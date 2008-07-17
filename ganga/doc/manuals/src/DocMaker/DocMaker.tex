@@ -1,0 +1,151 @@
+\documentclass{howto}
+\title{DocMaker -- make for GANGA documentation}
+
+\release{0.0.RC}
+
+\author{Vladimir Romanovski}
+\authoraddress{Vladimir.Romanovski@cern.ch}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{What is this document about}
+
+This document describes the  Ganga documentation system itself.  Ganga
+has an automatic framework for generating nice user manuals which have
+a look of standard python documents.
+
+The documentation framework is kept in the CVS in {\tt ganga/doc/manuals}.
+
+The  source of all  manuals (including  this one)  is located  in {\tt
+ganga/doc/manuals/src}.
+
+
+\section{Creating new document}
+
+To create new document, make directory with name {\tt src/DocumentName}
+and put there file with name {\tt DocumentName.tex} and all other files
+you want.  DocumentName  is the name of your  document. You don't need
+to edit any Makefile.   Then \begin{verbatim} make \end{verbatim} (see
+next section).
+
+
+The make output contains something like:
+\begin{verbatim}
+Makefile.incl:bla-bla-bla: No such file or directory
+\end{verbatim}
+This is not error, don't worry.
+
+\section{What you can make}
+
+By default \begin{verbatim} make \end{verbatim} without parameters produce html
+files for all your docoments.
+
+You can also: 
+\begin{itemize}
+
+  \item \begin{verbatim} make html \end{verbatim}
+
+
+   html files for all documents (the same as default). The DocumentName.html
+   file will be in directory html/DocumentName 
+  
+  \item \begin{verbatim} make dvi \end{verbatim}
+
+
+   dvi files for all documents. The DocumentName.dvi
+   file will be in directory paper-a4. 
+
+  \item \begin{verbatim} make ps \end{verbatim}
+
+
+   ps files for all documents. The DocumentName.ps
+   file will be in directory paper-a4. 
+
+  \item \begin{verbatim} make pdf \end{verbatim}
+
+
+   pdf files for all documents. The DocumentName.pdf
+   file will be in directory paper-a4. 
+
+\end{itemize}
+
+You also can do:
+
+\begin{itemize}
+  \item \begin{verbatim} make DocumentName.html \end{verbatim}
+  \item \begin{verbatim} make DocumentName.dvi \end{verbatim}
+  \item \begin{verbatim} make DocumentName.ps \end{verbatim}
+  \item \begin{verbatim} make DocumentName.pdf \end{verbatim}
+
+to produce only one DocumentName file with corespondant extension.
+\end{itemize}
+
+\begin{itemize}
+  \item \begin{verbatim} make DocumentName \end{verbatim}
+
+produce all files(html,ps,pdf) for DocumentName.
+
+  \item \begin{verbatim} make clean \end{verbatim}
+
+Clean everything, even some Makefiles.
+
+
+All "paper" files(dvi,ps,pdf) use a4 format as default and are in paper-a4
+directory. If you want to produce other format papers, run make with
+overriding variable PAPER. For example:
+ 
+\begin{verbatim} make PAPER=letter pdf \end{verbatim}
+As result all "paper" files will use letter format and will be in paper-letter
+directory.  
+
+\end{itemize}
+
+\section{How it works}
+
+You don't need read this section for using DocMaker. It is for them, who
+want to know what is inside Makefile.
+
+At first step make updates(creates) Makefile.incl, which depends on directories
+src/*.
+
+
+During next step, make updates(creates) Makefile-DocumentName for each directory
+src/*.
+
+Last step of make does what you wanted. 
+
+\section{Known bugs and warnings}
+
+\begin{itemize}
+  \item Crazy output from make
+  
+  
+  After creating new document or cleaning, make print string  
+  \begin{verbatim}
+  Makefile.incl:bla-bla-bla: No such file or directory
+  \end{verbatim}
+  This means make can't find Makefile for DocumentName and will produce it.
+  It is not error!
+
+  \item Postscipt file error
+
+
+  For documents with gif pictures, dvips can't find pictures. Really, it is
+  possible to insist on finding pictures, but postscript file become corrupted. 
+
+
+  \item pdf file error
+
+
+  For documents with gif pictures, pdftex does not know what gif means. As
+  result, no pdf file.  
+
+  \item There is no install for DocumentName 
+
+
+   May be later ...
+\end{itemize}
+
+\end{document}
