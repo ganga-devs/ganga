@@ -1,0 +1,44 @@
+#test that the exit code is being correctly returned to Dirac
+
+scriptString = """
+#include <cstdlib>
+void exitCode(){
+    exit(45);
+}
+"""
+
+import os
+from tempfile import mktemp
+
+file_name = 'exitCode.C'
+        
+#write string to tmpfile
+tmpdir = mktemp()
+os.mkdir(tmpdir)
+fileName = os.path.join(tmpdir,file_name)
+
+from GangaTest.Framework.utils import write_file
+write_file(fileName,scriptString)
+        
+#make a Root application object
+r = Root()
+r.script = fileName
+r.version = '5.14.00i'
+
+j = Job(application = r, backend = Dirac())
+j.backend.CPUTime = 600
+j.submit()
+
+from GangaTest.Framework.utils import sleep_until_completed, file_contains
+sleep_until_completed(j)
+assert j.status == 'failed', 'Job should fail'
+
+fileName = os.path.join(j.outputdir,'__jobstatus__')
+assert file_contains(fileName, 'EXITCODE: 45'), 'Exit code should be reported to Dirac'
+
+
+
+
+
+
+

@@ -1,0 +1,9 @@
+from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
+
+j = Job( application = "DaVinci", backend = "LSF" )
+j.submit()
+if not sleep_until_completed(j,1800):
+    assert(not "Timeout on job submission: job is still not finished")
+
+assert(j.status == 'completed')
+# FIXME: need to check the output or at least exit code
