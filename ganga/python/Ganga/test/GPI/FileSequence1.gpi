@@ -1,0 +1,6 @@
+a = TestApplication()
+a.optsfile = 'a'
+a.file_sequence = ['x','y']
+assert(a.file_sequence[0] == File('x'))
+assert(a.file_sequence[1] == File('y'))
+

@@ -1,0 +1,21 @@
+from GangaTest.Framework.tests import MultipassTest
+
+class Savannah9705(MultipassTest):
+    def __init__(self): MultipassTest.__init__(self,2)
+
+    def pass1(self):
+        j = Job()
+
+        j._impl.inputdir = '~/test_input'
+        j._impl.outputdir = '~/test_output'
+
+        assert(j.inputdir == '~/test_input')
+        assert(j.outputdir == '~/test_output')
+
+        return j.id
+
+    def pass2(self):
+        j = jobs(self.data[1])
+
+        assert(j.inputdir == '~/test_input')
+        assert(j.outputdir == '~/test_output')
