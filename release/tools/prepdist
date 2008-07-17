@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+#-*- python -*-
+
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: prepdist,v 1.1 2008-07-17 16:41:39 moscicki Exp $
+################################################################################
+
+
+import os.path, fnmatch
+
+# Python Cookbook 4.18
+def listFiles(root,patterns='*',recurse=1,return_folders=0):
+    pattern_list = patterns.split(';')
+    class Bunch:
+        def __init__(self,**kwds): self.__dict__.update(kwds)
+
+    arg = Bunch(recurse=recurse, pattern_list=pattern_list,
+                return_folders=return_folders, results=[])
+
+    def visit(arg,dirname,files):
+        for name in files:
+            fullname = os.path.normpath(os.path.join(dirname,name))
+            if arg.return_folders or os.path.isfile(fullname):
+                for pattern in arg.pattern_list:
+                    if fnmatch.fnmatch(name,pattern):
+                        arg.results.append(fullname)
+                        break
+        if not arg.recurse: files[:]=[]
+
+    os.path.walk(root,visit,arg)
+
+    return arg.results
+
+import sys
+
+def usage():
+    print
+    print 'usage: prepdist directory command'
+    print 'prepare a directory tree for distribution (recursive)'
+    print 'commands:'
+    print '      clean : remove all *.pyc, *.pyo, *.py~ files '
+    print '      compile: byte compile all *.py files'
+    print '      list: print all files which may be cleaned'
+    sys.exit(1)
+    
+try:
+    root = sys.argv[1]
+    command = sys.argv[2]
+except IndexError:
+    print 'Error: Not enough arguments'    
+    usage()
+    
+print 'root=',root
+print 'command=',command
+
+patterns = '*.pyc;*.pyo;*.py~;.happydoc*.py'
+
+def make_clean(root):
+    for l in listFiles(sys.argv[1],patterns):
+        try:
+            os.remove(l)
+            print 'removed',l
+        except OSError:
+            print 'cannot remove:',l
+            print 'quitting'
+            break
+
+def make_list(root):
+    ll = listFiles(sys.argv[1],patterns)
+    for l in ll:
+        print l
+    print 'found %d files' % (len(ll),)
+    
+def make_compile(root):
+    import compileall
+    compileall.compile_dir(root,1000,force=1)
+    
+actions = { 'clean' : make_clean, 'compile' : make_compile, 'list': make_list }
+
+try:
+    actions[command](root)
+except KeyError:
+    print 'Error: Unknown command'
+    usage()
+
+
+
+
+
+    
+
+        
+    

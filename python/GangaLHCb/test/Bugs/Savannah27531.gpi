@@ -1,0 +1,2 @@
+s=SplitByFiles()
+list=s._impl._splitFiles(['foo','bar'])

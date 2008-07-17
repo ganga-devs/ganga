@@ -1,0 +1,16 @@
+print """
+This test fails, because it looks for files which are now in the tarred sandbox. Previously they were untarred
+This needs a fix
+"""
+j=Job(backend=Dirac(),application=DaVinci())
+ver = j.application.version
+j.application.optsfile = ['/afs/cern.ch/lhcb/software/releases/DAVINCI/DAVINCI_'+str(ver)+'/Phys/DaVinci/'+str(ver)+'/options/DaVinci.opts']
+j.application.extraopts="TestBug10065.Var = 1;\n"
+j.submit()
+import os.path
+import os
+assert(os.path.exists(os.sep.join([j.inputdir ,'job.opts'])))
+j.kill()
+import re
+wanted=re.compile(r'TestBug10065')
+assert(wanted.search(open(os.sep.join([j.inputdir,'job.opts'])).read(-1)))
