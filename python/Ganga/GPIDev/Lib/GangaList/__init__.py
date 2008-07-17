@@ -1,1 +1,0 @@
-from GangaList import GangaList
