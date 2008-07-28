@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ATLASDataset.py,v 1.2 2008-07-28 14:27:34 elmsheus Exp $
+# $Id: ATLASDataset.py,v 1.3 2008-07-28 15:02:30 elmsheus Exp $
 ###############################################################################
 # A simple ATLAS dataset
 #
@@ -329,6 +329,8 @@ class ATLASOutputDataset(Dataset):
 #       Determine local output path to store files
         if job.outputdata.location and ((job.backend._name == 'Local') or (job.backend._name == 'LSF') or (job.backend._name == 'PBS') or (job.backend._name == 'SGE')):
             outputlocation =  expandfilename(job.outputdata.location)
+            # update the local_location variable to point to the location
+            job.outputdata.local_location = outputlocation
         elif job.outputdata.local_location:
             outputlocation = expandfilename(job.outputdata.local_location)
         else:
@@ -526,6 +528,12 @@ class ATLASOutputDataset(Dataset):
 config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
 
 #$Log: not supported by cvs2svn $
+#Revision 1.2  2008/07/28 14:27:34  elmsheus
+#* Upgrade to DQ2Clients 0.1.17 and DQ2 API
+#* Add full support for DQ2 container datasets in DQ2Dataset
+#* Change in DQ2OutputDataset.retrieve(): use dq2-get
+#* Fix bug #39286: Athena().atlas_environment omits type_list
+#
 #Revision 1.1  2008/07/17 16:41:18  moscicki
 #migration of 5.0.2 to HEAD
 #
