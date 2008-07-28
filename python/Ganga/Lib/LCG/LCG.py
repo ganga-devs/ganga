@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.1 2008-07-17 16:40:57 moscicki Exp $
+# $Id: LCG.py,v 1.2 2008-07-28 11:00:55 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -722,14 +722,45 @@ appargs = ###APPLICATIONARGS###
 
 exitcode=-1
 
-import sys, stat
+import sys, stat, os, os.path, commands
+
+# Change to scratch directory if provided
+scratchdir = ''
+tmpdir = ''
+
+orig_wdir = os.getcwd()
+
+# prepare log file for job wrapper 
+out = open(os.path.join(orig_wdir, wrapperlog),'w')
+
+if os.getenv('EDG_WL_SCRATCH'):
+    scratchdir = os.getenv('EDG_WL_SCRATCH')
+elif os.getenv('TMPDIR'):
+    scratchdir = os.getenv('TMPDIR')
+
+if scratchdir:
+    tmpdir = commands.getoutput('mktemp -d %s/gangajob_XXXXXXXX' % (scratchdir))
+    os.chdir(tmpdir)
+
 wdir = os.getcwd()
+
+if scratchdir:
+    printInfo('Changed working directory to scratch directory %s' % tmpdir)
+    try:
+        os.system("ln -s %s %s" % (os.path.join(wdir, 'stdout'), os.path.join(orig_wdir, 'stdout')))
+        os.system("ln -s %s %s" % (os.path.join(wdir, 'stderr'), os.path.join(orig_wdir, 'stderr')))
+    except Exception,e:
+        printError(sys.exc_info()[0])
+        printError(sys.exc_info()[1])
+        str_traceback = traceback.format_tb(sys.exc_info()[2])
+        for str_tb in str_traceback:
+            printError(str_tb)
+        printInfo('Linking stdout & stderr to original directory failed. Looking at stdout during job run may not be possible')
+
 sys.path.insert(0,os.path.join(wdir,PYTHON_DIR))
 os.environ['PATH'] = '.:'+os.environ['PATH']
 
 vo = os.environ['GANGA_LCG_VO']
-
-out = open('%s' % wrapperlog,'w')
 
 try:
     printInfo('Job Wrapper start.')
@@ -745,7 +776,7 @@ try:
 
 #   unpack inputsandbox from wdir
     for f in input_sandbox['local']:
-        getPackedInputSandbox(f)
+        getPackedInputSandbox(os.path.join(orig_wdir,f))
 
     printInfo('Unpack inputsandbox passed.')
 
@@ -780,20 +811,22 @@ try:
         # use subprocess to run the user's application if the module is available on the worker node
         import subprocess
         printInfo('Load application executable with subprocess module')
-        status = execSyscmdSubprocess('%s %s' % (appexec,appargs))
+        status = execSyscmdSubprocess('%s %s' % (appexec,appargs), wdir)
     except ImportError,err:
         # otherwise, use separate threads to control process IO pipes 
         printInfo('Load application executable with separate threads')
-        status = execSyscmdEnhanced('%s %s' % (appexec,appargs))
+        status = execSyscmdEnhanced('%s %s' % (appexec,appargs), wdir)
 
     printInfo('GZipping stdout and stderr...')
-    os.system("gzip stdout stderr") 
+    os.system("gzip stdout stderr")
+    # move them to the original wdir so they can be picked up
+    os.system("mv stdout.gz stderr.gz %s" % orig_wdir)
 
     if not status:
         raise Exception('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)
 
-    createPackedOutputSandbox(outputsandbox,None,wdir)
+    createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
 #   pack outputsandbox
 #    printInfo('== check output ==')
@@ -803,6 +836,10 @@ try:
     printInfo('Pack outputsandbox passed.')
     monitor.stop(exitcode)
     
+    # Clean up after us - All log files and packed outputsandbox should be in "wdir"
+    if scratchdir:
+        os.chdir(orig_wdir)
+        os.system("rm %s -rf" % wdir)
 except Exception,e:
     printError(sys.exc_info()[0])
     printError(sys.exc_info()[1])
@@ -1173,8 +1210,7 @@ sys.exit(0)
         script = script.replace('###MONITORING_SERVICE###',mon.getWrapperScriptConstructorText())
 
 #       prepare input/output sandboxes
-        packed_files = jobconfig.getSandboxFiles()+Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()) \
-	+ Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
+        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()) + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         ## sandbox of child jobs should include master's sandbox
@@ -1635,8 +1671,13 @@ def __updateGridObjects__(opt,val):
 
     ## update the config binded with the grid objects
     for mt in grids.keys():
-        grids[mt].config = getConfig('LCG')
-        logger.debug('update grid configuration for %s' % mt)
+        try: 
+            ## NB. grids[mt] is None if the corresponding
+            ## middleware is not enabled before
+            grids[mt].config = getConfig('LCG')
+            logger.debug('update grid configuration for %s' % mt)
+        except AttributeError:
+            pass
 
     ## when user changes the 'DefaultLFC', change the env. variable, LFC_HOST, of the cached grid shells
     if opt == 'DefaultLFC' and val:
@@ -1710,7 +1751,7 @@ if config['GLITE_ENABLE']:
 if config['EDG_ENABLE']:
     grids['EDG'] = Grid('EDG')
     if grids['EDG'].shell:
-	config.setSessionValue('DefaultLFC', grids['EDG'].shell.env['LFC_HOST'])
+    config.setSessionValue('DefaultLFC', grids['EDG'].shell.env['LFC_HOST'])
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 ##if config['GLITE_ENABLE']:
@@ -1726,6 +1767,18 @@ if config['EDG_ENABLE']:
 ##    config['EDG_ENABLE'] = grids['EDG'].active
 
 # $Log: not supported by cvs2svn $
+# Revision 1.95.4.12  2008/07/15 11:51:42  hclee
+# bug fix: https://savannah.cern.ch/bugs/?37825https://savannah.cern.ch/bugs/?37825
+#
+# Revision 1.95.4.11  2008/07/09 13:26:08  hclee
+# bug fix of https://savannah.cern.ch/bugs/index.php?38368
+#  - ignoring configuration postprocess on the grid object corresponding to a
+#    disabled middleware
+#
+# Revision 1.95.4.10  2008/07/09 13:10:18  hclee
+# apply the patch of feature request: https://savannah.cern.ch/bugs/?37825
+#  - using scratch directory as job's working directory
+#
 # Revision 1.95.4.9  2008/05/15 16:01:08  hclee
 # - bugfix #36178 (subprocess in python2.5)
 #
