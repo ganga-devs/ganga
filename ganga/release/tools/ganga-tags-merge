@@ -1,0 +1,67 @@
+#!/bin/env python
+import os
+import sys
+import os.path
+
+try:
+    tags_dir=sys.argv[1]    
+    release=sys.argv[2]
+except:
+    print "Usage:\n\t merge TAGSDIR RELEASE [PACKAGES_DIR] [RELEASE_NOTES_DIR]\n"
+    sys.exit(1)
+
+try:
+    packages_dir=sys.argv[3]
+except:
+    packages_dir='.'
+
+try:
+    releasenotes_dir=sys.argv[4]
+except:
+    releasenotes_dir='.'
+
+packages=[]
+modules=os.listdir(tags_dir)
+modules.sort()
+
+for module in modules:
+    if module.startswith('ganga') and not os.path.isdir(module):
+	try:
+	    fh=open(os.path.join(tags_dir,module),'r')
+	    lines = fh.readlines()
+	    
+	    maintainer=lines[0].strip()
+	    module_tag=lines[1].strip()
+	    if not maintainer or not module_tag:
+		raise Exception()
+	    #path tag
+	    p = [{'module_path':module.replace('.','/'),'maintainer':maintainer,'module_tag':module_tag, 'module_releasenotes':"".join(lines[2:]).strip()}]
+	    packages.extend(p)
+	    fh.close()
+	except Exception,e:
+	    #we need at least two lines: maintainer and module_tag, otherwise we don't use package tag in the release
+	    print "Invalid tag-file format for %s module. (at least 2 lines are required: maintainer,tag) [%s]" % (module,e)
+	    if fh: fh.close()
+
+fPackages=open('%s/PACKAGES-%s'%(packages_dir,release),'w')
+fReleaseNotes = open('%s/ReleaseNotes-%s'%(releasenotes_dir,release),'w')
+fReleaseNotes.write("*"*110)
+import time
+gmtTime = time.gmtime()
+fReleaseNotes.write("\n%s (%s/%s/%s)\n\n" % (release,gmtTime[0],gmtTime[1],gmtTime[2]))
+fPackages.write('#The packages are processed in top-down order\n')
+
+crtMaintainer=""
+for p in packages:
+    #group by maintainer if the order is maintained
+    if p['maintainer']!=crtMaintainer:
+	crtMaintainer=p['maintainer']
+	fPackages.write("\n#%s\n" % crtMaintainer)
+    fPackages.write("%(module_path)-70s %(module_tag)s\n" % p)    
+    if p['module_releasenotes']:
+	fReleaseNotes.write('\n'+'-'*110+'\n%(module_path)s\n'%p+'-'*110+'\n%(module_releasenotes)s\n\n'% p)
+
+fReleaseNotes.write("*"*110+"\n")
+fPackages.write("\n")
+fPackages.close()
+fReleaseNotes.close()

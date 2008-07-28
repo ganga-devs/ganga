@@ -1,0 +1,27 @@
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: PACKAGE.py,v 1.1 2008-07-17 16:41:30 moscicki Exp $
+################################################################################
+
+""" Refer to Ganga/PACKAGE.py for details on the purpose of this module.
+"""
+
+_external_packages = {
+   'Python' : { 'version' : '2.3.4', 
+                'LD_LIBRARY_PATH':'lib', 
+                'PATH' : 'bin',
+                'maxHexVersion' : '0x20300f0'  # switch python only for version 2.2
+   } 
+}
+
+from Ganga.Utility.Setup import PackageSetup
+
+setup = PackageSetup(_external_packages)
+
+def standardSetup(setup=setup):
+    for p in setup.packages:
+        setup.prependPath(p,'PYTHONPATH')
+        setup.prependPath(p,'LD_LIBRARY_PATH')
+        setup.prependPath(p,'PATH')
+
