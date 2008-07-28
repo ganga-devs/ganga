@@ -12,6 +12,7 @@ from Ganga.Utility.ColourText import Foreground, Effects
 
 import Ganga.Utility.Config 
 import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
 
 import commands
 import inspect
@@ -63,7 +64,7 @@ class Remote( IBackend ):
 
    E.g. 3 - Athena example submitted to LCG backend
    NOTE: you don't need a grid certificate (or UI) available on the local machine,
-   just the host machine
+   just the remote machine
 
    j = Job()
    j.name='Ex3_2_1'
@@ -86,21 +87,20 @@ class Remote( IBackend ):
     
    _schema = Schema( Version( 1, 0 ), {\
       "remote_backend": ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
-      "host" : SimpleItem( defvalue=None, doc="The remote host to use" ),
-      "username" : SimpleItem( defvalue=None, doc="The username at the remote host" ),
+      "host" : SimpleItem( defvalue="", doc="The remote host to use" ),
+      "username" : SimpleItem( defvalue="", doc="The username at the remote host" ),
       "ganga_dir" : SimpleItem( defvalue="", doc="The directory to use for the remote workspace, repository, etc." ),
-      "ganga_cmd" : SimpleItem( defvalue=None, doc="Command line to start ganga on the remote host" ),
-      "environment" : SimpleItem( defvalue="", doc="Overides any environment variables set in the job" ),
+      "ganga_cmd" : SimpleItem( defvalue="", doc="Command line to start ganga on the remote host" ),
+      "environment" : SimpleItem( defvalue={}, doc="Overides any environment variables set in the job" ),
       "pre_script" : SimpleItem( defvalue="", doc="Script to run on the remote site before running the submission script in Ganga" ),
       'remote_job_id' : SimpleItem(defvalue=0,protected=1,copyable=0,doc='Remote job id.'),
-      'exitcode' : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Process exit code.'),
-      'workdir' : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Working directory.'),
-      'actualCE' : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Hostname where the job was submitted.')
+      'exitcode'            : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Application exit code'),
+      'actualCE'            : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Computing Element where the job actually runs.')
       } )
 
    _category = "backends"
    _name =  "Remote"
-   _hidden = True # KUBA: temporarily disabled from the public
+   #_hidden = False # KUBA: temporarily disabled from the public
    _port = 22
    _transport = None
    _sftp = None
@@ -118,7 +118,7 @@ class Remote( IBackend ):
    def setup( self ): # KUBA: generic setup hook
       job = self.getJobObject()
       if job.status in [ 'submitted', 'running', 'completing' ]:
-         self.opentransport()
+         return self.opentransport()
          
    def opentransport( self ):
 
@@ -135,32 +135,95 @@ class Remote( IBackend ):
             if (t != None) and (t[0] == self.username) and (t[1] == self.host):
                self._transport = t[2]
                self._sftp = t[3]
+               
+               # ensure that the remote dir is still there - it will crash if the dir structure
+               # changes with the sftp sill open
+               channel = self._transport.open_session()
+               channel.exec_command( 'mkdir -p ' + self.ganga_dir )
+               bufout = ""
+               while not channel.exit_status_ready():
+                  if channel.recv_ready():
+                     bufout = channel.recv(1024)
+                     
                return
          
-      # Ask user for password
-      password = getpass.getpass('Password for %s@%s: ' % (self.username, self.host))
+      # Ask user for password - give three tries
+      num_try = 0
+      while num_try < 3:
       
-      try:
-         self._transport = paramiko.Transport((self.host, self._port))
-         self._transport.connect(username=self.username, password=password)
-         channel = self._transport.open_session()
-         channel.exec_command( 'mkdir -p ' + self.ganga_dir )
-         self._sftp = paramiko.SFTPClient.from_transport(self._transport)
+         try:
+            password = getpass.getpass('Password for %s@%s: ' % (self.username, self.host))
+            self._transport = paramiko.Transport((self.host, self._port))
+            self._transport.connect(username=self.username, password=password)
+            channel = self._transport.open_session()
+            channel.exec_command( 'mkdir -p ' + self.ganga_dir )
+            self._sftp = paramiko.SFTPClient.from_transport(self._transport)
 
-         # Add to the transport array
-         Remote._transportarray = [Remote._transportarray,
-                                   [self.username, self.host, self._transport, self._sftp]]
+            # Add to the transport array
+            Remote._transportarray = [Remote._transportarray,
+                                      [self.username, self.host, self._transport, self._sftp]]
+            num_try = 1000
+            
+         except:
+            logger.warning("Error when comunicating with remote host. Retrying...")
+            self._transport = None
+            self._sftp = None
+
+         num_try = num_try + 1
          
-      except:
-         print "Error when comunicating with remote host."
-         self._transport = None
-         self._sftp = None
-      
       # blank the password just in case
       password = ""
 
-      return
-   
+      if num_try == 3:
+         logger.error("Could not logon to remote host " + self.username + "@" + self.host)
+         return False
+         
+      return True
+
+   def run_remote_script( self, script_name, pre_script ):
+      """Run a ganga script on the remote site"""
+
+      import getpass
+      
+      # run ganga command
+      cmd = pre_script + " ; " + self.ganga_cmd
+      cmd = self.ganga_cmd
+      # For sub V5
+      #cmd += " -o\"[DefaultJobRepository]local_root=" + self.ganga_dir + "/repository\" "
+      #cmd += "-o\"[FileWorkspace]topdir=" + self.ganga_dir + "/workspace\" "
+      cmd += " -o[Configuration]gangadir=" + self.ganga_dir + " "
+      cmd += self.ganga_dir + script_name
+      channel = self._transport.open_session()
+      channel.exec_command(cmd)
+      
+      # Read the output after command
+      stdout = bufout = ""
+      stderr = buferr = ""
+      grid_ok = False
+
+      while not channel.exit_status_ready():
+
+         if channel.recv_ready():
+            bufout = channel.recv(1024)
+            stdout += bufout
+
+         if channel.recv_stderr_ready():
+            buferr = channel.recv_stderr(1024)
+            stderr += buferr
+
+         if stdout.find("***_FINISHED_***") != -1:
+            break
+
+         if (bufout.find("GRID pass") != -1 or buferr.find("GRID pass") != -1) :
+            grid_ok = True
+            password = getpass.getpass('Enter GRID pass phrase: ')
+            channel.send( password + "\n" )
+            password = ""
+
+         bufout = buferr = ""
+
+      return stdout, stderr
+      
    def submit( self, jobconfig, master_input_sandbox ):
       """Submit the job to the remote backend.
                        
@@ -169,10 +232,30 @@ class Remote( IBackend ):
 
       import os
       import getpass
+
+      # First some sanity checks...
+      fail = 0
+      if self.remote_backend == None:
+         logger.error("No backend specified for remote host.")
+         fail = 1
+      if self.host == "":
+         logger.error("No remote host specified.")
+         fail = 1
+      if self.username == "":
+         logger.error("No username specified.")
+         fail = 1
+      if self.ganga_dir == "":
+         logger.error("No remote ganga directory specified.")
+         fail = 1
+      if self.ganga_cmd == "":
+         logger.error("No ganga command specified.")
+         fail = 1 
+
+      if fail:
+         return 0
       
       # initiate the connection
-      self.opentransport()
-      if self._transport == None:
+      if self.opentransport() == False:
          return 0
 
       # Tar up the input sandbox and copy to the remote cluster
@@ -185,7 +268,7 @@ class Remote( IBackend ):
       self._sftp.put(subjob_input_sandbox[0], self.ganga_dir + sbx_name)
       sbx_name = '/__master_input_sbx__%s' % self._code
       self._sftp.put(master_input_sandbox[0], self.ganga_dir + sbx_name )
-   
+         
       # run the submit script on the remote cluster
       scriptpath = self.preparejob(jobconfig,master_input_sandbox)
       
@@ -193,51 +276,41 @@ class Remote( IBackend ):
       data = open(scriptpath, 'r').read()
       script_name = '/__jobscript_run__%s.py' % self._code
       self._sftp.open(self.ganga_dir + script_name, 'w').write(data)
-      
-      # run ganga command
-      cmd = self.pre_script + " ; " + self.ganga_cmd
-      cmd = self.ganga_cmd
-      cmd += " -o\"[DefaultJobRepository]local_root=" + self.ganga_dir + "/repository\" "
-      cmd += "-o\"[FileWorkspace]topdir=" + self.ganga_dir + "/workspace\" "
-      cmd += self.ganga_dir + script_name
-      channel = self._transport.open_session()
-      channel.exec_command(cmd)
-      
-      # Read the output after command
-      out = x = ""
-      out2 = x2 = ""
-      grid_ok = False
 
-      while not channel.exit_status_ready():
+      # run the script
+      stdout, stderr = self.run_remote_script( script_name, self.pre_script )
 
-         if channel.recv_ready():
-            x = channel.recv(1024)
-            out += x
-
-         if channel.recv_stderr_ready():
-            x2 = channel.recv_stderr(1024)
-            out2 += x2
-
-         if out.find("*** FINISHED ***") != -1:
-            break
-
-         if (x.find("GRID pass") != -1 or x2.find("GRID pass") != -1) :
-            grid_ok = True
-            password = getpass.getpass('Enter GRID pass phrase: ')
-            channel.send( password + "\n" )
-            password = ""
-
-         x = x2 = ""
-         
-      if out.find("*** FINISHED ***") != -1:
-         status, exitcode, outputdir, id = self.grabremoteinfo(out)
-         
-      self.remote_job_id = id
-
-      # finally, delete the jobscript
+      # delete the jobscript
       self._sftp.remove(self.ganga_dir + script_name)
-            
-      return 1
+
+      # Copy the job object
+      if stdout.find("***_FINISHED_***") != -1:
+         status, outputdir, id, be = self.grabremoteinfo(stdout)
+
+         self.remote_job_id = id
+         if hasattr(self.remote_backend,'exitcode'):      
+            self.exitcode = be.exitcode
+         if hasattr(self.remote_backend,'actualCE'):
+            self.actualCE = be.actualCE
+
+         # copy each variable in the schema
+         # Please can someone tell me why I can't just do self.remote_backend = be?
+         for o in be._schema.allItems():
+            exec("self.remote_backend." + o[0] + " = be." + o[0])            
+
+         return 1
+      else:
+         logger.error("Problem submitting the job on the remote site.")
+         logger.error("<last 1536 bytes of stderr>")
+         cut = stderr[ len(stderr) - 1536 : ]
+         
+         for ln in cut.splitlines():
+            logger.error(ln)
+
+         logger.error("<end of last 1536 bytes of stderr>")
+         
+      return 0
+
    
    def kill( self  ):
       """Kill running job.
@@ -253,86 +326,26 @@ class Remote( IBackend ):
    def grabremoteinfo( self, out ):
       
       from string import strip
-      tok_list = out.split()
+      import pickle
+
+      # Find the start and end of the pickle
+      start = out.find("***_START_PICKLE_***") + len("***_START_PICKLE_***")
+      stop = out.find("***_FINISHED_***")
+      outputdir = out[start + 1:out.find("\n", start + 1) - 1]
+      pickle_str = out[out.find("\n", start + 1) + 1:stop]
       
-      idx = 0
-      outputdir = ""
-      status = "submitted"
-      exitcode = 0
-      id = -1
-      injob = False
+      # Now unpickle and recreate the job
+      j = pickle.loads(pickle_str)
       
-      for tok in tok_list:
-         if tok == "Job":
-            injob = True
-
-         if injob:
-            if tok == "status":
-               status = strip(tok_list[idx+2], "'")
-            
-            if tok == "outputdir":
-               outputdir = strip(tok_list[idx+2], "'")
-
-            if tok == "id" and id == -1:
-               id = eval(tok_list[idx+2])
-
-         if tok == "backend":
-            injob = False
-            
-         if tok == "exitcode":
-            exitcode = eval(tok_list[idx+2])
-         
-         idx += 1
-
-      return status, exitcode, outputdir, id
-
-   def printinfo(self, job, obj_name):
-      """Returns a string containing the user alterable properties of the object"""
-
-      import os
-      
-      str = ''
-
-      try:
-         schema = job._schema
-      except:
-         return " = " + repr(job)
-
-      str += " = " + schema.name + " (\n"
-
-      # check for file object
-      in_file = False
-      if schema.name == "File":
-         in_file = True
-         
-      for (name,item) in job._schema.simpleItems():
-         if not item['protected']:
-            if in_file and name == "name":
-               filename = getattr(job, name)
-               str += obj_name + name + " = " + repr(os.path.basename( filename )) + ", \n"
-            else:
-               str += obj_name + name + " = " + repr( getattr(job, name) ) + ", \n"
-
-      for (name,item) in job._schema.componentItems():
-         if not item['protected']:
-            str += obj_name + name
-            str += self.printinfo(getattr(job,name), obj_name + "   ")
-               
-            str += obj_name + ",\n"
-         
-      str += obj_name + ")"
-         
-      return str
+      return j.status, outputdir, j.id, j.backend
 
    def preparejob( self, jobconfig, master_input_sandbox ):
       """Prepare the script to create the job on the remote host"""
 
       from Ganga.Utility import tempfile
 
-      job = self.getJobObject()
-      str = self.printinfo(job, " ")
-
       workdir = tempfile.mkdtemp()
+      job = self.getJobObject()
 
       script = """#!/usr/bin/env python
 #-----------------------------------------------------
@@ -360,7 +373,7 @@ output_sandbox = ###OUTPUTSANDBOX###
 input_sandbox = ###INPUTSANDBOX###
 appexec = ###APPLICATIONEXEC###
 appargs = ###APPLICATIONARGS###
-back_end ###BACKEND###
+back_end = ###BACKEND###
 ganga_dir = ###GANGADIR###
 code = ###CODE###
 environment = ###ENVIRONMENT###
@@ -383,12 +396,23 @@ inputsbx = []
 try:
    tar = tarfile.open(j.inputdir+"/__master_input_sbx__")
    filelist = tar.getnames()
-
+   print filelist
+   
    for f in filelist:
       inputsbx.append( j.inputdir + "/" + f )
 
 except:
    print "Unable to open master input sandbox"
+
+try:
+   tar = tarfile.open(j.inputdir+"/__subjob_input_sbx__")
+   filelist = tar.getnames()
+
+   for f in filelist:
+      inputsbx.append( j.inputdir + "/" + f )
+
+except:
+   print "Unable to open subjob input sandbox"
    
 j.inputsandbox = inputsbx
 
@@ -398,9 +422,16 @@ getPackedInputSandbox(j.inputdir+"/__master_input_sbx__", j.inputdir + "/.")
 # submit the job
 j.submit()
 
-print j
+# Start pickle token
+print "***_START_PICKLE_***"
 
-print "*** FINISHED ***"
+# pickle the job
+import pickle
+print j.outputdir
+print pickle.dumps(j._impl)
+
+# print a finished token
+print "***_FINISHED_***"
 """
       import inspect
       import Ganga.Core.Sandbox as Sandbox
@@ -410,7 +441,14 @@ print "*** FINISHED ***"
       script = script.replace('###OUTPUTSANDBOX###', repr(jobconfig.outputbox))
       script = script.replace('###APPLICATIONEXEC###',repr(os.path.basename(jobconfig.getExeString())))
       script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArgStrings()))
-      script = script.replace('###BACKEND###', self.printinfo( getattr( getattr(job, "backend" ), "remote_backend"), " "))
+
+      # get a string describing the required backend
+      import StringIO
+      be_out = StringIO.StringIO()
+      job.backend.remote_backend.printTree( be_out, "copyable" )
+      be_str = be_out.getvalue()
+      script = script.replace('###BACKEND###', be_str)
+      
       script = script.replace('###GANGADIR###', repr(self.ganga_dir))
       script = script.replace('###CODE###', repr(self._code))
       
@@ -457,73 +495,60 @@ jid = ###JOBID###
 j = jobs( jid )
 
 runMonitoring()
+
+# Start pickle token
+print "***_START_PICKLE_***"
+
+# pickle the job
+import pickle
+print j.outputdir
+print pickle.dumps(j._impl)
 print j
 
-print "*** FINISHED ***"
+# print a finished token
+print "***_FINISHED_***"
 """
 
          script = script.replace('###CODE###', repr(j.backend._code))
          script = script.replace('###JOBID###', str(j.backend.remote_job_id))
          
          # check for the connection
-         j.backend.opentransport()
+         if (j.backend.opentransport() == False):
+            return 0
          
          # send the script
-         #data = open(scriptpath, 'r').read()
          script_name = '/__jobscript__%s.py' % j.backend._code
          j.backend._sftp.open(j.backend.ganga_dir + script_name, 'w').write(script)
-         
-         # run it remotely
-         cmd = j.backend.ganga_cmd
-         cmd += " -o\"[DefaultJobRepository]local_root=" + j.backend.ganga_dir + "/repository\" "
-         cmd += "-o\"[FileWorkspace]topdir=" + j.backend.ganga_dir + "/workspace\" "
-         cmd += j.backend.ganga_dir + script_name
-         channel = j.backend._transport.open_session()
-         channel.exec_command(cmd)
 
-         # Read the output after command
-         out = x = ""
-         out2 = x2 = ""
+         # run the script
+         stdout, stderr = j.backend.run_remote_script( script_name, "" )
 
-         while not channel.exit_status_ready():
-
-            if channel.recv_ready():
-               x = channel.recv(1024)
-               out += x
-
-            if channel.recv_stderr_ready():
-               x2 = channel.recv_stderr(1024)
-               out2 += x2
-
-            if out.find("*** FINISHED ***") != -1:
-               break
-
-            if (x.find("GRID pass") != -1 or x2.find("GRID pass") != -1) :
-               grid_ok = True
-               password = getpass.getpass('Enter GRID pass phrase: ')
-               channel.send( password )
-               password = ""
-
-            x = x2 = ""
-
-         if out.find("*** FINISHED ***") != -1:
-            status, exitcode, outputdir, id = j.backend.grabremoteinfo(out)
+         # Copy the job object
+         if stdout.find("***_FINISHED_***") != -1:
+            status, outputdir, id, be = j.backend.grabremoteinfo(stdout)
             
-         if status != j.status:
-            j.updateStatus(status)
-            
-         j.backend.exitcode = exitcode
-         
-         # check for completed or failed and pull the output if required
-         if j.status == 'completed' or j.status == 'failed':
+            if status != j.status:
+               j.updateStatus(status)
+               
+            j.backend.remote_job_id = id
+            if hasattr(j.backend.remote_backend,'exitcode'):      
+               j.backend.exitcode = be.exitcode
+            if hasattr(j.backend.remote_backend,'actualCE'):
+               j.backend.actualCE = be.actualCE
+               
+            for o in be._schema.allItems():
+               exec("j.backend.remote_backend." + o[0] + " = be." + o[0])            
 
-            # we should have output, so get the file list first
-            filelist = j.backend._sftp.listdir(outputdir)
+            # check for completed or failed and pull the output if required
+            if j.status == 'completed' or j.status == 'failed':
 
-            # go through and sftp them back
-            for fname in filelist:
-               data = j.backend._sftp.open(outputdir + '/' + fname, 'r').read()
-               open(j.outputdir + '/' + os.path.basename(fname), 'w').write(data)
+               # we should have output, so get the file list first
+               filelist = j.backend._sftp.listdir(outputdir)
+
+               # go through and sftp them back
+               for fname in filelist:
+                  data = j.backend._sftp.open(outputdir + '/' + fname, 'r').read()
+                  open(j.outputdir + '/' + os.path.basename(fname), 'w').write(data)
 
 
          # remove the script
