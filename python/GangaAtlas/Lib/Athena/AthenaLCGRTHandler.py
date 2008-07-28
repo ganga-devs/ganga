@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.2 2008-07-28 14:27:34 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.3 2008-07-28 16:56:31 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -280,6 +280,10 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['GANGA_SHORTFILENAME'] = 1
             else:
                 environment['GANGA_SHORTFILENAME'] = ''
+                
+            environment['DQ2_OUTPUT_SPACE_TOKENS']= ':'.join(configDQ2['DQ2_OUTPUT_SPACE_TOKENS'])
+            environment['DQ2_OUTPUT_LOCATIONS']= ':'.join(configDQ2['DQ2_OUTPUT_LOCATIONS'])
+            environment['DQ2_BACKUP_OUTPUT_LOCATIONS']= ':'.join(configDQ2['DQ2_BACKUP_OUTPUT_LOCATIONS'])
             
         # CN: extra condition for TNTSplitter
         if job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter':
@@ -344,6 +348,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
 
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
+            if not job.outputdata.location:
+                raise ApplicationConfigurationError(None,'j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
             if not 'ganga-stage-in-out-dq2.py' in [ os.path.basename(file.name) for file in inputbox ]:
                 _append_files(inputbox,'ganga-stage-in-out-dq2.py')
             _append_files(inputbox,'ganga-joboption-parse.py')

@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.3 2008-07-28 14:44:13 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.4 2008-07-28 16:56:31 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -271,7 +271,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 environment['GANGA_GLITE_UI']=configLCG['GLITE_SETUP']
             except:
                 pass
-
+            environment['DQ2_OUTPUT_SPACE_TOKENS']= ':'.join(configDQ2['DQ2_OUTPUT_SPACE_TOKENS'])
+            environment['DQ2_OUTPUT_LOCATIONS']= ':'.join(configDQ2['DQ2_OUTPUT_LOCATIONS'])
+            environment['DQ2_BACKUP_OUTPUT_LOCATIONS']= ':'.join(configDQ2['DQ2_BACKUP_OUTPUT_LOCATIONS'])
+            
         # CN: extra condition for TNTSplitter
         if job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter':
             # set up dq2 environment
@@ -327,6 +330,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 inputbox += [ File(os.path.join(os.path.dirname(__file__),'ganga-stagein.py')) ]
 
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
+            if not job.outputdata.location:
+                raise ApplicationConfigurationError(None,'j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
             if not File(os.path.join(os.path.dirname(__file__),'ganga-stage-in-out-dq2.py')) in inputbox:
                 inputbox += [ File(os.path.join(os.path.dirname(__file__),'ganga-stage-in-out-dq2.py')),
                                 File(os.path.join(os.path.dirname(__file__),'dq2info.tar.gz')) ]
@@ -443,6 +448,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.3  2008/07/28 14:44:13  elmsheus
+#Add Remote backend submission to AthenaLocalRTHandler
+#
 #Revision 1.2  2008/07/28 14:27:34  elmsheus
 #* Upgrade to DQ2Clients 0.1.17 and DQ2 API
 #* Add full support for DQ2 container datasets in DQ2Dataset

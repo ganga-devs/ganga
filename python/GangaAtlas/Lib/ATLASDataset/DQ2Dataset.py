@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.2 2008-07-28 14:27:34 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.3 2008-07-28 16:56:30 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1135,12 +1135,27 @@ try:
 except KeyError:
     config.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
 
+
+config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASUSERDISK' , 'ATLASUSERTAPE', 'ATLASLOCALGROUPDISK'] , 'Allowed space tokens names of DQ2OutputDataset output' )
+
+config.addOption('DQ2_OUTPUT_LOCATIONS', [ 'CERN-PROD_USERTAPE' ], 'Default locations of DQ2OutputDataset output' )
+
+config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_USERTAPE', 'FZKDISK', 'LYONDISK', 'PICDISK', 'CNAFDISK', 'RALDISK', 'SARADISK', 'ASGCDISK', 'TRIUMFDISK' ], 'Default backup locations of DQ2OutputDataset output' )
+
+
+
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
    
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.2  2008/07/28 14:27:34  elmsheus
+#* Upgrade to DQ2Clients 0.1.17 and DQ2 API
+#* Add full support for DQ2 container datasets in DQ2Dataset
+#* Change in DQ2OutputDataset.retrieve(): use dq2-get
+#* Fix bug #39286: Athena().atlas_environment omits type_list
+#
 #Revision 1.1  2008/07/17 16:41:18  moscicki
 #migration of 5.0.2 to HEAD
 #

@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.1 2008-07-17 16:41:18 moscicki Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.2 2008-07-28 16:56:31 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -372,8 +372,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                 pfn = re.sub('srm://','dcap://',pfn)
                 # Hack for ccin2p3
                 pfn = re.sub('ccsrm','ccdcapatlas',pfn)
-                # Hack for RAL
-                pfn = re.sub('dcache.gridpp.rl.ac.uk','dcache-head.gridpp.rl.ac.uk',pfn)
+
                 # Hack for TRIUMF
                 if 'srm.triumf.ca' in defaultSE:
                     pfn = re.sub('/atlas/dq2/','//pnfs/triumf.ca/data/atlas/dq2/',pfn)
@@ -402,9 +401,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             pfn = re.sub('^[^:]+://[^/]+','',surl)
             # remove redundant /
 	    pfn = re.sub('^//','/',pfn)
-            if 'ralsrmd.rl.ac.uk' in defaultSE:
-                pfn = "rfio://castorstager.ads.rl.ac.uk:9002/?path=" + pfn
-            elif 'srm.grid.sinica.edu.tw' in defaultSE:
+            if 'srm.grid.sinica.edu.tw' in defaultSE:
                 pfn = "rfio://castor.grid.sinica.edu.tw/?path=" + pfn
             else:
                 pfn = "rfio:" + pfn
@@ -1037,11 +1034,7 @@ if __name__ == '__main__':
 
         if localsitesrm!='':
             defaultSE = _getDefaultStorage(localsitesrm)
-            if localsiteid in [ 'RAL', 'RALDISK'  ] or localsiteid.startswith('RAL-LCG2'):
-                defaultSE.append('srm-atlas.gridpp.rl.ac.uk')
-                defaultSE.append('ralsrmd.rl.ac.uk')
-                defaultSE.append('dcache.gridpp.rl.ac.uk')
-            elif localsiteid in [ 'RHUL' ] :
+            if localsiteid in [ 'RHUL' ] :
                 defaultSE.append('se1.pp.rhul.ac.uk')
             elif localsiteid in [ 'CERN', 'CERNPROD' ] :
                 defaultSE.append('srm-atlas.cern.ch')
@@ -1055,6 +1048,8 @@ if __name__ == '__main__':
                 defaultSE.append('f-dpm001.grid.sinica.edu.tw')
             elif localsiteid == 'BEIJING':
                 defaultSE.append('atlasse01.ihep.ac.cn')
+            elif localsiteid.startswith('MPPMU'):
+                defaultSE.append('lcg-lrz-se.lrz-muenchen.de')
 
         else:
             defaultSE = ''
@@ -1200,9 +1195,7 @@ if __name__ == '__main__':
             if len(out2)>1:
                 setype = findsetype(out2[1])
 
-        if localsiteid == 'RAL':
-            setype = 'DCACHE'
-        if localsiteid == 'NIKHEF':
+        if localsiteid.startswith('NIKHEF') or localsiteid.startswith('SARA'):
             setype = 'DPM'
 
         print setype
@@ -1690,22 +1683,46 @@ if __name__ == '__main__':
         output_locations = { }
         temp_locations = [ ]
 
-        backup_locations = [ 'CERN-PROD_USERTAPE', 'FZKDISK', 'LYONDISK', 'PICDISK', 'CNAFDISK', 'RALDISK', 'SARADISK', 'ASGCDISK', 'TRIUMFDISK' ]
+        # Get backup output locations
+        try:
+            backup_locations = os.environ['DQ2_BACKUP_OUTPUT_LOCATIONS'].split(":")
+        except:
+            print "ERROR : DQ2_BACKUP_OUTPUT_LOCATIONS not defined"
+            backup_locations = []
+            pass
+
+        # Get default DQ2 output locations
+        try:
+            dq2_output_locations = os.environ['DQ2_OUTPUT_LOCATIONS'].split(":")
+        except:
+            print "ERROR : DQ2_OUTPUT_LOCATIONS not defined"
+            dq2_output_locations = []
+            pass
 
         try:
             temp_locations = os.environ['OUTPUT_LOCATION'].split(':')
-            if temp_locations==['']:
-                temp_locations = [ siteID ] 
+            #if temp_locations==['']:
+            #    temp_locations = [ siteID ]
+            
         except:
             print "ERROR: OUTPUT_LOCATION not defined or empty srm value"
-            print "Using Tier1s" 
+            print "Using DQ2_BACKUP_OUTPUT_LOCATIONS" 
             temp_locations = [ ]
-        temp_locations = temp_locations + backup_locations
+        temp_locations = temp_locations + dq2_output_locations + backup_locations + [ siteID ]
 
         if 'CERN' in temp_locations:
             temp_locations.remove('CERN')
 
         new_locations = []
+
+        # Get space token names:
+        try:
+            space_token_names = os.environ['DQ2_OUTPUT_SPACE_TOKENS'].split(":")
+        except:
+            print "ERROR : DQ2_OUTPUT_SPACE_TOKENS not defined"
+            space_token_names = [ 'ATLASUSERDISK', 'ATLASUSERTAPE', 'ATLASLOCALGROUPDISK' ]
+            pass
+        
 
         for ilocation in temp_locations:
             temp_location = ilocation
@@ -1722,7 +1739,7 @@ if __name__ == '__main__':
                 name = re.findall(pat, temp_srm)
                 if name:
                     tokenname = name[0]
-                    if not tokenname in [ 'ATLASUSERDISK', 'ATLASUSERTAPE' ]:
+                    if not tokenname in space_token_names
                         continue
                 else:
                     tokenname = ''
