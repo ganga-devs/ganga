@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Root.py,v 1.1 2008-07-17 16:40:59 moscicki Exp $
+# $Id: Root.py,v 1.2 2008-07-28 10:29:22 wreece Exp $
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
@@ -33,8 +33,8 @@ class Root(IApplication):
     To run a job in ROOT you need to specify the CINT script to be
     executed. Additional files required at run time (shared libraries,
     source files, other scripts, Ntuples) should be placed in the
-    inputsandbox of the job. Arguments can be passed onto the script in the
-    separate field of the application.
+    inputsandbox of the job. Arguments can be passed onto the script using
+    the 'args' field of the application.
 
     Defining a Simple Job:
 
@@ -139,7 +139,13 @@ class Root(IApplication):
     be binary compatible with the Grid environment (e.g. same architecture 
     and version of gcc). As shown above, the wrapper class must be made CINT 
     compatible. This restriction does not, however, apply to classes used by 
-    the wrapper class.
+    the wrapper class. When running remote (e.g. LCG) jobs, the architecture
+    used is 'slc3_ia32_gcc323' if the Root version is 5.16 or earlier and
+    'slc4_ia32_gcc34' otherwise. This reflects the availability of builds
+    on the SPI server:
+    
+    http://service-spi.web.cern.ch/service-spi/external/distribution/
+         
      
     For backends that use a local installation of ROOT the location should
     be set correctly in the [Root] section of the configuration.
@@ -259,8 +265,8 @@ class RootRTHandler(IRuntimeHandler):
             #now try grepping files
             if not python_version:    
                 python_version = findPythonVersion(rootsys)
-                
-            if (python_version == None) or (len(python_version.split('.')) != 3):
+
+            if (python_version is None):
                 logger.warn('Unable to find the Python version needed for Root version %s. See the [ROOT] section of your .gangarc file.', version)
             else:
                 logger.debug('Python version found was %s', python_version)
@@ -381,7 +387,6 @@ class RootLCGRTHandler(IRuntimeHandler):
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('Root','Cronus',RootRTHandler)
-allHandlers.add('Root','Dirac',RootDownloadHandler)
 allHandlers.add('Root','LSF', RootLocalRTHandler)
 allHandlers.add('Root','Local', RootLocalRTHandler)
 allHandlers.add('Root','Interactive', RootRTHandler)
@@ -482,19 +487,67 @@ def findPythonVersion(arch,rootsys):
                             arglist = arg.split('/')
                             if arglist[-1] == arch:
                                 version = arglist[-2] 
-        return version            
+        return version
+    
+    def useRootConfig(rootsys):
+        '''Use the new root-config features to find the python version'''
+        version = None
+        root_config = os.path.join(rootsys,'bin','root-config')
+        if os.path.exists(root_config):
+            import subprocess
+            
+            args = [root_config,'--python-version']
+            
+            run = subprocess.Popen(' '.join(args), shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = [ e.splitlines() for e in run.communicate() ]
+            code = run.returncode
+            if code == 0 and out and not err and len(out) == 1:
+                split = out[0].split('.')
+                if len(out) != len(split):
+                    version = '.'.join(split)
+        return version
+            
 
     version = None
     for f in ['config.h','RConfigure.h']:
         version = lookInFile(os.path.join(rootsys,'include',f))
-        if version:
+        if version is not None:
             break
+    if version is None:
+        version = useRootConfig(rootsys)
     return version
 
-def findArch():
+def greaterThanVersion(version_string, version_tuple):
+    '''Checks whether a version string is greater than a specific version'''
+    result = False
+    version_split = version_string.split('.')
+    if len(version_split) == 3:
+        try:
+            major = int(version_split[0])
+            minor = int(version_split[1])
+            if major >= version_tuple[0] and minor > version_tuple[1]:
+                result = True
+        except:
+            pass
+    return result
+            
+def findArch(version):
     '''Method stub. In the future we might look at the
     environment to determin the arch we are running on.'''
+    
+    #SPI achitectures changed in Root > 5.16
+    if greaterThanVersion(version, (5,16) ):
+        return 'slc4_ia32_gcc34'
     return 'slc3_ia32_gcc323'
+    
+def findURL(version, arch):
+    
+    if greaterThanVersion(version, (5,16) ):
+        fname = 'ROOT_%s__LCG_%s.tar.gz' % (version,arch)
+    else:
+        fname = 'root_%s__LCG_%s.tar.gz' % (version,arch)
+        
+    return fname
 
 # Main
 if __name__ == '__main__':
@@ -506,12 +559,12 @@ if __name__ == '__main__':
     commandline = ###COMMANDLINE###    
     scriptPath = '###SCRIPTPATH###'
     usepython = ###USEPYTHON###
+
     version = '###ROOTVERSION###'
-    arch = findArch()
+    arch = findArch(version)
+    fname = findURL(version,arch)
 
     spiURL = 'http://service-spi.web.cern.ch/service-spi/external/distribution/'    
-
-    fname = 'root_%s__LCG_%s.tar.gz' % (version,arch)
     url = spiURL + fname
     
     print 'Downloading ROOT version %s from %s.' % (version,url)
