@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.1 2008-07-17 16:41:30 moscicki Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.2 2008-07-28 15:43:53 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -324,11 +324,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.outputdata:
             if job.outputdata._name <> 'DQ2OutputDataset':
                 raise ApplicationConfigurationError(None,'PANDA application supports only DQ2OutputDataset')
-            if job.outputdata.datasetname:
-                job.outputdataset = job.outputdata.datasetname
-            else:
+            if not job.outputdata.datasetname:
                 job.outputdata.datasetname = 'user.%s.ganga.%d.%s' % (gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
-                job.outputdataset = job.outputdata.datasetname
 
         else:
             job.outputdata = DQ2OutputDataset()
@@ -387,7 +384,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
         if matchURL:
             jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
-               
+
         finp = FileSpec()
         finp.lfn = sources
         finp.type = 'input'
@@ -434,7 +431,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.indexMeta    = 0
 
 #       here one could implement that the dataset content is queried
-        
         return jspec
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
@@ -459,10 +455,15 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jobCloud = Client.PandaSites[site]['cloud']
 
 #       if no outputdata are given
-
         if not job.outputdata:
             job.outputdata = DQ2OutputDataset()
             job.outputdata.datasetname = job._getRoot().outputdata.datasetname
+
+        if not job.outputdata.datasetname:
+            job.outputdata.datasetname = job._getRoot().outputdata.datasetname
+
+        if not job.outputdata.datasetname:
+            raise ApplicationConfigurationError(None,'DQ2OutputDataset has no datasetname')
 
         cacheVer = ''
         if app.atlas_project and app.atlas_production:
