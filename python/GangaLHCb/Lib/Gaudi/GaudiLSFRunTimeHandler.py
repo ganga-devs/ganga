@@ -1,20 +1,21 @@
 #!/usr/bin/env python
-#######################################################################
-# File: GausiLSFRunTimeHandler.py
-# Author: A. Maier
-# Date: March 2005
-# Purpose: Provide a Application runtime handler for Gaudi applications 
-#          the lsf backend
-# Bugs     Too many.
-#          - No error checking
-#######################################################################
+
+'''
+Provide a Application runtime handler for Gaudi applications the 
+LSF backend.
+'''
+
+__author__ = ' Andrew Maier, Greig A Cowan'
+__date__ = 'June 2008'
+__revision__ = 0.1
+
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Schema import *
 
 import sys,os,os.path
-from Ganga.GPIDev.Lib.File import  FileBuffer
-from Ganga.GPIDev.Lib.File import  File
+from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.GPIDev.Lib.File import File
 import Ganga.Utility.Config 
 from Ganga.Utility.util import unique
 
@@ -24,73 +25,58 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 logger = Ganga.Utility.logging.getLogger()
 class GaudiLSFRunTimeHandler(IRuntimeHandler):
-  """This is the application runtime handler class for Gaudi applications
-using the LSF backend."""
+  """This is the application runtime handler class for Gaudi applications 
+  using the LSF backend."""
   
   def __init__(self):
    config=Ganga.Utility.Config.getConfig('LHCb') 
   
-# A Application runtime handler has to provide  a prepare method. The arguments
-# are the application object, the extras object returned by the configure
-# method of the application configurator.
-
-
-
-
-
-
   def prepare(self,app,extra,appmasterconfig,jobmasterconfig):
     
     job= app.getJobObject()
-    sandbox=[]
+    sandbox = []
     if extra.dataopts:
+      #sandbox.append(FileBuffer("dataopts.py",extra.dataopts))
       sandbox.append(FileBuffer("dataopts.opts",extra.dataopts))
-    outsb=[]
-    for i in extra.outputfiles:
+
+    logger.debug("extra dataopts: " + str(extra.dataopts))
+    outsb = []
+    
+    for i in extra._outputfiles:
         outsb.append(i)
+    
     for f in job.outputsandbox:
         outsb.append(f)
+    
     logger.debug("Input sandbox: %s: ",str(sandbox))
     logger.debug("Output sandbox: %s: ",str(outsb))
     script=self.create_runscript(app,extra)
 
-#    return StandardJobConfig('./myscript',inputbox=sandbox,args=[],outputbox=outsb)
     return StandardJobConfig(FileBuffer('myscript',script,executable=1),inputbox=sandbox,args=[],outputbox=unique(outsb))
       
   def master_prepare(self,app,extra):
     
-    job= app.getJobObject()
+    job = app.getJobObject()
     logger.debug("Entering the master_prepare of the GaudiLSF Runtimehandler") 
-    userdlls=extra._userdlls
-    logger.debug("extra dlls: %s",str(extra._userdlls))
+    userdlls = extra._userdlls
+    logger.debug("extra dlls: %s", str(extra._userdlls))
     sandbox=[]
     for f in userdlls:
-        sandbox+=[File(f,subdir='lib')]
+        sandbox.append( File(f,subdir='lib'))
         
-    sandbox+=job.inputsandbox
-
-    outputdatastr=""
-
-    logger.debug("extra dataopts: " + str(extra.dataopts))
-
-    if extra.dataopts:
-      logger.debug("Adding extra include statement to optionsfile to include differences")  
-      extra.flatopts+='\n#include "dataopts.opts"\n'
-    sandbox.append(FileBuffer('myopts.opts',extra.flatopts))
-
-#    script=self.create_runscript(app,extra)
+    sandbox += job.inputsandbox
+    sandbox.append( FileBuffer('options.pkl', extra.opts_pkl_str))
+    
     logger.debug("Input sandbox: %s: ",str(sandbox))
-    logger.debug("OutputData: %s", outputdatastr)
 
-#    return StandardJobConfig(FileBuffer('myscript',script,executable=1),inputbox=sandbox,args=[])
-    return StandardJobConfig('',inputbox=sandbox,args=[])
+    return StandardJobConfig( '', inputbox = sandbox, args=[])
 
 
   def jobid_as_string(self,app):
       import os.path
       job=app.getJobObject()
       jstr=''
-      #test is this is a subjobs or not
+      # test is this is a subjobs or not
       if job.master: # it's a subjob
           jstr=str(job.master.id)+os.sep+str(job.id)
       else:
@@ -101,44 +87,43 @@ using the LSF backend."""
 
   def create_runscript(self,app,extra):
     
-    job= app.getJobObject()
-    config=Ganga.Utility.Config.getConfig('LHCb') 
+    job = app.getJobObject()
+    config = Ganga.Utility.Config.getConfig('LHCb') 
     logger.debug("Entering the master_prepare of the GaudiLSF Runtimehandler") 
-    version=app.version
-    theApp=app.appname
-    package=app.package
-    lhcb_release_area=app.lhcb_release_area
-    user_release_area=app.user_release_area
-    platform=app.platform
-    appUpper=theApp.upper()
-    algpack=''
-    alg=''
-    algver=''
-    userdlls=extra._userdlls
-    site=extra._LocalSite
-    protocol=extra._SEProtocol
-    jstr=self.jobid_as_string(app)
-    catalog=app._determine_catalog_type()
-    copy_cmd=config['cp_cmd']
-    mkdir_cmd=config['mkdir_cmd']
-    joboutdir=config['DataOutput']
+    version = app.version
+    theApp = app.appname
+    package = app.package
+    lhcb_release_area = app.lhcb_release_area
+    user_release_area = app.user_release_area
+    platform = app.platform
+    appUpper = theApp.upper()
+    algpack = ''
+    alg = ''
+    algver = ''
+    userdlls = extra._userdlls
+    site = extra._LocalSite
+    protocol = extra._SEProtocol
+    jstr = self.jobid_as_string(app)
+    copy_cmd = config['cp_cmd']
+    mkdir_cmd = config['mkdir_cmd']
+    joboutdir = config['DataOutput']
+    opts = 'options.pkl'
     
-
-    outputdatastr=""
-    for i in extra.outputdata:
-        outputdatastr+=" " + i
-
+    outputdatastr = ' '.join(extra.outputdata)
+    
     if app.masterpackage is None:
-      master=''
+      master = ''
     else:
-      master=app.masterpackage
+      master = app.masterpackage
       (algpack,alg,algver)=app._parseMasterPackage()
+    
     script="""#!/usr/bin/env bash
 export CMTPATH=###CMTUSERPATH###
 export ###THEAPP###_release_area=###CMTRELEASEAREA###
 export DATAOUTPUT='###DATAOUTPUT###'
+#DATAOPTS='dataopts.py'
 DATAOPTS='dataopts.opts'
-OPTS='myopts.opts'
+OPTS='###OPTS###'
 JOBOUTPUTDIR=###JOBOUTDIR###/###JOBID###/outputdata
 CP=###COPY###
 MKDIR=###MKDIR###
@@ -155,22 +140,10 @@ else
   echo "Could not find the SetupProject.sh script. Your job will probably fail"
 fi
 # create an xml slice
-if [ -f ${OPTS} ]; then
-    if [ -f ${DATAOPTS} ]; then
-       genCatalog -o ${DATAOPTS} -p myFiles.xml -s ###SITE### -P ###SEPROTOCOL### #ugly and hardcoded , FIXME
-    else   
-       genCatalog -o ${OPTS} -p myFiles.xml -s ###SITE### -P ###SEPROTOCOL###
-    fi    
-    if [ -f myFiles.xml ]; then
-        echo >> ${OPTS}
-        echo '###CATALOG### += { "xmlcatalog_file:myFiles.xml" };' >> ${OPTS}
-    fi        
-else 
-    if [ -f ${DATAOPTS} ]; then
-       genCatalog -o ${DATAOPTS} -p myFiles.xml -s ###SITE### -P ###SEPROTOCOL### #ugly and hardcoded , FIXME
-       echo >> ${DATAOPTS}
-       echo 'PoolDbCacheSvc.Catalog += { "xmlcatalog_file:myFiles.xml" };' >> ${DATAOPTS}
-    fi
+if [ -f ${DATAOPTS} ]; then
+    genCatalog -o ${DATAOPTS} -p myFiles.xml -s ###SITE### -P ###SEPROTOCOL### #ugly and hardcoded , FIXME
+    echo >> ${DATAOPTS}
+    echo 'FileCatalog.Catalogs += { "xmlcatalog_file:myFiles.xml" };' >> ${DATAOPTS}
 fi    
 # add the lib subdirectory in case some user supplied shared libs where copied to `pwd`/lib  
 export LD_LIBRARY_PATH=".:`pwd`/lib:$LD_LIBRARY_PATH"
@@ -179,7 +152,8 @@ if  [ -f ${OPTS} ]; then
 else
         export JOBOPTPATH=$###THEAPP###_release_area/###APPUPPER###/###APPUPPER###_###VERSION###/###PACKAGE###/###THEAPP###/###VERSION###/options/job.opts
 fi        
-$###THEAPP###_release_area/###APPUPPER###/###APPUPPER###_###VERSION###/###PACKAGE###/###THEAPP###/###VERSION###/###PLATFORM###/###THEAPP###.exe
+
+$GAUDIROOT/scripts/gaudirun.py ${OPTS} ${DATAOPTS}
 
 $MKDIR -p $JOBOUTPUTDIR
 for f in $DATAOUTPUT; do 
@@ -223,11 +197,10 @@ done
     script=script.replace('###JOBOUTDIR###',joboutdir)
     script=script.replace('###SITE###',site)
     script=script.replace('###SEPROTOCOL###',protocol)
-    script=script.replace('###CATALOG###',catalog)
     script=script.replace('###COPY###',copy_cmd)
     script=script.replace('###MKDIR###',mkdir_cmd)
-
-
+    script=script.replace('###OPTS###',opts)
+    
     return script
 
 
@@ -235,6 +208,23 @@ done
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.39.12.3.2.5  2008/07/15 17:53:51  gcowan
+# Modified PythonOptionsParser to pickle the options file. This is converted to a string and added to the Gaudi.extras. The string can then be converted back to an options.pkl file within the runtime handlers and added to the job sandboxes. This replaces the need to use flat_opts. There is no need to have the format() method in PythonOptionsParser.
+#
+# Revision 1.39.12.3.2.4  2008/07/14 19:08:38  gcowan
+# Major update to PythonOptionsParser which now uses gaudirun.py to perform the complete options file flattening. Output flat_opts.opts file is made available and placed in input sandbox of jobs. LSF and Dirac handlers updated to cope with this new design. extraopts need to be in python. User can specify input .opts file and these will be converted to python in the flattening process.
+#
+# Revision 1.39.12.3.2.3  2008/07/10 17:36:11  gcowan
+# Modified GaudiDirac RT handler to support python options files. Small bug fixed in PythonOptions where a string was returned rather than a list.
+#
+# Revision 1.39.12.3.2.2  2008/07/09 00:11:49  gcowan
+# Modified Gaudi._get_user_dlls() to address Savannah bug #31165. This should allow Ganga to pick up user DLLs from multiple user project areas.
+#
+# Modified GaudiLSFRunTimeHandler to look for gaudirun.py in the correct location.
+#
+# Revision 1.39.12.3.2.1  2008/07/03 12:52:07  gcowan
+# Can now successfully submit and run Gaudi jobs using python job options to Local() and Condor() backends. Changes in Gaudi.py, GaudiLSFRunTimeHandler.py, PythonOptionsParser.py, Splitters.py and GaudiDiracRunTimeHandler.py. More substantial testing using alternative (and more complex) use cases required.
+#
 # Revision 1.39.12.3  2008/05/22 20:50:15  uegede
 # Updates to Gaudi.py and GaudiLSFRunTimeHandler to deal better with the
 # ability to give a list of options files.

@@ -46,12 +46,12 @@ djob = dirac.Job()
     """Append the options to the DIRAC script for input data as LFNs."""
     indata = []
     import re
-    p = re.compile('lfn:.',re.IGNORECASE)
-    for filename in dataset:
-      if p.match(filename):
-        indata.append(filename[4:])
+    p = re.compile( 'lfn:.',re.IGNORECASE)
+    for lfn in dataset:
+        if p.match( lfn):
+            indata.append( lfn[4:])
     if len(indata) > 0:
-      self.append("setInputData("+str(indata)+")")
+        self.append( 'setInputData(' +str(indata) + ')')
 
   def outputdata(self,dataset,SE=None):
     """Append the options to the DIRAC script for output data to be uploaded to SE"""

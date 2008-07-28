@@ -1,86 +1,78 @@
+#!/usr/bin/env python
+
+__author__ = ' Andrew Maier, Greig A Cowan'
+__date__ = 'June 2008'
+__revision__ = 0.1
+
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Lib.File import FileBuffer,File
+from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 class GaudiDiracRunTimeHandler(IRuntimeHandler):
-    """The runtime handler to run Gaudi jobs on the Dirac backend"""
+    '''The runtime handler to run Gaudi jobs on the Dirac backend'''
 
     def __init__(self):
         pass
 
     def master_prepare(self,app,appconfig):
-
+        '''Prepare the master configuration for the job.'''
         inputsandbox=app._getParent().inputsandbox[:]
-
-        options = app.extra.flatopts +\
-                  app._determine_catalog_type()+\
-                  ' += { "xmlcatalog_file:pool_xml_catalog.xml" };\n'
-
-        inputsandbox.append(FileBuffer('expandedopts.opts',options))
+        
+        inputsandbox.append( FileBuffer('options.pkl', app.extra.opts_pkl_str))
 
         for dll in app.extra._userdlls:
-            inputsandbox.append(File(name=dll,subdir='lib'))
+            inputsandbox.append( File( name=dll,subdir='lib'))
 
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-        c = StandardJobConfig('',inputsandbox,[],[],None)
+        c = StandardJobConfig( '',inputsandbox,[],[],None)
         return c
 
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
+        '''Configure the specific parts of the subjob.'''
         job = app.getJobObject()
         
         from DiracScript import DiracScript
         diracScript=DiracScript()
+        
+        inputsandbox = []
+        if app.extra.dataopts:
+#            inputsandbox.append( FileBuffer( 'dataopts.py',app.extra.dataopts))
+            dataopts = app.extra.dataopts +\
+                       '\nFileCatalog.Catalogs += { "xmlcatalog_file:pool_xml_catalog.xml" };\n'
+            inputsandbox.append( FileBuffer( 'dataopts.opts', dataopts))
+        
+        outputsandbox = app._getParent().outputsandbox + app.extra._outputfiles
 
-        options = '#include "expandedopts.opts"\n' + app.extra.dataopts
-
-        inputsandbox= [FileBuffer(self._optsfilename(app),options)]
-
-        outputsandbox = app._getParent().outputsandbox + app.extra.outputfiles
+        logger.debug( 'Input sandbox: %s: ',str(inputsandbox))
+        logger.debug( 'Output sandbox: %s: ',str(outputsandbox))
 
         runScript = self._DiracWrapper(app)
 
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-        c = StandardJobConfig(runScript,inputsandbox,[],outputsandbox,None)
-        diracScript.append('setApplication("'+app._name+'","'+app.version+'")')
-        diracScript.append('setName("Ganga_'+ app._name+'_'+app.version+'")')
-
-
-        diracScript.inputdata(app.extra.inputdata)
+        c = StandardJobConfig( runScript,inputsandbox,[],outputsandbox,None)
+        
+        diracScript.append( 'setApplication("' + app._name + '","' + app.version + '")')
+        diracScript.append( 'setName("Ganga_'  + app._name + '_'   + app.version + '")')
+        diracScript.inputdata( app.extra.inputdata)
 
         outdata = app.extra.outputdata
         if job.outputdata:
-            outdata += [f.name for f in job.outputdata.files]
-        diracScript.outputdata(outdata)
+            outdata += [ f.name for f in job.outputdata.files]
+        diracScript.outputdata( outdata)
 
         c.script=diracScript
-
         c.logfile=app._name+'_'+app.version+'.log'
 
         return c
 
-    def _optsfilename(self,app):
-        try:
-            fullname = app.optsfile[0].name #FIXME opfile is now a sequence
-        except:
-            fullname='job.opts'
+    def _DiracWrapper(self, app):
+        '''Create the script that will be executed.'''
 
-        from os.path import basename
-        name = basename(fullname)
-        if name=='': name='job.opts'
-        return name
-
-
-    def _DiracWrapper(self,app):
-        from os.path import join,split
-        from os import environ,pathsep
-
-        commandline = ''
-        arglist = []
-
-        commandline = '\''+app._name+'.exe ' + self._optsfilename(app) + '\''
-        logger.debug( "Command line: %s: ", commandline )
+#        commandline = '\'$GAUDIROOT/scripts/gaudirun.py options.pkl dataopts.py\''
+        commandline = '\'$GAUDIROOT/scripts/gaudirun.py options.pkl dataopts.opts\''
+        logger.debug( 'Command line: %s: ', commandline )
 
         # Write a wrapper script
         wrapperscript= """#!/usr/bin/env python
@@ -101,15 +93,9 @@ if __name__ == '__main__':
     import sys    
 
     commandline = ###COMMANDLINE###    
-    # usepython = ###USEPYTHON###
 
     sys.stdout.flush()
     sys.stderr.flush()
-
-    # if usepython:
-    # 
-    #     pythonCmd = 'python'
-    #     commandline = commandline % {'PYTHONCMD':pythonCmd}
 
     #exec the script
     print 'Executing ',commandline
@@ -117,9 +103,7 @@ if __name__ == '__main__':
     sys.stderr.flush()
     sys.exit(system(commandline)/256)
   """
-
         wrapperscript = wrapperscript.replace('###COMMANDLINE###',commandline)
-        # wrapperscript = wrapperscript.replace('###USEPYTHON###',str(app.usepython))
 
         logger.debug('Script to run on worker node\n'+wrapperscript)
         scriptName = "GaudiWrapper.py"

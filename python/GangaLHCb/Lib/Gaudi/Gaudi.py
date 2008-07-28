@@ -1,29 +1,23 @@
 #!/usr/bin/env python
-#######################################################################
-# File: Gaudi.py
-# Author: A. Maier
-# Date: March 2005
-# Purpose: Application handler for Gaudi applications in LHCb
-#          Uses the GPI to implement an application handler
-#          Currently, this is a very basic skeleton. 
-# Bugs    Too many.
-#######################################################################
-"""
-File: Gaudi.py
-Purpose: Application handler for Gaudi applications in LHCb
-          Uses the GPI to implement an application handler
 
-"""
+'''
+Application handler for Gaudi applications in LHCb.
+Uses the GPI to implement an application handler
+'''
+
+__author__ = 'Andrew Maier, Greig A Cowan'
+__date__ = 'June 2008'
 __revision__ = 0.1
+
 ## Import the GPI
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IApplication import IApplication
+from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Schema import *
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
 from Ganga.Utility.files import expandfilename
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from Ganga.GPIDev.Lib.File import  File
 from Splitters import *
 from Ganga.Utility.util import unique
 
@@ -33,10 +27,8 @@ import sys
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-import cmt # functionality to setup CMT related things (unmodified from Ganga3)
 import env # enables setting of the environment (unmodified from Ganga3)
 import CMTscript
-import FileParser # Parses Gaudi options files 
 from GaudiLSFRunTimeHandler import * 
 from GangaLHCb.Lib.Dirac.GaudiDiracRunTimeHandler import *
 
@@ -45,77 +37,89 @@ def GaudiDocString(appname):
     
     doc="""The Gaudi Application handler
 
-The Gaudi application handler is for running LHCb GAUDI framework
-jobs. For its configuration it needs to know the version of the application
-and what options file to use. More detailed configuration options are
-described in the schema below.
+    The Gaudi application handler is for running LHCb GAUDI framework
+    jobs. For its configuration it needs to know the version of the application
+    and what options file to use. More detailed configuration options are
+    described in the schema below.
 
-An example of submitting a Gaudi job to Dirac could be:
+    An example of submitting a Gaudi job to Dirac could be:
 
-app = Gaudi(version='v99r0')
+    app = Gaudi(version='v99r0')
 
-# Give absolute path to options file. If several files are given, they are
-# just appended to each other.
-app.optsfile = ['/afs/...../myopts.opts']
+    # Give absolute path to options file. If several files are given, they are
+    # just appended to each other.
+    app.optsfile = ['/afs/...../myopts.opts']
 
-# Append two extra lines to the file
-app.extraopts=\"\"\"
-ApplicationMgr.HistogramPersistency ="ROOT";
-ApplicationMgr.EvtMax = 100;
-\"\"\"
+    # Append two extra lines to the python options file
+    app.extraopts=\"\"\"
+    ApplicationMgr.HistogramPersistency ="ROOT"
+    ApplicationMgr.EvtMax = 100
+    \"\"\"
 
-# Define dataset
-ds = LHCbDataset(['LFN:foo','LFN:bar'])
+    # Define dataset
+    ds = LHCbDataset(['LFN:foo','LFN:bar'])
 
-# Construct and submit job object
-j=Job(application=app,backend=Dirac())
-j.submit()
+    # Construct and submit job object
+    j=Job(application=app,backend=Dirac())
+    j.submit()
 
-"""
+    """
     return doc.replace( "Gaudi", appname )
 
-_available_apps = ["Gauss", "Boole", "Brunel", "DaVinci", "Euler", "Moore", "Vetra", "Panoramix"]
-_available_packs={'Gauss'  :'Sim',
-             'Boole'  :'Digi',
-             'Brunel' :'Rec',
-             'DaVinci':'Phys',
-             'Euler': 'Trg',
-             'Moore': 'Hlt',
-             'Vetra': 'Velo'}
+_available_apps = ["Gauss", "Boole", "Brunel", "DaVinci",
+                   "Euler", "Moore", "Vetra", "Panoramix",
+                   "Panoptes", "Gaudi"]
+
+_available_packs={'Gauss'   : 'Sim',
+                  'Boole'   : 'Digi',
+                  'Brunel'  : 'Rec',
+                  'DaVinci' : 'Phys',
+                  'Euler'   : 'Trg',
+                  'Moore'   : 'Hlt',
+                  'Vetra'   : 'Velo',
+                  'Panoptes': 'Rich'}
+
 class Gaudi(IApplication):
     _name = 'Gaudi'
     __doc__=GaudiDocString(_name)
 
 # Set up the schema for this application
     _schema = Schema(Version(2, 0), {
-            'optsfile': FileItem(sequence=1,defvalue=[],doc='''The name of the optionsfile. Import
- statements in the file will be expanded at submission time and a
- full copy made'''),
-            'version': SimpleItem(defvalue=None,typelist=['str'],doc='''The version of the application
- (like "v19r2")'''),
-            'platform': SimpleItem(defvalue = None, typelist=['str'], doc='''The
-platform the application is configured for (e.g.
-"slc4_ia32_gcc34")'''),
-            'package': SimpleItem(defvalue=None, typelist=['str'], doc='''The package the application
-belongs to (e.g. "Sim", "Phys")'''),
-            'appname': SimpleItem(defvalue = None, typelist=['str'],hidden = 1, doc='''The
-name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'''),
+            'optsfile': FileItem(sequence=1,defvalue=[],doc='''The name of the optionsfile. Import 
+            statements in the file will be expanded at submission time and a 
+            full copy made'''),
+            
+            'version': SimpleItem(defvalue=None,typelist=['str'],doc='''The version of the 
+            application (like "v19r2")'''),
+            
+            'platform': SimpleItem(defvalue = None, typelist=['str'], doc='''The 
+            platform the application is configured for (e.g. "slc4_ia32_gcc34")'''),
+            
+            'package': SimpleItem(defvalue=None, typelist=['str'], doc='''The package the 
+            application belongs to (e.g. "Sim", "Phys")'''),
+            
+            'appname': SimpleItem(defvalue = None, typelist=['str'],hidden = 1, doc='''The 
+            name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'''),
+            
             'lhcb_release_area': SimpleItem(defvalue = None, typelist=['str'], hidden = 0),
-            'user_release_area': SimpleItem(defvalue=None, typelist=['str'],doc='''The CMT user path to be
-used. By default the value of the first element in the
-CMTPROJECTPATH environment variable. After assigning this you
-can do j.application.getpack(\'Phys DaVinci v19r2\') to check
-out into the new location'''),
-            'masterpackage': SimpleItem(defvalue=None, typelist=['str'],doc='''The package where your
-top level requirements file is read from. Can be written either
-as a path "Tutorial/Analysis/v6r0" or in a CMT style notation
-"Analysis v6r0 Tutorial"'''),
+            
+            'user_release_area': SimpleItem(defvalue=None, typelist=['str'],doc='''The  
+            user path to be used. By default the value of the first element in the 
+            CMTPROJECTPATH environment variable. After assigning this you can do 
+            j.application.getpack(\'Phys DaVinci v19r2\') to check out into the new location.
+            This variable is used to identify private user DLLs by parsing the output of
+            "cmt show projects".'''),
+            
+            'masterpackage': SimpleItem(defvalue=None, typelist=['str'],doc='''The package 
+            where your top level requirements file is read from. Can be written either as 
+            a path "Tutorial/Analysis/v6r0" or in a CMT style notation "Analysis v6r0 Tutorial"'''),
+            
             'configured': SimpleItem(defvalue = None, typelist=['str'],hidden = 0,copyable=0),
-            'extraopts': SimpleItem(defvalue=None,typelist=['str'],doc='''A string that will be
-appended to the end of the options file. Can be multiline by
-using a notation like \nApplicationMgr.HistogramPersistency =
-"ROOT";\\nApplicationMgr.EvtMax = 100;\n or by using triple
-quotes around a multiline string'''),
+            
+            'extraopts': SimpleItem(defvalue=None,typelist=['str'],doc='''A python configurable 
+            string that will be appended to the end of the options file. Can be multiline by using 
+            a notation like \nHistogramPersistencySvc().OutputFile = "myPlots.root"\\nEventSelector().PrintFreq = 
+            100\n or by using triple quotes around a multiline string'''),
 #            'outputdatatypes':SimpleItem(defvalue=['NTUPLE','DST','SIM', 'DIGI'],sequence=1,doc='''
 #            list of data that will be returned as output data and not in the output sandbox. Possible values are 'HISTO', 'NTUPLE', 'DST', 'DIGI', 'SIM'. Note that some backends might not return large files if they are put into the output sandbox''')
             })
@@ -127,104 +131,129 @@ quotes around a multiline string'''),
         """bootstrap Gaudi applications. If called via a subclass
         set up some basic structure like version platform..."""
         if not self.appname:
-            logger.debug(
-                "_auto__init called without an appname. Nothing to configure")
+            logger.debug("_auto__init called without an appname. Nothing to configure")
             return 
+        
         if not self.lhcb_release_area:
             self.lhcb_release_area = os.path.expandvars("$LHCBRELEASES")
         else:
             self.lhcb_release_area = os.path.expandvars(self.lhcb_release_area)
         logger.debug( "self.lhcb_release_area: %s", str(self.lhcb_release_area))
+        
         if not self.user_release_area:
             if os.path.expandvars("$User_release_area") == "$User_release_area":
                 self.user_release_area = ""
             else:
                 self.user_release_area = os.path.expandvars("$User_release_area").split(os.pathsep)[0]
         logger.debug("Set user_release_area to: %s",str(self.user_release_area))        
-        if (not self.version) and  self.lhcb_release_area:  
+        
+        if (not self.version) and self.lhcb_release_area:  
             self.version = self.guess_version(self.appname, self.lhcb_release_area)
         self.package = _available_packs[self.appname]
-        self.platform = self.list_choices("platform")
-# The configure method configures the application. Here, the application
-# handler simply flattens the options file. For this it has to use CMT and
-# setup the invironment. configure returns a tuple (changed,extra). The first
-# element tells the client, if the configure has modified anything in the 
-# application object (that is the content of the schema), the second element
-# contains the object with the extra information returned from the application
-# configuration. In this case this is the flattened options file (as a string)
-# The extra information is a separate class
+        #self.platform = self.list_choices("platform")
+        # Using _get_user_platform not exactly the same as list_choices since it will
+        # force _setUpEnvironment() to be called if CMTCONFIG not defined. 
+        self.platform = self._get_user_platform()
+
+        
+
     def master_configure(self):
-        """
-        The configure method configures the application. Here, the application
-        handler simply flattens the options file. For this it has to use CMT and
-        setup the environment. configure returns a tuple (changed,extra). The first
+        '''The configure method configures the application. Here, the application
+        handler simply flattens the options file. For this it has to use CMT and gaudirun.py. 
+        configure() returns a tuple (changed,extra). The first
         element tells the client, if the configure has modified anything in the 
         application object (that is the content of the schema), the second element
         contains the object with the extra information returned from the application
         configuration. In this case this is the flattened options file (as a string)
-        The extra information is its own class"""
+        The extra information is its own class'''
 
-        inputs = self._checkInputs() # returns an empty list if all imputs are OK
+        inputs = self._checkInputs() # returns an empty list if all inputs are OK
         self.extra = GaudiExtras()
 
         self._setUpEnvironment()  
 
-        options=''
-        for fileitem in self.optsfile:
-            file=open(fileitem.name,'r')
-            options+=file.read()
-        if self.extraopts:
-            options+=self.extraopts
-            
-        import OptionsParser
-        parser = OptionsParser.OptionsParser(self.shell)
-        gaudiopts_string = parser.optsfiles_to_text(self.optsfile,self.extraopts)
-        gaudiopts = FileParser.parseString(gaudiopts_string)
-        self.extra.flatopts=gaudiopts_string
-  
-        inputdata = self.extra.getInputFiles(gaudiopts)
+        optsfilelist = [fileitem.name for fileitem in self.optsfile]
+                        
+        try:
+            import PythonOptionsParser
+            parser = PythonOptionsParser.PythonOptionsParser( optsfilelist, self.extraopts, 
+                                                              self.shell)
+        except Exception, e:
+            logger.error('Unable to parse the options file')
 
+        self.extra.opts_pkl_str = parser.opts_pkl_str
+
+        inputdata = parser.get_input_data()
+  
         # If the user has specified the data in a dataset, use it and
         # ignore the optionsfile, but warn the user.
         job=self.getJobObject()
-        if job.inputdata!=None and inputdata:
+        if job.inputdata != None and inputdata:
             logger.warning("You specified a dataset for this job, but have also defined a dataset")
             logger.warning("in your options file. I am going to ignore the options file.")
             logger.warning("I hope this is OK")
             
-        if job.inputdata!=None:
-            self.extra.inputdata=[x.name for x in job.inputdata.files]
-        else:
-            self.extra.inputdata=inputdata[:]
+            self.extra.inputdata = [x.name for x in job.inputdata.files]
+        
+        if job.inputdata == None and inputdata:
+            # Strip off the Gaudi card stuff. This places the inputdata in the 
+            # same form as the inputdata when defined as an LHCbDataset.
+            self.extra.inputdata = [x.split('\'')[1] for x in inputdata]
+        
         # create a separate options file with only data statements.
-        self.extra.dataopts=self._dataset2optionsstring(self.extra.inputdata)+self.extra.dataopts
-
+        self.extra.dataopts = self._dataset2optionsstring(self.extra.inputdata)
 
         self.extra._userdlls = self._get_user_dlls()
-        self.extra.outputfiles = self.extra.getOutputFiles(gaudiopts)
-
-        self.extra.outputdata =self.extra.getOutputData(gaudiopts)
-        if type(job.outputdata)==type(['a','b']):
+        self.extra._outputfiles = parser.get_output_files()
+        self.extra.outputdata = parser.get_output_data()
+        
+        if type(job.outputdata) == type(['a','b']):
             self.extra.outputdata += job.outputdata
-        if type(job.outputdata)==type(LHCbDataset):
-            self.extra.outputdata += job.outputdata.files
-
-        #
-        # Get  the site and the access protocol from config
+        if type(job.outputdata) == type(LHCbDataset()):
+            self.extra.outputdata += [f.name for f in job.outputdata.files]
+        
+        self.extra.outputdata
+        
+        # Get the site and the access protocol from config
         import Ganga.Utility.Config
         config=Ganga.Utility.Config.getConfig('LHCb')
-        self.extra._LocalSite=config['LocalSite']
-        self.extra._SEProtocol=config['SEProtocol']
+        self.extra._LocalSite = config['LocalSite']
+        self.extra._SEProtocol = config['SEProtocol']
 #        [opt['Value'] for opt in gaudiopts if opt['Type']=='option' and opt['Name']=='OutputFile']
-        if inputs: return (inputs, self.extra)
-        else: return (None, self.extra)
+        
+        if inputs: 
+            return (inputs, self.extra)
+        else:
+            return (None, self.extra)
+
 
     def configure(self,master_appconfig):
         return (None,self.extra)
 
+
     def _get_requirements(self):
         list=self._parseMasterPackage()
         return
+
+#    def _dataset2optionsstring(self,ds):
+#        s  = 'from Configurables import EventSelector\n'
+#        s += 'sel = EventSelector()\n'
+#        s += 'sel.Input = ['
+#        if type(ds) == type([1,2,3]):
+#            for f in ds:
+#                s += ''' "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",''' % f
+#            if s.endswith(','):
+#                logger.debug('_dataset2optsstring: removing trailing comma')
+#                s=s[:-1]
+#            s += ']'
+#        else:
+#            for f in ds.files:
+#                s += ''' "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",''' % f.name
+#            if s.endswith(','): 
+#                logger.debug('_dataset2optsstring: removing trailing comma')
+#                s=s[:-1]
+#            s += ']'
+#        return s
 
     def _dataset2optionsstring(self,ds):
         s=''
@@ -233,9 +262,9 @@ quotes around a multiline string'''),
             for k in ds:
                 s+='\n'
                 s+=""" "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",""" %k
-            
+
             #Delete the last , to be compatible with the new optiosn parser
-            if s.endswith(","): 
+            if s.endswith(","):
                 logger.debug("_dataset2optsstring: removing trailing comma")
                 s=s[:-1]
 
@@ -246,15 +275,11 @@ quotes around a multiline string'''),
                 s+='\n'
                 s+=""" "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",""" %k.name
             #Delete the last , to be compatible with the new optiosn parser
-            if s.endswith(","): 
+            if s.endswith(","):
                 logger.debug("_dataset2optsstring: removing trailing comma")
                 s=s[:-1]
             s+="""\n};"""
         return s
-
-
-                
-
 
     #######################################################################
     # available_versions                                                  #
@@ -264,39 +289,35 @@ quotes around a multiline string'''),
     #                    This only works for a standard LHCb installation #
     #                    e.g. on afs                                      #
     #######################################################################
-    def available_versions(self,appname, lhcb_release_area, dev = None):
+    def available_versions(self,appname, release_area, dev = None):
       """Try to extract the list of installed versions for a given application"""
       if appname not in _available_apps:
         raise ValueError, "Application " + appname + " not known"
       app_upper = appname.upper()
       app_upper_ = app_upper+"_"
-      if dev:
-        release = os.path.expandvars("$LHCBDEV")
-    #  else:
-    #    release = os.path.expandvars("$LHCBRELEASES")
-      release = lhcb_release_area
 
-      if not release:
+      if not release_area:
         raise ValueError, """
         The LHCb envrinment variables are not set (LHCBRELEASES, LHCBDEV)
         """
 
-      dirlist = os.listdir(release+os.sep+app_upper)
+      dirlist = os.listdir(release_area+os.sep+app_upper)
       versions = []
-      for i in  dirlist:
+      for i in dirlist:
         if i.startswith(app_upper_):
           versions.append(i.replace(app_upper_, ""))
       versions.sort(self.versions_compare)
       return versions
+
        
     #######################################################################
     #  guess_version                                                      #
     #                Given an appname, return the last entry in the list  #
     #                of available applications                            #
     #######################################################################
-    def guess_version(self,appname, lhcb_release_area, dev = None):
+    def guess_version(self,appname, release_area, dev = None):
       """Try to guess the correct version for a given application
-         Ith the the environment variable consiting of the upper
+         If the the environment variable consisting of the upper
          case name of the application + ENVROOT exists. The version
          will be taken from this variable"""
       if appname not in _available_apps:
@@ -306,14 +327,17 @@ quotes around a multiline string'''),
       if os.getenv(appname.upper()+"ENVROOT"):
         return os.path.basename(os.getenv(appname.upper()+"ENVROOT"))
       else: 
-        versions = self.available_versions(appname, lhcb_release_area, dev)
+        versions = self.available_versions(appname, release_area, dev)
         return versions[-1]
+
 
     #######################################################################
     # versions_compare                                                    #
     #                 Compare version strings for LHCb apps (needed to    #
     #                 sort the available versions. Taken from Ganga 3     #
     #######################################################################
+    # GC: do we really need this versions compare function?
+    # GC: os command for listing the dir should return the dirs in correct order.
     def versions_compare(self,x, y):
       """A simple function to compare versions of the format vXrY, with 
       X and Y being the major and minor version, respectively"""
@@ -330,78 +354,27 @@ quotes around a multiline string'''),
           nb = (0, 0, 0)
         nbs.append(nb)
       return cmp(nbs[0], nbs[1])
+
+    
     #######################################################################
     # guess_package                                                       #
     #               given an application name guess the corresponding     # 
     #               LHCb package name                                     #
     #######################################################################
-    def guess_package(self,appname):
+    def guess_package( self,appname):
       """Guess the package corresponding to a given application"""
 
       if appname in known_packs.keys():
-
           return known_packs[appname]
       else:
           return "UNKNOWN"
     
-    def list_choices(self, property):
-        if not self._schema.hasAttribute('appname'):
-            logger.warning("No such property")
-            return []
-        else:
-            # appname is the exception. Appname does not have to be
-            # set to ask for the available apps
-            if property is "appname": return _available_apps
-            # all other properties have to have at least appname set
-            # if it does not, raise an exception
-            if not self.appname:
-                tmpstr = "The appname is not set. Cannot list choices for property "+property+"."
-                logger.error(tmpstr)
-                raise ApplicationConfigurationError(None, tmpstr)
-            else:
-                if property is "version": return self.available_versions(self.appname, self.lhcb_release_area)
-                if property is "platform":
-                  # check is $CMTCONFIG is set, if yes return it, if not, run _setupEvnvironment
-                    if os.getenv('CMTCONFIG'): return os.getenv('CMTCONFIG')
-                    else:
-                        if self.version: 
-                            self._setUpEnvironment()
-                            return [os.getenv('CMTCONFIG')]
-                        else: # temporarily set up a version
-                            self.version = self.guess_version(self.appname, lhcb_release_area)
-                            self._setUpEnvironment()
-                            result = [os.getenv('CMTCONFIG')]
-                            self.version = None
-                            return result
-            if property is 'package':
-                return _available_packs[self.appname]
-        logger.info("Should never get here")
-        return []
-  
-  # Internal method to set up for options file flattening
-    def _setUpEnvironment(self):
-        #env.setenv(self.appname, self.version)
-        if self.masterpackage:
-            (pack,alg,ver)=self._parseMasterPackage()
-        self.shell=env._setenv(self)
-        cmtvar=cmt.cmt(self.shell)
-        cmtvar.uses = []
-        cmtvar.environ = {}
-        if self.masterpackage:
-            cmtvar.use(alg,ver,pack)
-            cmtvar.use(self.appname,self.version, self.package)
-        else:
-            cmtvar.use(self.appname,self.version, self.package)
-        if self.masterpackage:
-            (pack,alg,ver)=self._parseMasterPackage()
-            #(pack, alg, ver) = self.masterpackage.split('/', 3)
-            cmtvar.use(alg, ver, pack)
-            cmtvar.use(self.appname, self.version,  self.package)
-        else:
-            cmtvar.use(self.appname, self.version,  self.package)
-        cmtvar._setup()
+   
+    def _setUpEnvironment( self): 
+        self.shell=env._setenv( self)
 
-    def _parseMasterPackage(self):
+
+    def _parseMasterPackage( self):
         # first check if we have slashes
         if self.masterpackage.find('/')>=0:
             try:
@@ -431,8 +404,9 @@ quotes around a multiline string'''),
         else:
             raise ValueError,"wrongly formatted masterpackage"
             
-    def _checkInputs(self):
-        #Internal method to check the inputs
+            
+    def _checkInputs( self):
+        # Internal method to check the inputs
         # Go through the schema one by one and check if
         # we can guess the value
         # also normalise and expand filenames
@@ -466,6 +440,15 @@ quotes around a multiline string'''),
             # cannot set file
             logger.warning("The 'optsfile' is not set")
             logger.warning("I hope this is OK.")
+            opts = os.path.expandvars(self.lhcb_release_area + os.sep + self.appname.upper() + os.sep + \
+                                      self.appname.upper() + '_' + self.version + os.sep + \
+                                      self.package + os.sep + self.appname + os.sep + self.version + \
+                                      os.sep + 'options' + os.sep + self.appname + '.py')
+            if opts:
+                self.optsfile.append(opts)
+            else:
+                logger.error('Cannot find the default opts file for ' + self.appname + os.sep + self.version)
+            result.append('optsfile')
 #            raise ApplicationConfigurationError(None, "The 'optsfile' is not set")
         ##############################
         #     platform               #
@@ -486,8 +469,7 @@ quotes around a multiline string'''),
   
 
     def _get_user_release_area(self, env=os.environ):
-        """Get the User release area for the job
-        
+        """Get the User release area for the job.        
         For the moment only rely on environment. Should be updated to take into account the 
         properties in the Gaudi job
         """
@@ -508,6 +490,7 @@ quotes around a multiline string'''),
 
         return releaseArea
 
+
     def _get_user_platform(self,env=os.environ):
         if env.has_key('CMTCONFIG'):
             platform=env['CMTCONFIG']
@@ -515,7 +498,10 @@ quotes around a multiline string'''),
             logger.info('"CMTCONFIG" not set. Cannot determin the platform you want to use')
             platform=''
         
-        if platform != self.platform:
+        # GC: This allows a user to define a platform different from the default one.
+        # I don't like this function since this step isn't actually getting the platform
+        # but is rather setting it.
+        if platform != self.platform and self.platform != None:
             if env.has_key('CMTCONFIG'):
                 platform=self.platform
                 env['CMTCONFIG']=platform
@@ -528,46 +514,35 @@ quotes around a multiline string'''),
 
         ra=self._get_user_release_area()
         platform = self._get_user_platform()
-
-        libpath=fullpath(os.path.join(ra,self.appname+'_'+self.version,'InstallArea',platform,'lib'))
-        if os.path.exists(libpath):
-            for f in os.listdir(libpath):
-                fpath=os.path.join(libpath,f)
-                if os.path.exists(fpath):
-                    libs.append(fpath)
-                else:
-                    logger.warning("File %s in %s does not exist. Skipping...",str(f),str(libpath))
+        
+        rc, showProj, m = self.shell.cmd1('cmt show projects', capture_stderr=True)
+        
+        logger.debug( showProj)
+ 
+        user_ra = self.user_release_area
+        full_user_ra = fullpath( user_ra) # expand any symbolic links
+        project_areas = []
+        for line in showProj.split('\n'):
+            for entry in line.split():
+                if entry.startswith( user_ra) or entry.startswith( full_user_ra):
+                    libpath = fullpath( os.path.join(entry.rstrip('\)'), 'InstallArea',platform,'lib'))
+                    project_areas.append( libpath)
+        
+        for libpath in project_areas:
+            if os.path.exists(libpath):
+                for f in os.listdir(libpath):
+                    fpath=os.path.join(libpath,f)
+                    if os.path.exists(fpath):
+                        libs.append(fpath)
+                    else:
+                        logger.warning("File %s in %s does not exist. Skipping...",str(f),str(libpath))
         logger.debug("%s",pprint.pformat(libs))
         return libs     
 
-    def _determine_catalog_type(self):
-        from Ganga.Utility.files import fullpath
-
-        # For the moment assume the shell envionment is set (assumes configure has run)
-        if self.shell.env.has_key('GAUDIPOOLDBROOT'):
-            version=self._decode_lhcb_versions(fullpath(self.shell.env['GAUDIPOOLDBROOT']).split('/')[-1])
-            if version['version']>=3:
-                # we are using the new FileCatalog.Catalogs option
-                return 'FileCatalog.Catalogs'
-            else:
-                return 'PoolDbCacheSvc.Catalog'
-
-    def _decode_lhcb_versions(self,x):
-        rev = x.find('r')
-        patch = x.find('p')
-        try:
-          if patch == -1:
-            nb = map(int, (x[1:rev], x[rev+1:], '0'))
-          else:
-            nb = map(int, (x[1:rev], x[rev+1:patch], x[patch+1:]))
-        except:
-          nb = (0, 0, 0)
-        return {'version':nb[0],'revision':nb[1],'patch':nb[2]}
-        
 
     def getpack(self, options=''):
         """Execute a getpack command. If as an example dv is an object of
-        type DaVinci, the following will check the Bs2MuMu package out in
+        type DaVinci, the following will check the Analysis package out in
         the cmt area pointed to by the dv object.
 
         dv.getpack('Tutorial/Analysis v6r2')
@@ -584,12 +559,14 @@ quotes around a multiline string'''),
         command = 'getpack ' + options + '\n'
         CMTscript.CMTscript(self,command)
 
+
     def make(self, argument=''):
         """Build the code in the release area the application object points
         to. The actual command executed is "cmt broadcast make <argument>"
         after the proper configuration has taken place."""
         command = '###CMT### config \n ###CMT### broadcast make '+argument
         CMTscript.CMTscript(self,command)
+
 
     def cmt(self, command):
         """Execute a cmt command in the cmt user area pointed to by the
@@ -598,97 +575,21 @@ quotes around a multiline string'''),
         command = '###CMT### config \n ###CMT### '+command
         CMTscript.CMTscript(self,command)
 
-class GaudiExtras:
-    """The GaudiExtras class."""
 
-    dataopts=''
-    _SEProtocol=''
-    _LocalSite=''
-    _userdlls=[]
+class GaudiExtras:
+    '''The GaudiExtras class. This allows us to add more to the application
+    object than is defined in the schema.'''
+
+    opts_pkl = ''
+    dataopts = ''
+    _SEProtocol = ''
+    _LocalSite = ''
+    _userdlls = []
+    inputdata = []
     _outputfiles = []
     outputdata = []
     _name = "GaudiExtras"
     _category = "extras"
-
-    def _getOption(self, recipient, name, opt_list):
-        options = opt_list[:]
-        options.reverse()
-        for dict in options:
-            rc = dict['Recipient'].strip()
-            nm = dict['Name'].strip()
-            if rc == recipient and nm == name:
-                return dict['Value']
-    def getInputFiles(self, opts):
-        infl = []
-        # EventSelector.Input files
-        mylist = FileParser.getInputFilesFromOpts(opts, 'EventSelector', 'Input')
-        for fn, ft in mylist:
-            if re.match(r'POOL_ROOT', ft.strip().upper()):
-                if re.match(r'LFN:', fn.strip().upper()):  
-                    infl.append(fn)
-                if re.match(r'PFN:', fn.strip().upper()):  
-                    infl.append(fn)
-        logger.debug("Found the following inputdata %s", str(infl))
-        if infl == []:
-            logger.warning('No input files found, options file possibibly malformed')
-        return infl
-
-    def getOutputFiles(self, opts):
-      list = []
-      
-#      list = FileParser.getInputFilesFromOpts(opts, 'HistogramPersistencySvc', 'OutputFile')
-      
-
-      hst_str = self._getOption('HistogramPersistencySvc', 'OutputFile',opts)
-      if hst_str:
-        m = re.search(r"\s*?=\s*?'(.*?)'", hst_str)
-        if m:
-          hist_filename = m.group(1)
-          list.append(hist_filename)
-      ntp_str=self._getOption('NTupleSvc','Output',opts)
-      if ntp_str:
-        m = re.search(r'.*DATAFILE\s*?=\'(.*?)\'.*"', ntp_str)
-        if m:
-            ntp_filename=m.group(1)
-            list.append(ntp_filename)  
-      logger.info("Found the following histograms and NTuples: %s",str(list))
-      return list
-    def getOutputData(self,opts):
-      outdata=[]  
-#      dst_str =  self._getOption('DstWriter', 'Output',opts)
-#      if dst_str:
-#        m = re.search(r'\'(.+?)\'', dst_str)
-#        if m:
-#          dst_filename = m.group(1)
-#          outfl.append(os.path.basename(dst_filename))
-#
-#      list = FileParser.getInputFilesFromOpts(opts, 'NTupleSvc', 'Output')
-#      logger.debug("Found the following NTuples: %s", str(list))
-#      for fn, ft in list:
-#        outdata.append(os.path.basename(fn))
-      list = FileParser.getInputFilesFromOpts(opts,'GaussTape','Output')    
-      if list: logger.info("Found the following GaussTapes: %s", str(list))
-      for fn, ft in list:
-        outdata.append(os.path.basename(fn))
-      list = FileParser.getInputFilesFromOpts(opts,'DigiWriter','Output')    
-      if list: logger.info("Found the following Digi files: %s", str(list))
-      for fn, ft in list:
-        outdata.append(os.path.basename(fn))
-      list = FileParser.getInputFilesFromOpts(opts,'DstWriter','Output')    
-      if list: logger.info("Found the following Dst files: %s", str(list))
-      for fn, ft in list:
-        outdata.append(os.path.basename(fn))
-      
-      logger.debug("The following files are outputdata: %s", str(outdata))
-      # remove PFN: from the file names
-      k=0
-      for i in outdata:
-          s=str(i)
-          if s.startswith('PFN:') or s.startswith('pfn:'):
-              outdata[k]=s[4:]
-          k+=1
-      return outdata
-
 
 ################################################################################
 # Individual Gaudi applications. These are thin wrappers around the Gaudi base # 
@@ -696,7 +597,7 @@ class GaudiExtras:
 # properties except the optsfile.                                              #
 ################################################################################
 
-# Some generci stuff common to all classes
+# Some generic stuff common to all classes
 
 myschema = Gaudi._schema.inherit_copy()
 myschema['appname']._meta['protected'] = 1
@@ -866,6 +767,30 @@ class Vetra(Gaudi):
         baseMethod = getattr( Gaudi, methodname )
         setattr( eval(methodname), "__doc__", baseMethod.__doc__)
 
+###############################################################################
+#                             Panoptes                                        #
+###############################################################################
+
+class Panoptes(Gaudi):
+    _name = 'Panoptes'
+    __doc__ = GaudiDocString(_name)
+    _schema = myschema.inherit_copy()
+    def __init__(self):
+        super(Panoptes, self).__init__()
+        self.appname = 'Panoptes'
+    def getpack(self,options=''):
+        return super(Panoptes,self).getpack(options)
+    def make(self,argument=''):
+        return super(Panoptes,self).make(argument)
+    def cmt(self,command):
+        return super(Panoptes,self).cmt(command)
+
+    # Copy documentation from Gaudi class
+    for methodname in Gaudi._exportmethods:
+        baseMethod = getattr( Gaudi, methodname )
+        setattr( eval(methodname), "__doc__", baseMethod.__doc__)
+
+
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 for app in _available_apps+["Gaudi"]:
@@ -882,6 +807,31 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.87.6.11.2.7  2008/07/15 17:53:51  gcowan
+# Modified PythonOptionsParser to pickle the options file. This is converted to a string and added to the Gaudi.extras. The string can then be converted back to an options.pkl file within the runtime handlers and added to the job sandboxes. This replaces the need to use flat_opts. There is no need to have the format() method in PythonOptionsParser.
+#
+# Revision 1.87.6.11.2.6  2008/07/14 19:08:38  gcowan
+# Major update to PythonOptionsParser which now uses gaudirun.py to perform the complete options file flattening. Output flat_opts.opts file is made available and placed in input sandbox of jobs. LSF and Dirac handlers updated to cope with this new design. extraopts need to be in python. User can specify input .opts file and these will be converted to python in the flattening process.
+#
+# Revision 1.87.6.11.2.5  2008/07/10 17:36:10  gcowan
+# Modified GaudiDirac RT handler to support python options files. Small bug fixed in PythonOptions where a string was returned rather than a list.
+#
+# Revision 1.87.6.11.2.4  2008/07/09 00:11:49  gcowan
+# Modified Gaudi._get_user_dlls() to address Savannah bug #31165. This should allow Ganga to pick up user DLLs from multiple user project areas.
+#
+# Modified GaudiLSFRunTimeHandler to look for gaudirun.py in the correct location.
+#
+# Revision 1.87.6.11.2.3  2008/07/03 12:52:07  gcowan
+# Can now successfully submit and run Gaudi jobs using python job options to Local() and Condor() backends. Changes in Gaudi.py, GaudiLSFRunTimeHandler.py, PythonOptionsParser.py, Splitters.py and GaudiDiracRunTimeHandler.py. More substantial testing using alternative (and more complex) use cases required.
+#
+# Revision 1.87.6.11.2.2  2008/06/22 18:09:47  gcowan
+# Removed the Shell object from PythonOptionsParser, now using the environment that is already setup in the Gaudi object.
+#
+# Modified Gaudi.py to use PythonOptionsParser to extract out Input and Output data files. Added comments to the code as I have been reading through it to suggest changes and unneccessary code.
+#
+# Revision 1.1.2.1  2008/06/19 16:43:28  gcowan
+# Initial import of new code. Modifed Gaudi.py to use new PythonOptionsParser. This uses gaudirun.py to pickle the python options file and can easily extract the user input and output data files.
+#
 # Revision 1.87.6.11  2008/06/13 08:50:29  uegede
 # Updated Gaudi handler
 # - To allow platform to be modified
