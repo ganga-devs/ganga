@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.2 2008-07-28 16:56:31 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.3 2008-07-28 17:03:44 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1739,7 +1739,7 @@ if __name__ == '__main__':
                 name = re.findall(pat, temp_srm)
                 if name:
                     tokenname = name[0]
-                    if not tokenname in space_token_names
+                    if not tokenname in space_token_names:
                         continue
                 else:
                     tokenname = ''
