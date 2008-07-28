@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.1 2008-07-17 16:41:18 moscicki Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.2 2008-07-28 14:27:34 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -528,4 +528,4 @@ allHandlers.add('Athena','Cronus',AthenaLCGRTHandler)
 
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
-logger = getLogger('GangaAtlas')
+logger = getLogger()

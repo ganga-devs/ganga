@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ATLASDataset.py,v 1.1 2008-07-17 16:41:18 moscicki Exp $
+# $Id: ATLASDataset.py,v 1.2 2008-07-28 14:27:34 elmsheus Exp $
 ###############################################################################
 # A simple ATLAS dataset
 #
@@ -151,6 +151,13 @@ class Download:
             gridshell.env['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
             gridshell.env['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
             gridshell.env['DQ2_LOCAL_ID']=''
+            import GangaAtlas.PACKAGE
+            try:
+                pythonpath=GangaAtlas.PACKAGE.setup.getPackagePath2('DQ2Clients','PYTHONPATH',force=False)
+            except:
+                pythonpath = ''
+            gridshell.env['PYTHONPATH'] = gridshell.env['PYTHONPATH']+':'+pythonpath
+            print gridshell.env['PYTHONPATH']
             rc, out, m = gridshell.cmd1(self.cmd,allowed_exit=[0,255])
             if (rc==0):
                 logger.debug("dq2_get finished: %s", self.cmd)
@@ -519,6 +526,11 @@ class ATLASOutputDataset(Dataset):
 config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
 
 #$Log: not supported by cvs2svn $
+#Revision 1.1  2008/07/17 16:41:18  moscicki
+#migration of 5.0.2 to HEAD
+#
+#the doc and release/tools have been taken from HEAD
+#
 #Revision 1.30.2.5  2008/05/12 15:55:38  elmsheus
 #Fix small typo
 #

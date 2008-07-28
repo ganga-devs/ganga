@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.1 2008-07-17 16:41:18 moscicki Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.2 2008-07-28 14:27:34 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -438,10 +438,15 @@ allHandlers.add('Athena', 'SGE'  , AthenaLocalRTHandler)
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
 configLCG = getConfig('LCG')
-logger = getLogger('GangaAtlas')
+logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.1  2008/07/17 16:41:18  moscicki
+#migration of 5.0.2 to HEAD
+#
+#the doc and release/tools have been taken from HEAD
+#
 #Revision 1.53.2.9  2008/07/12 09:15:25  elmsheus
 #Fix bug #38202
 #

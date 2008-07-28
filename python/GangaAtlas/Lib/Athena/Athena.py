@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.1 2008-07-17 16:41:18 moscicki Exp $
+# $Id: Athena.py,v 1.2 2008-07-28 14:27:34 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -60,7 +60,7 @@ class Athena(IApplication):
                  'atlas_project'          : SimpleItem(defvalue='',doc='ATLAS Project Name'),
                  'atlas_cmtconfig'        : SimpleItem(defvalue='',doc='ATLAS CMTCONFIG environment variable'),
                  'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT '),
-                 'atlas_environment'      : SimpleItem(defvalue=[], sequence=1, doc='Extra environment variable to be set'),
+                 'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
                  'user_area'              : FileItem(doc='A tar file of the user area'),
                  'group_area'             : FileItem(doc='A tar file of the group area'),
                  'max_events'             : SimpleItem(defvalue='',doc='Maximum number of events'),
@@ -716,6 +716,11 @@ config.addOption('ExcludedSites', '' , 'FIXME')
 config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The path in which the cmtsetup magic function will look up the setup.sh for CMT environment setup')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:41:18  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.67.2.19  2008/07/12 09:37:17  elmsheus
 # Fix for bug #38795
 #

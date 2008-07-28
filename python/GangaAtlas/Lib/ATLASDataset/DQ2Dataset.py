@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.1 2008-07-17 16:41:18 moscicki Exp $
+# $Id: DQ2Dataset.py,v 1.2 2008-07-28 14:27:34 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -11,6 +11,7 @@ import sys, os, re, urllib, commands, imp, threading, time
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.files import expandfilename
+from Ganga.Utility.logging import getLogger
 
 from dq2.common.DQException import *
 from dq2.info.TiersOfATLAS import _refreshToACache, ToACache
@@ -20,7 +21,6 @@ from dq2.common.DQException import DQInvalidRequestException
 from dq2.content.DQContentException import DQInvalidFileMetadataException
 from dq2.common.client.DQClientException import DQInternalServerException
 from dq2.common.dao.DQDaoException import DQDaoException
-from dq2.common.DQException import DQBadServerResponse
 
 _refreshToACache()
 
@@ -211,7 +211,28 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         return dataset_locations_list
 
 
-
+def resolve_container(datasets):
+    """Helper function to resolver dataset containers"""
+    container_datasets = []
+    for dataset in datasets:
+        if dataset.endswith("/"):
+            try:
+                dq2_lock.acquire() 
+                try:
+                    contents = dq2.listDatasetsInContainer(dataset)
+                except:
+                    contents = []
+            finally:
+                dq2_lock.release()
+                    
+            if not contents:
+                contents = []
+            container_datasets = container_datasets + contents
+    if container_datasets:
+        return container_datasets
+    else:
+        return datasets
+    
 
 class DQ2Dataset(Dataset):
     '''ATLAS DDM Dataset'''
@@ -297,7 +318,10 @@ class DQ2Dataset(Dataset):
 
         allcontents = []
         diffcontents = {}
-        for dataset in self.dataset:
+
+        datasets = resolve_container(self.dataset)
+
+        for dataset in datasets:
             if backnav:
                 dataset = re.sub('AOD','ESD',dataset)
 
@@ -366,7 +390,10 @@ class DQ2Dataset(Dataset):
         '''Helper function to access tag datset content'''
 
         allcontents = []
-        for tagdataset in self.tagdataset:
+
+        datasets = resolve_container(self.tagdataset)
+        
+        for tagdataset in datasets:
             try:
                 dq2_lock.acquire()
                 contents=dq2.listFilesInDataset(tagdataset)
@@ -389,7 +416,10 @@ class DQ2Dataset(Dataset):
 
         alllocations = {}
         overlaplocations = []
-        for dataset in self.dataset:
+
+        datasets = resolve_container(self.dataset)
+        
+        for dataset in datasets:
             if backnav:
                 dataset = re.sub('AOD','ESD',dataset)
 
@@ -485,6 +515,8 @@ class DQ2Dataset(Dataset):
         else:
             datasets = [ dataset ]
 
+        datasets = resolve_container(datasets)
+
         for dataset in datasets:
             try:
                 dq2_lock.acquire()
@@ -529,6 +561,8 @@ class DQ2Dataset(Dataset):
         else:
             datasets = dataset
 
+        datasets = resolve_container(datasets)
+
         for dataset in datasets:
             try:
                 dq2_lock.acquire()
@@ -564,6 +598,8 @@ class DQ2Dataset(Dataset):
             datasets = self.dataset
         else:
             datasets = [ dataset ]
+            
+        datasets = resolve_container(datasets)
 
         dataset_locations_num = {}
         for dataset in datasets:
@@ -617,6 +653,8 @@ class DQ2Dataset(Dataset):
             datasets = self.dataset
         else:
             datasets = [ dataset ]
+
+        datasets = resolve_container(datasets)
 
         dataset_locations_list = {}
         for dataset in datasets:
@@ -678,6 +716,8 @@ class DQ2Dataset(Dataset):
             datasets = self.dataset
         else:
             datasets = [ dataset ]
+
+        datasets = resolve_container(datasets)
 
         return dq2_list_locations_siteindex(datasets, timeout, days, replicaList)
 
@@ -1040,9 +1080,10 @@ class DQ2OutputDataset(Dataset):
                 outputlocation = job.outputdir
             
 
-            exe = os.path.join(os.path.dirname(__file__)+'/../Athena/','dq2_get -rva')
-            cmd = 'python %s -d %s %s ' %(exe,outputlocation, job.outputdata.datasetname)
-            logger.warning("Please be patient - background execution of dq2_get of %s to %s", job.outputdata.datasetname, outputlocation )
+            exe = 'dq2-get -L CERN -d -D '
+            cmd = '%s -H %s %s ' %(exe,outputlocation, job.outputdata.datasetname)
+
+            logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
 
             threads=[]
             thread = Download.download_dq2(cmd)
@@ -1074,15 +1115,13 @@ class DQ2Output(DQ2Dataset):
     def __init__(self):
         super(DQ2Output,self).__init__()
 
+logger = getLogger()
 
 from dq2.clientapi.DQ2 import DQ2
 dq2=DQ2()
 
 from threading import Lock
 dq2_lock = Lock()
-
-from Ganga.Utility.logging import getLogger
-logger = getLogger()
 
 from Ganga.Utility.Config import makeConfig, ConfigError
 config = makeConfig('DQ2', 'DQ2 configuration options')
@@ -1102,6 +1141,11 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.1  2008/07/17 16:41:18  moscicki
+#migration of 5.0.2 to HEAD
+#
+#the doc and release/tools have been taken from HEAD
+#
 #Revision 1.72.2.15  2008/07/12 08:58:12  elmsheus
 #* DQ2JobSplitter.py: Add numsubjobs option - now jobs can also be
 #  splitted by number of subjobs
