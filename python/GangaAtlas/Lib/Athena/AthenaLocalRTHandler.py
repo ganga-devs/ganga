@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.2 2008-07-28 14:27:34 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.3 2008-07-28 14:44:13 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -434,6 +434,7 @@ allHandlers.add('Athena', 'Local', AthenaLocalRTHandler)
 allHandlers.add('Athena', 'LSF'  , AthenaLocalRTHandler)
 allHandlers.add('Athena', 'PBS'  , AthenaLocalRTHandler)
 allHandlers.add('Athena', 'SGE'  , AthenaLocalRTHandler)
+allHandlers.add('Athena', 'Remote'  , AthenaLocalRTHandler)
 
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
@@ -442,6 +443,12 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.2  2008/07/28 14:27:34  elmsheus
+#* Upgrade to DQ2Clients 0.1.17 and DQ2 API
+#* Add full support for DQ2 container datasets in DQ2Dataset
+#* Change in DQ2OutputDataset.retrieve(): use dq2-get
+#* Fix bug #39286: Athena().atlas_environment omits type_list
+#
 #Revision 1.1  2008/07/17 16:41:18  moscicki
 #migration of 5.0.2 to HEAD
 #
