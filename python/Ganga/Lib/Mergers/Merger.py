@@ -1,13 +1,13 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Merger.py,v 1.1 2008-07-17 16:40:58 moscicki Exp $
+# $Id: Merger.py,v 1.2 2008-07-28 10:16:34 wreece Exp $
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IMerger import MergerError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
-from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
 
 from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
 from Ganga.Utility.Plugin import allPlugins
@@ -21,7 +21,7 @@ logger = getLogger()
 #set the mergers config up
 config = makeConfig('Mergers','parameters for mergers')
 config.addOption('associate',"{'log':'TextMerger','root':'RootMerger',"
-                 "'text':'TextMerger','text':'TextMerger'}",'Dictionary of file associations')
+                 "'text':'TextMerger','txt':'TextMerger'}",'Dictionary of file associations')
 config.addOption('merge_output_dir','~/gangadir/merge_results',"location of the merger's outputdir")
 config.addOption('std_merge','TextMerger','Standard (default) merger')
 
@@ -531,6 +531,25 @@ class MultipleMerger(GangaObject):
         """Adds a merger object to the list of merges to be done."""
         self.merger_objects.append(merger_object)
 
+def findFilesToMerge(jobs):
+    """Look at a list of jobs and find a set of files present in each job that can be merged together"""
+    
+    result = []
+    
+    file_map = {}
+    jobs_len = len(jobs)
+    for j in jobs:
+        for file_name in j.outputsandbox:
+            file_map[file_name] = file_map.setdefault(file_name,0) + 1
+    
+    for file_name, count in file_map.iteritems():
+        if count == jobs_len: result.append(file_name)
+        else:
+            logger.warning('The file %s was not found in all jobs to be merged and so will be ignored.', file_name)
+    logger.info('No files specified, so using %s.', str(result))
+        
+    return result
+    
 
 class SmartMerger(GangaObject):
     """Allows the different types of merge to be run according to file extension in an automatic way.
@@ -549,6 +568,9 @@ class SmartMerger(GangaObject):
 
     If outputdir is not specified, the default location specfied in the [Mergers]
     section of the .gangarc file will be used.
+    
+    If files is not specified, then it will be taken from the list of jobs given to
+    the merge method. Only files which appear in all jobs will be merged.
 
     SmartMergers can also be attached to Job objects in the same way as other Merger
     objects.
@@ -587,6 +609,10 @@ class SmartMerger(GangaObject):
         if len(jobs) == 0:
             logger.warning('The jobslice given was empty. The merge will not continue.')
             return AbstractMerger.success
+        
+        #make a guess of what to merge if nothing is specified
+        if not self.files:
+            self.files = findFilesToMerge(jobs)
 
         type_map = {}
         for f in self.files:
@@ -636,8 +662,107 @@ class SmartMerger(GangaObject):
             multi_merge.addMerger(merge_object)
 
         return multi_merge.merge(jobs, outputdir = outputdir, ignorefailed = ignorefailed, overwrite = overwrite)
+    
+class _CustomMergeTool(IMergeTool):
+    """Allows arbitrary python modules to be used to merge"""
 
-#configure the plugins        
+    _category = 'merge_tools'
+    _hidden = 1
+    _name = '_CustomMergeTool'
+    _schema = IMergeTool._schema.inherit_copy()
+    _schema.datadict['module'] = FileItem(defvalue = None, doc='Path to a python module to perform the merge.')
+
+    def mergefiles(self, file_list, output_file):
+
+        import os
+        if not os.path.exists(self.module.name):
+            raise MergerError("The module '&s' does not exist and so merging will fail.",self.module.name)
+        
+        try:
+            
+            module_contents = ''
+            result = False
+            
+            try:
+                module_file = file(self.module.name)
+                module_contents = module_file.read()
+            finally:
+                module_file.close()
+            
+            if module_contents:
+                module_contents += """
+_xxxResult = mergefiles(%s , '%s') 
+                """ % (file_list, output_file)
+            
+                import tempfile
+                out_file = tempfile.mktemp('.py')
+                try:
+                    out = file(out_file,'w')
+                    out.write(module_contents)
+                finally:
+                    out.close()
+            
+                ns = {}
+                execfile(out_file,ns)
+                os.unlink(out_file)
+                
+                result = ns.get('_xxxResult',1)
+                
+            if result != 0:
+                raise MergerError('The merge module returned False or did not complete properly')
+            
+            
+        except Exception,e:
+            raise MergerError("Merge failed: ('%s')" % str(e))
+            
+        
+
+class CustomMerger(AbstractMerger):
+    """User tool for writing custom merging tools with Python
+    
+    Allows a script to be supplied that performs the merge of some custom file type.
+    The script must be a python file which defines the following function:
+    
+    def mergefiles(file_list, output_file):
+    
+        #perform the merge
+        if not success:
+            return -1
+        else:
+            return 0
+            
+    This module will be imported and used by the CustomMerger. The file_list is a
+    list of paths to the files to be merged. output_file is a string path for
+    the output of the merge. This file must exist by the end of the merge or the
+    merge will fail. If the merge cannot proceed, then the function should return a 
+    non-zero integer.
+    
+    Clearly this tool is provided for advanced ganga usage only, and should be used with
+    this in mind.
+    
+    """
+    _category = 'mergers'
+    _exportmethods = ['merge']
+    _name = 'CustomMerger'
+    _schema = AbstractMerger._schema.inherit_copy()
+    _schema.datadict['module'] = FileItem(defvalue = None, doc='Path to a python module to perform the merge.')
+        
+
+    def __init__(self):
+        super(CustomMerger,self).__init__(_CustomMergeTool())
+
+    def merge(self, jobs, outputdir = None, ignorefailed = None, overwrite = None):
+        if self.module is None or not self.module:
+            logger.error('No custom module specified. The merge will end now')
+            return AbstractMerger.success
+        self.merge_tool.module = self.module
+        #needed as exportmethods doesn't seem to cope with inheritance
+        return super(CustomMerger,self).merge(jobs, outputdir, ignorefailed, overwrite)
+    
+
+
+#configure the plugins
+allPlugins.add(_CustomMergeTool,'merge_tools','_CustomMergeTool') 
 allPlugins.add(_TextMergeTool,'merge_tools','_TextMergeTool')
 allPlugins.add(_RootMergeTool,'merge_tools','_RootMergeTool')        
 #we need a default, but don't care much what it is
