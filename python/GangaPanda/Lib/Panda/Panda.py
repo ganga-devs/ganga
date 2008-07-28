@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.1 2008-07-17 16:41:31 moscicki Exp $
+# $Id: Panda.py,v 1.2 2008-07-28 15:45:44 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -283,12 +283,9 @@ class Panda(IBackend):
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
     def list_sites(self):
-
-        return [ 'AGLT2', 'ALBERTA', 'BNL', 'BNL_ATLAS_1', 'BNL_ATLAS_2', 'CERN', 'CNAF', 
-                 'CPPM', 'FZK', 'LAPP', 'LPC', 'LYON', 'SACLAY', 'SHEF', 'SLAC', 'TAIWAN',
-                 'TOKYO', 'TORONTO', 'TRIUMF', 'UBC', 'UK', 'UTA', 'UTA-DPCC', 'VICTORIA' ] 
-
-
+        sites=Client.PandaSites.keys()
+        sites.sort()
+        return sites
 
 logger = getLogger()
 config = makeConfig('Panda','Panda backend configuration parameters')
@@ -305,6 +302,11 @@ shell.env['DQ2_LOCAL_ID'] = 'CERN'
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:41:31  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.11.2.3  2008/07/08 00:42:14  dvanders
 # add ara option
 #
