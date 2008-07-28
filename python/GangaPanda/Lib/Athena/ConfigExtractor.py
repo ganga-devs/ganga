@@ -327,7 +327,9 @@ try:
     for tmpStream in MSMgr.StreamList:
         # avoid duplication
         if not tmpStream.Name in streamOutputFiles.keys():
-            _printConfig('Output=MS %s %s' % (tmpStream.Name,tmpStream.Stream.OutputFile))
+            # remove prefix
+            tmpFileBaseName = tmpStream.Stream.OutputFile.split(':')[-1]
+            _printConfig('Output=MS %s %s' % (tmpStream.Name,tmpFileBaseName))
 except:
     pass
 
