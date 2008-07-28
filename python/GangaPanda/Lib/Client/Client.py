@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import time
+import types
 import urllib
 import urllib2
 import commands
@@ -584,16 +585,18 @@ def getElementsFromContainer(name,verbose=False):
     try:
         errStr = ''
         # get elements
-        url = baseURLDQ2 + '/ws_container/rpc'
-        data = {'operation':'retrieve','name': name,
-                'API':'10','tuid':commands.getoutput('uuidgen')}
+        url = baseURLDQ2 + '/ws_dq2/rpc'
+        data = {'operation':'container_retrieve','name': name,
+                'API':'030','tuid':commands.getoutput('uuidgen')}
         status,out = curl.get(url,data)
-        if status != 0 or (out != None and re.search('Exception',out) != None):
+        if status != 0 or (isinstance(out,types.StringType) and re.search('Exception',out) != None):
             errStr = "ERROR : could not get container"
             sys.exit(EC_Failed)
-        return pickle.loads(out).keys()
+        return out
     except:
         print status,out
+        type, value, traceBack = sys.exc_info()
+        print "%s %s" % (type,value)
         if errStr != '':
             print errStr
         else:
