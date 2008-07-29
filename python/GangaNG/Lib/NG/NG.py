@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.2 2008-07-29 09:50:41 bsamset Exp $
+# $Id: NG.py,v 1.3 2008-07-29 13:19:30 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -915,8 +915,8 @@ class Grid:
 
     def setup(self):
         # Source the setup script in the arc directory
-        print 'Soursing the setup file.'
-        cmd = 'cd %s/.. ; source ./setup.sh ; cd -' % self.__get_cmd_prefix_hack__()
+        # print 'Soursing the setup file.'
+        cmd = 'cd %s/.. &> /dev/null ; source ./setup.sh &> /dev/null ; cd - &> /dev/null' % self.__get_cmd_prefix_hack__()
         
         rc = self.shell.system(cmd)
 
@@ -1933,7 +1933,7 @@ grids = {'ARC':None}
 
 # Kat test 
 if config['ARC_ENABLE']:
-    print 'ARC_ENABLE in config grid = ARC'
+    logger.info('ARC_ENABLE in config grid = ARC')
     grids['ARC'] = Grid('ARC')
     config.setSessionValue('ARC_ENABLE',grids['ARC'].active)
     
@@ -1943,6 +1943,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/07/29 09:50:41  bsamset
+# Added backup atlasgiis server, fixed autonaming of jobs with DQ2 datasets
+#
 # Revision 1.1  2008/07/17 16:41:29  moscicki
 # migration of 5.0.2 to HEAD
 #
