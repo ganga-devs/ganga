@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.5 2008-07-29 10:08:32 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.6 2008-07-29 13:21:42 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -433,12 +433,38 @@ class AthenaLocalRTHandler(IRuntimeHandler):
 
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
+class AthenaRemoteRTHandler(IRuntimeHandler):
+    """Athena Remote Runtime Handler"""
+
+    def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
+        """prepare the subjob specific configuration"""
+        
+        be_name = app._getParent().backend.remote_backend._name
+
+        if be_name == "LCG" or be_name == "Condor" or be_name == "Cronus":
+            rt_handler = AthenaLCGRTHandler()
+            return rt_handler.prepare(app,appsubconfig,appmasterconfig,jobmasterconfig)
+        else:
+            rt_handler = AthenaLocalRTHandler()
+            return rt_handler.prepare(app,appsubconfig,appmasterconfig,jobmasterconfig)
+        
+
+    def master_prepare(self,app,appmasterconfig):
+        be_name = app._getParent().backend.remote_backend._name
+
+        if be_name == "LCG" or be_name == "Condor" or be_name == "Cronus":
+            rt_handler = AthenaLCGRTHandler()
+            return rt_handler.master_prepare(app,appmasterconfig)
+        else:
+            rt_handler = AthenaLocalRTHandler()
+            return rt_handler.master_prepare(app,appmasterconfig)
+
 
 allHandlers.add('Athena', 'Local', AthenaLocalRTHandler)
 allHandlers.add('Athena', 'LSF'  , AthenaLocalRTHandler)
 allHandlers.add('Athena', 'PBS'  , AthenaLocalRTHandler)
 allHandlers.add('Athena', 'SGE'  , AthenaLocalRTHandler)
-allHandlers.add('Athena', 'Remote'  , AthenaLocalRTHandler)
+allHandlers.add('Athena', 'Remote'  , AthenaRemoteRTHandler)
 
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
@@ -447,6 +473,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.5  2008/07/29 10:08:32  elmsheus
+#Remove DQ2_OUTPUT_LOCATIONS again
+#
 #Revision 1.4  2008/07/28 16:56:31  elmsheus
 #* ganga-stage-in-out-dq2.py:
 #  - Add fix for DPM setup for NIKHEF and SARA
