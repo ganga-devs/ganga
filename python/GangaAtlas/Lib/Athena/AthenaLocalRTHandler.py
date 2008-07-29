@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.4 2008-07-28 16:56:31 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.5 2008-07-29 10:08:32 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -272,7 +272,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             except:
                 pass
             environment['DQ2_OUTPUT_SPACE_TOKENS']= ':'.join(configDQ2['DQ2_OUTPUT_SPACE_TOKENS'])
-            environment['DQ2_OUTPUT_LOCATIONS']= ':'.join(configDQ2['DQ2_OUTPUT_LOCATIONS'])
             environment['DQ2_BACKUP_OUTPUT_LOCATIONS']= ':'.join(configDQ2['DQ2_BACKUP_OUTPUT_LOCATIONS'])
             
         # CN: extra condition for TNTSplitter
@@ -448,6 +447,28 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.4  2008/07/28 16:56:31  elmsheus
+#* ganga-stage-in-out-dq2.py:
+#  - Add fix for DPM setup for NIKHEF and SARA
+#  - remove special SE setup for RAL
+#  - add MPPMU defaultSE=lcg-lrz-se.lrz-muenchen.de
+#  - add DQ2_BACKUP_OUTPUT_LOCATIONS reading
+#  - add DQ2_OUTPUT_SPACE_TOKENS reading
+#  - change stage-out order for DQ2OutputDataset:
+#  (1) j.outputdata.location, (2) DQ2_OUTUT_LOCATIONS,
+#  (3) DQ2_BACKUP_OUTPUT_LOCATIONS (4) [ siteID ]
+#
+#* Add config options config['DQ2']:
+#  DQ2_OUTPUT_SPACE_TOKENS: Allowed space tokens names of
+#                           DQ2OutputDataset output
+#  DQ2_OUTPUT_LOCATIONS: Default locations of
+#                        DQ2OutputDataset output
+#  DQ2_BACKUP_OUTPUT_LOCATIONS: Default backup locations of
+#                               DQ2OutputDataset output
+#
+#* AthenaLCGRTHandler/AthenaLocalRTHandler
+#  Enforce setting of j.outputdata.location for DQ2OutputDataset
+#
 #Revision 1.3  2008/07/28 14:44:13  elmsheus
 #Add Remote backend submission to AthenaLocalRTHandler
 #

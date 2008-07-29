@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.3 2008-07-28 16:56:30 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.4 2008-07-29 10:08:32 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1138,8 +1138,6 @@ except KeyError:
 
 config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASUSERDISK' , 'ATLASUSERTAPE', 'ATLASLOCALGROUPDISK'] , 'Allowed space tokens names of DQ2OutputDataset output' )
 
-config.addOption('DQ2_OUTPUT_LOCATIONS', [ 'CERN-PROD_USERTAPE' ], 'Default locations of DQ2OutputDataset output' )
-
 config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_USERTAPE', 'FZKDISK', 'LYONDISK', 'PICDISK', 'CNAFDISK', 'RALDISK', 'SARADISK', 'ASGCDISK', 'TRIUMFDISK' ], 'Default backup locations of DQ2OutputDataset output' )
 
 
@@ -1150,6 +1148,28 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.3  2008/07/28 16:56:30  elmsheus
+#* ganga-stage-in-out-dq2.py:
+#  - Add fix for DPM setup for NIKHEF and SARA
+#  - remove special SE setup for RAL
+#  - add MPPMU defaultSE=lcg-lrz-se.lrz-muenchen.de
+#  - add DQ2_BACKUP_OUTPUT_LOCATIONS reading
+#  - add DQ2_OUTPUT_SPACE_TOKENS reading
+#  - change stage-out order for DQ2OutputDataset:
+#  (1) j.outputdata.location, (2) DQ2_OUTUT_LOCATIONS,
+#  (3) DQ2_BACKUP_OUTPUT_LOCATIONS (4) [ siteID ]
+#
+#* Add config options config['DQ2']:
+#  DQ2_OUTPUT_SPACE_TOKENS: Allowed space tokens names of
+#                           DQ2OutputDataset output
+#  DQ2_OUTPUT_LOCATIONS: Default locations of
+#                        DQ2OutputDataset output
+#  DQ2_BACKUP_OUTPUT_LOCATIONS: Default backup locations of
+#                               DQ2OutputDataset output
+#
+#* AthenaLCGRTHandler/AthenaLocalRTHandler
+#  Enforce setting of j.outputdata.location for DQ2OutputDataset
+#
 #Revision 1.2  2008/07/28 14:27:34  elmsheus
 #* Upgrade to DQ2Clients 0.1.17 and DQ2 API
 #* Add full support for DQ2 container datasets in DQ2Dataset

@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.3 2008-07-28 16:56:31 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.4 2008-07-29 10:08:32 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -282,7 +282,6 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['GANGA_SHORTFILENAME'] = ''
                 
             environment['DQ2_OUTPUT_SPACE_TOKENS']= ':'.join(configDQ2['DQ2_OUTPUT_SPACE_TOKENS'])
-            environment['DQ2_OUTPUT_LOCATIONS']= ':'.join(configDQ2['DQ2_OUTPUT_LOCATIONS'])
             environment['DQ2_BACKUP_OUTPUT_LOCATIONS']= ':'.join(configDQ2['DQ2_BACKUP_OUTPUT_LOCATIONS'])
             
         # CN: extra condition for TNTSplitter
