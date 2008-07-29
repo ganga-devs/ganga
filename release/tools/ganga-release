@@ -1,10 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #-*- python -*-
 
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-release,v 1.1 2008-07-17 16:41:39 moscicki Exp $
+# $Id: ganga-release,v 1.2 2008-07-29 14:56:09 moscicki Exp $
 ################################################################################
 
 import os,sys,time,re,shutil
@@ -155,7 +155,25 @@ class GenerateConfigFilesCommand:
             print 'login to %s@lxplus and run this command:'%x[1]
             print gencmd%cfg
             print
-       
+
+class CommitConfigFilesCommand:
+    "COMMIT CONFIG FILES: commit to cvs the previously generated config files (run this command after you've generated all config files on all accounts)"
+    def do(self):
+        import glob
+        
+        pars = {'configtemplatedir': '%(prereldir)s/python/Ganga/Runtime'%CONFIG }
+        pars.update(CONFIG)
+        
+        config_templates = [os.path.basename(x) for x in glob.glob('%(configtemplatedir)s/CONFIG_TEMPLATE*.INI'%pars)]
+
+        print 'the following files will be commited:',config_templates
+
+        for templ in config_templates:
+            pars.update({'template_file': templ})
+            print ('cd %(configtemplatedir)s && (cvs add %(template_file)s ; cvs commit -m "Automatically updated template for %(version)s" %(template_file)s)' % pars)
+
+        print 'done'
+    
 class PretestCommand:
     "TEST: run the test suite in the pre-release prereldir"
     def do(self):
@@ -433,7 +451,7 @@ def _setlib():
 
 _setlib()
 
-commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, PretestCommand, TagCommand, ReleaseCommand, PrepareNextRelease, QuitCommand]
+commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, CommitConfigFilesCommand, PretestCommand, TagCommand, ReleaseCommand, PrepareNextRelease, QuitCommand]
 
 ShowConfig().do()
 
