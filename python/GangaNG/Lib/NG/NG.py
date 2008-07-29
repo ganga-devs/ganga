@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.1 2008-07-17 16:41:29 moscicki Exp $
+# $Id: NG.py,v 1.2 2008-07-29 09:50:41 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -346,7 +346,7 @@ class Grid:
     def submit(self,xrslpath,ce=None,rejectedcl=None):
         '''Submit a XRSL file to NG'''
 
-        cmd = 'ngsub -g ldap://atlasgiis.nbi.dk:2135/o=grid/mds-vo-name=Atlas '
+        cmd = 'ngsub -G ldap://atlasgiis.nbi.dk:2135/o=grid/mds-vo-name=Atlas,ldap://arcgiis.titan.uio.no:2135/o=grid/mds-vo-name=Atlas '
         
         if not self.active:
             logger.warning('NG plugin not active.')
@@ -1485,7 +1485,7 @@ class NG(IBackend):
       if job.name:
           xrslDict[ 'jobname' ] = job.name     
       elif job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.dataset:
-          xrslDict[ 'jobname' ] = job.inputdata.dataset
+          xrslDict[ 'jobname' ] = job.inputdata.dataset[0]
 
       #print "############## This is xrslDict"
       #print xrslDict
@@ -1943,6 +1943,11 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:41:29  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.22  2008/06/06 19:24:25  pajchel
 # prestage of tar balls
 #
