@@ -1,14 +1,14 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.1 2008-07-17 16:41:28 moscicki Exp $
+# $Id: PACKAGE.py,v 1.2 2008-07-29 09:51:14 bsamset Exp $
 ################################################################################
 
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 """
 
 _external_packages = {
-    'nordugrid-arc-standalone' : {'version' : '0.6.1', 'PYTHONPATH':'lib/python2.2/site-packages', 'LD_LIBRARY_PATH':'lib', 'PATH' : 'bin', 'ARC_LOCATION' : '', 'GLOBUS_LOCATION' : ''}
+    'nordugrid-arc-standalone' : {'version' : '0.6.3', 'PYTHONPATH':'lib/python2.2/site-packages', 'LD_LIBRARY_PATH':'lib', 'PATH' : 'bin', 'ARC_LOCATION' : '', 'GLOBUS_LOCATION' : ''}
     }
 
 import os
