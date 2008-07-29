@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Condor.py,v 1.1 2008-07-17 16:40:56 moscicki Exp $
+# $Id: Condor.py,v 1.2 2008-07-29 10:30:39 karl Exp $
 ###############################################################################
 # File: Condor.py
 # Author: K. Harrison
@@ -23,12 +23,15 @@
 # KH - 080410: Corrections made to kill() method of Condor class
 #
 # KH - 080410: Implemented resubmit() method of Condor class
+#
+# KH - 080729: Updates for changes to JobConfig class in Ganga 5
+#              Error message printed in case submit command fails
 
 """Module containing class for handling job submission to Condor backend"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "10 April 2008"
-__version__ = "1.7"
+__date__    = "29 July 2008"
+__version__ = "1.8"
 
 from CondorRequirements import CondorRequirements
 
@@ -126,7 +129,13 @@ class Condor( IBackend ):
       status, output = commands.getstatusoutput( commandString )
 
       self.id = ""
-      if 0 == status:
+      if 0 != status:
+         logger.error\
+            ( "Tried submitting job with command: '%s'" % commandString )
+         logger.error( "Return code: %s" % str( status ) )
+         logger.error( "Condor output:" )
+         logger.error( output )
+      else:
          tmpList = output.split( "\n" )
          for item in tmpList:
             if 1 + item.find( "** Proc" ):
@@ -223,8 +232,11 @@ class Condor( IBackend ):
 
       infileList = []
 
-      exeCmdString = jobconfig.getExeCmdString()
       exeString = jobconfig.getExeString().strip()
+      quotedArgList = []
+      for arg in jobconfig.getArgStrings():
+         quotedArgList.append( "\\'%s\\'" % arg ) 
+      exeCmdString = " ".join( [ exeString ] + quotedArgList )
 
       for filePath in inbox:
          if not filePath in infileList:
@@ -238,6 +250,7 @@ class Condor( IBackend ):
       for filePath in infileList:
          fileList.append( os.path.basename( filePath ) )
 
+      print exeCmdString
       commandList = [
          "#!/usr/bin/env python",
          "# Condor job wrapper created by Ganga",
@@ -254,9 +267,9 @@ class Condor( IBackend ):
          "for inFile in %s:" % str( fileList ),
          "   getPackedInputSandbox( inFile )",
          "",
-         "if os.path.isfile( '%s' ):" % os.path.basename( exeCmdString ),
-         "   os.chmod( '%s', 0755 )" % exeCmdString,
-         "result = os.system( '%s' )" % repr( exeCmdString )[ 1 : -2 ],
+         "if os.path.isfile( '%s' ):" % os.path.basename( exeString ),
+         "   os.chmod( '%s', 0755 )" % os.path.basename( exeString ),
+         "result = os.system( '%s' )" % exeCmdString,
          "",
          "endTime = time.strftime"\
             + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",

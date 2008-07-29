@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: CondorRequirements.py,v 1.1 2008-07-17 16:40:56 moscicki Exp $
+# $Id: CondorRequirements.py,v 1.2 2008-07-29 10:30:39 karl Exp $
 ###############################################################################
 # File: CondorRequirements.py
 # Author: K. Harrison
@@ -16,12 +16,15 @@
 #               Correction to allow configuration values for "machine"
 #               and "excluded_machine" to be either string or list
 #               Correction to handling of requirement for allowed machines
+#
+# KH - 080729 : Updates for typing system of Ganga 5
+#               Improvements to documentation for CondorRequirements properties
 
 """Module containing class for handling Condor requirements"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "26 October 2006"
-__version__ = "1.3"
+__date__    = "29 July 2008"
+__version__ = "1.4"
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
@@ -39,16 +42,30 @@ class CondorRequirements( GangaObject ):
    '''
 
    _schema = Schema(Version(1,0), { 
-      "machine" : SimpleItem( defvalue = "",
-         doc = "Requested execution host(s)" ),
+      "machine" : SimpleItem( defvalue = "", typelist = [ "str", "list" ],
+         doc = """
+Requested execution hosts, given as a string of space-separated names:
+'machine1 machine2 machine3'; or as a list of names:
+[ 'machine1', 'machine2', 'machine3' ]
+""" ),
       "excluded_machine" : SimpleItem( defvalue = "",
-         doc = "Excluded execution host(s)" ),
+         typelist = [ "str", "list" ],
+         doc = """
+Excluded execution hosts, given as a string of space-separated names:
+'machine1 machine2 machine3'; or as a list of names:
+[ 'machine1', 'machine2', 'machine3' ]
+""" ),
       "opsys" : SimpleItem( defvalue = "LINUX", doc = "Operating system" ),
       "arch" : SimpleItem( defvalue = "INTEL", doc = "System architecture" ),
       "memory" : SimpleItem( defvalue = 400, doc = "Mininum physical memory" ),
       "virtual_memory" : SimpleItem( defvalue = 400,
          doc = "Minimum virtual memory" ),
-      "other" : SimpleItem( defvalue=[], sequence=1, doc= "Other requirements" )
+      "other" : SimpleItem( defvalue=[], typelist = [ "str" ], sequence=1, \
+         doc= """
+Other requirements, given as a list of strings, for example:
+[ 'OSTYPE == "SLC4"', '(POOL == "GENERAL" || POOL == "GEN_FARM")' ];
+the final requirement is the AND of all elements in the list
+""" )
       } )
 
    _category = 'condor_requirements'
