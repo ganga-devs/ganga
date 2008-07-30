@@ -62,27 +62,30 @@ try:
                logger.warning('Invalid job id %s',arg)
                continue
 
-            job = jobs(jobnr)
-            if not job:
-               logger.warning('Job %d does not exist.',jobnr)
-               continue
+            logger.warning('The subjobs magic command is not supported anymore in Ganga 5')
+            logger.warning('Please use instead: jobs(%s).subjobs', jobnr) 
 
-            print '\nJob %d - %s - Application %s - Backend %s - Subjobs %3d' % (job.id,job.status,job.application._impl._name,job.backend._impl._name,len(job.subjobs))
-            print '\n#    id    status  backend status  actualCE\n'
+##             job = jobs(jobnr)
+##             if not job:
+##                logger.warning('Job %d does not exist.',jobnr)
+##                continue
 
-            if job.backend._impl._name == 'Panda' and job.backend.buildjob:
-               print '# build %-10s %-15s %-20s\n' % (job.status,job.backend.buildjob.status,job.backend.actualCE) 
+##             print '\nJob %d - %s - Application %s - Backend %s - Subjobs %3d' % (job.id,job.status,job.application._impl._name,job.backend._impl._name,len(job.subjobs))
+##             print '\n#    id    status  backend status  actualCE\n'
 
-            for subjob in job.subjobs:
-                try:
-                    ce = subjob.backend.actualCE
-                except AttributeError:
-                    ce = ''
-                try:
-                    be_status = subjob.backend.status
-                except AttributeError:
-                    be_status = ''
-                print '#%6d %-10s %-15s %-20s' % (subjob.id%10000, subjob.status, be_status, ce)
+##             if job.backend._impl._name == 'Panda' and job.backend.buildjob:
+##                print '# build %-10s %-15s %-20s\n' % (job.status,job.backend.buildjob.status,job.backend.actualCE) 
+
+##             for subjob in job.subjobs:
+##                 try:
+##                     ce = subjob.backend.actualCE
+##                 except AttributeError:
+##                     ce = ''
+##                 try:
+##                     be_status = subjob.backend.status
+##                 except AttributeError:
+##                     be_status = ''
+##                 print '#%6d %-10s %-15s %-20s' % (subjob.id%10000, subjob.status, be_status, ce)
 
     InteractiveShell.magic_cmtsetup = magic_cmtsetup
     InteractiveShell.magic_setup = magic_setup
