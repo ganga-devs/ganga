@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.3 2008-07-30 07:28:57 elmsheus Exp $
+# $Id: Athena.py,v 1.4 2008-07-30 13:13:10 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -261,6 +261,9 @@ class Athena(IApplication):
 
        
         req.close()
+
+        if (athena_compile==True) and (NG==True):
+            raise ApplicationConfigurationError(None, 'athena_compile==True and NG==True ! There is no compilation possible on NorduGrid (NG) - please remove either the athena_compile or NG option as argument of the prepare() method !')
 
         if athena_compile==1 or athena_compile==True:
             athena_compile_flag='True'
@@ -722,6 +725,9 @@ config.addOption('ExcludedSites', '' , 'FIXME')
 config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The path in which the cmtsetup magic function will look up the setup.sh for CMT environment setup')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/07/30 07:28:57  elmsheus
+# Debug print-outs during compilation
+#
 # Revision 1.2  2008/07/28 14:27:34  elmsheus
 # * Upgrade to DQ2Clients 0.1.17 and DQ2 API
 # * Add full support for DQ2 container datasets in DQ2Dataset
