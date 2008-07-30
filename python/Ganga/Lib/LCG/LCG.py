@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.2 2008-07-28 11:00:55 hclee Exp $
+# $Id: LCG.py,v 1.3 2008-07-30 10:27:22 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -1751,22 +1751,13 @@ if config['GLITE_ENABLE']:
 if config['EDG_ENABLE']:
     grids['EDG'] = Grid('EDG')
     if grids['EDG'].shell:
-    config.setSessionValue('DefaultLFC', grids['EDG'].shell.env['LFC_HOST'])
+        config.setSessionValue('DefaultLFC', grids['EDG'].shell.env['LFC_HOST'])
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
-##if config['GLITE_ENABLE']:
-##    grids['GLITE'] = Grid('GLITE')
-##    if grids['GLITE'].shell:
-##        config['DefaultLFC'] = grids['GLITE'].shell.env['LFC_HOST']
-##    config['GLITE_ENABLE'] = grids['GLITE'].active
-##
-##if config['EDG_ENABLE']:
-##    grids['EDG'] = Grid('EDG')
-##    if grids['EDG'].shell:
-##        config['DefaultLFC'] = grids['EDG'].shell.env['LFC_HOST']
-##    config['EDG_ENABLE'] = grids['EDG'].active
-
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/07/28 11:00:55  hclee
+# patching up to the up-to-date development after CVS migration
+#
 # Revision 1.95.4.12  2008/07/15 11:51:42  hclee
 # bug fix: https://savannah.cern.ch/bugs/?37825https://savannah.cern.ch/bugs/?37825
 #
@@ -2280,4 +2271,3 @@ if config['EDG_ENABLE']:
 #
 # Revision 1.5  2005/09/02 12:46:10  liko
 # Extensively updated version
-#
