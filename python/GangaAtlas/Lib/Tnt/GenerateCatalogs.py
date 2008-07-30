@@ -25,7 +25,7 @@ try:
     from dq2.common.client.x509 import *
     from dq2.common.constants import *
     from dq2.common.DQException import *
-    from dq2.common import DQPing
+    from dq2.common.utils.ping import *
     from dq2.location.client.LocationClient import LocationClient
 except ImportError:
     logger.warning("Environment not set [error importing DQ2 dependencies]!")
