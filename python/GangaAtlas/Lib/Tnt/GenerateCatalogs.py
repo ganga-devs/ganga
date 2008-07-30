@@ -23,7 +23,7 @@ except ImportError:
 try:
     from dq2.clientapi.DQ2 import DQ2
     from dq2.common.client.x509 import *
-    from dq2.common.DQConstants import *
+    from dq2.common.constants import *
     from dq2.common.DQException import *
     from dq2.common import DQPing
     from dq2.location.client.LocationClient import LocationClient
