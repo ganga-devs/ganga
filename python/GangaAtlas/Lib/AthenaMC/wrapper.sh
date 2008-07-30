@@ -31,8 +31,33 @@ echo "--------------"
 env
 echo "--------------"
 echo
-echo "INPUT FILES: $INPUTFILES"
 # Work around for glite WMS spaced environement variable problem
+if [ -e inputfiles.conf ] 
+then
+    INPUTFILES_NEW=`cat inputfiles.conf`
+    if [ ! "$INPUTFILES_NEW" = "$INPUTFILES" ]
+    then
+	export INPUTFILES=$INPUTFILES_NEW	
+    fi
+fi
+echo "INPUT FILES: $INPUTFILES"
+if [ -e inputturls.conf ] 
+then
+    INPUTTURLS_NEW=`cat inputturls.conf`
+    if [ ! "$INPUTTURLS_NEW" = "$INPUTTURLS" ]
+    then
+	export INPUTTURLS=$INPUTTURLS_NEW	
+    fi
+fi
+if [ -e inputlfcs.conf ] 
+then
+    INPUTLFCS_NEW=`cat inputlfcs.conf`
+    if [ ! "$INPUTLFCS_NEW" = "$INPUTLFCS" ]
+    then
+	export INPUTLFCS=$INPUTLFCS_NEW	
+    fi
+fi
+# output data
 if [ -e outputfiles.conf ] 
 then
     OUTPUTFILES_NEW=`cat outputfiles.conf`

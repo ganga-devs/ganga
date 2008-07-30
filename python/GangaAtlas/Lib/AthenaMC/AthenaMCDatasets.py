@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.1 2008-07-17 16:41:19 moscicki Exp $
+# $Id: AthenaMCDatasets.py,v 1.2 2008-07-30 13:23:55 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -270,7 +270,7 @@ class AthenaMCInputDatasets(Dataset):
         
         if (datasetType=="DQ2" or datasetType=="unknown") and dataset:
             logger.debug("looking for dataset in DQ2, input data is : %s %s" % (dataset,inputfiles))
-            self.getdq2data(dataset,matcharray,backend,maxfiles,"true")
+            backend = self.getdq2data(dataset,matcharray,backend,maxfiles,"true")
                 
         if (datasetType=="private"  or datasetType=="unknown") and path != "":
             logger.debug("scanning CERN LFC for data in Tier 3, input data is : %s %s " % (path,inputfiles))
@@ -300,7 +300,7 @@ class AthenaMCInputDatasets(Dataset):
         backend=job.backend._name
         maxfiles=-1
         
-        self.getdq2data(dataset,matcharray,backend,maxfiles,"")
+        backend = self.getdq2data(dataset,matcharray,backend,maxfiles,"")
         try:
             assert backend == job.backend._name
         except:
@@ -320,7 +320,7 @@ class AthenaMCInputDatasets(Dataset):
         backend=job.backend._name
         maxfiles=-1
         
-        self.getdq2data(dataset,matcharray,backend,maxfiles,"")
+        backend = self.getdq2data(dataset,matcharray,backend,maxfiles,"")
         try:
             assert backend == job.backend._name
         except:
@@ -329,7 +329,6 @@ class AthenaMCInputDatasets(Dataset):
         return [self.turls,self.lfcs,self.sites]
 
     def getdq2data(self,dataset,matcharray,backend,maxfiles,update):
-
         allturls={}
 
         try:
@@ -370,7 +369,7 @@ class AthenaMCInputDatasets(Dataset):
         # Convert 0.3 output to 0.2 style
         if not contents:
             logger.warning("Empty DQ2 dataset %s. Aborting" % dsetname)
-            return 
+            return
         contents = contents[0]
         contents_new = {}
         for guid, info in contents.iteritems():
@@ -485,7 +484,6 @@ class AthenaMCInputDatasets(Dataset):
                 backend="Panda"
 
         # Once backend selection is done, restrict catalog list to catalogGrid[catalog]=selected backend. Set self.lfcs to this restricted list (LCG only)
-
         if backend=="LCG":
             self.lfcs[dsetname]=""
             for catalog in catalogGrid:
@@ -508,8 +506,8 @@ class AthenaMCInputDatasets(Dataset):
         # Now filling up self.turls...
         self.turls=allturls # as easy as that....
         #logger.warning("final lfc list:%s" % str(self.lfcs))
-
-                    
+        return backend
+    
     def getlfcdata(self,path,matcharray,lfc,backend):
         if path[-1]=="/":
             path=path[:-1] # pruning path .

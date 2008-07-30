@@ -570,6 +570,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         inputfiles=self.turls.keys()
         inputfiles.sort()
         outsite=""
+        environment["INPUTTURLS"]=""
+        environment["INPUTLFCS"]=""
+        environment["INPUTFILES"]=""
         self.inputfile,self.cavernfile,self.minbiasfile="","",""
         if len(inputfiles)>0:
             # need to allocate N input turls, lfcs, files to environment vars.
@@ -586,9 +589,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 imax=self.maxinfiles
             
             self.inputfile=",".join([inputfiles[i] for i in range(imin,imax)])
-            environment["INPUTTURLS"]=""
-            environment["INPUTLFCS"]=""
-            environment["INPUTFILES"]=""
             if app._getRoot().splitter:
                 logger.debug("Splitting data: %d %d %d %d %d " % (self.maxinfiles , app._getRoot().splitter.numsubjobs,ninfiles_subjob,imin,imax))
             j=0 # have to reset j to 0 for each subjob (see wrapper.sh for the reason why)
@@ -658,7 +658,16 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[i].strip())
                 j=j+1
             logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
-        
+        if environment["INPUTTURLS"] :
+            # Work around for glite WMS spaced environement variable problem
+            inputbox += [ FileBuffer('inputturls.conf',environment['INPUTTURLS']+'\n') ]
+        if environment["INPUTLFCS"] :
+            # Work around for glite WMS spaced environement variable problem
+            inputbox += [ FileBuffer('inputlfcs.conf',environment['INPUTLFCS']+'\n') ]
+        if environment["INPUTFILES"] :
+            # Work around for glite WMS spaced environement variable problem
+            inputbox += [ FileBuffer('inputfiles.conf',environment['INPUTFILES']+'\n') ]
+
 
 
 # now doing output files....

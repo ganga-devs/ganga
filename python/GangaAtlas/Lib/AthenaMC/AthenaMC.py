@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.1 2008-07-17 16:41:19 moscicki Exp $
+# $Id: AthenaMC.py,v 1.2 2008-07-30 13:23:55 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -25,31 +25,31 @@ class AthenaMC(IApplication):
     """The main Athena MC Job Handler for JobTransformations"""
 
     _schema = Schema(Version(2,0), {
-        'random_seed'        : SimpleItem(defvalue='1',doc='Random Seed for MC Generator'),
-        'evgen_job_option'         : SimpleItem(defvalue='',doc='JobOption filename, or path is modified locally'),
-        'production_name'    : SimpleItem(defvalue='',doc='Name of the MC production'),
-        'process_name'       : SimpleItem(defvalue='',doc='Name of the generated physics process'),
-        'run_number'         : SimpleItem(defvalue='',doc='Run number'),
+        'random_seed'        : SimpleItem(defvalue='1',doc='Random Seed for MC Generator',typelist=["str"]),
+        'evgen_job_option'         : SimpleItem(defvalue='',doc='JobOption filename, or path is modified locally',typelist=["str"]),
+        'production_name'    : SimpleItem(defvalue='',doc='Name of the MC production',typelist=["str"]),
+        'process_name'       : SimpleItem(defvalue='',doc='Name of the generated physics process',typelist=["str"]),
+        'run_number'         : SimpleItem(defvalue='',doc='Run number',typelist=["str"]),
         'number_events_job'  : SimpleItem(defvalue='',doc='Number of events per job'),
-        'atlas_release'      : SimpleItem(defvalue='',doc='ATLAS Software Release'),
-        'transform_archive'  : SimpleItem(defvalue='',doc='Name or Web location of a modified ATLAS transform archive.'),
-        'se_name'            : SimpleItem(defvalue='none',doc='Name of prefered SE or DQ2 site (from TierOfAtlas.py) for output'),
+        'atlas_release'      : SimpleItem(defvalue='',doc='ATLAS Software Release',typelist=["str"]),
+        'transform_archive'  : SimpleItem(defvalue='',doc='Name or Web location of a modified ATLAS transform archive.',typelist=["str"]),
+        'se_name'            : SimpleItem(defvalue='none',doc='Name of prefered SE or DQ2 site (from TierOfAtlas.py) for output',typelist=["str"]),
         'mode'               : SimpleItem(defvalue='',doc='Step in the generation chain (evgen, simul (is simul+digit), recon, template). template is to use any transformation not coverd by any of the three previous steps.'),
-        'transform_script'     : SimpleItem(defvalue='',doc='File name of the transformation script to use'),
+        'transform_script'     : SimpleItem(defvalue='',doc='File name of the transformation script to use',typelist=["str"]),
         
 #        'input_firstfile'           : SimpleItem(defvalue=1,doc='simul,recon: lowest partition number to be processed from input dataset'),
 #        'number_inputfiles'  : SimpleItem(defvalue=1,sequence=0,doc='Number of inputfiles to process. With input_firstfile, defines a subset of inputfiles to be processed (subset of size number_inputfiles starting with partition number= input_firstfile)'),
 #        'output_firstfile'   : SimpleItem(defvalue=1,doc='offset for output file partition numbers. First job will generate the partition number output_firstfile, second will generate output_firstfile+1, and so on...'),
-        'firstevent'         : SimpleItem(defvalue=1,doc='evgen: sets first event number to be generated (in first job. The first event number in second job will be firstevent+number_events_job and so on...). simul, recon: decides how many events to be skipped in input files (= skip +1). This is propagated to all subjobs.'),
-        'extraArgs'          : SimpleItem(defvalue='',doc='Extra arguments for the transformation, fixed value (experts only)'),
-        'extraIncArgs'       : SimpleItem(defvalue='',doc='Extra integer arguments for the transformation, with value increasing with the subjob number. Please set like this: extraIncArgs="arg1=val1_0 arg2=val2_0" with valX_0 the value taken by the argument at the first subjob. On the second subjob, the arguments will have the value valX_0 + 1 and so on...  (experts only)'),
-        'geometryTag'        : SimpleItem(defvalue='ATLAS-DC3-05',doc='Geometry tag for simulation and reconstruction'),        
+        'firstevent'         : SimpleItem(defvalue=1,doc='evgen: sets first event number to be generated (in first job. The first event number in second job will be firstevent+number_events_job and so on...). simul, recon: decides how many events to be skipped in input files (= skip +1). This is propagated to all subjobs.',typelist=["int"]),
+        'extraArgs'          : SimpleItem(defvalue='',doc='Extra arguments for the transformation, fixed value (experts only)',typelist=["str"]),
+        'extraIncArgs'       : SimpleItem(defvalue='',doc='Extra integer arguments for the transformation, with value increasing with the subjob number. Please set like this: extraIncArgs="arg1=val1_0 arg2=val2_0" with valX_0 the value taken by the argument at the first subjob. On the second subjob, the arguments will have the value valX_0 + 1 and so on...  (experts only)',typelist=["str"]),
+        'geometryTag'        : SimpleItem(defvalue='ATLAS-DC3-05',doc='Geometry tag for simulation and reconstruction',typelist=["str"]),        
         'partition_number'  : SimpleItem(defvalue='',doc='output partition number'),
-        'triggerConfig' : SimpleItem(defvalue='NONE',doc='recon, 12.0.5 and beyond: trigger configuration'),
-        'version' : SimpleItem(defvalue='',doc='version tag to insert in the output dataset and file names'),
-        'verbosity' : SimpleItem(defvalue='ERROR',doc='Verbosity of transformation for log files'),
-        'siteroot' : SimpleItem(defvalue='',doc='location of experiment software area for non-grid backends.'),
-        'cmtsite' : SimpleItem(defvalue='',doc='flag to use kit or cern AFS installation. Set to CERN for the latter, leave unset otherwise.')
+        'triggerConfig' : SimpleItem(defvalue='NONE',doc='recon, 12.0.5 and beyond: trigger configuration',typelist=["str"]),
+        'version' : SimpleItem(defvalue='',doc='version tag to insert in the output dataset and file names',typelist=["str"]),
+        'verbosity' : SimpleItem(defvalue='ERROR',doc='Verbosity of transformation for log files',typelist=["str"]),
+        'siteroot' : SimpleItem(defvalue='',doc='location of experiment software area for non-grid backends.',typelist=["str"]),
+        'cmtsite' : SimpleItem(defvalue='',doc='flag to use kit or cern AFS installation. Set to CERN for the latter, leave unset otherwise.',typelist=["str"])
         })
     
     _category = 'applications'
@@ -75,7 +75,6 @@ class AthenaMC(IApplication):
     
     def master_configure(self):
        """Prepare the job from the user area"""
-
        try:
           assert self.mode in [ 'evgen', 'simul' , 'recon' , 'template']
        except AssertionError:
@@ -188,7 +187,7 @@ class AthenaMCSplitterJob(ISplitter):
         return subjobs
 
 
-config = makeConfig('AthenaMC', 'AthenaMC configuration options') 	
+config = makeConfig('AthenaMC', 'AthenaMC configuration options')
 logger = getLogger()
 
 # some default values
@@ -196,6 +195,11 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:41:19  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.19.2.5  2008/04/22 11:23:22  fbrochu
 # bug fix for template mode: taking into account first event/ skip parameters in list of transformation parameters
 #
