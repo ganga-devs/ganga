@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.4 2008-07-29 10:08:32 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.5 2008-07-30 12:16:35 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -400,7 +400,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             # remove protocol and host
             pfn = re.sub('^[^:]+://[^/]+','',surl)
             # remove redundant /
-	    pfn = re.sub('^//','/',pfn)
+            pfn = re.sub('^//','/',pfn)
             if 'srm.grid.sinica.edu.tw' in defaultSE:
                 pfn = "rfio://castor.grid.sinica.edu.tw/?path=" + pfn
             else:
@@ -449,7 +449,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             # remove protocol and host
             pfn = re.sub('^[^:]+://[^/]+','',surl)
             # remove redundant /
-	    pfn = re.sub('^//','/',pfn)
+            pfn = re.sub('^//','/',pfn)
         # If all fails use gfal:srm://...
         else:
             pfn = "gfal:"+surl
@@ -664,7 +664,12 @@ def getLocalFileMetadata(file):
 
 ########################################################################
 # Save outfile file on SE
-def save_file(griddir, dest, gridlfn, output_lfn, filename, poolguid, siteID, tokenname=''):
+def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, siteID, tokenname=''):
+
+    # Calc timeout
+    timeout = int(300 * 2**count)
+    if timeout<300:
+        timeout = 300
     
     # Create LFC directory
     cmd = "lfc-mkdir -p %s" %(griddir) 
@@ -681,9 +686,9 @@ def save_file(griddir, dest, gridlfn, output_lfn, filename, poolguid, siteID, to
     else:
         cmd = "lcg-cr --vo atlas "
     if poolguid != '':
-        cmd = cmd + " -t 300 -d %s -g %s -l %s file://%s" %(dest, poolguid, gridlfn, filename)
+        cmd = cmd + " -t %s -d %s -g %s -l %s file://%s" %(timeout, dest, poolguid, gridlfn, filename)
     else:
-        cmd = cmd + " -t 300 -d %s -l %s file://%s" %(dest, gridlfn, filename)
+        cmd = cmd + " -t %s -d %s -l %s file://%s" %(timeout, dest, gridlfn, filename)
     rc, out = commands.getstatusoutput(cmd)
     if rc == 0:
         # Open output_guids to transfer guids back to GANGA
@@ -1843,7 +1848,7 @@ if __name__ == '__main__':
                 print 'poolguid: %s' %poolguid
 
 
-                guid, size, md5sum = save_file(griddir, dest, gridlfn, output_lfn, filename, poolguid, siteID, output_tokenname)
+                guid, size, md5sum = save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, siteID, output_tokenname)
                 if guid!=-1:
                     dq2lfns.append(file)
                     guids.append(guid)
