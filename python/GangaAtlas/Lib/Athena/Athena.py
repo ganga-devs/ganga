@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.2 2008-07-28 14:27:34 elmsheus Exp $
+# $Id: Athena.py,v 1.3 2008-07-30 07:28:57 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -34,7 +34,7 @@ def mktemp(extension,name,path):
         if not os.path.exists(filename):
             return filename
         i+=1
-	 
+
     return None
 
 class AthenaOutputDataset(GangaObject):
@@ -183,13 +183,13 @@ class Athena(IApplication):
 
     def setup(self):
         """Run CMT setup script"""
-	
+
         rc, output = commands.getstatusoutput('source setup.sh; printenv')
         if rc: logger.warning('Unexpected return code %d from setup command',rc)
 
         for key, val in re.findall('(\S+)=(\S+)\n',output):
-	    if key not in ['_','PWD','SHLVL']:
-	        os.environ[key] = val
+            if key not in ['_','PWD','SHLVL']:
+                os.environ[key] = val
 
     def postprocess(self):
         """Determine outputdata and outputsandbox locations of finished jobs
@@ -208,7 +208,7 @@ class Athena(IApplication):
         self.read_cmt()
 
         user_excludes = ['']
-	
+
         logger.info('Found ATLAS Release %s',self.atlas_release)
         if self.atlas_production:
             logger.info('Found ATLAS Production Release %s',self.atlas_production)
@@ -320,6 +320,12 @@ cmt broadcast cmt config
 source setup.sh
 if [ '%(athena_compile_flag)s' = 'True' ]
 then
+    echo '==========================='
+    echo 'GCC =' `which gcc`
+    echo `gcc --version`
+    echo 'PATH =' $PATH
+    echo 'LD_LIBRARY_PATH =' $LD_LIBRARY_PATH
+    echo '==========================='
     cmt broadcast gmake -s
 fi
 """ % { 'athena_compile_flag' : athena_compile_flag
@@ -716,6 +722,12 @@ config.addOption('ExcludedSites', '' , 'FIXME')
 config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The path in which the cmtsetup magic function will look up the setup.sh for CMT environment setup')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/07/28 14:27:34  elmsheus
+# * Upgrade to DQ2Clients 0.1.17 and DQ2 API
+# * Add full support for DQ2 container datasets in DQ2Dataset
+# * Change in DQ2OutputDataset.retrieve(): use dq2-get
+# * Fix bug #39286: Athena().atlas_environment omits type_list
+#
 # Revision 1.1  2008/07/17 16:41:18  moscicki
 # migration of 5.0.2 to HEAD
 #
