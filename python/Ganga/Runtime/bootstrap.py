@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
+# $Id: bootstrap.py,v 1.2 2008-07-31 17:25:02 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -143,11 +143,11 @@ under certain conditions; type license() for details.
                 return file(f)
             except IOError,x:
                self.exit(message,x)
-	       
-	# use GANGA_CONFIG_FILE env var if it's set
-	if self.options.config_file is None:
-	   self.options.config_file = os.environ.get('GANGA_CONFIG_FILE',None)
-	   
+
+        # use GANGA_CONFIG_FILE env var if it's set
+        if self.options.config_file is None:
+           self.options.config_file = os.environ.get('GANGA_CONFIG_FILE',None)
+           
         if self.options.config_file:
            import Ganga.Utility.files
            self.options.config_file = Ganga.Utility.files.expandfilename(self.options.config_file)
@@ -168,13 +168,13 @@ under certain conditions; type license() for details.
         def generate(where):
             import shutil
 
-	    flavour = Ganga.Utility.Config.Config.getFlavour()
+            flavour = Ganga.Utility.Config.Config.getFlavour()
             print "Using flavour %s"%flavour
             if flavour:
                 configtemplate = "/CONFIG_TEMPLATE_%s.INI"%flavour   
             else:
                 configtemplate = "/CONFIG_TEMPLATE.INI"   
-            shutil.copy(os.path.dirname(__file__)+configtemplate,where)
+            shutil.copy(os.path.join(os.path.dirname(_gangaPythonPath),'templates',configtemplate),where)
             print >> sys.stderr, 'Created standard config file',where
             
         gangadir = os.path.expanduser('~/gangadir')
@@ -353,7 +353,7 @@ some packages such as GangaTest may be taken from the release area.""",
 RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
 
         config.addOption('TextShell','IPython',""" The type of the interactive shell: IPython (cooler) or Console (limited)""")
-	config.addOption('StartupGPI','','block of GPI commands executed at startup')
+        config.addOption('StartupGPI','','block of GPI commands executed at startup')
         config.addOption('gangadir',Ganga.Utility.Config.expandvars(None,'~/gangadir'),'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.',filter=Ganga.Utility.Config.expandvars)
         config.addOption('repositorytype','LocalAMGA','Type of the repository.',examples='LocalAMGA,RemoteAMGA,LocalXML')
         config.addOption('workspacetype','LocalFilesystem','Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
@@ -383,10 +383,10 @@ If ANSI text colours are enabled, then individual colours may be specified like 
  fx.xxx - Effects: %s
         """ % (Ganga.Utility.ColourText.Foreground.__doc__, Ganga.Utility.ColourText.Background.__doc__,Ganga.Utility.ColourText.Effects.__doc__ ))
         
-	#[Shell] section
-	shellconfig = makeConfig( "Shell", "configuration parameters for internal Shell utility." )
-	shellconfig.addOption('IgnoredVars',['_','SHVL','PWD'],'list of env variables not inherited in Shell environment')
-	
+        #[Shell] section
+        shellconfig = makeConfig( "Shell", "configuration parameters for internal Shell utility." )
+        shellconfig.addOption('IgnoredVars',['_','SHVL','PWD'],'list of env variables not inherited in Shell environment')
+        
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
         # because the user config file is put at the end it always may override everything else
@@ -561,9 +561,9 @@ default_backends = LCG
         from Ganga.GPIDev.Credentials import getCredential 
         
         # only the available credentials are exported
-	
-	# At this point we expect to have the GridProxy already created 
-	# by one of the Grid plugins (LCG/NG/etc) so we search for it in creds cache
+        
+        # At this point we expect to have the GridProxy already created 
+        # by one of the Grid plugins (LCG/NG/etc) so we search for it in creds cache
         credential = getCredential(name = 'GridProxy', create = False)
         if credential:
             exportToGPI('gridProxy',GPIProxyObjectFactory(credential),'Objects','Grid proxy management object.')
@@ -721,7 +721,7 @@ default_backends = LCG
           if rc > 0 and tfconfig['EnableHTMLReporter']:                          
              self.logger.info("Generating tests HTML reports")
              rc = htmlizer.main(tfconfig)
-	     
+
           return rc
        except ImportError,e:
           self.logger.error("You need GangaTest external package in order to invoke Ganga test-runner.")
@@ -738,35 +738,35 @@ default_backends = LCG
 
         if local_ns is None:
             import __main__
-            local_ns = __main__.__dict__	    
+            local_ns = __main__.__dict__
         #save a reference to the Ganga namespace as an instance attribute
         self.local_ns = local_ns
-	    
+            
         # load templates for user-defined runtime modules
         from Ganga.Utility.Runtime import allRuntimes
         for r in allRuntimes.values():
             r.loadTemplates( local_ns )
-	
-	# exec ~/.ganga.py file
-	fileName = fullpath('~/.ganga.py')
-    	if os.path.exists(fileName):
-       	    try:
+        
+        # exec ~/.ganga.py file
+        fileName = fullpath('~/.ganga.py')
+        if os.path.exists(fileName):
+            try:
                 execfile( fileName, local_ns )
             except Exception, x:
                 logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(e))
         # exec StartupGPI code          
         from Ganga.Utility.Config import getConfig      
-        config=getConfig('Configuration')	
-	# exec StartupGPI code		
-	from Ganga.Utility.Config import getConfig	
+        config=getConfig('Configuration')       
+        # exec StartupGPI code          
+        from Ganga.Utility.Config import getConfig      
         config=getConfig('Configuration')
-	if config['StartupGPI']:
-	   #ConfigParser trims the lines and escape the space chars
-	   #so we have only one possibility to insert python code : 
-	   # using explicitly '\n' and '\t' chars
-	   code = config['StartupGPI'].replace('\\t','\t').replace('\\n','\n')
-	   exec code in local_ns
-	   
+        if config['StartupGPI']:
+           #ConfigParser trims the lines and escape the space chars
+           #so we have only one possibility to insert python code : 
+           # using explicitly '\n' and '\t' chars
+           code = config['StartupGPI'].replace('\\t','\t').replace('\\n','\n')
+           exec code in local_ns
+           
         # monitor the  ganga usage
         import spyware
 
@@ -783,12 +783,12 @@ default_backends = LCG
         
         if self.options.TEST:
             sys.argv = self.args
-	    try:
-	       rc = self.startTestRunner()	       
-	    except (KeyboardInterrupt, SystemExit):
-	       self.logger.warning('Test Runner interrupted!')
-	       sys.exit(1)
-	    sys.exit(rc)
+            try:
+               rc = self.startTestRunner()             
+            except (KeyboardInterrupt, SystemExit):
+               self.logger.warning('Test Runner interrupted!')
+               sys.exit(1)
+            sys.exit(rc)
 
         if len(self.args) > 0:
             # run the script and make it believe it that it is running directly as an executable (sys.argv)
@@ -799,7 +799,7 @@ default_backends = LCG
             path = Ganga.Utility.Runtime.getSearchPath()
             script = Ganga.Utility.Runtime.getScriptPath( self.args[ 0 ], path )
                   
-            if script:	       
+            if script:         
                execfile( script, local_ns )
             else:
                self.logger.error( "'%s' not found" % self.args[ 0 ] )
@@ -855,19 +855,19 @@ default_backends = LCG
 
             setCacheFilter(CacheFilter())
 
-            def ganga_prompt():	       
+            def ganga_prompt():        
                default_handler2.flush()
 
-	       credentialsWarningPrompt = ''
-	       #alter the prompt only when the internal services are disabled
-	       from Ganga.Core.InternalServices import Coordinator
-	       if not Coordinator.servicesEnabled:
-		  invalidCreds = Coordinator.getMissingCredentials()
-		  if invalidCreds:
-		     credentialsWarningPrompt = '[%s required]' % ','.join(invalidCreds)
-		  if credentialsWarningPrompt: # append newline
-		     credentialsWarningPrompt+='\n'
-	       
+               credentialsWarningPrompt = ''
+               #alter the prompt only when the internal services are disabled
+               from Ganga.Core.InternalServices import Coordinator
+               if not Coordinator.servicesEnabled:
+                  invalidCreds = Coordinator.getMissingCredentials()
+                  if invalidCreds:
+                     credentialsWarningPrompt = '[%s required]' % ','.join(invalidCreds)
+                  if credentialsWarningPrompt: # append newline
+                     credentialsWarningPrompt+='\n'
+               
                return credentialsWarningPrompt
             
             from IPython.Shell import IPShellEmbed          
@@ -917,6 +917,11 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:41:00  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.71.4.23  2008/07/03 16:11:31  moscicki
 # bug #38000: Add check for old .gangarc file
 #
