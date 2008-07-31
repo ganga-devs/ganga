@@ -4,10 +4,9 @@ flavour = Ganga.Utility.Config.Config.getFlavour()
 
 import os.path, Ganga
 
-gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
+gangaPath = os.path.dirname(os.path.dirname(os.path.dirname(Ganga.__file__)))
 
-runtimePath = os.path.join(gangaPythonPath,"Ganga/Runtime")
-headerFile = os.path.join(runtimePath,"HEAD_CONFIG.INI")
+headerFile = os.path.join(gangaPath,"python","Ganga","Runtime","HEAD_CONFIG.INI")
 
 text = open(headerFile).read()
 text += Ganga.GPIDev.Lib.Config.Config.config_file_as_text()
@@ -17,7 +16,7 @@ if flavour:
 else:
     filename = "CONFIG_TEMPLATE.INI"   
 
-configFile = os.path.join(runtimePath,filename)
+configFile = os.path.join(gangaPath,"templates",filename)
 print >>open(configFile,'w'), text
 
 print "created:",configFile
