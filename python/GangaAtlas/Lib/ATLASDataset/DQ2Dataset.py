@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.4 2008-07-29 10:08:32 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.5 2008-07-31 14:14:19 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -339,6 +339,9 @@ class DQ2Dataset(Dataset):
                 contents = []
                 pass
 
+            if not len(contents):
+                continue
+
             # Convert 0.3 output to 0.2 style
             contents = contents[0]
             contents_new = []
@@ -402,6 +405,9 @@ class DQ2Dataset(Dataset):
 
             if not contents:
                 return [] # protects against crash in next line if contents is empty
+            if not len(contents):
+                continue
+
             # Convert 0.3 output to 0.2 style
             contents = contents[0]
             contents_new = []
@@ -1148,6 +1154,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.4  2008/07/29 10:08:32  elmsheus
+#Remove DQ2_OUTPUT_LOCATIONS again
+#
 #Revision 1.3  2008/07/28 16:56:30  elmsheus
 #* ganga-stage-in-out-dq2.py:
 #  - Add fix for DPM setup for NIKHEF and SARA
