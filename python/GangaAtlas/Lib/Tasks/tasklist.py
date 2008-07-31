@@ -51,8 +51,6 @@ class TaskList(GangaObject):
 
       fna = os.path.join(config.Configuration["gangadir"], "tasks.dat.tmp")
       fnb = os.path.join(config.Configuration["gangadir"], "tasks.dat")
-      #fna = os.path.join(getConfig("DefaultJobRepository").getEffectiveOption("local_root"), "tasks.dat.tmp")
-      #fnb = os.path.join(getCtasonfig("DefaultJobRepository").getEffectiveOption("local_root"), "tasks.dat")
 
       export(self._proxyObject, fna)
       import os
@@ -88,8 +86,8 @@ class TaskList(GangaObject):
       fstring = "%2s | %10s | %20s | %10s | %6s %27s | %15s\n"
       ds = "\n" 
       ds += fstring % ("#", "Type", "Name", "State", "Jobs:", "%3s / %3s / %3s / %3s / %3s" % ("t","d","w","i","fi"), "Total Float")
-      ds += "-"*100 + "\n"
-
+      ds += "-"*110 + "\n"
+      
       for i in range(0,len(self.data)):
          p = self.data[i]
          try:
@@ -97,14 +95,14 @@ class TaskList(GangaObject):
          except KeyError:
             colour = fx.normal
 
-	 t = p.get_total_jobs()
+         t = p.get_total_jobs()
          c = p.get_done_jobs()
          r = p.get_working_jobs()
-	 ig = p.get_ignored_jobs()
-	 fig = p.get_forced_ignored_jobs()
+         ig = p.get_ignored_jobs()
+         fig = p.get_forced_ignored_jobs()
          ds += markup(fstring % (str(i), p.__class__.__name__, p.name, p.status, "", "%3i / %3i / %3i / %3i / %3i" % (t,c,r,ig,fig), p.float), colour)
       ds +=  "\n"
-      ds += "t = total; d = done; w = working; i = ignored; fi = forced ignorance"
+      ds += "t = total; d = done; w = working; i = ignored; fi = force ignore"
       return ds
 
    def get(self,name, warn=True):
@@ -126,7 +124,7 @@ class TaskList(GangaObject):
             return GPIProxyObjectFactory(p)
             #return p
       if warn:
-         logger.warning("Task %s not found!" % name)	    
+         logger.warning("Task %s not found!" % name)            
 
    def remove(self,name,warn = True):
       """Delete the task 'name'"""
@@ -137,6 +135,7 @@ class TaskList(GangaObject):
             return
          for i in range(0,len(self.data)):
             logger.info("Removing jobs of task %s"%self.data[0].name)
+            self.data[0].pause();self.save()
             self.data[0].remove_jobs('all',True)
             del self.data[0]
             logger.info("Task number %d deleted" % i)
@@ -155,11 +154,12 @@ class TaskList(GangaObject):
       for i in range(0,len(self.data)):
          if self.data[i].name == name:
             logger.info("Removing jobs of task %s"%name)
+            self.data[i].pause();self.save()
             self.data[i].remove_jobs('all',True)
             del self.data[i]
             logger.info("Task %s deleted" % name)
             self.save()
-	    return
+            return
       if warn:
          logger.warning("Task %s not found!" % name)
 
@@ -178,6 +178,9 @@ class TaskList(GangaObject):
          if "jobs" in reload(Ganga.GPI).__dict__:
             break
          time.sleep(3)
+      #print "vor while "
+      still_new={}
+      flag_new=0
       while self._run_thread:
          logger.debug("Background task thread waking up...")
          try:
@@ -185,48 +188,79 @@ class TaskList(GangaObject):
          except Exception,x:
             logger.error("Could not save tasks to file: %s" % x)
 
-         for p in [p for p in self.data if p.status == "running"]:
-            try:
-               #print "getting total"
-               t = p.get_total_jobs()
-               #print "total =%d"%t
-               c = p.get_done_jobs()
-               r = p.get_working_jobs()
-               i = p.get_ignored_jobs()
-               fig=p.get_forced_ignored_jobs()
+         for p in [p for p in self.data if p.status in ["new", "running"]]:
+            if p.status=="new":
+               if not p.name in still_new:
+                  still_new[p.name]="0:0"
+               else:
+                  limits=still_new[p.name].split(":")
+                  ncycles=int(limits[0]); nsubmits=int(limits[1])
+                  if nsubmits>5: continue
+                  if nsubmits==5: print "warn"; nsubmits+=1;still_new[p.name]="%d:%d"%(ncycles,nsubmits)
+                  if ncycles==10:
+                     p.submit()
+                     nsubmits+=1
+                     if p.status=="running": still_new.pop(p.name)
+                     else: ncycles=0
+                  else: ncycles+=1
+                  still_new[p.name]="%d:%d"%(ncycles,nsubmits)
                
-               if r == 0 and t == c and t > 0:
-                  p.status = "completed"
-                  logger.info("Task %s has been completed!" % p.name)
-                  p.on_complete()
-                  continue
+            else:
+               if p.name in still_new:still_new.pop(p.name)
+               try:
+                  my_debugg=False
+                  t = p.get_total_jobs()
+                  c = p.get_done_jobs()
+                  r = p.get_working_jobs()
+                  i = p.get_ignored_jobs()
+                  fig=p.get_forced_ignored_jobs()
+                  if my_debugg: print "total=%d, comp=%d, running=%d, igno=%d, forced igno=%d"%(t,c,r,i,fig)
+                  remain=t-c
+                  if r == 0 and t == c+fig and t > 0:
+                     if fig>0: logger.warning("Note that you have %d force-ignored jobs"%fig)
+                     p.status = "completed"
+                     logger.info("Task %s has been completed!" % p.name)
+                     p.on_complete()
+                     continue
 
-               if t==0:print "please waite ... ",;continue #this happens sometimes at the beginning when a task is submitted
-               if p.float>t:
-                  logger.info(""" Task '%s': float is set to %d (larger than total jobs of %d), setting it to float=%d"""%(p.name,p.float,t,t))
-                  p.float=t
-                  
-               if t==(i+fig): #t>0
-                  logger.info("All of task's jobs are ignored. Pausing the task.")
-                  p.pause()
-                  continue
+                  if t==0:print "please waite ... ",;continue #this happens sometimes at the beginning when a task is submitted
+                  if p.working_float > t:
+                     logger.info(""" Task '%s': working_float is set to %d, larger than total number of jobs (%d). Setting it to working_float=%d"""%(p.name,p.working_float,t,t))
+                     p.working_float=t
+                  if p.float > t:
+                     logger.info(""" Task '%s': float is set to %d, larger than total number of jobs (%d). Setting it to float=%d"""%(p.name,p.float,t,t))
+                     p.float=t
 
-               threshold= p.get_ignored_jobs()*100.0/p.get_total_jobs()
-               if threshold > 5:
-                  p.pause()
-                  logger.error("Task %s paused - %2i%% of its jobs have been resubmitted more than 'run_limit' times." % (p.name,threshold)) 
-                  logger.error("Please investigate the cause of the failing jobs and then either:") 
-                  logger.error(" * remove the previously failed jobs or") 
-                  logger.error(" * increase the run_limit for the concerned jobs")
-                  logger.error("You can continue the task with tasks.get('%s').unpause()" % p.name)
-                  continue
-               #print "going to run ........... "
-               p.run()
-               #print "after p. run ........... "
-            except Exception, x:
-               logger.error("Exception occurred in task monitoring loop: %s\nWaiting for 30 seconds to try again" % x)
-               self.save()
-               time.sleep(30)
+                  if p.float>0 and p.float==c and p.working_float>0 and p.working_float > p.float:
+                     logger.info("Task %s: %d jobs ran successfully (as many as 'float' was set)\n Setting float to %d"%(p.name,c,p.working_float))
+                     p.float = p.working_float
+                     if p.working_float<=2:p.working_float=0
+                                    
+                  if t==(i+fig): #t>0
+                     logger.info("All of task's jobs are ignored. Pausing the task.")
+                     p.pause()
+                     continue
+
+                  threshold= p.get_ignored_jobs()*100.0/p.get_total_jobs()
+                  pause_the_task=False
+                  if (threshold > 5 and t>40) or (t>20 and t<41 and  threshold > 15) or (t<21 and t>10 and threshold > 30) or (t<11 and threshold > 50):pause_the_task=True
+                  if pause_the_task:#threshold > 5 and t>40:
+                     p.pause()
+                     logger.error("Task %s paused - %2i%% of its jobs have been resubmitted more than 'run_limit' times." % (p.name,threshold)) 
+                     logger.error("Please investigate the cause of the failing jobs and then either:") 
+                     logger.error(" * remove the previously failed jobs or") 
+                     logger.error(" * increase the run_limit for the concerned jobs")
+                     logger.error("You can continue the task with tasks.get('%s').unpause()" % p.name)
+                     continue
+
+                  if my_debugg: print "Calling p.run in _thread_main. if this goes well you will see an other message: ' p.run called' "
+                  p.run()
+                  if my_debugg: print "p.run called"
+               
+               except Exception, x:
+                  logger.error("Exception occurred in task monitoring loop: %s\nWaiting for 30 seconds to try again" % x)
+                  self.save()
+                  time.sleep(30)
          time.sleep(sleeptime)
       logger.warning("Backgroud task thread stopped.")
 

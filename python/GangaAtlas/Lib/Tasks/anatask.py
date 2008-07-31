@@ -29,24 +29,16 @@ mylist=MyList.MyList()
 #respsites=None
 import os
 #######################
-def remove_multiple_files(fls_tuple):
-    """ checks a multible of a file is listed in a list of specified files to be analysed"""
-    files_in_set=[]
-    numbers_of_taken_fls=[]
-    #neg=0
-    for t in fls_tuple:
-        files_in_set.append(t[1])
-    return files_in_set
- 
 class AnaTask(task.Task):
     """ This class describes an analysis 'task' on the grid. """
     
     _schema = Schema(Version(1,0), dict(task.Task._schema.datadict.items() + {
         'application_max_events'    : SimpleItem(defvalue=-1,  checkset="check_new",doc="Total number of events to analyze"),
         'application_option_file'     : SimpleItem(defvalue='',checkset="check_new",doc="Set this to the full path to your analysis jobOption file"),
-        'application_group_area'    : SimpleItem(defvalue='http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/PAT/EventView/EventView-12.0.7.1.tar.gz', checkset="check_new",doc=""),
+        'application_group_area'    : SimpleItem(defvalue='', checkset="check_new",doc=""),
         'application_exclude_from_user_area'    : SimpleItem(defvalue=["*.o","*.root*","*.exe"], doc="Pattern of files to exclude from user area"),
         'files_per_job'  : SimpleItem(defvalue=-1,    doc="number of files per job"),
+
         'athena_version'  : SimpleItem(defvalue='12.0.6',   doc="Athena versions to use"),
         'inputdata_dataset'   : SimpleItem(defvalue='',    checkset="check_new",doc="input dataset"),
         'inputdata_names'         : SimpleItem(defvalue=[],  checkset="check_inputnames",doc="Set this if you only want to analyze some files from the input dataset"),
@@ -56,29 +48,21 @@ class AnaTask(task.Task):
         'outputdata_location' : SimpleItem(defvalue='',  checkset="check_new",doc="where to put the output ROOT-file"),
         'outputdata_outputdata' : SimpleItem(defvalue=[],    checkset="check_new",doc="output ROOT-file"),
         'outputdata_datasetname' :SimpleItem(defvalue='',    checkset="check_new",doc="output dataset"),
-        #'outputdata_datasetname' :SimpleItem(defvalue='' ,doc="output dataset"),
-        'requirements_sites'  : SimpleItem(defvalue=[], checkset="check_req_sites",doc="sites where the job should run"),
         'allowed_sites'  : SimpleItem(defvalue=[], doc="sites where the job is allowed to run"),
 
-        'CE'               : SimpleItem(defvalue='',  checkset="check_CE",doc="Specific site to send jobs to"),
         'excluded_sites'  : SimpleItem(defvalue=[],  checkset="check_exclud_sites",doc="sites which you want to exclude for this task"),
         'excluded_files'  : SimpleItem(defvalue=[],   checkset="check_exclud_files",doc="files in the dataset which should be excluded"),
-        'excluded_CEs'  : SimpleItem(defvalue=[]  ,doc="exclude CEs"),
-        #'CE'               : SimpleItem(defvalue='',doc="Specific site to send jobs to"),
+
         'abstract_jobs'  : SimpleItem(defvalue={},  checkset="check_new",doc="contains job name, files to be analysed and sites where to run"),
         'app_opt_file_content' : SimpleItem(defvalue=[],  checkset="check_new",doc="content of jobOption file"),
-        'allow_change' : SimpleItem(defvalue=False,  doc="allow direct changes on attributes "),
-        'report_output' : SimpleItem(defvalue=False,  doc="create a file with name 'Task_'+ taskname+'_report' and write all incidents to it"),
-        'report_file' : SimpleItem(defvalue="", checkset="check_report_file",doc="create a file with name 'Task_'+ taskname+'_report' and write all incidents to it"),
        }.items()))
     
-    allow_change=False
     _category = 'Tasks'
     _name = 'AnaTask'
     _exp_sites=[]
     _resp_sites=None
     
-    _exportmethods = task.Task._exportmethods + ['ext_excl_files','ext_excl_sites','ext_infiles','ext_req_sites','_change_CE','release_ignored_jobs','ext_excl_CE'] 
+    _exportmethods = task.Task._exportmethods + ['ext_excl_files','ext_infiles','release_ignored_jobs','get_files'] 
     
     def __init__(self):
         super(self.__class__, self).__init__() 
@@ -100,11 +84,11 @@ class AnaTask(task.Task):
             logger.info("You should have seen an Error-Message telling you that something is wrong with the dataset");
             logger.info("Dataset problems !! Task '%s' not submitted."%self.name)
             return
-        #sites=self.get_all_sites(d)
 
         self._exp_sites=self._resp_sites.get_dataset_locs(d)
         self.allowed_sites=self._resp_sites.get_allowed_sites(self._exp_sites)
-
+        print self.allowed_sites
+        print self._exp_sites
         if not self._resp_sites.Sites:
             self._resp_sites.set_sites(self.allowed_sites)
         
@@ -112,10 +96,9 @@ class AnaTask(task.Task):
         if len(mylist.difference(self._exp_sites,self.allowed_sites))>0:
             info_txt+="of which the following sites are labelled as 'unsuitable:'\n%s\n"%(mylist.difference(self._exp_sites,self.allowed_sites))
         logger.info(info_txt)
-
         site_info_basic=self.get_site_info_basic(conts,d)
         if not site_info_basic:
-            logger.info("No sites info is available. Task '%s' not submitted."%self.name)
+            logger.info("----------- No sites info is available. Task '%s' not submitted."%self.name)
             return
         
         site_info_listed=self.prepare_site_info(conts,site_info_basic)
@@ -129,17 +112,15 @@ class AnaTask(task.Task):
         njobs=len(jobs_to_run)
         if njobs==0:
             logger.warning('Task "%s": number of jobs is 0 ! verify you settings'%self.name)
-            logger.info('Task is not submitted.')
+            logger.info('Task "%s" not submitted.'%self.name)
             return
 
     
         logger.info("""Total of %d jobs"""%njobs)
         super(AnaTask, self).submit()
         
-        #check if float > njobs
         if self.float>njobs: self.float=njobs
-        #self.abstract_jobs={}
-
+ 
         self.allow_change=True
         self.abstract_jobs=jobs_to_run
         self.allow_change=False
@@ -150,34 +131,13 @@ class AnaTask(task.Task):
 ################# check and set attributes
     def set_attributes(self,DQ2_inst):
         """ checks if the attributs are set properly."""
+        super(self.__class__, self).set_attributes()#super(AnaTask, self).set_attributes()
         if self.abstract_jobs:
             logger.info("Do not specify abstract_jobs. Set to default (empty)")
             self.abstract_jobs=self._change_val(self.abstract_jobs,{})
         if self.app_opt_file_content:
             logger.info("Do not specify app_opt_file_content. Set to default (empty)")
             self.app_opt_file_content={}
-        #removing report file if existing
-        if self.report_output:
-            from Ganga.GPI import config #from Ganga.Utility.Config import getConfig
-            if not self.report_file:
-                self.report_file=os.path.join(config.Configuration["gangadir"],'Task_'+self.name+'.report' )
-                #self.report_file=os.path.join(getConfig("DefaultJobRepository").getEffectiveOption("local_root"),'Task_'+self.name+'.report' )
-            else:
-                self.report_file=os.path.join(config.Configuration["gangadir"],self.report_file )
-                #self.report_file=os.path.join(getConfig("DefaultJobRepository").getEffectiveOption("local_root"),self.report_file )
-            if os.path.exists(self.report_file):
-                logger.warning("A report file carrying the name of this task exists ! Removing it.")
-                os.remove(self.report_file)
-            
-            print "%s"%markup("""##################################""",fg.red)
-            logger.info("A report file will be created for task '%s':\n%s"%(self.name,self.report_file))
-            logger.warning("Its your duty to remove this file manually if you remove the task!!!!")
-            print "%s"%markup("""##################################""",fg.red)
-            self._report("""
-            #################################################
-            #### This file is created by task %s
-            #################################################
-            """%self.name)
  
         if not self.inputdata_dataset:
             logger.error(" No dataset is specified.")
@@ -220,14 +180,22 @@ class AnaTask(task.Task):
                 print "%s"%markup("""***************************************************************""",fg.blue)
                 print "If you specify sites in requirements_sites, other sites are automatically excluded.\nYou do not need to specify excluded_sites."
                 print "%s"%markup("""***************************************************************""",fg.blue)
-
+                self.clean_excl_sites()
+                
             #exclude sites which do not belong to experiment
             dummy_sites=mylist.difference(self.requirements_sites,all_sites)
             if dummy_sites:
                 print "%s"%markup("""***************************************************************""",fg.blue)
-                logger.warning("Sites %s do not belong to experiment's sites. Removing them from requirements_sites."%dummy_sites)
                 self.requirements_sites=mylist.difference(self.requirements_sites,dummy_sites)
-                logger.info("requirements_sites=%s"%self.requirements_sites)
+                if not self.requirements_sites:
+                    logger.warning("""All specified sites are not available or can not be recognised as part of experiment's sites""")
+                    logger.info("""Try any of the following sites:\n%s """%all_sites)
+                    print "%s"%markup("""***************************************************************""",fg.blue)
+                    return False
+                else:
+                    logger.warning("Sites %s do not belong to experiment's sites. Removing them from requirements_sites."%dummy_sites)
+                    logger.info("requirements_sites=%s"%self.requirements_sites)
+                print "%s"%markup("""***************************************************************""",fg.blue)
                 
             # do not allow a site to be specified doubled
             new_requirements_sites=mylist.unique_elements(self.requirements_sites)
@@ -243,14 +211,17 @@ class AnaTask(task.Task):
                 print "%s"%markup("""***************************************************************""",fg.blue)
                 print "If you specify a CE task.CE='ce_name', other CEs are automatically excluded.\nYou do not need to specify excluded_CEs."
                 print "%s"%markup("""***************************************************************""",fg.blue)
+                self.clean_excl_CEs()
                 
             if self.requirements_sites:
                 print "%s"%markup("""***************************************************************""",fg.blue)
                 logger.warning('EITHER you specifying a computing element OR a list of sites to run your jobs. Not both')
                 logger.info("Setting requirements_sites to CE's site. Jobs will run only at the given CE.")
-                self.excluded_sites=[]
-            
-            self.requirements_sites=[self.get_CE_site(self.CE.lower(),all_sites)]
+                self.clean_req_sites()
+                self.clean_excl_sites()
+                            
+            self.requirements_sites=[self.get_CE_site(self.CE.lower(),all_sites)]# we need req_sites later, therefore we take the site of the CE.
+                                                                                 # in final stage the req_sites is cleaned
             
         return True
 ######################### end set attributes
@@ -267,7 +238,6 @@ class AnaTask(task.Task):
         try:
             logger.info( "Trying site-index (dq2_siteinfo) ...")
             st_info=dq2_siteinfo(conts.keys(),self.allowed_sites,self._exp_sites)
-            #st_info=dq2_siteinfo(conts.keys(),self._exp_sites,self._exp_sites)
             if st_info: logger.info( "... got sites information")
         except:
             logger.info("No response from site_index ..., if you see an error proceeding this info ignore it.")
@@ -278,27 +248,25 @@ class AnaTask(task.Task):
         for inf in st_info.itervalues():
             nfiles+=len(inf)
         return st_info
-######################### get sites info (where are fils)
+######################### get sites info (where are fils)#nssm200
     def prepare_site_info(self,conts,site_info_gen):
-
+        """prepares site info for splitting"""
         responding_sites=[]
-        responding_sites=self._resp_sites.get_responding_sites()
+        responding_sites=self._resp_sites.get_responding_sites()['resp']#.keys()
+        
         if not responding_sites:
             logger.warning("None of the sites responds!")
             return {}
         taken_files_of_names=[]#if specified files, cound files which you consider
         Info={}
         conts_keys=conts.keys()
-        if self.report_output: self._report("#################################################\n#### Listed site_file info\n")
         nfiles=0
         for sts, guids in site_info_gen.iteritems(): ################sinf
-            #rept_txt="Info_dict_entry::"
             fls=[]
             for guid in guids:
                 if guid in conts_keys:
                     if conts[guid] not in self.excluded_files:
                         fls.append( conts[guid])################conts_keys
-                    #else: print "excluding file %s"%conts[guid]
             nfiles+=len(fls)
             this_groupe=sts.split(":")
             this_groupe_responding=mylist.in_both(this_groupe,responding_sites)
@@ -330,7 +298,7 @@ class AnaTask(task.Task):
 
 #######################################        
     def get_site_info(self,Info_dict):
-        #Rep=ReportAlt(self)
+        """returns splitted sites info"""
         site_info={}
         taken_files=[]
         if self.application_max_events>0:
@@ -390,12 +358,11 @@ class AnaTask(task.Task):
                         print "%s"%markup("*************************************************\n************** Tasks info block\n",fg.blue)
                         self.problem_no_resp_sites(i.split(":"),j[5],"specified files")
                         print "%s"%markup("************** Info block ends\n",fg.blue)
-                        #self.problem_no_resp_sites_OLD(i.split(":"),j)
+
                     if not j[0] and not j[1] and not j[2]:
                         print "%s"%markup("*************************************************\n************** Tasks info block\n",fg.blue)
                         self.problem_no_resp_sites(i.split(":"),j[5],"specified files")
                         print "%s"%markup("************** Info block ends\n",fg.blue)
-                       #self.problem_no_resp_sites_OLD(i.split(":"),j)
                 else:
                     if j[5] and  j[0]:
                         all_sites=i
@@ -416,7 +383,6 @@ class AnaTask(task.Task):
                         print "%s"%markup("*************************************************\n************** Tasks info block\n",fg.blue)
                         self.problem_no_resp_sites(i.split(":"),j[5],"specified files")
                         print "%s"%markup("************** Info block ends\n",fg.blue)
-                        #self.problem_no_resp_sites_OLD(i.split(":"),j)
             else:
                 if self.requirements_sites:
                     if j[0] and j[1] and j[2]:
@@ -452,7 +418,6 @@ class AnaTask(task.Task):
                         self.adding_fls(j[4],j[3])                        
                         print "%s"%markup("************** Info block ends\n",fg.blue)
                     if not j[0] and j[1] and not j[2]:# problem-->sts_no_resp_names
-                        #self.problem_no_resp_sites_OLD(i.split(":"),j)
                         print "%s"%markup("*************************************************\n************** Tasks info block\n",fg.blue)
                         self.problem_no_resp_sites(i.split(":"),j[4],"files")
                         print "%s"%markup("************** Info block ends\n",fg.blue)
@@ -460,7 +425,6 @@ class AnaTask(task.Task):
                         print "%s"%markup("*************************************************\n************** Tasks info block\n",fg.blue)
                         self.problem_no_resp_sites(i.split(":"),j[4],"files")
                         print "%s"%markup("************** Info block ends\n",fg.blue)
-                        #self.problem_no_resp_sites_OLD(i.split(":"),j)
                 else:
                     if j[0]:
                         all_sites=i
@@ -479,7 +443,6 @@ class AnaTask(task.Task):
                         print "%s"%markup("*************************************************\n************** Tasks info block\n",fg.blue)
                         self.problem_no_resp_sites(i.split(":"),j[4],"files")
                         print "%s"%markup("************** Info block ends\n",fg.blue)
-                        #self.problem_no_resp_sites_OLD(i.split(":"),j)
         ###end for loop
         return site_info
 
@@ -524,8 +487,6 @@ class AnaTask(task.Task):
         """splits the files in a site into small lists according to files per job"""
         site_info_splitted={}
         taken_fls=[]
-        #        for sit, fls in site_info.iteritems():
-        #for all_sts, sts_to_run_fls in site_info.iteritems():
         for all_sts in site_info:
             sts_to_run_fls=site_info[all_sts]
             new_sts_to_run_fls={}
@@ -566,6 +527,7 @@ class AnaTask(task.Task):
 ######################## end splitting files
 ##################################  sites
     def get_all_sites(self,DQ2_inst):
+        """returns all sites containing a dataset"""
         complete=DQ2_inst.get_locations(complete=1)
         if complete:
             global completeness
@@ -577,17 +539,6 @@ class AnaTask(task.Task):
             return DQ2_inst.get_locations()
                     
 ############### 
- ##    def get_CE_site(self,ce,sites):
-##         from GangaAtlas.Lib.AtlasLCGRequirements.AtlasLCGRequirements import getCEsForSites
-##         try:
-##             for ste in sites:
-##                 ces=getCEsForSites([ste])
-##                 if ce in ces:
-##                     return ste
-##         except Exception,x:
-##             logger.error("given CE is not located at any of the sites holding the given dataset\n%s"%ce)
-
-##########################################
 ####################### application_option_file exists?
     def file_exists(self):
         """ checks if the application option files exists and if the 'outputdata' specified agree with the content of the file"""
@@ -622,7 +573,7 @@ class AnaTask(task.Task):
         else:
             if self.outputdata_outputdata:
                 if not self.outputdata_in_opt_file(new_fle):
-                    logger.error(" The specified outputdata_outputdata '%s' is not in agreement with the specfication in your application_option_file."%self.outputdata_outputdata)
+                    logger.error(" The specified outputdata_outputdata '%s' is not in agreement with the specification in your application_option_file."%self.outputdata_outputdata)
                     logger.info(""" Set 'self.outputdata_outputdata' in agreement with the specification in your application_option_file
                     '%s'.
                     Check the line specifying the OutputName: AANTupleStream.OutputName = 'MyOutPutData.root'.
@@ -650,175 +601,120 @@ class AnaTask(task.Task):
                 
 #######################
     def on_complete(self):
-        logger.info("The data has been saved in the DQ2 dataset %s" % self.outputdata_datasetname)
-
-######################################
-    def _check_failed(self):
-        """Checks why a job failed. The suggestions made here are to be understood as a try. They can not replace the investigations of the user!"""
-        ##########################################
-        #in stderr: SysError in <TRFIOFile::TRFIOFile>: file /castor/ads.rl.ac.uk/prod/atlas/stripInput/simStrip/trig1_misal1_mc12/AOD/trig1_misal1_mc12.005961.Pythiagamgam5.recon.AOD.v13003002_tid016498/AOD.016498._00009.poo
-        # does this mean i have to take the root file with me in the prepare?
-        #############################################################
-        
+        self.get_files(True)
+        info_txt="The data has been saved in the DQ2 dataset %s" % self.outputdata_datasetname
+        logger.info(info_txt)
+        if self.report_output: self._report(info_txt)
+            
 #################################################
 ########## changes block ########################
 #################################################
+    def clean_CE(self):
+        """cleans the attribute CE and sets it to empty string"""
+        if not super(self.__class__, self).clean_CE():return
+        logger.warning("""
+        *******************************************************************
+        *** Removing the CE. ... Finding suitable sites for the jobs ...
+        *******************************************************************
+        """)
+       
+        for job in self.abstract_jobs:
+            valid_sites=self._resp_sites.get_responding_sites(self.abstract_jobs[job]['all_sites'])['resp']#.keys()
+            if not valid_sites:
+                self.problem_no_resp_sites(self.abstract_jobs[job]['all_sites'],self.abstract_jobs[job]['files'],"files")
+            else:
+                sites_to_take=mylist.difference(valid_sites, p.excluded_sites)
+                if not sites_to_take:
+                    logger.warning("The following sites %s \nare excluded by the user therefore the following files can not be analysed:\n"%(valid_sites,self.abstract_jobs[job]['files']))
+                    info_txt="To get the files analysed do the following:\n Step 1:\n"
+                    info_txt+="%s\n"%markup("tasks.get('%s').clean_excl_sites()"%self.name,fg.magenta)
+                    info_txt+="Step 2:\n"
+                    info_txt+="%s"%markup("tasks.get('%s').ext_infiles(%s,%s)"%(self.name,self.abstract_jobs[job]['files'],valid_sites),fg.magenta)
+                    loger.info(info_txt)
+                else:
+                    self.abstract_jobs[job]['sites_to_run']=valid_sites
+#######################
+    def clean_req_sites(self):
+        """cleans the attribute requirements_sites and sets it to empty list"""
+        if not super(self.__class__, self).clean_req_sites():return
+        logger.warning("""
+        *************************************************************************
+        *** Removing specified sites. ... Finding suitable sites for the jobs ...
+        *************************************************************************
+        """)
+       
+        for job in self.abstract_jobs:
+            valid_sites=self._resp_sites.get_responding_sites(self.abstract_jobs[job]['all_sites'])['resp']#.keys()
+            if not valid_sites:
+                self.problem_no_resp_sites(self.abstract_jobs[job]['all_sites'],self.abstract_jobs[job]['files'],"files")
+            else:
+                sites_to_take=mylist.difference(valid_sites, p.excluded_sites)
+                if not sites_to_take:
+                    logger.warning("The following sites %s \nare excluded by the user therefore the following files can not be analysed:\n"%(valid_sites,self.abstract_jobs[job]['files']))
+                    info_txt="To get the files analysed do the following:\n Step 1:\n"
+                    info_txt+="%s\n"%markup("tasks.get('%s').clean_excl_sites()"%self.name,fg.magenta)
+                    info_txt+="Step 2:\n"
+                    info_txt+="%s"%markup("tasks.get('%s').ext_infiles(%s,%s)"%(self.name,self.abstract_jobs[job]['files'],valid_sites),fg.magenta)
+                    loger.info(info_txt)
+                else: 
+                    self.abstract_jobs[job]['sites_to_run']=valid_sites
+
+  
 ################################# exclude files from specified files
     def ext_excl_files(self,item):
+        """adds files to the list of files the user wishes to exclude from the analysis"""
+
         if not item: logger.warning("No files are specified to exclude !!"); return
         if not isinstance(item, str) and not isinstance(item, list):
             logger.warning("Given file name must be of type string or a list of strings.");return
         if isinstance(item, str): self.ext_excl_files([item]); return
-
-        #exclude files only from not running jobs
         stats_to_add_files=["new","ignored"]
         empty_jobs=[]
-        for f in item:
-            if not isinstance(f, str): logger.warning("Given file '%s' is of type %s. Must be a string"%( str(f),type(f) ) ); continue
-            if f in self.excluded_files: logger.info("File %s already excluded"%f); continue #return
-            if f in self.inputdata_names: self.inputdata_names.remove(f)
-            self.excluded_files.append(f)
-                        
-            fle_in_jobs=True
-            for j in self.abstract_jobs:
-                if f in self.abstract_jobs[j]['files']:
-                    if self.get_job_by_name(j).status() not in stats_to_add_files: logger.warning("Job %s is in running modus. Can not exclude file %s."%(j,f))
-                    else:
-                        self.abstract_jobs[j]['files'].remove(f)
-                        if len(self.abstract_jobs[j]['files'])==0: empty_jobs.append(j)
-                    fle_in_jobs=True
-                    break
-                else: fle_in_jobs=False
-                
-            if not fle_in_jobs:
-                logger.warning("File %s is not in the jobs of task %s"%(f,self.name))
+        count_f=0
+        info_txt= "Task '%s': because of excluding files, job %s is empty, setting its status to force-ignored.\n"#%(self.name,ent)
+        info_txt+= "This will not influence your analysis."
+        for j in self.abstract_jobs:
+            if len(self.abstract_jobs[j]['files'])==0:
+                if self.get_job_by_name(j).ignore_this==False:#these two conditions should never apply
+                    info_txt=info_txt %(self.name,j)
+                    logger.info("%s"%markup("%s"%info_txt,fg.magenta))
+                    self.get_job_by_name(j).ignore_this=True
+                else: continue
+            
+            if self.get_job_by_name(j).status() not in stats_to_add_files:
+                logger.warning("""Job %s is in running modus.
+                                  Can not exclude files.
+                                  If the job fails, files are excluded in the resubmission."""%(j))
+            
+            common_files=mylist.in_both(item,self.abstract_jobs[j]['files'])
+            self.abstract_jobs[j]['files']=mylist.difference(self.abstract_jobs[j]['files'], common_files)
+
+            self.allow_change=True
+            self.excluded_files=mylist.extend_lsts(self.excluded_files,common_files)
+            self.allow_change=False
+            if len(self.abstract_jobs[j]['files'])==0:
+                empty_jobs.append(j)
 
         for ent in empty_jobs:
             if self.get_job_by_name(ent).status()=="done" or self.get_job_by_name(ent).status()=="working":continue
             if ent in self.abstract_jobs:
-                
-                info_txt= "Because of excluding files, job %s is empty, setting its status to force-ignored.\n"%ent
-                info_txt+= "This will not influence your analysis."
-                logger.info(info_txt)
+                info_txt=info_txt %(self.name,ent)
+                logger.info("%s"%markup("%s"%info_txt,fg.magenta))
+
                 if self.report_output:
                     self._report(info_txt)
-                #self.abstract_jobs.pop(ent)
-                self.get_job_by_name(ent).ignore_this=True #remove_spjob(ent)#a=t.spjobs #a[0].nameself.remove_spjob(ent)#a=t.spjobs #a[0].name
+                self.get_job_by_name(ent).ignore_this=True 
                                             
 ################################# exclude sites
-    def ext_excl_sites(self,item):
-        if not item: logger.warning("No sites are specified to exclude !!"); return
-        if not isinstance(item, str) and not isinstance(item, list):
-            logger.warning("Given site name must be of type string or a list of strings.");return
-
-        if isinstance(item, str): self.ext_excl_sites([item]); return
-        #from GangaAtlas.Lib.AtlasLCGRequirements.AtlasLCGRequirements import getCEsForSites
-        
-        #exclude files only from not running jobs
-        #stats_to_add_files=["new","ignored"]
-        empty_jobs=[]
-        for f in item:
-            if not isinstance(f, str): logger.warning("Given site '%s' is of type %s. Must be a string"%( str(f),type(f) ) ); continue
-            if f in self.excluded_sites: logger.info("Site %s already excluded"%f); continue
-            if f in self.requirements_sites: self.requirements_sites.remove(f)
-            self.excluded_sites.append(f)
-
-            site_in_jobs=False
-            #files_at_this_site=[]
-            for j in self.abstract_jobs:
-                if f in self.abstract_jobs[j]['sites_to_run']:
-                    self.abstract_jobs[j]['sites_to_run'].remove(f)
-                    #ces_of_f=self.getCEsForSites([f])
-                    #self.excluded_CEs=mylist.difference(self.excluded_CEs,ces_of_f)
-                    
-                    if len(self.abstract_jobs[j]['sites_to_run'])==0: empty_jobs.append(j)
-                    site_in_jobs=True
-                    
-            if not site_in_jobs:
-                logger.warning("Site %s is not considered for jobs of task %s"%(f,self.name))
-
-
-        warn_txt=None
-        info_txt=None
-        
-        all_jobs_sites=[]
-        files_at_bad_sites=[]
-        for j in self.abstract_jobs:
-            if j not in empty_jobs: continue
-            if self.get_job_by_name(j).status()=="done" or self.get_job_by_name(j).status()=="working":continue
-            alter_sites=self.find_alternative_site(self.abstract_jobs[j]['all_sites'])
-            alter_sites=mylist.difference(alter_sites,item)
-            #what if alternatives in excluded sites? (give warning and let it run)
-            if alter_sites:
-                self.abstract_jobs[j]['sites_to_run']=alter_sites
-                empty_jobs.remove(j)
-            else:
-                files_at_bad_sites=mylist.extend_lsts(files_at_bad_sites,self.abstract_jobs[j]['files'])
-                all_jobs_sites=mylist.extend_lsts(all_jobs_sites,self.abstract_jobs[j]['all_sites'])
-                self.get_job_by_name(j).ignore_this=True
-            
-        if empty_jobs:
-            abst_jobs_kys=self.abstract_jobs.keys()
-            empty_jobs.sort()
-            abst_jobs_kys.sort()
-            if empty_jobs==abst_jobs_kys:
-                warn_txt="""Because of excluding sites, non of your non-completed jobs can be run. No alternative sites could be found."""
-                info_txt= "Setting task's status to paused\n"
-                self.pause()
-                
-                #if self.get_forced_ignored_jobs()>0:
-            else:
-                warn_txt="Because of excluding sites, the following jobs can not be run\n%s. No alternative sites could be found."%self.write_iterable(empty_jobs,len(empty_jobs))
-                info_txt= "Setting their status to force-ignored\n"
-            info_txt+= "%s"% markup("You have two options:\n First: ",fg.blue)
- 
-            if empty_jobs==abst_jobs_kys:
-                info_txt+="Unpause the task (less preferred), then its jobs will be analyzed at any of the sites where the dataset is located. Do the following\n"
-                info_txt+="%s\n"%markup("tasks.get('%s').unpause()"%(self.name),fg.magenta)
-                info_txt+=" ************* If the jobs are ignored you must release them before 'unpausing' the task: Do the following\n"
-                info_txt+=" ************* %s\n"%markup("tasks.get('%s').release_ignored_jobs()"%(self.name),fg.magenta)
-            else:
-                info_txt+= "release these jobs, then they will be analyzed at any of the sites where the dataset is located (less preferred)\nDo the following:\n"
-                info_txt+="%s\n"%markup("tasks.get('%s').release_ignored_jobs()"%(self.name),fg.magenta)
-                
-            info_txt+="%s\n"%markup("Second: see the following info-block.",fg.blue)
- 
-            logger.warning(warn_txt); logger.info(info_txt)
-            if self.report_output: self._report(info_txt)
-
-            print "%s"%markup("*************************************************\n************** Tasks info block\n",fg.blue)
-            self.problem_no_resp_sites(all_jobs_sites,files_at_bad_sites,"files")
-            print "%s"%markup("************** Info block ends\n",fg.blue)
-             
-            
+##     def ext_excl_sites(self,item):
 ################################# exclude CE
-    def ext_excl_CE(self,item):
-        if not item: logger.warning("No files are specified to exclude !!"); return
-        if not isinstance(item, str) and not isinstance(item, list):
-            logger.warning("Given site name must be of type string or a list of strings.");return
-
-        if isinstance(item, str): self.ext_excl_sites([item]); return
-        
-        for f in item:
-            if not isinstance(f, str): logger.warning("Given site '%s' is of type %s. Must be a string"%( str(f),type(f) ) ); continue
-            if f in self.excluded_CEs: logger.info("Site %s already excluded"%f); continue
-            if self.CE and f == self.CE:
-                logger.warning("Given CE %s is specified as running CE for this task. Can not exclude."%f);
-                info_txt="You can replace the  it with any other CE and then exclude it. Do the following:\n"
-                info_txt+="%s\n"%markup("tasks.get('%s')._change_CE('New_Ce')"%(self.name),fg.magenta)
-                info_txt+="%s\n"%markup("tasks.get('%s').ext_excl_CE('%s')"%(self.name,f),fg.magenta)
-                logger.info(info_txt)
-                continue
-            self.excluded_CEs.append(f)
-
+##     def ext_excl_CE(self,item):
 ################################# extend files to be analysed                            
     def ext_infiles(self,files,sites):
         """ Extends a given list of files to be analysed. The user specifies a file (string) or a list of files (strings)>
         The sites where these files are located must also be specified as a string or a list of strings.
         'task.ext_infiles(files,sites)
         """
-        #the following should take into account that some sites were down and may come up later
-        # files which were not analysed because of this should be able to be added later.
         if not files or not sites:
             logger.warning("""
             The function 'ext_infiles(files,sites)' takes exactly two arguments: files to extend and sites where these files are located.
@@ -852,7 +748,7 @@ class AnaTask(task.Task):
             %s
             """%self.write_iterable( non_valid_files, len(non_valid_files) ) )
         
-        valid_sites=self._resp_sites.get_responding_sites(sites)
+        valid_sites=self._resp_sites.get_responding_sites(sites)['resp']#.keys()
         if not valid_sites:
             logger.warning(""" None of the given sites respons (OR it is not of type string). No extension."""); return
             
@@ -870,70 +766,21 @@ class AnaTask(task.Task):
             self.abstract_jobs[jb]=new_jobs[jb]
             self.get_job_by_name(jb)
 
-            #self.allow_change=True
         if self.inputdata_names:self.inputdata_names=mylist.extend_lsts(self.inputdata_names,files)
         if self.excluded_files: self.excluded_files=mylist.difference(self.excluded_files,files)
         if self.requirements_sites:self.requirements_sites=mylist.extend_lsts(self.requirements_sites,valid_sites)
-        #self.allow_change=False
         rept_txt="------- Files\n%s\n------- added to task '%s' within %d jobs: %s\n"%(files,self.name,len(new_jobs), [j_name for j_name in new_jobs])
         logger.info(rept_txt)
         if self.report_output:
             self._report(rept_txt)
                 
-        ########## end of call__ext_infiles
-           
 #######################
 #######################
     def _change_CE(self,ce,jobs=None):
-        if not ce or not isinstance(ce, str):
-            logger.warning(""" 'ce' in function ext_req_sites(ce,jobs=None) must be of type string with non-zero length.""")
-            return
-        if not self.CE:
-            if self.requirements_sites: logger.info("""No CE to replace. The jobs of this task run on the following sites %s."""%self.requirements_sites)
-            else: logger.info("""No CE to replace. The jobs of this task run on sites where files are located""")
-            return
-        if ce==self.CE:
-            logger.info("""Given CE is similar to that of non-running jobs. No changes.""")
-            return
-        if not self.get_CE_site(ce.lower(),self._exp_sites): return
-        #check the jobs
-            
-        all_jobs=self.abstract_jobs.keys()
-        jobs_lst=[]
-        #stats_to_add_sites=["new","ignored"]
-        if jobs:
-            #make sure sites has the right type
-            if not isinstance(jobs, str) and not isinstance(jobs, list):
-                logger.warning("""Second parameter of ext_req_sites should be a job name (string) or a list of job names (list) !""")
-                return
-            #if str create a list
-            if isinstance(jobs, str):
-                #make sure the string represents a job
-                if jobs not in all_jobs:
-                    logger.warning(""" Specified string '%s' doese not represent a job in this task.
-                    Either it does not follow the naming scheme 'analysis:'+jobnumber OR the job number is out of range [1-%d] 
-                    """%(jobs, len(all_jobs) ) )
-                    return
-                jobs_lst=[jobs]
-            else:
-                for j in jobs:
-                    #make sure the list contain right jobs
-                    if j in all_jobs:# and self.get_job_by_name(j).status() in stats_to_add_sites:
-                        jobs_lst.append(j)
-                if not jobs_lst:
-                    logger.warning(""" Specified strings in '%s' do not represent jobs in this task.
-                    Either they do not follow the naming scheme 'analysis:'+jobnumber OR the job numbers are out of range [1-%d] 
-                    """%(jobs, len(all_jobs) ) )
-                    return
-        else:
-            jobs_lst=all_jobs #[j for j in all_jobs if self.get_job_by_name(j).status() in stats_to_add_sites]
+        """replaces an existing CE with a new one"""
+        jobs_lst=super(self.__class__, self)._change_CE(ce,jobs)
+        if not jobs_lst: return
 
-        if not jobs_lst:
-            logger.warning(""" All (%d) jobs are in running modus. No changes."""%len(all_jobs))
-            return
-
-        #end checking the jobs
-        if ce in self.excluded_CEs: self.excluded_CEs.remove(ce)
         changed_jobs=[]
         for j in jobs_lst:
             if self.abstract_jobs[j]['sites_to_run']==ce:#self.abstract_jobs[j][0]==ce:
@@ -949,81 +796,16 @@ class AnaTask(task.Task):
             self.allow_change=True
             self.CE=ce#change the CE of the tasks, then loop to change it in the jobs
             self.allow_change=False
-            
-       
-###############################################
-    def set_CE(self,ce,jobs=None):
-        print """ This function does not bring out any thing for the moment\n In the future it will set a given CE as the working CE"""
-###############################################
-    def set_req_site(self,site,jobs=None):
-        print """ This function does not bring out any thing for the moment\n In the future it will set a given site as the working site"""
+           
 ###############################################
     def ext_req_sites(self,sites,jobs=None):
-        if not sites: logger.info("""No sites are specified to extend."""); return
-        # if CE do nothing
-        if self.CE:
-            logger.info("""Can not extend sites. This task runs jobs on the following CE:
-            %s.
-            To replace it with a new CE use _change_CE('name_of_new_CE',jobs=None)"""%self.CE)
-            return
+        """adds sites to the list of sites where the jobs should run"""
+        jobs_sites_dict=super(self.__class__, self)._change_CE(sites,jobs)
+        if not jobs_sites_dict: return
+        
+        jobs_lst=jobs_sites_dict.keys().split("+")
+        sts=jobs_sites_dict.values()[0]
         ####################################
-        if isinstance(sites, str): self.ext_req_sites([sites],jobs); return
-
-        if jobs and not isinstance(jobs, str):
-            jbs=None
-            if isinstance(jobs, list):
-                if not isinstance(jobs[0], str): jbs=str(jobs[0]); type_of=type(jobs[0])
-            else: jbs=str(jobs); type_of=type(jobs)
-            if jbs:
-                logger.warning("Jobs' names must be of type string or list of strings. Got '%s' of type '%s'. No extension."%(jbs,type_of))
-                return
-        
-        if jobs and isinstance(jobs, str): self.ext_req_sites(sites,[jobs]); return
-        ###############################
-        ### testing sites
-        for st in self.requirements_sites:
-            if st in sites:
-                logger.info("""Site %s is already in  requirements_sites"""%st)
-                sites.remove(st)
-        
-        #are there still sites to extend?
-        if not sites:
-            logger.warning("""All specified sites are in 'requirements_sites'. No sites to extend""")
-            return
-        #sites must be put as a list before this point
-        sts=self._resp_sites.get_responding_sites(sites)# sites must be a list, check that !!!
-        
-        if not sts:logger.info("""None of the given sites responds. No extension."""); return
-        if self.excluded_sites:self.excluded_sites=mylist.difference(self.excluded_sites,sts)
-        
-        ####################################        
-        ######################################
-        all_jobs=self.abstract_jobs.keys()
-        non_valid_jobs=[]
-        jobs_lst=[] # jobs left after all checks. to work with
-
-        if jobs:
-            for jb in jobs:
-                if jb in all_jobs: jobs_lst.append(jb);continue
-                else: non_valid_jobs.append(jb); continue
-                
-            if len(jobs_lst)==0:
-                logger.warning(""" Specified string(s) in '%s' do not represent jobs in this task.
-                Either they do not follow the naming scheme 'analysis:n', where n is an integer,  OR the job numbers are out of range [1-%d] 
-                """%(jobs, len(all_jobs) ) )
-                logger.info("No site extension.")
-                return
-            elif len(jobs_lst)<len(jobs):
-                logger.warning("""The following jobs names do not fulfill the naming scheme: 'analysis:n', where n is an integer.
-                OR the job numbers are out of range [1-%d].
-                %s"""%(  len(all_jobs), self.write_iterable( mylist.difference(jobs,jobs_lst) ) ) )
-                               
-        else:
-            jobs_lst=all_jobs
-
-        ####################################
-        
-        #stats_to_add_sites=["new","ignored"]
         for j in jobs_lst:         
             if mylist.lst_in_lst(sts,self.abstract_jobs[j]['sites_to_run']):
                 logger.info("sites '%s' is considered for this job %s"%(sts,j))
@@ -1032,8 +814,22 @@ class AnaTask(task.Task):
                 if ste in self.abstract_jobs[j]['sites_to_run'] or ste not in self.abstract_jobs[j]['all_sites']:continue
                 self.abstract_jobs[j]['sites_to_run'].append(ste)#=mylist.extend_lsts(self.abstract_jobs[j]['sites_to_run'],sts)
             
-        return sites
-#################### 
+####################
+###############################################
+    def get_files(self,oncomplete=False):
+        files=[]
+        for j in self.spjobs:#GPI.jobs:
+            if j.status()=="ignored": files.extend(self.abstract_jobs[j.name]['files'])
+        if files:
+            info_txt="Files of ignored jobs are:\n%s"%files
+            logger.info(info_txt)
+            if oncomplete and self.report_output: self._report(info_txt)
+            return files
+        else:
+            logger.info("no ignored jobs found in task '%s'"%self.name)
+    
+                   
+###############################################        
 ######################### info
     def info(self):
         if not GPI.tasks.user_called_tasks:self.first_visit_info()
@@ -1177,54 +973,6 @@ class AnaTask(task.Task):
 ###################################################################
 ############# check attributes which can be changed during running
 ###################################################################
-
-##################################### general check
-    def check_new(self, val,intern_change=False):
-        
-        if "tasks" in GPI.__dict__ and "status" in self._data and self.status != "new" and not self.allow_change:
-            raise Exception("""
-                 %s
-                 Cannot change this value if the task is not new!
-                 If you want to change it, first copy the task. Do the following:
-                 %s 
-                 then set the attributes anew and
-                 %s. (type tasks to get a list of the tasks and their numbers.)
-                 %s
-                 %s
-                 (This exception has no influence on your running task)
-                 """%(markup("""##################################""",fg.red), markup("t=tasks.get('%s').copy()"%self.name,fg.magenta),markup("t=tasks.get(Number or name of YourCopy)",fg.magenta), markup("t.submit() ",fg.magenta),markup("""##################################""",fg.red)))
-        return val
-##################################### check including sites
-    def check_req_sites(self, val):
-        if "tasks" in GPI.__dict__ and "status" in self._data and self.status != "new" and not self.allow_change:
-            raise Exception("""
-            %s
-            Cannot change requirements_sites. Try
-            %s,
-            sites is either a string or a list of strings.
-            %s
-            (This exception has no influence on your running task)
-            """%(markup("""##################################""",fg.red),
-                 markup("tasks.get('%s').ext_req_sites([site]s)"%self.name,fg.magenta),
-                 markup("""##################################""",fg.red))
-                            )
-        return val
-##################################### check including sites
-    def check_exclud_sites(self, val):
-        if "tasks" in GPI.__dict__ and "status" in self._data and self.status != "new" and not self.allow_change:
-            raise Exception("""
-            %s
-            Cannot change excluded_sites. Try
-            %s,
-            sites is either a string or a list of strings.
-            %s
-            (This exception has no influence on your running task)
-            """%(markup("""##################################""",fg.red),
-                 markup("tasks.get('%s').ext_excl_sites([site]s)"%self.name,fg.magenta),
-                 markup("""##################################""",fg.red))
-                            )
-        return val
-
 ##################################### check including files
     def check_inputnames(self, val):
         if "tasks" in GPI.__dict__ and "status" in self._data and self.status != "new" and not self.allow_change:
@@ -1256,28 +1004,6 @@ class AnaTask(task.Task):
                             )
         return val
 #######################################
-    def check_report_file(self, val):
-        if "tasks" in GPI.__dict__ and "status" in self._data and self.status != "new":
-            raise Exception("""
-            %s
-            Cannot change anatask.excluded_files. Try
-            %s,
-            files is either a string or a list of strings.
-            %s
-            (This exception has no influence on your running task)
-            """%(markup("""##################################""",fg.red),
-                 markup("tasks.get('%s').ext_excl_files([file]s)"%self.name,fg.magenta),
-                 markup("""##################################""",fg.red))
-                            )
-        #else: logger.info("report file is: %s"%val)
-        
-#######################################
-    def check_CE(self, val):
-        if "tasks" in GPI.__dict__ and "status" in self._data and self.status != "new" and not self.allow_change:        
-            logger.warning("Can not change CE.Use the methode  _change_CE('ce')")
-            info_txt="Do the following:\n%s\n"%markup("tasks.get('%s')._change_CE('%s')"%(self.name,val),fg.magenta)
-            logger.info(info_txt)
-        
 #######################################
     def _change_val(self,attrib,new_val):
         self.allow_change=True
@@ -1286,8 +1012,6 @@ class AnaTask(task.Task):
         return attrib
 #######################################    
 #######################################    
-
-    #class Alternative(object):
 #############################################
     def problem_I(self,info):
         files_txt="files"
@@ -1340,7 +1064,7 @@ class AnaTask(task.Task):
         info_txt+=self.write_iterable(groupe_sites,len(groupe_sites))
         info_txt+="Once they respond add them to this task '%s'. Do the following:\n"%self.name
         rept_txt+=info_txt
-        aded_txt="#### Testing a site:\nfrom GangaAtlas.Lib.Tasks.anatask import RespondingSites\nrs=RespondingSites(%s)\nrs.get_responding_sites()\n"%groupe_sites
+        aded_txt="#### Testing a site:\nfrom GangaAtlas.Lib.Tasks.anatask import RespondingSites\nrs=RespondingSites(%s)\nrs.get_responding_sites()['resp']\n"%groupe_sites
         
         info_txt+="%s"%markup(aded_txt,fg.magenta)
         rept_txt+=aded_txt
@@ -1374,7 +1098,7 @@ class AnaTask(task.Task):
         info_txt+=self.write_iterable(groupe_sites,len(groupe_sites))
         info_txt+="Once they respond add them to your (this) task. Do the following:\n"
         rept_txt+=info_txt
-        aded_txt="#### Testing a site:\nfrom GangaAtlas.Lib.Tasks.anatask import RespondingSites\nrs=RespondingSites(%s)\nrs.get_responding_sites()\n"%groupe_sites
+        aded_txt="#### Testing a site:\nfrom GangaAtlas.Lib.Tasks.anatask import RespondingSites\nrs=RespondingSites(%s)\nrs.get_responding_sites()['resp']\n"%groupe_sites
         
         info_txt+="%s"%markup(aded_txt,fg.magenta)
         rept_txt+=aded_txt
@@ -1399,9 +1123,6 @@ class AnaTask(task.Task):
         rept_txt=info_txt
         if self.report_output:
             self._report(rept_txt)
-        #self.adding_fls(fls,excl_sts_resp)
-        
-
 #############################################
     def adding_fls(self,fls,sts):
         if not fls or not sts:return
@@ -1424,7 +1145,9 @@ class AnaTask(task.Task):
             if spj._status=="ignored":
                 spj._status = "new"
                 spj.ignore_this=False
-                spj.status_duration = ['0', '']
+                spj.done = False
+                spj.status_duration ={}
+                
 #############################################
     def check_names(self,taken_fls):
         if len(taken_fls)==len(self.inputdata_names):return True
@@ -1445,29 +1168,11 @@ class AnaTask(task.Task):
         return partiell_included
         
                 
-        
-    def write_iterable(self,iterable,in_a_line=3):
-        txt=""
-        count=1
-        for i in iterable:
-            if not count%in_a_line or count==len(iterable):txt+="%s\n"%i
-            else:txt+="%s, "%i
-            count+=1
-        return txt
-########################### report to report file
-    def _report(self,*txt):
-        f=open(self.report_file,'a+')
-        for i in txt:
-            f.write(i)
-
-        f.close()
-
-######################################
 ######################################
 ######################################
     def find_alternative_site(self,search_in,bad_site=""):
         sites_to_run=[]
-        resp_sites=self._resp_sites.get_responding_sites(search_in)
+        resp_sites=self._resp_sites.get_responding_sites(search_in)['resp']#.keys()
         if bad_site in resp_sites: resp_sites.remove(bad_site)
         
         if resp_sites:
@@ -1498,6 +1203,7 @@ class AnaTask(task.Task):
         return sites_to_run
 
 ######################################
+#####################################
 ###############################
 class GangaRobot(object):
     this_month=""
@@ -1531,8 +1237,8 @@ class GangaRobot(object):
         if not year_month_txt: logger.warning("Got no month-year text to get GangaRobot !");return []
         import urllib
         import os
-        homepage="http://homepages.physik.uni-muenchen.de/~Johannes.Elmsheuser/GangaRobot/index_%s.html"%(year_month_txt)
-        #os.environ.get("wget(http://homepages.physik.uni-muenchen.de/~Johannes.Elmsheuser/GangaRobot/index_200804.html)")
+        #homepage="http://homepages.physik.uni-muenchen.de/~Johannes.Elmsheuser/GangaRobot/index_%s.html"%(year_month_txt)
+        homepage="http://gangarobot.cern.ch/index_%s.html"%(year_month_txt)
         pa=homepage
         data = urllib.urlopen(pa).read()
         return data
@@ -1695,7 +1401,7 @@ class RespondingSites(object):
     ###################################
     def get_responding_sites(self,all_sites=[]):
         if not all_sites:all_sites=self.Sites
-        if not all_sites:logger.warning("No sites specified for check!.");return []
+        if not all_sites:logger.warning("RespondingSites.get_responding_sites: No sites specified for check!.");return []
 
         from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, _resolveSites
         import  re, copy
@@ -1704,11 +1410,14 @@ class RespondingSites(object):
         CESEInfo=self._refreshCESEInfo()
 
         re_srm = re.compile('srm://([^/]+)(/.+)')
+        non_resp_sites=[]#member sites of site which do not repond
+                         #(member sites are achieved via sites = _resolveSites(id.upper(), see below)
+        resp_sites_dict={}
         for id in all_sites:
             sites = _resolveSites(id.upper())
+            non_resp_sites=[]
             if not sites:
                 logger.warning('Site %s has been excluded. Not found in TiersOfATLAS',id)
-                logger.warning('Site %s not considered for jobs',id)
                 resp_sites.remove(id)
                 continue
             for site in sites:
@@ -1717,11 +1426,12 @@ class RespondingSites(object):
                 if site_info.has_key('srm'):
                     match = re_srm.match(site_info['srm'])
                     if not match:
-                        logger.warning('Cannot extract host from %s at site %s',site_info['srm'],site)
-                        logger.warning('Site %s not considered for jobs',site)
+                        logger.warning('Cannot extract host from "%s" at site "%s"',site_info['srm'],site)
+                        logger.warning('Site "%s" not considered for jobs',site)
                         sites.remove(site)
+                        non_resp_sites.append(site)
                         if (len(sites))==0:
-                            logger.warning("No more sites in %s, removing it from considered sites."%id)
+                            logger.warning("No more sites in '%s', removing it from considered sites."%id)
                             resp_sites.remove(id)
                             continue
                     else:
@@ -1731,6 +1441,7 @@ class RespondingSites(object):
                             logger.warning('Did not find CE-SE association for %s',match.group(1))
                             logger.warning('Site %s not considered for jobs',site)
                             sites.remove(site)
+                            non_resp_sites.append(site)
                             if (len(sites))==0:
                                 logger.warning("No more CEs in %s, removing it from considered sites."%id)
                                 resp_sites.remove(id)
@@ -1744,13 +1455,16 @@ class RespondingSites(object):
                         logger.warning('No CE information on site %s. Maybe it failes the SAM test.',site)
                         logger.warning('Site %s not considered for jobs',site)
                         sites.remove(site)
+                        non_resp_sites.append(site)
                         if (len(sites))==0:
                             logger.warning("No more CEs in %s, removing it from considered sites."%id)
                             resp_sites.remove(id)
                             continue
 
-
-        return resp_sites
+            if id not in resp_sites:continue
+        resp_sites_dict['resp']=resp_sites
+        resp_sites_dict['non-resp']=non_resp_sites
+        return resp_sites_dict
 ####################################
     def get_allowed_sites(self,sts_in):
         """Checks if a site or a list of sites are responding """

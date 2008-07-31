@@ -5,6 +5,8 @@ from Ganga import GPI
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 
+import MyList
+
 import task
 import abstractjob
 
@@ -15,7 +17,7 @@ class MCJob(abstractjob.AbstractJob):
    """ A job in a Monte-Carlo production task"""
    
    _schema = Schema(Version(1,0), dict(abstractjob.AbstractJob._schema.datadict.items() + {
-       'mode'        : SimpleItem(defvalue="evgen", comparable=1, doc='Transformation mode of this job: evgen, simul, recon'),
+       'mode'        : SimpleItem(defvalue="evgen", comparable=1, doc='Transformation mode of this job'),
        'evgen_number': SimpleItem(defvalue=0, comparable=1, doc='number of evgen partition this chunk of events is descended from'),
        'simul_number': SimpleItem(defvalue=0, comparable=1, doc='number of (first) simul partition this chunk of events is from'),
        }.items()))
@@ -26,7 +28,7 @@ class MCJob(abstractjob.AbstractJob):
 
    def __init__(self, taskname='', name='', task = None):
       """ Initialize a mcjob by a name"""
-      super(self.__class__, self).__init__(taskname, name, task)
+      super(MCJob, self).__init__(taskname, name, task)
       if name == "": ## This happens iff the task is loaded from file
          return
 
@@ -52,9 +54,18 @@ class MCJob(abstractjob.AbstractJob):
 
    def check_job(self, j):
       if j.status == "completed":
-         if len(j.outputdata.expected_output)>len(j.outputdata.actual_output):
+         passed = True
+         if self.mode == "evgen" and len([1 for x in j.outputdata.actual_output if "EVNT" in x]) == 0: 
+            passed = False
+            logger.error("Job %s has not produced EVNT file, only: %s" % (j.id, j.outputdata.actual_output))
+         if self.mode == "simul" and len([1 for x in j.outputdata.actual_output if (("RDO" in x) or ("AOD" in x))]) == 0: 
+            passed = False
+            logger.error("Job %s has not produced RDO file, only: %s" % (j.id, j.outputdata.actual_output))
+         if self.mode == "recon" and len([1 for x in j.outputdata.actual_output if "AOD" in x]) == 0: 
+            passed = False
+            logger.error("Job %s has not produced AOD file, only: %s" % (j.id, j.outputdata.actual_output))
+         if not passed:
             self.done = False
-            logger.error("Job %s has more expected output than actual ouput (%s)!" % (j.id, j.outputdata.actual_output))
             j._impl.updateStatus("failed")
             return "failed"
          else:
@@ -85,13 +96,16 @@ class MCJob(abstractjob.AbstractJob):
       if self.mode == "evgen": 
          return []
       elif self.mode == "simul":
-         return [self.get_task().get_job_by_name("evgen:%i-0"%i) for i in range(1, self.evgen_number+1)]
+         return [self.get_task().get_job_by_name("evgen:%i-0"%self.evgen_number)]
       elif self.mode == "recon":
          simuls_per_recon = self.get_task().events_per_job["recon"] / self.get_task().events_per_job["simul"]
          return [self.get_task().get_job_by_name("simul:%i-%i" % (self.evgen_number, i)) for i in range(self.simul_number, self.simul_number + simuls_per_recon)]
     
    def necessary(self):
       """ Defines if this job has to be executed to meet task specifications"""
+      if self.evgen_number <= self.get_task().skip_evgen_partitions:
+         return False
+
       # check for invalid job number combinations:
       if self.mode == "recon":
          simuls_per_recon = int(ceil(self.get_task().events_per_job["recon"] * 1.0 / self.get_task().events_per_job["simul"]))
@@ -130,24 +144,13 @@ class MCJob(abstractjob.AbstractJob):
       j.outputdata = GPI.AthenaMCOutputDatasets()
       j.outputdata.output_firstfile = self.partition_number()
 
-      kiturl = "http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/"
-      av = atlas_release.split(".")
-      j.application.atlas_release=".".join(av[:3])
-      if len(av) == 3:
-         if av[2] == "31":
-            av.append("8")
-         elif av[2] == "4":
-            av.append("2")
-         elif av[2] == "5":
-            av.append("3")
-         elif av[2] == "6":
-            av.append("5")
-         elif av[2] == "7":
-            av.append("2")
-         else:
-            raise Exception('ERROR: Unknown Athena Version specified.')
-            return
-      j.application.transform_archive=kiturl + "AtlasProduction_%s_noarch.tar.gz" % "_".join(av)
+      j.application.atlas_release = atlas_release #".".join(av[:3])
+      if self.mode == "evgen":
+         kiturl = "http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/"
+         av = atlas_release.split(".")
+         j.application.atlas_release = ".".join(av[:3])
+         j.application.transform_archive=kiturl + "AtlasProduction_%s_noarch.tar.gz" % "_".join(av)
+
       return j
 
    def prepare(self, count = 1, backend = "Grid"):
@@ -166,11 +169,26 @@ class MCJob(abstractjob.AbstractJob):
       j.backend=Ganga.GPI.LCG()
       #j.backend.middleware='EDG'
       j.backend.middleware='GLITE'
-      j.backend.requirements.other = ['other.GlueCEStateStatus=="Production"']
-      j.backend.requirements.cputime = "1400"
+      #j.backend.requirements.other = ['other.GlueCEStateStatus=="Production"']
+      j.backend.requirements.cputime = 1400
+
+      mylist=MyList.MyList()
       if p.CE:
          j.backend.CE=p.CE
-
+         self.sites=p.CE
+      elif p.requirements_sites:
+         if not self.sites:self.sites=[]
+         self.sites=mylist.extend_lsts( self.sites, mylist.difference(p.requirements_sites,self.sites) )
+         j.backend.requirements.sites=self.sites
+      else: self.sites=[]
+      
+      self.excluded_CEs=mylist.extend_lsts( self.excluded_CEs, mylist.difference(p.excluded_CEs,self.excluded_CEs) )
+      requirements_other_list=['(!RegExp("%s",other.GlueCEUniqueID))' % ce for ce in self.excluded_CEs]
+      requirements_other_list.append('other.GlueCEStateStatus=="Production"')
+      j.backend.requirements.other =[ " &&\n ".join(requirements_other_list)]
+      
+      j.backend.requirements.excluded_sites=p.excluded_sites
+      
       # Set name
       j.name = "%s:%s:%s" % (backend, p.name, self.name)
       if count > 1:
@@ -182,7 +200,7 @@ class MCJob(abstractjob.AbstractJob):
             j.splitter.nsubjobs_inputfile = 1 # one (or more) input file for every subjob
 
       if self.mode == "evgen":
-         j.backend.requirements.memory = "512"
+         j.backend.requirements.memory = 512
          if p.generator:
             j.inputdata = GPI.AthenaMCInputDatasets()
             j.inputdata.datasetType = "DQ2"
@@ -196,10 +214,10 @@ class MCJob(abstractjob.AbstractJob):
 
       elif self.mode == "simul":
          j.application.geometryTag = p.geometry_tag["simul"]
-         j.backend.requirements.memory = "800"
+         j.backend.requirements.memory = 800
          j.application.firstevent =  (self.simul_number - 1) * p.events_per_job["simul"] + 1
          j.inputdata = GPI.AthenaMCInputDatasets()
-         if p.athena_version[self.mode][:2] == "13":
+         if int(p.athena_version[self.mode][:2]) >= 13:
             j.application.extraArgs=' digiSeedOffset1=11 digiSeedOffset2=22 '
          if p.datasets_data["evgen"]:
             j.inputdata.datasetType = "DQ2"
@@ -213,28 +231,34 @@ class MCJob(abstractjob.AbstractJob):
 
       elif self.mode == "recon":
          j.application.geometryTag = p.geometry_tag["recon"]
-         j.backend.requirements.memory = "1300"
+         j.backend.requirements.memory = 1300
          simuls_per_recon = int(ceil(self.get_task().events_per_job["recon"] * 1.0 / self.get_task().events_per_job["simul"]))
-         pr = self.prerequisites()
+         pr = [prereq for prereq in self.prerequisites() if prereq.status() == "done"]
          pr.sort()
          start = pr[0].partition_number()
          j.inputdata = GPI.AthenaMCInputDatasets()
 
-         j.backend.requirements.cputime = 70*simuls_per_recon
-
+         j.backend.requirements.cputime = 70*simuls_per_recon #### soll ein string sein
+         
          if p.datasets_data["simul"]:
             j.inputdata.datasetType = "DQ2"
-            j.inputdata.DQ2dataset = p.datasets_data["evgen"]
+            j.inputdata.DQ2dataset = p.datasets_data["simul"]
+            j.inputdata.number_inputfiles = str(count*simuls_per_recon)
+            j.inputdata.n_infiles_job = simuls_per_recon
             if p.filenames_data["simul"]:
-               j.inputdata.inputfiles = [p.filenames_data["evgen"] + "._%5.5d" % i for i in range(start, start+simuls_per_recon)]
+               j.inputdata.inputfiles = [p.filenames_data["simul"] + "._%5.5d" % i for i in range(start, start+simuls_per_recon)]
             else:
                j.inputdata.inputpartitions = '%i-%i' % (start, start + count*simuls_per_recon - 1)
          else:
-            j.inputdata.inputpartitions = '%i-%i' % (start, start + count*simuls_per_recon - 1)
+            if count > 1:
+               j.inputdata.inputpartitions = '%i-%i' % (start, start + count*simuls_per_recon - 1)
+               j.inputdata.number_inputfiles = str(count*simuls_per_recon)
+               j.inputdata.n_infiles_job = simuls_per_recon
+            else:
+               j.inputdata.inputpartitions = ",".join(map(str,[mcj.partition_number() for mcj in pr]))
+               j.inputdata.number_inputfiles = str(len(pr))
+               j.inputdata.n_infiles_job = len(pr)
 
-         j.inputdata.number_inputfiles = count*simuls_per_recon
-         j.inputdata.n_infiles_job = simuls_per_recon
          
-      
       return j
 

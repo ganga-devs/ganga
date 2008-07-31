@@ -10,20 +10,27 @@ import task
 import abstractjob
 import mcjob
 import random
+import MyList
+mylist=MyList.MyList()
 
 from task import status_colours, overview_colours, fg, fx, bg, markup
+from Ganga.GPIDev.Credentials import GridProxy
+username = GridProxy().identity()
+from dq2.clientapi.DQ2 import DQ2, DQException
+dq2 = DQ2()
 
 class MCTask(task.Task):
    """ This class describes a Monte-Carlo 'production' on the grid. """
 
    def check_new(self, val):
-      if self.status != "new" and "tasks" in GPI.__dict__:
+      if "tasks" in GPI.__dict__ and "status" in self._data and self.status != "new":#if self.status != "new" and "tasks" in GPI.__dict__:
          raise Exception("Cannot change this value if the task is not new! If you want to change it, first copy the task.")
       return val
 
-   _schema = Schema(Version(1,0), dict(task.Task._schema.datadict.items() + {
+   _schema = Schema(Version(1,1), dict(task.Task._schema.datadict.items() + {
         'run_number'  : SimpleItem(defvalue=0, checkset="check_new", doc="Official run number of the monte carlo process"),
         'total_events': SimpleItem(defvalue=0, checkset="check_new", doc="Total number of events to generate"),
+        'skip_evgen_partitions': SimpleItem(defvalue=0, checkset="check_new", doc="Number of evgen partitions to skip"),
         'process_name': SimpleItem(defvalue="CUSTOM", checkset="check_new", doc="Name of the process"),
         'evgen_job_option': SimpleItem(defvalue='', checkset="check_new", doc="Name of the official evgen file, or path to local evgen file"),
         'generator': SimpleItem(defvalue='', checkset="check_new", doc="Name of the generator if input files are needed, p.e. McAtNlo or alpgen"),
@@ -35,114 +42,136 @@ class MCTask(task.Task):
         'datasets_data'  : SimpleItem(defvalue={"evgen":"", "simul":"", "recon":""}, checkset="check_new", doc=""), 
         'filenames_data' : SimpleItem(defvalue={"evgen":"", "simul":"", "recon":""}, checkset="check_new", doc=""),
         'se_name' : SimpleItem(defvalue="FZKDISK",doc="Name of the SE where the data should be stored"),
-        'CE' : SimpleItem(defvalue="",doc="Name of the CE queue where the computation should be"),
-        'modelist'  : SimpleItem(defvalue=["evgen", "simul","recon"], protected=1, hidden=1, doc="Modelist"),
+        'modelist'  : SimpleItem(defvalue=["evgen", "simul","recon"], protected=1, hidden=0, doc="Modelist"),
        }.items()))
     
    _category = 'Tasks'
    _name = 'MCTask'
-   _exportmethods = task.Task._exportmethods
+   _exportmethods = task.Task._exportmethods + ["from_evgen"]
 
    def __init__(self):
       """MCTask(task_name)"""
-      super(self.__class__, self).__init__() ## call constructor of Task
+      super(MCTask, self).__init__() ## call constructor of Task
+      #super(self.__class__, self).__init__() ## call constructor of Task
       self.AbstractJob = mcjob.MCJob
       self.random_seed = random.randint(1000000,999999999)
+#############################
+   def from_evgen(self, dataset):
+      try:
+         files = dq2.listFilesInDataset(dataset)
+      except DQException:
+         logger.error("Dataset %s not known in DQ2" % dataset)
+         return
 
+      self.evgen_job_option = ""
+      self.generator = ""
+      self.datasets_data["evgen"] = dataset
+      
+      # Get file prefix and list of numbers
+      evgenlist = []
+      for key in files[0]:
+         s=files[0][key]["lfn"]
+         npos = s.find("._")
+         evgenlist.append(int(s[npos+2:npos+7]))
+         prefix = s[:npos]
+      print "Found file prefix %s " % prefix
+      self.filenames_data["evgen"] = prefix
+       
+      # Try to extract parameters from dataset name
+      # example: mc12.006107.AlpgenJimmyWmunuNp0LooseCut.evgen.EVNT.v12000501_tid014160    
+      sds = dataset.split(".")
+      if (len(sds) >= 6) and (sds[3]=="evgen") and (sds[4]=="EVNT"):
+         self.run_number = int(sds[1])
+         self.process_name = sds[2]
+         print "Dataset conforms to naming convention, setting run_number to %i and Process Name to %s" % (self.run_number, self.process_name)
+         print "You have now only to set the name, total_events, events_per_job, athena_version, geometry_tag, trigger_config and se_name to start"
+      else:
+         print "Dataset does not conform to naming convention"
+######################################
    def submit(self):
-      # Set jobOptions and process names for known run numbers
-      if self.run_number == 6315:
-          self.process_name = 'H170Wplus_WWem'
-          self.evgen_job_option = 'DC3.%06i.McAtNlo_Jimmy_H170Wp_WWem.py' % self.run_number
-      elif self.run_number == 6316:
-          self.process_name = 'H170Wminus_WWem'
-          self.evgen_job_option = 'DC3.%06i.McAtNlo_Jimmy_H170Wm_WWem.py' % self.run_number
-      elif self.run_number == 6317:
-          self.process_name = 'H170Wplus_WWmu'
-          self.evgen_job_option = 'DC3.%06i.McAtNlo_Jimmy_H170Wp_WWmu.py' % self.run_number
-      elif self.run_number == 6318:
-          self.process_name = 'H170Wminus_WWmu'
-          self.evgen_job_option = 'DC3.%06i.McAtNlo_Jimmy_H170Wm_WWmu.py' % self.run_number
-      # Check if stuff has the right format: 
-      if not isinstance(self.run_number, int):
-          raise Exception("The variable task.run_number has to be an integer! Submit aborted.")
-      if not isinstance(self.total_events, int):
-          raise Exception("The variable task.total_events has to be an integer! Submit aborted.")
-      if not isinstance(self.process_name, str):
-          raise Exception("The variable task.process_name has to be a string! Submit aborted.")
-      if not isinstance(self.evgen_job_option, str):
-          raise Exception("The variable task.evgen_job_option has to be a string! Submit aborted.")
+      ignorelist = []
+      if self.datasets_data["evgen"]:
+         dataset = self.datasets_data["evgen"]
+         try:
+            files = dq2.listFilesInDataset(dataset)
+         except DQException:
+            logger.error("Dataset %s not known in DQ2" % dataset)
+            return
+         # Get file prefix and list of numbers
+         evgenlist = []
+         for key in files[0]:
+            s=files[0][key]["lfn"]
+            npos = s.find("._")
+            evgenlist.append(int(s[npos+2:npos+7]))
+         el = dict(zip(evgenlist,evgenlist)).keys()
+         el.sort()
+         nevents = len(el) * self.events_per_job["evgen"]
+         if self.total_events > nevents:
+            print "In evgen there are only %i events available. Not submitting." % nevents
+            return
+         ninputs = self.total_events/self.events_per_job["evgen"]
+         ngoodinputs = 0
 
-      if not (isinstance(self.events_per_job, dict) and "evgen" in self.events_per_job and "simul" in self.events_per_job and "recon" in self.events_per_job):
-          raise Exception("The variable task.events_per_job has to be a dictionary with the keys 'evgen','simul' and 'recon'! Submit aborted.")
-      if not isinstance(self.events_per_job['evgen'], int):
-          raise Exception("The variable task.events_per_job['evgen'] has to be an integer! Submit aborted.")
-      if not isinstance(self.events_per_job['simul'], int):
-          raise Exception("The variable task.events_per_job['simul'] has to be an integer! Submit aborted.")
-      if not isinstance(self.events_per_job['recon'], int):
-          raise Exception("The variable task.events_per_job['recon'] has to be an integer! Submit aborted.")
+         for i in range(1, el[-1]+1):
+            if i in el and i > self.skip_evgen_partitions:
+               ngoodinputs += 1
+               if ngoodinputs >= ninputs:
+                  break
+            else:
+               self.total_events += self.events_per_job["evgen"]
+               if self.skip_evgen_partitions >= i:
+                  print "Partition number %i skipped..." % i
+               else:
+                  print "Partition number %i not in input dataset: setting to ignored" % i
+               ignorelist.append(i)
 
-      if not (isinstance(self.athena_version, dict) and "evgen" in self.athena_version and "simul" in self.athena_version and "recon" in self.athena_version):
-          raise Exception("The variable task.athena_version has to be a dictionary with the keys 'evgen','simul' and 'recon'! Submit aborted.")
-      if not isinstance(self.athena_version['evgen'], str):
-          raise Exception("The variable task.athena_version['evgen'] has to be a string! Submit aborted.")
-      if not isinstance(self.athena_version['simul'], str):
-          raise Exception("The variable task.athena_version['simul'] has to be a string! Submit aborted.")
-      if not isinstance(self.athena_version['recon'], str):
-          raise Exception("The variable task.athena_version['recon'] has to be a string! Submit aborted.")
-
-      if not (isinstance(self.geometry_tag, dict) and "simul" in self.geometry_tag and "recon" in self.geometry_tag):
-          raise Exception("The variable task.geometry_tag has to be a dictionary with the keys 'simul' and 'recon'! Submit aborted.")
-      if not isinstance(self.geometry_tag['simul'], str):
-          raise Exception("The variable task.geometry_tag['simul'] has to be a string! Submit aborted.")
-      if not isinstance(self.geometry_tag['recon'], str):
-          raise Exception("The variable task.geometry_tag['recon'] has to be a string! Submit aborted.")
-
-      if not isinstance(self.trigger_config, str):
-          raise Exception("The variable task.trigger_config has to be a string! Submit aborted.")
-      if not isinstance(self.random_seed, int):
-          raise Exception("The variable task.random_seed has to be an integer! Submit aborted.")
-
-      if not (isinstance(self.datasets_data, dict) and "evgen" in self.datasets_data and "simul" in self.datasets_data and "recon" in self.datasets_data):
-          raise Exception("The variable task.datasets_data has to be a dictionary with the keys 'evgen','simul' and 'recon'! Submit aborted.")
-      if not isinstance(self.datasets_data['evgen'], str):
-          raise Exception("The variable task.datasets_data['evgen'] has to be a string! Submit aborted.")
-      if not isinstance(self.datasets_data['simul'], str):
-          raise Exception("The variable task.datasets_data['simul'] has to be a string! Submit aborted.")
-      if not isinstance(self.datasets_data['recon'], str):
-          raise Exception("The variable task.datasets_data['recon'] has to be a string! Submit aborted.")
-
-      if not (isinstance(self.filenames_data, dict) and "evgen" in self.filenames_data and "simul" in self.filenames_data and "recon" in self.filenames_data):
-          raise Exception("The variable task.filenames_data has to be a dictionary with the keys 'evgen','simul' and 'recon'! Submit aborted.")
-      if not isinstance(self.filenames_data['evgen'], str):
-          raise Exception("The variable task.filenames_data['evgen'] has to be a string! Submit aborted.")
-      if not isinstance(self.filenames_data['simul'], str):
-          raise Exception("The variable task.filenames_data['simul'] has to be a string! Submit aborted.")
-      if not isinstance(self.filenames_data['recon'], str):
-          raise Exception("The variable task.filenames_data['recon'] has to be a string! Submit aborted.")
-
-      if not isinstance(self.se_name, str):
-          raise Exception("The variable task.se_name has to be a string! Submit aborted.")
-      if not isinstance(self.CE, str):
-          raise Exception("The variable task.CE has to be a string! Submit aborted.")
-
+      if not self.set_attributes():
+         logger.info("Task '%s' not submitted."%self.name)
+         return
+      
       super(MCTask, self).submit()
       # Load evgen events into initial tasklist 
       simuls_per_evgen = self.events_per_job['evgen']/self.events_per_job["simul"]
-      simuls_per_recon = self.events_per_job["recon"]/self.events_per_job["simul"]
+      if "recon" in self.modelist:
+         simuls_per_recon = self.events_per_job["recon"]/self.events_per_job["simul"]
       max_evgens = 2*ceil(self.total_events*1.0/self.events_per_job["evgen"])
-      for i in range(0, max_evgens):
+      self.info()
+      for i in range(self.skip_evgen_partitions, max_evgens):
          self.get_job_by_name("evgen:%i-0" % (i+1)) 
          for j in range(0, simuls_per_evgen):
             self.get_job_by_name("simul:%i-%i" % (i+1, j+1))
-	    jobnum = (j / simuls_per_recon) * simuls_per_recon + 1
-            self.get_job_by_name("recon:%i-%i" % (i+1, jobnum))
+            if "recon" in self.modelist:
+               jobnum = (j / simuls_per_recon) * simuls_per_recon + 1
+               self.get_job_by_name("recon:%i-%i" % (i+1, jobnum))
+
+      for i in ignorelist:
+         self.get_job_by_name("evgen:%i-0"%i).ignore_this = True
+      self._update_jobs(True);
+      if len(ignorelist) > 0:
+         print "Increased total_events to %i because some input files were not available and will be skipped." % self.total_events
+
+      # Update jobs to have accurate numbers
+      self._update_jobs(True) 
 
    def __repr__(self):
       """ Returns a prettyprint representation of this production task"""
       return "Small Monte-Carlo Production Task '%s' of %i %s-events (run number %i)" % \
                     (self.name, self.total_events, self.process_name, self.run_number)
+###################################
+   def set_attributes(self):   
+      """ checks if the attributs are set properly."""
+      super(self.__class__, self).set_attributes()
+      for mod in self.modelist:
+         if len(self.athena_version[mod].split("."))!= 4:
+            logger.error("""
+            Given version of Atlas Release for mode '%s' (%s) is not proper
+            The Atlas Release must be given to 4 version digits: for example 14.1.0.1
+            Look at http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/
+            to list possible Versions."""%(mod,self.athena_version[mod]))
+            return False
+      return True
 
+    
    def _next_name(self,name):
       """ returns the name following 'name' in subjobs"""
       mode = name.split(":")[0]
@@ -161,20 +190,26 @@ class MCTask(task.Task):
       print "The data has been saved in the DQ2 dataset users.%s.ganga.datafiles.%s.%06i.%s.recon.AOD" % (username, self.name, self.run_number, self.process_name)
    
    def _update_jobs_more(self):
-      from Ganga.GPIDev.Credentials import GridProxy
-      username = GridProxy().identity()
-      from dq2.clientapi.DQ2 import DQ2, DQException
-      dq2 = DQ2()
+
       logger.debug("Updating job status via DQ2...")
       files = {"evgen":[],"simul":[],"recon":[]}
       try:
-         files["evgen"] = dq2.listFilesInDataset("users.%s.ganga.datafiles.%s.%06i.%s.evgen.EVNT" % (username, self.name, self.run_number, self.process_name))
-         files["simul"] = dq2.listFilesInDataset("users.%s.ganga.datafiles.%s.%06i.%s.simul.RDO" % (username, self.name, self.run_number, self.process_name))
-         files["recon"] = dq2.listFilesInDataset("users.%s.ganga.datafiles.%s.%06i.%s.recon.AOD" % (username, self.name, self.run_number, self.process_name))
+         ds = {}
+         for mode in self.modelist:
+            ds[mode] = self.datasets_data[mode]
+            if not ds[mode]:
+               if mode == "evgen":
+                  ds[mode] = "users.%s.ganga.datafiles.%s.%06i.%s.evgen.EVNT" % (username, self.name, self.run_number, self.process_name)
+               if mode == "simul":
+                  ds[mode] = "users.%s.ganga.datafiles.%s.%06i.%s.simul.RDO" % (username, self.name, self.run_number, self.process_name)
+               if mode == "recon":
+                  ds[mode] = "users.%s.ganga.datafiles.%s.%06i.%s.recon.AOD" % (username, self.name, self.run_number, self.process_name)
+         for mode in self.modelist:         
+            files[mode] = dq2.listFilesInDataset(ds[mode])
       except DQException:
          logger.debug("DQ2 error (ignored)")
 
-      for mode in ["evgen","simul","recon"]:
+      for mode in self.modelist:
         if files[mode]:
            donelist = []
            for key in files[mode][0]:
@@ -212,21 +247,21 @@ class MCTask(task.Task):
 
       for t in [t for t in self.spjobs if t.necessary()]:
          total[t.mode] += 1
-	 numjobs = len(t.get_jobs())
-	 status = t.status()
-	 attempts[t.mode] += numjobs
+         numjobs = len(t.get_jobs())
+         status = t.status()
+         attempts[t.mode] += numjobs
          if status == "done":
-	    done[t.mode] += 1
-	    if numjobs > 0:
-	       successes[t.mode] += 1
-	 elif status == "working":
-	    working[t.mode] += 1
+            done[t.mode] += 1
+            if numjobs > 0:
+               successes[t.mode] += 1
+         elif status == "working":
+            working[t.mode] += 1
          elif status == "ignored":
-	    rem_attempted[t.mode] += 1
-	    ignoring[t.mode] += 1
-	 else:
-	    if numjobs > 0:
-	       rem_attempted[t.mode] += 1
+            rem_attempted[t.mode] += 1
+            ignoring[t.mode] += 1
+         else:
+            if numjobs > 0:
+               rem_attempted[t.mode] += 1
       
       print "Task %s" % self.name
       print "Float: %i " % self.float
@@ -252,19 +287,21 @@ class MCTask(task.Task):
       i = reduce(int.__add__, working.values(), 0)
       if a > 0:
          print "Total Efficiency: %i/%i = %i%% to %i/%i = %i%%" % (d, a, d*100.0/a, d+i, a, (d+i)*100.0/a)
-   
-   def overview(self):
+###################################
+   def overview(self,mod=None):
       """ Gives an ascii-art overview over task status. Overridden for MC mode splitting"""
       if self.status == "new":
          print "No jobs defined yet."
          return
       print "Done: '%s' ; Running the nth time: '%s'-'%s' and '%s' ; Attempted: '%s' ; Not ready: '%s' ; Ready '%s'" % (markup("-", overview_colours["done"]), markup("1", overview_colours["running"]), markup("9", overview_colours["running"]), markup("+", overview_colours["running"]), markup(":", overview_colours["attempted"]), markup(",", overview_colours["unready"]), markup(".", overview_colours["ready"]))
       for mode in self.modelist:
-         print "%s:" % mode.upper()
+         if mod and mod !=mode:continue
+         mod_txt="%s"%markup("------------\n%s:" % mode.upper(),fg.red)
+         print mod_txt
          s = self.get_ascii_str(self.total_events/self.events_per_job[mode], mode)
          for l in s.split("\n"):
             print l
-
+#######################
    def get_ascii_str(self, chunks, mode):
       """ Get an ascii art overview over task status. Can be overridden """
       str = ''
@@ -276,31 +313,60 @@ class MCTask(task.Task):
       while i < chunks or n < l:
          i += 1
          if not l > n or not i == tlist[n].partition_number():
-	    str += "u"
-	    if l > n and tlist[n].partition_number() < i:
-	       raise Exception("Logic Error in get_ascii_string_expected - numbering of jobs not continuous! (%i,%i)"% (i,tlist[n].partition_number()))
-	 else:
+            str += "u"
+            if l > n and tlist[n].partition_number() < i:
+               raise Exception("Logic Error in get_ascii_string_expected - numbering of jobs not continuous! (%i,%i)"% (i,tlist[n].partition_number()))
+         else:
             t = tlist[n]
-            if t.simul_number == 1: str += "\n"
+            if t.simul_number == 1:
+               str += "\n\n"
             n += 1
             status = t.status()
+            job_number=t.name.split(":")[1]
             if status == "done":
-               str += markup("-", overview_colours["done"])
+               str += markup("%s : -"% job_number, overview_colours["done"])
             elif status == "working":
                if t.get_run_count() < 10:
-                  str += markup("%i" % t.get_run_count(), overview_colours["running"])
+                  str += markup("%s : %i" % (job_number,t.get_run_count()), overview_colours["running"])
                else:
-                  str += markup("+", overview_colours["running"])
+                  str += markup("%s: +"% job_number, overview_colours["running"])
             elif status == "ignored":
-               str += markup("i", overview_colours["ignored"])
+               str += markup("%s : i"% job_number, overview_colours["ignored"])
             elif t.get_run_count() > 0: ## task already run but not successfully 
-	       str += markup(":", overview_colours["attempted"])
+               str += markup("%s : :"% job_number, overview_colours["attempted"])
             else:
                if t.ready():
-                  str += markup(".", overview_colours["ready"])
+                  str += markup("%s : ."% job_number, overview_colours["ready"])
                else:
-                  str += markup(",", overview_colours["unready"])
+                  str += markup("%s : ,"% job_number, overview_colours["unready"])
+         str+=" "
       return str
 
       __str__ = info 
       __repr__ = info 
+#####################################
+   def test_func(self,m=5):
+      super(self.__class__, self).test_func()
+      if m>5: print "m is larger 5"
+      print "ich bin test funktion in mctask. Hallo, m=%d"%m
+#######################
+   def _change_CE(self,ce):
+      jobs_lst=super(self.__class__, self)._change_CE(ce,None)
+      if not jobs_lst: return
+      self.allow_change=True
+      self.CE=ce
+      self.allow_change=False
+            
+#######################
+   def ext_req_sites(self,sites,jobs=None):
+      jobs_sites_dict=super(self.__class__, self).ext_req_sites(sites,jobs)
+      if not jobs_sites_dict: return
+        
+      jobs_lst=jobs_sites_dict.keys()[0].split("+")
+      sts=jobs_sites_dict.values()[0]
+        ####################################
+      for j in jobs_lst:         
+         for ste in sts:
+            if ste in self.requirements_sites: continue 
+            self.requirements_sites.append(ste)
+            

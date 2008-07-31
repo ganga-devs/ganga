@@ -12,16 +12,20 @@ class AbstractJob(GangaObject):
        'name'        : SimpleItem(defvalue='analysis:0', comparable=1, doc='Name of this job'),
        'task'        : SimpleItem(defvalue='', comparable=1, doc='Name of the task this job is part of'),
        'run_limit'   : SimpleItem(defvalue=4,  comparable=0, doc='Number of attempts that should be made before an error is triggered'),
-       #'prev_status' : SimpleItem(defvalue="",  comparable=0, doc='Number of attempts that should be made before an error is triggered'),
        'done'        : SimpleItem(defvalue=False, comparable=0, doc='This is set to true if this task is done. Unset if this was set to done by mistake'),
        'ignore_this' : SimpleItem(defvalue=False, doc='if this specific job makes problems ignore it without pausing the task'),
-       'status_duration' :SimpleItem(defvalue=['0','']  ,doc="duration of the GANGA-job status"),
+       'status_duration' :SimpleItem(defvalue={}  ,doc="duration of the GANGA-job status"),
+       'excluded_CEs'  : SimpleItem(defvalue=[]  ,doc="exclude CEs for this job"),
+       'sites'      : SimpleItem(defvalue=None,doc='Sites where the job could run'),
+       #'sites'    : SimpleItem(defvalue = [], typelist=['str'], sequence=1,strict_sequence=0, doc="Sites where the job could run" ),
        })
- 
+   
    _category = 'AbstractJobs'
    _name = 'AbstractJob'
    _exportmethods = ["__repr__", "__cmp__", "get_jobs", "get_run_count", "status", "ready", "necessary", "prerequisites", "prepare"]
-
+   #_GUIPrefs = [ { 'attribute' : 'sites', 'widget' : 'String_List' }]
+   _GUIPrefs = [ { 'attribute' : 'sites', 'widget' : 'List',  'choices' : ['String'] } ]
+                 
    jobs = None    # A list of jobs that run/ran this spjob
    _status = "new" # The status cache
 
@@ -33,18 +37,9 @@ class AbstractJob(GangaObject):
 
    def get_task(self):
       if "_impl" in self.__dict__:
-         #print "impl is in self.__dict__"
-         #print "self._impl._getRoot()",;print self._impl._getRoot()
-         return GPI.tasks.get(self.task)
-         #return self._impl._getRoot().get(self.task)#return self._impl._getParent()
-      
+         return GPI.tasks.get(self.task)#return self._impl._getParent()
       else:
-         #print "impl is NOT in self.__dict__"
-         #print self._getRoot()
-         #print self.task
-         return GPI.tasks.get(self.task)
-         #return self._getRoot().get(self.task)#return self._getParent()
-
+         return GPI.tasks.get(self.task)#return self._getParent()
 
    def check_job(self, j):
       """ Checks if the job j has sucessfully executed the job
@@ -61,15 +56,11 @@ class AbstractJob(GangaObject):
       return len(self.get_jobs())
 
    def status(self):
-      #print "in abstjobs status"
-      self.get_task()._update_jobs()
-      #print "returning self._status"
+      self.get_task()._update_jobs() 
       return self._status
 
    def ready(self):
-      #print "in spjob ready"
-      self.get_task()._update_jobs()
-      #print "in spjob ready: nach self.get_task()._update_jobs()"
+      self.get_task()._update_jobs() 
       if not self.necessary(): return False
       for t in self.prerequisites():
          if not t.done and t.necessary():

@@ -28,10 +28,12 @@ class MyList(object):
         
     
     def difference(self,L1,L2):
+        #print "L1=(%s)"%L1,;print type(L1)
+        #print "L2=(%s)"%L2 ,;print type(L1)
         """ returns the difference between 2 lists: entries in the first list but not in the second"""
         diff_list=[]
         if type(L1) is not list or type(L2) is not list:
-            print "%s"%markup("function _extend_lsts([],[]) takes two lists as arguments",fg.orange)
+            print "%s"%markup("function MyList.difference([],[]) takes two lists as arguments",fg.orange)
             return diff_list
 
         if not L2:
@@ -39,14 +41,14 @@ class MyList(object):
         s1=sets.Set(L1)
         s2=sets.Set(L2)
         sdiff=s1.difference(s2)#in 1 but not in 2
-
+        #print "returning (%s)"%list(sdiff)
         return list(sdiff)
 ######################## extend lists 
     def extend_lsts(self,L1,L2):
         """extend first list with the second with no repetition of entries"""
         if type(L1) is not list or type(L2) is not list:
             #logger.warning("function _extend_lsts([],[]) takes two lists as arguments")
-            print "%s"%markup("function _extend_lsts([],[]) takes two lists as arguments",fg.orange)
+            print "%s"%markup("function MyList.extend_lsts([],[]) takes two lists as arguments",fg.orange)
             return []
         
         if not L2:
@@ -70,7 +72,7 @@ class MyList(object):
     def in_both(self,L1,L2):
         """ """
         if type(L1) is not list or type(L2) is not list:
-            print "%s"%markup("in_both([],[]) takes two lists as arguments",fg.orange)
+            print "%s"%markup("function MyList.in_both([],[]) takes two lists as arguments",fg.orange)
             #logger.warning("in_both([],[]) takes two lists as arguments")
             return []
         
@@ -82,16 +84,16 @@ class MyList(object):
     def lst_in_lst(self,L1,L2):
         """_lst_in_lst(L1,L2) checks if L1 is included in L2"""
         if type(L1) is not list or type(L2) is not list:
-            print "%s"%markup("function _lst_in_lst([],[]) takes two lists as arguments",fg.orange)
+            print "%s"%markup("function MyList.lst_in_lst([],[]) takes two lists as arguments",fg.orange)
             #logger.warning("function _lst_in_lst([],[]) takes two lists as arguments")
             return []
         
         if not L1 or not L2:
-            print "%s"%markup("_lst_in_lst(L1,L2): First or second list (or both) is empty",fg.orange)
+            print "%s"%markup("function MyList.lst_in_lst(L1,L2): First or second list (or both) is empty",fg.orange)
             #logger.warning("_lst_in_lst(L1,L2): First or second list (or both) is empty")
             return []
         if type(L2[0]) != type(L1[0]):
-            print "%s"%markup("_lst_in_lst(L1,L2): Lists contain data of different types",fg.orange)
+            print "%s"%markup("function MyList.lst_in_lst(L1,L2): Lists contain data of different types",fg.orange)
             #logger.warning("_lst_in_lst(L1,L2): Lists contain data of different types")
             return []
         for i in L1:
@@ -100,7 +102,7 @@ class MyList(object):
 ######################################################
     def unique_elements(self,L1):
         if type(L1) is not list:
-            print "%s"%markup("function _lst_in_lst([],[]) takes two lists as arguments",fg.orange)
+            print "%s"%markup("function MyList.unique_elements([],[]) takes two lists as arguments",fg.orange)
             #logger.warning("function _lst_in_lst([],[]) takes two lists as arguments")
             return L1
         new_lst=[]
