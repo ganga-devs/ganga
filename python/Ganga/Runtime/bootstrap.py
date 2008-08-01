@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.2 2008-07-31 17:25:02 moscicki Exp $
+# $Id: bootstrap.py,v 1.3 2008-08-01 15:25:30 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -171,9 +171,9 @@ under certain conditions; type license() for details.
             flavour = Ganga.Utility.Config.Config.getFlavour()
             print "Using flavour %s"%flavour
             if flavour:
-                configtemplate = "/CONFIG_TEMPLATE_%s.INI"%flavour   
+                configtemplate = "CONFIG_TEMPLATE_%s.INI"%flavour   
             else:
-                configtemplate = "/CONFIG_TEMPLATE.INI"   
+                configtemplate = "CONFIG_TEMPLATE.INI"   
             shutil.copy(os.path.join(os.path.dirname(_gangaPythonPath),'templates',configtemplate),where)
             print >> sys.stderr, 'Created standard config file',where
             
@@ -917,6 +917,11 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/07/31 17:25:02  moscicki
+# config templates are now in a separate directory at top level ("templates")
+#
+# *converted all tabs to spaces*
+#
 # Revision 1.1  2008/07/17 16:41:00  moscicki
 # migration of 5.0.2 to HEAD
 #
