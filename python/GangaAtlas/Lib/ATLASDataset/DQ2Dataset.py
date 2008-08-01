@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.5 2008-07-31 14:14:19 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.6 2008-08-01 07:18:39 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1144,7 +1144,7 @@ except KeyError:
 
 config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASUSERDISK' , 'ATLASUSERTAPE', 'ATLASLOCALGROUPDISK'] , 'Allowed space tokens names of DQ2OutputDataset output' )
 
-config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_USERTAPE', 'FZKDISK', 'LYONDISK', 'PICDISK', 'CNAFDISK', 'RALDISK', 'SARADISK', 'ASGCDISK', 'TRIUMFDISK' ], 'Default backup locations of DQ2OutputDataset output' )
+config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_USERDISK', 'CERN-PROD_USERTAPE', 'FZKDISK', 'LYONDISK', 'PICDISK', 'CNAFDISK', 'RALDISK', 'SARADISK', 'ASGCDISK', 'TRIUMFDISK' ], 'Default backup locations of DQ2OutputDataset output' )
 
 
 
@@ -1154,6 +1154,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.5  2008/07/31 14:14:19  elmsheus
+#Fix but #39568: Panda/DQ2Dataset: Need better error message if DS doesn't exist
+#
 #Revision 1.4  2008/07/29 10:08:32  elmsheus
 #Remove DQ2_OUTPUT_LOCATIONS again
 #

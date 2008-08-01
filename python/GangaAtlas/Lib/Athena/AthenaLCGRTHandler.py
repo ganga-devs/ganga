@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.4 2008-07-29 10:08:32 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.5 2008-08-01 07:18:39 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -121,8 +121,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     if job.inputdata.use_aodesd_backnav:
                         input_esd_guids, input_esd_files = _splitlist(job.inputdata.get_contents(backnav=True))
 
-                    job.inputdata.names = input_files 	 
-                    job.inputdata.guids = input_guids 	 
+                    job.inputdata.names = input_files          
+                    job.inputdata.guids = input_guids          
 
 #       prepare outputdata
        
@@ -303,8 +303,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
 # append a property for monitoring to the jobconfig of subjobs
         lcg_config = LCGJobConfig(File(exe), inputbox, [], outputbox, environment, [], requirements)
-	lcg_config.monitoring_svc = mc['Athena']
-	return lcg_config
+        lcg_config.monitoring_svc = mc['Athena']
+        return lcg_config
 
     def master_prepare( self, app, appconfig):
         """Prepare the master job"""
@@ -347,8 +347,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
 
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
-            if not job.outputdata.location:
-                raise ApplicationConfigurationError(None,'j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
+            #if not job.outputdata.location:
+            #    raise ApplicationConfigurationError(None,'j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
             if not 'ganga-stage-in-out-dq2.py' in [ os.path.basename(file.name) for file in inputbox ]:
                 _append_files(inputbox,'ganga-stage-in-out-dq2.py')
             _append_files(inputbox,'ganga-joboption-parse.py')
@@ -374,8 +374,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         environment={ 
             'ATLAS_RELEASE'  : app.atlas_release,
-	    'ATHENA_OPTIONS' : athena_options,
-	    'ATHENA_USERSETUPFILE' : athena_usersetupfile,
+            'ATHENA_OPTIONS' : athena_options,
+            'ATHENA_USERSETUPFILE' : athena_usersetupfile,
             'ATLAS_PROJECT' : app.atlas_project,
             'ATLAS_EXETYPE' : app.atlas_exetype
         }

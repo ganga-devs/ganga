@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.5 2008-07-30 12:16:35 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.6 2008-08-01 07:18:39 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1705,7 +1705,7 @@ if __name__ == '__main__':
             print "ERROR: OUTPUT_LOCATION not defined or empty srm value"
             print "Using DQ2_BACKUP_OUTPUT_LOCATIONS" 
             temp_locations = [ ]
-        temp_locations = temp_locations + backup_locations + [ siteID ]
+        temp_locations = temp_locations + [ siteID ] + backup_locations
 
         if 'CERN' in temp_locations:
             temp_locations.remove('CERN')
