@@ -102,6 +102,9 @@ def CMTscript(app, command=''):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1.2.1  2008/07/28 10:53:06  gcowan
+# New Gaudi application handler to deal with python options. LSF and Dirac runtime handlers also updated. Old code removed.
+#
 # Revision 1.4.18.2  2008/06/13 08:50:29  uegede
 # Updated Gaudi handler
 # - To allow platform to be modified

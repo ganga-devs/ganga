@@ -57,25 +57,43 @@ class SplitByFiles(ISplitter):
         datasetlist = self._splitFiles(inputs)
         for dataset in datasetlist:
 
-            j=self.createSubjob(job)
-            j.application=job.application
-            j.backend=job.backend
+            j = self.createSubjob(job)
+            j.application = job.application
+            j.backend = job.backend
 
             #copy the dataset to the right place and configure
             j.inputdata = dataset
-            j.application.extra.inputdata= [df.name for df in dataset.files]
-            j.application.extra.dataopts+=self.subjobsDiffOpts(dataset.files,len(subjobs)+1)
-            j.application.extra._userdlls=job.application.extra._userdlls[:]
-            logger.debug("user dlls: "+str(job.application.extra._userdlls))
-            j.outputsandbox=job.outputsandbox[:]
-            subjobs.append(j)
+            j.application.extra.inputdata = [df.name for df in dataset.files]
+            j.application.extra.dataopts = self.subjobsDiffOpts(dataset.files,len(subjobs)+1)
+            j.application.extra._userdlls = job.application.extra._userdlls[:]
+            logger.debug( "user dlls: " + str(job.application.extra._userdlls))
+            j.outputsandbox = job.outputsandbox[:]
+            subjobs.append( j)
         return subjobs
 
     def prepareSubjobs(self,job):
         #job.application.configure() #### FIXME: once the logic of job preparation is reversed, this line should disappear
-        self._extra=job.application.extra
+        self._extra = job.application.extra
         return 
     
+#    def subjobsDiffOpts(self,files,i):
+#        # get the list of inputfiles
+#        # calculate the files to be returned
+#        # create a correct option file statemnet
+#        # return the option file statement
+#        s  = '## Data created for subjobs %d\n' % i 
+#        s += 'from Configurables import EventSelector\n'
+#        s += 'sel = EventSelector()\n'
+#        s += 'sel.Input = ['
+#        
+#        for k in files:
+#            s += ''' "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",''' % k.name
+#        if s.endswith(','):
+#            logger.debug('subjobsDiffOpts: removing trailing comma')
+#            s=s[:-1]
+#        s += ']'
+#        return s
+
     def subjobsDiffOpts(self,files,i):
         # get the list of inputfiles
         # calculate the files to be returned
@@ -87,13 +105,14 @@ class SplitByFiles(ISplitter):
             s+=""" "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",""" %k.name
 
         #Delete the last , to be compatible with the new optiosn parser
-        if s.endswith(","): 
+        if s.endswith(","):
             logger.debug("_dataset2optsstring: removing trailing comma")
             s=s[:-1]
 
         s+="""\n};"""
-        
+
         return s
+
 
 class _abstractSplitter(object):
     """Abstract baseclass for splitters"""
@@ -409,7 +428,7 @@ class OptionsFileSplitter(ISplitter):
         from Ganga.GPIDev.Lib.Job import Job
         subjobs=[]
         self._extra=job.application.extra
-        job.application.extra.dataopts+="//Adding includes for subjobs\n"
+        job.application.extra.dataopts += "## Adding includes for subjobs\n"
 
         for i in self.optsArray:
             j=self.createSubjob(job)
@@ -422,6 +441,7 @@ class OptionsFileSplitter(ISplitter):
             j.outputsandbox=job.outputsandbox[:]
             if job.inputdata: j.application.extra.inputdata=[x.name for x in job.inputdata.files]
             j.application.extra._userdlls=job.application.extra._userdlls[:]
+            # GC: need to deal with this dataopts
             j.application.extra.dataopts+=i
             subjobs.append(j)
         return subjobs
@@ -450,7 +470,7 @@ class GaussSplitter(ISplitter):
         from Ganga.GPIDev.Lib.Job import Job
         subjobs=[]
         self._extra=job.application.extra
-        job.application.extra.dataopts+="//Adding includes for subjobs\n"
+        job.application.extra.dataopts += '## Adding includes for subjobs\n'
 
         for i in range(self.numberOfJobs):
             j=self.createSubjob(job)
@@ -464,10 +484,8 @@ class GaussSplitter(ISplitter):
             if job.inputdata: j.application.extra.inputdata=[x.name for x in job.inputdata.files]
             j.application.extra._userdlls=job.application.extra._userdlls[:]
             firstEvent=i*self.eventsPerJob+1
-            j.application.extra.dataopts="""
-            ApplicationMgr.EvtMax = %d;
-            GaussGen.FirstEventNumber = %d;
-            """%(self.eventsPerJob,firstEvent)
+            j.application.extra.dataopts  = 'ApplicationMgr.EvtMax = %d\n' % self.eventsPerJob
+            j.application.extra.dataopts += 'GaussGen.FirstEventNumber = %d\n' % firstEvent
             logger.debug("Creating job "+ str(i) + " with FirstEventNumber = "+str(firstEvent))
             subjobs.append(j)
         return subjobs
@@ -476,6 +494,15 @@ class GaussSplitter(ISplitter):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1.2.1  2008/07/28 10:53:06  gcowan
+# New Gaudi application handler to deal with python options. LSF and Dirac runtime handlers also updated. Old code removed.
+#
+# Revision 1.15.6.3.2.2  2008/07/14 19:08:38  gcowan
+# Major update to PythonOptionsParser which now uses gaudirun.py to perform the complete options file flattening. Output flat_opts.opts file is made available and placed in input sandbox of jobs. LSF and Dirac handlers updated to cope with this new design. extraopts need to be in python. User can specify input .opts file and these will be converted to python in the flattening process.
+#
+# Revision 1.15.6.3.2.1  2008/07/03 12:52:07  gcowan
+# Can now successfully submit and run Gaudi jobs using python job options to Local() and Condor() backends. Changes in Gaudi.py, GaudiLSFRunTimeHandler.py, PythonOptionsParser.py, Splitters.py and GaudiDiracRunTimeHandler.py. More substantial testing using alternative (and more complex) use cases required.
+#
 # Revision 1.15.6.3  2008/03/03 17:13:03  wreece
 # Updates the LHCbDataset to respect the cache, and adds a test for this.
 #
