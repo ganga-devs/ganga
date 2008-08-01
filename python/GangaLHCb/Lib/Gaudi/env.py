@@ -25,20 +25,19 @@ def _setenv(gaudiapp):
     # generate shell script
     pack=gaudiapp.appname
     ver=gaudiapp.version
-    usestr=' '
-    os.environ['CMTPATH']=expandfilename(gaudiapp.user_release_area)
-    #os.environ.del_key('CMTPROJECTPATH')
-    #os.environ['User_release_area'=gaudiapp.user_release_area
-    logger.debug('CMTPATH before SetupProject: '+str(os.environ['CMTPATH']))
-    
 
-    if gaudiapp.masterpackage:
-        (pack,alg,ver)=gaudiapp._parseMasterPackage()
-        usestr='''--use='%s %s %s' '''%(str(alg),str(ver),str(pack))
-    setupstr='''$LHCBHOME/scripts/SetupProject.sh  --set-CMTPATH  --ignore-missing ''' +usestr + str(gaudiapp.appname) + " " + str(gaudiapp.version)
-    logger.debug(setupstr)
-    s=Shell(setup=setupstr)
-    logger.debug("CMTPATH of the cached environment: %s",s.env['CMTPATH'])
+    import tempfile
+    fd=tempfile.NamedTemporaryFile()
+    script = '#!/bin/sh\n'
+    script +='User_release_area=%s; export User_release_area\n' % \
+             expandfilename(gaudiapp.user_release_area)
+    script +='. $LHCBHOME/scripts/SetupProject.sh ' + pack + " " + ver + '\n'
+    fd.write(script)
+    fd.flush()
+
+    setupstr='$LHCBHOME/scripts/SetupProject.sh ' + pack + " " + ver
+    logger.debug(script)
+    s=Shell(setup=fd.name)
     import pprint
     logger.debug(pprint.pformat(s.env))
     return s
