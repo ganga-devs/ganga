@@ -1,1 +1,0 @@
-from GListApp import GListApp

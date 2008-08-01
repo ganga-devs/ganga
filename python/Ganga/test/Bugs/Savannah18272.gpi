@@ -1,3 +1,0 @@
-j = Job()
-
-assert(j.application.exe == File('/hello'))

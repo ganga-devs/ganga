@@ -1,4 +1,0 @@
-db_browser: demo version
-
-source setenv.sh to set the environment and db_browser.py to start
-the Browser.
