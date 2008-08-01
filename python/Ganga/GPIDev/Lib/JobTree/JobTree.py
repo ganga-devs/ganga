@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobTree.py,v 1.1 2008-07-17 16:40:55 moscicki Exp $
+# $Id: JobTree.py,v 1.2 2008-08-01 10:54:26 asaroka Exp $
 ################################################################################
 import os
 import types
@@ -11,6 +11,7 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobAccessError
+from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 
 import Ganga.Utility.logging
@@ -304,10 +305,13 @@ class JobTree(GangaObject):
         """Gives list of all jobs (objects) referenced in current folder
         or folder in the path if the latter is provided.
         """        
-        res = []
+        #jobslice
+        ##res = []
+        res = JobRegistryInstanceInterface("") 
         registry = self._getRegistry()
         if registry is not None:
             path = os.path.join(*self.__get_path(path))
+            res.name = "jobs found in %s" % path
             cont = self.ls(path)
             for i in cont['jobs']:
                 try:
@@ -315,7 +319,8 @@ class JobTree(GangaObject):
                 except JobAccessError:
                     pass
                 else:
-                    res.append(self._wrap(j))
+                    ##res.append(self._wrap(j))
+                    res.jobs[j.id] = self._wrap(j)
         return res
 
     def find(self, id, path = None):
