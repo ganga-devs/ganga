@@ -1,15 +1,18 @@
 **************************************************************************************************************
-5.0.4 (2008/8/1)
+5.0.4 (2008/8/4)
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 added pycrypto and paramico to the list of external dependencies (for Remote backend)
++ pycrypto sys.path fix for both 32 and 64 platforms
 
 bugfix #38547: Newly generated .gangarc produces error:
 configuration template files are now kept in the top-level templates directory - this should fix a
 bug introduced in 5.0.0 (ganga -g was not working)
+
+bugfix: #39655: Problem with slice operations on templates
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -31,6 +34,23 @@ ganga/python/Ganga/Lib/Mergers
 --------------------------------------------------------------------------------------------------------------
 Adds CustomMerger and updates the SmartMerger to introspect the jobs to find files to merge if none
 are specified.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+Updated the Remote backend that include:
+
+* Bug reporting from the remote site
+* Failure after three attempts at logging in
+* Sanity checks before job submission
+* Copying of remote backend info to the Local Host
+
+Also made the backend public. Do
+
+help(Remote)
+
+for more information.
 
 
 --------------------------------------------------------------------------------------------------------------
