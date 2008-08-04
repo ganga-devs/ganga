@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.2 2008-07-30 13:23:55 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.3 2008-08-04 14:22:52 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -756,7 +756,14 @@ class AthenaMCOutputDatasets(Dataset):
             
         for site, desc in ToACache.sites.iteritems():
             try:
-                outputlocation[site] = desc['srm'].strip()
+                outloc = desc['srm'].strip()
+                imin=outloc.find("srm:")
+                imax=outloc.rfind(":")
+                imin2=outloc.find("=")
+                if imin >0 and imin2>0 and imax >0:
+                    outputlocation[site]= outloc[imin:imax]+outloc[imin2+1:]
+                else:
+                    outputlocation[site]= outloc
             except KeyError:
                 continue
             
