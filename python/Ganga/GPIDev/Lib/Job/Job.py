@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.1 2008-07-17 16:40:54 moscicki Exp $
+# $Id: Job.py,v 1.2 2008-08-04 14:28:20 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -252,8 +252,8 @@ class Job(GangaObject):
 
             if transition_update:
                 #we call this even if there was a hook
-                newstatus = self.transition_update(newstatus)	    
-    	    self.status = newstatus # move to the new state AFTER hooks are called
+                newstatus = self.transition_update(newstatus)       
+            self.status = newstatus # move to the new state AFTER hooks are called
             self._commit()
         except Exception,x:
             self.status = saved_status
@@ -268,13 +268,13 @@ class Job(GangaObject):
             runAutoMerge(self, new_status)
         except MergerError:
             #stop recursion
-	    new_status = 'failed'
-	    self.updateStatus(new_status, transition_update = False)
+            new_status = 'failed'
+            self.updateStatus(new_status, transition_update = False)
         
         #Propagate transition updates to applications
         if self.application:
             self.application.transition_update(new_status)
-	return new_status
+        return new_status
 
     def updateMasterJobStatus(self):
         """
@@ -622,7 +622,7 @@ class Job(GangaObject):
                     raise JobManagerError('error during submit')
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
-	    self.info.increment()
+            self.info.increment()
             self.status = 'submitted' # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
             self._commit() # make sure that the status change goes to the repository
 
@@ -636,20 +636,20 @@ class Job(GangaObject):
 
 
     def rollbackToNewState(self):
-	''' 
-	Rollback the job to the "new" state if submitting of job failed:
-	    - cleanup the input and output workspace preserving the top dir(bug ##19434)
-	    - cleanup subjobs
-	This method is used as a hook for submitting->new transition
-	@see updateJobStatus() 
-	'''
-	self.getInputWorkspace().remove(preserve_top=True)
-	self.getOutputWorkspace().remove(preserve_top=True)
+        ''' 
+        Rollback the job to the "new" state if submitting of job failed:
+            - cleanup the input and output workspace preserving the top dir(bug ##19434)
+            - cleanup subjobs
+        This method is used as a hook for submitting->new transition
+        @see updateJobStatus() 
+        '''
+        self.getInputWorkspace().remove(preserve_top=True)
+        self.getOutputWorkspace().remove(preserve_top=True)
         #delete subjobs
         try:
             rep = self._getRegistry().repository
             rep.deleteJobs(map(lambda sj: tuple(sj.getFQID()), self.subjobs))#FIXME: convert to tuple because ARDA JobRepository checks if is tuple
-	    #FIXME: this should be fixed when the new function to update to new status in repository is available
+            #FIXME: this should be fixed when the new function to update to new status in repository is available
         except Exception, x:
             logger.error('Cannot delete subjobs of the job %d while reverting to the previous state (%s)', self.id, str(x))
         else:                                                                         
@@ -801,7 +801,7 @@ class Job(GangaObject):
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s',fqid,x)
                 
-	    self.info.increment()
+            self.info.increment()
             self.status = 'submitted' # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
             self._commit() # make sure that the status change goes to the repository
             return True
@@ -916,8 +916,8 @@ class JobTemplate(Job):
         return 0
     
     # FIXME: for the moment you have to explicitly define all methods if you want to export them...
-    def remove(self):
-        '''See Job for documentation.'''
+    def remove(self,force=False):
+        '''See Job for documentation. The force optional argument has no effect (it is provided for the compatibility with Job interface)'''
         return super(JobTemplate,self).remove()
 
     def submit(self):
@@ -932,6 +932,11 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:40:54  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.62.4.17  2008/04/21 08:46:51  wreece
 # Imports missing symbol. test Ganga/test/Bugs/Savannah28511 now passes
 #
