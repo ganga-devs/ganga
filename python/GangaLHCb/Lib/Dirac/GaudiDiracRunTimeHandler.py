@@ -2,8 +2,9 @@
 
 __author__ = ' Andrew Maier, Greig A Cowan'
 __date__ = 'June 2008'
-__revision__ = 0.1
+__revision__ = 0.2
 
+import os
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Lib.File import FileBuffer, File
@@ -23,8 +24,13 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         inputsandbox.append( FileBuffer('options.pkl', app.extra.opts_pkl_str))
 
         for dll in app.extra._userdlls:
-            inputsandbox.append( File( name=dll,subdir='lib'))
-
+            inputsandbox.append( File( dll, subdir = 'lib'))
+        for confDB in app.extra._merged_confDBs:
+            inputsandbox.append( File( confDB, subdir = 'python'))
+        for dir, files in app.extra._subdir_confDBs.iteritems():
+            for f in files:
+                inputsandbox.append( File( f, subdir = 'python' + os.sep + dir))   
+                
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         c = StandardJobConfig( '',inputsandbox,[],[],None)
         return c
@@ -88,7 +94,7 @@ def setEnvironment(key, value, update=False):
 # Main
 if __name__ == '__main__':
 
-    from os import curdir, system, environ, pathsep, sep
+    from os import curdir, system, environ, pathsep, sep, getcwd
     from os.path import join
     import sys    
 
@@ -96,7 +102,8 @@ if __name__ == '__main__':
 
     sys.stdout.flush()
     sys.stderr.flush()
-
+    setEnvironment( 'PYTHONPATH', getcwd() + '/python', True)
+    
     #exec the script
     print 'Executing ',commandline
     sys.stdout.flush()

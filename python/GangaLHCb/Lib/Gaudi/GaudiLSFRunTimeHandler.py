@@ -18,6 +18,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Lib.File import File
 import Ganga.Utility.Config 
 from Ganga.Utility.util import unique
+from Ganga.Utility.files import expandfilename
 
 import Ganga.Utility.logging
 
@@ -58,12 +59,18 @@ class GaudiLSFRunTimeHandler(IRuntimeHandler):
     
     job = app.getJobObject()
     logger.debug("Entering the master_prepare of the GaudiLSF Runtimehandler") 
-    userdlls = extra._userdlls
     logger.debug("extra dlls: %s", str(extra._userdlls))
+    logger.debug("extra confDBs: %s", str(extra._merged_confDBs))
+    logger.debug("extra confDBs: %s", str(extra._subdir_confDBs))    
     sandbox=[]
-    for f in userdlls:
-        sandbox.append( File(f,subdir='lib'))
-        
+    for f in extra._userdlls:
+        sandbox.append( File( f, subdir = 'lib'))
+    for f in extra._merged_confDBs:
+        sandbox.append( File( f, subdir = 'python'))
+    for dir, files in extra._subdir_confDBs.iteritems():
+        for f in files:
+            sandbox.append( File( f, subdir = 'python'+ os.sep + dir))    
+
     sandbox += job.inputsandbox
     sandbox.append( FileBuffer('options.pkl', extra.opts_pkl_str))
     
@@ -93,8 +100,8 @@ class GaudiLSFRunTimeHandler(IRuntimeHandler):
     version = app.version
     theApp = app.appname
     package = app.package
-    lhcb_release_area = app.lhcb_release_area
-    user_release_area = app.user_release_area
+    lhcb_release_area = expandfilename( app.lhcb_release_area)
+    user_release_area = expandfilename( app.user_release_area)
     platform = app.platform
     appUpper = theApp.upper()
     algpack = ''
@@ -118,7 +125,7 @@ class GaudiLSFRunTimeHandler(IRuntimeHandler):
       (algpack,alg,algver)=app._parseMasterPackage()
     
     script="""#!/usr/bin/env bash
-export CMTPATH=###CMTUSERPATH###
+export User_release_area=###CMTUSERPATH###
 export ###THEAPP###_release_area=###CMTRELEASEAREA###
 export DATAOUTPUT='###DATAOUTPUT###'
 #DATAOPTS='dataopts.py'
@@ -135,7 +142,7 @@ fi
 echo "Using the master optionsfile: ${OPTS}"
 
 if [ -f ${LHCBHOME}/scripts/SetupProject.sh ]; then
-  . ${LHCBHOME}/scripts/SetupProject.sh  --ignore-missing --use="###ALG### ###ALGVER### ###ALGPACK###" ###THEAPP### ###VERSION###
+  . ${LHCBHOME}/scripts/SetupProject.sh ###THEAPP### ###VERSION###
 else
   echo "Could not find the SetupProject.sh script. Your job will probably fail"
 fi
@@ -153,6 +160,7 @@ else
         export JOBOPTPATH=$###THEAPP###_release_area/###APPUPPER###/###APPUPPER###_###VERSION###/###PACKAGE###/###THEAPP###/###VERSION###/options/job.opts
 fi        
 
+export PYTHONPATH=`pwd`/python:${PYTHONPATH}
 $GAUDIROOT/scripts/gaudirun.py ${OPTS} ${DATAOPTS}
 
 $MKDIR -p $JOBOUTPUTDIR
@@ -208,6 +216,9 @@ done
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/08/01 15:52:11  uegede
+# Merged the new Gaudi application handler from branch
+#
 # Revision 1.1.2.1  2008/07/28 10:53:06  gcowan
 # New Gaudi application handler to deal with python options. LSF and Dirac runtime handlers also updated. Old code removed.
 #
