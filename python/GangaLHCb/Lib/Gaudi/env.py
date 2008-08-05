@@ -6,7 +6,7 @@
 #
 # Created:      09/04/2003
 # Modified:     01/07/2008, Greig Cowan
-#               01/08/2008, Ulrik Egede
+#               01/08/2008, Ulrik Egede, Greig Cowan
 #----------------------------------------------------------------------------
 
 from Ganga.Utility.Shell import Shell
@@ -15,7 +15,7 @@ from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-def _setenv(gaudiapp):
+def _setenv( gaudiapp):
     # generate shell script
     pack=gaudiapp.appname
     ver=gaudiapp.version
@@ -28,8 +28,6 @@ def _setenv(gaudiapp):
     script +='. $LHCBHOME/scripts/SetupProject.sh ' + pack + " " + ver + '\n'
     fd.write(script)
     fd.flush()
-
-    setupstr='$LHCBHOME/scripts/SetupProject.sh ' + pack + " " + ver
     logger.debug(script)
     s=Shell(setup=fd.name)
     import pprint

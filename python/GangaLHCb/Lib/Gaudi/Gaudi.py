@@ -203,7 +203,7 @@ class Gaudi(IApplication):
         # create a separate options file with only data statements.
         self.extra.dataopts = self._dataset2optionsstring(self.extra.inputdata)
 
-        self.extra._userdlls = self._get_user_dlls()
+        self.extra._userdlls, self.extra._merged_confDBs, self.extra._subdir_confDBs = self._get_user_dlls()
         self.extra._outputfiles = parser.get_output_files()
         self.extra.outputdata = parser.get_output_data()
         
@@ -236,6 +236,8 @@ class Gaudi(IApplication):
         return
 
 #    def _dataset2optionsstring(self,ds):
+#        '''This creates a python options file for the input data.
+#           Cannot use this at the moment due to genCatalog.'''
 #        s  = 'from Configurables import EventSelector\n'
 #        s += 'sel = EventSelector()\n'
 #        s += 'sel.Input = ['
@@ -511,33 +513,85 @@ class Gaudi(IApplication):
         from Ganga.Utility.files import fullpath
         import pprint
         libs=[]
+        merged_confDBs = []
+        subdir_confDBs = {}
 
-        ra=self._get_user_release_area()
+        user_ra = self._get_user_release_area()
+        full_user_ra = fullpath( user_ra) # expand any symbolic links
         platform = self._get_user_platform()
         
-        rc, showProj, m = self.shell.cmd1('cmt show projects', capture_stderr=True)
+        # Initially I thought I should use this path...
+        user_cmt_path = os.path.join( user_ra, self.appname + '_' + self.version,
+                                      self.package, self.appname, self.version, 'cmt')
+        # ...but now I think this is correct.
+        user_cmt_path = os.path.join( user_ra, self.appname + '_' + self.version, 
+                                      'cmt')
+        lhcb_cmt_path = os.path.join( self.lhcb_release_area, self.appname.upper(),
+                                      self.appname.upper() + '_' + self.version,
+                                      'cmt')
+        dir = ''
+        if self.masterpackage:
+            package, name, version = self._parseMasterPackage()
+            dir = os.path.join( user_ra, name + '_' + version, package, 'cmt')
+        elif os.path.exists( user_cmt_path):
+            dir = user_cmt_path
+        elif os.path.exists( lhcb_cmt_path):
+            dir = lhcb_cmt_path
+        else:
+            logger.error( 'Cannot find the application CMT directory')
+        logger.debug( 'Trying to use this directory ', dir)
+        # 'cd ' +dir + ';
+        rc, showProj, m = self.shell.cmd1( 'cd ' + dir +';cmt show projects', 
+                                           capture_stderr=True)
         
         logger.debug( showProj)
  
-        user_ra = self.user_release_area
-        full_user_ra = fullpath( user_ra) # expand any symbolic links
         project_areas = []
+        py_project_areas = []
         for line in showProj.split('\n'):
             for entry in line.split():
                 if entry.startswith( user_ra) or entry.startswith( full_user_ra):
                     libpath = fullpath( os.path.join(entry.rstrip('\)'), 'InstallArea',platform,'lib'))
+                    logger.debug( libpath)
                     project_areas.append( libpath)
+                    pypath  = fullpath( os.path.join(entry.rstrip('\)'), 'InstallArea','python'))
+                    logger.debug( pypath)
+                    py_project_areas.append( pypath)
         
         for libpath in project_areas:
-            if os.path.exists(libpath):
-                for f in os.listdir(libpath):
-                    fpath=os.path.join(libpath,f)
-                    if os.path.exists(fpath):
-                        libs.append(fpath)
+            if os.path.exists( libpath):
+                for f in os.listdir( libpath):
+                    fpath = os.path.join( libpath,f)
+                    if os.path.exists( fpath):
+                        libs.append( fpath)
                     else:
-                        logger.warning("File %s in %s does not exist. Skipping...",str(f),str(libpath))
-        logger.debug("%s",pprint.pformat(libs))
-        return libs     
+                        logger.warning( "File %s in %s does not exist. Skipping...",str(f),str(libpath))
+                           
+        for pypath in py_project_areas:
+            if os.path.exists( pypath):
+                for f in os.listdir( pypath):
+                    confDB_path = os.path.join( pypath, f)
+                    if confDB_path.endswith( '_merged_confDb.py'):
+                        if os.path.exists( confDB_path):
+                            merged_confDBs.append( confDB_path)
+                        else:
+                            logger.warning( "File %s in %s does not exist. Skipping...",str( f), str( confDB_path))
+                    elif os.path.isdir( confDB_path):
+                        pyfiles = []
+                        for g in os.listdir( confDB_path):
+                            file_path = os.path.join( confDB_path, g)
+                            if (file_path.endswith( '_confDb.py') or file_path.endswith( 'Conf.py') or file_path.endswith( '__init__.py')):
+                                if os.path.exists( file_path):
+                                    pyfiles.append( file_path)
+                                else:
+                                    logger.warning( "File %s in %s does not exist. Skipping...",str( g), str( f))                                
+                        subdir_confDBs[ f] = pyfiles
+                    
+        logger.debug("%s",pprint.pformat( libs))
+        logger.debug("%s",pprint.pformat( merged_confDBs))
+        logger.debug("%s",pprint.pformat( subdir_confDBs))
+
+        return libs, merged_confDBs, subdir_confDBs     
 
 
     def getpack(self, options=''):
@@ -585,6 +639,8 @@ class GaudiExtras:
     _SEProtocol = ''
     _LocalSite = ''
     _userdlls = []
+    _merged_confDBs = []
+    _subdir_confDBs = []
     inputdata = []
     _outputfiles = []
     outputdata = []
@@ -807,6 +863,9 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/08/01 15:52:11  uegede
+# Merged the new Gaudi application handler from branch
+#
 # Revision 1.1.2.1  2008/07/28 10:53:06  gcowan
 # New Gaudi application handler to deal with python options. LSF and Dirac runtime handlers also updated. Old code removed.
 #
