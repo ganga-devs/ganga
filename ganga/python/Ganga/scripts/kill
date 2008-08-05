@@ -1,0 +1,95 @@
+# File: kill
+# Author: K. Harrison
+# Created: 050722
+# Last modified: 050805
+
+"""GPI script for killing job(s) submitted with Ganga"""
+
+__author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
+__date__    = "5 August 2005"""
+__version__ = "1.0"
+
+import os
+import sys
+
+# Create list from command-line arguments saved to environment
+argList = sys.argv[ 1: ]
+
+if not argList:
+  # Print usage information if no arguments given at command line
+   print ""
+   print "Usage 1: ganga kill id1 [ id2 id3 ... ]"
+   print " => Kill job(s) with given ids"
+   print ""
+   print "Usage 2: ganga kill name1 [ name2 name3 ... ]"
+   print " => Kill job(s) with given names"
+   print ""
+   print "Usage 3: ganga kill +"
+   print " => Kill all jobs"
+   print ""
+else:
+  # Treat case where all jobs are to be killed
+   if "+" == argList[ 0 ]:
+      nkill = 0
+      nfail = 0
+      print ""
+      jobList = []
+      for j in jobs:
+         jobList.append( j )
+      for j in jobList:
+         if j.name:
+            nameString = "".join( [ "('", str( j.name ), "') " ] )
+         else:
+            nameString = ""
+         if j.kill():
+            nkill = nkill + 1
+            print "Killed job %s %s" % ( str( j.id ), nameString )
+         else:
+            nfail = nfail + 1
+            print "Unable to kill job %s %s- status: %s" %\
+               ( str( j.id ), nameString, str( j.status ) )
+      if ( nkill + nfail ):
+         print ""
+      if 1 == nkill:
+         print "1 job killed"
+      else:
+         print "%s jobs killed" % str( nkill )
+  # Treat case where jobs are killed by id or name
+   else:
+     # Create list of ids and names for all jobs in repository
+      idList = []
+      nameList = []
+      for j in jobs:
+         idList.append( j.id )
+         nameList.append( j.name )
+     # Loop over arguments
+      for item in argList:
+        # Treat case where argment is a job id
+         try:
+            id = eval( item )
+            if id in idList:
+               j = jobs[ id ]
+               if j.name:
+                  nameString = "".join( [ "('", str( j.name ), "') " ] )
+               else:
+                  nameString = ""
+               if j.kill():
+                  print "Killed job %s %s" % ( str( j.id ), nameString )
+               else:
+                  print "Unable to kill job %s %s- status: %s" %\
+                     ( str( j.id ), nameString, str( j.status ) )
+            else:
+               print "Job %s not known" %  str( id )
+        # Treat case where argment is a job name
+         except:
+            jobList = jobs[ item ]
+            if jobList:
+               for j in jobList:
+                  if j.kill():
+                     print "Killed job %s ('%s')" %\
+                        ( str( j.id ), str( j.name ) )
+                  else:
+                     print "Unable to kill job %s ('%s') - status: %s" %\
+                        ( str( j.id ), str( j.name ), str( j.status ) )
+            else:
+               print "Job '%s' not known" %  str( item )

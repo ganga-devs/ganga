@@ -1,0 +1,36 @@
+This is the Elsevier LaTeX package
+Last update: 18 July 2006
+
+Versions
+========
+
+class files: version 2.19, 01-05-2006
+documentation: 18-07-2006
+
+The latest version of this package can always be found at Elsevier's
+web site: http://www.elsevier.com/locate/latex.
+
+Requirements
+============
+Standard LaTeX 2e. Additional LaTeX packages are required for
+additional functionality.
+
+Contained files
+===============
+
+The class file for preprint style: elsart.cls.
+
+The class files for journal layout style: elsart1p.cls, elsart3p.cls,
+elsart5p.cls. See the instructions for an explanation.
+
+For articles with Harvard style (author-year) references:
+instructions: instructions-harv.pdf,
+template file: template-harv.tex,
+the LaTeX file of the instructions: instructions-harv.tex.
+
+For articles with numbered references:
+instructions: instructions-num.pdf,
+template file: template-num.tex,
+the LaTeX file of the instructions: instructions-num.tex.
+
+Copyright (C) 1998-2006 by Elsevier B.V., The Netherlands

@@ -1,0 +1,14 @@
+import os
+pwd = os.getcwd()
+
+from GangaTest.Framework.utils import sleep_until_completed
+
+j = Job(backend = Dirac(CPUTime = 60), application = Executable())
+j.submit()
+
+sleep_until_completed(j)
+assert j.status == 'completed', 'Job must be completed'
+#files must have been downloaded
+assert os.path.exists(os.path.join(j.outputdir,'stdout')), 'stdout must have been downloaded' 
+assert pwd == os.getcwd(), 'Directory must not have been changed'
+
