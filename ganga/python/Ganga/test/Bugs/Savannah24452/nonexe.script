@@ -1,0 +1,2 @@
+#!/bin/sh
+echo 'This is a non-exe script which ganga should execute anyway'
