@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.3 2008-08-04 14:23:14 moscicki Exp $
+# $Id: PACKAGE.py,v 1.4 2008-08-05 12:56:02 moscicki Exp $
 ################################################################################
 
 """ PACKAGE modules describe the installation and setup of the Ganga runtime packages.
@@ -60,7 +60,7 @@ _externalPackages = {
               'noarch':True},
    'paramiko' : {'version' : '1.7.3',
                  'noarch':True,
-                 'PYTHONPATH':'lib/python2.3/site-packages'},
+                 'syspath':'lib/python2.3/site-packages'},
    'pycrypto' : {'version' : '2.0.1',
                  'syspath':'lib/python2.3/site-packages'}
    }
