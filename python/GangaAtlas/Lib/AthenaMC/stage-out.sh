@@ -51,6 +51,13 @@ stageOutLCG(){
        export LFC_HOST=$OUTLFC
        DEST=$OUTPUT_LOCATION$lcn/$file.$TIMESTAMP.$OUTPUT_JOBID
     fi
+
+    userspacetoken=`grep -e USERDISK $OUTSITE`
+    stflag=""
+    if [ ! -z "$userspacetoken" ]; then
+	echo "Using srmv2 user space token"
+	stflag = "-s ATLASUSERDISK"
+    fi
     LFN="/grid/atlas/$lcn/$file.$TIMESTAMP.$OUTPUT_JOBID"
     # cannot use FClistGUID as the athena setup has been removed. Try something different...
     guid=`FClistGUID $file` # ensure that the guid from the pool catalog is used for the LFC registration
@@ -61,12 +68,12 @@ stageOutLCG(){
     fi       
      
     lfc-mkdir -p /grid/atlas/$lcn
-    stageoutcmd="lcg-cr --vo atlas -v -d $DEST -l $LFN $guidflag file:$PWD/$file"
+    stageoutcmd="lcg-cr --vo atlas -v $stflag -d $DEST -l $LFN $guidflag file:$PWD/$file"
     timeout 1 900 $stageoutcmd
     status=$?
     if [ $status -ne 0 ]; then
 	echo "Failed to upload to initial target destination $DEST, trying back up $BACKUP";
-	stageoutcmd="lcg-cr --vo atlas -v -d $BACKUP -l $LFN $guidflag file:$PWD/$file"
+	stageoutcmd="lcg-cr --vo atlas -v $stflag -d $BACKUP -l $LFN $guidflag file:$PWD/$file"
 	timeout 1 900 $stageoutcmd
 	status=$?
 	if [ $status -ne 0 ]; then

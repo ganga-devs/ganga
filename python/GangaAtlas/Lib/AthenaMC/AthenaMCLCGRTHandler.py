@@ -133,7 +133,17 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 assert job.inputdata._name == 'AthenaMCInputDatasets'
             except :
                 logger.error("job.inputdata must be set to 'AthenaMCInputDatasets'")
-                raise 
+                raise
+        # checking se-name: must not write to MC/DATA/PRODDISK space tokens.
+
+        if app.se_name:
+            forbidden_spacetokens=["MCDISK","DATADISK","MCTAPE","DATATAPE","PRODDISK","PRODTAPE"]
+            for token in forbidden_spacetokens:
+                try:
+                    assert token not in app.se_name
+                except:
+                    logger.error("You are not allowed to write output data in any production space token: %s. Please select a site with ATLASUSERDISK space token or a srmv1 endpoint" % app.se_name)
+                    raise
 
         if job.inputdata and job.inputdata._name == 'AthenaMCInputDatasets':
             inputdata=job.inputdata.get_dataset(app,self.username)
