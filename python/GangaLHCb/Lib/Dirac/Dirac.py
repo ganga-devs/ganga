@@ -161,8 +161,6 @@ the DIRAC WMS'''),
         if diracsite!=None and len(diracsite)>0:
             diracScript.append('setDestination("'+diracsite+'")')
 
-        # Set the platform
-        diracScript.append("setSystemConfig("+repr(os.environ['CMTCONFIG'])+")")
         # Write script into input sandbox and submit
         diracScript.write(job)
         return self._diracsubmit()
@@ -648,6 +646,11 @@ statusfile.writelines(line)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.1  2008/07/17 16:41:23  moscicki
+## migration of 5.0.2 to HEAD
+##
+## the doc and release/tools have been taken from HEAD
+##
 ## Revision 1.71.6.12  2008/05/08 14:55:07  uegede
 ## Fixed problem with comparison of float and string types.
 ##

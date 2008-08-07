@@ -23,8 +23,11 @@ def _setenv( gaudiapp):
     import tempfile
     fd=tempfile.NamedTemporaryFile()
     script = '#!/bin/sh\n'
-    script +='User_release_area=%s; export User_release_area\n' % \
-             expandfilename(gaudiapp.user_release_area)
+    try:
+        script +='User_release_area=%s; export User_release_area\n' % \
+                  expandfilename(gaudiapp.user_release_area)
+    except AttributeError:
+        pass
     script +='. $LHCBHOME/scripts/SetupProject.sh ' + pack + " " + ver + '\n'
     fd.write(script)
     fd.flush()
