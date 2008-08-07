@@ -125,7 +125,7 @@ for ((i=0;i<${#lfn[@]};i++)); do
  # now checking the backend
  case "$BACKEND" in
     'LCG')
-    stageInLCG $INPUTFILE $INPUTTURL $lfc;
+    stageInLCG $INPUTFILE $INPUTTURL ${lfc[@]};
     ;;
     'NG')
     stageInNG;

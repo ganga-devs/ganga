@@ -1,3 +1,4 @@
+
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -613,7 +614,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 lfc=""
                 for lfcentry in self.lfcs.values():
                     lfc+=lfcentry+" "
-                environment["INPUTLFCS"]+="lfc[%d]=\\\"%s\\\";" % (j,lfc.strip())
+                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
                 environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[i].strip())
                 j=j+1
                 if len(job.inputdata.inputfiles)==0:
