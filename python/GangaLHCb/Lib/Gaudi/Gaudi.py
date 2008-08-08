@@ -85,7 +85,7 @@ class Gaudi(IApplication):
 
 # Set up the schema for this application
     _schema = Schema(Version(2, 0), {
-            'optsfile': FileItem(sequence=1,defvalue=[],doc='''The name of the optionsfile. Import 
+            'optsfile': FileItem(sequence=1,strict_sequence=0,defvalue=[],doc='''List of options files. Import 
             statements in the file will be expanded at submission time and a 
             full copy made'''),
             
@@ -154,8 +154,7 @@ class Gaudi(IApplication):
         # Using _get_user_platform not exactly the same as list_choices since it will
         # force _setUpEnvironment() to be called if CMTCONFIG not defined. 
         self.platform = self._get_user_platform()
-
-        
+      
 
     def master_configure(self):
         '''The configure method configures the application. Here, the application
@@ -858,11 +857,22 @@ for app in _available_apps+["Gaudi"]:
     allHandlers.add(app, 'Dirac', GaudiDiracRunTimeHandler)
     allHandlers.add(app, 'Condor', GaudiLSFRunTimeHandler)
 
+from Ganga.GPIDev.Base.Filters import allComponentFilters
 
+def string_optsfile_shortcut(v,item):
+    print 'in here'
+    if type(v) is type(''):
+        return [ v ]
+    return None
+
+allComponentFilters['applications']=string_optsfile_shortcut
 
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2.2.1  2008/08/05 09:59:08  gcowan
+# Extended _get_user_dlls to pick up all relevant files under InstallArea/python in the users private project areas. This directory structure is now replicated in the job inputsandbox. PYTHONPATH in the job wrappers is modified to prepend it with `pwd`/python so that the python configurables in the input sandbox are picked up by the job.
+#
 # Revision 1.2  2008/08/01 15:52:11  uegede
 # Merged the new Gaudi application handler from branch
 #
