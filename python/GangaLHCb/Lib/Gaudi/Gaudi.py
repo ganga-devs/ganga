@@ -106,6 +106,8 @@ class Gaudi(IApplication):
             'user_release_area': SimpleItem(defvalue=None, typelist=['str'],doc='''The  
             user path to be used. By default the value of the first element in the 
             CMTPROJECTPATH environment variable. After assigning this you can do 
+<<<<<<< Gaudi.py
+            j.a=======
             j.application.getpack(\'Phys DaVinci v19r2\') to check out into the new location.
             This variable is used to identify private user DLLs by parsing the output of
             "cmt show projects".'''),
@@ -870,6 +872,9 @@ allComponentFilters['applications']=string_optsfile_shortcut
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2.2.2  2008/08/08 09:00:10  gcowan
+# optsfiles can now be specified as a string rather than a list if only single file required.
+#
 # Revision 1.2.2.1  2008/08/05 09:59:08  gcowan
 # Extended _get_user_dlls to pick up all relevant files under InstallArea/python in the users private project areas. This directory structure is now replicated in the job inputsandbox. PYTHONPATH in the job wrappers is modified to prepend it with `pwd`/python so that the python configurables in the input sandbox are picked up by the job.
 #
