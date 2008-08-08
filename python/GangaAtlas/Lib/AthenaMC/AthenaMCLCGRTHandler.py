@@ -641,7 +641,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 lfc=""
                 for lfcentry in self.cavern_lfcs.values():
                     lfc+=lfcentry+" "
-                environment["INPUTLFCS"]+="lfc[%d]=\\\"%s\\\";" % (j,lfc.strip())
+                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
                 environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[i].strip())
                 j=j+1
             logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
@@ -665,7 +665,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 lfc=""
                 for lfcentry in self.minbias_lfcs.values():
                     lfc+=lfcentry+" "
-                environment["INPUTLFCS"]+="lfc[%d]=\\\"%s\\\";" % (j,lfc.strip())
+                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
                 environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[i].strip())
                 j=j+1
             logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))

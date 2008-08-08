@@ -116,6 +116,7 @@ for ((i=0;i<${#lfn[@]};i++)); do
     echo "no transport string for the file, cannot get it. Skipping"
     continue
  fi
+   
  echo "==============================="
  echo "   STAGING INPUT FILES    "
  echo "==============================="
@@ -125,7 +126,7 @@ for ((i=0;i<${#lfn[@]};i++)); do
  # now checking the backend
  case "$BACKEND" in
     'LCG')
-    stageInLCG $INPUTFILE $INPUTTURL ${lfc[@]};
+    stageInLCG $INPUTFILE $INPUTTURL ${lfc[${i}]};
     ;;
     'NG')
     stageInNG;
