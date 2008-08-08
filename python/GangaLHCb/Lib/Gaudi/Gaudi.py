@@ -85,7 +85,7 @@ class Gaudi(IApplication):
 
 # Set up the schema for this application
     _schema = Schema(Version(2, 0), {
-            'optsfile': FileItem(sequence=1,defvalue=[],doc='''The name of the optionsfile. Import 
+            'optsfile': FileItem(sequence=1,strict_sequence=0,defvalue=[],doc='''The name of the optionsfile. Import 
             statements in the file will be expanded at submission time and a 
             full copy made'''),
             
@@ -857,11 +857,12 @@ for app in _available_apps+["Gaudi"]:
     allHandlers.add(app, 'Dirac', GaudiDiracRunTimeHandler)
     allHandlers.add(app, 'Condor', GaudiLSFRunTimeHandler)
 
-
-
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/08/05 14:02:58  gcowan
+# Extended _get_user_dlls to pick up all relevant files under InstallArea/python in the users private project areas. This directory structure is now replicated in the job inputsandbox. PYTHONPATH in the job wrappers is modified to prepend it with `pwd`/python so that the python configurables in the input sandbox are picked up by the job.
+#
 # Revision 1.2  2008/08/01 15:52:11  uegede
 # Merged the new Gaudi application handler from branch
 #
