@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# $Id: PythonOptionsParser.py,v 1.2 2008-08-01 15:52:11 uegede Exp $
+# $Id: PythonOptionsParser.py,v 1.3 2008-08-11 15:09:07 gcowan Exp $
 
 __author__ = 'Greig A Cowan'
 __date__ = 'June 2008'
@@ -87,7 +87,7 @@ class PythonOptionsParser:
         try:
             data = [f for f in self.opts_dict['EventSelector']['Input']]
         except KeyError, e:
-            logger.error('KeyError %s', e)
+            logger.debug('No inputdata has been defined in the options file.')
         
         if data:
             logger.info('Found the following input data: \n%s', '\n'.join(data))

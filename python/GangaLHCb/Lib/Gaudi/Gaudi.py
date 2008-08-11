@@ -188,18 +188,26 @@ class Gaudi(IApplication):
         # If the user has specified the data in a dataset, use it and
         # ignore the optionsfile, but warn the user.
         job=self.getJobObject()
-        if job.inputdata != None and inputdata:
-            logger.warning("You specified a dataset for this job, but have also defined a dataset")
-            logger.warning("in your options file. I am going to ignore the options file.")
-            logger.warning("I hope this is OK")
+        if inputdata:
+            if job.inputdata:
+                logger.warning("You specified a dataset for this job, but have also defined a dataset")
+                logger.warning("in your options file. I am going to ignore the options file.")
+                logger.warning("I hope this is OK.")
             
-            self.extra.inputdata = [x.name for x in job.inputdata.files]
-        
-        if job.inputdata == None and inputdata:
-            # Strip off the Gaudi card stuff. This places the inputdata in the 
-            # same form as the inputdata when defined as an LHCbDataset.
-            self.extra.inputdata = [x.split('\'')[1] for x in inputdata]
-        
+                self.extra.inputdata = [x.name for x in job.inputdata.files]
+            else:
+                # Strip off the Gaudi card stuff. This places the inputdata in the 
+                # same form as the inputdata when defined as an LHCbDataset.
+                logger.info('Using the inputdata defined in your options file.')
+                self.extra.inputdata = [x.split('\'')[1] for x in inputdata]
+        else:
+            # If no input data in options file
+            if job.inputdata:
+                logger.info('Using the inputdata defined in your job.')
+                self.extra.inputdata = [x.name for x in job.inputdata.files]
+            else:
+                logger.info('No inputdata is specified for this job.')
+         
         # create a separate options file with only data statements.
         self.extra.dataopts = self._dataset2optionsstring(self.extra.inputdata)
         
@@ -860,6 +868,19 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/08/11 14:35:51  uegede
+# Added configuration option AllowedPlatforms to the DIRAC section. Only jobs
+# of this configuration will be allowed for Dirac submission. At the moment
+# defaults to just slc4_ia32_gcc34.
+#
+# fixed a bug in GaudiPython application handler to use local path for script
+# to be executed.
+#
+# Added further test cases for GaudiPython application handler.
+#
+# Modified GaudiDiracRunTimeHandler to use new method for setting platform
+# in Dirac.
+#
 # Revision 1.4  2008/08/08 08:55:12  gcowan
 # optsfiles can now be specified as a string rather than a list if only single file required.
 #
