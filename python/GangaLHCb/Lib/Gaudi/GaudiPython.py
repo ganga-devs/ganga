@@ -72,7 +72,7 @@ class GaudiPython(IApplication):
 
 # Set up the schema for this application
     _schema = Schema(Version(1, 0), {
-            'script': FileItem(sequence=1,defvalue=[],doc='''The name of the script to execute. A copy will be made at submission time'''),
+            'script': FileItem(sequence=1,strict_sequence=0,defvalue=[],doc='''The name of the script to execute. A copy will be made at submission time'''),
             
             'version': SimpleItem(defvalue=None,typelist=['str'],doc='''The version of the 
             project (like "v19r2")'''),
@@ -100,7 +100,8 @@ class GaudiPython(IApplication):
             
         if (not self.version) and self.lhcb_release_area:  
             self.version = self.guess_version(self.project, self.lhcb_release_area)
-        self.platform = self._get_user_platform()
+        if (not self.platform):
+            self.platform = self._get_user_platform()
 
         
 

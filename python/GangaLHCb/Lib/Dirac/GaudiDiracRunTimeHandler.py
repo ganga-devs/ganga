@@ -60,7 +60,7 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         c = StandardJobConfig( runScript,inputsandbox,[],outputsandbox,None)
         
         diracScript.append( 'setApplication("' + app._name + '","' + app.version + '")')
-        diracScript.append("setSystemConfig("+repr(app.platform)+")")
+        diracScript.platform(app.platform)
         diracScript.append( 'setName("Ganga_'  + app._name + '_'   + app.version + '")')
         diracScript.inputdata( app.extra.inputdata)
 

@@ -32,6 +32,8 @@ configDirac.addOption('RootVersions',
 configDirac.addOption('extraProxytime','600','extra lifetime required for a proxy to submit a job')
 configDirac.addOption('DIRACsite','None','Used for testing only')
 configDirac.addOption('DiracLoggerLevel','ERROR','The logging level of DIRAC, not the logging level of the Dirac plugin in Ganga')
+configDirac.addOption('AllowedPlatforms',['slc4_ia32_gcc34'],'Allowed platforms for submission to DIRAC')
+
     
 def getEnvironment( config = {} ):
    import sys

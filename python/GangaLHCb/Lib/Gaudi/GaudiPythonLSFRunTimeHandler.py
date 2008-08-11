@@ -148,7 +148,9 @@ from Gaudi.Configuration import *
 importOptions('data.opts')
 execfile('###SCRIPTNAME###')
 """
-    script=script.replace('###SCRIPTNAME###',app.script[0].name)
+    from os.path import split,join
+    name = join('.',app.script[0].subdir,split(app.script[0].name)[-1])
+    script=script.replace('###SCRIPTNAME###',name)
     
     return script
   

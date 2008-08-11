@@ -153,8 +153,8 @@ class Gaudi(IApplication):
         #self.platform = self.list_choices("platform")
         # Using _get_user_platform not exactly the same as list_choices since it will
         # force _setUpEnvironment() to be called if CMTCONFIG not defined. 
-        self.platform = self._get_user_platform()
-
+        if (not self.platform):
+            self.platform = self._get_user_platform()
         
 
     def master_configure(self):
@@ -860,6 +860,9 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/08/08 08:55:12  gcowan
+# optsfiles can now be specified as a string rather than a list if only single file required.
+#
 # Revision 1.3  2008/08/05 14:02:58  gcowan
 # Extended _get_user_dlls to pick up all relevant files under InstallArea/python in the users private project areas. This directory structure is now replicated in the job inputsandbox. PYTHONPATH in the job wrappers is modified to prepend it with `pwd`/python so that the python configurables in the input sandbox are picked up by the job.
 #

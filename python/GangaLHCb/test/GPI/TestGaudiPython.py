@@ -1,13 +1,13 @@
-
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_file,sleep_until_state
 
-from Ganga.GPIDev.Lib.File import  FileBuffer
-
-import os
 import shutil
 import tempfile
 from os.path import join
+
+import Ganga.Utility.Config
+config = Ganga.Utility.Config.getConfig('DIRAC')
+
 
 class TestGaudiPython(GangaGPITestCase):
     
@@ -30,7 +30,8 @@ class TestGaudiPython(GangaGPITestCase):
                'stdout should contain string: ' + executionstring
 
     def testDirac(self):
-        j = Job(application=GaudiPython(), backend=Dirac())
+        gp = GaudiPython(platform=config['AllowedPlatforms'][0])
+        j = Job(application=gp, backend=Dirac())
         j.submit()
         j.remove()
         
@@ -53,3 +54,37 @@ class TestGaudiPython(GangaGPITestCase):
         assert file_contains(fname,'DEF'),\
                'Inclusion of second script not working'
         
+        shutil.rmtree(dir)
+
+    def testAutomaticList(self):
+        gp = GaudiPython()
+        
+        dir = tempfile.mkdtemp()
+        name1 = join(dir,'script1.py')
+
+        # Test that string assigned is converted into a list
+        gp.script=name1
+        assert gp.script[0].name==name1,\
+               'String assigned should be converted into list.'
+
+        shutil.rmtree(dir)
+
+    def testInvalidPlatform(self):
+        gp = GaudiPython()
+        gp.platform='FooBar'
+
+        j = Job(application=gp,backend=Dirac())
+
+        try:
+            j.submit()
+        except JobError:
+            pass
+        except Exception, e:
+            assert False, 'Unexpected exception: '+str(e)
+        else:
+            j.remove()
+            assert False, 'Invalid platform should throw exception'
+
+    def testValidPlatform(self):
+        gp = GaudiPython()
+        gp.platform='FooBar'

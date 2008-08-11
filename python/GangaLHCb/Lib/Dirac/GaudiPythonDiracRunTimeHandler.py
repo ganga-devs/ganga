@@ -54,7 +54,7 @@ class GaudiPythonDiracRunTimeHandler(IRuntimeHandler):
         c = StandardJobConfig( runScript,sandbox,[],outsb,None)
         
         diracScript.append( 'setApplication("' + app.project + '","' + app.version + '")')
-        diracScript.append("setSystemConfig("+repr(app.platform)+")")
+        diracScript.platform(app.platform)
         diracScript.append( 'setName("Ganga_GaudiPython")')
         if job.inputdata:
             diracScript.inputdata([x.name for x in job.inputdata.files])
@@ -118,7 +118,9 @@ from Gaudi.Configuration import *
 importOptions('data.opts')
 execfile('###SCRIPTNAME###')
 """
-        script=script.replace('###SCRIPTNAME###',app.script[0].name)
+        from os.path import split,join
+        name = join('.',app.script[0].subdir,split(app.script[0].name)[-1])
+        script=script.replace('###SCRIPTNAME###',name)
     
         return script
   

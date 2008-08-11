@@ -1,6 +1,9 @@
 from os.path import join
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
+import Ganga.Utility.Config
+config = Ganga.Utility.Config.getConfig('DIRAC')
+from Ganga.Core import BackendError
 
 class DiracScript:
   """Encapsulate the commands for submitting a job to Dirac into an object which is persisted as a simple set of commands in the input sandbox."""
@@ -61,6 +64,13 @@ djob = dirac.Job()
       outdata = [basename(f) for f in dataset]
       from Ganga.Utility.util import unique
       self.append("setOutputData("+str(unique(outdata))+")")
+
+  def platform(self,platform):
+    whitelist = config['AllowedPlatforms']
+    if platform in whitelist:
+      self.append("setSystemConfig(%s)"% repr(platform))
+    else:
+      raise BackendError("Dirac", "Failed to submit to the platform %s. Only the following are allowed: %s. Change the value in your application object." % (platform, str(whitelist)))
 
   def finalise(self):
     """Write the actual submission bit into the DIRACscript"""
