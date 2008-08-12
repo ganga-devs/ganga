@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.3 2008-07-30 10:27:22 hclee Exp $
+# $Id: LCG.py,v 1.4 2008-08-12 12:37:37 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -10,7 +10,7 @@
 #
 # Date:   August 2005
 
-import os, sys, md5, re, tempfile, time, errno, socket
+import os, sys, md5, re, tempfile, time, errno, socket, math
 from types import *
 from urlparse import urlparse
 
@@ -580,6 +580,7 @@ def lcg_file_download(vo,guid,localFilePath,timeout=60,maxRetry=3):
     cmd = 'lcg-cp -t %d --vo %s %s file://%s' % (timeout,vo,guid,localFilePath)
 
     printInfo('LFC_HOST set to %s' % os.environ['LFC_HOST'])
+    printInfo('lcg-cp timeout: %d' % timeout)
 
     i         = 0
     rc        = 0
@@ -590,11 +591,17 @@ def lcg_file_download(vo,guid,localFilePath,timeout=60,maxRetry=3):
         i = i + 1
         try:
             ps = os.popen(cmd)
-            ps.close()
-            isDone = True
-        except IOError:
-            printError("Download file %s from iocache failed ... trial %d." % (os.path.basename(localFilePath),i))
+            status = ps.close()
+
+            if not status:
+                isDone = True
+                printInfo('File %s download from iocache' % os.path.basename(localFilePath))
+            else:
+                raise IOError("Download file %s from iocache failed with error code: %d, trial %d." % (os.path.basename(localFilePath), status, i))
+
+        except IOError, e:
             isDone = False
+            printError(str(e))
 
         if isDone:
             try_again = False
@@ -604,7 +611,6 @@ def lcg_file_download(vo,guid,localFilePath,timeout=60,maxRetry=3):
             try_again = True
 
     return isDone
-
 
 ## system command executor with subprocess
 def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
@@ -719,6 +725,7 @@ input_sandbox = ###INPUTSANDBOX###
 wrapperlog = ###WRAPPERLOG###
 appexec = ###APPLICATIONEXEC###
 appargs = ###APPLICATIONARGS###
+timeout = ###TRANSFERTIMEOUT###
 
 exitcode=-1
 
@@ -767,7 +774,7 @@ try:
 
 #   download inputsandbox from remote cache
     for f,guid in input_sandbox['remote'].iteritems():
-        if not lcg_file_download(vo,guid,os.path.join(wdir,f)):
+        if not lcg_file_download(vo, guid, os.path.join(wdir,f), timeout=int(timeout)):
             raise Exception('Download remote input %s:%s failed.' % (guid,f) )
         else:
             getPackedInputSandbox(f)
@@ -1240,10 +1247,14 @@ sys.exit(0)
         ## get the environment variable LFC_HOST 
         lfc_host = grids[self.middleware.upper()].shell.env['LFC_HOST']
 
+        max_prestaged_fsize = 0
         c = open(clog,'a')
         for f in sandbox_files:
             abspath = os.path.abspath(f)
-            if os.path.getsize(abspath) > config['BoundSandboxLimit']:
+            fsize   = os.path.getsize(abspath) 
+            if fsize > config['BoundSandboxLimit']:
+                if fsize > max_prestaged_fsize:
+                    max_prestaged_fsize = fsize
                 md5sum  = __md5sum__(abspath)
                 if not uploadedFiles.has_key(md5sum):
                     logger.warning('The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (f,config['BoundSandboxLimit']) )
@@ -1260,6 +1271,16 @@ sys.exit(0)
             else:
                 inputs['local'].append(abspath)
         c.close()
+
+        ## determin the lcg-cp timeout according to the max_prestaged_fsize
+        ##  - using the assumption of 1 MB/sec.
+        transfer_timeout = config['SandboxTransferTimeout']
+        predict_timeout  = int( math.ceil( max_prestaged_fsize/1000000.0 ) )
+
+        if predict_timeout > transfer_timeout:
+            transfer_timeout = predict_timeout
+
+        script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
        
         ## update the job wrapper with the inputsandbox list
         script = script.replace('###INPUTSANDBOX###',repr({'remote':inputs['remote'],'local':[ os.path.basename(f) for f in inputs['local'] ]}))
@@ -1734,6 +1755,8 @@ config.addOption('DefaultLFC','prod-lfc-shared-central.cern.ch','sets the file c
 config.addOption('BoundSandboxLimit',10 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\'')
 
 config.addOption('Requirements','Ganga.Lib.LCG.LCGRequirements','sets the full qualified class name for other specific LCG job requirements')
+
+config.addOption('SandboxTransferTimeout', 60, 'sets the transfer timeout of the oversized input sandbox')
 #config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
 
 # apply preconfig and postconfig handlers
@@ -1755,6 +1778,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/07/30 10:27:22  hclee
+# fix indentation issue in the code
+#
 # Revision 1.2  2008/07/28 11:00:55  hclee
 # patching up to the up-to-date development after CVS migration
 #
