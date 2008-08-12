@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.4 2008-08-12 12:37:37 hclee Exp $
+# $Id: LCG.py,v 1.5 2008-08-12 13:57:42 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -862,136 +862,7 @@ out.close()
 # one can always get stdout and stderr back to the UI for debug. 
 sys.exit(0)
 """
-        return script;
-
-    def peek(self, filename='', command=''):
-        """
-        Allow peeking of this job's stdout on the WN
-        (i.e. while job is in 'running' state)
-
-        Return value: None
-        """
-        if filename and filename != 'stdout':
-            logger.warning('Arbitrary file peeking not supported for a running LCG job')
-        else:
-            self.inspect(command)
-
-    def inspect( self, cmd=None):
-        """
-        Allow viewing of this job's stdout on the WN
-        (i.e. while job is in 'running' state)
-                                                                                  
-        Return value: None
-        """
-
-        job = self.getJobObject()
-
-        # Use GLITE's job perusal feature if enabled
-        if self.middleware.upper()=="GLITE" and self.status=="Running" and self.perusable:
-            fname = os.path.join(job.outputdir,'_peek.dat')
-            #f    = open(fname,'w')
-
-            sh=grids[self.middleware.upper()].shell
-            re, output, m=sh.cmd("glite-wms-job-perusal --get --noint --all -f stdout %s" % self.id, fname)
-            job.viewFile(fname,cmd)
-        
-            return None
-
-        remoteFile = None
-      
-        ## create new connection if not connection is made
-        checkOctopus = False
-
-        if not self.octopus:
-            s = ''
-            p = ''
-            c = 0L
-            try:
-                s = self.monInfo['octopus_server']
-                p = self.monInfo['octopus_port']
-                c = self.monInfo['channel']
-             
-                self.octopus = Octopus(s, p)
-                self.octopus.join(c)
-             
-                checkOctopus = True 
-
-            except (TypeError,KeyError):
-                logger.warning('Octopus monitoring service not enabled at submission time')
-
-            except ProtocolException, pe:
-                logger.warning('Octopus connection error: %s' % pe.__str__())
-
-        ## do nothing if skipOtcopus is True
-        if not checkOctopus:
-            return None
-      
-        ## detect which remote file is going to be inspected 
-        if not remoteFile:
-            remoteFile = self.monInfo['remotefile']
-
-        ## send reset to octopus server if the remot file is changed 
-        if remoteFile != self.monInfo['remotefile']:
-            self.octopus.reset()
-            self.monInfo['remotefile'] = remoteFile
-            self.octopus.send('set ' + remoteFile + '\n')
-            logger.debug('reset target file for inspection: %s',remoteFile)
-
-        logger.debug('inspecting file: %s',remoteFile)
-
-        ## pick up data from the server 
-        size_picked = 0
-        read_cnt    = 0
-        data = ''
-
-        ## temporary file for storing the picked data
-        ## the given command will be operated on the temporary file
-        #tmpf = tempfile.mktemp('.tmp', '_inspect_%s_' % remoteFile, job.outputdir)
-
-        tmpf = os.path.join(job.outputdir,'_%s_peek.dat' % remoteFile)
-        f    = open(tmpf,'w')
-
-        if not self.octopus.eotFound:
-            try:
-                data = self.octopus.read()
-                read_cnt += 1
-                while len(data) > 0:
-                    logger.debug('read count:%d\tlength of data:%d' % (read_cnt,len(data)))
-                    f.write(data)
-                    size_picked += len(data)
-
-                    data = ''
-                    if not self.octopus.eotFound:
-                        data = self.octopus.read()
-                        read_cnt += 1
-                    else:
-                        logger.debug('end of data read')
-            
-            except socket.error, e:
-                if e[0] != errno.EAGAIN:
-                    logger.warning('socket error: %s' % e)
-
-            except IOError, (errno, strerror):
-                logger.warning("I/O error(%s): %s" % (errno, strerror))
-        else:
-            logger.debug('end of data read')
-
-        ## close the opened temporary file
-        f.close()
-
-        ## close the octopus connection
-        if self.octopus:
-            self.octopus.close()
-            self.octopus = None
-
-        ## performing the command on the temporary file
-        if size_picked:
-           if not cmd:
-               cmd = ''
-
-           job.viewFile(tmpf,cmd)
-
-        return None
+        return script
 
     def peek(self, filename='', command=''):
         """
@@ -1279,6 +1150,9 @@ sys.exit(0)
 
         if predict_timeout > transfer_timeout:
             transfer_timeout = predict_timeout
+
+        if transfer_timeout < 60:
+            transfer_timeout = 60
 
         script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
        
@@ -1778,6 +1652,12 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/08/12 12:37:37  hclee
+# - improving oversized inputsandbox downloading
+#   * add more debug information
+#   * automatically determine the lcg-cp timeout assuming the rate of 1MB/sec
+#   * add config.LCG.SandboxTransferTimeout allowing user to set it manually
+#
 # Revision 1.3  2008/07/30 10:27:22  hclee
 # fix indentation issue in the code
 #
