@@ -85,6 +85,20 @@ class TestGaudiPython(GangaGPITestCase):
             j.remove()
             assert False, 'Invalid platform should throw exception'
 
-    def testValidPlatform(self):
+    def testSplit(self):
         gp = GaudiPython()
-        gp.platform='FooBar'
+        j = Job(application=gp, backend=Local())
+        prefix='LFN:/lhcb/production/DC06/v1r0/00002069/DST/0000'
+        j.inputdata = LHCbDataset([
+            prefix+'/00002069_00000002_2.dst',
+            prefix+'/00002069_00000004_2.dst'])
+        j.splitter = SplitByFiles()
+        j.submit()
+        assert sleep_until_completed(j,600)
+        
+
+        executionstring = 'Application Manager Stopped successfully'
+        for js in j.subjobs:
+            fname = join(js.outputdir,'stdout')
+            assert file_contains(fname,executionstring),\
+                   'stdout should contain string: ' + executionstring

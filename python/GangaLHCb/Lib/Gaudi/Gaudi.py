@@ -275,7 +275,6 @@ class Gaudi(IApplication):
 
             #Delete the last , to be compatible with the new optiosn parser
             if s.endswith(","):
-                logger.debug("_dataset2optsstring: removing trailing comma")
                 s=s[:-1]
 
             s+="""\n};"""
@@ -286,7 +285,6 @@ class Gaudi(IApplication):
                 s+=""" "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",""" %k.name
             #Delete the last , to be compatible with the new optiosn parser
             if s.endswith(","):
-                logger.debug("_dataset2optsstring: removing trailing comma")
                 s=s[:-1]
             s+="""\n};"""
         return s
@@ -538,16 +536,17 @@ class Gaudi(IApplication):
                                       self.appname.upper() + '_' + self.version,
                                       'cmt')
         dir = ''
-        if self.masterpackage:
-            package, name, version = self._parseMasterPackage()
-            dir = os.path.join( user_ra, name + '_' + version, package, 'cmt')
-        elif os.path.exists( user_cmt_path):
+#         if self.masterpackage:
+#             package, name, version = self._parseMasterPackage()
+#             dir = os.path.join( user_ra, name + '_' + version, package, 'cmt')
+#         elif os.path.exists( user_cmt_path):
+        if os.path.exists(fullpath(user_cmt_path)):
             dir = user_cmt_path
-        elif os.path.exists( lhcb_cmt_path):
+        elif os.path.exists(fullpath(lhcb_cmt_path)):
             dir = lhcb_cmt_path
         else:
-            logger.error( 'Cannot find the application CMT directory')
-        logger.debug( 'Trying to use this directory ', dir)
+            logger.error( 'Cannot find the application CMT directory: %s' % dir)
+        logger.debug( 'Trying to use this CMT directory %s' % dir)
         # 'cd ' +dir + ';
         rc, showProj, m = self.shell.cmd1( 'cd ' + dir +';cmt show projects', 
                                            capture_stderr=True)
@@ -868,6 +867,9 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.6  2008/08/11 15:09:07  gcowan
+# Fixed bug when detecting the source of inputdata. Improved logging messages.
+#
 # Revision 1.5  2008/08/11 14:35:51  uegede
 # Added configuration option AllowedPlatforms to the DIRAC section. Only jobs
 # of this configuration will be allowed for Dirac submission. At the moment

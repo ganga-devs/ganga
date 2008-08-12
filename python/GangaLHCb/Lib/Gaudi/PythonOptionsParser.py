@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# $Id: PythonOptionsParser.py,v 1.3 2008-08-11 15:09:07 gcowan Exp $
+# $Id: PythonOptionsParser.py,v 1.4 2008-08-12 13:58:16 uegede Exp $
 
 __author__ = 'Greig A Cowan'
 __date__ = 'June 2008'
@@ -88,9 +88,6 @@ class PythonOptionsParser:
             data = [f for f in self.opts_dict['EventSelector']['Input']]
         except KeyError, e:
             logger.debug('No inputdata has been defined in the options file.')
-        
-        if data:
-            logger.info('Found the following input data: \n%s', '\n'.join(data))
         
         #for datum in data:
         #   # remove PFN: from filename

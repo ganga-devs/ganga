@@ -112,6 +112,11 @@ class GaudiPython(IApplication):
         self.appname = self.project
         self._setUpEnvironment()  
 
+        job=self.getJobObject()
+        from GangaLHCb.Lib.Gaudi import GaudiExtras
+        self.extra = GaudiExtras()
+        if job.inputdata:
+            self.extra.inputdata = [x.name for x in job.inputdata.files]
         self.package = _available_packs[self.project]
 
         return (None,None)

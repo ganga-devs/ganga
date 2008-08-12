@@ -76,24 +76,6 @@ class SplitByFiles(ISplitter):
         self._extra = job.application.extra
         return 
     
-#    def subjobsDiffOpts(self,files,i):
-#        # get the list of inputfiles
-#        # calculate the files to be returned
-#        # create a correct option file statemnet
-#        # return the option file statement
-#        s  = '## Data created for subjobs %d\n' % i 
-#        s += 'from Configurables import EventSelector\n'
-#        s += 'sel = EventSelector()\n'
-#        s += 'sel.Input = ['
-#        
-#        for k in files:
-#            s += ''' "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",''' % k.name
-#        if s.endswith(','):
-#            logger.debug('subjobsDiffOpts: removing trailing comma')
-#            s=s[:-1]
-#        s += ']'
-#        return s
-
     def subjobsDiffOpts(self,files,i):
         # get the list of inputfiles
         # calculate the files to be returned
@@ -494,6 +476,9 @@ class GaussSplitter(ISplitter):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/08/01 15:52:11  uegede
+# Merged the new Gaudi application handler from branch
+#
 # Revision 1.1.2.1  2008/07/28 10:53:06  gcowan
 # New Gaudi application handler to deal with python options. LSF and Dirac runtime handlers also updated. Old code removed.
 #
