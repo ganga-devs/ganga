@@ -1,0 +1,39 @@
+**************************************************************************************************************
+5.0.5 (2008/8/13)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+- improve oversized inputsandbox downloading
+  * add more debug information
+  * determine the lcg-cp timeout dynamically assuming the rate of 1MB/sec
+  * add config.LCG.SandboxTransferTimeout allowing user to set it manually
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+AthenaMC: various bug fixes concerning input data handling (multiple input datasets and multiple lfcs)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+New Gaudi handler implemented which internally now is only using
+gaudirun.py.
+ - Usage of old .opts files still possible.
+ - Users can specify a list of options files containing both .py and .opts files.
+ - The extraopts field now has to be in python format.
+ - Bug fixed when using alternative CMT area.
+ - Possibility to give opts field as a single filename re-instated.
+ - Issues related to multiple CMT areas fixed (Savannah bug #31165).
+ - Panoptes added to list of applications.
+ - Savannah bugs #39118 and #38990 have been fixed.
+
+New GaudiPython handler.
+ - See help(GaudiPython) for details.
+
+Submission to Dirac now only works with the slc4_ia32_gcc34 platform.
+
+**************************************************************************************************************
