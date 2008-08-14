@@ -165,19 +165,19 @@ class GaudiPython(IApplication):
 
     
     def _dataset2optionsstring(self,ds):
-        s='EventSelector.Input   = {'
+        s=''
         if ds!=None:
-            try:
-                for k in ds.files:
-                    s+='\n'
-                    s+=""" "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",""" %k.name
-                if s.endswith(","):
-                    logger.debug("_dataset2optsstring: removing trailing comma")
-                    s=s[:-1]
-            except:
-                logger.warning('Problems with passing input dataset. Results might be incomplete')
+            s='EventSelector.Input   = {'
+            for k in ds.files:
+                s+='\n'
+                s+=""" "DATAFILE='%s' %s",""" % (k.name, ds.datatype_string)
+            #Delete the last , to be compatible with the new optiosn parser
+            if s.endswith(","):
+                s=s[:-1]
         s+="""\n};"""
         return s
+
+
 
     def available_versions(self,appname, release_area, dev = None):
       """Try to extract the list of installed versions for a given application"""

@@ -22,10 +22,11 @@ def getCacheAge():
 # LHCbDataset is a simple list of files (LFNs)
 
 class LHCbDataset(Dataset):
-    _schema = Schema(Version(2,1), {
+    _schema = Schema(Version(2,2), {
         'files':ComponentItem(category='datafiles',defvalue=[],sequence=1),
         'cache_date': SimpleItem(defvalue = '', doc = 'The date the last full cache update was run.'),
-        'new_cache' : SimpleItem(defvalue = True, doc = 'True when the cache has never been updated before',hidden = 1)
+        'new_cache' : SimpleItem(defvalue = True, doc = 'True when the cache has never been updated before',hidden = 1),
+        'datatype_string': SimpleItem(defvalue= """TYP='POOL_ROOTTREE' OPT='READ'""", doc = 'The string that is added after the filename in the options to tell Gaudi how to read the data. If reading raw data (mdf files) it should be set to "SVC=\'LHCb::MDFSelector\'"')
         })
     _category = 'datasets'
     _name = "LHCbDataset"
@@ -80,7 +81,7 @@ class LHCbDataset(Dataset):
             result = False
 
         return result
-        
+
 
     class MigrationLHCbDataset10(Dataset):
         """This is a migration class for Athena Job Handler with schema version 1.2.
@@ -270,6 +271,11 @@ allComponentFilters['datafiles']=string_datafile_shortcut
 allComponentFilters['datasets']=string_dataset_shortcut
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:41:24  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.15.6.8  2008/05/22 16:36:40  wreece
 # fixs truth of LHCbDataset
 #

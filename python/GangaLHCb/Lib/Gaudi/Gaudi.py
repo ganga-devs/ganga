@@ -188,23 +188,21 @@ class Gaudi(IApplication):
         # If the user has specified the data in a dataset, use it and
         # ignore the optionsfile, but warn the user.
         job=self.getJobObject()
-        if inputdata:
+        if len(inputdata.files) == 0:
             if job.inputdata:
                 logger.warning("You specified a dataset for this job, but have also defined a dataset")
                 logger.warning("in your options file. I am going to ignore the options file.")
                 logger.warning("I hope this is OK.")
             
-                self.extra.inputdata = [x.name for x in job.inputdata.files]
+                self.extra.inputdata = job.inputdata
             else:
-                # Strip off the Gaudi card stuff. This places the inputdata in the 
-                # same form as the inputdata when defined as an LHCbDataset.
                 logger.info('Using the inputdata defined in your options file.')
-                self.extra.inputdata = [x.split('\'')[1] for x in inputdata]
+                self.extra.inputdata = inputdata
         else:
             # If no input data in options file
             if job.inputdata:
                 logger.info('Using the inputdata defined in your job.')
-                self.extra.inputdata = [x.name for x in job.inputdata.files]
+                self.extra.inputdata = job.inputdata
             else:
                 logger.info('No inputdata is specified for this job.')
          
@@ -267,26 +265,14 @@ class Gaudi(IApplication):
 
     def _dataset2optionsstring(self,ds):
         s=''
-        if type(ds) == type([1,2,3]):
-            s='EventSelector.Input   = {'
-            for k in ds:
-                s+='\n'
-                s+=""" "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",""" %k
-
-            #Delete the last , to be compatible with the new optiosn parser
-            if s.endswith(","):
-                s=s[:-1]
-
-            s+="""\n};"""
-        else:
-            s='EventSelector.Input   = {'
-            for k in ds.files:
-                s+='\n'
-                s+=""" "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",""" %k.name
-            #Delete the last , to be compatible with the new optiosn parser
-            if s.endswith(","):
-                s=s[:-1]
-            s+="""\n};"""
+        s='EventSelector.Input   = {'
+        for k in ds.files:
+            s+='\n'
+            s+=""" "DATAFILE='%s' %s",""" % (k.name, ds.datatype_string)
+        #Delete the last , to be compatible with the new optiosn parser
+        if s.endswith(","):
+            s=s[:-1]
+        s+="""\n};"""
         return s
 
     #######################################################################
@@ -867,6 +853,16 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.7  2008/08/12 13:58:16  uegede
+# Fixed gaudiPython to work with splitters
+#
+# Fixed bug in Gaudi handler causing projects not to be identified when
+# masterpackage was used.
+#
+# Fixed bug in Gaudi handler when cmt_user_path included a ~.
+#
+# Took away some confusing debug statements in PythonOptionsParser
+#
 # Revision 1.6  2008/08/11 15:09:07  gcowan
 # Fixed bug when detecting the source of inputdata. Improved logging messages.
 #

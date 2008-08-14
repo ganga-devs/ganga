@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# $Id: PythonOptionsParser.py,v 1.4 2008-08-12 13:58:16 uegede Exp $
+# $Id: PythonOptionsParser.py,v 1.5 2008-08-14 15:54:43 uegede Exp $
 
 __author__ = 'Greig A Cowan'
 __date__ = 'June 2008'
@@ -95,8 +95,9 @@ class PythonOptionsParser:
         #        inputdata.append( datum[4:])
         #    else:
         #        inputdata.append( datum)
-        
-        return data
+
+        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
+        return LHCbDataset(files=[x.split('\'')[1] for x in data])
 
     def get_output_files( self):
         '''Collects the ntuple and histogram filenames that the job outputs'''

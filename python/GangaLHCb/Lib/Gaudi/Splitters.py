@@ -47,11 +47,13 @@ class SplitByFiles(ISplitter):
         from Ganga.GPIDev.Lib.Job import Job
         subjobs=[]
         self.prepareSubjobs(job)
+        inputs = LHCbDataset()
+        inputs.datatype_string=job.inputdata.datatype_string
         if int(self.maxFiles) == -1:
-            inputs=self._extra.inputdata[:]
+            inputs.files=self._extra.inputdata.files[:]
             logger.info("Using all %d input files for splitting" % len(inputs))
         else:
-            inputs=self._extra.inputdata[:self.maxFiles]
+            inputs.files=self._extra.inputdata.files[:self.maxFiles]
             logger.info("Only using a maximum of %d inputfiles" %int(self.maxFiles))
 
         datasetlist = self._splitFiles(inputs)
@@ -63,10 +65,9 @@ class SplitByFiles(ISplitter):
 
             #copy the dataset to the right place and configure
             j.inputdata = dataset
-            j.application.extra.inputdata = [df.name for df in dataset.files]
-            j.application.extra.dataopts = self.subjobsDiffOpts(dataset.files,len(subjobs)+1)
+            j.application.extra.inputdata = dataset
+            j.application.extra.dataopts = self.subjobsDiffOpts(dataset,len(subjobs)+1)
             j.application.extra._userdlls = job.application.extra._userdlls[:]
-            logger.debug( "user dlls: " + str(job.application.extra._userdlls))
             j.outputsandbox = job.outputsandbox[:]
             subjobs.append( j)
         return subjobs
@@ -76,15 +77,15 @@ class SplitByFiles(ISplitter):
         self._extra = job.application.extra
         return 
     
-    def subjobsDiffOpts(self,files,i):
+    def subjobsDiffOpts(self,dataset,i):
         # get the list of inputfiles
         # calculate the files to be returned
         # create a correct option file statemnet
         # return the option file statement
-        s='\n////Data created for subjobs %d\nEventSelector.Input   = {'%i
-        for k in files:
+        s='\n////Data created for subjob %d\nEventSelector.Input   = {'% (i-1)
+        for k in dataset.files:
             s+='\n'
-            s+=""" "DATAFILE='%s' TYP='POOL_ROOTTREE' OPT='READ'",""" %k.name
+            s+=""" "DATAFILE='%s' %s",""" % (k.name, dataset.datatype_string)
 
         #Delete the last , to be compatible with the new optiosn parser
         if s.endswith(","):
@@ -112,17 +113,19 @@ class _simpleSplitter(_abstractSplitter):
         """Just splits the files in the order they came"""
         result = []
         end = 0
-        inputs_length = len(inputs)
+        inputs_length = len(inputs.files)
         for i in range(inputs_length // self.filesPerJob):
             start = i * self.filesPerJob
             end = start + self.filesPerJob
             #add a sublist of files
             dataset = LHCbDataset()
-            dataset.files = [string_datafile_shortcut(x,None) for x in inputs[start:end]]
+            dataset.datatype_string=inputs.datatype_string
+            dataset.files = inputs.files[start:end]
             result.append(dataset)
         if end < (inputs_length):
             dataset = LHCbDataset()
-            dataset.files = [string_datafile_shortcut(x,None) for x in inputs[end:]]
+            dataset.datatype_string=inputs.datatype_string
+            dataset.files = inputs.files[end:]
             result.append(dataset)
         #catch file loss
         result_length = 0
@@ -476,6 +479,16 @@ class GaussSplitter(ISplitter):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/08/12 13:58:16  uegede
+# Fixed gaudiPython to work with splitters
+#
+# Fixed bug in Gaudi handler causing projects not to be identified when
+# masterpackage was used.
+#
+# Fixed bug in Gaudi handler when cmt_user_path included a ~.
+#
+# Took away some confusing debug statements in PythonOptionsParser
+#
 # Revision 1.2  2008/08/01 15:52:11  uegede
 # Merged the new Gaudi application handler from branch
 #

@@ -50,7 +50,8 @@ djob = dirac.Job()
     indata = []
     import re
     p = re.compile( 'lfn:.',re.IGNORECASE)
-    for lfn in dataset:
+    fnames = [f.name for f in dataset.files]
+    for lfn in fnames:
         if p.match( lfn):
             indata.append( lfn[4:])
     if len(indata) > 0:
