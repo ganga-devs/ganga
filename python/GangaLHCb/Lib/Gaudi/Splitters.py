@@ -230,7 +230,8 @@ class _diracSplitter(_abstractSplitter):
         bulk = {}
         if data_set is None:
             data_set = LHCbDataset()
-            data_set.files = [string_datafile_shortcut(x,None) for x in inputs]
+            data_set.datatype_string=inputs.datatype_string
+            data_set.files = inputs.files
 
         if data_set.cacheOutOfDate():
             #print an estimate of how long the query will take
@@ -266,15 +267,16 @@ class _diracSplitter(_abstractSplitter):
         #storage elements 
         files = {}
         debug_dict = {}
-        for i in inputs:
-            if not i in bad_file_list:
-                loc = _locations(bulk[i])
-                debug_dict[i] = loc
-                logger.debug('Location for file %s is %s', i, str(loc))
+        for i in inputs.files:
+            name = i.name
+            if not name in bad_file_list:
+                loc = _locations(bulk[name])
+                debug_dict[name] = loc
+                logger.debug('Location for file %s is %s', name, str(loc))
                 if loc in files:
                     files[loc].append(i)
                 else:
-                    files[loc] = [i]
+                    files[loc] = [name]
         logger.debug('Dirac bulk query done and stored in map')
         logger.debug('There are %d unique location sets.',len(files.keys()))
         logger.debug('The unique locations are %s',str(files.keys()))
@@ -479,6 +481,10 @@ class GaussSplitter(ISplitter):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/08/14 15:54:43  uegede
+# Added "datatype_string" to schema for LHCbDataset. This allows Ganga to run with
+# cosmic data.
+#
 # Revision 1.3  2008/08/12 13:58:16  uegede
 # Fixed gaudiPython to work with splitters
 #
