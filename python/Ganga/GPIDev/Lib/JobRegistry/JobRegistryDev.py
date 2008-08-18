@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.2 2008-08-18 13:18:58 moscicki Exp $
+# $Id: JobRegistryDev.py,v 1.3 2008-08-18 15:51:10 moscicki Exp $
 ################################################################################
 
 
@@ -136,8 +136,10 @@ class JobRegistryInstanceInterface:
         attrs_str = ''
         for a in attrs:
             attrs_str += ',%s=%s'%(a,repr(attrs[a]))
-        
-        jobslice = JobRegistryInstanceInterface("%s.select(minid=%s,maxid=%s%s)"%(self.name,repr(minid),repr(maxid),attrs_str))
+
+        import repr
+        r = repr.Repr()
+        jobslice = JobRegistryInstanceInterface("%s.select(minid=%s,maxid=%s%s)"%(self.name,r.repr(minid),r.repr(maxid),attrs_str))
 
         def callback(j):
             jobslice.jobs[j.id] = j
@@ -152,12 +154,24 @@ class JobRegistryInstanceInterface:
         persistent storage. 
         """
         import sys
+
+        def select_by_list(j):
+            return j.id in ids
+
+        def select_by_range(j):
+            return minid <= j.id <= maxid
         
-        if minid is None: minid = 0
-        if maxid is None: maxid = sys.maxint
+        ids = None
+        if type(minid) is type([]):
+            ids = minid
+            select = select_by_list
+        else:
+            if minid is None: minid = 0
+            if maxid is None: maxid = sys.maxint
+            select = select_by_range
 
         for j in self.jobs.values():
-            if minid <= j.id <= maxid:
+            if select(j):
                 selected=True
                 for a in attrs:
                     try:
@@ -598,6 +612,10 @@ class JobRegistryInstance(JobRegistryInstanceBase):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/08/18 13:18:58  moscicki
+# added force_status() method to replace job.fail(), force_job_failed() and
+# force_job_completed()
+#
 # Revision 1.1  2008/07/17 16:40:55  moscicki
 # migration of 5.0.2 to HEAD
 #
