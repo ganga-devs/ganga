@@ -1,0 +1,40 @@
+import os.path,time
+
+#print 'touch LOCKFILE now!'
+
+#while not os.path.exists('LOCKFILE'):
+# time.sleep(1)
+
+#print 'continuing!'
+
+## j = Job()
+## j.backend=Local()
+## j.application=Executable()
+## j.splitter=ExeSplitter()
+## apps = []
+## LEN = 10
+## for i in range(LEN):
+##     apps.append(Executable(args=['ARGUMENT %d'%i]))
+## j.splitter.apps = apps
+## j.application.exe='/bin/echo'
+## j.submit()
+
+## print j
+
+j = Job()
+j.application = StoreTestApplication(factor=2)
+j.backend = StoreTestBackend()
+j.splitter = StoreTestSplitter()
+j.submit()
+
+#print j
+
+assert(j.application.shared_config==j.application.factor*10)
+assert(j.application.specific_config is None)
+for s in j.subjobs:
+    assert(s.application.specific_config == s.id*10*j.application.factor)
+    assert(s.application.shared_config is None)
+    
+    
+#print j
+
