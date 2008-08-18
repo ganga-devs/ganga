@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.1 2008-07-17 16:40:55 moscicki Exp $
+# $Id: JobRegistryDev.py,v 1.2 2008-08-18 13:18:58 moscicki Exp $
 ################################################################################
 
 
@@ -102,7 +102,10 @@ class JobRegistryInstanceInterface:
         self.do_collective_operation(keep_going,'resubmit')
 
     def fail(self,keep_going,force):
-        self.do_collective_operation(keep_going,'fail',force=force)
+        raise GangaException('fail() is deprecated, use force_status("failed") instead')
+
+    def force_status(self,status,keep_going,force):
+        self.do_collective_operation(keep_going,'force_status',status,force=force)
         
     def remove(self,keep_going,force):
         self.do_collective_operation(keep_going,'remove',force=force)
@@ -299,16 +302,16 @@ class JobRegistryInstanceInterface:
 
         cnt = len(self.jobs)
                         
-	fg = Foreground()
-	fx = Effects()
-	bg = Background()
+        fg = Foreground()
+        fx = Effects()
+        bg = Background()
 
-	status_colours = { 'new'	: fx.normal,
-			   'submitted'	: fg.orange,
-			   'running'	: fg.green,
-			   'completed'	: fg.blue,
-			   'failed'	: fg.red }
-				   	
+        status_colours = { 'new'        : fx.normal,
+                           'submitted'  : fg.orange,
+                           'running'    : fg.green,
+                           'completed'  : fg.blue,
+                           'failed'     : fg.red }
+                                        
 
 
         label = ''
@@ -318,10 +321,10 @@ class JobRegistryInstanceInterface:
 
         format = "#"
         for d in config['registry_columns']:
-    	    if d not in config['registry_columns_width'].keys(): 
-    		width = 10
-    	    else:
-    		width = config['registry_columns_width'][d]	
+            if d not in config['registry_columns_width'].keys(): 
+                width = 10
+            else:
+                width = config['registry_columns_width'][d]     
             format += "%"+str(width)+"s  "
 
         format += "\n"
@@ -368,10 +371,10 @@ class JobRegistryInstanceInterface:
 
             vals = []
             for item in config['registry_columns']:
-        	if d not in config['registry_columns_width'].keys():
-        	    width = 10
-        	else:
-        	   width = config['registry_columns_width'][d]
+                if d not in config['registry_columns_width'].keys():
+                    width = 10
+                else:
+                   width = config['registry_columns_width'][d]
                 vals.append(getstr(item,width))
 
             ds += markup(format % tuple(vals), colour)
@@ -409,9 +412,9 @@ class JobRegistryInstanceBase(JobRegistryInstanceInterface):
         #reglock_acquire()
         try:
             # call registry-specific job initialization
-	    #check the internal services state
-	    checkInternalServices()
-	    
+            #check the internal services state
+            checkInternalServices()
+            
             self._init_new_job(job)
             
             logger.debug('registering new job')
@@ -505,7 +508,7 @@ class JobRegistryInstance(JobRegistryInstanceBase):
 
     def clean(self):
         # use bulk operations to clean the whole repository
-	
+        
         checkInternalServices()
 
         self.repository.resetAll()
@@ -544,8 +547,8 @@ class JobRegistryInstance(JobRegistryInstanceBase):
     def _dirty(self,j):
         """ mark a job as dirty
             trigger automatic job flush after specified number of dirty hits """
-	
-	checkInternalServices("Cannot modify job object. Internal services disabled and job repository in read-only mode.")	
+        
+        checkInternalServices("Cannot modify job object. Internal services disabled and job repository in read-only mode.")     
         logger.debug('dirty job %d...',j.id)
 
         self.dirty_jobs[j.id] = j
@@ -560,7 +563,7 @@ class JobRegistryInstance(JobRegistryInstanceBase):
         """ flush dirty jobs to the persistent storage
             if jobs are not specified, flush all of the dirty jobs
         """
-	checkInternalServices()
+        checkInternalServices()
         all = False
         if jobs is None:
             jobs = self.dirty_jobs.values()
@@ -581,8 +584,8 @@ class JobRegistryInstance(JobRegistryInstanceBase):
                     # explicitly specified jobs may be not marked as dirty
                     pass
 
-    def _do_remove(self,id,auto_removed):	
-	checkInternalServices()
+    def _do_remove(self,id,auto_removed):       
+        checkInternalServices()
         JobRegistryInstanceBase._do_remove(self,id,auto_removed)
         if auto_removed:
             try:
@@ -595,6 +598,11 @@ class JobRegistryInstance(JobRegistryInstanceBase):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:40:55  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.26.4.9  2008/04/18 13:46:55  moscicki
 # use resetAll() to wipe the repository
 #

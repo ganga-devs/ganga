@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.4 2008-08-18 10:02:15 moscicki Exp $
+# $Id: bootstrap.py,v 1.5 2008-08-18 13:18:59 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -632,19 +632,14 @@ default_backends = LCG
         exportToGPI('categoryname',categoryname,'Functions')
         exportToGPI('plugins',plugins,'Functions')
 
-        def move_job_to_state(j,state,allowed_states):
-           if j.status in allowed_states:
-              j._impl.updateStatus( state )
-           else:
-              self.logger.warning("manually forcing a %s %s to '%s' ignored"%(j.status,repr(j),str(state)))
-              
+        from Ganga.Core import GangaException
         def force_job_completed(j):
-           "manually make the job 'completed' if stuck in completing state"
-           move_job_to_state(j,'completed',['completing'])
+           "obsoleted, use j.force_status('completed') instead"
+           raise GangaException("obsoleted, use j.force_status('completed') instead")
 
         def force_job_failed(j):
-           "manually make the job 'failed' if stuck in submitting or completing state"           
-           move_job_to_state(j,'failed',['submitting','completing'])
+           "obsoleted, use j.force_status('failed') instead"
+           raise GangaException("obsoleted, use j.force_status('failed') instead")
 
         exportToGPI('force_job_completed',force_job_completed,'Functions')
         exportToGPI('force_job_failed',force_job_failed,'Functions')
@@ -920,6 +915,10 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/08/18 10:02:15  moscicki
+#
+# bugfix 40110
+#
 # Revision 1.3  2008/08/01 15:25:30  moscicki
 # typo fix
 #

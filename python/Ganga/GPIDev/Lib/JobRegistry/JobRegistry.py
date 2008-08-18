@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistry.py,v 1.1 2008-07-17 16:40:54 moscicki Exp $
+# $Id: JobRegistry.py,v 1.2 2008-08-18 13:18:58 moscicki Exp $
 ################################################################################
 
 class JobRegistryInterface:
@@ -49,6 +49,11 @@ class JobRegistryInterface:
         """ Fail all jobs.
         """
         return self._impl.fail(keep_going,force=force)
+
+    def force_status(self,status,keep_going=True,force=False):
+        """ Force status of all jobs to 'completed' or 'failed'.
+        """
+        return self._impl.force_status(status,keep_going,force=force)
 
     def copy(self,keep_going=True):
         """ Copy all jobs.
@@ -153,6 +158,11 @@ def _unwrap(obj):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:40:54  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.11.4.10  2008/07/02 16:49:00  moscicki
 # comments added (bug #38001: Provide better online documentation for jobs object)
 #

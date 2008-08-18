@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.2 2008-08-04 14:28:20 moscicki Exp $
+# $Id: Job.py,v 1.3 2008-08-18 13:18:58 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -124,7 +124,7 @@ class Job(GangaObject):
 
     _category = 'jobs'
     _name = 'Job'
-    _exportmethods = ['submit','remove','kill', 'resubmit', 'peek','fail' ]
+    _exportmethods = ['submit','remove','kill', 'resubmit', 'peek','fail', 'force_status' ]
 
     default_registry = 'native_jobs'
 
@@ -712,18 +712,50 @@ class Job(GangaObject):
 
 
     def fail(self,force=False):
-        ''' Force job to enter the failed state. This may be used for marking jobs "bad" jobs or jobs which are stuck in one of the internal ganga
-        states (e.g. completing).
+        """Deprecated. Use force_status('failed') instead."""
+        raise JobError('fail() method is deprecated, use force_status("failed") instead.')
+
+    allowed_force_states = { 'completed' : ['completing'],
+                             'failed' : ["submitting","completing","submitted","running","killed"] }
+    
+    def force_status(self,status,force=False):
+        ''' Force job to enter the "failed" or "completed" state. This may be
+        used for marking jobs "bad" jobs or jobs which are stuck in one of the
+        internal ganga states (e.g. completing).
+
+        To see the list of allowed states do: job.force_status(None)
         '''
+
+        if status is None:
+            logger.info("The following states may be forced")
+            revstates = {}
+            for s1 in Job.allowed_force_states:
+                for s2 in Job.allowed_force_states[s1]:
+                    revstates.setdefault(s2,{})
+                    revstates[s2][s1] = 1
+
+            for s in revstates:
+                logger.info("%s => %s"%(s,revstates[s].keys()))
+            return
+            
+        if self.status == status:
+            return
+        
+        if not status in Job.allowed_force_states:
+            raise JobError('force_status("%s") not allowed. Job may be forced to %s states only.'%(status,Job.allowed_force_states.keys()))
+
+        if not self.status in Job.allowed_force_states[status]:
+            raise JobError('Only a job in one of %s may be forced into "failed" (job %s)'%(str(Job.allowed_force_states[status]),self.getFQID('.')))
+        
         if not force:
             if self.status in ['submitted','running']:
                 try:
                     self._kill(transition_update=False)
                 except JobError,x:
-                    x.what += "Use fail(force=True) to ignore kill errors."
+                    x.what += "Use force_status('%s',force=True) to ignore kill errors."%status
                     raise x
         try:
-            self.updateStatus('failed')
+            self.updateStatus(status)
         except JobStatusError,x:
             logger.warning(x)
             raise x
@@ -932,6 +964,11 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/08/04 14:28:20  moscicki
+# bugfix: #39655: Problem with slice operations on templates
+#
+# REMOVED TABS
+#
 # Revision 1.1  2008/07/17 16:40:54  moscicki
 # migration of 5.0.2 to HEAD
 #
