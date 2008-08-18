@@ -14,6 +14,7 @@
 \def\davinci {\textsc{DaVinci}\xspace}
 \def\dirac {\textsc{Dirac}\xspace}
 \def\gauss {\textsc{Gauss}\xspace}
+\def\grid {\textsc{Grid}\xspace}
 \def\majorv {5}
 \def\minorv {0.5}
 \def\totalv {\majorv.\minorv}
@@ -54,6 +55,51 @@ jobs to the \dirac production system and how to select data for analysis in
   get in the reference manual is identical to the help text you get on the
   command line in \ganga but might be more convenient for reading.
 \end{seealso}
+
+\subsection{Installing \ganga}
+\label{sec:install}
+If you are working on the \texttt{lxplus} machines at CERN there is no need to
+install anything. However, to take advantage of more disk space available at
+other machines it will often be an advantage to install \ganga at your home
+institute.
+
+To take full advantage of \ganga you will need to have the following things
+installed:
+\begin{itemize}
+\item the \lhcb software,
+\item the latest version of the \dirac WMS client,
+\item a \grid user interface,
+\item whatever versions of \root that you might want to use.
+\end{itemize}
+Here we will only deal with the installation of \ganga.
+
+From the \ganga homepage you go to the \textit{User guides} and then to the
+\textit{installation instructions}. Download the \texttt{ganga-install}
+script. Decide which release, $<$rel$>$ and which directory,
+\texttt{$<$installdir$>$}, you want \ganga installed in and execute the
+command
+\begin{verbatim}
+./ganga-install --prefix <installdir> --extern=GangaLHCb,GangaGUI,GangaPlotter,GangaTutorial,GangaTest <rel>
+\end{verbatim}
+
+To get the correct configuration when starting \ganga, copy the two files
+\begin{verbatim}
+/afs/cern.ch/sw/ganga/install/config/GangaLHCbRoot.ini
+/afs/cern.ch/sw/ganga/install/config/GangaLHCb-v5.ini
+\end{verbatim}
+to a local disk and edit the second file to fit with your local
+installation. In particular the location of the \grid user interface might
+need changing. Lines which are not relevant outside CERN should simply be
+deleted.
+
+Before running define the environment variable
+\begin{verbatim}
+GANGA_CONFIG_PATH=<mydir>/GangaLHCbRoot.ini:<mydir>/GangaLHCb-v5.ini:GangaLHCb/LHCb.ini
+\end{verbatim}
+and you can then start \ganga with the command line
+\begin{verbatim}
+<installdir>/install/<rel>/bin/ganga
+\end{verbatim}
 
 \section{Applications}
 \label{sec:gaudi}
@@ -271,11 +317,11 @@ further details.
 
 \section{\dirac}
 \label{sec:dirac}
-The \dirac backend is the way that \lhcb jobs are executed on the grid. They
+The \dirac backend is the way that \lhcb jobs are executed on the \grid. They
 will go through the \dirac workload management system that takes care of all
-\lhcb jobs on the grid.
+\lhcb jobs on the \grid.
 \begin{notice}
-  As a pre-requisite you need to have a Grid certificate, have your
+  As a pre-requisite you need to have a \grid certificate, have your
   \texttt{.globus} directory correctly confugured and be a member of the \lhcb
   virtual organisation (VO).
 \end{notice}
@@ -289,6 +335,10 @@ easy.
   \seeurl{http://lhcb.pic.es/DIRAC/Monitoring/Analysis/}{}. To get the
   corresponding id look at \texttt{j.backend.id} for your \ganga job.
 \end{seealso}
+
+You can specify the requested CPU time for a job in seconds on the \grid by
+setting the \texttt{CPUTime} attribute of the \dirac backend. If you set a low
+number your job should start running quicker.
 
 \section{Input and Output}
 \label{sec:InOut}
@@ -368,7 +418,7 @@ See the reference for the full documentation on what is possible with the
 \texttt{peek} method and how it can be configured.
 
 If the size of an output sandbox file with the \dirac backend exceeds 10~Mb it
-will automatically be treated as output data instead and copied to a Grid
+will automatically be treated as output data instead and copied to a \grid
 Storage Element.
 
 \subsection{OutputData}
@@ -380,16 +430,18 @@ created by \texttt{GaussTape}, \texttt{DigiWriter} or the
 backend used:
 \begin{description}
 \item[Local, LSF] Files are stored in the location
-  \texttt{\$CASTOR_HOME/gangadir/$<$j.id$>$/outputdata/}
+  \texttt{\$CASTOR_HOME/gangadir/$<$j.id$>$/outputdata/}. The behaviour can be
+  tailored to a non-CERN location by modifying the \texttt{LHCb} section of
+  the configuration.
 \item[Dirac] The files are registered in the LCG file catalogue~(LFC) and can
-  be used as input to Grid jobs in exactly the same way as for other input
+  be used as input to \grid jobs in exactly the same way as for other input
   data. The name of the file is stored in a structure similar to the home
   directories on afs at CERN:
 \begin{verbatim}
       LFN:/lhcb/user/<initial>/<username>/<diracid>/<fname> 
 \end{verbatim}
   The \dirac id is obtained as \texttt{j.backend.id}. The LFN given above can
-  be used in a new Grid job for further analysis. If you would like to
+  be used in a new \grid job for further analysis. If you would like to
   retrieve a local copy of the file pointed to by the LFN do something like.
 \begin{verbatim}
       j.backend.getOutputData(names=['myDST.dst'])
@@ -404,15 +456,17 @@ If you want to analyse a large dataset you can create a single
 \emph{masterjob} and then specify how much data should be analysed in each of
 a set of \emph{subjobs}. For \davinci jobs there are two splitters of interest:
 \begin{itemize}
-\item The \texttt{SplitByFiles} splitter takes a single argument which
-  specifies the number of input data files that each sub job will process. The
-  following example will create a \davinci master job with the default 10 data
-  files per subjob.
+\item The \texttt{SplitByFiles} splitter takes two arguments. The first one,
+  \texttt{filesPerJob}, specifies the number of input data files that each sub
+  job will process. The following example will create a \davinci master job
+  with the default 10 data files per subjob.
 \begin{verbatim}
 In [31]:j = Job(application=dv, splitter=SplitByFiles())
 \end{verbatim}
+  The second argument, \texttt{maxFiles}, decide the maximum number of files
+  that will be used for the complete job. A value of -1 means all.
 \item The \texttt{DiracSplitter} works as \texttt{SplitByFiles} but ensures
-  that a given job will only have data that is located at the same Grid
+  that a given job will only have data that is located at the same \grid
   site. This is the recommended splitter to use for \davinci jobs when using
   the \dirac backend.
 \end{itemize}
@@ -422,7 +476,7 @@ In [31]:j = Job(application=dv, splitter=SplitByFiles())
 The example here put together the pieces from above in a non-trivial way. It
 will analyse a signal dataset with an algorithm from the Tutorial package of
 \davinci. The first analysis will be on the local machine going through just
-100 events, and afterwards on the Grid analysing many events with splitting
+100 events, and afterwards on the \grid analysing many events with splitting
 into many subjobs.
 
 First we define a \davinci application. We place the code in a non-default
@@ -494,7 +548,7 @@ j.application.make()
 
 j = Job(t, inputdata=dataCERN)
 \end{verbatim}
-When happy we can then create our analysis job for the Grid. We assign a
+When happy we can then create our analysis job for the \grid. We assign a
 dataset with logical filenames without the restriction that they are located
 at CERN, change the number of events to analyse and tell the job to split into
 subjobs with 3 datasets per job.
@@ -526,7 +580,7 @@ for js in j.subjobs:
 1.0K /afs/.../LocalAMGA/51/2/output/DVHistos_3.root
 \end{verbatim}
 
-In the end lets store the job definition for our job on the Grid as a template
+In the end lets store the job definition for our job on the \grid as a template
 for easy use in a later \ganga session:
 \begin{verbatim}
 t = JobTemplate(j)
