@@ -179,7 +179,7 @@ class Gaudi(IApplication):
             parser = PythonOptionsParser.PythonOptionsParser( optsfilelist, self.extraopts, 
                                                               self.shell)
         except Exception, e:
-            logger.error('Unable to parse the options file')
+            raise ApplicationConfigurationError(None, 'Unable to parse the job options. Please check options files and extraopts.')
 
         self.extra.opts_pkl_str = parser.opts_pkl_str
 
@@ -853,6 +853,10 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.8  2008/08/14 15:54:43  uegede
+# Added "datatype_string" to schema for LHCbDataset. This allows Ganga to run with
+# cosmic data.
+#
 # Revision 1.7  2008/08/12 13:58:16  uegede
 # Fixed gaudiPython to work with splitters
 #
