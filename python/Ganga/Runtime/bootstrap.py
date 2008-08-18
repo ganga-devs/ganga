@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.3 2008-08-01 15:25:30 moscicki Exp $
+# $Id: bootstrap.py,v 1.4 2008-08-18 10:02:15 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -490,7 +490,10 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         else:
             self.logger.debug('skipped the environment initialization -- the processed has been re-execed and setup was done already')
-               
+
+        #bugfix 40110
+        del os.environ['GANGA_INTERNAL_PROCREEXEC']
+        
     # bootstrap all system and user-defined runtime modules
     def bootstrap(self):
         from Ganga.Utility.Runtime import allRuntimes
@@ -917,6 +920,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/08/01 15:25:30  moscicki
+# typo fix
+#
 # Revision 1.2  2008/07/31 17:25:02  moscicki
 # config templates are now in a separate directory at top level ("templates")
 #
