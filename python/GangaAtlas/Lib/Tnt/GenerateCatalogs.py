@@ -17,7 +17,7 @@ logger = getLogger()
 try:
     import lfc
 except ImportError:
-    logger.warning('Error importing lfc module')
+    logger.debug('Error importing lfc module')
     pass
 
 try:
