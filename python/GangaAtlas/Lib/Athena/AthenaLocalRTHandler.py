@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.6 2008-07-29 13:21:42 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.7 2008-08-19 14:05:03 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -94,8 +94,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                         input_esd_files = [ lfn  for guid, lfn in esd_contents ]
                         input_esd_guids = [ guid for guid, lfn in esd_contents ]                        
 
-                    job.inputdata.names = input_files 	 
-                    job.inputdata.guids = input_guids 	 
+                    job.inputdata.names = input_files          
+                    job.inputdata.guids = input_guids          
  
         # Outputdataset
         output_location=''
@@ -359,7 +359,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             'ATLAS_RELEASE' : app.atlas_release,
             'ATHENA_OPTIONS' : athena_options,
             'ATLAS_SOFTWARE' : atlas_software,
-	    'ATHENA_USERSETUPFILE' : athena_usersetupfile,
+            'ATHENA_USERSETUPFILE' : athena_usersetupfile,
             'ATLAS_PROJECT' : app.atlas_project,
             'ATLAS_EXETYPE' : app.atlas_exetype
         }
@@ -368,7 +368,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 vars=var.split('=')
                 if len(vars)==2:
                     environment[vars[0]]=vars[1]
-                                                        
+
+        if app.atlas_production and (app.atlas_project == 'AtlasPoint1' or app.atlas_release.find('12.')<=0):
+            environment['ATLAS_PRODUCTION'] = app.atlas_production 
+
         if app.user_area.name: 
             environment['USER_AREA'] = os.path.basename(app.user_area.name)
         if app.group_area.name:
@@ -473,6 +476,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.6  2008/07/29 13:21:42  elmsheus
+#Add  AthenaRemoteRTHandler class for the Remote backend
+#
 #Revision 1.5  2008/07/29 10:08:32  elmsheus
 #Remove DQ2_OUTPUT_LOCATIONS again
 #
