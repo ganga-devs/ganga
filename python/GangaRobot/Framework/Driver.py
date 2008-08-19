@@ -9,7 +9,9 @@ configuration.
 
 from GangaRobot.Framework import Utility
 from Ganga.Core import ApplicationConfigurationError
+from GangaRobot.Framework.exceptions import * #import Fatal, Break, Continue excpetions
 from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Config import getConfig
 import time
 
 logger = getLogger()
@@ -68,16 +70,32 @@ class Driver(object):
         
         """
         self.runid = Utility.utcid()
-        logger.info("Start run %s with id '%s'.", self.run, self.runid)
-        for action in self.run:
-            try:
-                self._doaction(action)
-            except:
-                logger.error("Abort run id '%s'. Action '%s' failed.", self.runid, action)
-                raise
-        logger.info("Finish run id '%s'.", self.runid)
-        if self.repeat:
-            self.dorun()
+        while 1:
+            logger.info("Start run %s with id '%s'.", self.run, self.runid)
+            for action in self.run:
+                try:
+                    self._doaction(action)
+                except GangaRobotContinueError, e:
+                    logger.warning("Continue Error in Action '%s' with message '%s'. Run continued", action, e)
+                except GangaRobotBreakError, e:
+                    logger.warning("Break Error in Action '%s' with message '%s'. Run ended", action, e)
+                    break
+                except GangaRobotFatalError, e:
+                    logger.error("Fatal Error in Action '%s' with message '%s'. Run aborted", action, e)
+                    raise
+                except Exception, e:
+                    config = getConfig('Robot')
+                    if (config['ExceptionBehaviour'] == 'Continue'):
+                        logger.error("Error in Action '%s' with message '%s'. Run continued", action, e)
+                    elif (config['ExceptionBehaviour'] == 'Break'):
+                        logger.error("Error in Action '%s' with message '%s'. Run continued", action, e)
+                        break
+                    else:
+                        logger.error("Abort run id '%s'. Action '%s' failed with message %s.", self.runid, action, e)
+                        raise
+            logger.info("Finish run id '%s'.", self.runid)
+            if not self.repeat: 
+                break
 
     def _doaction(self, action):
         """Executes the named action or sleep period.
@@ -159,5 +177,7 @@ def loaddriver():
                 int(action)
             except ValueError, e:
                 raise ApplicationConfigurationError(e, "Unknown action '%s'." % action)
+            
+            
 
     return Driver(run = run, actions = actions, repeat = repeat)

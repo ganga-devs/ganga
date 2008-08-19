@@ -54,12 +54,14 @@ def _run(patterns):
     if patterns:
         print 'Setting export file patterns to %s.' % patterns
         config['Robot']['CoreSubmitter_Patterns'] = patterns
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
     from GangaRobot.Framework import Driver
-    print 'Loading Ganga Robot Driver.'
+    logger.info('Loading Ganga Robot Driver.')
     driver = Driver.loaddriver()
-    print 'Starting Ganga Robot Driver.'
+    logger.info('Starting Ganga Robot Driver.')
     driver.dorun()
-    print 'Exiting Ganga Robot Driver.'
+    logger.info('Exiting Ganga Robot Driver.')
 
 if __name__ == '__main__':
     import sys
