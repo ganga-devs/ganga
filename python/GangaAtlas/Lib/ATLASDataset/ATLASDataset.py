@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ATLASDataset.py,v 1.3 2008-07-28 15:02:30 elmsheus Exp $
+# $Id: ATLASDataset.py,v 1.4 2008-08-19 13:15:32 elmsheus Exp $
 ###############################################################################
 # A simple ATLAS dataset
 #
@@ -77,7 +77,7 @@ def expand(name):
         match2 = re_comma.match(part)
         if not match2:
             names += [ match1.group(1)+part+match1.group(3) ]
-	    continue
+            continue
         l = max(len(match2.group(1)),len(match2.group(2)))
         i1 = int(match2.group(1))
         i2 = int(match2.group(2))
@@ -178,7 +178,7 @@ class ATLASDataset(Dataset):
     _category = 'datasets'
     _name = 'ATLASDataset'
 
-    _exportmethods = ['get_dataset' ]
+    _exportmethods = ['get_dataset']
 
     _GUIPrefs = [ { 'attribute' : 'lfn',  'widget' : 'String_List' },
                   { 'attribute' : 'lfc',  'widget' : 'String' } ]
@@ -204,15 +204,15 @@ class ATLASDataset(Dataset):
         job=app._getRoot()
         if not job:
             logger.warning('Application object is not associated to a job.')
-	    return []
-	 
+            return []
+         
 #       jobs without inputdata are allowed
-	 
+         
         if not job.inputdata: return []
       
         if not job.inputdata._name == 'ATLASDataset':
             logger.warning('Dataset is not of type ATLASDataset.')
-	    return []
+            return []
 
         return job.inputdata.filenames()
 
@@ -222,18 +222,18 @@ class ATLASDataset(Dataset):
         job=app._getRoot()
         if not job:
             logger.warning('Application object is not associated to a job.')
-	    return []
-	 
+            return []
+         
 #       jobs without inputdata are allowed
-	 
+         
         if not job.inputdata: return []
       
         if not job.inputdata._name == 'ATLASDataset':
             logger.warning('Dataset is not of type ATLASDataset.')
-	    return []
+            return []
 
         return job.inputdata.filenames()
-	 
+         
     get_filenames=staticmethod(get_filenames)
 
 
@@ -247,13 +247,31 @@ class ATLASLocalDataset(Dataset):
     _category = 'datasets'
     _name = 'ATLASLocalDataset'
 
-    _exportmethods = ['get_dataset', 'get_dataset_filenames' ]
+    _exportmethods = ['get_dataset', 'get_dataset_filenames', 'get_dataset_from_list' ]
 
     _GUIPrefs = [ { 'attribute' : 'names',  'widget' : 'String_List' } ]
    
     def __init__(self):
         super(ATLASLocalDataset, self).__init__()
+        
+    def get_dataset_from_list(self,list_file):
+       """Get the dataset files as listed in a text file"""
 
+       logger.info('Reading list file %s ...',list_file)
+
+       if not os.path.exists(list_file):
+           logger.error('File %s does not exist',list_file)
+           return
+
+       f = open( list_file )
+       for ln in f.readlines():
+
+           # split the directory from the file and call get_dataset
+           if os.path.isdir(ln.strip()):
+               self.get_dataset( ln.strip() )
+           else:
+               self.get_dataset( os.path.dirname(ln.strip()), os.path.basename( ln.strip() ) )
+           
     def get_dataset(self,directory,filter=None):
        """Get the actual files of a dataset"""
       
@@ -266,9 +284,11 @@ class ATLASLocalDataset(Dataset):
 
        directory = os.path.abspath(directory)
        if filter:
-           self.names = [ os.path.join(directory,name) for name in fnmatch.filter(os.listdir(directory),filter) ]
+           new_names = [ os.path.join(directory,name) for name in fnmatch.filter(os.listdir(directory),filter) ]
        else:
-           self.names = [ os.path.join(directory,name) for name in os.listdir(directory) ]
+           new_names = [ os.path.join(directory,name) for name in os.listdir(directory) ]
+
+       self.names.extend( new_names )
 
        self._setDirty(1)
 
@@ -282,18 +302,18 @@ class ATLASLocalDataset(Dataset):
         job=app._getRoot()
         if not job:
             logger.warning('Application object is not associated to a job.')
-	    return []
-	 
+            return []
+         
 #       jobs without inputdata are allowed
-	 
+         
         if not job.inputdata: return []
       
         if not job.inputdata._name == 'ATLASLocalDataset':
             logger.warning('Dataset is not of type ATLASLocalDataset.')
-	    return []
+            return []
 
         return job.inputdata.names
-	 
+         
     get_filenames=staticmethod(get_filenames)
 
 
@@ -528,6 +548,9 @@ class ATLASOutputDataset(Dataset):
 config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
 
 #$Log: not supported by cvs2svn $
+#Revision 1.3  2008/07/28 15:02:30  elmsheus
+#Fix for bug #35256
+#
 #Revision 1.2  2008/07/28 14:27:34  elmsheus
 #* Upgrade to DQ2Clients 0.1.17 and DQ2 API
 #* Add full support for DQ2 container datasets in DQ2Dataset
