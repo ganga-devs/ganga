@@ -83,6 +83,18 @@ class Remote( IBackend ):
 
    j.submit()
 
+   E.g. 4 - Hello World submitted at CERN on LSF using atlas startup
+
+   j = Job()
+   j.backend = Remote()
+   j.backend.host = "lxplus.cern.ch"
+   j.backend.username = "mslater"
+   j.backend.ganga_cmd = "ganga"
+   j.backend.ganga_dir = "/afs/cern.ch/user/m/mslater/gangadir/remote_jobs"
+   j.backend.pre_script = ['source /afs/cern.ch/sw/ganga/install/etc/setup-atlas.csh'] # source the atlas setup script before running ganga
+   j.backend.remote_backend = LSF()
+   j.submit()
+
    """
     
    _schema = Schema( Version( 1, 0 ), {\
@@ -92,7 +104,7 @@ class Remote( IBackend ):
       "ganga_dir" : SimpleItem( defvalue="", doc="The directory to use for the remote workspace, repository, etc." ),
       "ganga_cmd" : SimpleItem( defvalue="", doc="Command line to start ganga on the remote host" ),
       "environment" : SimpleItem( defvalue={}, doc="Overides any environment variables set in the job" ),
-      "pre_script" : SimpleItem( defvalue="", doc="Script to run on the remote site before running the submission script in Ganga" ),
+      "pre_script" : SimpleItem( defvalue=[''], doc="Sequence of commands to execute before running Ganga on the remote site" ),
       'remote_job_id' : SimpleItem(defvalue=0,protected=1,copyable=0,doc='Remote job id.'),
       'exitcode'            : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Application exit code'),
       'actualCE'            : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Computing Element where the job actually runs.')
@@ -118,7 +130,37 @@ class Remote( IBackend ):
    def setup( self ): # KUBA: generic setup hook
       job = self.getJobObject()
       if job.status in [ 'submitted', 'running', 'completing' ]:
-         return self.opentransport()
+
+         # Send a script over to the remote site that updates this jobs
+         # info with the info of the remote job
+         import os
+
+         # Create a ganga script that updates the job info from the remote site
+         script = """#!/usr/bin/env python
+#-----------------------------------------------------
+# This is a setup script for a remote job. It
+# does very litte
+#-----------------------------------------------------
+
+# print a finished token
+print "***_FINISHED_***"
+"""
+
+         # check for the connection
+         if (self.opentransport() == False):
+            return False
+         
+         # send the script
+         script_name = '/__setupscript__%s.py' % self._code
+         self._sftp.open(self.ganga_dir + script_name, 'w').write(script)
+         
+         # run the script
+         stdout, stderr = self.run_remote_script( script_name, self.pre_script )
+         
+         # remove the script
+         self._sftp.remove(self.ganga_dir + script_name)
+         
+      return True
          
    def opentransport( self ):
 
@@ -184,18 +226,21 @@ class Remote( IBackend ):
       """Run a ganga script on the remote site"""
 
       import getpass
-      
+
+      # Set up a command file to source. This gets around a silly alias problem
+      cmd_str = ""
+      for c in pre_script:
+         cmd_str += c + '\n'
+
+      cmd_str += self.ganga_cmd + " -o\'[Configuration]gangadir=" + self.ganga_dir + "\' "
+      cmd_str += self.ganga_dir + script_name + '\n'
+      cmd_file = os.path.join(self.ganga_dir, "__gangacmd__" + randomString())
+      self._sftp.open( cmd_file, 'w').write(cmd_str)
+
       # run ganga command
-      cmd = pre_script + " ; " + self.ganga_cmd
-      cmd = self.ganga_cmd
-      # For sub V5
-      #cmd += " -o\"[DefaultJobRepository]local_root=" + self.ganga_dir + "/repository\" "
-      #cmd += "-o\"[FileWorkspace]topdir=" + self.ganga_dir + "/workspace\" "
-      cmd += " -o[Configuration]gangadir=" + self.ganga_dir + " "
-      cmd += self.ganga_dir + script_name
       channel = self._transport.open_session()
-      channel.exec_command(cmd)
-      
+      channel.exec_command("source " + cmd_file)
+
       # Read the output after command
       stdout = bufout = ""
       stderr = buferr = ""
@@ -221,6 +266,8 @@ class Remote( IBackend ):
             password = ""
 
          bufout = buferr = ""
+
+      self._sftp.remove( cmd_file )
 
       return stdout, stderr
       
@@ -511,7 +558,7 @@ print "***_FINISHED_***"
 
          script = script.replace('###CODE###', repr(j.backend._code))
          script = script.replace('###JOBID###', str(j.backend.remote_job_id))
-         
+
          # check for the connection
          if (j.backend.opentransport() == False):
             return 0
@@ -521,8 +568,8 @@ print "***_FINISHED_***"
          j.backend._sftp.open(j.backend.ganga_dir + script_name, 'w').write(script)
 
          # run the script
-         stdout, stderr = j.backend.run_remote_script( script_name, "" )
-
+         stdout, stderr = j.backend.run_remote_script( script_name, j.backend.pre_script )
+         
          # Copy the job object
          if stdout.find("***_FINISHED_***") != -1:
             status, outputdir, id, be = j.backend.grabremoteinfo(stdout)
