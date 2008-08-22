@@ -100,8 +100,8 @@ class GaudiLSFRunTimeHandler(IRuntimeHandler):
     version = app.version
     theApp = app.appname
     package = app.package
-    lhcb_release_area = expandfilename( app.lhcb_release_area)
     user_release_area = expandfilename( app.user_release_area)
+    projectopts = app.setupProjectOptions
     platform = app.platform
     appUpper = theApp.upper()
     algpack = ''
@@ -126,7 +126,6 @@ class GaudiLSFRunTimeHandler(IRuntimeHandler):
     
     script="""#!/usr/bin/env bash
 export User_release_area=###CMTUSERPATH###
-export ###THEAPP###_release_area=###CMTRELEASEAREA###
 export DATAOUTPUT='###DATAOUTPUT###'
 #DATAOPTS='dataopts.py'
 DATAOPTS='dataopts.opts'
@@ -142,7 +141,7 @@ fi
 echo "Using the master optionsfile: ${OPTS}"
 
 if [ -f ${LHCBHOME}/scripts/SetupProject.sh ]; then
-  . ${LHCBHOME}/scripts/SetupProject.sh ###THEAPP### ###VERSION###
+  . ${LHCBHOME}/scripts/SetupProject.sh ###PROJECTOPTS### ###THEAPP### ###VERSION###
 else
   echo "Could not find the SetupProject.sh script. Your job will probably fail"
 fi
@@ -192,7 +191,6 @@ done
     script=script.replace('###CMTUSERPATH###',user_release_area)
     script=script.replace('###DATAOUTPUT###', outputdatastr)
     script=script.replace('###THEAPP###',theApp) 
-    script=script.replace('###CMTRELEASEAREA###',lhcb_release_area)
     script=script.replace('###VERSION###',version)
     script=script.replace('###ALG###',alg)
     script=script.replace('###ALGVER###',algver)
@@ -208,7 +206,7 @@ done
     script=script.replace('###COPY###',copy_cmd)
     script=script.replace('###MKDIR###',mkdir_cmd)
     script=script.replace('###OPTS###',opts)
-    
+    script=script.replace('###PROJECTOPTS###',projectopts)
     return script
 
 
@@ -216,6 +214,9 @@ done
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/08/05 14:02:58  gcowan
+# Extended _get_user_dlls to pick up all relevant files under InstallArea/python in the users private project areas. This directory structure is now replicated in the job inputsandbox. PYTHONPATH in the job wrappers is modified to prepend it with `pwd`/python so that the python configurables in the input sandbox are picked up by the job.
+#
 # Revision 1.2  2008/08/01 15:52:11  uegede
 # Merged the new Gaudi application handler from branch
 #

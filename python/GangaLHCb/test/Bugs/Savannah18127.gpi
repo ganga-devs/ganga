@@ -5,8 +5,6 @@ j = Job (
     application = DaVinci(),
     backend = Local())
 
-ver = j.application.version
-j.application.optsfile = ['/afs/cern.ch/lhcb/software/releases/DAVINCI/DAVINCI_'+str(ver)+'/Phys/DaVinci/'+str(ver)+'/options/DaVinci.opts']
 j.submit()
 
 assert j.status == 'submitted', 'Job must submit correctly'

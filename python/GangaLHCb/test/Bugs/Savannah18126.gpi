@@ -1,14 +1,10 @@
 from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
 
+name = 'Savannah18126.root'
 j = Job (
     name = 'NtupleTest' ,
     application = DaVinci(
-      version = 'v12r18' ,
-      extraopts = """ApplicationMgr.HistogramPersistency = \"ROOT\";
-      HistogramPersistencySvc.OutputFile = \"DVHistos.root\";
-      NTupleSvc.Output={\"FILE1 DATAFILE=\'DVNtuples.root\' TYP=\'ROOT\' OPT=\'NEW\'\"};
-      ApplicationMgr.EvtMax = 100;""" ,
-      optsfile = ['/afs/cern.ch/lhcb/software/releases/DAVINCI/DAVINCI_v12r18/Hlt/HltSelChecker/v4r1/options/DVHLTNTuplesCheck.opts']) ,
+      extraopts = 'HistogramPersistencySvc().OutputFile = "%s"' % name),
     backend = Local())
 
 j.submit()
@@ -17,4 +13,4 @@ if not sleep_until_completed(j,1200):
     assert(not "Timeout on job submission: job is still not finished")
 
 import os.path
-assert(os.path.exists(j.outputdir+'/DVNtuples.root'))
+assert(os.path.exists(os.path.join(j.outputdir,name)))

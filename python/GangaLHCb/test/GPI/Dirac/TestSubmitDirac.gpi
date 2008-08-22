@@ -1,6 +1,6 @@
 from GangaLHCb.test import *
 
-ap = DaVinci(version=getTestDaVinciVersion())
+ap = DaVinci()
 j = Job(application=ap, backend=TestSubmitter())
 print j
 

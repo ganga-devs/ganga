@@ -219,8 +219,9 @@ class _diracSplitter(_abstractSplitter):
 
         dataSet = LHCbDataset()
         for d in data:
-            lhcbFile = string_datafile_shortcut(d,None)
-            lhcbFile.replicas = replica_map[d]
+            lhcbFile = string_datafile_shortcut(d.name,None)
+            print repr(lhcbFile)
+            lhcbFile.replicas = replica_map[d.name]
             dataSet.files.append(lhcbFile)
         return dataSet
 
@@ -235,7 +236,7 @@ class _diracSplitter(_abstractSplitter):
 
         if data_set.cacheOutOfDate():
             #print an estimate of how long the query will take
-            estimated_query_time = 0.05 * len(inputs)
+            estimated_query_time = 0.05 * len(inputs.files)
             logger.info('Estimated time to query the LFC: %dm%ds',
                         (estimated_query_time // 60) , (estimated_query_time % 60))
         data_set.updateReplicaCache()
@@ -276,7 +277,7 @@ class _diracSplitter(_abstractSplitter):
                 if loc in files:
                     files[loc].append(i)
                 else:
-                    files[loc] = [name]
+                    files[loc] = [i]
         logger.debug('Dirac bulk query done and stored in map')
         logger.debug('There are %d unique location sets.',len(files.keys()))
         logger.debug('The unique locations are %s',str(files.keys()))
@@ -388,7 +389,7 @@ class _diracSplitter(_abstractSplitter):
                 unique_files.append(f)
         
         from Ganga.Utility.util import unique 
-        if (len(inputs) - len(bad_file_list)) != len(unique(unique_files)):
+        if (len(inputs.files) - len(bad_file_list)) != len(unique(unique_files)):
             raise SplittingError('Data files have been lost during splitting. Please submit a bug report to the Ganga team.')
         return result            
 
@@ -481,6 +482,9 @@ class GaussSplitter(ISplitter):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/08/15 15:52:21  uegede
+# Changed the Dirac splitter to work with the modified LHCbDataset
+#
 # Revision 1.4  2008/08/14 15:54:43  uegede
 # Added "datatype_string" to schema for LHCbDataset. This allows Ganga to run with
 # cosmic data.

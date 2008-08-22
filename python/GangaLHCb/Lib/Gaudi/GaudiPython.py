@@ -64,14 +64,14 @@ class GaudiPython(IApplication):
     ds = LHCbDataset(['LFN:foo','LFN:bar'])
 
     # Construct and submit job object
-    j=Job(application=app,backend=Dirac())
+    j=Job(application=app,backend=Dirac(),inputdata=ds)
     j.submit()
 
 """
     _name = 'GaudiPython'
 
 # Set up the schema for this application
-    _schema = Schema(Version(1, 0), {
+    _schema = Schema(Version(1, 1), {
             'script': FileItem(sequence=1,strict_sequence=0,defvalue=[],doc='''The name of the script to execute. A copy will be made at submission time'''),
             
             'version': SimpleItem(defvalue=None,typelist=['str'],doc='''The version of the 
@@ -82,24 +82,17 @@ class GaudiPython(IApplication):
             
             'project': SimpleItem(defvalue = None, typelist=['str'],
                                   doc='''The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'''),
-            
-            'lhcb_release_area': SimpleItem(defvalue = None, typelist=['str'],
-                                            doc = 'The release area'),
-            
+            'setupProjectOptions': SimpleItem(defvalue = '', typelist=['str'], doc='''Extra options to be passed onto the SetupProject command used for configuring the environment. As an example setting it to '--dev' will give access to the DEV area. For full documentation of the available options see https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'''),
             })
     _category = 'applications'
 
     def _auto__init__(self):
-        if not self.lhcb_release_area:
-            self.lhcb_release_area = os.path.expandvars("$LHCBRELEASES")
-        else:
-            self.lhcb_release_area = os.path.expandvars(self.lhcb_release_area)
-        logger.debug( "self.lhcb_release_area: %s", str(self.lhcb_release_area))
         if (not self.project):
             self.project = 'DaVinci'
             
-        if (not self.version) and self.lhcb_release_area:  
-            self.version = self.guess_version(self.project, self.lhcb_release_area)
+        if (not self.version):
+            import GaudiVersions
+            self.version = GaudiVersions.guess_version(self.project)
         if (not self.platform):
             self.platform = self._get_user_platform()
 
@@ -177,56 +170,6 @@ class GaudiPython(IApplication):
         s+="""\n};"""
         return s
 
-
-
-    def available_versions(self,appname, release_area, dev = None):
-      """Try to extract the list of installed versions for a given application"""
-      if appname not in _available_apps:
-        raise ValueError, "Application " + appname + " not known"
-      app_upper = appname.upper()
-      app_upper_ = app_upper+"_"
-
-      dirlist = os.listdir(release_area+os.sep+app_upper)
-      versions = []
-      for i in dirlist:
-        if i.startswith(app_upper_):
-          versions.append(i.replace(app_upper_, ""))
-      versions.sort(self.versions_compare)
-      return versions
-
-       
-    def guess_version(self,appname, release_area, dev = None):
-      """Try to guess the correct version for a given application
-         If the the environment variable consisting of the upper
-         case name of the application + ENVROOT exists. The version
-         will be taken from this variable"""
-      if appname not in _available_apps:
-        raise ValueError, "Application " + appname + " not known"
-      # check if the user has used ProjectEnv to select a certain version
-      # if so choose that version, if not choose the latest
-      if os.getenv(appname.upper()+"ENVROOT"):
-        return os.path.basename(os.getenv(appname.upper()+"ENVROOT"))
-      else: 
-        versions = self.available_versions(appname, release_area, dev)
-        return versions[-1]
-
-    def versions_compare(self,x, y):
-      """A simple function to compare versions of the format vXrY, with 
-      X and Y being the major and minor version, respectively"""
-      nbs = []
-      for i in (x, y):
-        rev = i.find('r')
-        patch = i.find('p')
-        try:
-          if patch == -1:
-            nb = map(int, (i[1:rev], i[rev+1:], '0'))
-          else:
-            nb = map(int, (i[1:rev], i[rev+1:patch], i[patch+1:]))
-        except:
-          nb = (0, 0, 0)
-        nbs.append(nb)
-      return cmp(nbs[0], nbs[1])
-
     def _setUpEnvironment( self): 
         self.shell=env._setenv( self)
 
@@ -249,5 +192,3 @@ allHandlers.add('GaudiPython', 'SGE', GaudiPythonLSFRunTimeHandler)
 allHandlers.add('GaudiPython', 'Local', GaudiPythonLSFRunTimeHandler)
 allHandlers.add('GaudiPython', 'Dirac', GaudiPythonDiracRunTimeHandler)
 allHandlers.add('GaudiPython', 'Condor', GaudiPythonLSFRunTimeHandler)
-
-

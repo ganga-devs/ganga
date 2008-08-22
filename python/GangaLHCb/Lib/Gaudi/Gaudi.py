@@ -84,44 +84,28 @@ class Gaudi(IApplication):
     __doc__=GaudiDocString(_name)
 
 # Set up the schema for this application
-    _schema = Schema(Version(2, 0), {
-            'optsfile': FileItem(sequence=1,strict_sequence=0,defvalue=[],doc='''The name of the optionsfile. Import 
-            statements in the file will be expanded at submission time and a 
-            full copy made'''),
+    _schema = Schema(Version(2, 1), {
+            'optsfile': FileItem(sequence=1,strict_sequence=0,defvalue=[],doc='''The name of the optionsfile. Import statements in the file will be expanded at submission time and a full copy made'''),
             
-            'version': SimpleItem(defvalue=None,typelist=['str'],doc='''The version of the 
-            application (like "v19r2")'''),
+            'version': SimpleItem(defvalue=None,typelist=['str'],doc='''The version of the application (like "v19r2")'''),
             
             'platform': SimpleItem(defvalue = None, typelist=['str'], doc='''The 
             platform the application is configured for (e.g. "slc4_ia32_gcc34")'''),
             
-            'package': SimpleItem(defvalue=None, typelist=['str'], doc='''The package the 
-            application belongs to (e.g. "Sim", "Phys")'''),
+            'package': SimpleItem(defvalue=None, typelist=['str'], doc='''The package the application belongs to (e.g. "Sim", "Phys")'''),
             
-            'appname': SimpleItem(defvalue = None, typelist=['str'],hidden = 1, doc='''The 
-            name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'''),
+            'appname': SimpleItem(defvalue = None, typelist=['str'],hidden = 1, doc='''The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'''),
             
-            'lhcb_release_area': SimpleItem(defvalue = None, typelist=['str'], hidden = 0),
+            'user_release_area': SimpleItem(defvalue=None, typelist=['str'],doc='''The user path to be used. By default the value of the User_release_area environment variable. After assigning this you can do j.application.getpack(\'Phys DaVinci v19r2\') to check out into the new location. This variable is used to identify private user DLLs by parsing the output of "cmt show projects".'''),
             
-            'user_release_area': SimpleItem(defvalue=None, typelist=['str'],doc='''The  
-            user path to be used. By default the value of the first element in the 
-            CMTPROJECTPATH environment variable. After assigning this you can do 
-            j.application.getpack(\'Phys DaVinci v19r2\') to check out into the new location.
-            This variable is used to identify private user DLLs by parsing the output of
-            "cmt show projects".'''),
-            
-            'masterpackage': SimpleItem(defvalue=None, typelist=['str'],doc='''The package 
-            where your top level requirements file is read from. Can be written either as 
-            a path "Tutorial/Analysis/v6r0" or in a CMT style notation "Analysis v6r0 Tutorial"'''),
+            'masterpackage': SimpleItem(defvalue=None, typelist=['str'],doc='''The package where your top level requirements file is read from. Can be written either as a path "Tutorial/Analysis/v6r0" or in a CMT style notation "Analysis v6r0 Tutorial"'''),
             
             'configured': SimpleItem(defvalue = None, typelist=['str'],hidden = 0,copyable=0),
             
-            'extraopts': SimpleItem(defvalue=None,typelist=['str'],doc='''A python configurable 
-            string that will be appended to the end of the options file. Can be multiline by using 
-            a notation like \nHistogramPersistencySvc().OutputFile = "myPlots.root"\\nEventSelector().PrintFreq = 
-            100\n or by using triple quotes around a multiline string'''),
+            'extraopts': SimpleItem(defvalue=None,typelist=['str'],doc='''A python configurable string that will be appended to the end of the options file. Can be multiline by using a notation like \nHistogramPersistencySvc().OutputFile = "myPlots.root"\\nEventSelector().PrintFreq = 100\n or by using triple quotes around a multiline string'''),
 #            'outputdatatypes':SimpleItem(defvalue=['NTUPLE','DST','SIM', 'DIGI'],sequence=1,doc='''
 #            list of data that will be returned as output data and not in the output sandbox. Possible values are 'HISTO', 'NTUPLE', 'DST', 'DIGI', 'SIM'. Note that some backends might not return large files if they are put into the output sandbox''')
+            'setupProjectOptions': SimpleItem(defvalue = '', typelist=['str'], doc='''Extra options to be passed onto the SetupProject command used for configuring the environment. As an example setting it to '--dev' will give access to the DEV area. For full documentation of the available options see https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'''),
             })
     _category = 'applications'
     _exportmethods = ['getpack', 'make', 'cmt']
@@ -133,13 +117,7 @@ class Gaudi(IApplication):
         if not self.appname:
             logger.debug("_auto__init called without an appname. Nothing to configure")
             return 
-        
-        if not self.lhcb_release_area:
-            self.lhcb_release_area = os.path.expandvars("$LHCBRELEASES")
-        else:
-            self.lhcb_release_area = os.path.expandvars(self.lhcb_release_area)
-        logger.debug( "self.lhcb_release_area: %s", str(self.lhcb_release_area))
-        
+                
         if not self.user_release_area:
             if os.path.expandvars("$User_release_area") == "$User_release_area":
                 self.user_release_area = ""
@@ -147,8 +125,9 @@ class Gaudi(IApplication):
                 self.user_release_area = os.path.expandvars("$User_release_area").split(os.pathsep)[0]
         logger.debug("Set user_release_area to: %s",str(self.user_release_area))        
         
-        if (not self.version) and self.lhcb_release_area:  
-            self.version = self.guess_version(self.appname, self.lhcb_release_area)
+        if not self.version:  
+            import GaudiVersions
+            self.version = GaudiVersions.guess_version(self.appname)
         self.package = _available_packs[self.appname]
         #self.platform = self.list_choices("platform")
         # Using _get_user_platform not exactly the same as list_choices since it will
@@ -167,10 +146,10 @@ class Gaudi(IApplication):
         configuration. In this case this is the flattened options file (as a string)
         The extra information is its own class'''
 
+        self._setUpEnvironment()  
+
         inputs = self._checkInputs() # returns an empty list if all inputs are OK
         self.extra = GaudiExtras()
-
-        self._setUpEnvironment()  
 
         optsfilelist = [fileitem.name for fileitem in self.optsfile]
                         
@@ -275,80 +254,6 @@ class Gaudi(IApplication):
         s+="""\n};"""
         return s
 
-    #######################################################################
-    # available_versions                                                  #
-    #                    given a package name, try to evaluate the        #
-    #                    available versions of the application            #
-    #                                                                     #
-    #                    This only works for a standard LHCb installation #
-    #                    e.g. on afs                                      #
-    #######################################################################
-    def available_versions(self,appname, release_area, dev = None):
-      """Try to extract the list of installed versions for a given application"""
-      if appname not in _available_apps:
-        raise ValueError, "Application " + appname + " not known"
-      app_upper = appname.upper()
-      app_upper_ = app_upper+"_"
-
-      if not release_area:
-        raise ValueError, """
-        The LHCb envrinment variables are not set (LHCBRELEASES, LHCBDEV)
-        """
-
-      dirlist = os.listdir(release_area+os.sep+app_upper)
-      versions = []
-      for i in dirlist:
-        if i.startswith(app_upper_):
-          versions.append(i.replace(app_upper_, ""))
-      versions.sort(self.versions_compare)
-      return versions
-
-       
-    #######################################################################
-    #  guess_version                                                      #
-    #                Given an appname, return the last entry in the list  #
-    #                of available applications                            #
-    #######################################################################
-    def guess_version(self,appname, release_area, dev = None):
-      """Try to guess the correct version for a given application
-         If the the environment variable consisting of the upper
-         case name of the application + ENVROOT exists. The version
-         will be taken from this variable"""
-      if appname not in _available_apps:
-        raise ValueError, "Application " + appname + " not known"
-      # check if the user has used ProjectEnv to select a certain version
-      # if so choose that version, if not choose the latest
-      if os.getenv(appname.upper()+"ENVROOT"):
-        return os.path.basename(os.getenv(appname.upper()+"ENVROOT"))
-      else: 
-        versions = self.available_versions(appname, release_area, dev)
-        return versions[-1]
-
-
-    #######################################################################
-    # versions_compare                                                    #
-    #                 Compare version strings for LHCb apps (needed to    #
-    #                 sort the available versions. Taken from Ganga 3     #
-    #######################################################################
-    # GC: do we really need this versions compare function?
-    # GC: os command for listing the dir should return the dirs in correct order.
-    def versions_compare(self,x, y):
-      """A simple function to compare versions of the format vXrY, with 
-      X and Y being the major and minor version, respectively"""
-      nbs = []
-      for i in (x, y):
-        rev = i.find('r')
-        patch = i.find('p')
-        try:
-          if patch == -1:
-            nb = map(int, (i[1:rev], i[rev+1:], '0'))
-          else:
-            nb = map(int, (i[1:rev], i[rev+1:patch], i[patch+1:]))
-        except:
-          nb = (0, 0, 0)
-        nbs.append(nb)
-      return cmp(nbs[0], nbs[1])
-
     
     #######################################################################
     # guess_package                                                       #
@@ -434,10 +339,9 @@ class Gaudi(IApplication):
             # cannot set file
             logger.warning("The 'optsfile' is not set")
             logger.warning("I hope this is OK.")
-            opts = os.path.expandvars(self.lhcb_release_area + os.sep + self.appname.upper() + os.sep + \
-                                      self.appname.upper() + '_' + self.version + os.sep + \
-                                      self.package + os.sep + self.appname + os.sep + self.version + \
-                                      os.sep + 'options' + os.sep + self.appname + '.py')
+            packagedir=self.shell.env[self.appname.upper()+'ROOT']
+            opts = os.path.expandvars(os.path.join(packagedir,'options',
+                                                   self.appname + '.py'))
             if opts:
                 self.optsfile.append(opts)
             else:
@@ -512,27 +416,23 @@ class Gaudi(IApplication):
         full_user_ra = fullpath( user_ra) # expand any symbolic links
         platform = self._get_user_platform()
         
-        # Initially I thought I should use this path...
-        user_cmt_path = os.path.join( user_ra, self.appname + '_' + self.version,
-                                      self.package, self.appname, self.version, 'cmt')
-        # ...but now I think this is correct.
-        user_cmt_path = os.path.join( user_ra, self.appname + '_' + self.version, 
-                                      'cmt')
-        lhcb_cmt_path = os.path.join( self.lhcb_release_area, self.appname.upper(),
-                                      self.appname.upper() + '_' + self.version,
-                                      'cmt')
-        dir = ''
-#         if self.masterpackage:
-#             package, name, version = self._parseMasterPackage()
-#             dir = os.path.join( user_ra, name + '_' + version, package, 'cmt')
-#         elif os.path.exists( user_cmt_path):
-        if os.path.exists(fullpath(user_cmt_path)):
-            dir = user_cmt_path
-        elif os.path.exists(fullpath(lhcb_cmt_path)):
-            dir = lhcb_cmt_path
-        else:
-            logger.error( 'Cannot find the application CMT directory: %s' % dir)
-        logger.debug( 'Trying to use this CMT directory %s' % dir)
+        # Work our way through the CMTPROJECTPATH until we find a cmt directory
+        projectdirs = self.shell.env['CMTPROJECTPATH'].split(os.pathsep)
+        appveruser = os.path.join(self.appname + '_' + self.version,'cmt')
+        appverrelease = os.path.join(self.appname.upper(),
+                                     self.appname.upper() + '_' + self.version,
+                                     'cmt')
+        for projectdir in projectdirs:
+            dir = fullpath(os.path.join(projectdir,appveruser))
+            logger.debug('Looking for projectdir %s' % dir)
+            if os.path.exists(dir):
+                break
+            dir = fullpath(os.path.join(projectdir,appverrelease))
+            logger.debug('Looking for projectdir %s' % dir)
+            if os.path.exists(dir):
+                break
+
+        logger.debug('Using the CMT directory %s for identifying projects' % dir)
         # 'cd ' +dir + ';
         rc, showProj, m = self.shell.cmd1( 'cd ' + dir +';cmt show projects', 
                                            capture_stderr=True)
@@ -853,6 +753,9 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.9  2008/08/18 11:18:00  gcowan
+# Now raise ApplicationConfigurationError if there is an error when parsing the job options.
+#
 # Revision 1.8  2008/08/14 15:54:43  uegede
 # Added "datatype_string" to schema for LHCbDataset. This allows Ganga to run with
 # cosmic data.

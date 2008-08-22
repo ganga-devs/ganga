@@ -80,7 +80,6 @@ class GaudiPythonLSFRunTimeHandler(IRuntimeHandler):
     config = Ganga.Utility.Config.getConfig('LHCb') 
     version = app.version
     theApp = app.project
-    lhcb_release_area = app.lhcb_release_area
     platform = app.platform
     appUpper = theApp.upper()
     site = config['LocalSite']
@@ -89,6 +88,7 @@ class GaudiPythonLSFRunTimeHandler(IRuntimeHandler):
     copy_cmd = config['cp_cmd']
     mkdir_cmd = config['mkdir_cmd']
     joboutdir = config['DataOutput']
+    projectopts = app.setupProjectOptions
     
     if job.outputdata:
       outputdatastr = ' '.join(job.outputdata)
@@ -96,7 +96,6 @@ class GaudiPythonLSFRunTimeHandler(IRuntimeHandler):
        outputdatastr = ''
     
     script="""#!/usr/bin/env bash
-export LHCb_release_area=###CMTRELEASEAREA###
 export DATAOUTPUT='###DATAOUTPUT###'
 DATAOPTS='data.opts'
 JOBOUTPUTDIR=###JOBOUTDIR###/###JOBID###/outputdata
@@ -130,7 +129,6 @@ done
 """
     script=script.replace('###DATAOUTPUT###', outputdatastr)
     script=script.replace('###THEAPP###',theApp) 
-    script=script.replace('###CMTRELEASEAREA###',lhcb_release_area)
     script=script.replace('###VERSION###',version)
     script=script.replace('###PLATFORM###',platform)
     script=script.replace('###JOBID###',jstr)
@@ -139,6 +137,7 @@ done
     script=script.replace('###SEPROTOCOL###',protocol)
     script=script.replace('###COPY###',copy_cmd)
     script=script.replace('###MKDIR###',mkdir_cmd)
+    script=script.replace('###PROJECTOPTS###',projectopts)
     
     return script
 
