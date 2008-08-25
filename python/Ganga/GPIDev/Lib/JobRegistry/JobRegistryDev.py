@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.3 2008-08-18 15:51:10 moscicki Exp $
+# $Id: JobRegistryDev.py,v 1.4 2008-08-25 08:16:19 moscicki Exp $
 ################################################################################
 
 
@@ -133,12 +133,13 @@ class JobRegistryInstanceInterface:
         return ids
 
     def select(self,minid=None,maxid=None,**attrs):
-        attrs_str = ''
-        for a in attrs:
-            attrs_str += ',%s=%s'%(a,repr(attrs[a]))
-
         import repr
         r = repr.Repr()
+
+        attrs_str = ''
+        for a in attrs:
+            attrs_str += ',%s=%s'%(a,r.repr(attrs[a]))
+
         jobslice = JobRegistryInstanceInterface("%s.select(minid=%s,maxid=%s%s)"%(self.name,r.repr(minid),r.repr(maxid),attrs_str))
 
         def callback(j):
@@ -612,6 +613,9 @@ class JobRegistryInstance(JobRegistryInstanceBase):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/08/18 15:51:10  moscicki
+# jobs.select([ids]) added
+#
 # Revision 1.2  2008/08/18 13:18:58  moscicki
 # added force_status() method to replace job.fail(), force_job_failed() and
 # force_job_completed()
