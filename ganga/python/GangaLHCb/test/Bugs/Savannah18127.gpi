@@ -1,0 +1,12 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+j = Job (
+    name = 'CMTConfigTest' ,
+    application = DaVinci(),
+    backend = Local())
+
+j.submit()
+
+assert j.status == 'submitted', 'Job must submit correctly'
+assert sleep_until_completed(j), 'Job should complete'
+
