@@ -24,4 +24,6 @@ assert(jscript.submit())
 
 assert(sleep_until_completed(jscript,1800))
 
+jscript.backend.getOutputData()
+
 assert(file_contains(join(jscript.outputdir,'output.txt'),'This is a test'))

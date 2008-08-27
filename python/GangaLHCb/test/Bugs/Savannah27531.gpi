@@ -1,2 +1,2 @@
 s=SplitByFiles()
-list=s._impl._splitFiles(['foo','bar'])
+list=s._impl._splitFiles(LHCbDataset(files=['foo','bar']))

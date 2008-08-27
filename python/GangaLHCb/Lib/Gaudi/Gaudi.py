@@ -129,9 +129,6 @@ class Gaudi(IApplication):
             import GaudiVersions
             self.version = GaudiVersions.guess_version(self.appname)
         self.package = _available_packs[self.appname]
-        #self.platform = self.list_choices("platform")
-        # Using _get_user_platform not exactly the same as list_choices since it will
-        # force _setUpEnvironment() to be called if CMTCONFIG not defined. 
         if (not self.platform):
             self.platform = self._get_user_platform()
         
@@ -254,21 +251,6 @@ class Gaudi(IApplication):
         s+="""\n};"""
         return s
 
-    
-    #######################################################################
-    # guess_package                                                       #
-    #               given an application name guess the corresponding     # 
-    #               LHCb package name                                     #
-    #######################################################################
-    def guess_package( self,appname):
-      """Guess the package corresponding to a given application"""
-
-      if appname in known_packs.keys():
-          return known_packs[appname]
-      else:
-          return "UNKNOWN"
-    
-   
     def _setUpEnvironment( self): 
         self.shell=env._setenv( self)
 
@@ -325,14 +307,6 @@ class Gaudi(IApplication):
             logger.error("Unknown applications "+self.appname+". Cannot configure")
             raise ApplicationConfigurationError(None, "Unknown applications "+self.appname+". Cannot configure")
         ##############################
-        #       version              #
-        ##############################
-        if self.version is None:
-            self.version = self.guess_version(self.appname)
-            logger.warning("The 'version' is not set. Setting it to "+self.version+".")
-            logger.warning("I hope this is OK.")
-            result.append("version")
-        ##############################
         #     optsfile               #
         ##############################
         if len(self.optsfile)==0:
@@ -348,21 +322,13 @@ class Gaudi(IApplication):
                 logger.error('Cannot find the default opts file for ' + self.appname + os.sep + self.version)
             result.append('optsfile')
 #            raise ApplicationConfigurationError(None, "The 'optsfile' is not set")
-        ##############################
-        #     platform               #
-        ##############################
-        if self.platform is None:
-            #plattform is set up in _setEnvironment
-            pass
           
         ##############################
         #     package                #
         ##############################
         if self.package is None:
-            self.package = self.guess_package(self.appname)
-            logger.warning("Set package to " + self.package + ".")
-            logger.warning("I hope this is OK.")
-            result.append("package")
+            raise ApplicationConfigurationError(None, "The 'package' attribute is not set for application. Not possible to continue")
+
         return result
   
 
@@ -396,13 +362,6 @@ class Gaudi(IApplication):
             logger.info('"CMTCONFIG" not set. Cannot determin the platform you want to use')
             platform=''
         
-        # GC: This allows a user to define a platform different from the default one.
-        # I don't like this function since this step isn't actually getting the platform
-        # but is rather setting it.
-        if platform != self.platform and self.platform != None:
-            if env.has_key('CMTCONFIG'):
-                platform=self.platform
-                env['CMTCONFIG']=platform
         return platform        
 
     def _get_user_dlls(self):
@@ -433,7 +392,6 @@ class Gaudi(IApplication):
                 break
 
         logger.debug('Using the CMT directory %s for identifying projects' % dir)
-        # 'cd ' +dir + ';
         rc, showProj, m = self.shell.cmd1( 'cd ' + dir +';cmt show projects', 
                                            capture_stderr=True)
 
@@ -753,6 +711,30 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.10  2008/08/22 10:07:23  uegede
+# New features:
+# =============
+# The Gaudi and GaudiPython applications have a new attribute called
+# 'setupProjectOptions'. It contains extra options to be passed onto the
+# SetupProject command used for configuring the environment. As an
+# example setting it to '--dev' will give access to the DEV area. For
+# full documentation of the available options see
+# https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject. The
+# 'lhcb_release_area' attribute has been taken away as it was not useful.
+#
+# The Gaudi and GaudiPython applications can now read data from the
+# detector. For this a new attribute, 'datatype_string', is added to the
+# LHCbDataset. It contains the string that is added after the filename
+# in the options to tell Gaudi how to read the data. If reading raw data
+# (mdf files) it should be set to "SVC='LHCb::MDFSelector'".
+#
+# Minor changes:
+# ==============
+# The identification of which default application version to pick is now
+# using SetupProject.
+#
+# Many test cases have been updated to Ganga 5.
+#
 # Revision 1.9  2008/08/18 11:18:00  gcowan
 # Now raise ApplicationConfigurationError if there is an error when parsing the job options.
 #

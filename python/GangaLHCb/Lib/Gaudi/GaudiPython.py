@@ -109,7 +109,9 @@ class GaudiPython(IApplication):
         from GangaLHCb.Lib.Gaudi import GaudiExtras
         self.extra = GaudiExtras()
         if job.inputdata:
-            self.extra.inputdata = [x.name for x in job.inputdata.files]
+            self.extra.inputdata = job.inputdata
+            self.extra.inputdata.datatype_string=job.inputdata.datatype_string
+
         self.package = _available_packs[self.project]
 
         return (None,None)
@@ -141,12 +143,6 @@ class GaudiPython(IApplication):
             raise ApplicationConfigurationError(
                 None, "Unknown application "+self.appname+". Cannot configure")
 
-        if self.version is None:
-            self.version = self.guess_version(self.appname)
-            logger.warning("The 'version' is not set. Setting it to "+
-                           self.version+".")
-            logger.warning("I hope this is OK.")
-
         if len(self.script)==0:
             logger.warning("No script defined. Will use a default script which is probably not what you want.")
 
@@ -167,7 +163,7 @@ class GaudiPython(IApplication):
             #Delete the last , to be compatible with the new optiosn parser
             if s.endswith(","):
                 s=s[:-1]
-        s+="""\n};"""
+            s+="""\n};"""
         return s
 
     def _setUpEnvironment( self): 
