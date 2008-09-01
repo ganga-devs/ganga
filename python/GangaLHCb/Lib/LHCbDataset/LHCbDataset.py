@@ -143,6 +143,11 @@ class LHCbDataset(Dataset):
         If we are doing a full update then the cache_date will
         be updated.
         """
+
+        #Savannah 40219
+        if not forceUpdate and not self.cacheOutOfDate():
+            return
+
         lfns=[]
         for f in self.files:
             if f.isLFN():
@@ -271,6 +276,10 @@ allComponentFilters['datafiles']=string_datafile_shortcut
 allComponentFilters['datasets']=string_dataset_shortcut
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/08/14 15:54:43  uegede
+# Added "datatype_string" to schema for LHCbDataset. This allows Ganga to run with
+# cosmic data.
+#
 # Revision 1.1  2008/07/17 16:41:24  moscicki
 # migration of 5.0.2 to HEAD
 #

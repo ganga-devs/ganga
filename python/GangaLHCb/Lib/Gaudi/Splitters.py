@@ -55,8 +55,20 @@ class SplitByFiles(ISplitter):
         else:
             inputs.files=self._extra.inputdata.files[:self.maxFiles]
             logger.info("Only using a maximum of %d inputfiles" %int(self.maxFiles))
+        
+        #store names to add cache info later
+        dataset_files = {}
+        for i in job.inputdata.files:
+            dataset_files[i.name] = i
 
         datasetlist = self._splitFiles(inputs)
+        import time
+        if job.inputdata.cache_date:
+            _time = time.mktime(time.strptime(job.inputdata.cache_date))
+        else:
+            _time = time.time()*2
+        _timeUpdate = False
+
         for dataset in datasetlist:
 
             j = self.createSubjob(job)
@@ -70,6 +82,18 @@ class SplitByFiles(ISplitter):
             j.application.extra._userdlls = job.application.extra._userdlls[:]
             j.outputsandbox = job.outputsandbox[:]
             subjobs.append( j)
+            
+            #copy the replicas back up the tree
+            for f in dataset.files:
+                dataset_files[f.name].replicas = f.replicas
+            if dataset.cache_date:
+                cache_time = time.mktime(time.strptime(dataset.cache_date))
+                if cache_time < _time:
+                    _time = cache_time
+                    _timeUpdate = True
+        if _timeUpdate:
+            job.inputdata.cache_date = time.asctime(time.localtime(_time))
+            
         return subjobs
 
     def prepareSubjobs(self,job):
@@ -121,11 +145,13 @@ class _simpleSplitter(_abstractSplitter):
             dataset = LHCbDataset()
             dataset.datatype_string=inputs.datatype_string
             dataset.files = inputs.files[start:end]
+            dataset.cache_date = inputs.cache_date
             result.append(dataset)
         if end < (inputs_length):
             dataset = LHCbDataset()
             dataset.datatype_string=inputs.datatype_string
             dataset.files = inputs.files[end:]
+            dataset.cache_date = inputs.cache_date
             result.append(dataset)
         #catch file loss
         result_length = 0
@@ -215,12 +241,12 @@ class _diracSplitter(_abstractSplitter):
         super(_diracSplitter,self).__init__(filesPerJob,maxFiles)
         self.ignoremissing = ignoremissing
 
-    def _copyToDataSet(self, data, replica_map):
+    def _copyToDataSet(self, data, replica_map, date = ''):
 
         dataSet = LHCbDataset()
+        dataSet.cache_date = date
         for d in data:
             lhcbFile = string_datafile_shortcut(d.name,None)
-            print repr(lhcbFile)
             lhcbFile.replicas = replica_map[d.name]
             dataSet.files.append(lhcbFile)
         return dataSet
@@ -240,6 +266,7 @@ class _diracSplitter(_abstractSplitter):
             logger.info('Estimated time to query the LFC: %dm%ds',
                         (estimated_query_time // 60) , (estimated_query_time % 60))
         data_set.updateReplicaCache()
+        cache_date = data_set.cache_date
 
         #make a map of replicas
         bad_file_list = []
@@ -297,7 +324,7 @@ class _diracSplitter(_abstractSplitter):
                     start = i * self.filesPerJob
                     end = start + self.filesPerJob
                     #add a sublist of files
-                    result.append(self._copyToDataSet(files[k][start:end],bulk))
+                    result.append(self._copyToDataSet(files[k][start:end],bulk,cache_date))
                     logger.debug('Added a separate job with the files %s - sites are %s.',str(files[k][start:end]), str(k))
                     logger.debug('start %d, end %d, length %d.', start, end, files_length)
                 if end < (files_length):
@@ -372,7 +399,7 @@ class _diracSplitter(_abstractSplitter):
             logger.debug('Merge list is now %s', merge_list)
             #append
             logger.debug('Adding the subjob %s', added)
-            result.extend([self._copyToDataSet(a,bulk) for a in added])
+            result.extend([self._copyToDataSet(a,bulk,cache_date) for a in added])
             logger.debug('We now have %d subjobs.',len(result))
 
         #anything left over is unmergable and has to become a subjob on its own    
@@ -380,7 +407,7 @@ class _diracSplitter(_abstractSplitter):
             if not len(merge_list[k]): continue
             
             assert(len(merge_list[k]) < self.filesPerJob)
-            result.append(self._copyToDataSet(merge_list[k],bulk))
+            result.append(self._copyToDataSet(merge_list[k],bulk,cache_date))
 
         unique_files = []
         for r in result:
@@ -482,6 +509,30 @@ class GaussSplitter(ISplitter):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.6  2008/08/22 10:07:24  uegede
+# New features:
+# =============
+# The Gaudi and GaudiPython applications have a new attribute called
+# 'setupProjectOptions'. It contains extra options to be passed onto the
+# SetupProject command used for configuring the environment. As an
+# example setting it to '--dev' will give access to the DEV area. For
+# full documentation of the available options see
+# https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject. The
+# 'lhcb_release_area' attribute has been taken away as it was not useful.
+#
+# The Gaudi and GaudiPython applications can now read data from the
+# detector. For this a new attribute, 'datatype_string', is added to the
+# LHCbDataset. It contains the string that is added after the filename
+# in the options to tell Gaudi how to read the data. If reading raw data
+# (mdf files) it should be set to "SVC='LHCb::MDFSelector'".
+#
+# Minor changes:
+# ==============
+# The identification of which default application version to pick is now
+# using SetupProject.
+#
+# Many test cases have been updated to Ganga 5.
+#
 # Revision 1.5  2008/08/15 15:52:21  uegede
 # Changed the Dirac splitter to work with the modified LHCbDataset
 #
