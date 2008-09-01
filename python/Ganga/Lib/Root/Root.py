@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Root.py,v 1.2 2008-07-28 10:29:22 wreece Exp $
+# $Id: Root.py,v 1.3 2008-09-01 05:17:25 wreece Exp $
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
@@ -19,12 +19,12 @@ logger = Ganga.Utility.logging.getLogger()
 
 import sys
 config = makeConfig('ROOT',"Options for Root backend")
-config.addOption('arch','slc3_ia32_gcc323','Architecture of ROOT')
+config.addOption('arch','slc4_ia32_gcc34','Architecture of ROOT')
 config.addOption('location','/afs/cern.ch/sw/lcg/external/root','Location of ROOT')
 config.addOption('path','','Set to a specific ROOT version. Will override other options.')
 config.addOption('pythonhome','${location}/../Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
 config.addOption('pythonversion','',"Version number of python used for execution python ROOT script")
-config.addOption('version','5.14.00d','Version of ROOT')
+config.addOption('version','5.18.00','Version of ROOT')
 
 class Root(IApplication):
     """
@@ -197,7 +197,7 @@ class Root(IApplication):
     _schema = Schema(Version(1,1), {
         'script' : FileItem(defvalue=File(),doc='A File object specifying the script to execute when Root starts',checkset='_checkset_script'), 
         'args' : SimpleItem(defvalue=[],typelist=['str','int'],sequence=1,doc="List of arguments for the script. Accepted types are numerics and strings"),
-        'version' : SimpleItem(defvalue='5.14.00d',doc="The version of Root to run"),
+        'version' : SimpleItem(defvalue='5.18.00',doc="The version of Root to run"),
         'usepython' : SimpleItem(defvalue = False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH.")
         } )
     _category = 'applications'
