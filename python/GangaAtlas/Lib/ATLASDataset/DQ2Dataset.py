@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.6 2008-08-01 07:18:39 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.7 2008-09-02 16:06:27 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -14,13 +14,14 @@ from Ganga.Utility.files import expandfilename
 from Ganga.Utility.logging import getLogger
 
 from dq2.common.DQException import *
-from dq2.info.TiersOfATLAS import _refreshToACache, ToACache
+from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites
 from dq2.repository.DQRepositoryException import DQUnknownDatasetException
 from dq2.location.DQLocationException import DQLocationExistsException
 from dq2.common.DQException import DQInvalidRequestException
 from dq2.content.DQContentException import DQInvalidFileMetadataException
 from dq2.common.client.DQClientException import DQInternalServerException
 from dq2.common.dao.DQDaoException import DQDaoException
+from dq2.info.TiersOfATLASValidator import is_site
 
 _refreshToACache()
 
@@ -232,7 +233,35 @@ def resolve_container(datasets):
         return container_datasets
     else:
         return datasets
-    
+
+def _resolveSites(sites):
+
+    new_sites = []
+    for site in sites:
+        if site in ToACache.topology:
+            new_sites += _resolveSites(ToACache.topology[site])
+        else:
+            new_sites.append(site)
+
+    return new_sites
+
+def whichCloud (site):
+    is_site(site)
+
+    for cloudID, eachCloud in ToACache.dbcloud.iteritems():
+        sites = getSites(eachCloud)
+        if site in sites:
+            return cloudID
+
+    info = { 'CERN' : 'TO', 'CNAF' : 'IT', 'PIC': 'ES', 'LYON': 'FR',
+             'RAL' : 'UK', 'FZK': 'DE', 'SARA' : 'NL', 'ASGC' : 'TW',
+             'TRIUMF' : 'CA', 'BNL' : 'US', 'NDGF' : 'NG' }
+    for sitename, cloud in info.iteritems():
+        if site == sitename:
+            return cloud
+        
+    return None
+
 
 class DQ2Dataset(Dataset):
     '''ATLAS DDM Dataset'''
@@ -746,7 +775,7 @@ class DQ2OutputDataset(Dataset):
     _category = 'datasets'
     _name = 'DQ2OutputDataset'
 
-    _exportmethods = [ 'retrieve', 'fill', 'create_dataset','create_datasets', 'dataset_exists', 'get_locations' ]
+    _exportmethods = [ 'retrieve', 'fill', 'create_dataset','create_datasets', 'dataset_exists', 'get_locations', 'create_subscription' ]
 
     _GUIPrefs = [ { 'attribute' : 'outputdata',     'widget' : 'String_List' },
                   { 'attribute' : 'output',         'widget' : 'String_List' },
@@ -839,6 +868,22 @@ class DQ2OutputDataset(Dataset):
         
         self.datasetname="" # mandatory to avoid confusing the fill method
         return
+
+    def create_subscription(self, datasetname = None, location = None):
+        """Create a subscription for a dataset"""
+        if datasetname and location:
+            if isDQ2SRMSite(location) and \
+                   (location.find('LOCALGROUPDISK')>0 or location.find('USERDISK')>0):
+                try:
+                    dq2_lock.acquire()
+                    dq2.registerDatasetSubscription(datasetname, location)
+                    logger.warning('Dataset %s has been subscribed to %s.', datasetname, location)
+                finally:
+                    dq2_lock.release()
+                    
+
+        return
+
         
     def register_dataset_location(self, datasetname, siteID):
         """Register location of dataset into DQ2 database"""
@@ -1144,9 +1189,9 @@ except KeyError:
 
 config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASUSERDISK' , 'ATLASUSERTAPE', 'ATLASLOCALGROUPDISK'] , 'Allowed space tokens names of DQ2OutputDataset output' )
 
-config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_USERDISK', 'CERN-PROD_USERTAPE', 'FZKDISK', 'LYONDISK', 'PICDISK', 'CNAFDISK', 'RALDISK', 'SARADISK', 'ASGCDISK', 'TRIUMFDISK' ], 'Default backup locations of DQ2OutputDataset output' )
+config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_USERDISK', 'CERN-PROD_USERTAPE', 'FZK-LCG2_USERDISK', 'IN2P3-CC_USERDISK', 'TRIUMF-LCG2_USERDISK', 'IFAE_USERDISK', 'NIKHEF-ELPROD_USERDISK' ], 'Default backup locations of DQ2OutputDataset output' )
 
-
+config.addOption('USE_STAGEOUT_SUBSCRIPTION', False, 'Allow DQ2 subscription to aggregate DQ2OutputDataset output on a storage element instead of using remote lcg-cr' )
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
@@ -1154,6 +1199,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.6  2008/08/01 07:18:39  elmsheus
+#Remove enforcing of DQ2OutputDatatset loction
+#
 #Revision 1.5  2008/07/31 14:14:19  elmsheus
 #Fix but #39568: Panda/DQ2Dataset: Need better error message if DS doesn't exist
 #

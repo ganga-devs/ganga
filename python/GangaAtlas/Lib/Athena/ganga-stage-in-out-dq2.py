@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.6 2008-08-01 07:18:39 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.7 2008-09-02 16:06:27 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1181,8 +1181,8 @@ if __name__ == '__main__':
         if sitese:
             for sitename in TiersOfATLAS.getAllSources():
                 dq2srm = TiersOfATLAS.getSiteProperty(sitename,'srm')
-                if dq2srm and dq2srm.startswith('token:'):
-                    continue
+                #if dq2srm and dq2srm.startswith('token:'):
+                #    continue
                 if dq2srm and dq2srm.find(sitese)>=0:
                     setype = findsetype(dq2srm)
 
@@ -1705,7 +1705,24 @@ if __name__ == '__main__':
             print "ERROR: OUTPUT_LOCATION not defined or empty srm value"
             print "Using DQ2_BACKUP_OUTPUT_LOCATIONS" 
             temp_locations = [ ]
-        temp_locations = temp_locations + [ siteID ] + backup_locations
+
+
+        # Set siteID to site_USERDISK
+        dq2alternatename = TiersOfATLAS.getSiteProperty(siteID,'alternateName')
+        for sitename in TiersOfATLAS.getAllSources():
+            if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename \
+               and TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasuserdisk')>0:
+                siteID = sitename
+                break
+
+        # Find close backup locations
+        close_backup_locations = []
+        for sitename in TiersOfATLAS.getCloseSites(siteID):
+            if TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasuserdisk')>0:
+                close_backup_locations.append( sitename )
+
+        # Compile stage out SE sequence 
+        temp_locations = temp_locations + [ siteID ] + close_backup_locations + backup_locations
 
         if 'CERN' in temp_locations:
             temp_locations.remove('CERN')

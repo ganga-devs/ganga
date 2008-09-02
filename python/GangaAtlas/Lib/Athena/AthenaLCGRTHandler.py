@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.5 2008-08-01 07:18:39 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.6 2008-09-02 16:06:27 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -21,7 +21,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Lib.LCG import LCGJobConfig
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
 
-from GangaAtlas.Lib.ATLASDataset import ATLASDataset, isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations
+from GangaAtlas.Lib.ATLASDataset import ATLASDataset, isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations, whichCloud
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -136,12 +136,24 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                         output_location = job.outputdata.location
                     else:
                         logger.warning('Unknown output location %s.',job.outputdata.location)
+
+                    if job.backend.requirements._name == 'AtlasLCGRequirements':
+                        if job.backend.requirements.cloud:
+                            if whichCloud(output_location) != job.backend.requirements.cloud:
+                                printout = 'Job submission failed ! j.outputdata.location=%s is not in the same cloud as j.backend.requirements.cloud=%s' %(job.outputdata.location, job.backend.requirements.cloud )
+                                raise ApplicationConfigurationError(None, printout)
+                        if job.backend.requirements.sites:
+                            if whichCloud(output_location) != whichCloud(job.backend.requirements.sites[0]):
+                                printout = 'Job submission failed ! j.outputdata.location=%s is not in the same cloud as j.backend.requirements.sites=%s'%(job.outputdata.location, job.backend.requirements.sites)
+                                raise ApplicationConfigurationError(None,printout )     
+                    
                 elif job._getRoot().subjobs and job._getRoot().outputdata.location:
                     if isDQ2SRMSite(job._getRoot().outputdata.location):
                         output_location = job._getRoot().outputdata.location
                     else:
                         logger.warning('Unknown output location %s.',job.getRoot().outputdata.location)
                         
+                
                 logger.debug('Output: %s,%s',output_location, job.outputdata.location)
             else:
                 if job.outputdata.location:
@@ -220,6 +232,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                         job.outputdata.create_dataset(output_datasetname)
                 else:
                     job.outputdata.create_dataset(output_datasetname)
+                if output_location and configDQ2['USE_STAGEOUT_SUBSCRIPTION']:
+                    job.outputdata.create_subscription(output_datasetname, output_location)    
+                
             else:
                 if (job._getRoot().subjobs and job.id==0) or not job._getRoot().subjobs:
                     logger.warning("Dataset %s already exists - appending new files to this dataset", output_datasetname)
@@ -268,6 +283,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             raise ApplicationConfigurationError(None,'You are try to save the output to TIER0DISK - please use another area !')
         if not output_location:
             output_location = ''
+        if configDQ2['USE_STAGEOUT_SUBSCRIPTION']:
+            output_location = ''
         environment['OUTPUT_LOCATION'] = output_location
         environment['ATLASOutputDatasetLFC'] = config['ATLASOutputDatasetLFC']
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
@@ -311,6 +328,16 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         job = app._getParent() # Returns job or subjob object
         logger.debug('AthenaLCGRTHandler master_prepare called: %s', job.id )
+
+        # Check if all sites are in the same cloud
+        if job.backend.requirements.sites:
+            firstCloud = whichCloud(job.backend.requirements.sites[0])
+            for site in job.backend.requirements.sites:
+                cloud = whichCloud(site)
+                if cloud != firstCloud:
+                    printout = 'Job submission failed ! Site specified with j.backend.requirements.sites=%s are not in the same cloud !' %(job.backend.requirements.sites)
+                    raise ApplicationConfigurationError(None,printout )
+
 
         # Expand Athena jobOptions
         athena_options = ' '.join([os.path.basename(opt_file.name) for opt_file in app.option_file])
@@ -428,59 +455,15 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             else:
                 raise ApplicationConfigurationError(None,'j.inputdata.dataset is empty - DQ2 dataset name needs to be specified.')
 
-            # Restrict CE to list provided from DQ2 system with ToA info
+            # Raise submission exception
             if (not job.backend.CE and 
                 not (job.backend.requirements._name == 'AtlasLCGRequirements' and job.backend.requirements.sites) and
                 not (job.splitter and job.splitter._name == 'DQ2JobSplitter')):
 
-                cesall = []
-                cesincomplete = []
-                # Use only complete sources by default
-                ces = job.inputdata.get_locations(complete=1)
-                # Find sites with AOD and ESD dataset
-                if job.inputdata.use_aodesd_backnav:
-                    cesbacknav = job.inputdata.get_locations(complete=1,backnav=True)
-                    cesnew = []
-                    for ices in cesbacknav:
-                        if ices in ces:
-                            cesnew.append(ices)
-                    ces = cesnew
-                # Use complete and incomplete sources if match_ce_all
-                if job.inputdata.match_ce_all:
-                    cesall = job.inputdata.get_locations(complete=0)
-                    # Find sites with AOD and ESD dataset
-                    if job.inputdata.use_aodesd_backnav:
-                        cesbacknav = job.inputdata.get_locations(complete=0,backnav=True)
-                        cesnew = []
-                        for ices in cesbacknav:
-                            if ices in ces:
-                                cesnew.append(ices)
-                        cesall = cesnew
-                    
-                if job.inputdata.min_num_files>0:
-                    logger.warning('Please be patient, scanning LFC catalogs for incomplete dataset locations')
-                    cesincomplete = getIncompleteLocations(job.inputdata.list_locations_num_files(complete=0), job.inputdata.min_num_files)
-                    # Find sites with AOD and ESD dataset
-                    if job.inputdata.use_aodesd_backnav:
-                        cesincompletebacknav = getIncompleteLocations(job.inputdata.list_locations_num_files(complete=0,backnav=True),job.inputdata.min_num_files)
-                        cesnew = []
-                        for ices in cesincompletebacknav:
-                            if ices in cesincomplete:
-                                cesnew.append(ices)
-                        cesincomplete = cesnew
+                raise ApplicationConfigurationError(None,'Job submission failed ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
 
-                if cesall and not cesincomplete:
-                    ces = cesall
-                elif cesincomplete and not cesall:
-                    ces += cesincomplete
-                elif cesincomplete and cesall:
-                    ces += cesincomplete
-                    
-                    
-                if not ces:
-                    raise ApplicationConfigurationError(None,'DQ2 returned no complete dataset location - unable to submit the job to an appropriate CE. Use match_ce_all instead for incomplete sources ?')
-                
-                requirements.sites = ces
+            if job.inputdata.match_ce_all or job.inputdata.min_num_files>0:
+                raise ApplicationConfigurationError(None,'Job submission failed ! Usage of j.inputdata.match_ce_all or min_num_files is obsolete ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
 
             # Add TAG datasetname
             if job.inputdata.tagdataset:

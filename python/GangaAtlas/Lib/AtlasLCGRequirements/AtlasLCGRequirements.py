@@ -7,7 +7,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 from Ganga.Lib.LCG import LCGRequirements
 
-from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, _resolveSites
+from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, _resolveSites, getSites 
 
 logger = getLogger()
 
@@ -267,20 +267,20 @@ def getAllSites(only_lcg=True,resolve=False):
 
     _refreshToACache()
     _refreshCESEInfo()
-
-    sites = [ 'CERN' ]
-    sites += ToACache.topology['ITALYSITES']
-    sites += ToACache.topology['SPAINSITES']
-    sites += ToACache.topology['FRANCESITES']
-    sites += [ 'RAL' ] + ToACache.topology['UKTIER2S']
-    sites += ToACache.topology['FZKSITES']
-    sites += ToACache.topology['NLSITES']
-    sites += ToACache.topology['TAIWANSITES']
-    sites += ToACache.topology['CANADASITES']
+    
+    sites = getSites('CERN')
+    sites += getSites('ITALYSITES')
+    sites += getSites('SPAINSITES')
+    sites += getSites('FRANCESITES')
+    sites += getSites('UKSITES')
+    sites += getSites('FZKSITES')
+    sites += getSites('NLSITES')
+    sites += getSites('TAIWANSITES')    
+    sites += getSites('CANADASITES')    
     
     if not only_lcg:
-        sites += ToACache.topology['USASITES']
-        sites += ToACache.topology['NDGF']
+        sites += getSites('USASITES')
+        sites += getSites('NDGF')
 
     if resolve: sites = _resolveSites(sites)
 
@@ -343,12 +343,13 @@ class AtlasLCGRequirements(LCGRequirements):
         'other'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Other Requirements'),
         'sites'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names'),
         'excluded_sites'  : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names to be excluded'),
+        'cloud'           : SimpleItem(defvalue = '', doc='ATLAS cloud name: CERN, IT, ES, FR, UK, DE, NL, TW, CA, US, NG'),
         'os'              : SimpleItem(defvalue ='', doc='Operation Systems')
     })
 
     _category = 'LCGRequirements'
     _name = 'AtlasLCGRequirements'
-    _exportmethods = ['list_ce', 'list_se','list_sites','list_clouds']
+    _exportmethods = ['list_ce', 'list_se','list_sites','list_clouds', 'list_sites_cloud' ]
 
     _GUIPrefs = [ 
          { 'attribute' : 'software',       'widget' : 'String_List' },
@@ -359,6 +360,7 @@ class AtlasLCGRequirements(LCGRequirements):
          { 'attribute' : 'ipconnectivity', 'widget' : 'Bool' },
          { 'attribute' : 'other',          'widget' : 'String_List' },
          { 'attribute' : 'sites',          'widget' : 'String_List' },
+         { 'attribute' : 'cloud',          'widget' : 'String' },
          { 'attribute' : 'excluded_sites', 'widget' : 'String_List' },
          { 'attribute' : 'os',             'widget' : 'String' } 
     ]
@@ -427,3 +429,29 @@ class AtlasLCGRequirements(LCGRequirements):
     def list_clouds(self):
 
         return getCloudInfo()
+
+    def list_sites_cloud(self, cloudName=''):
+
+        couldNameList = { 'TO' : 'CERN',
+                          'IT' : 'ITALYSITES',
+                          'ES' : 'SPAINSITES',
+                          'FR' : 'FRANCESITES',
+                          'UK' : 'UKSITES',
+                          'DE' : 'FZKSITES',
+                          'NL' : 'NLSITES',
+                          'TW' : 'TAIWANSITES',
+                          'CA' : 'CANADASITES',
+                          'US' : 'USASITES',
+                          'NG' : 'NDGF'
+                          }
+        if cloudName:
+            cloudID = cloudName
+        else:
+            cloudID = self.cloud
+
+        try:
+            cloud = couldNameList[cloudID]
+        except:
+            cloud = cloudID
+            
+        return getSites(cloud)

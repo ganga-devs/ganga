@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.1 2008-07-17 16:41:18 moscicki Exp $
+# $Id: DQ2JobSplitter.py,v 1.2 2008-09-02 16:06:27 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -92,11 +92,16 @@ class DQ2JobSplitter(ISplitter):
 
         if self.numfiles <= 0: 
             self.numfiles = 1
-       
-        if job.backend.requirements._name == 'AtlasLCGRequirements' and job.backend.requirements.sites:
-            allowed_sites = job.backend.requirements.sites
-        else: 
-            allowed_sites = job.backend.requirements.list_sites(True,True)
+
+        allowed_sites = []
+        if job.backend.requirements._name == 'AtlasLCGRequirements':
+            if job.backend.requirements.cloud:
+                allowed_sites = job.backend.requirements.list_sites_cloud()
+            elif job.backend.requirements.sites:
+                allowed_sites = job.backend.requirements.sites
+            else: 
+                raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use j.backend.requirements.cloud=CLOUDNAME ( CERN, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
+            #allowed_sites = job.backend.requirements.list_sites(True,True)
 
         contents = dict(job.inputdata.get_contents(overlap=False))
 

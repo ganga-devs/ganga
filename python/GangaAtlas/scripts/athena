@@ -82,6 +82,7 @@ p.add_option('--queue', action='store', type='string', dest='queue', help='Speci
 p.add_option('--ce' , action='store', type='string', dest='ce', help='Specific computing element and queue for LCG or NG submission')
 p.add_option('--rejectce' , action='store', type='string', dest='rejectce', help='Specific computing element and queue to exclude from NG submission')
 p.add_option('--site' , action='store', type='string', dest='site', help='Specific computing element and queue for LCG submission following the DQ2 naming schema, separated by ":", e.g. --site FZK:LRZ')
+p.add_option('--cloud' , action='store', type='string', dest='cloud', help='Cloudname for LCG or Panda submission, e.g. --cloud DE or --cloud US')
 p.add_option('--glite', action='store_true', help='Use gLite resource broker')
 p.add_option('--edg', action='store_true', help='Use the EDG resource broker')
 p.add_option('--walltime' , action='store', type='int', dest='walltime', help='Specify walltime requirement')
@@ -330,6 +331,9 @@ elif opt.backend == 'lcg' or opt.glite:
     if opt.site: 
         j.backend.requirements=AtlasLCGRequirements()
 	j.backend.requirements.sites=opt.site.split(':') 
+    if opt.cloud: 
+        j.backend.requirements=AtlasLCGRequirements()
+	j.backend.requirements.cloud=opt.cloud 
     if opt.glite: 
         j.backend.middleware = 'GLITE'
     elif opt.edg: 
@@ -361,6 +365,7 @@ elif opt.backend=='ng':
 elif opt.backend=='panda':
     try:
         j.backend = Panda()
+	if opt.cloud: j.backend.cloud = opt.cloud
     except NameError:
         print >>sys.stderr, 'ERROR: Panda backend has not been enabled in the gangarc file'
         sys.exit(100)

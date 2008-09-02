@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.4 2008-07-30 13:13:10 elmsheus Exp $
+# $Id: Athena.py,v 1.5 2008-09-02 16:06:27 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -503,6 +503,10 @@ class AthenaSplitterJob(ISplitter):
                     inputnames[j % self.numsubjobs].append(input_files[j])
                     inputguids[j % self.numsubjobs].append(input_guids[j])
 
+        if job.backend._name == 'LCG' and job.backend.middleware=='GLITE' and self.numsubjobs>config['MaxJobsAthenaSplitterJobLCG']:
+            printout = 'Job submission failed ! AthenaSplitterJob.numsubjobs>%s - glite WMS does not like bulk jobs with more than approximately 100 subjobs - use less subjobs or use job.backend.middleware=="EDG"  ' %config['MaxJobsAthenaSplitterJobLCG']
+            raise ApplicationConfigurationError(None, printout)
+
         # Do the splitting
         for i in range(self.numsubjobs):
             j = Job()
@@ -723,8 +727,12 @@ config.addOption('ATLAS_SOFTWARE', '/afs/cern.ch/project/gd/apps/atlas/slc3/soft
 config.addOption('PRODUCTION_ARCHIVE_BASEURL', 'http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/', 'FIXME')
 config.addOption('ExcludedSites', '' , 'FIXME')
 config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The path in which the cmtsetup magic function will look up the setup.sh for CMT environment setup')
+config.addOption('MaxJobsAthenaSplitterJobLCG', 100 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/07/30 13:13:10  elmsheus
+# Fix bug #39549: raise execption if (athena_compile==True) and (NG==True)
+#
 # Revision 1.3  2008/07/30 07:28:57  elmsheus
 # Debug print-outs during compilation
 #
