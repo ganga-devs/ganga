@@ -160,11 +160,11 @@ if opt.process:
     j.application.process_name=opt.process
 if opt.runnumber:
     j.application.run_number=opt.runnumber
-j.application.firstevent='1'
+j.application.firstevent=1
 if opt.firstevt:
     j.application.firstevent=opt.firstevt
 if opt.maxevt:
-    j.application.number_events_job=opt.maxevt
+    j.application.number_events_job=str(opt.maxevt)
 if opt.release:
     j.application.atlas_release=opt.release
 if opt.transpack:
