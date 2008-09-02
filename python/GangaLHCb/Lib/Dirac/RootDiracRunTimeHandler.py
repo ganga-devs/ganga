@@ -1,6 +1,7 @@
 from Ganga.Core import BackendError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
@@ -19,54 +20,6 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
         c = StandardJobConfig('',inputsandbox,[],[],None)
         return c
 
-    def checkArch(self):
-        
-        #get the architecture to use from the config file
-        from Ganga.Utility.Config import getConfig
-        rootConfig = getConfig('ROOT')
-        architecture = rootConfig['arch']
-        logger.info('Root architecture to use is ', architecture)
-        
-        import tempfile,os
-        from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
-        fileNameOut = tempfile.mktemp('.py')
-        
-        command = """
-result = dirac.checkSupportedPlatforms('%s')
-returnVal = 0
-if result['Status'] == 'OK' and result['OK']:
-    returnVal = 1
-out = file('%s','w')
-try:
-    out.write(repr(returnVal))
-finally:
-    out.close()    
-""" % (architecture,fileNameOut)
-        
-        rc=diracwrapper(command)
-        infile = file(fileNameOut)
-        result = False
-        try:
-            result = bool(eval(infile.read()))
-        finally:
-            infile.close()
-        if rc == 0: os.unlink(fileNameOut)
-        
-        if not result:
-            logger.error("The specified arch '%s' is not supported by Dirac for ROOT Jobs. Check the ROOT section of your configuration", architecture)
-            raise BackendError('Dirac',"'%s' is not a supported by Dirac." % architecture)
-        
-        #just try to make it obvious with the whole cmt thing
-        try:
-            cmtconfig = os.environ.get('CMTCONFIG',None)
-            if cmtconfig is not None and cmtconfig != architecture:
-                logger.warning("CMTCONFIG is set to '%s' but ROOT architecture specified is '%s'. Using '%s' for ROOT jobs.", \
-                               cmtconfig, architecture, architecture)
-        except:
-            pass
-        
-        return architecture
-
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         job = app.getJobObject()
 
@@ -79,11 +32,14 @@ finally:
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         c = StandardJobConfig(runScript,inputsandbox,argList,app._getParent().outputsandbox,None)
 
-        architecture = self.checkArch()
+        #architecture = self.checkArch()
+        rootConfig = getConfig('ROOT')
+        architecture = rootConfig['arch']
+        logger.info('Root architecture to use is ', architecture)
 
         import RootVersions
         version=RootVersions.getDaVinciVersion(app.version)
-        diracScript.append("setPlatform('%s')" % architecture)
+        diracScript.platform(architecture)
         diracScript.append('setApplication("DaVinci","'+version+'")')
         diracScript.append('setName("Ganga_ROOT_'+app.version+'")')
 
