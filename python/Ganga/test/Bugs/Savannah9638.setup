@@ -1,4 +1,0 @@
-
-import os
-tmpdir = '/tmp/ganga_topdir-$USER'
-os.system('rm -rf %s'%tmpdir)

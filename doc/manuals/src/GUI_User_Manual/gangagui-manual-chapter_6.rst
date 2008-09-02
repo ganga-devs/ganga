@@ -1,5 +1,0 @@
-FAQ
-===
-To be completed...
-
-

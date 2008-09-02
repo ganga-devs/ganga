@@ -1,4 +1,0 @@
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger('Test')
-print logger.handlers[0].formatter.markup.__class__
-assert(str(logger.handlers[0].formatter.markup.__class__) == "Ganga.Utility.ColourText.NoMarkup")
