@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.2 2008-07-30 13:23:55 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.3 2008-09-02 13:32:44 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -30,7 +30,7 @@ class AthenaMC(IApplication):
         'production_name'    : SimpleItem(defvalue='',doc='Name of the MC production',typelist=["str"]),
         'process_name'       : SimpleItem(defvalue='',doc='Name of the generated physics process',typelist=["str"]),
         'run_number'         : SimpleItem(defvalue='',doc='Run number',typelist=["str"]),
-        'number_events_job'  : SimpleItem(defvalue='',doc='Number of events per job'),
+        'number_events_job'  : SimpleItem(defvalue='1',doc='Number of events per job',typelist=["str"]),
         'atlas_release'      : SimpleItem(defvalue='',doc='ATLAS Software Release',typelist=["str"]),
         'transform_archive'  : SimpleItem(defvalue='',doc='Name or Web location of a modified ATLAS transform archive.',typelist=["str"]),
         'se_name'            : SimpleItem(defvalue='none',doc='Name of prefered SE or DQ2 site (from TierOfAtlas.py) for output',typelist=["str"]),
@@ -195,6 +195,9 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/07/30 13:23:55  fbrochu
+# AthenaMC.py: added type checks to members. AthenaMCDatasets: bug fix for treatment of DQ2 datasets available only for Panda. AthenaMCLCGRTGandler.py and wrapper.sh: extension of the glite WMS workaround to input data
+#
 # Revision 1.1  2008/07/17 16:41:19  moscicki
 # migration of 5.0.2 to HEAD
 #
