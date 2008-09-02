@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.7 2008-09-02 16:06:27 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.8 2008-09-02 16:12:11 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1117,7 +1117,7 @@ if __name__ == '__main__':
                 configLOCALPROTOCOL = 'dcap'
                 configSTORAGEROOT = '/pnfs'
                 configLOCALPREFIX = 'dcap:'
-            if localsiteid in [ 'MANC' ]:
+            if localsiteid in [ 'MANC', 'MANC-2', 'UVIC' ] or localsiteid.startswith('MANC') or localsiteid.startswith('VICTORIA'):
                 configLOCALPROTOCOL = 'gsidcap'
                 configSTORAGEROOT = '/pnfs'
                 configLOCALPREFIX = 'dcap:'
