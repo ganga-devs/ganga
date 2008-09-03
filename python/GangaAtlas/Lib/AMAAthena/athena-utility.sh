@@ -2,21 +2,28 @@
 
 # function for resolving and setting TMPDIR env. variable
 resolve_tmpdir () {
-    #  - fistly respect the TMPDIR setup on WN
-    #  - use SCRATCH_DIRECTORY from pre-WS globus gatekeeper 
-    #  - use EDG_WL_SCRATCH from gLite middleware
-    #  - use /tmp dir forcely in the worst case
-    if [ -z $TMPDIR ]; then
-        if [ ! -z $SCRATCH_DIRECTORY ]; then
-            export TMPDIR=$SCRATCH_DIRECTORY  
-        elif [ ! -z $EDG_WL_SCRATCH ]; then
-            export TMPDIR=$EDG_WL_SCRATCH
-        else 
-            export TMPDIR=`mktemp -d /tmp/ganga_scratch_XXXXXXXX`
-            if [ $? -ne 0 ]; then
-                echo "cannot create and setup TMPDIR"
-                exit 1
+    if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
+        #  - fistly respect the TMPDIR setup on WN
+        #  - use SCRATCH_DIRECTORY from pre-WS globus gatekeeper 
+        #  - use EDG_WL_SCRATCH from gLite middleware
+        #  - use /tmp dir forcely in the worst case
+        if [ -z $TMPDIR ]; then
+            if [ ! -z $SCRATCH_DIRECTORY ]; then
+                export TMPDIR=$SCRATCH_DIRECTORY  
+            elif [ ! -z $EDG_WL_SCRATCH ]; then
+                export TMPDIR=$EDG_WL_SCRATCH
+            else 
+                export TMPDIR=`mktemp -d /tmp/ganga_scratch_XXXXXXXX`
+                if [ $? -ne 0 ]; then
+                    echo "cannot create and setup TMPDIR"
+                    exit 1
+                fi
             fi
+        fi
+    elif [ n$GANGA_ATHENA_WRAPPER_MODE = n'local' ]; then
+        #  - check if WORKDIR is given in the LSF case
+        if [ ! -z $LSB_JOBID ] && [ ! -z $WORKDIR ]; then
+            export TMPDIR=`mktemp -d $WORKDIR/ganga_scratch_XXXXXXXX`
         fi
     fi
 }

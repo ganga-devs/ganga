@@ -31,6 +31,10 @@ if [ -f $LCG_SETUP ]; then
 fi
 
 ################################################
+# resolving and setting TMPDIR env. variable
+resolve_tmpdir
+
+################################################
 # Save essential library path for later usage
 LD_LIBRARY_PATH_ORIG=$LD_LIBRARY_PATH
 PATH_ORIG=$PATH
