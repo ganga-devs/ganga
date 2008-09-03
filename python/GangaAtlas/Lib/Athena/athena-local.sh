@@ -34,6 +34,12 @@ export LFC_CONRETRYINT=60
 export DCACHE_RAHEAD=TRUE
 #export DCACHE_RA_BUFFER=196608
 
+# Setup glite UI 
+if [ ! -z $GANGA_GLITE_UI ] && [ ! -e `which voms-proxy-init` ] 
+then
+    source $GANGA_GLITE_UI
+fi
+
 if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
 then
     source $ATLAS_SOFTWARE/$ATLAS_RELEASE/setup.sh 
