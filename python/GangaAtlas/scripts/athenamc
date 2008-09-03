@@ -110,21 +110,21 @@ if opt.jobid:
     if jobs[opt.jobid].subjobs:
         for subjob in jobs[opt.jobid].subjobs:
                 print jobs[opt.jobid].id, subjob.id, subjob.backend.actualCE, subjob.status,
-		if subjob.status=='completed':
-		    try:
+                if subjob.status=='completed':
+                    try:
                         print subjob.outputdata.datasetname
-		    except AttributeError:
-	                print subjob.outputdata.output
+                    except AttributeError:
+                        print subjob.outputdata.output
     else:
         print jobs[opt.jobid].id, jobs[opt.jobid].backend.actualCE, jobs[opt.jobid].status, 
         if jobs[opt.jobid].status=='completed':
             try:
                 print jobs[opt.jobid].outputdata.datasetname
-	    except AttributeError:
-	        print jobs[opt.jobid].outputdata.output
-	
+            except AttributeError:
+                print jobs[opt.jobid].outputdata.output
+        
     print '\n-----------'
-    sys.exit(0)	
+    sys.exit(0)        
 
 # Parse additional arguments
 
@@ -135,11 +135,11 @@ if args:
             if not os.access(option_file,os.R_OK):
                 print >>sys.stderr, 'ERROR: Cannot read athena job option file: %s' % option_file
                 sys.exit(4)
-	    else:
+            else:
                 option_files.append(option_file)
 else:
     if not opt.step:
-	print >>sys.stderr, 'ERROR: No athena job option file given'
+        print >>sys.stderr, 'ERROR: No athena job option file given'
         sys.exit(4)
 
 
@@ -193,7 +193,7 @@ if opt.input_dataset:
 if opt.inputtype:
     j.inputdata.datasetType=opt.inputtype
     if (opt.inputtype=="private" or opt.inputtype=="local") and opt.input_dataset:
-	    j.inputdata.LFCpath=opt.input_dataset
+            j.inputdata.LFCpath=opt.input_dataset
 
 if opt.inputfiles:
     j.inputdata.inputfiles=string.split(opt.inputfiles,",")
@@ -206,7 +206,7 @@ if opt.inputrange:
 
 # Output data
 j.outputdata=AthenaMCOutputDatasets()
-	
+        
 if opt.output_dataset:
     j.outputdata.output_dataset=opt.output_dataset
 if opt.outputdirectory:
@@ -235,11 +235,11 @@ if opt.numsubjobs > 1:
 
 # Inputsandbox
 if opt.inputsandbox:
-    j.inputsandbox = opt.inputsandbox.split(':')	
+    j.inputsandbox = opt.inputsandbox.split(':')        
 
 # Outputsandbox
 if opt.outputsandbox:
-    j.outputsandbox = opt.outputsandbox.split(':')	
+    j.outputsandbox = opt.outputsandbox.split(':')        
 
 print j
 
