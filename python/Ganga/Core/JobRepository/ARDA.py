@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ARDA.py,v 1.1 2008-07-17 16:40:50 moscicki Exp $
+# $Id: ARDA.py,v 1.2 2008-09-03 08:19:51 asaroka Exp $
 ################################################################################
 
 __version__ = "2.2"
@@ -1392,7 +1392,7 @@ class ARDARepositoryMixIn(JobRepository):
                 else:
                     self.addEntry(fn, attrs, values)
             except CommandException, e:
-                logger.debud(str(e))
+                logger.debug(str(e))
                 raise RepositoryError(e = e, msg = str(e))
         finally:
             self._rep_lock.release()
