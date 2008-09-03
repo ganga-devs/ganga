@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.2 2008-07-28 15:45:44 dvanders Exp $
+# $Id: Panda.py,v 1.3 2008-09-03 17:04:56 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -21,49 +21,11 @@ from Ganga.Utility.logging import getLogger
 
 # Panda Client
 
-from GangaPanda.Lib.Client import Client
-
-# JobSpec and FileSpec have to be imported as taskbuffer.JobSpec and taskbuffer.FileSpec
-
-tmpdir = tempfile.mkdtemp()
-src = os.path.join(os.path.dirname(__file__),'../Client')
-dst = os.path.join(tmpdir,'taskbuffer')
-os.symlink(src,dst)
-
-sys.path.insert(0,tmpdir)
-from taskbuffer.JobSpec  import JobSpec 
+import Client
+from taskbuffer.JobSpec import JobSpec
 from taskbuffer.FileSpec import FileSpec
-del sys.path[0]
-
-os.remove(dst)
-os.rmdir(tmpdir)
-
-def dq2_get(dataset,lfns,directory):
-    '''small wrapper to call dq2_get'''
-
-    cmd = os.path.join(os.path.dirname(__file__),'dq2_get')
-    rc,output,m = shell.cmd1('%s -d %s -r %s %s' % (cmd,directory,dataset,' '.join(lfns)))
-    return rc
-
-def extract_stdout(directory,tarball):
-    '''Extract stdout and stderr'''
-
-    savedir = os.getcwd()
-    os.chdir(directory)
-
-    re_child = re.compile('^(.*)/pilot_child\.(.*)$')
-    for line in os.popen('tar tzf %s' % tarball):
-        match = re_child.match(line)
-        if match:
-            filename = line[:-1]
-            os.system('tar xzf %s %s' % (tarball,filename))
-            os.rename(filename,match.group(2))
-            os.rmdir(match.group(1))
-
-    os.chdir(savedir)
 
 class PandaBuildJob(GangaObject):
-
     _schema = Schema(Version(1,0), {
         'id'            : SimpleItem(defvalue=None,protected=0,copyable=0,doc='Panda Job id'),
         'status'        : SimpleItem(defvalue=None,protected=0,copyable=0,doc='Panda Job status')
@@ -73,19 +35,18 @@ class PandaBuildJob(GangaObject):
     _name = 'PandaBuildJob'
 
     def __init__(self):
-
         super(PandaBuildJob,self).__init__()
 
 class Panda(IBackend):
     '''Panda backend'''
 
     _schema = Schema(Version(1,0), {
-        'site'          : SimpleItem(defvalue='',protected=0,copyable=1,doc='Require the job to run at a specific site'),
+        'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'long'          : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send job to a long queue'),
 #        'blong'         : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send build job to a long queue'),
 #        'nFiles'        : SimpleItem(defvalue=0,protected=0,copyable=1,doc='Use an limited number of files in the input dataset'),
 #        'SkipFiles'    : SimpleItem(defvalue=0,protected=0,copyable=1,doc='Skip N files in the input dataset'),
-#        'cloud'         : SimpleItem(defvalue='US',protected=0,copyable=1,doc='cloud where jobs are submitted (default:US)'),
+        'cloud'         : SimpleItem(defvalue='US',protected=0,copyable=1,doc='cloud where jobs are submitted (default:US)'),
 #        'noBuild'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Skip buildJob'),
 #        'memory'        : SimpleItem(defvalue=-1,protected=0,copyable=1,doc='Required memory size'),
 #        'fileList'      : SimpleItem(defvalue='',protected=0,copyable=1,doc='List of files in the input dataset to be run'),        
@@ -110,23 +71,7 @@ class Panda(IBackend):
     _exportmethods = ['list_sites']
   
     def __init__(self):
-
         super(Panda,self).__init__()
-
-    def getQueue(self):
-
-        if not self.site:
-            return 'ANALY_BNL_ATLAS_1' 
-
-        site = self.site.upper()
-
-        if site.startswith('ANALY_'):
-            return site
-
-        if self.long:
-            return 'ANALY_LONG_%s' % site, 
-        else:
-            return 'ANALY_%s' % site
 
     def master_submit(self,rjobs,subjobspecs,buildjobspec):
         '''Submit jobs'''
@@ -145,7 +90,7 @@ class Panda(IBackend):
             jobspecs = [buildjobspec] + subjobspecs
         else:
             jobspecs = subjobspecs
-#
+
         verbose = logger.isEnabledFor(10)
         status, jobids = Client.submitJobs(jobspecs,verbose)
         if status:
@@ -169,7 +114,7 @@ class Panda(IBackend):
         job = self.getJobObject()
         logger.info('Killing job %s' % job.getFQID('.'))
 
-        active_status = [ None, 'activated', 'defined', 'holding', 'running' ]
+        active_status = [ None, 'defined', 'assigned', 'waiting', 'activated', 'sent', 'running', 'holding', 'transferring' ]
 
         jobids = []
         if self.buildjob and self.buildjob.id and self.buildjob.status in active_status: 
@@ -188,10 +133,80 @@ class Panda(IBackend):
                                                                                                               
         return True
 
+    def master_resubmit(self,jobs):
+        '''Resubmit failed subjobs'''
+        jobIDs = {}
+        for job in jobs: 
+            jobIDs[job.backend.id] = job
+
+        rc,jspecs = Client.getJobStatus(jobIDs.keys())
+        if rc:
+            logger.error('Return code %d retrieving job status information.',rc)
+            raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
+
+        retryJobs = [] # jspecs
+        resubmittedJobs = [] # ganga jobs
+        i = 0
+        for job in jspecs:
+            if job.jobStatus == 'failed':
+                # reset
+                job.jobStatus = None
+                job.commandToPilot = None
+                job.startTime = None
+                job.endTime = None
+                job.attemptNr = 1+job.attemptNr
+                job.transExitCode = None
+                job.pilotErrorCode = None
+                job.exeErrorCode = None
+                job.ddmErrorCode = None
+                job.taskBufferErrorCode = None
+                job.dispatchDBlock = None
+                for file in job.Files:
+                    file.rowID = None
+                    if file.type in ('output','log'):
+                        file.destinationDBlock=file.dataset
+                        # add attempt nr
+                        oldName  = file.lfn
+                        file.lfn = re.sub("\.\d+$","",file.lfn)
+                        file.lfn = "%s.%d" % (file.lfn,job.attemptNr)
+                        newName  = file.lfn
+                        # modify jobParameters
+                        job.jobParameters = re.sub("'%s'" % oldName ,"'%s'" % newName, job.jobParameters)
+                    elif file.type == 'input' and re.search('\.lib\.tgz',file.lfn)==None:
+                        # reset dispatchDBlock
+                        if file.status != 'ready':
+                            file.dispatchDBlock = None
+                retryJobs.append(job)
+                resubmittedJobs.append(jobs[i])
+            elif job.jobStatus == 'finished':
+                pass
+            else:
+                logger.warning("Cannot resubmit. Some jobs are still running.")
+                return False
+            i = i+1
+
+        # submit
+        if len(retryJobs)==0:
+            logger.warning("No failed jobs to resubmit")
+            return False
+
+        status,newJobIDs = Client.submitJobs(retryJobs)
+        if status:
+            logger.error('Error: Status %d from Panda submit',status)
+            return False
+       
+        for job, newJobID in zip(resubmittedJobs,newJobIDs):
+            job.backend.id = newJobID[0]
+            job.backend.status = None
+            job.updateStatus('submitted')
+
+        logger.info('Resubmission successful',status)
+        return True
+
     def master_updateMonitoringInformation(jobs):
         '''Monitor jobs'''       
 
-        active_status = [ None, 'activated', 'defined', 'holding', 'running' ]
+        active_status = [ None, 'defined', 'assigned', 'waiting', 'activated', 'sent', 'running', 'holding', 'transferring' ]
 
         jobdict = {}
 
@@ -221,59 +236,44 @@ class Panda(IBackend):
             if job.backend.id == status.PandaID:
 
                 if job.backend.status != status.jobStatus:
-                    logger.info('Job %s has changed status to %s',job.getFQID('.'),status.jobStatus)
-
+                    logger.info('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
                 job.backend.status = status.jobStatus
+
                 if status.computingElement != 'NULL':
                     job.backend.CE = status.computingElement
                 else:
                     job.backend.CE = None
                
-                if status.jobStatus == 'finished':
-
-                    if job.status == 'submitted':
-                        job.updateStatus('running')
-
-                    if job.status == 'running':
-                        job.updateStatus('completing')
-                        logger.info('Retrieving output for job %s ...',job.getFQID('.'))
-                        job.updateStatus('completed')
-   
-                elif status.jobStatus == 'running':
-
-                    if job.status == 'submitted':
-                        job.updateStatus('running')
-
-                elif status.jobStatus == 'failed':
-                    
-                    if job.status in [ 'submitted', 'running' ]:
-                        job.updateStatus('failed')
-
-                elif status.jobStatus in ['activated','defined','holding']:
+                if status.jobStatus in ['defined','assigned','waiting','activated','sent']:
                     pass
-
+                elif status.jobStatus == 'running':
+                    job.updateStatus('running')
+                elif status.jobStatus in ['holding','transferring']:
+                    job.updateStatus('completing')
+                elif status.jobStatus == 'finished':
+                    job.updateStatus('completed')
+                elif status.jobStatus == 'failed':
+                    job.updateStatus('failed')
                 else:
                     logger.warning('Unexpected job status %s',status.jobStatus)
 
             elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
+                if job.backend.buildjob.status != status.jobStatus:
+                    logger.info('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
+                job.backend.buildjob.status = status.jobStatus
 
-                 if job.backend.buildjob.status != status.jobStatus:
-                     logger.info('Buildjob %s has changed status to %s',job.getFQID('.'),status.jobStatus)
-
-                 job.backend.buildjob.status = status.jobStatus
-
-                 if status.jobStatus == 'running':
-                     job.updateStatus('running')
-
-                 elif status.jobStatus == 'failed':
-                     job.updateStatus('failed')
-
-                 elif status.jobStatus in ['activated', 'defined', 'holding','finished']:
-                     pass
-
-                 else:
-                     logger.warning('Unexpected job status %s',status.jobStatus)
-
+                if status.jobStatus in ['defined','assigned','waiting','activated','sent']:
+                    pass
+                elif status.jobStatus == 'running':
+                    job.updateStatus('running')
+                elif status.jobStatus in ['holding','transferring']:
+                    job.updateStatus('completing')
+                elif status.jobStatus == 'finished':
+                    job.updateStatus('completed')
+                elif status.jobStatus == 'failed':
+                    job.updateStatus('failed')
+                else:
+                    logger.warning('Unexpected job status %s',status.jobStatus)
             else:
                 logger.warning('Unexpected Panda ID %s',status.PandaID)
 
@@ -290,18 +290,16 @@ class Panda(IBackend):
 logger = getLogger()
 config = makeConfig('Panda','Panda backend configuration parameters')
 
-config.addOption( 'SETUP', '/afs/cern.ch/project/gd/LCG-share/sl3/etc/profile.d/grid_env.sh', 'FIXME')  
 config.addOption( 'prodSourceLabel', 'user', 'FIXME')
 config.addOption( 'assignedPriority', 1000, 'FIXME' )
 
 
-shell = Shell(config['SETUP'])
-shell.env['DQ2_COPY_COMMAND'] = 'lcg-cp -v --vo atlas'
-shell.env['DQ2_URL_SERVER'] = 'http://atlddmpro.cern.ch:8000/dq2/'
-shell.env['DQ2_LOCAL_ID'] = 'CERN'
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/07/28 15:45:44  dvanders
+# list_sites now gets from Panda server
+#
 # Revision 1.1  2008/07/17 16:41:31  moscicki
 # migration of 5.0.2 to HEAD
 #
