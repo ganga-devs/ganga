@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.2 2008-07-28 15:43:53 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.3 2008-09-03 17:01:54 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -18,12 +18,10 @@ from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-from GangaPanda.Lib.Client import Client
-
-sys.path.insert(0,os.path.join(os.path.dirname(__file__),'../Client/tmp'))
-from taskbuffer.JobSpec  import JobSpec
+# PandaTools
+import Client
+from taskbuffer.JobSpec import JobSpec
 from taskbuffer.FileSpec import FileSpec
-del sys.path[0]
 
 def extractConfiguration(jobOptions,trf=False):
 
@@ -64,8 +62,8 @@ def extractConfiguration(jobOptions,trf=False):
 
     if not trf:
         # run ConfigExtractor for normal jobO
-        jobOpt1 = os.path.join(os.path.dirname(__file__),'FakeAppMgr.py')
-        jobOpt2 = os.path.join(os.path.dirname(__file__),'ConfigExtractor.py') 
+        jobOpt1 = os.path.join(os.environ['CONFIGEXTRACTOR_PATH'],'FakeAppMgr.py')
+        jobOpt2 = os.path.join(os.environ['CONFIGEXTRACTOR_PATH'],'ConfigExtractor.py') 
         rc, output = commands.getstatusoutput('athena.py %s %s %s' % (jobOpt1,jobOptions,jobOpt2))
         if rc>>8 :
             logger.warning('Return code of athena was %d from the ConfigExtractor. This is probably harmless.' % (rc>>8))
@@ -222,7 +220,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
  
-        self.libDataset = 'user.%s.ganga.%s_%d.lib._%06d' % (gridProxy.identity(),commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
+        self.libDataset = 'user08.%s.ganga.%s_%d.lib._%06d' % (gridProxy.identity(),commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
         sources = 'sources.%s.tar.gz' % commands.getoutput('uuidgen') 
         self.library = '%s.lib.tgz' % self.libDataset
 
@@ -238,7 +236,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         tmpdir = '/tmp/%s' % commands.getoutput('uuidgen')
         os.mkdir(tmpdir)
 
-#        print 'tar xzf %s -C %s' % (app.user_area.name,tmpdir)
         if not job.backend.ara:
             if not app.user_area.name:
                 raise ApplicationConfigurationError(None,'app.user_area.name is null')
@@ -319,28 +316,83 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if job.inputdata._name <> 'DQ2Dataset':
                 raise ApplicationConfigurationError(None,'PANDA application supports only DQ2Datasets')
 
+        if not job.inputdata.dataset:
+           raise ApplicationConfigurationError(None,'You did not set job.inputdata.dataset')
+
+        if len(job.inputdata.dataset) > 1:
+           raise ApplicationConfigurationError(None,'GangaPanda does not currently support input containers')
+
+        logger.info('Input dataset %s',job.inputdata.dataset[0])
+
 #       output dataset
 
         if job.outputdata:
             if job.outputdata._name <> 'DQ2OutputDataset':
                 raise ApplicationConfigurationError(None,'PANDA application supports only DQ2OutputDataset')
             if not job.outputdata.datasetname:
-                job.outputdata.datasetname = 'user.%s.ganga.%d.%s' % (gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
+                job.outputdata.datasetname = 'user08.%s.ganga.%d.%s' % (gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
 
         else:
             job.outputdata = DQ2OutputDataset()
-            job.outputdata.datasetname = 'user.%s.ganga.%d.%s' % (gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
+            job.outputdata.datasetname = 'user08.%s.ganga.%d.%s' % (gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
 
         logger.info('Output datasetname %s',job.outputdata.datasetname)
 
 #       queue and destinationSE
 
-        site = job.backend.getQueue()
+        site = job.backend.site
+        cloud = job.backend.cloud
 
-        jobCloud = None
-        if Client.PandaSites.has_key(site):
-            jobCloud = Client.PandaSites[site]['cloud']
+        # get locations when site==AUTO
+        if site == "AUTO":
+            expCloudFlag = True
+            try:
+                tmpList  = Client.queryFilesInDataset(job.inputdata.dataset[0],False)
+            except exceptions.SystemExit:
+                raise ApplicationConfigurationError(None,'Error in Client.queryFilesInDataset')
+            try:
+                dsLocationMap = Client.getLocations(job.inputdata.dataset[0],tmpList,cloud,False,False,expCloud=expCloudFlag)
+            except exceptions.SystemExit:
+                raise ApplicationConfigurationError(None,'Error in Client.getLocations')
+            # no location
+            if dsLocationMap == {}:
+                if expCloudFlag:
+                    raise ApplicationConfigurationError(None,"ERROR : could not find supported locations in the %s cloud for %s" % (cloud,dataset))
+                else:
+                    raise ApplicationConfigurationError(None,"ERROR : could not find supported locations for %s" % dataset)
+            # run brorage
+            tmpSites = []
+            for tmpItem in dsLocationMap.values():
+                tmpSites += tmpItem
+            try:
+                status,out = Client.runBrokerage(tmpSites,'Atlas-%s' % app.atlas_release,verbose=False)
+            except exceptions.SystemExit:
+                raise ApplicationConfigurationError(None,'Error in Client.runBrokerage')
+            if status != 0:
+                raise ApplicationConfigurationError(None,'failed to run brokerage for automatic assignment: %s' % out)
+            if not Client.PandaSites.has_key(out):
+                raise ApplicationConfigurationError(None,'brokerage gave wrong PandaSiteID:%s' % out)
+            # set site
+            site = out
+        
+        # patch for BNL
+        if site == "ANALY_BNL":
+            site = "ANALY_BNL_ATLAS_1"
+        # long queue
+        if job.backend.long:
+            site = re.sub('ANALY_','ANALY_LONG_',site)
+            site = re.sub('_\d+$','',site)
 
+        job.backend.cloud = cloud
+        job.backend.site = site
+        job.backend.actualCE = site
+        logger.info('Panda runBrokerage results: cloud %s, site %s'%(cloud,site))
+
+        if not Client.PandaSites.has_key(site):
+            raise ApplicationConfigurationError(None,'ERROR: selected site %s is not known to Panda' % site)
+
+        if job.outputdata.outputdata and not job.backend.ara:
+            raise ApplicationConfigurationError(None,'job.outputdata.outputdata is not required when job.backend.ara is True"')
         # output files for ARA
         if job.backend.ara and not job.outputdata.outputdata:
             raise ApplicationConfigurationError(None,'job.outputdata.outputdata is needed when job.backend.ara is True"')
@@ -379,7 +431,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.prodSourceLabel   = 'panda'
         jspec.assignedPriority  = 2000
         jspec.computingSite     = site
-        jspec.cloud             = jobCloud
+        jspec.cloud             = cloud
         jspec.jobParameters     = '-i %s -o %s' % (sources,self.library)
         matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
         if matchURL:
@@ -430,12 +482,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.indexBS      = 0
         self.indexMeta    = 0
 
-#       here one could implement that the dataset content is queried
         return jspec
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         '''prepare the subjob specific configuration'''
-
+ 
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler prepare called for %s', job.getFQID('.'))
 
@@ -448,11 +499,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     job.inputdata.guids.append(guid)
                     job.inputdata.names.append(lfn)
 
-        site = job.backend.getQueue()
-
-        jobCloud = None
-        if Client.PandaSites.has_key(site):
-            jobCloud = Client.PandaSites[site]['cloud']
+        site = job._getRoot().backend.site
+        job.backend.site = site
+        job.backend.actualCE = site
+        cloud = job._getRoot().backend.cloud
+        job.backend.cloud = cloud
 
 #       if no outputdata are given
         if not job.outputdata:
@@ -476,17 +527,14 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.homepackage       = 'AnalysisTransforms'+cacheVer#+nightVer
         jspec.transformation    = '%s/runAthena-00-00-11' % Client.baseURLSUB
         if job.inputdata:
-            if type(job.inputdata.dataset) is str:
-                jspec.prodDBlock    = job.inputdata.dataset
-            else:
-                jspec.prodDBlock    = job.inputdata.dataset[0]
+            jspec.prodDBlock    = job.inputdata.dataset[0]
         else:
             jspec.prodDBlock    = 'NULL'
         jspec.destinationDBlock = job.outputdata.datasetname
         jspec.destinationSE     = site
         jspec.prodSourceLabel   = 'user'
         jspec.assignedPriority  = 1000
-        jspec.cloud             = jobCloud
+        jspec.cloud             = cloud
         # memory
         if self.config['memory'] != -1:
             jspec.minRamCount = self.config['memory']
@@ -509,14 +557,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             finp.GUID           = guid
 #            finp.fsize =
 #            finp.md5sum =
-            if type(job.inputdata.dataset) is str:
-                finp.dataset        = job.inputdata.dataset
-                finp.prodDBlock     = job.inputdata.dataset
-                finp.dispatchDBlock = job.inputdata.dataset
-            else:
-                finp.dataset        = job.inputdata.dataset[0]
-                finp.prodDBlock     = job.inputdata.dataset[0]
-                finp.dispatchDBlock = job.inputdata.dataset[0]
+            finp.dataset        = job.inputdata.dataset[0]
+            finp.prodDBlock     = job.inputdata.dataset[0]
+            finp.dispatchDBlock = job.inputdata.dataset[0]
             finp.type           = 'input'
             finp.status         = 'ready'
             jspec.addFile(finp)
