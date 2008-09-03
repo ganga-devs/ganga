@@ -35,7 +35,8 @@ export DCACHE_RAHEAD=TRUE
 #export DCACHE_RA_BUFFER=196608
 
 # Setup glite UI 
-if [ ! -z $GANGA_GLITE_UI ] && [ ! -e `which voms-proxy-init` ] 
+TEST_CMD=`which voms-proxy-init 2>/dev/null`
+if [ ! -z $GANGA_GLITE_UI ] && [ -z $TEST_CMD ] 
 then
     source $GANGA_GLITE_UI
 fi
