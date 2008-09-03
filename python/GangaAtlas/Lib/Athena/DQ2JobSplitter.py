@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.2 2008-09-02 16:06:27 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.3 2008-09-03 21:47:15 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -100,7 +100,7 @@ class DQ2JobSplitter(ISplitter):
             elif job.backend.requirements.sites:
                 allowed_sites = job.backend.requirements.sites
             else: 
-                raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use j.backend.requirements.cloud=CLOUDNAME ( CERN, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
+                raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
             #allowed_sites = job.backend.requirements.list_sites(True,True)
 
         contents = dict(job.inputdata.get_contents(overlap=False))
