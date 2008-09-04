@@ -47,13 +47,6 @@ CACHE=`cat /proc/cpuinfo | grep -i 'cache size' | tail -1 | cut -d':' -f2 | tr -
 MEMORY=`cat /proc/meminfo | grep -i memtotal | cut -d':' -f2 | tr -s ' '`
 HNAME=`hostname -f`
 echo "### node info:   $DATE , $MHZ , $MODEL , $MEMORY , $CACHE , $MACH , $HNAME"
-mytmp=${TMPDIR-/tmp}
-echo "TMP-dir = " $mytmp
-df -h $mytmp
-
-pwd
-df -h .
-
 #
 echo '### checking tmpdirs'
 printenv | grep -i tmp
