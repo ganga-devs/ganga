@@ -14,11 +14,6 @@
 
 retcode=0
 
-if [ ! -z $GANGA_GLITE_UI ] 
-then
-    source $GANGA_GLITE_UI
-fi
-
 # Save LD_LIBRARY_PATH
 LD_LIBRARY_PATH_ORIG=$LD_LIBRARY_PATH
 PATH_ORIG=$PATH
@@ -40,8 +35,29 @@ export LFC_CONRETRY=2
 export LFC_CONRETRYINT=60
 
 # improve dcap reading speed
-export DCACHE_RAHEAD=TRUE
-#export DCACHE_RA_BUFFER=196608
+export DCACHE_RAHEAD=TRUE ; echo "Setting DCACHE_RAHEAD=TRUE"
+#export DCACHE_RA_BUFFER=32768 ; echo "Setting DCACHE_RA_BUFFER=32768"
+
+# get some machine infos
+DATE=`date +'%D %T'`
+MACH=`uname -srm`
+MHZ=`cat /proc/cpuinfo | grep -i 'cpu mhz' | tail -1 | cut -d':' -f2 | tr -s ' ' `
+MODEL=`cat /proc/cpuinfo | grep -i 'model name' | tail -1 | cut -d':' -f2 | tr -s ' '`
+CACHE=`cat /proc/cpuinfo | grep -i 'cache size' | tail -1 | cut -d':' -f2 | tr -s ' '`
+MEMORY=`cat /proc/meminfo | grep -i memtotal | cut -d':' -f2 | tr -s ' '`
+HNAME=`hostname -f`
+echo "### node info:   $DATE , $MHZ , $MODEL , $MEMORY , $CACHE , $MACH , $HNAME"
+mytmp=${TMPDIR-/tmp}
+echo "TMP-dir = " $mytmp
+df -h $mytmp
+
+pwd
+df -h .
+
+#
+echo '### checking tmpdirs'
+printenv | grep -i tmp
+
 
 # check for GangaTnt subcollection and rename
 ls | grep 'sub_collection_*' > tmp
@@ -411,6 +427,14 @@ then
     fi
 fi
 
+
+# Set timing command
+if [ -x /usr/bin/time ]; then
+   timecmd="/usr/bin/time -v"
+else
+   timecmd=time
+fi
+
 #   run athena in regular mode =========================================== 
 if [ $retcode -eq 0 ] && [ n$DATASETTYPE != n'DQ2_COPY' ]
 then
@@ -419,21 +443,21 @@ then
     echo "Running athena ..."
     if [ n$ATLAS_EXETYPE == n'ATHENA' ]
     then 
-	athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
     elif [ n$ATLAS_EXETYPE == n'PYARA' ]
     then
-	$pybin $ATHENA_OPTIONS ; echo $? > retcode.tmp
+	$timecmd $pybin $ATHENA_OPTIONS ; echo $? > retcode.tmp
 	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
     elif [ n$ATLAS_EXETYPE == n'ROOT' ]
     then
-	root -b -q $ATHENA_OPTIONS ; echo $? > retcode.tmp
+	$timecmd root -b -q $ATHENA_OPTIONS ; echo $? > retcode.tmp
 	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
     else
-	athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
     fi
@@ -549,21 +573,21 @@ cat input_files | while read filespec
 
 	if [ n$ATLAS_EXETYPE == n'ATHENA' ]
 	then 
-	    athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	elif [ n$ATLAS_EXETYPE == n'PYARA' ]
 	then
-	    $pybin $ATHENA_OPTIONS ; echo $? > retcode.tmp
+	    $timecmd $pybin $ATHENA_OPTIONS ; echo $? > retcode.tmp
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	elif [ n$ATLAS_EXETYPE == n'ROOT' ]
 	then
-	    root -b -q $ATHENA_OPTIONS ; echo $? > retcode.tmp
+	    $timecmd root -b -q $ATHENA_OPTIONS ; echo $? > retcode.tmp
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	else
-	    athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	fi
