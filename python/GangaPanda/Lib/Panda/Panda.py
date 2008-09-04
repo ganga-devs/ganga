@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.3 2008-09-03 17:04:56 dvanders Exp $
+# $Id: Panda.py,v 1.4 2008-09-04 15:33:10 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -114,7 +114,7 @@ class Panda(IBackend):
         job = self.getJobObject()
         logger.info('Killing job %s' % job.getFQID('.'))
 
-        active_status = [ None, 'defined', 'assigned', 'waiting', 'activated', 'sent', 'running', 'holding', 'transferring' ]
+        active_status = [ None, 'defined', 'unknown', 'assigned', 'waiting', 'activated', 'sent', 'starting', 'running', 'holding', 'transferring' ]
 
         jobids = []
         if self.buildjob and self.buildjob.id and self.buildjob.status in active_status: 
@@ -206,7 +206,7 @@ class Panda(IBackend):
     def master_updateMonitoringInformation(jobs):
         '''Monitor jobs'''       
 
-        active_status = [ None, 'defined', 'assigned', 'waiting', 'activated', 'sent', 'running', 'holding', 'transferring' ]
+        active_status = [ None, 'defined', 'unknown', 'assigned', 'waiting', 'activated', 'sent', 'starting', 'running', 'holding', 'transferring' ]
 
         jobdict = {}
 
@@ -244,7 +244,7 @@ class Panda(IBackend):
                 else:
                     job.backend.CE = None
                
-                if status.jobStatus in ['defined','assigned','waiting','activated','sent']:
+                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','starting']:
                     pass
                 elif status.jobStatus == 'running':
                     job.updateStatus('running')
@@ -262,7 +262,7 @@ class Panda(IBackend):
                     logger.info('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
                 job.backend.buildjob.status = status.jobStatus
 
-                if status.jobStatus in ['defined','assigned','waiting','activated','sent']:
+                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','starting']:
                     pass
                 elif status.jobStatus == 'running':
                     job.updateStatus('running')
@@ -297,6 +297,15 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/09/03 17:04:56  dvanders
+# Use external PandaTools
+# Added cloud
+# Removed useless dq2_get and getQueue
+# EXPERIMENTAL: Added resubmission:
+#     job(x).resubmit() will resubmit the _failed_ subjobs to Panda.
+# Removed useless gridshell
+# Cleaned up status update function
+#
 # Revision 1.2  2008/07/28 15:45:44  dvanders
 # list_sites now gets from Panda server
 #
