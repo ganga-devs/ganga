@@ -65,37 +65,41 @@ try:
             logger.warning('The subjobs magic command is not supported anymore in Ganga 5')
             logger.warning('Please use instead: jobs(%s).subjobs', jobnr) 
 
-##             job = jobs(jobnr)
-##             if not job:
-##                logger.warning('Job %d does not exist.',jobnr)
-##                continue
+    def magic_fixpython(self,args=''):
+        '''Fix python conflict'''
 
-##             print '\nJob %d - %s - Application %s - Backend %s - Subjobs %3d' % (job.id,job.status,job.application._impl._name,job.backend._impl._name,len(job.subjobs))
-##             print '\n#    id    status  backend status  actualCE\n'
+        # detect the python base dir.
+        _pybins = os.popen('which python').readlines()
+        _pybase = sys.prefix
 
-##             if job.backend._impl._name == 'Panda' and job.backend.buildjob:
-##                print '# build %-10s %-15s %-20s\n' % (job.status,job.backend.buildjob.status,job.backend.actualCE) 
+        if _pybins:
+           _pybase = _pybins[0].split('/bin/python')[0]
 
-##             for subjob in job.subjobs:
-##                 try:
-##                     ce = subjob.backend.actualCE
-##                 except AttributeError:
-##                     ce = ''
-##                 try:
-##                     be_status = subjob.backend.status
-##                 except AttributeError:
-##                     be_status = ''
-##                 print '#%6d %-10s %-15s %-20s' % (subjob.id%10000, subjob.status, be_status, ce)
+        print _pybase
 
+        _pypaths = os.environ['PYTHONPATH'].split(':')
+
+        _new_pypaths = [] 
+
+        # detect and remove the default python library path from PYTHONPATH
+        for p in _pypaths:
+            if p.find('%s/lib/python' % _pybase) >= 0:
+                logger.warning('removing %s from PYTHONPATH' % p)
+            else:
+                _new_pypaths.append(p)
+
+        ## reset the new python path
+        os.environ['PYTHONPATH'] = ':'.join(_new_pypaths)
+
+    InteractiveShell.magic_fixpython = magic_fixpython
     InteractiveShell.magic_cmtsetup = magic_cmtsetup
     InteractiveShell.magic_setup = magic_setup
     InteractiveShell.magic_subjobs = magic_subjobs
 
     del magic_cmtsetup
     del magic_setup 
+    del magic_fixpython
     del InteractiveShell
-
-
 
 except ImportError:
     pass
