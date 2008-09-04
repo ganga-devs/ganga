@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.5 2008-08-12 13:57:42 hclee Exp $
+# $Id: LCG.py,v 1.6 2008-09-04 14:00:34 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -67,7 +67,7 @@ class LCG(IBackend):
     #  - 0: job without the need of special control
     #  - 1: job (normally a subjob) resubmitted individually. The monitoring of those jobs should be separated.
     _schema = Schema(Version(1,7), {
-        'CE'                  : SimpleItem(defvalue=None,doc='Request a specific Computing Element'),
+        'CE'                  : SimpleItem(defvalue='',doc='Request a specific Computing Element'),
         'iocache'             : SimpleItem(defvalue='',protected=0,copyable=1,doc='Storage element used as a cache for oversized input sandbox'),
         'jobtype'             : SimpleItem(defvalue='Normal',doc='Job type: Normal, MPICH'),
         'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
@@ -1652,6 +1652,10 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/08/12 13:57:42  hclee
+#  - remove redundant functions
+#  - set minimum timeout of downloading oversized inputsandbox to 60 secs.
+#
 # Revision 1.4  2008/08/12 12:37:37  hclee
 # - improving oversized inputsandbox downloading
 #   * add more debug information
