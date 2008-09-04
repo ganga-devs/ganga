@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.3 2008-09-03 17:01:54 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.4 2008-09-04 09:12:29 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -336,6 +336,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             job.outputdata = DQ2OutputDataset()
             job.outputdata.datasetname = 'user08.%s.ganga.%d.%s' % (gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
 
+        if not job.outputdata.datasetname.startswith('user08.%s.ganga.'%gridProxy.identity()):
+            raise ApplicationConfigurationError(None,'outputdata.datasetname must start with user08.%s.ganga.'%gridProxy.identity())
+
         logger.info('Output datasetname %s',job.outputdata.datasetname)
 
 #       queue and destinationSE
@@ -390,6 +393,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         if not Client.PandaSites.has_key(site):
             raise ApplicationConfigurationError(None,'ERROR: selected site %s is not known to Panda' % site)
+
+        # correct the cloud in case site was not AUTO
+        job.backend.cloud = Client.PandaSites[job.backend.site]['cloud']
+        cloud = job.backend.cloud
 
         if job.outputdata.outputdata and not job.backend.ara:
             raise ApplicationConfigurationError(None,'job.outputdata.outputdata is not required when job.backend.ara is True"')
