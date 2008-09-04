@@ -23,6 +23,13 @@ PYTHONPATH_ORIG=$PYTHONPATH
 # setup ATLAS software
 unset CMTPATH
 
+# Setup glite UI 
+TEST_CMD=`which voms-proxy-init 2>/dev/null`
+if [ ! -z $GANGA_GLITE_UI ] && [ -z $TEST_CMD ] 
+then
+    source $GANGA_GLITE_UI
+fi
+
 export LCG_CATALOG_TYPE=lfc
 
 #  LFC Client Timeouts
@@ -31,15 +38,22 @@ export LFC_CONRETRY=2
 export LFC_CONRETRYINT=60
 
 # improve dcap reading speed
-export DCACHE_RAHEAD=TRUE
-#export DCACHE_RA_BUFFER=196608
+export DCACHE_RAHEAD=TRUE ; echo "Setting DCACHE_RAHEAD=TRUE"
+#export DCACHE_RA_BUFFER=32768 ; echo "Setting DCACHE_RA_BUFFER=32768"
 
-# Setup glite UI 
-TEST_CMD=`which voms-proxy-init 2>/dev/null`
-if [ ! -z $GANGA_GLITE_UI ] && [ -z $TEST_CMD ] 
-then
-    source $GANGA_GLITE_UI
-fi
+# get some machine infos
+DATE=`date +'%D %T'`
+MACH=`uname -srm`
+MHZ=`cat /proc/cpuinfo | grep -i 'cpu mhz' | tail -1 | cut -d':' -f2 | tr -s ' ' `
+MODEL=`cat /proc/cpuinfo | grep -i 'model name' | tail -1 | cut -d':' -f2 | tr -s ' '`
+CACHE=`cat /proc/cpuinfo | grep -i 'cache size' | tail -1 | cut -d':' -f2 | tr -s ' '`
+MEMORY=`cat /proc/meminfo | grep -i memtotal | cut -d':' -f2 | tr -s ' '`
+HNAME=`hostname -f`
+echo "### node info:   $DATE , $MHZ , $MODEL , $MEMORY , $CACHE , $MACH , $HNAME"
+#
+echo '### checking tmpdirs'
+printenv | grep -i tmp
+
 
 if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
 then
@@ -218,6 +232,13 @@ fi
 
 fi
 
+# Set timing command
+if [ -x /usr/bin/time ]; then
+   timecmd="/usr/bin/time -v"
+else
+   timecmd=time
+fi
+
 # run athena
  
 get_files PDGTABLE.MeV   
@@ -235,21 +256,21 @@ then
     fi
     if [ n$ATLAS_EXETYPE == n'ATHENA' ]
     then 
-	athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
     elif [ n$ATLAS_EXETYPE == n'PYARA' ]
     then
-	$pybin $ATHENA_OPTIONS ; echo $? > retcode.tmp
+	$timecmd $pybin $ATHENA_OPTIONS ; echo $? > retcode.tmp
 	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
     elif [ n$ATLAS_EXETYPE == n'ROOT' ]
     then
-	root -b -q $ATHENA_OPTIONS ; echo $? > retcode.tmp
+	$timecmd root -b -q $ATHENA_OPTIONS ; echo $? > retcode.tmp
 	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
     else
-	athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
     fi
