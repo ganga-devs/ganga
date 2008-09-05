@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.5 2008-08-18 13:18:59 moscicki Exp $
+# $Id: bootstrap.py,v 1.6 2008-09-05 15:55:51 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -702,6 +702,7 @@ default_backends = LCG
        try:
           from GangaTest.Framework import runner
           from GangaTest.Framework import htmlizer
+          from GangaTest.Framework import xmldifferencer
           
           tfconfig = Ganga.Utility.Config.getConfig('TestingFramework')                    
           rc = 1    
@@ -719,7 +720,9 @@ default_backends = LCG
           if rc > 0 and tfconfig['EnableHTMLReporter']:                          
              self.logger.info("Generating tests HTML reports")
              rc = htmlizer.main(tfconfig)
-
+          elif rc > 0 and tfconfig['EnableXMLDifferencer']:
+             self.logger.info("Generating difference HTML reports")
+             rc = xmldifferencer.main(self.args)
           return rc
        except ImportError,e:
           self.logger.error("You need GangaTest external package in order to invoke Ganga test-runner.")
@@ -915,6 +918,10 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/08/18 13:18:59  moscicki
+# added force_status() method to replace job.fail(), force_job_failed() and
+# force_job_completed()
+#
 # Revision 1.4  2008/08/18 10:02:15  moscicki
 #
 # bugfix 40110
