@@ -7,5 +7,6 @@ def getEnvironment(c):
 def loadPlugins( config = {} ):
     import Lib.TestApplication
     import Lib.TestSubmitter
+    import Lib.TestRobot
     import Framework.runner
 

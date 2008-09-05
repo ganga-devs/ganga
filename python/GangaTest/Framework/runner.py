@@ -2,7 +2,7 @@
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
-# $Id: runner.py,v 1.1 2008-07-17 16:41:36 moscicki Exp $
+# $Id: runner.py,v 1.2 2008-09-05 09:53:18 uegede Exp $
 # runner.py is a Python module used to run Ganga test-cases
 #
 # Copyright (C) 2003-2007 The Ganga Project
@@ -50,6 +50,8 @@ myConfig.addOption('ReleaseTesting', False, '')
 myConfig.addOption('EnableTestRunner', True, 'enable/disable test-runner') 
 #enable/disable html reporter
 myConfig.addOption('EnableHTMLReporter', False, 'enable/disable html reporter')
+#enable/disable xml differencer
+myConfig.addOption('EnableXMLDifferencer','False', 'enable/disable xml differencer')
 #ganga configuration(s)
 myConfig.addOption('Config', 'default.ini', 'ganga configuration(s)')
 #search for local tests lookup
