@@ -8,6 +8,9 @@ from Ganga.GPIDev.Lib.File import  FileBuffer, File
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.tempfile_compatibility import *
 from Ganga.Core import BackendError
+from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
+
+import DiracShared
 
 import Ganga.Utility.Config
 import Ganga.Utility.logging
@@ -15,7 +18,6 @@ from GangaLHCb.Lib.LHCbDataset import LHCbDataset,LHCbDataFile,string_dataset_sh
 logger = Ganga.Utility.logging.getLogger()
 
 configLHCb = Ganga.Utility.Config.getConfig('LHCb')
-
 configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 
 try:
@@ -27,29 +29,14 @@ try:
     os.environ['X509_CERT_DIR'] = gShell.env['X509_CERT_DIR']
     logger.debug('Setting the envrionment variable X509_CERT_DIR to ' + os.environ['X509_CERT_DIR']+'.')
 
-    from os.path import join
-    diracPythonDir = join(configLHCb['DiracTopDir'],  "DIRAC", "python")
-    import sys
-    sys.path.append( diracPythonDir )
-
-    import DIRAC.Client.Dirac as dirac
-    _diracImported = True
-    logger.debug("Importing DIRAC succeeded")
 except:
-    logger.error("Importing DIRAC failed")
-    _diracImported = False
+    pass
 
-if _diracImported:
-    from ChangeDiracLoggerLevel import *
-    configDirac.attachUserHandler(None,ChangeDiracLoggerLevel)
-    configDirac.attachSessionHandler(None,ChangeDiracLoggerLevel)
-    ChangeDiracLoggerLevel('DiracLoggerLevel',configDirac['DiracLoggerLevel'])
-
-    from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-    from ExeDiracRunTimeHandler import *
-    from RootDiracRunTimeHandler import *
-    allHandlers.add('Executable','Dirac', ExeDiracRunTimeHandler)
-    allHandlers.add('Root','Dirac', RootDiracRunTimeHandler)
+from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from ExeDiracRunTimeHandler import *
+from RootDiracRunTimeHandler import *
+allHandlers.add('Executable','Dirac', ExeDiracRunTimeHandler)
+allHandlers.add('Root','Dirac', RootDiracRunTimeHandler)
 
 class Dirac(IBackend):
     """The backend that submits LHCb jobs to the Grid via DIRAC
@@ -83,7 +70,7 @@ j = Job(application=app,backend=Dirac())
 j.submit()
     
     """
-    _schema = Schema(Version(1, 4), 
+    _schema = Schema(Version(1, 5), 
             {'id': SimpleItem(defvalue = None, protected = 1, copyable = 0,
                               doc='''The id number assigned to the job by the
 DIRAC WMS. If seeking help on jobs with the Dirac backend, please always
@@ -96,7 +83,9 @@ the DIRAC WMS'''),
             'CPUTime': SimpleItem(defvalue=86400,checkset='_checkset_CPUTime',
                                   doc='''The requested CPU time in seconds'''),
             'actualCE': SimpleItem(defvalue=None, protected=1, copyable=0,
-                                   doc='''The location where the job ran''')})
+                                   doc='''The location where the job ran'''),
+            'statusInfo' : SimpleItem(defvalue='', protected=1, copyable=0,
+                                   doc='''Minor status information from Dirac''')})
 
     _exportmethods = ['getOutput','getOutputData']
     _packed_input_sandbox = True
@@ -175,9 +164,6 @@ the DIRAC WMS'''),
         job=self.getJobObject()
         fqid=job.getFQID('.')
 
-        if not _diracImported:
-            raise BackendError("Dirac", "Can't submit job %s as Dirac API did not import correctly" % fqid)
-
         from DiracScript import DiracScript
         diracScript = DiracScript(job)
         logger.debug(diracScript.commands())
@@ -227,56 +213,72 @@ the DIRAC WMS'''),
 
     def kill(self ):
         """ Kill a Dirac jobs"""
-        if not _diracImported:
+
+        command = """
+result = dirac.kill(%i)
+if not result.get('OK',False): rc = -1
+        """ % self.id
+        if diracwrapper(command) != 0:
             job=self.getJobObject()
             fqid=job.getFQID('.')
-            raise BackendError("Dirac", "Can't kill job %s as Dirac API did not import correctly" % fqid)
-
-        mydirac = dirac.Dirac()
-        mydirac.killJob(self.id,mode=self._diracverbosity())
+            raise BackendError('Dirac', "Could not kill job %s. Try with a higher Dirac Log level set." % fqid)
         return 1
-
+    
     def getOutput(self,dir=os.curdir):
         """Retrieve the outputsandbox from the DIRAC WMS. The dir argument gives the directory the the sandbox will be retrieved into"""
-        md=dirac.Dirac()
-        #Savannah 33823 - Should be backed out in Dirac 3
-        pwd = os.getcwd()
-        ret = None
-        try:
-            ret=md.getOutput(self.id, str(dir), mode=self._diracverbosity())
-        finally:
-            #if Dirac changed the cwd, change it back
-            if os.getcwd() != pwd:
-                os.chdir(pwd)
-        if ret is not None and ret != dirac.S_ERROR():
-            try:
-                files = ret['Value']
-            except KeyError:
-                pass
-            else:
-                return files
+        
+        command = """
+def getOutput(dirac, num):
 
+    outputDir = os.path.join('%s',str(num))
+    id = %d
+    
+    if not os.path.exists(outputDir):
+        os.mkdir(outputDir)
+
+    pwd = os.getcwd()
+    result = None
+    try:
+        result = dirac.getOutputSandbox(id,outputDir=outputDir)
+    finally:
+        if os.getcwd() != pwd: os.chdir(pwd)
+        
+    files = []
+    if result is not None and result.get('OK',False):
+        outdir = os.path.join(outputDir,str(id))
+        files = listdirs(outdir)
+        
+        if files:
+            result['Value'] = files
+        else:
+            result['OK'] = False
+            result['Message'] = 'Failed to find downloaded files on the local file system.'
+    return result
+
+#finally actually get the output
+for i in range(2):
+    result = getOutput(dirac, i)
+    if (result is None) or (result is not None and not result.get('OK', False)):
         import time
-        job=self.getJobObject()
-        fqid=job.getFQID('.')
-        logger.warning("Job %s with Dirac id %s at %s: Problems retrieving output. Will try again in  5 seconds.",fqid,str(job.backend.id),job.backend.actualCE)
         time.sleep(5)
-        #Savannah 33823 - Should be backed out in Dirac 3
-        pwd = os.getcwd()
-        try:
-            ret=md.getOutput(self.id, str(dir), mode=self._diracverbosity())
-            if ret!=dirac.S_ERROR():
-                logger.warning("Job %s with Dirac id %s at %s: Problems retrieving output. Giving up.",fqid,str(job.backend.id),job.backend.actualCE)
-        finally:
-            #if Dirac changed the cwd, change it back
-            if os.getcwd() != pwd:
-                os.chdir(pwd)
-        try:
-            files = ret['Value']
-        except KeyError:
-            files = []
-        return files
-
+        rc = 1
+    else:
+        storeResult(result)
+        rc = 0
+        break
+""" % (dir, self.id)
+        
+        rc = diracwrapper(command)
+        result = DiracShared.getResult()
+        
+        if rc != 0 or (result is None) or (result is not None and not result.get('OK',False)):
+            job = self.getJobObject()
+            fqid = job.getFQID('.')
+            if result is None: result = {}
+            logger.warning("Job %s with Dirac id %s at %s: Problems retrieving output. Messege was '%s'.",\
+                           fqid,str(job.backend.id),job.backend.actualCE, result.get('Message','None'))
+            return []
+        return result.get('Value',[])
 
     def master_prepare(self,masterjobconfig):
         """Add Python files specific to the DIRAC backend to the master inputsandbox"""
@@ -509,37 +511,48 @@ statusfile.writelines(line)
             """Retrieve status information from Dirac and return as list"""
 
             # Translate between the many statuses in DIRAC and the few in Ganga
-            statusmapping = { 'ready': 'submitted', 
-                              'received' : 'submitted', 
-                              'checked' : 'submitted', 
-                              'waitingdata' : 'submitted', 
-                              'waiting' : 'submitted', 
-                              'queued' : 'submitted', 
-                              'matched' : 'submitted', 
-                              'staging' : 'submitted', 
-                              'scheduled' : 'submitted', 
-                              'rescheduled' : 'submitted', 
-                              'running' : 'running', 
-                              'outputready' : 'completed', 
-                              'done' : 'running', 
-                              'failed' : 'failed', 
-                              'deleted' : 'failed', 
-                              'stalled' : 'failed'}
-            mydirac = dirac.Dirac()
+            statusmapping = {'Checking' : 'submitted',
+                             'Completed' : 'completed',
+                             'Deleted' : 'failed',
+                             'Done' : 'completed',
+                             'Failed' : 'failed',
+                             'Killed' : 'killed',
+                             'Matched' : 'submitted',
+                             'Received' : 'submitted',
+                             'Running' : 'running',
+                             'Staging' : 'submitted',
+                             'Stalled' : 'failed',
+                             'Waiting' : 'submitted'}
 
             # Get status information from DIRAC in bulk operation
-            try:
-                djobids=[j.backend.id for j in jobs]
-                bulkStatus=mydirac.bulkStatus(djobids)
-            except AttributeError:
-                raise BackendError("Dirac", "Your version of DIRAC is too old, please upgrade")
+            djobids=[j.backend.id for j in jobs]
+                    
+            command = """
+result = dirac.status(%s)
+if not result.get('OK',False): rc = -1
+storeResult(result)
+        """ % str(djobids)
+            
+            rc = diracwrapper(command)
+            result = DiracShared.getResult()
+            
+            statusList = []
+            if result is None or rc != 0:
+                logger.warning('No monitoring information could be obtained, and no reason was given.')
+                return statusList
+            
+            if not result['OK']:
+                logger.warning("No monitoring information could be obtained. The Dirac error message was '%s'", result.get('Message','None'))
+                return statusList
+            
+            bulkStatus = result['Value']
 
-            list = []
             for j in jobs:
                 diracid=j.backend.id
                 try:
-                    diracStatus=bulkStatus[diracid]['status']
-                    diracSite=bulkStatus[diracid]['site']
+                    minorStatus=bulkStatus[diracid]['MinorStatus']
+                    diracStatus=bulkStatus[diracid]['Status']
+                    diracSite=bulkStatus[diracid]['Site']
                 except KeyError:
                     logger.info('No monitoring information for job %s with Dirac id %s',
                                 str(j.id),str(j.backend.id))
@@ -550,8 +563,8 @@ statusfile.writelines(line)
                     logger.warning('Unknown DIRAC status %s for job %s',
                                    diracStatus,str(j.id))
                     continue
-                list.append((j,diracStatus,diracSite,gangaStatus))
-            return list
+                statusList.append((j,diracStatus,diracSite,gangaStatus,minorStatus))
+            return statusList
 
         def get_exit_code(f):
             import re
@@ -564,23 +577,20 @@ statusfile.writelines(line)
             else:
                 return int(m.group('exitcode'))
 
-
-
-        if not _diracImported:
-            raise BackendError("Dirac", "Can't monitor Dirac jobs as API did not import correctly")
-
-        for j,diracStatus,diracSite,gangaStatus in _get_DIRACstatus(jobs):
+        for j,diracStatus,diracSite,gangaStatus,minorStatus in _get_DIRACstatus(jobs):
 
             # Update backend information
             if diracStatus != j.backend.status or\
-               diracSite != j.backend.actualCE:
+               diracSite != j.backend.actualCE or\
+               minorStatus != j.backend.statusInfo:
                 j.backend.status=diracStatus
+                j.backend.statusInfo = minorStatus
                 j.backend.actualCE=diracSite
                 logger.debug("Ganga Job %s: Dirac job %s at %s: %s" ,
                              str(j.id),str(j.backend.id),
                              j.backend.actualCE, j.backend.status) 
 
-                if ("completed" != gangaStatus) and ("failed" != gangaStatus):
+                if ("completed" != gangaStatus) and ("failed" != gangaStatus) and (gangaStatus != j.status):
                     j.updateStatus(gangaStatus)
 
             # Retrieve output while in completing state
@@ -592,37 +602,21 @@ statusfile.writelines(line)
                 tmpdir = tempfile.mkdtemp()
 
                 # Get output sandbox from DIRAC WMS
-                filelist=j.backend.getOutput(tmpdir)
-                import os
-                for f in filelist:
-                    fromname = join(tmpdir,str(j.backend.id),str(f))
-                    toname = join(jobDir,str(f))
-                    try:
-                        os.rename(fromname,toname)
-                    except OSError:
-                        import shutil
-                        try:
-                            shutil.copy2(fromname,toname)
-                            os.unlink(fromname)
-                        except OSError:
-                            logger.warning('Failed to move file %s into outputworkspace' % fromname)
+                filelist = j.backend.getOutput(tmpdir)
 
+                import os
+                import shutil
+                
+                for f in filelist:
+                    try:
+                        shutil.copy2(f,jobDir)
+                        os.unlink(f)
+                    except OSError:
+                        logger.warning("Failed to move file '%s' file  from '%s'", f, tmpdir)
+                
                 # Get sandbox from SE if uploaded there
                 if outputsandboxname+'.note' in filelist:
                     j.backend.getOutputData(names=[outputsandboxname])
-
-                # Unpack sandbox
-                from os.path import exists
-                if exists(join(jobDir,outputsandboxname)):
-                    import Ganga.Core.Sandbox as Sandbox
-                    Sandbox.getPackedOutputSandbox(jobDir,jobDir)
-                    try:
-                        os.remove(join(jobDir,outputsandboxname))
-                    except OSError:
-                        pass
-                else:
-                    logger.error('Output sandbox lost for job %s' % str(j.getFQID('.')))
-
 
                 # try to get the application exit code from the status file
                 try:
@@ -635,17 +629,18 @@ statusfile.writelines(line)
                 except Exception:
                     logger.critical('Problem during monitoring')
                     raise
+                j.updateStatus(gangaStatus)
 
-                if not exitcode is None and exitcode == 0 and gangaStatus != 'failed':
-                    j.updateStatus('completed')
-                else:
-                    j.updateStatus('failed')
-  
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
+
 
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.2  2008/08/07 22:07:47  uegede
+## Added a GaudiPython application handler with runtime handlers for Local/Batch
+## and for DIRAC.
+##
 ## Revision 1.1  2008/07/17 16:41:23  moscicki
 ## migration of 5.0.2 to HEAD
 ##

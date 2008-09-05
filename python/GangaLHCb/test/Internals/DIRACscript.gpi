@@ -16,7 +16,7 @@ dscript.finalise()
 
 # Recover the commands as a string. Check that a few expected items are present
 commands = dscript.commands()
-if commands.find('djob = dirac.Job()')==-1 or \
+if commands.find('djob = job.LHCbJob()')==-1 or \
    commands.find('djob.setCPUTime(3000)')==-1 or \
    commands.find('mydirac.submit')==-1 :
   print commands
@@ -39,7 +39,7 @@ else:
 # Check that we can read script fram file
 dscript = DiracScript(j._impl)
 commands = dscript.commands()
-if commands.find('djob = dirac.Job()')==-1 or \
+if commands.find('djob = job.LHCbJob()')==-1 or \
    commands.find('djob.setCPUTime(3000)')==-1 or \
    commands.find('mydirac.submit')==-1 :
   print commands

@@ -1,0 +1,10 @@
+from GangaLHCb.Lib.Dirac.DiracShared import *
+
+assert getPickleFileName(), 'Function called without error'
+
+fName = getPickleFileName()
+result = {'OK':True}
+assert fName == storeResult(result), 'Result is stored and the filename returned'
+
+assert result == getResult(), 'Must correctly reload the result'
+assert getResult() is None, 'File no longer exists and so must return None'

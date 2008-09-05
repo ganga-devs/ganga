@@ -1,6 +1,7 @@
 from Ganga.Core import BackendError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from Ganga.GPIDev.Lib.File import File
 from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -26,7 +27,7 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
         from DiracScript import DiracScript
         diracScript=DiracScript()
 
-        runScript, inputsandbox = self._DiracWrapper(app)
+        runScript, inputsandbox, script = self._DiracWrapper(app)
         argList = [str(s) for s in app.args]
 
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -36,11 +37,18 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
         rootConfig = getConfig('ROOT')
         architecture = rootConfig['arch']
         logger.info('Root architecture to use is ', architecture)
-
-        import RootVersions
-        version=RootVersions.getDaVinciVersion(app.version)
+        
+        argString = ' '.join([str(s) for s in app.args])
         diracScript.platform(architecture)
-        diracScript.append('setApplication("DaVinci","'+version+'")')
+
+        if app.usepython:
+            diracCommand = 'setRootPythonScript'
+        else:
+            diracCommand = 'setRootMacro'
+
+        logFile = 'Root_%s.log' % app.version
+        diracScript.append("%s(rootVersion = '%s', rootScript = '%s', arguments = '%s', logFile = '%s')" % \
+                           (diracCommand, app.version, script.name, argString, logFile))
         diracScript.append('setName("Ganga_ROOT_'+app.version+'")')
 
         if job.inputdata:
@@ -50,8 +58,7 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
             diracScript.outputdata([f.name for f in job.outputdata.files])
 
         c.script=diracScript
-
-        c.logfile='DaVinci'+'_'+version+'.log'
+        c.logfile=logFile
 
         return c
 
@@ -148,4 +155,4 @@ if __name__ == '__main__':
         runScript = FileBuffer( scriptName, wrapperscript, executable = 1 )
 
         inputsandbox=[script]
-        return runScript,inputsandbox
+        return runScript,inputsandbox,script

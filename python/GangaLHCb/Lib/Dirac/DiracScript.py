@@ -5,6 +5,8 @@ import Ganga.Utility.Config
 config = Ganga.Utility.Config.getConfig('DIRAC')
 from Ganga.Core import BackendError
 
+import DiracShared
+
 class DiracScript:
   """Encapsulate the commands for submitting a job to Dirac into an object which is persisted as a simple set of commands in the input sandbox."""
 
@@ -21,22 +23,25 @@ class DiracScript:
       finally:
         f.close()
     else:
+        
+      import inspect
+              
       self.finalised=False
       self.script="""#!/bin/env python
 # This file contains the commands to be executed for submitting the job
 # to DIRAC. Do not edit unless you ***really*** know what you are doing.
 # The variable "id" is passed back to Ganga.
 
-id = None
-try:
-    submit
-except NameError:
-    submit=True
+%(###SHARED###)s
 
-import DIRAC.Client.Dirac as dirac
-djob = dirac.Job()
-"""
-      
+id = None
+
+from DIRAC.Interfaces.API.Dirac import Dirac as dirac
+from DIRAC.LHCbSystem.Client.LHCbJob import LHCbJob
+
+djob = LHCbJob()
+""" % {'###SHARED###':inspect.getsource(DiracShared)}
+  
   def append(self,command):
     """Append a command to the DIRAC script for setting up the job"""
     if self.finalised:
@@ -73,30 +78,33 @@ djob = dirac.Job()
     else:
       raise BackendError("Dirac", "Failed to submit to the platform %s. Only the following are allowed: %s. Change the value in your application object." % (platform, str(whitelist)))
 
-  def finalise(self):
+  def finalise(self, submit = True):
     """Write the actual submission bit into the DIRACscript"""
+
     if not self.finalised:
-      self.finalised=True
-      self.script+="""mydirac = dirac.Dirac()
+        self.finalised=True
+        self.script+="""mydirac = Dirac()
+submit = %(#SUBMIT#)i
 try:
-    if submit: id = mydirac.submit(djob, verbose = 1, mode='quiet')
+    if submit: result = mydirac.submit(djob)
 except:
     pass
 
-if type(id)!=int or id==-1:
+if not result.get('OK',False):
     # We failed first attempt, so retry in 5 seconds
     import time
     time.sleep(5)
-    mydirac=dirac.Dirac()
-    if submit: id = mydirac.submit(djob, verbose = 1, mode='quiet')
-"""
+    mydirac = Dirac()
+    if submit: result = mydirac.submit(djob)
+storeResult(result)
+""" % {'#SUBMIT#':int(submit)}
 
-  def write(self,job):
+  def write(self,job, submit = True):
     """Persist the DIRACscript into the input workspace"""
     inputws=job.getInputWorkspace()
     fname=join(inputws.getPath(),'DIRACscript')
     if not self.finalised:
-      self.finalise()
+      self.finalise(submit)
     f = open(fname,'w')
     try:
       f.write(self.script)
@@ -108,17 +116,18 @@ if type(id)!=int or id==-1:
     from Ganga.Core import BackendError
     scriptdict={'submit':submit}
     if not self.finalised:
-      self.finalise()
+      self.finalise(submit)
+      
+    from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
+    id = 0
     try:
-      exec(self.script, scriptdict, scriptdict)
+      rc = diracwrapper(self.script)
+      result = DiracShared.getResult()
+      if result.get('OK',False): id = result['Value']
     except Exception, detail:
       logger.warning(str(detail))
       logger.warning(self.commands())
       raise BackendError("DIRAC", "Problems executing the DIRAC script.")
-    try:
-      id = scriptdict['id']
-    except KeyError:
-      raise BackendError("DIRAC", "DIRAC script failed to define variable 'id'.")
     return id
 
   def commands(self):
