@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.9 2008-09-03 21:45:39 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.10 2008-09-05 09:19:02 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -989,6 +989,9 @@ if __name__ == '__main__':
 
         if sename in [ 'atlasse.phys.sinica.edu.tw']:
             localsiteid = 'TW-FTT'
+
+        if sename in ['srm-disk.pic.es']:
+            localsiteid = 'PIC'
             
         localsitesrm = TiersOfATLAS.getSiteProperty(localsiteid,'srm')
         # Remove token info
@@ -1710,10 +1713,11 @@ if __name__ == '__main__':
         # Set siteID to site_USERDISK
         dq2alternatename = TiersOfATLAS.getSiteProperty(siteID,'alternateName')
         for sitename in TiersOfATLAS.getAllSources():
-            if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename \
-               and TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasuserdisk')>0:
-                siteID = sitename
-                break
+            if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
+                if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename \
+                       and TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasuserdisk')>0:
+                    siteID = sitename
+                    break
 
         # Find close backup locations
         close_backup_locations = []
