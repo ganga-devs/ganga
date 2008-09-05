@@ -83,10 +83,6 @@ class Tester(IAction):
             logger.info(j.application)
             jobsList += [j]
 
-        #k = Job()
-        #k.application.exe = InstallDir+"/install/"+ReleaseNo+"/bin/ganga"
-        #k.application.args = ["--test","-o[TestingFramework]EnableHTMLReporter=True","-oEnableTestRunner=False"]
-        #jobsList += [k]
 
         i = 0
         self.TestsAllGood = True
@@ -94,7 +90,7 @@ class Tester(IAction):
             try:
                 jobsList[i].submit()
                 StartTime = datetime.datetime.now()
-                #logger.info("Submitted job "+OptionList[i][0]+" to "+OptionList[i][1]+" backend")
+                logger.info("Submitted job "+OptionList[i][0]+" to "+OptionList[i][1]+" backend")
                 #Now to wait for time-out
                 JobFinished = False
                 while not JobFinished:
@@ -124,7 +120,7 @@ class Tester(IAction):
                         raise GangaRobotFatalError
    
             except:
-                logger.error("Failed to submit job "+str(i)+" Test option %s, TestConfig %s",TestOption, TestConfig)
+                logger.error("Failed to submit job "+str(i)+" TestOption %s, TestConfig %s",OptionList[i][0], OptionList[i][2])
                 self.TestsAllGood = False
 
         logger.info("All jobs finished")

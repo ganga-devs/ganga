@@ -7,7 +7,7 @@ from Ganga.Utility.logging import getLogger
 import os, urllib, datetime, subprocess, time, fnmatch, shutil
 #from Ganga.Utility.Config import getConfig
 import Ganga.Utility.Config
-from GangaTest.Lib.TestRobot.Utils import Emailer
+#from GangaTest.Lib.TestRobot.Utils import Emailer
 
 logger = getLogger()
 
@@ -38,7 +38,7 @@ class Checker(IAction):
         if (self.EmailOnStartup == True):
             subject = "Ganga - TestRobot automatic restart by crontab"
             text = "GangaTestRobot restarted on: %s" %(datetime.datetime.now().strftime("%H:%M:%S %d %b %Y"))
-            Emailer(subject, text)
+            self._emailer(subject, text)
         else:
             pass
         self.NewRelease = False
@@ -128,7 +128,7 @@ class Checker(IAction):
     
            #obtain file
         try:
-            f, inf = urllib.urlretrieve(self.DownloadURL+"VERSIONS.txt")
+            f, inf = urllib.urlretrieve(self.DownloadURL+"/VERSIONS.txt")
         except:
             msg = "Failed to retrieve VERSIONS.txt from %s" % (self.DownloadURL)
             logger.error(msg)
@@ -232,7 +232,7 @@ class Checker(IAction):
             f.write(datetime.datetime.now().strftime("%H:%M:%S %j %y")+" - "+str(os.getpid()))
             f.close()
             
-        """def _emailonstartup(self):
+    def _emailer(self, subject, text):
         #Function to email list on startup of ganga (following restart by cronjob)
         from email.MIMEText import MIMEText
         from smtplib import SMTP
@@ -263,8 +263,8 @@ class Checker(IAction):
             session.quit()
         except:
             logger.error("Failed to send notification of start-up")
-        finally:
-            session.close()"""
+        
+        session.close()
             
 
     def __init__(self):

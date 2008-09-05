@@ -34,7 +34,7 @@ class Installer(IAction):
         """
         Call the class methods in turn
         """
-        raise GangaRobotBreakError("Testing checking time",ValueError)
+        #raise GangaRobotBreakError("Testing checking time",ValueError)
         Datalist = []
         
         self._getConfigInfo()
@@ -46,7 +46,7 @@ class Installer(IAction):
 
     def _getConfigInfo(self):
         """ Gets the config info from the ganga config file """
-        config = Ganga.Utility.Config.getConfig('IndependantTest')     
+        config = Ganga.Utility.Config.getConfig('TestRobot')     
         self.InstallPath = config['InstallPath']
         self.downloadURL = config['ReleasePath']        
         self.VersionNumber = config['VersionNumber']
@@ -61,13 +61,11 @@ class Installer(IAction):
             
         config = Ganga.Utility.Config.getConfig('IndependantTest')
 
-        cmd = "python "+f+" --prefix="+self.InstallPath+" --extern=GangaTest --prerelease --verbose "+self.VersionNumber
+        cmd = "python "+f+" --prefix="+self.InstallPath+" --extern=GangaTest "+self.VersionNumber
         logger.warning("Executing command: '%s'",cmd)
         try:
             os.system(cmd)
             logger.info('ganga installed')
-            # since sucessful installation, set the last version tested time to the installed one. (Assumes test will run)
-            print "SESSION VALUE SET: %s" %(self.VersionNumber)
 
         except Exception, e:
             logger.error('ganga installation failed')
