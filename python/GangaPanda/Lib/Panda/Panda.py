@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.4 2008-09-04 15:33:10 dvanders Exp $
+# $Id: Panda.py,v 1.5 2008-09-05 09:07:00 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -244,12 +244,10 @@ class Panda(IBackend):
                 else:
                     job.backend.CE = None
                
-                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','starting']:
+                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
                     pass
-                elif status.jobStatus == 'running':
+                elif status.jobStatus in ['starting','running','holding','transferring']:
                     job.updateStatus('running')
-                elif status.jobStatus in ['holding','transferring']:
-                    job.updateStatus('completing')
                 elif status.jobStatus == 'finished':
                     job.updateStatus('completed')
                 elif status.jobStatus == 'failed':
@@ -262,12 +260,10 @@ class Panda(IBackend):
                     logger.info('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
                 job.backend.buildjob.status = status.jobStatus
 
-                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','starting']:
+                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
                     pass
-                elif status.jobStatus == 'running':
+                elif status.jobStatus in ['starting','running','holding','transferring']:
                     job.updateStatus('running')
-                elif status.jobStatus in ['holding','transferring']:
-                    job.updateStatus('completing')
                 elif status.jobStatus == 'finished':
                     job.updateStatus('completed')
                 elif status.jobStatus == 'failed':
@@ -297,6 +293,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/09/04 15:33:10  dvanders
+# added unknown, starting panda statuses
+#
 # Revision 1.3  2008/09/03 17:04:56  dvanders
 # Use external PandaTools
 # Added cloud
