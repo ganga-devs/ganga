@@ -78,7 +78,7 @@ class Tester(IAction):
                 break # DO SOMETHING ELSE HERE
             j.application.exe = InstallDir+"/install/"+ReleaseNo+"/bin/ganga"
             #j.application.exe = "ganga"            - DEBUGGING LINE
-            j.application.args = ["--test","--config:"+TestConfig+".ini",TestOption]
+            j.application.args = ["--test","-o[TestingFramework]Config="+TestConfig+".ini",TestOption]
             j.application.env = { 'GANGA_CONFIG_PATH':JobIniFile }
             logger.info(j.application)
             jobsList += [j]

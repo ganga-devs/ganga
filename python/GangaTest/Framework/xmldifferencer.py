@@ -17,7 +17,7 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
     from pytf.testoob.compatibility.SimpleXMLWriter import XMLWriter
     #strip relevant part of filename
     ind = filename.find("__")
-    filename[:ind].strip()
+    filename = filename[:ind].strip()
     #write new difference file
     differencefile = os.path.join(newreportdir,filename+"__Diff_"+newversion+"-"+oldversion+"_"+newconfig+"_"+oldconfig+".xml")
     logger.info("writing:"+differencefile)
@@ -33,8 +33,11 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
         try: testcase_old = oldtests[test]
         except KeyError: 
             w.start('testcase', {'name':testcase_new.attributes.items()[0][1]} )
-            w.element('result', testcase_new.getElementsByTagName("result")[0].childNodes[0].data )
+            result = testcase_new.getElementsByTagName("result")[0].childNodes[0].data
+            w.element('result', result )
+            w.start(result)
             w.data("Brand New Test")
+            w.end(result)
             w.end('testcase')
             continue 
         #work out what to do
@@ -58,19 +61,18 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
         elif ( result_new == 'failure' and result_old == 'success' ): 
             test_result = 'failure'
             failureNode = testcase_new.getElementsByTagName("failure")
-            new_data = "Changed from success to failure: \n "+failureNode[0].childNodes[0].data+"\n"
+            new_data = "Changed from success to failure: \n "+failureNode[0].childNodes[0].data+"\n"+" - "+"oops"
             w.start('testcase', { 'name':test_name , 'time':test_time } )
             w.element('result',test_result)
-            w.start('failure', { 'message':'New test failed, old one passed' , 'type': 'S->F'} )
+            w.start('failure',{ 'message':'New test failed, old one passed' , 'type': 'S->F'} )
             w.data(new_data)
             w.end('failure')
             w.end('testcase')
         elif ( result_new == 'success' and result_old == 'failure' ):
             test_result = 'failure'
+            old_data = "Changed from failure to success in new release"+" - "+"correct"
             w.start('testcase', { 'name':test_name , 'time':test_time } )
             w.element('result',test_result)
-            #failureNode = testcase_old.getElementsByTagName("failure")
-            old_data = "Changed from failure to success in new release"
             w.start('failure', { 'message':'Old test failed, new one passed' , 'type': 'F->S'} )
             w.data(old_data)
             w.end('failure')
@@ -91,14 +93,14 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
     
     
 #======================================================================
-def comparetestfiles(newfiledict, oldfiledict, filelist):
-    newtests = {}
-    oldtests = {}
+def comparetestfiles(newfiledict, oldfiledict):
     #print newfiledict
     #print oldfiledict
     #print filelist
     #go through list of tests
-    for filename in filelist:
+    for filename in newfiledict:
+        newtests = {}
+        oldtests = {}
         #go through new report
         newdoc = newfiledict[filename]
         testcases = newdoc.getElementsByTagName("testcase")
@@ -129,11 +131,60 @@ def comparetestfiles(newfiledict, oldfiledict, filelist):
                         #print test
                 #add to dictionary
                 oldtests[test] = testcase
-                
+        #        
         #Call writeXMLfile and pass the two dicts
-        writeXMLDifferenceFile(newtests, oldtests, filename)# , testlist)
-     
-                
+        writeXMLDifferenceFile(newtests, oldtests, filename)
+
+#======================================================================
+def decide_new(datalist):
+    version_one = datalist[0]
+    version_two = datalist[2]
+    config_one = datalist[1]
+    config_two = datalist[3]
+    a = version_one.split(".")
+    b = version_two.split(".")
+    
+    if ( a[0] == b[0] ):
+        if ( a[1] == b[1] ):
+            if ( a[2] == b[2] ):
+                newversion = version_one
+                oldversion = version_two
+                newconfig = config_one
+                oldconfig = config_two                        
+            elif ( a[2] < b[2] ):
+                newversion = version_two
+                oldversion = version_one
+                newconfig = config_two
+                oldconfig = config_one
+            elif ( a[2] > b[2] ):
+                newversion = version_one
+                oldversion = version_two
+                newconfig = config_one
+                oldconfig = config_two        
+        elif ( a[1] < b[1] ):
+            newversion = version_two
+            oldversion = version_one
+            newconfig = config_two
+            oldconfig = config_one
+        elif ( a[1] > b[1] ):
+            newversion = version_one
+            oldversion = version_two
+            newconfig = config_one
+            oldconfig = config_two        
+    elif ( a[0] < b[0] ):
+        newversion = version_two
+        oldversion = version_one
+        newconfig = config_two
+        oldconfig = config_one
+    elif ( a[0] > b[0] ):
+        newversion = version_one
+        oldversion = version_two
+        newconfig = config_one
+        oldconfig = config_two        
+
+    return [newversion, newconfig, oldversion, oldconfig]
+
+
 #======================================================================
 def start(cmd_args=None):    
     #import global variables
@@ -182,6 +233,14 @@ def start(cmd_args=None):
         oldconfig = cmd_args[2]
         newconfig = cmd_args[3]
     
+    datalist = decide_new([newversion, newconfig, oldversion, oldconfig])
+    newversion = datalist[0]
+    newconfig = datalist[1]
+    oldversion = datalist[2]
+    oldconfig = datalist[3]
+    logger.info( "new version = "+newversion )
+    logger.info( "oldversion = "+oldversion )
+    
     #Get Newreportdir and oldreportdir
     topdir = os.sep.join(config['GANGA_PYTHONPATH'].split(os.sep)[:-2])
     for dir in os.listdir(topdir):
@@ -207,11 +266,15 @@ def start(cmd_args=None):
     filelist = []
     #Parse xml files
     for newfile in os.listdir(newreportdir): 
+        #print newfile
         ind = newfile.find("__")
         fileconfig = newfile[ind+2:-4].strip()
         #print fileconfig
+        #if fileconfig.find("Diff_"):
+        #    pass
         if fileconfig == newconfig:
             reportfile = os.path.join(newreportdir,newfile)    
+            #print reportfile
             try:
                 newdoc = xml.dom.minidom.parse(reportfile)
             except IOError:
@@ -230,10 +293,10 @@ def start(cmd_args=None):
             except IOError:
                 logger.warning("attempted to parse directory in "+oldreportdir)     
             oldfiles[str(oldfile)] = olddoc      
-    #print newfiles
-    #print oldfiles
+    print newfiles
+    print oldfiles
     #go through dictionaries and compare files and then compare tests
-    comparetestfiles(newfiles, oldfiles, filelist)
+    comparetestfiles(newfiles, oldfiles)
     
 
 def main(cmd_args):
