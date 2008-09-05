@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.5 2008-09-05 09:07:00 dvanders Exp $
+# $Id: Panda.py,v 1.6 2008-09-05 12:06:54 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -146,9 +146,9 @@ class Panda(IBackend):
 
         retryJobs = [] # jspecs
         resubmittedJobs = [] # ganga jobs
-        i = 0
         for job in jspecs:
             if job.jobStatus == 'failed':
+                oldID = job.PandaID
                 # reset
                 job.jobStatus = None
                 job.commandToPilot = None
@@ -177,13 +177,12 @@ class Panda(IBackend):
                         if file.status != 'ready':
                             file.dispatchDBlock = None
                 retryJobs.append(job)
-                resubmittedJobs.append(jobs[i])
+                resubmittedJobs.append(jobIDs[oldID])
             elif job.jobStatus == 'finished':
                 pass
             else:
                 logger.warning("Cannot resubmit. Some jobs are still running.")
                 return False
-            i = i+1
 
         # submit
         if len(retryJobs)==0:
@@ -293,6 +292,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/09/05 09:07:00  dvanders
+# removed 'completing' state
+#
 # Revision 1.4  2008/09/04 15:33:10  dvanders
 # added unknown, starting panda statuses
 #
