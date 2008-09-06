@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.6 2008-09-05 12:06:54 dvanders Exp $
+# $Id: Panda.py,v 1.7 2008-09-06 09:18:30 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -259,12 +259,10 @@ class Panda(IBackend):
                     logger.info('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
                 job.backend.buildjob.status = status.jobStatus
 
-                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
+                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
                     pass
                 elif status.jobStatus in ['starting','running','holding','transferring']:
                     job.updateStatus('running')
-                elif status.jobStatus == 'finished':
-                    job.updateStatus('completed')
                 elif status.jobStatus == 'failed':
                     job.updateStatus('failed')
                 else:
@@ -292,6 +290,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.6  2008/09/05 12:06:54  dvanders
+# fix bug in update
+#
 # Revision 1.5  2008/09/05 09:07:00  dvanders
 # removed 'completing' state
 #
