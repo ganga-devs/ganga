@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.7 2008-09-06 09:18:30 dvanders Exp $
+# $Id: Panda.py,v 1.8 2008-09-06 17:53:02 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -236,37 +236,37 @@ class Panda(IBackend):
 
                 if job.backend.status != status.jobStatus:
                     logger.info('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
-                job.backend.status = status.jobStatus
+                    job.backend.status = status.jobStatus
 
-                if status.computingElement != 'NULL':
-                    job.backend.CE = status.computingElement
-                else:
-                    job.backend.CE = None
+                    if status.computingElement != 'NULL':
+                        job.backend.CE = status.computingElement
+                    else:
+                        job.backend.CE = None
                
-                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
-                    pass
-                elif status.jobStatus in ['starting','running','holding','transferring']:
-                    job.updateStatus('running')
-                elif status.jobStatus == 'finished':
-                    job.updateStatus('completed')
-                elif status.jobStatus == 'failed':
-                    job.updateStatus('failed')
-                else:
-                    logger.warning('Unexpected job status %s',status.jobStatus)
+                    if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
+                        pass
+                    elif status.jobStatus in ['starting','running','holding','transferring']:
+                        job.updateStatus('running')
+                    elif status.jobStatus == 'finished':
+                        job.updateStatus('completed')
+                    elif status.jobStatus == 'failed':
+                        job.updateStatus('failed')
+                    else:
+                        logger.warning('Unexpected job status %s',status.jobStatus)
 
             elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
                 if job.backend.buildjob.status != status.jobStatus:
                     logger.info('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
-                job.backend.buildjob.status = status.jobStatus
+                    job.backend.buildjob.status = status.jobStatus
 
-                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
-                    pass
-                elif status.jobStatus in ['starting','running','holding','transferring']:
-                    job.updateStatus('running')
-                elif status.jobStatus == 'failed':
-                    job.updateStatus('failed')
-                else:
-                    logger.warning('Unexpected job status %s',status.jobStatus)
+                    if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
+                        pass
+                    elif status.jobStatus in ['starting','running','holding','transferring']:
+                        job.updateStatus('running')
+                    elif status.jobStatus == 'failed':
+                        job.updateStatus('failed')
+                    else:
+                        logger.warning('Unexpected job status %s',status.jobStatus)
             else:
                 logger.warning('Unexpected Panda ID %s',status.PandaID)
 
@@ -290,6 +290,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.7  2008/09/06 09:18:30  dvanders
+# don't marked completed when build job finishes!
+#
 # Revision 1.6  2008/09/05 12:06:54  dvanders
 # fix bug in update
 #
