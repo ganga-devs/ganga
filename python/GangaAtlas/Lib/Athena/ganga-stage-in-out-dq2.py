@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.10 2008-09-05 09:19:02 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.11 2008-09-07 14:49:07 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -991,7 +991,7 @@ if __name__ == '__main__':
             localsiteid = 'TW-FTT'
 
         if sename in ['srm-disk.pic.es']:
-            localsiteid = 'PIC'
+            localsiteid = 'PIC_DATADISK'
             
         localsitesrm = TiersOfATLAS.getSiteProperty(localsiteid,'srm')
         # Remove token info
