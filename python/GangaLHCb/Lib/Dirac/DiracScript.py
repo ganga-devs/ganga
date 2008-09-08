@@ -78,6 +78,21 @@ djob = LHCbJob()
     else:
       raise BackendError("Dirac", "Failed to submit to the platform %s. Only the following are allowed: %s. Change the value in your application object." % (platform, str(whitelist)))
 
+  def addPackage(self, appName, appVersion):
+    """Adds an package to the Dirac environment"""
+    self.append("addPackage('%s','%s')" % (appName,appVersion))
+    
+  def setName(self, jobName):
+    """Adds a name to the dirac job"""
+    self.append("setName('%s')" % jobName)
+
+  def setExecutable(self, logFile = None, command = 'chmod +x ./jobscript.py; ./jobscript.py'):
+    """Calls the setExecutable method with a default command"""
+    if logFile is not None:
+        self.append("setExecutable('%s', logFile = '%s')" % (command, logFile))
+    else:
+        self.append("setExecutable('%s')" % command)
+
   def finalise(self, submit = True):
     """Write the actual submission bit into the DIRACscript"""
 

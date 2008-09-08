@@ -37,19 +37,15 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
         rootConfig = getConfig('ROOT')
         architecture = rootConfig['arch']
         logger.info('Root architecture to use is ', architecture)
-        
-        argString = ' '.join([str(s) for s in app.args])
-        diracScript.platform(architecture)
 
-        if app.usepython:
-            diracCommand = 'setRootPythonScript'
-        else:
-            diracCommand = 'setRootMacro'
-
+        import RootVersions
         logFile = 'Root_%s.log' % app.version
-        diracScript.append("%s(rootVersion = '%s', rootScript = '%s', arguments = '%s', logFile = '%s')" % \
-                           (diracCommand, app.version, script.name, argString, logFile))
-        diracScript.append('setName("Ganga_ROOT_'+app.version+'")')
+        version=RootVersions.getDaVinciVersion(app.version)
+        
+        diracScript.platform(architecture)
+        diracScript.addPackage('DaVinci',version)
+        diracScript.setExecutable(logFile)
+        diracScript.setName('Ganga_ROOT_%s' % app.version)
 
         if job.inputdata:
             diracScript.inputdata([f.name for f in job.inputdata.files])

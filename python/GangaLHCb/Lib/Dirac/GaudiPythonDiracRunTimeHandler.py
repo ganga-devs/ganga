@@ -49,13 +49,15 @@ class GaudiPythonDiracRunTimeHandler(IRuntimeHandler):
         from DiracScript import DiracScript
         diracScript=DiracScript()
         
+        logFile = '%s_%s.log' % (app.project, app.version)
         runScript = self._DiracWrapper(app)
 
         c = StandardJobConfig( runScript,sandbox,[],outsb,None)
         
-        diracScript.append( 'setApplication("' + app.project + '","' + app.version + '")')
+        diracScript.addPackage(app.project, app.version)
+        diracScript.setExecutable(logFile)
         diracScript.platform(app.platform)
-        diracScript.append( 'setName("Ganga_GaudiPython")')
+        diracScript.setName("Ganga_GaudiPython")
         if job.inputdata:
             diracScript.inputdata([x.name for x in job.inputdata.files])
 
@@ -65,7 +67,7 @@ class GaudiPythonDiracRunTimeHandler(IRuntimeHandler):
         diracScript.outputdata( outdata)
 
         c.script=diracScript
-        c.logfile='%s_%s.log' % (app.project, app.version)
+        c.logfile=logFile
 
         return c
 

@@ -48,7 +48,7 @@ class SplitByFiles(ISplitter):
         subjobs=[]
         self.prepareSubjobs(job)
         inputs = LHCbDataset()
-        inputs.datatype_string=job.inputdata.datatype_string
+        inputs.datatype_string=self._extra.inputdata.datatype_string
         if int(self.maxFiles) == -1:
             inputs.files=self._extra.inputdata.files[:]
             logger.info("Using all %d input files for splitting" % len(inputs))
@@ -58,13 +58,13 @@ class SplitByFiles(ISplitter):
         
         #store names to add cache info later
         dataset_files = {}
-        for i in job.inputdata.files:
+        for i in self._extra.inputdata.files:
             dataset_files[i.name] = i
 
         datasetlist = self._splitFiles(inputs)
         import time
-        if job.inputdata.cache_date:
-            _time = time.mktime(time.strptime(job.inputdata.cache_date))
+        if self._extra.inputdata.cache_date:
+            _time = time.mktime(time.strptime(self._extra.inputdata.cache_date))
         else:
             _time = time.time()*2
         _timeUpdate = False
@@ -92,8 +92,7 @@ class SplitByFiles(ISplitter):
                     _time = cache_time
                     _timeUpdate = True
         if _timeUpdate:
-            job.inputdata.cache_date = time.asctime(time.localtime(_time))
-            
+            self._extra.inputdata.cache_date = time.asctime(time.localtime(_time))
         return subjobs
 
     def prepareSubjobs(self,job):
@@ -509,6 +508,12 @@ class GaussSplitter(ISplitter):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.8  2008/09/03 11:54:59  wreece
+# Savannah 40910 - Also problem with datasets in options files
+#
+# Revision 1.7  2008/09/01 03:13:52  wreece
+# fix for Savannah 40219 - Manages cache updating better.
+#
 # Revision 1.6  2008/08/22 10:07:24  uegede
 # New features:
 # =============

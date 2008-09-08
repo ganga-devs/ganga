@@ -4,6 +4,9 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
+from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
+
+from GangaLHCb.Lib.Dirac import DiracShared
 
 def getCacheAge():
 
@@ -158,27 +161,23 @@ class LHCbDataset(Dataset):
 
         # Execute LFC command in separate process as
         # it needs special environment.
-        import tempfile,os
-        from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
-        (handle,fname) = tempfile.mkstemp(text=True)
-        os.close(handle)
-        command=\
-                  'result = dirac.bulkReplicas('+repr(lfns)+')\n'+\
-                  'file = open('+repr(fname)+',"w")\n'+\
-                  'file.write(repr(result))\n'+\
-                  'file.close()\n'
-
-        rc=diracwrapper(command)
-        file = open(fname)
-        result=eval(file.readline())
-        file.close()
-        if rc==0: os.unlink(fname)
-
-        if result['Status'] != 'OK':
+        command = """
+result = dirac.getReplicas(%s)
+if not result.get('OK',False): rc = -1
+storeResult(result)
+        """ % str(lfns)
+        rc = diracwrapper(command)
+        result = DiracShared.getResult()
+        
+        if rc != 0 or result is None or (result is not None and not result['OK']):
             logger.warning('The LFC query did not return cleanly. '\
-                           'Some of the replica information may be missing.')
-        replicas=result['Replicas']
-
+                                'Some of the replica information may be missing.')
+            if result is not None and result.has_key('Message'):
+                logger.warning("Message from Dirac3 was '%s'" % result['Message'])
+            
+        if result is None or (result is not None and not result.has_key('Value')):
+            return #don't do anything more
+        replicas = result['Value']['Successful']
         
         logger.debug('Replica information received is: '+repr(replicas))
         for f in self.files:
@@ -210,31 +209,28 @@ class LHCbDataFile(GangaObject):
 
             # Execute LFC command in separate process as
             # it needs special environment.
-            import tempfile,os
-            from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
-            (handle,fname) = tempfile.mkstemp(text=True)
-            os.close(handle)
-            name=self._stripFileName()
-            command=\
-                      'result = dirac.lfcreplicas('+repr(name)+')\n'+\
-                      'file = open('+repr(fname)+',"w")\n'+\
-                      'file.write(repr(result))\n'+\
-                      'file.close()\n'
-
-            rc=diracwrapper(command)
-            file = open(fname)
-            result=eval(file.readline())
-            file.close()
-            if rc==0:
-                os.unlink(fname)
-
-            rep = result.get('lfn: '+self._stripFileName(),[])
-            if rep and rep[0] != 'Replicas:  No such file or directory':
-                result = []
-                for r in rep:
-                    result.append(r.split(' ')[0])
-                rep = result
-            self.replicas = rep
+            command = """
+result = dirac.getReplicas('%s')
+if not result.get('OK',False): rc = -1
+storeResult(result)
+        """ % self.name
+            rc = diracwrapper(command)
+            result = DiracShared.getResult()
+        
+            if rc != 0 or result is None or (result is not None and not result['OK']):
+                logger.warning('The LFC query did not return cleanly. '\
+                                'Some of the replica information may be missing.')
+            if result is not None and result.has_key('Message'):
+                logger.warning("Message from Dirac3 was '%s'" % result['Message'])
+            
+            if result is None or (result is not None and not result.has_key('Value')):
+                return #don't do anything more
+            replicas = result['Value']['Successful']
+            
+            logger.debug('Replica information received is: '+repr(replicas))
+            name = self._stripFileName()
+            if replicas.has_key(name):
+                self.replicas = replicas[name].keys() 
         else:
             self.replicas = []
 
@@ -276,6 +272,9 @@ allComponentFilters['datafiles']=string_datafile_shortcut
 allComponentFilters['datasets']=string_dataset_shortcut
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/09/01 03:13:52  wreece
+# fix for Savannah 40219 - Manages cache updating better.
+#
 # Revision 1.2  2008/08/14 15:54:43  uegede
 # Added "datatype_string" to schema for LHCbDataset. This allows Ganga to run with
 # cosmic data.

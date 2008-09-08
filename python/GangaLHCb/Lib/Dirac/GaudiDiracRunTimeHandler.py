@@ -58,9 +58,12 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         c = StandardJobConfig( runScript,inputsandbox,[],outputsandbox,None)
         
-        diracScript.append( 'setApplication("' + app._name + '","' + app.version + '")')
+        logFile = '%s_%s.log' % (app._name, app.version)
+        
+        diracScript.addPackage(app._name, app.version)
         diracScript.platform(app.platform)
-        diracScript.append( 'setName("Ganga_'  + app._name + '_'   + app.version + '")')
+        diracScript.setExecutable(logFile)
+        diracScript.setName( 'Ganga_%s_%s' % (app._name, app.version) )
         diracScript.inputdata( app.extra.inputdata)
 
         outdata = app.extra.outputdata

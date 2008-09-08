@@ -164,7 +164,7 @@ class Gaudi(IApplication):
         # If the user has specified the data in a dataset, use it and
         # ignore the optionsfile, but warn the user.
         job=self.getJobObject()
-        if len(inputdata.files) == 0:
+        if len(inputdata.files) > 0:
             if job.inputdata:
                 logger.warning("You specified a dataset for this job, but have also defined a dataset")
                 logger.warning("in your options file. I am going to ignore the options file.")
@@ -711,6 +711,13 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.11  2008/08/27 15:53:20  uegede
+# Modified failing test cases.
+#
+# Deleted code in Gaudi.py and GaudiPython.py which was not required.
+#
+# Fixed problem with dataset splitting in GaudiPython.
+#
 # Revision 1.10  2008/08/22 10:07:23  uegede
 # New features:
 # =============

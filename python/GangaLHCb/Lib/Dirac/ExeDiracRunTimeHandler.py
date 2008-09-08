@@ -23,8 +23,9 @@ class ExeDiracRunTimeHandler(IRuntimeHandler):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         c = StandardJobConfig(app.exe,[],app.args,
                               app._getParent().outputsandbox,app.env)
-        diracScript.append("setExecutable('chmod +x ./jobscript.py; ./jobscript.py')")
-        diracScript.append('setName("Ganga_Executable")')
+        logFile = 'GangaExcutable.log'
+        diracScript.setExecutable(logFile)
+        diracScript.setName("Ganga_Executable")
 
         if job.inputdata:
             diracScript.inputdata([f.name for f in job.inputdata.files])
@@ -33,7 +34,7 @@ class ExeDiracRunTimeHandler(IRuntimeHandler):
             diracScript.outputdata([f.name for f in job.outputdata.files])
 
 
-
+        c.logfile=logFile
         c.script=diracScript
-
+        
         return c
