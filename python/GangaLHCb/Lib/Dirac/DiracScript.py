@@ -36,7 +36,7 @@ class DiracScript:
 
 id = None
 
-from DIRAC.Interfaces.API.Dirac import Dirac as dirac
+from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.LHCbSystem.Client.LHCbJob import LHCbJob
 
 djob = LHCbJob()

@@ -44,7 +44,6 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         
         inputsandbox = []
         if app.extra.dataopts:
-#            inputsandbox.append( FileBuffer( 'dataopts.py',app.extra.dataopts))
             dataopts = app.extra.dataopts +\
                        '\nFileCatalog.Catalogs += { "xmlcatalog_file:pool_xml_catalog.xml" };\n'
             inputsandbox.append( FileBuffer( 'dataopts.opts', dataopts))
