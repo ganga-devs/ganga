@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: File.py,v 1.1 2008-07-17 16:40:53 moscicki Exp $
+# $Id: File.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -20,7 +20,7 @@ class File(GangaObject):
     """
     _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='path to the file source'),
                                     'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)'),
-                                    'executable': SimpleItem(defvalue=None,hidden=True,transient=True,
+                                    'executable': SimpleItem(defvalue=False,hidden=True,transient=True,
                                                              doc='specify if executable bit should be set when the file is created (internal framework use)')})
     _category = 'files'
     _name = "File"
@@ -40,7 +40,7 @@ class File(GangaObject):
 
         if not subdir is None:
             self.subdir = subdir
-	
+        
     def getPathInSandbox(self):
         """return a relative location of a file in a sandbox: subdir/name"""
         from Ganga.Utility.files import real_basename       
@@ -88,13 +88,13 @@ def string_file_shortcut(v,item):
     import os.path
 
     if type(v) is type(''):
-	f = File()
+        f = File()
         expanded = expandfilename(v)
         if not urlprefix.match(expanded): # if it is not already an absolute filename
-    	    f.name = os.path.abspath(expanded)
-	else: #bugfix #20545 
-	    f.name = expanded
-	return f
+            f.name = os.path.abspath(expanded)
+        else: #bugfix #20545 
+            f.name = expanded
+        return f
     return None    
         
 allComponentFilters['files'] = string_file_shortcut
@@ -113,6 +113,11 @@ allComponentFilters['files'] = string_file_shortcut
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:40:53  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.15  2007/08/24 15:55:03  moscicki
 # added executable flag to the file, ganga will set the executable mode of the app.exe file (in the sandbox only, the original file is not touched), this is to solve feature request #24452
 #

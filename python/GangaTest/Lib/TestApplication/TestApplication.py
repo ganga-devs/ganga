@@ -9,7 +9,7 @@ from Ganga.GPIDev.Lib.File import File
 
 class TestApplication(IApplication):
     _schema = Schema(Version(1,0), {'exe':SimpleItem(defvalue='/usr/bin/env'),
-                                    'derived_value' : SimpleItem(defvalue=None,typelist=['str']),
+                                    'derived_value' : SimpleItem(defvalue='',typelist=['str']),
                                     'sequence' : SimpleItem([],sequence=1,typelist=['str']),
                                     'file_sequence' : FileItem(defvalue=[],sequence=1),
                                     'optsfile' : FileItem(),
@@ -53,7 +53,7 @@ class TestApplication(IApplication):
         self._setDirty(1)
 
 class TestAdvancedProperties(IApplication):
-    _schema = Schema(Version(1,0), {'exe':SimpleItem(defvalue='/usr/bin/env'), 'exe2' : SimpleItem(defvalue=None)} )
+    _schema = Schema(Version(1,0), {'exe':SimpleItem(defvalue='/usr/bin/env'), 'exe2' : SimpleItem(defvalue='')} )
     _name = 'TestAdvancedProperties'
     
     def _object_filter__get__(self,v):

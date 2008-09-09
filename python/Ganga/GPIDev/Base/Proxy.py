@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Proxy.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
+# $Id: Proxy.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -9,31 +9,9 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 import Ganga.GPIDev.Schema as Schema
 
-from Ganga.Core import GangaException
+from Ganga.Core import GangaException,GangaAttributeError,ProtectedAttributeError,ReadOnlyObjectError,TypeMismatchError,SchemaError
 
 from Ganga.Utility.util import importName
-
-
-class GangaAttributeError(AttributeError,GangaException):
-    def __init__(self,*a,**k): AttributeError.__init__(self,*a,**k)
-    
-class ProtectedAttributeError(GangaAttributeError):
-    'Attribute is read-only and may not be modified by the user (for example job.id)'
-    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
-
-
-class ReadOnlyObjectError(GangaAttributeError):
-    'Object cannot be modified (for example job in a submitted state)'
-    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
-
-
-class TypeMismatchError(GangaAttributeError):
-    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
-
-
-class SchemaError(GangaAttributeError):
-    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
-
 
 #some proxy related convieniance methods
 def isProxy(obj):
@@ -157,62 +135,8 @@ class ProxyDataDescriptor(object):
         return disguiser(val)
 
     def _check_type(self, obj, val):
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         item = obj._impl._schema[self._name]
-
-        # type checking does not make too much sense for Component Items because component items are
-        # always checked at the object (_impl) level for category compatibility
-        
-        if item.isA(Schema.ComponentItem):
-            return
-
-        validTypes = item._meta['typelist']
-
-        # setting typelist explicitly to None results in disabling the type checking completely
-        if validTypes is None:
-            return
-                
-        def check(isAllowedType):
-            if not isAllowedType:
-                raise TypeMismatchError( 'Attribute "%s" expects a value of the following types: %s' % ( self._name, validTypes ) )
-            
-        if validTypes:
-            if item._meta[ 'sequence' ]:
-                if not isinstance( item._meta['defvalue'], (list,GangaList) ):
-                    raise SchemaError( 'Attribute "%s" defined as a sequence but defvalue is not a list.' % self._name )
-                
-                if not isinstance( val, (GangaList,list) ):
-                    raise TypeMismatchError( 'Attribute "%s" expects a list.' % self._name )
-                
-                for valItem in val:
-                    if not valueTypeAllowed( valItem, validTypes ):
-                        raise TypeMismatchError( 'List entry %s for %s is invalid. Valid types: %s' % ( valItem, self._name, validTypes ) )
-
-                    
-                return
-            else: # Non-sequence
-                if isinstance( item._meta['defvalue'], dict ):
-                    if isinstance( val, dict ):
-                        for dKey, dVal in val.iteritems():
-                            if not valueTypeAllowed( dKey, validTypes ) or not valueTypeAllowed( dVal, validTypes ):
-                                raise TypeMismatchError( 'Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % ( dKey, dVal, self._name, validTypes ) )
-                    else: # new value is not a dict
-                        raise TypeMismatchError( 'Attribute "%s" expects a dictionary.' % self._name )
-                    return
-                else: # a 'simple' (i.e. non-dictionary) non-sequence value
-                    check(valueTypeAllowed( val, validTypes ))
-                    return
-
-        # typelist is not defined, use the type of the default value
-        if item._meta['defvalue'] is None:
-            logger.warning('type-checking disabled: type information not provided for %s, \
-            contact plugin developer',self._name)
-        else:
-            if item._meta['sequence']:
-                logger.warning('type-checking is incomplete: type information not provided for a sequence %s,\
-                contact plugin developer',self._name)
-            check(isinstance( val, type(item._meta['defvalue']) ))
-            
+        return item._check_type(val, self._name)
         
     def __set__(self, obj, val):
         item = obj._impl._schema[self._name]
@@ -418,6 +342,11 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:40:52  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.32.4.15  2008/07/02 13:19:35  moscicki
 # TODO comment
 #

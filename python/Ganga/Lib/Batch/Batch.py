@@ -71,11 +71,11 @@ class Batch(IBackend):
     """
     _schema = Schema(Version(1,0), {'queue' : SimpleItem(defvalue='',doc='queue name as defomed in your local Batch installation'),
                                     'extraopts' : SimpleItem(defvalue='',doc='extra options for Batch'),
-                                    'id' : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Batch id of the job'),
-                                    'exitcode' : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Process exit code'),
-                                    'status' : SimpleItem(defvalue=None,protected=1,hidden=1,copyable=0,doc='Batch status of the job'),
+                                    'id' : SimpleItem(defvalue='',protected=1,copyable=0,doc='Batch id of the job'),
+                                    'exitcode' : SimpleItem(defvalue=None,typelist=['int','type(None)'],protected=1,copyable=0,doc='Process exit code'),
+                                    'status' : SimpleItem(defvalue='',protected=1,hidden=1,copyable=0,doc='Batch status of the job'),
                                     'actualqueue' : SimpleItem(defvalue='',protected=1,copyable=0,doc='queue name where the job was submitted.')
-				    })
+                                    })
     _category = 'backends'
     _name = 'Batch'
     _hidden = 1
@@ -127,7 +127,7 @@ class Batch(IBackend):
                     jobnameopt = False
                         
             queue_option = queue_option + " " + self.extraopts
-		
+                
         if jobnameopt and job.name != '':
             queue_option = queue_option + " " + jobnameopt + " " + "'%s'"%(job.name) 
         
@@ -139,7 +139,7 @@ class Batch(IBackend):
             script_cmd = scriptpath
         
         command_str=self.config['submit_str'] % (inw.getPath(),queue_option,stderr_option,stdout_option,script_cmd)
-	self.command_string = command_str
+        self.command_string = command_str
         rc,soutfile = self.command(command_str)
         logger.debug('from command get rc: "%d"',rc)
         if rc == 0:
@@ -151,7 +151,7 @@ class Batch(IBackend):
                 logger.warning('command output \n %s ',sout)
             else:
                 self.id = m.group('id')
-		try:
+                try:
                     queue = m.group('queue')
                     if self.queue != queue:
                         if self.queue:
@@ -164,7 +164,7 @@ class Batch(IBackend):
                     logger.info('could not match the output and extract the Batch queue name')
         else:
             logger.warning(file(soutfile).read())
-		        
+                        
         return rc == 0
 
     def resubmit(self):
@@ -174,13 +174,13 @@ class Batch(IBackend):
         inw = job.getInputWorkspace() 
         outw = job.getOutputWorkspace()
 
-	statusfilename = outw.getPath('__jobstatus__')
-	try:
-	    os.remove(statusfilename)
-	except OSError,x:
+        statusfilename = outw.getPath('__jobstatus__')
+        try:
+            os.remove(statusfilename)
+        except OSError,x:
             if x.errno!=2:
-	        logger.warning("OSError:"+str(x))
-	    
+                logger.warning("OSError:"+str(x))
+            
         scriptpath = inw.getPath('__jobscript__')
         stderr_option = '-e '+str(outw.getPath())+'stderr'
         stdout_option = '-o '+str(outw.getPath())+'stdout'
@@ -207,10 +207,10 @@ class Batch(IBackend):
                     jobnameopt = False
 
             queue_option = queue_option + " " + self.extraopts
-		
+                
         if jobnameopt and job.name != '':
             queue_option = queue_option + " " + jobnameopt + " " + "'%s'"%(job.name) 
-		
+                
         # bugfix #16646 
         if self.config['shared_python_executable']:
             import sys
@@ -219,7 +219,7 @@ class Batch(IBackend):
             script_cmd = scriptpath
         
         command_str=self.config['submit_str'] % (inw.getPath(),queue_option,stderr_option,stdout_option,script_cmd)
-	self.command_string = command_str
+        self.command_string = command_str
         rc,soutfile = self.command(command_str)
         logger.debug('from command get rc: "%d"',rc)
         if rc == 0:
@@ -231,7 +231,7 @@ class Batch(IBackend):
                 logger.warning('command output \n %s ',sout)
             else:
                 self.id = m.group('id')
-		try:
+                try:
                     queue = m.group('queue')
                     if self.queue != queue:
                         if self.queue:
@@ -244,7 +244,7 @@ class Batch(IBackend):
                     logger.info('could not match the output and extract the Batch queue name')
         else:
             logger.warning(file(soutfile).read())
-		        
+                        
         return rc == 0
 
 
@@ -254,12 +254,12 @@ class Batch(IBackend):
         sout = file(soutfile).read()
         logger.debug('while killing job %s: rc = %d',self.getJobObject().getFQID('.'),rc)
         if rc == 0:
-	    return True
-	else:
+            return True
+        else:
             import re
             m = re.compile(self.config['kill_res_pattern'],re.M).search(sout)
             logger.warning('while killing job %s: %s',self.getJobObject().getFQID('.'), sout)
-	
+        
             return not m==None
         
     def preparejob(self,jobconfig,master_input_sandbox):
@@ -267,10 +267,10 @@ class Batch(IBackend):
         job = self.getJobObject()
                     
         subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles())
-	appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
+        appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath=job.getOutputWorkspace().getPath()
         outputpatterns = jobconfig.outputbox
-	environment = jobconfig.env
+        environment = jobconfig.env
 
         text = """#!/usr/bin/env python
 import shutil
@@ -390,19 +390,19 @@ sys.exit(result)
 """
 
         import inspect
-	import Ganga.Core.Sandbox as Sandbox
+        import Ganga.Core.Sandbox as Sandbox
         text = text.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
         text = text.replace('###APPSCRIPTPATH###',repr(appscriptpath))
         #text = text.replace('###SHAREDINPUTPATH###',repr(sharedinputpath))
-	
+        
         logger.debug('subjob input sandbox %s ',subjob_input_sandbox)
         logger.debug('master input sandbox %s ',master_input_sandbox)
-	
-	text = text.replace('###INPUT_SANDBOX###',repr(subjob_input_sandbox+master_input_sandbox))
+        
+        text = text.replace('###INPUT_SANDBOX###',repr(subjob_input_sandbox+master_input_sandbox))
         text = text.replace('###SHAREDOUTPUTPATH###',repr(sharedoutputpath))
         text = text.replace('###OUTPUTPATTERNS###',repr(outputpatterns))
         text = text.replace('###JOBID###',repr(self.getJobObject().getFQID('.')))
-	text = text.replace('###ENVIRONMENT###',repr(environment))
+        text = text.replace('###ENVIRONMENT###',repr(environment))
         text = text.replace('###PREEXECUTE###',self.config['preexecute'])
         text = text.replace('###POSTEXECUTE###',self.config['postexecute'])
         text = text.replace('###JOBIDNAME###',self.config['jobid_name'])
@@ -469,8 +469,8 @@ sys.exit(result)
                     if pid or queue:
                         j.updateStatus('running')
 
-			if pid:
-	                    j.backend.id = pid
+                        if pid:
+                            j.backend.id = pid
                         if queue and queue != j.backend.actualqueue:
                             j.backend.actualqueue = queue
                 exitcode = get_exit_code(statusfile)
@@ -540,8 +540,8 @@ class LSF(Batch):
     def __init__(self):
         super(LSF,self).__init__()
 
-	
-		
+        
+                
 #____________________________________________________________________________________
         
 config = Ganga.Utility.Config.makeConfig('PBS','internal PBS command line interface')
@@ -582,7 +582,7 @@ class PBS(Batch):
     config = Ganga.Utility.Config.getConfig('PBS')
     def __init__(self):
         super(PBS,self).__init__()
-		
+                
 
 #____________________________________________________________________________________
         
@@ -628,4 +628,4 @@ class SGE(Batch):
     config = Ganga.Utility.Config.getConfig('SGE')
     def __init__(self):
         super(SGE,self).__init__()
-		
+                

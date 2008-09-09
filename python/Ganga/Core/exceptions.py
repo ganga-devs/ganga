@@ -1,14 +1,14 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: exceptions.py,v 1.1 2008-07-17 16:40:49 moscicki Exp $
+# $Id: exceptions.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ################################################################################
 
 
 class GangaException(Exception):
     """ Markup base class for well-behaved exception that should not print the whole traceback to user's prompt
-	Any subclass of this exception is handled by a custom IPython exception handler
-	and is printed out in an usable format to iPython prompt
+        Any subclass of this exception is handled by a custom IPython exception handler
+        and is printed out in an usable format to iPython prompt
     """
 
     def __init__(self,*args,**kwds):
@@ -17,8 +17,8 @@ class GangaException(Exception):
 
     def __str__(self):
         """
-	 String representation of this class
-	"""
+         String representation of this class
+        """
         _str = "%s: " % self.__class__.__name__
         if hasattr(self,'args') and self.args:
             _str +=" %s" % str(self.args)
@@ -102,10 +102,34 @@ class JobManagerError(GangaException):
     def __str__(self):
         return "JobManagerError: %s" % str(self.msg)
 
+class GangaAttributeError(AttributeError,GangaException):
+    def __init__(self,*a,**k): AttributeError.__init__(self,*a,**k)
+    
+class ProtectedAttributeError(GangaAttributeError):
+    'Attribute is read-only and may not be modified by the user (for example job.id)'
+    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
+
+
+class ReadOnlyObjectError(GangaAttributeError):
+    'Object cannot be modified (for example job in a submitted state)'
+    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
+
+
+class TypeMismatchError(GangaAttributeError):
+    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
+
+
+class SchemaError(GangaAttributeError):
+    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
 
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:40:49  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.20.4.1  2008/03/04 14:49:03  amuraru
 # make RepositoryError a GangaException
 #

@@ -9,7 +9,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 class StoreTestApplication(IApplication):
-    _schema = Schema(Version(1,0), {'factor':SimpleItem(defvalue=10),'shared_config':SimpleItem(defvalue=None,protected=True,copyable=False), 'specific_config' : SimpleItem(defvalue=None,protected=True,copyable=False)} )
+    _schema = Schema(Version(1,0), {'factor':SimpleItem(defvalue=10),'shared_config':SimpleItem(defvalue=0,protected=True,copyable=False), 'specific_config' : SimpleItem(defvalue=0,protected=True,copyable=False)} )
 
     _category = 'applications'
     _name = 'StoreTestApplication'
@@ -47,8 +47,8 @@ class StoreTestSplitter(ISplitter):
 # This backend just stores to job config objects.
 
 class StoreTestBackend(IBackend):
-    _schema = Schema(Version(1,0), {'shared_config' : SimpleItem(defvalue=None,protected=True,copyable=True),
-                                    'specific_config' : SimpleItem(defvalue=None,protected=True,copyable=True),
+    _schema = Schema(Version(1,0), {'shared_config' : SimpleItem(defvalue=0,protected=True,copyable=True),
+                                    'specific_config' : SimpleItem(defvalue=0,protected=True,copyable=True),
                                     })
 
     _category = 'backends'

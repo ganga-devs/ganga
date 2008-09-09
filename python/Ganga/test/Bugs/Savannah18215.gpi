@@ -15,26 +15,26 @@ def goto_state(j,dest):
 
 j = Job()
 goto_state(j,'submitting')
-j.fail()
+j.force_status("failed")
 j.remove()
 
 j = Job()
 goto_state(j,'completing')
-j.fail()
+j.force_status("failed")
 j.remove()
 
 j = Job()
 goto_state(j,'completed')
-j.fail()
+j.force_status("failed")
 j.remove()
 
 j = Job()
 goto_state(j,'failed')
-j.fail
+j.force_status("failed")
 j.remove()
 
 j = Job()
 goto_state(j,'killed')
-j.fail()
+j.force_status("failed")
 j.remove()
 

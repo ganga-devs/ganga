@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
+# $Id: Objects.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -250,6 +250,7 @@ class Descriptor(object):
         #self._check_getter()
         del obj._data[self._name]
 
+
 class ObjectMetaclass(type):
     _descriptor = Descriptor
     def __init__(cls, name, bases, dict):
@@ -294,10 +295,16 @@ class ObjectMetaclass(type):
             logger.warning('Possible schema clash in class %s between %s and %s',name,cls._name,cls._schema._pluginclass._name)
 
         # export visible properties... do not export hidden properties
-        for attr, item in cls._schema.allItems():
+        for attr, item in cls._schema.allItems():            
             setattr(cls, attr, cls._descriptor(attr, item))
             if not item['hidden']:
                 setattr(proxyClass, attr, ProxyDataDescriptor(attr))
+
+        # additional check of type
+        # bugfix #40220: Ensure that default values satisfy the declared types in the schema
+        for attr, item in cls._schema.simpleItems():
+            if not item['getter']:
+                item._check_type(item['defvalue'],'.'.join([name,attr]),enableGangaList=False)
 
         # create reference in schema to the pluginclass
         cls._schema._pluginclass = cls
@@ -469,6 +476,11 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:40:52  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.27.4.10  2008/03/31 15:30:26  kubam
 # More flexible internal logic of hiding the plugin classes derived from GangaObject:
 #

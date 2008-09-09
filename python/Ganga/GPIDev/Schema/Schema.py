@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Schema.py,v 1.1 2008-07-17 16:40:55 moscicki Exp $
+# $Id: Schema.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -365,6 +365,71 @@ class Item:
         txt = " default="+repr(self['defvalue'])+txt
         if self['sequence']: txt = " list," + txt
         return txt
+
+    def _check_type(self, val, name, enableGangaList=True):
+        from Ganga.Core import GangaAttributeError,ProtectedAttributeError,ReadOnlyObjectError,TypeMismatchError,SchemaError
+
+        if enableGangaList:
+            from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        else:
+            GangaList = list
+            
+        item = self
+
+        # type checking does not make too much sense for Component Items because component items are
+        # always checked at the object (_impl) level for category compatibility
+        
+        if item.isA(ComponentItem):
+            return
+
+        validTypes = item._meta['typelist']
+
+        # setting typelist explicitly to None results in disabling the type checking completely
+        if validTypes is None:
+            return
+                
+        def check(isAllowedType):
+            if not isAllowedType:
+                raise TypeMismatchError( 'Attribute "%s" expects a value of the following types: %s' % ( name, validTypes ) )
+
+        if item._meta['sequence']:
+            if not isinstance( item._meta['defvalue'], (list,GangaList) ):
+                raise SchemaError( 'Attribute "%s" defined as a sequence but defvalue is not a list.' % name )
+                
+            if not isinstance( val, (GangaList,list) ):
+                raise TypeMismatchError( 'Attribute "%s" expects a list.' % name )
+
+        if validTypes:
+            if item._meta[ 'sequence' ]:
+                
+                for valItem in val:
+                    if not valueTypeAllowed( valItem, validTypes ):
+                        raise TypeMismatchError( 'List entry %s for %s is invalid. Valid types: %s' % ( valItem, name, validTypes ) )
+
+                    
+                return
+            else: # Non-sequence
+                if isinstance( item._meta['defvalue'], dict ):
+                    if isinstance( val, dict ):
+                        for dKey, dVal in val.iteritems():
+                            if not valueTypeAllowed( dKey, validTypes ) or not valueTypeAllowed( dVal, validTypes ):
+                                raise TypeMismatchError( 'Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % ( dKey, dVal, name, validTypes ) )
+                    else: # new value is not a dict
+                        raise TypeMismatchError( 'Attribute "%s" expects a dictionary.' % name )
+                    return
+                else: # a 'simple' (i.e. non-dictionary) non-sequence value
+                    check(valueTypeAllowed( val, validTypes ))
+                    return
+
+        # typelist is not defined, use the type of the default value
+        if item._meta['defvalue'] is None:
+            logger.warning('type-checking disabled: type information not provided for %s, contact plugin developer',name)
+        else:
+            if item._meta['sequence']:
+                logger.warning('type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer',name)
+            else:
+                check(isinstance( val, type(item._meta['defvalue']) ))
+
     
 class ComponentItem(Item):
     # schema user of a ComponentItem cannot change the forced values below
@@ -384,6 +449,11 @@ class ComponentItem(Item):
     def _describe(self):
         return "'"+self['category']+"' object,"+Item._describe(self)
 
+from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
+valueTypeAllowed = lambda val,valTypeList: _valueTypeAllowed(val,valTypeList,logger)
+
+
+
 class SimpleItem(Item):
     def __init__(self,defvalue,typelist=[],**kwds):
         Item.__init__(self)
@@ -394,6 +464,10 @@ class SimpleItem(Item):
     def _describe(self):
         return 'simple property,' + Item._describe(self)
 
+
+#    def type_match(self,v):
+#        return (self['sequence'] and v == []) or \
+#               (not self['typelist'] or valueTypeAllowed( v, self['typelist']))
 
 ## class BindingItem(Item):
 ##     _forced = {'transient' : 1, 'sequence' : 0, 'defvalue' : None, 'copyable' : 0}
@@ -499,6 +573,11 @@ if __name__=='__main__':
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:40:55  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.15.26.8  2008/05/15 06:31:38  moscicki
 # # bugfix 36398: allow to assign a list in the configuration
 #
