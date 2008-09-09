@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.4 2008-09-09 14:37:16 moscicki Exp $
+# $Id: Job.py,v 1.5 2008-09-09 14:51:14 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -808,8 +808,9 @@ class Job(GangaObject):
         logger.info('resubmitting job %s',fqid)
 
         if not self.status in ['completed','failed','killed']:
-            logger.warning("cannot resubmit job %s which is in '%s' state",fqid,self.status)
-            return 0
+            msg = "cannot resubmit job %s which is in '%s' state"%(fqid,self.status)
+            logger.warning(msg)
+            raise JobError(msg)
 
         oldstatus = self.status
 
@@ -818,9 +819,10 @@ class Job(GangaObject):
         try:
             self._commit()
         except Exception,x:
-            logger.warning('cannot commit the job %s, resubmission aborted',fqid)
+            msg = 'cannot commit the job %s, resubmission aborted'%fqid
+            logger.warning(msg)
             self.status = oldstatus
-            return 0
+            raise JobError(msg)
 
         try:
             rjobs = self.subjobs
@@ -836,13 +838,12 @@ class Job(GangaObject):
             self.info.increment()
             self.status = 'submitted' # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
             self._commit() # make sure that the status change goes to the repository
-            return True
         except GangaException,x:
             logger.warning("failed to resubmit job, %s" % (str(x),))
             logger.warning('reverting job %s to the %s status', fqid, oldstatus )
             self.status = oldstatus
             self._commit() #PENDING: what to do if this fails?
-            return False
+            raise
 
     def _commit(self,objects=None):
         """ Helper method to unconditionally commit to the repository. The 'objects' list specifies objects
@@ -964,6 +965,11 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/09/09 14:37:16  moscicki
+# bugfix #40220: Ensure that default values satisfy the declared types in the schema
+#
+# factored out type checking into schema module, fixed a number of wrongly declared schema items in the core
+#
 # Revision 1.3  2008/08/18 13:18:58  moscicki
 # added force_status() method to replace job.fail(), force_job_failed() and
 # force_job_completed()
