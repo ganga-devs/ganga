@@ -73,6 +73,10 @@ then
 fi
 
 ################################################
+# setup DQ2Client environment
+dq2client_setup
+
+################################################
 # setup CMT environment
 cmt_setup
 
@@ -147,6 +151,10 @@ fi
 export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 
 retcode=0
+
+################################################
+# check proxy info 
+check_voms_proxy
 
 ################################################
 # prepare/staging input data

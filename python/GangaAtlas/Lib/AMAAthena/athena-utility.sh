@@ -28,6 +28,13 @@ resolve_tmpdir () {
     fi
 }
 
+## function for checking voms proxy information
+check_voms_proxy() {
+    echo "== voms-proxy-info -all =="
+    voms-proxy-info -all
+    echo "===="
+}
+
 ## function for printing WN env. info 
 print_wn_info () {
     echo "== hostname =="
@@ -87,11 +94,25 @@ cmt_setup () {
         fi
     fi
 
+
     # print relevant env. variables for debug 
     echo "CMT setup:"
     env | grep 'CMT'
     echo "SITE setup:"
     env | grep 'SITE'
+}
+
+## function for setting up pre-installed dq2client tools on WN
+dq2client_setup () {
+
+    if [ ! -z $DQ2_CLIENT_VERSION ]; then
+        source $VO_ATLAS_SW_DIR/ddm/$DQ2_CLIENT_VERSION/setup.sh
+    fi
+  
+    # check configuration
+    echo "DQ2CLIENT setup:"
+    env | grep 'DQ2_'
+    which dq2-ls
 }
 
 ## function for getting grid proxy from a remote endpoint 
