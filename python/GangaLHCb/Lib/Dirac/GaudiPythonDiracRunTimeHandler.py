@@ -11,6 +11,8 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+import DiracShared
+
 class GaudiPythonDiracRunTimeHandler(IRuntimeHandler):
     '''The runtime handler to run Gaudi jobs on the Dirac backend'''
 
@@ -54,9 +56,9 @@ class GaudiPythonDiracRunTimeHandler(IRuntimeHandler):
 
         c = StandardJobConfig( runScript,sandbox,[],outsb,None)
         
-        diracScript.addPackage(app.project, app.version)
-        diracScript.setExecutable(logFile)
         diracScript.platform(app.platform)
+        diracScript.runApplicationScript(app.project, app.version,\
+                                         DiracShared.getGenericRunScript(),logFile)
         diracScript.setName("Ganga_GaudiPython")
         if job.inputdata:
             diracScript.inputdata([x.name for x in job.inputdata.files])

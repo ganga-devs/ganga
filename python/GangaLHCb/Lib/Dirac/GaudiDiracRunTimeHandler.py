@@ -11,6 +11,8 @@ from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+import DiracShared
+
 class GaudiDiracRunTimeHandler(IRuntimeHandler):
     '''The runtime handler to run Gaudi jobs on the Dirac backend'''
 
@@ -60,9 +62,9 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         
         logFile = '%s_%s.log' % (app._name, app.version)
         
-        diracScript.addPackage(app._name, app.version)
         diracScript.platform(app.platform)
-        diracScript.setExecutable(logFile)
+        diracScript.runApplicationScript(app._name, app.version,\
+                                         DiracShared.getGenericRunScript(),logFile)
         diracScript.setName( 'Ganga_%s_%s' % (app._name, app.version) )
         diracScript.inputdata( app.extra.inputdata)
 
@@ -80,7 +82,7 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         '''Create the script that will be executed.'''
 
 #        commandline = '\'$GAUDIROOT/scripts/gaudirun.py options.pkl dataopts.py\''
-        commandline = '\'$GAUDIROOT/scripts/gaudirun.py options.pkl dataopts.opts\''
+        commandline = "'gaudirun.py options.pkl dataopts.opts'"
         logger.debug( 'Command line: %s: ', commandline )
 
         # Write a wrapper script

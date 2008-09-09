@@ -6,6 +6,8 @@ from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+import DiracShared
+
 class RootDiracRunTimeHandler(IRuntimeHandler):
     """The runtime handler to run ROOT jobs on the Dirac backend"""
 
@@ -43,8 +45,8 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
         version=RootVersions.getDaVinciVersion(app.version)
         
         diracScript.platform(architecture)
-        diracScript.addPackage('DaVinci',version)
-        diracScript.setExecutable(logFile)
+        diracScript.runApplicationScript('DaVinci',version,\
+                                         DiracShared.getGenericRunScript(),logFile)
         diracScript.setName('Ganga_ROOT_%s' % app.version)
 
         if job.inputdata:

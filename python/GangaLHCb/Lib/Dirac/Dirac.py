@@ -87,7 +87,7 @@ the DIRAC WMS'''),
             'statusInfo' : SimpleItem(defvalue='', protected=1, copyable=0,
                                    doc='''Minor status information from Dirac''')})
 
-    _exportmethods = ['getOutput','getOutputData']
+    _exportmethods = ['getOutput','getOutputData','peek']
     _packed_input_sandbox = True
 
     _category="backends"
@@ -223,6 +223,23 @@ if not result.get('OK',False): rc = -1
             fqid=job.getFQID('.')
             raise BackendError('Dirac', "Could not kill job %s. Try with a higher Dirac Log level set." % fqid)
         return 1
+    
+    def peek(self):
+        """Peek at the output of a job"""
+        command = """
+result = dirac.peek(%i)
+if not result.get('OK',False): rc = -1
+storeResult(result)        
+        """ % self.id
+        
+        rc = diracwrapper(command)
+        result = DiracShared.getResult()
+
+        if result is not None and result.get('OK',False):
+            print result['Value']
+        else:
+            logger.error("No peeking available for Dirac job '%i'.", self.id)
+    
     
     def getOutput(self,dir=os.curdir):
         """Retrieve the outputsandbox from the DIRAC WMS. The dir argument gives the directory the the sandbox will be retrieved into"""
@@ -637,6 +654,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.2.2.1  2008/09/05 10:20:30  wreece
+## First steps for Dirac 3 port. Submission of root jobs works, as does monitoring.
+##
 ## Revision 1.2  2008/08/07 22:07:47  uegede
 ## Added a GaudiPython application handler with runtime handlers for Local/Batch
 ## and for DIRAC.

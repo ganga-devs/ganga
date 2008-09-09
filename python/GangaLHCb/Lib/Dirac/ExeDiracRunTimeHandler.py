@@ -1,6 +1,8 @@
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
+import DiracShared
+
 class ExeDiracRunTimeHandler(IRuntimeHandler):
     """The runtime handler to run plain executables on the Dirac backend"""
 
@@ -24,7 +26,7 @@ class ExeDiracRunTimeHandler(IRuntimeHandler):
         c = StandardJobConfig(app.exe,[],app.args,
                               app._getParent().outputsandbox,app.env)
         logFile = 'GangaExcutable.log'
-        diracScript.setExecutable(logFile)
+        diracScript.setExecutable(logFile = logFile, command = DiracShared.getGenericRunScript())
         diracScript.setName("Ganga_Executable")
 
         if job.inputdata:

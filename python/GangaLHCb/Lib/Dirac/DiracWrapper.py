@@ -47,7 +47,7 @@ def diracwrapper(command, getoutput = False):
   require a modified environment"""
   import os,os.path,stat
   content="""#!/bin/env python
-import sys
+import sys, os
 import warnings
 warnings.filterwarnings(action="ignore", category=RuntimeWarning)
 
