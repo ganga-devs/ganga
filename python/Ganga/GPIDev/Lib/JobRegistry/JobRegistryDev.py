@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.4 2008-08-25 08:16:19 moscicki Exp $
+# $Id: JobRegistryDev.py,v 1.5 2008-09-09 12:18:25 moscicki Exp $
 ################################################################################
 
 
@@ -161,9 +161,16 @@ class JobRegistryInstanceInterface:
 
         def select_by_range(j):
             return minid <= j.id <= maxid
-        
+
+        def is_container(c):
+            try:
+                0 in c
+            except: return False
+            else: return True
+            
         ids = None
-        if type(minid) is type([]):
+        
+        if is_container(minid):
             ids = minid
             select = select_by_list
         else:
@@ -613,6 +620,12 @@ class JobRegistryInstance(JobRegistryInstanceBase):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/08/25 08:16:19  moscicki
+# fixed problems found in 5.0.6-pre:
+#
+#  - jobs.select() repr problem
+#  - VirtualOrganisation should not be set in test config files, it should be set in the ~/.gangarc of the release manager
+#
 # Revision 1.3  2008/08/18 15:51:10  moscicki
 # jobs.select([ids]) added
 #
