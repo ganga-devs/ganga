@@ -8,3 +8,5 @@ assert fName == storeResult(result), 'Result is stored and the filename returned
 
 assert result == getResult(), 'Must correctly reload the result'
 assert getResult() is None, 'File no longer exists and so must return None'
+
+assert getGenericRunScript(), 'Must return something sensible'
