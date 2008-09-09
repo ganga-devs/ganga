@@ -1,0 +1,28 @@
+## CHANGE: "myattr" replaced by "name" because it is not possible to assign random attributes anymore
+j = Job()
+j.name = 'hello'
+j.application = Executable(exe=File('my.exe'))
+assert(len(jobs) == 1)
+
+# make sure job.copy() duplicates the attributes but not the internal state (id)
+j2 = j.copy()
+assert(j2.name == 'hello')
+assert(j2.application.exe == File('my.exe'))
+assert(j2.id != j.id)
+assert(j2.id > j.id) # internal assumption (implementation dependent)
+
+# make sure interface objects are not shared
+assert(j.application is not j2.application)
+assert(j.backend is not j2.backend)
+
+# make sure properties are not shared between the copies
+j.name = '1'
+j.application.exe = 'exe1'
+j2.name = '2'
+j2.application.exe = 'exe2'
+
+assert(j.name == '1')
+assert(j2.name == '2')
+assert(j.application.exe == 'exe1')
+assert(j2.application.exe == 'exe2')
+
