@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GenericSplitter.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
+# $Id: GenericSplitter.py,v 1.2 2008-09-09 15:11:35 moscicki Exp $
 ###############################################################################
 
 import inspect
@@ -42,8 +42,8 @@ class GenericSplitter(ISplitter):
     """    
     _name = "GenericSplitter"
     _schema = Schema(Version(1,0), {
-        'attribute' : SimpleItem(defvalue=None,doc='The attribute on which the job is splitted'),
-        'values' : SimpleItem(defvalue=[],typelist=['list','Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'],checkset="_checkset_values",sequence=1,doc='A list of the values corresponding to the attribute of the subjobs')
+        'attribute' : SimpleItem(defvalue='',doc='The attribute on which the job is splitted'),
+        'values' : SimpleItem(defvalue=[],typelist=None,checkset="_checkset_values",sequence=1,doc='A list of the values corresponding to the attribute of the subjobs')
         } )
 
     def _checkset_values(self, value):
@@ -74,6 +74,11 @@ class GenericSplitter(ISplitter):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:41:00  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.3.4.3  2008/07/03 08:36:16  wreece
 # Typesystem fix for Splitters
 #
