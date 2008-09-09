@@ -92,6 +92,12 @@ djob = LHCbJob()
         self.append("setExecutable('%s', logFile = '%s')" % (command, logFile))
     else:
         self.append("setExecutable('%s')" % command)
+        
+  def runApplicationScript(self, appName, appVersion, scriptFile, logFile = None):
+    if logFile is not None:
+        self.append("setApplicationScript('%s','%s','%s', logFile = '%s')" % (appName,appVersion,scriptFile,logFile))
+    else:
+        self.append("setApplicationScript('%s','%s','%s')" % (appName,appVersion,scriptFile))
 
   def finalise(self, submit = True):
     """Write the actual submission bit into the DIRACscript"""
