@@ -232,8 +232,8 @@ if not result.get('OK',False): rc = -1
 storeResult(result)        
         """ % self.id
         
-        rc = diracwrapper(command)
-        result = DiracShared.getResult()
+        dw = diracwrapper(command)
+        result = dw.getOutput()
 
         if result is not None and result.get('OK',False):
             print result['Value']
@@ -654,6 +654,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.2.2.2  2008/09/09 15:08:07  wreece
+## Gaudi, Executable and Root jobs seem to work fine. GaudiPython still not really working fine.
+##
 ## Revision 1.2.2.1  2008/09/05 10:20:30  wreece
 ## First steps for Dirac 3 port. Submission of root jobs works, as does monitoring.
 ##

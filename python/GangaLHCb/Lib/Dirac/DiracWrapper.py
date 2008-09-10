@@ -42,14 +42,32 @@ s = Shell(diracEnvSetup,setup_args = [configLHCb['DiracTopDir']])
 for key, item in _varKeep.iteritems():
     environ[key] = item
 
-def diracwrapper(command, getoutput = False):
+class _DiracWrapper(object):
+    
+    def __init__(self):
+        
+        import tempfile
+        self.outputFile = tempfile.mktemp('.p')
+        self.returnCode = 0
+        self.stdout = ''
+    
+    def getOutput(self):
+        return DiracShared.getResult(self.outputFile)
+
+
+def diracwrapper(command):
   """This is a wrapper script for executing DIRAC API commands that
   require a modified environment"""
   import os,os.path,stat
+
+  dwrapper = _DiracWrapper()
+  
   content="""#!/bin/env python
 import sys, os
 import warnings
 warnings.filterwarnings(action="ignore", category=RuntimeWarning)
+
+__outputFileName = '%(###OUTPUT###)s'
 
 %(###SHARED###)s
 
@@ -64,25 +82,61 @@ gLogger.setLevel('%(###LEVEL###)s')
 
 dirac = Dirac()
 %(###COMMAND###)s
+
 sys.exit(rc)
-        """ % {'###COMMAND###':command,'###LEVEL###':configDirac['DiracLoggerLevel'],'###SHARED###':inspect.getsource(DiracShared)}
+        """ % {'###COMMAND###':command,'###LEVEL###':configDirac['DiracLoggerLevel'],\
+               '###SHARED###':inspect.getsource(DiracShared),'###OUTPUT###':dwrapper.outputFile}
+        
+  wrapper = """#!/bin/env python
+import sys, os
+
+__outputFileName = '%(###OUTPUT###)s'
+%(###SHARED###)s
+  
+command = '''
+%(###CONTENT###)s
+'''
+
+#write out the script and exec
+try:
+    import tempfile
+    fName = tempfile.mktemp('.py')
+    try:
+        outfile = file(fName,'w')
+        outfile.write(command)
+        outfile.close()
+        execfile(fName)
+    finally:
+        outfile.close()
+        if os.path.exists(fName):
+            os.unlink(fName)
+except SystemExit, e:
+    #try to exit with the correct return code, but don't worry if not
+    try:
+        sys.exit(int(str(e)))
+    except:
+        pass
+except Exception, e:
+    result = {'OK':False,'Exception':str(e)}
+    try:
+        result['Type'] = e.__class__.__name__
+    except:
+        pass
+    storeResult(result)
+  """ % {'###CONTENT###':content,'###SHARED###':inspect.getsource(DiracShared),'###OUTPUT###':dwrapper.outputFile}
 
   fname = tempfile.mktemp('.py')
   f = open(fname,'w')
-  f.write(content)
+  f.write(wrapper)
   f.close()
   os.chmod(fname,stat.S_IRWXU)
-  if getoutput:
-      rc,output,m = s.cmd1(fname)
-  else:
-      rc,output,m = s.cmd(fname)
   
-  result = rc
-  if getoutput:
-      result = (rc,output)
-  
+  rc,output,m = s.cmd1(fname)
+      
+  dwrapper.returnCode = rc
+  dwrapper.stdout = output
+  print 'exec',rc, fname
   if rc==0:
-      os.unlink(fname)
-      if not getoutput:
-          os.unlink(output)
-  return result
+      pass
+      #os.unlink(fname)
+  return dwrapper

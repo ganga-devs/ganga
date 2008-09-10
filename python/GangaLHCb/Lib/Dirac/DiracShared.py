@@ -1,13 +1,17 @@
 #file for functions shared between scripts and the main code
 
 def getPickleFileName():
-    """Always use the same temp file for getting results from dirac"""
     import os
-    return os.path.join(os.path.expanduser('~'),'.__tmpGangaPickle__%s.p' % os.path.expandvars('$USER'))
+    try:
+        return __outputFileName
+    except NameError:
+        return os.path.join(os.path.expanduser('~'),'.__tmpGangaPickle__%s.p' % os.path.expandvars('$USER'))
   
-def storeResult(result, retry_count = 0):
+def storeResult(result, fName = None, retry_count = 0):
     import pickle, os, time
-    fName = getPickleFileName()
+    
+    if fName is None:
+        fName = getPickleFileName()
     
     #if the file exists then hold off a little while
     if os.path.exists(fName):
@@ -15,7 +19,7 @@ def storeResult(result, retry_count = 0):
         time.sleep(2) #sleep for a second
         if retry_count < 6:
             #file is locked so wait... and try again
-            storeResult(result, retry_count + 1)
+            storeResult(result, retry_count = retry_count + 1)
         else:
             #file needs to be cleaned up
             try:
@@ -30,23 +34,26 @@ def storeResult(result, retry_count = 0):
         out.close()
     return fName
 
-def getResult():
+def getResult(fName = None):
     import pickle, os
-    fName = getPickleFileName()
+    if fName is None:
+        fName = getPickleFileName()
     
     if not os.path.exists(fName):
         return None
     
+    result = None
     infile = file(fName,'rb')
     try:
         result = pickle.load(infile)
     finally:
         infile.close()
-        
-    try:
-        os.unlink(fName)
-    except:
-        pass
+
+    if result is not None and not result.get('OK',False):
+        try:
+            os.unlink(fName)
+        except:
+            pass
     return result
 
 #recursive lister for directories

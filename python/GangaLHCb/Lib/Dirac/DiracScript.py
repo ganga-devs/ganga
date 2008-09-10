@@ -32,16 +32,13 @@ class DiracScript:
 # to DIRAC. Do not edit unless you ***really*** know what you are doing.
 # The variable "id" is passed back to Ganga.
 
-%(###SHARED###)s
-
 id = None
 
 from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.LHCbSystem.Client.LHCbJob import LHCbJob
 
 djob = LHCbJob()
-""" % {'###SHARED###':inspect.getsource(DiracShared)}
-  
+"""  
   def append(self,command):
     """Append a command to the DIRAC script for setting up the job"""
     if self.finalised:
@@ -106,6 +103,8 @@ djob = LHCbJob()
         self.finalised=True
         self.script+="""mydirac = Dirac()
 submit = %(#SUBMIT#)i
+
+result = {}
 try:
     if submit: result = mydirac.submit(djob)
 except:
@@ -124,6 +123,7 @@ storeResult(result)
     """Persist the DIRACscript into the input workspace"""
     inputws=job.getInputWorkspace()
     fname=join(inputws.getPath(),'DIRACscript')
+
     if not self.finalised:
       self.finalise(submit)
     f = open(fname,'w')
@@ -135,16 +135,22 @@ storeResult(result)
   def execute(self, submit=True):
     """Execute the DIRACscript and report back id."""
     from Ganga.Core import BackendError
-    scriptdict={'submit':submit}
     if not self.finalised:
       self.finalise(submit)
       
     from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
-    id = 0
+    id = None
     try:
-      rc = diracwrapper(self.script)
-      result = DiracShared.getResult()
-      if result.get('OK',False): id = result['Value']
+      dw = diracwrapper(self.script)
+      result = dw.getOutput()
+      if result is not None:
+          if result.get('OK',False):
+              id = result['Value']
+          else:
+              if result.has_key('Exception'):
+                  logger.warning("'%s': %s", result.get('Type',''), result['Exception'])
+                  raise BackendError("DIRAC", "Problems executing the DIRAC script.") 
+
     except Exception, detail:
       logger.warning(str(detail))
       logger.warning(self.commands())
