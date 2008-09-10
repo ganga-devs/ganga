@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.3 2008-08-04 14:22:52 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.4 2008-09-10 15:02:20 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -163,6 +163,7 @@ class AthenaMCInputDatasets(Dataset):
 
     # content = [ ]
     # content_tag = [ ]
+
     
     def __init__(self):
         super( AthenaMCInputDatasets, self ).__init__()
@@ -230,16 +231,15 @@ class AthenaMCInputDatasets(Dataset):
                 logger.error("datasetType set to local but no local path declared in LFCpath. Aborting")
                 raise
 
-
         if not dataset and not path:
             # set up default values: DQ2 dataset with automatic naming conventions
             if app.mode=='simul':
-                dataset = "users.%s.ganga.datafiles.%s.%6.6d.%s.evgen.EVNT" % (username,app.production_name,int(app.run_number),app.process_name)
+                dataset = "%s.%s.ganga.datafiles.%s.%6.6d.%s.evgen.EVNT" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
             elif app.mode=="recon":
                 if app.transform_script=="csc_recoAOD_trf.py":
-                    dataset = "users.%s.ganga.datafiles.%s.%6.6d.%s.recon.ESD" % (username,app.production_name,int(app.run_number),app.process_name)
+                    dataset = "%s.%s.ganga.datafiles.%s.%6.6d.%s.recon.ESD" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
                 else:
-                    dataset = "users.%s.ganga.datafiles.%s.%6.6d.%s.simul.RDO" % (username,app.production_name,int(app.run_number),app.process_name)
+                    dataset = "%s.%s.ganga.datafiles.%s.%6.6d.%s.simul.RDO" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
             if app.version:
                 dataset+="."+str(app.version)
             datasetType="DQ2" # force datasetType to be DQ2 as this is the default mode.
@@ -708,7 +708,7 @@ class AthenaMCOutputDatasets(Dataset):
                 continue
 
         # done with file prefixes. Now generatig datasets out of them...
-        datasetbase="users.%s." % username
+        datasetbase="%s.%s." % (_usertag,username)
         if job.outputdata.output_dataset and string.find(job.outputdata.output_dataset,",")<0:
             dataset=datasetbase+job.outputdata.output_dataset
             if app.se_name != "local":
@@ -733,12 +733,12 @@ class AthenaMCOutputDatasets(Dataset):
             if job.outputdata.outdirectory:
                 outputpaths[type]=job.outputdata.outdirectory
             elif job.outputdata.output_dataset and string.find(job.outputdata.output_dataset,",")<0:
-                outputpaths[type]="/users/%s/%s" % (username,job.outputdata.output_dataset)
+                outputpaths[type]="/%s/%s/%s" % (_usertag,username,job.outputdata.output_dataset)
             else:
                 if type=="logfile":
-                    outputpaths[type]="/users/%s/ganga/logfiles/%s"  % (username,fileprefixes[type])
+                    outputpaths[type]="/%s/%s/ganga/logfiles/%s"  % (_usertag,username,fileprefixes[type])
                 else:
-                    outputpaths[type]="/users/%s/ganga/datafiles/%s"% (username,fileprefixes[type]) 
+                    outputpaths[type]="/%s/%s/ganga/datafiles/%s"% (_usertag,username,fileprefixes[type]) 
         return fileprefixes,outputpaths
         
         
@@ -1023,8 +1023,9 @@ logger = getLogger()
 
 from Ganga.Utility.Config import makeConfig, ConfigError
 config = makeConfig('AthenaMCDatasets', 'AthenaMCDatasets configuration options')
+config.addOption('usertag','user','user tag for a given data taking period')
+_usertag=config['usertag']
 
-   
 from dq2.clientapi.DQ2 import DQ2
 dq2=DQ2()
 
@@ -1036,6 +1037,7 @@ logger = getLogger()
 
 from Ganga.Utility.Config import getConfig, ConfigError
 configDQ2 = getConfig('DQ2')
+
 
 try:
    configDQ2['DQ2_URL_SERVER']
@@ -1055,5 +1057,4 @@ except ConfigError:
 baseURLDQ2 = configDQ2['DQ2_URL_SERVER']
 baseURLDQ2SSL = configDQ2['DQ2_URL_SERVER_SSL']
    
-
 
