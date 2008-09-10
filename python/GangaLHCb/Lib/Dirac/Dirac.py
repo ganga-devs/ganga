@@ -218,7 +218,7 @@ the DIRAC WMS'''),
 result = dirac.kill(%i)
 if not result.get('OK',False): rc = -1
         """ % self.id
-        if diracwrapper(command) != 0:
+        if diracwrapper(command).returnCode != 0:
             job=self.getJobObject()
             fqid=job.getFQID('.')
             raise BackendError('Dirac', "Could not kill job %s. Try with a higher Dirac Log level set." % fqid)
@@ -285,10 +285,10 @@ for i in range(2):
         break
 """ % (dir, self.id)
         
-        rc = diracwrapper(command)
-        result = DiracShared.getResult()
+        dw = diracwrapper(command)
+        result = dw.getOutput()
         
-        if rc != 0 or (result is None) or (result is not None and not result.get('OK',False)):
+        if dw.returnCode != 0 or (result is None) or (result is not None and not result.get('OK',False)):
             job = self.getJobObject()
             fqid = job.getFQID('.')
             if result is None: result = {}
@@ -550,11 +550,11 @@ if not result.get('OK',False): rc = -1
 storeResult(result)
         """ % str(djobids)
             
-            rc = diracwrapper(command)
-            result = DiracShared.getResult()
+            dw = diracwrapper(command)
+            result = dw.getOutput()
             
             statusList = []
-            if result is None or rc != 0:
+            if result is None or dw.returnCode != 0:
                 logger.warning('No monitoring information could be obtained, and no reason was given.')
                 return statusList
             
@@ -654,6 +654,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.2.2.3  2008/09/10 12:20:26  wreece
+## Improves script submission
+##
 ## Revision 1.2.2.2  2008/09/09 15:08:07  wreece
 ## Gaudi, Executable and Root jobs seem to work fine. GaudiPython still not really working fine.
 ##

@@ -11,19 +11,19 @@ sys.exit(result)
 """
 
 
-assert diracwrapper(command) == 0, 'Dirac python run'
+assert diracwrapper(command).returnCode == 0, 'Dirac python run'
 
 #check the log level is properly set
 config.DIRAC.DiracLoggerLevel = 'FATAL'
 command = """
 gLogger.info('HERE IS SOME INFO')
 """
-rc,output = diracwrapper(command, getoutput = True)
-assert not 'HERE IS SOME INFO' in output, 'Dirac logging info not printed'
+dw = diracwrapper(command)
+assert not 'HERE IS SOME INFO' in dw.stdout, 'Dirac logging info not printed'
 
 config.DIRAC.DiracLoggerLevel = 'INFO'
 command = """
 gLogger.info('HERE IS SOME INFO')
 """
-rc,output = diracwrapper(command, getoutput = True)
-assert 'HERE IS SOME INFO' in output, 'Dirac logging info printed'
+dw = diracwrapper(command)
+assert 'HERE IS SOME INFO' in dw.stdout, 'Dirac logging info printed'

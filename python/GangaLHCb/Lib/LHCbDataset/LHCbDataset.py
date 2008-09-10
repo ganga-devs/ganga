@@ -166,10 +166,10 @@ result = dirac.getReplicas(%s)
 if not result.get('OK',False): rc = -1
 storeResult(result)
         """ % str(lfns)
-        rc = diracwrapper(command)
-        result = DiracShared.getResult()
+        dw = diracwrapper(command)
+        result = dw.getOutput()
         
-        if rc != 0 or result is None or (result is not None and not result['OK']):
+        if dw.returnCode != 0 or result is None or (result is not None and not result['OK']):
             logger.warning('The LFC query did not return cleanly. '\
                                 'Some of the replica information may be missing.')
             if result is not None and result.has_key('Message'):
@@ -214,10 +214,10 @@ result = dirac.getReplicas('%s')
 if not result.get('OK',False): rc = -1
 storeResult(result)
         """ % self.name
-            rc = diracwrapper(command)
-            result = DiracShared.getResult()
+            dw = diracwrapper(command)
+            result = dw.getOutput()
         
-            if rc != 0 or result is None or (result is not None and not result['OK']):
+            if dw.returnCode != 0 or result is None or (result is not None and not result['OK']):
                 logger.warning('The LFC query did not return cleanly. '\
                                 'Some of the replica information may be missing.')
             if result is not None and result.has_key('Message'):
@@ -272,6 +272,9 @@ allComponentFilters['datafiles']=string_datafile_shortcut
 allComponentFilters['datasets']=string_dataset_shortcut
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3.2.1  2008/09/08 13:09:18  wreece
+# lots of changes. smallest change from HEAD to support Dirac 3?
+#
 # Revision 1.3  2008/09/01 03:13:52  wreece
 # fix for Savannah 40219 - Manages cache updating better.
 #

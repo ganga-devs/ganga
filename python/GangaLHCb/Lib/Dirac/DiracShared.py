@@ -49,7 +49,7 @@ def getResult(fName = None):
     finally:
         infile.close()
 
-    if result is not None and not result.get('OK',False):
+    if result is not None and result.get('OK',False):
         try:
             os.unlink(fName)
         except:

@@ -135,8 +135,6 @@ except Exception, e:
       
   dwrapper.returnCode = rc
   dwrapper.stdout = output
-  print 'exec',rc, fname
   if rc==0:
-      pass
-      #os.unlink(fname)
+      os.unlink(fname)
   return dwrapper
