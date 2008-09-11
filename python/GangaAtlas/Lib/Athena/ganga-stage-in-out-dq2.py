@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.11 2008-09-07 14:49:07 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.12 2008-09-11 12:43:44 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -975,6 +975,8 @@ if __name__ == '__main__':
             localsitesrm = TiersOfATLAS.getSiteProperty(dq2localid,'srm')
             #if localsitesrm.startswith('token:'):
             #    continue
+            if not localsitesrm:
+                continue
             if localsitesrm.find(sename)>=0:
                 if dq2localid in datasetlocation: 
                     localsiteid = dq2localid
