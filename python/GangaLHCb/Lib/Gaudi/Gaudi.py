@@ -491,7 +491,7 @@ class GaudiExtras:
     _userdlls = []
     _merged_confDBs = []
     _subdir_confDBs = []
-    inputdata = []
+    inputdata = LHCbDataset()
     _outputfiles = []
     outputdata = []
     _name = "GaudiExtras"
@@ -711,6 +711,9 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.11.2.1  2008/09/08 13:09:18  wreece
+# lots of changes. smallest change from HEAD to support Dirac 3?
+#
 # Revision 1.11  2008/08/27 15:53:20  uegede
 # Modified failing test cases.
 #

@@ -147,6 +147,7 @@ storeResult(result)
           if result.get('OK',False):
               id = result['Value']
           else:
+              logger.warning("Submission failed: Message from Dirac was '%s'.", result.get('Message',''))
               if result.has_key('Exception'):
                   logger.warning("'%s': %s", result.get('Type',''), result['Exception'])
                   raise BackendError("DIRAC", "Problems executing the DIRAC script.") 
