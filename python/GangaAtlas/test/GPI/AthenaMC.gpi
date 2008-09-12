@@ -21,7 +21,7 @@ evgen.application.atlas_release='12.0.4'
 #evgen.application.transform_archive=transform_archive_path
 evgen.application.transform_archive='AtlasProduction_12_0_4_1_noarch.tar.gz'
 evgen.application.mode='evgen'
-evgen.application.se_name='CAM'
+evgen.application.se_name='UKI-SOUTHGRID-CAM-HEP_USERDISK'
 evgen.backend=LCG()
 evgen.backend.middleware='EDG'
 evgen.outputdata=AthenaMCOutputDatasets()
@@ -40,7 +40,6 @@ simul.application.atlas_release='12.0.4'
 #simul.application.transform_archive=transform_archive_path
 simul.application.transform_archive='AtlasProduction_12_0_4_1_noarch.tar.gz'
 simul.application.mode='simul'
-simul.application.se_name='CAM'
 simul.application.geometryTag = 'ATLAS-DC3-05' 
 simul.inputdata=AthenaMCInputDatasets()
 simul.inputdata.DQ2dataset='users.fredericbrochu.ganga.datafiles.tutorial.000001.evgen.single_e_Et40'
@@ -67,7 +66,7 @@ reco.application.atlas_release='12.0.4'
 #reco.application.transform_archive=transform_archive_path
 reco.application.transform_archive='AtlasProduction_12_0_4_1_noarch.tar.gz'
 reco.application.mode='recon'
-reco.application.se_name='CAM'
+#reco.application.se_name='CAM'
 reco.inputdata=AthenaMCInputDatasets()
 reco.inputdata.DQ2dataset='users.fredericbrochu.ganga.datafiles.tutorial.000001.simul.rdo.single_e_Et40'
 reco.inputdata.datasetType='DQ2'
@@ -85,7 +84,7 @@ assert(reco.submit()==True)
 #evgen_jdlfile=open(evgen.inputdir+"/__jdlfile__")
 #jdllines=evgen_jdlfile.readlines()
 #for lines in jdllines:
-## perform all sort of checks line by line...	
+#perform all sort of checks line by line...
 os.system("cat %s/__jdlfile__" % evgen.inputdir )
 os.system("cat %s/__jdlfile__" % simul.subjobs[0].inputdir)
 os.system("cat %s/__jdlfile__" % reco.subjobs[0].inputdir)

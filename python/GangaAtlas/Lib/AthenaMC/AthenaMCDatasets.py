@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.4 2008-09-10 15:02:20 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.5 2008-09-12 08:34:26 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1021,10 +1021,10 @@ class AthenaMCOutputDatasets(Dataset):
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
-from Ganga.Utility.Config import makeConfig, ConfigError
-config = makeConfig('AthenaMCDatasets', 'AthenaMCDatasets configuration options')
-config.addOption('usertag','user','user tag for a given data taking period')
-_usertag=config['usertag']
+##from Ganga.Utility.Config import makeConfig, ConfigError
+##config = makeConfig('AthenaMCDatasets', 'AthenaMCDatasets configuration options')
+##config.addOption('usertag','user','user tag for a given data taking period')
+##_usertag=config['usertag']
 
 from dq2.clientapi.DQ2 import DQ2
 dq2=DQ2()
@@ -1053,8 +1053,14 @@ except ConfigError:
        configDQ2.addOption('DQ2_URL_SERVER_SSL', os.environ['DQ2_URL_SERVER_SSL'], 'FIXME')
    except KeyError:
        configDQ2.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
+try:
+    configDQ2['usertag']
+except ConfigError:
+    configDQ2.addOption('usertag','users','FIXME')
+    
 
 baseURLDQ2 = configDQ2['DQ2_URL_SERVER']
 baseURLDQ2SSL = configDQ2['DQ2_URL_SERVER_SSL']
-   
+_usertag=configDQ2['usertag']
+
 
