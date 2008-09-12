@@ -26,7 +26,8 @@ def getTestDaVinciVersion():
     d={}
     siteInstallArea='/afs/cern.ch/sw/ganga/install/TEST' #FIXME once config option is available
     execfile(os.path.join(siteInstallArea,'LHCb','software','CURRENT'),d,d)
-    return d['DAVINCI_VERSION']
+    #return d['DAVINCI_VERSION']
+    return 'v19r14' #TODO: Backout once Ulrik has updated on afs
 
 def getTestDaVinciApplication():
     siteInstallArea='/afs/cern.ch/sw/ganga/install/TEST' #FIXME once config option is available
