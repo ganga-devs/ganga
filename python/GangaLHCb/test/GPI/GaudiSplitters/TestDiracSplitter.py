@@ -1,13 +1,13 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: TestDiracSplitter.py,v 1.2 2008-08-22 10:07:25 uegede Exp $
+# $Id: TestDiracSplitter.py,v 1.2.2.1 2008-09-12 11:20:06 wreece Exp $
 ################################################################################
+from __future__ import division
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from GangaLHCb.test import addDiracTestSubmitter
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
-from __future__ import division
 
 addDiracTestSubmitter()
 
