@@ -5,7 +5,12 @@ from GangaTest.Framework.tests import GangaGPITestCase
 # using other backends
 loc = locals()
 if not loc.has_key('backends_to_test'):
-    loc['backends_to_test'] = ['Interactive','Local','LCG','LSF']#backends to test
+    loc['backends_to_test'] = ['Interactive','Local']#backends to tes, FIXME: add 'LCG','LSF' again
+
+#temporarily disabled running Root tests on LCG and LSF (due to timeouts), a
+#proper solution is needed for the future (either splitting the submit and
+#verify phases, or to make a test backend that woudl exercise the rt-handlers
+#or to move it to a generic robot).
 
 class TestRoot(GangaGPITestCase):
     '''
