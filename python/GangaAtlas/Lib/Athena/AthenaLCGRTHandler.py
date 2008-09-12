@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.6 2008-09-02 16:06:27 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.7 2008-09-12 07:16:11 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -196,34 +196,30 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
             jobdate = time.strftime('%Y%m%d')
 
+            usertag = configDQ2['usertag']
+            
             if job.outputdata.datasetname:
                 # new datasetname during job resubmission
-                pat = re.compile(r'^users\.%s\.ganga' % username)
+                pat = re.compile(r'^%s\.%s\.ganga' % (usertag,username))
                 if re.findall(pat,job.outputdata.datasetname):
                     if job.outputdata.dataset_exists():
                         output_datasetname = job.outputdata.datasetname
                     else:
-                        output_datasetname = 'users.%s.ganga.%s.%s' % ( username, jobid, jobdate)
+                        output_datasetname = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
                         
-                    #output_lfn = 'users/%s/ganga/%s/' % (username,jobid)
-                    #output_lfn = 'users/%s/ganga/' % (username)
-                    output_lfn = 'users/%s/ganga/%s/' % (username,output_datasetname)
+                    output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
                 else:
                     # append user datasetname for new configuration
                     if job.outputdata.use_datasetname and job.outputdata.datasetname:
                         output_datasetname = job.outputdata.datasetname
                     else:
-                        output_datasetname = 'users.%s.ganga.%s' % (username,job.outputdata.datasetname)
+                        output_datasetname = '%s.%s.ganga.%s' % (usertag, username,job.outputdata.datasetname)
 
-                    #output_lfn = 'users/%s/ganga/%s/' % (username,job.outputdata.datasetname)
-                    #output_lfn = 'users/%s/ganga/' % (username)
-                    output_lfn = 'users/%s/ganga/%s/' % (username,output_datasetname)
+                    output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
             else:
                 # No datasetname is given
-                output_datasetname = 'users.%s.ganga.%s.%s' % (username,jobid, jobdate)
-                #output_lfn = 'users/%s/ganga/%s/' % (username,jobid)
-                #output_lfn = 'users/%s/ganga/' % (username)
-                output_lfn = 'users/%s/ganga/%s/' % (username,output_datasetname)
+                output_datasetname = '%s.%s.ganga.%s.%s' % (usertag,username,jobid, jobdate)
+                output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
             output_jobid = jid
             job.outputdata.datasetname=output_datasetname
             if not job.outputdata.dataset_exists(output_datasetname):

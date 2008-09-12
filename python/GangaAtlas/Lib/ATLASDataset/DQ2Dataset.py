@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.7 2008-09-02 16:06:27 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.8 2008-09-12 07:16:11 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1193,12 +1193,50 @@ config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_USERDISK', 'CERN-PR
 
 config.addOption('USE_STAGEOUT_SUBSCRIPTION', False, 'Allow DQ2 subscription to aggregate DQ2OutputDataset output on a storage element instead of using remote lcg-cr' )
 
+config.addOption('usertag','users','user tag for a given data taking period')
+
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
    
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.7  2008/09/02 16:06:27  elmsheus
+#Athena:
+#* Fix SE type detection problems for space tokens at DPM sites
+#* Change default DQ2 stage-out to use _USERDISK token
+#* Change default DQ2Dataset default values of
+#  DQ2_BACKUP_OUTPUT_LOCATIONS
+#* Disable functionality of DQ2Dataset.match_ce_all and
+#  DQ2Dataset.min_num_files and print out warning.
+#  These are obsolete and DQ2JobSplitter should be used instead.
+#* Add option config['DQ2']['USE_STAGEOUT_SUBSCRIPTION'] to allow DQ2
+#  subscription to final output SE destinations instead of "remote lcg-cr"
+#  Will be enabled in future version if DQ2 site services are ready for this
+#=============================================
+#A few changes to enforce the computing model:
+#=============================================
+#* DQ2OutputDataset: j.backend.location is verified to be in the same cloud
+#  as j.backend.requirements.cloud during job submission to LCG
+#* Add AtlasLCGRequirements.cloud option.
+#  Use: T0, IT, ES, FR, UK, DE, NL, TW, CA, (US, NG) or
+#       CERN, ITALYSITES, SPAINSITES, FRANCESITES, UKSITES, FZKSITES,
+#       NLSITES, TAIWANSITES, CANADASITES, (USASITES, NDGF)
+#
+#  *********************************************************
+#  Job submission to LCG requires now one of the following options:
+#  - j.backend.requirements.cloud='ID'
+#  - j.backend.requirements.sites=['SITENAME']
+#  ********************************************************
+#* Sites specified with j.backend.requirements.sites need to be in the same
+#  cloud for the LCG backend
+#* Restrict the number of subjobs of AthenaSplitterJob to value of
+#  config['Athena']['MaxJobsAthenaSplitterJobLCG'] (100) if glite WMS is
+#  used.
+#
+#scripts:
+#* athena: Add --cloud option
+#
 #Revision 1.6  2008/08/01 07:18:39  elmsheus
 #Remove enforcing of DQ2OutputDatatset loction
 #
