@@ -1,8 +1,9 @@
 from GangaLHCb.test import *
 from GangaTest.Framework.utils import read_file,failureException
 
-ver=getTestDaVinciVersion()
-app = DaVinci(version=ver)
+#ver=getTestDaVinciVersion()
+app = DaVinci()
+ver = app.version
 
 import tempfile
 import os
@@ -22,7 +23,8 @@ read_file(fname)
 app.make()
 dirname = os.path.join(cmtuserpath,'DaVinci_'+ver,'Phys/DaVinci',ver,
                        app._impl.platform)
-fname = os.path.join(dirname,'DaVinci.exe')
+#fname = os.path.join(dirname,'DaVinci.exe')
+fname = os.path.join(dirname,'DaVincisetup.make')
 read_file(fname)
 
 # Test general CMT command
