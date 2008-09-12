@@ -1,0 +1,89 @@
+
+def test_empty_registry(reg):
+    try:
+        reg[0]
+        assert(not 'operator [0] should raise IndexError on empty registry')
+    except IndexError:
+        pass
+
+    reg.remove()
+    reg.submit()
+    reg.kill()
+    reg.resubmit()
+
+test_empty_registry(jobs)
+test_empty_registry(jobs.select())
+test_empty_registry(jobs[:])
+
+# CANNOT COMPARE SLICES
+#assert(jobs == jobs.select())
+#assert(jobs[:] == jobs)
+
+j = Job()
+j.name = 'one'
+
+def test_one_job(reg):
+    assert(reg[0] == reg[-1])
+    assert(j in reg.select(name='one'))
+
+test_one_job(jobs)
+test_one_job(jobs.select())
+test_one_job(jobs[:])
+
+j2 = Job(name='more')
+j3 = Job(name='more')
+
+def test_more_jobs(reg):
+    assert(reg[0] is j)
+    assert(reg(j.id) is j)
+    assert(reg[1] is j2)
+    assert(reg[-1] is j3)
+
+    assert(j in reg.select(name='one'))
+    assert(j not in reg.select(name='more'))
+    assert(j2 in reg.select(name='more'))
+    assert(j3 in reg.select(name='more'))
+
+    assert(len(reg.select(name='one'))==1)
+    assert(len(reg.select(name='more'))==2)
+    
+test_more_jobs(jobs)
+test_more_jobs(jobs.select())
+test_more_jobs(jobs[:])
+
+def make_jobs():
+    global j,j2,j3
+    j = Job(name='one')
+    j2 = Job(name='more')
+    j3 = Job(name='more')
+
+def test_remove(reg):
+    one_slice = jobs.select(name='one')
+    more_slice = jobs.select(name='more')
+
+    reg.remove()
+
+    assert(len(one_slice)==1)
+    assert(len(more_slice)==2)
+
+    for j in one_slice:
+        assert(j.status=='removed')
+
+    for j in more_slice:
+        assert(j.status=='removed')
+
+    # behaviour differs for the original registry object and a slice object
+    #assert(len(reg) == 0)
+
+test_remove(jobs)
+make_jobs()
+test_remove(jobs.select())
+make_jobs()
+test_remove(jobs[:])
+
+make_jobs()
+
+test_more_jobs(jobs)
+
+
+
