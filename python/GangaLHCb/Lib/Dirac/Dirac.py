@@ -612,8 +612,11 @@ storeResult(result)
 
             # Retrieve output while in completing state
             if ("completed" == gangaStatus) or ("failed" == gangaStatus):
+
+                from Ganga.Core import Sandbox
+                
                 j.updateStatus("completing")
-                outputsandboxname='_output_sandbox.tgz'
+                outputsandboxname = Sandbox.OUTPUT_TARBALL_NAME
                 outw=j.getOutputWorkspace()
                 jobDir = outw.getPath()
                 tmpdir = tempfile.mkdtemp()
@@ -626,7 +629,11 @@ storeResult(result)
                 
                 for f in filelist:
                     try:
-                        shutil.copy2(f,jobDir)
+                        # Handle the untaring of the sandbox
+                        if os.path.basename(f) == outputsandboxname:
+                            Sandbox.getPackedOutputSandbox(os.path.dirname(f),jobDir)
+                        else:
+                            shutil.copy2(f,jobDir)
                         os.unlink(f)
                     except OSError:
                         logger.warning("Failed to move file '%s' file  from '%s'", f, tmpdir)
@@ -646,14 +653,21 @@ storeResult(result)
                 except Exception:
                     logger.critical('Problem during monitoring')
                     raise
-                j.updateStatus(gangaStatus)
 
+                if exitcode is not None and exitcode == 0 and gangaStatus != 'failed':
+                    j.updateStatus('completed')
+                else:
+                    j.updateStatus('failed')
+                    
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
 
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.2.2.4  2008/09/10 12:35:19  wreece
+## Updates to use the new diracwrapper mechanism
+##
 ## Revision 1.2.2.3  2008/09/10 12:20:26  wreece
 ## Improves script submission
 ##

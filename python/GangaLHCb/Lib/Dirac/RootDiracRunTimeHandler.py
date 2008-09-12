@@ -93,7 +93,7 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
                        rootarg + '\''
         else:
             #use python
-            pyarg = string.join([str(s) for s in app.args],' ')
+            pyarg = string.join(['"%s"' % str(s) for s in app.args],' ')
             commandline = '\'%(PYTHONCMD)s ' + scriptPath + ' ' + pyarg + ' -b \''
 
         logger.debug( "Command line: %s: ", commandline )
@@ -119,7 +119,6 @@ if __name__ == '__main__':
     commandline = ###COMMANDLINE###    
     scriptPath = '###SCRIPTPATH###'
     usepython = ###USEPYTHON###
-    version = '###ROOTVERSION###'
 
     sys.stdout.flush()
     sys.stderr.flush()
@@ -144,7 +143,6 @@ if __name__ == '__main__':
   """
 
         wrapperscript = wrapperscript.replace('###COMMANDLINE###',commandline)
-        wrapperscript = wrapperscript.replace('###ROOTVERSION###',app.version)
         wrapperscript = wrapperscript.replace('###SCRIPTPATH###',scriptPath)
         wrapperscript = wrapperscript.replace('###USEPYTHON###',str(app.usepython))
 
