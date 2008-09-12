@@ -339,6 +339,9 @@ for i in range(2):
               LFN will be prepended. If names start with a / it is assumed to be the
               complete path. Do never add an "LFN:" to the name.
         """
+        
+        downloadedFiles = []
+        
         if type(names)!=type([]):
             logger.error('Aborting. The names argument has to be a list of strings')
             return
@@ -346,23 +349,72 @@ for i in range(2):
         job=self.getJobObject()
         if not dir:
             dir = job.getOutputWorkspace().getPath()
-        md=dirac.Dirac()
+        
+        try:
+            try:
+                user_name = os.getlogin()
+            except OSError:
+                user_name = os.path.expandvars('$USER')
+            
+            #TODO: Get this name decoration more sensibly
+            lfn = '/lhcb/user/%s/%s/%s/' % (user_name[0],user_name,job.backend.id)
+            
+            if len(names)==0 and job.outputdata:
+                names = [f.name for f in job.outputdata.files]
+                
+            lfn_list=[]
+            for n in names:
+                if not n.startswith('/'):
+                    n = lfn + n
+                lfn_list.append(n)
+            
+            if lfn_list:
+                
+                logger.debug('Retrieving the files '+str(list)+' from the Storage Element')            
+                command = """
+files = %(FILES)s
+outputdir = '%(OUTPUTDIR)s'
+                
+thisdir = os.getcwd()
+                
+def getFile(retry_count = 0):
+                    
+    result = None
+    if retry_count < 3:
+        result = dirac.getFile(files)
+                        
+        if (result is None) or (result is not None and not result.get('OK',False)):
+            result = getFile( retry_count = retry_count + 1 )
+    return result
+                
+try:
+    os.chdir(outputdir)
+    result = getFile()
+    storeResult(result)
+finally:
+    os.chdir(thisdir)
+                """ % {'FILES':str(lfn_list),'OUTPUTDIR':dir}
+                
+                dw = diracwrapper(command)
+                result = dw.getOutput()
 
-        # Strip LFN part from the front
-        lfn=md.getOutputLFN(job.backend.id,mode=self._diracverbosity())[4:]
-        if len(names)==0 and job.outputdata:
-            names = [f.name for f in job.outputdata.files]
-        list=[]
-        for i in names:
-            if not i.startswith('/'):
-                i=lfn+i
-            list.append(i)
+                if result is not None and result.get('OK',False):
+                    if result.has_key('Value'):
+                        value = result['Value']
+                        success = value.get('Successful',{})
+                        failure = value.get('Failed',{})
+                        
+                        for k,v in failure.iteritems():
+                            logger.error("Failed: '%s' (%s)", str(k), str(v))
+                        
+                        for k,v in success.iteritems():
+                            logger.info("Success: '%s' to '%s'", str(k), str(v))
+                            downloadedFiles.append(v)
+        except Exception, e:
+            pass
+        
+        return downloadedFiles
 
-        logger.debug('Retrieving the files '+str(list)+' from the Storage Element')
-        if len(list)>0:
-            command='if dirac.getOutputData('+repr(list)+','+repr(dir)+',mode='+repr(self._diracverbosity())+')["Status"]=="Error": rc=1'
-            from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
-            diracwrapper(command)
   
     def _handleInputSandbox(self,subjobconfig,master_input_sandbox):
         """Default implementation. Just deals with input sandbox"""
@@ -665,6 +717,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.2.2.5  2008/09/12 08:11:53  wreece
+## Fixes return code handling and argument passing
+##
 ## Revision 1.2.2.4  2008/09/10 12:35:19  wreece
 ## Updates to use the new diracwrapper mechanism
 ##

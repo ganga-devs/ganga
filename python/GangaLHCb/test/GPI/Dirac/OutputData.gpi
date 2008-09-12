@@ -1,10 +1,10 @@
 from GangaTest.Framework.utils import sleep_until_completed, write_file, file_contains
-from os import mkdir
+from os import mkdir, chmod
 from os.path import join,basename
 import tempfile
 
 # Job with a script
-scriptname=tempfile.mktemp()
+scriptname=tempfile.mktemp('.py')
 write_file(scriptname,"""#!/bin/env python
 from random import choice
 import string
@@ -16,6 +16,7 @@ text=''.join([choice(chars) for i in range(kbyte)])
 f.write(text)
 f.close()
 """)
+os.chmod(scriptname,0700)
 jscript=Job(name='OutputData',application=Executable(),backend=Dirac(CPUTime=300))
 jscript.application.exe=File(scriptname)
 jscript.application.args=[]
