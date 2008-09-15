@@ -16,7 +16,6 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import isStringLike
 
 from Ganga.Utility.GridShell import getShell
-from Ganga.Lib.LCG.GridCache import GridCache
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
 # global variables
@@ -152,68 +151,6 @@ class Grid(object):
         else:
             lfc_list = output.strip().split('\n')
             return lfc_list[0]
-
-    def lcg_file_upload(self,iocache,src,maxRetry=3):
-        '''Upload single file'''
-
-        if not iocache:
-            iocache = self.config['DefaultSE']
-
-        # parse the srmv2 token
-        token = None
-        m = self.re_token.match(iocache)
-        if m:
-            token   = m.group(1)
-            iocache = m.group(2)
-
-        # if srmv2 token not found, use the one defined in the configuration
-        if not token:
-            token = self.config['DefaultSRMToken']
-        
-        gCache = GridCache(vo=self.config['VirtualOrganisation'],iocache=iocache,shell=self.shell,middleware=self.middleware,srmv2_token=token)
-
-        return gCache.upload(src=src,maxRetry=maxRetry)
-
-    def lcg_file_download(self,iocache,src,dest,maxRetry=3):
-        '''Download single file'''
-
-        if not iocache:
-            iocache = self.config['DefaultSE']
-
-        # parse the srmv2 token
-        token = None
-        m = self.re_token.match(iocache)
-        if m:
-            token   = m.group(1)
-            iocache = m.group(2)
-
-        # if srmv2 token not found, use the one defined in the configuration
-        if not token:
-            token = self.config['DefaultSRMToken']
-
-        gCache = GridCache(vo=self.config['VirtualOrganisation'],iocache=iocache,shell=self.shell,middleware=self.middleware,srmv2_token=token)
-        return gCache.download(src=src,dest=dest,maxRetry=maxRetry)
-
-    def lcg_file_delete(self,iocache,uri,maxRetry=3):
-        '''Delete all replications corresponding to the given guid'''
-
-        if not iocache:
-            iocache = self.config['DefaultSE']
-
-        # parse the srmv2 token
-        token = None
-        m = self.re_token.match(iocache)
-        if m:
-            token   = m.group(1)
-            iocache = m.group(2)
-
-        # if srmv2 token not found, use the one defined in the configuration
-        if not token:
-            token = self.config['DefaultSRMToken']
-
-        gCache = GridCache(vo=self.config['VirtualOrganisation'],iocache=iocache,shell=self.shell,middleware=self.middleware,srmv2_token=token)
-
-        return gCache.delete(uri=uri,maxRetry=maxRetry)
 
     def check_proxy(self):
         '''Check the proxy and prompt the user to refresh it'''

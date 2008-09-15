@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.6 2008-09-04 14:00:34 hclee Exp $
+# $Id: LCG.py,v 1.7 2008-09-15 20:42:38 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -26,8 +26,8 @@ from Ganga.Utility.Config import makeConfig,getConfig, ConfigError
 from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.Utility.util import isStringLike
 from Ganga.Utility.GridShell import getShell
-from Ganga.Lib.LCG.GridCache import GridCache
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
+from Ganga.Lib.LCG.Utility import *
 
 # for runtime stdout/stderr inspection
 from Ganga.Lib.MonitoringServices.Octopus import Octopus,ProtocolException
@@ -50,15 +50,13 @@ class LCG(IBackend):
     configuration. See [LCG] section of ~/.gangarc file.
 
     If the input sandbox exceeds the limit specified in the ganga
-    configuration, it is automatically uploaded to a storage element.  This
-    overcomes sandbox size limits on the resource broker. If iocache attribute
-    is unspecified then the DefaultSE is used as defined in ganga
-    configuration.
+    configuration, it is automatically uploaded to a storage element. This
+    overcomes sandbox size limits on the resource broker.
 
     For gLite middleware bulk (faster) submission is supported so splitting
     jobs may be more efficient than submitting bunches of individual jobs.
 
-   For more options see help on LCGRequirements.
+    For more options see help on LCGRequirements.
 
     See also: http://cern.ch/glite/documentation
     '''
@@ -66,11 +64,11 @@ class LCG(IBackend):
     # internal usage of the flag:
     #  - 0: job without the need of special control
     #  - 1: job (normally a subjob) resubmitted individually. The monitoring of those jobs should be separated.
-    _schema = Schema(Version(1,7), {
+    _schema = Schema(Version(1,8), {
         'CE'                  : SimpleItem(defvalue='',doc='Request a specific Computing Element'),
-        'iocache'             : SimpleItem(defvalue='',protected=0,copyable=1,doc='Storage element used as a cache for oversized input sandbox'),
         'jobtype'             : SimpleItem(defvalue='Normal',doc='Job type: Normal, MPICH'),
         'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
+        'sandboxcache'        : ComponentItem('GridSandboxCache',doc='Interface for handling oversized input sandbox'),
         'id'                  : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Middleware job identifier'),
         'status'              : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Middleware job status'),
         'middleware'          : SimpleItem(defvalue='EDG',protected=0,copyable=1,doc='Middleware type',checkset='_checkset_middleware'),
@@ -86,10 +84,9 @@ class LCG(IBackend):
 
     _category = 'backends'
     _name =  'LCG'
-    _exportmethods = ['check_proxy','loginfo','cleanup_iocache','inspect']
+    _exportmethods = ['check_proxy', 'loginfo', 'inspect']
 
     _GUIPrefs = [ { 'attribute' : 'CE', 'widget' : 'String' },
-                  { 'attribute' : 'iocache', 'widget' : 'String'},
                   { 'attribute' : 'jobtype', 'widget' : 'String_Choice', 'choices' : ['Normal', 'MPICH'] },
                   { 'attribute' : 'middleware', 'widget' : 'String_Choice', 'choices' : [ 'EDG', 'GLITE' ] } ]
 
@@ -103,7 +100,7 @@ class LCG(IBackend):
         
         # dynamic requirement object loading 
         try:
-            reqName1   = config['Requirements']
+            reqName1  = config['Requirements']
             reqName   = config['Requirements'].split('.').pop()
             reqModule = __import__(reqName1, globals(), locals(), [reqName1])
             reqClass  = vars(reqModule)[reqName]
@@ -112,6 +109,18 @@ class LCG(IBackend):
             logger.debug('load %s as LCGRequirements' % reqName)
         except:
             logger.debug('load default LCGRequirements')
+            pass
+
+        # dynamic sandbox cache object loading 
+        try:
+            scName1  = config['SandboxCache']
+            scName   = config['SandboxCache'].split('.').pop()
+            scModule = __import__(scName1, globals(), locals(), [scName1])
+            scClass  = vars(scModule)[scName]
+            self.sandboxcache = scClass()
+            logger.debug('load %s as SandboxCache' % scName)
+        except:
+            logger.debug('load default LCGSandboxCAche')
             pass
 
     def _checkset_middleware(self, value):
@@ -147,6 +156,45 @@ class LCG(IBackend):
         jdlText = Grid.expandjdl(jdl)
         logger.debug('master job JDL: %s' % jdlText)
         return jdlText
+
+    def __setup_sandboxcache(self, job):
+        '''Sets up the sandbox cache object to adopt the runtime configuration of the LCG backend'''
+
+        re_token = re.compile('^token:(.*):(.*)$')
+
+        self.sandboxcache.vo = config['VirtualOrganisation']
+        self.sandboxcache.middleware = self.middleware.upper()
+        self.sandboxcache.timeout    = config['SandboxTransferTimeout']
+
+        if self.sandboxcache._name == 'LCGSandboxCache':
+            if not self.sandboxcache.lfc_host:
+                self.sandboxcache.lfc_host = grids[self.middleware.upper()].shell.env['LFC_HOST']
+
+            if not self.sandboxcache.se:
+
+                token   = None
+                se_host = None
+                m = re_token.match(config['DefaultSE'])
+                if m:
+                    token   = m.group(1)
+                    se_host = m.group(2)
+
+                self.sandboxcache.se = se_host
+
+                if token:
+                    self.sandboxcache.srm_token = token
+         
+            if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
+                self.sandboxcache.srm_token = config['DefaultSRMToken']
+
+        if job.master is None:
+            clog = os.path.join(job.inputdir,'__iocache__')
+        else:
+            clog = os.path.join(job.master.inputdir,'__iocache__')
+
+        self.sandboxcache.index_file = clog
+
+        return True
 
     def __refresh_jobinfo__(self,job):
         '''Refresh the lcg jobinfo. It will be called after resubmission.'''
@@ -415,47 +463,6 @@ class LCG(IBackend):
                 if sj.backend.flag != 1 and sj.status in ['submitted','running']:
                     sj.updateStatus('killed')
             return True
-
-    def fupload(self,localFilePath,maxRetry=3):
-        '''Upload a localfile to the Grid'''
-
-        # make sure the localFilePath is represented as file://...
-        localFilePath = os.path.abspath(localFilePath.replace('file://',''))
-        if not os.path.exists(localFilePath):
-            return None
-
-        localFilePath = 'file://' + localFilePath
-
-        return grids[self.middleware.upper()].lcg_file_upload(self.iocache,localFilePath,maxRetry)
-
-    def fdownload(self,src,localFilePath,maxRetry=3):
-        '''Download a file on the Grid to the localfile storage'''
-
-        # make sure the localFilePath is represented as file://...
-        localFilePath = os.path.abspath(localFilePath.replace('file://',''))
-        if os.path.exists(localFilePath):
-            os.rename(localFilePath,localFilePath+'.bak')
-
-        localFilePath = 'file://' + os.path.abspath(localFilePath.replace('file://',''))
-
-        return grids[self.middleware.upper()].lcg_file_download(self.iocache,src,localFilePath,maxRetry)
-
-    def fdelete(self,uri,lfc,maxRetry=3):
-        '''Delete all replicas of a Grid file corresponding to the given guid'''
-
-        # cache the current setting of LFC_HOST
-        lfc_back = grids[self.middleware.upper()].shell.env['LFC_HOST']
-
-        # set to the given lfc 
-        grids[self.middleware.upper()].shell.env['LFC_HOST'] = lfc
-
-        # perform job deletion 
-        ick = grids[self.middleware.upper()].lcg_file_delete(self.iocache,uri,maxRetry)
-
-        # roll back the LFC_HOST setting 
-        grids[self.middleware.upper()].shell.env['LFC_HOST'] = lfc_back
-
-        return ick
 
     def loginfo(self,verbosity=1):
         """Get the job's logging info"""
@@ -993,61 +1000,8 @@ sys.exit(0)
 
         return None
 
-    def cleanup_iocache(self):
-        '''Clean up the uploaded files in remote cache'''
-        job = self.getJobObject()
-
-        if job.master is None:
-            clog = os.path.join(job.inputdir,'__iocache__')
-        else:
-            clog = os.path.join(job.master.inputdir,'__iocache__')
-
-        remoteFiles = {}
-        if os.path.exists(clog):
-            ## read-in the remote files on the iocache
-            f = open(clog,'r')
-            for line in f.readlines():
-                myguid,mylfc,myfname,mymd5 = line.strip().split()
-                remoteFiles[myguid] = [myfname,mymd5,mylfc]
-            f.close()
-
-            ## cleanup the remote cache when job is running is dangerous
-            if len(remoteFiles.keys()) > 0 and not job.status in ['completed','failed']:
-                logger.warning("Job haven't reached final status: removing files from remote cache may cause a failed job.")
-                return False
-
-            ## try to remove them one-by-one
-            ## the files failed to be removed will be kept in the same filea 
-            f = open(clog,'w')
-            fct = 0
-            for myguid in remoteFiles.keys():
-                if not self.fdelete(myguid,remoteFiles[myguid][2]):
-                    fct = fct + 1
-                    f.write(myguid + '\t' + remoteFiles[myguid][2] + '\t' + remoteFiles[myguid][0] + '\t' + remoteFiles[myguid][1] + '\n')
-            f.close()
-
-            if fct > 0:
-                logger.warning("Not all remote files were successfully removed from the iocache.")
-                return False
-            else:
-                return True
-        else:
-            return True
-
     def preparejob(self,jobconfig,master_job_sandbox):
         '''Prepare the JDL'''
-
-        ## inner method for creating md5sum of files
-        def __md5sum__(fname):
-            f = open(fname, 'rb')
-            m = md5.new()
-            while True:
-                d = f.read(8096)
-                if not d:
-                    break
-                m.update(d)
-            f.close()
-            return m.hexdigest()
 
         script = self.__jobWrapperTemplate__()
 
@@ -1097,51 +1051,50 @@ sys.exit(0)
         ## check the input file size and pre-upload larger inputs to the iocache
         inputs = {'remote':{},'local':[]}
 
-        if job.master is None:
-            clog = os.path.join(job.inputdir,'__iocache__')
-        else:
-            clog = os.path.join(job.master.inputdir,'__iocache__')
-
         ## read-in the previously uploaded files 
-        uploadedFiles = {} 
-        if os.path.exists(clog):
-            c = open(clog,'r')
-            for line in c.readlines():
-                myguid,mylfc,myfname,mymd5 = line.strip().split()
-                uploadedFiles[mymd5] = [myguid,myfname,mylfc]
-            c.close()
-
+        uploadedFiles = []
+        if os.path.exists(self.sandboxcache.index_file):
+            uploadedFiles = self.sandboxcache.get_uploaded_files()
+    
         ## pre-upload oversized input sandbox to iocache
         ##  - if the file has been previously uploaded, 
         ##    just take the uploaded one and ignore the pre-upload
 
         ## get the environment variable LFC_HOST 
-        lfc_host = grids[self.middleware.upper()].shell.env['LFC_HOST']
+        self.__setup_sandboxcache(job)
+        lfc_host = grids[self.sandboxcache.middleware.upper()].shell.env['LFC_HOST']
 
         max_prestaged_fsize = 0
-        c = open(clog,'a')
         for f in sandbox_files:
             abspath = os.path.abspath(f)
             fsize   = os.path.getsize(abspath) 
             if fsize > config['BoundSandboxLimit']:
-                if fsize > max_prestaged_fsize:
-                    max_prestaged_fsize = fsize
-                md5sum  = __md5sum__(abspath)
-                if not uploadedFiles.has_key(md5sum):
+
+                md5sum  = get_md5sum(abspath)
+
+                doUpload = True 
+                for uf in uploadedFiles:
+                    if uf.md5sum == md5sum:
+                        # the same file has been uploaded to the iocache
+                        inputs['remote'][os.path.basename(f)] = uf.id
+                        doUpload = False
+                        break
+
+                if doUpload:
+
+                    if fsize > max_prestaged_fsize:
+                        max_prestaged_fsize = fsize
+
                     logger.warning('The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (f,config['BoundSandboxLimit']) )
-                    guid = self.fupload(abspath)
-                    if not guid: # file upload to iocache failed
-                        return
+
+                    if self.sandboxcache.upload( [abspath] ):
+                        remote_sandbox = self.sandboxcache.get_uploaded_files()[0]
+                        inputs['remote'][remote_sandbox.name] = remote_sandbox.id
                     else:
-                        c.write(guid + '\t' + lfc_host  + '\t' + os.path.basename(f) + '\t' + md5sum + '\n')
-                        inputs['remote'][os.path.basename(f)] = guid
-                else:
-                    # the same file has been uploaded to the iocache
-                    # TODO: send the lfc_host as well
-                    inputs['remote'][os.path.basename(f)] = uploadedFiles[md5sum][0]
+                        logger.error('Oversized sandbox not successfully pre-staged')
+                        return
             else:
                 inputs['local'].append(abspath)
-        c.close()
 
         ## determin the lcg-cp timeout according to the max_prestaged_fsize
         ##  - using the assumption of 1 MB/sec.
@@ -1630,6 +1583,8 @@ config.addOption('BoundSandboxLimit',10 * 1024 * 1024,'sets the size limitation 
 
 config.addOption('Requirements','Ganga.Lib.LCG.LCGRequirements','sets the full qualified class name for other specific LCG job requirements')
 
+config.addOption('SandboxCache','Ganga.Lib.LCG.LCGSandboxCache','sets the full qualified class name for handling the oversized input sandbox')
+
 config.addOption('SandboxTransferTimeout', 60, 'sets the transfer timeout of the oversized input sandbox')
 #config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
 
@@ -1652,6 +1607,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.6  2008/09/04 14:00:34  hclee
+# fix the type-checking issue when setting up CE attribute
+#
 # Revision 1.5  2008/08/12 13:57:42  hclee
 #  - remove redundant functions
 #  - set minimum timeout of downloading oversized inputsandbox to 60 secs.

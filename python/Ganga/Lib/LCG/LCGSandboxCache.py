@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCGSandboxCache.py,v 1.1 2008-09-11 16:55:19 hclee Exp $
+# $Id: LCGSandboxCache.py,v 1.2 2008-09-15 20:42:38 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -16,19 +16,43 @@ from urlparse import urlparse
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Credentials import getCredential 
 
 from Ganga.Utility.Shell import Shell
 from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import isStringLike
 from Ganga.Utility.GridShell import getShell 
 
-from Ganga.Lib.LCG.GridSandboxCache import GridSandboxCache
+from Ganga.Lib.LCG.GridSandboxCache import GridFileIndex, GridSandboxCache
 from Ganga.Lib.LCG.MTRunner import MTRunner, Data, Algorithm  
+from Ganga.Lib.LCG.Utility import * 
 
 lcg_sandbox_cache_schema_datadict = GridSandboxCache._schema.inherit_copy().datadict
+lcg_file_index_schema_datadict    = GridFileIndex._schema.inherit_copy().datadict
 
+class LCGFileIndex(GridFileIndex):
+    """
+    Data object containing LCG file index information. 
+    
+    @author: Hurng-Chun Lee 
+    @contact: hurngchunlee@gmail.com
+    """
+
+    _schema   = Schema( Version(1,0), lcg_file_index_schema_datadict )
+    _category = 'GridFileIndex'
+    _name = 'LCGFileIndex'
+
+    def __init__(self, guid, lfc_host, local_fpath, md5sum):
+
+        super(LCGFileIndex,self).__init__()
+
+        self.id     = guid
+        self.name   = os.path.basename(local_fpath)
+        self.md5sum = md5sum
+        self.attributes['lfc_host']    = lfc_host
+        self.attributes['local_fpath'] = local_fpath
+
+    def __str__(self):
+        return '%s\t%s\t%s\t%s' % (self.id, self.attributes['lfc_host'], self.attributes['local_fpath'], self.md5sum)
 
 class LCGSandboxCache(GridSandboxCache):
 
@@ -36,13 +60,11 @@ class LCGSandboxCache(GridSandboxCache):
     '''
 
     lcg_sandbox_cache_schema_datadict.update({
-        'vo'          : SimpleItem(defvalue='dteam', doc='the Grid virtual organization'),
-        'se'          : SimpleItem(defvalue='', doc='the LCG SE hostname'),
-        'se_type'     : SimpleItem(defvalue='srmv2', doc='the LCG SE type'),
-        'se_rpath'    : SimpleItem(defvalue='generated', doc='the relative path to the VO directory on the SE'),
-        'lfc_host'    : SimpleItem(defvalue='', doc='the LCG LFC hostname'),
-        'srm_token'   : SimpleItem(defvalue='', doc='the SRM space token, meaningful only when se_type is set to srmv2'),
-        'middleware'  : SimpleItem(defvalue='EDG', doc='the LCG middleware type')
+        'se'          : SimpleItem(defvalue='', copyable=0, doc='the LCG SE hostname'),
+        'se_type'     : SimpleItem(defvalue='srmv2', copyable=0, doc='the LCG SE type'),
+        'se_rpath'    : SimpleItem(defvalue='generated', copyable=0, doc='the relative path to the VO directory on the SE'),
+        'lfc_host'    : SimpleItem(defvalue='', copyable=0, doc='the LCG LFC hostname'),
+        'srm_token'   : SimpleItem(defvalue='', copyable=0, doc='the SRM space token, meaningful only when se_type is set to srmv2')
         } )
 
     _schema   = Schema( Version(1,0), lcg_sandbox_cache_schema_datadict )
@@ -54,15 +76,17 @@ class LCGSandboxCache(GridSandboxCache):
     def __init__(self):
         super(LCGSandboxCache,self).__init__()
         self.protocol = 'lcg'
+        if not self.index_file:
+            self.index_file = tempfile.mkstemp(suffix='.idx', prefix='_ganga_lcg_sandbox_')[1]
 
-    def upload(self, files=[], opts=''):
+    def __setattr__(self, attr, value):
+        if attr == 'se_type' and value not in ['','srmv1','srmv2']:
+            raise AttributeError('invalid se_type: %s' % value)
+        super(LCGSandboxCache,self).__setattr__(attr, value)
+
+    def impl_upload(self, files=[], opts=''):
         """
         Uploads multiple files to a remote grid storage.
-
-        files in the format:
-          - [ file1, file2, ... ]
-
-        and element can be a File object or a path string.
         """
 
         shell = getShell(self.middleware)
@@ -84,6 +108,8 @@ class LCGSandboxCache(GridSandboxCache):
                 ## decide number of parallel stream to be used
                 fsize    = os.path.getsize( urlparse(file)[2] )
                 fname    = os.path.basename( urlparse(file)[2] )
+                fpath    = os.path.abspath( urlparse(file)[2] )
+                md5sum   = get_md5sum(fpath)
                 nbstream = int((fsize*1.0)/(10.0*1024*1024*1024))
           
                 if nbstream < 1: nbstream = 1 # min stream
@@ -113,43 +139,27 @@ class LCGSandboxCache(GridSandboxCache):
                 else:
                     match = re.search('(guid:\S+)',output)
                     if match:
-                        self.__appendResult__(file, match.group(1))
+                        guid = match.group(1)
+                        self.__appendResult__( file, LCGFileIndex(guid,self.cacheObj.lfc_host,fpath,md5sum) )
                         return True
                     else:
                         return False
 
-        paths = []
-        for f in files:
-            if f.__class__.__name__ == 'File':
-                paths.append('file://%s' % f.name)
-            elif f.__class__.__name__ == 'str':
-                paths.append('file://%s' % f)
-            else:
-                logger.warning('unknown file expression: %s' % repr(f))
-
         myAlg  = MyAlgorithm(cacheObj=self)
-        myData = Data(collection=paths)
+        myData = Data(collection=files)
 
         runner = MTRunner(myAlg, myData)
-        runner.debug = True
+        runner.debug = False 
         runner.start()
         runner.join()
-        return runner.getResults()
 
-    def download(self, files={}, dest_dir=None, opts=''):
+        return runner.getResults().values()
+
+    def impl_download(self, files=[], dest_dir=None, opts=''):
         """
         Downloads multiple files from remote grid storages to 
         a local directory.
-
-        files in the format:
-          - { lfn1: guid1, lfn2: guid2, ... }
         """
-
-        shell = getShell(self.middleware)
-        if self.lfc_host:
-            shell.env['LFC_HOST'] = self.lfc_host
-        self.logger.debug('download file with LFC_HOST: %s', shell.env['LFC_HOST'])
-
         if not dest_dir:
             dest_dir = os.getcwd()
         self.logger.debug('download file to: %s', dest_dir)
@@ -160,55 +170,43 @@ class LCGSandboxCache(GridSandboxCache):
             def __init__(self, cacheObj):
                 Algorithm.__init__(self)
                 self.cacheObj = cacheObj
+                self.shell = getShell(self.cacheObj.middleware)
 
             def process(self, file):
 
-                lfn  = file[0]
-                guid = file[1]
-                fname = os.path.basename( urlparse(lfn)[2] )
+                guid      = file.id
+                lfn       = file.attributes['local_fpath']
+                lfc_host  = file.attributes['lfc_host']
+                fname     = os.path.basename( urlparse(lfn)[2] )
+
+                self.shell.env['LFC_HOST']
+                self.cacheObj.logger.debug('download file with LFC_HOST: %s', self.shell.env['LFC_HOST'])
 
                 cmd  = 'lcg-cp -t %d --vo %s -T %s ' % (self.cacheObj.timeout, self.cacheObj.vo, self.cacheObj.se_type)
                 cmd += '%s file://%s/%s' % (guid, dest_dir, fname)
              
-                rc,output,m = self.cacheObj.__cmd_retry_loop__(shell, cmd, self.cacheObj.max_try)
+                rc,output,m = self.cacheObj.__cmd_retry_loop__(self.shell, cmd, self.cacheObj.max_try)
              
                 if rc != 0:
                     return False 
                 else:
-                    self.__appendResult__(guid, True)
+                    self.__appendResult__(file.id, file)
                     return True
 
-        re_guid = re.compile('^guid:\S+$')
-
-        guids = []
-        for lfn, guid in files.iteritems():
-            if re_guid.match(guid):
-                guids.append([lfn, guid])
-            else:
-                logger.warning('unknown guid: %s' % f)
-
         myAlg  = MyAlgorithm(cacheObj=self)
-        myData = Data(collection=guids)
+        myData = Data(collection=files)
 
         runner = MTRunner(myAlg, myData)
-        runner.debug = True
+        runner.debug = False 
         runner.start()
         runner.join()
 
-        return runner.getResults()
+        return runner.getResults().values()
 
-    def delete(self, files=[], opts=''):
+    def impl_delete(self, files=[], opts=''):
         """
         Deletes multiple files from remote grid storages. 
-
-        files in the format: 
-           - [guid1, guid2, ...]
         """
-
-        shell = getShell(self.middleware)
-        if self.lfc_host:
-            shell.env['LFC_HOST'] = self.lfc_host
-        self.logger.debug('delete file with LFC_HOST: %s', shell.env['LFC_HOST'])
 
         # the algorithm of downloading one file to a local directory
         class MyAlgorithm(Algorithm): 
@@ -216,37 +214,92 @@ class LCGSandboxCache(GridSandboxCache):
             def __init__(self, cacheObj):
                 Algorithm.__init__(self)
                 self.cacheObj = cacheObj
+                self.shell = getShell(self.cacheObj.middleware)
 
-            def process(self, guid):
+            def process(self, file):
+
+                guid = file.id
+
+                lfc_host = file.attributes['lfc_host']
+
+                self.shell.env['LFC_HOST'] = lfc_host
+
+                self.cacheObj.logger.debug('delete file with LFC_HOST: %s' % self.shell.env['LFC_HOST'])
 
                 cmd = 'lcg-del -a -t 60 --vo %s %s' % (self.cacheObj.vo, guid)
              
-                rc,output,m = self.cacheObj.__cmd_retry_loop__(shell, cmd, self.cacheObj.max_try)
+                rc,output,m = self.cacheObj.__cmd_retry_loop__(self.shell, cmd, self.cacheObj.max_try)
 
                 if rc != 0:
                     return False 
                 else:
-                    self.__appendResult__(guid, True)
+                    self.__appendResult__(file.id, file)
                     return True
 
-        re_guid = re.compile('^guid:\S+$')
-
-        guids = []
-        for guid in files:
-            if re_guid.match(guid):
-                guids.append(guid)
-            else:
-                logger.warning('unknown guid: %s' % guid)
-
         myAlg  = MyAlgorithm(cacheObj=self)
-        myData = Data(collection=guids)
+        myData = Data(collection=files)
 
         runner = MTRunner(myAlg, myData)
-        runner.debug = True
+        runner.debug = False 
         runner.start()
         runner.join()
 
-        return runner.getResults()
+        ## update the local index file
+        del_files = runner.getResults().values()
+        all_files = self.get_uploaded_files()
+
+        left_files = []
+        for f in all_files:
+            if f not in del_files:
+                 left_files.append(f)
+
+        self.impl_bookkeepUploadedFiles(left_files, append=False)
+
+        return del_files
+
+    def impl_bookkeepUploadedFiles(self, files, append=True, opts=''):
+        """
+        implementation for bookkeeping the uploaded files.
+        """
+
+        fmode = 'w'
+        if append:
+            fmode = 'a'
+
+        f_idx = open(self.index_file, fmode)
+        for f in files:
+            f_idx.write( '%s\n' % f )
+        f_idx.close()
+
+        return True
+
+    def impl_parseIndexFile(self, opts=''):
+
+        """
+        implementation for parsing the index file used for bookkeeping the uploaded files. 
+        """
+
+        files = [] 
+
+        if not os.path.exists(self.index_file):
+            logger.warning('file not found: %s' % self.index_file)
+        else:
+            f = open(self.index_file,'r')
+            lines = map(lambda x:x.strip(), f.readlines())
+            f.close()
+
+            for l in lines:
+                info   = l.split('\t')
+                try:
+                    guid   = info[0]
+                    lfc    = info[1]
+                    fpath  = info[2]
+                    md5sum = info[3]
+                    files.append(LCGFileIndex(guid, lfc, fpath, md5sum))
+                except IndexError, e:
+                    pass
+
+        return files 
 
     # For GUID protocol
     def __lfc_mkdir__(self, shell, path, mode='775'):
