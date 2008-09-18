@@ -50,7 +50,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
     sites=[]
     maxinfiles=0
     outputlocation,lfchosts,lfcstrings={},{},{}
-    outsite,outlocation,outlfc="","",""
+    outsite,outlfc,outlfc2="","",""
     outputpaths,fileprefixes={},{}
     username=""
     joboffset=0
@@ -142,7 +142,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 try:
                     assert token not in app.se_name
                 except:
-                    logger.error("You are not allowed to write output data in any production space token: %s. Please select a site with ATLASUSERDISK space token or a srmv1 endpoint" % app.se_name)
+                    logger.error("You are not allowed to write output data in any production space token: %s. Please select a site with ATLASUSERDISK or ATLASLOCALGROUPDISK space token or a srmv1 endpoint" % app.se_name)
                     raise
 
         if job.inputdata and job.inputdata._name == 'AthenaMCInputDatasets':
@@ -227,7 +227,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         if  app.se_name == "none" and len(self.sites)>0:
             [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(self.sites[0])
             if len(self.sites)>1:
-                [outlfc,backup,backuplocation]=job.outputdata.getDQ2Locations(self.sites[1])
+                [outlfc2,backup,backuplocation]=job.outputdata.getDQ2Locations(self.sites[1])
                 
             
         outloc="CERNCAF"
@@ -236,14 +236,34 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         if outsite=="" :
             [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(outloc)
 
+        # srmv2 sites special treatment: the space token has been prefixed to the outputlocation and must be removed now:
+        imin=string.find(outputlocation,"token:")
+        imax=string.find(outputlocation,"srm:")
+        spacetoken=""
+        if imin>-1 and imax>-1:
+            spacetoken=outputlocation[imin+6:imax-1]
+            outputlocation=outputlocation[imax:]
+        # same treatment for backup location if any
+        imin=string.find(backuplocation,"token:")
+        imax=string.find(backuplocation,"srm:")
+        bst=""
+        if imin>-1 and imax>-1:
+            bst=backuplocation[imin+6:imax-1]
+            backuplocation=backuplocation[imax:]
        
             
         environment={'T_LCG_GFAL_INFOSYS' :'atlas-bdii.cern.ch:2170'}
+
         environment["OUTLFC"]=outlfc
         environment["OUTSITE"]=outsite
         environment["OUTPUT_LOCATION"]=outputlocation
-        environment["OUTSITE2"]=backup
-        environment["OUTPUT_LOCATION2"]=backuplocation
+        if spacetoken:
+            environment["SPACETOKEN"]=spacetoken
+        if backup:
+            environment["OUTLFC2"]=outlfc2
+            environment["OUTSITE2"]=backup
+            environment["OUTPUT_LOCATION2"]=backuplocation
+
 
         environment["PROD_RELEASE"]=self.prod_release
 

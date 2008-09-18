@@ -227,7 +227,22 @@ then
 fi
 
 get_files PDGTABLE.MeV
+# Make a local copy of requested geomDB if none already available
+if [ ! -e geomDB ]; then
+ mkdir geomDB
+ cd geomDB
+ get_files -data geomDB/larHV_sqlite
+ get_files -data geomDB/geomDB_sqlite
+ cd ..
+fi
+if [ ! -e sqlite200 ]; then
+ mkdir sqlite200
+ cd sqlite200
+ get_files -data sqlite200/ALLP200.db
+ cd ..
+fi
 
+ 
 # Remove /lib and /usr/lib from LD_LIBRARY_PATH
 
 dum=`echo $LD_LIBRARY_PATH | tr ':' '\n' | egrep -v '^/lib' | egrep -v '^/usr/lib' | tr '\n' ':' `

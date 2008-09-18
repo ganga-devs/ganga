@@ -52,11 +52,15 @@ stageOutLCG(){
        DEST=$OUTPUT_LOCATION$lcn/$file.$TIMESTAMP.$OUTPUT_JOBID
     fi
 
-    userspacetoken=`grep -e USERDISK $OUTSITE`
     stflag=""
-    if [ ! -z "$userspacetoken" ]; then
+    if [ ! -z "$SPACETOKEN" ]; then
 	echo "Using srmv2 user space token"
-	stflag = "-s ATLASUSERDISK"
+	stflag = "-s $SPACETOKEN"
+    fi
+    bstflag=""
+    if [ ! -z "$BACKUPTOKEN" ]; then
+	echo "Using srmv2 user space token"
+	bstflag = "-s $BACKUPTOKEN"
     fi
     LFN="/grid/atlas/$lcn/$file.$TIMESTAMP.$OUTPUT_JOBID"
     # cannot use FClistGUID as the athena setup has been removed. Try something different...
@@ -71,9 +75,12 @@ stageOutLCG(){
     stageoutcmd="lcg-cr --vo atlas -v $stflag -d $DEST -l $LFN $guidflag file:$PWD/$file"
     timeout 1 900 $stageoutcmd
     status=$?
-    if [ $status -ne 0 ]; then
+    if [ $status -ne 0 -a ! -z "$BACKUP" ]; then
 	echo "Failed to upload to initial target destination $DEST, trying back up $BACKUP";
-	stageoutcmd="lcg-cr --vo atlas -v $stflag -d $BACKUP -l $LFN $guidflag file:$PWD/$file"
+        if [ ! -z "$OUTLFC2" ]; then
+           export LFC_HOST=$OUTLFC2
+        fi
+	stageoutcmd="lcg-cr --vo atlas -v $bstflag -d $BACKUP -l $LFN $guidflag file:$PWD/$file"
 	timeout 1 900 $stageoutcmd
 	status=$?
 	if [ $status -ne 0 ]; then

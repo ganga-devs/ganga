@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.5 2008-09-12 08:34:26 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.6 2008-09-18 08:53:38 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -757,12 +757,16 @@ class AthenaMCOutputDatasets(Dataset):
         for site, desc in ToACache.sites.iteritems():
             try:
                 outloc = desc['srm'].strip()
-                imin=outloc.find("srm:")
+#                imin=outloc.find("srm:")
                 imax=outloc.rfind(":")
                 imin2=outloc.find("=")
-                if imin >0 and imin2>0 and imax >0:
-                    outputlocation[site]= outloc[imin:imax]+outloc[imin2+1:]
+                token=outloc.find("token:")
+                print outloc,outloc[:imax]
+                if imin2>0 and token>=0:
+                    # srmv2 site. Save token information as coded in ToA: token:SPACETOKEN+srm path, removing the junk bit between the port number (after the last : in the string) and the equal sign.
+                    outputlocation[site]= outloc[:imax]+outloc[imin2+1:]
                 else:
+                    # srmv1 site
                     outputlocation[site]= outloc
             except KeyError:
                 continue
