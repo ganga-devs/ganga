@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.3 2008-09-03 21:47:15 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.4 2008-09-18 15:23:04 dvanders Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -130,9 +130,9 @@ class DQ2JobSplitter(ISplitter):
                 self.numfiles = int(math.ceil(len(guids)/float(nrjob)))
             
             if nrjob > config['MaxJobsDQ2JobSplitter']:
-                nrjob = config['MaxJobsDQ2JobSplitter']
-                self.numfiles = int(math.ceil(len(guids)/float(nrjob)))
-
+                self.numfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
+                nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+            
             for i in xrange(0,nrjob):
           
                 j = Job()
