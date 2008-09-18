@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+import time
 from threading import Thread, Lock
-from Queue import Queue, Empty
+from Queue import Empty
 from Algorithm import AlgorithmError
 
 class MTRunnerError(Exception):
@@ -30,7 +31,7 @@ class MTRunner(Thread):
     algorithm running on a dataset.
     """
 
-    _attributes = ('algorithm','data','numThread','debug','doneList')
+    _attributes = ('algorithm','data','numThread','debug','doneList', 'keepAlive', 'doStop')
 
     def __init__(self, algorithm=None, data=None, numThread=10):
         """
@@ -52,6 +53,8 @@ class MTRunner(Thread):
         self.data      = data
         self.numThread = numThread
         self.debug     = False
+        self.keepAlive = False
+        self.doStop    = False
         self.doneList  = []
 
     def getDoneList(self):
@@ -66,46 +69,74 @@ class MTRunner(Thread):
         """
         return self.algorithm.getResults()
 
+    def stop(self):
+        """
+        stops the MTRunner.
+        """
+        self.doStop = True
+
     def run(self):
         """
         runs the MTRunner thread.
         """
 
-        # preparing the queue
-        collection = self.data.getCollection()
-        wq = Queue(len(collection))
-        for item in collection:
-            wq.put(item)
-
         myLock = Lock()
  
-        def worker(id):
-            while not wq.empty():
-                try:
-                    item = wq.get(block=True, timeout=1)
-                    if self.debug:
-                        print 'worker %d get item %s' % (id, item)
-                    rslt = self.algorithm.process(item)
-                    if rslt:
-                        myLock.acquire()
-                        self.doneList.append(item)
-                        myLock.release()
-                except NotImplementedError:
-                    break
-                except AlgorithmError:
-                    break
-                except Empty:
-                    pass
+        def worker(id, keepAlive=False):
+
+            while not self.doStop:
+
+                if self.data.isEmpty():
+
+                    if keepAlive:
+                        if self.debug:
+                            print 'data queue is empty, check again in 5 sec.'
+                        time.sleep(5)
+                        continue
+                    else:
+                        if self.debug:
+                            print 'data queue is empty, stop worker'
+                        break
+                else:
+                    try:
+                        item = self.data.getNextItem()
+                        if self.debug:
+                            print 'worker %d get item %s' % (id, item)
+                        rslt = self.algorithm.process(item)
+                        if rslt:
+                            myLock.acquire()
+                            self.doneList.append(item)
+                            myLock.release()
+                    except NotImplementedError:
+                        break
+                    except AlgorithmError:
+                        break
+                    except Empty:
+                        pass
         
         # creating new threads to run the algorithm
         threads = []
+
+        # don't keep the worker thread alive if the MTRunner is not a daemon-type thread
+        if not self.isDaemon:
+            self.keepAlive = False
+
         for i in range(self.numThread):
-            t = Thread(target=worker, kwargs={'id': i})
+            t = Thread(target=worker, kwargs={'id': i, 'keepAlive': self.keepAlive })
             t.setDaemon(False)
             threads.append(t)
 
+        # starting worker threads
         for t in threads:
             t.start()
-        
-        for t in threads:
-            t.join()
+
+        # checking periodically and trying to join the splitted worker thread  
+        num_alive_threads = self.numThread
+        while num_alive_threads > 0:
+            if self.debug:
+                print 'number of running threads: %s' % num_alive_threads
+            num_alive_threads = 0
+            for t in threads:
+                t.join(1)
+                if t.isAlive():
+                    num_alive_threads += 1
