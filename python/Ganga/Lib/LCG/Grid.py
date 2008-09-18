@@ -217,8 +217,11 @@ class Grid(object):
 
         return
 
-    def native_master_cancel(self,jobid):
+    def native_master_cancel(self,jobids):
         '''Native bulk cancellation supported by GLITE middleware.'''
+
+        idsfile = tempfile.mktemp('.jids')
+        file(idsfile,'w').write('\n'.join(jobids)+'\n')
 
         if self.middleware == 'EDG':
             logger.warning('EDG middleware doesn\'t support bulk cancellation.')
@@ -237,7 +240,7 @@ class Grid(object):
         if not self.__set_submit_option__():
             return False
 
-        cmd = '%s --noint %s' % (cmd,jobid)
+        cmd = '%s --noint -i %s' % (cmd, idsfile)
 
         logger.debug('job cancel command: %s' % cmd)
 
@@ -366,8 +369,11 @@ class Grid(object):
 
         return info
 
-    def get_loginfo(self,jobid,directory,verbosity=1):
+    def get_loginfo(self,jobids,directory,verbosity=1):
         '''Fetch the logging info of the given job and save the output in the job's outputdir'''
+
+        idsfile = tempfile.mktemp('.jids')
+        file(idsfile,'w').write('\n'.join(jobids)+'\n')
 
         if self.middleware == 'EDG':
             cmd = 'edg-job-get-logging-info -v %d' % verbosity
@@ -383,7 +389,7 @@ class Grid(object):
 
         log_output = directory+'/__jobloginfo__.log'
 
-        cmd = '%s --noint -o %s %s' % (cmd,log_output,jobid)
+        cmd = '%s --noint -o %s -i %s' % (cmd, log_output, idsfile)
 
         logger.debug('job logging info command: %s' % cmd)
 

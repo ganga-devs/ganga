@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridSandboxCache.py,v 1.2 2008-09-15 20:42:38 hclee Exp $
+# $Id: GridSandboxCache.py,v 1.3 2008-09-18 16:34:58 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -96,6 +96,10 @@ class GridSandboxCache(GangaObject):
                 paths.append('file://%s' % f)
             else:
                 logger.warning('unknown file expression: %s' % repr(f))
+
+        ## check or create the index file for local bookkeeping
+        if not self.index_file:
+            self.index_file = tempfile.mkstemp(suffix='.idx', prefix='_ganga_grid_sandbox_')[1]
 
         uploaded_files = self.impl_upload(files=paths, opts=opts)
         status = self.impl_bookkeepUploadedFiles(uploaded_files, append=True, opts=opts)
@@ -210,12 +214,23 @@ class GridSandboxCache(GangaObject):
 
     def impl_bookkeepUploadedFiles(self, files=[], append=True, opts=''):
         """
-        implementation for bookkeeping the uploaded files.
+        basic implementation for bookkeeping the uploaded files.
+        It simply writes out the given GridFileIndex objects. 
 
         @param files is a list of files represented by GridFileIndex objects 
         @return True if files are successfully logged in the local index file 
         """
-        raise NotImplementedError
+
+        fmode = 'w'
+        if append:
+            fmode = 'a'
+
+        f_idx = open(self.index_file, fmode)
+        for f in files:
+            f_idx.write( '%s\n' % f )
+        f_idx.close()
+
+        return True
 
     def impl_parseIndexFile(self, opts=''):
         """

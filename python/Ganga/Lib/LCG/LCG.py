@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.7 2008-09-15 20:42:38 hclee Exp $
+# $Id: LCG.py,v 1.8 2008-09-18 16:34:58 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -27,6 +27,8 @@ from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.Utility.util import isStringLike
 from Ganga.Utility.GridShell import getShell
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
+from Ganga.Lib.LCG.MTRunner import MTRunner, Data, Algorithm  
+from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader, LCGOutputDownloadTask
 from Ganga.Lib.LCG.Utility import *
 
 # for runtime stdout/stderr inspection
@@ -41,6 +43,27 @@ if simulator_enabled:
     from GridSimulator import GridSimulator as Grid
 else:
     from Grid import Grid
+
+## load the lcg_output_downloader (a background thread)
+import atexit
+
+def start_lcg_output_downloader():
+    global lcg_output_downloader
+    lcg_output_downloader = None
+    if not lcg_output_downloader:
+        lcg_output_downloader = LCGOutputDownloader(keepAlive = True)
+        lcg_output_downloader.start()
+
+def get_lcg_output_downloader():
+    global lcg_output_downloader
+    return lcg_output_downloader
+
+def stop_lcg_output_downloader():
+    if lcg_output_downloader:
+        lcg_output_downloader.stop()
+
+start_lcg_output_downloader()
+atexit.register( (0, stop_lcg_output_downloader) )
     
 class LCG(IBackend):
     '''LCG backend - submit jobs to the EGEE/LCG Grid using gLite/EDG middleware.
@@ -64,11 +87,12 @@ class LCG(IBackend):
     # internal usage of the flag:
     #  - 0: job without the need of special control
     #  - 1: job (normally a subjob) resubmitted individually. The monitoring of those jobs should be separated.
-    _schema = Schema(Version(1,8), {
+    _schema = Schema(Version(1,9), {
         'CE'                  : SimpleItem(defvalue='',doc='Request a specific Computing Element'),
         'jobtype'             : SimpleItem(defvalue='Normal',doc='Job type: Normal, MPICH'),
         'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
         'sandboxcache'        : ComponentItem('GridSandboxCache',doc='Interface for handling oversized input sandbox'),
+        'parent_id'           : SimpleItem(defvalue=None,protected=1,copyable=0,hidden=1,doc='Middleware job identifier for its parent job'),
         'id'                  : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Middleware job identifier'),
         'status'              : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Middleware job status'),
         'middleware'          : SimpleItem(defvalue='EDG',protected=0,copyable=1,doc='Middleware type',checkset='_checkset_middleware'),
@@ -131,31 +155,6 @@ class LCG(IBackend):
         if value!=False and self.middleware.upper()!='GLITE':
             raise AttributeError("perusable can only be set for GLITE jobs")
 
-    def __make_collection_jdl(self,nodeJDLFiles=[]):
-        '''Compose the collection JDL for the master job'''
-
-        nodes = ',\n'.join(map(lambda x:'[file = "%s";]' % x, nodeJDLFiles))
-
-        jdl = {
-            'Type'  : 'collection',
-            'VirtualOrganisation'  : config['VirtualOrganisation'],
-            'Nodes' : ''
-        }
-
-        # specification of the node jobs
-        node_cnt = 0
-        node_str = ''
-        jdl ['Nodes'] = '{\n';
-        for f in nodeJDLFiles:
-            node_str += '[NodeName = "gsj_%d"; file="%s";],\n' % (node_cnt, f)
-            node_cnt += 1
-        if node_str:
-            jdl['Nodes'] += node_str.strip()[:-1]
-        jdl['Nodes'] += '\n}';
-
-        jdlText = Grid.expandjdl(jdl)
-        logger.debug('master job JDL: %s' % jdlText)
-        return jdlText
 
     def __setup_sandboxcache(self, job):
         '''Sets up the sandbox cache object to adopt the runtime configuration of the LCG backend'''
@@ -186,6 +185,11 @@ class LCG(IBackend):
          
             if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
+
+        elif self.sandboxcache._name == 'DQ2SandboxCache':
+            uname = grids[self.middleware.upper()].credential.identity()
+            uname = re.sub(r'[\s_\-\(\)\=\+\?\*]*', r'', uname)
+            self.sandboxcache.dataset_name = 'users.%s.ganga.%s.input' % (uname, get_uuid())
 
         if job.master is None:
             clog = os.path.join(job.inputdir,'__iocache__')
@@ -296,6 +300,148 @@ class LCG(IBackend):
             else:
                 return self.master_bulk_kill()
 
+    def __mt_bulk_submit(self, node_jdls, max_node):
+        '''submitting bulk jobs in multiple threads'''
+
+        job = self.getJobObject() 
+        mt  = self.middleware.upper()
+
+        logger.warning('submitting %d subjobs ... it may take a while' % len(node_jdls))
+        
+        # the algorithm for submitting a single bulk job
+        class MyAlgorithm(Algorithm):
+
+            def __init__(self, gridObj, masterInputWorkspace):
+                Algorithm.__init__(self)
+                self.inpw    = masterInputWorkspace
+                self.gridObj = gridObj
+
+            def process(self, node_info):
+                my_node_offset = node_info['offset']
+                my_node_jdls   = node_info['jdls']
+                coll_jdl_name  = '__jdlfile__%d_%d__' % (my_node_offset, my_node_offset + len(my_node_jdls))
+                # compose master JDL for collection job
+                jdl_cnt  = self.__make_collection_jdl(my_node_jdls, offset=my_node_offset)
+                jdl_path = self.inpw.writefile( FileBuffer(coll_jdl_name, jdl_cnt) )
+                master_jid = self.gridObj.submit(jdl_path, ce=None)
+
+                if not master_jid:
+                    return False 
+                else:
+                    self.__appendResult__( my_node_offset, master_jid )
+                    return True
+
+            def __make_collection_jdl(self,nodeJDLFiles=[], offset=0):
+                '''Compose the collection JDL for the master job'''
+   
+                nodes = ',\n'.join(map(lambda x:'[file = "%s";]' % x, nodeJDLFiles))
+   
+                jdl = {
+                    'Type'  : 'collection',
+                    'VirtualOrganisation'  : config['VirtualOrganisation'],
+                    'Nodes' : ''
+                }
+   
+                # specification of the node jobs
+                node_cnt = offset
+                node_str = ''
+                jdl ['Nodes'] = '{\n';
+                for f in nodeJDLFiles:
+                    node_str += '[NodeName = "gsj_%d"; file="%s";],\n' % (node_cnt, f)
+                    node_cnt += 1
+                if node_str:
+                    jdl['Nodes'] += node_str.strip()[:-1]
+                jdl['Nodes'] += '\n}';
+   
+                jdlText = Grid.expandjdl(jdl)
+                logger.debug('master job JDL: %s' % jdlText)
+                return jdlText
+
+        # split to multiple glite bulk jobs
+        num_chunks = len(node_jdls) / max_node
+        if len(node_jdls) % max_node > 0:
+            num_chunks += 1
+
+        mt_data = []
+
+        for i in range(num_chunks):
+            data = {}
+            ibeg = i * max_node
+            iend = min(ibeg + max_node, len(node_jdls) )
+            data['offset'] = ibeg
+            data['jdls']   = node_jdls[ibeg:iend]
+            mt_data.append(data)
+
+        myAlg  = MyAlgorithm(gridObj=grids[mt],masterInputWorkspace=job.getInputWorkspace())
+        myData = Data(collection=mt_data)
+
+        runner = MTRunner(myAlg, myData)
+        runner.debug = True
+        runner.start()
+        runner.join()
+
+        if len(runner.getDoneList()) < num_chunks:
+            return None
+        else:
+            return runner.getResults()
+
+    def _mt_job_prepare(self, rjobs, subjobconfigs, masterjobconfig):
+        '''preparing jobs in multiple threads'''
+
+        logger.warning('preparing %d subjobs ... it may take a while' % len(rjobs))
+
+        mt = self.middleware.upper()
+
+        # prepare the master job (i.e. create shared inputsandbox, etc.)
+        master_input_sandbox=IBackend.master_prepare(self,masterjobconfig)
+
+        job = self.getJobObject()
+
+        # the algorithm for preparing a single bulk job
+        class MyAlgorithm(Algorithm):
+
+            def __init__(self):
+                Algorithm.__init__(self)
+
+            def process(self, sj_info):
+                my_sc = sj_info[0]
+                my_sj = sj_info[1]
+
+                try:
+                    logger.debug("preparing subjob %s" % my_sj.getFQID('.'))
+                    jdlpath = my_sj.backend.preparejob(my_sc, master_input_sandbox)
+                    self.__appendResult__( my_sj.id, jdlpath )
+                    return True
+                except Exception,x:
+                    log_user_exception()
+                    return False
+
+        mt_data = []
+        for sc,sj in zip(subjobconfigs,rjobs):
+            mt_data.append( [sc, sj] )
+
+        myAlg  = MyAlgorithm()
+        myData = Data(collection=mt_data)
+
+        runner = MTRunner(myAlg, myData, numThread=20)
+        runner.debug = False
+        runner.start()
+        runner.join()
+
+        if len(runner.getDoneList()) < len(mt_data):
+            return None
+        else:
+
+            # the result should be sorted
+            results = runner.getResults()
+            sc_ids  = results.keys()
+            sc_ids.sort()
+           
+            node_jdls = []
+            for id in sc_ids:
+                node_jdls.append(results[id])
+            return node_jdls
+
     def master_bulk_submit(self,rjobs,subjobconfigs,masterjobconfig):
         '''GLITE bulk submission'''
 
@@ -307,37 +453,12 @@ class LCG(IBackend):
 
         assert(implies(rjobs,len(subjobconfigs)==len(rjobs)))
 
-        mt = self.middleware.upper()
-
-        # prepare the master job (i.e. create shared inputsandbox, etc.)
-        master_input_sandbox=IBackend.master_prepare(self,masterjobconfig)
-
-        job = self.getJobObject()
-
-        # create jdl repository in master job's inputdir for storing subjobs' jdls
-        #jdlrepos = os.path.join(job.inputdir,'jdlrepos')
-        #if os.path.exists(jdlrepos):
-        #    grids[mt].shell.system('rm -rf %s' % jdlrepos)
-        #os.makedirs(jdlrepos)
-
         # prepare the subjobs, jdl repository before bulk submission
-        node_jdls = []
-        for sc,sj in zip(subjobconfigs,rjobs):
-            try:
-                logger.debug("preparing subjob %s" % sj.getFQID('.'))
-                jdlpath = sj.backend.preparejob(sc,master_input_sandbox)
-                node_jdls.append(jdlpath)
-                #os.symlink(jdlpath,os.path.join(jdlrepos,os.path.basename(jdlpath)+'.'+str(sj.id)))
-            except Exception,x:
-                log_user_exception()
-                raise IncompleteJobSubmissionError(sj.id,str(x))
+        node_jdls = self._mt_job_prepare(rjobs, subjobconfigs, masterjobconfig)
 
-        # use --collection to submit jobs 
-        #master_jid = grids[mt].native_master_submit(jdlrepos,self.CE)
-
-        # compose master JDL for collection job
-        inpw = job.getInputWorkspace()
-        master_jdl = inpw.writefile(FileBuffer('__jdlfile__', self.__make_collection_jdl(node_jdls)))
+        if not node_jdls:
+            logger.error('Some jobs not successfully prepared')
+            return False
 
         profiler.checkAndStart('job preparation elapsed time')
 
@@ -347,37 +468,32 @@ class LCG(IBackend):
 
         profiler.checkAndStart('job state transition (submitting) elapsed time')
 
-        master_jid = grids[mt].submit(master_jdl,ce=None)
+        max_node = 50
+        results  = self.__mt_bulk_submit(node_jdls, max_node=max_node)
 
-        if not master_jid:
-            logger.error('Job submission failed')
-            return False
+        profiler.checkAndStart('job submission elapsed time')
 
-        self.id = master_jid
+        status = False
+        if not results:
+            logger.error('Some bulk jobs not successfully submitted')
+        else: 
+            offsets = results.keys()
+            offsets.sort()
+         
+            self.id = []
+            for ibeg in offsets:
+                mid = results[ibeg]
+                self.id.append(mid)
+                iend = min(ibeg + max_node, len(node_jdls))
+                for i in range(ibeg, iend):
+                    sj = rjobs[i]
+                    sj.backend.parent_id = mid
+                    sj.updateStatus('submitted')
+                    sj.info.submit_counter += 1
+         
+            status = True 
 
-        # set all subjobs to submitted status (a temporary workaround for Ganga 4)
-        # NOTE: this is just a workaround to avoid the unexpected transition
-        #       that turns the master job's status from 'submitted' to 'submitting'.
-        #       As this transition should be allowed to simulate a lock mechanism in Ganga 4, the workaround
-        #       is to set all subjob's status to 'submitted' so that the transition can be avoided.
-        #       A more clear solution should be implemented with the lock mechanism introduced in Ganga 5.  
-        for sj in rjobs:
-            sj.updateStatus('submitted')
-            sj.info.submit_counter += 1
-
-        profiler.checkAndStart('job state transition (submitting) elapsed time')
-
-        # update the subjob information right after the submission
-        #self.master_bulk_updateMonitoringInformation([job],True)
-
-        #profiler.checkAndStart('job info update elapsed time')
-        
-        #for sj in rjobs:
-        #    sj.updateStatus('submitted')
-        #    sj.info.submit_counter += 1
-        #profiler.checkAndStart('job state transition (submitted) elapsed time')
-
-        return True
+        return status 
 
     def master_bulk_resubmit(self,rjobs):
         '''GLITE bulk resubmission'''
@@ -388,43 +504,49 @@ class LCG(IBackend):
 
         job = self.getJobObject()
 
-        # use --collection to submit jobs 
-        #jdlrepos = os.path.join(job.inputdir,'jdlrepos')
-        #master_jid = grids[mt].native_master_submit(jdlrepos,self.CE)
-
         # compose master JDL for collection job
         node_jdls = []
         for sj in rjobs:
             jdlpath = os.path.join(sj.inputdir,'__jdlfile__')
             node_jdls.append(jdlpath)
 
-        inpw = job.getInputWorkspace()
-        master_jdl = inpw.writefile(FileBuffer('__jdlfile__', self.__make_collection_jdl(node_jdls)))
-        master_jid = grids[mt].submit(master_jdl,ce=None)
+        max_node = 50
 
-        if not master_jid:
-            logger.error('Job resubmission failed')
-            return False
-            #raise IncompleteJobSubmissionError(job.id,'native master job submission failed.')
+        results = self.__mt_bulk_submit(node_jdls, max_node=max_node)
 
-        self.id = master_jid
-        self.__refresh_jobinfo__(job)
-        for sj in rjobs:
-            sj.backend.id = None
-            self.__refresh_jobinfo__(sj)
-            sj.updateStatus('submitting')
+        status = False
+        if not results:
+            logger.error('Some bulk jobs not successfully re-submitted')
+        else: 
+            offsets = results.keys()
+            offsets.sort()
+         
+            self.__refresh_jobinfo__(job)
+            self.id = []
+            for ibeg in offsets:
+                mid = results[ibeg]
+                self.id.append(mid)
+                iend = min(ibeg + max_node, len(node_jdls))
+                for i in range(ibeg, iend):
+                    sj = rjobs[i]
+                    sj.backend.id = None
+                    sj.backend.parent_id = mid
+                    self.__refresh_jobinfo__(sj)
+                    sj.updateStatus('submitting')
 
-        # set all subjobs to submitted status
-        # NOTE: this is just a workaround to avoid the unexpected transition
-        #       that turns the master job's status from 'submitted' to 'submitting'.
-        #       As this transition should be allowed to simulate a lock mechanism in Ganga 4, the workaround
-        #       is to set all subjobs' status to 'submitted' so that the transition can be avoided.
-        #       A more clear solution should be implemented with the lock mechanism introduced in Ganga 5.  
-        for sj in rjobs:
-            sj.updateStatus('submitted')
-            sj.info.submit_counter += 1
+            # set all subjobs to submitted status
+            # NOTE: this is just a workaround to avoid the unexpected transition
+            #       that turns the master job's status from 'submitted' to 'submitting'.
+            #       As this transition should be allowed to simulate a lock mechanism in Ganga 4, the workaround
+            #       is to set all subjobs' status to 'submitted' so that the transition can be avoided.
+            #       A more clear solution should be implemented with the lock mechanism introduced in Ganga 5.  
+            for sj in rjobs:
+                sj.updateStatus('submitted')
+                sj.info.submit_counter += 1
+         
+            status = True 
 
-        return True
+        return status 
 
     def master_bulk_kill(self):
         '''GLITE bulk resubmission'''
@@ -453,7 +575,14 @@ class LCG(IBackend):
         
         ## killing the master job
         logger.debug('cancelling the master job.')
-        ck = grids[mt].native_master_cancel(self.id)
+
+        myids = []
+        if isStringLike(self.id):
+            myids.append(self.id)
+        else:
+            myids = self.id
+
+        ck = grids[mt].native_master_cancel(myids)
 
         if not ck:
             logger.warning('Job cancellation failed: %s' % self.id)
@@ -481,8 +610,13 @@ class LCG(IBackend):
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return None 
 
+        if isStringLike(self.id):
+            my_ids = [ self.id ]
+        else:
+            my_ids = self.id
+
         # successful logging info fetching returns a file path to the information
-        loginfo_output = grids[self.middleware.upper()].get_loginfo(self.id,job.outputdir,verbosity)
+        loginfo_output = grids[self.middleware.upper()].get_loginfo(my_ids,job.outputdir,verbosity)
 
         if loginfo_output:
 
@@ -513,6 +647,9 @@ class LCG(IBackend):
             grids[mt].perusable=self.perusable
         
         self.id = grids[mt].submit(jdlpath,self.CE)
+
+        self.parent_id = self.id
+
         return not self.id is None
 
     def resubmit(self):
@@ -521,6 +658,7 @@ class LCG(IBackend):
       
         mt = self.middleware.upper()
         self.id = grids[mt].submit(job.getInputWorkspace().getPath("__jdlfile__"),self.CE)
+        self.parent_id = self.id
 
         if self.id:
             # refresh the lcg job information
@@ -1290,6 +1428,7 @@ sys.exit(0)
 
                         job.updateStatus('completing')
                         outw = job.getOutputWorkspace()
+
                         pps_check = grids[mt].get_output(job.backend.id,outw.getPath(),wms_proxy=False)
                 
                     if pps_check[0]:
@@ -1312,7 +1451,15 @@ sys.exit(0)
         if not grid:
             return
 
-        jobdict = dict([ [job.backend.id,job] for job in jobs if job.backend.id ])
+        ## split up the master job into severl LCG bulk job ids
+        jobdict = {}
+        for j in jobs:
+            if j.backend.id:
+                for sj in j.subjobs:
+                    if not jobdict.has_key(sj.backend.parent_id):
+                        jobdict[sj.backend.parent_id] = j
+
+        #jobdict = dict([ [job.backend.id,job] for job in jobs if job.backend.id ])
 
         job        = None
         subjobdict = {}
@@ -1339,12 +1486,13 @@ sys.exit(0)
 
                 subjobdict = dict([ [str(subjob.id),subjob] for subjob in job.subjobs ])
 
-                if job.backend.status != info['status']:
-                    logger.debug('job %s has changed status to %s',job.getFQID('.'),info['status'])
-
-                job.backend.status = info['status']
-                job.backend.reason = info['reason']
-                job.backend.exitcode_lcg = info['exit']
+                ## NB: still no idea how to map multiple bulk jobs' information into one Ganga master job
+                ##     therefore we left it empty
+                #if job.backend.status != info['status']:
+                #    logger.debug('job %s has changed status to %s',job.getFQID('.'),info['status'])
+                #job.backend.status = info['status']
+                #job.backend.reason = info['reason']
+                #job.backend.exitcode_lcg = info['exit']
 
             else: # this is the info for the node job
 
@@ -1395,18 +1543,23 @@ sys.exit(0)
                             # update to 'running' before changing to 'completing'
                             if subjob.status == 'submitted':
                                 subjob.updateStatus('running')
-                     
-                            subjob.updateStatus('completing')
-                            outw = subjob.getOutputWorkspace()
-                            pps_check = grid.get_output(subjob.backend.id,outw.getPath(),wms_proxy=True)
                     
-                        if pps_check[0]:
-                            LCG.updateGangaJobStatus(subjob,info['status'])
+                            downloader = get_lcg_output_downloader()
+
+                            downloader.addTask(grid, subjob)
+
+                            #subjob.updateStatus('completing')
+                            #outw = subjob.getOutputWorkspace()
+                            ## output checking is time-consuming, should be parallelized
+                            #pps_check = grid.get_output(subjob.backend.id,outw.getPath(),wms_proxy=True)
                         else:
-                            subjob.updateStatus('failed')
-                            # update the backend's reason if the failure detected in the Ganga's pps 
-                            if pps_check[1]:
-                                job.backend.reason = 'warning from Ganga: %s' % pps_check[1]
+                            if pps_check[0]:
+                                LCG.updateGangaJobStatus(subjob,info['status'])
+                            else:
+                                subjob.updateStatus('failed')
+                                # update the backend's reason if the failure detected in the Ganga's pps 
+                                if pps_check[1]:
+                                    subjob.backend.reason = 'warning from Ganga: %s' % pps_check[1]
 
         # update master job status
         if updateMasterStatus:
@@ -1607,6 +1760,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.7  2008/09/15 20:42:38  hclee
+# improve sandbox cache handler and adopt it in the LCG backend
+#
 # Revision 1.6  2008/09/04 14:00:34  hclee
 # fix the type-checking issue when setting up CE attribute
 #

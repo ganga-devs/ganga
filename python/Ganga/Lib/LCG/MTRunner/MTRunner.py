@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import time
+import time, threading
 from threading import Thread, Lock
 from Queue import Empty
 from Algorithm import AlgorithmError
@@ -31,7 +31,7 @@ class MTRunner(Thread):
     algorithm running on a dataset.
     """
 
-    _attributes = ('algorithm','data','numThread','debug','doneList', 'keepAlive', 'doStop')
+    _attributes = ('algorithm', 'data', 'numThread', 'debug', 'doneList', 'keepAlive', 'doStop')
 
     def __init__(self, algorithm=None, data=None, numThread=10):
         """
@@ -140,3 +140,7 @@ class MTRunner(Thread):
                 t.join(1)
                 if t.isAlive():
                     num_alive_threads += 1
+
+        # when entering this line, MTRunner stops
+        if self.debug:
+            print 'MTRunner stop'

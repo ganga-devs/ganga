@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCGSandboxCache.py,v 1.2 2008-09-15 20:42:38 hclee Exp $
+# $Id: LCGSandboxCache.py,v 1.3 2008-09-18 16:34:58 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -76,8 +76,6 @@ class LCGSandboxCache(GridSandboxCache):
     def __init__(self):
         super(LCGSandboxCache,self).__init__()
         self.protocol = 'lcg'
-        if not self.index_file:
-            self.index_file = tempfile.mkstemp(suffix='.idx', prefix='_ganga_lcg_sandbox_')[1]
 
     def __setattr__(self, attr, value):
         if attr == 'se_type' and value not in ['','srmv1','srmv2']:
@@ -257,24 +255,7 @@ class LCGSandboxCache(GridSandboxCache):
 
         return del_files
 
-    def impl_bookkeepUploadedFiles(self, files, append=True, opts=''):
-        """
-        implementation for bookkeeping the uploaded files.
-        """
-
-        fmode = 'w'
-        if append:
-            fmode = 'a'
-
-        f_idx = open(self.index_file, fmode)
-        for f in files:
-            f_idx.write( '%s\n' % f )
-        f_idx.close()
-
-        return True
-
     def impl_parseIndexFile(self, opts=''):
-
         """
         implementation for parsing the index file used for bookkeeping the uploaded files. 
         """
