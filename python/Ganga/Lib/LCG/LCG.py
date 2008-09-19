@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.8 2008-09-18 16:34:58 hclee Exp $
+# $Id: LCG.py,v 1.9 2008-09-19 11:45:19 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -376,7 +376,7 @@ class LCG(IBackend):
         myData = Data(collection=mt_data)
 
         runner = MTRunner(myAlg, myData)
-        runner.debug = True
+        runner.debug = False
         runner.start()
         runner.join()
 
@@ -1417,29 +1417,18 @@ sys.exit(0)
                     job.backend.reason = info['reason']
                     job.backend.exitcode_lcg = info['exit']
 
-                    pps_check = (True,None)
-
-                    # postprocess of getting job output if the job is done
-                    if info['status'] == 'Done (Success)' and job.status != 'completed':
-
-                        # update to 'running' before changing to 'completing'
-                        if job.status == 'submitted':
-                            job.updateStatus('running')
-
-                        job.updateStatus('completing')
-                        outw = job.getOutputWorkspace()
-
-                        pps_check = grids[mt].get_output(job.backend.id,outw.getPath(),wms_proxy=False)
+                if info['status'] == 'Done (Success)' and ( job.status not in ['completed', 'failed'] ):
                 
-                    if pps_check[0]:
-                        LCG.updateGangaJobStatus(job,info['status'])
-                        job.backend.exitcode = 0
-                    else:
-                        job.updateStatus("failed")
-                        # update the backend's reason if the failure detected in the Ganga's pps 
-                        if pps_check[1] != 0:
-                            job.backend.reason = 'non-zero app. exit code: %s' % pps_check[1]
-                            job.backend.exitcode = pps_check[1]
+                    # update to 'running' before changing to 'completing'
+                    if job.status == 'submitted':
+                        job.updateStatus('running')
+                
+                    downloader = get_lcg_output_downloader()
+                    downloader.addTask(grids[mt], job, False)
+
+                    # job status update will be done after the output is successfully downloaded 
+                else:
+                    LCG.updateGangaJobStatus(job,info['status'])
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
@@ -1459,8 +1448,6 @@ sys.exit(0)
                     if not jobdict.has_key(sj.backend.parent_id):
                         jobdict[sj.backend.parent_id] = j
 
-        #jobdict = dict([ [job.backend.id,job] for job in jobs if job.backend.id ])
-
         job        = None
         subjobdict = {}
 
@@ -1473,34 +1460,32 @@ sys.exit(0)
             return True
 
         status_info = grid.status(jobdict.keys(),is_collection=True)
-        #while not check_info(status_info):
-        #    logger.debug('waiting for node job information to be available')
-        #    time.sleep(0.1)
-        #    status_info = grid.status(jobdict.keys(),is_collection=True)
 
         ## update GANGA job repository according to the available job information 
         for info in status_info:
             if not info['is_node']: # this is the info for the master job
 
-                job = jobdict[info['id']]
+                cachedParentId = info['id']
+
+                job = jobdict[cachedParentId]
 
                 subjobdict = dict([ [str(subjob.id),subjob] for subjob in job.subjobs ])
-
-                ## NB: still no idea how to map multiple bulk jobs' information into one Ganga master job
-                ##     therefore we left it empty
-                #if job.backend.status != info['status']:
-                #    logger.debug('job %s has changed status to %s',job.getFQID('.'),info['status'])
-                #job.backend.status = info['status']
-                #job.backend.reason = info['reason']
-                #job.backend.exitcode_lcg = info['exit']
 
             else: # this is the info for the node job
 
                 # subjob's node name is not available 
                 if not info['name']: continue
+
                 subjob = subjobdict[info['name'].replace('gsj_','')]
 
-                # skip updating the cleared jobs   
+                # skip updating the resubmitted jobs by comparing:
+                #  - the subjob's parent job id
+                #  - the parent id returned from status
+                if cachedParentId != subjob.backend.parent_id:
+                    logger.debug('job %s has been resubmitted, ignore the status update.' % subjob.getFQID('.'))
+                    continue
+
+                # skip updating the cleared jobs
                 if info['status'] == 'Cleared' and subjob.status in ['completed','failed']: continue
 
                 # skip updating the jobs that are individually resubmitted after the original bulk submission
@@ -1536,30 +1521,18 @@ sys.exit(0)
                         subjob.backend.status = info['status']
                         subjob.backend.reason = info['reason']
                         subjob.backend.exitcode_lcg = info['exit']
-                        pps_check = (True,None)
                         
-                        if info['status'] == 'Done (Success)' and subjob.status != 'completed':
+                    if info['status'] == 'Done (Success)' and ( subjob.status not in ['completed', 'failed'] ):
                  
-                            # update to 'running' before changing to 'completing'
-                            if subjob.status == 'submitted':
-                                subjob.updateStatus('running')
+                        # update to 'running' before changing to 'completing'
+                        if subjob.status == 'submitted':
+                            subjob.updateStatus('running')
                     
-                            downloader = get_lcg_output_downloader()
-
-                            downloader.addTask(grid, subjob)
-
-                            #subjob.updateStatus('completing')
-                            #outw = subjob.getOutputWorkspace()
-                            ## output checking is time-consuming, should be parallelized
-                            #pps_check = grid.get_output(subjob.backend.id,outw.getPath(),wms_proxy=True)
-                        else:
-                            if pps_check[0]:
-                                LCG.updateGangaJobStatus(subjob,info['status'])
-                            else:
-                                subjob.updateStatus('failed')
-                                # update the backend's reason if the failure detected in the Ganga's pps 
-                                if pps_check[1]:
-                                    subjob.backend.reason = 'warning from Ganga: %s' % pps_check[1]
+                        downloader = get_lcg_output_downloader()
+                        downloader.addTask(grid, subjob, True)
+                        # job status update will be done after the output is successfully downloaded 
+                    else:
+                        LCG.updateGangaJobStatus(subjob, info['status'])
 
         # update master job status
         if updateMasterStatus:
@@ -1760,6 +1733,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.8  2008/09/18 16:34:58  hclee
+# improving job submission/output fetching performance
+#
 # Revision 1.7  2008/09/15 20:42:38  hclee
 # improve sandbox cache handler and adopt it in the LCG backend
 #
