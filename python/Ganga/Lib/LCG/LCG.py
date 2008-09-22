@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.9 2008-09-19 11:45:19 hclee Exp $
+# $Id: LCG.py,v 1.10 2008-09-22 22:43:41 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -1427,8 +1427,10 @@ sys.exit(0)
                     downloader.addTask(grids[mt], job, False)
 
                     # job status update will be done after the output is successfully downloaded 
+                elif job.backend.status != info['status']:
+                    LCG.updateGangaJobStatus(job, info['status'])
                 else:
-                    LCG.updateGangaJobStatus(job,info['status'])
+                    pass
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
@@ -1531,8 +1533,10 @@ sys.exit(0)
                         downloader = get_lcg_output_downloader()
                         downloader.addTask(grid, subjob, True)
                         # job status update will be done after the output is successfully downloaded 
-                    else:
+                    elif subjob.backend.status != info['status']:
                         LCG.updateGangaJobStatus(subjob, info['status'])
+                    else:
+                        pass
 
         # update master job status
         if updateMasterStatus:
@@ -1733,6 +1737,10 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.9  2008/09/19 11:45:19  hclee
+# turn off debug message of the MTRunner objects
+# try to avoid the race condition amoung concurrent threads
+#
 # Revision 1.8  2008/09/18 16:34:58  hclee
 # improving job submission/output fetching performance
 #

@@ -123,6 +123,7 @@ class MTRunner(Thread):
 
         for i in range(self.numThread):
             t = Thread(target=worker, kwargs={'id': i, 'keepAlive': self.keepAlive })
+            t.setName(self.getName() + '_agent_%d' % i)
             t.setDaemon(False)
             threads.append(t)
 
