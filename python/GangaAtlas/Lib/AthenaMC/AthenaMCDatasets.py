@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.6 2008-09-18 08:53:38 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.7 2008-09-23 14:04:01 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -158,7 +158,7 @@ class AthenaMCInputDatasets(Dataset):
 
     _category = 'datasets'
     _name = 'AthenaMCInputDatasets'
-    _exportmethods = [ 'get_dataset', 'get_cavern_dataset', 'get_minbias_dataset' ]
+    _exportmethods = [ 'get_dataset', 'get_cavern_dataset', 'get_minbias_dataset','get_DBRelease' ]
     _GUIPrefs= [ { 'attribute' : 'datasetType', 'widget' : 'String_Choice', 'choices' : ['DQ2','private','unknown','local']}]
 
     # content = [ ]
@@ -326,6 +326,88 @@ class AthenaMCInputDatasets(Dataset):
         except:
             logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
             raise        
+        return [self.turls,self.lfcs,self.sites]
+
+
+    def get_DBRelease(self, release):
+        '''Get macthing DBrelease dataset from DQ2 database and useful information like guid for downloads'''
+
+        self.turls={}
+        self.lfcs={}
+        self.sites=[]
+        relary=string.split(release,".")
+        release_string=""
+        for bits in relary:
+            release_string+=string.zfill(bits,2)
+        dataset="ddo.000001.Atlas.Ideal.DBRelease.v"+release_string
+
+        allturls={}
+        try:
+            dq2_lock.acquire()
+            datasets = dq2.listDatasets('%s' % dataset)
+        finally:
+            dq2_lock.release()
+        if len(datasets.values())==0:
+            logger.error('Dataset %s is not defined in DQ2 database ! Aborting',dataset)
+            return []      
+        dsetlist=datasets.keys()
+        dsetname=dsetlist[0]
+        # get list of files in selected dataset.
+        try:
+            dq2_lock.acquire()
+            contents = dq2.listFilesInDataset(dsetname)
+        finally:
+            dq2_lock.release()
+        # Convert 0.3 output to 0.2 style
+        if not contents:
+            logger.warning("Empty DQ2 dataset %s. Aborting" % dsetname)
+            return
+        contents = contents[0]
+        contents_new = {}
+        for guid, info in contents.iteritems():
+            contents_new[guid]=info['lfn']
+        contents = contents_new
+        for guid, lfn in contents.iteritems():
+            allturls[lfn]="guid:"+guid
+        # Now filling up self.turls...
+        self.turls=allturls # as easy as that....
+        # now get associated lfcs... by getting list of host sites first...
+        try:
+            dq2_lock.acquire()
+            locations = dq2.listDatasetReplicas(dsetname)
+        finally:
+            dq2_lock.release()
+
+        try:
+            dq2_lock.acquire()
+            datasetinfo = dq2.listDatasets(dsetname)
+        finally:
+            dq2_lock.release()
+
+        datasetvuid = datasetinfo[dsetname]['vuids'][0]
+       
+
+        datasetType="complete"
+        allSites=locations[datasetvuid][1]
+        self.lfcs[dsetname]=""
+        LFCmap=getLFCmap()
+        lfclist=[]
+        for site in allSites:
+            if site not in LFCmap:
+                logger.error("No file catalog found for site: %s "%site)
+                continue
+            catalog=LFCmap[site]
+            imin=string.find(catalog,"lfc://") # in ToA, lfcs are coded as lfc://server
+            imax=string.rfind(catalog,":")
+            if imin <0:
+                continue
+            lfc=catalog[imin+6:imax]
+            if lfc not in lfclist:
+                lfclist.append(lfc)
+                self.lfcs[dsetname]+=lfc+" "
+
+        self.sites=[]
+            
         return [self.turls,self.lfcs,self.sites]
 
     def getdq2data(self,dataset,matcharray,backend,maxfiles,update):
@@ -757,11 +839,9 @@ class AthenaMCOutputDatasets(Dataset):
         for site, desc in ToACache.sites.iteritems():
             try:
                 outloc = desc['srm'].strip()
-#                imin=outloc.find("srm:")
                 imax=outloc.rfind(":")
                 imin2=outloc.find("=")
                 token=outloc.find("token:")
-                print outloc,outloc[:imax]
                 if imin2>0 and token>=0:
                     # srmv2 site. Save token information as coded in ToA: token:SPACETOKEN+srm path, removing the junk bit between the port number (after the last : in the string) and the equal sign.
                     outputlocation[site]= outloc[:imax]+outloc[imin2+1:]

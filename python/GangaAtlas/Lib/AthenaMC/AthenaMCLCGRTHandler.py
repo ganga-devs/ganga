@@ -45,8 +45,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
     # Counter for number of subjobs
     ijob = 0
-    turls,cavern_turls,minbias_turls={},{},{}
-    lfcs,cavern_lfcs,minbias_lfcs={},{},{}
+    turls,cavern_turls,minbias_turls,dbturls={},{},{},{}
+    lfcs,cavern_lfcs,minbias_lfcs,dblfcs={},{},{},{}
     sites=[]
     maxinfiles=0
     outputlocation,lfchosts,lfcstrings={},{},{}
@@ -144,7 +144,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 except:
                     logger.error("You are not allowed to write output data in any production space token: %s. Please select a site with ATLASUSERDISK or ATLASLOCALGROUPDISK space token or a srmv1 endpoint" % app.se_name)
                     raise
-
+            
         if job.inputdata and job.inputdata._name == 'AthenaMCInputDatasets':
             inputdata=job.inputdata.get_dataset(app,self.username)
             if len(inputdata)!= 3:
@@ -207,6 +207,27 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                     raise "Input file not found"
                 self.minbias_turls=inputdata[0]
                 self.minbias_lfcs=inputdata[1]
+        # Add db release to input data if relevant
+        dbrelease=""
+        if app.extraArgs:    
+            arglist=string.split(app.extraArgs)
+            for arg in arglist:
+                key,val=string.split(arg,"=")
+                digval=string.replace(val,".","0")
+                if key=="DBRelease" and digval.isdigit():
+                    dbrelease=val
+                    break
+        if dbrelease:
+            logger.debug("Detected numeric value for DBRelease. Looking for match in DQ2 database")
+            if not job.inputdata:
+                job.inputdata=AthenaMCInputDatasets()
+            inputdata=job.inputdata.get_DBRelease(dbrelease)
+            if len(inputdata)!= 3:
+                    logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
+                    raise "Input file not found"
+            self.dbturls=inputdata[0]
+            self.dblfcs=inputdata[1]
+
             
         # doing output data now
         self.fileprefixes,self.outputpaths=job.outputdata.prep_data(app,self.username)
@@ -687,7 +708,19 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
                 environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[i].strip())
                 j=j+1
-            logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
+        inputfiles=self.dbturls.keys()
+        if len(inputfiles)>0:
+            for (k,v) in self.dbturls.items():
+                environment["INPUTTURLS"]+="turl[%d]='%s';" % (j,v.strip())
+                lfc=""
+                for lfcentry in self.dblfcs.values():
+                    lfc+=lfcentry+" "
+                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
+                environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,k.strip())
+                j=j+1
+                
+        logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
+        
         if environment["INPUTTURLS"] :
             # Work around for glite WMS spaced environement variable problem
             inputbox += [ FileBuffer('inputturls.conf',environment['INPUTTURLS']+'\n') ]
@@ -741,6 +774,13 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             NewArgstring=""
             for arg in arglist:
                 key,val=string.split(arg,"=")
+                digval=string.replace(val,".","0")
+                if key=="DBRelease" and digval.isdigit():
+                    environment["DBRELEASE"]=val
+                    environment["DBRELEASE_OVERRIDE"]=val
+                    dbfile="DBRelease-%s.tar.gz" % val
+                    NewArgstring=NewArgstring+"DBRelease=%s " % dbfile
+                    continue
                 imin=string.find(val,"$")
                 imin2=string.find(val,"$out")
                 newval=""
@@ -771,7 +811,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                     newarg=arg
                 NewArgstring=NewArgstring+newarg+" "
             args.append(NewArgstring)
-                
+               
         if app.extraIncArgs:
             # incremental arguments: need to add the subjob number.
             arglist=string.split(app.extraIncArgs)
@@ -793,7 +833,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         except AssertionError:
             logger.error("Transformation with no arguments. Please check your inputs!")
             raise
-        
+
         # Save variables in subjobs for later reuse
         k=0
         for i in app._getRoot().subjobs:
