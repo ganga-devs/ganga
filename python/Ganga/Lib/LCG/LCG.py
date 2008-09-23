@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.10 2008-09-22 22:43:41 hclee Exp $
+# $Id: LCG.py,v 1.11 2008-09-23 12:29:32 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -63,7 +63,7 @@ def stop_lcg_output_downloader():
         lcg_output_downloader.stop()
 
 start_lcg_output_downloader()
-atexit.register( (0, stop_lcg_output_downloader) )
+atexit.register( (-999, stop_lcg_output_downloader) )
     
 class LCG(IBackend):
     '''LCG backend - submit jobs to the EGEE/LCG Grid using gLite/EDG middleware.
@@ -1405,6 +1405,8 @@ sys.exit(0)
             ## loop over the jobs in each class
             for info in grids[mt].status(jobclass[mt]):
 
+                create_download_task = False
+
                 job = jobdict[info['id']]
          
                 if job.backend.actualCE != info['destination']:
@@ -1416,21 +1418,20 @@ sys.exit(0)
                     job.backend.status = info['status']
                     job.backend.reason = info['reason']
                     job.backend.exitcode_lcg = info['exit']
+                    if info['status'] == 'Done (Success)':
+                        create_download_task = True
+                    else:
+                        LCG.updateGangaJobStatus(job, info['status'])
+                elif info['status'] == 'Done (Success)' and ( job.status not in ['completed', 'failed'] ):
+                    create_download_task = True
 
-                if info['status'] == 'Done (Success)' and ( job.status not in ['completed', 'failed'] ):
-                
+                if create_download_task:
                     # update to 'running' before changing to 'completing'
                     if job.status == 'submitted':
                         job.updateStatus('running')
                 
                     downloader = get_lcg_output_downloader()
                     downloader.addTask(grids[mt], job, False)
-
-                    # job status update will be done after the output is successfully downloaded 
-                elif job.backend.status != info['status']:
-                    LCG.updateGangaJobStatus(job, info['status'])
-                else:
-                    pass
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
@@ -1480,6 +1481,8 @@ sys.exit(0)
 
                 subjob = subjobdict[info['name'].replace('gsj_','')]
 
+                create_download_task = False
+
                 # skip updating the resubmitted jobs by comparing:
                 #  - the subjob's parent job id
                 #  - the parent id returned from status
@@ -1523,20 +1526,19 @@ sys.exit(0)
                         subjob.backend.status = info['status']
                         subjob.backend.reason = info['reason']
                         subjob.backend.exitcode_lcg = info['exit']
-                        
-                    if info['status'] == 'Done (Success)' and ( subjob.status not in ['completed', 'failed'] ):
-                 
+                        if info['status'] == 'Done (Success)':
+                            create_download_task = True
+                        else:
+                            LCG.updateGangaJobStatus(subjob, info['status'])
+                    elif info['status'] == 'Done (Success)' and ( subjob.status not in ['completed', 'failed'] ):
+                        create_download_task = True
+
+                    if create_download_task:
                         # update to 'running' before changing to 'completing'
                         if subjob.status == 'submitted':
                             subjob.updateStatus('running')
-                    
                         downloader = get_lcg_output_downloader()
                         downloader.addTask(grid, subjob, True)
-                        # job status update will be done after the output is successfully downloaded 
-                    elif subjob.backend.status != info['status']:
-                        LCG.updateGangaJobStatus(subjob, info['status'])
-                    else:
-                        pass
 
         # update master job status
         if updateMasterStatus:
@@ -1737,6 +1739,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.10  2008/09/22 22:43:41  hclee
+# cache the logging information coming out from the LCGOutputDownloader threads
+#
 # Revision 1.9  2008/09/19 11:45:19  hclee
 # turn off debug message of the MTRunner objects
 # try to avoid the race condition amoung concurrent threads
