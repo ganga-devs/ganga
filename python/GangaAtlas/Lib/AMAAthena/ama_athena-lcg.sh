@@ -30,6 +30,10 @@ then
 fi
 
 ################################################
+# for some site doesn't config lcg env. properly
+check_lcg_env
+
+################################################
 # resolving and setting TMPDIR env. variable
 resolve_tmpdir
 

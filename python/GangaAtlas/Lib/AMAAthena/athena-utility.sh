@@ -35,6 +35,19 @@ check_voms_proxy() {
     echo "===="
 }
 
+## function for checking/restoring LCG runtime libraries
+check_lcg_env() {
+    echo "== check lcg python path =="
+    if [ ! -z $LCG_LOCATION ]; then
+        lcg_pythonpath=$LCG_LOCATION/lib/python
+        if [ -z `echo $PYTHONPATH | grep $lcg_pythonpath` ]; then
+            export PYTHONPATH=$PYTHONPATH:$lcg_pythonpath
+            echo "append $lcg_pythonpath to PYTHONPATH"
+        fi
+    fi
+    echo "===="
+}
+
 ## function for printing WN env. info 
 print_wn_info () {
     echo "== hostname =="
