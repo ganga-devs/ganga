@@ -180,6 +180,9 @@ def getSEsForSites(ids):
                 logger.error('Site %s has no srm info in TiersOfATLAS',site)
                 continue
             sitesrm = site_info['srm']
+            if sitesrm == '': 
+                logger.warning('Site %s has no srm info in TiersOfATLAS',site)
+                continue
             sitesrm = re.sub('token:*\w*:','', sitesrm)
             sitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', sitesrm)
             match = re_srm.match(sitesrm)
@@ -228,6 +231,9 @@ def getCEsForSites(ids, excluded_ids = [] ):
             ces = []
             if site_info.has_key('srm'):
                 sitesrm = site_info['srm']
+                if sitesrm == '': 
+                    logger.warning('Site %s has no srm info in TiersOfATLAS',site)
+                    continue
                 sitesrm = re.sub('token:*\w*:','', sitesrm)
                 sitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', sitesrm)
                 match = re_srm.match(sitesrm)
