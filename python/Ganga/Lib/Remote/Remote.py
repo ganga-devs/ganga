@@ -99,15 +99,15 @@ class Remote( IBackend ):
     
    _schema = Schema( Version( 1, 0 ), {\
       "remote_backend": ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
-      "host" : SimpleItem( defvalue="", doc="The remote host to use" ),
+      "host" : SimpleItem( defvalue="", doc="The remote host and port number ('host:port') to use. Default port is 22." ),
       "username" : SimpleItem( defvalue="", doc="The username at the remote host" ),
       "ganga_dir" : SimpleItem( defvalue="", doc="The directory to use for the remote workspace, repository, etc." ),
       "ganga_cmd" : SimpleItem( defvalue="", doc="Command line to start ganga on the remote host" ),
       "environment" : SimpleItem( defvalue={}, doc="Overides any environment variables set in the job" ),
       "pre_script" : SimpleItem( defvalue=[''], doc="Sequence of commands to execute before running Ganga on the remote site" ),
       'remote_job_id' : SimpleItem(defvalue=0,protected=1,copyable=0,doc='Remote job id.'),
-      'exitcode'            : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Application exit code'),
-      'actualCE'            : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Computing Element where the job actually runs.')
+      'exitcode'            : SimpleItem(defvalue=0,protected=1,copyable=0,doc='Application exit code'),
+      'actualCE'            : SimpleItem(defvalue=0,protected=1,copyable=0,doc='Computing Element where the job actually runs.')
       } )
 
    _category = "backends"
@@ -195,7 +195,14 @@ print "***_FINISHED_***"
       
          try:
             password = getpass.getpass('Password for %s@%s: ' % (self.username, self.host))
-            self._transport = paramiko.Transport((self.host, self._port))
+            temp_host = self.host
+            temp_port = self._port
+            if self.host.find(":") != -1:
+               # user specified port
+               temp_port = eval( self.host[ self.host.find(":")+1 : ] )
+               temp_host = self.host[ : self.host.find(":") ]
+               
+            self._transport = paramiko.Transport((temp_host, temp_port))
             self._transport.connect(username=self.username, password=password)
             channel = self._transport.open_session()
             channel.exec_command( 'mkdir -p ' + self.ganga_dir )
@@ -367,9 +374,180 @@ print "***_FINISHED_***"
          Return value: True if job killed successfully,
                        or False otherwise"""
 
-      # NOT IMPLEMENTED YET
-      return False
+      script = """#!/usr/bin/env python
+#-----------------------------------------------------
+# This is a kill script for a remote job. It
+# attempts to kill the given job and returns
+#-----------------------------------------------------
+import os,os.path,shutil,tempfile
+import sys,popen2,time,traceback
 
+############################################################################################
+
+###INLINEMODULES###
+
+############################################################################################
+
+code = ###CODE###
+jid = ###JOBID###
+
+j = jobs( jid )
+j.kill()
+
+# Start pickle token
+print "***_START_PICKLE_***"
+
+# pickle the job
+import pickle
+print j.outputdir
+print pickle.dumps(j._impl)
+print j
+
+# print a finished token
+print "***_FINISHED_***"
+"""
+      
+      script = script.replace('###CODE###', repr(self._code))
+      script = script.replace('###JOBID###', str(self.remote_job_id))
+      
+      # check for the connection
+      if (self.opentransport() == False):
+         return 0
+      
+      # send the script
+      script_name = '/__jobscript_kill__%s.py' % self._code
+      self._sftp.open(self.ganga_dir + script_name, 'w').write(script)
+      
+      # run the script
+      stdout, stderr = self.run_remote_script( script_name, self.pre_script )
+      
+      # Copy the job object
+      if stdout.find("***_FINISHED_***") != -1:
+         status, outputdir, id, be = self.grabremoteinfo(stdout)
+         
+         if status == 'killed':
+            return True
+         
+      return False
+   
+   def remove( self ):
+      """Remove the selected job from the remote site
+
+         No arguments other than self
+
+         Return value: True if job removed successfully,
+                       or False otherwise"""
+
+      script = """#!/usr/bin/env python
+#-----------------------------------------------------
+# This is a remove script for a remote job. It
+# attempts to kill the given job and returns
+#-----------------------------------------------------
+import os,os.path,shutil,tempfile
+import sys,popen2,time,traceback
+
+############################################################################################
+
+###INLINEMODULES###
+
+############################################################################################
+
+code = ###CODE###
+jid = ###JOBID###
+
+j = jobs( jid )
+j.remove()
+
+jobs( jid )
+
+# print a finished token
+print "***_FINISHED_***"
+"""
+      
+      script = script.replace('###CODE###', repr(self._code))
+      script = script.replace('###JOBID###', str(self.remote_job_id))
+      
+      # check for the connection
+      if (self.opentransport() == False):
+         return 0
+      
+      # send the script
+      script_name = '/__jobscript_remove__%s.py' % self._code
+      self._sftp.open(self.ganga_dir + script_name, 'w').write(script)
+      
+      # run the script
+      stdout, stderr = self.run_remote_script( script_name, self.pre_script )
+      
+      # Copy the job object
+      if stdout.find("***_FINISHED_***") != -1:
+         return True
+         
+      return False
+   
+   def resubmit( self  ):
+      """Resubmit the job.
+
+         No arguments other than self
+
+         Return value: 1 if job was resubmitted,
+                       or 0 otherwise"""
+
+      script = """#!/usr/bin/env python
+#-----------------------------------------------------
+# This is a resubmit script for a remote job. It
+# attempts to kill the given job and returns
+#-----------------------------------------------------
+import os,os.path,shutil,tempfile
+import sys,popen2,time,traceback
+
+############################################################################################
+
+###INLINEMODULES###
+
+############################################################################################
+
+code = ###CODE###
+jid = ###JOBID###
+
+j = jobs( jid )
+j.resubmit()
+
+# Start pickle token
+print "***_START_PICKLE_***"
+
+# pickle the job
+import pickle
+print j.outputdir
+print pickle.dumps(j._impl)
+print j
+
+# print a finished token
+print "***_FINISHED_***"
+"""
+      
+      script = script.replace('###CODE###', repr(self._code))
+      script = script.replace('###JOBID###', str(self.remote_job_id))
+      
+      # check for the connection
+      if (self.opentransport() == False):
+         return 0
+      
+      # send the script
+      script_name = '/__jobscript_resubmit__%s.py' % self._code
+      self._sftp.open(self.ganga_dir + script_name, 'w').write(script)
+      
+      # run the script
+      stdout, stderr = self.run_remote_script( script_name, self.pre_script )
+      
+      # Copy the job object
+      if stdout.find("***_FINISHED_***") != -1:
+         status, outputdir, id, be = self.grabremoteinfo(stdout)
+         
+         if status == 'submitted' or status == 'running':
+            return 1
+         
+      return 0
+   
    def grabremoteinfo( self, out ):
       
       from string import strip
