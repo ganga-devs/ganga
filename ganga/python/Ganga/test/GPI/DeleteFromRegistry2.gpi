@@ -1,0 +1,5 @@
+j = Job()
+id = j.id
+del j
+# after deletion of local variable referencing it the job still exists
+assert(jobs(id))
