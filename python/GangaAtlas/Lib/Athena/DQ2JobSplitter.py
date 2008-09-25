@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.4 2008-09-18 15:23:04 dvanders Exp $
+# $Id: DQ2JobSplitter.py,v 1.5 2008-09-25 05:57:42 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -122,6 +122,17 @@ class DQ2JobSplitter(ISplitter):
         
         subjobs = []
         for sites, guids in siteinfos.iteritems():
+
+            # Fix bug 42044
+            # drop unused guids
+            removal = []
+            for g in guids:
+                if not g in allcontent.keys():
+                    logger.debug("Removing guid %s" % g)
+                    removal += [g]
+
+            for g in removal:
+                guids.remove(g)
 
             nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
             
