@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.8 2008-09-25 05:56:55 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.9 2008-09-25 11:00:32 mslater Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -248,7 +248,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
 #       prepare inputsandbox
 
-        inputbox = [ ]
+        inputbox = [File(os.path.join(__directory__,'athena-utility.sh')) ]
         if input_guids:     _append_file_buffer(inputbox,'input_guids',input_guids)
         if input_files:     _append_file_buffer(inputbox,'input_files',input_files)
         if input_tag_guids: _append_file_buffer(inputbox,'input_tag_guids',input_tag_guids)
@@ -260,7 +260,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         elif job.outputdata and not job.outputdata.outputdata:
             raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
 
-        exe = os.path.join(__directory__,'athena-lcg.sh')
+        exe = os.path.join(__directory__,'run-athena-lcg.sh')
         outputbox = jobmasterconfig.outputbox
         requirements = jobmasterconfig.requirements.__copy__()
         environment  = jobmasterconfig.env.copy()
@@ -346,7 +346,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 #       prepare input sandbox
 
         inputbox = [ File(opt_file.name) for opt_file in app.option_file ]
-
+        inputbox.append( File(os.path.join(__directory__,'athena-utility.sh')) )
+            
         if job.inputdata and job.inputdata._name == 'ATLASDataset':
             if job.inputdata.lfc:
                 _append_files(inputbox,'ganga-stagein-lfc.py')
@@ -497,7 +498,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
 #       jobscript
 
-        exe = os.path.join(__directory__,'athena-lcg.sh')
+        exe = os.path.join(__directory__,'run-athena-lcg.sh')
 
 #       output sandbox
         outputbox = [

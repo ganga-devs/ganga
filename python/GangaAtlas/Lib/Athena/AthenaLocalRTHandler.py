@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.7 2008-08-19 14:05:03 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.8 2008-09-25 11:00:32 mslater Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -215,7 +215,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                             
                     logger.debug('Output4: %s,%s',output_location, job.outputdata.location)
 
-        inputbox = [ ]
+        inputbox = [File(os.path.join(os.path.dirname(__file__),'athena-utility.sh'))]
                 
         if input_guids:
             inputbox += [ FileBuffer('input_guids','\n'.join(input_guids)+'\n') ]
@@ -240,7 +240,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         elif job.outputdata and not job.outputdata.outputdata:
             raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
    
-        exe = os.path.join(os.path.dirname(__file__),'athena-local.sh')
+        exe = os.path.join(os.path.dirname(__file__),'run-athena-local.sh')
         outputbox = jobmasterconfig.outputbox
         environment = jobmasterconfig.env.copy()
 
@@ -301,7 +301,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             raise ConfigError("j.application.option_file='' - No Athena jobOptions files specified.")
 
         athena_options = ''
-        inputbox = []
+        inputbox = [File(os.path.join(os.path.dirname(__file__),'athena-utility.sh'))]
         for option_file in app.option_file:
             athena_option = os.path.basename(option_file.name)
             athena_options += ' ' + athena_option
@@ -420,7 +420,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             if job.inputdata.tagdataset:
                 environment['TAGDATASETNAME']= job.inputdata.tagdataset
 
-        exe = os.path.join(os.path.dirname(__file__), 'athena-local.sh')
+        exe = os.path.join(os.path.dirname(__file__), 'run-athena-local.sh')
 
 #       output sandbox
         outputbox = [ ]
@@ -476,6 +476,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.7  2008/08/19 14:05:03  elmsheus
+#Fix bug #40269, ATLAS_PRODUCTION environment variable is now handled properly in Local/Batch backend
+#
 #Revision 1.6  2008/07/29 13:21:42  elmsheus
 #Add  AthenaRemoteRTHandler class for the Remote backend
 #
