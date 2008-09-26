@@ -87,25 +87,25 @@ class Gaudi(IApplication):
     _schema = Schema(Version(2, 1), {
             'optsfile': FileItem(sequence=1,strict_sequence=0,defvalue=[],doc='''The name of the optionsfile. Import statements in the file will be expanded at submission time and a full copy made'''),
             
-            'version': SimpleItem(defvalue=None,typelist=['str'],doc='''The version of the application (like "v19r2")'''),
+            'version': SimpleItem(defvalue=None,typelist=['str','type(None)'],doc='''The version of the application (like "v19r2")'''),
             
-            'platform': SimpleItem(defvalue = None, typelist=['str'], doc='''The 
+            'platform': SimpleItem(defvalue = None, typelist=['str','type(None)'], doc='''The 
             platform the application is configured for (e.g. "slc4_ia32_gcc34")'''),
             
-            'package': SimpleItem(defvalue=None, typelist=['str'], doc='''The package the application belongs to (e.g. "Sim", "Phys")'''),
+            'package': SimpleItem(defvalue=None, typelist=['str','type(None)'], doc='''The package the application belongs to (e.g. "Sim", "Phys")'''),
             
-            'appname': SimpleItem(defvalue = None, typelist=['str'],hidden = 1, doc='''The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'''),
+            'appname': SimpleItem(defvalue = None, typelist=['str','type(None)'],hidden = 1, doc='''The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'''),
             
-            'user_release_area': SimpleItem(defvalue=None, typelist=['str'],doc='''The user path to be used. By default the value of the User_release_area environment variable. After assigning this you can do j.application.getpack(\'Phys DaVinci v19r2\') to check out into the new location. This variable is used to identify private user DLLs by parsing the output of "cmt show projects".'''),
+            'user_release_area': SimpleItem(defvalue=None, typelist=['str','type(None)'],doc='''The user path to be used. By default the value of the User_release_area environment variable. After assigning this you can do j.application.getpack(\'Phys DaVinci v19r2\') to check out into the new location. This variable is used to identify private user DLLs by parsing the output of "cmt show projects".'''),
             
-            'masterpackage': SimpleItem(defvalue=None, typelist=['str'],doc='''The package where your top level requirements file is read from. Can be written either as a path "Tutorial/Analysis/v6r0" or in a CMT style notation "Analysis v6r0 Tutorial"'''),
+            'masterpackage': SimpleItem(defvalue=None, typelist=['str','type(None)'],doc='''The package where your top level requirements file is read from. Can be written either as a path "Tutorial/Analysis/v6r0" or in a CMT style notation "Analysis v6r0 Tutorial"'''),
             
-            'configured': SimpleItem(defvalue = None, typelist=['str'],hidden = 0,copyable=0),
+            'configured': SimpleItem(defvalue = None, typelist=['str','type(None)'],hidden = 0,copyable=0),
             
-            'extraopts': SimpleItem(defvalue=None,typelist=['str'],doc='''A python configurable string that will be appended to the end of the options file. Can be multiline by using a notation like \nHistogramPersistencySvc().OutputFile = "myPlots.root"\\nEventSelector().PrintFreq = 100\n or by using triple quotes around a multiline string'''),
+            'extraopts': SimpleItem(defvalue=None,typelist=['str','type(None)'],doc='''A python configurable string that will be appended to the end of the options file. Can be multiline by using a notation like \nHistogramPersistencySvc().OutputFile = "myPlots.root"\\nEventSelector().PrintFreq = 100\n or by using triple quotes around a multiline string'''),
 #            'outputdatatypes':SimpleItem(defvalue=['NTUPLE','DST','SIM', 'DIGI'],sequence=1,doc='''
 #            list of data that will be returned as output data and not in the output sandbox. Possible values are 'HISTO', 'NTUPLE', 'DST', 'DIGI', 'SIM'. Note that some backends might not return large files if they are put into the output sandbox''')
-            'setupProjectOptions': SimpleItem(defvalue = '', typelist=['str'], doc='''Extra options to be passed onto the SetupProject command used for configuring the environment. As an example setting it to '--dev' will give access to the DEV area. For full documentation of the available options see https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'''),
+            'setupProjectOptions': SimpleItem(defvalue = '', typelist=['str','type(None)'], doc='''Extra options to be passed onto the SetupProject command used for configuring the environment. As an example setting it to '--dev' will give access to the DEV area. For full documentation of the available options see https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'''),
             })
     _category = 'applications'
     _exportmethods = ['getpack', 'make', 'cmt']
@@ -711,6 +711,9 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12  2008/09/03 11:54:59  wreece
+# Savannah 40910 - Also problem with datasets in options files
+#
 # Revision 1.11  2008/08/27 15:53:20  uegede
 # Modified failing test cases.
 #

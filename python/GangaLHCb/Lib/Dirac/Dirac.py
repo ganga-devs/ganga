@@ -84,18 +84,17 @@ j.submit()
     
     """
     _schema = Schema(Version(1, 4), 
-            {'id': SimpleItem(defvalue = None, protected = 1, copyable = 0,
+            {'id': SimpleItem(defvalue = None, protected = 1, copyable = 0, typelist=['int','type(None)'],
                               doc='''The id number assigned to the job by the
 DIRAC WMS. If seeking help on jobs with the Dirac backend, please always
 report this id number in addition to a full description of your problem.
 The id can also be used to further inspect the job at
 http://lhcb.pic.es/DIRAC/Monitoring/Analysis/ '''),
-            'status':SimpleItem(defvalue = None, protected = 1, copyable = 0,
-                                doc='''The detailed status as reported by
-the DIRAC WMS'''),
+            'status':SimpleItem(defvalue = None, protected = 1, copyable = 0, typelist=['str','type(None)'],\
+                                doc='''The detailed status as reported by the DIRAC WMS'''),
             'CPUTime': SimpleItem(defvalue=86400,checkset='_checkset_CPUTime',
                                   doc='''The requested CPU time in seconds'''),
-            'actualCE': SimpleItem(defvalue=None, protected=1, copyable=0,
+            'actualCE': SimpleItem(defvalue=None, protected=1, copyable=0, typelist=['str','type(None)'], \
                                    doc='''The location where the job ran''')})
 
     _exportmethods = ['getOutput','getOutputData']
@@ -646,6 +645,10 @@ statusfile.writelines(line)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.2  2008/08/07 22:07:47  uegede
+## Added a GaudiPython application handler with runtime handlers for Local/Batch
+## and for DIRAC.
+##
 ## Revision 1.1  2008/07/17 16:41:23  moscicki
 ## migration of 5.0.2 to HEAD
 ##
