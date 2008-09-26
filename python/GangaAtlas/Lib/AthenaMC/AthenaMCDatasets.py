@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.8 2008-09-26 10:04:42 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.9 2008-09-26 16:03:21 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -830,11 +830,7 @@ class AthenaMCOutputDatasets(Dataset):
         ''' Provides the triplet: LFC, site and srm path from input se'''
         lfcstrings=getLFCmap()
         outputlocation={}
-
-         # checking that the output locations are allowed
-        if se_name in ["TIER0DISK","TIER0TAPE","CERNPROD"]:
-            logger.warning("This CERN endpoint is only for ATLAS production, not for analysis. Forcing output to CERNCAF")
-            se_name="CERNCAF"
+        default_site="CERN-PROD_USERDISK"
             
         for site, desc in ToACache.sites.iteritems():
             try:
@@ -852,20 +848,33 @@ class AthenaMCOutputDatasets(Dataset):
                 continue
             
         sites=lfcstrings.keys()
+
+            
         if se_name not in sites:
             logger.debug("%s not found in DQ2 site list. Must be a private production" % se_name)
             if se_name != "none":
                 return ["",se_name,""]
             else:
-                return ["prod-lfc-atlas-local.cern.ch","CERNCAF",outputlocation["CERNCAF"]]
+                return [lfcstrings[default_site],default_site,outputlocation[default_site]]
                 
         else:
-            imin=string.find(lfcstrings[se_name],"lfc://") # lfc:// notation from ToA
+            selsite=se_name
+            if string.find(se_name,"LOCALGROUPDISK")<-1 and string.find(se_name,"USERDISK")<-1: # need to check if one can use LOCALGROUPDISK
+            #if  string.find(se_name,"USERDISK")<-1: # no support for LOCALUSERDISK yet as space token requires explicit voms role.
+                logger.warning("Site name proposed for output: %s is forbidden for writing. Using alternative site in the same cloud."% se_name)
+                lfccloud=lfcstrings[se_name]
+                random.shuffle(sites)
+                for site in sites:
+                    if site.find("USERDISK")>0 and lfcstring[site]==lfccloud:
+                        selsite=site
+                        break
+            
+            imin=string.find(lfcstrings[selsite],"lfc://") # lfc:// notation from ToA
             if imin>-1:
-                imax=string.rfind(lfcstrings[se_name],":/")
-                return [lfcstrings[se_name][imin+6:imax],se_name,outputlocation[se_name]]
+                imax=string.rfind(lfcstrings[selsite],":/")
+                return [lfcstrings[selsite][imin+6:imax],selsite,outputlocation[selsite]]
             else:
-                return ["prod-lfc-atlas-local.cern.ch","CERNCAF",outputlocation["CERNCAF"]] # does not make sense yet to write data out of LCG as we are not supporting other grid backend yet.
+                return [lfcstrings[default_site],default_site,outputlocation[default_site]] # does not make sense yet to write data out of LCG as we are not supporting other grid backend yet.
             
         
     def makeLCGmatch(self,lfc,site):

@@ -55,12 +55,12 @@ stageOutLCG(){
     stflag=""
     if [ ! -z "$SPACETOKEN" ]; then
 	echo "Using srmv2 user space token"
-	stflag = "-s $SPACETOKEN"
+	stflag="-s $SPACETOKEN"
     fi
     bstflag=""
     if [ ! -z "$BACKUPTOKEN" ]; then
 	echo "Using srmv2 user space token"
-	bstflag = "-s $BACKUPTOKEN"
+	bstflag="-s $BACKUPTOKEN"
     fi
     LFN="/grid/atlas/$lcn/$file.$TIMESTAMP.$OUTPUT_JOBID"
     # cannot use FClistGUID as the athena setup has been removed. Try something different...
