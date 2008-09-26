@@ -1,0 +1,75 @@
+**************************************************************************************************************
+5.0.9 (2008/9/26)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+#38646 bugfix: accept jobs.select(xrange(..))
+#40696: Exception raised during resubmit() should be propagated to caller
+fixed: j.submit() and j.resubmit() do not return the status but raise
+exceptions on error
+
+#40220: Ensure that default values satisfy the declared types in the schema
+factored out type checking into schema module, fixed a number of wrongly
+declared schema items in the core
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Batch
+--------------------------------------------------------------------------------------------------------------
+fixed type declaration for some plugins
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+- introduces new abstract class for handling over-sized inputsandbox, the implementation class
+(LCGSandboxCache) using lcg-cp/cr/del is loaded by default
+- introduces background downloader for fetching job's outputs from the WMS so that monitoring loop
+is not blocked by the output downloading
+- enhances glite bulk submission to avoid hitting the node job number limitation of the WMS
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+Added some functionality:
+
+** Bug 41370:  Add port number as configurable
+
+host option now takes the port number as well, i.e. host:port
+
+** Bug 41372: j.remove should remove the job on the remote site
+
+Added the 'remove' routine that should get called from Job.py
+
+** Bug 41374: Implement kill() and resubmit() routines
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Combined functionality between lcg and local athena scripts (bug 41955). Two new scripts have been
+created (run-athena-*.sh) to aid roll back.
+
+* bug 37539: max_events now works properly for local backend.
+
+* Various AthenaMC updates
+
+* Addition of AMAAthena
+
+* AthenaLCGRTHandler: Disallow submission if number_of_files for incomplete dataset is used in
+splitting mode
+
+* DQ2JobSplitter.py: Fix bug 42044 - drop unused guids
+
+* AtlasLCGRequirements: Fix bug 42038 - Print warning if srm entry is empty in TiersOfATLAS'
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+fixed type declaration for some plugins
+
+**************************************************************************************************************
