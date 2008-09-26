@@ -62,10 +62,10 @@ class Installer(IAction):
         config = Ganga.Utility.Config.getConfig('IndependantTest')
 
         cmd = "python "+f+" --prefix="+self.InstallPath+" --extern=GangaTest "+self.VersionNumber
-        logger.warning("Executing command: '%s'",cmd)
+        logger.debug("Executing command: '%s'",cmd)
         try:
             os.system(cmd)
-            logger.info('ganga installed')
+            logger.debug('Ganga installed')
 
         except Exception, e:
             logger.error('ganga installation failed')

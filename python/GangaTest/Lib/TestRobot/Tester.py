@@ -36,20 +36,9 @@ class Tester(IAction):
         InstallDir = config['InstallPath']
         JobDir = config['JobDir']
         ReleaseNo = config['VersionNumber']
-        Delta = int(config['JobTimeOut'])
-        logger.info("Job Time-out at %s",config['JobTimeOut'])
+        Delta = config['JobTimeOut']
         SleepSecs = 30
       
-        if os.environ.has_key('GANGA_INTERNAL_PROCEEXEC'):
-            try:
-                del os.environ['GANGA_INTERNAL_PROCEEXEC']
-                logger.info("deleted GANGA_INTERNAL_PROCEEXEC")
-            except Exception, e:
-                raise GangaRobotBreakError("Could not delete GANGA_INTERNAL_PROCEEXEC with error: %s" %e)
-        else:
-            logger.info("GANGA_INTERNAL_PROCEEXEC does not exist")
-            pass
-        
         i = 0
         for i in range(len(OptionList)):
             TestOption = OptionList[i][0]
@@ -80,7 +69,7 @@ class Tester(IAction):
             #j.application.exe = "ganga"            - DEBUGGING LINE
             j.application.args = ["--test","-o[TestingFramework]Config="+TestConfig+".ini",TestOption]
             j.application.env = { 'GANGA_CONFIG_PATH':JobIniFile }
-            logger.info(j.application)
+            logger.debug(j.application)
             jobsList += [j]
 
 
@@ -90,14 +79,13 @@ class Tester(IAction):
             try:
                 jobsList[i].submit()
                 StartTime = datetime.datetime.now()
-                logger.info("Submitted job "+OptionList[i][0]+" to "+OptionList[i][1]+" backend")
+                logger.debug("Submitted job "+OptionList[i][0]+" to "+OptionList[i][1]+" backend")
                 #Now to wait for time-out
                 JobFinished = False
                 while not JobFinished:
 
-                    logger.info("sleeping for %s secs" % str(SleepSecs))
+                    logger.debug("sleeping for %s secs" % str(SleepSecs))
                     time.sleep(SleepSecs)
-                    logger.info("finished sleeping")
                     
                     if jobsList[i].status == 'completed':
                         JobFinished = True
@@ -108,7 +96,7 @@ class Tester(IAction):
                         NowTime = datetime.datetime.now()
                         if (NowTime > EndTime):
                             NowTimeAsString = datetime.datetime.now().strftime("%d %b %Y %H:%M:%S")
-                            logger.info("Job "+str(i)+" has timed out at %s" % NowTimeAsString)
+                            logger.warning("Job "+str(i)+" has timed out at %s" % NowTimeAsString)
                             jobsList[i].kill()
                             JobFinished = True
                     else:
@@ -124,7 +112,7 @@ class Tester(IAction):
                 self.TestsAllGood = False
 
         logger.info("All jobs finished")
-        logger.info(jobs)
+        logger.debug(jobs)
         #for j in jobs:
             #j.peek('stdout')
         jobs.remove()
@@ -151,8 +139,6 @@ class Tester(IAction):
         f.write("[Configuration]\n")
         f.write("gangadir = "+Jobfolder+"\n")
         f.write("\n")
-        #f.write("[Local]\n")
-        #f.write("remove_workdir = False\n")
         f.flush()
         f.close()
         return JobConfigFile
@@ -170,15 +156,14 @@ class Tester(IAction):
         gangaconfig = Ganga.Utility.Config.getConfig('Configuration')
         testrobotdir = gangaconfig['gangadir']
         VersionFileFound = False
-        lastversionfile = str(testrobotdir)+os.sep+"LastVersionFile.txt"
-        for file in os.listdir(testrobotdir):
-            if fnmatch.fnmatch(file, 'LastVersionFile.txt'):
-                f = open(file, 'r')
-                LastVersionData = f.read()
-                f.close()
-                VersionFilefound = True
-        # Test for Version File
-        if (VersionFileFound == True):
+        from os.path import join,isfile
+        lastversionfile = join(str(testrobotdir),"LastVersionFile.txt")
+        if isfile(lastversionfile):
+            f = open(lastversionfile, 'r')
+            LastVersionData = f.read()
+            f.close()
+            logger.debug("CurrentVersionData is %s." % CurrentVersionData)
+            logger.debug("LastVersionData is %s." % LastVersionData)
             #compare with current data
             if (LastVersionData != CurrentVersionData):
                 # another version has been installed and tested
@@ -186,13 +171,9 @@ class Tester(IAction):
                 f.write(CurrentVersionData+"\n")
                 f.flush()
                 f.close()
-                try:
-                    shutil.move('LastVersionTemp.txt','LastVersionFile.txt')
-                except:
-                    GangaRobotContinueError("Failed to move LastVersionFile")
         else:
             f = open(lastversionfile,'w')
-            f.write(CurrentVersionData)
+            f.write(CurrentVersionData+"\n")
             f.flush()
             f.close()
 

@@ -48,10 +48,10 @@ class Checker(IAction):
             CurrentTime = datetime.datetime.now()
             SleepDelta = datetime.timedelta(seconds=int(self.SleepTime))
             if (CurrentTime - self.LastCheckedTime) < SleepDelta:
-                logger.info("last check was too recent")
+                logger.debug("Last check was too recent")
                 pass
             else:
-                logger.info("checking for update...")
+                logger.debug("Checking for update...")
                 self.NewRelease = self._checkfornewrelease()
                 self.LastCheckedTime = datetime.datetime.now()
                 config.setSessionValue('LastCheckedTime',self.LastCheckedTime.strftime("%d %b %Y %H:%M:%S"))
@@ -59,7 +59,7 @@ class Checker(IAction):
                 config.setSessionValue('VersionNumber',self.VersionNumber)
                 config.setSessionValue('VersionTime',self.VersionTime.strftime("%d %b %Y %H:%M:%S"))
                 break
-            logger.info("no update, sleeping for %s" %(self.SleepTime))
+            logger.debug("No update available, sleeping for %s" %(self.SleepTime))
             time.sleep(int(self.SleepTime))
             #write heartbeat
             self.NewRelease = False # Reset NewRelease flag
@@ -77,19 +77,7 @@ class Checker(IAction):
             self.LastCheckedTime = datetime.datetime(*(time.strptime(self.LastCheckedTime,"%d %b %Y %H:%M:%S")[0:6]))
         # Get data from temp files
         self._getfiledata()
-        """    
-        #sort out Last Version Time configuration
-        if config['VersionTime'] == 'None':
-            if self.VersionTime == 'None':
-               self.VersionTime = datetime.datetime.now()
-               logger.warning("No version time in config file, using current time")
-               config.setSessionValue('VersionTime',self.VersionTime.strftime("%d %b %Y %H:%M:%S"))
-            else:
-                pass # VersionTime has been set in runtime
-        else:
-            # Version time found in config file
-            pass
-        """
+
     def _getfiledata(self):
         gangaconfig = Ganga.Utility.Config.getConfig('Configuration')
         gangadirname = gangaconfig['gangadir']
@@ -146,8 +134,8 @@ class Checker(IAction):
                     raise GangaRobotBreakError(None,msg)
         #read lines into list
         f = open(f)
-        VersionList = f.readlines()
-        logger.info(VersionList)
+        VersionList = [v for v in f.readlines() if len(v)>2]
+        logger.debug(VersionList)
         #find matching point
         #else return test first new
         i = -1
@@ -155,21 +143,19 @@ class Checker(IAction):
         for data in VersionList:
             i += 1
             #print "i = "+str(i)
-            print "data: "+data+"LastVersionData:"+self.LastVersionData
             if (data == self.LastVersionData) :
                 match = i
-                print "match = "+str(match)
                 break
         #if none found, return first in list
         if (match == -1):
             self.VersionData = VersionList[0]
             self.VersionNumber = self._getversioninfo(self.VersionData)[0]
             self.VersionTime = self._getversioninfo(self.VersionData)[1]
-            logger.info("No matches found. Testing first in list")
+            logger.debug("No matches found. Testing first in list")
             return True
         elif (match == (len(VersionList)-1)):
             self.VersionData = VersionList[(i-1)]
-            logger.info("No new releases found")
+            logger.debug("No new releases found")
             #self.LastVersionData = ''
             return False
         # Assign next element as new data
@@ -192,10 +178,11 @@ class Checker(IAction):
             self.VersionData = VersionList[0]
         self.VersionNumber = self._getversioninfo(self.VersionData)[0]
         self.VersionTime = self._getversioninfo(self.VersionData)[1]
-        logger.info("First new release being installed")
+        logger.info("Installing release %s created on %s" % (self.VersionNumber,self.VersionTime ))
         return True
 
     def _getversioninfo(self, VersionData):
+        EqualsPoint = 0
         for i in range(len(VersionData)):
             if VersionData[i] == "-":
                 EqualsPoint = i

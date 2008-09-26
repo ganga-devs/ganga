@@ -21,21 +21,14 @@ class ProxyChecker(IAction):
         
         GPcred = getCredential(name = 'GridProxy', create = 'False')
 
-        timeleft = GPcred.timeleftInHMS()
-        timeleftAsDT = datetime.datetime(*(time.strptime(timeleft,"%H:%M:%S")[0:6]))
+        timeleft = float(GPcred.timeleft("seconds"))
+
         # Get maxumin time tests allowed to take
-        config = getConfig('IndependantTest')
-        MaxTestTime = config['TestLength']
+        config = getConfig('TestRobot')
+        MaxTestTime = config['JobTimeOut']
         
-        if ( timeleftAsDT > MaxTestTime ):
-            pass
-        else:
-            try:
-                GPcred.renew()
-            except:
-                #email to say oops, not valid grid proxy forl ong enough
-                raise GangaRobotBreakError("Grid Proxy not valid for long enough, breaking", Exception)
-       
+        if ( timeleft < MaxTestTime ):
+            raise GangaRobotBreakError("Grid Proxy valid for %8.0f seconds but %d might be required to finish testing. Breaking." % (timeleft, MaxTestTime), Exception)
             
         
         
