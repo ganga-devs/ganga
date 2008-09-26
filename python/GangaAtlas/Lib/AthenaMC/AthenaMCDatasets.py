@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.7 2008-09-23 14:04:01 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.8 2008-09-26 10:04:42 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -144,7 +144,7 @@ class AthenaMCInputDatasets(Dataset):
     _schema = Schema(Version(1,0), {
         'DQ2dataset'    : SimpleItem(defvalue = '', doc = 'DQ2 Dataset Name'),
         'LFCpath' : SimpleItem(defvalue = '', doc = 'LFC path of directory to find inputfiles on the grid, or local directory path for input datasets (datasetType=local). For all non-DQ2 datasets.'),
-        'inputfiles'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names of subset of files to be processed. Must be used in conjunction of either DQ2dataset or LFCpath.'),
+        'inputfiles'      : SimpleItem(defvalue = [], typelist=['list'], sequence = 1, doc = 'Logical File Names of subset of files to be processed. Must be used in conjunction of either DQ2dataset or LFCpath.'),
         'inputpartitions'  : SimpleItem(defvalue ="",doc='String of input file numbers to be used (each block separated by a coma).A block can be a single number or a closed subrange (x-y). Subranges are defined with a dash. Must be used in conjunction of either DQ2dataset or LFCpath. Alternative to inputfiles.'),
         'number_inputfiles'  : SimpleItem(defvalue="",sequence=0,doc='Number of inputfiles to process.'),
         'n_infiles_job'    : SimpleItem(defvalue=1,doc='Number of input files processed by one job or subjob. Minimum 1'),
@@ -716,8 +716,8 @@ class AthenaMCOutputDatasets(Dataset):
         'outrdofile'         : SimpleItem(defvalue='',doc='file prefix and dataset suffix for RDO files. Placeholder for any type of output file in template mode.'),
        'outesdfile'         : SimpleItem(defvalue='',doc='file prefix and dataset suffix for ESD files. Placeholder for any type of output file in template mode.'),
         'outaodfile'         : SimpleItem(defvalue='',doc='file prefix and dataset suffix for AOD files. Placeholder for any type of output file in template mode.'),
-        'expected_output'         : SimpleItem(defvalue = [], sequence = 1, protected=1,doc = 'List of output files expected to be produced by the job. Should not be visible nor modified by the user.'),
-        'actual_output'         : SimpleItem(defvalue = [], sequence = 1, protected=1,doc = 'List of output files actually produced by the job followed by their locations. Should not be visible nor modified by the user.')
+        'expected_output'         : SimpleItem(defvalue = [], typelist=['list'], sequence = 1, protected=1,doc = 'List of output files expected to be produced by the job. Should not be visible nor modified by the user.'),
+        'actual_output'         : SimpleItem(defvalue = [], typelist=['list'], sequence = 1, protected=1,doc = 'List of output files actually produced by the job followed by their locations. Should not be visible nor modified by the user.')
         })
     
     _category = 'datasets'

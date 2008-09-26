@@ -776,8 +776,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 key,val=string.split(arg,"=")
                 digval=string.replace(val,".","0")
                 if key=="DBRelease" and digval.isdigit():
-                    environment["DBRELEASE"]=val
-                    environment["DBRELEASE_OVERRIDE"]=val
                     dbfile="DBRelease-%s.tar.gz" % val
                     NewArgstring=NewArgstring+"DBRelease=%s " % dbfile
                     continue
