@@ -342,9 +342,9 @@ class AtlasLCGRequirements(LCGRequirements):
     _schema = Schema(Version(1,1), { 
         'software'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Software Installations'),
         'nodenumber'      : SimpleItem(defvalue=1,doc='Number of Nodes for MPICH jobs'),
-        'memory'          : SimpleItem(defvalue=None,doc='Mininum available memory (MB)'),
-        'cputime'         : SimpleItem(defvalue=None,doc='Minimum available CPU time (min)'),
-        'walltime'        : SimpleItem(defvalue=None,doc='Mimimum available total time (min)'),
+        'memory'          : SimpleItem(defvalue=None, typelist=['type(None)','int'], doc='Mininum available memory (MB)'),
+        'cputime'         : SimpleItem(defvalue=None, typelist=['type(None)','int'], doc='Minimum available CPU time (min)'),
+        'walltime'        : SimpleItem(defvalue=None, typelist=['type(None)','int'], doc='Mimimum available total time (min)'),
         'ipconnectivity'  : SimpleItem(defvalue=False,doc='External connectivity'),
         'other'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Other Requirements'),
         'sites'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names'),
