@@ -228,14 +228,15 @@ ls -rtla
 
 #################################################
 # run athena
-if [ $retcode -eq 0 ]
+if [ $retcode -eq 0 ] && [ n$DATASETTYPE != n'DQ2_COPY' ]
     then 
+    prepare_athena
     run_athena $ATHENA_OPTIONS input.py
 fi
 
 #################################################
 # Specific input and running for DQ2_COPY
-if [ $retcode -eq 0 ] && [ n$DATASETTYPE = n'DQ2_COPY' ]
+if [ $retcode -ne 0 ] || [ n$DATASETTYPE = n'DQ2_COPY' ]
     then
 # Create generic input.py
     cat - >input.py <<EOF
@@ -287,6 +288,9 @@ EOF
 # File counter
     I=0
     
+    # Parse jobs jobOptions and set timing command
+    prepare_athena
+
     cat input_files | while read filespec
       do
       for file in $filespec
@@ -294,40 +298,19 @@ EOF
 	echo "Downloading input file $file ..."
 	let "I += 1"
 	
-	LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
-	PATH_BACKUP=$PATH
-	PYTHONPATH_BACKUP=$PYTHONPATH
-	export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH_ORIG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
-	export PATH=$PATH_ORIG:$PATH_BACKUP
-	export PYTHONPATH=$PYTHONPATH_ORIG:$PYTHONPATH_BACKUP
-	
-	DQ2_LOCAL_ID=$DQ2_LOCAL_ID_BACKUP
-	
-	if [ ! -z $python32bin ]; then
-	    $python32bin dq2_get -v -t 300 $DATASETNAME $file ; echo $? > retcode.tmp
+        # Setup new dq2- tools
+	if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+	    then
+	    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+	    dq2-get --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
+	    mv $DATASETNAME/* .
 	else
-	    $pybin dq2_get -v -t 300 $DATASETNAME $file ; echo $? > retcode.tmp
+	    echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
+	    echo '1'>retcode.tmp
 	fi
 	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
-	if [ $retcode -ne 0 ] || [ ! -e $file ]
-	    then
-	    export DQ2_LOCAL_ID=''
-	    export DQ2_COPY_COMMAND='lcg-cp --vo atlas '
-	    
-	    if [ ! -z $python32bin ]; then
-		$python32bin dq2_get -rv -s $DQ2_LOCAL_ID_BACKUP -t 300 $DATASETNAME $file ; echo $? > retcode.tmp
-	    else
-		$pybin dq2_get -rv -s $DQ2_LOCAL_ID_BACKUP -t 300 $DATASETNAME $file ; echo $? > retcode.tmp
-	    fi
-	    retcode=`cat retcode.tmp`
-	    rm -f retcode.tmp
-	fi
-	
 	ls -rtla
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
-	export PATH=$PATH_BACKUP
-	export PYTHONPATH=$PYTHONPATH_BACKUP
 	
 	if [ $retcode -eq 0 ] && [ -e $file ]
 	    then
@@ -343,21 +326,21 @@ EOF
 	    
 	    if [ n$ATLAS_EXETYPE == n'ATHENA' ]
 		then 
-		athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    elif [ n$ATLAS_EXETYPE == n'PYARA' ]
 		then
-		$pybin $ATHENA_OPTIONS ; echo $? > retcode.tmp
+		$timecmd $pybin $ATHENA_OPTIONS ; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    elif [ n$ATLAS_EXETYPE == n'ROOT' ]
 		then
-		root -b -q $ATHENA_OPTIONS ; echo $? > retcode.tmp
+		$timecmd root -b -q $ATHENA_OPTIONS ; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    else
-		athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    fi
@@ -392,9 +375,10 @@ EOF
 	mv output_files.new output_files.new.old
 	mv output_files.copy output_files.new
     fi
-    
-    
+
 fi
+
+ls -rtla
 
 #################################################
 # store output
