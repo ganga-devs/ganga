@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.12 2008-09-11 12:43:44 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.13 2008-09-28 15:42:33 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1367,20 +1367,26 @@ if __name__ == '__main__':
         # NIKHEF/SARA special case
         if os.environ[ 'DQ2_LOCAL_ID' ].startswith('NIKHEF') and len(tUrlMap)==0:
             print 'Special setup at SARA/NIKHEF - re-reading LFC' 
-            localsitesrm = TiersOfATLAS.getSiteProperty('SARADISK','srm')
-            defaultSE = _getDefaultStorage(localsitesrm)
-            configLOCALPROTOCOL = 'gsidcap'
-            configSTORAGEROOT = '/pnfs'
-            configLOCALPREFIX = 'dcap:'
-            sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
+            localsitesrm = TiersOfATLAS.getSiteProperty('SARA-MATRIX_MCDISK','srm')
+            if localsitesrm:
+                localsitesrm = re.sub('token:*\w*:','', localsitesrm)
+                localsitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', localsitesrm)
+                defaultSE = _getDefaultStorage(localsitesrm)
+                configLOCALPROTOCOL = 'gsidcap'
+                configSTORAGEROOT = '/pnfs'
+                configLOCALPREFIX = 'dcap:'
+                sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
         elif os.environ[ 'DQ2_LOCAL_ID' ].startswith('SARA') and len(tUrlMap)==0: 
             print 'Special setup at SARA?NIKHEF - re-reading LFC' 
-            localsitesrm = TiersOfATLAS.getSiteProperty('NIKHEF','srm')
-            defaultSE = _getDefaultStorage(localsitesrm)
-            configLOCALPROTOCOL = 'rfio'
-            configSTORAGEROOT = '/dpm'
-            configLOCALPREFIX = 'rfio:'
-            sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
+            localsitesrm = TiersOfATLAS.getSiteProperty('NIKHEF-ELPROD_MCDISK','srm')
+            if localsitesrm:
+                localsitesrm = re.sub('token:*\w*:','', localsitesrm)
+                localsitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', localsitesrm)
+                defaultSE = _getDefaultStorage(localsitesrm)
+                configLOCALPROTOCOL = 'rfio'
+                configSTORAGEROOT = '/dpm'
+                configLOCALPREFIX = 'rfio:'
+                sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
 
         # Check md5sum
         if len(tUrlMap)>0 and os.environ.has_key('GANGA_CHECKMD5SUM') and os.environ['GANGA_CHECKMD5SUM']=='1':
@@ -1754,6 +1760,8 @@ if __name__ == '__main__':
                 temp_lfc_host = re.sub('[/:]',' ',lfccat[0]).split()[1]
                 temp_lfc_home = lfccat[0].split(':')[2]
                 temp_srm = TiersOfATLAS.getSiteProperty(temp_location,'srm')
+                if not temp_srm:
+                    continue
                 # Determine token name
                 pat = re.compile(r'^token:([^:]+)')
                 name = re.findall(pat, temp_srm)
