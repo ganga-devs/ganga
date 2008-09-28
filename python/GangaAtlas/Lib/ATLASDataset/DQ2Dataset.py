@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.8 2008-09-12 07:16:11 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.9 2008-09-28 15:20:34 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1149,23 +1149,6 @@ class DQ2OutputDataset(Dataset):
             logger.error("Nothing to download")
 
 
-class DQ2Output(DQ2Dataset):
-    '''ATLAS DDM Output Dataset'''
-                                                                                                                              
-    _schema = Schema(Version(1,0), {
-        'dataset'       : SimpleItem(defvalue = '', doc = 'Dataset Name'),
-        'names'         : SimpleItem(defvalue = [], sequence = 1, doc = 'Logical File Names'),
-        'type'          : SimpleItem(defvalue = '', doc = 'Output Type'),
-        'destinationSE' : SimpleItem(defvalue = '', doc = 'Output to SE')
-    })
-                                                                                                                              
-    _category = 'output'
-    _name = 'DQ2Output'
-    _exportmethods = [ 'list_datasets', 'list_contents', 'list_locations']
-                                                                                                                              
-    def __init__(self):
-        super(DQ2Output,self).__init__()
-
 logger = getLogger()
 
 from dq2.clientapi.DQ2 import DQ2
@@ -1201,6 +1184,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.8  2008/09/12 07:16:11  elmsheus
+#Add usertag config option and change DQ2OutputDataset name
+#
 #Revision 1.7  2008/09/02 16:06:27  elmsheus
 #Athena:
 #* Fix SE type detection problems for space tokens at DPM sites
