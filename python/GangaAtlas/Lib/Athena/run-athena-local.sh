@@ -10,8 +10,6 @@
 # ATHENA_OPTIONS    ... Options to run Athena
 # ATHENA_MAX_EVENTS ... Limit the events to be processed by Athena
 # OUTPUT_LOCATION   ... Place to store the results
-#
-# ATLAS/ARDA - Dietrich.Liko@cern.ch
 
 retcode=0
 
@@ -120,6 +118,7 @@ get_files PDGTABLE.MeV
 # run athena
 if [ $retcode -eq 0 ]
 then
+    prepare_athena
     run_athena $ATHENA_OPTIONS input.py
 fi
 

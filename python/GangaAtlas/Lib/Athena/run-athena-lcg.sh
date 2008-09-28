@@ -9,8 +9,6 @@
 # ATHENA_OPTIONS    ... Options to run Athena
 # ATHENA_MAX_EVENTS ... Limit the events to be processed by Athena
 # OUTPUT_LOCATION   ... Place to store the results
-#
-# ATLAS/ARDA - Dietrich.Liko@cern.ch
 
 retcode=0
 

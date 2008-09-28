@@ -579,16 +579,14 @@ EOF
     fi
 }
 
-# run athena
-run_athena () {
-
-    job_options=$*
+# prepare athena
+prepare_athena () { 
 
     # Set timing command
     if [ -x /usr/bin/time ]; then
-	timecmd="/usr/bin/time -v"
+	export timecmd="/usr/bin/time -v"
     else
-	timecmd=time
+	export timecmd=time
     fi
 
     # parse the job options
@@ -611,6 +609,12 @@ run_athena () {
 	    export ATHENA_OPTIONS=$ATHENA_OPTIONS_NEW	
 	fi
     fi
+} 
+
+# run athena
+run_athena () {
+
+    job_options=$*
 
     # run athena in regular mode =========================================== 
     if [ $retcode -eq 0 ]; then
