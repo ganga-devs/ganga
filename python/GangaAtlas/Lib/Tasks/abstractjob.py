@@ -16,7 +16,7 @@ class AbstractJob(GangaObject):
        'ignore_this' : SimpleItem(defvalue=False, doc='if this specific job makes problems ignore it without pausing the task'),
        'status_duration' :SimpleItem(defvalue={}  ,doc="duration of the GANGA-job status"),
        'excluded_CEs'  : SimpleItem(defvalue=[]  ,doc="exclude CEs for this job"),
-       'sites'      : SimpleItem(defvalue=None,doc='Sites where the job could run'),
+       'sites'      : SimpleItem(defvalue=None, typelist=['type(None)','str'], doc='Sites where the job could run'),
        #'sites'    : SimpleItem(defvalue = [], typelist=['str'], sequence=1,strict_sequence=0, doc="Sites where the job could run" ),
        })
    
