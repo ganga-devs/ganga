@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.9 2008-09-25 11:00:32 mslater Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.10 2008-09-28 15:23:57 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -462,7 +462,12 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if job.inputdata.match_ce_all or job.inputdata.min_num_files>0:
                 raise ApplicationConfigurationError(None,'Job submission failed ! Usage of j.inputdata.match_ce_all or min_num_files is obsolete ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
             if job.inputdata.number_of_files and (job.splitter and job.splitter._name == 'DQ2JobSplitter'):
-                incompleteLoc = job.inputdata.get_locations(complete=0)
+                allLoc = job.inputdata.get_locations(complete=0)
+                completeLoc = job.inputdata.get_locations(complete=1)
+                incompleteLoc = []
+                for loc in allLoc:
+                    if loc not in completeLoc:
+                        incompleteLoc.append(loc)
                 if incompleteLoc:
                     raise ApplicationConfigurationError(None,'Job submission failed ! Dataset is incomplete ! Usage of j.inputdata.number_of_files and DQ2JobSplitter is not allowed for incomplete datasets !')
 
