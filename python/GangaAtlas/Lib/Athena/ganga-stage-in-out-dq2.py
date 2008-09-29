@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.14 2008-09-29 15:18:47 hclee Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.15 2008-09-29 19:41:14 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -831,7 +831,7 @@ if __name__ == '__main__':
     # Set default DQ2 environment variables
     os.environ[ 'DQ2_URL_SERVER' ] = dq2urlserver
     os.environ[ 'DQ2_URL_SERVER_SSL'] = dq2urlserverssl
-    os.environ[ 'DQ2_LOCAL_SITE_ID' ] = ''
+    #os.environ[ 'DQ2_LOCAL_SITE_ID' ] = ''
     #os.environ[ 'DQ2_LOCAL_PROTOCOL' ] = 'dcap'
     os.environ[ 'DQ2_STORAGE_ROOT' ] = ''
     os.environ[ 'DQ2_SRM_HOST' ] = ''
@@ -988,7 +988,8 @@ if __name__ == '__main__':
             localsiteid = dq2localids[0]
             localsitesrm = TiersOfATLAS.getSiteProperty(localsiteid,'srm')
 
-        print 'localsiteid: %s' % localsiteid
+        if not detsetype:
+            print 'localsiteid: %s' % localsiteid
 
         if sename in ['dpm01.grid.sinica.edu.tw']:
             localsiteid = 'ASGCDISK'
@@ -1012,34 +1013,47 @@ if __name__ == '__main__':
                 print "ERROR : DATASETLOCATION not defined"
             datasetlocation = []
             pass
-
+        
         # Determine local DQ2 configuration variables (gsiftp, dcap, rfio)
         os.environ[ 'LCG_CATALOG_TYPE' ] = 'lfc'
         os.environ[ 'DQ2_LFC_HOME' ] = '/grid/atlas'
 
-        #if not localsiteid.endswith('MCDISK') and not localsiteid.endswith('DATADISK') and not localsiteid.endswith('USERDISK'):
-        #    # change TIER0 to CERN
-        #    localsiteid = re.sub('^TIER0','CERN',localsiteid)
-        #    # remove TAPE
-        #    localsiteid = re.sub('TAPE$','',localsiteid)
-        #    # remove DISK
-        #    localsiteid = re.sub('DISK$','',localsiteid)
-
         # Reset localsite id
-        print 'localsiteid before getAggName(): %s' % localsiteid
+        if not detsetype:
+            print 'localsiteid before getAggName(): %s' % localsiteid
         # TODO: avoiding  getAggName() is just a workaround; should be tuned
         if datasettype not in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD']:
             localsiteid = getAggName(localsiteid)
-            print 'localsiteid after getAggName(): %s' % localsiteid
+            if not detsetype:
+                print 'localsiteid after getAggName(): %s' % localsiteid
+
+        # Set DQ2_LOCAL_SITE_ID
+        try:
+            siteID = ''
+            cmd =  "grep DQ2_LOCAL_SITE_ID $VO_ATLAS_SW_DIR/ddm/latest/setup.sh |  tr '=' '\n' | tail -1"
+            rc, out = commands.getstatusoutput(cmd)
+            if not rc:
+                dq2localsiteid = out
+            else:
+                dq2localsiteid = localsiteid
+            dq2alternatename = TiersOfATLAS.getSiteProperty(dq2localsiteid,'alternateName')
+            for sitename in datasetlocation:
+                if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
+                    if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename:
+                        siteID = sitename
+                        break
+        except:
+            siteID = localsiteid
+            pass
+
+        outFile = open('dq2localid.txt','w')
+        outFile.write('%s\n' % siteID)
+        outFile.close()
 
         os.environ[ 'DQ2_LOCAL_SITE_ID' ] = localsiteid
         if not detsetype:
             print 'DQ2_LOCAL_SITE_ID: %s' %os.environ[ 'DQ2_LOCAL_SITE_ID' ]
 
-        outFile = open('dq2localid.txt','w')
-        outFile.write('%s\n' % os.environ[ 'DQ2_LOCAL_SITE_ID' ])
-        outFile.close()
-        
         # Find LFC Catalog host and set LFC_HOST 
         if localsiteid.startswith('CERN'):
             localsiteid = 'CERN'

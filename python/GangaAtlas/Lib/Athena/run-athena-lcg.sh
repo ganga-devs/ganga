@@ -272,7 +272,7 @@ EOF
     
     if [ -e dq2localid.txt ]
 	then
-	export DQ2_LOCAL_ID=`cat dq2localid.txt`
+	export DQ2_LOCAL_SITE_ID=`cat dq2localid.txt`
 	export DQ2_LOCAL_ID_BACKUP=$DQ2_LOCAL_ID
     fi
     
