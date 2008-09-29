@@ -236,7 +236,6 @@ fi
 # Specific input and running for DQ2_COPY
 if [ $retcode -ne 0 ] || [ n$DATASETTYPE = n'DQ2_COPY' ]
     then
-    export retcode=0
 
 # Create generic input.py
     cat - >input.py <<EOF
@@ -289,7 +288,11 @@ EOF
     I=0
     
     # Parse jobs jobOptions and set timing command
-    prepare_athena
+    if [ n$DATASETTYPE = n'DQ2_COPY' ]
+	then
+	prepare_athena
+    fi
+    export retcode=0
 
     cat input_files | while read filespec
       do
