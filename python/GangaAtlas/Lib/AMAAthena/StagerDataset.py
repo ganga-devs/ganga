@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: StagerDataset.py,v 1.1 2008-09-02 12:50:45 hclee Exp $
+# $Id: StagerDataset.py,v 1.2 2008-09-29 13:48:13 hclee Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -326,7 +326,7 @@ class StagerDataset(DQ2Dataset):
         'accessprotocol'       : SimpleItem(defvalue = '', doc = 'Accessprotocol to use on worker node, e.g. Xrootd', hidden=1),
         'match_ce_all' : SimpleItem(defvalue = False, doc = 'Match complete and incomplete sources of dataset to CE during job submission', hidden=1),
         'min_num_files' : SimpleItem(defvalue = 0, doc = 'Number of minimum files at incomplete dataset location', hidden=1),
-        'complete_files_replicas' : SimpleItem(defvalue=None,protected=1,copyable=0,transient=1,hidden=1,doc='The hidden cache of the info of the file replicas of the complete datasets'),
+        'complete_files_replicas' : SimpleItem(defvalue={},protected=1,copyable=0,transient=1,hidden=1,doc='The hidden cache of the info of the file replicas of the complete datasets'),
         'check_md5sum' : SimpleItem(defvalue = False, doc = 'Check md5sum of input files on storage elemenet - very time consuming !', hidden=1)
     })
 
@@ -344,7 +344,7 @@ class StagerDataset(DQ2Dataset):
         DQ2Dataset.__setattr__(self, attr, value)
 
         if attr == 'dataset':
-            self.complete_files_replicas = None
+            self.complete_files_replicas = {}
 
     def __resolve_containers(self, containers, nthreads=10):
         '''resolving dataset containers'''
