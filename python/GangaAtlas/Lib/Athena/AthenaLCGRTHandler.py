@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.10 2008-09-28 15:23:57 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.11 2008-09-29 15:18:47 hclee Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -500,6 +500,12 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 requirements.software = ['VO-atlas-production-%s-%s' %(app.atlas_production, cmtconfig )]
         else:
             requirements.software = ['VO-atlas-production-%s' % app.atlas_release ]
+
+#       add software requirement of dq2clients
+        if job.inputdata.type in ['DQ2_DOWNLOAD', 'TNT_DOWNLOAD']:
+            dq2client_version = '0.1.17'
+            requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
+            environment['DQ2_CLIENT_VERSION'] = dq2client_version
 
 #       jobscript
 

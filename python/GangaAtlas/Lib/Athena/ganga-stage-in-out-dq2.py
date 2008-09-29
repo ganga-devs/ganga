@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.13 2008-09-28 15:42:33 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.14 2008-09-29 15:18:47 hclee Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -52,9 +52,9 @@ except:
     sys.exit(EC_Configuration)
 #try:
 #    # local site ID
-#    DQ2LOCALSITEID = os.environ['DQ2_LOCAL_ID']
+#    DQ2LOCALSITEID = os.environ['DQ2_LOCAL_SITE_ID']
 #except:
-#    print "ERROR : DQ2_LOCAL_ID is not defined"
+#    print "ERROR : DQ2_LOCAL_SITE_ID is not defined"
 #    sys.exit(EC_Configuration)
 try:
     # local access protocol
@@ -77,12 +77,14 @@ try:
 except:
     configLOCALPREFIX = ''
 
-try:
+## setting DQ2_COPY_COMMAND can cause dq2-get 0.1.17 failed 
+## with an unknown attribute in EndpointTool instance.
+#try:
     # remote copy command
-    configCOPYCOMMAND = os.environ['DQ2_COPY_COMMAND']
-except:
-    configCOPYCOMMAND = 'lcg-cp -v --vo atlas'
-    os.environ['DQ2_COPY_COMMAND'] = configCOPYCOMMAND
+#    configCOPYCOMMAND = os.environ['DQ2_COPY_COMMAND']
+#except:
+#    configCOPYCOMMAND = 'lcg-cp -v --vo atlas'
+#    os.environ['DQ2_COPY_COMMAND'] = configCOPYCOMMAND
 
 # Set default values for output LFC
 config_lfc_host = ''
@@ -829,7 +831,7 @@ if __name__ == '__main__':
     # Set default DQ2 environment variables
     os.environ[ 'DQ2_URL_SERVER' ] = dq2urlserver
     os.environ[ 'DQ2_URL_SERVER_SSL'] = dq2urlserverssl
-    os.environ[ 'DQ2_LOCAL_ID' ] = ''
+    os.environ[ 'DQ2_LOCAL_SITE_ID' ] = ''
     #os.environ[ 'DQ2_LOCAL_PROTOCOL' ] = 'dcap'
     os.environ[ 'DQ2_STORAGE_ROOT' ] = ''
     os.environ[ 'DQ2_SRM_HOST' ] = ''
@@ -986,6 +988,8 @@ if __name__ == '__main__':
             localsiteid = dq2localids[0]
             localsitesrm = TiersOfATLAS.getSiteProperty(localsiteid,'srm')
 
+        print 'localsiteid: %s' % localsiteid
+
         if sename in ['dpm01.grid.sinica.edu.tw']:
             localsiteid = 'ASGCDISK'
 
@@ -1022,14 +1026,18 @@ if __name__ == '__main__':
         #    localsiteid = re.sub('DISK$','',localsiteid)
 
         # Reset localsite id
-        localsiteid = getAggName(localsiteid)
+        print 'localsiteid before getAggName(): %s' % localsiteid
+        # TODO: avoiding  getAggName() is just a workaround; should be tuned
+        if datasettype not in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD']:
+            localsiteid = getAggName(localsiteid)
+            print 'localsiteid after getAggName(): %s' % localsiteid
 
-        os.environ[ 'DQ2_LOCAL_ID' ] = localsiteid
+        os.environ[ 'DQ2_LOCAL_SITE_ID' ] = localsiteid
         if not detsetype:
-            print 'DQ2_LOCAL_ID: %s' %os.environ[ 'DQ2_LOCAL_ID' ]
+            print 'DQ2_LOCAL_SITE_ID: %s' %os.environ[ 'DQ2_LOCAL_SITE_ID' ]
 
         outFile = open('dq2localid.txt','w')
-        outFile.write('%s\n' % os.environ[ 'DQ2_LOCAL_ID' ])
+        outFile.write('%s\n' % os.environ[ 'DQ2_LOCAL_SITE_ID' ])
         outFile.close()
         
         # Find LFC Catalog host and set LFC_HOST 
@@ -1066,13 +1074,13 @@ if __name__ == '__main__':
         
         try:
             if not detsetype:
-                #print 'DQ2_LOCAL_ID: %s' %os.environ[ 'DQ2_LOCAL_ID' ]
+                #print 'DQ2_LOCAL_SITE_ID: %s' %os.environ[ 'DQ2_LOCAL_SITE_ID' ]
                 print 'DQ2_URL_SERVER: %s' %os.environ[ 'DQ2_URL_SERVER' ] 
                 print 'DQ2_URL_SERVER_SSL: %s' %os.environ[ 'DQ2_URL_SERVER_SSL']
                 print 'localsitesrm: %s' %localsitesrm            
         except:
             if not detsetype:
-                print 'ERROR: could not set DQ2_LOCAL_ID'
+                print 'ERROR: could not set DQ2_LOCAL_SITE_ID'
             sys.exit(EC_Configuration)
 
         try:
@@ -1138,8 +1146,7 @@ if __name__ == '__main__':
                 configLOCALPREFIX = 'file:'
 
             # if no info is found
-            # hack for NIKHEF
-            if configLOCALPROTOCOL == '' or localsiteid=='NIKHEF':
+            if configLOCALPROTOCOL == '':
                 if localsitesrm.find('/pnfs/')>=0:
                     configLOCALPROTOCOL = 'dcap'
                     configSTORAGEROOT = '/pnfs'
@@ -1205,8 +1212,11 @@ if __name__ == '__main__':
             if len(out2)>1:
                 setype = findsetype(out2[1])
 
-        if localsiteid.startswith('NIKHEF') or localsiteid.startswith('SARA'):
-            setype = 'DPM'
+        # The setype of NIKHEF and SARA can be detected via ToA query  
+        #if localsiteid.startswith('NIKHEF'):
+        #    setype = 'DPM'
+        #if localsiteid.startswith('SARA'):
+        #    setype = 'DCACHE'
 
         print setype
         sys.exit(0)
@@ -1298,25 +1308,50 @@ if __name__ == '__main__':
         # compose dq2 command
         for datasetname in datasetnames: 
             if ((datasettype == 'DQ2_DOWNLOAD') or (datasettype == 'TNT_DOWNLOAD')):
-                cmd = 'DQ2_LOCAL_ID= ; %s ./dq2_get -rcv -t %s %s ' % (pythoncmd,timeout,datasetname)
-                cmdretry = 'DQ2_LOCAL_ID= ; %s ./dq2_get -rcv -s BNL -t %s %s ' % (pythoncmd,timeout,datasetname)
+                #cmd = 'DQ2_LOCAL_SITE_ID= ; %s ./dq2_get -rcv -t %s %s ' % (pythoncmd,timeout,datasetname)
+                #cmdretry = 'DQ2_LOCAL_SITE_ID= ; %s ./dq2_get -rcv -s BNL -t %s %s ' % (pythoncmd,timeout,datasetname)
+
+                # resolve the pre-installed dq2-get path 
+                dq2_get_path = None
+                rc, out = getstatusoutput('which dq2-get')
+                if rc != 0:
+                    print 'ERROR: dq2-get command not found'
+                    sys.exit(EC_DQ2GET)
+                else:
+                    dq2_get_path = out
+
+                # compose dq2-get command 
+                flist = ','.join(lfns) 
+                #cmd = '%s %s -s %s -t %s -f %s %s' % (pythoncmd, dq2_get_path, os.environ['DQ2_LOCAL_SITE_ID'], timeout, flist, datasetname)
+                #cmdretry = '%s %s -s %s -t %s -f %s %s' % (pythoncmd, dq2_get_path, 'CERN-PROD_DATADISK', timeout, flist, datasetname)
+                print 'export %s=%s' % ('PYTHONPATH', os.environ['PYTHONPATH'])
+                print 'export %s=%s' % ('LD_LIBRARY_PATH', os.environ['LD_LIBRARY_PATH'])
+                for key in os.environ.keys():
+                    if key.find('DQ2_') == 0:
+                        print 'export %s=%s' % (key, os.environ[key])
+                cmd = '%s %s -s %s -t %s -p lcg -D -H %s -f %s %s' % (pythoncmd, dq2_get_path, os.environ['DQ2_LOCAL_SITE_ID'], timeout, directory, flist, datasetname)
+                cmdretry = '%s %s -s %s -t %s -p lcg -D -H %s -f %s %s' % (pythoncmd, dq2_get_path, 'CERN-PROD_DATADISK', timeout, directory, flist, datasetname)
+
             elif datasettype == 'LFC':
                 cmd = '%s ./dq2_get_old -rlv -t %s %s ' % (pythoncmd,timeout,datasetname)
                 cmdretry = '%s ./dq2_get_old -rv -s BNL -t %s %s ' % (pythoncmd,timeout,datasetname)
-            for lfn in lfns:
-                cmd = cmd + lfn +" "
-                cmdretry = cmdretry + lfn +" "
+                for lfn in lfns:
+                    cmd = cmd + lfn +" "
+                    cmdretry = cmdretry + lfn +" "
+
+            print 'INFO: dq2 get command: %s' % cmd
+            print 'INFO: dq2 get retry command: %s' % cmdretry
 
             # execute dq2 command
             rc, out = getstatusoutput(cmd)
             print out
             if (rc!=0):
-                print "ERROR: error during dq2_get occured"
+                print "ERROR: error during dq2-get occured"
                 # retry dq2 command
                 rc, out = getstatusoutput(cmdretry)
                 print out
                 if (rc!=0):
-                    print "ERROR: error during retry of dq2_get from BNL occured"
+                    print "ERROR: error during retry of dq2-get from CERN (or BNL) occured"
                     sys.exit(EC_DQ2GET)
 
         # check if all files have been transfered
@@ -1365,28 +1400,22 @@ if __name__ == '__main__':
         sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
 
         # NIKHEF/SARA special case
-        if os.environ[ 'DQ2_LOCAL_ID' ].startswith('NIKHEF') and len(tUrlMap)==0:
-            print 'Special setup at SARA/NIKHEF - re-reading LFC' 
-            localsitesrm = TiersOfATLAS.getSiteProperty('SARA-MATRIX_MCDISK','srm')
-            if localsitesrm:
-                localsitesrm = re.sub('token:*\w*:','', localsitesrm)
-                localsitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', localsitesrm)
-                defaultSE = _getDefaultStorage(localsitesrm)
-                configLOCALPROTOCOL = 'gsidcap'
-                configSTORAGEROOT = '/pnfs'
-                configLOCALPREFIX = 'dcap:'
-                sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
-        elif os.environ[ 'DQ2_LOCAL_ID' ].startswith('SARA') and len(tUrlMap)==0: 
-            print 'Special setup at SARA?NIKHEF - re-reading LFC' 
-            localsitesrm = TiersOfATLAS.getSiteProperty('NIKHEF-ELPROD_MCDISK','srm')
-            if localsitesrm:
-                localsitesrm = re.sub('token:*\w*:','', localsitesrm)
-                localsitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', localsitesrm)
-                defaultSE = _getDefaultStorage(localsitesrm)
-                configLOCALPROTOCOL = 'rfio'
-                configSTORAGEROOT = '/dpm'
-                configLOCALPREFIX = 'rfio:'
-                sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
+        if os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('NIKHEF') and len(tUrlMap)==0:
+            print 'Special setup at NIKHEF - re-reading LFC' 
+            localsitesrm = TiersOfATLAS.getSiteProperty(os.environ['DQ2_LOCAL_SITE_ID'],'srm')
+            defaultSE = _getDefaultStorage(localsitesrm)
+            configLOCALPROTOCOL = 'rfio'
+            configSTORAGEROOT = '/dpm'
+            configLOCALPREFIX = 'rfio:'
+            sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
+        elif os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('SARA') and len(tUrlMap)==0: 
+            print 'Special setup at SARA - re-reading LFC' 
+            localsitesrm = TiersOfATLAS.getSiteProperty(os.environ['DQ2_LOCAL_SITE_ID'],'srm')
+            defaultSE = _getDefaultStorage(localsitesrm)
+            configLOCALPROTOCOL = 'gsidcap'
+            configSTORAGEROOT = '/pnfs'
+            configLOCALPREFIX = 'dcap:'
+            sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
 
         # Check md5sum
         if len(tUrlMap)>0 and os.environ.has_key('GANGA_CHECKMD5SUM') and os.environ['GANGA_CHECKMD5SUM']=='1':
@@ -1687,7 +1716,7 @@ if __name__ == '__main__':
             sys.exit(EC_Configuration)
 
         # Set siteID
-        siteID = os.environ[ 'DQ2_LOCAL_ID' ]
+        siteID = os.environ[ 'DQ2_LOCAL_SITE_ID' ]
         if siteID in [ 'PIC', 'IFIC', 'CNAF', 'RAL', 'SARA', 'FZK', 'ASGC', 'LYON', 'TRIUMF', 'TIER0' ]:
             if re.search('DISK$',siteID) == None:
                 siteID += 'DISK'
