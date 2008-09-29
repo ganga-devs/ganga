@@ -73,7 +73,8 @@ cmt_setup () {
     
     # improve dcap reading speed
     export DCACHE_RAHEAD=TRUE
-    export DCACHE_RA_BUFFER=32768
+    #export DCACHE_RA_BUFFER=32768
+    #export DCACHE_RA_BUFFER=262144
   
     if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
         ATLAS_RELEASE_DIR=$VO_ATLAS_SW_DIR/software/$ATLAS_RELEASE
@@ -628,6 +629,7 @@ run_athena () {
         ls -al
         env | grep DQ2
         env | grep LFC
+	env | grep DCACHE
 
 	cat input.py
 
