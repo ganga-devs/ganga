@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.8 2008-09-06 17:53:02 dvanders Exp $
+# $Id: Panda.py,v 1.9 2008-09-29 08:14:53 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -27,8 +27,8 @@ from taskbuffer.FileSpec import FileSpec
 
 class PandaBuildJob(GangaObject):
     _schema = Schema(Version(1,0), {
-        'id'            : SimpleItem(defvalue=None,protected=0,copyable=0,doc='Panda Job id'),
-        'status'        : SimpleItem(defvalue=None,protected=0,copyable=0,doc='Panda Job status')
+        'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=0,copyable=0,doc='Panda Job id'),
+        'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=0,doc='Panda Job status')
     })
 
     _category = 'PandaBuildJob'
@@ -60,9 +60,9 @@ class Panda(IBackend):
         'ara'           : SimpleItem(defvalue=False,protected=0,copyable=1,doc='use Athena ROOT Access'),
 #        'araOutFile'    : SimpleItem(defvalue=[],protected=0,copyable=1,doc='define output files for ARA, e.g., [\'output1.root\',\'output2.root\']'),
 #        'trf'           : SimpleItem(defvalue='',protected=0,copyable=1,doc='run transformation, e.g. .trf = "csc_atlfast_trf.py %IN %OUT.AOD.root %OUT.ntuple.root -1 0"'),
-        'id'            : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Panda job id'),
-        'status'        : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Panda job status'),
-        'actualCE'      : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Actual CE where the job is run'),
+        'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='Panda job id'),
+        'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Panda job status'),
+        'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
         'buildjob'      : ComponentItem('PandaBuildJob',load_default=0,optional=1,protected=1,copyable=0,doc='Panda Build Job')
     })
 
@@ -290,6 +290,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.8  2008/09/06 17:53:02  dvanders
+# less spammy status changes. (Only updateStatus when panda status has changed).
+#
 # Revision 1.7  2008/09/06 09:18:30  dvanders
 # don't marked completed when build job finishes!
 #
