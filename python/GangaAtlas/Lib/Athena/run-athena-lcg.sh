@@ -163,11 +163,6 @@ then
     echo 'Fixing broken DPM ROOT access in athena 12.0.x'
     chmod +x libRFIO.so
 fi
-if [ -e libRFIO.so ] && [ n$GANGA_SETYPE = n'DPM' ] && [ ! -z `echo $ATLAS_RELEASE | grep 13.2.0` ]
-then
-    echo 'Remove libRFIO.so in athena 13.2.0'
-    rm libRFIO.so
-fi
 if [ n$GANGA_SETYPE = n'DPM' ] 
 then
     echo 'Creating soft link to fix broken DPM ROOT access in athena'
@@ -320,6 +315,7 @@ EOF
 	if [ $retcode -eq 0 ] && [ -e $file ]
 	    then
 	    echo "Running Athena ..."
+	    retcode=0
         # Start athena
 	    
 	    if [ n$ATLAS_EXETYPE == n'ATHENA' ]

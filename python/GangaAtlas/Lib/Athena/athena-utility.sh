@@ -73,7 +73,7 @@ cmt_setup () {
     
     # improve dcap reading speed
     export DCACHE_RAHEAD=TRUE
-    #export DCACHE_RA_BUFFER=196608
+    export DCACHE_RA_BUFFER=32768
   
     if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
         ATLAS_RELEASE_DIR=$VO_ATLAS_SW_DIR/software/$ATLAS_RELEASE
@@ -279,6 +279,16 @@ get_pybin () {
     else
         export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/slc3_ia32_gcc323/bin/python | head -1)
     fi
+
+    # Determine python32 executable location 
+    # Set python32bin only if athena v14 is NOT setup
+    which python32; echo $? > retcode.tmp
+    retcode=`cat retcode.tmp`
+    rm -f retcode.tmp
+    if [ $retcode -eq 0 ] && [ -z `echo $ATLAS_RELEASE | grep 14.` ] ; then
+	export python32bin=`which python32`
+    fi
+
 }
 
 # detecting the se type
@@ -299,14 +309,15 @@ detect_setype () {
         export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
         export PATH=$MY_PATH_ORG:$PATH_BACKUP
         export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
-        which python32; echo $? > retcode.tmp
-        retcode=`cat retcode.tmp`
-        rm -f retcode.tmp
-        if [ $retcode -eq 0 ]; then
-            export GANGA_SETYPE=`python32 ./ganga-stage-in-out-dq2.py --setype`
-        else
-            export GANGA_SETYPE=`$pybin ./ganga-stage-in-out-dq2.py --setype`
-        fi
+
+	if [ ! -z $python32bin ]; then
+	    export GANGA_SETYPE=`$python32bin ./ganga-stage-in-out-dq2.py --setype`
+	else
+	    export GANGA_SETYPE=`$pybin ./ganga-stage-in-out-dq2.py --setype`
+	fi
+	if [ -z $GANGA_SETYPE ]; then
+	    export GANGA_SETYPE=`$pybin ./ganga-stage-in-out-dq2.py --setype`
+	fi
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
         export PATH=$PATH_BACKUP
         export PYTHONPATH=$PYTHONPATH_BACKUP
@@ -338,11 +349,9 @@ stage_inputs () {
 	    export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
 	    export PATH=$MY_PATH_ORG:$PATH_BACKUP
 	    export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
-	    which python32; echo $? > retcode.tmp
-	    retcode=`cat retcode.tmp`
-	    rm -f retcode.tmp
-	    if [ $retcode -eq 0 ]; then
-		python32 ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
+
+	    if [ ! -z $python32bin ]; then
+		$python32bin ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 	    else
 		if [ -e /usr/bin32/python ]; then
 		    /usr/bin32/python ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
@@ -409,11 +418,9 @@ stage_outputs () {
             export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
             export PATH=$MY_PATH_ORG:$PATH_BACKUP
             export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
-            which python32; echo $? > retcode.tmp
-            retcode=`cat retcode.tmp`
-            rm -f retcode.tmp
-            if [ $retcode -eq 0 ]; then
-                python32 ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
+
+	    if [ ! -z $python32bin ]; then
+                $python32bin ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
             else
                 if [ -e /usr/bin32/python ]
                 then
@@ -616,13 +623,15 @@ run_athena () {
 
     job_options=$*
 
-    # run athena in regular mode =========================================== 
+5H    # run athena in regular mode =========================================== 
     if [ $retcode -eq 0 ]; then
         ls -al
         env | grep DQ2
         env | grep LFC
 
 	cat input.py
+
+	export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 
         echo "Running Athena ..."
         if [ n$ATLAS_EXETYPE == n'ATHENA' ]
