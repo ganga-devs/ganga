@@ -623,7 +623,7 @@ run_athena () {
 
     job_options=$*
 
-5H    # run athena in regular mode =========================================== 
+# run athena in regular mode =========================================== 
     if [ $retcode -eq 0 ]; then
         ls -al
         env | grep DQ2
