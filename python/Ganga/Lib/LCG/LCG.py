@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.11 2008-09-23 12:29:32 hclee Exp $
+# $Id: LCG.py,v 1.12 2008-09-29 13:17:55 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -92,17 +92,17 @@ class LCG(IBackend):
         'jobtype'             : SimpleItem(defvalue='Normal',doc='Job type: Normal, MPICH'),
         'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
         'sandboxcache'        : ComponentItem('GridSandboxCache',doc='Interface for handling oversized input sandbox'),
-        'parent_id'           : SimpleItem(defvalue=None,protected=1,copyable=0,hidden=1,doc='Middleware job identifier for its parent job'),
-        'id'                  : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Middleware job identifier'),
-        'status'              : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Middleware job status'),
+        'parent_id'           : SimpleItem(defvalue='',protected=1,copyable=0,hidden=1,doc='Middleware job identifier for its parent job'),
+        'id'                  : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware job identifier'),
+        'status'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware job status'),
         'middleware'          : SimpleItem(defvalue='EDG',protected=0,copyable=1,doc='Middleware type',checkset='_checkset_middleware'),
-        'exitcode'            : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Application exit code'),
-        'exitcode_lcg'        : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Middleware exit code'),
-        'reason'              : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Reason of causing the job status'),
+        'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
+        'exitcode_lcg'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
+        'reason'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status'),
         'perusable'           : SimpleItem(defvalue=False,protected=0,copyable=1,checkset='_checkset_perusable',doc='Enable the job perusal feature of GLITE'),
-        'actualCE'            : SimpleItem(defvalue=None,protected=1,copyable=0,doc='Computing Element where the job actually runs.'),
-        'monInfo'             : SimpleItem(defvalue=None,protected=1,copyable=0,hidden=1,doc='Hidden information of the monitoring service.'),
-        'octopus'             : SimpleItem(defvalue=None,protected=1,copyable=0,transient=1,hidden=1,doc='Hidden transient object for Octopus connection.'),
+        'actualCE'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Computing Element where the job actually runs.'),
+        'monInfo'             : SimpleItem(defvalue={},protected=1,copyable=0,hidden=1,doc='Hidden information of the monitoring service.'),
+        'octopus'             : SimpleItem(defvalue=[],listtype=['Ganga.Lib.MonitoringServices.Octopus.Octopus'],protected=1,copyable=0,transient=1,hidden=1,doc='Hidden transient object for Octopus connection.'),
         'flag'                : SimpleItem(defvalue=0,protected=1,copyable=0,hidden=1,doc='Hidden flag for internal control.')
     })
 
@@ -202,11 +202,11 @@ class LCG(IBackend):
 
     def __refresh_jobinfo__(self,job):
         '''Refresh the lcg jobinfo. It will be called after resubmission.'''
-        job.backend.status   = None
-        job.backend.reason   = None
-        job.backend.actualCE = None
-        job.backend.exitcode = None
-        job.backend.exitcode_lcg = None
+        job.backend.status   = '' 
+        job.backend.reason   = '' 
+        job.backend.actualCE = '' 
+        job.backend.exitcode = '' 
+        job.backend.exitcode_lcg = '' 
         job.backend.flag     = 0
 
     def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
@@ -1739,6 +1739,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.11  2008/09/23 12:29:32  hclee
+# fix the status update logic
+#
 # Revision 1.10  2008/09/22 22:43:41  hclee
 # cache the logging information coming out from the LCGOutputDownloader threads
 #

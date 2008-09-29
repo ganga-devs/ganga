@@ -328,12 +328,12 @@ class Grid(object):
             match = re_id.match(line)
             if match:
                 info += [{ 'id'     : match.group(1),
-                           'name'   : None,
+                           'name'   : '',
                            'is_node': False,
-                           'status' : None,
-                           'exit'   : None,
-                           'reason' : None,
-                           'destination' : None }]
+                           'status' : '',
+                           'exit'   : '',
+                           'reason' : '',
+                           'destination' : '' }]
                 if is_node:
                     info[-1]['is_node'] = True 
                 #if is_node:
