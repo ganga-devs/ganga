@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.3 2008-07-29 13:19:30 bsamset Exp $
+# $Id: NG.py,v 1.4 2008-09-29 11:16:35 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -946,30 +946,30 @@ class NG(IBackend):
       "requirements" : ComponentItem( category = "ng_requirements",
          defvalue = "NGRequirements",
          doc = "Requirements for selecting execution host" ),
-      "CE" : SimpleItem(defvalue="",doc='Request specific cluster(s)'),
-      "RejectCE" : SimpleItem(defvalue="",doc='Reject specific cluster(s)'),
-      "submit_options" : SimpleItem( defvalue = [], sequence = 1,
+      "CE" : SimpleItem(defvalue="",typelist=['str'], doc='Request specific cluster(s)'),
+      "RejectCE" : SimpleItem(defvalue="",typelist=['str'], doc='Reject specific cluster(s)'),
+      "submit_options" : SimpleItem( defvalue = [], typelist=['str'], sequence = 1,
          doc = "Options passed to Condor at submission time" ),
-      "id" : SimpleItem( defvalue = "", protected = 1, copyable = 0,
+      "id" : SimpleItem( defvalue = "", typelist=['str'], protected = 1, copyable = 0,
          doc = "NG jobid" ),
-      "status" : SimpleItem( defvalue = "", protected = 1, copyable = 0,
+      "status" : SimpleItem( defvalue = "", typelist=['str'], protected = 1, copyable = 0,
          doc = "NG status"),
-      "reason" : SimpleItem( defvalue = "", protected = 1, copyable = 0,
+      "reason" : SimpleItem( defvalue = "", typelist=['str'], protected = 1, copyable = 0,
          doc = "Failure season"),
-      "cputime" : SimpleItem( defvalue = "", protected = 1, copyable = 0,
+      "cputime" : SimpleItem( defvalue = "", typelist=['str'], protected = 1, copyable = 0,
          doc = "CPU time used by job"),
-      "requestedcputime" : SimpleItem( defvalue = "", protected = 1, copyable = 0,
+      "requestedcputime" : SimpleItem( defvalue = "", typelist=['str'], protected = 1, copyable = 0,
          doc = "Requested CPU time"),
-      "actualCE" : SimpleItem( defvalue = "", protected = 1, copyable = 0,
+      "actualCE" : SimpleItem( defvalue = "", typelist=['str'], protected = 1, copyable = 0,
          doc = "Machine where job has been submitted" ),
-      'monInfo': SimpleItem(defvalue=None,protected=1,copyable=0,hidden=0,
+      'monInfo': SimpleItem(defvalue="",typelist=['str'], protected=1,copyable=0,hidden=0,
          doc='Hidden information of the monitoring service.'),
-      "queue" : SimpleItem( defvalue = "", protected = 1, copyable = 0,
+      "queue" : SimpleItem( defvalue = "", typelist=['str'], protected = 1, copyable = 0,
          doc = "Queue where job has been submitted" ),
-      'middleware' : SimpleItem(defvalue=None,protected=0,copyable=1,doc='Middleware type'),
+      'middleware' : SimpleItem(defvalue="",typelist=['str'], protected=0,copyable=1,doc='Middleware type'),
       "RLS" : SimpleItem( defvalue = "rls://atlasrls.nordugrid.org:39281",
-         doc = "RLS dserver" ),
-      'check_availability'   : SimpleItem(defvalue = False,
+         typelist=['str'], doc = "RLS dserver" ),
+      'check_availability'   : SimpleItem(defvalue = False, typelist=['bool'], 
                                           doc = 'Check availability of DQ2 data on NG before submission'),
       'clean' : SimpleItem( defvalue=[],typelist=['str'],sequence=1, doc= "Files to be cleaned after job")
       } )
@@ -1943,6 +1943,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/07/29 13:19:30  bsamset
+# Removed some remaining info messages
+#
 # Revision 1.2  2008/07/29 09:50:41  bsamset
 # Added backup atlasgiis server, fixed autonaming of jobs with DQ2 datasets
 #

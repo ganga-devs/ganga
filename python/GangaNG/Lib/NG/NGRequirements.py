@@ -8,11 +8,11 @@ class NGRequirements(GangaObject):
 
      _schema = Schema(Version(1,0), {
           "runtimeenvironment": SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc='Runtimeenvironment'),
-          "cputime" : SimpleItem( defvalue = "30", doc = "Requested cpu time" ),
-          "walltime" : SimpleItem( defvalue = "30", doc = "Requested wall time" ),
-          "memory" : SimpleItem( defvalue = 500, doc = "Mininum virtual  memory" ),
-          "disk" : SimpleItem( defvalue = 500, doc = "Minimum memory" ),
-          "other" : SimpleItem( defvalue=[], sequence=1, doc= "Other requirements" )
+          "cputime" : SimpleItem( defvalue = 30, typelist=['int'], doc = "Requested cpu time" ),
+          "walltime" : SimpleItem( defvalue = 30, typelist=['int'],  doc = "Requested wall time" ),
+          "memory" : SimpleItem( defvalue = 500, typelist=['int'], doc = "Mininum virtual  memory" ),
+          "disk" : SimpleItem( defvalue = 500, typelist=['int'], doc = "Minimum memory" ),
+          "other" : SimpleItem( defvalue=[], typelist=['str'], sequence=1, doc= "Other requirements" )
           } )
 
      _category = 'ng_requirements'
