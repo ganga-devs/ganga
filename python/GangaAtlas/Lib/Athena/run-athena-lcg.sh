@@ -146,6 +146,11 @@ get_pybin
 
 #################################################
 # Determine SE type
+
+# Unpack dq2info.tar.gz
+if [ -e dq2info.tar.gz ]; then
+    tar xzf dq2info.tar.gz
+fi
 detect_setype
 
 #################################################
@@ -231,6 +236,8 @@ fi
 # Specific input and running for DQ2_COPY
 if [ $retcode -ne 0 ] || [ n$DATASETTYPE = n'DQ2_COPY' ]
     then
+    export retcode=0
+
 # Create generic input.py
     cat - >input.py <<EOF
 ic = []
@@ -315,7 +322,7 @@ EOF
 	if [ $retcode -eq 0 ] && [ -e $file ]
 	    then
 	    echo "Running Athena ..."
-	    retcode=0
+
         # Start athena
 	    
 	    if [ n$ATLAS_EXETYPE == n'ATHENA' ]
