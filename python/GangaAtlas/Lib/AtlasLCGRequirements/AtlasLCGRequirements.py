@@ -339,13 +339,14 @@ class AtlasLCGRequirements(LCGRequirements):
     See also: JDL Attributes Specification at http://cern.ch/glite/documentation
     '''
 
-    _schema = Schema(Version(1,1), { 
+    _schema = Schema(Version(1,2), { 
         'software'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Software Installations'),
         'nodenumber'      : SimpleItem(defvalue=1,doc='Number of Nodes for MPICH jobs'),
         'memory'          : SimpleItem(defvalue=None, typelist=['type(None)','int'], doc='Mininum available memory (MB)'),
         'cputime'         : SimpleItem(defvalue=None, typelist=['type(None)','int'], doc='Minimum available CPU time (min)'),
         'walltime'        : SimpleItem(defvalue=None, typelist=['type(None)','int'], doc='Mimimum available total time (min)'),
         'ipconnectivity'  : SimpleItem(defvalue=False,doc='External connectivity'),
+        'dq2client_version'  : SimpleItem(defvalue='0.1.21',doc='DQ2 client version on the computing element'),
         'other'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Other Requirements'),
         'sites'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names'),
         'excluded_sites'  : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names to be excluded'),
