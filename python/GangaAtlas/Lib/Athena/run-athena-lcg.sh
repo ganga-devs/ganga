@@ -269,7 +269,14 @@ EOF
 	rm PoolFileCatalog.xml
     fi
     
-    
+    # Setup new dq2- tools
+    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+	source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+    else
+	echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
+	echo '1'>retcode.tmp
+    fi
+    # Set DQ2_LOCAL_SITE_ID to dataset location
     if [ -e dq2localid.txt ]
 	then
 	export DQ2_LOCAL_SITE_ID=`cat dq2localid.txt`
@@ -301,10 +308,9 @@ EOF
 	echo "Downloading input file $file ..."
 	let "I += 1"
 	
-        # Setup new dq2- tools
+        # use dq2-get to download input file
 	if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 	    then
-	    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
 	    dq2-get --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
 	    mv $DATASETNAME/* .
 	else
