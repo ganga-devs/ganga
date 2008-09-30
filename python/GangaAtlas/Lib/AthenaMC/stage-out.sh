@@ -97,6 +97,10 @@ stageOutLCG(){
 
     echo $guid >> output_guids
     echo $OUTSITE >> output_location
+    if [ -z "$guid" ]; then
+	echo "file was not registered in lfc, aborting"
+	return 113
+    fi
     echo "$dataset,$file.$TIMESTAMP.$OUTPUT_JOBID,$guid,$filesize,$md5sumfile,$OUTSITE" >> output_data
     return 0;
 }
