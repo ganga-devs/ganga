@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.10 2008-09-30 09:38:49 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.11 2008-09-30 09:53:57 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -274,7 +274,7 @@ class DQ2Dataset(Dataset):
         'exclude_names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to exclude from processing'),
         'number_of_files'    : SimpleItem(defvalue = 0, doc = 'Number of files. '),
         'guids'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'GUID of Logical File Names'),
-        'type'               : SimpleItem(defvalue = '', doc = 'Dataset access on worker node: DQ2_LOCAL (default), DQ2_COPY, TAG, LFC, TNT_LOCAL', 'TNT_DOWNLOAD'),
+        'type'               : SimpleItem(defvalue = '', doc = 'Dataset access on worker node: DQ2_LOCAL (default), DQ2_COPY, TAG, LFC, TNT_LOCAL, TNT_DOWNLOAD'),
         'failover'           : SimpleItem(defvalue = False, doc = 'Use DQ2_COPY automatically if DQ2_LOCAL fails'),
         'datatype'           : SimpleItem(defvalue = '', doc = 'Data type: DATA, MC or MuonCalibStream'),
         'accessprotocol'     : SimpleItem(defvalue = '', doc = 'Accessprotocol to use on worker node, e.g. Xrootd'),
@@ -1184,6 +1184,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.10  2008/09/30 09:38:49  elmsheus
+#Add DQ2Dataset.failover
+#
 #Revision 1.9  2008/09/28 15:20:34  elmsheus
 #Remove obsolte DQ2Output class
 #
