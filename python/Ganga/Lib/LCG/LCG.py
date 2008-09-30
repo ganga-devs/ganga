@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.12 2008-09-29 13:17:55 hclee Exp $
+# $Id: LCG.py,v 1.13 2008-09-30 17:51:08 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -93,7 +93,7 @@ class LCG(IBackend):
         'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
         'sandboxcache'        : ComponentItem('GridSandboxCache',doc='Interface for handling oversized input sandbox'),
         'parent_id'           : SimpleItem(defvalue='',protected=1,copyable=0,hidden=1,doc='Middleware job identifier for its parent job'),
-        'id'                  : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware job identifier'),
+        'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
         'status'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware job status'),
         'middleware'          : SimpleItem(defvalue='EDG',protected=0,copyable=1,doc='Middleware type',checkset='_checkset_middleware'),
         'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
@@ -102,7 +102,7 @@ class LCG(IBackend):
         'perusable'           : SimpleItem(defvalue=False,protected=0,copyable=1,checkset='_checkset_perusable',doc='Enable the job perusal feature of GLITE'),
         'actualCE'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Computing Element where the job actually runs.'),
         'monInfo'             : SimpleItem(defvalue={},protected=1,copyable=0,hidden=1,doc='Hidden information of the monitoring service.'),
-        'octopus'             : SimpleItem(defvalue=[],listtype=['Ganga.Lib.MonitoringServices.Octopus.Octopus'],protected=1,copyable=0,transient=1,hidden=1,doc='Hidden transient object for Octopus connection.'),
+        'octopus'             : SimpleItem(defvalue=None,typelist=['type(None)', 'Ganga.Lib.MonitoringServices.Octopus.Octopus'],protected=1,copyable=0,transient=1,hidden=1,doc='Hidden transient object for Octopus connection.'),
         'flag'                : SimpleItem(defvalue=0,protected=1,copyable=0,hidden=1,doc='Hidden flag for internal control.')
     })
 
@@ -1739,6 +1739,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.12  2008/09/29 13:17:55  hclee
+# fix the type checking issue
+#
 # Revision 1.11  2008/09/23 12:29:32  hclee
 # fix the status update logic
 #
