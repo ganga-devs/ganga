@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.15 2008-09-29 19:41:14 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.16 2008-09-30 07:50:20 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1592,18 +1592,29 @@ if __name__ == '__main__':
 
             # Download tag dataset
             # compose dq2 command
+            dq2setuppath = '$VO_ATLAS_SW_DIR/ddm/latest/setup.sh'
+            inputtxt = 'dq2localid.txt'
+            try:
+                temp_dq2localsiteid = [ line.strip() for line in file(inputtxt) ]
+                dq2localsiteid = temp_dq2localsiteid[0]
+            except:
+                dq2localsiteid = os.environ[ 'DQ2_LOCAL_SITE_ID' ]
+                pass
+            
             for tagdatasetname in tagdatasetnames:
-                cmd = 'DQ2_LOCAL_ID= ; %s ./dq2_get -rcv -t %s %s ' % (pythoncmd,timeout,tagdatasetname)
-                cmdretry = ' DQ2_LOCAL_ID= ; %s ./dq2_get -rcv -s BNL -t %s %s ' % (pythoncmd,timeout,tagdatasetname)
+                #cmd = 'DQ2_LOCAL_ID= ; %s ./dq2_get -rcv -t %s %s ' % (pythoncmd,timeout,tagdatasetname)
+                #cmdretry = ' DQ2_LOCAL_ID= ; %s ./dq2_get -rcv -s BNL -t %s %s ' % (pythoncmd,timeout,tagdatasetname)
+                cmd = 'source %s; dq2-get --automatic --local-site=%s --no-directories --timeout %s -p lcg %s' % (dq2setuppath, dq2localsiteid ,timeout, tagdatasetname)
+                cmdretry = 'source %s; dq2-get --automatic --local-site=CERN-PROD_DATADISK --no-directories --timeout %s -p lcg %s' % (dq2setuppath, dq2localsiteid ,timeout, tagdatasetname)
                 # execute dq2 command
                 rc, out = getstatusoutput(cmd)
                 print out
                 if (rc!=0):
-                    print "ERROR: error during dq2_get occured"
+                    print "ERROR: error during dq2-get occured"
                     rc, out = getstatusoutput(cmdretry)
                     print out
                     if (rc!=0):
-                        print "ERROR: error during retry of dq2_get from BNL occured"
+                        print "ERROR: error during retry of dq2-get occured"
                         sys.exit(EC_DQ2GET)
             
             # Create input file list of TAG dataset
