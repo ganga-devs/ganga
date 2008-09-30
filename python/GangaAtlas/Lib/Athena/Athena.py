@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.5 2008-09-02 16:06:27 elmsheus Exp $
+# $Id: Athena.py,v 1.6 2008-09-30 12:09:31 mslater Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -606,13 +606,19 @@ class AthenaOutputMerger(IMerger):
                         elif job.outputdata._name=='ATLASOutputDataset':
                             lfn = isubjob.outputdata.outputdata[iline]
                             id = "%d" % (isubjob.id)
-                            lfn = os.path.join(id, lfn) 
-                        pfn = os.path.join(outputlocation,lfn) 
+                            lfn = os.path.join(id, lfn)
+                            
+                        pfn = os.path.join(outputlocation,lfn)
+                        
+                        if not os.path.exists(pfn):
+                            pfn = isubjob.outputdata.output[iline]
+                        
                         for name in isubjob.outputdata.outputdata:
                             if name in lfn:
                                 pfnlink =  os.path.join( isubjob.outputdir, name )
 
-                                if job.outputdata._name=='DQ2OutputDataset' or (job.outputdata._name=='ATLASOutputDataset' and not job.outputdata.local_location==''):
+                                if job.outputdata._name=='DQ2OutputDataset' or (job.outputdata._name=='ATLASOutputDataset' and not isubjob.outputdata.local_location==''):
+
                                     try:
                                         open(pfn)
                                         fsize = os.stat(pfn).st_size
@@ -730,6 +736,42 @@ config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The pa
 config.addOption('MaxJobsAthenaSplitterJobLCG', 100 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/09/02 16:06:27  elmsheus
+# Athena:
+# * Fix SE type detection problems for space tokens at DPM sites
+# * Change default DQ2 stage-out to use _USERDISK token
+# * Change default DQ2Dataset default values of
+#   DQ2_BACKUP_OUTPUT_LOCATIONS
+# * Disable functionality of DQ2Dataset.match_ce_all and
+#   DQ2Dataset.min_num_files and print out warning.
+#   These are obsolete and DQ2JobSplitter should be used instead.
+# * Add option config['DQ2']['USE_STAGEOUT_SUBSCRIPTION'] to allow DQ2
+#   subscription to final output SE destinations instead of "remote lcg-cr"
+#   Will be enabled in future version if DQ2 site services are ready for this
+# =============================================
+# A few changes to enforce the computing model:
+# =============================================
+# * DQ2OutputDataset: j.backend.location is verified to be in the same cloud
+#   as j.backend.requirements.cloud during job submission to LCG
+# * Add AtlasLCGRequirements.cloud option.
+#   Use: T0, IT, ES, FR, UK, DE, NL, TW, CA, (US, NG) or
+#        CERN, ITALYSITES, SPAINSITES, FRANCESITES, UKSITES, FZKSITES,
+#        NLSITES, TAIWANSITES, CANADASITES, (USASITES, NDGF)
+#
+#   *********************************************************
+#   Job submission to LCG requires now one of the following options:
+#   - j.backend.requirements.cloud='ID'
+#   - j.backend.requirements.sites=['SITENAME']
+#   ********************************************************
+# * Sites specified with j.backend.requirements.sites need to be in the same
+#   cloud for the LCG backend
+# * Restrict the number of subjobs of AthenaSplitterJob to value of
+#   config['Athena']['MaxJobsAthenaSplitterJobLCG'] (100) if glite WMS is
+#   used.
+#
+# scripts:
+# * athena: Add --cloud option
+#
 # Revision 1.4  2008/07/30 13:13:10  elmsheus
 # Fix bug #39549: raise execption if (athena_compile==True) and (NG==True)
 #
