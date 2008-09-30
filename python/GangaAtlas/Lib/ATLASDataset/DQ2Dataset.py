@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.9 2008-09-28 15:20:34 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.10 2008-09-30 09:38:49 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -267,21 +267,20 @@ class DQ2Dataset(Dataset):
     '''ATLAS DDM Dataset'''
 
     _schema = Schema(Version(1,0), {
-        #'dataset'    : SimpleItem(defvalue = '', doc = 'Dataset Name'),
-        'dataset'    : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="Dataset Name(s)" ),
-        #'tagdataset' : SimpleItem(defvalue = '', doc = 'Tag Dataset Name'),
-        'tagdataset' : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc = 'Tag Dataset Name'),
+        'dataset'            : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="Dataset Name(s)" ),
+        'tagdataset'         : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc = 'Tag Dataset Name'),
         'use_aodesd_backnav' : SimpleItem(defvalue = False, doc = 'Use AOD to ESD Backnavigation'),
-        'names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to use for processing'),
+        'names'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to use for processing'),
         'exclude_names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to exclude from processing'),
-        'number_of_files' : SimpleItem(defvalue = 0, doc = 'Number of files. '),
-        'guids'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'GUID of Logical File Names'),
-        'type'       : SimpleItem(defvalue = '', doc = 'Dataset type, DQ2 or LFN'),
-        'datatype'   : SimpleItem(defvalue = '', doc = 'Data type: DATA, MC or MuonCalibStream'),
-        'accessprotocol'       : SimpleItem(defvalue = '', doc = 'Accessprotocol to use on worker node, e.g. Xrootd'),
-        'match_ce_all' : SimpleItem(defvalue = False, doc = 'Match complete and incomplete sources of dataset to CE during job submission'),
-        'min_num_files' : SimpleItem(defvalue = 0, doc = 'Number of minimum files at incomplete dataset location'),
-        'check_md5sum' : SimpleItem(defvalue = False, doc = 'Check md5sum of input files on storage elemenet - very time consuming !')
+        'number_of_files'    : SimpleItem(defvalue = 0, doc = 'Number of files. '),
+        'guids'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'GUID of Logical File Names'),
+        'type'               : SimpleItem(defvalue = '', doc = 'Dataset access on worker node: DQ2_LOCAL (default), DQ2_COPY, TAG, LFC, TNT_LOCAL', 'TNT_DOWNLOAD'),
+        'failover'           : SimpleItem(defvalue = False, doc = 'Use DQ2_COPY automatically if DQ2_LOCAL fails'),
+        'datatype'           : SimpleItem(defvalue = '', doc = 'Data type: DATA, MC or MuonCalibStream'),
+        'accessprotocol'     : SimpleItem(defvalue = '', doc = 'Accessprotocol to use on worker node, e.g. Xrootd'),
+        'match_ce_all'       : SimpleItem(defvalue = False, doc = 'Match complete and incomplete sources of dataset to CE during job submission'),
+        'min_num_files'      : SimpleItem(defvalue = 0, doc = 'Number of minimum files at incomplete dataset location'),
+        'check_md5sum'       : SimpleItem(defvalue = False, doc = 'Check md5sum of input files on storage elemenet - very time consuming !')
     })
 
     _category = 'datasets'
@@ -296,7 +295,8 @@ class DQ2Dataset(Dataset):
                   { 'attribute' : 'exclude_names',          'widget' : 'String_List' },
                   { 'attribute' : 'number_of_files', 'widget' : 'String' },
                   { 'attribute' : 'guids',           'widget' : 'String_List' },
-                  {'attribute'  : 'type',            'widget' : 'String_Choice', 'choices':['DQ2_LOCAL', 'DQ2_DOWNLOAD', 'TAG', 'LFC', 'DQ2_COPY' ]},
+                  {'attribute'  : 'type',            'widget' : 'String_Choice', 'choices':['DQ2_LOCAL', 'DQ2_COPY', 'TAG', 'LFC', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_DOWNLOAD' ]},
+                  { 'attribute' : 'failover',        'widget' : 'Bool' },
                   { 'attribute' : 'datatype',        'widget' : 'String_Choice', 'choices':['DATA', 'MC', 'MuonCalibStream' ]},
                   {'attribute'  : 'accessprotocol',  'widget' : 'String' },
                   { 'attribute' : 'match_ce_all',    'widget' : 'Bool' },
@@ -1184,6 +1184,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.9  2008/09/28 15:20:34  elmsheus
+#Remove obsolte DQ2Output class
+#
 #Revision 1.8  2008/09/12 07:16:11  elmsheus
 #Add usertag config option and change DQ2OutputDataset name
 #
