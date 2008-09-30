@@ -234,7 +234,7 @@ fi
 
 #################################################
 # Specific input and running for DQ2_COPY
-if [ $retcode -ne 0 ] || [ n$DATASETTYPE = n'DQ2_COPY' ]
+if [ n$DATASETTYPE = n'DQ2_COPY' ] || ( [ $retcode -ne 0 ] && [ -n $DATASETFAILOVER ] )
     then
 
 # Create generic input.py
@@ -271,6 +271,7 @@ EOF
     
     # Setup new dq2- tools
     if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+	then
 	source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
     else
 	echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'

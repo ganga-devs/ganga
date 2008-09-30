@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.13 2008-09-29 17:46:08 hclee Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.14 2008-09-30 09:39:09 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -443,6 +443,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['DQ2_URL_SERVER'] = configDQ2['DQ2_URL_SERVER']
                 environment['DQ2_URL_SERVER_SSL'] = configDQ2['DQ2_URL_SERVER_SSL']
                 environment['DATASETTYPE'] = job.inputdata.type
+                if job.inputdata.failover:
+                    environment['DATASETFAILOVER'] = 1
                 environment['DATASETDATATYPE'] = job.inputdata.datatype
                 if job.inputdata.accessprotocol:
                     environment['DQ2_LOCAL_PROTOCOL'] = job.inputdata.accessprotocol
