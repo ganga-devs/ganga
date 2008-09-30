@@ -234,7 +234,7 @@ fi
 
 #################################################
 # Specific input and running for DQ2_COPY
-if [ n$DATASETTYPE = n'DQ2_COPY' ] || ( [ $retcode -ne 0 ] && [ -n $DATASETFAILOVER ] )
+if [ n$DATASETTYPE = n'DQ2_COPY' ] || ( [ $retcode -ne 0 ] && [ ! -z $DATASETFAILOVER ] )
     then
 
 # Create generic input.py
