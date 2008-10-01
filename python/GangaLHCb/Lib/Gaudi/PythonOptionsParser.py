@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# $Id: PythonOptionsParser.py,v 1.7 2008-10-01 14:05:25 gcowan Exp $
+# $Id: PythonOptionsParser.py,v 1.8 2008-10-01 14:30:46 gcowan Exp $
 
 __author__ = 'Greig A Cowan'
 __date__ = 'June 2008'
@@ -123,7 +123,7 @@ class PythonOptionsParser:
             logger.debug('No HistogramPersistencySvc is defined: %s', e)
 
         try:
-            micro = self.opts_dict['MicroDSTStream']['Output'][0].split('\'')[1]
+            micro = self.opts_dict['MicroDSTStream']['Output'].split('\'')[1]
         except KeyError, e:
             logger.debug('No MicroDSTStream is defined: %s', e)
         
