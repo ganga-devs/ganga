@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.14 2008-09-30 09:39:09 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.15 2008-10-02 16:28:50 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -137,15 +137,15 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     else:
                         logger.warning('Unknown output location %s.',job.outputdata.location)
 
-                    if job.backend.requirements._name == 'AtlasLCGRequirements':
-                        if job.backend.requirements.cloud:
-                            if whichCloud(output_location) != job.backend.requirements.cloud:
-                                printout = 'Job submission failed ! j.outputdata.location=%s is not in the same cloud as j.backend.requirements.cloud=%s' %(job.outputdata.location, job.backend.requirements.cloud )
-                                raise ApplicationConfigurationError(None, printout)
-                        if job.backend.requirements.sites:
-                            if whichCloud(output_location) != whichCloud(job.backend.requirements.sites[0]):
-                                printout = 'Job submission failed ! j.outputdata.location=%s is not in the same cloud as j.backend.requirements.sites=%s'%(job.outputdata.location, job.backend.requirements.sites)
-                                raise ApplicationConfigurationError(None,printout )     
+                    #if job.backend.requirements._name == 'AtlasLCGRequirements':
+                    #    if job.backend.requirements.cloud:
+                    #        if whichCloud(output_location) != job.backend.requirements.cloud:
+                    #            printout = 'Job submission failed ! j.outputdata.location=%s is not in the same cloud as j.backend.requirements.cloud=%s' %(job.outputdata.location, job.backend.requirements.cloud )
+                    #            raise ApplicationConfigurationError(None, printout)
+                    #    if job.backend.requirements.sites:
+                    #        if whichCloud(output_location) != whichCloud(job.backend.requirements.sites[0]):
+                    #            printout = 'Job submission failed ! j.outputdata.location=%s is not in the same cloud as j.backend.requirements.sites=%s'%(job.outputdata.location, job.backend.requirements.sites)
+                    #            raise ApplicationConfigurationError(None,printout )     
                     
                 elif job._getRoot().subjobs and job._getRoot().outputdata.location:
                     if isDQ2SRMSite(job._getRoot().outputdata.location):
@@ -463,15 +463,15 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
             if job.inputdata.match_ce_all or job.inputdata.min_num_files>0:
                 raise ApplicationConfigurationError(None,'Job submission failed ! Usage of j.inputdata.match_ce_all or min_num_files is obsolete ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
-            if job.inputdata.number_of_files and (job.splitter and job.splitter._name == 'DQ2JobSplitter'):
-                allLoc = job.inputdata.get_locations(complete=0)
-                completeLoc = job.inputdata.get_locations(complete=1)
-                incompleteLoc = []
-                for loc in allLoc:
-                    if loc not in completeLoc:
-                        incompleteLoc.append(loc)
-                if incompleteLoc:
-                    raise ApplicationConfigurationError(None,'Job submission failed ! Dataset is incomplete ! Usage of j.inputdata.number_of_files and DQ2JobSplitter is not allowed for incomplete datasets !')
+            #if job.inputdata.number_of_files and (job.splitter and job.splitter._name == 'DQ2JobSplitter'):
+            #    allLoc = job.inputdata.get_locations(complete=0)
+            #    completeLoc = job.inputdata.get_locations(complete=1)
+            #    incompleteLoc = []
+            #    for loc in allLoc:
+            #        if loc not in completeLoc:
+            #            incompleteLoc.append(loc)
+            #    if incompleteLoc:
+            #        raise ApplicationConfigurationError(None,'Job submission failed ! Dataset is incomplete ! Usage of j.inputdata.number_of_files and DQ2JobSplitter is not allowed for incomplete datasets !')
 
             # Add TAG datasetname
             if job.inputdata.tagdataset:
