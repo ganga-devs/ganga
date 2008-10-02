@@ -1,0 +1,27 @@
+from GangaTest.Framework.utils import assert_cannot_submit
+
+job = Job(application=Executable(exe=File('x')))
+assert(job.application.exe == File('x'))
+print '*'*30,len(jobs)
+assert(len(jobs) == 1)
+
+job2 = Job(job)
+assert(job2.application.exe == File('x'))
+assert(len(jobs) == 2)
+
+t1 = JobTemplate(application=Executable(exe=File('y')))
+assert(t1.application.exe == File('y'))
+assert(len(templates) == 1)
+
+t2 = JobTemplate(t1)
+assert(t1.application.exe == File('y'))
+assert(len(templates) == 2)
+
+job3 = Job(t2)
+assert(t1.application.exe == File('y'))
+assert(len(jobs) == 3)
+assert(len(templates) == 2)
+
+assert_cannot_submit(t1)
+
+

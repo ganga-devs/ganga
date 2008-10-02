@@ -1,0 +1,10 @@
+# test various possibilities of passing File object or strings to the Executable handler
+
+# FIXME: test the stdout and sterr
+
+for backend in ['Local','LSF']:
+
+    j = Job(backend=backend); j.application.exe='grep'; j.application.args=['Configuration',File('executable_args.txt')]; assert(j.submit())
+    j = Job(backend=backend); j.application.exe=File('executable_args_exe.py'); j.application.args=['kuba',File('executable_args.txt')]; assert(j.submit())
+    j = Job(backend=backend); j.application.exe='ls'; j.application.args=['*.py']; j.inputsandbox=['executable_args_exe.py']; assert(j.submit())
+
