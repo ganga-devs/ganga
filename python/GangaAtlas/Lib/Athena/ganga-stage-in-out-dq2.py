@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.16 2008-09-30 07:50:20 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.17 2008-10-02 16:29:13 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1776,8 +1776,7 @@ if __name__ == '__main__':
         dq2alternatename = TiersOfATLAS.getSiteProperty(siteID,'alternateName')
         for sitename in TiersOfATLAS.getAllSources():
             if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
-                if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename \
-                       and TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasuserdisk')>0:
+                if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASUSERDISK'):
                     siteID = sitename
                     break
 
