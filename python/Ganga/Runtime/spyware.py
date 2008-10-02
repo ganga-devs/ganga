@@ -1,6 +1,6 @@
 from Ganga.Utility.Config import getConfig
 config = getConfig('Configuration')
-config.addOption('UsageMonitoringURL', "http://gangamon.cern.ch:8080/apmon/ganga.conf",'MonALISA configuration file used to setup the destination of usage messages')
+config.addOption('UsageMonitoringURL', "http://gangamon.cern.ch:8888/apmon/ganga.conf",'MonALISA configuration file used to setup the destination of usage messages')
 
 monitor = None
 
