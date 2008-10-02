@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.4 2008-08-05 12:56:02 moscicki Exp $
+# $Id: PACKAGE.py,v 1.5 2008-10-02 10:26:20 moscicki Exp $
 ################################################################################
 
 """ PACKAGE modules describe the installation and setup of the Ganga runtime packages.
@@ -77,14 +77,14 @@ def detectPlatform():
     Comments about current implementations:
 
     We assume that 64 bit python implies the slc4, amd64 system.
-    We assume that 32 bit python implies the slc3, ia32 system.
+    We assume that 32 bit python implies the slc4, ia32 system.
 
     We ignore IA64 architecture (Opteron) as not frequently used.
     
     """
 
     # assume INTEL processors (i386, i686), ignore IA64 architecture
-    platforms = { 32: 'slc3_gcc323', 64: 'slc4_amd64_gcc34'}
+    platforms = { 32: 'slc4_ia32_gcc34', 64: 'slc4_amd64_gcc34'}
 
     # for older python versions use some tricks
     import sys
