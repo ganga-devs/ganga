@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-release,v 1.6 2008-08-05 13:12:21 moscicki Exp $
+# $Id: ganga-release,v 1.7 2008-10-02 10:50:36 gangage Exp $
 ################################################################################
 
 import os,sys,time,re,shutil
@@ -32,13 +32,13 @@ except IndexError:
 
 CONFIG = {}
 CONFIG['top'] = '/afs/cern.ch/sw/ganga'
-CONFIG['platf'] = 'slc3_gcc323'
+CONFIG['platf'] = 'slc4_amd64_gcc34'
 CONFIG['cvsroot'] = ':kserver:isscvs.cern.ch:/local/reps/ganga'
 
 CONFIG['version'] = version
 CONFIG['version-pre'] = version+'-pre'
-CONFIG['plugin_packages_gcc323']='GangaGUI,GangaLHCb,GangaAtlas,GangaPlotter,GangaTest,GangaNG'
-CONFIG['plugin_packages_gcc34']='GangaTest,GangaAtlas,GangaNG'
+CONFIG['plugin_packages_gcc323']='GangaGUI,GangaLHCb,GangaAtlas,GangaPlotter,GangaTest,GangaNG,GangaPanda'
+CONFIG['plugin_packages_gcc34']='GangaTest,GangaAtlas,GangaNG,GangaPanda'
 CONFIG['prereldir'] = os.path.join(CONFIG['top'], 'install',CONFIG['version-pre'])
 CONFIG['reldir'] = os.path.join(CONFIG['top'],'install',CONFIG['version'])
 CONFIG['installdir'] = os.path.join(CONFIG['top'],'install')
@@ -100,13 +100,22 @@ class PrereleaseCommand:
     "PRE: create the PRE-RELEASE in the prereldir"
     
     def do(self):
-
+        import glob,re
         if os.path.isdir(CONFIG['prereldir']):
-            print 'the prerelease already exists in %(prereldir)s'%CONFIG
-            if askYesNo('do you want to delete the existing one?') == "YES":
-                print 'removing...'
-                acmd('rm -rf '+CONFIG['prereldir'])
-                print 'sucessfully removed %(prereldir)s'%CONFIG
+            print 'the current prerelease is %(prereldir)s'%CONFIG
+            prm = re.compile('(\S)+-pre(?P<num>\d+)')
+            maxnum = 0
+            for pre_rel in glob.glob(CONFIG['prereldir']+'*'):
+                print 'prelease found:', pre_rel
+                r = prm.match(os.path.split(pre_rel)[-1])
+                if r:
+                    maxnum = max(maxnum,int(r.group('num')))
+            maxnum += 1
+            new_backup_prerelease = CONFIG['prereldir']+str(maxnum)
+            #print 'if you answer YES then the current prerelease will be backed up as',new_backup_prerelease
+            if askYesNo('do you want to delete the current prerelease (and back it up as %s)?'%new_backup_prerelease) == "YES":
+                acmd('mv %s %s'%(CONFIG['prereldir'],new_backup_prerelease))
+                print 'sucessfully moved %s to %s'%(CONFIG['prereldir'],new_backup_prerelease)
                 pre_tarball = '%(top)s/tarball/Ganga-%(version-pre)s.tar.gz' % CONFIG
 		try:
 		    os.unlink(pre_tarball)
@@ -132,9 +141,13 @@ class PrereleaseCommand:
         # do not forget to update the list of external dependencies for the release too
         print 'the prerelease is installed in',CONFIG['prereldir']
         
+        #        print 'Making pre-release tarballs (forcing recreation) for slc4_ia32_gcc34 (limited externaldependencies)'
+        #        toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --make-tarballs --all-deps --platf=slc4_ia32_gcc34 --force --verbose %(version-pre)s'%CONFIG)
+
         print 'Making pre-release tarballs (forcing recreation) for slc4_ia32_gcc34 (limited externaldependencies)'
         toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --make-tarballs --all-deps --platf=slc4_ia32_gcc34 --force --verbose %(version-pre)s'%CONFIG)
-        
+
+
         print 'Making pre-release tarballs (forcing recreation) for slc4_amd64_gcc34 (limited external dependencies)'
         toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --make-tarballs --all-deps --platf=slc4_amd64_gcc34 --force --verbose %(version-pre)s'%CONFIG)
 
@@ -152,7 +165,7 @@ class GenerateConfigFilesCommand:
             if x[0] == 'Ganga':
                 cfg = ''
             else:
-                cfg = '-o[Configuration]RUNTIME_PATH=%s'%x[0]
+                cfg = '-o\'[Configuration]RUNTIME_PATH=%s\''%x[0]
 
             print 'login to %s@lxplus and run this command:'%x[1]
             print gencmd%cfg
@@ -194,12 +207,12 @@ class PretestCommand:
             #runganga = "cd %(prereldir)s/ganga/python/Ganga/test && %(prereldir)s/ganga/bin/ganga " % CONFIG
 
             runtest = 'rm -rf ~/gangadir_testing && %(prereldir)s/bin/ganga'%CONFIG
-            args = ' --test -o[Configuration]RUNTIME_PATH=GangaTest -o[TestingFramework]ReleaseTesting=True -oConfig=local.ini:localxml.ini:remote.ini %s/test 2>&1 | tee %s/%s.out ' % (name,outputdir,name)
+            args = ' --test -o\'[Configuration]RUNTIME_PATH=GangaTest\' -o\'[TestingFramework]ReleaseTesting=True\' -o\'Config=local.ini:localxml.ini:remote.ini\' %s/test 2>&1 | tee %s/%s.out ' % (name,outputdir,name)
             
             cmd = runtest+args
             print '*'*40
             print '%s tests ' % name
-            print 'Loging to %s@lxplus and run : %s'%(account,cmd)
+            print 'Login to %s@lxplus and run : %s'%(account,cmd)
             #code = os.system(cmd)
             #print "Exit code:",code
             return "%s/%s.out" % (CONFIG['prereldir'],name),1
@@ -210,8 +223,8 @@ class PretestCommand:
             testresult.append(run_test(acc,n))
 
         print '*'*40
-        print "Login to gangage@lxplus and generate the HTML reports:"
-	print "%(prereldir)s/bin/ganga --test -o[TestingFramework]ReleaseTesting=True -oEnableHTMLReporter=True -oEnableTestRunner=False" % CONFIG
+        print "After all tests complete, login to gangage@lxplus and generate the HTML reports:"
+        print "%(prereldir)s/bin/ganga --test -o\'[TestingFramework]ReleaseTesting=True\' -o\'EnableHTMLReporter=True\' -o\'EnableTestRunner=False\'" % CONFIG
 
 
 class TagCommand:
@@ -246,10 +259,6 @@ class ReleaseCommand:
             
         print 'Sources with GLOBAL TAG %(tag)s have been exported ' % CONFIG
 
-        print 'Copying generated config files from the pre-release area'
-##        acmd('cp %(prereldir)s/python/Ganga/Runtime/CONFIG_TEMPLATE*.INI %(reldir)s/python/Ganga/Runtime')
-	acmd('cp %(prereldir)s/python/Ganga/Runtime/CONFIG_TEMPLATE*.INI %(reldir)s/python/Ganga/Runtime' % CONFIG) ##AS FIX
-        
         print 'Copying all reports from the pre-release area'
 
         acmd('cp -r %(prereldir)s/reports %(reldir)s'%CONFIG)
@@ -266,10 +275,10 @@ class ReleaseCommand:
         
         print 'Making installation tarballs'
 
-        print 'Forcing recreation for slc3_gcc323 (all external dependencies)'
+        print 'Forcing recreation for slc4_ia32_gcc34 (all external dependencies)'
 
         # do not forget to update the list of external dependencies for the prerelease too
-        toolcmd('ganga-install --extern=%(plugin_packages_gcc323)s --prefix=%(top)s --platf=slc3_gcc323 --make-tarballs --force --verbose %(version)s'%CONFIG)
+        toolcmd('ganga-install --extern=%(plugin_packages_gcc323)s --prefix=%(top)s --platf=slc4_ia32_gcc34 --make-tarballs --force --verbose %(version)s'%CONFIG)
         
         print 'Forcing recreation for slc4_amd64_gcc34 (limited external dependencies)'
         toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --platf=slc4_amd64_gcc34 --make-tarballs --force --verbose %(version)s'%CONFIG)
