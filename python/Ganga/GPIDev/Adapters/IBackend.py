@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: IBackend.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
+# $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -252,6 +252,11 @@ class IBackend(GangaObject):
         job = self.getJobObject()
         job.peek( filename = os.path.join( "..", filename ), command = command )
         return None
+
+    def remove(self):
+        """When the job is removed then this backend method is called.
+        The primary use-case is the Remote (ssh) backend. """
+        pass
 
     def master_updateMonitoringInformation(jobs):
         

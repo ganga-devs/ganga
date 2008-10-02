@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.5 2008-09-09 14:51:14 moscicki Exp $
+# $Id: Job.py,v 1.6 2008-10-02 10:31:05 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -687,7 +687,10 @@ class Job(GangaObject):
             except Exception,x:
                 log_user_exception(logger)                
                 logger.warning('unhandled exception in j.kill(), job id=%d',self.id)
-            
+
+        # tell the backend that the job was removed (this is used by Remote backend to remove the jobs remotely)
+        self.backend.remove()
+        
         if self._registry:
             self._registry._remove_by_object(self,auto_removed=1)
 
@@ -965,6 +968,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/09/09 14:51:14  moscicki
+# bug #40696: Exception raised during resubmit() should be propagated to caller
+#
 # Revision 1.4  2008/09/09 14:37:16  moscicki
 # bugfix #40220: Ensure that default values satisfy the declared types in the schema
 #
