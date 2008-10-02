@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# $Id: PythonOptionsParser.py,v 1.8 2008-10-01 14:30:46 gcowan Exp $
+# $Id: PythonOptionsParser.py,v 1.9 2008-10-02 10:00:53 gcowan Exp $
 
 __author__ = 'Greig A Cowan'
 __date__ = 'June 2008'
@@ -47,6 +47,8 @@ class PythonOptionsParser:
                 options = eval( optionsString)
             except Exception, e:
                 logger.error('Cannot eval() the options file. Exception: %s', e)
+                from traceback import print_exc
+                logger.error(' ', print_exc())
             try:
                 opts_pkl_string = tmp_pkl.read()        
             except IOError, e:
