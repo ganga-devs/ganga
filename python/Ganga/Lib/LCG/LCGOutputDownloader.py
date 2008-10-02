@@ -30,7 +30,7 @@ class LCGOutputDownloadAlgorithm(Algorithm):
         ## it is very likely that the job's downloading task has been
         ## created and assigned in a previous monitoring loop
         ## ignore such kind of cases
-        if job.status in ['completing', 'completed']:
+        if job.status in ['completing', 'completed', 'failed']:
             return True
 
         job.updateStatus('completing')
