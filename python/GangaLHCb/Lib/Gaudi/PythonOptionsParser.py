@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# $Id: PythonOptionsParser.py,v 1.10 2008-10-03 15:29:36 gcowan Exp $
+# $Id: PythonOptionsParser.py,v 1.11 2008-10-03 18:02:51 gcowan Exp $
 
 __author__ = 'Greig A Cowan'
 __date__ = 'June 2008'
@@ -49,6 +49,10 @@ class PythonOptionsParser:
                 logger.error('Cannot eval() the options file. Exception: %s', e)
                 from traceback import print_exc
                 logger.error(' ', print_exc())
+
+                err = 'Please check gaudirun.py -n -v %s returns valid python syntax' % py_opts.name
+                from Ganga.Core import ApplicationConfigurationError
+                raise ApplicationConfigurationError( None, err)
             try:
                 opts_pkl_string = tmp_pkl.read()        
             except IOError, e:
