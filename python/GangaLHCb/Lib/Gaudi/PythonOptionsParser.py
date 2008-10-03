@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# $Id: PythonOptionsParser.py,v 1.9 2008-10-02 10:00:53 gcowan Exp $
+# $Id: PythonOptionsParser.py,v 1.10 2008-10-03 15:29:36 gcowan Exp $
 
 __author__ = 'Greig A Cowan'
 __date__ = 'June 2008'
@@ -115,24 +115,25 @@ class PythonOptionsParser:
         histo = ''
         micro = ''
         try:
-            tuple = self.opts_dict['NTupleSvc']['Output'][0].split('\'')[1]
+            tuples = self.opts_dict['NTupleSvc']['Output']
+            for t in tuples:
+                tuple = t.split('\'')[1]
+                if tuple: outputfiles.append( tuple)
         except KeyError, e:
             logger.debug('No NTupleSvc is defined: %s', e)
         
         try:
             histo = self.opts_dict['HistogramPersistencySvc']['OutputFile']
+            if histo: outputfiles.append( histo)
         except KeyError, e:
             logger.debug('No HistogramPersistencySvc is defined: %s', e)
 
         try:
             micro = self.opts_dict['MicroDSTStream']['Output'].split('\'')[1]
+            if micro: outputfiles.append( micro)
         except KeyError, e:
             logger.debug('No MicroDSTStream is defined: %s', e)
         
-
-        if tuple: outputfiles.append( tuple)
-        if histo: outputfiles.append( histo)
-        if micro: outputfiles.append( micro)
 
         if outputfiles:
             logger.info('Found these histograms, nTuples and microDSTs: %s', str(outputfiles))
