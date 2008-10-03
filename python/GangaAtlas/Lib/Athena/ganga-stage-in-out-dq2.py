@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.17 2008-10-02 16:29:13 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.18 2008-10-03 10:11:24 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1863,7 +1863,7 @@ if __name__ == '__main__':
         md5sums = [] 
         dq2lfns = []
 
-        f_data = open('output_data','w')
+        f_data = open('output_data','a')
 
         # loop to save all output_files
         for file in output_files:
