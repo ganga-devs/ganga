@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: CamontDataset.py,v 1.1 2008-10-04 17:42:38 karl Exp $
+# $Id: CamontDataset.py,v 1.2 2008-10-04 18:14:36 karl Exp $
 ###############################################################################
 # File: CamontData.py
 # Author: K. Harrison
@@ -132,7 +132,7 @@ class CamontDataset( Dataset ):
             "gsiftp://t2se01.physics.ox.ac.uk/dpm/physics.ox.ac.uk/home", vo )
       job = self._getParent()
       id = job.id
-      username = getConfig( "DefaultJobRepository" )[ "user" ]
+      username = getConfig( "Configuration" )[ "user" ]
       userletter = username[ 0 ]
       gridStorage = os.path.join\
          ( gridhome, "user", userletter, username, "ganga", str( id ) )
