@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.5 2008-09-12 09:45:32 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.6 2008-10-06 15:27:47 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -405,6 +405,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.backend.ara and not job.outputdata.outputdata:
             raise ApplicationConfigurationError(None,'job.outputdata.outputdata is needed when job.backend.ara is True"')
         for tmpName in job.outputdata.outputdata:
+            if tmpName != '':
+                self.config['extOutFile'].append(tmpName)
+
+        # add extOutFiles
+        for tmpName in job.backend.extOutFile:
             if tmpName != '':
                 self.config['extOutFile'].append(tmpName)
 

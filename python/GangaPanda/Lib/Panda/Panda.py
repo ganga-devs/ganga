@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.9 2008-09-29 08:14:53 dvanders Exp $
+# $Id: Panda.py,v 1.10 2008-10-06 15:27:48 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -40,7 +40,7 @@ class PandaBuildJob(GangaObject):
 class Panda(IBackend):
     '''Panda backend'''
 
-    _schema = Schema(Version(1,0), {
+    _schema = Schema(Version(1,1), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'long'          : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send job to a long queue'),
 #        'blong'         : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send build job to a long queue'),
@@ -51,7 +51,7 @@ class Panda(IBackend):
 #        'memory'        : SimpleItem(defvalue=-1,protected=0,copyable=1,doc='Required memory size'),
 #        'fileList'      : SimpleItem(defvalue='',protected=0,copyable=1,doc='List of files in the input dataset to be run'),        
 #        'shipinput'     : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Ship input files to remote WNs'),        
-#        'extOutFile'    : SimpleItem(defvalue=[],protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
+        'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
 #        'addPoolFC'     : SimpleItem(defvalue='',protected=0,copyable=1,doc='file names to be inserted into PoolFileCatalog.xml except input files. e.g., MyCalib1.root,MyGeom2.root'),        
         'corCheck'      : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Enable a checker to skip corrupted files'),        
         'notSkipMissing': SimpleItem(defvalue=False,protected=0,copyable=1,doc='If input files are not read from SE, they will be skipped by default. This option disables the functionality'),        
@@ -290,6 +290,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.9  2008/09/29 08:14:53  dvanders
+# fix for type checking
+#
 # Revision 1.8  2008/09/06 17:53:02  dvanders
 # less spammy status changes. (Only updateStatus when panda status has changed).
 #
