@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.5 2008-09-25 05:57:42 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.6 2008-10-07 21:23:42 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -135,15 +135,12 @@ class DQ2JobSplitter(ISplitter):
                 guids.remove(g)
 
             nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
-            
             if nrjob > self.numsubjobs and self.numsubjobs!=0:
-                nrjob = self.numsubjobs
-                self.numfiles = int(math.ceil(len(guids)/float(nrjob)))
-            
+                self.numfiles = int(math.ceil(len(guids)/float(self.numsubjobs)))
             if nrjob > config['MaxJobsDQ2JobSplitter']:
                 self.numfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
-                nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
-            
+            nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+
             for i in xrange(0,nrjob):
           
                 j = Job()
