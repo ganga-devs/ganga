@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.6 2008-10-07 21:23:42 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.7 2008-10-07 21:25:40 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -162,4 +162,4 @@ class DQ2JobSplitter(ISplitter):
         return subjobs
     
 config = getConfig('Athena')
-config.addOption('MaxJobsDQ2JobSplitter', 100, 'Maximum number of allowed subjobs of DQ2JobSplitter')
+config.addOption('MaxJobsDQ2JobSplitter', 1000, 'Maximum number of allowed subjobs of DQ2JobSplitter')

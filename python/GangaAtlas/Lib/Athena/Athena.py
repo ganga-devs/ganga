@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.6 2008-09-30 12:09:31 mslater Exp $
+# $Id: Athena.py,v 1.7 2008-10-07 21:25:40 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -733,9 +733,12 @@ config.addOption('ATLAS_SOFTWARE', '/afs/cern.ch/project/gd/apps/atlas/slc3/soft
 config.addOption('PRODUCTION_ARCHIVE_BASEURL', 'http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/', 'FIXME')
 config.addOption('ExcludedSites', '' , 'FIXME')
 config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The path in which the cmtsetup magic function will look up the setup.sh for CMT environment setup')
-config.addOption('MaxJobsAthenaSplitterJobLCG', 100 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
+config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.6  2008/09/30 12:09:31  mslater
+# Small bug fix for local dataset merging
+#
 # Revision 1.5  2008/09/02 16:06:27  elmsheus
 # Athena:
 # * Fix SE type detection problems for space tokens at DPM sites
