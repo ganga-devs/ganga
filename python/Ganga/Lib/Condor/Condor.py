@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Condor.py,v 1.2 2008-07-29 10:30:39 karl Exp $
+# $Id: Condor.py,v 1.3 2008-10-08 10:15:24 karl Exp $
 ###############################################################################
 # File: Condor.py
 # Author: K. Harrison
@@ -26,12 +26,14 @@
 #
 # KH - 080729: Updates for changes to JobConfig class in Ganga 5
 #              Error message printed in case submit command fails
+#
+# KH - 081008 : Added typelist information for schema property "submit_options"
 
 """Module containing class for handling job submission to Condor backend"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "29 July 2008"
-__version__ = "1.8"
+__date__    = "8 October 2008"
+__version__ = "1.9"
 
 from CondorRequirements import CondorRequirements
 
@@ -66,8 +68,8 @@ class Condor( IBackend ):
          doc = 'Environment settings for execution host' ),
       "rank" : SimpleItem( defvalue = "Memory",
          doc = "Ranking scheme to be used when selecting execution host" ),
-      "submit_options" : SimpleItem( defvalue = [], sequence = 1,
-         doc = "Options passed to Condor at submission time" ),
+      "submit_options" : SimpleItem( defvalue = [], typelist = [ "str" ], \
+         sequence = 1, doc = "Options passed to Condor at submission time" ),
       "id" : SimpleItem( defvalue = "", protected = 1, copyable = 0,
          doc = "Condor jobid" ),
       "status" : SimpleItem( defvalue = "", protected = 1, copyable = 0,
@@ -198,8 +200,8 @@ class Condor( IBackend ):
 
       if not self.id:
          logger.warning( "Job %s not running" % job.id )
-	 return False
-	  
+         return False
+
       idElementList = job.backend.id.split( "#" )
       if 3 == len( idElementList ):
          killCommand = "condor_rm -name %s %s" % \
