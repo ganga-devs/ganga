@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.13 2008-09-30 17:51:08 hclee Exp $
+# $Id: LCG.py,v 1.14 2008-10-08 07:42:47 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -94,7 +94,7 @@ class LCG(IBackend):
         'sandboxcache'        : ComponentItem('GridSandboxCache',doc='Interface for handling oversized input sandbox'),
         'parent_id'           : SimpleItem(defvalue='',protected=1,copyable=0,hidden=1,doc='Middleware job identifier for its parent job'),
         'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
-        'status'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware job status'),
+        'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
         'middleware'          : SimpleItem(defvalue='EDG',protected=0,copyable=1,doc='Middleware type',checkset='_checkset_middleware'),
         'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
         'exitcode_lcg'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
@@ -480,10 +480,12 @@ class LCG(IBackend):
             offsets = results.keys()
             offsets.sort()
          
-            self.id = []
+            self.id     = []
+            self.status = {}
             for ibeg in offsets:
                 mid = results[ibeg]
                 self.id.append(mid)
+                self.status[mid] = ''
                 iend = min(ibeg + max_node, len(node_jdls))
                 for i in range(ibeg, iend):
                     sj = rjobs[i]
@@ -523,9 +525,11 @@ class LCG(IBackend):
          
             self.__refresh_jobinfo__(job)
             self.id = []
+            self.status = {}
             for ibeg in offsets:
                 mid = results[ibeg]
                 self.id.append(mid)
+                self.status[mid] = ''
                 iend = min(ibeg + max_node, len(node_jdls))
                 for i in range(ibeg, iend):
                     sj = rjobs[i]
@@ -576,11 +580,19 @@ class LCG(IBackend):
         ## killing the master job
         logger.debug('cancelling the master job.')
 
+        ## avoid killing master jobs in the final state
+        final_states = ['Aborted','Cancelled','Cleared','Done (Success)','Done (Failed)','Done (Exit Code !=0)']
         myids = []
         if isStringLike(self.id):
-            myids.append(self.id)
+            if job.backend.status not in final_states:
+                myids.append(self.id)
         else:
-            myids = self.id
+            for myid in self.id:
+                try:
+                    if job.backend.status[myid] not in final_states:
+                        myids.append(myid)
+                except KeyError:
+                    pass
 
         ck = grids[mt].native_master_cancel(myids)
 
@@ -1422,7 +1434,7 @@ sys.exit(0)
                         create_download_task = True
                     else:
                         LCG.updateGangaJobStatus(job, info['status'])
-                elif info['status'] == 'Done (Success)' and ( job.status not in ['completed', 'failed'] ):
+                elif ( info['status'] == 'Done (Success)' ) and ( job.status not in ['completed', 'failed'] ):
                     create_download_task = True
 
                 if create_download_task:
@@ -1469,8 +1481,16 @@ sys.exit(0)
             if not info['is_node']: # this is the info for the master job
 
                 cachedParentId = info['id']
+                master_jstatus = info['status']
 
                 job = jobdict[cachedParentId]
+
+                # update master job's status if needed
+                if cachedParentId not in job.backend.status.keys():
+                    # if this happens, something must be seriously wrong
+                    logger.warning('job id not found in the submitted master job: %s' % cachedParentId)
+                elif master_jstatus != job.backend.status[cachedParentId]:
+                    job.backend.status[cachedParentId] = master_jstatus
 
                 subjobdict = dict([ [str(subjob.id),subjob] for subjob in job.subjobs ])
 
@@ -1530,7 +1550,7 @@ sys.exit(0)
                             create_download_task = True
                         else:
                             LCG.updateGangaJobStatus(subjob, info['status'])
-                    elif info['status'] == 'Done (Success)' and ( subjob.status not in ['completed', 'failed'] ):
+                    elif ( info['status'] == 'Done (Success)' ) and ( subjob.status not in ['completed', 'failed'] ):
                         create_download_task = True
 
                     if create_download_task:
@@ -1739,6 +1759,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.13  2008/09/30 17:51:08  hclee
+# fine tune the typelist attribute in the schema
+#
 # Revision 1.12  2008/09/29 13:17:55  hclee
 # fix the type checking issue
 #
