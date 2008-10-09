@@ -2,11 +2,11 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: StagerDataset.py,v 1.2 2008-09-29 13:48:13 hclee Exp $
+# $Id: StagerDataset.py,v 1.3 2008-10-09 10:17:47 hclee Exp $
 ###############################################################################
 # A DQ2 dataset
 
-import sys, os, re, urllib, commands, imp, threading, time
+import sys, os, os.path, re, urllib, commands, imp, threading, time
 from tempfile import mkstemp
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
@@ -26,6 +26,32 @@ from dq2.common.DQException import *
 
 from threading import Thread, Lock
 from Queue import Queue, Empty
+
+def find(dirs, pattern):
+    """
+    finds files within the given directories. Only the filename matching the 
+    given pattern will be returned.
+    """
+
+    fpaths = []
+    re_pat = re.compile(pattern)
+
+    def __file_picker__(re_pat, dirname, names):
+        for n in names:
+            fpath = os.path.join(dirname,n)
+            if re_pat.match(n):
+                fpaths.append(fpath)
+            else:
+                logger.debug('ignore file: %s' % fpath)
+
+    for dir in dirs:
+        absdir = os.path.abspath( os.path.expandvars( os.path.expanduser(dir) ) )
+        if not os.path.isdir(absdir):
+            logger.warning('dir. not exist: %s' % absdir)
+        else:
+            os.path.walk(absdir, __file_picker__, arg=re_pat)
+
+    return fpaths
 
 def urisplit(uri):
    """
@@ -313,7 +339,7 @@ class StagerDataset(DQ2Dataset):
     '''A customized DQ2 Dataset for AMA Stager'''
 
     _schema = Schema(Version(1,1), {
-        'dataset': SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="Dataset Name(s)" ),
+        'dataset': SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc='Dataset Name(s) or a root path in which the dataset files are located'),
         'guids'      : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc='GUID of Logical File Names'),
 
         'tagdataset' : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, hidden=1, doc = 'Tag Dataset Name'),
@@ -321,7 +347,7 @@ class StagerDataset(DQ2Dataset):
         'names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to use for processing', hidden=1),
         'exclude_names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to exclude from processing', hidden=1),
         'number_of_files' : SimpleItem(defvalue = 0, doc = 'Number of files. ', hidden=1),
-        'type'       : SimpleItem(defvalue = '', doc = 'Dataset type, DQ2 or LFN', hidden=1),
+        'type'       : SimpleItem(defvalue = 'DQ2',  doc = 'Dataset type, DQ2 or LOCAL (refer to a local directory)', hidden=0),
         'datatype'   : SimpleItem(defvalue = '', doc = 'Data type: DATA, MC or MuonCalibStream', hidden=1),
         'accessprotocol'       : SimpleItem(defvalue = '', doc = 'Accessprotocol to use on worker node, e.g. Xrootd', hidden=1),
         'match_ce_all' : SimpleItem(defvalue = False, doc = 'Match complete and incomplete sources of dataset to CE during job submission', hidden=1),
@@ -332,7 +358,7 @@ class StagerDataset(DQ2Dataset):
 
     _category = 'datasets'
     _name = 'StagerDataset'
-    _exportmethods = [ 'list_datasets', 'list_contents', 'get_surls', 'get_locations', 'get_file_locations', 'make_input_option_file', 'get_complete_files_replicas' ]
+    _exportmethods = [ 'list_datasets', 'list_contents', 'get_surls', 'get_locations', 'get_file_locations', 'make_input_option_file', 'get_complete_files_replicas', 'make_sample_file' ]
 
     _GUIPrefs = [ { 'attribute' : 'dataset',     'widget' : 'String_List' }]
 
@@ -344,7 +370,7 @@ class StagerDataset(DQ2Dataset):
         DQ2Dataset.__setattr__(self, attr, value)
 
         if attr == 'dataset':
-            self.complete_files_replicas = {}
+            self.complete_files_replicas = {} 
 
     def __resolve_containers(self, containers, nthreads=10):
         '''resolving dataset containers'''
@@ -678,10 +704,19 @@ class StagerDataset(DQ2Dataset):
         # write out the sample file
         f = open(filepath,'w')
         f.write('TITLE: %s\n' % sampleName)
-        f.write('FLAGS: GridCopy=1\n')
-        pfns = self.get_surls(guidRefill=False)
-        for guid in pfns.keys():
-            f.write('gridcopy://%s\n' % pfns[guid])
+
+        if self.type in ['', 'DQ2']: 
+            f.write('FLAGS: GridCopy=1\n')
+            pfns = self.get_surls(guidRefill=False)
+            for guid in pfns.keys():
+                f.write('gridcopy://%s\n' % pfns[guid])
+        elif self.type in ['LOCAL']:
+            ## work through underlying directories to get '*.root*' files
+            f.write('FLAGS: GridCopy=0\n')
+            fpaths = find(dirs=self.dataset, pattern='.*\.root.*')
+            for fpath in fpaths:
+                f.write('%s\n' % fpath)
+
         # NOTE: test if empty line cause AMAAthena to crash 
         #f.write('\n')
         f.close()
