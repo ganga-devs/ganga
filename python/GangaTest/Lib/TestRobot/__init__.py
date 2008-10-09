@@ -5,7 +5,7 @@ of new releases of Ganga
 
 import Ganga.Utility.Config
 
-config=Ganga.Utility.Config.makeConfig('TestRobot','Parameters for the autonomous independant testing of Ganga')
+config=Ganga.Utility.Config.makeConfig('TestRobot','Parameters for the autonomous independent testing of Ganga')
 
 config.addOption('ReleasePath','http://cern/ch/ganga/download/','Default URL to check for Ganga releases')
 config.addOption('InstallPath','','default install path for Ganga scratch testing')
@@ -19,3 +19,5 @@ config.addOption('VersionNumber','None','Last Version tested')
 config.addOption('SleepTime','600','Time to wait between checking of new releases')
 config.addOption('EmailOnStartup','False','If you require the autonomous process to email you on startup following a fail')
 config.addOption('LastCheckedTime','0','Last Checked Time of the VERSIONS.txt')
+config.addOption('PublishPath','~/public_html/testrobot','Directory where test results should be made available as a .tgz file')
+config.addOption('Site','Imperial','Name of site where test is carried out')

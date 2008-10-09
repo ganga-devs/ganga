@@ -65,7 +65,8 @@ class Tester(IAction):
                     pass
             if not BackendFound:
                 break # DO SOMETHING ELSE HERE
-            j.application.exe = InstallDir+"/install/"+ReleaseNo+"/bin/ganga"
+            from os.path import join
+            j.application.exe = join(InstallDir,"install",ReleaseNo,"bin","ganga")
             #j.application.exe = "ganga"            - DEBUGGING LINE
             j.application.args = ["--test","-o[TestingFramework]Config="+TestConfig+".ini",TestOption]
             j.application.env = { 'GANGA_CONFIG_PATH':JobIniFile }
