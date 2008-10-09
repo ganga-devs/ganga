@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.6 2008-10-06 15:27:47 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.7 2008-10-09 11:50:23 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -342,63 +342,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         logger.info('Output datasetname %s',job.outputdata.datasetname)
 
-#       queue and destinationSE
-
-        site = job.backend.site
-        cloud = job.backend.cloud
-
-        # get locations when site==AUTO
-        if site == "AUTO":
-            expCloudFlag = True
-            try:
-                tmpList  = Client.queryFilesInDataset(job.inputdata.dataset[0],False)
-            except exceptions.SystemExit:
-                raise ApplicationConfigurationError(None,'Error in Client.queryFilesInDataset')
-            try:
-                dsLocationMap = Client.getLocations(job.inputdata.dataset[0],tmpList,cloud,False,False,expCloud=expCloudFlag)
-            except exceptions.SystemExit:
-                raise ApplicationConfigurationError(None,'Error in Client.getLocations')
-            # no location
-            if dsLocationMap == {}:
-                if expCloudFlag:
-                    raise ApplicationConfigurationError(None,"ERROR : could not find supported locations in the %s cloud for %s" % (cloud,dataset))
-                else:
-                    raise ApplicationConfigurationError(None,"ERROR : could not find supported locations for %s" % dataset)
-            # run brorage
-            tmpSites = []
-            for tmpItem in dsLocationMap.values():
-                tmpSites += tmpItem
-            try:
-                status,out = Client.runBrokerage(tmpSites,'Atlas-%s' % app.atlas_release,verbose=False)
-            except exceptions.SystemExit:
-                raise ApplicationConfigurationError(None,'Error in Client.runBrokerage')
-            if status != 0:
-                raise ApplicationConfigurationError(None,'failed to run brokerage for automatic assignment: %s' % out)
-            if not Client.PandaSites.has_key(out):
-                raise ApplicationConfigurationError(None,'brokerage gave wrong PandaSiteID:%s' % out)
-            # set site
-            site = out
-        
-        # patch for BNL
-        if site == "ANALY_BNL":
-            site = "ANALY_BNL_ATLAS_1"
-        # long queue
-        if job.backend.long:
-            site = re.sub('ANALY_','ANALY_LONG_',site)
-            site = re.sub('_\d+$','',site)
-
-        job.backend.cloud = cloud
-        job.backend.site = site
-        job.backend.actualCE = site
-        logger.info('Panda runBrokerage results: cloud %s, site %s'%(cloud,site))
-
-        if not Client.PandaSites.has_key(site):
-            raise ApplicationConfigurationError(None,'ERROR: selected site %s is not known to Panda' % site)
-
-        # correct the cloud in case site was not AUTO
-        job.backend.cloud = Client.PandaSites[job.backend.site]['cloud']
-        cloud = job.backend.cloud
-
+        # ARA
         if job.outputdata.outputdata and not job.backend.ara:
             raise ApplicationConfigurationError(None,'job.outputdata.outputdata is not required when job.backend.ara is True"')
         # output files for ARA
@@ -440,20 +384,15 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.homepackage       = 'AnalysisTransforms'+cacheVer#+nightVer
         jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
         jspec.destinationDBlock = self.libDataset
-        jspec.destinationSE     = site
+        jspec.destinationSE     = job.backend.site
         jspec.prodSourceLabel   = 'panda'
         jspec.assignedPriority  = 2000
-        jspec.computingSite     = site
-        jspec.cloud             = cloud
+        jspec.computingSite     = job.backend.site
+        jspec.cloud             = job.backend.cloud
         jspec.jobParameters     = '-i %s -o %s' % (sources,self.library)
         matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
         if matchURL:
             jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
-
-        finp = FileSpec()
-        finp.lfn = sources
-        finp.type = 'input'
-#        jspec.addFile(finp)
 
         fout = FileSpec()
         fout.lfn  = self.library
@@ -506,7 +445,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #       in case of a simple job get the dataset content, subjobs are filled by the splitter
 
         if job.inputdata and not job._getRoot().subjobs:
-
             if not job.inputdata.names:
                 for guid, lfn in job.inputdata.get_contents():
                     job.inputdata.guids.append(guid)
