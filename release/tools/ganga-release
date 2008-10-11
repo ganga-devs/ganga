@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-release,v 1.8 2008-10-11 07:53:47 gangage Exp $
+# $Id: ganga-release,v 1.9 2008-10-11 08:24:39 gangage Exp $
 ################################################################################
 
 import os,sys,time,re,shutil
@@ -52,6 +52,10 @@ CONFIG['configdir'] = os.path.join(CONFIG['toolsdir'],'..','config')
 CONFIG['releasenotesdir'] = os.path.join(CONFIG['toolsdir'],'..')
 
 CONFIG['tag'] = "Ganga-"+version.replace('.','-')
+
+CONFIG['RemoteSites'] = {'Imperial':
+                         {'URL': "http://www.hep.ph.ic.ac.uk/~lhcb/testrobot",
+                          "Tests" : ['Ganga.test_local']}}
 
 # accounts used for CERN deployment of Ganga
 GANGA_ACCOUNTS = [('Ganga','gangage'),('GangaRobot','gangage'),('GangaLHCb','gangalb'),('GangaAtlas','gangaat')]
@@ -151,6 +155,12 @@ class PrereleaseCommand:
         print 'Making pre-release tarballs (forcing recreation) for slc4_amd64_gcc34 (limited external dependencies)'
         toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --make-tarballs --all-deps --platf=slc4_amd64_gcc34 --force --verbose %(version-pre)s'%CONFIG)
 
+        import os.path
+        versionfile=os.path.join(CONFIG['webdir_top'],'download','VERSIONS.txt')
+        print 'Updating file with available releases'
+        acmd("touch %s && date +'%s - %%d %%b %%Y %%k:%%m:%%S' >> %s"% (versionfile, CONFIG['version-pre'], versionfile))
+
+
 class GenerateConfigFilesCommand:
     "GENERATE CONFIG FILES: generate configuration file templates"
     def do(self):
@@ -223,10 +233,40 @@ class PretestCommand:
             testresult.append(run_test(acc,n))
 
         print '*'*40
-        print "After all tests complete, login to gangage@lxplus and generate the HTML reports:"
-        print "%(prereldir)s/bin/ganga --test -o\'[TestingFramework]ReleaseTesting=True\' -o\'EnableHTMLReporter=True\' -o\'EnableTestRunner=False\'" % CONFIG
+        print "Now wait for tests to complete ..."
 
+class TestReportCommand:
+    "TEST REPORT: Create the summary web pages with the test results."
 
+    def do(self):
+        import urllib
+        import tarfile
+        import os
+        from os.path import join
+
+        path = join(CONFIG["prereldir"],"reports","latest")
+        remotelist = CONFIG['RemoteSites']
+        for site in remotelist:
+            print "Downloading tests from %s." %site
+            url = remotelist[site]['URL']
+            tests = remotelist[site]['Tests']
+            for test in tests:
+                fname = CONFIG['version']+'-pre_'+test+'-'+site+'.tgz'
+                urllib.urlretrieve(url+'/'+fname,join(path,fname))
+            
+                try:
+                    tf = tarfile.open(join(path,fname),'r:gz')
+                except TarError:
+                    print "Test file %s could not be retrieved."
+                    print "Will just ignore this and continue without it."
+                    return
+                for f in tf.getnames():
+                    tf.extract(f,path)
+                os.remove(join(path,fname))
+
+        print "Creating web pages."
+        acmd("%(prereldir)s/bin/ganga --test -o\'[TestingFramework]ReleaseTesting=True\' -o\'EnableHTMLReporter=True\' -o\'EnableTestRunner=False\'" % CONFIG)
+        
 class TagCommand:
     "TAG: make a GLOBAL TAG using the a pre-release in the prereldir"
 
@@ -466,7 +506,7 @@ def _setlib():
 
 _setlib()
 
-commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, CommitConfigFilesCommand, PretestCommand, TagCommand, ReleaseCommand, PrepareNextRelease, QuitCommand]
+commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, CommitConfigFilesCommand, PretestCommand, TestReportCommand, TagCommand, ReleaseCommand, PrepareNextRelease, QuitCommand]
 
 ShowConfig().do()
 
