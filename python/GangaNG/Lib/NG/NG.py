@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.4 2008-09-29 11:16:35 bsamset Exp $
+# $Id: NG.py,v 1.5 2008-10-11 15:40:00 pajchel Exp $
 ###############################################################################
 #
 # NG backend
@@ -39,11 +39,71 @@ from dq2.common.DQException import DQInvalidRequestException
 from dq2.clientapi.DQ2 import DQ2
 from dq2.common.DQException import *
 
-# available for all
-RLSurl ='rls://atlasrls.nordugrid.org:39281'
+#import LFCTools
+from dq2.filecatalog.lfc.lfcconventions import to_native_lfn
+#from dq2.filecatalog.lfc.LFCFileCatalog import LFCFileCatalogException
+from GangaNG.Lib.NG.LFCTools import *
 
+# Configuration for later
+lfchost = 'lfc1.ndgf.org' # This is production server
+lfcarchival = 'P'
+lfcprefix = ''
+LFC_HOME = '/grid/atlas/'
+#os.environ['LFC_CONNTIMEOUT'] = '30'
+#os.environ['LFC_CONRETRY'] = '1'
+#os.environ['LFC_CONRETRYINT'] = '15'
+
+# SRM url for temporary files
+SRMurl ='srm://dcache.ijs.si/pnfs/ijs.si/atlas/disk/flat/'
+
+# python pinding not used - command line wrapper
 #from arclib import *
 
+def getTidDatasetnames(ds):
+  dq2 = DQ2()
+  ds_tid = []
+  
+  for dsn in ds:
+    if dsn.find('_tid') < 0:
+      ds_names = dq2.listDatasets(dsn+'*')
+      ds_names = ds_names.keys()
+      
+      for d in ds_names:
+        if d.find('_tid') > -1:
+          ds_tid += [d]
+          
+    else:
+      ds_tid += [dsn]
+      
+  return ds_tid
+
+def matchLFNtoDataset(ds,lfn):
+
+  tid = lfn.split('.')[1]
+  lrnds = None
+  for d in ds:
+    if d.find('_tid'+tid) > -1:
+      lfnds = d
+
+  return lfnds
+
+def getGangaLFN(dataset,fname):
+
+  username = dataset.split('.')[1]
+  output_lfn = 'users/%s/ganga/%s/' % (username,dataset)
+  
+  lfn = output_lfn + fname
+
+  return lfn
+
+def getLFCurl(dataset,file):
+
+  ds = dataset.split('.')[0]
+
+  if ds.startswith('users'):
+    return 'lfc://lfc1.ndgf.org/' + getGangaLFN(dataset,gile)
+  else:
+    return 'lfc://lfc1.ndgf.org/' + to_native_lfn(dataset,file)
 
 def getTiersOfATLASCache():
     """Download TiersOfATLASCache.py"""
@@ -217,96 +277,8 @@ class Grid:
 
         return True
 
-    def RegisterRLSurl(self,lfn,turl):
-
-        if not self.active:
-            logger.warning('NG plugin not active.')
-            return
-
-        if not self.credential.isValid():
-            logger.warning('GRID proxy not valid. Use gridProxy.renew() to renew it.')
-            return
-        
-        command = 'globus-rls-cli create ' + lfn + ' ' + turl + ' ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-        if rc != 0:
-            command2 = 'globus-rls-cli del ' + lfn + ' ' + turl + ' ' + RLSurl
-            rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command2),allowed_exit=[0,255])
-            rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-            if rc != 0:
-                print output
-                raise Exception("ERROR: Failure during " + command)
-
-        return
-
-    def SetAllAttributes (self, lfn, guid, date, lcn, size, md5sum):
-
-        com = 'globus-rls-cli attribute add ' + lfn 
-        
-        # md5sum:
-        md5sum = md5sum.split(':')[1]
-        command = com + ' dq_md5sum lfn string ' + md5sum + ' ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-        if rc != 0:
-            print output
-
-        # dq_lcn:
-        command = com + ' dq_lcn lfn string ' + 'None' + ' ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-        if rc != 0:
-            print output
-
-        # dq_guid:
-        command = com + ' dq_guid lfn string ' + guid + ' ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-        if rc != 0:
-            print output
-
-        # dq_fsize (originally long):
-        command = com + ' dq_fsize lfn string ' + str(size) + ' ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-        if rc != 0:
-            print output
-
-        # dq_date:
-        command = com + ' dq_date lfn string "' + date + '" ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-        if rc != 0:
-            print output
-
-        # modifytime:
-        epochtime = str(epoch(date))
-        command = com + ' modifytime lfn string "' + epochtime + '" ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-        if rc != 0:
-            print output
-
-        # filechecksum
-        filechecksum = 'md5: ' + md5sum
-        command = com + ' filechecksum lfn string "' + filechecksum + '" ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-        if rc != 0:
-            print output
-
-        # size (originally long):
-        command = com + ' size lfn string ' + str(size) + ' ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-        if rc != 0:
-            print output
-
-        # filetype:
-        command = com + ' filetype lfn string ' + 'file' + ' ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,255])
-        if rc != 0:
-            print output
-            
-        command = 'globus-rls-cli attribute query ' + lfn + ' - lfn ' + RLSurl
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,500])
-
-        return
-
     def upload(self, upfile ):
-        '''Upload file to RLS'''
+        '''Upload file to temporary grid storage.'''
 
         cmd = 'ngcp '
         
@@ -322,7 +294,7 @@ class Grid:
         temptime = time.gmtime()
         time_pattern = "%04d%02d%02d%02d%02d%02d" % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5])
         new_file_name = time_pattern + file_name
-        new_upfile = RLSurl +'/'+new_file_name 
+        new_upfile = SRMurl +'/'+new_file_name
         command = cmd + upfile +' '+ new_upfile
         rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,500])
         if rc != 0:
@@ -330,12 +302,11 @@ class Grid:
 
         return new_upfile
 
-    def clean_rls(self,rlsfile):
-        ''' Clean prestaged files in rls'''
+    def clean_gridfile(self,gridfile):
+        ''' Clean prestaged files in srm'''
         
         cmd = 'ngrm '
-        command = cmd + rlsfile
-
+        command = cmd + gridfile
         
         rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,500])
         if rc != 0:
@@ -805,6 +776,7 @@ class Grid:
         
         lfn = []
         md5sum = []
+        adler32a = []
         date = []
         size = []
         guid = []
@@ -832,6 +804,16 @@ class Grid:
                     #print 'get_output md5 ', md5sum
                 except:
                     md5sum = None
+
+                try:
+                  adler32 = file.getElementsByTagName ("ad32")[0].firstChild.data
+                  adler32 = str(adler32.lower().rstrip('l')) # the python in Atlas release can append l (lowercase L)!!!
+                  adler32 = '%8s' % (adler32)
+                  adler32 = adler32.replace(' ','0')
+                  adler32a  += ['ad:' + adler32]
+                except:
+                  adler32 = None
+                  print ":-( adler32 missing?",outp
                 
                 try:
                     tdate = file.getElementsByTagName ("date")[0].firstChild.data
@@ -861,19 +843,43 @@ class Grid:
                 if lfn == None or md5sum == None or date == None or size == None or guid == None or dataset == None:
                     outp = False
                     print "ERROR: File attribute is missing, job outputs not processed! ",jobid
+
+            if adler32 == None:
+              checksum =  md5sum
+            else:
+              checksum = adler32a
                     
             if outp:
-                register_file_in_dataset(dataset,lfn,guid, size, md5sum)
+              register_file_in_dataset(dataset,lfn,guid, size, checksum)
             else:
-                print "ERROR could not register file in dq2"
+              print "ERROR could not register file in dq2"
 
-
+            lfcinput = {}
             for i in range(len(lfn)):
                 turl = getTurl(lfn[i],dataset)
-                #print 'rls registration turl ', turl
-                self.RegisterRLSurl(lfn[i],turl)
-                #print 'registering atributes ', lfn[i], guid[i], date[i], lcn, size[i], md5sum[i]
-                self.SetAllAttributes (lfn[i], guid[i], date[i], lcn, size[i], md5sum[i])
+                #print 'guid ', guid , ' reg  ' , guid[0]
+                #print 'lfn', getGangaLFN(dataset,lfn[i]) , ' reister lfn ', str(lfn[0])
+                #print 'turl surl ', turl
+                #print 'size ', size, '  ', int(size[0])
+                #print 'check sum', checksum, '  ', str(checksum[0])
+                #print 'dsn ', dataset
+                #print 'lfcarchival ', lfcarchival 
+                lfcinput[guid[0]] = {'lfn': str(lfn[0]),
+                                  'surl': turl,
+                                  'dsn': dataset,
+                                  'fsize': int(size[0]),
+                                  'checksum': str(checksum[0]),
+                                  'archival': lfcarchival}
+
+                print 'try register lfcinput ', lfcinput
+                try:
+                  result = bulkRegisterFiles(lfchost,lfcinput)
+                  print 'lfc registration result ', result
+                  for guid in result:
+                    if isinstance(result[guid],LFCFileCatalogException):
+                      print 'ERROR: LFC exception during registration: %s' % result[guid]
+                except:
+                  print 'Unclassified exception during LFC registration, put job back to UNKNOWN'
                 
         return True
 
@@ -899,17 +905,16 @@ class Grid:
             self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return False
 
-    def check_dq2_file_avaiability(self,lfn,rls,jobid):
+    def check_dq2_file_avaiability(self,dsn,lfn,jobid):
         # Check if a file is available on NorduGrid
 
-        cmd = 'globus-rls-cli query wildcard lrc lfn "'+lfn+'" '+rls
-
-        # Returns 0 if file is found, otherwise 1
+        #cmd = 'globus-rls-cli query wildcard lrc lfn "'+lfn+'" '+rls
+        lfcu = getLFCurl(dsn,lfn)
+    
+        cmd = 'ngls -l ' + lfcu  
+    
+        # Returns 0 if file is found, otherwise 
         rc, output, m = self.shell.cmd1('%s%s %s' % (self.__get_cmd_prefix_hack__(),cmd,jobid),allowed_exit=[0,1,255])
-
-        # Use return code instead
-        #match = re.search('(gsiftp:\S+)',output)
-        #if match: return match.group(1)
 
         return rc
 
@@ -967,12 +972,11 @@ class NG(IBackend):
       "queue" : SimpleItem( defvalue = "", typelist=['str'], protected = 1, copyable = 0,
          doc = "Queue where job has been submitted" ),
       'middleware' : SimpleItem(defvalue="",typelist=['str'], protected=0,copyable=1,doc='Middleware type'),
-      "RLS" : SimpleItem( defvalue = "rls://atlasrls.nordugrid.org:39281",
-         typelist=['str'], doc = "RLS dserver" ),
       'check_availability'   : SimpleItem(defvalue = False, typelist=['bool'], 
                                           doc = 'Check availability of DQ2 data on NG before submission'),
       'clean' : SimpleItem( defvalue=[],typelist=['str'],sequence=1, doc= "Files to be cleaned after job")
       } )
+
 
     _category = 'backends'
     _name =  'NG'
@@ -1051,10 +1055,11 @@ class NG(IBackend):
         
         master_input_sandbox_tmp= []
         if sandbox_s > config['BoundSandboxLimit']:
-            master_input_sandbox_tmp += [grids[mt].upload(master_input_sandbox[0])]
-
+          master_input_sandbox_tmp += [grids[mt].upload(master_input_sandbox[0])]
+        else:
+          master_input_sandbox_tmp += [abspath]
+          
         master_input_sandbox = master_input_sandbox_tmp
-
 
         """
         # arclib 
@@ -1077,29 +1082,33 @@ class NG(IBackend):
         # prepare the subjobs, xrsl repository before bulk submission
         xrslStrings=[]
         i = 0
-        group_area_rls = None
+        group_area_srm = None
         for sc,sj in zip(subjobconfigs,rjobs):
-            try:
-                if i == 0 and not sj.application.group_area.name.startswith('http'):
-                    abspath = os.path.abspath(sj.application.group_area.name)
-                    groupArea_s = os.path.getsize(abspath)
-                    
-                    if groupArea_s > config['BoundSandboxLimit']: 
-                        group_area_rls = grids[mt].upload(sj.application.group_area.name)
-                        sj.application.group_area.name = group_area_rls
-                        sj.backend.clean += [group_area_rls]
-                elif group_area_rls:
-                    sj.application.group_area.name = group_area_rls
-                    sj.backend.clean += [group_area_rls]
-                        
-                sj.name=job.name+'_'+str(i)
-                i = i+1
-                logger.info("preparing subjob %s" % sj.getFQID('.'))
-                xrslStrings += [sj.backend.preparejob(sc,master_input_sandbox,True)]
+          try:
+
+            if sj.application.group_area.name:
+              if i == 0 and not sj.application.group_area.name.startswith('http'):
+                abspath = os.path.abspath(sj.application.group_area.name)
+                groupArea_s = os.path.getsize(abspath)
+              
+                if groupArea_s > config['BoundSandboxLimit']:
+                  group_area_srm = grids[mt].upload(sj.application.group_area.name)
+                  sj.application.group_area.name = group_area_srm
+                  sj.backend.clean += [group_area_srm]
+                elif group_area_srm:
+                  # no uploading Test,
+                  print 'no upload, just adding group_area_srm ', group_area_srm
+                  sj.application.group_area.name = group_area_srm
+                  sj.backend.clean += [group_area_srm]
                 
-            except Exception,x:
-                log_user_exception()
-                raise IncompleteJobSubmissionError(sj.id,str(x))
+            sj.name=job.name+'_'+str(i)
+            i = i+1
+            logger.info("preparing subjob %s" % sj.getFQID('.'))
+            xrslStrings += [sj.backend.preparejob(sc,master_input_sandbox,True)]
+                
+          except Exception,x:
+            log_user_exception()
+            raise IncompleteJobSubmissionError(sj.id,str(x))
 
         # Join xrsls in one file
         
@@ -1273,8 +1282,8 @@ class NG(IBackend):
       for filePath in master_input_sandbox:
          if not filePath in infileList:
              infileList.append( filePath )
-             if filePath.startswith('rls'):
-                 self.clean += [filePath]
+             if filePath.startswith('srm'):
+               self.clean += [filePath]
 
       fileList = []
       for filePath in infileList:
@@ -1286,16 +1295,20 @@ class NG(IBackend):
           for filePath in job.inputdata.names:
               infileList.append( filePath )
       elif job.inputdata and job.inputdata._name == 'DQ2Dataset':
+
+          # prepare the dataset namelist with tids - needed for check availability and paths
+          ds_tid = getTidDatasetnames(job.inputdata.dataset)
+      
           # Check for availability on DQ2? Avoids submitting jobs where dataset is empty
           if self.check_availability:
               remove_flist=[]
               remove_glist=[]
               for f in range(len(job.inputdata.names)):
-                  rc = grids[self.middleware.upper()].check_dq2_file_avaiability(job.inputdata.names[f],self.RLS,self.id)
-                  if rc==1:
-                      logger.warning("DQ2 input file %s not present on NG",job.inputdata.names[f])
-                      remove_flist.append(job.inputdata.names[f])
-                      remove_glist.append(job.inputdata.guids[f])
+                rc = grids[self.middleware.upper()].check_dq2_file_avaiability(job.inputdata.dataset[0],job.inputdata.names[f],self.id)
+                if rc==1:
+                  logger.warning("DQ2 input file %s not present on NG",job.inputdata.names[f])
+                  remove_flist.append(job.inputdata.names[f])
+                  remove_glist.append(job.inputdata.guids[f])
               if len(remove_flist)>0:
                   logger.warning("Removing input files not present on NG")
                   for f in remove_flist:
@@ -1318,7 +1331,11 @@ class NG(IBackend):
               arguments += [job.inputdata.guids[i]]
           
           for f in job.inputdata.names:
-              infileList.append( getRLSurl(f) )
+            if len(ds_tid) > 1:
+              lfn_ds = matchLFNtoDataset(ds_tid,f)
+              infileList.append(getLFCurl(lfn_ds,f))
+            else:
+              infileList.append(getLFCurl(ds_tid[0],f))
 
       #print 'job info of monitoring service: %s' % str(self.monInfo)
       #print 'mon.getWrapperScriptConstructorText() ',mon.getWrapperScriptConstructorText()
@@ -1421,16 +1438,22 @@ class NG(IBackend):
           tiersofatlas = getTiersOfATLASCache() 
           # Set a default site name
           sitename = 'NDGFT1DISK'
-
+          spacetoken = 'ATLASUSERDISK'
+          
           # ...but then check if the user has set one
           if job.outputdata.location!='':
               sitename = job.outputdata.location
 
           # See if sitename is in TiersOfAtlasCache.py
-          for site, desc in tiersofatlas.sites.iteritems():
-              if site!=sitename:
-                  continue
-              srm_endpoint = desc['srm'].strip()
+          if not spacetoken:
+              for site, desc in tiersofatlas.sites.iteritems():
+                  if site!=sitename:
+                      continue
+                  srm_endpoint = desc['srm'].strip()
+          else:
+              srm_endpoint = 'srm://srm.ndgf.org;spacetoken=ATLASUSERDISK/atlas/disk/'
+
+          #print 'srm_endpoint ', srm_endpoint
           
           if jobconfig.env.has_key('OUTPUT_LFN'):
               output_lfn = jobconfig.env['OUTPUT_LFN']
@@ -1440,7 +1463,6 @@ class NG(IBackend):
           for fn in range(len(jobconfig.outputbox)):
               #users/DietrichLiko/ganga/users.DietrichLiko.ganga.20.20080410/
               gridPlacementString = srm_endpoint + output_lfn + job.outputdata.outputdata[fn]
-              #print gridPlacementString
               outfile.append("(" + jobconfig.outputbox[fn] + " \""+gridPlacementString+"\")" )
               arguments += [jobconfig.outputbox[fn]]
               arguments += [job.outputdata.outputdata[fn]]
@@ -1759,8 +1781,8 @@ class NG(IBackend):
                         all_done = False
                     
             if all_done and sjob and check:
-                for f in sjob.backend.clean:
-                    grids[mt].clean_rls(f)
+              for f in sjob.backend.clean:
+                grids[mt].clean_gridfile(f)
 
         # update master job status
         for jid in jobdict.keys():
@@ -1816,14 +1838,6 @@ class NGJobConfig(StandardJobConfig):
             return os.path.basename(exe)
         else:
             return exe
-
-def getRLSurl (lfn):
-    ''' Help function to get the RLSurl'''
-    
-    if lfn.startswith('dc2.') or lfn.startswith('rome.'):
-        return 'rls://atlasrls.nordugrid.org:39282/' + lfn
-    else:
-        return 'rls://atlasrls.nordugrid.org:39281/' + lfn
 
 # initialisation
 # function for parsing VirtualOrganisation from ConfigVO
@@ -1919,7 +1933,7 @@ config.addOption('ARC_SETUP', arcloc + '/setup.sh','FIXME Environment setup scri
 
 config.addOption('Requirements','GangaNG.Lib.NG.NGRequirements','FIXME under testing sets the full qualified class name forother specific NG job requirements')
 
-config.addOption('BoundSandboxLimit',1 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to rls')
+config.addOption('BoundSandboxLimit',0.1 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to rls')
 
 # set default values for the configuration parameters
 #config['ARC_ENABLE'] = True
@@ -1943,6 +1957,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/09/29 11:16:35  bsamset
+# Fixed type checking for NG.py and NGRequirements.py
+#
 # Revision 1.3  2008/07/29 13:19:30  bsamset
 # Removed some remaining info messages
 #
