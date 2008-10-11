@@ -21,10 +21,44 @@ env
 echo 'host info'
 env | grep HOST
 
-if [ ! -z $ATLAS_USERSETUPFILE ]
+echo 'USER_AREA'
+echo $USER_AREA
+echo 'ATHENA_USERSETUPFILE'
+echo $ATHENA_USERSETUPFILE
+echo 'SITEROOT'
+echo $SITEROOT
+
+# if not defined URER_AREA or ATHENA_USERSETUPFILE
+if [ -z $USER_AREA ] && [ -z $ATHENA_USERSETUPFILE ]
+then
+    if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
+    then
+	source $SITEROOT/dist/$ATLAS_RELEASE/Control/AthenaRunTime/AthenaRunTime-*/cmt/setup.sh
+    elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ]
+    then
+	echo 'sourcing AtlasOfflineRunTime'
+	source $SITEROOT/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
+	if [ ! -z $ATLAS_PRODUCTION_ARCHIVE ]
+	then
+	    wget $ATLAS_PRODUCTION_ARCHIVE
+	    export ATLAS_PRODUCTION_FILE=`ls AtlasProduction*.tar.gz`
+	    tar xzf $ATLAS_PRODUCTION_FILE
+	    export CMTPATH=`ls -d $PWD/work/AtlasProduction/*`
+	    export MYTEMPDIR=$PWD
+	    cd AtlasProduction/*/AtlasProductionRunTime/cmt
+	    cmt config
+	    source setup.sh
+	    echo $CMTPATH
+	    cd $MYTEMPDIR
+	fi
+    fi
+
+elif [ ! -z $ATLAS_USERSETUPFILE ]
 then
     . $ATLAS_USERSETUPFILE
-else                                                                                                             
+
+else                                                                                                
+   echo 'Make local USER_AREA'             
    mkdir work
 
    if [ ! -z $GROUP_AREA_REMOTE ] ; then
@@ -68,6 +102,26 @@ else
    cd ..
 fi
 
+# Determine PYTHON executable in ATLAS release
+if [ ! -z `echo $ATLAS_RELEASE | grep 14.` ]
+then
+    export pybin=$(ls -r $SITEROOT/sw/lcg/external/Python/*/*/bin/python | head -1)
+else
+    export pybin=$(ls -r $SITEROOT/sw/lcg/external/Python/*/slc3_ia32_gcc323/bin/python | head -1)
+fi
+
+# Determine python32 executable location 
+# Set python32bin only if athena v14 is NOT setup
+#which python32; echo $? > retcode.tmp
+#retcode=`cat retcode.tmp`
+#rm -f retcode.tmp
+#if [ $retcode -eq 0 ] && [ -z `echo $ATLAS_RELEASE | grep 14.` ] ; then
+#    export python32bin=`which python32`
+#fi
+
+which python
+echo $pybin
+
 cmt show macro_value cmt_compiler_version
 
 get_files PDGTABLE.MeV
@@ -80,6 +134,7 @@ shift
 export INDIR=`pwd`
 
 if [ $numinfiles -ge 1 ]; then
+  echo 'Mating  PoolFileCatalog.xml'
   rm -f PoolFileCatalog.xml
   echo "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>" >> PoolFileCatalog.xml
   echo "<!-- Edited by POOL --><!DOCTYPE POOLFILECATALOG SYSTEM \"InMemory\">" >> PoolFileCatalog.xml
@@ -143,6 +198,7 @@ fi
 
 if [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] 
 then
+  echo 'Modify input.py'
   sed 's/EventSelector/ServiceMgr.EventSelector/' input.py > input.py.new
   mv input.py.new input.py
 fi
@@ -170,8 +226,11 @@ export LD_LIBRARY_PATH=$dum
 
 export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 
+echo 'OUTPUT_JOBID'
 echo $OUTPUT_JOBID
+echo 'GROUP_AREA_REMOTE'
 echo $GROUP_AREA_REMOTE
+echo 'GROUP_AREA'
 echo $GROUP_AREA
 
 #if [ ! -z $OUTPUT_JOBID ] && [ -e ganga-joboption-parse.py ] && [ -e output_files ]
@@ -180,8 +239,12 @@ echo $GROUP_AREA
 #    ./ganga-joboption-parse.py
 #fi
 
+echo 'retcode'
+echo $retcode
+
 if [ $retcode -eq 0 ]
 then
+    
     echo "Running Athena ..."
     athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
     retcode=`cat retcode.tmp`
@@ -190,6 +253,69 @@ fi
 
 # Making OutpuFiles.xml
 echo 'Making OutputFiles.xml'
+
+cat <<EOF > adler32.py
+#!/usr/bin/python
+
+import sys
+import zlib
+import getopt
+
+def help():
+    print 'adler32.py [OPTIONS] [FILE] [[FILE2] [FILE3]...]'
+    print ''
+    print 'Prints the adler32 checksum(s) of one or more files.'
+    print 'Note that adler32 is nearly as reliable as CRC32'
+    print 'and much faster to compute.'
+
+short_options='h'
+long_options=['help']
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:],
+                               short_options,
+                               long_options,)
+except getopt.GetoptError,x:
+    print x
+    help()
+    sys.exit(2)
+
+quiet = False    
+if len(opts) > 0:
+    for cmd, arg in opts:
+        if cmd in ('--help','-h'):
+            help()
+            sys.exit(0)
+
+if len(args) == 0:
+    help()
+    sys.exit(1)
+else:
+    filenames = args
+
+mb = 1024*1024
+
+for filename in filenames:
+    try:
+        file=open(filename,'r')
+        ad32=1
+        while True:
+            str = file.read(mb)
+            if len(str) > 0:
+                ad32=zlib.adler32(str,ad32)
+            else:
+                break
+        # correct for bug 32 bit zlib
+        if ad32 < 0 :
+            ad32 += 2**32
+        res = '%8s' % (hex(ad32).lstrip('0x'))
+        res = res.replace(' ','0')
+        print res
+        file.close()
+    except Exception,x:
+        print x
+EOF
+
 
 numoutfiles=$1
 shift
@@ -241,6 +367,16 @@ if [ $numoutfiles -ge 1 ]; then
 	  echo "md5sum does not work or is missing" >| wrapper.log
 	  exit $returncode
       fi
+      #
+      # use the python in the Atlas release and not the system python!
+      #
+      ad32=`python adler32.py $file`
+      returncode=$?
+      if [ $returncode -ne 0 ] ; then
+	  echo "adler32 does not work or is missing"
+	  echo "adler32 does not work or is missing" >| wrapper.log
+	  exit $returncode
+      fi
       date=`find $file -printf "%TY-%Tm-%Td %TT" 2>/dev/null`
       size=`find $file -printf "%s"`
 
@@ -250,6 +386,7 @@ if [ $numoutfiles -ge 1 ]; then
       echo "  <lfn>${outfilerls[$i]}</lfn>" >> OutputFiles.xml
       echo "  <date>$date</date>" >> OutputFiles.xml
       echo "  <md5sum>$md5sum</md5sum>" >> OutputFiles.xml
+      echo "  <ad32>$ad32</ad32>" >> OutputFiles.xml
       echo "  <lcn>${lcn[$i]}</lcn>" >> OutputFiles.xml
       echo "  <dataset>${dataset[$i]}</dataset>" >> OutputFiles.xml
       echo "</file>" >> OutputFiles.xml
