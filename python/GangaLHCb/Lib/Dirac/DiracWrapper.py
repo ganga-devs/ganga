@@ -76,7 +76,7 @@ def diracwrapper(command):
 
   dwrapper = _DiracWrapper()
   
-  content="""#!/bin/env python
+  content="""#!/usr/bin/env python
 import sys, os
 import warnings
 warnings.filterwarnings(action="ignore", category=RuntimeWarning)
@@ -101,7 +101,7 @@ sys.exit(rc)
         """ % {'###COMMAND###':command,'###LEVEL###':configDirac['DiracLoggerLevel'],\
                '###SHARED###':inspect.getsource(DiracShared),'###OUTPUT###':dwrapper.outputFile}
         
-  wrapper = """#!/bin/env python
+  wrapper = """#!/usr/bin/env python
 import sys, os
 
 __outputFileName = '%(###OUTPUT###)s'

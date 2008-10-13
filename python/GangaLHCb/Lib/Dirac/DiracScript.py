@@ -27,7 +27,7 @@ class DiracScript:
       import inspect
               
       self.finalised=False
-      self.script="""#!/bin/env python
+      self.script="""#!/usr/bin/env python
 # This file contains the commands to be executed for submitting the job
 # to DIRAC. Do not edit unless you ***really*** know what you are doing.
 # The variable "id" is passed back to Ganga.
