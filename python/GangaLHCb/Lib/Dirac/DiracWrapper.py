@@ -2,7 +2,7 @@
 from Ganga.Core import BackendError
 import Ganga.Utility.Config
 from Ganga.Utility.Shell import Shell
-from os.path import dirname,exists,join
+from os.path import basename,dirname,exists,join,sep
 from os import pathsep,environ
 import inspect
 import sys
@@ -37,7 +37,21 @@ if not exists(diracEnvSetup):
     logger.error("Cannot find the file 'setupDiracEnv.sh' needed by ganga.")
     raise BackendError('Dirac',"Cannot find the file 'setupDiracEnv.sh' needed by ganga.")
 
-s = Shell(diracEnvSetup,setup_args = [configLHCb['DiracTopDir']])
+diracVersion = None
+try:
+    diracTopDir = configDirac['DiracTopDir']
+    if diracTopDir.endswith(sep):
+        diracTopDir = diracTopDir[:-1]
+    diracName = basename(diracTopDir)
+    if diracName:
+        d = diracName.split('_')
+        if len(d) == 2 and d[0].startswith('DIRAC'):
+            diracVersion = d[1]
+    if diracVersion is None:
+        logger.warning('Failed to find the DIRAC Version to use from %s. Using a default value',diracTopDir)
+except:
+    diracVersion = 'v3r3'
+s = Shell(diracEnvSetup,setup_args = [diracVersion])
 
 for key, item in _varKeep.iteritems():
     environ[key] = item
