@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.5 2008-10-11 15:40:00 pajchel Exp $
+# $Id: NG.py,v 1.6 2008-10-13 19:54:55 pajchel Exp $
 ###############################################################################
 #
 # NG backend
@@ -97,13 +97,14 @@ def getGangaLFN(dataset,fname):
   return lfn
 
 def getLFCurl(dataset,file):
+  """ user datasets are registered under to_natie_lfn convention
+  One can use the same procerure for getting the lfn both for production datasets
+  as for user datasets.
+  """
 
   ds = dataset.split('.')[0]
 
-  if ds.startswith('users'):
-    return 'lfc://lfc1.ndgf.org/' + getGangaLFN(dataset,gile)
-  else:
-    return 'lfc://lfc1.ndgf.org/' + to_native_lfn(dataset,file)
+  return 'lfc://lfc1.ndgf.org/' + to_native_lfn(dataset,file)
 
 def getTiersOfATLASCache():
     """Download TiersOfATLASCache.py"""
@@ -871,10 +872,8 @@ class Grid:
                                   'checksum': str(checksum[0]),
                                   'archival': lfcarchival}
 
-                print 'try register lfcinput ', lfcinput
                 try:
                   result = bulkRegisterFiles(lfchost,lfcinput)
-                  print 'lfc registration result ', result
                   for guid in result:
                     if isinstance(result[guid],LFCFileCatalogException):
                       print 'ERROR: LFC exception during registration: %s' % result[guid]
@@ -905,14 +904,13 @@ class Grid:
             self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return False
 
-    def check_dq2_file_avaiability(self,dsn,lfn,jobid):
+    def check_dq2_file_avaiability(self,lfcu,jobid):
         # Check if a file is available on NorduGrid
 
         #cmd = 'globus-rls-cli query wildcard lrc lfn "'+lfn+'" '+rls
-        lfcu = getLFCurl(dsn,lfn)
     
         cmd = 'ngls -l ' + lfcu  
-    
+        print 'check availability cmd ', cmd
         # Returns 0 if file is found, otherwise 
         rc, output, m = self.shell.cmd1('%s%s %s' % (self.__get_cmd_prefix_hack__(),cmd,jobid),allowed_exit=[0,1,255])
 
@@ -1300,42 +1298,56 @@ class NG(IBackend):
           ds_tid = getTidDatasetnames(job.inputdata.dataset)
       
           # Check for availability on DQ2? Avoids submitting jobs where dataset is empty
+          lfnlist=[]
           if self.check_availability:
-              remove_flist=[]
-              remove_glist=[]
-              for f in range(len(job.inputdata.names)):
-                rc = grids[self.middleware.upper()].check_dq2_file_avaiability(job.inputdata.dataset[0],job.inputdata.names[f],self.id)
+            remove_flist=[]
+            remove_glist=[]
+            for f in range(len(job.inputdata.names)):
+
+                if len(ds_tid) > 1:
+                  lfn_ds = matchLFNtoDataset(ds_tid,job.inputdata.names[f])
+                  lfn = getLFCurl(lfn_ds,job.inputdata.names[f])
+                else:
+                  lfn = getLFCurl(ds_tid[0],job.inputdata.names[f])
+
+                rc = grids[self.middleware.upper()].check_dq2_file_avaiability(lfn,self.id)
                 if rc==1:
-                  logger.warning("DQ2 input file %s not present on NG",job.inputdata.names[f])
+                  logger.warning("DQ2 input file %s not present on NG.",job.inputdata.names[f])
                   remove_flist.append(job.inputdata.names[f])
                   remove_glist.append(job.inputdata.guids[f])
-              if len(remove_flist)>0:
-                  logger.warning("Removing input files not present on NG")
-                  for f in remove_flist:
-                      job.inputdata.names.remove(f)
-                  for g in remove_glist:
-                      job.inputdata.guids.remove(g)
+                else:
+                  lfnlist += [lfn]
+                  
+            if len(lfnlist)==0:
+              logger.warning("No input files available on NG")
+              return None
+                
+            if len(remove_flist)>0:
+              logger.warning("Removing input files not present on NG")
+              for f in remove_flist:
+                job.inputdata.names.remove(f)
+              for g in remove_glist:
+                job.inputdata.guids.remove(g)
 
-              if len(job.inputdata.names)==0:
-                  logger.warning("No input files available on NG")
-                  return None
-
+          else:
+            for f in range(len(job.inputdata.names)):
+              if len(ds_tid) > 1:
+                lfn_ds = matchLFNtoDataset(ds_tid,job.inputdata.names[f])
+                lfn = getLFCurl(lfn_ds,job.inputdata.names[f])
+                lfnlist += [lfn]
+              else:
+                lfn = getLFCurl(ds_tid[0],job.inputdata.names[f])
+                lfnlist += [lfn]
+              
           # number of input files
           arguments += [len(job.inputdata.names)]
-
-          #print 'job.inputdata.names ', job.inputdata.names
-          #print 'job.inputdata.names ', job.inputdata.guids
 
           for i in range(len(job.inputdata.names)):
               arguments += [job.inputdata.names[i]]
               arguments += [job.inputdata.guids[i]]
-          
-          for f in job.inputdata.names:
-            if len(ds_tid) > 1:
-              lfn_ds = matchLFNtoDataset(ds_tid,f)
-              infileList.append(getLFCurl(lfn_ds,f))
-            else:
-              infileList.append(getLFCurl(ds_tid[0],f))
+
+          for f in lfnlist:
+            infileList.append(f)
 
       #print 'job info of monitoring service: %s' % str(self.monInfo)
       #print 'mon.getWrapperScriptConstructorText() ',mon.getWrapperScriptConstructorText()
