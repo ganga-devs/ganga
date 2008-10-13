@@ -57,7 +57,7 @@ class GaudiPythonDiracRunTimeHandler(IRuntimeHandler):
         diracScript.platform(app.platform)
         diracScript.append( 'setName("Ganga_GaudiPython")')
         if job.inputdata:
-            diracScript.inputdata([x.name for x in job.inputdata.files])
+            diracScript.inputdata(job.inputdata)
 
         outdata = []
         if job.outputdata:
