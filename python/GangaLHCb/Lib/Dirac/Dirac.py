@@ -18,6 +18,7 @@ from GangaLHCb.Lib.LHCbDataset import LHCbDataset,LHCbDataFile,string_dataset_sh
 logger = Ganga.Utility.logging.getLogger()
 
 configLHCb = Ganga.Utility.Config.getConfig('LHCb')
+
 configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 
 try:
@@ -71,20 +72,20 @@ j.submit()
     
     """
     _schema = Schema(Version(1, 5), 
-            {'id': SimpleItem(defvalue = None, protected = 1, copyable = 0,
+            {'id': SimpleItem(defvalue = None, protected = 1, copyable = 0, typelist=['int','type(None)'],
                               doc='''The id number assigned to the job by the
 DIRAC WMS. If seeking help on jobs with the Dirac backend, please always
 report this id number in addition to a full description of your problem.
 The id can also be used to further inspect the job at
 http://lhcb.pic.es/DIRAC/Monitoring/Analysis/ '''),
-            'status':SimpleItem(defvalue = None, protected = 1, copyable = 0,
+            'status':SimpleItem(defvalue = None, protected = 1, copyable = 0,typelist=['str','type(None)'],
                                 doc='''The detailed status as reported by
 the DIRAC WMS'''),
             'CPUTime': SimpleItem(defvalue=86400,checkset='_checkset_CPUTime',
                                   doc='''The requested CPU time in seconds'''),
-            'actualCE': SimpleItem(defvalue=None, protected=1, copyable=0,
+            'actualCE': SimpleItem(defvalue=None, protected=1, copyable=0,typelist=['str','type(None)'],
                                    doc='''The location where the job ran'''),
-            'statusInfo' : SimpleItem(defvalue='', protected=1, copyable=0,
+            'statusInfo' : SimpleItem(defvalue='', protected=1, copyable=0,typelist=['str','type(None)'],
                                    doc='''Minor status information from Dirac''')})
 
     _exportmethods = ['getOutput','getOutputData','peek']
@@ -713,24 +714,11 @@ storeResult(result)
                     
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
-
 #
 #
 ## $Log: not supported by cvs2svn $
-## Revision 1.2.2.5  2008/09/12 08:11:53  wreece
-## Fixes return code handling and argument passing
-##
-## Revision 1.2.2.4  2008/09/10 12:35:19  wreece
-## Updates to use the new diracwrapper mechanism
-##
-## Revision 1.2.2.3  2008/09/10 12:20:26  wreece
-## Improves script submission
-##
-## Revision 1.2.2.2  2008/09/09 15:08:07  wreece
-## Gaudi, Executable and Root jobs seem to work fine. GaudiPython still not really working fine.
-##
-## Revision 1.2.2.1  2008/09/05 10:20:30  wreece
-## First steps for Dirac 3 port. Submission of root jobs works, as does monitoring.
+## Revision 1.3  2008/09/26 12:09:42  wreece
+## Updates the schema definitions for Ganga 5.0.9-pre. Just adds a few type(None)s to the allowed types.
 ##
 ## Revision 1.2  2008/08/07 22:07:47  uegede
 ## Added a GaudiPython application handler with runtime handlers for Local/Batch

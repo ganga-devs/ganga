@@ -74,15 +74,15 @@ class GaudiPython(IApplication):
     _schema = Schema(Version(1, 1), {
             'script': FileItem(sequence=1,strict_sequence=0,defvalue=[],doc='''The name of the script to execute. A copy will be made at submission time'''),
             
-            'version': SimpleItem(defvalue=None,typelist=['str'],doc='''The version of the 
+            'version': SimpleItem(defvalue=None,typelist=['str','type(None)'],doc='''The version of the 
             project (like "v19r2")'''),
             
-            'platform': SimpleItem(defvalue = None, typelist=['str'],
+            'platform': SimpleItem(defvalue = None, typelist=['str','type(None)'],
                                    doc='''The platform the application is configured for (e.g. "slc4_ia32_gcc34")'''),
             
-            'project': SimpleItem(defvalue = None, typelist=['str'],
+            'project': SimpleItem(defvalue = None, typelist=['str','type(None)'],
                                   doc='''The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'''),
-            'setupProjectOptions': SimpleItem(defvalue = '', typelist=['str'], doc='''Extra options to be passed onto the SetupProject command used for configuring the environment. As an example setting it to '--dev' will give access to the DEV area. For full documentation of the available options see https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'''),
+            'setupProjectOptions': SimpleItem(defvalue = '', typelist=['str','type(None)'], doc='''Extra options to be passed onto the SetupProject command used for configuring the environment. As an example setting it to '--dev' will give access to the DEV area. For full documentation of the available options see https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'''),
             })
     _category = 'applications'
 

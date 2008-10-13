@@ -116,16 +116,18 @@ fi
 
 python ./gaudiPythonwrapper.py
 
-$MKDIR -p $JOBOUTPUTDIR
-for f in $DATAOUTPUT; do 
-    $CP "$f" "${JOBOUTPUTDIR}/$f"
-    echo "Copying $f to $JOBOUTPUTDIR"
-    if [ $? -ne 0 ]; then
-       echo "WARNING:  Could not copy file $f to $JOBOUTPUTDIR"
-       echo "WARNING:  File $f will be lost"
-    fi
-    rm -f "$f"
-done
+if [ -n $DATAOUTPUT ]; then # only create the directory if necessary
+    $MKDIR -p $JOBOUTPUTDIR
+    for f in $DATAOUTPUT; do 
+        $CP "$f" "${JOBOUTPUTDIR}/$f"
+        echo "Copying $f to $JOBOUTPUTDIR"
+        if [ $? -ne 0 ]; then
+           echo "WARNING:  Could not copy file $f to $JOBOUTPUTDIR"
+           echo "WARNING:  File $f will be lost"
+        fi
+        rm -f "$f"
+    done
+fi    
 """
     script=script.replace('###DATAOUTPUT###', outputdatastr)
     script=script.replace('###THEAPP###',theApp) 
