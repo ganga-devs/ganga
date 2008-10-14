@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-release,v 1.9 2008-10-11 08:24:39 gangage Exp $
+# $Id: ganga-release,v 1.10 2008-10-14 09:19:41 gangage Exp $
 ################################################################################
 
 import os,sys,time,re,shutil
@@ -329,7 +329,7 @@ class ReleaseCommand:
 
         print 'Fix the coverage report symlink'
         
-        acmd('ln -s ../latest/html/coverage %(reldir)s/reports/html/coverage')
+        acmd('ln -s ../latest/html/coverage %(reldir)s/reports/html/coverage'%CONFIG)
         
         print 'Protecting the release area'
 
