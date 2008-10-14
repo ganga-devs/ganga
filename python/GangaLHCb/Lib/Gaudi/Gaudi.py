@@ -185,7 +185,7 @@ class Gaudi(IApplication):
         # create a separate options file with only data statements.
         self.extra.dataopts = self._dataset2optionsstring(self.extra.inputdata)
         
-        self.extra._userdlls, self.extra._merged_confDBs, self.extra._subdir_confDBs = self._get_user_dlls()
+        self.extra._userdlls, self.extra._merged_pys, self.extra._subdir_pys = self._get_user_dlls()
         self.extra._outputfiles = parser.get_output_files()
         self.extra.outputdata = parser.get_output_data()
         
@@ -368,8 +368,8 @@ class Gaudi(IApplication):
         from Ganga.Utility.files import fullpath
         import pprint
         libs=[]
-        merged_confDBs = []
-        subdir_confDBs = {}
+        merged_pys = []
+        subdir_pys = {}
 
         user_ra = self._get_user_release_area()
         full_user_ra = fullpath( user_ra) # expand any symbolic links
@@ -422,27 +422,27 @@ class Gaudi(IApplication):
             if os.path.exists( pypath):
                 for f in os.listdir( pypath):
                     confDB_path = os.path.join( pypath, f)
-                    if confDB_path.endswith( '_merged_confDb.py'):
+                    if confDB_path.endswith( '.py'):
                         if os.path.exists( confDB_path):
-                            merged_confDBs.append( confDB_path)
+                            merged_pys.append( confDB_path)
                         else:
                             logger.warning( "File %s in %s does not exist. Skipping...",str( f), str( confDB_path))
                     elif os.path.isdir( confDB_path):
                         pyfiles = []
                         for g in os.listdir( confDB_path):
                             file_path = os.path.join( confDB_path, g)
-                            if (file_path.endswith( '_confDb.py') or file_path.endswith( 'Conf.py') or file_path.endswith( '__init__.py')):
+                            if (file_path.endswith( '.py')):
                                 if os.path.exists( file_path):
                                     pyfiles.append( file_path)
                                 else:
                                     logger.warning( "File %s in %s does not exist. Skipping...",str( g), str( f))                                
-                        subdir_confDBs[ f] = pyfiles
+                        subdir_pys[ f] = pyfiles
                     
         logger.debug("%s",pprint.pformat( libs))
-        logger.debug("%s",pprint.pformat( merged_confDBs))
-        logger.debug("%s",pprint.pformat( subdir_confDBs))
+        logger.debug("%s",pprint.pformat( merged_pys))
+        logger.debug("%s",pprint.pformat( subdir_pys))
 
-        return libs, merged_confDBs, subdir_confDBs     
+        return libs, merged_pys, subdir_pys     
  
     def getpack(self, options=''):
         """Execute a getpack command. If as an example dv is an object of
@@ -489,8 +489,8 @@ class GaudiExtras:
     _SEProtocol = ''
     _LocalSite = ''
     _userdlls = []
-    _merged_confDBs = []
-    _subdir_confDBs = []
+    _merged_pys = []
+    _subdir_pys = []
     inputdata = []
     _outputfiles = []
     outputdata = []
@@ -711,6 +711,9 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.13  2008/09/26 12:09:42  wreece
+# Updates the schema definitions for Ganga 5.0.9-pre. Just adds a few type(None)s to the allowed types.
+#
 # Revision 1.12  2008/09/03 11:54:59  wreece
 # Savannah 40910 - Also problem with datasets in options files
 #

@@ -25,9 +25,9 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
 
         for dll in app.extra._userdlls:
             inputsandbox.append( File( dll, subdir = 'lib'))
-        for confDB in app.extra._merged_confDBs:
-            inputsandbox.append( File( confDB, subdir = 'python'))
-        for dir, files in app.extra._subdir_confDBs.iteritems():
+        for pyFile in app.extra._merged_pys:
+            inputsandbox.append( File( pyFile, subdir = 'python'))
+        for dir, files in app.extra._subdir_pys.iteritems():
             for f in files:
                 inputsandbox.append( File( f, subdir = 'python' + os.sep + dir))   
                 

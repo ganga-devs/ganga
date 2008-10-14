@@ -60,14 +60,14 @@ class GaudiLSFRunTimeHandler(IRuntimeHandler):
     job = app.getJobObject()
     logger.debug("Entering the master_prepare of the GaudiLSF Runtimehandler") 
     logger.debug("extra dlls: %s", str(extra._userdlls))
-    logger.debug("extra confDBs: %s", str(extra._merged_confDBs))
-    logger.debug("extra confDBs: %s", str(extra._subdir_confDBs))    
+    logger.debug("extra .py files: %s", str(extra._merged_pys))
+    logger.debug("extra .py files: %s", str(extra._subdir_pys))    
     sandbox=[]
     for f in extra._userdlls:
         sandbox.append( File( f, subdir = 'lib'))
-    for f in extra._merged_confDBs:
+    for f in extra._merged_pys:
         sandbox.append( File( f, subdir = 'python'))
-    for dir, files in extra._subdir_confDBs.iteritems():
+    for dir, files in extra._subdir_pys.iteritems():
         for f in files:
             sandbox.append( File( f, subdir = 'python'+ os.sep + dir))    
 
@@ -214,6 +214,30 @@ done
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/08/22 10:07:23  uegede
+# New features:
+# =============
+# The Gaudi and GaudiPython applications have a new attribute called
+# 'setupProjectOptions'. It contains extra options to be passed onto the
+# SetupProject command used for configuring the environment. As an
+# example setting it to '--dev' will give access to the DEV area. For
+# full documentation of the available options see
+# https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject. The
+# 'lhcb_release_area' attribute has been taken away as it was not useful.
+#
+# The Gaudi and GaudiPython applications can now read data from the
+# detector. For this a new attribute, 'datatype_string', is added to the
+# LHCbDataset. It contains the string that is added after the filename
+# in the options to tell Gaudi how to read the data. If reading raw data
+# (mdf files) it should be set to "SVC='LHCb::MDFSelector'".
+#
+# Minor changes:
+# ==============
+# The identification of which default application version to pick is now
+# using SetupProject.
+#
+# Many test cases have been updated to Ganga 5.
+#
 # Revision 1.3  2008/08/05 14:02:58  gcowan
 # Extended _get_user_dlls to pick up all relevant files under InstallArea/python in the users private project areas. This directory structure is now replicated in the job inputsandbox. PYTHONPATH in the job wrappers is modified to prepend it with `pwd`/python so that the python configurables in the input sandbox are picked up by the job.
 #
