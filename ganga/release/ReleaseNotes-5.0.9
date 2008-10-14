@@ -1,0 +1,118 @@
+**************************************************************************************************************
+5.0.9 (2008/10/8)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+#38646 bugfix: accept jobs.select(xrange(..))
+#40696: Exception raised during resubmit() should be propagated to caller
+fixed: j.submit() and j.resubmit() do not return the status but raise
+exceptions on error
+
+#40220: Ensure that default values satisfy the declared types in the schema
+factored out type checking into schema module, fixed a number of wrongly
+declared schema items in the core
+
+deprecated slc3 plaftorm and replaced with slc4_ia32_gcc34
+
+updated configuration URL for monalisa usage monitoring server
+
+#41372: added backend.remove() method to support job removal on the Remote backend
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Batch
+--------------------------------------------------------------------------------------------------------------
+fixed type declaration for some plugins
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Condor
+--------------------------------------------------------------------------------------------------------------
+Added typelist information for schema property "submit_options"
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+- introduces new abstract class for handling over-sized inputsandbox, the implementation class
+(LCGSandboxCache) using lcg-cp/cr/del is loaded by default
+- introduces background downloader for fetching job's outputs from the WMS so that monitoring loop
+is not blocked by the output downloading
+- enhances glite bulk submission to avoid hitting the node job number limitation of the WMS
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+Added some functionality:
+
+** Bug 41370:  Add port number as configurable
+
+host option now takes the port number as well, i.e. host:port
+
+** Bug 41372: j.remove should remove the job on the remote site
+
+Added the 'remove' routine that should get called from Job.py
+
+** Bug 41374: Implement kill() and resubmit() routines
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Use dq2-get on LCG/Athena worker node instead of dq2_get in DQ2_COPY mode and for TAG
+  This should fix many access problems at problematic sites.
+* DQ2Dataset.failover - new switch for fail-over to DQ2_COPY mode if inputdata access failed
+  with DQ2_LOCAL on LCG/Athena  
+* Change boot up message - use for support now hn-atlas-dist-analysis-help@cern.ch
+* Combined functionality between lcg and local athena scripts (bug 41955). Two new scripts
+  have been created (run-athena-*.sh) to aid roll back.
+* bug 37539: max_events now works properly for local backend.
+* AthenaLCGRTHandler: Disallow submission if number_of_files for incomplete dataset is used in
+  splitting mode
+* DQ2JobSplitter.py: Fix bug 42044 - drop unused guids
+* AtlasLCGRequirements: Fix bug 42038 - Print warning if srm entry is empty in TiersOfATLAS'
+* Clean-up of type setting warnings
+* tentative fix for database lock by making copies of the DB flat files on the worker node.
+* Fix _USERDISK stage out problem
+* Remove constraint for same cloud stageout location in DQ2OutputDataset
+
+AthenaMC:
+* AthenaMC bug fix for space token support and support of DBRelease.
+* stage-out.sh: prevent script from creating incomplete output_data lines which are screwing up
+  completion stage (jobs remain forever in completing state if the output_data lines are not
+  complete)
+
+AMAAthena:
+* Addition of AMAAthena - new Application for AMAAthena framework on the Grid
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Updates the schema for Dirac, Gaudi and GaudiPython, and fixes a bug in the data handling
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+Fixed type checking for NG.py and NGRequirements.py
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- fix for type checking
+- support extOutFile
+- added PandaPilot application. Experimental.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+Fixed a set of bugs in TestRobot
+
+**************************************************************************************************************

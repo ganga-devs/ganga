@@ -1,0 +1,29 @@
+import os
+
+testfile=".GangaPersistencyTest.py"
+
+# Make sure that repository contains at least one job
+if not len( jobs ):
+   j = Job()
+
+# Create list of job names
+nameList = []
+for j in jobs:
+   nameList.append( j.name )
+
+# Determine number of jobs in registry
+nJob = len( jobs )
+
+# Export all jobs in registry
+export( jobs, testfile )
+
+# Load jobs from file
+objectList = load( testfile )
+
+# Perform checks
+assert( nJob == len( objectList ) )
+assert( nJob * 2 == len( jobs ) )
+for i in range( nJob ):
+   assert( nameList[ i ] == objectList[ i ].name )
+
+os.remove( testfile )
