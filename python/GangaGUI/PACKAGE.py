@@ -1,15 +1,15 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.1 2008-07-17 16:41:22 moscicki Exp $
+# $Id: PACKAGE.py,v 1.2 2008-10-14 08:42:51 moscicki Exp $
 ################################################################################
 
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 """
 
 external_packages = {
-   'pyqt' : {'version' : '3.13_python234', 'PYTHONPATH':'lib/python2.3.4/site-packages', 'LD_LIBRARY_PATH' :'lib'},
-   'Python' : {'version' : '2.3.4', 'LD_LIBRARY_PATH':'lib', 'PATH' : 'bin'} }
+   'pyqt' : {'version' : '3.13_python234', 'PYTHONPATH':'lib/python2.3.4/site-packages', 'LD_LIBRARY_PATH' :'lib'}
+   }
 
 from Ganga.Utility.Setup import PackageSetup
 
