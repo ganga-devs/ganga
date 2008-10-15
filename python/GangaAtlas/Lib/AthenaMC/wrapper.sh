@@ -192,4 +192,9 @@ echo "==============================="
 echo "           END OF JOB          "
 echo "==============================="
 
-exit
+if [ ! -s "output_data" ]; then
+    echo "Output data missing, returning non-zero exit code"
+    exit 128
+fi
+
+exit 0

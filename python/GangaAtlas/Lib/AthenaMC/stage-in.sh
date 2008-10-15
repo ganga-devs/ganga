@@ -56,9 +56,15 @@ stageInLCG(){
 	    if [ $status -eq 0 ]; then
 		echo "got file $LFN from $lfc, leaving loop"
 		return 0;
-	    else
-	        echo "failed to download $turl, looping to next replica"
 	    fi
+	       #echo "failed to download $turl, looping to next replica"
+	    echo "failed to download $turl, trying with srmv2 token:"
+	    timeout 1 600 "lcg-cp -T srmv2 --vo atlas $turl file:$PWD/$LFN"
+	    if [ $status -eq 0 ]; then
+		echo "got file $LFN from $lfc, leaving loop"
+		return 0;
+	    fi
+	    echo "failed to download $turl, looping to next replica"
 	done
     done
     return 410302; # failed to get any replica...

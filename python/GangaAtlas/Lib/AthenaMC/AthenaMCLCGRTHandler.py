@@ -135,7 +135,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 logger.error("job.inputdata must be set to 'AthenaMCInputDatasets'")
                 raise
         # checking se-name: must not write to MC/DATA/PRODDISK space tokens.
-
+        if not app.se_name:
+            app.se_name='none'
+            # important to avoid having null string in app.se_name as it would ruin the argument list of the wrapper script!
+            
         if app.se_name:
             forbidden_spacetokens=["MCDISK","DATADISK","MCTAPE","DATATAPE","PRODDISK","PRODTAPE"]
             for token in forbidden_spacetokens:
@@ -168,18 +171,34 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             # compute nsubjobs_infile, ninfile_subjobs, etc... , compare with numsubjobs and maxinfiles, do the whole splitting business here!
             numsubjobs=0
             njob_infile=1
+            outparts=[]
             if app._getRoot().splitter:
                 numsubjobs= app._getRoot().splitter.numsubjobs
                 njob_infile=  app._getRoot().splitter.nsubjobs_inputfile
+                outparts=app._getRoot().splitter.output_partitions
             # now checking maxinfiles
             n_infiles_job=job.inputdata.n_infiles_job
             if numsubjobs>0:
-                totalinfile=int((numsubjobs-1)*n_infiles_job/njob_infile)+1
+                # formula is wrong as it does not take into account a potential offset in output file number
+                #totalinfile=int((numsubjobs-1)*n_infiles_job/njob_infile)+1
+                offset=0
+                if job.outputdata.output_firstfile>0:
+                    offset= int(job.outputdata.output_firstfile)-1
+                if app.partition_number:
+                    offset=app.partition_number
+                if len(outparts)>0:
+                    outparts.sort()
+                    offset=outparts[-1]-1
+                    offset=offset-len(outparts)# need to compensate for numbsubjobs later (computation of totalinfile), as the last job number is not computed in this particular case, it is given in this list.
+#                logger.warning("offset is %i" % offset)
+                if offset<0:
+                    offset=0
+                totalinfile=int((numsubjobs+offset-1)*n_infiles_job/njob_infile)+1
                 if n_infiles_job >= njob_infile:
                     totalinfile=int(numsubjobs*n_infiles_job/njob_infile)
                     
                 if totalinfile>self.maxinfiles:
-                    logger.debug("Not enough input files, need %s got %s" % (totalinfile, self.maxinfiles))
+                    logger.warning("Not enough input files, need %s got %s" % (totalinfile, self.maxinfiles))
                     try:
                         assert self.maxinfiles>=totalinfile-n_infiles_job
                     except AssertionError:
@@ -189,7 +208,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                         raise 
 
                 else:
-                    logger.debug("Too many input files, selecting only the %d first ones" % totalinfile)
+                    logger.warning("Too many input files, selecting only the %d first ones" % totalinfile)
                     self.maxinfiles=totalinfile
                     
             # handling cavern and minbias data now.
@@ -392,8 +411,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 requirements.other.append(targetCloud)
             logger.debug("targetCloud result:%s" % targetCloud)
             ##if string.find(targetCloud,"VO-atlas-cloud")>-1 and not string.find(targetCloud,"VO-atlas-cloud-T0")>-1:
-            ##    requirements.other.append('(Member("VO-atlas-tier-T2",other.GlueHostApplicationSoftwareRunTimeEnvironment) || Member("VO-atlas-tier-T3",other.GlueHostApplicationSoftwareRunTimeEnvironment))')
-            #### Applying computing model: Tier 0 and Tier 1s should be reserved to official production. Users jobs must use Tier2s or Tier 3s. Not for Ganga 4, perhaps Ganga 5???
+            requirements.other.append('( ! Member("VO-atlas-tier-T0",other.GlueHostApplicationSoftwareRunTimeEnvironment) && ! Member("VO-atlas-tier-T1",other.GlueHostApplicationSoftwareRunTimeEnvironment))')
+            #### Applying computing model: Tier 0 and Tier 1s should be reserved to official production. Users jobs must use other sites.
             
         logger.debug("master job submit?")
         if job.backend._name=="LCG" or job.backend._name=="Cronus" or job.backend._name=="Condor" or job.backend._name=="NG":
@@ -576,7 +595,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         logger.debug("job number is %s" % app.partition_number)
         # should change to :
         if app.partition_number:
-            jobnum=string.atoi(app.partition_number)
+            jobnum=app.partition_number
 
         logger.debug("job number is now %i" % jobnum)
 
@@ -595,7 +614,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         if app.mode!="evgen":
             
             # for simul and others, firstevent is the actual offset (skip+1) and should not be bigger than the total number of events in the input file.
-            self.firstevent = "%i" % (int(app.firstevent)+ int(app.number_events_job)*(self.ijob%njob_infile))
+            #self.firstevent = "%i" % (int(app.firstevent)+ int(app.number_events_job)*(self.ijob%njob_infile)) # should be jobnum instead of self.ijob?
+            self.firstevent = "%i" % (int(app.firstevent)+ int(app.number_events_job)*((jobnum-1)%njob_infile))
         logger.debug("job number is %i, first event is %i" % (int(self.ijob),int(self.firstevent)))
 
         # If using subjobs, take subjob random seed, modify first event
@@ -625,20 +645,29 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         environment["INPUTLFCS"]=""
         environment["INPUTFILES"]=""
         self.inputfile,self.cavernfile,self.minbiasfile="","",""
-        if len(inputfiles)>0:
+
+        if len(inputfiles)>0:        
             # need to allocate N input turls, lfcs, files to environment vars.
             # getting N
             ninfiles_subjob=job.inputdata.n_infiles_job
-            
-            imin=int(self.ijob*ninfiles_subjob/njob_infile)
+
+            imin=int((jobnum-1)*ninfiles_subjob/njob_infile)
             imax=imin+int((ninfiles_subjob-1)/njob_infile)+1
+            if (app.partition_number and not app._getRoot().splitter):
+                # use inputdata.inputfiles to define input data.
+                imin=0
+                imax=imin+ninfiles_subjob
+            else: 
+                job.inputdata.inputfiles=inputfiles[imin:imax]
+            #logger.warning("test: imin %i imax %i mxinfiles %i len(inputfiles):%i" % (imin,imax,self.maxinfiles,len(inputfiles)))
+ 
             if imin>=len(inputfiles):
                 logger.error("subjob has no input data. Aborting")
                 return 
             if imax>=self.maxinfiles:
                 logger.debug("Reached maximum number of inputfiles provided in job.inputdata.number_inputfiles. This is the last subjob")
                 imax=self.maxinfiles
-            
+
             self.inputfile=",".join([inputfiles[i] for i in range(imin,imax)])
             if app._getRoot().splitter:
                 logger.debug("Splitting data: %d %d %d %d %d " % (self.maxinfiles , app._getRoot().splitter.numsubjobs,ninfiles_subjob,imin,imax))
@@ -657,10 +686,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
                 environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[i].strip())
                 j=j+1
-                if len(job.inputdata.inputfiles)==0:
-                    job.inputdata.inputfiles.append(inputfiles[i].strip())
+            
             logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
 
+            
         # now handling cavern/minbias input datasets:
         inputfiles=self.cavern_turls.keys()
         if len(inputfiles)>0:

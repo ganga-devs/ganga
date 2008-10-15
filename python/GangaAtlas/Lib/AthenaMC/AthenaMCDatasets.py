@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.9 2008-09-26 16:03:21 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.10 2008-10-15 13:44:05 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -144,7 +144,7 @@ class AthenaMCInputDatasets(Dataset):
     _schema = Schema(Version(1,0), {
         'DQ2dataset'    : SimpleItem(defvalue = '', doc = 'DQ2 Dataset Name'),
         'LFCpath' : SimpleItem(defvalue = '', doc = 'LFC path of directory to find inputfiles on the grid, or local directory path for input datasets (datasetType=local). For all non-DQ2 datasets.'),
-        'inputfiles'      : SimpleItem(defvalue = [], typelist=['list'], sequence = 1, doc = 'Logical File Names of subset of files to be processed. Must be used in conjunction of either DQ2dataset or LFCpath.'),
+        'inputfiles'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names of subset of files to be processed. Must be used in conjunction of either DQ2dataset or LFCpath.'),
         'inputpartitions'  : SimpleItem(defvalue ="",doc='String of input file numbers to be used (each block separated by a coma).A block can be a single number or a closed subrange (x-y). Subranges are defined with a dash. Must be used in conjunction of either DQ2dataset or LFCpath. Alternative to inputfiles.'),
         'number_inputfiles'  : SimpleItem(defvalue="",sequence=0,doc='Number of inputfiles to process.'),
         'n_infiles_job'    : SimpleItem(defvalue=1,doc='Number of input files processed by one job or subjob. Minimum 1'),
@@ -1078,7 +1078,7 @@ class AthenaMCOutputDatasets(Dataset):
             # compare actual_output and rest of members of AthenaMCOutputDatasets (declared/expected)
             # first, extract list of lfns from actual_output
             expected_lfns=self.expected_output[:] # forces deep copy. Otherwise, we just copy a pointer and self.expected_output is emptied which is not what we want...
-            
+                
             for line in self.actual_output:
                 lfn,dest=string.split(line)
                 # must strip lfn from final numbers (timestamp and job) for comparison!

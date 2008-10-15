@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.3 2008-09-02 13:32:44 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.4 2008-10-15 13:44:05 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -44,7 +44,7 @@ class AthenaMC(IApplication):
         'extraArgs'          : SimpleItem(defvalue='',doc='Extra arguments for the transformation, fixed value (experts only)',typelist=["str"]),
         'extraIncArgs'       : SimpleItem(defvalue='',doc='Extra integer arguments for the transformation, with value increasing with the subjob number. Please set like this: extraIncArgs="arg1=val1_0 arg2=val2_0" with valX_0 the value taken by the argument at the first subjob. On the second subjob, the arguments will have the value valX_0 + 1 and so on...  (experts only)',typelist=["str"]),
         'geometryTag'        : SimpleItem(defvalue='ATLAS-DC3-05',doc='Geometry tag for simulation and reconstruction',typelist=["str"]),        
-        'partition_number'  : SimpleItem(defvalue='',doc='output partition number'),
+        'partition_number'  : SimpleItem(defvalue='',doc='output partition number',typelist=["int"]),
         'triggerConfig' : SimpleItem(defvalue='NONE',doc='recon, 12.0.5 and beyond: trigger configuration',typelist=["str"]),
         'version' : SimpleItem(defvalue='',doc='version tag to insert in the output dataset and file names',typelist=["str"]),
         'verbosity' : SimpleItem(defvalue='ERROR',doc='Verbosity of transformation for log files',typelist=["str"]),
@@ -57,6 +57,7 @@ class AthenaMC(IApplication):
     _exportmethods = ['prepare', 'postprocess']
     _GUIPrefs= [ { 'attribute' : 'mode', 'widget' : 'String_Choice', 'choices' : ['evgen','simul','recon','template']}, { 'attribute' : 'verbosity', 'widget' : 'String_Choice', 'choices' : ['ALL','VERBOSE','DEBUG','INFO','WARNING','ERROR','FATAL']}]
     
+     
     def postprocess(self):
        """Determine outputdata and outputsandbox locations of finished jobs
        and fill output variable"""
@@ -64,7 +65,7 @@ class AthenaMC(IApplication):
        job = self._getParent()
        if job.outputdata:
           job.outputdata.fill()
-          
+              
     def prepare(self):
        """Prepare the job from the user area"""
        
@@ -151,7 +152,8 @@ class AthenaMCSplitterJob(ISplitter):
     _name = "AthenaMCSplitterJob"
     _schema = Schema(Version(1,0), {
        'numsubjobs': SimpleItem(defvalue=1,sequence=0, doc='Number of subjobs'),
-       'nsubjobs_inputfile'  : SimpleItem(defvalue=1,sequence=0,doc='Number of subjobs processing one inputfile (N to M splitting)')
+       'nsubjobs_inputfile'  : SimpleItem(defvalue=1,sequence=0,doc='Number of subjobs processing one inputfile (N to M splitting)'),
+       'output_partitions' : SimpleItem(defvalue=[],sequence=1,doc='List of output partition numbers to be processed. Useful for resubmitting failed subjobs',typelist=["int"])
         } )
 
     ### Splitting based on numsubjobs
@@ -159,6 +161,9 @@ class AthenaMCSplitterJob(ISplitter):
         from Ganga.GPIDev.Lib.Job import Job
         subjobs = []
 
+        if len(self.output_partitions)>0 and self.numsubjobs!=len(self.output_partitions):
+            self.numsubjobs=len(self.output_partitions)
+        
         try:
             assert self.numsubjobs
         except AssertionError:
@@ -172,6 +177,10 @@ class AthenaMCSplitterJob(ISplitter):
         logger.debug("doing job splitting: %d subjobs" % self.numsubjobs)
 
         for i in range(self.numsubjobs):
+            # need to override offset, outputdata.output_firstfile or app.partition_number with contents of self.output_partitions.
+            if len(self.output_partitions)>0:
+                offset=self.output_partitions[i]-1 # 
+                
             rndtemp = int(job.application.random_seed)+i+offset
             j = Job()
             j.application = job.application
@@ -181,7 +190,9 @@ class AthenaMCSplitterJob(ISplitter):
             j.outputdata=job.outputdata
             j.inputsandbox=job.inputsandbox
             j.outputsandbox=job.outputsandbox
-
+            if len(self.output_partitions)>0:
+                j.application.partition_number=self.output_partitions[i]
+                # application.partition_number overrides the use of outputdata.output_firstfile to set up jobnum and all depending partition variables.
             subjobs.append(j)
 
         return subjobs
@@ -195,6 +206,9 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/09/02 13:32:44  fbrochu
+# Gave a type and a default value to app.number_events_job
+#
 # Revision 1.2  2008/07/30 13:23:55  fbrochu
 # AthenaMC.py: added type checks to members. AthenaMCDatasets: bug fix for treatment of DQ2 datasets available only for Panda. AthenaMCLCGRTGandler.py and wrapper.sh: extension of the glite WMS workaround to input data
 #

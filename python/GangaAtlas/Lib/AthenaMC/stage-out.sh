@@ -23,7 +23,7 @@ timeout() {
 	    let icount=$icount+30
 	done
 	if [ ! -z "$isalive" ] ; then
-	    echo "Stage-in timeout"
+	    echo "Stage-out timeout"
 	    kill -9 $PID
 	    let ntry=$ntry+1
 	    let icount=0
@@ -69,11 +69,18 @@ stageOutLCG(){
     if [ -z "$guid" ]; then
 	echo "no guid. Hope this is a log file: $file"
         guidflag=""
-    fi       
-     
+    fi
+       
+    filesize=$(stat -c%s "$file")
+    let timelim=($filesize/50000)+10
+    if [ $timelim -lt 900 ]; then
+	timelim=900
+    fi
+    echo "TIMEOUT set to $timelim"
+
     lfc-mkdir -p /grid/atlas/$lcn
     stageoutcmd="lcg-cr --vo atlas -v $stflag -d $DEST -l $LFN $guidflag file:$PWD/$file"
-    timeout 1 900 $stageoutcmd
+    timeout 1 $timelim $stageoutcmd
     status=$?
     if [ $status -ne 0 -a ! -z "$BACKUP" ]; then
 	echo "Failed to upload to initial target destination $DEST, trying back up $BACKUP";
@@ -81,13 +88,14 @@ stageOutLCG(){
            export LFC_HOST=$OUTLFC2
         fi
 	stageoutcmd="lcg-cr --vo atlas -v $bstflag -d $BACKUP -l $LFN $guidflag file:$PWD/$file"
-	timeout 1 900 $stageoutcmd
+	timeout 1 $timelim $stageoutcmd
 	status=$?
-	if [ $status -ne 0 ]; then
-	    echo "Second attempt failed, bailing out of here..."
-	    return 431303;
-        fi
+     fi
+    if [ $status -ne 0 ]; then
+	echo "Stage-out attempt(s) failed, bailing out of here..."
+	return 431303;
     fi
+
     oldguid=$guid
     guid=`lcg-lg --vo atlas lfn:$LFN | grep "guid\:" | sed -e "s:.*guid\:::" `
     echo "GUIDS: $oldguid vs guid:$guid"
@@ -186,6 +194,10 @@ for path in $OUTPUTFILES; do
 
     if [ ! -f "$file" ]; then
 	echo "$file not found, skipping"
+	continue
+    fi
+    if [ ! -s "$file" ]; then
+	echo "$file is empty, skipping"
 	continue
     fi
     case "$BACKEND" in
