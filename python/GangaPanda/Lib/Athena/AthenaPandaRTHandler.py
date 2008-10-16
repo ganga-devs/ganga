@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.7 2008-10-09 11:50:23 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.8 2008-10-16 22:00:18 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -376,6 +376,16 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if app.atlas_project and app.atlas_production:
             cacheVer = "-" + app.atlas_project + "_" + app.atlas_production
 
+        # run brokerage here if not splitting
+        if not job.splitter:
+            from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
+            runPandaBrokerage(job)
+        elif job.splitter._name <> 'DQ2JobSplitter':
+            raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter')
+        
+        if job.backend.site == 'AUTO':
+            raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
+
 #       create build job
         jspec = JobSpec()
         jspec.jobDefinitionID   = job.id
@@ -442,8 +452,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler prepare called for %s', job.getFQID('.'))
 
-#       in case of a simple job get the dataset content, subjobs are filled by the splitter
-
+#       in case of a simple job get the dataset content, otherwise subjobs are filled by the splitter
         if job.inputdata and not job._getRoot().subjobs:
             if not job.inputdata.names:
                 for guid, lfn in job.inputdata.get_contents():
@@ -482,7 +491,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         else:
             jspec.prodDBlock    = 'NULL'
         jspec.destinationDBlock = job.outputdata.datasetname
-        jspec.destinationSE     = site
+        if job.outputdata.location:
+            jspec.destinationSE = job.outputdata.location
+        else:
+            jspec.destinationSE = site
         jspec.prodSourceLabel   = 'user'
         jspec.assignedPriority  = 1000
         jspec.cloud             = cloud
