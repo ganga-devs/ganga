@@ -429,8 +429,6 @@ stage_outputs () {
                 else
                     ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
                 fi
-
-                ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
             fi
             retcode=`cat retcode.tmp`
             rm -f retcode.tmp
