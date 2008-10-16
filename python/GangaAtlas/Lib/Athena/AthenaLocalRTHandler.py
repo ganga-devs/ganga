@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.8 2008-09-25 11:00:32 mslater Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.9 2008-10-16 15:58:37 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -29,7 +29,18 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.Utility.files import expandfilename
 
 from Ganga.GPIDev.Credentials import GridProxy
-  
+
+__directory__ = os.path.dirname(__file__)
+
+def _append_file_buffer(inputbox,name,array):
+
+    inputbox.append(FileBuffer(name,'\n'.join(array)+'\n'))
+
+def _append_files(inputbox,*names):
+
+    for name in names:
+        inputbox.append(File(os.path.join(__directory__,name)))
+
 class AthenaLocalRTHandler(IRuntimeHandler):
     """Athena Local Runtime Handler"""
     
@@ -316,26 +327,26 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if app.user_setupfile.name: inputbox += [ File(app.user_setupfile.name) ]
         #CN: added extra test for TNTJobSplitter
         if job.inputdata and job.inputdata._name == 'DQ2Dataset' or (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
-            inputbox += [
-                File(os.path.join(os.path.dirname(__file__),'ganga-stage-in-out-dq2.py')),
-                File(os.path.join(os.path.dirname(__file__),'dq2_get')),
-                File(os.path.join(os.path.dirname(__file__),'dq2info.tar.gz'))
-                ]
+            _append_files(inputbox,'ganga-stage-in-out-dq2.py')
+            _append_files(inputbox,'dq2_get')
+            _append_files(inputbox,'dq2info.tar.gz')
+            _append_files(inputbox,'libdcap.so')
 
         if job.inputdata and job.inputdata._name == 'ATLASDataset':
             if job.inputdata.lfc:
-                inputbox += [ File(os.path.join(os.path.dirname(__file__),'ganga-stagein-lfc.py')) ]
+                _append_files(inputbox,'ganga-stagein-lfc.py')
             else:
-                inputbox += [ File(os.path.join(os.path.dirname(__file__),'ganga-stagein.py')) ]
+                _append_files(inputbox,'ganga-stagein.py')
 
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             if not job.outputdata.location:
                 raise ApplicationConfigurationError(None,'j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
             if not File(os.path.join(os.path.dirname(__file__),'ganga-stage-in-out-dq2.py')) in inputbox:
-                inputbox += [ File(os.path.join(os.path.dirname(__file__),'ganga-stage-in-out-dq2.py')),
-                                File(os.path.join(os.path.dirname(__file__),'dq2info.tar.gz')) ]
+                _append_files(inputbox,'ganga-stage-in-out-dq2.py')
+                _append_files(inputbox,'dq2info.tar.gz')
+                _append_files(inputbox,'libdcap.so')
 
-            inputbox += [ File(os.path.join(os.path.dirname(__file__),'ganga-joboption-parse.py')) ]
+            _append_files(inputbox,'ganga-joboption-parse.py')
 
         if job.inputsandbox:
             for file in job.inputsandbox:
@@ -476,6 +487,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.8  2008/09/25 11:00:32  mslater
+#Combined the functionality in lcg and local scripts. Created new versions to aid rollback.
+#
 #Revision 1.7  2008/08/19 14:05:03  elmsheus
 #Fix bug #40269, ATLAS_PRODUCTION environment variable is now handled properly in Local/Batch backend
 #
