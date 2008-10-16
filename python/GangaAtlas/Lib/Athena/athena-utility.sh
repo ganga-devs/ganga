@@ -73,7 +73,7 @@ cmt_setup () {
     
     # improve dcap reading speed
     export DCACHE_RAHEAD=TRUE
-    #export DCACHE_RA_BUFFER=32768
+    export DCACHE_RA_BUFFER=32768
     #export DCACHE_RA_BUFFER=262144
   
     if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
