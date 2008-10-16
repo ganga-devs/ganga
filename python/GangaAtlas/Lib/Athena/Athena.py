@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.7 2008-10-07 21:25:40 elmsheus Exp $
+# $Id: Athena.py,v 1.8 2008-10-16 15:43:37 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -63,7 +63,7 @@ class Athena(IApplication):
                  'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
                  'user_area'              : FileItem(doc='A tar file of the user area'),
                  'group_area'             : FileItem(doc='A tar file of the group area'),
-                 'max_events'             : SimpleItem(defvalue='',doc='Maximum number of events'),
+                 'max_events'             : SimpleItem(defvalue=-1, typelist=['int'], doc='Maximum number of events'),
                  'option_file'            : FileItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
                  'options'                : SimpleItem(defvalue='',doc='Additional Athena options'),
                  'user_setupfile'         : FileItem(doc='User setup script for special setup'),
@@ -83,7 +83,7 @@ class Athena(IApplication):
                   { 'attribute' : 'atlas_environment', 'widget' : 'String_List' },
                   { 'attribute' : 'user_area',     'widget' : 'FileOrString' },
                   { 'attribute' : 'group_area',     'widget' : 'FileOrString' },
-                  { 'attribute' : 'max_events',    'widget' : 'String' },
+                  { 'attribute' : 'max_events',    'widget' : 'Int' },
                   { 'attribute' : 'option_file',   'widget' : 'FileOrString_List' },
 
                   { 'attribute' : 'options',       'widget' : 'String_List' },
@@ -736,6 +736,9 @@ config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The pa
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.7  2008/10/07 21:25:40  elmsheus
+# Increase maximum number of subjobs
+#
 # Revision 1.6  2008/09/30 12:09:31  mslater
 # Small bug fix for local dataset merging
 #
