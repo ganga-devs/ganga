@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.8 2008-10-16 15:45:56 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.9 2008-10-16 21:54:07 dvanders Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -87,21 +87,29 @@ class DQ2JobSplitter(ISplitter):
         if job.inputdata._name <> 'DQ2Dataset':
             raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset as input')
 
-        if job.backend._name <> 'LCG':
-            raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a LCG backend')
+        if job.backend._name <> 'LCG' and job.backend._name <> 'Panda':
+            raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG or Panda backend')
 
         if self.numfiles <= 0: 
             self.numfiles = 1
 
         allowed_sites = []
-        if job.backend.requirements._name == 'AtlasLCGRequirements':
-            if job.backend.requirements.cloud:
-                allowed_sites = job.backend.requirements.list_sites_cloud()
-            elif job.backend.requirements.sites:
-                allowed_sites = job.backend.requirements.sites
-            else: 
-                raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
-            #allowed_sites = job.backend.requirements.list_sites(True,True)
+        if job.backend._name == 'LCG':
+            if job.backend.requirements._name == 'AtlasLCGRequirements':
+                if job.backend.requirements.cloud:
+                    allowed_sites = job.backend.requirements.list_sites_cloud()
+                elif job.backend.requirements.sites:
+                    allowed_sites = job.backend.requirements.sites
+                else: 
+                    raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
+                #allowed_sites = job.backend.requirements.list_sites(True,True)
+        elif job.backend._name == 'Panda':
+            from GangaPanda.Lib.Panda.Panda import runPandaBrokerage,queueToAllowedSites
+            runPandaBrokerage(job)
+            allowed_sites = queueToAllowedSites(job.backend.site)
+
+        if not allowed_sites:
+            raise ApplicationConfigurationError(None,'DQ2JobSplitter found no allowed_sites for dataset')
 
         contents = dict(job.inputdata.get_contents(overlap=False))
 
@@ -158,7 +166,8 @@ class DQ2JobSplitter(ISplitter):
                 j.outputdata    = job.outputdata
                 j.application   = job.application
                 j.backend       = job.backend
-                j.backend.requirements.sites = sites.split(':')
+                if j.backend._name == 'LCG':
+                    j.backend.requirements.sites = sites.split(':')
                 j.inputsandbox  = job.inputsandbox
                 j.outputsandbox = job.outputsandbox 
 
