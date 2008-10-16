@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# $Id: PythonOptionsParser.py,v 1.5.2.2 2008-10-13 08:56:08 wreece Exp $
+# $Id: PythonOptionsParser.py,v 1.5.2.3 2008-10-16 13:38:07 wreece Exp $
 
 __author__ = 'Greig A Cowan'
 __date__ = 'June 2008'
@@ -47,12 +47,6 @@ class PythonOptionsParser:
                 options = eval( optionsString)
             except Exception, e:
                 logger.error('Cannot eval() the options file. Exception: %s', e)
-                from traceback import print_exc
-                logger.error(' ', print_exc())
-
-                err = 'Please check gaudirun.py -n -v %s returns valid python syntax' % py_opts.name
-                from Ganga.Core import ApplicationConfigurationError
-                raise ApplicationConfigurationError( None, err)
             try:
                 opts_pkl_string = tmp_pkl.read()        
             except IOError, e:
@@ -113,34 +107,25 @@ class PythonOptionsParser:
         return lb
 
     def get_output_files( self):
-        '''Collects the ntuple, histogram and microDST filenames that the job outputs'''
+        '''Collects the ntuple and histogram filenames that the job outputs'''
         outputfiles = []
         tuple = ''
         histo = ''
-        micro = ''
         try:
-            tuples = self.opts_dict['NTupleSvc']['Output']
-            for t in tuples:
-                tuple = t.split('\'')[1]
-                if tuple: outputfiles.append( tuple)
+            tuple = self.opts_dict['NTupleSvc']['Output'][0].split('\'')[1]
         except KeyError, e:
             logger.debug('No NTupleSvc is defined: %s', e)
         
         try:
             histo = self.opts_dict['HistogramPersistencySvc']['OutputFile']
-            if histo: outputfiles.append( histo)
         except KeyError, e:
             logger.debug('No HistogramPersistencySvc is defined: %s', e)
 
-        try:
-            micro = self.opts_dict['MicroDSTStream']['Output'].split('\'')[1]
-            if micro: outputfiles.append( micro)
-        except KeyError, e:
-            logger.debug('No MicroDSTStream is defined: %s', e)
-        
+        if tuple: outputfiles.append( tuple)
+        if histo: outputfiles.append( histo)
 
         if outputfiles:
-            logger.info('Found these histograms, nTuples and microDSTs: %s', str(outputfiles))
+            logger.info('Found these histograms and NTuples: %s', str(outputfiles))
         return outputfiles
 
     def get_output_data( self):
