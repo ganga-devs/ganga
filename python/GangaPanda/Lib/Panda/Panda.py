@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.10 2008-10-06 15:27:48 dvanders Exp $
+# $Id: Panda.py,v 1.11 2008-10-16 21:56:52 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -13,6 +13,7 @@ from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.Core import BackendError, Sandbox
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core import FileWorkspace
 from Ganga.Utility.Shell import Shell
@@ -24,6 +25,97 @@ from Ganga.Utility.logging import getLogger
 import Client
 from taskbuffer.JobSpec import JobSpec
 from taskbuffer.FileSpec import FileSpec
+
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
+
+def queueToAllowedSites(queue):
+    try:
+        ddm = Client.PandaSites[queue]['ddm']
+    except KeyError:
+        raise ApplicationConfigurationError(None,'Queue %s has no ddm field in SchedConfig'%queue)
+    allowed_sites = []
+    alternate_names = []
+    for site in ToACache.sites:
+        if site not in allowed_sites:
+            try:
+                if ddm == site:
+                    alternate_names = ToACache.sites[site]['alternateName']
+                    allowed_sites.append(site)
+                    [allowed_sites.append(x) for x in alternate_names]
+                elif ddm in ToACache.sites[site]['alternateName']:
+                    allowed_sites.append(site)
+                else:
+                    for alternate_name in alternate_names:
+                        if (alternate_name in ToACache.sites[site]['alternateName']):
+                            allowed_sites.append(site)
+            except (TypeError,KeyError):
+                continue
+    for site in ToACache.sites:
+        if site not in allowed_sites:
+            try:
+                if ddm == site:
+                    alternate_names = ToACache.sites[site]['alternateName']
+                    print '%s has alternateName %s'%(ddm,alternate_names)
+                    allowed_sites.append(site)
+                    [allowed_sites.append(x) for x in alternate_names]
+                elif ddm in ToACache.sites[site]['alternateName']:
+                    allowed_sites.append(site)
+                else:
+                    for alternate_name in alternate_names:
+                        if (alternate_name in ToACache.sites[site]['alternateName']):
+                            allowed_sites.append(site)
+            except (TypeError,KeyError):
+                continue
+    print 'allowed_sites: %s'%allowed_sites
+
+    disallowed_sites = ['CERN-PROD_TZERO']
+    allowed_allowed_sites = []
+    for site in allowed_sites:
+        if site not in disallowed_sites:
+            allowed_allowed_sites.append(site)
+    return allowed_allowed_sites
+
+def runPandaBrokerage(job):
+    # get locations when site==AUTO
+    if job.backend.site == "AUTO":
+        fileList = []
+        try:
+            fileList  = Client.queryFilesInDataset(job.inputdata.dataset[0],False)
+        except exceptions.SystemExit:
+            raise ApplicationConfigurationError(None,'Error in Client.queryFilesInDataset')
+        try:
+            dsLocationMap = Client.getLocations(job.inputdata.dataset[0],fileList,job.backend.cloud,False,False,expCloud=True)
+        except exceptions.SystemExit:
+            raise ApplicationConfigurationError(None,'Error in Client.getLocations')
+        # no location
+        if dsLocationMap == {}:
+            raise ApplicationConfigurationError(None,"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.cloud,job.inputdata.dataset[0]))
+        # run brorage
+        tmpSites = []
+        for tmpItem in dsLocationMap.values():
+            tmpSites += tmpItem
+        try:
+            status,out = Client.runBrokerage(tmpSites,'Atlas-%s' % job.application.atlas_release,verbose=False)
+        except exceptions.SystemExit:
+            raise ApplicationConfigurationError(None,'Error in Client.runBrokerage')
+        if status != 0:
+            raise ApplicationConfigurationError(None,'failed to run brokerage for automatic assignment: %s' % out)
+        if not Client.PandaSites.has_key(out):
+            raise ApplicationConfigurationError(None,'brokerage gave wrong PandaSiteID:%s' % out)
+        # set site
+        job.backend.site = out
+    
+    # patch for BNL
+    if job.backend.site == "ANALY_BNL":
+        job.backend.site = "ANALY_BNL_ATLAS_1"
+
+    # long queue
+    if job.backend.long:
+        job.backend.site = re.sub('ANALY_','ANALY_LONG_',job.backend.site)
+    job.backend.actualCE = job.backend.site
+    # correct the cloud in case site was not AUTO
+    job.backend.cloud = Client.PandaSites[job.backend.site]['cloud']
+    logger.warning('Panda brokerage results: cloud %s, site %s'%(job.backend.cloud,job.backend.site))
 
 class PandaBuildJob(GangaObject):
     _schema = Schema(Version(1,0), {
@@ -282,7 +374,6 @@ class Panda(IBackend):
 
 logger = getLogger()
 config = makeConfig('Panda','Panda backend configuration parameters')
-
 config.addOption( 'prodSourceLabel', 'user', 'FIXME')
 config.addOption( 'assignedPriority', 1000, 'FIXME' )
 
@@ -290,6 +381,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.10  2008/10/06 15:27:48  dvanders
+# add extOutFile
+#
 # Revision 1.9  2008/09/29 08:14:53  dvanders
 # fix for type checking
 #
