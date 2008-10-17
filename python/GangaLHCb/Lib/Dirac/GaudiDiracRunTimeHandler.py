@@ -107,8 +107,9 @@ if __name__ == '__main__':
 
     sys.stdout.flush()
     sys.stderr.flush()
+    setEnvironment( 'LD_LIBRARY_PATH', getcwd() + '/lib', True)
     setEnvironment( 'PYTHONPATH', getcwd() + '/python', True)
-    
+        
     #exec the script
     print 'Executing ',commandline
     sys.stdout.flush()
