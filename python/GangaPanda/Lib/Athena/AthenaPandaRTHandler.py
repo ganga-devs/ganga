@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.8 2008-10-16 22:00:18 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.9 2008-10-17 11:48:43 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -196,7 +196,7 @@ def alternateCmtExtraction():
                    else:
                       raise ApplicationConfigurationError(None, "ERROR : unsupported nightly %s" % line)
                 break
-            elif items[0] in ['AtlasProduction','AtlasPoint1']:
+            elif items[0] in ['AtlasProduction','AtlasPoint1','AtlasTier0','AtlasP1HLT']:
                 # production cache
                 cacheVer = '-%s_%s' % (items[0],os.path.basename(res.group(1)))
             else:
