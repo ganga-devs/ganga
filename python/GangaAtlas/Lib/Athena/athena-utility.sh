@@ -282,11 +282,12 @@ get_pybin () {
     fi
 
     # Determine python32 executable location 
-    # Set python32bin only if athena v14 is NOT setup
+
     which python32; echo $? > retcode.tmp
     retcode=`cat retcode.tmp`
     rm -f retcode.tmp
-    if [ $retcode -eq 0 ] && [ -z `echo $ATLAS_RELEASE | grep 14.` ] ; then
+    #if [ $retcode -eq 0 ] && [ -z `echo $ATLAS_RELEASE | grep 14.` ] ; then
+    if [ $retcode -eq 0 ]; then
 	export python32bin=`which python32`
     fi
 
@@ -314,7 +315,13 @@ detect_setype () {
 	if [ ! -z $python32bin ]; then
 	    export GANGA_SETYPE=`$python32bin ./ganga-stage-in-out-dq2.py --setype`
 	else
-	    export GANGA_SETYPE=`$pybin ./ganga-stage-in-out-dq2.py --setype`
+	    if [ -e /usr/bin32/python ]
+	    then	
+		export GANGA_SETYPE=`/usr/bin32/python ./ganga-stage-in-out-dq2.py --setype`
+            else
+		export GANGA_SETYPE=`./ganga-stage-in-out-dq2.py --setype`
+	    fi
+		
 	fi
 	if [ -z $GANGA_SETYPE ]; then
 	    export GANGA_SETYPE=`$pybin ./ganga-stage-in-out-dq2.py --setype`
@@ -368,6 +375,7 @@ stage_inputs () {
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    fi
+
 	    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
 	    export PATH=$PATH_BACKUP
 	    export PYTHONPATH=$PYTHONPATH_BACKUP
