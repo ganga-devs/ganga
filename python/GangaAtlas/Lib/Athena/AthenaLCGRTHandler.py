@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.16 2008-10-03 10:11:24 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.17 2008-10-20 07:06:12 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -499,7 +499,12 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if app.atlas_production=='':
                 requirements.software = ['VO-atlas-offline-%s-%s' %(app.atlas_release, cmtconfig )]
             else:
-                requirements.software = ['VO-atlas-production-%s-%s' %(app.atlas_production, cmtconfig )]
+                if app.atlas_project=="AtlasPoint1":
+                    requirements.software = ['VO-atlas-point1-%s' %(app.atlas_production)]
+                elif app.atlas_project=="AtlasTier0":
+                    requirements.software = ['VO-atlas-tier0-%s' %(app.atlas_production)]
+                else:
+                    requirements.software = ['VO-atlas-production-%s-%s' %(app.atlas_production, cmtconfig )]
         else:
             requirements.software = ['VO-atlas-production-%s' % app.atlas_release ]
 
