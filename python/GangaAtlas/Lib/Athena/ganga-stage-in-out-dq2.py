@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.18 2008-10-03 10:11:24 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.19 2008-10-20 15:28:00 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1080,8 +1080,8 @@ if __name__ == '__main__':
                 defaultSE.append('f-dpm001.grid.sinica.edu.tw')
             elif localsiteid == 'BEIJING':
                 defaultSE.append('atlasse01.ihep.ac.cn')
-            elif localsiteid.startswith('MPPMU'):
-                defaultSE.append('lcg-lrz-se.lrz-muenchen.de')
+            #elif localsiteid.startswith('MPPMU'):
+            #    defaultSE.append('lcg-lrz-se.lrz-muenchen.de')
 
         else:
             defaultSE = ''
@@ -1225,6 +1225,14 @@ if __name__ == '__main__':
             out2 = out.split('%')
             if len(out2)>1:
                 setype = findsetype(out2[1])
+
+        if localsiteid.startswith('ALBERTA'):
+            setype = 'DCACHE'
+        elif localsiteid.startswith('TRIUMF'):
+            setype = 'DCACHE'
+        elif localsiteid.startswith('SFU'):
+            setype = 'DCACHE'
+
 
         # The setype of NIKHEF and SARA can be detected via ToA query  
         #if localsiteid.startswith('NIKHEF'):
