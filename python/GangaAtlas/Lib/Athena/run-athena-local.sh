@@ -68,6 +68,26 @@ ls -la
 # get pybin
 get_pybin
 
+#################################################
+# Determine SE type
+
+# Unpack dq2info.tar.gz
+if [ -e dq2info.tar.gz ]; then
+    tar xzf dq2info.tar.gz
+fi
+detect_setype
+
+# Fix of broken DPM ROOT access
+if [ n$GANGA_SETYPE = n'DPM' ] 
+then
+    echo 'Creating soft link to fix broken DPM ROOT access in athena'
+    ln -s $LCG_LOCATION/lib/libdpm.so libshift.so.2.1
+fi
+
+export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
+
+retcode=0
+
 ################################################
 # state the inputs
 stage_inputs
@@ -90,10 +110,10 @@ if os.path.exists('input_files'):
             ic.append('%s' % lfn.strip())
     EventSelector.InputCollections = ic
 
-if os.environ.has_key('ATHENA_MAX_EVENTS'):
-    theApp.EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
-else:
-    theApp.EvtMax = -1
+    if os.environ.has_key('ATHENA_MAX_EVENTS'):
+        theApp.EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
+    else:
+        theApp.EvtMax = -1
 EOF
 if [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ]
 then

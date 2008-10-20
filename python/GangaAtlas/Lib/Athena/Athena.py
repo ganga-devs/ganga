@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.8 2008-10-16 15:43:37 elmsheus Exp $
+# $Id: Athena.py,v 1.9 2008-10-20 07:47:10 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -63,7 +63,7 @@ class Athena(IApplication):
                  'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
                  'user_area'              : FileItem(doc='A tar file of the user area'),
                  'group_area'             : FileItem(doc='A tar file of the group area'),
-                 'max_events'             : SimpleItem(defvalue=-1, typelist=['int'], doc='Maximum number of events'),
+                 'max_events'             : SimpleItem(defvalue=-999, typelist=['int'], doc='Maximum number of events'),
                  'option_file'            : FileItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
                  'options'                : SimpleItem(defvalue='',doc='Additional Athena options'),
                  'user_setupfile'         : FileItem(doc='User setup script for special setup'),
@@ -736,6 +736,9 @@ config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The pa
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.8  2008/10/16 15:43:37  elmsheus
+# Athena.max_events has to been an integer now (Bug #42613)
+#
 # Revision 1.7  2008/10/07 21:25:40  elmsheus
 # Increase maximum number of subjobs
 #

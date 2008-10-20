@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.9 2008-10-16 15:58:37 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.10 2008-10-20 07:47:11 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -391,11 +391,11 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             else:
                 environment['GROUP_AREA']=os.path.basename(app.group_area.name)
 
-        if app.max_events: 
-            max_events = app.max_events
-            if max_events.__class__.__name__ == 'int':
-                max_events = str(max_events)
-            environment['ATHENA_MAX_EVENTS'] = max_events
+        if app.max_events:
+            if app.max_events == -999:
+                environment['ATHENA_MAX_EVENTS'] = ''
+            else:
+                environment['ATHENA_MAX_EVENTS'] = str(app.max_events)
 
         if job.inputdata and job.inputdata._name == 'DQ2Dataset':
             if job.inputdata.dataset:
@@ -487,6 +487,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.9  2008/10/16 15:58:37  elmsheus
+#Add _append_files routine and add libdcap.so
+#
 #Revision 1.8  2008/09/25 11:00:32  mslater
 #Combined the functionality in lcg and local scripts. Created new versions to aid rollback.
 #
