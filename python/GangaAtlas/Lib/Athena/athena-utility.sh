@@ -312,6 +312,10 @@ detect_setype () {
         export PATH=$MY_PATH_ORG:$PATH_BACKUP
         export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
 
+        # Remove lib64/python from PYTHONPATH
+	dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
+	export PYTHONPATH=$dum
+
 	if [ ! -z $python32bin ]; then
 	    export GANGA_SETYPE=`$python32bin ./ganga-stage-in-out-dq2.py --setype`
 	else
@@ -357,6 +361,10 @@ stage_inputs () {
 	    export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
 	    export PATH=$MY_PATH_ORG:$PATH_BACKUP
 	    export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
+
+            # Remove lib64/python from PYTHONPATH
+	    dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
+	    export PYTHONPATH=$dum
 
 	    if [ ! -z $python32bin ]; then
 		$python32bin ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
@@ -427,6 +435,10 @@ stage_outputs () {
             export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
             export PATH=$MY_PATH_ORG:$PATH_BACKUP
             export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
+
+            # Remove lib64/python from PYTHONPATH
+	    dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
+	    export PYTHONPATH=$dum
 
 	    if [ ! -z $python32bin ]; then
                 $python32bin ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
