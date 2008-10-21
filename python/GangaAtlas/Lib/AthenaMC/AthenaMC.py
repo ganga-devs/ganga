@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.4 2008-10-15 13:44:05 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.5 2008-10-21 06:43:09 elmsheus Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -44,7 +44,7 @@ class AthenaMC(IApplication):
         'extraArgs'          : SimpleItem(defvalue='',doc='Extra arguments for the transformation, fixed value (experts only)',typelist=["str"]),
         'extraIncArgs'       : SimpleItem(defvalue='',doc='Extra integer arguments for the transformation, with value increasing with the subjob number. Please set like this: extraIncArgs="arg1=val1_0 arg2=val2_0" with valX_0 the value taken by the argument at the first subjob. On the second subjob, the arguments will have the value valX_0 + 1 and so on...  (experts only)',typelist=["str"]),
         'geometryTag'        : SimpleItem(defvalue='ATLAS-DC3-05',doc='Geometry tag for simulation and reconstruction',typelist=["str"]),        
-        'partition_number'  : SimpleItem(defvalue='',doc='output partition number',typelist=["int"]),
+        'partition_number'  : SimpleItem(defvalue=None,doc='output partition number',typelist=['type(None)',"int"]),
         'triggerConfig' : SimpleItem(defvalue='NONE',doc='recon, 12.0.5 and beyond: trigger configuration',typelist=["str"]),
         'version' : SimpleItem(defvalue='',doc='version tag to insert in the output dataset and file names',typelist=["str"]),
         'verbosity' : SimpleItem(defvalue='ERROR',doc='Verbosity of transformation for log files',typelist=["str"]),
@@ -206,6 +206,9 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/10/15 13:44:05  fbrochu
+# Bug fix for inputdata.inputfiles type, improving timeout evaluation for stage-out, allowing support for stage-in files from SRMV2 space tokens, extending splitter to allow partial resubmission of master jobs (all failed subjobs at once instead of one by one.)
+#
 # Revision 1.3  2008/09/02 13:32:44  fbrochu
 # Gave a type and a default value to app.number_events_job
 #
