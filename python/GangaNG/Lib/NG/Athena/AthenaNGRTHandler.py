@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.1 2008-07-17 16:41:29 moscicki Exp $
+# $Id: AthenaNGRTHandler.py,v 1.2 2008-10-21 09:28:32 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -323,8 +323,8 @@ class AthenaNGRTHandler(IRuntimeHandler):
         #print 'environment ', environment
         #print 'requirements rt env ', requirements.runtimeenvironment
         ng_config = NGJobConfig(File(exe), inputbox, arg, outputbox, environment, [], requirements)
-	ng_config.monitoring_svc = mc['Athena']
-	return ng_config
+        ng_config.monitoring_svc = mc['Athena']
+        return ng_config
 
     def master_prepare( self, app, appconfig):
         """Prepare the master job"""
@@ -402,8 +402,8 @@ class AthenaNGRTHandler(IRuntimeHandler):
 #       prepare environment
 
         environment={   
-	    'ATHENA_OPTIONS' : athena_options,
-	    'ATHENA_USERSETUPFILE' : athena_usersetupfile,
+            'ATHENA_OPTIONS' : athena_options,
+            'ATHENA_USERSETUPFILE' : athena_usersetupfile,
             'ATLAS_PROJECT' : app.atlas_project
         }
 
@@ -427,6 +427,9 @@ class AthenaNGRTHandler(IRuntimeHandler):
         if app.user_area.name: environment['USER_AREA']=os.path.basename(app.user_area.name)
         if app.max_events: environment['ATHENA_MAX_EVENTS']=app.max_events
 
+
+        # Set application exe type in environment variable
+        environment['ATHENA_EXE_TYPE']=app.atlas_exetype
 
         requirements = NGRequirements()
         
@@ -558,6 +561,11 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:41:29  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.14  2008/05/20 18:59:18  pajchel
 # Minitoring, userid updates
 #

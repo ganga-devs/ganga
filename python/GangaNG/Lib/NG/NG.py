@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.7 2008-10-21 09:15:58 pajchel Exp $
+# $Id: NG.py,v 1.8 2008-10-21 09:28:32 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -1345,6 +1345,8 @@ class NG(IBackend):
               xrslList.append("(GROUP_AREA  %s" % str( jobconfig.env['GROUP_AREA'] ) + ")")
           if jobconfig.env.has_key('GROUP_AREA_REMOTE'):
               xrslList.append("(GROUP_AREA_REMOTE  %s" % str( jobconfig.env['GROUP_AREA_REMOTE'] ) + ")")                 
+          if jobconfig.env.has_key('ATHENA_EXE_TYPE'):
+              xrslList.append("(ATHENA_EXE_TYPE  %s" % str( jobconfig.env['ATHENA_EXE_TYPE'] ) + ")")
 
           # ROOT env
           if jobconfig.env.has_key('ROOTSYS'):
@@ -1740,6 +1742,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.7  2008/10/21 09:15:58  pajchel
+# creativ bug fixing
+#
 # Revision 1.4  2008/09/29 11:16:35  bsamset
 # Fixed type checking for NG.py and NGRequirements.py
 #

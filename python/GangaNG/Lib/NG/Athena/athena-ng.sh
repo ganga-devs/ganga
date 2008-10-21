@@ -125,6 +125,21 @@ echo $pybin
 cmt show macro_value cmt_compiler_version
 
 get_files PDGTABLE.MeV
+# Make a local copy of requested geomDB if none already available
+if [ ! -e geomDB ]; then
+ mkdir geomDB
+ cd geomDB
+ get_files -data geomDB/larHV_sqlite
+ get_files -data geomDB/geomDB_sqlite
+ cd ..
+fi
+if [ ! -e sqlite200 ]; then
+ mkdir sqlite200
+ cd sqlite200
+ get_files -data sqlite200/ALLP200.db
+ cd ..
+fi
+
 
 ## Preparing job
 
@@ -186,6 +201,9 @@ print 'ic ', ic
 
 EOF
 
+# Also copy the input file list to something recognized by AthenaROOTAccess
+cp input_files input.txt
+
 else
 # no input_files
 cat - >input.py <<EOF
@@ -246,7 +264,12 @@ if [ $retcode -eq 0 ]
 then
     
     echo "Running Athena ..."
-    athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+    if [ ! -z `echo $ATHENA_EXE_TYPE | grep PYARA` ]
+    then
+	athena.py $ATHENA_OPTIONS ; echo $? > retcode.tmp
+    else
+        athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+    fi
     retcode=`cat retcode.tmp`
     rm -f retcode.tmp
 fi
