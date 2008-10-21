@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.6 2008-10-13 19:54:55 pajchel Exp $
+# $Id: NG.py,v 1.7 2008-10-21 09:15:58 pajchel Exp $
 ###############################################################################
 #
 # NG backend
@@ -114,12 +114,12 @@ def getTiersOfATLASCache():
     try:
         urllib.urlretrieve(url, local)
     except IOError:
-        print 'Failed to download TiersOfATLASCache.py'
+      logger.warning('Failed to download TiersOfATLASCache.py')
         
     try:
         tiersofatlas = imp.load_source('',local)
     except SyntaxError:
-        print 'Error loading TiersOfATLASCache.py'
+        logger.warning('Error loading TiersOfATLASCache.py')
         sys.exit(EC_UNSPEC)
             
     return tiersofatlas
@@ -196,7 +196,6 @@ class Grid:
             return
 
 #       create credential for this Grid object
-        # print "Middleware active, check proxy"
         self.active = self.check_proxy()
 
     """
@@ -310,6 +309,7 @@ class Grid:
         command = cmd + gridfile
         
         rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,500])
+        
         if rc != 0:
             print output
 
@@ -353,77 +353,6 @@ class Grid:
         self.__print_gridcmd_log__('(.*-job-submit.*\.log)',output)
 
         return   
-
-    """
-    def submit(self,xrsl,ce=None,rejectedcl=None):
-        '''Submit a XRSL file to NG  arclib based'''
-        
-        if not self.active:
-            logger.warning('NG plugin not active.')
-            return
-
-        if not self.credential.isValid():
-            logger.warning('GRID proxy not valid. Use gridProxy.renew() to renew it.')
-            return
-
-        queuelist = []
-        qlist = GetQueueInfo()
-        if len(ce) > 0:
-            # add selected only
-            for queue in qlist:
-                if queue.cluster.hostname in ce:
-                    #print "Selecting queue: ", queue.name, "@", queue.cluster.hostname
-                    queuelist += [queue]
-        else:
-            # add all not rejected
-            for queue in qlist:
-                if queue.cluster.hostname in rejectedcl:
-                    pass
-                    #print "Rejecting queue: ", queue.name, "@", queue.cluster.hostname
-                else:
-                    queuelist += [queue]
-           
-        #logger.debug('NG submit command: %s%s %s' % (self.__get_cmd_prefix_hack__(),cmd,xrslpath))
-
-        #rc, output, m = self.shell.cmd1('%s%s %s' % (self.__get_cmd_prefix_hack__(),cmd,xrslpath),allowed_exit=[0,500]
-        
-        jobname = 'dummy_name'
-        X = Xrsl (xrsl)
-        try:
-            PerformXrslValidation(X)
-            targetlist = ConstructTargets (queuelist, X)
-            targetlist = PerformStandardBrokering (targetlist)
-            if len(targetlist)==0:
-                errortext = "No submission targets identified - Impossible to submit job"
-                print errortext
-                jobid = None
-            else:
-                submitter = JobSubmission (X, targetlist)
-                jobid = submitter.Submit()
-                AddJobID(jobid, jobname)
-                queuelist = submitter.RegisterJobsubmission(queuelist)
-        except ARCLibError, x:
-            print x
-            jobid = None
-            errortext = "Job submission failed!"
-            print errortext
-        except Exception, x:
-            print x
-            jobid = None
-            errortext ="Job submission failed!"
-            print errortext
-        except:
-            print "Unclassified exception submitting job!"
-            jobid = None
-
-        return jobid
-
-        logger.warning('Job submission failed.')
-        self.__print_gridcmd_log__('(.*-job-submit.*\.log)',errortext)
-
-        return
-
-    """
 
     def native_master_submit(self,xrslpath,ce=None,rejectedcl=None):
         '''Native bulk submission supported by GLITE middleware.'''
@@ -474,116 +403,6 @@ class Grid:
 
         return
 
-    """
-    def native_master_submit(self,xrslstrings,ce=None,rejectedcl=None):
-        '''Native bulk submission supported by GLITE middleware. arclib based  '''
-        # Bulk sumission is supported in NG, but the XRSL files need some care.
-
-
-        if not self.active:
-            logger.warning('NG plugin not active.')
-            return
-
-        if not self.credential.isValid():
-            logger.debug('GRID proxy not valid. Use gridProxy.renew() to renew it.')
-            return
-
-        queuelist = []
-        qlist = GetQueueInfo()
-        print 'qlist ', qlist
-
-        if len(ce) > 0:
-            # add selected only
-            for queue in qlist:
-                if queue.cluster.hostname in ce:
-                    #print "Selecting queue: ", queue.name, "@", queue.cluster.hostname
-                    queuelist += [queue]
-        else:
-            # add all not rejected
-            for queue in qlist:
-                if queue.cluster.hostname in rejectedcl:
-                    pass
-                    #print "Rejecting queue: ", queue.name, "@", queue.cluster.hostname
-                else:
-                    queuelist += [queue]
-                    
-        
-        #missing else fixed
-        
-        if len(ce) > 0:
-            cea=ce.split(',')
-            # add selected only
-            for queue in qlist:
-                if queue.cluster.hostname in cea:
-                    #print "Selecting queue: ", queue.name, "@", queue.cluster.hostname
-                    queuelist += [queue]
-        elif len(rejectedcl) > 0:
-            # add all not rejected
-            rea=rejectedcl.split(',')
-            for queue in qlist:
-                if queue.cluster.hostname in rea:
-                    pass
-                    #print "Rejecting queue: ", queue.name, "@", queue.cluster.hostname
-                else:
-                    queuelist += [queue]
-        else:
-            for queue in qlist:  
-                queuelist += [queue]
-        
-        #print 'queuelist ', queuelist
-        
-        jobids = []
-        jobname = 'dummy_name'
-        njobs = len(xrslstrings)
-        ijob = 1
-        for x in xrslstrings:
-            X = Xrsl (x)
-            try:
-                PerformXrslValidation(X)
-                targetlist = ConstructTargets (queuelist, X)
-                targetlist = PerformStandardBrokering (targetlist)
-                if len(targetlist)==0:
-                    errortext = "No submission targets identified - Impossible to submit job"
-                    print errortext
-                    jobid = None
-                else:
-                    submitter = JobSubmission (X, targetlist) 
-                    jobid = submitter.Submit()
-                    AddJobID(jobid, jobname)
-                    queuelist = submitter.RegisterJobsubmission(queuelist)
-                    print "Job ",ijob," of ",njobs," submitted: ",jobid
-                    ijob += 1
-                    jobids += [jobid]
-            except ARCLibError, x:
-                print x
-                jobid = None
-                errortext = "Job submission failed!"
-                print errortext
-            except Exception, x:
-                print x
-                jobid = None
-                errortext ="Job submission failed!"
-                print errortext
-            except:
-                print "Unclassified exception submitting job!"
-                jobid = None
-
-        
-        #logger.info('Job submission report')
-        # output does not exist
-        #self.__print_gridcmd_log__('(.*-job-submit.*\.log)',output)
-        
-        if len(jobids) > 0:
-            return jobids
-
-        output = 'Jobs could not be submitted.'
-        logger.warning('Job submission failed.')
-        self.__print_gridcmd_log__('(.*-job-submit.*\.log)',output)
-
-        return
-
-    """
-
     def status(self,jobids):
         '''Query the status of jobs on the grid'''
 
@@ -598,7 +417,7 @@ class Grid:
             return []
 
         if not jobids:
-            print "No jobs in status"
+            logger.warning('No jobs in status')
             return []
 
         idsfile = tempfile.mktemp('.jids')
@@ -853,32 +672,26 @@ class Grid:
             if outp:
               register_file_in_dataset(dataset,lfn,guid, size, checksum)
             else:
-              print "ERROR could not register file in dq2"
+              logger.warning('ERROR could not register file in dq2')
 
             lfcinput = {}
             for i in range(len(lfn)):
                 turl = getTurl(lfn[i],dataset)
-                #print 'guid ', guid , ' reg  ' , guid[0]
-                #print 'lfn', getGangaLFN(dataset,lfn[i]) , ' reister lfn ', str(lfn[0])
-                #print 'turl surl ', turl
-                #print 'size ', size, '  ', int(size[0])
-                #print 'check sum', checksum, '  ', str(checksum[0])
-                #print 'dsn ', dataset
-                #print 'lfcarchival ', lfcarchival 
-                lfcinput[guid[0]] = {'lfn': str(lfn[0]),
+                
+                lfcinput[guid[i]] = {'lfn': str(lfn[i]),
                                   'surl': turl,
                                   'dsn': dataset,
-                                  'fsize': int(size[0]),
-                                  'checksum': str(checksum[0]),
+                                  'fsize': int(size[i]),
+                                  'checksum': str(checksum[i]),
                                   'archival': lfcarchival}
 
-                try:
-                  result = bulkRegisterFiles(lfchost,lfcinput)
-                  for guid in result:
-                    if isinstance(result[guid],LFCFileCatalogException):
-                      print 'ERROR: LFC exception during registration: %s' % result[guid]
-                except:
-                  print 'Unclassified exception during LFC registration, put job back to UNKNOWN'
+            try:
+              result = bulkRegisterFiles(lfchost,lfcinput)
+              for guid in result:
+                if isinstance(result[guid],LFCFileCatalogException):
+                  print 'ERROR: LFC exception during registration: %s' % result[guid]
+            except:
+              print 'Unclassified exception during LFC registration, put job back to UNKNOWN'
                 
         return True
 
@@ -910,7 +723,6 @@ class Grid:
         #cmd = 'globus-rls-cli query wildcard lrc lfn "'+lfn+'" '+rls
     
         cmd = 'ngls -l ' + lfcu  
-        print 'check availability cmd ', cmd
         # Returns 0 if file is found, otherwise 
         rc, output, m = self.shell.cmd1('%s%s %s' % (self.__get_cmd_prefix_hack__(),cmd,jobid),allowed_exit=[0,1,255])
 
@@ -1083,22 +895,21 @@ class NG(IBackend):
         group_area_srm = None
         for sc,sj in zip(subjobconfigs,rjobs):
           try:
-
             if sj.application.group_area.name:
               if i == 0 and not sj.application.group_area.name.startswith('http'):
                 abspath = os.path.abspath(sj.application.group_area.name)
                 groupArea_s = os.path.getsize(abspath)
               
-                if groupArea_s > config['BoundSandboxLimit']:
+                if groupArea_s > config['BoundSandboxLimit'] and i == 0: 
                   group_area_srm = grids[mt].upload(sj.application.group_area.name)
                   sj.application.group_area.name = group_area_srm
                   sj.backend.clean += [group_area_srm]
-                elif group_area_srm:
-                  # no uploading Test,
-                  print 'no upload, just adding group_area_srm ', group_area_srm
-                  sj.application.group_area.name = group_area_srm
-                  sj.backend.clean += [group_area_srm]
-                
+
+              elif group_area_srm:
+                # no uploading, sut add the groupArea
+                sj.application.group_area.name = group_area_srm
+                sj.backend.clean += [group_area_srm]
+
             sj.name=job.name+'_'+str(i)
             i = i+1
             logger.info("preparing subjob %s" % sj.getFQID('.'))
@@ -1249,33 +1060,22 @@ class NG(IBackend):
           self.monInfo['remotefile'] = 'stdout.txt' 
       
       inpw = job.getInputWorkspace()
-      #print 'prepare job jobconfig.getSandboxFiles()',jobconfig.getSandboxFiles()
       packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
-      #print 'preparejob packed_files ', packed_files
       inbox = job.createPackedInputSandbox( packed_files ) 
-      #print 'preparejob inbox ', inbox
-      
+            
       inpDir = job.getInputWorkspace().getPath()
       outDir = job.getOutputWorkspace().getPath()
-      #print 'inpDir ', inpDir
-      #print 'outDir ', outDir
-      #print 'jobconfig.inputbox '
-
-      #for f in jobconfig.inputbox:
-      #    print f
-
+      
       infileList = []
       arguments = []
 
       exeCmdString = jobconfig.getExeString()
-      #print "preparejob exeCmdString " + exeCmdString
       exeString = jobconfig.getExeString().strip()
-      #print "preparejob exeString " + exeString
+      
 
       for filePath in inbox:
          if not filePath in infileList:
-            #print 'inbox ', filePath
-            infileList.append( filePath )
+           infileList.append( filePath )
             
       for filePath in master_input_sandbox:
          if not filePath in infileList:
@@ -1285,7 +1085,6 @@ class NG(IBackend):
 
       fileList = []
       for filePath in infileList:
-         #print 'infileList', filePath
          fileList.append( os.path.basename( filePath ) )   
 
       # inputfiles
@@ -1463,10 +1262,7 @@ class NG(IBackend):
                       continue
                   srm_endpoint = desc['srm'].strip()
           else:
-              srm_endpoint = 'srm://srm.ndgf.org;spacetoken=ATLASUSERDISK/atlas/disk/'
-
-          #print 'srm_endpoint ', srm_endpoint
-          
+              srm_endpoint = 'srm://srm.ndgf.org;spacetoken=ATLASUSERDISK/atlas/disk/'       
           if jobconfig.env.has_key('OUTPUT_LFN'):
               output_lfn = jobconfig.env['OUTPUT_LFN']
           
@@ -1502,30 +1298,22 @@ class NG(IBackend):
 
       # add group area to inputfiles
       if jobconfig.env.has_key('GROUP_AREA_REMOTE'):
-          ga = jobconfig.env['GROUP_AREA_REMOTE'].split('/')[-1]
-          infileString += "(" + ga + " " + jobconfig.env['GROUP_AREA_REMOTE'] + ")"
+        ga = jobconfig.env['GROUP_AREA_REMOTE'].split('/')[-1]
+        infileString += "(" + ga + " " + jobconfig.env['GROUP_AREA_REMOTE'] + ")"
 
-      if jobconfig.env.has_key('GROUP_AREA'):
-          print 'adding local group area ', jobconfig.env['GROUP_AREA'],' location ',  job.application.group_area.name
-          infileString += "(" + jobconfig.env['GROUP_AREA'] + " " + job.application.group_area.name + ")"
+      if jobconfig.env.has_key('GROUP_AREA'):       
+        infileString += "(" + jobconfig.env['GROUP_AREA'] + " " + job.application.group_area.name + ")"
           
       if infileString:
          xrslDict[ 'inputfiles' ] = infileString
 
-      if outfileString:
-         #print 'add outfileString' 
+      if outfileString: 
          xrslDict[ 'outputfiles' ] = outfileString         
 
       if job.name:
           xrslDict[ 'jobname' ] = job.name     
       elif job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.dataset:
           xrslDict[ 'jobname' ] = job.inputdata.dataset[0]
-
-      #print "############## This is xrslDict"
-      #print xrslDict
-
-#     if outfileString:
-#        xrslDict[ 'transfer_output_files' ] = outfileString
 
       xrslList = [
          "&" 
@@ -1566,11 +1354,9 @@ class NG(IBackend):
       
       xrslString = "\n".join( xrslList )
 
-      #print xrslString
-
       logger.debug('NG xrslString: %s ' % xrslString)
 
-      # return ""
+      
       
       if subjob:
           return xrslString
@@ -1675,7 +1461,6 @@ class NG(IBackend):
                     job.backend.cputime = info['cputime']    
         
                 if job.backend.status != info['status']:
-                    #print 'backend status ', job.backend.status
                     logger.info('job %s has changed status to %s',job.getFQID('.'),info['status'])
                     job.backend.status = info['status']
                     job.backend.reason = info['reason']
@@ -1757,14 +1542,12 @@ class NG(IBackend):
                     sjob.backend.cputime = info['cputime']    
 
                 if sjob.backend.status != info['status']:
-                    #print 'backend status ', job.backend.status
                     logger.info('job %s has changed status to %s',sjob.getFQID('.'),info['status'])
                     sjob.backend.status = info['status']
                     sjob.backend.reason = info['reason']
                     sjob.backend.exitcode = info['exit']
 
                     pps_check = True
-                    # postprocess of getting job output if the job is done
                     if ( info['status'] == 'FINISHED' or \
                        info['status'] == 'FAILED' or \
                        info['status'] == 'KILLED' or \
@@ -1822,18 +1605,6 @@ class NGJobConfig(StandardJobConfig):
     '''Extends the standard Job Configuration with additional attributes'''
    
     def __init__(self,exe=None,inputbox=[],args=[],outputbox=[],env={},inputdata=[],requirements=None):
-
-        #print 'In NG, arguments in NGJobConfig'
-        #print 'exe', exe
-        #print 'inputbox'
-        #for f in inputbox:
-        #    print f
-        #print 'arg'    
-        #for a in args:
-        #    print a
-        #print 'env ', env
-        #if requirements:
-        #    print 'requirements', requirements.runtimeenvironment
 
         self.inputdata=inputdata
         self.requirements=requirements
@@ -1945,7 +1716,7 @@ config.addOption('ARC_SETUP', arcloc + '/setup.sh','FIXME Environment setup scri
 
 config.addOption('Requirements','GangaNG.Lib.NG.NGRequirements','FIXME under testing sets the full qualified class name forother specific NG job requirements')
 
-config.addOption('BoundSandboxLimit',0.1 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to rls')
+config.addOption('BoundSandboxLimit', 0.01 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to rls')
 
 # set default values for the configuration parameters
 #config['ARC_ENABLE'] = True
