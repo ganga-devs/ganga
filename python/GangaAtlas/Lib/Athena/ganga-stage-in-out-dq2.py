@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.19 2008-10-20 15:28:00 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.20 2008-10-21 04:13:28 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1140,7 +1140,7 @@ if __name__ == '__main__':
                 configSTORAGEROOT = '/'
                 configLOCALPREFIX = ''
             # Hack for SFU, SNIP, UAM
-            if localsiteid in [ 'SFU', 'SINP', 'UAM' ]:
+            if localsiteid in [ 'SFU', 'SINP', 'UAM' ] or localsiteid.startswith('SFU') or localsiteid.startswith('TRIUMF') or localsiteid.startswith('ALBERTA'):  
                 configLOCALPROTOCOL = 'dcap'
                 configSTORAGEROOT = '/pnfs'
                 configLOCALPREFIX = 'dcap:'
