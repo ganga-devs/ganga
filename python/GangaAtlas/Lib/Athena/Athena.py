@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.9 2008-10-20 07:47:10 elmsheus Exp $
+# $Id: Athena.py,v 1.10 2008-10-21 09:23:16 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -156,7 +156,7 @@ class Athena(IApplication):
                     # Atlas release
                     athenaVer = os.path.basename(res.group(1))
                     break
-                elif items[0] in [ 'AtlasProduction', 'AtlasPoint1' ]:
+                elif items[0] in [ 'AtlasProduction', 'AtlasPoint1', 'AtlasTier0'  ]:
                     # production cache
                     productionVer = '%s' % os.path.basename(res.group(1))
                     projectName = '%s' %items[0]
@@ -736,6 +736,9 @@ config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The pa
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.9  2008/10/20 07:47:10  elmsheus
+# Fix HelloWorld job for Local/Batch backend
+#
 # Revision 1.8  2008/10/16 15:43:37  elmsheus
 # Athena.max_events has to been an integer now (Bug #42613)
 #
