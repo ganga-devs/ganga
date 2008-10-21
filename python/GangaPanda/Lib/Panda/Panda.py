@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.11 2008-10-16 21:56:52 dvanders Exp $
+# $Id: Panda.py,v 1.12 2008-10-21 14:30:34 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -55,7 +55,7 @@ def queueToAllowedSites(queue):
             try:
                 if ddm == site:
                     alternate_names = ToACache.sites[site]['alternateName']
-                    print '%s has alternateName %s'%(ddm,alternate_names)
+                    #print '%s has alternateName %s'%(ddm,alternate_names)
                     allowed_sites.append(site)
                     [allowed_sites.append(x) for x in alternate_names]
                 elif ddm in ToACache.sites[site]['alternateName']:
@@ -66,7 +66,7 @@ def queueToAllowedSites(queue):
                             allowed_sites.append(site)
             except (TypeError,KeyError):
                 continue
-    print 'allowed_sites: %s'%allowed_sites
+    #print 'allowed_sites: %s'%allowed_sites
 
     disallowed_sites = ['CERN-PROD_TZERO']
     allowed_allowed_sites = []
@@ -381,6 +381,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.11  2008/10/16 21:56:52  dvanders
+# add runPandaBrokerage and queueToAllowedSites functions
+#
 # Revision 1.10  2008/10/06 15:27:48  dvanders
 # add extOutFile
 #
