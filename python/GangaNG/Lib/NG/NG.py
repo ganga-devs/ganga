@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.8 2008-10-21 09:28:32 bsamset Exp $
+# $Id: NG.py,v 1.9 2008-10-22 13:35:08 pajchel Exp $
 ###############################################################################
 #
 # NG backend
@@ -1718,7 +1718,7 @@ config.addOption('ARC_SETUP', arcloc + '/setup.sh','FIXME Environment setup scri
 
 config.addOption('Requirements','GangaNG.Lib.NG.NGRequirements','FIXME under testing sets the full qualified class name forother specific NG job requirements')
 
-config.addOption('BoundSandboxLimit', 0.01 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to rls')
+config.addOption('BoundSandboxLimit', 5 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to rls')
 
 # set default values for the configuration parameters
 #config['ARC_ENABLE'] = True
@@ -1742,6 +1742,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.8  2008/10/21 09:28:32  bsamset
+# Added ARA support, setup of local databases
+#
 # Revision 1.7  2008/10/21 09:15:58  pajchel
 # creativ bug fixing
 #
