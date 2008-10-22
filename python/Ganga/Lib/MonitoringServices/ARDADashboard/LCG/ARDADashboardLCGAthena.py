@@ -20,7 +20,7 @@ class ARDADashboardLCGAthena(ARDADashboardLCG):
             try:
                 self.application = job_info['application']
                 self.applicationVersion = job_info['applicationVersion']
-                self.dataset = job_info['dataset']
+                self.dataset = job_info['dataset'][0]
                 self.activity = job_info['activity']
                 self.complete = True
             except KeyError,msg:
@@ -48,8 +48,10 @@ class ARDADashboardLCGAthena(ARDADashboardLCG):
             
             # dataset name
             try:
-                self.dataset = job.inputdata.dataset
+                self.dataset = job.inputdata.dataset[0]
             except AttributeError:
+                self.dataset = 'unknown'
+            except IndexError:
                 self.dataset = 'unknown'
             
             self.complete = True
