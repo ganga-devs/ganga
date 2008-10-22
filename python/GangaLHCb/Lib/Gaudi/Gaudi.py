@@ -491,7 +491,7 @@ class GaudiExtras:
     _userdlls = []
     _merged_pys = []
     _subdir_pys = []
-    inputdata = []
+    inputdata = LHCbDataset()
     _outputfiles = []
     outputdata = []
     _name = "GaudiExtras"
@@ -711,6 +711,9 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.14  2008/10/14 13:07:26  gcowan
+# Modified Gaudi application and runtime handlers so that they now place all .py files under InstallArea/python into the job input sandbox. Previously only *_merged_confDb.py, *_confDb.py, *Conf.py and _init_.py were copied (Configuration.py was missing).
+#
 # Revision 1.13  2008/09/26 12:09:42  wreece
 # Updates the schema definitions for Ganga 5.0.9-pre. Just adds a few type(None)s to the allowed types.
 #
