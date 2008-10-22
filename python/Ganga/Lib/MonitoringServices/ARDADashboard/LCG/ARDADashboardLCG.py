@@ -9,6 +9,16 @@ from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 from types import DictionaryType, IntType
 from Ganga.Lib.MonitoringServices.ARDADashboard.DashboardAPI import DashboardAPI
 
+out = open(os.path.join(os.getcwd(), 'dashboard.log'),'w')
+def printInfo(s):
+    out.write(str(s) + os.linesep)
+    out.flush()
+
+def printError(s):
+    out.write(str(s) + os.linesep)
+    out.flush()
+
+
 def safe_getenv(varname):
     try:
         return os.environ[varname]
@@ -17,6 +27,7 @@ def safe_getenv(varname):
 
 def get_output(commands):
     for command in commands:
+        printInfo("running %s" % command)
         p = popen2.Popen3(command)
         retcode = p.wait()
         if retcode == 0:
@@ -27,7 +38,10 @@ def get_output(commands):
                         s += ' '
                 s += l.split('\n')[0]
             return s
-        return 'unknown'
+        else:
+            lines = p.fromchild.readlines()
+            printInfo("get_output: %s" % lines)
+    return 'unknown'
 
 
 class ARDADashboardLCG(IMonitoringService):
@@ -126,7 +140,7 @@ class ARDADashboardLCG(IMonitoringService):
             try:
                 self.VO = backendConfig['VirtualOrganisation']
             except KeyError:
-                _logger.debug('VirtualOrganisation not configured')
+                self._logger.debug('VirtualOrganisation not configured')
                 # we need it, it's too dangerous if we are not sure
                 return
             
@@ -195,12 +209,12 @@ class ARDADashboardLCG(IMonitoringService):
     
     def start(self, **opts):
         # we are in principle in the WN. We need the CE (we try both possibilities)
-        
+        printInfo("monitor start event")
         if self.complete:
             hostqueue = get_output(['edg-brokerinfo getCE','glite-brokerinfo getCE'])
             
             if hostqueue == 'unknown':
-                self._logger.warning("brokerinfo command returns nothing")
+                printInfo("brokerinfo command returns nothing")
                 hostqueue = safe_getenv('GANGA_LCG_CE')
             self.dashboard.publish(SyncCE=hostqueue)
     
