@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GListApp.py,v 1.1 2008-07-17 16:41:11 moscicki Exp $
+# $Id: GListApp.py,v 1.2 2008-10-22 11:59:19 wreece Exp $
 ################################################################################
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IApplication import IApplication
@@ -20,7 +20,7 @@ class GListApp(IApplication):
         'bound_print_simple' : SimpleItem(defvalue=[], sequence=1, summary_print = '_print_summary_bound_simple'),
         'no_summary' : SimpleItem(defvalue=[], sequence=1, summary_sequence_maxlen = -1, typelist=['str']),
         'seq' : SimpleItem(defvalue=[], sequence = 1,typelist = ['int']), 
-        'gList' : SimpleItem(defvalue=GangaList(), sequence=1, typelist=['str']),
+        'gList' : SimpleItem(defvalue=[], sequence=1, typelist=['str']),
         'gListComp': ComponentItem('files', defvalue = [], sequence = 1),
         'simple_print': SimpleItem(defvalue='',summary_print = '_print_summary_simple_print'),
         'comp_print': ComponentItem('backends',defvalue = None ,summary_print = '_print_summary_comp_print')
