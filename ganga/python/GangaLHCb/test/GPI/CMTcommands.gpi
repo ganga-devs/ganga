@@ -1,0 +1,33 @@
+from GangaLHCb.test import *
+from GangaTest.Framework.utils import read_file,failureException
+
+ver=getTestDaVinciVersion()
+app = DaVinci(version=ver)
+
+import tempfile
+import os
+import os.path
+cmtuserpath=tempfile.mktemp()
+os.mkdir(cmtuserpath)
+app.user_release_area=cmtuserpath
+pack = 'Phys/DaVinci '+ver
+
+# Test getpack
+app.getpack(pack)
+fname = os.path.join(cmtuserpath,'DaVinci_'+ver,'Phys/DaVinci',ver,
+                     'cmt/requirements')
+read_file(fname)
+
+# Test build
+app.make()
+dirname = os.path.join(cmtuserpath,'DaVinci_'+ver,'Phys/DaVinci',ver,
+                       app._impl.platform)
+fname = os.path.join(dirname,'DaVinci.exe')
+read_file(fname)
+
+# Test general CMT command
+import shutil
+
+shutil.rmtree(dirname)
+app.cmt('br make')
+read_file(fname)

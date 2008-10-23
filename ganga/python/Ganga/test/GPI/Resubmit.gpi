@@ -1,0 +1,9 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+j = Job()
+assert(j.submit())
+sleep_until_completed(j,60)
+
+assert(j.resubmit())
+assert(j.status != 'completed')
+sleep_until_completed(j,60)
