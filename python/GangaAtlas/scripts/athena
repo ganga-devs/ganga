@@ -95,7 +95,7 @@ p.add_option('--runtimeenvironment', action='store', type='string', dest='runtim
 
 # Application options
 p.add_option('-c', action='store', type='string', dest='options', help='One-liner, runs before any job Options')
-p.add_option('--maxevt' , action='store', type='string', dest='maxevt', help='Maximal number of events to process')
+p.add_option('--maxevt' , action='store', type='int', dest='maxevt', help='Maximal number of events to process')
 p.add_option('--compile', action='store_true', help='Determine if job should be recompiled on Grid worker node' )
 p.add_option('--nocompile', action='store_true', help='Determine if job should *not* be recompiled on Grid worker node' )
 p.add_option('--excludefiles', action='store', type='string', dest='excludefiles', help='List of files to be excluded from user_area tar file, separated by ":", e.g. --excludefiles=*.root:Numbers.txt')
