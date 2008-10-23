@@ -34,7 +34,7 @@ def bootstrap(reg, interactive_session):
     from Ganga.Core.InternalServices import Coordinator,ShutdownManager
     Coordinator.bootstrap()
     #load the shutdown manager    
-    ShutdownManager.install()
+    #ShutdownManager.install()
 
     # backend-specific setup (e.g. Remote: setup any remote ssh pipes)
     for j in reg:
