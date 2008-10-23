@@ -2,6 +2,11 @@
 import os
 from GangaTest.Framework.tests import MultipassTest
 
+import Ganga.GPI
+
+if Ganga.GPI.config.Configuration.repositorytype == 'LocalXML':
+    assert 0, "LocalXML repository does not support automatic schema migration (intentionally)"
+    
 class MigrationFramework(MultipassTest):
     def __init__(self):
         MultipassTest.__init__(self, 2)
