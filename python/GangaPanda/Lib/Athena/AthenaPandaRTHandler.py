@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.9 2008-10-17 11:48:43 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.10 2008-10-23 11:37:24 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -741,8 +741,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '--shipInput '
         #FIXME options.rndmStream
         nEventsToSkip = 0
-        if app.max_events:
-            param += '-f "theApp.EvtMax=%s;EventSelector.SkipEvents=%s" ' % (app.max_events,nEventsToSkip)
+        if app.max_events > 0:
+            param += '-f "theApp.EvtMax=%d;EventSelector.SkipEvents=%s" ' % (app.max_events,nEventsToSkip)
         # addPoolFC
         if self.config['addPoolFC'] != "":
             param += '--addPoolFC %s ' % self.config['addPoolFC']
