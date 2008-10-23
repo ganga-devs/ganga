@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.9 2008-10-22 13:35:08 pajchel Exp $
+# $Id: NG.py,v 1.10 2008-10-23 11:05:47 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -1490,7 +1490,7 @@ class NG(IBackend):
                         pps_check = grids[mt].get_output(job.backend.id,outw.getPath(),output,wms_proxy=False)
                 
                     if pps_check:
-                        print 'updateMonitoring info staus ', info['status']
+                        #print 'updateMonitoring info staus ', info['status']
                         NG.updateGangaJobStatus(job,info['status'])
                     else:
                         job.updateStatus("failed")
@@ -1742,6 +1742,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.9  2008/10/22 13:35:08  pajchel
+# min. limit for sandbox/groupArea upload 5M
+#
 # Revision 1.8  2008/10/21 09:28:32  bsamset
 # Added ARA support, setup of local databases
 #
