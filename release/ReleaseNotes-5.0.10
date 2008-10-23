@@ -1,5 +1,14 @@
 **************************************************************************************************************
-5.0.10 (2008/10/21)
+5.0.10 (2008/10/23)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard
+--------------------------------------------------------------------------------------------------------------
+Fixed all the important bugs:
+
+- now the job identifies the CE it runs on and it shows in the dashboard,
+- dataset properly returned as well,
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -50,9 +59,8 @@ InstallArea/python into the job input sandbox. Previously only *_merged_confDb.p
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaNG
 --------------------------------------------------------------------------------------------------------------
-* Added automatic setup of local databases when using the Athena application, necessary for running
-under athena 14
-* Removed some superflous logging messages
+* Removed logging messages
+* Minor bugfixes
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -64,5 +72,12 @@ brokering and incomplete datasets. (Fixes https://savannah.cern.ch/bugs/?42573)
 to use DQ2JobSplitter instead.
 
 Added detection of 'AtlasTier0' and 'AtlasP1HLT' releases.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaRobot
+--------------------------------------------------------------------------------------------------------------
+Changed username and gangadir in the test configuration files to allow the Robot tests to run at the
+same time as the core tests.
 
 **************************************************************************************************************
