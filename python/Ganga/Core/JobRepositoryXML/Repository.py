@@ -83,6 +83,9 @@ class Repository:
         for id in jobids:
             try:
                 subpath = os.sep.join([str(i) for i in id])
+                #update the corresponding counter for subjobs
+                #the use-case is limited to the rollback of subjobs in case of submission failure
+                self.counters[id[0]].subtract()
             except TypeError:
                 subpath = str(id)
             removedir(os.path.join(self.dir,subpath))

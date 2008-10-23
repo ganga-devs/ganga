@@ -24,3 +24,7 @@ class Counter:
         self.cnt += n
         pickle.dump(self.cnt,file(self.cntfn,'w'))
         return ids
+
+    def subtract(self):
+        self.cnt -= 1
+        pickle.dump(self.cnt,file(self.cntfn,'w'))
