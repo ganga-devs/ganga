@@ -206,7 +206,7 @@ if opt.user_setupfile:
 
 # max_events
 if opt.maxevt:
-   j.application.max_events = opt.maxevt
+   j.application.max_events = int(opt.maxevt)
 
 # inputdata
 
