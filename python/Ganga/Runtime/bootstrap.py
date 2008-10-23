@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.6 2008-09-05 15:55:51 moscicki Exp $
+# $Id: bootstrap.py,v 1.7 2008-10-23 15:24:04 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -40,6 +40,15 @@ _gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
 from Ganga.Utility.files import fullpath
 
 import sys,time
+
+#import atexit, traceback
+#def register(f):
+#   print '*'*10
+#   print 'register',f
+#   traceback.print_stack()
+#   _register(f)
+#_register = atexit.register
+#atexit.register = register
 
 class GangaProgram:
     """ High level API to create instances of Ganga programs and configure/run it """
@@ -436,12 +445,21 @@ If ANSI text colours are enabled, then individual colours may be specified like 
     # if option rexec=1 then initEnvironment restarts the current ganga process (needed for LD_LIBRARY_PATH on linux)
     # set rexec=0 if you prepare your environment outside of Ganga and you do not want to rexec process
     def initEnvironment(self):
+
+        from Ganga.Core.InternalServices import ShutdownManager
+        ShutdownManager.install()
+       
         import os,os.path
         import Ganga.Utility.Config
         from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
-
-        # load Ganga system plugins...
-        import plugins
+        from Ganga.Core import GangaException
+        
+        try:
+           # load Ganga system plugins...
+           import plugins
+        except Exception,x:
+           self.logger.critical('Ganga system plugins could not be loaded due to the following reason: %s',str(x))
+           raise GangaException(x) 
 
         # initialize runtime packages, they are registered in allRuntimes dictionary automatically
         try:
@@ -918,6 +936,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.6  2008/09/05 15:55:51  moscicki
+# XML differenciater added (from Ulrik)
+#
 # Revision 1.5  2008/08/18 13:18:59  moscicki
 # added force_status() method to replace job.fail(), force_job_failed() and
 # force_job_completed()
