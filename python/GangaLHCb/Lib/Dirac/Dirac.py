@@ -71,7 +71,7 @@ j = Job(application=app,backend=Dirac())
 j.submit()
     
     """
-    _schema = Schema(Version(1, 5), 
+    _schema = Schema(Version(2, 0), 
             {'id': SimpleItem(defvalue = None, protected = 1, copyable = 0, typelist=['int','type(None)'],
                               doc='''The id number assigned to the job by the
 DIRAC WMS. If seeking help on jobs with the Dirac backend, please always
@@ -147,9 +147,8 @@ the DIRAC WMS'''),
         if self.CPUTime:
             diracScript.append("setCPUTime("+str(self.CPUTime)+")")
 
-        diracsite = configDirac['DIRACsite']
-        if diracsite!=None and len(diracsite)>0:
-            diracScript.append('setDestination("'+diracsite+'")')
+        #set the destination - can use 'localhost' here for agent mode
+        diracScript.setDestination(configDirac['DIRACsite'])
 
         # Write script into input sandbox and submit
         diracScript.write(job)
@@ -717,6 +716,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.2.2.7  2008/10/13 08:56:08  wreece
+## Merges to HEAD for latest fixes
+##
 ## Revision 1.3  2008/09/26 12:09:42  wreece
 ## Updates the schema definitions for Ganga 5.0.9-pre. Just adds a few type(None)s to the allowed types.
 ##

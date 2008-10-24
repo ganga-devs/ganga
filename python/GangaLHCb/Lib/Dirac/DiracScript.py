@@ -38,7 +38,9 @@ from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.LHCbSystem.Client.LHCbJob import LHCbJob
 
 djob = LHCbJob()
-"""  
+"""
+      self.mode = 'wms' #the Dirac default
+        
   def append(self,command):
     """Append a command to the DIRAC script for setting up the job"""
     if self.finalised:
@@ -95,6 +97,13 @@ djob = LHCbJob()
         self.append("setApplicationScript('%s','%s','%s', logFile = '%s')" % (appName,appVersion,scriptFile,logFile))
     else:
         self.append("setApplicationScript('%s','%s','%s')" % (appName,appVersion,scriptFile))
+        
+  def setDestination(self, diracSite):
+      if diracSite is None or not diracSite: return
+      if diracSite.lower() != 'localhost':
+          self.append('setDestination("%s")' % diracSite)
+      else:
+          self.mode = 'agent' #run the dirac session locally
 
   def finalise(self, submit = True):
     """Write the actual submission bit into the DIRACscript"""
@@ -106,7 +115,7 @@ submit = %(#SUBMIT#)i
 
 result = {}
 try:
-    if submit: result = mydirac.submit(djob)
+    if submit: result = mydirac.submit(djob, mode = '%(#MODE#)s')
 except:
     pass
 
@@ -115,9 +124,9 @@ if not result.get('OK',False):
     import time
     time.sleep(5)
     mydirac = Dirac()
-    if submit: result = mydirac.submit(djob)
+    if submit: result = mydirac.submit(djob, mode = '%(#MODE#)s')
 storeResult(result)
-""" % {'#SUBMIT#':int(submit)}
+""" % {'#SUBMIT#':int(submit),'#MODE#':self.mode}
 
   def write(self,job, submit = True):
     """Persist the DIRACscript into the input workspace"""

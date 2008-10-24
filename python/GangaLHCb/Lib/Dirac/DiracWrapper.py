@@ -10,6 +10,9 @@ import tempfile
 configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 configLHCb = Ganga.Utility.Config.getConfig('LHCb')
 
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
+
 import DiracShared
 
 # The LD_LIBRARY_PATH set by Ganga interferes with GridEnv. Hence unset
@@ -39,7 +42,7 @@ if not exists(diracEnvSetup):
 
 diracVersion = None
 try:
-    diracTopDir = configDirac['DiracTopDir']
+    diracTopDir = configLHCb['DiracTopDir']
     if diracTopDir.endswith(sep):
         diracTopDir = diracTopDir[:-1]
     diracName = basename(diracTopDir)
@@ -49,7 +52,8 @@ try:
             diracVersion = d[1]
     if diracVersion is None:
         logger.warning('Failed to find the DIRAC Version to use from %s. Using a default value',diracTopDir)
-except:
+except Exception, e:
+    logger.warning("Failed to find the DIRAC Version. Error was '%s'", str(e))
     diracVersion = 'v3r3'
 s = Shell(diracEnvSetup,setup_args = [diracVersion])
 
