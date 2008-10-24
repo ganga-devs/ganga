@@ -1,17 +1,14 @@
 
-def browseBK():
+def browseBK(gui=True):
     import Ganga.Utility.logging
     logger = Ganga.Utility.logging.getLogger()
     try: 
-        import GangaGUI.LHCB_BKDB_browser.browser_mod
+        from GangaLHCb.Lib.Dirac.Bookkeeping import Bookkeeping
     except ImportError:
-        logger.warning("Could not import the GangaGUI. ")
-        logger.warning("The LHCb bookkeeping browser will not be available")
-        logger.warning("Try to add 'GangaGUI' to your RUNTIME_PATH")
-        logger.warning("in your .gangarc file or start ganga with options:")
-        logger.warning('''"ganga -o'[Configuration]RUNTIME_PATH=GangaGUI'"''')
+        logger.warning('''Could not start Bookkeeping Browser''')
         return None
-    list = GangaGUI.LHCB_BKDB_browser.browser_mod.browse()
+    bkk=Bookkeeping()
+    list = bkk.browse(gui)
     return LHCbDataset(files=[File(name=n) for n in list])
 
         
