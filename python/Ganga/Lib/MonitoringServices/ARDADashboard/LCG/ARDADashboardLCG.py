@@ -9,14 +9,17 @@ from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 from types import DictionaryType, IntType
 from Ganga.Lib.MonitoringServices.ARDADashboard.DashboardAPI import DashboardAPI
 
-out = open(os.path.join(os.getcwd(), 'dashboard.log'),'w')
+#out = open(os.path.join(os.getcwd(), 'dashboard.log'),'w')
 def printInfo(s):
-    out.write(str(s) + os.linesep)
-    out.flush()
+    pass
+#    out.write(str(s) + os.linesep)
+#    out.flush()
+
 
 def printError(s):
-    out.write(str(s) + os.linesep)
-    out.flush()
+    pass
+#    out.write(str(s) + os.linesep)
+#    out.flush()
 
 
 def safe_getenv(varname):
