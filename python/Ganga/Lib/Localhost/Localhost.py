@@ -23,13 +23,14 @@ class Localhost(IBackend):
 
     The job is run in the workdir (usually in /tmp).
     """
-    _schema = Schema(Version(1,1), {'nice' : SimpleItem(defvalue=None,typelist=None,doc='*NOT USED*', hidden=1),
+    _schema = Schema(Version(1,2), {'nice' : SimpleItem(defvalue=None,typelist=None,doc='*NOT USED*', hidden=1),
                                     'id' : SimpleItem(defvalue=-1,protected=1,copyable=0,doc='Process id.'),
                                     'status' : SimpleItem(defvalue=None,typelist=None,protected=1,copyable=0,hidden=1,doc='*NOT USED*'),
                                     'exitcode' : SimpleItem(defvalue=None,typelist=['int','type(None)'],protected=1,copyable=0,doc='Process exit code.'),
                                     'workdir' : SimpleItem(defvalue='',protected=1,copyable=0,doc='Working directory.'),
                                     'actualCE' : SimpleItem(defvalue='',protected=1,copyable=0,doc='Hostname where the job was submitted.'),
-                                    'wrapper_pid' : SimpleItem(defvalue=-1,protected=1,copyable=0,hidden=1,doc='(internal) process id of the execution wrapper')
+                                    'wrapper_pid' : SimpleItem(defvalue=-1,protected=1,copyable=0,hidden=1,doc='(internal) process id of the execution wrapper'),
+                                    'nice' : SimpleItem(defvalue=0, doc='adjust process priority using nice -n command')
                                     })
     _category = 'backends'
     _name = 'Local'
@@ -101,6 +102,11 @@ class Localhost(IBackend):
 
       subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles())
       appscriptpath = [jobconfig.getExeString()]+jobconfig.getArgStrings()
+      if self.nice:
+          appscriptpath = ['nice','-n %d'%self.nice] + appscriptpath
+      if self.nice < 0:
+          logger.warning('increasing process priority is often not allowed, your job may fail due to this')
+          
       sharedoutputpath=job.getOutputWorkspace().getPath()
       outputpatterns=jobconfig.outputbox
       environment=jobconfig.env
