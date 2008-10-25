@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.10 2008-10-21 09:23:16 elmsheus Exp $
+# $Id: Athena.py,v 1.11 2008-10-25 16:09:39 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -440,14 +440,16 @@ class AthenaSplitterJob(ISplitter):
     
     _name = "AthenaSplitterJob"
     _schema = Schema(Version(1,0), {
-        'numsubjobs': SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
-        'numfiles_subjob': SimpleItem(defvalue=0,sequence=0, doc="Number of files per subjob"),
-        'match_subjobs_files': SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of inputfiles")
+        'numsubjobs'           : SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
+        'numfiles_subjob'      : SimpleItem(defvalue=0,sequence=0, doc="Number of files per subjob"),
+        'match_subjobs_files'  : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of inputfiles"),
+        'split_per_dataset'   : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of datasets")
         } )
 
-    _GUIPrefs = [ { 'attribute' : 'numsubjobs',  'widget' : 'Int' },
-                  { 'attribute' : 'numfiles_subjob',  'widget' : 'Int' },
-                  { 'attribute' : 'match_subjobs_files',  'widget' : 'Bool' }
+    _GUIPrefs = [ { 'attribute' : 'numsubjobs',           'widget' : 'Int' },
+                  { 'attribute' : 'numfiles_subjob',      'widget' : 'Int' },
+                  { 'attribute' : 'match_subjobs_files',  'widget' : 'Bool' },
+                  { 'attribute' : 'split_per_dataset',    'widget' : 'Bool' },
                   ]
 
     ### Splitting based on numsubjobs
@@ -476,32 +478,44 @@ class AthenaSplitterJob(ISplitter):
                     inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset()[j])
 
             if job.inputdata._name == 'DQ2Dataset':
-                content = []
-                input_files = []
-                input_guids = []
-                names = None
-                # Get list of filenames and guids
-                contents = job.inputdata.get_contents()
-                if self.match_subjobs_files:
-                    self.numsubjobs = len(contents)
-                elif self.numfiles_subjob>0:
-                    numjobs = len(contents) / int(self.numfiles_subjob)
-                    if (len(contents) % self.numfiles_subjob)>0:
-                        numjobs += 1
-                    self.numsubjobs = numjobs
-                    logger.info('Submitting %s subjobs',numjobs)
+                # Splitting per dataset
+                if self.split_per_dataset:
+                    contents = job.inputdata.get_contents(overlap=False)
+                    datasets = job.inputdata.dataset
+                    self.numsubjobs = len(datasets)
+                    for dataset in datasets:
+                        content = contents[dataset]
+                        content.sort(lambda x,y:cmp(x[1],y[1]))
+                        inputnames.append( [ lfn for guid, lfn in content ] )
+                        inputguids.append( [ guid for guid, lfn in content ] )
+                else:
+                    # Splitting per file
+                    content = []
+                    input_files = []
+                    input_guids = []
+                    names = None
+                    # Get list of filenames and guids
+                    contents = job.inputdata.get_contents()
+                    if self.match_subjobs_files:
+                        self.numsubjobs = len(contents)
+                    elif self.numfiles_subjob>0:
+                        numjobs = len(contents) / int(self.numfiles_subjob)
+                        if (len(contents) % self.numfiles_subjob)>0:
+                            numjobs += 1
+                        self.numsubjobs = numjobs
+                        logger.info('Submitting %s subjobs',numjobs)
 
-                # Fill dummy values
-                for i in xrange(self.numsubjobs):    
-                    inputnames.append([])
-                    inputguids.append([])
-                input_files = [ lfn  for guid, lfn in contents ]
-                input_guids = [ guid for guid, lfn in contents ]
+                    # Fill dummy values
+                    for i in xrange(self.numsubjobs):    
+                        inputnames.append([])
+                        inputguids.append([])
+                    input_files = [ lfn  for guid, lfn in contents ]
+                    input_guids = [ guid for guid, lfn in contents ]
 
-                # Splitting
-                for j in xrange(len(input_files)):
-                    inputnames[j % self.numsubjobs].append(input_files[j])
-                    inputguids[j % self.numsubjobs].append(input_guids[j])
+                    # Splitting
+                    for j in xrange(len(input_files)):
+                        inputnames[j % self.numsubjobs].append(input_files[j])
+                        inputguids[j % self.numsubjobs].append(input_guids[j])
 
         if job.backend._name == 'LCG' and job.backend.middleware=='GLITE' and self.numsubjobs>config['MaxJobsAthenaSplitterJobLCG']:
             printout = 'Job submission failed ! AthenaSplitterJob.numsubjobs>%s - glite WMS does not like bulk jobs with more than approximately 100 subjobs - use less subjobs or use job.backend.middleware=="EDG"  ' %config['MaxJobsAthenaSplitterJobLCG']
@@ -519,6 +533,8 @@ class AthenaSplitterJob(ISplitter):
                     if job.inputdata._name == 'DQ2Dataset':
                         j.inputdata.guids=inputguids[i]
                         j.inputdata.number_of_files = len(inputguids[i])
+                        if self.split_per_dataset:
+                            j.inputdata.dataset=job.inputdata.dataset[i]
             j.outputdata=job.outputdata
             j.application = job.application
             j.backend=job.backend
@@ -736,6 +752,9 @@ config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The pa
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.10  2008/10/21 09:23:16  elmsheus
+# Add AtlasTier0
+#
 # Revision 1.9  2008/10/20 07:47:10  elmsheus
 # Fix HelloWorld job for Local/Batch backend
 #
