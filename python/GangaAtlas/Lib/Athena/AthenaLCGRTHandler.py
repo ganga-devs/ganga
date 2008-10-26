@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.18 2008-10-20 07:47:11 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.19 2008-10-26 10:59:50 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -427,9 +427,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['GROUP_AREA'] = os.path.basename(app.group_area.name)
 
         if app.max_events:
-            if app.max_events == -999:
-                environment['ATHENA_MAX_EVENTS'] = ''
-            else:
+            if (app.max_events != -999) and (app.max_events > -2):
                 environment['ATHENA_MAX_EVENTS'] = str(app.max_events)
 
         requirements = AtlasLCGRequirements()
