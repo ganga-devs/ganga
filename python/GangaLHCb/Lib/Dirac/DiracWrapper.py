@@ -32,7 +32,6 @@ _checkVar(_varKeep,'DIRACROOT')
 environ['DIRACROOT'] = configLHCb['DiracTopDir']
 
 #figure out where our env is to load
-# TODO: HACK
 class __FindMe(object):
     pass
 diracEnvSetup = join(dirname(inspect.getsourcefile(__FindMe)),'setupDiracEnv.sh')
@@ -40,21 +39,21 @@ if not exists(diracEnvSetup):
     logger.error("Cannot find the file 'setupDiracEnv.sh' needed by ganga.")
     raise BackendError('Dirac',"Cannot find the file 'setupDiracEnv.sh' needed by ganga.")
 
-diracVersion = None
+diracVersion = ''
 try:
     diracTopDir = configLHCb['DiracTopDir']
-    if diracTopDir.endswith(sep):
-        diracTopDir = diracTopDir[:-1]
-    diracName = basename(diracTopDir)
-    if diracName:
-        d = diracName.split('_')
-        if len(d) == 2 and d[0].startswith('DIRAC'):
-            diracVersion = d[1]
-    if diracVersion is None:
+    if diracTopDir:
+        if diracTopDir.endswith(sep):
+            diracTopDir = diracTopDir[:-1]
+        diracName = basename(diracTopDir)
+        if diracName:
+            d = diracName.split('_')
+            if len(d) == 2 and d[0].startswith('DIRAC'):
+                diracVersion = d[1]
+    if not diracVersion:
         logger.warning('Failed to find the DIRAC Version to use from %s. Using a default value',diracTopDir)
 except Exception, e:
     logger.warning("Failed to find the DIRAC Version. Error was '%s'", str(e))
-    diracVersion = 'v3r3'
 s = Shell(diracEnvSetup,setup_args = [diracVersion])
 
 for key, item in _varKeep.iteritems():

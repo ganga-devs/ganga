@@ -273,7 +273,7 @@ def getOutput(dirac, num):
     return result
 
 #finally actually get the output
-for i in range(2):
+for i in range(3):
     result = getOutput(dirac, i)
     if (result is None) or (result is not None and not result.get('OK', False)):
         import time
@@ -659,11 +659,11 @@ storeResult(result)
                              str(j.id),str(j.backend.id),
                              j.backend.actualCE, j.backend.status) 
 
-                if ("completed" != gangaStatus) and ("failed" != gangaStatus) and (gangaStatus != j.status):
+                if ("completed" != gangaStatus) and (gangaStatus != j.status):
                     j.updateStatus(gangaStatus)
 
             # Retrieve output while in completing state
-            if ("completed" == gangaStatus) or ("failed" == gangaStatus):
+            if ("completed" == gangaStatus):
 
                 from Ganga.Core import Sandbox
                 
@@ -716,6 +716,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.4  2008/10/27 11:06:53  wreece
+## Dirac 3 merged to HEAD. Need to perform lots of testing
+##
 ## Revision 1.3  2008/09/26 12:09:42  wreece
 ## Updates the schema definitions for Ganga 5.0.9-pre. Just adds a few type(None)s to the allowed types.
 ##
