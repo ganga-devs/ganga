@@ -241,6 +241,7 @@ class Gaudi(IApplication):
 
     def _dataset2optionsstring(self,ds):
         s=''
+        if not ds: return s
         s='EventSelector.Input   = {'
         for k in ds.files:
             s+='\n'
@@ -711,6 +712,9 @@ for app in _available_apps+["Gaudi"]:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.15  2008/10/22 12:14:21  wreece
+# Removes an incorrect test and adds small fix to make another pass.
+#
 # Revision 1.14  2008/10/14 13:07:26  gcowan
 # Modified Gaudi application and runtime handlers so that they now place all .py files under InstallArea/python into the job input sandbox. Previously only *_merged_confDb.py, *_confDb.py, *Conf.py and _init_.py were copied (Configuration.py was missing).
 #
