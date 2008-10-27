@@ -77,7 +77,7 @@ j.submit()
 DIRAC WMS. If seeking help on jobs with the Dirac backend, please always
 report this id number in addition to a full description of your problem.
 The id can also be used to further inspect the job at
-http://lhcb.pic.es/DIRAC/Monitoring/Analysis/ '''),
+https://lhcbweb.pic.es/DIRAC/info/general/diracOverview '''),
             'status':SimpleItem(defvalue = None, protected = 1, copyable = 0,typelist=['str','type(None)'],
                                 doc='''The detailed status as reported by
 the DIRAC WMS'''),
@@ -716,6 +716,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.5  2008/10/27 14:42:23  wreece
+## stops failed jobs from downloading their sandboxes
+##
 ## Revision 1.4  2008/10/27 11:06:53  wreece
 ## Dirac 3 merged to HEAD. Need to perform lots of testing
 ##
