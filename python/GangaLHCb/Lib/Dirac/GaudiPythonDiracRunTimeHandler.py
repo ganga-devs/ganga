@@ -58,7 +58,7 @@ class GaudiPythonDiracRunTimeHandler(IRuntimeHandler):
         
         diracScript.platform(app.platform)
         diracScript.runApplicationScript(app.project, app.version,\
-                                         DiracShared.getGenericRunScript(),logFile)
+                                         DiracShared.getGenericRunScript(job),logFile)
         diracScript.setName("Ganga_GaudiPython")
         if job.inputdata:
             diracScript.inputdata(job.inputdata)

@@ -46,7 +46,7 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
         
         diracScript.platform(architecture)
         diracScript.runApplicationScript('DaVinci',version,\
-                                         DiracShared.getGenericRunScript(),logFile)
+                                         DiracShared.getGenericRunScript(job),logFile)
         diracScript.setName('Ganga_ROOT_%s' % app.version)
 
         if job.inputdata:

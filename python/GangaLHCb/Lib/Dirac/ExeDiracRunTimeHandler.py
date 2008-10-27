@@ -26,7 +26,7 @@ class ExeDiracRunTimeHandler(IRuntimeHandler):
         c = StandardJobConfig(app.exe,[],app.args,
                               app._getParent().outputsandbox,app.env)
         logFile = 'GangaExcutable.log'
-        diracScript.setExecutable(logFile = logFile, command = DiracShared.getGenericRunScript())
+        diracScript.setExecutable(logFile = logFile, command = DiracShared.getGenericRunScript(job))
         diracScript.setName("Ganga_Executable")
 
         if job.inputdata:

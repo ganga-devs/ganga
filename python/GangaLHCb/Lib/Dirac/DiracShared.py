@@ -73,10 +73,21 @@ def listdirs(path, file_list = []):
     return file_list
 
 
-def getGenericRunScript():
+def getGenericRunScript(job = None):
     import inspect, os
     
+    diracMainFile = 'diracJobMain.py'
+    
     diracShared = inspect.getsourcefile(getGenericRunScript)
-    return os.path.join(os.path.dirname(diracShared),'diracJobMain.py')
+    diracJobMain = os.path.join(os.path.dirname(diracShared),diracMainFile)
+    
+    diracMainCopy = diracJobMain #copy into inputdir if possible
+    if job is not None:
+        inputdir = job.getInputWorkspace().getPath()
+        if os.path.exists(inputdir):
+            import shutil
+            diracMainCopy = os.path.join(inputdir,diracMainFile)
+            shutil.copyfile(diracJobMain, diracMainCopy)
+    return diracMainCopy
 
 
