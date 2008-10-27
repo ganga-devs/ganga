@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.10 2008-10-23 11:05:47 bsamset Exp $
+# $Id: NG.py,v 1.11 2008-10-27 16:33:38 pajchel Exp $
 ###############################################################################
 #
 # NG backend
@@ -77,14 +77,25 @@ def getTidDatasetnames(ds):
       
   return ds_tid
 
-def matchLFNtoDataset(ds,lfn):
+def matchLFNtoDataset(ds,lfn,atlasrel):
 
   tid = lfn.split('.')[1]
   lrnds = None
-  for d in ds:
-    if d.find('_tid'+tid) > -1:
-      lfnds = d
-
+  at = atlasrel.split('.')
+  
+  if int(at[0]) > 12:  
+    for d in ds:
+      if d.find('_tid'+tid) > -1:
+        lfnds = d
+  else:
+    lfn1 = lfn.split('_')
+    for l in lfn1:
+      if l.startswith('tid'):
+        tid = l.strip('.') 
+    for d in ds:
+      if d.find(tid) > -1:
+        lfnds = d
+        
   return lfnds
 
 def getGangaLFN(dataset,fname):
@@ -1101,10 +1112,9 @@ class NG(IBackend):
           if self.check_availability:
             remove_flist=[]
             remove_glist=[]
-            for f in range(len(job.inputdata.names)):
-
+            for f in range(len(job.inputdata.names)): 
                 if len(ds_tid) > 1:
-                  lfn_ds = matchLFNtoDataset(ds_tid,job.inputdata.names[f])
+                  lfn_ds = matchLFNtoDataset(ds_tid,job.inputdata.names[f],job.application.atlas_release)
                   lfn = getLFCurl(lfn_ds,job.inputdata.names[f])
                 else:
                   lfn = getLFCurl(ds_tid[0],job.inputdata.names[f])
@@ -1131,7 +1141,7 @@ class NG(IBackend):
           else:
             for f in range(len(job.inputdata.names)):
               if len(ds_tid) > 1:
-                lfn_ds = matchLFNtoDataset(ds_tid,job.inputdata.names[f])
+                lfn_ds = matchLFNtoDataset(ds_tid,job.inputdata.names[f], job.application.atlas_release)
                 lfn = getLFCurl(lfn_ds,job.inputdata.names[f])
                 lfnlist += [lfn]
               else:
@@ -1742,6 +1752,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.10  2008/10/23 11:05:47  bsamset
+# Removed debugging message
+#
 # Revision 1.9  2008/10/22 13:35:08  pajchel
 # min. limit for sandbox/groupArea upload 5M
 #
