@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# $Id: PythonOptionsParser.py,v 1.11 2008-10-03 18:02:51 gcowan Exp $
+# $Id: PythonOptionsParser.py,v 1.12 2008-10-27 11:06:52 wreece Exp $
 
 __author__ = 'Greig A Cowan'
 __date__ = 'June 2008'
@@ -39,8 +39,9 @@ class PythonOptionsParser:
         rc, optionsString, m = self.shell.cmd1( gaudirun)
         if not rc ==0:
             from Ganga.Core import ApplicationConfigurationError
-            raise ApplicationConfigurationError( None, 'Problem with syntax in options file')
             logger.error('Cannot run: %s', gaudirun)
+            logger.error('Output was %s', optionsString)
+            raise ApplicationConfigurationError( None, 'Problem with syntax in options file')
     
         if optionsString and rc == 0:
             try:

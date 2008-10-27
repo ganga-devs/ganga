@@ -11,6 +11,8 @@ from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+import DiracShared
+
 class GaudiDiracRunTimeHandler(IRuntimeHandler):
     '''The runtime handler to run Gaudi jobs on the Dirac backend'''
 
@@ -44,7 +46,6 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         
         inputsandbox = []
         if app.extra.dataopts:
-#            inputsandbox.append( FileBuffer( 'dataopts.py',app.extra.dataopts))
             dataopts = app.extra.dataopts +\
                        '\nFileCatalog.Catalogs += { "xmlcatalog_file:pool_xml_catalog.xml" };\n'
             inputsandbox.append( FileBuffer( 'dataopts.opts', dataopts))
@@ -59,9 +60,12 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         c = StandardJobConfig( runScript,inputsandbox,[],outputsandbox,None)
         
-        diracScript.append( 'setApplication("' + app._name + '","' + app.version + '")')
+        logFile = '%s_%s.log' % (app._name, app.version)
+        
         diracScript.platform(app.platform)
-        diracScript.append( 'setName("Ganga_'  + app._name + '_'   + app.version + '")')
+        diracScript.runApplicationScript(app._name, app.version,\
+                                         DiracShared.getGenericRunScript(),logFile)
+        diracScript.setName( 'Ganga_%s_%s' % (app._name, app.version) )
         diracScript.inputdata( app.extra.inputdata)
 
         outdata = app.extra.outputdata
@@ -78,7 +82,7 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         '''Create the script that will be executed.'''
 
 #        commandline = '\'$GAUDIROOT/scripts/gaudirun.py options.pkl dataopts.py\''
-        commandline = '\'$GAUDIROOT/scripts/gaudirun.py options.pkl dataopts.opts\''
+        commandline = "'gaudirun.py options.pkl dataopts.opts'"
         logger.debug( 'Command line: %s: ', commandline )
 
         # Write a wrapper script
@@ -103,8 +107,9 @@ if __name__ == '__main__':
 
     sys.stdout.flush()
     sys.stderr.flush()
+    setEnvironment( 'LD_LIBRARY_PATH', getcwd() + '/lib', True)
     setEnvironment( 'PYTHONPATH', getcwd() + '/python', True)
-    
+        
     #exec the script
     print 'Executing ',commandline
     sys.stdout.flush()

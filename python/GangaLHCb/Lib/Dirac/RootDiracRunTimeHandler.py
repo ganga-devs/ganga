@@ -1,9 +1,12 @@
 from Ganga.Core import BackendError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from Ganga.GPIDev.Lib.File import File
 from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
+
+import DiracShared
 
 class RootDiracRunTimeHandler(IRuntimeHandler):
     """The runtime handler to run ROOT jobs on the Dirac backend"""
@@ -26,7 +29,7 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
         from DiracScript import DiracScript
         diracScript=DiracScript()
 
-        runScript, inputsandbox = self._DiracWrapper(app)
+        runScript, inputsandbox, script = self._DiracWrapper(app)
         argList = [str(s) for s in app.args]
 
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -38,10 +41,13 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
         logger.info('Root architecture to use is ', architecture)
 
         import RootVersions
+        logFile = 'Root_%s.log' % app.version
         version=RootVersions.getDaVinciVersion(app.version)
+        
         diracScript.platform(architecture)
-        diracScript.append('setApplication("DaVinci","'+version+'")')
-        diracScript.append('setName("Ganga_ROOT_'+app.version+'")')
+        diracScript.runApplicationScript('DaVinci',version,\
+                                         DiracShared.getGenericRunScript(),logFile)
+        diracScript.setName('Ganga_ROOT_%s' % app.version)
 
         if job.inputdata:
             diracScript.inputdata([f.name for f in job.inputdata.files])
@@ -50,8 +56,7 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
             diracScript.outputdata([f.name for f in job.outputdata.files])
 
         c.script=diracScript
-
-        c.logfile='DaVinci'+'_'+version+'.log'
+        c.logfile=logFile
 
         return c
 
@@ -88,7 +93,7 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
                        rootarg + '\''
         else:
             #use python
-            pyarg = string.join([str(s) for s in app.args],' ')
+            pyarg = string.join(['"%s"' % str(s) for s in app.args],' ')
             commandline = '\'%(PYTHONCMD)s ' + scriptPath + ' ' + pyarg + ' -b \''
 
         logger.debug( "Command line: %s: ", commandline )
@@ -114,7 +119,6 @@ if __name__ == '__main__':
     commandline = ###COMMANDLINE###    
     scriptPath = '###SCRIPTPATH###'
     usepython = ###USEPYTHON###
-    version = '###ROOTVERSION###'
 
     sys.stdout.flush()
     sys.stderr.flush()
@@ -139,7 +143,6 @@ if __name__ == '__main__':
   """
 
         wrapperscript = wrapperscript.replace('###COMMANDLINE###',commandline)
-        wrapperscript = wrapperscript.replace('###ROOTVERSION###',app.version)
         wrapperscript = wrapperscript.replace('###SCRIPTPATH###',scriptPath)
         wrapperscript = wrapperscript.replace('###USEPYTHON###',str(app.usepython))
 
@@ -148,4 +151,4 @@ if __name__ == '__main__':
         runScript = FileBuffer( scriptName, wrapperscript, executable = 1 )
 
         inputsandbox=[script]
-        return runScript,inputsandbox
+        return runScript,inputsandbox,script

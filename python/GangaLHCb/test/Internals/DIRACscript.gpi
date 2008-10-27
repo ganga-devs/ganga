@@ -16,7 +16,7 @@ dscript.finalise()
 
 # Recover the commands as a string. Check that a few expected items are present
 commands = dscript.commands()
-if commands.find('djob = dirac.Job()')==-1 or \
+if commands.find('djob = LHCbJob()')==-1 or \
    commands.find('djob.setCPUTime(3000)')==-1 or \
    commands.find('mydirac.submit')==-1 :
   print commands
@@ -39,21 +39,19 @@ else:
 # Check that we can read script fram file
 dscript = DiracScript(j._impl)
 commands = dscript.commands()
-if commands.find('djob = dirac.Job()')==-1 or \
+if commands.find('djob = LHCbJob()')==-1 or \
    commands.find('djob.setCPUTime(3000)')==-1 or \
    commands.find('mydirac.submit')==-1 :
-  print commands
-  raise AssertionError, "Something is missing from the DIRACscript."
+  raise AssertionError, "Something is missing from the DIRACscript. - %s" % commands
   
 # Check that syntax errors get reported as a BackendError
 dscript = DiracScript()
 dscript.append('foo bar')
 try:
   dscript.execute()
+  raise AssertionError, 'Failed to throw BackendError when syntax error in script.'
 except BackendError:
   pass
-else:
-   raise AssertionError, "Failed to throw BackendError when syntax error in scrit."
 
 # Check that id variable is passed back
 import tempfile

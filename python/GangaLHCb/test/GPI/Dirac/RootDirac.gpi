@@ -3,11 +3,11 @@ from os.path import join,basename
 
 # Do a standard Root job
 j1 = Job(application=Root(),backend=Dirac())
-assert(j1.submit())
+j1.submit()
 
 # Do a Root job using pyRoot
 j2 = Job(application=Root(usepython=True),backend=Dirac())
-assert(j2.submit())
+j2.submit()
 
 
 assert(sleep_until_completed(j1,1800))

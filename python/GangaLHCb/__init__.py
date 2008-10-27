@@ -30,7 +30,7 @@ configDirac.addOption('RootVersions',
         {'5.14.00f': 'v19r5', '5.14.00h': 'v19r8', '5.14.00i': 'v19r9', '5.18.00': 'v19r10', '5.18.00a': 'v19r11', '4.04.02': 'v14r5', '3.10.02': 'v12r18'},
         'Root versions used by Dirac for given versions of DaVinci')
 configDirac.addOption('extraProxytime','600','extra lifetime required for a proxy to submit a job')
-configDirac.addOption('DIRACsite','None','Used for testing only')
+configDirac.addOption('DIRACsite',None,'Used for testing only')
 configDirac.addOption('DiracLoggerLevel','ERROR','The logging level of DIRAC, not the logging level of the Dirac plugin in Ganga')
 configDirac.addOption('AllowedPlatforms',['slc4_ia32_gcc34'],'Allowed platforms for submission to DIRAC')
 

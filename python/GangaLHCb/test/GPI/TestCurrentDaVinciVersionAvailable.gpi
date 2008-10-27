@@ -1,0 +1,6 @@
+from GangaLHCb.test import *
+
+app = DaVinci()
+installedVersions = getInstalledVersions(app)
+assert installedVersions, 'Must return something'
+assert app.version in installedVersions, 'Default version of DaVinci must be installed'
