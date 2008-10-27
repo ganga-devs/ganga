@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Merger.py,v 1.2 2008-07-28 10:16:34 wreece Exp $
+# $Id: Merger.py,v 1.3 2008-10-27 14:33:14 wreece Exp $
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IMerger import MergerError
@@ -181,7 +181,7 @@ class AbstractMerger(GangaObject):
                                      'This can be overridden with the ignorefailed flag.', j.id, j.status)
                         return self.failure
                 else:
-                    logger.error("Job %d is in an unsupported status and so the merge can not continue. '\
+                    logger.error("Job %d is in an unsupported status %s and so the merge can not continue. '\
                     'Supported statuses are 'completed', 'failed' or 'killed' (if the ignorefailed flag is set).", j.id, j.status)
                     return self.failure
 
