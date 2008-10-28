@@ -1,0 +1,34 @@
+j = Job()
+j.application = CrashTestApplication()
+j.backend = CrashTestBackend()
+
+j.backend.error = CrashType(expr='raise GangaException("fake gangaproblem","testing")',method='master_submit')
+
+j.splitter = CrashTestSplitter()
+
+try:
+  j.submit()
+  assert False, "should raise JobError"
+except JobError:
+    pass
+
+try:
+  j.submit()
+  assert False, "should raise JobError"
+except JobError:
+    pass
+
+j.backend.error = CrashType()
+
+assert(j.submit())
+
+assert(j.subjobs[0].id == 0)
+
+print j
+full_print(j)
+
+# this assertiion is not valid anymore when Oracle backend is used
+#for i in range(len(j.subjobs)):
+#    assert(j.subjobs[i].id == i)
+
+

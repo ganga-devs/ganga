@@ -1,0 +1,34 @@
+import os, tempfile, shutil
+nn = tempfile.mktemp(suffix = '.test')
+root = os.path.join('/tmp', os.path.basename(nn))
+assert(not os.path.exists(root))
+from Ganga.Core.JobRepository.ARDA import repositoryFactory
+from Ganga.GPIDev.Streamers.SimpleStreamer import SimpleJobStreamer
+repository = repositoryFactory(repositoryType = "Local",
+			      root_dir = '/testdir/GangaTest/user',
+			      streamer = SimpleJobStreamer(),
+			      root     = root)
+
+from Ganga.GPIDev.Lib.Job.Job  import Job
+import Ganga.Runtime.plugins
+NTEST = 10
+jj = []
+for i in range(NTEST):
+    j = Job()
+    j.name = "MyJob" + str(i)
+    jj.append(j)
+
+print "registering jobs"
+repository.registerJobs(jj)
+
+print 'retrieving registered jobs...'
+rjj = repository.checkoutJobs(map(lambda j: j.id, jj))
+
+assert(len(jj) == len(rjj))
+
+# clean up
+try:
+    shutil.rmtree(root)
+except:
+    pass
+
