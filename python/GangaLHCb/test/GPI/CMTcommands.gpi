@@ -15,16 +15,18 @@ pack = 'Phys/DaVinci '+ver
 
 # Test getpack
 app.getpack(pack)
-fname = os.path.join(cmtuserpath,'DaVinci_'+ver,'Phys/DaVinci',ver,
+fname = os.path.join(cmtuserpath,'DaVinci_'+ver,'Phys/DaVinci',
                      'cmt/requirements')
+assert os.path.exists(fname), '%s must exist' % fname
 read_file(fname)
 
 # Test build
 app.make()
-dirname = os.path.join(cmtuserpath,'DaVinci_'+ver,'Phys/DaVinci',ver,
+dirname = os.path.join(cmtuserpath,'DaVinci_'+ver,'Phys/DaVinci',
                        app._impl.platform)
-#fname = os.path.join(dirname,'DaVinci.exe')
+assert os.path.exists(dirname), '%s must exist' % dirname
 fname = os.path.join(dirname,'DaVincisetup.make')
+
 read_file(fname)
 
 # Test general CMT command
