@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.3 2008-09-03 08:56:29 elmsheus Exp $
+# $Id: PACKAGE.py,v 1.4 2008-10-28 11:02:26 elmsheus Exp $
 ###############################################################################
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 """
@@ -13,7 +13,7 @@ from Ganga.Utility.Setup import PackageSetup
 
 
 _external_packages = { 
-    'DQ2Clients' : { 'version' : '0.1.20',
+    'DQ2Clients' : { 'version' : '0.1.22',
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
                      'PYTHONPATH' : ['usr/lib/python2.3/site-packages/','external/mysqldb32/'],
