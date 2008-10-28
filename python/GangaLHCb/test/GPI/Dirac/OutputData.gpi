@@ -21,7 +21,7 @@ jscript=Job(name='OutputData',application=Executable(),backend=Dirac(CPUTime=300
 jscript.application.exe=File(scriptname)
 jscript.application.args=[]
 jscript.outputdata=['output.txt']
-assert(jscript.submit())
+jscript.submit()
 
 assert(sleep_until_completed(jscript,1800))
 

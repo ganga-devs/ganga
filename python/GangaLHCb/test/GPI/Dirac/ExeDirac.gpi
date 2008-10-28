@@ -28,7 +28,7 @@ jscript.application.args=['input.txt','output.txt']
 jscript.application.exe=File(scriptname)
 jscript.inputsandbox=[testname]
 jscript.outputsandbox=['output.txt']
-assert(jscript.submit())
+jscript.submit()
 
 assert(sleep_until_completed(jcommand,1800))
 assert(sleep_until_completed(jscript,1800))

@@ -1,7 +1,0 @@
-from GangaLHCb.test import *
-#test the testing version from AFS
-ver = getTestDaVinciVersion()
-app = DaVinci(version = ver)
-installedVersions = getInstalledVersions(app)
-assert installedVersions, 'Must return something'
-assert app.version in installedVersions, 'Default version of DaVinci must be installed'
