@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.11 2008-09-30 09:53:57 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.12 2008-10-28 10:59:38 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1131,7 +1131,7 @@ class DQ2OutputDataset(Dataset):
                 outputlocation = job.outputdir
             
 
-            exe = 'dq2-get -L CERN -d -D '
+            exe = 'DQ2_LOCAL_SITE_ID=ROAMING; dq2-get -a -d -D '
             cmd = '%s -H %s %s ' %(exe,outputlocation, job.outputdata.datasetname)
 
             logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
@@ -1184,6 +1184,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.11  2008/09/30 09:53:57  elmsheus
+#Small fix
+#
 #Revision 1.10  2008/09/30 09:38:49  elmsheus
 #Add DQ2Dataset.failover
 #
