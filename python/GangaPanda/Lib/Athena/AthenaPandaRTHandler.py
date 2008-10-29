@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.10 2008-10-23 11:37:24 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.11 2008-10-29 15:26:52 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -537,7 +537,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 fout.lfn               = '%s.%s._%05d.root' % (job.outputdata.datasetname,name,self.indexNT)
                 fout.type              = 'output'
                 fout.destinationDBlock = jspec.destinationDBlock
-                fout.destionationSE    = jspec.destionationSE
+                fout.destinationSE    = jspec.destinationSE
                 jspec.addFile(fout)
                 if not 'ntuple' in outMap:
                     outMap['ntuple'] = []
