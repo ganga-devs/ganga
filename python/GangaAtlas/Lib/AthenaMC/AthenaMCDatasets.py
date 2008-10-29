@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.10 2008-10-15 13:44:05 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.11 2008-10-29 14:11:09 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -378,6 +378,11 @@ class AthenaMCInputDatasets(Dataset):
         finally:
             dq2_lock.release()
 
+        try:
+            assert len(locations)>0
+        except:
+            logger.error("Requested input dataset %s has no registered location in DQ2 catalog. Aborting" % dsetname)
+            raise
         try:
             dq2_lock.acquire()
             datasetinfo = dq2.listDatasets(dsetname)
