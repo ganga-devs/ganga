@@ -270,15 +270,35 @@ def getOutput(dirac, num):
         else:
             result['OK'] = False
             result['Message'] = 'Failed to find downloaded files on the local file system.'
+    
+    elif result is not None and result.has_key('OK') and not result['OK']:
+    
+        #try to find out what went wrong
+        
+        try:
+            user_name = os.getlogin()
+        except OSError:
+            user_name = os.path.expandvars('$USER')
+        lfn = os.path.join(os.path.sep,'lhcb','user',user_name[0],user_name,str(id),'Sandbox_' + str(id) + '.tar.gz')
+        rep = dirac.getReplicas(lfn)
+        if rep is not None and rep.get('OK',False):
+            #check if the sandbox has been uploaded
+            if lfn in rep['Value']['Successful']:
+                result = {'OK':False,'Message':'Sandbox was too large and has been uploaded to Grid storage','LFN':lfn}
     return result
 
 #finally actually get the output
 for i in range(3):
     result = getOutput(dirac, i)
     if (result is None) or (result is not None and not result.get('OK', False)):
-        import time
-        time.sleep(5)
-        rc = 1
+        if not result.has_key('LFN'):
+            import time
+            time.sleep(5)
+            rc = 1
+        else:
+            storeResult(result)
+            rc = 0
+            break
     else:
         storeResult(result)
         rc = 0
@@ -292,8 +312,12 @@ for i in range(3):
             job = self.getJobObject()
             fqid = job.getFQID('.')
             if result is None: result = {}
-            logger.warning("Job %s with Dirac id %s at %s: Problems retrieving output. Messege was '%s'.",\
-                           fqid,str(job.backend.id),job.backend.actualCE, result.get('Message','None'))
+            if result.has_key('LFN'):
+                logger.warning("Job %s generated a overlarge sandbox. Use j.backend.getOutputData(names = ['Sandbox_%s.tar.gz']) to download it.", \
+                               fqid,str(job.backend.id))
+            else:
+                logger.warning("Job %s with Dirac id %s at %s: Problems retrieving output. Message was '%s'.",\
+                               fqid,str(job.backend.id),job.backend.actualCE, result.get('Message','None'))
             return []
         return result.get('Value',[])
 
@@ -716,6 +740,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.6  2008/10/27 14:46:17  wreece
+## Updates the URL for the monitoring page
+##
 ## Revision 1.5  2008/10/27 14:42:23  wreece
 ## stops failed jobs from downloading their sandboxes
 ##
