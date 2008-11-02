@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Condor.py,v 1.3 2008-10-08 10:15:24 karl Exp $
+# $Id: Condor.py,v 1.4 2008-11-02 18:03:46 karl Exp $
 ###############################################################################
 # File: Condor.py
 # Author: K. Harrison
@@ -28,12 +28,14 @@
 #              Error message printed in case submit command fails
 #
 # KH - 081008 : Added typelist information for schema property "submit_options"
+#
+# KH - 081102 : Remove spurious print statement
 
 """Module containing class for handling job submission to Condor backend"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "8 October 2008"
-__version__ = "1.9"
+__date__    = "2 November 2008"
+__version__ = "2.0"
 
 from CondorRequirements import CondorRequirements
 
@@ -252,7 +254,6 @@ class Condor( IBackend ):
       for filePath in infileList:
          fileList.append( os.path.basename( filePath ) )
 
-      print exeCmdString
       commandList = [
          "#!/usr/bin/env python",
          "# Condor job wrapper created by Ganga",
