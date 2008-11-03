@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2SandboxCache.py,v 1.1 2008-09-16 18:05:22 hclee Exp $
+# $Id: DQ2SandboxCache.py,v 1.2 2008-11-03 15:27:18 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -83,10 +83,17 @@ class DQ2SandboxCache(GridSandboxCache):
 
         shell = getShell(self.middleware)
 
+        ## exclude the Ganga-owned external package for LFC python binding
+        pythonpaths = []
+        for path in shell.env['PYTHONPATH'].split(':'):
+            if not re.match('.*\/external\/lfc\/.*', path):
+                pythonpaths.append(path)
+        shell.env['PYTHONPATH'] = ':'.join(pythonpaths)
+
         if self.local_site_id:
             shell.env['DQ2_LOCAL_SITE_ID'] = self.local_site_id
 
-        self.logger.debug('DQ2_LOCAL_SITE_ID: %s', shell.env['DQ2_LOCAL_SITE_ID'])
+        self.logger.debug('DQ2_LOCAL_SITE_ID: %s' % shell.env['DQ2_LOCAL_SITE_ID'])
 
         # check dq2 existence
         rc,output,m = self.__cmd_retry_loop__(shell, 'source %s; which dq2-put' % self.setup, 1)
@@ -114,7 +121,7 @@ class DQ2SandboxCache(GridSandboxCache):
             finfo[tmp_fname]['local_fpath']  = urlparse(f)[2]
 
         # compose dq2-put command 
-        cmd = 'source %s; dq2-put -a -d ' % self.setup
+        cmd = 'source %s; dq2-put -a -d ' % (self.setup)
 
         if self.local_site_id:
             cmd += '-L %s ' % self.local_site_id
@@ -126,8 +133,7 @@ class DQ2SandboxCache(GridSandboxCache):
         # run dq2-put
         rc,output,m = self.__cmd_retry_loop__(shell, cmd, self.max_try)
 
-        print rc
-        print output
+        self.logger.debug('%d %s' % (rc, output))
 
         # run dq2-ls to query the uploaded files
         # together with local file information, creates GridFileIndex objects
@@ -152,6 +158,9 @@ class DQ2SandboxCache(GridSandboxCache):
                     surl   = finfo[f]['surl']
                     md5sum = finfo[f]['md5sum']
                     file_idx.append( DQ2FileIndex(surl=surl, name=name, dataset=self.dataset_name, site=self.local_site_id, md5sum=md5sum) )
+
+        ## removing the temporary directory in any case
+        shutil.rmtree(src_dir)
 
         return file_idx
 
