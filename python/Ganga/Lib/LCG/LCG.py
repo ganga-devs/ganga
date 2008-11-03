@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.14 2008-10-08 07:42:47 hclee Exp $
+# $Id: LCG.py,v 1.15 2008-11-03 15:27:48 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -171,9 +171,9 @@ class LCG(IBackend):
 
             if not self.sandboxcache.se:
 
-                token   = None
-                se_host = None
-                m = re_token.match(config['DefaultSE'])
+                token   = '' 
+                se_host = config['DefaultSE']
+                m = re_token.match(se_host)
                 if m:
                     token   = m.group(1)
                     se_host = m.group(2)
@@ -1759,6 +1759,10 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.14  2008/10/08 07:42:47  hclee
+# avoid doing glite-wms-job-cancel on jobs which is in a final state
+#  - glite bulk job status is now correctly stored as master job's status
+#
 # Revision 1.13  2008/09/30 17:51:08  hclee
 # fine tune the typelist attribute in the schema
 #
