@@ -34,13 +34,13 @@ ganga/python/Ganga/GPIDev/Streamers                                    Ganga-Str
 ganga/python/Ganga/Lib/Batch                                           Ganga-Batch-20-1
 
 #karl
-ganga/python/Ganga/Lib/Condor                                          Ganga-Condor-20-02
+ganga/python/Ganga/Lib/Condor                                          Ganga-Condor-20-03
 
 #vladimir
 ganga/python/Ganga/Lib/Interactive                                     Ganga-Interactive-20-00
 
 #hclee
-ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-20-4
+ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-20-5
 
 #will
 ganga/python/Ganga/Lib/Mergers                                         Ganga-Mergers-20-2
