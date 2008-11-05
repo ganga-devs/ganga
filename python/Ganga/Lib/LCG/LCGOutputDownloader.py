@@ -6,6 +6,9 @@ from Ganga.Lib.LCG.Utility import *
 logger = getLogger()
 
 class LCGOutputDownloadTask:
+    """
+    Class for defining a data object for each output downloading task.
+    """
 
     _attributes = ('gridObj', 'jobObj', 'use_wms_proxy')
 
@@ -15,6 +18,9 @@ class LCGOutputDownloadTask:
         self.use_wms_proxy = use_wms_proxy
 
 class LCGOutputDownloadAlgorithm(Algorithm):
+    """
+    Class for implementing the logic of each downloading task.
+    """
 
     def process(self, item):
         """
@@ -79,7 +85,7 @@ class LCGOutputDownloader:
     def addTask(self, grid, job, use_wms_proxy):
 
         task = LCGOutputDownloadTask(grid, job, use_wms_proxy)
-        logger.debug( 'output download task: job %s' % job.getFQID('.') )
+        logger.debug( 'add output downloading task: job %s' % job.getFQID('.') )
         self.data.addItem(task)
         return True
 
