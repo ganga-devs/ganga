@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridSandboxCache.py,v 1.3 2008-09-18 16:34:58 hclee Exp $
+# $Id: GridSandboxCache.py,v 1.4 2008-11-05 13:51:57 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -257,24 +257,11 @@ class GridSandboxCache(GangaObject):
 
         return myFiles
 
-    def __uuid__(self,*args):
-        ''' Generates a universally unique ID. '''
-        t = long( time.time() * 1000 )
-        r = long( random.random()*100000000000000000L )
-        try:
-            a = socket.gethostbyname( socket.gethostname() )
-        except:
-            # if we can't get a network address, just imagine one
-            a = random.random()*100000000000000000L
-        data = str(t)+' '+str(r)+' '+str(a)+' '+str(args)
-        data = md5.md5(data).hexdigest()
-        return data
-
     def __get_unique_fname__(self):
         '''gets an unique filename'''
         cred  = getCredential('GridProxy',self.middleware)
         uid   = re.sub(r'[\:\-\(\)]{1,}','',cred.identity()).lower()
-        fname = 'user.%s.%s' % (uid, self.__uuid__())
+        fname = 'user.%s.%s' % (uid, get_uuid())
         return fname
 
     def __cmd_retry_loop__(self,shell,cmd,maxRetry=3):
