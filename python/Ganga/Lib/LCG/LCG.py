@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.15 2008-11-03 15:27:48 hclee Exp $
+# $Id: LCG.py,v 1.16 2008-11-05 10:20:58 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -1456,11 +1456,15 @@ sys.exit(0)
             return
 
         ## split up the master job into severl LCG bulk job ids
+        ##  - checking subjob status and excluding the master jobs with all subjobs in a final state)
+        ##  - excluding the resubmitted jobs
         jobdict = {}
         for j in jobs:
             if j.backend.id:
                 for sj in j.subjobs:
-                    if not jobdict.has_key(sj.backend.parent_id):
+                    if (sj.status not in ['completing','completed','failed']) and \
+                            (sj.backend.parent_id in j.backend.id) and \
+                            (not jobdict.has_key(sj.backend.parent_id)):
                         jobdict[sj.backend.parent_id] = j
 
         job        = None
@@ -1759,6 +1763,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.15  2008/11/03 15:27:48  hclee
+# enhance the internal setup for the SandboxCache
+#
 # Revision 1.14  2008/10/08 07:42:47  hclee
 # avoid doing glite-wms-job-cancel on jobs which is in a final state
 #  - glite bulk job status is now correctly stored as master job's status
