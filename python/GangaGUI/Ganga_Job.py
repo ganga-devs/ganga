@@ -3,6 +3,7 @@ from GangaGUI.widget_set import *
 from GangaGUI.customEvents import *
 from GangaGUI import miscDialogs, inspector, Ganga_Errors
 from GangaGUI.customTables import JobNavListView, JobNavLVItem
+from Ganga.Core.exceptions import TypeMismatchError
 import qt
 
 class Item2PageMap( object ):
@@ -334,7 +335,8 @@ class Ganga_Job( Ganga_Job_BASE ):
             _attrStr = "self.job%s" % _w.command[ _w.command.index('.'): ]
             try:
                exec( "%s = _w.get()" % _attrStr )
-            except ( Ganga_Errors.UpdateException, 
+            except ( TypeMismatchError,
+                     Ganga_Errors.UpdateException, 
                      Ganga_Errors.TypeException, 
                      inspector.Ganga.GPIDev.Base.Proxy.ReadOnlyObjectError ), msg:
                self.__actionInProgress = ""

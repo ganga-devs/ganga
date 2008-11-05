@@ -5,8 +5,7 @@ from GangaGUI.inputlist_widget_BASE import InputList_Widget_BASE
 from GangaGUI.inputchoice_widget_BASE import InputChoice_Widget_BASE
 from GangaGUI.file_association_BASE import File_Association_BASE
 from GangaGUI import miscDialogs, inspector, Ganga_Errors, customGUIManager
-#from Ganga.GPI import *
-from Ganga.GPIDev.Lib.GangaList import GangaList
+from Ganga.GPIDev.Lib.GangaList import *
 # Setup logging ---------------
 import Ganga.Utility.logging
 log = Ganga.Utility.logging.getLogger( "Ganga.widget_set" )
@@ -19,6 +18,8 @@ class TypeValidator( object ):
    def validate( self, val, omitTypeList = [] ):
       if not isinstance( omitTypeList, list ):
          raise Ganga_Errors.TypeException( "Expecting an list for omitTypeList argument" )
+      if not self.typeList:
+         return True
       if omitTypeList:
          _tl = self.typeList[:]
          for _o in omitTypeList:
@@ -30,7 +31,7 @@ class TypeValidator( object ):
       return self.validator( val, self.typeList )
    
    def inUse( self ):
-      return bool( self.typeList )
+      return True
 
 
 def _makeCustomValidator( tv_Func, typeList ):
@@ -57,11 +58,13 @@ def getGUIConfig( gangaObj, objPrefix = None, advancedView = None, ignoreCompone
          guiPrefs.extend( gangaObj._impl._GUIPrefs )
    # Remove entries in attributes where the plugin developer has specified a 
    # preference.
+
    for guiPref in guiPrefs:
       try:
          attributes.pop( guiPref[ 'attribute' ] )
       except KeyError, msg:
-         raise Ganga_Errors.InspectionError( msg )
+         pass
+#         raise Ganga_Errors.InspectionError( "%s %s" % ( msg, objPrefix ) )
    # For the remainder of the attributes, add to the guiPrefs as minimal entries.
    for attribute in attributes:
       guiPrefs.append( { 'attribute': attribute } )
@@ -94,6 +97,12 @@ def getGUIConfig( gangaObj, objPrefix = None, advancedView = None, ignoreCompone
                   combinedPref[ 'widget' ] = 'File_List'
                else:
                   combinedPref[ 'widget' ] = 'File'
+            # Explicitly add typelist info if plugin developer omits them.
+            combinedPref.setdefault( 'typelist', [ 'Ganga.GPIDev.Lib.File.File.File', 'str' ] )
+            if 'Ganga.GPIDev.Lib.File.File.File' not in combinedPref[ 'typelist' ]:
+               combinedPref[ 'typelist' ] .append( 'Ganga.GPIDev.Lib.File.File.File' )
+            if 'str' not in combinedPref[ 'typelist' ]:
+               combinedPref[ 'typelist' ] .append( 'str' )
             combinedPref.update( guiPref )
             combinedPrefList.append( combinedPref )         
          else: # Complex item is not a FileItem
@@ -228,8 +237,12 @@ def buildGUI( parent, displayDictList, mCallback = None, typeValidator = None ):
             log.debug( "_GUIPrefs entry for the %s attribute does not contain the %s key." % ( displayDict[ 'attribute' ], dictKey ) )
       widgetArgDict[ 'parent' ] = LayoutWidget
       widgetArgDict[ 'modifiedCallback' ] = mCallback
-      if typeValidator is None and 'typelist' in displayDict:
-         typeValidator = TypeValidator( Ganga.GPIDev.Base.Proxy.valueTypeAllowed, displayDict[ 'typelist' ] )
+      if typeValidator is None:
+         try:
+            tList = displayDict[ 'typelist' ] 
+         except KeyError:
+            tList = []
+         typeValidator = TypeValidator( Ganga.GPIDev.Base.Proxy.valueTypeAllowed, tList )
       widgetArgDict[ 'typeValidator' ] = typeValidator
       _w = preferredWidget( **widgetArgDict )
       _wLayout.addWidget( _w )
@@ -330,31 +343,22 @@ class InputLine_Widget( InputLine_Widget_BASE ):
 
    def get( self, validateOnly = False ):
       _str = str( self.lineEdit.text() ).strip()
-      # -------- Pre-TypeSystem code -----------
-      if not self.typeValidator.inUse():
-         if validateOnly:
-            log.debug( "Validator not in use. validateOnly parameter ignored. Returning False." )
-            return False
-         if not _str:
-            if self.default is None:
-               return self.default
-            else:
-               return self.defvalue
-         elif _str.lower() in [ 'true', 'false' ]:
-            return { 'true': True, 'false': False }[ _str.lower() ]
-         else:
-            return _str # returns the string verbatim (almost... trailing spaces removed)
-      # ----------------------------------------
+      try:
+         float( _str ) 
+      except:
+         if _str.lower() in [ 'true', 'false', 'none' ]:
+            _str =  _str.capitalize()
+         elif not _str or _str[0] not in ['"',"'"]:
+            _str = '"%s"' % _str
+      
       try:
          _val = eval( _str )
       except:
-#         if _str: # eval fails with an empty string. typeValidator() can take an empty string but eval() cannot.
          if validateOnly:
             log.error( "%s: Pre-validation eval failed. %s is not valid Python syntax." % ( str( self.textLabel.text() ), _str ) )
             return False
          else:
             raise Ganga_Errors.TypeException( "%s: Pre-validation eval failed. %s is not valid Python syntax." % ( str( self.textLabel.text() ), _str ) )
-#         _val = _str   # set _val to ""
 
       if self.typeValidator.validate( _val ):
          if validateOnly:
@@ -367,20 +371,15 @@ class InputLine_Widget( InputLine_Widget_BASE ):
       raise Ganga_Errors.TypeException( "%s: Type validation failed. Valid types are: %s" % ( str( self.textLabel.text() ), self.typeValidator.typeList ) )
 
    def slotRevert( self ):
-      if not self.typeValidator.inUse():
-         if self.default is None:
-            self.lineEdit.setText( '' )
+      quote = ''
+      if isinstance( self.default, str ):
+         try:
+            float( self.default )
+         except:
+            pass
          else:
-            self.lineEdit.setText( str( self.default ) )
-         return
-      _quote = ''
-      if 'str' in self.typeValidator.typeList and not self.typeValidator.validate( self.default, ['str'] ):
-         # Remove 'str' from the typeList and check if still valid. If valid then must not used quotes.
-         _quote = '"'
-      if self.default is None:
-         self.lineEdit.setText( '%s%s' % ( _quote, _quote ) )
-      else:
-         self.lineEdit.setText( '%s%s%s' % ( _quote, str( self.default ), _quote ) )
+            quote = '"'
+      self.lineEdit.setText( "%s%s%s" % ( quote, str( self.default ), quote ) )
       self.lineEdit.setFocus()
       
    def slotBrowse( self ):
@@ -395,66 +394,7 @@ class InputLine_Widget( InputLine_Widget_BASE ):
       customGUIManager.customGUI_Dict[ self.customgui ].show()
 
 
-# Depreciated widget. To remove once type system fully integrated.
-class InputInt_Widget( InputLine_Widget ):
-   def __init__( self,
-                 parent = None, 
-                 name = None, 
-                 textLabel = 'Filename:',
-                 default = '', 
-                 defvalue = '',
-                 protected = 0,
-                 tooltip = '',
-                 command = '',
-                 displayLevel = 0,
-                 modifiedCallback = None,
-                 typeValidator = None,
-                 customgui = None,
-                 fl = 0 ):
-      InputLine_Widget.__init__( self, parent, name, textLabel, default, defvalue, protected, tooltip, command, displayLevel, modifiedCallback, typeValidator, customgui, fl )
-
-   def get( self ):
-      _str = str( self.lineEdit.text() ).strip()
-      if not _str:
-         if self.default is None:
-            return self.default
-         else:
-            return self.defvalue
-      try:
-         return int( _str )
-      except ValueError:
-         raise Ganga_Errors.TypeException( "Expecting an integer for %s" % str( self.textLabel.text() ) )    
-
-
 class InputFile_Widget( InputLine_Widget ):
-   def __init__( self,
-                 parent = None, 
-                 name = None, 
-                 textLabel = 'Filename:',
-                 default = '',
-                 defvalue = '', 
-                 protected = 0,
-                 tooltip = '',
-                 command = '',
-                 displayLevel = 0,
-                 modifiedCallback = None,
-                 typeValidator = None,
-                 customgui = None,
-                 fl = 0 ):
-      InputLine_Widget.__init__( self, parent, name, textLabel, default, defvalue, protected, tooltip, command, displayLevel, modifiedCallback, typeValidator, customgui, fl )
-      if not protected:
-         self.pushButton_Browse.setEnabled( True )
-         self.pushButton_Browse.show()
-
-   def slotBrowse( self ):
-      fSelected = QFileDialog.getOpenFileName( "", "" , self, "BrowseFile", "Select a file." )
-      if fSelected:
-         self.lineEdit.setText( '"%s"' % fSelected )
-         self.lineEdit.setFocus()
-
-
-# Depreciated widget. To remove once type system fully integrated.
-class InputFileOrString_Widget( InputLine_Widget ):
    def __init__( self,
                  parent = None, 
                  name = None, 
@@ -474,9 +414,9 @@ class InputFileOrString_Widget( InputLine_Widget ):
          self.connect( self.pushButton_Edit, SIGNAL( 'clicked()' ), self.slotEdit )
          self.pushButton_Browse.setEnabled( True )
          self.pushButton_Browse.show()
-         if displayLevel > 0:
-            self.pushButton_Edit.setEnabled( True )
-            self.pushButton_Edit.show()
+#         if displayLevel > 0:
+         self.pushButton_Edit.setEnabled( True )
+         self.pushButton_Edit.show()
 
    def slotBrowse( self ):
       fSelected = QFileDialog.getOpenFileName( "", "" , self, "BrowseFile", "Select a file." )
@@ -487,7 +427,7 @@ class InputFileOrString_Widget( InputLine_Widget ):
          
    def __updateFileObj( self, existingFile = None ):
       if existingFile is None:
-         existingFile = True
+         existingFile = False
       fname = str( self.lineEdit.text() )
       if existingFile:
          if fname and not os.path.isfile( os.path.expandvars( fname ) ):
@@ -516,7 +456,7 @@ class InputFileOrString_Widget( InputLine_Widget ):
          return ''
       return fObj.name #os.path.join( fObj.subdir, fObj.name )
 
-   def get( self ):
+   def get( self, validateOnly = False ):
       try:
          self.__updateFileObj( True )
       except Ganga_Errors.UpdateException, msg:
@@ -524,7 +464,11 @@ class InputFileOrString_Widget( InputLine_Widget ):
             raise
          else:
             self.__updateFileObj( False )
-      return self.currFileObj
+      if 'Ganga.GPIDev.Lib.File.File.File' not in self.typeValidator.typeList:
+         log.debug( "%s unable to accept a Ganga File object when it should! Returning a list of filenames instead." % self.command )
+         return self.currFileObj.name
+      else:
+         return self.currFileObj
 
    def slotRevert( self ):
       if isinstance( self.default, str ):
@@ -542,11 +486,11 @@ class InputFileOrString_Widget( InputLine_Widget ):
       _notDone = True
       while _notDone:
          if editDialog.exec_loop() == QDialog.Accepted:
-            _f = _widgetList[0].get()
-            if _f and not os.path.exists( os.path.expandvars( _f ) ):
-               if miscDialogs.warningDialog( None, "%s does not exist.\nIgnore and carry on?" % _f ) == 1:
-                  [ x.slotRevert() for x in _widgetList ]
-                  continue
+#            _f = _widgetList[0].get()
+#            if _f and not os.path.exists( os.path.expandvars( _f ) ):
+#               if miscDialogs.warningDialog( None, "%s does not exist.\nIgnore and carry on?" % _f ) == 1:
+#                  [ x.slotRevert() for x in _widgetList ]
+#                  continue
             for _w in _widgetList:
                if _w.protected:
                   continue
@@ -635,19 +579,6 @@ class InputList_Widget( InputList_Widget_BASE ):
    
    def get( self, lvItem = None, validateOnly = False ):
       _list = []
-      # -------- Pre-TypeSystem code -----------
-      if not self.typeValidator.inUse():
-         if validateOnly: # ignore lvItem completely
-            log.debug( "Validator not in use. validateOnly parameter ignored. Returning False." )
-            return False
-         _i = self.listView.firstChild()
-         while _i:
-            s = str( _i.text( 0 ) ).strip()
-            if s:
-               _list.append( s )
-            _i = _i.nextSibling()
-         return _list
-      # ----------------------------------------
       if lvItem: # specific item requested
          _i = lvItem
       else:
@@ -655,15 +586,21 @@ class InputList_Widget( InputList_Widget_BASE ):
       while _i:
          _str = str( _i.text( 0 ) ).strip()
          try:
+            float( _str ) 
+         except:
+            if _str.lower() in [ 'true', 'false', 'none' ]:
+               _str =  _str.capitalize()
+            elif not _str or _str[0] not in ["'",'"']:
+               _str = '"%s"' % _str
+
+         try:
             _val = eval( _str )
          except:
-#            if _str:
             if validateOnly:
                log.error( "%s: Pre-validation eval failed. %s is not valid Python syntax." % ( str( self.listView.header().label( 0 ) ), _str ) )
                return False # First error will stop validation.
             else:
                raise Ganga_Errors.TypeException( "%s: Pre-validation eval failed. %s is not valid Python syntax." % ( str( self.listView.header().label( 0 ) ), _str ) )
-#            _val = _str
 
          if self.typeValidator.validate( _val ):
             if validateOnly:
@@ -689,26 +626,24 @@ class InputList_Widget( InputList_Widget_BASE ):
    
    def fillWithDefault( self ):
       self.listView.clear()
-      if not self.typeValidator.inUse():
-         for _p in xrange( len( self.default ) - 1, -1, -1 ):
-            self.slotInsert( self.default[ _p ] )
-         return
-      _strPossible = 'str' in self.typeValidator.typeList
       for _p in xrange( len( self.default ) - 1, -1, -1 ):
-         # Remove 'str' from the typeList and check if still valid. If valid then must not used quotes.
-         _quote = ''
-         if _strPossible and not self.typeValidator.validate( self.default[ _p ], ['str'] ):
-            _quote = '"'
-         self.slotInsert( '%s%s%s' % ( _quote, self.default[ _p ], _quote ) )
+         val = self.default[ _p ]
+         quote = ""
+         if isinstance( self.default, str ):
+            try:
+               float( self.default )
+            except:
+               pass
+            else:
+               quote = '"'
+
+         self.slotInsert( "%s%s%s" % ( quote, val, quote ) )
 
    def slotInsert( self, itemText = None ):
       editNow = False
       if itemText is None:
          editNow = True
-         if self.typeValidator.inUse() and 'str' in self.typeValidator.typeList:
-            itemText = '"New item"'
-         else:
-            itemText = 'New item'
+         itemText = 'New item'
       lastItem = self.listView.lastItem()
       if isinstance( itemText, list ) or isinstance( itemText, GangaList ): # support use of GangaList
          for itemStr in itemText:
@@ -721,9 +656,10 @@ class InputList_Widget( InputList_Widget_BASE ):
          item.setText( 0, str( itemText ) )
          item.setRenameEnabled( 0, True )
 
+      # Insert in a specific position may be important for certain attributes e.g. command sequences?
       if editNow:
          currItem = self.listView.currentItem()
-         if currItem and currItem != lastItem and currItem.isSelected():
+         if currItem and currItem.isSelected():
             item.moveItem( currItem )
          else:
             item.moveItem( lastItem )
@@ -754,40 +690,7 @@ class InputList_Widget( InputList_Widget_BASE ):
       customGUIManager.customGUI_Dict[ self.customgui ].show()
 
 
-# Depreciated widget. To remove once type system fully integrated.
-class InputIntList_Widget( InputList_Widget ):
-   def __init__( self,
-                 parent = None, 
-                 name = None, 
-                 textLabel = 'File List',
-                 default = [],
-                 defvalue = [],
-                 protected = 0,
-                 tooltip = '',
-                 command = '',
-                 displayLevel = 0,
-                 modifiedCallback = None,
-                 typeValidator = None,
-                 customgui = None,
-                 fl = 0 ):
-      InputList_Widget.__init__( self, parent, name, textLabel, default, defvalue, protected, tooltip, command, displayLevel, modifiedCallback, typeValidator, customgui, fl )
-   
-   def get( self ):
-      _i = self.listView.firstChild()
-      _list = []
-      while _i:
-            s = str( _i.text( 0 ) ).strip()
-            if s:
-               try:
-                  _list.append( int( s ) )
-               except ValueError:
-                  raise Ganga_Errors.TypeException( "Expecting list of integers for %s" % str( self.listView.header().label(0) ) )
-            _i = _i.nextSibling()
-      return _list
-
-
-# Depreciated widget. To remove once type system fully integrated.
-class InputFileOrStringList_Widget( InputList_Widget ):
+class InputFileList_Widget( InputList_Widget ):
    def __init__( self,
                  parent = None, 
                  name = None, 
@@ -806,22 +709,28 @@ class InputFileOrStringList_Widget( InputList_Widget ):
       InputList_Widget.__init__( self, parent, name, textLabel, default, defvalue, protected, tooltip, command, displayLevel, modifiedCallback, typeValidator, customgui, fl )
       if not protected:
          self.connect( self.pushButton_Edit, SIGNAL( 'clicked()' ), self.slotEdit )
-         if displayLevel > 0:
-            self.pushButton_Edit.show()
+#         if displayLevel > 0:
+         self.pushButton_Edit.show()
+         self.pushButton_Browse.show()
 
-   def get( self ):
-      try:
-         return self.__updateFileDict( existingFile = True ).values()
-      except Ganga_Errors.UpdateException, msg:
-         if miscDialogs.warningDialog( None, "Error trying to update\n%s\n%s.\nIgnore and carry on?" % ( self.command, msg ) ) == 1:
-            raise
-      return self.__updateFileDict( existingFile = False ).values()
+   def get( self, lvItem = None, validateOnly = False ):
+#      try:
+#         fDict = self.__updateFileDict( existingFile = True )
+#      except Ganga_Errors.UpdateException, msg:
+#         if miscDialogs.warningDialog( None, "Error trying to update\n%s\n%s.\nIgnore and carry on?" % ( self.command, msg ) ) == 1:
+#            raise
+#         else:
+#            fDict = self.__updateFileDict( existingFile = False )
+      fDict = self.__updateFileDict()
+      if 'Ganga.GPIDev.Lib.File.File.File' not in self.typeValidator.typeList:
+         log.error( "%s unable to accept a Ganga File object as an entry when it should!" % self.command )
+         return fDict.keys()
+      else:
+         return fDict.values()
 
    def fillWithDefault( self ):
-#      if not isinstance( self.default, list ):
-      if not isinstance( self.default, GangaList ):
-         miscDialogs.warningDialog( None, "Default value for %s is %s.\nExpected a GangaList!\nIgnoring and resetting it to an empty GangaList." % ( self.command, self.default ) )
-         self.default = GangaList()
+      if isinstance( self.default, list ):
+         self.default = makeGangaListByRef( self.default )
       self.currFileDict.clear()
       for i in self.default:
          if isinstance( i, str ):
@@ -833,19 +742,40 @@ class InputFileOrStringList_Widget( InputList_Widget ):
       self.slotInsert( self.currFileDict )
 
    def slotInsert( self, fDict = None ):
+      editNow = False
+      lastItem = self.listView.lastItem()
       if fDict is None:
-         fDict = {}
-         selectedList = QFileDialog.getOpenFileNames( "", "" , self, "BrowseFiles", "Select one or more files." )
-         for f in selectedList:
-            f = str( f ).strip()
-            if f not in self.currFileDict:
-               fDict[ f ] = self.__Str2File( f )
-      for _f in self.__updateFileDict( fDict ):
+         editNow = True
          item = QListViewItem( self.listView )
          item.setMultiLinesEnabled( True )
-         item.setText( 0, _f )
-         item.setRenameEnabled( 0, False )
-         self.modifiedCallback()
+         item.setText( 0, 'New file item' )
+         item.setRenameEnabled( 0, True )
+      else:
+         for fName in self.__updateFileDict( fDict ):
+            item = QListViewItem( self.listView )
+            item.setMultiLinesEnabled( True )
+            item.setText( 0, fName )
+            item.setRenameEnabled( 0, True )
+
+      if editNow:
+         currItem = self.listView.currentItem()
+         if currItem and currItem.isSelected():
+            item.moveItem( currItem )
+         else:
+            item.moveItem( lastItem )
+         self.listView.clearSelection()
+         item.startRename( 0 )
+
+      self.modifiedCallback()
+
+   def slotBrowse( self ):
+      fDict = {}
+      selectedList = QFileDialog.getOpenFileNames( "", "" , self, "BrowseFiles", "Select one or more files." )
+      for f in selectedList:
+         f = str( f ).strip()
+         if f not in self.currFileDict:
+            fDict[ f ] = self.__Str2File( f )
+      self.slotInsert( fDict )
 
    def slotRevert( self ):
       if miscDialogs.warningDialog( None, "Current selection will be removed! Proceed?" ) == 0:
@@ -863,11 +793,11 @@ class InputFileOrStringList_Widget( InputList_Widget ):
       _notDone = True
       while _notDone:
          if editDialog.exec_loop() == QDialog.Accepted:
-            _f = _widgetList[0].get()
-            if _f and not os.path.exists( os.path.expandvars( _f ) ):
-               if miscDialogs.warningDialog( None, "%s does not exist.\nIgnore and carry on?" % _f ) == 1:
-                  [ x.slotRevert() for x in _widgetList ]
-                  continue
+#            _f = _widgetList[0].get()
+#            if _f and not os.path.exists( os.path.expandvars( _f ) ):
+#               if miscDialogs.warningDialog( None, "%s does not exist.\nIgnore and carry on?" % _f ) == 1:
+#                  [ x.slotRevert() for x in _widgetList ]
+#                  continue
             for _w in _widgetList:
                if _w.protected:
                   continue
@@ -903,7 +833,7 @@ class InputFileOrStringList_Widget( InputList_Widget ):
 
    def __updateFileDict( self, fDict = None, existingFile = None ):
       if existingFile is None:
-         existingFile = True
+         existingFile = False
       if fDict is None: # Check Listview for changes and update internal dictionary
          fDict = {}
          removeList = self.currFileDict.keys() # start list of keys to remove. 
@@ -954,50 +884,7 @@ class InputFileOrStringList_Widget( InputList_Widget ):
       return fObj.name
 
 
-class InputFileList_Widget( InputList_Widget ):
-   def __init__( self,
-                 parent = None, 
-                 name = None, 
-                 textLabel = 'File List',
-                 default = [],
-                 defvalue = [],
-                 protected = 0,
-                 tooltip = '',
-                 command = '',
-                 displayLevel = 0,
-                 modifiedCallback = None,
-                 typeValidator = None,
-                 customgui = None,
-                 fl = 0 ):
-      InputList_Widget.__init__( self, parent, name, textLabel, default, defvalue, protected, tooltip, command, displayLevel, modifiedCallback, typeValidator, customgui, fl )
-      self.pushButton_Browse.show()
-   
-   def fillWithDefault( self ):
-      self.listView.clear()
-      self.slotInsert( self.default )
-   
-   def slotInsert(self, fList = None):
-      if fList is None:
-         fList = [ '"New File"' ]
-      for _f in fList:
-         item = QListViewItem( self.listView )
-         item.setMultiLinesEnabled( True )
-         item.setText( 0, str( _f ) )
-         item.setRenameEnabled( 0, True )
-         self.modifiedCallback()
-
-   def slotBrowse( self ):
-      fList = QFileDialog.getOpenFileNames( "", "" , self, "BrowseFiles", "Select one or more files." )
-      self.slotInsert( [ '"%s"' % _f for _f in fList ] )
-
-   def slotRevert(self):
-      if miscDialogs.warningDialog( None, "Current selection will be removed! Proceed?" ) == 0:
-         self.listView.clear()
-         self.modifiedCallback()
-         self.slotInsert( self.default )
-
-
-class InputStringDict_Widget( InputList_Widget ):
+class InputDict_Widget( InputList_Widget ):
    def __init__( self,
                  parent = None, 
                  name = None, 
@@ -1014,31 +901,12 @@ class InputStringDict_Widget( InputList_Widget ):
                  customgui = None,
                  fl = 0 ):
       if newEntryFormat is None:
-         newEntryFormat = '"key" : "value"'
+         newEntryFormat = 'key : value'
       self.newEntryFormat = newEntryFormat
       InputList_Widget.__init__( self, parent, name, textLabel, default, defvalue, protected, tooltip, command, displayLevel, modifiedCallback, typeValidator, customgui, fl )
 
    def get( self, lvItem = None, validateOnly = False ):
       _dict = {}
-      # -------- Pre-TypeSystem code -----------
-      if not self.typeValidator.inUse():
-         if validateOnly: # ignore lvItem completely
-            log.debug( "Validator not in use. validateOnly parameter ignored. Returning False." )
-            return False
-         _i = self.listView.firstChild()
-         while _i:
-            _str = str( _i.text( 0 ) ).strip()
-            if _str:
-               try:
-                  _pos = _str.index( ':' )
-               except ValueError:
-                  raise Ganga_Errors.TypeException( "Expecting entries in x:y format for %s." % str( self.listView.header().label(0) ) )
-               _key = _str[ :_pos ].strip().replace( '"', '' ).replace( "'", "" )
-               _val = _str[ _pos+1: ].strip().replace( '"', '' ).replace( "'", "" )
-               _dict[ _key ] = _val
-            _i = _i.nextSibling()
-         return _dict
-      # ----------------------------------------
       if lvItem: # specific item requested
          _i = lvItem
       else:
@@ -1049,12 +917,27 @@ class InputStringDict_Widget( InputList_Widget ):
             try:
                _pos = _str.index( ':' )
             except ValueError:
-               raise Ganga_Errors.TypeException( 'Expecting entries in "x":"y" format for %s.' % str( self.listView.header().label(0) ) )
+               raise Ganga_Errors.TypeException( 'Expecting entries in [x:y] format for %s.' % str( self.listView.header().label(0) ) )
             _dKey = _str[ :_pos ].strip()
             _dVal = _str[ _pos+1: ].strip()
          else: # empty entry
             _i = _i.nextSibling()
             continue
+
+         try:
+            float( _dKey ) 
+         except:
+            if not _dKey or _dKey[0] not in ["'",'"']:
+               _dKey = '"%s"' % _dKey
+
+         try:
+            float( _dVal ) 
+         except:
+            if _dVal.lower() in [ 'true', 'false', 'none' ]:
+               _dVal =  _dVal.capitalize()
+            elif not _dVal or _dVal[0] not in ["'",'"']:
+               _dVal = '"%s"' % _dVal
+
          # Pre-validation test
          try:
             _key = eval( _dKey )
@@ -1090,20 +973,28 @@ class InputStringDict_Widget( InputList_Widget ):
       
    def fillWithDefault( self ):
       self.listView.clear()
-      if not self.typeValidator.inUse():
-         for _f in self.default:
-            self.slotInsert( "%s : %s" % ( _f, self.default[ _f ] ) )
-         return
-      _strPossible = 'str' in self.typeValidator.typeList
       for _f in self.default:
-         # Remove 'str' from the typeList and check if still valid. If valid then must not used quotes.
          _kQuote = ''
          _vQuote = ''
-         if _strPossible and not self.typeValidator.validate( _f, ['str'] ):
-            _kQuote = '"'
-         if _strPossible and not self.typeValidator.validate( self.default[ _f ], ['str'] ):
-            _vQuote = '"'
-         self.slotInsert( '%s%s%s : %s%s%s' % ( _kQuote, _f, _kQuote, _vQuote, self.default[ _f ], _vQuote ) )
+         val = self.default[ _f ]
+
+         if isinstance( val, str ):
+            try:
+               float( val )
+            except:
+               pass
+            else:
+               _vQuote = '"'
+
+         if isinstance( _f, str ):
+            try:
+               float( _f )
+            except:
+               pass
+            else:
+               _kQuote = '"'
+
+         self.slotInsert( '%s%s%s : %s%s%s' % ( _kQuote, _f, _kQuote, _vQuote, val, _vQuote ) )
 
    def slotInsert( self, itemText = None ):
       editNow = False
@@ -1171,9 +1062,6 @@ class InputChoice_Widget( InputChoice_Widget_BASE ):
          self.pushButton_Revert.show()
       else:
          self.pushButton_Revert.hide()
-
-   def get( self ):
-      return str( self.comboBox.currentText() ).strip()
    
    def fillWithChoices( self ):
       self.comboBox.clear()
@@ -1190,57 +1078,34 @@ class InputChoice_Widget( InputChoice_Widget_BASE ):
       except ValueError:
          pass
 
-
-class Bool_Widget( InputChoice_Widget ):
-   def __init__( self, 
-                 parent = None, 
-                 name = None, 
-                 textLabel = '',
-                 choices = [ True, False ],
-                 default = None,
-                 defvalue = None,
-                 protected = 0,
-                 tooltip = '',
-                 command = '',
-                 displayLevel = 0,
-                 modifiedCallback = None,
-                 typeValidator = None,
-                 customgui = None,
-                 fl = 0 ):
-      InputChoice_Widget.__init__( self, parent, name, textLabel, choices, default, defvalue, protected, tooltip, command, displayLevel, modifiedCallback, typeValidator, customgui, fl )
-
-   def get( self ):
-      _str = str( self.comboBox.currentText() ).strip().lower()
-      try:
-         return { 'true': True, 'false': False }[ _str ]     
-      except ValueError:
-         raise Ganga_Errors.TypeException( "Expecting an integer value for %s.\nPossible error in choice definition." % str( self.textLabel.text() ) )
-
-
-class InputIntChoice_Widget( InputChoice_Widget ):
-   def __init__( self, 
-                 parent = None, 
-                 name = None, 
-                 textLabel = '',
-                 choices = [],
-                 default = None,
-                 defvalue = None,
-                 protected = 0,
-                 tooltip = '',
-                 command = '',
-                 displayLevel = 0,
-                 modifiedCallback = None,
-                 typeValidator = None,
-                 customgui = None,
-                 fl = 0 ):
-      InputChoice_Widget.__init__( self, parent, name, textLabel, choices, default, defvalue, protected, tooltip, command, displayLevel, modifiedCallback, typeValidator, customgui, fl )
-
-   def get( self ):
+   def get( self, validateOnly = False ):
       _str = str( self.comboBox.currentText() ).strip()
       try:
-         return int( _str )      
-      except ValueError:
-         raise Ganga_Errors.TypeException( "Expecting an integer value for %s.\nPossible error in choice definition." % str( self.textLabel.text() ) )
+         float( _str ) 
+      except:
+         if _str.lower() in [ 'true', 'false', 'none' ]:
+            _str =  _str.capitalize()
+         elif not _str or _str[0] not in ["'",'"']:
+            _str = '"%s"' % _str
+      
+      try:
+         _val = eval( _str )
+      except:
+         if validateOnly:
+            log.error( "%s: Pre-validation eval failed. %s is not valid Python syntax." % ( str( self.textLabel.text() ), _str ) )
+            return False
+         else:
+            raise Ganga_Errors.TypeException( "%s: Pre-validation eval failed. %s is not valid Python syntax." % ( str( self.textLabel.text() ), _str ) )
+
+      if self.typeValidator.validate( _val ):
+         if validateOnly:
+            return True
+         else:
+            return _val
+      if validateOnly:
+         log.error( "%s: Type validation failed. Valid types are: %s" % ( str( self.textLabel.text() ), self.typeValidator.typeList ) )
+         return False
+      raise Ganga_Errors.TypeException( "%s: Type validation failed. Valid types are: %s" % ( str( self.textLabel.text() ), self.typeValidator.typeList ) )
 
 
 class ItemChoice_Widget( InputChoice_Widget ):
@@ -1271,6 +1136,9 @@ class ItemChoice_Widget( InputChoice_Widget ):
       if self.currentItemChoice != newChoice:
          self.modifiedCallback( self.command, newChoice, 'swap' )
          self.currentItemChoice = newChoice
+
+   def get( self, validateOnly = False ):
+      return str( self.comboBox.currentText() ).strip()
 
 
 class ItemChoiceAdd_Widget( InputChoice_Widget ):
@@ -1303,6 +1171,10 @@ class ItemChoiceAdd_Widget( InputChoice_Widget ):
 
    def slotRevert( self ):
       pass
+
+   def get( self, validateOnly = False ):
+      return str( self.comboBox.currentText() ).strip()
+      
 
 class File_Association( File_Association_BASE ):
    def __init__( self, 
@@ -1384,17 +1256,20 @@ class File_Association( File_Association_BASE ):
       self.modifiedCallback()
 
 
-WIDGETS_AVAILABLE = { 'Int' : InputInt_Widget,
+WIDGETS_AVAILABLE = { 'Int' : InputLine_Widget,
                       'String' : InputLine_Widget,
-                      'Bool' : Bool_Widget,
-                      'DictOfString' : InputStringDict_Widget,
+                      'Bool' : InputChoice_Widget,
+                      'DictOfString' : InputDict_Widget,
+                      'Dict' : InputDict_Widget,
                       'File' : InputFile_Widget,
-                      'FileOrString' : InputFileOrString_Widget,
-                      'Int_List' : InputIntList_Widget,
+                      'FileOrString' : InputFile_Widget,
+                      'List' : InputList_Widget,
+                      'Int_List' : InputList_Widget,
                       'String_List' : InputList_Widget,
                       'File_List' : InputFileList_Widget,
-                      'FileOrString_List' : InputFileOrStringList_Widget,
+                      'FileOrString_List' : InputFileList_Widget,
+                      'Choice' : InputChoice_Widget,
                       'String_Choice' : InputChoice_Widget,
-                      'Int_Choice' : InputIntChoice_Widget,
+                      'Int_Choice' : InputChoice_Widget,
                       'Item_Choice' : ItemChoice_Widget,
                       'ItemChoice_Add' : ItemChoiceAdd_Widget }
