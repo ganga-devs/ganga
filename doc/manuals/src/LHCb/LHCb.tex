@@ -103,9 +103,9 @@ and you can then start \ganga with the command line
 
 \section{Applications}
 \label{sec:gaudi}
-In \ganga you can specify any \gaudi application directly as the appliaction
+In \ganga you can specify any \gaudi application directly as the application
 for your job. Specific versions of the handler are available for all the
-different \gaudi applliactions like \gauss and \davinci. Since they all work
+different \gaudi applications like \gauss and \davinci. Since they all work
 in the same way we will only describe \davinci here.
 
 The example below illustrates the creation of a job where the version of
@@ -150,7 +150,7 @@ understanding how they can be used.
   \texttt{.py} options can be used and mixed. Include statements in the files
   will be expanded at submission time and a full copy made.
 \item[extraopts] In this field you can add extra options that will be appended
-  to the end of your options file before running. This is very convienient for
+  to the end of your options file before running. This is very convenient for
   changing a single parameter before running a job. \textbf{Only the new
     Python format is accepted in this field.}
 \begin{verbatim}
@@ -197,7 +197,7 @@ happen.
   area(s) is made. This also includes the \texttt{rootmap} and \texttt{confDb}
   \python files.
 \end{itemize}
-The purpose of the above oprations is to make your job independent of your
+The purpose of the above operations is to make your job independent of your
 \texttt{CMT} area. This means that after you have submitted a job (and before
 it has finished) you can edit your options files, rebuild the code etc.\
 without putting your running job at risk. This is something that is not
@@ -322,7 +322,7 @@ will go through the \dirac workload management system that takes care of all
 \lhcb jobs on the \grid.
 \begin{notice}
   As a pre-requisite you need to have a \grid certificate, have your
-  \texttt{.globus} directory correctly confugured and be a member of the \lhcb
+  \texttt{.globus} directory correctly configured and be a member of the \lhcb
   virtual organisation (VO).
 \end{notice}
 For input data you will have to specify it as logical filenames~(LFNs) rather
@@ -331,9 +331,12 @@ files. The bookkeeping database returns LFNs by default so this should be
 easy.
 \begin{seealso}
   In addition to the monitoring within \ganga, you can monitor the progress on
-  the \dirac monitoring webpage
-  \seeurl{http://lhcb.pic.es/DIRAC/Monitoring/Analysis/}{}. To get the
-  corresponding id look at \texttt{j.backend.id} for your \ganga job.
+  the \dirac monitoring web page
+  \seeurl{https://lhcbweb.pic.es/DIRAC/info/general/diracOverview}{}. To use
+  this page you will need to import a valid grid proxy into your web browser. To
+  get the corresponding id look at \texttt{j.backend.id} for your \ganga job.
+  The major and minor status of the \dirac job is available in ganga in the
+  \texttt{status} and \texttt{statusInfo} fields of \texttt{j.backend}.
 \end{seealso}
 
 You can specify the requested CPU time for a job in seconds on the \grid by
