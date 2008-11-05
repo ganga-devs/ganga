@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.16 2008-11-05 10:20:58 hclee Exp $
+# $Id: LCG.py,v 1.17 2008-11-05 13:51:03 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -1210,9 +1210,15 @@ sys.exit(0)
         ##  - if the file has been previously uploaded, 
         ##    just take the uploaded one and ignore the pre-upload
 
-        ## get the environment variable LFC_HOST 
+        ## set and get the $LFC_HOST for uploading oversized sandbox
         self.__setup_sandboxcache(job)
+        ## in general, take the one from the local grid shell environment.
         lfc_host = grids[self.sandboxcache.middleware.upper()].shell.env['LFC_HOST']
+        ## for LCGSandboxCache, take the one specified in the sansboxcache object.
+        ## the value is exactly the same as the one from the local grid shell env. if
+        ## it is not specified exclusively.  
+        if self.sandboxcache._name == 'LCGSandboxCache':
+            lfc_host = self.sandboxcache.lfc_host
 
         max_prestaged_fsize = 0
         for f in sandbox_files:
@@ -1763,6 +1769,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.16  2008/11/05 10:20:58  hclee
+# fix the bug triggering the annoying warning message after subjob resubmission
+#
 # Revision 1.15  2008/11/03 15:27:48  hclee
 # enhance the internal setup for the SandboxCache
 #
