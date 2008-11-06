@@ -195,6 +195,8 @@ EOF
 ## function for setting up athena runtime environment 
 athena_setup () {
 
+    exitCode=0
+
     echo "Setting up the Athena environment ..."
 
     if [ -z $USER_AREA ] && [ -z $ATHENA_USERSETUPFILE ]
@@ -265,6 +267,7 @@ athena_setup () {
         retcode=`cat retcode.tmp`
         rm -f retcode.tmp
         if [ $retcode -ne 0 ]; then
+            exitCode=$retcode
             echo "*************************************************************"
             echo "*** Compilation warnings. Return Code $retcode            ***"
             echo "*************************************************************"
@@ -272,6 +275,8 @@ athena_setup () {
         pwd
         cd ..
     fi
+
+    return $exitCode
 }
 
 # Determine PYTHON executable in ATLAS release

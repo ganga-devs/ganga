@@ -93,6 +93,11 @@ fi
 #################################################
 # setup Athena
 athena_setup
+exitcode=$?
+if [ $exitcode -ne 0 ]; then
+   echo "Athena setup returns non-zero exit code: $exitcode" 1>&2
+   exit $exitcode
+fi
 
 #################################################
 # Special setup for CNAF
