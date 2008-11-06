@@ -105,6 +105,8 @@ class Grid(object):
             return False
 
         # general WMS options
+        # NB. please be aware the config for gLite WMS is NOT compatible with the config for EDG RB
+        #     although both shares the same command option: '--config'
         if self.config['Config']:
             self.submit_option += ' --config %s' % self.config['Config']
 
@@ -194,9 +196,9 @@ class Grid(object):
 
         cmd += self.submit_option
 
-        cmd = '%s --nomsg %s' % (cmd,jdlpath)
+        cmd = '%s --nomsg %s < /dev/null' % (cmd,jdlpath)
 
-        logger.debug('job submit command: %s' % cmd)       
+        logger.debug('job submit command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),allowed_exit=[0,255])
 
