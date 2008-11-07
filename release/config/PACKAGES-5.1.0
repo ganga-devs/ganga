@@ -4,7 +4,7 @@
 ganga/LICENSE_GPL                                                      Ganga-LICENSE-20-0
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Base-21-5
+ganga/python/Ganga                                                     Ganga-Base-21-6
 
 #alexander
 ganga/python/Ganga/Core/JobRepository                                  Ganga-JobRepository-20-2
@@ -77,7 +77,7 @@ ganga/python/GangaGUI/LHCB_BKDB_browser                                GangaGUI-
 ganga/python/GangaLHCb                                                 GangaLHCb-20-D3-01
 
 #pajchel/bsamset
-ganga/python/GangaNG                                                   GangaNG-20-7
+ganga/python/GangaNG                                                   GangaNG-20-8
 
 #dan/johannes
 ganga/python/GangaPanda                                                GangaPanda-20-15
