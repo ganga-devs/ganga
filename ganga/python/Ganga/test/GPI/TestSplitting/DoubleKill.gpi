@@ -1,0 +1,8 @@
+# try to kill subjobs which have already been killed
+j = Job()
+j.backend = TestSubmitter()
+j.splitter = TestSplitter()
+j.splitter.backs = 10*[TestSubmitter()]
+j.submit()
+j.subjobs[0].kill()
+j.kill()

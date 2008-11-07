@@ -1,0 +1,9 @@
+j = Job(backend=LCG())
+import tempfile
+import os
+f,name = tempfile.mkstemp()
+export(j,name)
+try:
+  load(name)
+finally:
+  os.remove(name)
