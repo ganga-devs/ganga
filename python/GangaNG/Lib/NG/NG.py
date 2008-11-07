@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.11 2008-10-27 16:33:38 pajchel Exp $
+# $Id: NG.py,v 1.12 2008-11-07 13:53:13 pajchel Exp $
 ###############################################################################
 #
 # NG backend
@@ -80,7 +80,7 @@ def getTidDatasetnames(ds):
 def matchLFNtoDataset(ds,lfn,atlasrel):
 
   tid = lfn.split('.')[1]
-  lrnds = None
+  lfnds = None
   at = atlasrel.split('.')
   
   if int(at[0]) > 12:  
@@ -1752,6 +1752,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.11  2008/10/27 16:33:38  pajchel
+# old file name convention compatibility
+#
 # Revision 1.10  2008/10/23 11:05:47  bsamset
 # Removed debugging message
 #
