@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.17 2008-11-05 13:51:03 hclee Exp $
+# $Id: LCG.py,v 1.18 2008-11-07 13:02:25 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -1719,13 +1719,24 @@ config = makeConfig('LCG','LCG/gLite/EGEE configuration parameters')
 
 # set default values for the configuration parameters
 config.addOption('EDG_ENABLE',True,'enables/disables the support of the EDG middleware')
-config.addOption('EDG_SETUP', '/afs/cern.ch/project/gd/LCG-share/current/etc/profile.d/grid_env.sh','sets the LCG-UI environment setup script for the EDG middleware')
+
+config.addOption('EDG_SETUP', '/afs/cern.ch/project/gd/LCG-share/current/etc/profile.d/grid_env.sh', \
+                 'sets the LCG-UI environment setup script for the EDG middleware', \
+                 filter=Ganga.Utility.Config.expandvars)
+
 config.addOption('GLITE_ENABLE', False, 'Enables/disables the support of the GLITE middleware')
-config.addOption('GLITE_SETUP', '/afs/cern.ch/project/gd/LCG-share/current/etc/profile.d/grid_env.sh','sets the LCG-UI environment setup script for the GLITE middleware')
+
+config.addOption('GLITE_SETUP', '/afs/cern.ch/project/gd/LCG-share/current/etc/profile.d/grid_env.sh', \
+                 'sets the LCG-UI environment setup script for the GLITE middleware', \
+                 filter=Ganga.Utility.Config.expandvars)
 
 config.addOption('VirtualOrganisation','dteam','sets the name of the grid virtual organisation')
-config.addOption('ConfigVO','','sets the VO-specific LCG-UI configuration script for the EDG resource broker')
-config.addOption('Config','','sets the generic LCG-UI configuration script for the GLITE workload management system')
+
+config.addOption('ConfigVO','','sets the VO-specific LCG-UI configuration script for the EDG resource broker', \
+                 filter=Ganga.Utility.Config.expandvars)
+
+config.addOption('Config','','sets the generic LCG-UI configuration script for the GLITE workload management system', \
+                 filter=Ganga.Utility.Config.expandvars)
 
 config.addOption('AllowedCEs','','sets allowed computing elements by a regular expression')
 config.addOption('ExcludedCEs','','sets excluded computing elements by a regular expression')
@@ -1769,6 +1780,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.17  2008/11/05 13:51:03  hclee
+# fix the bug in passing LFC_HOST to the job wrapper while using LCGSandboxCache
+#
 # Revision 1.16  2008/11/05 10:20:58  hclee
 # fix the bug triggering the annoying warning message after subjob resubmission
 #
