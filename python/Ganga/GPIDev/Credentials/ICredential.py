@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ICredential.py,v 1.1 2008-07-17 16:40:53 moscicki Exp $
+# $Id: ICredential.py,v 1.2 2008-11-07 22:46:52 ctan Exp $
 ################################################################################
 #
 # File: ICredential.py
@@ -40,7 +40,7 @@
 # 27/07/2007 AM:  Updated the renew() method to notify the
 #                 InternalServices.Coordinator when credentials are
 #                 detected by the monitoring loop as being invalid
-#		  so the internal services to be disabled
+#                 so the internal services to be disabled
 #
 # 07/12/2007 KH:  Made ICommandSet a component class
 #
@@ -49,6 +49,10 @@
 #
 # 13 03/2008 KH:  Update for change in configuration system
 #                 (use "defaults_" instead of "_Properties")
+#
+# 07/11/2008 CLT: Added mechanism to differentiate exitcodes to allow for 
+#                 immediate failure without retry. Fix for bug #40111.
+
 
 """Module defining interface class for working with credentials"""
                                                                                 
@@ -275,12 +279,18 @@ class ICredential( GangaObject ):
                # Append option value pairs
                for optName, optVal in self.command.currentOpts.iteritems():
                   initList.append( "%s %s" % ( optName, optVal ) )
-               status = self.shell.system( " ".join( initList ) )
-               if status == 0:
+               status, output, message = \
+                  self.shell.cmd1( " ".join( initList ), self.command.init_parameters[ 'exitcodes' ][ 'success' ] )
+               if status in self.command.init_parameters[ 'exitcodes' ][ 'success' ]:
                   logger.info( "%s creation/renewal successful." % self._name )
                   return True
                else:
-                  logger.warning( "%s creation/renewal failed [%s]." % ( self._name, status ) )
+                  logger.warning( "%s creation/renewal failed [%s].\n%s\n%s\n" % ( self._name, status, output, message ) )
+                  logger.warning( "status = %s, %s" % (status, status in self.command.init_parameters[ 'exitcodes' ][ 'fail_immediate' ]) )
+                  if status in self.command.init_parameters[ 'exitcodes' ][ 'fail_immediate' ]:
+                     Coordinator.notifyInvalidCredential( self )
+                     logger.debug( "credential disabled" )
+                     return False
             else: # create initiated from worker thread from monitoring component.
                currTime = time.time()
                if currTime - logTimeStamp >= logRepeatDuration:

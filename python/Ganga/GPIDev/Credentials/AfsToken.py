@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AfsToken.py,v 1.1 2008-07-17 16:40:53 moscicki Exp $
+# $Id: AfsToken.py,v 1.2 2008-11-07 22:46:52 ctan Exp $
 ################################################################################
 #
 # File: AfsToken.py
@@ -76,6 +76,9 @@
 # 02/07/2008 KH: Update to use requiresAfsToken() function of
 #                Ganga.Runtime.Repository_runtime to determine 
 #                whether Ganga repository is on AFS
+#
+# 07/11/2008 CLT: Added mechanism to differentiate exitcodes to allow for 
+#                 immediate failure without retry. Fix for bug #40111.
 
 
 """Module defining class for creating, querying and renewing AFS token"""
@@ -108,8 +111,15 @@ class AfsCommand( ICommandSet ):
    _schema['init']._meta['defvalue'] = "klog"
    _schema['info']._meta['defvalue'] = "tokens"
    _schema['destroy']._meta['defvalue'] = "unlog"
-   _schema['init_parameters']._meta['defvalue'] = { "pipe" : "-pipe", "valid" : "-lifetime", \
-         "username" : "-principal", "cell" : "-cell" }
+#   _schema['init_parameters']._meta['defvalue'] = { "pipe" : "-pipe", "valid" : "-lifetime", \
+#         "username" : "-principal", "cell" : "-cell" }
+   _schema['init_parameters']._meta['defvalue'] = {\
+      "pipe" : "-pipe",\
+      "valid" : "-lifetime",\
+      "username" : "-principal",\
+      "cell" : "-cell",\
+      "exitcodes" : { "success" : (0,), "fail_immediate" : (5, 130) }\
+   }
    _schema['destroy_parameters']._meta['defvalue'] = { "cell" : "-cell" }
    
    _name = "AfsCommand"

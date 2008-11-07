@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridProxy.py,v 1.1 2008-07-17 16:40:53 moscicki Exp $
+# $Id: GridProxy.py,v 1.2 2008-11-07 22:46:52 ctan Exp $
 ################################################################################
 #
 # File: GridProxy.py
@@ -68,6 +68,8 @@
 #
 # 27/02/2008 KH : Setup shell in GridProxy constructor, if middleware is defined
 #
+# 07/11/2008 CLT: Added mechanism to differentiate exitcodes to allow for 
+#                 immediate failure without retry. Fix for bug #40111.
 
 """Module defining class for creating, querying and renewing Grid proxy"""
                                                                                 
@@ -95,7 +97,11 @@ class GridCommand( ICommandSet ):
    _schema['init']._meta['defvalue'] = "grid-proxy-init"
    _schema['info']._meta['defvalue'] = "grid-proxy-info"
    _schema['destroy']._meta['defvalue'] = "grid-proxy-destroy"
-   _schema['init_parameters']._meta['defvalue'] = { "pipe" : "-pwstdin", "valid" : "-valid" }
+   _schema['init_parameters']._meta['defvalue'] = {\
+      "pipe" : "-pwstdin",\
+      "valid" : "-valid",\
+      "exitcodes" : { "success" : (0,), "fail_immediate" : (2,) }\
+   }
    _schema['destroy_parameters']._meta['defvalue'] = {}
    _schema['info_parameters']._meta['defvalue'] = {}
 
@@ -121,8 +127,14 @@ class VomsCommand( ICommandSet ):
    _schema['init']._meta['defvalue'] = "voms-proxy-init"
    _schema['info']._meta['defvalue'] = "voms-proxy-info"
    _schema['destroy']._meta['defvalue'] = "voms-proxy-destroy"
-   _schema['init_parameters']._meta['defvalue'] = { "pipe" : "-pwstdin", "valid" : "-valid", \
-         "voms" : "-voms" }
+#   _schema['init_parameters']._meta['defvalue'] = { "pipe" : "-pwstdin", "valid" : "-valid", \
+#         "voms" : "-voms" }
+   _schema['init_parameters']._meta['defvalue'] = {\
+      "pipe" : "-pwstdin",\
+      "valid" : "-valid",\
+      "voms" : "-voms",\
+      "exitcodes" : { "success" : (0,), "fail_immediate" : (1,) }\
+   }
    _schema['destroy_parameters']._meta['defvalue'] = {}
    _schema['info_parameters']._meta['defvalue'] = { "vo" : "-vo" }
 
