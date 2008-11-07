@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Shell.py,v 1.2 2008-10-24 06:42:14 moscicki Exp $
+# $Id: Shell.py,v 1.3 2008-11-07 12:26:12 moscicki Exp $
 ################################################################################
 #
 # Shell wrapper with environment caching 
@@ -47,7 +47,7 @@ class Shell:
       "The setup script is sourced (with possible arguments) and the environment is captured"
 
       if setup:
-         pipe=os.popen('source %s %s; python -c "import os; print os.environ"' % (setup," ".join(setup_args)))
+         pipe=os.popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)))
          output=pipe.read()
          rc=pipe.close()
          if rc: logger.warning('Unexpected rc %d from setup command %s',rc,setup)
@@ -154,6 +154,9 @@ class Shell:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/10/24 06:42:14  moscicki
+# bugfix #40932: Ganga incompatible with shell functions (using os.environ directly instead of printenv)
+#
 # Revision 1.1  2008/07/17 16:41:00  moscicki
 # migration of 5.0.2 to HEAD
 #
