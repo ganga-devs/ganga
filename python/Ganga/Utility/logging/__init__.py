@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: __init__.py,v 1.1 2008-07-17 16:41:03 moscicki Exp $
+# $Id: __init__.py,v 1.2 2008-11-07 12:37:51 moscicki Exp $
 ################################################################################
 
 #
@@ -108,7 +108,11 @@ def _make_file_handler(logfile,logfile_size):
         #import os
         #if not os.path.exists(logfile):
         #    file(logfile,'w').close()
-        file_handler = handlers.RotatingFileHandler(logfile,maxBytes=logfile_size)
+        try:
+            file_handler = handlers.RotatingFileHandler(logfile,maxBytes=logfile_size)
+        except IOError,x:
+            private_logger.error('Cannot open the log file: %s',str(x))
+            return
         file_handler.setFormatter(logging.Formatter(_formats['VERBOSE']))
         main_logger.addHandler(file_handler)    
 
@@ -319,7 +323,7 @@ def _getLogger(name=None,modulename=None,_roothandler=0, handler=None,frame=None
         # initialize the root of the hierarchy of loggers
         if _roothandler:
             formatter = ColourFormatter(_formats[config['_format']]) ##
-	    formatter.setColour(config['_colour'])
+            formatter.setColour(config['_colour'])
             handler.setFormatter(formatter)
             logger.propagate = 0 # do not propagate messages upwards...
             logger.addHandler(handler)
