@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ClassifyLocal.py,v 1.1 2008-10-04 17:42:38 karl Exp $
+# $Id: ClassifyLocal.py,v 1.2 2008-11-07 15:27:31 karl Exp $
 ###############################################################################
 # File: ClassifyLocal.py
 # Author: K. Harrison
@@ -11,8 +11,8 @@
    image-classification application on Local backend"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "30 November 2007"
-__version__ = "1.2"
+__date__    = "7 November 2008"
+__version__ = "1.3"
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -134,9 +134,11 @@ class ClassifyLocal( IRuntimeHandler ):
             "CLASSIFIER_HOME=\"\"",
             "if [ -d %s ]; then" % classifierDir,
             "   CLASSIFIER_HOME=%s" % classifierDir,
+            "   IMENSE_LIB_DIR=%s/lib" % classifierDir,
             # used to be ${VO_CAMONT_SW_DIR}/classifier
             "elif [ -d ${VO_CAMONT_SW_DIR} ]; then",
             "   CLASSIFIER_HOME=${VO_CAMONT_SW_DIR}",
+            "   IMENSE_LIB_DIR=${VO_CAMONT_SW_DIR}/lib",
             "else",
             "   echo \"Unable to locate classifier directory\"",
             "   exit",
@@ -144,7 +146,8 @@ class ClassifyLocal( IRuntimeHandler ):
             "if [ -z ${LD_LIBRARY_PATH} ]; then",
             "   export LD_LIBRARY_PATH=\"\"",
             "fi",
-            "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WORKDIR}",
+            "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WORKDIR}"
+            "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${IMENSE_LIB_DIR}"
             "",
          ] )
       return ( lineList, outbox )
