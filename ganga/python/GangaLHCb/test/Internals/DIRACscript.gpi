@@ -1,0 +1,63 @@
+# Test that the DIRAC script written by the Dirac backend is behaving as
+# expected
+
+from GangaLHCb.Lib.Dirac.DiracScript import DiracScript
+from GangaTest.Framework.utils import file_contains, write_file
+from os.path import exists,join
+from Ganga.Core import BackendError
+
+dscript = DiracScript()
+
+# Add a command to the file
+dscript.append('setCPUTime(3000)')
+
+# Finalise the script
+dscript.finalise()
+
+# Recover the commands as a string. Check that a few expected items are present
+commands = dscript.commands()
+if commands.find('djob = LHCbJob()')==-1 or \
+   commands.find('djob.setCPUTime(3000)')==-1 or \
+   commands.find('mydirac.submit')==-1 :
+  print commands
+  raise AssertionError, "Something is missing from the DIRACscript."
+
+# Check file is created
+j = Job()
+dscript.write(j._impl)
+fname=join(j.inputdir,'DIRACscript')
+assert(exists(fname))
+
+# Check that we can't append to a finalised script
+try:
+  dscript.append('setCPUTime(3000)')
+except BackendError:
+  pass
+else:
+   raise AssertionError, "Appending to a finalised script should fail."
+
+# Check that we can read script fram file
+dscript = DiracScript(j._impl)
+commands = dscript.commands()
+if commands.find('djob = LHCbJob()')==-1 or \
+   commands.find('djob.setCPUTime(3000)')==-1 or \
+   commands.find('mydirac.submit')==-1 :
+  raise AssertionError, "Something is missing from the DIRACscript. - %s" % commands
+  
+# Check that syntax errors get reported as a BackendError
+dscript = DiracScript()
+dscript.append('foo bar')
+try:
+  dscript.execute()
+  raise AssertionError, 'Failed to throw BackendError when syntax error in script.'
+except BackendError:
+  pass
+
+# Check that id variable is passed back
+import tempfile
+fname=tempfile.mktemp()
+write_file(fname,"#!/bin/sh\nhostname\n")
+dscript = DiracScript()
+dscript.append('setExecutable("'+str(fname)+'")')
+id = dscript.execute(submit=False)
+assert(id==None)

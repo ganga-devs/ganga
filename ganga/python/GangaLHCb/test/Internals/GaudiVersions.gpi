@@ -1,0 +1,15 @@
+available_apps = ["Gauss", "Boole", "Brunel", "DaVinci",
+                  "Euler", "Moore", "Vetra", "Panoramix",
+                  "Panoptes", "Gaudi"]
+from GangaLHCb.Lib.Gaudi.GaudiVersions import available_versions, guess_version
+
+# Check that we can get the list of all available versions
+for appname in available_apps:
+    versions = available_versions(appname)
+    print 'Application %s has versions: %s' %(appname, versions)
+
+# Check that all Gaudi application can set a default version
+for appname in available_apps:
+    version = guess_version(appname)
+    print 'Application %s set to default %s.' %(appname, version)
+
