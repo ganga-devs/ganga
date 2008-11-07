@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.6 2008-10-02 10:31:05 moscicki Exp $
+# $Id: Job.py,v 1.7 2008-11-07 12:39:53 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -181,7 +181,7 @@ class Job(GangaObject):
                     'submitting' : Transitions(State('new','submission failed',hook='rollbackToNewState'),
                                                State('submitted',hook='monitorSubmitted_hook'),
                                                State('unknown','forced remove OR remote jobmgr error'),
-                                               State('failed','manually forced')),
+                                               State('failed','manually forced or keep_on_failed=True')),
                     'submitted' : Transitions(State('running'),
                                               State('killed','j.kill()'),
                                               State('unknown','forced remove'),
@@ -528,13 +528,20 @@ class Job(GangaObject):
 
         return None
 
-    def submit(self,keep_going=False):
+    def submit(self,keep_going=False,keep_on_fail=False):
         '''Submits a job. Return true on success.
 
         First  the  application   is  configured  which  may  generate
         additional  input files,  preprocess  executable scripts  etc.
         Then  backend handler is  used to  submit the  configured job.
         The job is automatically checkpointed to persistent storage.
+
+        When the submission fails the job status is automatically
+        reverted to new and all files in the input directory are
+        deleted (this is the default behaviour,
+        keep_on_fail=False). If keep_on_fail=True then the job status
+        is moved to the failed status and input directory is left intact.
+        This is helpful for debugging anf implements the request #43143.
 
         For split jobs: consult https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaSplitters#Subjob_submission
         '''
@@ -628,11 +635,15 @@ class Job(GangaObject):
 
             return 1
         except Exception,x:
-            # revert to the new status
             log_user_exception(logger,debug = isinstance(x,GangaException))
-            logger.warning('%s ... reverting job %s to the new status', str(x), self.getFQID('.') )
-            self.updateStatus('new')
-            raise JobError(x)
+                            
+            if keep_on_fail:
+                self.updateStatus('failed')
+            else:
+                # revert to the new status
+                logger.warning('%s ... reverting job %s to the new status', str(x), self.getFQID('.') )
+                self.updateStatus('new')
+                raise JobError(x)
 
 
     def rollbackToNewState(self):
@@ -968,6 +979,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.6  2008/10/02 10:31:05  moscicki
+# bugfix #41372: added backend.remove() method to support job removal on the Remote backend
+#
 # Revision 1.5  2008/09/09 14:51:14  moscicki
 # bug #40696: Exception raised during resubmit() should be propagated to caller
 #
