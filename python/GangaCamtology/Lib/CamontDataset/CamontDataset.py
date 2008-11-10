@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: CamontDataset.py,v 1.2 2008-10-04 18:14:36 karl Exp $
+# $Id: CamontDataset.py,v 1.3 2008-11-10 11:35:05 karl Exp $
 ###############################################################################
 # File: CamontData.py
 # Author: K. Harrison
@@ -10,8 +10,8 @@
 """Module containing class for Camont output data"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "30 November 2007"
-__version__ = "1.1"
+__date__    = "10 November 2008"
+__version__ = "1.2"
 
 import commands
 import os
@@ -44,18 +44,21 @@ class CamontDataset( Dataset ):
       if not job:
          job = self._getParent()
 
-      outfileList = os.listdir( job.outputdir )
-      for filename in outfileList:
-         if filename not in [ "execute.dat", "stderr", "stdout", "submit.dat", "time.dat" ]:
-            filepath = os.path.join( job.outputdir, filename )
-            if os.path.isdir( filepath ):
-               shutil.rmtree( filepath )
-            else:
-               os.remove( filepath )
+      inTuple = ( job.inputdir, [] )
+      outSaveList = [ "execute.dat", "stderr", "stderr.gz", \
+         "stdout", "stdout.gz", "submit.dat", "time.dat" ]
+      outTuple = ( job.outputdir, outSaveList )
 
-      shutil.rmtree( job.inputdir )
-      os.mkdir( job.inputdir )
-      job.updateStatus( "completed" )
+      for dirTuple in [ inTuple, outTuple ]:
+         dirPath, saveList = dirTuple
+         fileList = os.listdir( dirPath )
+         for filename in fileList:
+            if filename not in saveList:
+               filepath = os.path.join( dirPath, filename )
+               if os.path.isdir( filepath ):
+                  shutil.rmtree( filepath )
+               else:
+                  os.remove( filepath )
 
       return True
         
