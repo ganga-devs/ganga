@@ -270,7 +270,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 [outlfc2,backup,backuplocation]=job.outputdata.getDQ2Locations(self.sites[1])
                 
             
-        outloc="CERNCAF"
+        outloc="CERN-PROD_USERDISK"
         if app.se_name != "none":
             outloc=app.se_name
         if outsite=="" :
@@ -411,8 +411,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 requirements.other.append(targetCloud)
             logger.debug("targetCloud result:%s" % targetCloud)
             ##if string.find(targetCloud,"VO-atlas-cloud")>-1 and not string.find(targetCloud,"VO-atlas-cloud-T0")>-1:
-            requirements.other.append('( ! Member("VO-atlas-tier-T0",other.GlueHostApplicationSoftwareRunTimeEnvironment) && ! Member("VO-atlas-tier-T1",other.GlueHostApplicationSoftwareRunTimeEnvironment))')
+            #requirements.other.append('( ! Member("VO-atlas-tier-T0",other.GlueHostApplicationSoftwareRunTimeEnvironment) && ! Member("VO-atlas-tier-T1",other.GlueHostApplicationSoftwareRunTimeEnvironment))')
+            requirements.other.append('( ! Member("VO-atlas-tier-T1",other.GlueHostApplicationSoftwareRunTimeEnvironment))')
             #### Applying computing model: Tier 0 and Tier 1s should be reserved to official production. Users jobs must use other sites.
+            #### Allowing T0 as CERN T2 is not properly tagged .
             
         logger.debug("master job submit?")
         if job.backend._name=="LCG" or job.backend._name=="Cronus" or job.backend._name=="Condor" or job.backend._name=="NG":
