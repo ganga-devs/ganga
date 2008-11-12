@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ClassifyLocal.py,v 1.2 2008-11-07 15:27:31 karl Exp $
+# $Id: ClassifyLocal.py,v 1.3 2008-11-12 11:56:43 karl Exp $
 ###############################################################################
 # File: ClassifyLocal.py
 # Author: K. Harrison
@@ -146,7 +146,7 @@ class ClassifyLocal( IRuntimeHandler ):
             "if [ -z ${LD_LIBRARY_PATH} ]; then",
             "   export LD_LIBRARY_PATH=\"\"",
             "fi",
-            "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WORKDIR}"
+            "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WORKDIR}",
             "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${IMENSE_LIB_DIR}"
             "",
          ] )
