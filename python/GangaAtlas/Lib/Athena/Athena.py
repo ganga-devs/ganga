@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.11 2008-10-25 16:09:39 elmsheus Exp $
+# $Id: Athena.py,v 1.12 2008-11-12 11:28:20 mslater Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -254,7 +254,7 @@ class Athena(IApplication):
             if re_package2:
                 match2=re_package2.match(line)
                 if match2 and not match1 and not match2.group(1) in self.exclude_package:
-                    req.write('use %s %s-* %s\n' %  (match2.group(1), match2.group(1), match2.group(1)))
+                    #req.write('use %s %s-* %s\n' %  (match2.group(1), match2.group(1), match2.group(1)))
                     req.write('use %s %s-*\n' %  (match2.group(1), match2.group(1) ))
                     user_excludes += ["%s" % match2.group(1)]
                     user_excludes += ["InstallArea/*/%s" % match2.group(1)]
@@ -752,6 +752,9 @@ config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The pa
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.11  2008/10/25 16:09:39  elmsheus
+# Introduce splitting per dataset
+#
 # Revision 1.10  2008/10/21 09:23:16  elmsheus
 # Add AtlasTier0
 #
