@@ -207,7 +207,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                         logger.error("Too many subjobs. Must abort to prevent crashes. Please resubmit with splitter.numsubjobs=%d." % numsubjobs)
                         raise 
 
-                else:
+                elif totalinfile<self.maxinfiles:
                     logger.warning("Too many input files, selecting only the %d first ones" % totalinfile)
                     self.maxinfiles=totalinfile
                     
