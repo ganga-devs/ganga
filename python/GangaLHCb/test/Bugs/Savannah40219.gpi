@@ -11,6 +11,7 @@ def checkDataSet(dataset):
 
 #first check SplitByFiles when we update the cache ourselves
 j = Job(application=DaVinci(), backend=TestSubmitter(), splitter= SplitByFiles())
+j.application.platform=config['DIRAC']['AllowedPlatforms'][0]
 j.inputdata = LHCbDataset(files = [
                                    'LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000001_5.dst',
                                    'LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000002_5.dst'])
@@ -31,6 +32,7 @@ j.kill()
 
 #now do same check with DiracSplitter when we update the cache ourselves
 j = Job(application=DaVinci(), backend=TestSubmitter(), splitter= DiracSplitter())
+j.application.platform=config['DIRAC']['AllowedPlatforms'][0]
 j.inputdata = LHCbDataset(files = [
                                    'LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000001_5.dst',
                                    'LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000002_5.dst'])
@@ -51,6 +53,7 @@ j.kill()
 #now try without first updating the dataset
 
 j = Job(application=DaVinci(), backend=TestSubmitter(), splitter= DiracSplitter())
+j.application.platform=config['DIRAC']['AllowedPlatforms'][0]
 j.inputdata = LHCbDataset(files = [
                                    'LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000001_5.dst',
                                    'LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000002_5.dst'])

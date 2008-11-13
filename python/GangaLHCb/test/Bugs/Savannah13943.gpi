@@ -13,6 +13,7 @@ f = open(fname,'w')
 f.close()
 j = Job(application=DaVinci(), backend=Dirac())
 j.application.optsfile=[optsfile]
+j.application.platform=config['DIRAC']['AllowedPlatforms'][0]
 j.inputsandbox=[fname]
 try:
     j.submit()
