@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.18 2008-11-07 13:02:25 hclee Exp $
+# $Id: LCG.py,v 1.19 2008-11-13 11:34:23 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -1391,10 +1391,20 @@ sys.exit(0)
                         emulated_bulk_jobs.append(sj)
 
         # involk normal monitoring method for normal jobs
+        for j in emulated_bulk_jobs:
+            logger.debug('emulated bulk job to be monitored: %s' % j.getFQID('.'))
         IBackend.master_updateMonitoringInformation(emulated_bulk_jobs)
 
         # involk special monitoring method for glite bulk jobs
+        for j in native_bulk_jobs:
+            logger.debug('native bulk job to be monitored: %s' % j.getFQID('.'))
         LCG.master_bulk_updateMonitoringInformation(native_bulk_jobs)
+        
+        ## should went through all jobs to update overall master job status
+        for j in jobs:
+            if ( len(j.subjobs) > 0 ) and j.backend.id:
+                logger.debug('updating overall master job status: %s' % j.getFQID('.'))
+                j.updateMasterJobStatus()
 
         profiler.check('==> master_updateMonitoringInformation() elapsed time')
 
@@ -1453,7 +1463,8 @@ sys.exit(0)
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
-    def master_bulk_updateMonitoringInformation(jobs,updateMasterStatus=True):
+#    def master_bulk_updateMonitoringInformation(jobs,updateMasterStatus=True):
+    def master_bulk_updateMonitoringInformation(jobs):
         '''Monitoring loop for glite bulk jobs'''
 
         grid = grids['GLITE']
@@ -1464,15 +1475,31 @@ sys.exit(0)
         ## split up the master job into severl LCG bulk job ids
         ##  - checking subjob status and excluding the master jobs with all subjobs in a final state)
         ##  - excluding the resubmitted jobs
+        ##  - checking master jobs with the status not being properly updated while all subjobs are in final states
         jobdict = {}
+        #mjob_status_updatelist = []
         for j in jobs:
+            #cnt_sj_final = 0
             if j.backend.id:
+                
+                ## collect master jobs need to be updated by polling the status from gLite WMS
                 for sj in j.subjobs:
+                    #if (sj.status in ['completed','failed']):
+                    #    cnt_sj_final += 1
+                        
                     if (sj.status not in ['completing','completed','failed']) and \
                             (sj.backend.parent_id in j.backend.id) and \
                             (not jobdict.has_key(sj.backend.parent_id)):
                         jobdict[sj.backend.parent_id] = j
-
+                        
+                    #    if j not in mjob_status_updatelist:
+                    #        mjob_status_updatelist.append(j)
+                        
+            ## collect master jobs with status not being updated even when all subjobs are in final states
+            #if (j.status not in ['completed','failed']) and (cnt_sj_final == len(j.subjobs)):
+            #    if j not in mjob_status_updatelist:
+            #        mjob_status_updatelist.append(j)
+                        
         job        = None
         subjobdict = {}
 
@@ -1571,9 +1598,10 @@ sys.exit(0)
                         downloader.addTask(grid, subjob, True)
 
         # update master job status
-        if updateMasterStatus:
-            for jid in jobdict.keys():
-                jobdict[jid].updateMasterJobStatus()
+        #if updateMasterStatus:
+        #    for mj in mjob_status_updatelist:
+        #        logger.debug('updating overall master job status: %s' % mj.getFQID('.'))
+        #        mj.updateMasterJobStatus()
 
     master_bulk_updateMonitoringInformation = staticmethod(master_bulk_updateMonitoringInformation)
 
@@ -1780,6 +1808,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.18  2008/11/07 13:02:25  hclee
+# expand $VAR and '~' when setting path-like options
+#
 # Revision 1.17  2008/11/05 13:51:03  hclee
 # fix the bug in passing LFC_HOST to the job wrapper while using LCGSandboxCache
 #
