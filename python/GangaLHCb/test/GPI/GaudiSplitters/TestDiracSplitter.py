@@ -1,13 +1,14 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: TestDiracSplitter.py,v 1.3 2008-10-27 11:06:55 wreece Exp $
+# $Id: TestDiracSplitter.py,v 1.4 2008-11-13 10:08:37 jwilliam Exp $
 ################################################################################
 from __future__ import division
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from GangaLHCb.test import addDiracTestSubmitter
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
+from GangaLHCb.Lib.Dirac.DiracSplitter import _diracSplitter
 
 addDiracTestSubmitter()
 
@@ -51,7 +52,6 @@ class TestDiracSplitter(GangaGPITestCase):
             )
 
         len_files = len(inputdata.files)
-        from GangaLHCb.Lib.Gaudi.Splitters import _diracSplitter
         ds = _diracSplitter(3,len_files,False)
         result = ds.split(inputdata, inputdata)
         assert len(result) == 5, 'Unexpected number of subjobs'
@@ -74,14 +74,12 @@ class TestDiracSplitter(GangaGPITestCase):
             )
 
         len_files = len(inputdata.files)
-        from GangaLHCb.Lib.Gaudi.Splitters import _diracSplitter
+
         ds = _diracSplitter(2,len_files,True)
         result = ds.split(inputdata, inputdata)
         assert len(result) == 2, 'Unexpected number of subjobs'
 
     def testSplitWithErrorReplicas(self):
-
-        from GangaLHCb.Lib.Gaudi.Splitters import _diracSplitter
 
         inputdata = MockDataset (
             cache_date = '' ,
@@ -142,7 +140,6 @@ class TestDiracSplitter(GangaGPITestCase):
             )
 
         len_files = len(inputdata.files)
-        from GangaLHCb.Lib.Gaudi.Splitters import _diracSplitter
         ds = _diracSplitter(len_files,len_files,False)
         result = ds.split(inputdata, inputdata)
         assert len(result) == 2, 'One file can only run at PIC-disk.'
@@ -185,7 +182,6 @@ class TestDiracSplitter(GangaGPITestCase):
             )
 
         len_files = len(inputdata.files)
-        from GangaLHCb.Lib.Gaudi.Splitters import _diracSplitter
         ds = _diracSplitter(2,len_files,False)
         result = ds.split(inputdata, inputdata)
         assert len(result) == 5, 'Should be split optimally'
@@ -228,7 +224,6 @@ class TestDiracSplitter(GangaGPITestCase):
             )
 
         len_files = len(inputdata.files)
-        from GangaLHCb.Lib.Gaudi.Splitters import _diracSplitter
         ds = _diracSplitter(2,len_files,False)
         result = ds.split(inputdata, inputdata)
         assert len(result) == 6, 'Should be split optimally'
@@ -3203,7 +3198,6 @@ class TestDiracSplitter(GangaGPITestCase):
          ) 
 
         
-        from GangaLHCb.Lib.Gaudi.Splitters import _diracSplitter
         ds = _diracSplitter(10,50,False)
         try:
             ds.split(inputdata, inputdata)
