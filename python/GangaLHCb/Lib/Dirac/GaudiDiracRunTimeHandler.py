@@ -31,7 +31,7 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
             inputsandbox.append( File( pyFile, subdir = 'python'))
         for dir, files in app.extra._subdir_pys.iteritems():
             for f in files:
-                inputsandbox.append( File( f, subdir = 'python' + os.sep + dir))   
+                inputsandbox.append(File(f, subdir = 'python' + os.sep + dir))
                 
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         c = StandardJobConfig( '',inputsandbox,[],[],None)
@@ -50,7 +50,7 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
                        '\nFileCatalog.Catalogs += { "xmlcatalog_file:pool_xml_catalog.xml" };\n'
             inputsandbox.append( FileBuffer( 'dataopts.opts', dataopts))
         
-        outputsandbox = app._getParent().outputsandbox + app.extra._outputfiles
+        outputsandbox = app.extra.outputsandbox
 
         logger.debug( 'Input sandbox: %s: ',str(inputsandbox))
         logger.debug( 'Output sandbox: %s: ',str(outputsandbox))
@@ -67,11 +67,7 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
                                          DiracShared.getGenericRunScript(job),logFile)
         diracScript.setName( 'Ganga_%s_%s' % (app._name, app.version) )
         diracScript.inputdata( app.extra.inputdata)
-
-        outdata = app.extra.outputdata
-        if job.outputdata:
-            outdata += [ f.name for f in job.outputdata.files]
-        diracScript.outputdata( outdata)
+        diracScript.outputdata(app.extra.outputdata)
 
         c.script=diracScript
         c.logfile=app._name+'_'+app.version+'.log'
