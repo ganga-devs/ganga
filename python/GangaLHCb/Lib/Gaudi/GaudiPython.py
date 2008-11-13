@@ -1,42 +1,28 @@
-#!/usr/bin/env python
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-'''
-Application handler for GaudiPython applications in LHCb.
-'''
+'''Application handler for GaudiPython applications in LHCb.'''
 
 __author__ = 'Ulrik Egede'
-__date__ = 'August 2008'
-__revision__ = 0.1
+__date__ = "$Date: 2008-11-13 10:02:53 $"
+__revision__ = "$Revision: 1.8 $"
 
-## Import the GPI
-from Ganga.GPIDev.Base import GangaObject
+import os
+import re
+import sys
+import inspect
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Schema import *
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
 from Ganga.Utility.files import expandfilename
-from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-
-import os, re
-import sys
-
 import Ganga.Utility.logging
+from Ganga.GPIDev.Lib.File import  File
+from GangaLHCb.Lib.Gaudi import GaudiExtras
+from GaudiUtils import *
+
 logger = Ganga.Utility.logging.getLogger()
 
-import env # enables setting of the environment
-
-_available_apps = ["Gauss", "Boole", "Brunel", "DaVinci",
-                   "Euler", "Moore", "Vetra", "Panoramix",
-                   "Panoptes", "Gaudi"]
-
-_available_packs={'Gauss'   : 'Sim',
-                  'Boole'   : 'Digi',
-                  'Brunel'  : 'Rec',
-                  'DaVinci' : 'Phys',
-                  'Euler'   : 'Trg',
-                  'Moore'   : 'Hlt',
-                  'Vetra'   : 'Velo',
-                  'Panoptes': 'Rich'}
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class GaudiPython(IApplication):
     """The Gaudi Application handler
@@ -69,117 +55,89 @@ class GaudiPython(IApplication):
 
 """
     _name = 'GaudiPython'
-
-# Set up the schema for this application
-    _schema = Schema(Version(1, 1), {
-            'script': FileItem(sequence=1,strict_sequence=0,defvalue=[],doc='''The name of the script to execute. A copy will be made at submission time'''),
-            
-            'version': SimpleItem(defvalue=None,typelist=['str','type(None)'],doc='''The version of the 
-            project (like "v19r2")'''),
-            
-            'platform': SimpleItem(defvalue = None, typelist=['str','type(None)'],
-                                   doc='''The platform the application is configured for (e.g. "slc4_ia32_gcc34")'''),
-            
-            'project': SimpleItem(defvalue = None, typelist=['str','type(None)'],
-                                  doc='''The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'''),
-            'setupProjectOptions': SimpleItem(defvalue = '', typelist=['str','type(None)'], doc='''Extra options to be passed onto the SetupProject command used for configuring the environment. As an example setting it to '--dev' will give access to the DEV area. For full documentation of the available options see https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'''),
-            })
     _category = 'applications'
+    
+    schema = {}
+    docstr = 'The name of the script to execute. A copy will be made ' + \
+             'at submission time'
+    schema['script'] = FileItem(sequence=1,strict_sequence=0,defvalue=[],
+                                doc=docstr)
+    docstr = 'The version of the application (like "v19r2")'
+    schema['version'] = SimpleItem(defvalue=None,
+                                   typelist=['str','type(None)'],doc=docstr)
+    docstr = 'The platform the application is configured for (e.g. ' + \
+             '"slc4_ia32_gcc34")'
+    schema['platform'] = SimpleItem(defvalue=None,
+                                    typelist=['str','type(None)'],doc=docstr)
+    docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
+    schema['project'] = SimpleItem(defvalue=None,
+                                   typelist=['str','type(None)'],hidden=1,
+                                   doc=docstr)
+    docstr = 'Extra options to be passed onto the SetupProject command ' + \
+             'used for configuring the environment. As an example ' + \
+             'setting it to \'--dev\' will give access to the DEV area. ' + \
+             'For full documentation of the available options see ' + \
+             'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
+    schema['setupProjectOptions'] = SimpleItem(defvalue='',
+                                               typelist=['str','type(None)'],
+                                               doc=docstr)  
+    _schema = Schema(Version(1, 1), schema)                                    
+
 
     def _auto__init__(self):
         if (not self.project):
-            self.project = 'DaVinci'
-            
+            self.project = 'DaVinci'            
         if (not self.version):
-            import GaudiVersions
-            self.version = GaudiVersions.guess_version(self.project)
+            self.version = guess_version(self.project)
         if (not self.platform):
-            self.platform = self._get_user_platform()
-
+            self.platform = get_user_platform()
         
-
     def master_configure(self):
         '''Configures the application'''
 
-        self._checkInputs()
         self.appname = self.project
-        self._setUpEnvironment()  
+        self.shell = gaudishell_setenv(self)
 
+        self._check_inputs()
         job=self.getJobObject()
-        from GangaLHCb.Lib.Gaudi import GaudiExtras
         self.extra = GaudiExtras()
         if job.inputdata:
             self.extra.inputdata = job.inputdata
             self.extra.inputdata.datatype_string=job.inputdata.datatype_string
 
-        self.package = _available_packs[self.project]
+        self.package = available_packs(self.project)
 
         return (None,None)
-
 
     def configure(self,master_appconfig):
         job=self.getJobObject()
-        self.dataopts = self._dataset2optionsstring(job.inputdata)
+        self.dataopts = dataset_to_options_string(job.inputdata)
         return (None,None)
-
-
             
-    def _checkInputs( self):
-        # Go through the schema one by one and check if
-        # we can guess the value
-        # also normalise and expand filenames
-        for fileitem in self.script:
-            fileitem.name = os.path.expanduser(fileitem.name)
-            fileitem.name = os.path.normpath(fileitem.name)
-
-        if self.project is None:
-            logger.error("The project is not set. Cannot configure")
-            raise ApplicationConfigurationError(
-                None, "The project is not set. Cannot configure")
-
-        if self.project not in _available_apps:
-            logger.error("Unknown application "+self.appname+
-                         ". Cannot configure")
-            raise ApplicationConfigurationError(
-                None, "Unknown application "+self.appname+". Cannot configure")
+    def _check_inputs(self):
+        """Checks the validity of user's entries for GaudiPython schema"""
+        
+        check_gaudi_inputs(self.script,self.project)
 
         if len(self.script)==0:
-            logger.warning("No script defined. Will use a default script which is probably not what you want.")
-
-            from Ganga.GPIDev.Lib.File import  File
-            import inspect
+            logger.warning("No script defined. Will use a default " + \
+                           'script which is probably not what you want.')
             self.script = [File(os.path.join(
                 os.path.dirname(inspect.getsourcefile(GaudiPython)),
-                'GaudiPythonExample.py'))]
+                'options/GaudiPythonExample.py'))]
+        return
 
-    
-    def _dataset2optionsstring(self,ds):
-        s=''
-        if ds!=None:
-            s='EventSelector.Input   = {'
-            for k in ds.files:
-                s+='\n'
-                s+=""" "DATAFILE='%s' %s",""" % (k.name, ds.datatype_string)
-            #Delete the last , to be compatible with the new optiosn parser
-            if s.endswith(","):
-                s=s[:-1]
-            s+="""\n};"""
-        return s
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-    def _setUpEnvironment( self): 
-        self.shell=env._setenv( self)
-
-    def _get_user_platform(self,env=os.environ):
-        if env.has_key('CMTCONFIG'):
-            return env['CMTCONFIG']
-        else:
-            logger.info('"CMTCONFIG" not set. Cannot determine the platform you want to use')
-            return ''
+#
+# Associate the correct run-time handlers to GaudiPython for various backends.
+#
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-
-from GangaLHCb.Lib.Gaudi.GaudiPythonLSFRunTimeHandler import GaudiPythonLSFRunTimeHandler
-from GangaLHCb.Lib.Dirac.GaudiPythonDiracRunTimeHandler import GaudiPythonDiracRunTimeHandler
+from GangaLHCb.Lib.Gaudi.GaudiPythonLSFRunTimeHandler \
+     import GaudiPythonLSFRunTimeHandler
+from GangaLHCb.Lib.Dirac.GaudiPythonDiracRunTimeHandler \
+     import GaudiPythonDiracRunTimeHandler
 
 allHandlers.add('GaudiPython', 'LSF', GaudiPythonLSFRunTimeHandler)
 allHandlers.add('GaudiPython', 'Interactive', GaudiPythonLSFRunTimeHandler)
@@ -188,3 +146,5 @@ allHandlers.add('GaudiPython', 'SGE', GaudiPythonLSFRunTimeHandler)
 allHandlers.add('GaudiPython', 'Local', GaudiPythonLSFRunTimeHandler)
 allHandlers.add('GaudiPython', 'Dirac', GaudiPythonDiracRunTimeHandler)
 allHandlers.add('GaudiPython', 'Condor', GaudiPythonLSFRunTimeHandler)
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

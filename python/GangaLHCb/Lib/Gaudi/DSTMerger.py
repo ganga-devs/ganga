@@ -1,22 +1,29 @@
-from Ganga.GPIDev.Adapters.IMerger import MergerError
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import GPIProxyObject
-from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+"""Merges DST files."""
 
-from Ganga.GPIDev.Lib.File import  File
-from Ganga.Lib.Mergers.Merger import AbstractMerger, IMergeTool
+__date__ = "$Date: 2008-11-13 10:02:53 $"
+__revision__ = "$Revision: 1.2 $"
 
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
-from Ganga.Utility.Plugin import allPlugins
-from Ganga.Utility.logging import getLogger, log_user_exception
 import commands
 import inspect
 import os
 import string
 import subprocess
 import tempfile
+from Ganga.GPIDev.Adapters.IMerger import MergerError
+from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import GPIProxyObject
+from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema
+from Ganga.GPIDev.Schema import SimpleItem, Version
+from Ganga.GPIDev.Lib.File import  File
+from Ganga.Lib.Mergers.Merger import AbstractMerger, IMergeTool
+from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+from Ganga.Utility.Plugin import allPlugins
+from Ganga.Utility.logging import getLogger, log_user_exception
 
 logger = getLogger()
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class _DSTMergeTool(IMergeTool):
     
@@ -24,17 +31,21 @@ class _DSTMergeTool(IMergeTool):
     _hidden = 1
     _name = '_DSTMergeTool'
     _schema = IMergeTool._schema.inherit_copy()
-    _schema.datadict['merge_opts'] = FileItem(defvalue = None, doc='Path to a options file to use when merging.')
-    _schema.datadict['version'] = SimpleItem(defvalue = '', doc='The version of DaVinci to use when merging. (e.g. v19r14)')
+    docstr = 'Path to a options file to use when merging.'
+    _schema.datadict['merge_opts'] = FileItem(defvalue=None,doc=docstr)
+    docstr = 'The version of DaVinci to use when merging. (e.g. v19r14)'
+    _schema.datadict['version'] = SimpleItem(defvalue='',doc=docstr)
 
     def mergefiles(self, file_list, output_file):
         
         #if no opts file is specified, then use version from instellation
         if self.merge_opts is None or not self.merge_opts.name:
-            self.merge_opts = File(os.path.join(os.path.dirname(inspect.getsourcefile(_DSTMergeTool)),'DSTMerger.opts'))
+            dir = os.path.dirname(inspect.getsourcefile(_DSTMergeTool))
+            self.merge_opts = File(os.path.join(dir,'options/DSTMerger.opts'))
     
         if not os.path.exists(self.merge_opts.name):
-            raise MergerError("The options file '%s' needed for merging does not exist." % self.merge_opts.name)
+            msg = "The options file '%s' needed for merging does not exist." 
+            raise MergerError(msg % self.merge_opts.name)
         logger.info("Using the options file '%s'.", self.merge_opts.name)
         
         #this is the bit specifing the files
@@ -56,7 +67,6 @@ EventSelector.Input = {""" % output_file
 "DATAFILE='PFN:%s' TYP='POOL_ROOTTREE' OPT='READ'"%s""" % (file_name, file_sep)
         output_opts += """
 };"""
-        #print output_opts
         
         #write this out to a file
         opts_file_name = tempfile.mktemp('.opts')
@@ -67,7 +77,8 @@ EventSelector.Input = {""" % output_file
             opts_file.close()
             
         if not os.path.exists(opts_file_name):
-            raise MergerError("Failed to write tempory options file '%s' during merge" % opts_file_name)
+            msg = "Failed to write tempory options file '%s' during merge"
+            raise MergerError(msg % opts_file_name)
         
         #now run gaudirun via a script
         shell_script = """#!/bin/sh
@@ -81,8 +92,6 @@ gaudirun.py %s %s
 exit $?
 """ % (self.version, self.merge_opts.name, opts_file_name)
 
-        #print shell_script
-
         script_file_name = tempfile.mktemp('.sh')
         try:
             script_file = file(script_file_name,'w')
@@ -92,15 +101,19 @@ exit $?
         
         return_code = subprocess.call(['/bin/sh',script_file_name])
         if return_code != 0:
-            logger.warning('The DSTMerger returned %i when calling gaudirun' % return_code)
+            msg = 'The DSTMerger returned %i when calling gaudirun'
+            logger.warning(msg % return_code)
             
         #finally clean up
         os.unlink(script_file_name)
         os.unlink(opts_file_name)
         
         if not os.path.exists(output_file):
-            raise MergerError("The output file '%s' was not created" % output_file)
+            msg = "The output file '%s' was not created"
+            raise MergerError(msg % output_file)
 
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class DSTMerger(AbstractMerger):
     """A merger object for LHCb DST files
@@ -136,16 +149,24 @@ class DSTMerger(AbstractMerger):
     _exportmethods = ['merge']
     _name = 'DSTMerger'
     _schema = AbstractMerger._schema.inherit_copy()
-    _schema.datadict['merge_opts'] = FileItem(defvalue = None, doc='Path to a options file to use when merging.')
-    _schema.datadict['version'] = SimpleItem(defvalue = '', doc='The version of DaVinci to use when merging. (e.g. v19r14)')
+    docstr = 'Path to a options file to use when merging.'
+    _schema.datadict['merge_opts'] = FileItem(defvalue=None, doc=docstr)
+    docstr = 'The version of DaVinci to use when merging. (e.g. v19r14)'
+    _schema.datadict['version'] = SimpleItem(defvalue='', doc=docstr)
 
     def __init__(self):
         super(DSTMerger,self).__init__(_DSTMergeTool())
 
-    def merge(self, jobs, outputdir = None, ignorefailed = None, overwrite = None):
+    def merge(self, jobs, outputdir=None, ignorefailed=None, overwrite=None):
         self.merge_tool.merge_opts = self.merge_opts
         self.merge_tool.version = self.version
         #needed as exportmethods doesn't seem to cope with inheritance
-        return super(DTSMerger,self).merge(jobs, outputdir, ignorefailed, overwrite)
-    
+        return super(DTSMerger,self).merge(jobs, outputdir, ignorefailed,
+                                           overwrite)
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
+# Add it to the list of plug-ins
 allPlugins.add(_DSTMergeTool,'merge_tools','_DSTMergeTool')
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
