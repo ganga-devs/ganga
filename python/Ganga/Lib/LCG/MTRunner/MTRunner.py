@@ -89,8 +89,8 @@ class MTRunner(Thread):
                 if self.data.isEmpty():
 
                     if keepAlive:
-                        if self.debug:
-                            print 'data queue is empty, check again in 0.5 sec.'
+                        #if self.debug:
+                        #    print 'data queue is empty, check again in 0.5 sec.'
                         time.sleep(0.5)
                         continue
                     else:
