@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.12 2008-10-21 14:30:34 dvanders Exp $
+# $Id: Panda.py,v 1.13 2008-11-13 16:28:09 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -115,7 +115,7 @@ def runPandaBrokerage(job):
     job.backend.actualCE = job.backend.site
     # correct the cloud in case site was not AUTO
     job.backend.cloud = Client.PandaSites[job.backend.site]['cloud']
-    logger.warning('Panda brokerage results: cloud %s, site %s'%(job.backend.cloud,job.backend.site))
+    logger.info('Panda brokerage results: cloud %s, site %s'%(job.backend.cloud,job.backend.site))
 
 class PandaBuildJob(GangaObject):
     _schema = Schema(Version(1,0), {
@@ -132,7 +132,7 @@ class PandaBuildJob(GangaObject):
 class Panda(IBackend):
     '''Panda backend'''
 
-    _schema = Schema(Version(1,1), {
+    _schema = Schema(Version(1,2), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'long'          : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send job to a long queue'),
 #        'blong'         : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send build job to a long queue'),
@@ -152,6 +152,7 @@ class Panda(IBackend):
         'ara'           : SimpleItem(defvalue=False,protected=0,copyable=1,doc='use Athena ROOT Access'),
 #        'araOutFile'    : SimpleItem(defvalue=[],protected=0,copyable=1,doc='define output files for ARA, e.g., [\'output1.root\',\'output2.root\']'),
 #        'trf'           : SimpleItem(defvalue='',protected=0,copyable=1,doc='run transformation, e.g. .trf = "csc_atlfast_trf.py %IN %OUT.AOD.root %OUT.ntuple.root -1 0"'),
+        'supStream'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='suppress some output streams. e.g., [\'ESD\',\'TAG\']'),
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='Panda job id'),
         'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Panda job status'),
         'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
@@ -204,7 +205,7 @@ class Panda(IBackend):
         '''Kill jobs'''  
                                                                                                             
         job = self.getJobObject()
-        logger.info('Killing job %s' % job.getFQID('.'))
+        logger.debug('Killing job %s' % job.getFQID('.'))
 
         active_status = [ None, 'defined', 'unknown', 'assigned', 'waiting', 'activated', 'sent', 'starting', 'running', 'holding', 'transferring' ]
 
@@ -327,7 +328,7 @@ class Panda(IBackend):
             if job.backend.id == status.PandaID:
 
                 if job.backend.status != status.jobStatus:
-                    logger.info('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
+                    logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
                     job.backend.status = status.jobStatus
 
                     if status.computingElement != 'NULL':
@@ -348,7 +349,7 @@ class Panda(IBackend):
 
             elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
                 if job.backend.buildjob.status != status.jobStatus:
-                    logger.info('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
+                    logger.debug('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
                     job.backend.buildjob.status = status.jobStatus
 
                     if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
@@ -381,6 +382,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12  2008/10/21 14:30:34  dvanders
+# comment out prints
+#
 # Revision 1.11  2008/10/16 21:56:52  dvanders
 # add runPandaBrokerage and queueToAllowedSites functions
 #

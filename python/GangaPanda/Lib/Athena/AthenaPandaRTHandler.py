@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.12 2008-11-11 13:55:11 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.13 2008-11-13 16:28:09 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -23,7 +23,7 @@ import Client
 from taskbuffer.JobSpec import JobSpec
 from taskbuffer.FileSpec import FileSpec
 
-def extractConfiguration(jobOptions,trf=False):
+def extractConfiguration(jobOptions,trf=False,supStream=[]):
 
     config = {
        'outHist'     : False,
@@ -71,8 +71,15 @@ def extractConfiguration(jobOptions,trf=False):
         fail = True
         for line in output.split('\n'):
             if not line.startswith('ConfigExtractor >'): continue
+
             fail = False
             item = line[18:].split()
+            if item[0].startswith("Output="):
+                logger.info('Detected output stream %s'%item[0])
+                tmpSt = item[0].replace('=',' ').split()[-1]
+                if tmpSt.upper() in supStream:
+                    logger.info('Supressing output stream %s'%item[0])
+                    continue
 
             if   item[0] == 'Output=HIST':
                 config['outHist'] = True
@@ -230,10 +237,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         logger.info('Parsing job options file ...')
         job_option_files = ' '.join([ opt_file.name for opt_file in app.option_file ])
 
-        self.config = extractConfiguration(job_option_files,job.backend.ara)
+        upperSupStream = [s.upper() for s in job.backend.supStream]
+        self.config = extractConfiguration(job_option_files,job.backend.ara,upperSupStream)
 
 #       unpack library
-        logger.info('Creating source tarball ...')        
+        logger.debug('Creating source tarball ...')        
         tmpdir = '/tmp/%s' % commands.getoutput('uuidgen')
         os.mkdir(tmpdir)
 
@@ -299,7 +307,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
 #       upload sources
 
-        logger.info('Uploading source tarball ...')
+        logger.debug('Uploading source tarball ...')
         try:
             cwd = os.getcwd()
             os.chdir(inpw.getPath())
@@ -340,7 +348,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,gridProxy.identity())):
             raise ApplicationConfigurationError(None,'outputdata.datasetname must start with %s.%s.ganga.'%(usertag,gridProxy.identity()))
 
-        logger.info('Output datasetname %s',job.outputdata.datasetname)
+        logger.info('Output dataset %s',job.outputdata.datasetname)
 
         if job.outputdata.outputdata and not job.backend.ara:
             raise ApplicationConfigurationError(None,'job.outputdata.outputdata is not required for normal athena user analyses (i.e. job.backend.ara = False)"')
@@ -493,6 +501,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.prodDBlock    = 'NULL'
         jspec.destinationDBlock = job.outputdata.datasetname
         if job.outputdata.location:
+            if not job._getRoot().subjobs or job.id == 0:
+                logger.warning('You have specified outputdata.location. Note that Panda may not support writing to a user-defined output location.')
             jspec.destinationSE = job.outputdata.location
         else:
             jspec.destinationSE = site
