@@ -104,5 +104,7 @@ class LCGOutputDownloader:
             logger.debug('LCGOutputDownloader started')
 
     def stop(self):
+        logger.warning('stopping LCGOutputDownloader ... It may take a while until all activated downloading processes to be finished properly.')
         self.runner.stop()
-        logger.debug('LCGOutputDownloader stopped')
+        self.runner.join()
+        logger.debug('... LCGOutputDownloader stopped')
