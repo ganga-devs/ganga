@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: CamontDataset.py,v 1.3 2008-11-10 11:35:05 karl Exp $
+# $Id: CamontDataset.py,v 1.4 2008-11-15 15:06:39 karl Exp $
 ###############################################################################
 # File: CamontData.py
 # Author: K. Harrison
@@ -10,8 +10,8 @@
 """Module containing class for Camont output data"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "10 November 2008"
-__version__ = "1.2"
+__date__    = "15 November 2008"
+__version__ = "1.3"
 
 import commands
 import os
@@ -30,7 +30,12 @@ shell = getShell()
 
 class CamontDataset( Dataset ):
 
-   _schema = Schema( Version( 1, 0 ), {} )
+   _schema = Schema( Version( 1, 0 ), {
+      "gridhome" : SimpleItem( defvalue = \
+      "gsiftp://serv02.hep.phy.cam.ac.uk/dpm/hep.phy.cam.ac.uk/home/camont", \
+#     "gsiftp://t2se01.physics.ox.ac.uk/dpm/physics.ox.ac.uk/home/camont"
+      doc = "Path to default top-level directory for Grid storage" ) \
+      } )
    _category = 'datasets'
    _name = 'CamontDataset'
 
@@ -129,10 +134,7 @@ class CamontDataset( Dataset ):
    def getGridStorage( self, gridhome = "" ):
       vo = getConfig( "LCG" )[ "VirtualOrganisation" ]
       if not gridhome:
-#        gridhome = os.path.join( \
-#           "gsiftp://serv02.hep.phy.cam.ac.uk/dpm/hep.phy.cam.ac.uk/home", vo )
-         gridhome = os.path.join( \
-            "gsiftp://t2se01.physics.ox.ac.uk/dpm/physics.ox.ac.uk/home", vo )
+         gridhome = self.gridhome
       job = self._getParent()
       id = job.id
       username = getConfig( "Configuration" )[ "user" ]
