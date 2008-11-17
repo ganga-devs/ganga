@@ -312,18 +312,25 @@ EOF
         # use dq2-get to download input file
 	if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 	    then
-	    dq2-get --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
-	    if [ -e $DATASETNAME/$file ] 
-		then
-		mv $DATASETNAME/* .
-	    else
-		echo 'ERROR: dq2-get of inputfile failed !'
-		echo '1'>retcode.tmp
-	    fi
+	    for ((i=1;i<=3;i+=1)); do
+		echo Copying $file, attempt $i of 3
+		dq2-get --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
+		if [ -e $DATASETNAME/$file ]
+		    then
+		    mv $DATASETNAME/* .
+		    echo successfully retrieved $file
+		    break
+		else
+		    echo 'ERROR: dq2-get of inputfile failed !'
+		    echo '1'>retcode.tmp
+		fi
+	    done
 	else
-	    echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
+	    echo 'ERROR: DQ2Clients with dq2-get are not installed at the 
+site - please contact Ganga support mailing list.'
 	    echo '1'>retcode.tmp
 	fi
+
 	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
 	ls -rtla
@@ -377,7 +384,7 @@ EOF
 		break
 	    fi
 	else
-	    echo 'Problems with input file $file'
+	    echo "Problems with input file $file"
 	fi
 	rm $file
       done
