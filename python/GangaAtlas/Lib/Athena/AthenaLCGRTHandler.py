@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.20 2008-11-17 15:00:18 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.21 2008-11-17 15:38:58 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -408,7 +408,11 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             'ATHENA_USERSETUPFILE' : athena_usersetupfile,
             'ATLAS_PROJECT' : app.atlas_project,
             'ATLAS_EXETYPE' : app.atlas_exetype
+
         }
+
+        environment['DCACHE_RA_BUFFER'] = config['DCACHE_RA_BUFFER']
+
         if app.atlas_environment:
             for var in app.atlas_environment:
                 vars=var.split('=')

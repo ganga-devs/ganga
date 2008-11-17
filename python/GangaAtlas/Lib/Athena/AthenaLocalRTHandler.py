@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.12 2008-11-17 15:08:34 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.13 2008-11-17 15:38:58 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -379,6 +379,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             'ATLAS_PROJECT' : app.atlas_project,
             'ATLAS_EXETYPE' : app.atlas_exetype
         }
+
+        environment['DCACHE_RA_BUFFER'] = config['DCACHE_RA_BUFFER']
+        
         if app.atlas_environment:
             for var in app.atlas_environment:
                 vars=var.split('=')
@@ -490,6 +493,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.12  2008/11/17 15:08:34  elmsheus
+#Fix bug #43946, DQ2_COPY mode for multiple datasets
+#
 #Revision 1.11  2008/10/26 10:59:50  elmsheus
 #Correct setting of max_event
 #

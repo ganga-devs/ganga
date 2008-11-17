@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.13 2008-11-17 15:01:42 elmsheus Exp $
+# $Id: Athena.py,v 1.14 2008-11-17 15:38:58 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -807,9 +807,12 @@ config.addOption('ATLAS_SOFTWARE', '/afs/cern.ch/project/gd/apps/atlas/slc3/soft
 config.addOption('PRODUCTION_ARCHIVE_BASEURL', 'http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/', 'FIXME')
 config.addOption('ExcludedSites', '' , 'FIXME')
 config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The path in which the cmtsetup magic function will look up the setup.sh for CMT environment setup')
-config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
+config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.13  2008/11/17 15:01:42  elmsheus
+# Add Athena.stats
+#
 # Revision 1.12  2008/11/12 11:28:20  mslater
 # Fix for bug 42661: User packages not being recognised in Athena Root dir
 #
