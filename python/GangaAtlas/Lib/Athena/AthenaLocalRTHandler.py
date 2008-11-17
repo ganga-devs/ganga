@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.11 2008-10-26 10:59:50 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.12 2008-11-17 15:08:34 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -298,6 +298,11 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                  environment['DQ2_LOCAL_PROTOCOL'] = job.inputdata.accessprotocol
             if job.inputsandbox: inputbox += job.inputsandbox   
 
+        # Fix DATASETNAME env variable for DQ2_COPY mode
+        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type=='DQ2_COPY' :
+            if job.inputdata.dataset:
+                environment['DATASETNAME'] = job.inputdata.dataset[0]
+
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
     def master_prepare( self, app, appconfig ):
@@ -485,6 +490,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.11  2008/10/26 10:59:50  elmsheus
+#Correct setting of max_event
+#
 #Revision 1.10  2008/10/20 07:47:11  elmsheus
 #Fix HelloWorld job for Local/Batch backend
 #
