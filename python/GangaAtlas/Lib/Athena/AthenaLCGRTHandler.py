@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.19 2008-10-26 10:59:50 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.20 2008-11-17 15:00:18 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -90,7 +90,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     input_files = job.inputdata.lfn
 
                 elif job.inputdata._name == 'DQ2Dataset':
-                    if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
+                    if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified. Failure in job %s.%s. Dataset %s' %(job._getRoot().id, job.id, job.inputdata.dataset)  )
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
                     if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY' ]:
@@ -310,6 +310,12 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if job.inputdata.accessprotocol:
                  environment['DQ2_LOCAL_PROTOCOL'] = job.inputdata.accessprotocol
             if job.inputsandbox: inputbox += job.inputsandbox   
+
+        # Fix DATASETNAME env variable for DQ2_COPY mode
+        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type=='DQ2_COPY' :
+            if job.inputdata.dataset:
+                environment['DATASETNAME'] = job.inputdata.dataset[0]
+
 
         # Work around for glite WMS spaced environement variable problem
         inputbox.append(FileBuffer('athena_options',environment['ATHENA_OPTIONS']+'\n'))
