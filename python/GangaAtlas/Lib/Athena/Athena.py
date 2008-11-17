@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.12 2008-11-12 11:28:20 mslater Exp $
+# $Id: Athena.py,v 1.13 2008-11-17 15:01:42 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -68,7 +68,8 @@ class Athena(IApplication):
                  'options'                : SimpleItem(defvalue='',doc='Additional Athena options'),
                  'user_setupfile'         : FileItem(doc='User setup script for special setup'),
                  'exclude_from_user_area' : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Pattern of files to exclude from user area'),
-                 'exclude_package'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Packages to exclude from user area requirements file')
+                 'exclude_package'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Packages to exclude from user area requirements file'),
+                 'stats'                  : SimpleItem(defvalue = {}, doc='Dictionary of stats info')
               })
                      
     _category = 'applications'
@@ -200,7 +201,64 @@ class Athena(IApplication):
             if job.outputdata:
                 job.outputdata.fill()
                 if not job.outputdata.output:
-                    job.updateStatus('failed') 
+                    job.updateStatus('failed')
+                        # collect job stats
+            import gzip, time
+            
+            # collect stats from stderr
+            if 'stderr.gz' in os.listdir(job.outputdir):
+                zfile = gzip.GzipFile(os.path.join(job.outputdir,'stderr.gz' ))
+                content = zfile.read()
+                zfile.close()
+                for line in content.split('\n'):
+                    if line.find('Percent of CPU this job got')>-1:
+                        self.stats['percentcpu'] = re.match('.*got: (.*)',line).group(1)
+                    if line.find('+ DATE')>-1:
+                        starttime = re.match('\+ DATE=\'(.*)\'',line).group(1)
+                        self.stats['starttime'] = time.mktime(time.strptime(starttime,'%m/%d/%y %H:%M:%S'))
+                    if line.find('Elapsed (wall clock) time')>-1:
+                        try:
+                            wallclock = re.match('.*m:ss\): (.*)\.\d\d',line).group(1).split(':')
+                            self.stats['wallclock'] = int(wallclock[0])*60+int(wallclock[1])
+                        except:
+                            wallclock = re.match('.*m:ss\): (.*)',line).group(1).split(':')
+                            self.stats['wallclock'] = int(wallclock[0])*3600+int(wallclock[1])*60+int(wallclock[2])
+                        if line.find('Exit status')>-1:
+                            self.stats['exitstatus'] = re.match('.*status: (.*)',line).group(1)
+                        if line.find('can not be opened for reading (Timed out)')>-1:
+                            self.stats['filetimedout'] = True
+
+            # collect stats from stdout
+            if 'stdout.gz' in os.listdir(job.outputdir):
+                zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
+                content = zfile.read()
+                zfile.close()
+                for line in content.split('\n'):
+                    if line.find('Storing file at:')>-1:
+                        self.stats['outse'] = re.match('.*at: (.*)',line).group(1)
+                    if line.find('SITE_NAME=')>-1:
+                        self.stats['site'] = re.match('SITE_NAME=(.*)',line).group(1)
+                    if line.find('Database being retired...')>-1:
+                        self.stats['dbretired'] = True
+                    if line.find('Core dump from CoreDumpSvc')>-1:
+                        self.stats['coredump'] = True
+                    if line.find('Cannot load entry')>-1:
+                        self.stats['cannotloadentry'] = True
+                    if line.find('cannot open a ROOT file in mode READ if it does not exists')>-1:
+                        self.stats['filenotexist'] = True
+                    if line.find('FATAL finalize: Invalid state "Configured"')>-1:
+                        self.stats['invalidstateconfig'] = True
+                    if line.find('failure in an algorithm execute')>-1:
+                        self.stats['failalg'] = True
+                    if line.find('events processed so far')>-1:
+                        self.stats['totalevents'] = re.match('.* run #\d+ (\d+) events processed so far.*',line).group(1)
+                    if line.find('rfio://')>-1 and line.find('Always Root file version')>-1:
+                        try:
+                            self.stats['server'] = re.match('(.+://.+)//.*',line).group(1)
+                        except:
+                            self.stats['server'] = 'unknown'
+
+
 
     def prepare(self, athena_compile=True, NG=False, **options):
         """Prepare the job from the user area"""
@@ -752,6 +810,9 @@ config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The pa
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.12  2008/11/12 11:28:20  mslater
+# Fix for bug 42661: User packages not being recognised in Athena Root dir
+#
 # Revision 1.11  2008/10/25 16:09:39  elmsheus
 # Introduce splitting per dataset
 #
