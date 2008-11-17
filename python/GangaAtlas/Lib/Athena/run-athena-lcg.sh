@@ -313,7 +313,13 @@ EOF
 	if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 	    then
 	    dq2-get --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
-	    mv $DATASETNAME/* .
+	    if [ -e $DATASETNAME/$file ] 
+		then
+		mv $DATASETNAME/* .
+	    else
+		echo 'ERROR: dq2-get of inputfile failed !'
+		echo '1'>retcode.tmp
+	    fi
 	else
 	    echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
 	    echo '1'>retcode.tmp
