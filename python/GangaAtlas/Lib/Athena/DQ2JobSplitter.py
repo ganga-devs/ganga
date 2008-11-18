@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.10 2008-10-17 13:51:27 dvanders Exp $
+# $Id: DQ2JobSplitter.py,v 1.11 2008-11-18 09:40:15 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -116,7 +116,7 @@ class DQ2JobSplitter(ISplitter):
         locations = job.inputdata.get_locations(overlap=False)
 
         siteinfos = {}
-        allcontent = {}
+        allcontents = {}
         for dataset, content in contents.iteritems():
             content = dict(content)
             if self.use_lfc:
@@ -125,12 +125,20 @@ class DQ2JobSplitter(ISplitter):
                 siteinfo = lfc_siteinfo(result, allowed_sites)
             else:
                 siteinfo = dq2_siteinfo( dataset, allowed_sites, locations[dataset])
-            siteinfos.update(siteinfo)
-            allcontent.update(content)
+            siteinfos[dataset]=siteinfo
+            allcontents[dataset]=content
         
         subjobs = []
-        for sites, guids in siteinfos.iteritems():
+        for dataset, siteinfo in siteinfos.iteritems():
+            if self.numfiles <= 0: 
+                self.numfiles = 1
 
+            sites = siteinfo.keys()[0]
+            guids = siteinfo.values()[0]
+            allcontent = allcontents[dataset]
+
+            print dataset, self.numfiles, sites, guids
+            
             # Fix bug 42044
             # drop unused guids
             removal = []
@@ -159,6 +167,7 @@ class DQ2JobSplitter(ISplitter):
                 j = Job()
 
                 j.inputdata       = job.inputdata
+                j.inputdata.dataset = dataset
                 j.inputdata.guids = guids[i*self.numfiles:(i+1)*self.numfiles]
                 j.inputdata.names = [ allcontent[guid] for guid in j.inputdata.guids ]
                 j.inputdata.number_of_files = len(j.inputdata.guids)
