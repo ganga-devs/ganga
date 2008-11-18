@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.21 2008-11-17 15:38:58 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.22 2008-11-18 09:41:49 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -312,7 +312,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if job.inputsandbox: inputbox += job.inputsandbox   
 
         # Fix DATASETNAME env variable for DQ2_COPY mode
-        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type=='DQ2_COPY' :
+        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and (job.inputdata.type=='DQ2_LOCAL' or job.inputdata.type=='DQ2_COPY'):
             if job.inputdata.dataset:
                 environment['DATASETNAME'] = job.inputdata.dataset[0]
 
