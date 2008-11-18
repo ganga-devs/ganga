@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.12 2008-11-18 10:17:37 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.13 2008-11-18 11:32:31 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -23,9 +23,9 @@ from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
 
 logger = getLogger()
 
-def dq2_siteinfo(dataset, allowed_sites, locations):
+def dq2_siteinfo(dataset, allowed_sites, locations, udays):
 
-    result = dq2_list_locations_siteindex(datasets=dataset, replicaList=True, allowed_sites= allowed_sites) 
+    result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites= allowed_sites) 
 
     siteinfo = {}
     for guid, sites in result.iteritems():
@@ -69,9 +69,10 @@ class DQ2JobSplitter(ISplitter):
 
     _name = 'DQ2JobSplitter'
     _schema = Schema(Version(1,0), {
-        'numfiles' : SimpleItem(defvalue=0,doc='Number of files per subjob'),
-        'numsubjobs': SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
-        'use_lfc'  : SimpleItem(defvalue = False, doc = 'Use LFC catalog instead of default site catalog/tracker service'),
+        'numfiles'          : SimpleItem(defvalue=0,doc='Number of files per subjob'),
+        'numsubjobs'        : SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
+        'use_lfc'           : SimpleItem(defvalue = False, doc = 'Use LFC catalog instead of default site catalog/tracker service'),
+        'update_siteindex'  : SimpleItem(defvalue = True, doc = 'Update siteindex during job submission to get the latest file location distribution.'),
     })
 
     _GUIPrefs = [ { 'attribute' : 'numfiles',        'widget' : 'Int' },
@@ -124,7 +125,11 @@ class DQ2JobSplitter(ISplitter):
                 result = job.inputdata.get_replica_listing(dataset,SURL=False,complete=-1)
                 siteinfo = lfc_siteinfo(result, allowed_sites)
             else:
-                siteinfo = dq2_siteinfo( dataset, allowed_sites, locations[dataset])
+                if self.update_siteindex:
+                    udays = 2
+                else:
+                    udays = -1
+                siteinfo = dq2_siteinfo( dataset, allowed_sites, locations[dataset], udays )
             siteinfos[dataset]=siteinfo
             allcontents[dataset]=content
         
@@ -133,8 +138,15 @@ class DQ2JobSplitter(ISplitter):
             if self.numfiles <= 0: 
                 self.numfiles = 1
 
-            sites = siteinfo.keys()[0]
-            guids = siteinfo.values()[0]
+            if siteinfo.keys():
+                sites = siteinfo.keys()[0]
+            else:
+                sites = []
+            if siteinfo.values():
+                guids = siteinfo.values()[0]
+            else:
+                guids = []
+
             allcontent = allcontents[dataset]
             
             # Fix bug 42044
