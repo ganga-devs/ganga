@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.12 2008-10-28 10:59:38 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.13 2008-11-18 09:40:44 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -954,7 +954,7 @@ class DQ2OutputDataset(Dataset):
             siteID=siteID.strip() # remove \n from last component
             regline=dataset+","+siteID
             if regline in reglines:
-                logger.info("Registration of %s in %s already done, skipping" % (dataset,siteID))
+                logger.debug("Registration of %s in %s already done, skipping" % (dataset,siteID))
                 #continue
             else:
                 reglines.append(regline)
@@ -1184,6 +1184,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.12  2008/10/28 10:59:38  elmsheus
+#Fix bug #42944
+#
 #Revision 1.11  2008/09/30 09:53:57  elmsheus
 #Small fix
 #
