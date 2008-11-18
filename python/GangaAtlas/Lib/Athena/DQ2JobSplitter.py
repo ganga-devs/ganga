@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.11 2008-11-18 09:40:15 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.12 2008-11-18 10:17:37 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -136,8 +136,6 @@ class DQ2JobSplitter(ISplitter):
             sites = siteinfo.keys()[0]
             guids = siteinfo.values()[0]
             allcontent = allcontents[dataset]
-
-            print dataset, self.numfiles, sites, guids
             
             # Fix bug 42044
             # drop unused guids
