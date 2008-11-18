@@ -314,7 +314,7 @@ EOF
 	    then
 	    for ((i=1;i<=3;i+=1)); do
 		echo Copying $file, attempt $i of 3
-		dq2-get --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
+		dq2-get -d --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
 		if [ -e $DATASETNAME/$file ]
 		    then
 		    mv $DATASETNAME/* .
