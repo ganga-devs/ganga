@@ -318,6 +318,7 @@ EOF
 		if [ -e $DATASETNAME/$file ]
 		    then
 		    mv $DATASETNAME/* .
+		    echo $file > input.txt
 		    echo successfully retrieved $file
 		    break
 		else
