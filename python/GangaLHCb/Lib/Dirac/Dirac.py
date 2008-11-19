@@ -635,7 +635,10 @@ storeResult(result)
                 return statusList
             
             if not result['OK']:
-                logger.warning("No monitoring information could be obtained. The Dirac error message was '%s'", result.get('Message','None'))
+                msg = result.get('Message',None)
+                if msg is None:
+                    msg = result.get('Exception',None)
+                logger.warning("No monitoring information could be obtained. The Dirac error message was '%s'", str(msg))
                 return statusList
             
             bulkStatus = result['Value']
@@ -740,6 +743,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.7  2008/10/30 16:05:04  wreece
+## Adds a warning if the sandbox was oversized.
+##
 ## Revision 1.6  2008/10/27 14:46:17  wreece
 ## Updates the URL for the monitoring page
 ##
