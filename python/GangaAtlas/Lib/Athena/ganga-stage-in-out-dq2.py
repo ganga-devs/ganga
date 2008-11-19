@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.20 2008-10-21 04:13:28 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.21 2008-11-19 10:10:32 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1731,7 +1731,8 @@ if __name__ == '__main__':
                     output_files.append(output_files_orig[i])
                     renameflag = True
                 except IOError:
-                    pass
+                    raise NameError, "ERROR: problems in output stage-out"
+                    sys.exit(EC_STAGEOUT)
 
         if len(output_files)==0:
             print 'ERROR: no output files existing to stage out.'
