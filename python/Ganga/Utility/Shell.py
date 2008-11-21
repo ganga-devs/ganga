@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Shell.py,v 1.3 2008-11-07 12:26:12 moscicki Exp $
+# $Id: Shell.py,v 1.4 2008-11-21 14:03:36 moscicki Exp $
 ################################################################################
 #
 # Shell wrapper with environment caching 
@@ -61,7 +61,7 @@ class Shell:
                pass
          self.env = env
       else:
-         self.env=os.environ
+         self.env=dict(os.environ) #bug #44334: Ganga/Utility/Shell.py does not save environ
 
       self.dirname=None
 
@@ -154,6 +154,9 @@ class Shell:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/11/07 12:26:12  moscicki
+# fixed Shell in case the setup script produces garbage on stdout (now discarded to /dev/null)
+#
 # Revision 1.2  2008/10/24 06:42:14  moscicki
 # bugfix #40932: Ganga incompatible with shell functions (using os.environ directly instead of printenv)
 #
