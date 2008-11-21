@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.21 2008-11-19 10:10:32 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.22 2008-11-21 13:33:04 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -654,13 +654,23 @@ def getLocalFileMetadata(file):
         return -1,-1
     size=os.stat(file)[6]
     # get md5sum
-    m = md5.new()
-    md5sum = hexify(m.digest())
-    mf = open(file, 'r')
-    for line in mf.readlines():
-        m.update(line)
+    try:
+        m = md5.new()
+        md5sum = hexify(m.digest())
+        mf = open(file, 'r')
+        for line in mf.readlines():
+            m.update(line)
         mf.close()
         md5sum=hexify(m.digest())
+    except MemoryError:
+        cmd = 'md5sum %s' % file
+        rc, out = commands.getstatusoutput(cmd)
+        if rc != 0:
+            print 'ERROR during execution of %s' %cmd
+            print rc, out
+            md5sum = -1
+        else:
+            md5sum = out.split(' ')[0]
         
     return size,md5sum
 
