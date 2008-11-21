@@ -2,8 +2,8 @@
 """Write a script containing CMT command which can subsequence be executed."""
 
 __author__ = 'U. Egede'
-__date__ = "$Date: 2008-11-18 10:55:00 $"
-__revision__ = "$Revision: 1.4 $"
+__date__ = "$Date: 2008-11-21 11:28:41 $"
+__revision__ = "$Revision: 1.5 $"
 
 from Ganga.GPI import *
 import Ganga.Utility.logging
@@ -87,7 +87,7 @@ def CMTscript(app,command=''):
    script+='unset CMTPROJECTPATH\n'
    script+='export CMTCONFIG='+str(app.platform)+'\n' 
    script+='export User_release_area='+str(app.user_release_area)+'\n'
-   script+='. $LHCBHOME/scripts/SetupProject.sh '
+   script+='. $LHCBHOME/scripts/setenvProject.sh '
    script+= '%s %s %s\n' % (app.setupProjectOptions,app.appname,app.version)
    script+='[ x$CMTPATH == x ] || cd ' + str(app.user_release_area) + '\n'
    script+='pwd\n'
