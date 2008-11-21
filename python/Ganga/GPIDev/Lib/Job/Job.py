@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.7 2008-11-07 12:39:53 moscicki Exp $
+# $Id: Job.py,v 1.8 2008-11-21 13:45:58 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -700,7 +700,8 @@ class Job(GangaObject):
                 logger.warning('unhandled exception in j.kill(), job id=%d',self.id)
 
         # tell the backend that the job was removed (this is used by Remote backend to remove the jobs remotely)
-        self.backend.remove()
+        if hasattr(self.backend,'remove'): #bug #44256: Job in state "incomplete" is impossible to remove
+            self.backend.remove()
         
         if self._registry:
             self._registry._remove_by_object(self,auto_removed=1)
@@ -979,6 +980,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.7  2008/11/07 12:39:53  moscicki
+# added j.submit(keep_on_fail=False) option (request #43143)
+#
 # Revision 1.6  2008/10/02 10:31:05  moscicki
 # bugfix #41372: added backend.remove() method to support job removal on the Remote backend
 #
