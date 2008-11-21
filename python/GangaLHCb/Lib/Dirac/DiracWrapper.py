@@ -29,7 +29,6 @@ def _checkVar(varKeep,varName):
 
 _checkVar(_varKeep,'LD_LIBRARY_PATH')
 _checkVar(_varKeep,'DIRACROOT')
-environ['DIRACROOT'] = configLHCb['DiracTopDir']
 
 #figure out where our env is to load
 class __FindMe(object):
@@ -39,22 +38,31 @@ if not exists(diracEnvSetup):
     logger.error("Cannot find the file 'setupDiracEnv.sh' needed by ganga.")
     raise BackendError('Dirac',"Cannot find the file 'setupDiracEnv.sh' needed by ganga.")
 
-diracVersion = ''
+#idea here is to use DiracVersion if available, but otherwise use DiracTopDir
+configDiracVersion = None
 try:
+    configDiracVersion = configLHCb['DiracVersion']
     diracTopDir = configLHCb['DiracTopDir']
-    if diracTopDir:
+    if not configDiracVersion and diracTopDir:
+        #fall back on DiracTopDir - TODO: Remove this
+        #happens when DiracVersion is not set but DiracTopDir is
         if diracTopDir.endswith(sep):
             diracTopDir = diracTopDir[:-1]
         diracName = basename(diracTopDir)
         if diracName:
             d = diracName.split('_')
             if len(d) == 2 and d[0].startswith('DIRAC'):
-                diracVersion = d[1]
-    if not diracVersion:
-        logger.warning('Failed to find the DIRAC Version to use from %s. Using a default value',diracTopDir)
-except Exception, e:
-    logger.warning("Failed to find the DIRAC Version. Error was '%s'", str(e))
-s = Shell(diracEnvSetup,setup_args = [diracVersion])
+                configDiracVersion = d[1]
+            else:
+                logger.warning("Failed to find the DIRAC Version. Taking the default version.")
+except:
+    pass
+
+if configDiracVersion is None:
+    logger.warning("Failed to find the DIRAC Version. Taking the default version.")
+    configDiracVersion = ''
+print 'DiracVersion',configDiracVersion
+s = Shell(diracEnvSetup,setup_args = [configDiracVersion])
 
 for key, item in _varKeep.iteritems():
     environ[key] = item

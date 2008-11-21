@@ -6,10 +6,10 @@ configDirac=Ganga.Utility.Config.makeConfig('DIRAC','Parameters for DIRAC')
 logger=Ganga.Utility.logging.getLogger()
 
 # Set default values for the LHCb config section.
-dscrpt = 'The location of the DIRAC client installation that Ganga should use.'
-configLHCb.addOption('DiracTopDir',
-                     '/afs/cern.ch/lhcb/software/releases/DIRAC/DIRAC_v2r19', 
-                     dscrpt)
+dscrpt = '(Deprecated) The location of the DIRAC client installation that Ganga should use.'
+configLHCb.addOption('DiracTopDir','', dscrpt)
+dscrpt = 'The version of the Dirac client that should be used. The default is to take the latest available version.'
+configLHCb.addOption('DiracVersion','',dscrpt)
 dscrpt = 'The age in minutes that a cache of site locations for LFNs in an \
 LHCbDataset stays valid.'
 configLHCb.addOption('maximum_cache_age',10080,dscrpt)
