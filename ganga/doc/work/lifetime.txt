@@ -1,0 +1,133 @@
+
+I. Summary:
+
+Customization of the creation  process (triggered by an explicit proxy
+constructor call  or the copy()  method, i.e.  what GPI  user normally
+does):
+
+ - _auto__init__() is always  calls once for the top  level GPI object
+   after the object state has been initialized
+
+   Examples:
+     j = Job(application=Executable()) : _auto__init__ is called on a context-free Executable() object 
+                                         and then on Job object
+
+     j.application = Executable() : _auto__init__ is called on a context-free Executable() object before assignment
+
+     j2 = j.copy() : _auto__init__ is called on the j2
+
+  Thus    usage   of   _auto__init__    is   limited    to   automatic
+  registration-like purposes.   If part of the job's  state depends on
+  the  job  id   (inputdir)  then  it  may  only   be  initialized  in
+  _auto__init__.  Probably  this should be  modified in the  future by
+  introducing inputdir to  be a property which triggers  a method call
+  to compute the directory path  on the fly rather than the persistent
+  data property.
+
+ - __getstate__()  is always called  for every  object created  in the
+   tree, (whether or not explicitly triggered by the user)
+
+   Current implementation  internally creates temporary  objects which
+   may be  dropped.  For  example the non-copyable  component property
+   will be first copied but then reset to the default value.
+
+   Therefore __getstate__()  should not  be used for  the registration
+   purposes!   However it  may be  used to  create a  helper, internal
+   objects.  For example  Job may  have FileWorkspace  objects created
+   internally based  on the persistent string  property inputdir. This
+   may  be useful  if  we  do not  want  to expose  at  GPI level  the
+   FileWorkspace class but to use it internally.
+
+   Reminder: changes to __init__() and __getstate__() should always be
+   synchronized
+   
+II. Interaction with standard python mechanisms:
+
+ c = copy.deepcopy(j)  -- creates a properly copied ganga object but it does not call _auto__init__()
+    Thus the job is not registered correctly and part of the job's state is empty (id,inputdir,...)
+
+ s = pickle.dumps(j) -- unable to pickle GPI objects, I did not yet investigate the reason
+
+  PicklingError: Can't pickle <class 'Ganga.GPIDev.Base.Proxy.Job'>: it's not found as Ganga.GPIDev.Base.Proxy.Job
+
+
+III. Details of the implementation
+
+1. Construction of the GPI objects by explicit contructor call of the proxy class, e.g. j2 = Job(j,name=n):
+   self refers to the proxy object of the class X(GPIObject)
+
+1.1 create the implementation object
+    self._impl = X()
+ 
+    The constructor upcall: -> GPIObject -> Node
+    
+    1.1.2 GPIObject.__init__: initialize the hardcoded defaults
+      Node.__init__: initialize the administrative dictionaries (data,parent)
+      iterate over the schema and setattr() the default values of the properties
+
+1.2 if the non-keyword argument is given (j) then make a copy of it
+
+    1.2.1 apply a componentFilter (a user defined conversion) if applicable to the argument value 
+    (see also user defined conversions later)
+
+    1.2.1 make a copy of the converted value: self._impl.copyFrom(componentFilter(j))
+    
+        x.copyFrom(y) makes  a copy of the values  from another object
+        (y)  into *existing*  object (x)  provided that  the top-level
+        schema is the same. if  schema is not matching then the method
+        fails and leaves the object in the inconsistent state
+
+        copyFrom() iterates over  all schema items in the  self and if
+        item is copyable then a deepcopy(*) of the value is made. Else
+        the default value (from schema) is taken and set.
+
+1.3 apply all keyword arguments
+
+  this step is done with __setattr__ at the proxy level so it is equivalent to manual assignment 
+  of the properties by the user (all restrictions apply)
+
+1.4 call a user-defined initialization hook self._impl._auto__init__()
+
+   _auto__init__ has the following functionality for Job objects:
+     - registers the job: registry._add(self)
+     - creates workspace directories (updates some properties and marks object as dirty)
+
+   The _auto__init__ is called ONLY when the object is created by user explicitly or by self.copy() method 
+   (at proxy level)
+
+2. Construction of GPI objects by calling a copy method on the proxy object, e.g. j2 = j.copy()
+
+   obj = self._impl.clone() # alias for deepcopy, see below
+   obj._auto_init()
+   return a proxy to obj
+
+
+3. How the deepcopy  works with GPI objects: self  refers to the ganga object (called self._impl above)
+
+In brief the deepcopy is called  for every object in the tree. At each level the following happens:
+
+3.1 Node.__deepcopy__() is called first:
+    3.1.1 an empty object is created using __new__ (skipping __init__ constructor call)
+    3.1.2 state dictionary is extracted via __getstate__()
+    3.1.3 deepcopy() is recusrively called on *every* item in the dictionary
+          the copies are saved in the state dictionary
+    3.1.4 state dictionary is saved by calling __setstate__
+    3.1.5 deepcopy then iterates over non-copyable properties and reset their values to default       
+          (thus disregarding some object copies which may have been done unnecesserily)
+
+4. Additional description of low-level methods
+
+4.1  __getstate__(): returns a copy of the bookeeping dictionary (data and parent)
+
+    this method is overriden  in GangaObject class to introduce _dirty
+    flag and _proxyObject pointer
+
+4.2 __setstate__(): assigns the dictionary to __dict__
+     
+    it  also  makes  sure  that  all  Node  objects  in  dict['_data']
+    dictionary have the parent correctly set
+ 
+
+
+
+

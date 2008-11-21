@@ -1,0 +1,4 @@
+config.defaults_GridProxy.voms='blah'
+
+# a bug prevented to set an empty string
+config.defaults_GridProxy.voms=''
