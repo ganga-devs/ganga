@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Shell.py,v 1.4 2008-11-21 14:03:36 moscicki Exp $
+# $Id: Shell.py,v 1.5 2008-11-21 15:42:03 moscicki Exp $
 ################################################################################
 #
 # Shell wrapper with environment caching 
@@ -44,7 +44,34 @@ class Shell:
    exceptions=getConfig('Shell')['IgnoredVars']
 
    def __init__(self,setup=None, setup_args=[]):
-      "The setup script is sourced (with possible arguments) and the environment is captured"
+      
+      """The setup script is sourced (with possible arguments) and the
+      environment is captured. The environment variables are expanded
+      automatically (this is a fix for bug #44259: GangaLHCb tests fail due to
+      gridProxy check).
+
+      Example of variable expansion:
+      
+      os.environ['BAR'] = 'rabarbar'
+      os.environ['FOO'] = '$BAR'
+      s = Shell() # with or without the setup script
+      assert s.env['FOO'] == 'rabarbar' # NOT literal string '$BAR'
+
+      NOTE: the behaviour is not 100% bash compatible: undefined variables in
+      bash are empty strings, Shell() leaves the literals unchanged,so:
+
+      os.environ['FOO'] = '$NO_BAR'
+      s = Shell()
+      if os.environ.not has_key('NO_BAR'):
+         assert s.env['FOO'] == '$NO_BAR'
+         
+      """
+
+      def expand_vars(env):
+         tmp_dict = {}
+         for k,v in env.iteritems():
+            tmp_dict[k] = os.path.expandvars(v)
+         return tmp_dict
 
       if setup:
          pipe=os.popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)))
@@ -52,7 +79,7 @@ class Shell:
          rc=pipe.close()
          if rc: logger.warning('Unexpected rc %d from setup command %s',rc,setup)
 
-         env = eval(output)
+         env = expand_vars(eval(output))
 
          for key in Shell.exceptions:
             try:
@@ -61,7 +88,8 @@ class Shell:
                pass
          self.env = env
       else:
-         self.env=dict(os.environ) #bug #44334: Ganga/Utility/Shell.py does not save environ
+         env=dict(os.environ) #bug #44334: Ganga/Utility/Shell.py does not save environ
+         self.env = expand_vars(env)
 
       self.dirname=None
 
@@ -154,6 +182,9 @@ class Shell:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/11/21 14:03:36  moscicki
+# bug #44334: Ganga/Utility/Shell.py does not save environ
+#
 # Revision 1.3  2008/11/07 12:26:12  moscicki
 # fixed Shell in case the setup script produces garbage on stdout (now discarded to /dev/null)
 #
