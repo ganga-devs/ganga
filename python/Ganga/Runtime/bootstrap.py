@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.7 2008-10-23 15:24:04 moscicki Exp $
+# $Id: bootstrap.py,v 1.8 2008-11-21 16:34:22 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -514,6 +514,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         
     # bootstrap all system and user-defined runtime modules
     def bootstrap(self):
+        from Ganga.Core import GangaException
         from Ganga.Utility.Runtime import allRuntimes
         import Ganga.Utility.logging
 
@@ -560,6 +561,17 @@ default_backends = LCG
               else:
                  self.logger.warning("do not understand option %s in [Plugins]",opt) 
 
+        # set alias for default Batch plugin (it will not appear in the configuration)
+
+        batch_default_name = Ganga.Utility.Config.getConfig('Configuration').getEffectiveOption('Batch')
+        try:
+           batch_default = allPlugins.find('backends',batch_default_name)
+        except Exception,x:
+           raise Ganga.Utility.Config.ConfigError('Check configuration. Unable to set default Batch backend alias (%s)'%str(x))
+        else:
+           allPlugins.add(batch_default,'backends','Batch')
+           exportToGPI('Batch',batch_default._proxyClass,'Classes')
+        
         from Ganga.GPIDev.Base import ProtectedAttributeError, ReadOnlyObjectError, GangaAttributeError
         from Ganga.GPIDev.Lib.Job.Job import JobError
 
@@ -650,7 +662,7 @@ default_backends = LCG
         exportToGPI('categoryname',categoryname,'Functions')
         exportToGPI('plugins',plugins,'Functions')
 
-        from Ganga.Core import GangaException
+
         def force_job_completed(j):
            "obsoleted, use j.force_status('completed') instead"
            raise GangaException("obsoleted, use j.force_status('completed') instead")
@@ -936,6 +948,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.7  2008/10/23 15:24:04  moscicki
+# install the shutdown manager for atexit handlers before loading system plugins (e.g. LCG download thread registers the atexit handler using a tuple (priority,handler))
+#
 # Revision 1.6  2008/09/05 15:55:51  moscicki
 # XML differenciater added (from Ulrik)
 #
