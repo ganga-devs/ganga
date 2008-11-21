@@ -61,7 +61,6 @@ except:
 if configDiracVersion is None:
     logger.warning("Failed to find the DIRAC Version. Taking the default version.")
     configDiracVersion = ''
-print 'DiracVersion',configDiracVersion
 s = Shell(diracEnvSetup,setup_args = [configDiracVersion])
 
 for key, item in _varKeep.iteritems():
