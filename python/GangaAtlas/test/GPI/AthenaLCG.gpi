@@ -6,6 +6,8 @@ import getpass
 
 joboption = '/tmp/ganga_athenalcg_testing_data-%s/HelloWorldOptions.py' % getpass.getuser()
 
+config['TestingFramework']['timeout']=600
+
 j = Job()
 j.application=Athena()
 j.application.option_file=[ joboption ]
