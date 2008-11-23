@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.15 2008-11-17 15:52:23 elmsheus Exp $
+# $Id: Athena.py,v 1.16 2008-11-23 16:57:43 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -192,6 +192,114 @@ class Athena(IApplication):
             if key not in ['_','PWD','SHLVL']:
                 os.environ[key] = val
 
+    def collectStats(self):
+        """Collect job statistics from different log files and fill dict
+        Athena.stats"""
+        import gzip, time
+        from Ganga.GPIDev.Lib.Job import Job
+        job = self.getJobObject()
+        # collect stats from __jobscript__.log
+        if '__jobscript__.log' in os.listdir(job.outputdir):
+            content = [ line.strip() for line in file(os.path.join(job.outputdir,'__jobscript__.log')) ]
+            for line in content:
+                if line.find('[Info] Job Wrapper start.')>-1:
+                    starttime = re.match('(.*)  .*Info.* Job Wrapper start.',line).group(1)
+                    self.stats['starttime'] = time.mktime(time.strptime(starttime))
+                if line.find('[Info] Job Wrapper stop.')>-1:
+                    stoptime = re.match('(.*)  .*Info.* Job Wrapper stop.',line).group(1)
+                    self.stats['stoptime'] = time.mktime(time.strptime(stoptime))
+        
+        # collect stats from stderr
+        if 'stderr.gz' in os.listdir(job.outputdir):
+            zfile = gzip.GzipFile(os.path.join(job.outputdir,'stderr.gz' ))
+            content = zfile.read()
+            zfile.close()
+            percentcpu = 0
+            ipercentcpu = 0
+            wallclock = 0
+            usertime = 0
+            systemtime = 0
+            for line in content.split('\n'):
+                if line.find('Percent of CPU this job got')>-1:
+                    percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
+                    ipercentcpu = ipercentcpu + 1
+                if line.find('Elapsed (wall clock) time')>-1:
+                    try:
+                        iwallclock = re.match('.*m:ss\): (.*)\.\d\d',line).group(1).split(':')
+                        wallclock = wallclock + int(iwallclock[0])*60+int(iwallclock[1])
+                    except:
+                        iwallclock = re.match('.*m:ss\): (.*)',line).group(1).split(':')
+                        wallclock = wallclock + int(iwallclock[0])*3600+int(iwallclock[1])*60+int(iwallclock[2])
+                if line.find('User time (seconds)')>-1:
+                    iusertime = float(re.match('.*User time \(seconds\): (.*)',line).group(1))
+                    usertime = usertime + iusertime
+                if line.find('System time (seconds)')>-1:
+                    isystemtime = float(re.match('.*System time \(seconds\): (.*)',line).group(1))
+                    systemtime = systemtime + isystemtime
+                if line.find('Exit status')>-1:
+                    self.stats['exitstatus'] = re.match('.*status: (.*)',line).group(1)
+                if line.find('can not be opened for reading (Timed out)')>-1:
+                    self.stats['filetimedout'] = True
+
+            if ipercentcpu > 0:            
+                self.stats['percentcpu'] = percentcpu / ipercentcpu
+                self.stats['usertime'] = usertime
+                self.stats['systemtime'] = systemtime
+                self.stats['wallclock'] = wallclock
+            else:
+                self.stats['percentcpu'] = 0
+                self.stats['wallclock'] = 0
+                self.stats['usertime'] = 0
+                self.stats['systemtime'] = 0
+
+        # collect stats from stdout
+        if 'stdout.gz' in os.listdir(job.outputdir):
+            totalevents = 0
+            itotalevents = 0
+            numfiles = 0
+            zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
+            content = zfile.read()
+            zfile.close()
+
+            for line in content.split('\n'):
+                if line.find('Storing file at:')>-1:
+                    self.stats['outse'] = re.match('.*at: (.*)',line).group(1)
+                if line.find('SITE_NAME=')>-1:
+                    self.stats['site'] = re.match('SITE_NAME=(.*)',line).group(1)
+                #if line.find('Database being retired...')>-1:
+                #    self.stats['dbretired'] = True
+                if line.find('Core dump from CoreDumpSvc')>-1:
+                    self.stats['coredump'] = True
+                if line.find('Cannot load entry')>-1:
+                    self.stats['cannotloadentry'] = True
+                if line.find('cannot open a ROOT file in mode READ if it does not exists')>-1:
+                    self.stats['filenotexist'] = True
+                if line.find('FATAL finalize: Invalid state "Configured"')>-1:
+                    self.stats['invalidstateconfig'] = True
+                if line.find('failure in an algorithm execute')>-1:
+                    self.stats['failalg'] = True
+                if line.find('events processed so far')>-1:
+                    itotalevents = int(re.match('.* run #\d+ (\d+) events processed so far.*',line).group(1))
+                    jtotalevents = itotalevents
+                if line.find('rfio://')>-1 and line.find('Always Root file version')>-1:
+                    try:
+                        self.stats['server'] = re.match('(.+://.+)//.*',line).group(1)
+                    except:
+                        self.stats['server'] = 'unknown'
+                        
+                if line.find('Info Database being retired...')>-1:
+                    numfiles = numfiles + 1
+                    totalevents = totalevents + itotalevents
+                    itotalevents = 0
+
+            if job.inputdata and job.inputdata._name == 'DQ2Dataset':
+                if not job.inputdata.type == 'DQ2_COPY':
+                    self.stats['numfiles'] = numfiles - 1
+                    self.stats['totalevents'] = jtotalevents
+                else:
+                    self.stats['numfiles'] = numfiles / 2
+                    self.stats['totalevents'] = totalevents
+
     def postprocess(self):
         """Determine outputdata and outputsandbox locations of finished jobs
         and fill output variable"""
@@ -199,66 +307,16 @@ class Athena(IApplication):
         job = self.getJobObject()
         if not job.backend.__class__.__name__ in [ 'NG', 'Panda' ]:
             if job.outputdata:
-                job.outputdata.fill()
+                try:
+                    job.outputdata.fill()
+                except:
+                    logger.warning('An ERROR occured during job.outputdata.fill() call !')
+                    pass
+                                   
                 if not job.outputdata.output:
                     job.updateStatus('failed')
-                        # collect job stats
-            import gzip, time
-            
-            # collect stats from stderr
-            if 'stderr.gz' in os.listdir(job.outputdir):
-                zfile = gzip.GzipFile(os.path.join(job.outputdir,'stderr.gz' ))
-                content = zfile.read()
-                zfile.close()
-                for line in content.split('\n'):
-                    if line.find('Percent of CPU this job got')>-1:
-                        self.stats['percentcpu'] = re.match('.*got: (.*)',line).group(1)
-                    if line.find('+ DATE')>-1:
-                        starttime = re.match('\+ DATE=\'(.*)\'',line).group(1)
-                        self.stats['starttime'] = time.mktime(time.strptime(starttime,'%m/%d/%y %H:%M:%S'))
-                    if line.find('Elapsed (wall clock) time')>-1:
-                        try:
-                            wallclock = re.match('.*m:ss\): (.*)\.\d\d',line).group(1).split(':')
-                            self.stats['wallclock'] = int(wallclock[0])*60+int(wallclock[1])
-                        except:
-                            wallclock = re.match('.*m:ss\): (.*)',line).group(1).split(':')
-                            self.stats['wallclock'] = int(wallclock[0])*3600+int(wallclock[1])*60+int(wallclock[2])
-                        if line.find('Exit status')>-1:
-                            self.stats['exitstatus'] = re.match('.*status: (.*)',line).group(1)
-                        if line.find('can not be opened for reading (Timed out)')>-1:
-                            self.stats['filetimedout'] = True
-
-            # collect stats from stdout
-            if 'stdout.gz' in os.listdir(job.outputdir):
-                zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
-                content = zfile.read()
-                zfile.close()
-                for line in content.split('\n'):
-                    if line.find('Storing file at:')>-1:
-                        self.stats['outse'] = re.match('.*at: (.*)',line).group(1)
-                    if line.find('SITE_NAME=')>-1:
-                        self.stats['site'] = re.match('SITE_NAME=(.*)',line).group(1)
-                    if line.find('Database being retired...')>-1:
-                        self.stats['dbretired'] = True
-                    if line.find('Core dump from CoreDumpSvc')>-1:
-                        self.stats['coredump'] = True
-                    if line.find('Cannot load entry')>-1:
-                        self.stats['cannotloadentry'] = True
-                    if line.find('cannot open a ROOT file in mode READ if it does not exists')>-1:
-                        self.stats['filenotexist'] = True
-                    if line.find('FATAL finalize: Invalid state "Configured"')>-1:
-                        self.stats['invalidstateconfig'] = True
-                    if line.find('failure in an algorithm execute')>-1:
-                        self.stats['failalg'] = True
-                    if line.find('events processed so far')>-1:
-                        self.stats['totalevents'] = re.match('.* run #\d+ (\d+) events processed so far.*',line).group(1)
-                    if line.find('rfio://')>-1 and line.find('Always Root file version')>-1:
-                        try:
-                            self.stats['server'] = re.match('(.+://.+)//.*',line).group(1)
-                        except:
-                            self.stats['server'] = 'unknown'
-
-
+            # collect athena job statistics         
+            self.collectStats()
 
     def prepare(self, athena_compile=True, NG=False, **options):
         """Prepare the job from the user area"""
@@ -811,6 +869,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.15  2008/11/17 15:52:23  elmsheus
+# Add MaxJobsAthenaSplitterJobLCG again
+#
 # Revision 1.14  2008/11/17 15:38:58  elmsheus
 # Make DCACHE_RA_BUFFER configurable
 #
