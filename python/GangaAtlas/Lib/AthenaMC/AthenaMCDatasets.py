@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.11 2008-10-29 14:11:09 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.12 2008-11-24 14:12:04 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -796,17 +796,31 @@ class AthenaMCOutputDatasets(Dataset):
 
         # done with file prefixes. Now generatig datasets out of them...
         datasetbase="%s.%s." % (_usertag,username)
+        maxdsname_length=132
         if job.outputdata.output_dataset and string.find(job.outputdata.output_dataset,",")<0:
             dataset=datasetbase+job.outputdata.output_dataset
             if app.se_name != "local":
+                if len(dataset)>maxdsname_length:
+                    DQ2DS=dataset[0:maxdsname_length]
+                    logger.warning("Chosen dataset name %s is too long. Truncating to %s for DQ2 registration" % (dataset,DQ2DS))
+                    dataset=DQ2DS
                 logger.debug("creating dataset %s in DQ2" % dataset)
                 self.create_dataset(dataset)
         else:
             for type in fileprefixes.keys():
                 if type=="logfile":
                     dataset=datasetbase+"ganga.logfiles."+fileprefixes[type]
+                    if len(dataset)>maxdsname_length and len(dataset)<maxdsname_length+12:
+                        dataset=datasetbase+"log."+fileprefixes[type]
                 else:
                     dataset=datasetbase+"ganga.datafiles."+fileprefixes[type]
+                    if len(dataset)>maxdsname_length and len(dataset)<maxdsname_length+12:
+                        dataset=datasetbase+"data."+fileprefixes[type]
+                if len(dataset)>maxdsname_length:
+                    DQ2DS=dataset[0:maxdsname_length]
+                    logger.warning("Dataset name %s is too long. Truncating to %s for DQ2 registration" % (dataset,DQ2DS))
+                    dataset=DQ2DS
+                logger.debug("creating dataset %s in DQ2" % dataset)        
                 # now generating DQ2 dataset:
                 if app.se_name != "local":
                     logger.debug("creating dataset %s in DQ2" % dataset)

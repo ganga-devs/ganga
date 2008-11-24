@@ -67,7 +67,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         # Extract username from certificate
         proxy = GridProxy()
         self.username = proxy.identity()
-
+        self.username = string.replace(self.username,"'","")
+        
         if app.siteroot:
             os.environ["SITEROOT"]=app.siteroot
         os.environ["CMTSITE"]=app.cmtsite
@@ -79,11 +80,12 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             self.atlas_rel=app.atlas_release
             
         # note: either self.prod_release or app.transform_archive must be set! Otherwise, you won't be able to get any transform!
-        try:
-            assert self.prod_release or app.transform_archive
-        except:
-            logger.error("A reference to the Production archive to be used must be set, either through the declaration of the archive itself in application.transform_archive or by putting the 4-digit production cache release number in application.atlas_release. Neither are set. Aborting.")
-            raise            
+        # not true anymore, removing try block
+#        try:
+#            assert self.prod_release or app.transform_archive
+#        except:
+#            logger.error("A reference to the Production archive to be used must be set, either through the declaration of the archive itself in application.transform_archive or by putting the 4-digit production cache release number in application.atlas_release. Neither are set. Aborting.")
+#            raise            
         job = app._getParent()
         if job.backend._name in ["Local","PBS"]:
             try:

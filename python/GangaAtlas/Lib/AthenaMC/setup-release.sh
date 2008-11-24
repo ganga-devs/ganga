@@ -116,17 +116,23 @@ export JTPATH=""
 if [ ! -z "$isJT" ]; then 
     echo "Using JobTransforms"
     export JTPATH=`ls -d ${PWD}/JobTransforms/JobTransforms-*/share`
-elif [ -e "AtlasProduction" -a -z "$PROD_RELEASE" ]; then
+elif [ -e "AtlasProduction" ]; then
     echo "Using user Python transforms on core release"
-    export JTPATH=${PWD}/AtlasProduction/*/InstallArea/share/bin/
     # specific to AtlasProduction archive setup
-    cd AtlasProduction/*/AtlasProductionRunTime/cmt
     which cmt
-    export CMTPATH=""
+    reldir=`ls AtlasProduction`
+    echo "local release directory is $reldir"
+    if [ ! -e "AtlasProduction/$reldir/AtlasProductionRunTime/cmt/requirements" ]; then
+	echo "requirements file missing in archive. Please check that AtlasProductionRunTime/cmt/requirements is in your archive or get it from the relevant AtlasProduction*noarch.tar.gz tarball"
+	exit 25
+    fi
+    cd AtlasProduction/$reldir/AtlasProductionRunTime/cmt
     cmt config
-    source setup.sh
-    echo $CMTPATH
     cd $T_HOMEDIR
+    export CMTPATH=AtlasProduction/$reldir:$CMTPATH
+    source AtlasProduction/$reldir/AtlasProductionRunTime/cmt/setup.sh
+    echo "CMTPATH is now $CMTPATH"
+    echo "********"
 fi
 
 cd $T_HOMEDIR
