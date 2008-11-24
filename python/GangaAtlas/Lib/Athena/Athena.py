@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.16 2008-11-23 16:57:43 elmsheus Exp $
+# $Id: Athena.py,v 1.17 2008-11-24 07:43:05 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -256,6 +256,7 @@ class Athena(IApplication):
         if 'stdout.gz' in os.listdir(job.outputdir):
             totalevents = 0
             itotalevents = 0
+            jtotalevents = 0
             numfiles = 0
             zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
             content = zfile.read()
@@ -869,6 +870,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.16  2008/11/23 16:57:43  elmsheus
+# Factorize and extend job statistics
+#
 # Revision 1.15  2008/11/17 15:52:23  elmsheus
 # Add MaxJobsAthenaSplitterJobLCG again
 #
