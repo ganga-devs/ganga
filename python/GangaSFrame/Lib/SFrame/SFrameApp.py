@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: SFrameApp.py,v 1.1 2008-11-19 15:42:58 mbarison Exp $
+# $Id: SFrameApp.py,v 1.2 2008-11-24 16:12:49 mbarison Exp $
 ################################################################################
 import os, socket, pwd, commands, re, string
 from xml.dom.minidom import Node
@@ -136,7 +136,8 @@ class SFrameApp(IApplication):
         'exclude_list' : SimpleItem(defvalue=[ "CVS", "obj", "*~", "*.root",
                              "*.ps", "*.so", "*.d",
                              "*.rootmap", "*.pyc",
-                             "*._Dict.*", "*.o", "python" ], doc='Patterns to be excluded from the compiled archive')
+                             "*._Dict.*", "*.o", "python" ], doc='Patterns to be excluded from the compiled archive'),
+        'user_email' : SimpleItem(defvalue = '', doc='email for job status notifications'),
         } )
     _category = 'applications'
     _name = 'SFrameApp'
@@ -145,7 +146,9 @@ class SFrameApp(IApplication):
                   { 'attribute' : 'sframe_dir', 'widget' : 'FileOrString' },
                   { 'attribute' : 'sframe_archive', 'widget' : 'FileOrString' },
                   { 'attribute' : 'atlas_release', 'widget' : 'DictOfString' },
-                  { 'attribute' : 'env', 'widget' : 'DictOfString' }]
+                  { 'attribute' : 'env', 'widget' : 'DictOfString' },
+                  { 'attribute' : 'user_email', 'widget' : 'String' },
+                  ]
     
 
     _GUIAdvancedPrefs = [ { 'attribute' : 'xml_options', 'widget' : 'File' },
@@ -606,6 +609,9 @@ mc = getConfig('MonitoringServices')
 mc.addOption('SFrameApp', None, 'FIXME')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/11/19 15:42:58  mbarison
+# first version
+#
 # Revision 1.4  2008/04/16 15:35:59  mbarison
 # adding CVS log
 #

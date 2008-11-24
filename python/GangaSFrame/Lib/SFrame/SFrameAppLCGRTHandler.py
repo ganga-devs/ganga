@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: SFrameAppLCGRTHandler.py,v 1.1 2008-11-19 15:42:59 mbarison Exp $
+# $Id: SFrameAppLCGRTHandler.py,v 1.2 2008-11-24 16:12:49 mbarison Exp $
 ################################################################################
 
 import os, socket, pwd, commands, re, xml.dom.minidom
@@ -376,6 +376,10 @@ class SFrameAppLCGRTHandler(IRuntimeHandler):
         environment['ATLAS_RELEASE'] = app.atlas_release
         environment['SFRAME_XML'] = app.xml_options.name.split('/')[-1]
 
+        if app.user_email != '':
+            environment['USER_EMAIL'] = app.user_email
+
+
         if app.sframe_archive.name:
             environment['SFRAME_ARCHIVE'] = app.sframe_archive.name.split('/')[-1]
 
@@ -525,6 +529,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('SFrameApp')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/11/19 15:42:59  mbarison
+# first version
+#
 # Revision 1.3  2008/04/16 15:35:59  mbarison
 # adding CVS log
 #

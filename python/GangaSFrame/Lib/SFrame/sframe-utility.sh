@@ -6,6 +6,12 @@
 # marcello.barisonzi@desy.de
 
 compile_SFrame() {
+    if [ ! -z $USER_EMAIL ]
+	then
+	echo "Compiling SFrame" | mail -s "GangaSFrame status" $USER_EMAIL
+    fi
+
+
     if [ ! -z $SFRAME_ARCHIVE ]
 	then
 	if [ -z $SFRAME_COMPILE ]
@@ -34,6 +40,12 @@ compile_SFrame() {
 }
 
 make_XML() {
+
+    if [ ! -z $USER_EMAIL ]
+	then
+	echo "Modifiyng XML file" | mail -s "GangaSFrame status" $USER_EMAIL
+    fi
+
     if [ -e PoolFileCatalog.xml ]
 	then
 	./pool2sframe.py $SFRAME_XML PoolFileCatalog.xml; echo $? > retcode.tmp
@@ -46,5 +58,11 @@ make_XML() {
 }
 
 run_SFrame() {
+
+    if [ ! -z $USER_EMAIL ]
+	then
+	echo "Running SFrame" | mail -s "GangaSFrame status" $USER_EMAIL
+    fi
+
     sframe_main ganga_$SFRAME_XML; echo $? > retcode.tmp
 }

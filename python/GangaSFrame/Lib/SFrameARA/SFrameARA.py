@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: SFrameARA.py,v 1.1 2008-11-19 15:43:01 mbarison Exp $
+# $Id: SFrameARA.py,v 1.2 2008-11-24 16:12:50 mbarison Exp $
 ################################################################################
 import os, socket, pwd, commands, re, string
 
@@ -40,7 +40,8 @@ class SFrameARA(IApplication):
                                        doc='Patterns to be excluded from the compiled archive'),
         'user_area'              : FileItem(doc='A tar file of the user area'),
         'user_setupfile'         : FileItem(doc='User setup script for special setup'),
-        'xml_options'            : FileItem(doc='A XML File specifying the SFrame options.'), 
+        'xml_options'            : FileItem(doc='A XML File specifying the SFrame options.'),
+        'user_email' : SimpleItem(defvalue='', doc='email for job status notifications'),
         } )
     
     _category = 'applications'
@@ -66,6 +67,7 @@ class SFrameARA(IApplication):
         { 'attribute' : 'user_area',     'widget' : 'FileOrString' },
         { 'attribute' : 'user_setupfile', 'widget' : 'FileOrString' },
         { 'attribute' : 'xml_options', 'widget' : 'File' },
+        { 'attribute' : 'user_email', 'widget' : 'String' },
                   ]
 
     def __init__(self):
@@ -180,3 +182,6 @@ config = makeConfig('SFrameARA','SFrameARA configuration parameters')
 logger = getLogger('SFrameARA')
 
 #$Log: not supported by cvs2svn $
+#Revision 1.1  2008/11/19 15:43:01  mbarison
+#first version
+#
