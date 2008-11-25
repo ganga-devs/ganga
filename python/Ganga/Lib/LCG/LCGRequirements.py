@@ -10,13 +10,13 @@ class LCGRequirements(GangaObject):
    '''
 
    _schema = Schema(Version(1,1), { 
-      'software'        : SimpleItem(defvalue=[], typelist=['list'],sequence=1,doc='Software Installations'),
+      'software'        : SimpleItem(defvalue=[], typelist=['str'],sequence=1,doc='Software Installations'),
       'nodenumber'      : SimpleItem(defvalue=1,doc='Number of Nodes for MPICH jobs'),
       'memory'          : SimpleItem(defvalue=0,doc='Mininum available memory (MB)'),
       'cputime'         : SimpleItem(defvalue=0,doc='Minimum available CPU time (min)'),
       'walltime'        : SimpleItem(defvalue=0,doc='Mimimum available total time (min)'),
       'ipconnectivity'  : SimpleItem(defvalue=False,doc='External connectivity'),
-      'other'           : SimpleItem(defvalue=[],typelist=['list'],sequence=1,doc='Other Requirements')
+      'other'           : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc='Other Requirements')
    })
 
    _category = 'LCGRequirements'
