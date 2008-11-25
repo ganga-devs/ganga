@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.20 2008-11-25 19:30:44 elmsheus Exp $
+# $Id: Athena.py,v 1.21 2008-11-25 19:35:37 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -284,7 +284,7 @@ class Athena(IApplication):
                     itotalevents = int(re.match('.* run #\d+ (\d+) events processed so far.*',line).group(1))
                     jtotalevents = itotalevents
                 if line.find('cObj_DataHeader...')>-1:
-                    numfiles2 = numfiles2 + int(re.match('.* #=(\d+)',line).group(1))
+                    numfiles2 = numfiles2 + int(re.match('.* #=(.*)',line).group(1))
                 if line.find('rfio://')>-1 and line.find('Always Root file version')>-1:
                     try:
                         self.stats['server'] = re.match('(.+://.+)//.*',line).group(1)
@@ -889,6 +889,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.20  2008/11/25 19:30:44  elmsheus
+# Add numfiles2
+#
 # Revision 1.19  2008/11/25 19:25:31  elmsheus
 # Add numfiles2
 #
