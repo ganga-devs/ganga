@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.19 2008-11-13 11:34:23 hclee Exp $
+# $Id: LCG.py,v 1.20 2008-11-25 15:26:07 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -51,7 +51,7 @@ def start_lcg_output_downloader():
     global lcg_output_downloader
     lcg_output_downloader = None
     if not lcg_output_downloader:
-        lcg_output_downloader = LCGOutputDownloader(keepAlive = True)
+        lcg_output_downloader = LCGOutputDownloader(keepAlive=True, numThread=10)
         lcg_output_downloader.start()
 
 def get_lcg_output_downloader():
@@ -375,7 +375,7 @@ class LCG(IBackend):
         myAlg  = MyAlgorithm(gridObj=grids[mt],masterInputWorkspace=job.getInputWorkspace())
         myData = Data(collection=mt_data)
 
-        runner = MTRunner(myAlg, myData)
+        runner = MTRunner(myAlg, myData, numThread=config['SubmissionThread'])
         runner.debug = False
         runner.start()
         runner.join()
@@ -1786,6 +1786,8 @@ config.addOption('Requirements','Ganga.Lib.LCG.LCGRequirements','sets the full q
 
 config.addOption('SandboxCache','Ganga.Lib.LCG.LCGSandboxCache','sets the full qualified class name for handling the oversized input sandbox')
 
+config.addOption('SubmissionThread', 10, 'sets the number of concurrent threads for job submission to gLite WMS')
+
 config.addOption('SandboxTransferTimeout', 60, 'sets the transfer timeout of the oversized input sandbox')
 #config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
 
@@ -1808,6 +1810,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.19  2008/11/13 11:34:23  hclee
+# update master job's status at the end of the master_updateMonitorInformation() in any case
+#
 # Revision 1.18  2008/11/07 13:02:25  hclee
 # expand $VAR and '~' when setting path-like options
 #
