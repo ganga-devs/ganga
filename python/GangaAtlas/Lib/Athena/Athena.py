@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.17 2008-11-24 07:43:05 elmsheus Exp $
+# $Id: Athena.py,v 1.18 2008-11-25 08:12:47 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -292,6 +292,16 @@ class Athena(IApplication):
                     numfiles = numfiles + 1
                     totalevents = totalevents + itotalevents
                     itotalevents = 0
+                if line.find('GANGATIME1')>-1:
+                    self.stats['gangatime1'] = int(re.match('GANGATIME1=(.*)',line).group(1))
+                if line.find('GANGATIME2')>-1:
+                    self.stats['gangatime2'] = int(re.match('GANGATIME2=(.*)',line).group(1))
+                if line.find('GANGATIME3')>-1:
+                    self.stats['gangatime3'] = int(re.match('GANGATIME3=(.*)',line).group(1))
+                if line.find('GANGATIME4')>-1:
+                    self.stats['gangatime4'] = int(re.match('GANGATIME4=(.*)',line).group(1))
+                if line.find('GANGATIME5')>-1:
+                    self.stats['gangatime5'] = int(re.match('GANGATIME5=(.*)',line).group(1))
 
             if job.inputdata and job.inputdata._name == 'DQ2Dataset':
                 if not job.inputdata.type == 'DQ2_COPY':
@@ -300,6 +310,10 @@ class Athena(IApplication):
                 else:
                     self.stats['numfiles'] = numfiles / 2
                     self.stats['totalevents'] = totalevents
+
+            if '__jdlfile__' in os.listdir(job.inputdir):
+                print
+                self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
 
     def postprocess(self):
         """Determine outputdata and outputsandbox locations of finished jobs
@@ -870,6 +884,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.17  2008/11/24 07:43:05  elmsheus
+# Small fix
+#
 # Revision 1.16  2008/11/23 16:57:43  elmsheus
 # Factorize and extend job statistics
 #

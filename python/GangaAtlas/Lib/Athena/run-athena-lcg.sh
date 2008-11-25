@@ -12,6 +12,7 @@
 
 retcode=0
 
+GANGATIME1=`date +'%s'`
 ################################################
 # set the wrapper type
 export GANGA_ATHENA_WRAPPER_MODE='grid'
@@ -178,6 +179,7 @@ export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 
 retcode=0
 
+GANGATIME2=`date +'%s'`
 ################################################
 # prepare/staging input data
 if [ -e input_files ] && [ n$DATASETTYPE != n'DQ2_COPY' ]
@@ -224,6 +226,7 @@ fi
 
 ls -rtla
 
+GANGATIME3=`date +'%s'`
 #################################################
 # run athena
 if [ $retcode -eq 0 ] && [ n$DATASETTYPE != n'DQ2_COPY' ]
@@ -405,9 +408,17 @@ fi
 
 ls -rtla
 
+GANGATIME4=`date +'%s'`
 #################################################
 # store output
 stage_outputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 
+GANGATIME5=`date +'%s'`
+
+echo "GANGATIME1=$GANGATIME1"
+echo "GANGATIME2=$GANGATIME2"
+echo "GANGATIME3=$GANGATIME3"
+echo "GANGATIME4=$GANGATIME4"
+echo "GANGATIME5=$GANGATIME5"
 
 exit $retcode
