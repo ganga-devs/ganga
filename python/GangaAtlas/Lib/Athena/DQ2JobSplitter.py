@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.13 2008-11-18 11:32:31 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.14 2008-11-25 20:24:43 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -128,7 +128,7 @@ class DQ2JobSplitter(ISplitter):
                 if self.update_siteindex:
                     udays = 2
                 else:
-                    udays = -1
+                    udays = 10000
                 siteinfo = dq2_siteinfo( dataset, allowed_sites, locations[dataset], udays )
             siteinfos[dataset]=siteinfo
             allcontents[dataset]=content
