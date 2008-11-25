@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.18 2008-11-25 08:12:47 elmsheus Exp $
+# $Id: Athena.py,v 1.19 2008-11-25 19:25:31 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -258,6 +258,7 @@ class Athena(IApplication):
             itotalevents = 0
             jtotalevents = 0
             numfiles = 0
+            numfiles2 = 0
             zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
             content = zfile.read()
             zfile.close()
@@ -282,6 +283,8 @@ class Athena(IApplication):
                 if line.find('events processed so far')>-1:
                     itotalevents = int(re.match('.* run #\d+ (\d+) events processed so far.*',line).group(1))
                     jtotalevents = itotalevents
+                if line.find('cObj_DataHeader')>-1:
+                    numfiles2 = numfiles2 + int(re.match('.* #=(\d+)',line).group(1))
                 if line.find('rfio://')>-1 and line.find('Always Root file version')>-1:
                     try:
                         self.stats['server'] = re.match('(.+://.+)//.*',line).group(1)
@@ -302,6 +305,8 @@ class Athena(IApplication):
                     self.stats['gangatime4'] = int(re.match('GANGATIME4=(.*)',line).group(1))
                 if line.find('GANGATIME5')>-1:
                     self.stats['gangatime5'] = int(re.match('GANGATIME5=(.*)',line).group(1))
+
+            self.stats['numfiles2'] = numfiles2
 
             if job.inputdata and job.inputdata._name == 'DQ2Dataset':
                 if not job.inputdata.type == 'DQ2_COPY':
@@ -884,6 +889,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.18  2008/11/25 08:12:47  elmsheus
+# Add addition time parameters for Athena.stats
+#
 # Revision 1.17  2008/11/24 07:43:05  elmsheus
 # Small fix
 #
