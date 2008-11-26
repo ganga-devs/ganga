@@ -68,17 +68,18 @@ class LCGOutputDownloader:
     Class for managing the LCG output downloading activities.
     """
 
-    _attributes = ('data','algorithm','runner','keepAlive')
+    _attributes = ('data','algorithm','runner','keepAlive','numThread')
 
-    def __init__(self, keepAlive=True):
+    def __init__(self, keepAlive=True, numThread=10):
 
         self.data      = Data(collection=[])
         self.algorithm = LCGOutputDownloadAlgorithm()
         self.keepAlive = keepAlive
         self.runner    = None
+        self.numThread = numThread
  
     def __create_new_runner__(self):
-        self.runner = MTRunner(self.algorithm, self.data)
+        self.runner = MTRunner(self.algorithm, self.data, numThread=self.numThread)
         ## the runner thread's name should have the prefix "GANGA_Updata_Thread" 
         ## so the the logging info can be cached until the next IPython prompt
         self.runner.setName('GANGA_Update_Thread_lcg_output_downloader')
