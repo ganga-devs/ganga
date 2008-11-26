@@ -2,7 +2,7 @@
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
-# $Id: htmlizer.py,v 1.1 2008-07-17 16:41:36 moscicki Exp $
+# $Id: htmlizer.py,v 1.2 2008-11-26 08:31:33 moscicki Exp $
 # htmlizer.py is a Python module used to generate html reports based on output of 
 # Ganga Testing Framework
 #
@@ -178,6 +178,8 @@ def printTestCase(out,testcase,config=None):
     
     name = time = result = info = ""
     ext=''
+    gpip_type = False
+
     for (aname, avalue) in testcase.attributes.items():
         if aname=='name':
             testcase_name=avalue.split()[0]
@@ -187,6 +189,11 @@ def printTestCase(out,testcase,config=None):
                 b = testcase_name.split("/")
                 name='%s/%s [PY]'%("/".join(b[:-2]),":".join(b[-2:]))
                 ext = '.py'
+            elif testcase_type == "[GPIP]":
+                b = testcase_name.split("/")
+                name='%s/%s [GPIP]'%("/".join(b[:-2]),":".join(b[-2:]))
+                ext = '.gpip'
+                gpip_type = True
             else:
                 if testcase_type == "[GPI]": ext = '.gpi' 
                 else:  ext = '.gpim'                 
@@ -204,7 +211,12 @@ def printTestCase(out,testcase,config=None):
         else:
             result = '<font color="green">%s</font>'%result
         #link to standard output    
-        stdout = name.split()[0].replace("/",".").replace(":",".")+"__"+config
+        if gpip_type:
+            # if the test type is "gpip", the link of standard output will be indicated to the same standard output file.
+            stdout = name.split()[0].replace("/",".").split(":")[0] + ".ALL__"+config
+        else:
+            stdout = name.split()[0].replace("/",".").replace(":",".")+"__"+config
+         
         info = info.strip()
         if info: #wrap in <pre>
             info = '<pre>%s</pre>' % info
@@ -588,6 +600,11 @@ def main(config):
     return 1
         
 #$Log: not supported by cvs2svn $
+#Revision 1.1  2008/07/17 16:41:36  moscicki
+#migration of 5.0.2 to HEAD
+#
+#the doc and release/tools have been taken from HEAD
+#
 #Revision 1.5.12.2  2008/05/27 18:07:00  kuba
 #fixed bug #36824: Coverage report generation aborts if problem in single package
 #

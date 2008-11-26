@@ -44,6 +44,26 @@ def sleep_until_state(j,timeout=None,state='completed', break_states=None,sleep_
 
 def sleep_until_completed(j,timeout=None):
     return sleep_until_state (j,timeout,'completed',['new','killed','failed','unknown','removed'])
+
+def is_job_state(j, states=['completed'],break_states=None):
+    #Allow the completed state to be a list of status.
+    if j.status in states:
+        return True
+    else:
+        if break_states:
+            if type(break_states) == type([]):
+                assert (j.status not in break_states), 'Job did not complete (Status = %s)' % j.status
+                return False
+        else:
+            return False
+            
+
+def is_job_finished(j):
+    ''' Once the job status has reached the final status, then True. '''
+    return is_job_state(j, ['completed','new','killed','failed','unknown','removed'])
+
+def is_job_completed(j):
+    return is_job_state(j, ['completed'], ['new','killed','failed','unknown','removed']) 
         
 def file_contains(filename,string):
     return file(filename).read().find(string) != -1

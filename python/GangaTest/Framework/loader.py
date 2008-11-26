@@ -1,8 +1,8 @@
-################################################################################
+###############################################################################
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
-# $Id: loader.py,v 1.1 2008-07-17 16:41:36 moscicki Exp $
+# $Id: loader.py,v 1.2 2008-11-26 08:31:33 moscicki Exp $
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
@@ -29,6 +29,7 @@ import os
 import os.path
 import unittest
 from pytf.lib import *
+from GangaTest.Framework.tests import GangaGPIPTestCase
 
 __version__ = "1.2"
 __author__="Adrian.Muraru[at]cern[dot]ch"
@@ -74,6 +75,8 @@ class GangaTestLoader:
         
         self.enableLocalTests = int(loadArg(args,4,default=True))
         self.enableReleaseTests = int(loadArg(args,5,default=True))
+        self.report_outputpath = loadArg(args,6,default='./')
+        self.current_report_name = None
         
         #set the verbosity based on GangaTest.Framework logging config           
         from Ganga.Utility.logging import getLogger
@@ -89,7 +92,6 @@ class GangaTestLoader:
         Update 27.02.07:
         -pattern can also be a file/dir containing tests (load tests from arbitrary locations)
         """
-
         #TODO: support also multiple patterns to be specified ?
         patterns=patterns[:1]
         _log(self.logger,'info',"Test search pattern: %s" % patterns[0])
@@ -125,6 +127,7 @@ class GangaTestLoader:
             _log(self.logger,'info',"Searching local tests in: %s" % ' '.join(patterns))
             #change the default (release tests) top dir
             self.testsTopDir = os.getcwd()
+
             local_tests = self._loadLocalTests(patterns)
             if local_tests:
                 _msg = "Running local tests from:"
@@ -158,7 +161,7 @@ class GangaTestLoader:
         #print "Project TESTS TOP_DIR: %s"%self.testsTopDir
         #print "Package: %s\nPattern: %s "%(top_level_package, pattern)
         print "Test configuration(s):",self.config 
-        
+
         suites = {}
         tests_no=0
         for config in self.config:
@@ -169,6 +172,9 @@ class GangaTestLoader:
             report_name = "%s__%s"%(pattern.replace("*","ALL"),self.configAlias)
             print "Using configuration: %s" % config_path 
             print "Report ID: %s" % report_name
+
+            self.current_report_name = report_name
+
             #the tests container
             tests = self.__walkTests(dirname,pattern,config_path)
             tests_no+=len(tests)
@@ -193,6 +199,8 @@ class GangaTestLoader:
                     return sys_pattern[:-5].replace('/','.')
                 elif sys_pattern.endswith('.py'):
                     return sys_pattern[:-3].replace('/','.')+".*"
+                elif sys_pattern.endswith('.gpip'):
+                    return sys_pattern[:-5].replace('/','.')+".*"
         return sys_pattern.replace('/','.')
         
         
@@ -254,6 +262,15 @@ class GangaTestLoader:
                         if type(pys)==type([]) and len(pys)>0:
                             list+=pys
                         tests[key]=list       
+                    elif file.endswith(".gpip") and file.startswith('Test'):
+                        newroot= os.path.join(root,get_name(file))
+                        key=newroot[newroot.index(topdir)+len(topdir)+1:]
+                        list = tests.get(newroot,[])
+                        #list.append("%s tests"%file)
+                        gpips = self.__generateTestCasesFromGPIPTest(os.path.join(root,file),config)
+                        if type(gpips)==type([]) and len(gpips)>0:
+                            list+=gpips
+                        tests[key]=list       
         filtered = self.filterTests(tests,pattern)
         filtered.sort(lambda t1,t2: cmp(t1.getDescription(),t2.getDescription()))
         return filtered
@@ -268,9 +285,8 @@ class GangaTestLoader:
             if os.path.exists(location):
                 paths = [location]
             paths = glob.glob(location)            
-            
             if len(paths)==0:
-                guess = [location+".gpi",location+".gpim",location+".py"]                
+                guess = [location+".gpi",location+".gpim",location+".py",location+".gpip"]                
                 paths = [l for l in guess if os.path.exists(l) and os.path.isfile(l)]
                 
             if len(paths)==0:
@@ -323,6 +339,12 @@ class GangaTestLoader:
                 elif ext == ".gpim":
                     test = self.__generateTestCaseFromGMPTest(file,ganga_config_path,test_relpath=os.path.dirname(file))
                 if test is not None: list.append(test)
+            elif ext.lower() == ".gpip" and get_name(file).startswith('Test'):
+                print 'Load local GPIP test'
+                gpips = []
+                gpips = self.__generateTestCasesFromGPIPTest(file,ganga_config_path,test=None,test_relpath=os.path.dirname(file))
+                if type(gpips)==type([]) and len(gpips)>0:
+                    list+=gpips
             elif ext.lower() == ".py" and get_name(file).startswith('Test'):            
                 pys=[]
                 pys = self.__generateTestCasesFromPyUnitTest(file,ganga_config_path,test=None,test_relpath=os.path.dirname(file))
@@ -755,6 +777,91 @@ def %(method_name)s(self):
                 break
         return tests
 
+    def __generateTestCasesFromGPIPTest(self,test_path,ganga_config_path,test=None,test_relpath=None):
+        
+        test_filepart = os.path.basename(test_path)
+        test_dir = os.path.dirname(test_path)
+        test_filename = os.path.splitext(test_filepart)[0]
+        
+        if test_relpath is None: #relative to release
+            test_relpath = test_path[len(self.testsTopDir)+1:-len(os.path.splitext(test_filepart)[1])]
+            
+        test_name = "%s"%test_relpath
+        
+        if self.releaseTesting:
+            #when doing release testing we generate the coverage analysis reports
+            #and generatate a well defined output dir structure
+            output_path=os.path.join(self.outputPrefix,test_relpath.replace("/",".")+"."+"%s"+"__"+self.configAlias+".out")
+            coverage_path = "%s.figleaf" % os.path.splitext(output_path)[0]
+        else:
+            output_path=os.path.join(self.outputPrefix,test_filename+"."+"%s"+".out")            
+            if self.configAlias:
+                output_path+="__%s" % self.configAlias
+            coverage_path = ""
+
+        def getCoveragePath(template,value):
+            if template:
+                return template%value
+            return ''
+            
+        #print "Checking PyUnit tests from: %s"%test_name
+        test_ini = os.path.join(self.testsTopDir,test_dir,test_filename+".ini")
+
+        #set the ganga configuration path
+        if os.path.isfile(test_ini):
+            test_ini = "%s:%s"%(test_ini,ganga_config_path)
+        else:
+            test_ini = ganga_config_path
+
+        #read the timeout for this testcase
+        timeout = readTestTimeout(test_ini)
+        
+        try:
+            module = exec_module_code(test_path)
+            if hasattr(module,'setUp'):
+                getattr(module,'setUp')()
+        except Exception,e:
+            print "[WARNING] Cannot parse GPIP test  %s [skipped]:"%test_path
+            import traceback
+            traceback.print_exc()
+            return []
+            
+        tests = []
+        runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
+        for name in dir(module):
+            clazz = getattr(module, name)
+            sclazz = str(clazz)
+            #print sclazz
+            #print '-->%s, -->%s' % (sclazz.split('.')[-1].split("'")[0], test_filename)
+            if isinstance(clazz, (type, types.ClassType)) and  sclazz.split('.')[-1].split("'")[0] == test_filename:
+                #print '[%s]' % test
+                if test is not None and attrname==test:
+                    print 'This line should be printed out.'
+                else:
+                    try:
+                        descr = os.path.join(test_dir[test_dir.index(self.testsTopDir)+len(self.testsTopDir)+1:],test_filename,'ALL')+" [GPIP]"
+                    except ValueError:
+                        descr = os.path.join(test_dir,test_filename,'ALL')+" [GPIP]"
+
+                    testCmd = "cd %s ;env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s "\
+                              "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s %s %s --test-type=gpip --output_base=%s --coverage-report=%s --timeout=%s %s setUp tearDown"%(
+                              os.path.join(self.testsTopDir,test_dir),
+                              fullpath(output_path),
+                              self.releaseTopDir,
+                              test_ini,
+                              runPyFile,
+                              test_path,
+                              output_path,
+                              getCoveragePath(coverage_path,'ALL'),
+                              timeout,
+                              'run_pyunit_testcases')
+
+                    #print '%s *********' % descr
+                    testcase = GangaGPIPTestCase(testCmd, descr,output_path,self.report_outputpath,self.current_report_name,self.releaseTesting)
+                    if testcase is not None: tests.append(testcase)
+        #print tests
+        return tests
+
 ## Utility functions ##
 
 def loadArg(args,ind,default=None):
@@ -850,6 +957,11 @@ def _log(logger,level,msg):
         print "[%s] %s" % (level.upper(),msg)
 
 #$Log: not supported by cvs2svn $
+#Revision 1.1  2008/07/17 16:41:36  moscicki
+#migration of 5.0.2 to HEAD
+#
+#the doc and release/tools have been taken from HEAD
+#
 #Revision 1.43.4.6  2008/02/12 14:08:02  amuraru
 #*** empty log message ***
 #

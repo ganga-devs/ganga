@@ -2,7 +2,7 @@
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
-# $Id: runner.py,v 1.2 2008-09-05 09:53:18 uegede Exp $
+# $Id: runner.py,v 1.3 2008-11-26 08:31:33 moscicki Exp $
 # runner.py is a Python module used to run Ganga test-cases
 #
 # Copyright (C) 2003-2007 The Ganga Project
@@ -118,6 +118,8 @@ def start( config = myConfig , test_selection='Ganga.test.*', logger=myLogger):
     pytf_loader_args.append( '--loader-args=%s' % int(config['SearchLocalTests'])) 
     #system-testing: on/off
     pytf_loader_args.append( '--loader-args=%s' % int(config['SearchReleaseTests'])) 
+    #Pass the report(report path + runid) path
+    pytf_loader_args.append( '--loader-args=%s' % os.path.join(config['ReportsOutputDir'],config['RunID']))
     
     #print("PYTF path %s config: %s" % (pytf_loader_path, pytf_loader_args))
     import runTests
@@ -164,6 +166,11 @@ if __name__ == '__main__':
     start()
     
 #$Log: not supported by cvs2svn $
+#Revision 1.2  2008/09/05 09:53:18  uegede
+#New features:
+#- Remote testing of Ganga thorugh the use of the GangaRobot
+#- Ability to create test reports showing differences between releases.
+#
 #Revision 1.6.4.6  2007/12/18 13:12:48  amuraru
 #stream-line the test-case execution code (use a single entry-point : Framework/driver.py)
 #symplified the interface with Ganga bootstrap
