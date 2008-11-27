@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.23 2008-11-27 10:44:59 elmsheus Exp $
+# $Id: Athena.py,v 1.24 2008-11-27 12:15:33 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -204,10 +204,10 @@ class Athena(IApplication):
             for line in content:
                 if line.find('[Info] Job Wrapper start.')>-1:
                     starttime = re.match('(.*)  .*Info.* Job Wrapper start.',line).group(1)
-                    self.stats['starttime'] = time.mktime(time.strptime(starttime))
+                    self.stats['starttime'] = time.mktime(time.strptime(starttime))-time.timezone
                 if line.find('[Info] Job Wrapper stop.')>-1:
                     stoptime = re.match('(.*)  .*Info.* Job Wrapper stop.',line).group(1)
-                    self.stats['stoptime'] = time.mktime(time.strptime(stoptime))
+                    self.stats['stoptime'] = time.mktime(time.strptime(stoptime))-time.timezone
         
         # collect stats from stderr
         if 'stderr.gz' in os.listdir(job.outputdir) or 'stdout.txt' in os.listdir(job.outputdir):
@@ -900,6 +900,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.23  2008/11/27 10:44:59  elmsheus
+# Athena.stats updates for GangaNG
+#
 # Revision 1.22  2008/11/27 07:48:58  elmsheus
 # Small fix
 #
