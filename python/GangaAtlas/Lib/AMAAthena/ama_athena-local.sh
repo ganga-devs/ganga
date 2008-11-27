@@ -23,6 +23,11 @@ export GANGA_ATHENA_WRAPPER_MODE='local'
 ################################################
 # load utility functions 
 source athena-utility.sh
+source ama_athena-utility.sh
+
+################################################
+# load AMAAthena/Ganga job wrapper exitcode
+define_exitcode
 
 ################################################
 ## setup grid environment 
@@ -43,6 +48,7 @@ PYTHONPATH_ORIG=$PYTHONPATH
 ################################################
 # information for debugging 
 print_wn_info
+print_ext_wn_info
 
 ################################################
 # setup CMT 
@@ -54,11 +60,11 @@ get_remote_proxy
 
 ################################################
 # setup Athena
-athena_setup
-exitcode=$?
-if [ $exitcode -ne 0 ]; then
-   echo "Athena setup returns non-zero exit code: $exitcode" 1>&2
-   exit $exitcode
+time athena_setup
+
+if [ $retcode -ne 0 ]; then
+    echo "Athena setup/compilation error." 1>&2
+    exit $EC_ATLAS_SOFTWARE_UNAVAILABLE
 fi
 
 ################################################
@@ -71,6 +77,11 @@ fi
 # prepare/staging input data
 #stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 stage_inputs
+
+if [ $retcode -ne 0 ]; then
+    echo "Input stage error" 1>&2
+    exit $EC_STAGEIN_ERROR
+fi
  
 ################################################
 ## create configuration job option
@@ -80,9 +91,19 @@ ama_make_options
 # run athena
 run_athena $ATHENA_OPTIONS input.py
 
+if [ $retcode -ne 0 ]; then
+    echo "Athena runtime error" 1>&2
+    exit $EC_ATHENA_RUNTIME_ERROR
+fi
+
 ################################################
 # store output
 #stage_outputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 stage_outputs
+
+if [ $retcode -ne 0 ]; then
+    echo "Output stage error" 1>&2
+    exit $EC_STAGEOUT_ERROR
+fi
 
 exit $retcode

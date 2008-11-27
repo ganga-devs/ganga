@@ -21,6 +21,7 @@ export GANGA_ATHENA_WRAPPER_MODE='grid'
 ################################################
 # load utility functions 
 source athena-utility.sh
+source ama_athena-utility.sh
 
 ################################################
 # setup grid environment 
@@ -28,6 +29,10 @@ if [ ! -z $GANGA_GLITE_UI ]
 then
     source $GANGA_GLITE_UI
 fi
+
+################################################
+# load AMAAthena/Ganga job wrapper exitcode
+define_exitcode
 
 ################################################
 # for some site doesn't config lcg env. properly
@@ -40,6 +45,7 @@ resolve_tmpdir
 ################################################
 # information for debugging
 print_wn_info
+print_ext_wn_info
 
 ################################################
 # Save essential library path for later usage 
@@ -57,23 +63,13 @@ else
 fi
 
 ################################################
-# check for GangaTnt subcollection and rename
-#ls | grep 'sub_collection_*' > tmp
-#if [ $? -eq 0 ]
-#then
-#mv sub_collection_* tag.pool.root
-#tar -c tag.pool.root > tag.tar
-#gzip tag.tar
-#fi
-
-################################################
 # detect ATLAS software
 if [ -z $VO_ATLAS_SW_DIR ]
 then
    echo "No ATLAS Software found." 1>&2
    # step exits with an error
    # WRAPLCG_WNCHEKC_SWENV
-   exit 410103
+   exit $EC_ATLAS_SOFTWARE_UNAVAILABLE
 fi
 
 ################################################
@@ -92,11 +88,11 @@ fi
 
 #################################################
 # setup Athena
-athena_setup
-exitcode=$?
-if [ $exitcode -ne 0 ]; then
-   echo "Athena setup returns non-zero exit code: $exitcode" 1>&2
-   exit $exitcode
+time athena_setup
+
+if [ $retcode -ne 0 ]; then
+    echo "Athena setup/compilation error." 1>&2
+    exit $EC_ATHENA_COMPILATION_ERROR
 fi
 
 #################################################
@@ -132,34 +128,10 @@ get_pybin
 detect_setype
 
 #################################################
-# Fix of broken DCache ROOT access in 12.0.x
-if [ -e libDCache.so ] && [ n$GANGA_SETYPE = n'DCACHE' ] &&  [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] 
-then
-    echo 'Fixing broken DCache ROOT access in athena 12.0.x'
-    chmod +x libDCache.so
-fi
+# Load special DM libraries for dCache/DPM/CASTOR
+load_special_dm_libraries
 
-#################################################
-# Fix of broken DPM ROOT access in 12.0.x
-if [ -e libRFIO.so ] && [ n$GANGA_SETYPE = n'DPM' ] && ( [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] )
-then
-    echo 'Fixing broken DPM ROOT access in athena 12.0.x'
-    chmod +x libRFIO.so
-fi
-if [ -e libRFIO.so ] && [ n$GANGA_SETYPE = n'DPM' ] && [ ! -z `echo $ATLAS_RELEASE | grep 13.2.0` ]
-then
-    echo 'Remove libRFIO.so in athena 13.2.0'
-    rm libRFIO.so
-fi
-if [ n$GANGA_SETYPE = n'DPM' ] 
-then
-    echo 'Creating soft link to fix broken DPM ROOT access in athena'
-    ln -s $LCG_LOCATION/lib/libdpm.so libshift.so.2.1
-fi
-
-export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
-
-retcode=0
+#retcode=0
 
 ################################################
 # check proxy info 
@@ -168,29 +140,50 @@ check_voms_proxy
 ################################################
 # prepare/staging input data
 stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
-#stage_inputs
+
+if [ $retcode -ne 0 ]; then
+    echo "Input stage error" 1>&2
+    exit $EC_STAGEIN_ERROR
+fi
+
+#if [ -e input_files ] && [ n$DATASETTYPE != n'DQ2_COPY' ]; then
+#    stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
+#else
+#    # Unpack dq2info.tar.gz
+#    if [ -e dq2info.tar.gz ]; then
+#        tar xzf dq2info.tar.gz
+#    fi
+#fi
 
 #################################################
 ## create AMA-specific internal option files 
 ama_make_options
 
 #################################################
-# Work around for glite WMS spaced environement variable problem
-if [ -e athena_options ]; then 
-    ATHENA_OPTIONS_NEW=`cat athena_options`
-    if [ ! "$ATHENA_OPTIONS_NEW" = "$ATHENA_OPTIONS" ]
-    then
-        export ATHENA_OPTIONS=$ATHENA_OPTIONS_NEW	
-    fi
+# run athena without DQ2_COPY 
+if [ $retcode -eq 0 ] && [ n$DATASETTYPE != n'DQ2_COPY' ]; then
+    prepare_athena
+    run_athena $ATHENA_OPTIONS input.py
 fi
 
 #################################################
-# run athena
-run_athena $ATHENA_OPTIONS input.py
+# run athena with DQ2_COPY 
+if [ n$DATASETTYPE = n'DQ2_COPY' ] || ( [ $retcode -ne 0 ] && [ ! -z $DATASETFAILOVER ] ); then
+    run_athena_with_dq2_copy
+fi
+
+if [ $retcode -ne 0 ]; then
+    echo "Athena runtime error" 1>&2
+    exit $EC_ATHENA_RUNTIME_ERROR
+fi
 
 #################################################
 # store output
 stage_outputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
-#stage_outputs
 
-exit $retcode
+if [ $retcode -ne 0 ]; then
+    echo "Output stage error" 1>&2
+    exit $EC_STAGEOUT_ERROR
+fi
+
+exit 0
