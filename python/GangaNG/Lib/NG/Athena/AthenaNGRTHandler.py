@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.3 2008-11-11 15:19:30 pajchel Exp $
+# $Id: AthenaNGRTHandler.py,v 1.4 2008-11-27 10:21:22 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -176,7 +176,7 @@ class AthenaNGRTHandler(IRuntimeHandler):
             # proxy = GridProxy(job.backend.middleware.upper())
             proxyNG = GridProxy('ARC')
             #print 'AthenaNGRTHandler calling proxy.info '
-            useridARC = proxyNG.info(opt="-identity")
+            #useridARC = proxyNG.info(opt="-identity")
             #print 'AthenaNGRTHandler usridARC ', useridARC
             #proxy = GridProxy()
             username = proxyNG.identity()
@@ -559,6 +559,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2008/11/11 15:19:30  pajchel
+# uertag in dataset name and outpu_lfn
+#
 # Revision 1.2  2008/10/21 09:28:32  bsamset
 # Added ARA support, setup of local databases
 #
