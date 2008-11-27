@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.22 2008-11-27 07:48:58 elmsheus Exp $
+# $Id: Athena.py,v 1.23 2008-11-27 10:44:59 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -210,16 +210,22 @@ class Athena(IApplication):
                     self.stats['stoptime'] = time.mktime(time.strptime(stoptime))
         
         # collect stats from stderr
-        if 'stderr.gz' in os.listdir(job.outputdir):
-            zfile = gzip.GzipFile(os.path.join(job.outputdir,'stderr.gz' ))
-            content = zfile.read()
-            zfile.close()
+        if 'stderr.gz' in os.listdir(job.outputdir) or 'stdout.txt' in os.listdir(job.outputdir):
+            if 'stderr.gz' in os.listdir(job.outputdir):
+                zfile = gzip.GzipFile(os.path.join(job.outputdir,'stderr.gz' ))
+                content = zfile.read()
+                zfile.close()
+                content = content.split('\n')
+            # NG has stdout.txt as output
+            if 'stdout.txt' in os.listdir(job.outputdir):
+                content = [ line.strip() for line in file(os.path.join(job.outputdir,'stdout.txt')) ]
+
             percentcpu = 0
             ipercentcpu = 0
             wallclock = 0
             usertime = 0
             systemtime = 0
-            for line in content.split('\n'):
+            for line in content:
                 if line.find('Percent of CPU this job got')>-1:
                     percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
                     ipercentcpu = ipercentcpu + 1
@@ -253,17 +259,22 @@ class Athena(IApplication):
                 self.stats['systemtime'] = 0
 
         # collect stats from stdout
-        if 'stdout.gz' in os.listdir(job.outputdir):
+        if 'stdout.gz' in os.listdir(job.outputdir) or 'stdout.txt' in os.listdir(job.outputdir):
             totalevents = 0
             itotalevents = 0
             jtotalevents = 0
             numfiles = 0
             numfiles2 = 0
-            zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
-            content = zfile.read()
-            zfile.close()
+            if 'stdout.gz' in os.listdir(job.outputdir):
+                zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
+                content = zfile.read()
+                zfile.close()
+                content = content.split('\n')
+            # NG has stdout.txt as output
+            if 'stdout.txt' in os.listdir(job.outputdir):
+                content = [ line.strip() for line in file(os.path.join(job.outputdir,'stdout.txt')) ]
 
-            for line in content.split('\n'):
+            for line in content:
                 if line.find('Storing file at:')>-1:
                     self.stats['outse'] = re.match('.*at: (.*)',line).group(1)
                 if line.find('SITE_NAME=')>-1:
@@ -334,7 +345,8 @@ class Athena(IApplication):
                                    
                 if not job.outputdata.output:
                     job.updateStatus('failed')
-            # collect athena job statistics         
+        # collect athena job statistics                             
+        if job.backend.__class__.__name__ in [ 'LCG', 'NG' ]:
             self.collectStats()
 
     def prepare(self, athena_compile=True, NG=False, **options):
@@ -888,6 +900,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.22  2008/11/27 07:48:58  elmsheus
+# Small fix
+#
 # Revision 1.21  2008/11/25 19:35:37  elmsheus
 # Small fix
 #
