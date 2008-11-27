@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: StagerDataset.py,v 1.3 2008-10-09 10:17:47 hclee Exp $
+# $Id: StagerDataset.py,v 1.4 2008-11-27 15:42:38 hclee Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -249,6 +249,8 @@ def get_srmv2_sites(cloud=None, token=None, debug=False):
 
     ## a bit of hack with non-public DQ2 API interface
     cache = TiersOfATLAS.ToACache
+    
+    print 'cache'
 
     all_sites = []
     if not cloud:
@@ -300,8 +302,8 @@ def resolve_file_locations(dataset, sites=None, cloud=None, token='ATLASDATADISK
         while not wq.empty():
             try:
                 site = wq.get(block=True, timeout=1)
-                logger.debug('resolving dataset files at %s' % site)
                 replicaInfo = dq2.listFileReplicas(site, dataset)
+                logger.debug('resolving dataset files at %s, no files: %d' % (site,len(replicaInfo[0]['content'])) )
                 if replicaInfo:
                     mylock.acquire()
                     for guid in replicaInfo[0]['content']:
@@ -316,9 +318,7 @@ def resolve_file_locations(dataset, sites=None, cloud=None, token='ATLASDATADISK
                 logger.warning('site %s excluded' % site)
                 pass
 
-    # starting the migration threads for moving files one-by-one
     threads = []
-
     nthread = len(sites)
     if nthread > 10: nthread = 10
 
@@ -505,12 +505,13 @@ class StagerDataset(DQ2Dataset):
         profiler.start()
         replicas = {}
          
-        if complete:
-            pass
-        else:
-            for ds in ds_sites.keys():
-                logger.debug('dataset: %s' % ds)
-                replicas.update(resolve_file_locations(ds, sites=ds_sites[ds]))
+        #if complete:
+        #    pass
+        #else:
+        for ds in ds_sites.keys():
+            logger.debug('dataset: %s' % ds)
+            logger.debug('sites: %s' % repr(ds_sites[ds]))
+            replicas.update(resolve_file_locations(ds, sites=ds_sites[ds]))
          
         profiler.check('%d datasets %d files' % ( len(ds_sites.keys()), len(replicas.keys()) ))
 
@@ -691,7 +692,7 @@ class StagerDataset(DQ2Dataset):
 
         return pfns
 
-    def make_sample_file(self, sampleName='MySample', filepath=None):
+    def make_sample_file(self, sampleName='MySample', ddmSiteName=None, filepath=None):
         '''Generates a grid sample file containing a list of SURLs of the dataset contents'''   
   
         # prepare for the  
@@ -707,7 +708,7 @@ class StagerDataset(DQ2Dataset):
 
         if self.type in ['', 'DQ2']: 
             f.write('FLAGS: GridCopy=1\n')
-            pfns = self.get_surls(guidRefill=False)
+            pfns = self.get_surls(guidRefill=False, ddmSiteName=ddmSiteName)
             for guid in pfns.keys():
                 f.write('gridcopy://%s\n' % pfns[guid])
         elif self.type in ['LOCAL']:
