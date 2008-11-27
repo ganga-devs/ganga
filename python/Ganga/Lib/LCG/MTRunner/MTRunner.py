@@ -75,7 +75,7 @@ class MTRunner(Thread):
         """
         self.doStop = True
 
-    def join(self, timeout):
+    def join(self, timeout=None):
         """
         overrides the join method.
         """
