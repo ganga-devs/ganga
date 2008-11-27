@@ -184,8 +184,8 @@ class Grid(object):
             logger.warning('LCG plugin not active.')
             return
 
-        if not self.credential.isValid('00:30'):
-            logger.warning('GRID proxy not valid.')
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
             return
 
         if not self.__set_submit_option__():
@@ -235,8 +235,8 @@ class Grid(object):
             logger.warning('LCG plugin not active.')
             return False
 
-        if not self.credential.isValid('00:30'):
-            logger.warning('GRID proxy not valid.')
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
         if not self.__set_submit_option__():
@@ -278,8 +278,8 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin not active.')
             return []
-        if not self.credential.isValid('00:30'):
-            logger.warning('GRID proxy not valid.')
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
             return []
 
         cmd = '%s --noint -i %s' % (cmd,idsfile)
@@ -385,8 +385,8 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin not active.')
             return False 
-        if not self.credential.isValid('00:30'):
-            logger.warning('GRID proxy not valid.')
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
         log_output = directory+'/__jobloginfo__.log'
@@ -418,8 +418,8 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin is not active.')
             return (False,None)
-        if not self.credential.isValid('00:30'):
-            logger.warning('GRID proxy not valid.')
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
             return (False,None)
 
         cmd = '%s --noint --dir %s %s' % (cmd,directory,jobid)
@@ -500,8 +500,8 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin is not active.')
             return False
-        if not self.credential.isValid('00:30'):
-            logger.warning('GRID proxy not valid.')
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
         # compose the cancel command
@@ -529,8 +529,8 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin is not active.')
             return False
-        if not self.credential.isValid('00:30'):
-            logger.warning('GRID proxy not valid.')
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
         cmd = '%s --noint %s' % (cmd,jobid)
