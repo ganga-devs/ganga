@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import time, threading
+import time
 from threading import Thread, Lock
 from Queue import Empty
 from Algorithm import AlgorithmError
@@ -74,6 +74,12 @@ class MTRunner(Thread):
         stops the MTRunner.
         """
         self.doStop = True
+
+    def join(self, timeout):
+        """
+        overrides the join method.
+        """
+        Thread.join(self, timeout)
 
     def run(self):
         """
