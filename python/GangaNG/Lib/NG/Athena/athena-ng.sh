@@ -266,9 +266,9 @@ then
     echo "Running Athena ..."
     if [ ! -z `echo $ATHENA_EXE_TYPE | grep PYARA` ]
     then
-	/usr/bin/time athena.py $ATHENA_OPTIONS ; echo $? > retcode.tmp
+	/usr/bin/time -v athena.py $ATHENA_OPTIONS ; echo $? > retcode.tmp
     else
-        /usr/bin/time athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+        /usr/bin/time -v athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
     fi
     retcode=`cat retcode.tmp`
     rm -f retcode.tmp
