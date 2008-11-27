@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.21 2008-11-25 19:35:37 elmsheus Exp $
+# $Id: Athena.py,v 1.22 2008-11-27 07:48:58 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -317,7 +317,6 @@ class Athena(IApplication):
                     self.stats['totalevents'] = totalevents
 
             if '__jdlfile__' in os.listdir(job.inputdir):
-                print
                 self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
 
     def postprocess(self):
@@ -889,6 +888,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.21  2008/11/25 19:35:37  elmsheus
+# Small fix
+#
 # Revision 1.20  2008/11/25 19:30:44  elmsheus
 # Add numfiles2
 #
