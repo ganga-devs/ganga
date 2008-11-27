@@ -57,7 +57,11 @@ def getResult(fName = None):
     return result
 
 #recursive lister for directories
-def listdirs(path, file_list = []):
+def listdirs(path, file_list = None):
+    
+    #savannah 44414
+    if file_list is None:
+        file_list = []
     
     import os, dircache
 
