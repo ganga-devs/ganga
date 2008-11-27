@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.8 2008-11-21 16:34:22 moscicki Exp $
+# $Id: bootstrap.py,v 1.9 2008-11-27 15:49:03 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -459,6 +459,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
            import plugins
         except Exception,x:
            self.logger.critical('Ganga system plugins could not be loaded due to the following reason: %s',str(x))
+           self.logger.exception(x)
            raise GangaException(x) 
 
         # initialize runtime packages, they are registered in allRuntimes dictionary automatically
@@ -948,6 +949,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.8  2008/11/21 16:34:22  moscicki
+# bug #43917: Implement Batch backend as alias to default backend at a given site
+#
 # Revision 1.7  2008/10/23 15:24:04  moscicki
 # install the shutdown manager for atexit handlers before loading system plugins (e.g. LCG download thread registers the atexit handler using a tuple (priority,handler))
 #
