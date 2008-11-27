@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLCGRTHandler.py,v 1.1 2008-09-02 12:50:45 hclee Exp $
+# $Id: AMAAthenaLCGRTHandler.py,v 1.2 2008-11-27 15:38:25 hclee Exp $
 ###############################################################################
 # AMAAthena LCG Runtime Handler
 #
@@ -11,8 +11,7 @@ import os
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
+from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from GangaAtlas.Lib.Athena.AthenaLCGRTHandler import *
   
@@ -92,8 +91,8 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
         environment = athena_jc.env
         requirements = athena_jc.requirements
 
-        ## add athena-utility.sh into inputbox
-        inputbox += [ File( os.path.join(os.path.dirname(__file__), 'athena-utility.sh') ) ]
+        ## add ama_athena-utility.sh into inputbox
+        inputbox += [ File( os.path.join(os.path.dirname(__file__), 'ama_athena-utility.sh') ) ]
 
         ## add AMADriver configuration files into inputbox 
         inputbox += [ app.driver_config.config_file ]

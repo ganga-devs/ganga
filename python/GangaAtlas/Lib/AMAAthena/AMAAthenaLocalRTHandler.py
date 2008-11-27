@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLocalRTHandler.py,v 1.1 2008-09-02 12:50:45 hclee Exp $
+# $Id: AMAAthenaLocalRTHandler.py,v 1.2 2008-11-27 15:38:25 hclee Exp $
 ###############################################################################
 # AMAAthena Local Runtime Handler
 #
@@ -112,8 +112,8 @@ class AMAAthenaLocalRTHandler(AthenaLocalRTHandler):
         outputbox = athena_jc.outputbox
         environment = athena_jc.env
 
-        ## add athena-utility.sh into inputbox
-        inputbox += [ File( os.path.join(os.path.dirname(__file__), 'athena-utility.sh') ) ]
+        ## add ama_athena-utility.sh into inputbox
+        inputbox += [ File( os.path.join(os.path.dirname(__file__), 'ama_athena-utility.sh') ) ]
 
         ## add AMADriver configuration files into inputbox 
         inputbox += [ app.driver_config.config_file ]
