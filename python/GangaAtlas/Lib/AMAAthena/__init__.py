@@ -4,6 +4,7 @@ from AMAAthenaLocalRTHandler import *
 from AMAAthenaLCGRTHandler import *
 from StagerJobSplitter import *
 from StagerDataset import *
+from SimpleStagerBroker import *
 
 ## introduce new DQ2 configuration variable
 from Ganga.Utility.Config import makeConfig, ConfigError
