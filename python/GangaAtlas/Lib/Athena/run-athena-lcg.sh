@@ -182,14 +182,9 @@ retcode=0
 GANGATIME2=`date +'%s'`
 ################################################
 # prepare/staging input data
-if [ -e input_files ] && [ n$DATASETTYPE != n'DQ2_COPY' ]
+if [ -e input_files ] 
 then 
     stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
-else
-    # Unpack dq2info.tar.gz
-    if [ -e dq2info.tar.gz ]; then
-        tar xzf dq2info.tar.gz
-    fi
 fi
 
 ################################################
