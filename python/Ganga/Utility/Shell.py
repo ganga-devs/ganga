@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Shell.py,v 1.5 2008-11-21 15:42:03 moscicki Exp $
+# $Id: Shell.py,v 1.6 2008-11-27 15:06:08 moscicki Exp $
 ################################################################################
 #
 # Shell wrapper with environment caching 
@@ -100,7 +100,7 @@ class Shell:
          
       logger.debug('Running shell command: %s' % cmd)
       try:
-         rc=os.spawnve(os.P_WAIT,'/bin/sh',['/bin/sh','-c','%s &>%s' % (cmd,soutfile)],self.env)
+         rc=os.spawnve(os.P_WAIT,'/bin/sh',['/bin/sh','-c','%s > %s 2>&1' % (cmd,soutfile)],self.env)
       except OSError, (num,text):
          logger.warning( 'Problem with shell command: %s, %s', num,text)
          rc = 255
@@ -182,6 +182,9 @@ class Shell:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/11/21 15:42:03  moscicki
+# bug #44259: GangaLHCb tests fail due to gridProxy check
+#
 # Revision 1.4  2008/11/21 14:03:36  moscicki
 # bug #44334: Ganga/Utility/Shell.py does not save environ
 #
