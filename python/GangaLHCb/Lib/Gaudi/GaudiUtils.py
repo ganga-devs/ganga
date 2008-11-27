@@ -2,8 +2,8 @@
 '''Utility methods used by various classes in GangaLHCb.Lib.Gaudi.'''
 
 __author__ = 'Greig A Cowan, Ulrik Egede, Andrew Maier, Mike Williams'
-__date__ = "$Date: 2008-11-13 10:02:53 $"
-__revision__ = "$Revision: 1.1 $"
+__date__ = "$Date: 2008-11-27 12:05:33 $"
+__revision__ = "$Revision: 1.2 $"
 
 import os
 import os.path
@@ -213,7 +213,7 @@ else:
 if os.path.exists(data_opts):
     os.system('genCatalog -o %s -p myFiles.xml -s %s -P %s' \
               % (data_opts,site,seprotocol))
-    f = open(opts,'a')
+    f = open(data_opts,'a')
     f.write('\\n')
     f.write('FileCatalog.Catalogs += { \\"xmlcatalog_file:myFiles.xml\\" };')
     f.close()
