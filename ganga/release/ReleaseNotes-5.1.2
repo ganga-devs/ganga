@@ -1,0 +1,78 @@
+**************************************************************************************************************
+5.1.2 (2008/11/27)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+bug #44256: Job in state "incomplete" is impossible to remove
+bug #44334: Ganga/Utility/Shell.py does not save environ
+bug #44259: GangaLHCb tests fail due to gridProxy check
+bug #44393: wrong redirection of stdout/stderr in Shell
+bug #43917: Implement Batch backend as alias to default backend at a given site
+
+converted Root tests to GPIP
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Batch
+--------------------------------------------------------------------------------------------------------------
+bug #43917: Implement Batch backend as alias to default backend at a given site
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+- configurable number of the gLite job submission thread by: config.LCG.SubmissionThread, default is 10
+- attribute type checking issue fix: https://savannah.cern.ch/support/?106226
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Fix bug #44372: md5sum calculation procedure has been been changed 
+  in the LCG/Batch worker node code
+* Fix bug #44426: fix for DCACHE_RA_BUFFER environment variable setting 
+  problems in Local/Batch backend
+* Improve statistics collection in Athena.stat - DQ2_COPY mode has
+  correct entries now and GangaNG is also added
+* Add dq2clients requirements for DQ2_COPY mode to jdl
+* Small change for DQ2_COPY workflow in run-athena-lcg.sh
+* Change AtlasLCGRequirements.dq2clients='0.1.22' and add it to Atlas.ini
+
+AthenaMC:
+* bugfix to allow production with locally modified production tarball. 
+  Also prevent creation of illegal dataset names in DQ2 by removing 
+  single quotes in user names and cropping long dataset names.
+
+tests:
+* New AthenaLocal and AthenaLCG tests - simple HelloWorldOptions.py 
+  tests, which check the basic functionality of submission and worker
+  node code for the Local and LCG backend
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Fixed a bug in how input data LFN's were handled. Ability to directly specify the Dirac version has
+been added.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+* Added timing information for statistics collection
+* Removed some spurious error messages
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+Added GPIP tests from Mason. This type of tests speeds up the execution of the testing framework.
+The Root tests have been migrated to use this scheme. For a simple example look at
+python/GangaTest/TestGPIP.
+
+The external package PYTF was also upgraded to version 1.5
+
+**************************************************************************************************************

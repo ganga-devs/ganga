@@ -1,0 +1,29 @@
+from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
+
+#check that the correct python is run
+command = """
+import sys
+result = 1
+print sys.prefix
+if sys.prefix.startswith('/afs/cern.ch/lhcb/software/DEV/DIRAC/'):
+    result = 0
+sys.exit(result)
+"""
+
+
+assert diracwrapper(command).returnCode == 0, 'Dirac python run'
+
+#check the log level is properly set
+config.DIRAC.DiracLoggerLevel = 'FATAL'
+command = """
+gLogger.info('HERE IS SOME INFO')
+"""
+dw = diracwrapper(command)
+assert not 'HERE IS SOME INFO' in dw.stdout, 'Dirac logging info not printed'
+
+config.DIRAC.DiracLoggerLevel = 'INFO'
+command = """
+gLogger.info('HERE IS SOME INFO')
+"""
+dw = diracwrapper(command)
+assert 'HERE IS SOME INFO' in dw.stdout, 'Dirac logging info printed'
