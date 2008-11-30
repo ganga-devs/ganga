@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.22 2008-11-21 13:33:04 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.23 2008-11-30 13:44:03 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -239,6 +239,8 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                 name = re.findall(pat, rep.sfn)
                 if name:
                     host = name[0]
+                else:
+                    host = ''
 
                 if (defaultSE and host in defaultSE) or \
                        rep.sfn.startswith(localsitesrm):
@@ -253,7 +255,10 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     
                     # TURL
                     match = re.search('^[^:]+://([^:/]+):*\d*/', surl)
-                    sURLHost = match.group(1)
+                    try:
+                        sURLHost = match.group(1)
+                    except:
+                        sURLHost = defaultSE[0]
                     turl = []    
                     if configLOCALPROTOCOL!='gfal' \
                            and not stUrlMap.has_key(sURLHost) \
@@ -319,7 +324,10 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
 
                     # TURL
                     match = re.search('^[^:]+://([^:/]+):*\d*/', surl)
-                    sURLHost = match.group(1)
+                    try:
+                        sURLHost = match.group(1)
+                    except:
+                        sURLHost = defaultSE[0]
                     turl = []
                     if configLOCALPROTOCOL!='gfal' \
                            and not stUrlMap.has_key(sURLHost) \
@@ -360,7 +368,10 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
     for lfn, surl in guidReplicas.iteritems():
         if configLOCALPROTOCOL in [ "dcap", 'Xrootd', 'gsidcap' ]:
             match = re.search('^[^:]+://([^:/]+):*\d*/', surl)
-            sURLHost = match.group(1)
+            try:
+                sURLHost = match.group(1)
+            except:
+                sURLHost = defaultSE[0]
             if stUrlMap.has_key(sURLHost):
                 pfn = re.sub(sURLHost,stUrlMap[sURLHost],surl)
             else:
@@ -397,8 +408,9 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                 pfn = re.sub('srm://','gfal:gsidcap://',pfn)
                 pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
 
-        elif configLOCALPROTOCOL == "rfio" and configSTORAGEROOT == '/castor' \
-                 and not sURLHost == 'castorsc.grid.sinica.edu.tw':
+        elif (configLOCALPROTOCOL == "rfio" and configSTORAGEROOT == '/castor' \
+                 and not sURLHost == 'castorsc.grid.sinica.edu.tw') \
+                 or localsitesrm.find('gla.scotgrid.ac.uk')>-1:
             # remove protocol and host
             pfn = re.sub('^[^:]+://[^/]+','',surl)
             # remove redundant /
@@ -445,9 +457,8 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     # remove redundant /
                     pfn = re.sub('^//','/',pfn)
                     pfn = "rfio:" + pfn
-        # IFAE is a classic SE
         # IFICDISK is lustre but adveritzes rfio
-        elif 'ifaese01.pic.es' in defaultSE or 'ifaesrm.pic.es' in defaultSE or 'lsrm.ific.uv.es' in defaultSE:
+        elif 'lsrm.ific.uv.es' in defaultSE:
             # remove protocol and host
             pfn = re.sub('^[^:]+://[^/]+','',surl)
             # remove redundant /
@@ -998,18 +1009,21 @@ if __name__ == '__main__':
             localsiteid = dq2localids[0]
             localsitesrm = TiersOfATLAS.getSiteProperty(localsiteid,'srm')
 
-        if not detsetype:
-            print 'localsiteid: %s' % localsiteid
-
         if sename in ['dpm01.grid.sinica.edu.tw']:
             localsiteid = 'ASGCDISK'
 
         if sename in [ 'atlasse.phys.sinica.edu.tw']:
             localsiteid = 'TW-FTT'
 
-        if sename in ['srm-disk.pic.es']:
+        if sename in ['srmatlas.pic.es', 'srm.pic.es' ]:
             localsiteid = 'PIC_DATADISK'
-            
+
+        if sename in [ 'srmifae.pic.es' ]:
+            localsiteid = 'IFAE_DATADISK'
+
+        if not detsetype:
+            print 'localsiteid: %s' % localsiteid
+
         localsitesrm = TiersOfATLAS.getSiteProperty(localsiteid,'srm')
         # Remove token info
         localsitesrm = re.sub('token:*\w*:','', localsitesrm)
@@ -1164,7 +1178,8 @@ if __name__ == '__main__':
                 configSTORAGEROOT = '/castor'
                 configLOCALPREFIX = 'rfio:'
             # CNAF uses StoRM, needs extra treatment
-            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1'):
+            # IFIC, LIP-LISBON use lustre
+            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1') or localsiteid.startswith('IFIC') or localsiteid.startswith('LIP-LISBON'):
                 configLOCALPROTOCOL = 'file'
                 configSTORAGEROOT = '/storage'
                 configLOCALPREFIX = 'file:'
@@ -1187,6 +1202,10 @@ if __name__ == '__main__':
                     configLOCALPROTOCOL = ""
                     configLOCALPREFIX = ""
                     configSTORAGEROOT = ""
+                elif localsitesrm.find('/lustre/')>=0:
+                    configLOCALPROTOCOL = 'file'
+                    configSTORAGEROOT = '/storage'
+                    configLOCALPREFIX = 'file:'
                 else:
                     configLOCALPROTOCOL = ""
                     configLOCALPREFIX = ""
