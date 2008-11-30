@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.24 2008-11-30 18:51:02 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.25 2008-11-30 19:37:17 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1454,6 +1454,8 @@ if __name__ == '__main__':
         if os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('NIKHEF') and len(tUrlMap)==0:
             print 'Special setup at NIKHEF - re-reading LFC' 
             localsitesrm = TiersOfATLAS.getSiteProperty(os.environ['DQ2_LOCAL_SITE_ID'],'srm')
+            localsitesrm = re.sub('token:*\w*:','', localsitesrm)
+            localsitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', localsitesrm)
             defaultSE = _getDefaultStorage(localsitesrm)
             configLOCALPROTOCOL = 'rfio'
             configSTORAGEROOT = '/dpm'
@@ -1461,7 +1463,9 @@ if __name__ == '__main__':
             sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
         elif os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('SARA') and len(tUrlMap)==0: 
             print 'Special setup at SARA - re-reading LFC' 
-            localsitesrm = TiersOfATLAS.getSiteProperty(os.environ['DQ2_LOCAL_SITE_ID'],'srm')
+            localsitesrm = TiersOfATLAS.getSiteProperty('SARA-MATRIX_MCDISK','srm')
+            localsitesrm = re.sub('token:*\w*:','', localsitesrm)
+            localsitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', localsitesrm)
             defaultSE = _getDefaultStorage(localsitesrm)
             configLOCALPROTOCOL = 'gsidcap'
             configSTORAGEROOT = '/pnfs'
