@@ -32,8 +32,8 @@ class GangaCronSubmitter(BaseSubmitter):
 
     def handlesubmit(self, jobids, runid):
         """Submit 10 DaVinci/Dirac jobs with 4 LFN files, for each CPUTime 3599 and 86399 seconds."""
-        JOB_COUNT = 10
-        CHUNK_SIZE = 4
+        JOB_COUNT = 10 #default 10
+        CHUNK_SIZE = 1 # default 4
         CPU_TIMES = [3599, 86399]
         for cputime in CPU_TIMES:
             for index in range(JOB_COUNT):
@@ -46,13 +46,12 @@ class GangaCronSubmitter(BaseSubmitter):
         j = Job()
         j.name = '%d-%d' % (cputime, time.time())
         cmt_user_path = files.expandfilename('~/cmtuserRobot')
-        optsfile = os.path.join(cmt_user_path, 'DaVinci_v19r4/Tutorial/Analysis/v6r4/options/DVTutorial_2.opts')
+        optsfile = os.path.join(cmt_user_path, 'DaVinci_v19r14/Tutorial/Analysis/solutions/DaVinci2/DVTutorial_2.opts')
         j.application = DaVinci(
             extraopts = 'ApplicationMgr.EvtMax = 2500;',
             package = 'Phys',
             masterpackage = None,
-            version = 'v19r4',
-            cmt_user_path = cmt_user_path,
+            version = 'v19r14',
             optsfile = optsfile)
         j.backend = Dirac(
             CPUTime = cputime)
