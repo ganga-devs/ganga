@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.25 2008-11-30 19:37:17 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.26 2008-12-02 15:51:21 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1047,9 +1047,10 @@ if __name__ == '__main__':
             print 'localsiteid before getAggName(): %s' % localsiteid
         # TODO: avoiding  getAggName() is just a workaround; should be tuned
         if datasettype not in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD']:
-            localsiteid = getAggName(localsiteid)
-            if not detsetype:
-                print 'localsiteid after getAggName(): %s' % localsiteid
+            if not localsiteid.startswith('NIKHEF'):
+                localsiteid = getAggName(localsiteid)
+                if not detsetype:
+                    print 'localsiteid after getAggName(): %s' % localsiteid
 
         # Set DQ2_LOCAL_SITE_ID
         try:
