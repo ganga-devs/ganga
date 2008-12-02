@@ -24,19 +24,19 @@ dscrpt = 'The command to used to create a directory in the locations of \
 configLHCb.addOption('mkdir_cmd','/bin/mkdir',dscrpt)
 dscrpt = 'The command used to copy out data to the `DataOutput` locations'
 configLHCb.addOption('cp_cmd','/bin/cp',dscrpt)
+dscrpt = 'Files from these services will go to the output sandbox (unless \
+overridden by the user in a specific job via the Job.outputdata field). Files \
+from all other known handlers will go to output data (unless overridden by \
+the user in a specific job via the Job.outputsandbox field).'
+configLHCb.addOption('outputsandbox_types',
+                     ['NTupleSvc','HistogramPersistencySvc','MicroDSTStream'],
+                     dscrpt)
+ 
+# Set default values for the Dirac section.
 dscrpt = 'Root versions used by Dirac for given versions of DaVinci'
 versions = {'5.14.00f': 'v19r5', '5.14.00h': 'v19r8', '5.14.00i': 'v19r9',
             '5.18.00': 'v19r10', '5.18.00a': 'v19r11', '4.04.02': 'v14r5',
             '3.10.02': 'v12r18'}
-dscrpt = 'Files from these services will go to the output sandbox (unless \
-overridden by the user in a specific job via the Job.outputdata field). Files \
-from all other known handlers will go to output data (unless overridden by \
-the user in\n# a specific job via the Job.outputsandbox field).'
-configLHCb.addOption('outputsandbox_types',
-                     ['NTupleSvc','HistogramPersistencySvc','MicroDSTStream'],
-                     dscrpt)
-
-# Set default values for the Dirac section.
 configDirac.addOption('RootVersions',versions,dscrpt)
 dscrpt = 'extra lifetime required for a proxy to submit a job'
 configDirac.addOption('extraProxytime','600',dscrpt)
