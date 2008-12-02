@@ -10,6 +10,9 @@ relevant data may be extracted in a later version.
 
 from GangaRobot.Lib.Base.BaseExtractor import BaseExtractor
 from Ganga.GPI import *
+from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
+
+from GangaLHCb.Lib.Dirac import DiracShared
 
 
 class DiracExtractor(BaseExtractor):
@@ -70,20 +73,31 @@ class DiracExtractor(BaseExtractor):
         cpu = None
         # extract data
         diracid = job.backend.id
-        if diracid:
-            from DIRAC.Client.Dirac import Dirac
-            dirac = Dirac()
-            try:
-                jobSummary = dirac.client.getJobSummary(diracid)['Value']['Job']
+        try:
+                command="""
+jobsummary=dirac.getJobSummary(%i)
+if not result.get('OK',False): rc = -1
+storeResult(jobsummary)
+"""%diracid
+                result=diracwrapper(command)
+                jobSummary=result.getOutput()['Value'][diracid]
+                
+
                 status = jobSummary['Status']
                 applicationstatus = jobSummary['ApplicationStatus']
-            except KeyError:
+        except KeyError:
                 pass # data unavailable
-            try:
-                jobParams = dirac.client.getJobParams(diracid)['Value']
+        try:
+                command="""
+jobParams=dirac.getJobParams(%i)
+if not result.get('OK',False): rc = -1
+storeResult(jobParams)
+"""%diracid
+                dc=diracwrapper(command)
+                jobParams =dc.getOutput()['Value']
                 edgwljobid = jobParams['EDG_WL_JOBID']
                 cpu = jobParams['CPU']
-            except KeyError:
+        except KeyError:
                 pass # data unavailable
         # add subnodes
         diracnode.addnode('status', status)
