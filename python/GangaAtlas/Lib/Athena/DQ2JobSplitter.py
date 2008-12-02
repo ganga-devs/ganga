@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.16 2008-12-02 15:52:34 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.17 2008-12-02 17:49:02 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -73,11 +73,14 @@ class DQ2JobSplitter(ISplitter):
         'numsubjobs'        : SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
         'use_lfc'           : SimpleItem(defvalue = False, doc = 'Use LFC catalog instead of default site catalog/tracker service'),
         'update_siteindex'  : SimpleItem(defvalue = True, doc = 'Update siteindex during job submission to get the latest file location distribution.'),
+        'use_blacklist'     : SimpleItem(defvalue = True, doc = 'Use black list of sites create by GangaRobot functional tests.'),
     })
 
     _GUIPrefs = [ { 'attribute' : 'numfiles',        'widget' : 'Int' },
                   { 'attribute' : 'numsubjobs',      'widget' : 'Int' },
-                  { 'attribute' : 'use_lfc',         'widget' : 'Bool' }
+                  { 'attribute' : 'use_lfc',         'widget' : 'Bool' },
+                  { 'attribute' : 'update_siteindex', 'widget' : 'Bool' },
+                  { 'attribute' : 'use_blacklist',    'widget' : 'Bool' }
                   ]
 
 
@@ -103,7 +106,16 @@ class DQ2JobSplitter(ISplitter):
                     allowed_sites = job.backend.requirements.sites
                 else: 
                     raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
-                #allowed_sites = job.backend.requirements.list_sites(True,True)
+                
+                allowed_sites_all = job.backend.requirements.list_sites(True,True)
+                # Apply GangaRobot blacklist
+                if use_blacklist:
+                    newsites = []
+                    for site in allowed_sites:
+                        if site in allowed_sites_all:
+                            newsites.append(site)
+                    allowed_sites = newsites
+                
         elif job.backend._name == 'Panda':
             from GangaPanda.Lib.Panda.Panda import runPandaBrokerage,queueToAllowedSites
             runPandaBrokerage(job)
