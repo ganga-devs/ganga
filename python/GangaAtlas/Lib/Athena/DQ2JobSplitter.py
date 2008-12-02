@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.17 2008-12-02 17:49:02 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.18 2008-12-02 21:03:50 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -109,7 +109,7 @@ class DQ2JobSplitter(ISplitter):
                 
                 allowed_sites_all = job.backend.requirements.list_sites(True,True)
                 # Apply GangaRobot blacklist
-                if use_blacklist:
+                if self.use_blacklist:
                     newsites = []
                     for site in allowed_sites:
                         if site in allowed_sites_all:
