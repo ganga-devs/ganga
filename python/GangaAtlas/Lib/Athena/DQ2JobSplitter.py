@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.15 2008-12-02 15:51:21 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.16 2008-12-02 15:52:34 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -140,13 +140,13 @@ class DQ2JobSplitter(ISplitter):
 
             if siteinfo.keys():
                 sites = siteinfo.keys()[0]
-                sitestemp = []
-                for site in sites:
-                    if site.startswith('SARA-MATRIX'):
-                        temp = site
-                        temp.replace('SARA-MATRIX','NIKHEF-ELPROD')
-                        sitestemp.append(temp)
-                sites = sites + sitestemp
+                #sitestemp = []
+                #for site in sites:
+                #    if site.startswith('SARA-MATRIX'):
+                #        temp = site
+                #        temp.replace('SARA-MATRIX','NIKHEF-ELPROD')
+                #        sitestemp.append(temp)
+                #sites = sites + sitestemp
                 
             else:
                 sites = []
