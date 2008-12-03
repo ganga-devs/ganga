@@ -4,7 +4,10 @@
 ####################################################
 
 #recursive lister for directories
-def listdirs(path, file_list = []):
+def listdirs(path, file_list = None):
+    
+    if file_list is None:
+        file_list = []
     
     import os, dircache
 
