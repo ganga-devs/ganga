@@ -394,7 +394,7 @@ error = None
 params = dirac.parameters(id)
 if params is not None and params.get('OK',False):
     data = params['Value']['UploadedOutputData']
-    if type(data) == type(''): data = [data]
+    data = data.split(',')#get a comma seperated list
     for d in data:
         name = os.path.basename(d)
         if name in files:
@@ -753,6 +753,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.9  2008/12/04 11:24:09  wreece
+## savannah 44923: use the dirac job parameters to construct the lfn rather than guessing
+##
 ## Revision 1.8  2008/11/19 09:17:04  wreece
 ## Improves the error reporting for monitoring
 ##
