@@ -41,9 +41,7 @@ class TestLHCbDataset(GangaGPITestCase):
 
     def test_LHCbDataFile_updateReplicaCache(self):
         df = LHCbDataFile('LFN:' + self.file_name)
-        print 'reps before = ', df.replicas
         df.updateReplicaCache()
-        print 'reps after = ', df.replicas
         assert df.replicas, 'replicas should now be full'
         df = LHCbDataFile('PFN:' + self.file_name)
         df.updateReplicaCache()
