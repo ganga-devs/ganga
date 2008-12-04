@@ -353,7 +353,7 @@ for i in range(3):
         
         job.outputdata=string_dataset_shortcut(list,None)
 
-    def getOutputData(self,dir='',names=[]):
+    def getOutputData(self, dir='', names = None):
         """Retrieve data created by job and stored on SE
 
         dir   Copy the output to this directory. The output workspace of the job
@@ -363,7 +363,9 @@ for i in range(3):
               LFN will be prepended. If names start with a / it is assumed to be the
               complete path. Do never add an "LFN:" to the name.
         """
-        
+        if names is None:
+            names = []
+            
         downloadedFiles = []
         
         if type(names)!=type([]):
@@ -373,31 +375,32 @@ for i in range(3):
         job=self.getJobObject()
         if not dir:
             dir = job.getOutputWorkspace().getPath()
-        
+
         try:
-            try:
-                user_name = os.getlogin()
-            except OSError:
-                user_name = os.path.expandvars('$USER')
-            
-            #TODO: Get this name decoration more sensibly
-            lfn = '/lhcb/user/%s/%s/%s/' % (user_name[0],user_name,job.backend.id)
-            
             if len(names)==0 and job.outputdata:
                 names = [f.name for f in job.outputdata.files]
                 
-            lfn_list=[]
-            for n in names:
-                if not n.startswith('/'):
-                    n = lfn + n
-                lfn_list.append(n)
-            
-            if lfn_list:
-                
-                logger.debug('Retrieving the files '+str(list)+' from the Storage Element')            
+            if names:
+                logger.debug('Retrieving the files '+str(names)+' from the Storage Element')            
                 command = """
+id = %(ID)d
 files = %(FILES)s
 outputdir = '%(OUTPUTDIR)s'
+
+download_files = [] 
+error = None
+
+#look in the job parameters for the lfns
+params = dirac.parameters(id)
+if params is not None and params.get('OK',False):
+    data = params['Value']['UploadedOutputData']
+    if type(data) == type(''): data = [data]
+    for d in data:
+        name = os.path.basename(d)
+        if name in files:
+            download_files.append(d)
+if files and not download_files:
+    error = {'OK':False, 'Message':'Did not find the LFNs for the specified files.'}
                 
 thisdir = os.getcwd()
                 
@@ -405,7 +408,7 @@ def getFile(retry_count = 0):
                     
     result = None
     if retry_count < 3:
-        result = dirac.getFile(files)
+        result = dirac.getFile(download_files)
                         
         if (result is None) or (result is not None and not result.get('OK',False)):
             result = getFile( retry_count = retry_count + 1 )
@@ -413,27 +416,34 @@ def getFile(retry_count = 0):
                 
 try:
     os.chdir(outputdir)
-    result = getFile()
+    if error is None:
+        result = getFile()
+    else:
+        result = error
     storeResult(result)
 finally:
     os.chdir(thisdir)
-                """ % {'FILES':str(lfn_list),'OUTPUTDIR':dir}
+                """ % {'FILES':str(names),'OUTPUTDIR':dir,'ID':self.id}
                 
                 dw = diracwrapper(command)
                 result = dw.getOutput()
 
-                if result is not None and result.get('OK',False):
-                    if result.has_key('Value'):
-                        value = result['Value']
-                        success = value.get('Successful',{})
-                        failure = value.get('Failed',{})
+                if result is not None:
+                    if result.get('OK',False):
+                        if result.has_key('Value'):
+                            value = result['Value']
+                            success = value.get('Successful',{})
+                            failure = value.get('Failed',{})
                         
-                        for k,v in failure.iteritems():
-                            logger.error("Failed: '%s' (%s)", str(k), str(v))
+                            for k,v in failure.iteritems():
+                                logger.error("Failed: '%s' (%s)", str(k), str(v))
                         
-                        for k,v in success.iteritems():
-                            logger.info("Success: '%s' to '%s'", str(k), str(v))
-                            downloadedFiles.append(v)
+                            for k,v in success.iteritems():
+                                logger.info("Success: '%s' to '%s'", str(k), str(v))
+                                downloadedFiles.append(v)
+                    elif result.has_key('Message'):
+                         logger.error("Output download failed: '%s'", str(result['Message']))
+                         
         except Exception, e:
             pass
         
@@ -743,6 +753,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.8  2008/11/19 09:17:04  wreece
+## Improves the error reporting for monitoring
+##
 ## Revision 1.7  2008/10/30 16:05:04  wreece
 ## Adds a warning if the sandbox was oversized.
 ##
