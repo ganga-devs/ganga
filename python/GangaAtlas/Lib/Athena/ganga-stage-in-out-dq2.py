@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.26 2008-12-02 15:51:21 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.27 2008-12-04 15:20:40 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -283,6 +283,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                                     turl = line.split()
                             signal.alarm(0)
                         except IOError:
+                            print 'lcg-gt time out !'
                             pass
                         signal.alarm(0)
 
@@ -350,6 +351,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                                     turl = line.split()
                             signal.alarm(0)
                         except IOError:
+                            print 'lcg-gt time-out !'
                             pass
                         signal.alarm(0)
 
@@ -420,8 +422,8 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             else:
                 pfn = "rfio:" + pfn
         elif ( configLOCALPROTOCOL == "rfio" and \
-                 ( configSTORAGEROOT == '/dpm' or sURLHost == 'castorsc.grid.sinica.edu.tw')) \
-                 or ( configLOCALPROTOCOL == "file" ):
+               ( configSTORAGEROOT == '/dpm' or sURLHost == 'castorsc.grid.sinica.edu.tw')) \
+               or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE):
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
             cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
@@ -440,6 +442,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     turl = [line.strip()]
                 signal.alarm(0)
             except IOError:
+                print 'lcg-gt time-out !'
                 pass
             signal.alarm(0)
 
@@ -456,13 +459,16 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     pfn = re.sub('^[^:]+://[^/]+','',surl)
                     # remove redundant /
                     pfn = re.sub('^//','/',pfn)
-                    pfn = "rfio:" + pfn
-        # IFICDISK is lustre but adveritzes rfio
-        elif 'lsrm.ific.uv.es' in defaultSE:
+                    # prepend protocol
+                    pfn = configLOCALPROTOCOL + ":" + pfn
+        # file protocol used on lustre at IFIC and LIP-LISBON (no lcg-gt)
+        elif configLOCALPROTOCOL == "file":
             # remove protocol and host
             pfn = re.sub('^[^:]+://[^/]+','',surl)
             # remove redundant /
             pfn = re.sub('^//','/',pfn)
+            # prepend protocol
+            pfn = configLOCALPROTOCOL + "://" + pfn
         # If all fails use gfal:srm://...
         else:
             pfn = "gfal:"+surl
@@ -1021,6 +1027,9 @@ if __name__ == '__main__':
         if sename in [ 'srmifae.pic.es' ]:
             localsiteid = 'IFAE_DATADISK'
 
+        if sename in ['heplnx204.pp.rl.ac.uk' ]:
+            localsiteid = 'UKI-SOUTHGRID-RALPP_DATADISK'
+
         if not detsetype:
             print 'localsiteid: %s' % localsiteid
 
@@ -1105,6 +1114,10 @@ if __name__ == '__main__':
                 defaultSE.append('f-dpm001.grid.sinica.edu.tw')
             elif localsiteid == 'BEIJING':
                 defaultSE.append('atlasse01.ihep.ac.cn')
+            elif localsiteid in [ 'GRIF-LAL', 'GRIF-SACLAY' ] or localsiteid.startswith('GRIF-LAL') or localsiteid.startswith('GRIF-SACLAY'):
+                defaultSE.append('grid05.lal.in2p3.fr')
+                defaultSE.append('node12.datagrid.cea.fr')
+    
             #elif localsiteid.startswith('MPPMU'):
             #    defaultSE.append('lcg-lrz-se.lrz-muenchen.de')
 
