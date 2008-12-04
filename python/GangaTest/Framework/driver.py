@@ -2,7 +2,7 @@
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
-# $Id: driver.py,v 1.2 2008-11-26 08:30:35 moscicki Exp $
+# $Id: driver.py,v 1.3 2008-12-04 13:17:58 moscicki Exp $
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
@@ -126,7 +126,7 @@ from testoob.reporting.colored import ColoredTextReporter
 from testoob.reporting import XMLFileReporter
 
 import unittest
-from GangaTest.Framework.tests import GPIPPreparationTestCase, SimpleRunnerControl
+from GangaTest.Framework.tests import GPIPPreparationTestCase, SimpleRunnerControl, FailedTestsException
 
 class GPIPRunner:
         def __init__(self, testPath, outputPath,timeout,description,releaseTest,report_outputpath,parent_report_name):
@@ -140,6 +140,7 @@ class GPIPRunner:
                 self.report_outputpath = report_outputpath # release report directory 
                 self.parent_report_name = parent_report_name # indicate the parent report name(suite name)
                 self.pytest_name = os.path.basename(self.outputPath.split('%s')[0].strip('.'))
+                self.gpiptest_prefix = self.pytest_name.replace('.', '/')
                 self._testinstances = []
                 self._xml_report_ext = '%s.xml_merged'
                 #print 'Path : %s, NAME : %s, REPORT : %s' %(testPath, 'ALL', self.parent_report_name)
@@ -181,9 +182,10 @@ class GPIPRunner:
 
                 test_extractor = apply_decorators(_full_extractor, [])
 
-                runner_threads = []
                 runners_control = []
                 
+                failedTests = []
+
                 start = time.time()
 
                 # self.testsuite must be initialized in load()
@@ -198,6 +200,10 @@ class GPIPRunner:
                     run_status = run_control.runPreparationTestCase()
                     if not run_status:
                         run_control.setFinished(True) # Fail occurred while preparing the job, stop the test and write out the report.
+                        if run_control.preparationError:
+                            failedTests.append(["%s:%s" % (self.gpiptest_prefix, run_control.testName), run_control.preparationError])
+                        else:
+                            failedTests.append(["%s:%s" % (self.gpiptest_prefix, run_control.testName), 'Failed in preparation somehow.'])
 
                 all_done = False
 
@@ -223,7 +229,20 @@ class GPIPRunner:
 
                 for run_control in runners_control:
                     if not run_control.isFinished():
-                        run_control.runCheckTest()
+                        if not run_control.runCheckTest():
+                            if run_control.error:
+                                failedTests.append(["%s:%s" % (self.gpiptest_prefix, run_control.testName), run_control.errorTraceback])
+                            elif run_control.timeoutError:
+                                failedTests.append(["%s:%s" % (self.gpiptest_prefix, run_control.testName), run_control.errorTraceback])
+                            elif run_control.runCheckError:
+                                failedTests.append(["%s:%s" % (self.gpiptest_prefix, run_control.testName), run_control.errorTraceback])
+                            else:
+                                failedTests.append(["%s:%s" % (self.gpiptest_prefix, run_control.testName), 'Failed in running check test somehow.'])
+
+                print "[%d failed tests]" % len(failedTests)
+                if len(failedTests) > 0:
+                    failedTestsException = FailedTestsException(failedTests)
+                    raise failedTestsException
 
 
         def _generate_runner(self, testName):
@@ -400,6 +419,7 @@ if __name__=="__main__":
                         figleaf.start()
                 #3. RUN
                 testRunner.run()
+
                 if coverage_report and coverage_report!='None':
                         try:
                                 figleaf.stop()
@@ -421,6 +441,10 @@ if __name__=="__main__":
         sys.exit(not success)
 
 #$Log: not supported by cvs2svn $
+#Revision 1.2  2008/11/26 08:30:35  moscicki
+#GPIP (parallel) tests from Mason
+#untabified the driver.py file
+#
 #Revision 1.1  2008/07/17 16:41:35  moscicki
 #migration of 5.0.2 to HEAD
 #

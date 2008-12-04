@@ -1,4 +1,6 @@
 import unittest
+import traceback
+import StringIO
 
 class GangaGPITestCase(unittest.TestCase):
         """
@@ -28,6 +30,18 @@ class MultipassTest(MP):
         def tearDown(self):
                 pass
 
+
+class FailedTestsException(Exception):
+    """The exception shows the failed tests"""
+    def __init__(self, failedTests):
+        self.failedTests = failedTests
+
+    def __str__(self):
+        msg = "\n**** FAIL ****\n\n"
+        for name in self.failedTests:
+            msg += "%s\nFAIL: %s, please check the error message below\n%s" % (('-' * 40), name[0], name[1])
+        msg += '%s' % ('-' * 40)
+        return "%s\n**** END ****" % msg
 
 class GangaGPIPTestCase(unittest.TestCase):
     """
@@ -80,6 +94,19 @@ class GangaGPIPTestCase(unittest.TestCase):
         process.wait()
         output.close()
 
+        
+        text = None
+        f = open(self.output_path)
+        try: text = f.read()
+        finally: f.close()
+
+        start_index = text.find("**** FAIL ****")
+        end_index = text.find("**** END ****")
+        if start_index > -1:start_index = start_index + 15
+        err = "%s" % text[start_index:end_index]
+        if len(err) > 0:
+            raise unittest.TestCase.failureException, err
+
 import time
 
 class GPIPPreparationTestCase(unittest.TestCase):
@@ -93,11 +120,20 @@ class GPIPPreparationTestCase(unittest.TestCase):
         self.timeout = timeout
         self.outputpath = outputpath
         self.description = description #'%s_preparation' % description
+        self.preparationError = None
         #self.description_org = description
 
     def run_pytest_function(self):
         print '%s starts to run' % self.method_name 
-        checkTest = getattr(self.pytest_instance, self.method_name)()
+        try:
+            checkTest = getattr(self.pytest_instance, self.method_name)()
+        except Exception, preparationError:
+            sio = StringIO.StringIO()
+            traceback.print_exc(file=sio)
+            self.preparationError = sio.getvalue()
+            sio.close()
+            raise preparationError
+
         if checkTest:
             self.checkTest = checkTest
 
@@ -127,17 +163,34 @@ class GPIPCheckTestCase(unittest.TestCase):
         self.description = description
         self.preError = preError
         self.timeoutError = timeoutError
+        self.runCheckError = None
+        self.errorTraceback = None
 
     def runCheckTest(self):
-        if self.timeoutError:
-            raise self.timeoutError
+        try:
+            if self.timeoutError:
+                raise self.timeoutError
 
-        if self.preError:
-            raise self.preError
+            if self.preError:
+                raise self.preError
 
-        assert(self.checkTest != None), 'No instance of checktest, this should happen while the preparation of test is failed.'
+            assert(self.checkTest != None), 'No instance of checktest, this should happen while the preparation of test is failed.'
+        except Exception, error:
+            sio = StringIO.StringIO()
+            traceback.print_exc(file=sio)
+            self.errorTraceback = sio.getvalue()
+            sio.close()
+            raise error
 
-        self.checkTest.checkTest()
+        try:
+            self.checkTest.checkTest()
+        except Exception, runCheckError:
+            self.runCheckError = runCheckError
+            sio = StringIO.StringIO()
+            traceback.print_exc(file=sio)
+            self.errorTraceback = sio.getvalue()
+            sio.close()
+            raise runCheckError
 
     def getDescription(self):
         return self.description
@@ -180,10 +233,15 @@ class SimpleRunnerControl(object):
         self.error = None
         self.timeoutError = None
         self.finished = False
+        self.preparationError = None
+        self.runCheckError = None
+        self.errorTraceback = None
 
     def runPreparationTestCase(self):
         self._printBegin('runPreparation')
         run_status =  self.runner.run(self.preparationTestCase)
+        if self.preparationTestCase.get_fixture().preparationError:
+            self.preparationError = self.preparationTestCase.get_fixture().preparationError
         try:
             self.checkTest = self.preparationTestCase.get_fixture().getCheckTest()
         except Exception, e:
@@ -203,20 +261,24 @@ class SimpleRunnerControl(object):
         self.finished = finished
 
     def isReadyForCheck(self):
-         ready = None
+         ready = False
          try:
              if self.checkTest:
                  ready = self.checkTest.isReadyForCheck()
              else:
                  ready = True
-         except AssertionError, e:
-             self.error = e
+         except Exception, e:
+             #Change to catch generic exception.
+             sio = StringIO.StringIO()
+             traceback.print_exc(file=sio)
+             self.error = sio.getvalue()
+             sio.close()
              #raise e
 
-         if ready is None:
-             return False
-         else:
-             return ready
+         #if ready is None:
+         #    return False
+         #else:
+         return ready
 
     def getError(self):
          if self.erorr:
@@ -228,9 +290,13 @@ class SimpleRunnerControl(object):
         self.isTimeout = flag
 
     def runCheckTest(self):
+        run_status = False
         self._printBegin('runCheckTest')
         if self.isTimeout:
             self.timeoutError = unittest.TestCase.failureException("Test Timeout(%s sec). Consider increasing the value of '[TestingFramework]timeout' parameter in your test configuration file" % self.timeout)
+
+        #if self.error is not None:
+
         checkTestCase = GPIPCheckTestCase(self.checkTest, "CheckTest", self.error, self.timeoutError)
         checkTestSuite = unittest.TestSuite([checkTestCase])
 
@@ -238,9 +304,17 @@ class SimpleRunnerControl(object):
 
         for fixture in test_extractor(checkTestSuite):
             decorated_fixture = apply_decorators(fixture, self.fixture_decorators)
-            self.runner.run(decorated_fixture)
+            run_status = self.runner.run(decorated_fixture)
+
+        if checkTestCase.runCheckError:
+            self.runCheckError = checkTestCase.runCheckError
+
+        if checkTestCase.errorTraceback:
+            self.errorTraceback = checkTestCase.errorTraceback
+
         self.runner.done()
         self._printEnd('runCheckTest')
+        return run_status
 
     def _printBegin(self, method):
         print '@@@@ [%s] BEGIN of %s' % (self.testName, method)
