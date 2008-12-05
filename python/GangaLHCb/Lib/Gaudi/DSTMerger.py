@@ -1,8 +1,8 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """Merges DST files."""
 
-__date__ = "$Date: 2008-11-13 10:02:53 $"
-__revision__ = "$Revision: 1.2 $"
+__date__ = "$Date: 2008-12-05 12:42:04 $"
+__revision__ = "$Revision: 1.3 $"
 
 import commands
 import inspect
@@ -83,8 +83,8 @@ EventSelector.Input = {""" % output_file
         #now run gaudirun via a script
         shell_script = """#!/bin/sh
         
-if [ -f ${LHCBHOME}/scripts/SetupProject.sh ]; then
-  . ${LHCBHOME}/scripts/SetupProject.sh  --ignore-missing DaVinci %s
+if [ -f ${LHCBSCRIPTS}/SetupProject.sh ]; then
+  . ${LHCBSCRIPTS}/SetupProject.sh  --ignore-missing DaVinci %s
 else
   echo "Could not find the SetupProject.sh script. Your job will probably fail"
 fi

@@ -2,8 +2,8 @@
 '''Utility methods used by various classes in GangaLHCb.Lib.Gaudi.'''
 
 __author__ = 'Greig A Cowan, Ulrik Egede, Andrew Maier, Mike Williams'
-__date__ = "$Date: 2008-11-27 12:05:33 $"
-__revision__ = "$Revision: 1.2 $"
+__date__ = "$Date: 2008-12-05 12:42:04 $"
+__revision__ = "$Revision: 1.3 $"
 
 import os
 import os.path
@@ -39,7 +39,7 @@ def available_versions(appname):
   """Provide a list of the available Gaudi application versions"""
   
   s = Shell()
-  command = '$LHCBHOME/scripts/SetupProject.sh --ask %s' % appname
+  command = '${LHCBSCRIPTS}/SetupProject.sh --ask %s' % appname
   rc,output,m=s.cmd1("echo 'q\n' | %s" % command)
   versions = output[output.rfind('(')+1:output.rfind('q[uit]')].split()
   return versions
@@ -48,7 +48,7 @@ def guess_version(appname):
   """Guess the default Gaudi application version"""
   
   s = Shell()
-  command = '$LHCBHOME/scripts/SetupProject.sh --ask %s' % appname
+  command = '${LHCBSCRIPTS}/SetupProject.sh --ask %s' % appname
   rc,output,m=s.cmd1("echo 'q\n' | %s" % command)
   version = output[output.rfind('[')+1:output.rfind(']')]
   return version
@@ -84,7 +84,7 @@ def gaudishell_setenv(gaudiapp):
                   expandfilename(gaudiapp.user_release_area)
     except AttributeError:
         pass
-    script +='. $LHCBHOME/scripts/SetupProject.sh %s %s %s\n'\
+    script +='. ${LHCBSCRIPTS}/SetupProject.sh %s %s %s\n'\
               % (opts, pack, ver)
     fd.write(script)
     fd.flush()
@@ -197,7 +197,7 @@ else:
 """
 
   script+="""# check that SetupProject.sh script exists, then execute it    
-setup_script = os.environ['LHCBHOME'] + '/scripts/SetupProject.sh'
+setup_script = os.environ['LHCBSCRIPTS'] + '/SetupProject.sh'
 if os.path.exists(setup_script):
     os.system('source %s %s %s %s && printenv > env.tmp' \
               % (setup_script,project_opts,app,version))
