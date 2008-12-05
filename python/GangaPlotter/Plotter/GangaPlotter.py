@@ -1,9 +1,11 @@
 #!/usr/bin/env ganga
 
-import re, inspect
+import re
+import inspect
 import GangaPlotHelper
 ## require matplotlib to produce statistic plots
 from pylab import *
+
 ## require sets module supported from python 2.3 
 from sets import Set
 
@@ -398,6 +400,86 @@ class GangaPlotter:
 
         self.__doPlot__()
 
+    def __makeMultiHistograms__(self, dataTable, pltColIdList, pltDataProcList, pltLabelList, pltTitle='Histogram',\
+                                pltNumBins=50,pltXLabel=None,pltColorMap=None,pltNormalize=False,\
+                                pltOutput=None):
+
+        """ backend generator for multiple histograms """
+
+        hist_cmap = self.__setColormap__( pltColorMap, len(pltColIdList) )
+
+        # set figure id
+        self.__setFigureId__()
+
+        figure(self.figId)
+        rc('font',size=8.0)
+
+        # create only the xlabel if only one histogram is plotted
+        if not pltXLabel:
+            xlabel(dataHeader[pltColId])
+        else:
+            xlabel(pltXLabel)
+
+        for id in pltColIdList:
+
+            pltFaceColor = hist_cmap[id]
+            pltDataProc  = pltDataProcList[id]
+            pltLabel     = pltLabelList[id]
+
+            self.__makeHistogram__(dataTable, pltColId=id, pltNumBins=pltNumBins, \
+                                   pltFaceColor=pltFaceColor, pltNormalize=pltNormalize, \
+                                   pltLabel=pltLabel, pltOutput=pltOutput, pltDataProc=pltDataProc)
+
+        # making the plot
+        self.output = pltOutput
+
+        if pltNormalize:
+            ylabel('')
+        else:
+            ylabel('# jobs')
+
+
+        title(pltTitle)
+        legend()
+        grid(True)
+        self.__doPlot__()
+
+    def __makeHistogram__(self,dataTable,pltColId=0,pltNumBins=50,\
+                          pltFaceColor='green',pltNormalize=False,\
+                          pltLabel=None,pltOutput=None,pltDataProc=None):
+
+        """ backend histogram generator """
+
+        pltAlpha=0.7
+
+        ##-----
+        ## extract the given data for pie chart
+        ##-----
+        # summarize the data of the given column
+        dataHeader = dataTable[0]
+        dataTable  = dataTable[1:]
+
+        pltData = {}
+        pltData[dataHeader[pltColId]] = []
+        for data in dataTable:
+            
+            # apply the user defined data processor
+            value = self.__procPltData__(data[pltColId],pltDataProc)
+
+            # make sure the value is in floating point
+            if not isNumeric(value):
+                raise TypeError('histogram data should be a numeric value.')
+            else:
+                pltData[dataHeader[pltColId]].append(value)
+        
+        #a = axes([0.05,0.1,0.5,0.7])
+        n, bins, patches = hist(pltData[dataHeader[pltColId]], bins=pltNumBins, normed=pltNormalize, facecolor=pltFaceColor, label=pltLabel, alpha=pltAlpha)
+
+        ## a trick for remove the dummy labels from the legend
+        for p in patches[1:]:
+            p.set_label('_nolegend_')
+        
+
     def __makePieChart__(self,dataTable,pltColId=0,pltTitle='Pie Chart',pltColorMap=None,pltOutput=None,pltDataProc=None):
 
         """ backend pie chart generator """
@@ -495,7 +577,7 @@ class GangaPlotter:
     def barchart(self,jobs,xattr,yattr,**keywords):
         
         """
-        The plotter's interface for generating bar chart
+        The plotter's interface for generating bar chart.
         
         usage:
             >>> plotter.barchart(jobs,xattr,yattr,**keywords)
@@ -590,7 +672,7 @@ class GangaPlotter:
     def piechart(self,jobs,attr,**keywords):
         
         """
-        The plotter's interface for generating pie chart
+        The plotter's interface for generating pie chart.
         
         usage:
             >>> plotter.piechart(jobs,attr,**keywords)
@@ -657,3 +739,104 @@ class GangaPlotter:
 
         # make the plot
         self.__makePieChart__(dataTable,pltColId=0,pltTitle=title,pltColorMap=colormap,pltOutput=output,pltDataProc=dataproc)
+
+    def histogram(self,jobs,attr,**keywords):
+
+        """
+        The plotter's interface for generating one or multiple histograms in one chart.
+
+        usage:
+            >>> plotter.histogram(jobs,attr,**keywords)
+
+            Generate a histogram catogorized by the attr among the given jobs.
+
+        required arguments:
+            jobs: A GANGA's job table
+
+            attr: A string or a user defined function, the corresponding value of which
+                  will be extracted from the given jobs to generate the histogram.
+
+        optional arguments:
+            colormap: A list of values representing the colors that will be picked to
+                      paint the histogram bars. The supported description of color can be found
+                      at http://matplotlib.sourceforge.net/matplotlib.pylab.html#-colors
+
+           normalize: Sets if doing histogram normalization. Default is "False"
+
+             numbins: Sets the number of bins in the histogram. Default is 50
+
+               title: A string specifying the title of the histogram.
+
+              xlabel: A string specifying the xlabel of the histogram.
+
+               label: A string specifying the lable of the histogram displayed on the legend.
+
+              output: A name of file where the pie chart plot will be exported. The format
+                      is auto-determinated by the extension of the given name.
+
+            dataproc: An user-defined function which will be applied to process the value
+                      of attr before plotting the histogram.
+
+                deep: Sets if looping over all the subjob levels. Default is "True"
+        """
+
+        # default keyword arguments
+        subtitle  = self.__defaultSubtitle__(attr)       # default subtitle
+        xlabel    = self.__defaultSubtitle__(attr)       # default xlabel
+        label     = self.__defaultSubtitle__(attr)       # default label
+        colormap  = None        # colormap
+        output    = None        # the output file of the picture
+        attrext   = None        # trigger the build-in data processing function
+        dataproc  = None        # function for data processing (cannot work together with 'attrext')
+        deep      = True        # deep looping over all the subjob levels
+        normalize = False       # histogram normalization
+        numbins   = 50          # number of bins in the histogram
+
+        # update keyword arguments with the given values
+        if keywords.has_key('title'):    subtitle  = keywords['title']
+        if keywords.has_key('colormap'): colormap  = keywords['colormap']
+        if keywords.has_key('xlabel'):    xlabel   = keywords['xlabel']
+        if keywords.has_key('label'):     label    = keywords['label']
+        if keywords.has_key('output'):   output    = keywords['output']
+        if keywords.has_key('dataproc'): dataproc  = keywords['dataproc']
+        if keywords.has_key('deep'):       deep    = keywords['deep']
+        if keywords.has_key('normalize'): normalize= keywords['normalize']
+        if keywords.has_key('numbins'):   numbins  = keywords['numbins']
+
+        jlist = []
+        for j in jobs:
+            jlist.append(j)
+
+        attr_spec = self.__makeList__(attr)
+
+        logger.debug('attribute specification: %s' % repr(attr_spec))
+
+        # special build-in dataprocs for the CE-based pie chart
+        dataproc  = self.__setDataProcessor__(attr,attrext,dataproc)
+        dataTable = getJobInfoTable(jlist,attr_spec,deep)
+
+        logger.debug('internal data table: %s' % repr(dataTable))
+
+        # make the plot title
+        title = __makePlotTitle__(len(dataTable[1:]),deep,subtitle)
+
+        pltColIdList = range(len(dataTable[0]))
+
+        if not canLoopOver(dataproc):
+            dataproc = len( dataTable[0] ) * [dataproc]
+        elif len(dataproc) != len(dataTable[0]):
+            logger.error('dataproc requires a list with %d elements, %d are given' % (len(dataTable[0]),len(dataproc)) )
+            return False
+
+        if (not canLoopOver(label)) or (isStringLike(label)):
+            label = len( dataTable[0] ) * [label]
+        elif len(label) != len(dataTable[0]):
+            logger.error('label requires a list with %d elements, %d are given' % (len(dataTable[0]), len(label)) )
+            return False
+
+        # make the plot
+        self.__makeMultiHistograms__(dataTable,pltColIdList=pltColIdList,pltDataProcList=dataproc,pltLabelList=label, \
+                                     pltTitle=title,pltNumBins=numbins,pltXLabel=xlabel, \
+                                     pltColorMap=colormap,pltNormalize=normalize, \
+                                     pltOutput=output)
+
