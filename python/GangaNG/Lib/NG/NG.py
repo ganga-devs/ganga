@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.13 2008-12-05 11:26:23 bsamset Exp $
+# $Id: NG.py,v 1.14 2008-12-05 20:46:11 pajchel Exp $
 ###############################################################################
 #
 # NG backend
@@ -66,17 +66,24 @@ def getTidDatasetnames(ds):
   ds_tid = []
   
   for dsn in ds:
+    
     if dsn.find('_tid') < 0:
       ds_names = dq2.listDatasets(dsn+'*')
       ds_names = ds_names.keys()
+
+      lds = len(ds_tid)
       
       for d in ds_names:
         if d.find('_tid') > -1:
           ds_tid += [d]
-          
+
+      # no tid names found for the datset and only one set with the name in dq2
+      if lds == len(ds_tid) and len(ds_names) == 1:
+        ds_tid += [ds_names[0]]
+        
     else:
       ds_tid += [dsn]
-      
+  
   return ds_tid
 
 def matchLFNtoDataset(ds,lfn,atlasrel):
@@ -96,6 +103,13 @@ def matchLFNtoDataset(ds,lfn,atlasrel):
         tid = l.strip('.') 
     for d in ds:
       if d.find(tid) > -1:
+        lfnds = d
+
+  if lfnds == None:
+    slfn = lfn.split('.')
+    for d in ds:
+      sd = d.split('.')
+      if slfn[0] == sd[0] and slfn[1] == sd[1] and slfn[2] == sd[2]:
         lfnds = d
         
   return lfnds
@@ -1806,6 +1820,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.13  2008/12/05 11:26:23  bsamset
+# Take lfc, srm info from ToA, allow for writing to remote storage, add timing info for HammerCloud
+#
 # Revision 1.12  2008/11/07 13:53:13  pajchel
 # file name fix
 #
