@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.4 2008-11-27 10:21:22 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.5 2008-12-05 11:26:24 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -162,7 +162,9 @@ class AthenaNGRTHandler(IRuntimeHandler):
 
         # can be set in config ? output_location=config['NGOutputLocation']
         if job.outputdata and job.outputdata._name=='DQ2OutputDataset':
-            job.outputdata.location = 'NDGFT1DISK'
+            # Set a default output if none is provided
+            if job.outputdata.location=='':
+                job.outputdata.location = 'NDGF-T1_USERDISK'
 
         if job.outputdata and job.outputdata._name=='DQ2OutputDataset':
             if job._getRoot().subjobs:
@@ -559,6 +561,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2008/11/27 10:21:22  bsamset
+# Removed superflous useridARC check
+#
 # Revision 1.3  2008/11/11 15:19:30  pajchel
 # uertag in dataset name and outpu_lfn
 #

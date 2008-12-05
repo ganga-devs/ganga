@@ -14,6 +14,8 @@
 
 retcode=0
 
+GANGATIME1=`date +'%s'`
+
 echo $ATLAS_RELEASE
 
 env
@@ -141,6 +143,8 @@ if [ ! -e sqlite200 ]; then
 fi
 
 
+GANGATIME2=`date +'%s'`
+
 ## Preparing job
 
 inputfiles=
@@ -238,6 +242,9 @@ fi
 
 echo 'ATHENA_OPTIONS '$ATHENA_OPTIONS
 
+
+GANGATIME3=`date +'%s'` 
+
 #   run athena
 dum=`echo $LD_LIBRARY_PATH | tr ':' '\n' | egrep -v '^/lib' | egrep -v '^/usr/lib' | tr '\n' ':' `
 export LD_LIBRARY_PATH=$dum
@@ -273,6 +280,8 @@ then
     retcode=`cat retcode.tmp`
     rm -f retcode.tmp
 fi
+
+GANGATIME4=`date +'%s'`
 
 # Making OutpuFiles.xml
 echo 'Making OutputFiles.xml'
@@ -420,5 +429,13 @@ fi
 
 echo "OutputFiles.xml"
 cat OutputFiles.xml
+
+GANGATIME5=`date +'%s'` 
+
+echo "GANGATIME1=$GANGATIME1"
+echo "GANGATIME2=$GANGATIME2" 
+echo "GANGATIME3=$GANGATIME3"   
+echo "GANGATIME4=$GANGATIME4" 
+echo "GANGATIME5=$GANGATIME5" 
 
 exit $retcode

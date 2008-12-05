@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.12 2008-11-07 13:53:13 pajchel Exp $
+# $Id: NG.py,v 1.13 2008-12-05 11:26:23 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -38,6 +38,8 @@ from xml.sax import SAXParseException
 from dq2.common.DQException import DQInvalidRequestException
 from dq2.clientapi.DQ2 import DQ2
 from dq2.common.DQException import *
+
+from dq2.info import TiersOfATLAS
 
 #import LFCTools
 from dq2.filecatalog.lfc.lfcconventions import to_native_lfn
@@ -309,7 +311,7 @@ class Grid:
         command = cmd + upfile +' '+ new_upfile
         rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,500])
         if rc != 0:
-            print output
+            logger.warning(output)
 
         return new_upfile
 
@@ -322,7 +324,7 @@ class Grid:
         rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,500])
         
         if rc != 0:
-            print output
+            logger.warning(output)
 
         return
             
@@ -369,7 +371,7 @@ class Grid:
         '''Native bulk submission supported by GLITE middleware.'''
         # Bulk sumission is supported in NG, but the XRSL files need some care.
 
-        cmd = 'ngsub -g ldap://atlasgiis.nbi.dk:2135/o=grid/mds-vo-name=Atlas '
+        cmd = 'ngsub -G ldap://atlasgiis.nbi.dk:2135/o=grid/mds-vo-name=Atlas,ldap://arcgiis.titan.uio.no:2135/o=grid/mds-vo-name=Atlas '
         
         if not self.active:
             logger.warning('NG plugin not active.')
@@ -548,7 +550,7 @@ class Grid:
             f.close()
             return outfile
         
-    def get_output(self,jobid,directory,out,wms_proxy=False):
+    def get_output(self,jobid,directory,out,location,wms_proxy=False):
         '''Retrieve the output of a job on the grid'''
 
         binary = False
@@ -597,12 +599,12 @@ class Grid:
         except IOError, x:
             outp = False
             if not str(x).startswith('[Errno 2]'):
-                print x
+                logger.warning(x)
             pass
         except SAXParseException, x:
             outp = False
-            print x
-            print "XML PARSE ERROR: failed to parse OutputFiles.xml for job ", jobid
+            logger.warning(x)
+            logger.warning("XML PARSE ERROR: failed to parse OutputFiles.xml for job ", jobid)
             pass
         
         lfn = []
@@ -673,7 +675,7 @@ class Grid:
                 
                 if lfn == None or md5sum == None or date == None or size == None or guid == None or dataset == None:
                     outp = False
-                    print "ERROR: File attribute is missing, job outputs not processed! ",jobid
+                    logger.warning("ERROR: File attribute is missing, job outputs not processed! ",jobid)
 
             if adler32 == None:
               checksum =  md5sum
@@ -696,13 +698,21 @@ class Grid:
                                   'checksum': str(checksum[i]),
                                   'archival': lfcarchival}
 
+            lfchost = TiersOfATLAS.getLocalCatalog(location)
+            lfchost_l = lfchost.split(":")
+            lfchost = ""
+            for i in range(len(lfchost_l)-1):
+              lfchost = lfchost+lfchost_l[i]+":"
+            lfchost = lfchost[6:-1]
+            #print "LFCHOST: "+lfchost
+
             try:
               result = bulkRegisterFiles(lfchost,lfcinput)
               for guid in result:
                 if isinstance(result[guid],LFCFileCatalogException):
-                  print 'ERROR: LFC exception during registration: %s' % result[guid]
+                  logger.warning('ERROR: LFC exception during registration: %s' % result[guid])
             except:
-              print 'Unclassified exception during LFC registration, put job back to UNKNOWN'
+              logger.warning('Unclassified exception during LFC registration, put job back to UNKNOWN')
                 
         return True
 
@@ -1258,21 +1268,54 @@ class NG(IBackend):
           # Get TiersOfATLASChache
           tiersofatlas = getTiersOfATLASCache() 
           # Set a default site name
-          sitename = 'NDGFT1DISK'
-          spacetoken = 'ATLASUSERDISK'
+          #sitename = 'NDGFT1DISK'
+          #spacetoken = 'ATLASUSERDISK'
+          sitename = 'NDGF-T1'
+          spacetoken = 'USERDISK'
           
           # ...but then check if the user has set one
           if job.outputdata.location!='':
-              sitename = job.outputdata.location
+              # is it following the srmv2 convention? If so, set sitename and spacetoken
+              sitenamelist = job.outputdata.location.split("_")
+              if len(sitenamelist)==2:
+                sitename = sitenamelist[0]
+                spacetoken=sitenamelist[1]
+              else:
+                sitename = job.outputdata.location
+                spacetoken = ''
 
           # See if sitename is in TiersOfAtlasCache.py
-          if not spacetoken:
-              for site, desc in tiersofatlas.sites.iteritems():
-                  if site!=sitename:
-                      continue
-                  srm_endpoint = desc['srm'].strip()
-          else:
-              srm_endpoint = 'srm://srm.ndgf.org;spacetoken=ATLASUSERDISK/atlas/disk/'       
+          #if not spacetoken:
+
+          sn = sitename
+          if spacetoken!='':
+            sn = sn+"_"+spacetoken
+
+          #print "STORAGE:  "+sn
+          #print "LFC: " + TiersOfATLAS.getLocalCatalog(sn)
+
+          for site, desc in tiersofatlas.sites.iteritems():
+            if site!=sn:
+              continue
+            srm_endpoint = desc['srm'].strip()
+            # Some magic to strip away the space token in the srm path
+            srm_endpoint_l = srm_endpoint.split(":")
+            srm_endpoint_s = ''
+            for i in range(len(srm_endpoint_l)):
+              if i<2:
+                continue
+              srm_endpoint_s=srm_endpoint_s+srm_endpoint_l[i]+":"
+            # Strip tailing ':'
+            srm_endpoint_s = srm_endpoint_s[:-1]
+            srm_endpoint = srm_endpoint_s 
+            # print "SRM ENDPOINT: "+srm_endpoint
+
+          if srm_endpoint=='':
+            logger.error("Couldn't find SRM information for sitename %s in TiersOfAtlasCache" % sn)
+            
+          #else:
+          #    srm_endpoint = 'srm://srm.ndgf.org;spacetoken=ATLASUSERDISK/atlas/disk/'       
+
           if jobconfig.env.has_key('OUTPUT_LFN'):
               output_lfn = jobconfig.env['OUTPUT_LFN']
           
@@ -1489,6 +1532,8 @@ class NG(IBackend):
                         output = True
                         if info['status'] == 'FAILED' or info['status'] == 'KILLED':
                             output = False
+                        elif job.outputdata==None:
+                            output = False
                             
                         # update to 'running' before changing to 'completing'
                         if job.status == 'submitted':
@@ -1497,7 +1542,10 @@ class NG(IBackend):
                         job.updateStatus('completing')
                         outw = job.getOutputWorkspace()
                         # Post processing of a job
-                        pps_check = grids[mt].get_output(job.backend.id,outw.getPath(),output,wms_proxy=False)
+                        lfc_location = ""
+                        if job.outputdata!=None:
+                          lfc_location=job.outputdata.location
+                        pps_check = grids[mt].get_output(job.backend.id,outw.getPath(),output,lfc_location,wms_proxy=False)
                 
                     if pps_check:
                         #print 'updateMonitoring info staus ', info['status']
@@ -1569,14 +1617,20 @@ class NG(IBackend):
                         output = True
                         if info['status'] == 'FAILED' or info['status'] == 'KILLED':
                             output = False
-
+                        elif sjob.outputdata==None:
+                            output = False
+                                                      
                         # update to 'running' before changing to 'completing'
                         if sjob.status == 'submitted':
                             sjob.updateStatus('running')
     
                         sjob.updateStatus('completing')
                         outw = sjob.getOutputWorkspace()
-                        pps_check = grids[mt].get_output(sjob.backend.id,outw.getPath(),output,wms_proxy=False)
+                        # Post processing of a job
+                        lfc_location = ""
+                        if sjob.outputdata!=None:
+                            lfc_location=sjob.outputdata.location                                                
+                        pps_check = grids[mt].get_output(sjob.backend.id,outw.getPath(),output,lfc_location,wms_proxy=False)
 
                     if pps_check:
                         NG.updateGangaJobStatus(sjob,info['status'])
@@ -1752,6 +1806,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.12  2008/11/07 13:53:13  pajchel
+# file name fix
+#
 # Revision 1.11  2008/10/27 16:33:38  pajchel
 # old file name convention compatibility
 #
