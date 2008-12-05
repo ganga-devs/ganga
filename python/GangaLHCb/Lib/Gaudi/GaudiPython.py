@@ -3,8 +3,8 @@
 '''Application handler for GaudiPython applications in LHCb.'''
 
 __author__ = 'Ulrik Egede'
-__date__ = "$Date: 2008-11-13 10:02:53 $"
-__revision__ = "$Revision: 1.8 $"
+__date__ = "$Date: 2008-12-05 16:11:48 $"
+__revision__ = "$Revision: 1.9 $"
 
 import os
 import re
@@ -71,7 +71,7 @@ class GaudiPython(IApplication):
                                     typelist=['str','type(None)'],doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
     schema['project'] = SimpleItem(defvalue=None,
-                                   typelist=['str','type(None)'],hidden=1,
+                                   typelist=['str','type(None)'],
                                    doc=docstr)
     docstr = 'Extra options to be passed onto the SetupProject command ' + \
              'used for configuring the environment. As an example ' + \
