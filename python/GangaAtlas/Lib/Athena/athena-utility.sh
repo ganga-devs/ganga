@@ -106,13 +106,24 @@ cmt_setup () {
 dq2client_setup () {
 
     if [ ! -z $DQ2_CLIENT_VERSION ]; then
+
+        ## client side version request
         source $VO_ATLAS_SW_DIR/ddm/$DQ2_CLIENT_VERSION/setup.sh
+
+    else
+
+        ## latest version: general case
+        source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+
     fi
   
     # check configuration
     echo "DQ2CLIENT setup:"
     env | grep 'DQ2_'
     which dq2-ls
+
+    ## return 0 if dq2-ls is found in PATH; otherwise, return 1
+    return $?
 }
 
 ## function for getting grid proxy from a remote endpoint 
@@ -528,82 +539,6 @@ stage_outputs () {
     fi
 }
 
-# generate additional AMA job option files 
-#  - AMAConfigFile.py
-#  - input.py
-ama_make_options () {
-
-    # make AMAConfigFile
-    if [ ! -f AMAConfigFile.py ] && [ $retcode -eq 0 ]; then 
-        cat - >AMAConfigFile.py <<EOF
-# AMA ConfigFile
-SampleFile = 'grid_sample.list'
-SampleName = os.environ['AMA_SAMPLE_NAME']
-ConfigFile = os.environ['AMA_DRIVER_CONF']
-
-FlagList = ""
-if os.environ.has_key('AMA_FLAG_LIST'):
-    FlagList = os.environ['AMA_FLAG_LIST']
-
-## set number of the max. events 
-EvtMax = -1
-if os.environ.has_key('ATHENA_MAX_EVENTS'):
-    EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
-EOF
-    fi
-
-    ## generate the input.py dependent on if FileStager is enabled
-    if [ ! -f input.py ] && [ $retcode -eq 0 ]; then 
-        cat - >input.py <<EOF
-ic = []
-if os.environ.has_key('AMA_WITH_STAGER'):
-    # input with FileStager
-    from FileStager.FileStagerTool import FileStagerTool
-    stagetool = FileStagerTool(sampleFile=SampleFile)
-
-    ## get Reference to existing Athena job
-    from FileStager.FileStagerConf import FileStagerAlg
-    from AthenaCommon.AlgSequence import AlgSequence
-    
-    thejob = AlgSequence()
-    
-    if stagetool.DoStaging():
-        thejob += FileStagerAlg('FileStager')
-        thejob.FileStager.InputCollections = stagetool.GetSampleList()
-        #thejob.FileStager.PipeLength = 2
-        #thejob.FileStager.VerboseStager = True
-        thejob.FileStager.BaseTmpdir    = stagetool.GetTmpdir()
-        thejob.FileStager.InfilePrefix  = stagetool.InfilePrefix
-        thejob.FileStager.OutfilePrefix = stagetool.OutfilePrefix
-        thejob.FileStager.CpCommand     = stagetool.CpCommand
-        thejob.FileStager.CpArguments   = stagetool.CpArguments
-        thejob.FileStager.FirstFileAlreadyStaged = stagetool.StageFirstFile
-    
-    ## set input collections
-    if stagetool.DoStaging():
-        ic = stagetool.GetStageCollections()
-    else:
-        ic = stagetool.GetSampleList()
-else:
-    ## implement the case that FileStager is not enabled
-    if os.path.exists('input_files'):
-        for lfn in file('input_files'):
-            name = os.path.basename(lfn.strip())
-            pfn = os.path.join(os.getcwd(),name)
-            if (os.path.exists(pfn) and (os.stat(pfn).st_size>0)):
-                print 'Input: %s' % name
-                ic.append('%s' % name)
-            elif (os.path.exists(lfn.strip()) and (os.stat(lfn.strip()).st_size>0)):
-                print 'Input: %s' % lfn.strip()
-                ic.append('%s' % lfn.strip())
-
-## get a handle on the ServiceManager
-svcMgr = theApp.serviceMgr()
-svcMgr.EventSelector.InputCollections = ic
-EOF
-    fi
-}
-
 # prepare athena
 prepare_athena () { 
 
@@ -675,4 +610,53 @@ run_athena () {
 	fi
 	
     fi
+}
+
+## routine for making file stager job option: input.py
+make_filestager_joption() {
+
+    # given the library/binaray/python paths for data copy commands
+    MY_LD_LIBRARY_PATH_ORG=$1
+    MY_PATH_ORG=$2
+    MY_PYTHONPATH_ORG=$3
+
+    if [ -f make_filestager_joption.py ]; then
+        chmod +x make_filestager_joption.py
+
+        LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+        PATH_BACKUP=$PATH
+        PYTHONPATH_BACKUP=$PYTHONPATH
+        export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
+        export PATH=$MY_PATH_ORG:$PATH_BACKUP
+        export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
+
+            # Remove lib64/python from PYTHONPATH
+        dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
+        export PYTHONPATH=$dum
+
+        if [ ! -z $python32bin ]; then
+            $python32bin ./make_filestager_joption.py; echo $? > retcode.tmp
+        else
+            if [ -e /usr/bin32/python ]; then
+                /usr/bin32/python ./make_filestager_joption.py; echo $? > retcode.tmp
+            else
+                ./make_filestager_joption.py; echo $? > retcode.tmp
+            fi
+        fi
+        retcode=`cat retcode.tmp`
+        rm -f retcode.tmp
+
+        # Fail over
+        if [ $retcode -ne 0 ]; then
+            $pybin ./make_filestager_joption.py; echo $? > retcode.tmp
+            retcode=`cat retcode.tmp`
+            rm -f retcode.tmp
+        fi
+
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+        export PATH=$PATH_BACKUP
+        export PYTHONPATH=$PYTHONPATH_BACKUP
+    fi
+
+    return 0
 }

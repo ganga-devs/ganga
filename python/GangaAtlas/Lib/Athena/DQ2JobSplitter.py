@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.19 2008-12-07 15:56:03 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.20 2008-12-07 19:40:32 mslater Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -198,6 +198,8 @@ class DQ2JobSplitter(ISplitter):
           
                 j = Job()
 
+                j.name = job.name
+                
                 j.inputdata       = job.inputdata
                 j.inputdata.dataset = dataset
                 j.inputdata.guids = guids[i*self.numfiles:(i+1)*self.numfiles]

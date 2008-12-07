@@ -182,9 +182,13 @@ retcode=0
 GANGATIME2=`date +'%s'`
 ################################################
 # prepare/staging input data
-if [ -e input_files ] 
-then 
-    stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
+if [ -e input_files ]
+then
+    if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
+        make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
+    else
+        stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
+    fi
 fi
 
 ################################################

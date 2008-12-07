@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.23 2008-11-27 10:08:49 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.24 2008-12-07 19:40:32 mslater Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -93,7 +93,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified. Failure in job %s.%s. Dataset %s' %(job._getRoot().id, job.id, job.inputdata.dataset)  )
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
-                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY' ]:
+                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER' ]:
                         job.inputdata.type ='DQ2_LOCAL'
                     if not job.inputdata.datatype in ['DATA', 'MC', 'MuonCalibStream']:
                         job.inputdata.datatype ='MC'
@@ -109,7 +109,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     input_files = ATLASDataset.get_filenames(app)
 
                 elif job.inputdata._name == 'DQ2Dataset':
-                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY' ]:
+                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER' ]:
                         job.inputdata.type ='DQ2_LOCAL'
                     if not job.inputdata.datatype in ['DATA', 'MC', 'MuonCalibStream']:
                         job.inputdata.datatype ='MC'
@@ -375,6 +375,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if job.inputdata and job.inputdata.type == 'LFC' and not (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
                 _append_files(inputbox,'dq2_get_old')
 
+        ## insert more scripts to inputsandbox for FileStager
+        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type in ['FILE_STAGER']:
+            _append_files(inputbox,'make_filestager_joption.py','dm_util.py')
 
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             #if not job.outputdata.location:
@@ -520,7 +523,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             requirements.software = ['VO-atlas-production-%s' % app.atlas_release ]
 
 #       add software requirement of dq2clients
-        if job.inputdata and job.inputdata.type in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD', 'DQ2_COPY']:
+        if job.inputdata and job.inputdata.type in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER']:
             dq2client_version = requirements.dq2client_version
             try:
                 # override the default one if the dq2client_version is presented 
