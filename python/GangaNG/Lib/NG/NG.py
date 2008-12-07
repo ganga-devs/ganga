@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.14 2008-12-05 20:46:11 pajchel Exp $
+# $Id: NG.py,v 1.15 2008-12-07 17:22:30 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -964,7 +964,7 @@ class NG(IBackend):
         for sj in rjobs:
             sj.updateStatus('submitting')
 
-        if len(xrslStrings) > 1:
+        if len(xrslStrings) >= 1:
             xrslpath = inpw.writefile(FileBuffer('ganga.xrsl',xrslString))
             master_jid = grids[mt].native_master_submit(xrslpath,self.CE,self.RejectCE)
         else:
@@ -1820,6 +1820,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.14  2008/12/05 20:46:11  pajchel
+# dataset name list fix
+#
 # Revision 1.13  2008/12/05 11:26:23  bsamset
 # Take lfc, srm info from ToA, allow for writing to remote storage, add timing info for HammerCloud
 #
