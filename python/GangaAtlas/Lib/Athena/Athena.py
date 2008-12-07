@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.24 2008-11-27 12:15:33 elmsheus Exp $
+# $Id: Athena.py,v 1.25 2008-12-07 16:02:09 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -69,28 +69,29 @@ class Athena(IApplication):
                  'user_setupfile'         : FileItem(doc='User setup script for special setup'),
                  'exclude_from_user_area' : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Pattern of files to exclude from user area'),
                  'exclude_package'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Packages to exclude from user area requirements file'),
-                 'stats'                  : SimpleItem(defvalue = {}, doc='Dictionary of stats info')
+                 'stats'                  : SimpleItem(defvalue = {}, doc='Dictionary of stats info'),
+                 'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field')
               })
                      
     _category = 'applications'
     _name = 'Athena'
     _exportmethods = ['prepare', 'setup', 'postprocess']
     
-    _GUIPrefs = [ { 'attribute' : 'atlas_release', 'widget' : 'String' },
-                  { 'attribute' : 'atlas_production', 'widget' : 'String' },
-                  { 'attribute' : 'atlas_project', 'widget' : 'String' },
-                  { 'attribute' : 'atlas_cmtconfig', 'widget' : 'String' },
-                  {'attribute'  : 'atlas_exetype',   'widget' : 'String_Choice', 'choices':['ATHENA', 'PYARA', 'ROOT' ]},
+    _GUIPrefs = [ { 'attribute' : 'atlas_release',     'widget' : 'String' },
+                  { 'attribute' : 'atlas_production',  'widget' : 'String' },
+                  { 'attribute' : 'atlas_project',     'widget' : 'String' },
+                  { 'attribute' : 'atlas_cmtconfig',   'widget' : 'String' },
+                  { 'attribute'  : 'atlas_exetype',    'widget' : 'String_Choice', 'choices':['ATHENA', 'PYARA', 'ROOT' ]},
                   { 'attribute' : 'atlas_environment', 'widget' : 'String_List' },
-                  { 'attribute' : 'user_area',     'widget' : 'FileOrString' },
-                  { 'attribute' : 'group_area',     'widget' : 'FileOrString' },
-                  { 'attribute' : 'max_events',    'widget' : 'Int' },
-                  { 'attribute' : 'option_file',   'widget' : 'FileOrString_List' },
-
-                  { 'attribute' : 'options',       'widget' : 'String_List' },
-                  { 'attribute' : 'user_setupfile', 'widget' : 'FileOrString' },
+                  { 'attribute' : 'user_area',         'widget' : 'FileOrString' },
+                  { 'attribute' : 'group_area',        'widget' : 'FileOrString' },
+                  { 'attribute' : 'max_events',        'widget' : 'Int' },
+                  { 'attribute' : 'option_file',       'widget' : 'FileOrString_List' },
+                  { 'attribute' : 'options',           'widget' : 'String_List' },
+                  { 'attribute' : 'user_setupfile',    'widget' : 'FileOrString' },
                   { 'attribute' : 'exclude_from_user_area', 'widget' : 'FileOrString_List' },
-                  { 'attribute' : 'exclude_package', 'widget' : 'String_List' }
+                  { 'attribute' : 'exclude_package',   'widget' : 'String_List' },
+                  { 'attribute' : 'collect_stats',     'widget' : 'Bool' }                  
                   ]
     
                   
@@ -306,15 +307,15 @@ class Athena(IApplication):
                     numfiles = numfiles + 1
                     totalevents = totalevents + itotalevents
                     itotalevents = 0
-                if line.find('GANGATIME1')>-1:
+                if line.find('GANGATIME1')==0:
                     self.stats['gangatime1'] = int(re.match('GANGATIME1=(.*)',line).group(1))
-                if line.find('GANGATIME2')>-1:
+                if line.find('GANGATIME2')==0:
                     self.stats['gangatime2'] = int(re.match('GANGATIME2=(.*)',line).group(1))
-                if line.find('GANGATIME3')>-1:
+                if line.find('GANGATIME3')==0:
                     self.stats['gangatime3'] = int(re.match('GANGATIME3=(.*)',line).group(1))
-                if line.find('GANGATIME4')>-1:
+                if line.find('GANGATIME4')==0:
                     self.stats['gangatime4'] = int(re.match('GANGATIME4=(.*)',line).group(1))
-                if line.find('GANGATIME5')>-1:
+                if line.find('GANGATIME5')==0:
                     self.stats['gangatime5'] = int(re.match('GANGATIME5=(.*)',line).group(1))
 
             self.stats['numfiles2'] = numfiles2
@@ -345,9 +346,24 @@ class Athena(IApplication):
                                    
                 if not job.outputdata.output:
                     job.updateStatus('failed')
-        # collect athena job statistics                             
-        if job.backend.__class__.__name__ in [ 'LCG', 'NG' ]:
+        # collect athena job statistics
+        if self.collect_stats and job.backend.__class__.__name__ in [ 'LCG', 'NG' ]:
             self.collectStats()
+        # collect statistics for master job   
+        if not job.master and job.subjobs:
+            numfiles = 0
+            numfiles2 = 0
+            totalevents = 0
+            for subjob in job.subjobs:
+                if subjob.application.stats.has_key('numfiles'):
+                    numfiles = numfiles + subjob.application.stats['numfiles']
+                if subjob.application.stats.has_key('numfiles2'):
+                    numfiles2 = numfiles2 + subjob.application.stats['numfiles2']
+                if subjob.application.stats.has_key('totalevents'):
+                    totalevents = totalevents + subjob.application.stats['totalevents']
+            self.stats['numfiles']=numfiles
+            self.stats['numfiles2']=numfiles
+            self.stats['totalevents']=totalevents        
 
     def prepare(self, athena_compile=True, NG=False, **options):
         """Prepare the job from the user area"""
@@ -900,6 +916,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.24  2008/11/27 12:15:33  elmsheus
+# Fix timezone
+#
 # Revision 1.23  2008/11/27 10:44:59  elmsheus
 # Athena.stats updates for GangaNG
 #
