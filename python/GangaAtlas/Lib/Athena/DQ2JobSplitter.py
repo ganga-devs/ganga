@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.18 2008-12-02 21:03:50 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.19 2008-12-07 15:56:03 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -91,8 +91,8 @@ class DQ2JobSplitter(ISplitter):
         if job.inputdata._name <> 'DQ2Dataset':
             raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset as input')
 
-        if job.backend._name <> 'LCG' and job.backend._name <> 'Panda':
-            raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG or Panda backend')
+        if job.backend._name <> 'LCG' and job.backend._name <> 'Panda' and job.backend._name <> 'NG':
+            raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, Panda or NG backend')
 
         if self.numfiles <= 0: 
             self.numfiles = 1
@@ -120,6 +120,8 @@ class DQ2JobSplitter(ISplitter):
             from GangaPanda.Lib.Panda.Panda import runPandaBrokerage,queueToAllowedSites
             runPandaBrokerage(job)
             allowed_sites = queueToAllowedSites(job.backend.site)
+        elif job.backend._name == 'NG':
+            allowed_sites = [ 'NDGF-T1_MCDISK', 'NDGF-T1_DATADISK' ]
 
         if not allowed_sites:
             raise ApplicationConfigurationError(None,'DQ2JobSplitter found no allowed_sites for dataset')
@@ -211,7 +213,7 @@ class DQ2JobSplitter(ISplitter):
                 j.outputsandbox = job.outputsandbox 
 
                 subjobs.append(j)
-                
+
         return subjobs
     
 config = getConfig('Athena')
