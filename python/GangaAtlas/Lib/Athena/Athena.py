@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.26 2008-12-07 16:19:44 elmsheus Exp $
+# $Id: Athena.py,v 1.27 2008-12-07 16:21:18 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -265,7 +265,6 @@ class Athena(IApplication):
 
         # collect stats from stdout
         try:
-            
             if 'stdout.gz' in os.listdir(job.outputdir) or 'stdout.txt' in os.listdir(job.outputdir):
                 totalevents = 0
                 itotalevents = 0
@@ -336,7 +335,7 @@ class Athena(IApplication):
 
         except MemoryError:
             logger.warning('ERROR in Athena.collectStats - logfiles too large to be unpacked.')
-                pass
+            pass
 
         if '__jdlfile__' in os.listdir(job.inputdir):
             self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
@@ -926,6 +925,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.26  2008/12/07 16:19:44  elmsheus
+# Add try/except protection
+#
 # Revision 1.25  2008/12/07 16:02:09  elmsheus
 # Introduce Athena.collect_stats switch and add master job statistics collection
 #
