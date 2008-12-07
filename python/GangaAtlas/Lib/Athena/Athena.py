@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.25 2008-12-07 16:02:09 elmsheus Exp $
+# $Id: Athena.py,v 1.26 2008-12-07 16:19:44 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -211,125 +211,135 @@ class Athena(IApplication):
                     self.stats['stoptime'] = time.mktime(time.strptime(stoptime))-time.timezone
         
         # collect stats from stderr
-        if 'stderr.gz' in os.listdir(job.outputdir) or 'stdout.txt' in os.listdir(job.outputdir):
-            if 'stderr.gz' in os.listdir(job.outputdir):
-                zfile = gzip.GzipFile(os.path.join(job.outputdir,'stderr.gz' ))
-                content = zfile.read()
-                zfile.close()
-                content = content.split('\n')
-            # NG has stdout.txt as output
-            if 'stdout.txt' in os.listdir(job.outputdir):
-                content = [ line.strip() for line in file(os.path.join(job.outputdir,'stdout.txt')) ]
+        try:
+            if 'stderr.gz' in os.listdir(job.outputdir) or 'stdout.txt' in os.listdir(job.outputdir):
+                if 'stderr.gz' in os.listdir(job.outputdir):
+                    zfile = gzip.GzipFile(os.path.join(job.outputdir,'stderr.gz' ))
+                    content = zfile.read()
+                    zfile.close()
+                    content = content.split('\n')
+                # NG has stdout.txt as output
+                if 'stdout.txt' in os.listdir(job.outputdir):
+                    content = [ line.strip() for line in file(os.path.join(job.outputdir,'stdout.txt')) ]
 
-            percentcpu = 0
-            ipercentcpu = 0
-            wallclock = 0
-            usertime = 0
-            systemtime = 0
-            for line in content:
-                if line.find('Percent of CPU this job got')>-1:
-                    percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
-                    ipercentcpu = ipercentcpu + 1
-                if line.find('Elapsed (wall clock) time')>-1:
-                    try:
-                        iwallclock = re.match('.*m:ss\): (.*)\.\d\d',line).group(1).split(':')
-                        wallclock = wallclock + int(iwallclock[0])*60+int(iwallclock[1])
-                    except:
-                        iwallclock = re.match('.*m:ss\): (.*)',line).group(1).split(':')
-                        wallclock = wallclock + int(iwallclock[0])*3600+int(iwallclock[1])*60+int(iwallclock[2])
-                if line.find('User time (seconds)')>-1:
-                    iusertime = float(re.match('.*User time \(seconds\): (.*)',line).group(1))
-                    usertime = usertime + iusertime
-                if line.find('System time (seconds)')>-1:
-                    isystemtime = float(re.match('.*System time \(seconds\): (.*)',line).group(1))
-                    systemtime = systemtime + isystemtime
-                if line.find('Exit status')>-1:
-                    self.stats['exitstatus'] = re.match('.*status: (.*)',line).group(1)
-                if line.find('can not be opened for reading (Timed out)')>-1:
-                    self.stats['filetimedout'] = True
+                percentcpu = 0
+                ipercentcpu = 0
+                wallclock = 0
+                usertime = 0
+                systemtime = 0
+                for line in content:
+                    if line.find('Percent of CPU this job got')>-1:
+                        percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
+                        ipercentcpu = ipercentcpu + 1
+                    if line.find('Elapsed (wall clock) time')>-1:
+                        try:
+                            iwallclock = re.match('.*m:ss\): (.*)\.\d\d',line).group(1).split(':')
+                            wallclock = wallclock + int(iwallclock[0])*60+int(iwallclock[1])
+                        except:
+                            iwallclock = re.match('.*m:ss\): (.*)',line).group(1).split(':')
+                            wallclock = wallclock + int(iwallclock[0])*3600+int(iwallclock[1])*60+int(iwallclock[2])
+                    if line.find('User time (seconds)')>-1:
+                        iusertime = float(re.match('.*User time \(seconds\): (.*)',line).group(1))
+                        usertime = usertime + iusertime
+                    if line.find('System time (seconds)')>-1:
+                        isystemtime = float(re.match('.*System time \(seconds\): (.*)',line).group(1))
+                        systemtime = systemtime + isystemtime
+                    if line.find('Exit status')>-1:
+                        self.stats['exitstatus'] = re.match('.*status: (.*)',line).group(1)
+                    if line.find('can not be opened for reading (Timed out)')>-1:
+                        self.stats['filetimedout'] = True
 
-            if ipercentcpu > 0:            
-                self.stats['percentcpu'] = percentcpu / ipercentcpu
-                self.stats['usertime'] = usertime
-                self.stats['systemtime'] = systemtime
-                self.stats['wallclock'] = wallclock
-            else:
-                self.stats['percentcpu'] = 0
-                self.stats['wallclock'] = 0
-                self.stats['usertime'] = 0
-                self.stats['systemtime'] = 0
+                if ipercentcpu > 0:            
+                    self.stats['percentcpu'] = percentcpu / ipercentcpu
+                    self.stats['usertime'] = usertime
+                    self.stats['systemtime'] = systemtime
+                    self.stats['wallclock'] = wallclock
+                else:
+                    self.stats['percentcpu'] = 0
+                    self.stats['wallclock'] = 0
+                    self.stats['usertime'] = 0
+                    self.stats['systemtime'] = 0
+        except MemoryError:
+            logger.warning('ERROR in Athena.collectStats - logfiles too large to be unpacked.')
+            pass
 
         # collect stats from stdout
-        if 'stdout.gz' in os.listdir(job.outputdir) or 'stdout.txt' in os.listdir(job.outputdir):
-            totalevents = 0
-            itotalevents = 0
-            jtotalevents = 0
-            numfiles = 0
-            numfiles2 = 0
-            if 'stdout.gz' in os.listdir(job.outputdir):
-                zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
-                content = zfile.read()
-                zfile.close()
-                content = content.split('\n')
-            # NG has stdout.txt as output
-            if 'stdout.txt' in os.listdir(job.outputdir):
-                content = [ line.strip() for line in file(os.path.join(job.outputdir,'stdout.txt')) ]
+        try:
+            
+            if 'stdout.gz' in os.listdir(job.outputdir) or 'stdout.txt' in os.listdir(job.outputdir):
+                totalevents = 0
+                itotalevents = 0
+                jtotalevents = 0
+                numfiles = 0
+                numfiles2 = 0
+                if 'stdout.gz' in os.listdir(job.outputdir):
+                    zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
+                    content = zfile.read()
+                    zfile.close()
+                    content = content.split('\n')
+                # NG has stdout.txt as output
+                if 'stdout.txt' in os.listdir(job.outputdir):
+                    content = [ line.strip() for line in file(os.path.join(job.outputdir,'stdout.txt')) ]
 
-            for line in content:
-                if line.find('Storing file at:')>-1:
-                    self.stats['outse'] = re.match('.*at: (.*)',line).group(1)
-                if line.find('SITE_NAME=')>-1:
-                    self.stats['site'] = re.match('SITE_NAME=(.*)',line).group(1)
-                #if line.find('Database being retired...')>-1:
-                #    self.stats['dbretired'] = True
-                if line.find('Core dump from CoreDumpSvc')>-1:
-                    self.stats['coredump'] = True
-                if line.find('Cannot load entry')>-1:
-                    self.stats['cannotloadentry'] = True
-                if line.find('cannot open a ROOT file in mode READ if it does not exists')>-1:
-                    self.stats['filenotexist'] = True
-                if line.find('FATAL finalize: Invalid state "Configured"')>-1:
-                    self.stats['invalidstateconfig'] = True
-                if line.find('failure in an algorithm execute')>-1:
-                    self.stats['failalg'] = True
-                if line.find('events processed so far')>-1:
-                    itotalevents = int(re.match('.* run #\d+ (\d+) events processed so far.*',line).group(1))
-                    jtotalevents = itotalevents
-                if line.find('cObj_DataHeader...')>-1:
-                    numfiles2 = numfiles2 + int(re.match('.* #=(.*)',line).group(1))
-                if line.find('rfio://')>-1 and line.find('Always Root file version')>-1:
-                    try:
-                        self.stats['server'] = re.match('(.+://.+)//.*',line).group(1)
-                    except:
-                        self.stats['server'] = 'unknown'
-                        
-                if line.find('Info Database being retired...')>-1:
-                    numfiles = numfiles + 1
-                    totalevents = totalevents + itotalevents
-                    itotalevents = 0
-                if line.find('GANGATIME1')==0:
-                    self.stats['gangatime1'] = int(re.match('GANGATIME1=(.*)',line).group(1))
-                if line.find('GANGATIME2')==0:
-                    self.stats['gangatime2'] = int(re.match('GANGATIME2=(.*)',line).group(1))
-                if line.find('GANGATIME3')==0:
-                    self.stats['gangatime3'] = int(re.match('GANGATIME3=(.*)',line).group(1))
-                if line.find('GANGATIME4')==0:
-                    self.stats['gangatime4'] = int(re.match('GANGATIME4=(.*)',line).group(1))
-                if line.find('GANGATIME5')==0:
-                    self.stats['gangatime5'] = int(re.match('GANGATIME5=(.*)',line).group(1))
+                for line in content:
+                    if line.find('Storing file at:')>-1:
+                        self.stats['outse'] = re.match('.*at: (.*)',line).group(1)
+                    if line.find('SITE_NAME=')>-1:
+                        self.stats['site'] = re.match('SITE_NAME=(.*)',line).group(1)
+                    #if line.find('Database being retired...')>-1:
+                    #    self.stats['dbretired'] = True
+                    if line.find('Core dump from CoreDumpSvc')>-1:
+                        self.stats['coredump'] = True
+                    if line.find('Cannot load entry')>-1:
+                        self.stats['cannotloadentry'] = True
+                    if line.find('cannot open a ROOT file in mode READ if it does not exists')>-1:
+                        self.stats['filenotexist'] = True
+                    if line.find('FATAL finalize: Invalid state "Configured"')>-1:
+                        self.stats['invalidstateconfig'] = True
+                    if line.find('failure in an algorithm execute')>-1:
+                        self.stats['failalg'] = True
+                    if line.find('events processed so far')>-1:
+                        itotalevents = int(re.match('.* run #\d+ (\d+) events processed so far.*',line).group(1))
+                        jtotalevents = itotalevents
+                    if line.find('cObj_DataHeader...')>-1:
+                        numfiles2 = numfiles2 + int(re.match('.* #=(.*)',line).group(1))
+                    if line.find('rfio://')>-1 and line.find('Always Root file version')>-1:
+                        try:
+                            self.stats['server'] = re.match('(.+://.+)//.*',line).group(1)
+                        except:
+                            self.stats['server'] = 'unknown'
 
-            self.stats['numfiles2'] = numfiles2
+                    if line.find('Info Database being retired...')>-1:
+                        numfiles = numfiles + 1
+                        totalevents = totalevents + itotalevents
+                        itotalevents = 0
+                    if line.find('GANGATIME1')==0:
+                        self.stats['gangatime1'] = int(re.match('GANGATIME1=(.*)',line).group(1))
+                    if line.find('GANGATIME2')==0:
+                        self.stats['gangatime2'] = int(re.match('GANGATIME2=(.*)',line).group(1))
+                    if line.find('GANGATIME3')==0:
+                        self.stats['gangatime3'] = int(re.match('GANGATIME3=(.*)',line).group(1))
+                    if line.find('GANGATIME4')==0:
+                        self.stats['gangatime4'] = int(re.match('GANGATIME4=(.*)',line).group(1))
+                    if line.find('GANGATIME5')==0:
+                        self.stats['gangatime5'] = int(re.match('GANGATIME5=(.*)',line).group(1))
 
-            if job.inputdata and job.inputdata._name == 'DQ2Dataset':
-                if not job.inputdata.type == 'DQ2_COPY':
-                    self.stats['numfiles'] = numfiles - 1
-                    self.stats['totalevents'] = jtotalevents
-                else:
-                    self.stats['numfiles'] = numfiles / 2
-                    self.stats['totalevents'] = totalevents
+                self.stats['numfiles2'] = numfiles2
 
-            if '__jdlfile__' in os.listdir(job.inputdir):
-                self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
+                if job.inputdata and job.inputdata._name == 'DQ2Dataset':
+                    if not job.inputdata.type == 'DQ2_COPY':
+                        self.stats['numfiles'] = numfiles - 1
+                        self.stats['totalevents'] = jtotalevents
+                    else:
+                        self.stats['numfiles'] = numfiles / 2
+                        self.stats['totalevents'] = totalevents
+
+        except MemoryError:
+            logger.warning('ERROR in Athena.collectStats - logfiles too large to be unpacked.')
+                pass
+
+        if '__jdlfile__' in os.listdir(job.inputdir):
+            self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
 
     def postprocess(self):
         """Determine outputdata and outputsandbox locations of finished jobs
@@ -916,6 +926,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.25  2008/12/07 16:02:09  elmsheus
+# Introduce Athena.collect_stats switch and add master job statistics collection
+#
 # Revision 1.24  2008/11/27 12:15:33  elmsheus
 # Fix timezone
 #
