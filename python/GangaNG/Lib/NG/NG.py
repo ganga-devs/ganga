@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.15 2008-12-07 17:22:30 bsamset Exp $
+# $Id: NG.py,v 1.16 2008-12-08 21:32:53 pajchel Exp $
 ###############################################################################
 #
 # NG backend
@@ -1274,7 +1274,7 @@ class NG(IBackend):
 
       outfile = []
       if xrslDict['stdout']:
-         outfile.append("(" + xrslDict['stdout'] + " \"\")")
+         outfile.append("(" + "stdout.txt.gz" + " \"\")")
 
       srm_endpoint = ''
       output_lfn = ''
@@ -1820,6 +1820,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.15  2008/12/07 17:22:30  bsamset
+# Fixed a buggy equality
+#
 # Revision 1.14  2008/12/05 20:46:11  pajchel
 # dataset name list fix
 #
