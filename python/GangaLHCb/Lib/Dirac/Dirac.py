@@ -272,33 +272,48 @@ def getOutput(dirac, num):
             result['Message'] = 'Failed to find downloaded files on the local file system.'
     
     elif result is not None and result.has_key('OK') and not result['OK']:
-    
-        #try to find out what went wrong
-        
-        try:
-            user_name = os.getlogin()
-        except OSError:
-            user_name = os.path.expandvars('$USER')
-        lfn = os.path.join(os.path.sep,'lhcb','user',user_name[0],user_name,str(id),'Sandbox_' + str(id) + '.tar.gz')
-        rep = dirac.getReplicas(lfn)
-        if rep is not None and rep.get('OK',False):
-            #check if the sandbox has been uploaded
-            if lfn in rep['Value']['Successful']:
-                result = {'OK':False,'Message':'Sandbox was too large and has been uploaded to Grid storage','LFN':lfn}
+
+        #look in the job parameters for the lfns
+        params = dirac.parameters(id)
+        if params is not None and params.get('OK',False):
+            #if they provide the sandbox LFN then get the file
+            if params.has_key('Value') and params['Value'].has_key('OutputSandboxLFN'):
+                pwd = os.getcwd()
+                try:
+                    lfn = params['Value']['OutputSandboxLFN']
+                    os.chdir(outputDir)
+                    r = dirac.getFile([lfn])
+                    print 'result getfile',r
+                    if r and r.get('OK',False):
+                        #untar the file
+                        sandbox = r['Value']['Successful'][lfn]
+                        print 'sandbox',sandbox
+                        if os.access(sandbox,os.F_OK):
+                            import tarfile
+                            try:
+                                tf = tarfile.open(sandbox,"r:gz")
+                                [tf.extract(tarinfo,outputDir) for tarinfo in tf]
+                                files = listdirs(outputDir)
+                                files.remove(sandbox) #don't need to report the tar file itself
+                                tf.close()
+                                result = {'OK':True,'Value':files}
+                            except tarfile.ReadError:
+                                result = {'OK':False,'Message':'The output sandbox was too large and has been uploaded to Grid storage. \
+                                    Download failed.'}
+                            os.unlink(sandbox)
+                finally:
+                    os.chdir(pwd)
+            else:
+                result = {'OK':False,'Message':'The outputsandbox can not be found.'}
     return result
 
 #finally actually get the output
 for i in range(3):
     result = getOutput(dirac, i)
     if (result is None) or (result is not None and not result.get('OK', False)):
-        if not result.has_key('LFN'):
             import time
             time.sleep(5)
             rc = 1
-        else:
-            storeResult(result)
-            rc = 0
-            break
     else:
         storeResult(result)
         rc = 0
@@ -312,11 +327,7 @@ for i in range(3):
             job = self.getJobObject()
             fqid = job.getFQID('.')
             if result is None: result = {}
-            if result.has_key('LFN'):
-                logger.warning("Job %s generated a overlarge sandbox. Use j.backend.getOutputData(names = ['Sandbox_%s.tar.gz']) to download it.", \
-                               fqid,str(job.backend.id))
-            else:
-                logger.warning("Job %s with Dirac id %s at %s: Problems retrieving output. Message was '%s'.",\
+            logger.warning("Job %s with Dirac id %s at %s: Problems retrieving output. Message was '%s'.",\
                                fqid,str(job.backend.id),job.backend.actualCE, result.get('Message','None'))
             return []
         return result.get('Value',[])
@@ -753,6 +764,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.10  2008/12/04 12:00:36  wreece
+## tip from Andrei on multiple lfns
+##
 ## Revision 1.9  2008/12/04 11:24:09  wreece
 ## savannah 44923: use the dirac job parameters to construct the lfn rather than guessing
 ##
