@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.27 2008-12-07 16:21:18 elmsheus Exp $
+# $Id: Athena.py,v 1.28 2008-12-08 16:01:49 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -196,38 +196,46 @@ class Athena(IApplication):
     def collectStats(self):
         """Collect job statistics from different log files and fill dict
         Athena.stats"""
-        import gzip, time
+        import gzip, time, fileinput
         from Ganga.GPIDev.Lib.Job import Job
         job = self.getJobObject()
+
+        # Compress NG stdout.txt
+        if 'stdout.txt' in os.listdir(job.outputdir):
+            fileNameIn = os.path.join(job.outputdir,'stdout.txt')
+            fileNameOut = os.path.join(job.outputdir,'stdout.txt.gz')
+            f_in = open(fileNameIn, 'rb')
+            f_out = gzip.open(fileNameOut, 'wb')
+            f_out.writelines(f_in)
+            f_out.close()
+            f_in.close()
+
         # collect stats from __jobscript__.log
         if '__jobscript__.log' in os.listdir(job.outputdir):
-            content = [ line.strip() for line in file(os.path.join(job.outputdir,'__jobscript__.log')) ]
-            for line in content:
+            fileName = os.path.join(job.outputdir,'__jobscript__.log' )
+            for line in fileinput.input([fileName]):
                 if line.find('[Info] Job Wrapper start.')>-1:
                     starttime = re.match('(.*)  .*Info.* Job Wrapper start.',line).group(1)
                     self.stats['starttime'] = time.mktime(time.strptime(starttime))-time.timezone
                 if line.find('[Info] Job Wrapper stop.')>-1:
                     stoptime = re.match('(.*)  .*Info.* Job Wrapper stop.',line).group(1)
                     self.stats['stoptime'] = time.mktime(time.strptime(stoptime))-time.timezone
-        
+
         # collect stats from stderr
         try:
-            if 'stderr.gz' in os.listdir(job.outputdir) or 'stdout.txt' in os.listdir(job.outputdir):
-                if 'stderr.gz' in os.listdir(job.outputdir):
-                    zfile = gzip.GzipFile(os.path.join(job.outputdir,'stderr.gz' ))
-                    content = zfile.read()
-                    zfile.close()
-                    content = content.split('\n')
-                # NG has stdout.txt as output
-                if 'stdout.txt' in os.listdir(job.outputdir):
-                    content = [ line.strip() for line in file(os.path.join(job.outputdir,'stdout.txt')) ]
-
+            if 'stderr.gz' in os.listdir(job.outputdir) or 'stdout.txt.gz' in os.listdir(job.outputdir):
                 percentcpu = 0
                 ipercentcpu = 0
                 wallclock = 0
                 usertime = 0
                 systemtime = 0
-                for line in content:
+                # LCG backend
+                if 'stderr.gz' in os.listdir(job.outputdir):
+                    zfile = gzip.GzipFile(os.path.join(job.outputdir,'stderr.gz' ))
+                # NG has stdout.txt as output
+                if 'stdout.txt.gz' in os.listdir(job.outputdir):
+                    zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.txt.gz' ))
+                for line in zfile:
                     if line.find('Percent of CPU this job got')>-1:
                         percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
                         ipercentcpu = ipercentcpu + 1
@@ -259,6 +267,9 @@ class Athena(IApplication):
                     self.stats['wallclock'] = 0
                     self.stats['usertime'] = 0
                     self.stats['systemtime'] = 0
+                if zfile:        
+                    zfile.close()
+
         except MemoryError:
             logger.warning('ERROR in Athena.collectStats - logfiles too large to be unpacked.')
             pass
@@ -273,14 +284,11 @@ class Athena(IApplication):
                 numfiles2 = 0
                 if 'stdout.gz' in os.listdir(job.outputdir):
                     zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
-                    content = zfile.read()
-                    zfile.close()
-                    content = content.split('\n')
-                # NG has stdout.txt as output
-                if 'stdout.txt' in os.listdir(job.outputdir):
-                    content = [ line.strip() for line in file(os.path.join(job.outputdir,'stdout.txt')) ]
 
-                for line in content:
+                # NG has stdout.txt as output
+                if 'stdout.txt.gz' in os.listdir(job.outputdir):
+                    zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.txt.gz' ))
+                for line in zfile:
                     if line.find('Storing file at:')>-1:
                         self.stats['outse'] = re.match('.*at: (.*)',line).group(1)
                     if line.find('SITE_NAME=')>-1:
@@ -332,6 +340,9 @@ class Athena(IApplication):
                     else:
                         self.stats['numfiles'] = numfiles / 2
                         self.stats['totalevents'] = totalevents
+
+                if zfile:        
+                    zfile.close()
 
         except MemoryError:
             logger.warning('ERROR in Athena.collectStats - logfiles too large to be unpacked.')
@@ -925,6 +936,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.27  2008/12/07 16:21:18  elmsheus
+# Small fix
+#
 # Revision 1.26  2008/12/07 16:19:44  elmsheus
 # Add try/except protection
 #
