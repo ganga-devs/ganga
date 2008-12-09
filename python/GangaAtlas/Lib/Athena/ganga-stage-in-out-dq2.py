@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.27 2008-12-04 15:20:40 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.28 2008-12-09 15:07:21 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1909,6 +1909,15 @@ if __name__ == '__main__':
             sys.exit(EC_Configuration)
 
         try:
+            output_number = int(os.environ['OUTPUT_FILE_NUMBER'])
+        except:
+            i=output_jobid.split('.')
+            if len(i)>1:
+               output_number = int(i[1])+1
+            else:
+               output_number = 1
+
+        try:
             use_short_filename = os.environ['GANGA_SHORTFILENAME']
         except:
             raise NameError, "ERROR: GANGA_SHORTFILENAME not defined"
@@ -1928,14 +1937,9 @@ if __name__ == '__main__':
                 temptime = time.gmtime()
                 output_datasetname = re.sub('\.[\d]+$','',datasetname)
                 pattern=output_datasetname+".%04d%02d%02d%02d%02d%02d._%05d."+file
-                i=output_jobid.split('.')
-                if len(i)>1:
-                    new_output_file = pattern % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5],int(i[1])+1)
-                    short_pattern = ".%04d%02d%02d%02d%02d%02d._%05d" % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5],int(i[1])+1)
-                else:
-                    new_output_file = pattern % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5],1)
-                    short_pattern = ".%04d%02d%02d%02d%02d%02d._%05d" % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5],1)
-                    
+
+                new_output_file = pattern % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5],output_number)
+                short_pattern = ".%04d%02d%02d%02d%02d%02d._%05d" % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5], output_number)
     
                 new_short_output_file = re.sub(".root", short_pattern+".root" , file )
                 if new_short_output_file == file:
