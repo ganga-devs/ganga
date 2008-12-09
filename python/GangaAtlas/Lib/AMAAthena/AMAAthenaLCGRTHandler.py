@@ -1,13 +1,15 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLCGRTHandler.py,v 1.2 2008-11-27 15:38:25 hclee Exp $
+# $Id: AMAAthenaLCGRTHandler.py,v 1.3 2008-12-09 16:32:35 hclee Exp $
 ###############################################################################
 # AMAAthena LCG Runtime Handler
 #
 # NIKHEF/ATLAS 
 
 import os
+
+from sets import Set
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.File import *
@@ -51,22 +53,27 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
         outputbox += [ 'summary/summary_%s_confFile_%s_nEvts_%s.root' % (sample_name, conf_name, str(max_events) ) ]
 
         if job.inputdata._name == 'StagerDataset':
-
             ## needs a valid dataset name 
             if not job.inputdata.dataset:
                 raise ApplicationConfigurationError(None,'dataset name not specified in job.inputdata')
+            
             ## StagerDataset support on LCG is under construction
             if job.backend._name in ['LCG', 'NG']:
-                raise ApplicationConfigurationError(None,'StagerDataset support on the grid is not yet implemented. Please use DQ2Dataset instead.')
-
-            grid_sample_file = os.path.join(job.inputdir,'grid_sample.list')
-            job.inputdata.make_sample_file(sampleName=sample_name, filepath=grid_sample_file)
-            inputbox += [ job.inputdata.grid_sample_file ]
-            environment['AMA_WITH_STAGER']='1'
+                raise ApplicationConfigurationError(None,'StagerDataset doesn\'t support grid jobs. Please use DQ2Dataset with "FILE_STAGER" type.')
 
         elif job.inputdata._name == 'DQ2Dataset':
-            pass
 
+            if job.inputdata.type in ['DQ2_COPY']:
+                raise ApplicationConfigurationError(None,'AMAAthena doesn\'t support "DQ2_COPY" type of DQ2Dataset')
+
+            if job.backend.requirements._name == 'AtlasLCGRequirements' and job.backend.requirements.sites:
+
+                # TODO: refine the logic of including the sites in DATASETLOCATION passed to the WN
+                if environment['DATASETLOCATION']:
+                    allsites = environment['DATASETLOCATION'].split(':')
+
+                environment['DATASETLOCATION'] = ':'.join( list(Set(allsites+job.backend.requirements.sites)) )
+                
         else:
             raise ApplicationConfigurationError(None,'AMAAthena works only with StagerDataset and DQ2Dataset as job\'s inputdata')
 
