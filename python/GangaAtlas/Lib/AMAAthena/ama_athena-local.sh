@@ -14,8 +14,6 @@
 #
 # ATLAS/NIKHEF - Hurng-Chun.Lee@cern.ch
 
-retcode=0
-
 ################################################
 # set the wrapper type
 export GANGA_ATHENA_WRAPPER_MODE='local'
@@ -27,7 +25,7 @@ source ama_athena-utility.sh
 
 ################################################
 # load AMAAthena/Ganga job wrapper exitcode
-define_exitcode
+define_ama_exitcode
 
 ################################################
 ## setup grid environment 
@@ -51,6 +49,22 @@ print_wn_info
 print_ext_wn_info
 
 ################################################
+# setup DQ2Client environment
+# !TO BE CHECKED! the dq2client_setup assumes a preinstalled DQ2Clients
+# !TO BE CHECKED! which may not be available on the local resource
+dq2client_setup
+
+if [ $? -ne 0 ]; then
+    echo "DQ2 client not available" 1>&2
+
+    # when DATASETTYPE is defined, it means DQ2 client is needed.
+    # in this case, the job should be stopped if dq2client_setup failed
+    if [ ! -z $DATASETTYPE ]; then
+        exit $EC_ATLAS_SOFTWARE_UNAVAILABLE
+    fi
+fi
+
+################################################
 # setup CMT 
 cmt_setup
 
@@ -60,11 +74,11 @@ get_remote_proxy
 
 ################################################
 # setup Athena
-time athena_setup
+athena_setup
 
-if [ $retcode -ne 0 ]; then
+if [ $? -ne 0 ]; then
     echo "Athena setup/compilation error." 1>&2
-    exit $EC_ATLAS_SOFTWARE_UNAVAILABLE
+    exit $EC_ATHENA_COMPILATION_ERROR
 fi
 
 ################################################
@@ -75,23 +89,45 @@ fi
 
 ################################################
 # prepare/staging input data
-#stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
-stage_inputs
+if [ n$DATASETTYPE != n'FILE_STAGER' ]; then
+    stage_inputs
 
-if [ $retcode -ne 0 ]; then
-    echo "Input stage error" 1>&2
-    exit $EC_STAGEIN_ERROR
+    if [ $? -ne 0 ]; then
+        echo "Input stage error" 1>&2
+        exit $EC_STAGEIN_ERROR
+    fi
+else
+    make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 fi
  
 ################################################
 ## create configuration job option
 ama_make_options
 
-################################################
-# run athena
-run_athena $ATHENA_OPTIONS input.py
+ls -lt
 
-if [ $retcode -ne 0 ]; then
+#################################################
+# run athena with different DATASETTYPE
+if [ n$DATASETTYPE == n'DQ2_COPY' ]; then
+    ## !TO BE CHECKED! the DQ2_COPY mode can cause the summary root file incorrect.
+    ## !TO BE CHECKED! the output merging mechanism in the copy-run loop needs to be checked.
+    ama_run_athena_with_dq2_copy
+else
+    ## at this point, input.py should be properly created; otherwise, something wrong
+    if [ ! -f input.py ]; then
+        echo "input.py not created" 1>&2
+        exit $EC_MAKEOPT_ERROR
+    fi
+
+    echo "===== input.py beg. ====="
+    cat input.py
+    echo "===== input.py end. ====="
+
+    prepare_athena
+    ama_run_athena $ATHENA_OPTIONS input.py
+fi
+
+if [ $? -ne 0 ]; then
     echo "Athena runtime error" 1>&2
     exit $EC_ATHENA_RUNTIME_ERROR
 fi
@@ -101,9 +137,9 @@ fi
 #stage_outputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 stage_outputs
 
-if [ $retcode -ne 0 ]; then
+if [ $? -ne 0 ]; then
     echo "Output stage error" 1>&2
     exit $EC_STAGEOUT_ERROR
 fi
 
-exit $retcode
+exit 0

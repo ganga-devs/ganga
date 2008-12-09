@@ -2,11 +2,12 @@
 
 ## function for defining exitcode of the AMAAthena/Ganga job wrapper
 define_ama_exitcode() {
-    EC_ATLAS_SOFTWARE_UNAVAILABLE=410103
-    EC_ATHENA_COMPILATION_ERROR=410104
-    EC_ATHENA_RUNTIME_ERROR=410105
-    EC_STAGEIN_ERROR=410106
-    EC_STAGEOUT_ERROR=410107
+    export EC_ATLAS_SOFTWARE_UNAVAILABLE=103
+    export EC_ATHENA_COMPILATION_ERROR=104
+    export EC_ATHENA_RUNTIME_ERROR=105
+    export EC_STAGEIN_ERROR=106
+    export EC_STAGEOUT_ERROR=107
+    export EC_MAKEOPT_ERROR=108
 }
 
 ## function for checking/restoring LCG runtime libraries
@@ -64,8 +65,118 @@ load_special_dm_libraries() {
     export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 }
 
+
+# generate additional AMA job option files
+#  - AMAConfigFile.py
+#  - input.py if not presented
+ama_make_options () {
+
+    retcode=0
+
+    # make AMAConfigFile
+    if [ ! -f AMAConfigFile.py ]; then
+        cat - >AMAConfigFile.py <<EOF
+# AMA ConfigFile
+SampleName = os.environ['AMA_SAMPLE_NAME']
+ConfigFile = os.environ['AMA_DRIVER_CONF']
+
+FlagList = ""
+if os.environ.has_key('AMA_FLAG_LIST'):
+    FlagList = os.environ['AMA_FLAG_LIST']
+
+## set number of the max. events
+EvtMax = -1
+if os.environ.has_key('ATHENA_MAX_EVENTS'):
+    EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
+EOF
+    fi
+
+    # make input.py if not yet presented
+    if [ ! -f input.py ]; then
+        # case 1: the FileStager sample_file.list is presented, take it directly
+        if [ ! -z $AMA_WITH_STAGER ] && [ -f sample_file.list ]; then
+            cat - >input.py <<EOF
+ic = []
+# input with FileStager
+from FileStager.FileStagerTool import FileStagerTool
+stagetool = FileStagerTool(sampleFile='sample_file.list')
+
+## get Reference to existing Athena job
+from FileStager.FileStagerConf import FileStagerAlg
+from AthenaCommon.AlgSequence import AlgSequence
+
+thejob = AlgSequence()
+
+if stagetool.DoStaging():
+    thejob += FileStagerAlg('FileStager')
+    thejob.FileStager.InputCollections = stagetool.GetSampleList()
+    thejob.FileStager.BaseTmpdir    = stagetool.GetTmpdir()
+    thejob.FileStager.InfilePrefix  = stagetool.InfilePrefix
+    thejob.FileStager.OutfilePrefix = stagetool.OutfilePrefix
+    thejob.FileStager.CpCommand     = stagetool.CpCommand
+    thejob.FileStager.CpArguments   = stagetool.CpArguments
+    thejob.FileStager.FirstFileAlreadyStaged = stagetool.StageFirstFile
+
+## set input collections
+if stagetool.DoStaging():
+    ic = stagetool.GetStageCollections()
+else:
+    ic = stagetool.GetSampleList()
+
+## get a handle on the ServiceManager
+svcMgr = theApp.serviceMgr()
+svcMgr.EventSelector.InputCollections = ic
+EOF
+
+        ## input_files is only meaningful for jobs running locally
+        ## as it's provided on the client side
+        elif [ -f input_files ] && [ n'GANGA_ATHENA_WRAPPER_MODE' == n'local' ] ; then
+            cat - >input.py <<EOFF
+ic = []
+## implement the case that FileStager is not enabled
+if os.path.exists('input_files'):
+    for lfn in file('input_files'):
+        name = os.path.basename(lfn.strip())
+        pfn = os.path.join(os.getcwd(),name)
+        if (os.path.exists(pfn) and (os.stat(pfn).st_size>0)):
+            print 'Input: %s' % name
+            ic.append('%s' % name)
+        elif (os.path.exists(lfn.strip()) and (os.stat(lfn.strip()).st_size>0)):
+            print 'Input: %s' % lfn.strip()
+            ic.append('%s' % lfn.strip())
+
+## get a handle on the ServiceManager
+svcMgr = theApp.serviceMgr()
+svcMgr.EventSelector.InputCollections = ic
+EOFF
+        fi
+    fi
+
+    return $retcode
+}
+
+# run athena
+ama_run_athena () {
+
+    job_options=$*
+
+    retcode=0
+
+    export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
+
+    echo "Running Athena ..."
+
+    $timecmd athena.py $job_options; echo $? > retcode.tmp
+    retcode=`cat retcode.tmp`
+    rm -f retcode.tmp
+
+    return $retcode
+}
+
 ## function for running DQ2_COPY mode 
-run_athena_with_dq2_copy() {
+ama_run_athena_with_dq2_copy() {
+
+    retcode=0
 
     # Create generic input.py
     cat - >input.py <<EOF
@@ -120,8 +231,6 @@ EOF
     
     # Parse jobs jobOptions and set timing command
 	prepare_athena
-
-    retcode=0
 
     cat input_files | while read filespec; do
         for file in $filespec; do
@@ -190,82 +299,6 @@ EOF
         mv output_files.new output_files.new.old
         mv output_files.copy output_files.new
     fi
-}
 
-# generate file stager job option
-#  - sampleFile: the name of the file composed by AMAAthenaDriver
-#  - sampleList: the name of the file containing simply a list of files for FileStager
-#
-# the routine generates a job option file "input_stager.py" to be appended after "input.py"
-make_FileStager_jobOption() {
-
-    if [ ! -f input_stager.py ]; then
-        cat - >input_stager.py << EOF
-
-#################################################################################################
-# Provide input for the FileStager here
-#################################################################################################
-
-## import filestager tool
-from FileStager.FileStagerTool import FileStagerTool
-
-## File with input collections
-if (not 'sampleFile' in dir()):
-  sampleFile = "../samples/top.def"
-
-if ('sampleList' in dir()):
-  stagetool = FileStagerTool(sampleList=sampleList)
-elif ('sampleFile' in dir()):
-  stagetool = FileStagerTool(sampleFile=sampleFile)
-
-## Configure rf copy command used by the stager; default is 'lcg-cp -v --vo altas -t 1200'
-#stagetool.CpCommand = "rfcp"
-#stagetool.CpArguments = []
-#stagetool.OutfilePrefix = ""
-#stagetool.checkGridProxy = False
-
-#################################################################################################
-# Configure the FileStager -- no need to change these lines
-#################################################################################################
-
-## get Reference to existing Athena job
-from AthenaCommon.AlgSequence import AlgSequence
-thejob = AlgSequence()
-
-## check if collection names begin with "gridcopy"
-print "doStaging?", stagetool.DoStaging()
-
-## Import file stager algorithm
-from FileStager.FileStagerConf import FileStagerAlg
-
-## filestageralg needs to be the first algorithm added to the thejob.
-if stagetool.DoStaging():
-   thejob += FileStagerAlg('FileStager')
-   thejob.FileStager.InputCollections = stagetool.GetSampleList()
-   #thejob.FileStager.PipeLength = 2
-   #thejob.FileStager.VerboseStager = True
-   thejob.FileStager.BaseTmpdir    = stagetool.GetTmpdir()
-   thejob.FileStager.InfilePrefix  = stagetool.InfilePrefix
-   thejob.FileStager.OutfilePrefix = stagetool.OutfilePrefix
-   thejob.FileStager.CpCommand     = stagetool.CpCommand
-   thejob.FileStager.CpArguments   = stagetool.CpArguments
-   thejob.FileStager.FirstFileAlreadyStaged = stagetool.StageFirstFile
-
-#################################################################################################
-# Pass collection names to EventSelector
-#################################################################################################
-
-## set input collections
-ic = []
-if stagetool.DoStaging():
-  ic = stagetool.GetStageCollections()
-else:
-  ic = stagetool.GetSampleList()
-
-## get a handle on the ServiceManager
-svcMgr = theApp.serviceMgr()
-svcMgr.EventSelector.InputCollections = ic
-#svcMgr.EventSelector.SkipBadFiles = True
-EOF
-
+    return $retcode
 }
