@@ -23,7 +23,6 @@ write_file(fileName,scriptString)
 #make a Root application object
 r = Root()
 r.script = fileName
-r.version = '5.14.00i'
 
 j = Job(application = r, backend = Dirac())
 j.backend.CPUTime = 600
