@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.29 2008-12-10 15:20:21 elmsheus Exp $
+# $Id: Athena.py,v 1.30 2008-12-10 15:24:20 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -385,7 +385,7 @@ class Athena(IApplication):
                 if subjob.application.stats.has_key('totalevents'):
                     totalevents = totalevents + subjob.application.stats['totalevents']
             self.stats['numfiles']=numfiles
-            self.stats['numfiles2']=numfiles
+            self.stats['numfiles2']=numfiles2
             self.stats['totalevents']=totalevents        
 
     def prepare(self, athena_compile=True, NG=False, **options):
@@ -939,6 +939,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.29  2008/12/10 15:20:21  elmsheus
+# Change in the .gz reading and fixes for numfiles for the FILE_STAGER
+#
 # Revision 1.28  2008/12/08 16:01:49  elmsheus
 # Make logfile reading more memory friendly
 #
