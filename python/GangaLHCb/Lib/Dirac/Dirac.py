@@ -256,6 +256,7 @@ def getOutput(dirac, num):
     pwd = os.getcwd()
     result = None
     try:
+        #call now downloads oversized sandboxes if there are there
         result = dirac.getOutputSandbox(id,outputDir=outputDir)
     finally:
         if os.getcwd() != pwd: os.chdir(pwd)
@@ -271,43 +272,8 @@ def getOutput(dirac, num):
             result['OK'] = False
             result['Message'] = 'Failed to find downloaded files on the local file system.'
     
-    elif result is not None and result.has_key('OK') and not result['OK']:
-
-        #look in the job parameters for the lfns
-        params = dirac.parameters(id)
-        if params is not None and params.get('OK',False):
-            #if they provide the sandbox LFN then get the file
-            if params.has_key('Value') and params['Value'].has_key('OutputSandboxLFN'):
-                pwd = os.getcwd()
-                try:
-                    lfn = params['Value']['OutputSandboxLFN']
-                    os.chdir(outputDir)
-                    r = dirac.getFile([lfn])
-                    print 'result getfile',r
-                    if r and r.get('OK',False):
-                        #untar the file
-                        sandbox = r['Value']['Successful'][lfn]
-                        print 'sandbox',sandbox
-                        if os.access(sandbox,os.F_OK):
-                            import tarfile
-                            try:
-                                tf = tarfile.open(sandbox,"r:gz")
-                                [tf.extract(tarinfo,outputDir) for tarinfo in tf]
-                                files = listdirs(outputDir)
-                                files.remove(sandbox) #don't need to report the tar file itself
-                                tf.close()
-                                result = {'OK':True,'Value':files}
-                            except tarfile.ReadError:
-                                result = {'OK':False,'Message':'The output sandbox was too large and has been uploaded to Grid storage. \
-                                    Download failed.'}
-                            os.unlink(sandbox)
-                finally:
-                    os.chdir(pwd)
-            else:
-                result = {'OK':False,'Message':'The outputsandbox can not be found.'}
     return result
 
-#finally actually get the output
 for i in range(3):
     result = getOutput(dirac, i)
     if (result is None) or (result is not None and not result.get('OK', False)):
@@ -398,42 +364,29 @@ id = %(ID)d
 files = %(FILES)s
 outputdir = '%(OUTPUTDIR)s'
 
-download_files = [] 
-error = None
-
-#look in the job parameters for the lfns
-params = dirac.parameters(id)
-if params is not None and params.get('OK',False):
-    data = params['Value']['UploadedOutputData']
-    data = data.split(',')#get a comma seperated list
-    for d in data:
-        name = os.path.basename(d)
-        if name in files:
-            download_files.append(d)
-if files and not download_files:
-    error = {'OK':False, 'Message':'Did not find the LFNs for the specified files.'}
-                
-thisdir = os.getcwd()
-                
-def getFile(retry_count = 0):
-                    
+def getFiles():
+    pwd = os.getcwd()
     result = None
-    if retry_count < 3:
-        result = dirac.getFile(download_files)
-                        
-        if (result is None) or (result is not None and not result.get('OK',False)):
-            result = getFile( retry_count = retry_count + 1 )
+    try:
+        #call now downloads oversized sandboxes if there are there
+        os.chdir(outputdir)
+        result = dirac.getJobOutputData(id,outputFiles=files)
+    finally:
+        os.chdir(pwd)
     return result
-                
-try:
-    os.chdir(outputdir)
-    if error is None:
-        result = getFile()
-    else:
-        result = error
-    storeResult(result)
-finally:
-    os.chdir(thisdir)
+
+result = None
+for i in range(3): #retry
+    if not hasattr(dirac,'getJobOutputData'):
+        result = {'OK':False,'Message':'The version of the Dirac client needs to be upgraded for this to work!'}
+        break
+    result = getFiles()
+    if result is not None and result.get('OK',False):
+        rc = 0
+        break
+if result is None:
+    result = {'OK':False,'Message':'Failed to download the outputdata files. The reason is not known'}
+storeResult(result)
                 """ % {'FILES':str(names),'OUTPUTDIR':dir,'ID':self.id}
                 
                 dw = diracwrapper(command)
@@ -442,16 +395,15 @@ finally:
                 if result is not None:
                     if result.get('OK',False):
                         if result.has_key('Value'):
-                            value = result['Value']
-                            success = value.get('Successful',{})
-                            failure = value.get('Failed',{})
-                        
-                            for k,v in failure.iteritems():
-                                logger.error("Failed: '%s' (%s)", str(k), str(v))
-                        
-                            for k,v in success.iteritems():
-                                logger.info("Success: '%s' to '%s'", str(k), str(v))
-                                downloadedFiles.append(v)
+                            files = result['Value']
+                            
+                            import os
+                            for f in files:
+                                downloadedFiles.append(os.path.basename(f))
+                            for n in names:
+                                if not n in downloadedFiles:
+                                    logger.warning("Output download failed for file: '%s'", str(n))
+                            
                     elif result.has_key('Message'):
                          logger.error("Output download failed: '%s'", str(result['Message']))
                          
@@ -764,6 +716,9 @@ storeResult(result)
 #
 #
 ## $Log: not supported by cvs2svn $
+## Revision 1.11  2008/12/08 11:56:20  wreece
+## Improves the overlarge sandbox handling to make use of the Dirac OutputSandboxLFN parameter and do the untarring.
+##
 ## Revision 1.10  2008/12/04 12:00:36  wreece
 ## tip from Andrei on multiple lfns
 ##

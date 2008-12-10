@@ -15,21 +15,6 @@ logger = Ganga.Utility.logging.getLogger()
 
 import DiracShared
 
-# The LD_LIBRARY_PATH set by Ganga interferes with GridEnv. Hence unset
-# it and reset it again afterwards. Same may be true for DIRACROOT
-
-_varKeep = {}
-def _checkVar(varKeep,varName):
-    """Keep a copy of variables before we change them"""
-    keep = environ.get(varName,None)
-    if keep is not None:
-        del environ[varName]
-        varKeep[varName] = keep
-    return varKeep
-
-_checkVar(_varKeep,'LD_LIBRARY_PATH')
-_checkVar(_varKeep,'DIRACROOT')
-
 #figure out where our env is to load
 class __FindMe(object):
     pass
@@ -62,9 +47,6 @@ if configDiracVersion is None:
     logger.warning("Failed to find the DIRAC Version. Taking the default version.")
     configDiracVersion = ''
 s = Shell(diracEnvSetup,setup_args = [configDiracVersion])
-
-for key, item in _varKeep.iteritems():
-    environ[key] = item
 
 class _DiracWrapper(object):
     
