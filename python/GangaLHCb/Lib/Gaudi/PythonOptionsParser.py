@@ -4,8 +4,8 @@
 of inputdata, outputdata and output files.'''
 
 __author__ = 'Greig A Cowan'
-__date__ = "$Date: 2008-11-13 10:02:53 $"
-__revision__ = "$Revision: 1.13 $"
+__date__ = "$Date: 2008-12-10 13:41:02 $"
+__revision__ = "$Revision: 1.14 $"
 
 import tempfile, fnmatch
 from Ganga.GPIDev.Lib.File import FileBuffer
@@ -34,15 +34,18 @@ class PythonOptionsParser:
         configuration and pickle the options. The app handler will make a copy
         of the .pkl file for each job.'''
         tmp_pkl = tempfile.NamedTemporaryFile( suffix = '.pkl')
+        tmp_py = tempfile.NamedTemporaryFile( suffix = '.py')
         py_opts = tempfile.NamedTemporaryFile( suffix = '.py')
         py_opts.write( self._join_opts_files())
         py_opts.flush()
         
-        gaudirun = 'gaudirun.py -n -v -p %s %s' % ( tmp_pkl.name, py_opts.name)
+        gaudirun = 'gaudirun.py -n -v -o %s -p %s %s' \
+                   % (tmp_py.name, tmp_pkl.name, py_opts.name)
         outputString = ''
         options = {}
         
         rc, optionsString, m = self.shell.cmd1( gaudirun)
+        
         if not rc ==0:
             msg = 'Problem with syntax in options file'
             raise ApplicationConfigurationError(None,msg)
