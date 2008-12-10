@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.28 2008-12-08 16:01:49 elmsheus Exp $
+# $Id: Athena.py,v 1.29 2008-12-10 15:20:21 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -231,10 +231,10 @@ class Athena(IApplication):
                 systemtime = 0
                 # LCG backend
                 if 'stderr.gz' in os.listdir(job.outputdir):
-                    zfile = gzip.GzipFile(os.path.join(job.outputdir,'stderr.gz' ))
+                    zfile = os.popen('zcat '+os.path.join(job.outputdir,'stderr.gz' ))
                 # NG has stdout.txt as output
                 if 'stdout.txt.gz' in os.listdir(job.outputdir):
-                    zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.txt.gz' ))
+                    zfile = os.popen('zcat '+os.path.join(job.outputdir,'stdout.txt.gz' ))
                 for line in zfile:
                     if line.find('Percent of CPU this job got')>-1:
                         percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
@@ -283,11 +283,10 @@ class Athena(IApplication):
                 numfiles = 0
                 numfiles2 = 0
                 if 'stdout.gz' in os.listdir(job.outputdir):
-                    zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.gz' ))
-
+                    zfile = os.popen('zcat '+os.path.join(job.outputdir,'stdout.gz' ))
                 # NG has stdout.txt as output
                 if 'stdout.txt.gz' in os.listdir(job.outputdir):
-                    zfile = gzip.GzipFile(os.path.join(job.outputdir,'stdout.txt.gz' ))
+                    zfile = os.popen('zcat '+os.path.join(job.outputdir,'stdout.txt.gz' ))
                 for line in zfile:
                     if line.find('Storing file at:')>-1:
                         self.stats['outse'] = re.match('.*at: (.*)',line).group(1)
@@ -334,12 +333,16 @@ class Athena(IApplication):
                 self.stats['numfiles2'] = numfiles2
 
                 if job.inputdata and job.inputdata._name == 'DQ2Dataset':
-                    if not job.inputdata.type == 'DQ2_COPY':
-                        self.stats['numfiles'] = numfiles - 1
-                        self.stats['totalevents'] = jtotalevents
-                    else:
+                    if job.inputdata.type == 'DQ2_COPY':
                         self.stats['numfiles'] = numfiles / 2
                         self.stats['totalevents'] = totalevents
+                    elif job.inputdata.type == 'FILE_STAGER':
+                        self.stats['numfiles'] = (numfiles - 2)/2
+                        self.stats['totalevents'] = jtotalevents
+                    else:
+                        self.stats['numfiles'] = numfiles - 1
+                        self.stats['totalevents'] = jtotalevents
+
 
                 if zfile:        
                     zfile.close()
@@ -936,6 +939,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.28  2008/12/08 16:01:49  elmsheus
+# Make logfile reading more memory friendly
+#
 # Revision 1.27  2008/12/07 16:21:18  elmsheus
 # Small fix
 #
