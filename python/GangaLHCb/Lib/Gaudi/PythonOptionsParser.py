@@ -4,8 +4,8 @@
 of inputdata, outputdata and output files.'''
 
 __author__ = 'Greig A Cowan'
-__date__ = "$Date: 2008-12-10 13:41:02 $"
-__revision__ = "$Revision: 1.14 $"
+__date__ = "$Date: 2008-12-10 17:00:46 $"
+__revision__ = "$Revision: 1.15 $"
 
 import tempfile, fnmatch
 from Ganga.GPIDev.Lib.File import FileBuffer
@@ -38,36 +38,55 @@ class PythonOptionsParser:
         py_opts = tempfile.NamedTemporaryFile( suffix = '.py')
         py_opts.write( self._join_opts_files())
         py_opts.flush()
-        
-        gaudirun = 'gaudirun.py -n -v -o %s -p %s %s' \
-                   % (tmp_py.name, tmp_pkl.name, py_opts.name)
-        outputString = ''
+
+        gaudirun = 'gaudirun.py -n -v -p %s %s' \
+                   % (tmp_pkl.name, py_opts.name)
+        opts_str = ''
+        err_msg = ''
         options = {}
         
-        rc, optionsString, m = self.shell.cmd1( gaudirun)
+        rc, stdout, m = self.shell.cmd1( gaudirun)
         
-        if not rc ==0:
-            msg = 'Problem with syntax in options file'
-            raise ApplicationConfigurationError(None,msg)
-            logger.error('Cannot run: %s', gaudirun)
-            logger.error('Output was %s', optionsString)
-        
-        if optionsString and rc == 0:
+        if stdout.find('no such option: -o') >= 0:
+            # old version of gaudirun.py
+            gaudirun = 'gaudirun.py -n -v -p %s %s' \
+                       % ( tmp_pkl.name, py_opts.name)
+            rc, stdout, m = self.shell.cmd1( gaudirun)
+
+            if stdout and rc == 0:
+                opts_str = stdout
+                err_msg = 'Please check gaudirun.py -n -v %s' % py_opts.name
+                err_msg += ' returns valid python syntax' 
+        else:
+            # new version of gaudirun.py
+            cmd = 'gaudirun.py -n -o %s %s' % (tmp_py.name, py_opts.name)
+            rc, stdout, m = self.shell.cmd1(cmd)
+            if rc == 0 and stdout:
+                opts_str = tmp_py.read()
+                err_msg = 'Please check gaudirun.py -o file.py produces a ' \
+                          'valid python file.'
+
+        if stdout and rc == 0:
             try:
-                options = eval( optionsString)
+                options = eval(opts_str)
             except Exception, e:
                 logger.error('Cannot eval() the options file. Exception: %s',e)
                 from traceback import print_exc
                 logger.error(' ', print_exc())
-                err = 'Please check gaudirun.py -n -v %s' % py_opts.name
-                err += ' returns valid python syntax' 
-                raise ApplicationConfigurationError(None,err)
+                raise ApplicationConfigurationError(None,err_msg)
             try:
                 opts_pkl_string = tmp_pkl.read()        
             except IOError, e:
                 logger.error('Cannot read() the temporary pickle file: %s',
                              tmp_pkl.name)
-    
+
+        
+        if not rc ==0:
+            msg = 'Problem with syntax in options file'
+            raise ApplicationConfigurationError(None,msg)
+            logger.error('Cannot run: %s', gaudirun)
+            logger.error('Output was %s', stdout)
+        
         tmp_pkl.close()
         py_opts.close()
         return (options, opts_pkl_string)
