@@ -1,10 +1,9 @@
+from __future__ import division
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Splitters for Gaudi applications in LHCb.'''
 
-__date__ = "$Date: 2008-11-13 10:02:53 $"
-__revision__ = "$Revision: 1.9 $"
-
-from __future__ import division
+__date__ = "$Date: 2008-12-10 14:32:42 $"
+__revision__ = "$Revision: 1.10 $"
 
 import time
 import string
