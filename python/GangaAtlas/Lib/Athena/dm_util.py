@@ -284,11 +284,19 @@ def make_FileStager_jobOption(pfns, gridcopy=True, optionFileName='input_stager.
 
 mySampleList = ###SAMPLELIST###
 
+mySampleFile = 'sample.list'
+
+f = open(mySampleFile,'w')
+for l in mySampleList:
+    f.write(l + '\\n')
+f.close()
+
 ## import filestager tool
 from FileStager.FileStagerTool import FileStagerTool
 
 ## File with input collections
-stagetool = FileStagerTool(sampleList=mySampleList)
+#stagetool = FileStagerTool(sampleList=mySampleList)
+stagetool = FileStagerTool(sampleFile=mySampleFile)
 
 ## Configure rf copy command used by the stager; default is 'lcg-cp -v --vo altas -t 1200'
 #stagetool.CpCommand = "rfcp"
