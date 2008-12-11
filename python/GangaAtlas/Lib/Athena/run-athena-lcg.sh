@@ -38,9 +38,9 @@ print_wn_info
 
 ################################################
 # Save LD_LIBRARY_PATH
-LD_LIBRARY_PATH_ORIG=$LD_LIBRARY_PATH
-PATH_ORIG=$PATH
-PYTHONPATH_ORIG=$PYTHONPATH
+export LD_LIBRARY_PATH_ORIG=$LD_LIBRARY_PATH
+export PATH_ORIG=$PATH
+export PYTHONPATH_ORIG=$PYTHONPATH
 
 ################################################
 # set up LFC_HOST

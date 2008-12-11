@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.28 2008-12-09 15:07:21 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.29 2008-12-11 12:39:59 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1465,25 +1465,17 @@ if __name__ == '__main__':
         sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
 
         # NIKHEF/SARA special case
-        if os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('NIKHEF') and len(tUrlMap)==0:
-            print 'Special setup at NIKHEF - re-reading LFC' 
-            localsitesrm = TiersOfATLAS.getSiteProperty(os.environ['DQ2_LOCAL_SITE_ID'],'srm')
+        if len(tUrlMap)==0 and (os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('NIKHEF') or os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('SARA')):
+            print 'Special setup at NIKHEF/SARA - re-reading LFC'
+            if os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('NIKHEF') or os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('SARA'):
+                localsitesrm = TiersOfATLAS.getSiteProperty('SARA-MATRIX_MCDISK','srm')
+                configLOCALPROTOCOL = 'gsidcap'
+                configSTORAGEROOT = '/pnfs'
+                configLOCALPREFIX = 'gsidcap:'
+
             localsitesrm = re.sub('token:*\w*:','', localsitesrm)
             localsitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', localsitesrm)
             defaultSE = _getDefaultStorage(localsitesrm)
-            configLOCALPROTOCOL = 'rfio'
-            configSTORAGEROOT = '/dpm'
-            configLOCALPREFIX = 'rfio:'
-            sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
-        elif os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('SARA') and len(tUrlMap)==0: 
-            print 'Special setup at SARA - re-reading LFC' 
-            localsitesrm = TiersOfATLAS.getSiteProperty('SARA-MATRIX_MCDISK','srm')
-            localsitesrm = re.sub('token:*\w*:','', localsitesrm)
-            localsitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', localsitesrm)
-            defaultSE = _getDefaultStorage(localsitesrm)
-            configLOCALPROTOCOL = 'gsidcap'
-            configSTORAGEROOT = '/pnfs'
-            configLOCALPREFIX = 'dcap:'
             sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
 
         # Check md5sum

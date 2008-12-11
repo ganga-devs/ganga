@@ -585,10 +585,10 @@ run_athena () {
 
 	cat input.py
 
-	export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
+	export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH:$LD_LIBRARY_PATH_ORIG
 
         echo "Running Athena ..."
-        if [ n$ATLAS_EXETYPE == n'ATHENA' ]
+    if [ n$ATLAS_EXETYPE == n'ATHENA' ]
 	    then 
 	    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 	    retcode=`cat retcode.tmp`
