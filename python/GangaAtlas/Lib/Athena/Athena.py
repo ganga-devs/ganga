@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.30 2008-12-10 15:24:20 elmsheus Exp $
+# $Id: Athena.py,v 1.31 2008-12-11 10:54:52 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -62,6 +62,7 @@ class Athena(IApplication):
                  'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT '),
                  'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
                  'user_area'              : FileItem(doc='A tar file of the user area'),
+                 'user_area_path'         : SimpleItem(defvalue='', doc='Path where user_area tarfile is created'),
                  'group_area'             : FileItem(doc='A tar file of the group area'),
                  'max_events'             : SimpleItem(defvalue=-999, typelist=['int'], doc='Maximum number of events'),
                  'option_file'            : FileItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
@@ -84,6 +85,7 @@ class Athena(IApplication):
                   { 'attribute'  : 'atlas_exetype',    'widget' : 'String_Choice', 'choices':['ATHENA', 'PYARA', 'ROOT' ]},
                   { 'attribute' : 'atlas_environment', 'widget' : 'String_List' },
                   { 'attribute' : 'user_area',         'widget' : 'FileOrString' },
+                  { 'attribute' : 'user_area_path',    'widget' : 'String' },
                   { 'attribute' : 'group_area',        'widget' : 'FileOrString' },
                   { 'attribute' : 'max_events',        'widget' : 'Int' },
                   { 'attribute' : 'option_file',       'widget' : 'FileOrString_List' },
@@ -521,10 +523,28 @@ fi
         } )
 
 
-        from Ganga.Core import FileWorkspace
-        ws=FileWorkspace.FileWorkspace(FileWorkspace.gettop(),subpath='file')
-        ws.create(None)
-        self.user_area.name=mktemp('.tar.gz',self.package,ws.getPath())
+        if self.user_area_path != '':
+            if not os.path.exists(self.user_area_path):
+                from Ganga.Core import FileWorkspace
+                ws=FileWorkspace.FileWorkspace(FileWorkspace.gettop(),subpath='file')
+                ws.create(None)
+                self.user_area_path = ws.getPath()
+
+            self.user_area.name=mktemp('.tar.gz',self.package, self.user_area_path)
+
+        else:  
+            if os.environ.has_key('TMPDIR'):
+                tmp = os.environ['TMPDIR']
+            else:
+                cn = os.path.basename( os.path.expanduser( "~" ) )
+                tmpDir = os.path.realpath('/tmp/' + cn )
+
+            if not os.access(tmpDir,os.W_OK):    
+                os.makedirs(tmpDir)
+            
+            self.user_area_path = tmpDir
+            
+        self.user_area.name=mktemp('.tar.gz',self.package, self.user_area_path)
         logger.info('Creating %s ...',self.user_area.name)
 
         # Remove InstallArea from tar file if athena_compile==True
@@ -939,6 +959,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.30  2008/12/10 15:24:20  elmsheus
+# Fix for the master job numfiles2
+#
 # Revision 1.29  2008/12/10 15:20:21  elmsheus
 # Change in the .gz reading and fixes for numfiles for the FILE_STAGER
 #
