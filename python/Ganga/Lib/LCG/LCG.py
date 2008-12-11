@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.21 2008-12-08 08:44:52 hclee Exp $
+# $Id: LCG.py,v 1.22 2008-12-11 09:15:31 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -468,7 +468,7 @@ class LCG(IBackend):
 
         profiler.checkAndStart('job state transition (submitting) elapsed time')
 
-        max_node = 50
+        max_node = config['GliteBulkJobSize']
         results  = self.__mt_bulk_submit(node_jdls, max_node=max_node)
 
         profiler.checkAndStart('job submission elapsed time')
@@ -512,7 +512,7 @@ class LCG(IBackend):
             jdlpath = os.path.join(sj.inputdir,'__jdlfile__')
             node_jdls.append(jdlpath)
 
-        max_node = 50
+        max_node = config['GliteBulkJobSize']
 
         results = self.__mt_bulk_submit(node_jdls, max_node=max_node)
 
@@ -1786,6 +1786,8 @@ config.addOption('Requirements','Ganga.Lib.LCG.LCGRequirements','sets the full q
 
 config.addOption('SandboxCache','Ganga.Lib.LCG.LCGSandboxCache','sets the full qualified class name for handling the oversized input sandbox')
 
+config.addOption('GliteBulkJobSize', 50, 'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
+
 config.addOption('SubmissionThread', 10, 'sets the number of concurrent threads for job submission to gLite WMS')
 
 config.addOption('OutputDownloaderThread', 10, 'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
@@ -1812,6 +1814,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.21  2008/12/08 08:44:52  hclee
+# make the number of output downloader threads configurable
+#
 # Revision 1.20  2008/11/25 15:26:07  hclee
 # introducing "SubmissionThread" configuration variable for setting the concurrent
 # number of job submission threads
