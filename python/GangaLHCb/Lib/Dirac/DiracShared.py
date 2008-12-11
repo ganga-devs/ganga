@@ -1,3 +1,5 @@
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
 #file for functions shared between scripts and the main code
 
 def getPickleFileName():
@@ -5,7 +7,9 @@ def getPickleFileName():
     try:
         return __outputFileName
     except NameError:
-        return os.path.join(os.path.expanduser('~'),'.__tmpGangaPickle__%s.p' % os.path.expandvars('$USER'))
+        return os.path.join(os.path.expanduser('~'),
+                            '.__tmpGangaPickle__%s.p' \
+                            % os.path.expandvars('$USER'))
   
 def storeResult(result, fName = None, retry_count = 0):
     import pickle, os, time
@@ -94,4 +98,5 @@ def getGenericRunScript(job = None):
             shutil.copyfile(diracJobMain, diracMainCopy)
     return diracMainCopy
 
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

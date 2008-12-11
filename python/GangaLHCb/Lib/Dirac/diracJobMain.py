@@ -1,7 +1,8 @@
-####################################################
-# WARNING: Must live in same
-# directory as DiracShared
-####################################################
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+#
+# WARNING: Must live in same directory as DiracShared
+#
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 #recursive lister for directories
 def listdirs(path, file_list = None):
@@ -29,7 +30,8 @@ if __name__ == '__main__':
     
     jobWrapper = os.path.join(os.getcwd(),'jobscript.py')
     if not os.path.exists(jobWrapper):
-        print >>sys.stderr, 'The job wrapper script can not be found and so execution will fail'
+        print >>sys.stderr, 'The job wrapper script can not be found and ' \
+              'so execution will fail'
         print >>sys.stderr, 'To aid in debug, the CWD directory list is:'
         for f in listdirs(os.getcwd()):
             print >>sys.stderr, f
@@ -37,3 +39,5 @@ if __name__ == '__main__':
         sys.exit(-1)
     
     execfile(jobWrapper)
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

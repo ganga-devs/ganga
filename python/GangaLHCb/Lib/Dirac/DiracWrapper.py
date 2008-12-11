@@ -1,27 +1,33 @@
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
 # Make some lcg commands callable from within the DIRAC API
+
+import inspect
+import sys
+import tempfile
 from Ganga.Core import BackendError
 import Ganga.Utility.Config
 from Ganga.Utility.Shell import Shell
 from os.path import basename,dirname,exists,join,sep
 from os import pathsep,environ
-import inspect
-import sys
-import tempfile
+import Ganga.Utility.logging
+import DiracShared
+
 configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 configLHCb = Ganga.Utility.Config.getConfig('LHCb')
-
-import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-import DiracShared
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 #figure out where our env is to load
 class __FindMe(object):
     pass
-diracEnvSetup = join(dirname(inspect.getsourcefile(__FindMe)),'setupDiracEnv.sh')
+diracEnvSetup = join(dirname(inspect.getsourcefile(__FindMe)),
+                     'setupDiracEnv.sh')
 if not exists(diracEnvSetup):
     logger.error("Cannot find the file 'setupDiracEnv.sh' needed by ganga.")
-    raise BackendError('Dirac',"Cannot find the file 'setupDiracEnv.sh' needed by ganga.")
+    raise BackendError('Dirac',"Cannot find the file 'setupDiracEnv.sh' "\
+                       "needed by ganga.")
 
 #idea here is to use DiracVersion if available, but otherwise use DiracTopDir
 configDiracVersion = None
@@ -39,12 +45,14 @@ try:
             if len(d) == 2 and d[0].startswith('DIRAC'):
                 configDiracVersion = d[1]
             else:
-                logger.warning("Failed to find the DIRAC Version. Taking the default version.")
+                logger.warning("Failed to find the DIRAC Version. Taking " \
+                               "the default version.")
 except:
     pass
 
 if configDiracVersion is None:
-    logger.warning("Failed to find the DIRAC Version. Taking the default version.")
+    logger.warning("Failed to find the DIRAC Version. Taking the default "
+                   "version.")
     configDiracVersion = ''
 s = Shell(diracEnvSetup,setup_args = [configDiracVersion])
 
@@ -90,8 +98,10 @@ dirac = Dirac()
 %(###COMMAND###)s
 
 sys.exit(rc)
-        """ % {'###COMMAND###':command,'###LEVEL###':configDirac['DiracLoggerLevel'],\
-               '###SHARED###':inspect.getsource(DiracShared),'###OUTPUT###':dwrapper.outputFile}
+        """ % {'###COMMAND###':command,
+               '###LEVEL###':configDirac['DiracLoggerLevel'],
+               '###SHARED###':inspect.getsource(DiracShared),
+               '###OUTPUT###':dwrapper.outputFile}
         
   wrapper = """#!/usr/bin/env python
 import sys, os
@@ -129,7 +139,9 @@ except Exception, e:
     except:
         pass
     storeResult(result)
-  """ % {'###CONTENT###':content,'###SHARED###':inspect.getsource(DiracShared),'###OUTPUT###':dwrapper.outputFile}
+  """ % {'###CONTENT###':content,
+         '###SHARED###':inspect.getsource(DiracShared),
+         '###OUTPUT###':dwrapper.outputFile}
 
   fname = tempfile.mktemp('.py')
   f = open(fname,'w')
@@ -144,3 +156,5 @@ except Exception, e:
   if rc==0:
       os.unlink(fname)
   return dwrapper
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

@@ -1,17 +1,18 @@
-#!/usr/bin/env python
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 __author__ = ' Andrew Maier, Greig A Cowan'
-__date__ = 'June 2008'
-__revision__ = 0.2
 
 import os
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
+import DiracShared
+import DiracUtils
+
 logger = Ganga.Utility.logging.getLogger()
 
-import DiracShared
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class GaudiDiracRunTimeHandler(IRuntimeHandler):
     '''The runtime handler to run Gaudi jobs on the Dirac backend'''
@@ -46,8 +47,8 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         
         inputsandbox = []
         if app.extra.dataopts:
-            dataopts = app.extra.dataopts +\
-                       '\nFileCatalog.Catalogs += { "xmlcatalog_file:pool_xml_catalog.xml" };\n'
+            dataopts = app.extra.dataopts +  '\nFileCatalog.Catalogs += ' \
+                       '{ "xmlcatalog_file:pool_xml_catalog.xml" };\n'
             inputsandbox.append( FileBuffer( 'dataopts.opts', dataopts))
         
         outputsandbox = app.extra.outputsandbox
@@ -63,8 +64,9 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
         logFile = '%s_%s.log' % (app._name, app.version)
         
         diracScript.platform(app.platform)
-        diracScript.runApplicationScript(app._name, app.version,\
-                                         DiracShared.getGenericRunScript(job),logFile)
+        diracScript.runApplicationScript(app._name, app.version,
+                                         DiracShared.getGenericRunScript(job),
+                                         logFile)
         diracScript.setName( 'Ganga_%s_%s' % (app._name, app.version) )
         diracScript.inputdata( app.extra.inputdata)
         diracScript.outputdata(app.extra.outputdata)
@@ -77,45 +79,14 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
     def _DiracWrapper(self, app):
         '''Create the script that will be executed.'''
 
-#        commandline = '\'$GAUDIROOT/scripts/gaudirun.py options.pkl dataopts.py\''
         commandline = "'gaudirun.py options.pkl dataopts.opts'"
         logger.debug( 'Command line: %s: ', commandline )
-
-        # Write a wrapper script
-        wrapperscript= """#!/usr/bin/env python
-'''Script to run Gaudi application'''
-def setEnvironment(key, value, update=False):
-    '''Sets an environment variable. If update=True, it preends it to
-    the current value with os.pathsep as the seperator.'''
-    from os import environ,pathsep
-    if update and environ.has_key(key):
-        value += (pathsep + environ[key])#prepend
-    environ[key] = value
-
-# Main
-if __name__ == '__main__':
-
-    from os import curdir, system, environ, pathsep, sep, getcwd
-    from os.path import join
-    import sys    
-
-    commandline = ###COMMANDLINE###    
-
-    sys.stdout.flush()
-    sys.stderr.flush()
-    setEnvironment( 'LD_LIBRARY_PATH', getcwd() + '/lib', True)
-    setEnvironment( 'PYTHONPATH', getcwd() + '/python', True)
-        
-    #exec the script
-    print 'Executing ',commandline
-    sys.stdout.flush()
-    sys.stderr.flush()
-    sys.exit(system(commandline)/256)
-  """
-        wrapperscript = wrapperscript.replace('###COMMANDLINE###',commandline)
+        wrapperscript = DiracUtils.gaudi_dirac_wrapper(commandline)
 
         logger.debug('Script to run on worker node\n'+wrapperscript)
         scriptName = "GaudiWrapper.py"
-        runScript = FileBuffer( scriptName, wrapperscript, executable = 1 )
+        runScript = FileBuffer(scriptName, wrapperscript, executable=1)
 
         return runScript
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
