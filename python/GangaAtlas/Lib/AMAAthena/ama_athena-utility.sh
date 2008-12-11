@@ -94,12 +94,12 @@ EOF
     # make input.py if not yet presented
     if [ ! -f input.py ]; then
         # case 1: the FileStager sample_file.list is presented, take it directly
-        if [ ! -z $AMA_WITH_STAGER ] && [ -f sample_file.list ]; then
+        if [ ! -z $AMA_WITH_STAGER ] && [ -f grid_sample.list ]; then
             cat - >input.py <<EOF
 ic = []
 # input with FileStager
 from FileStager.FileStagerTool import FileStagerTool
-stagetool = FileStagerTool(sampleFile='sample_file.list')
+stagetool = FileStagerTool(sampleFile='grid_sample.list')
 
 ## get Reference to existing Athena job
 from FileStager.FileStagerConf import FileStagerAlg
