@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.22 2008-12-11 09:15:31 hclee Exp $
+# $Id: LCG.py,v 1.23 2008-12-11 11:14:33 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -408,7 +408,7 @@ class LCG(IBackend):
                 my_sj = sj_info[1]
 
                 try:
-                    logger.debug("preparing subjob %s" % my_sj.getFQID('.'))
+                    logger.debug("preparing job %s" % my_sj.getFQID('.'))
                     jdlpath = my_sj.backend.preparejob(my_sc, master_input_sandbox)
                     self.__appendResult__( my_sj.id, jdlpath )
                     return True
@@ -1575,11 +1575,11 @@ sys.exit(0)
                         #subjob.updateStatus('submitted')
                  
                     if subjob.backend.actualCE != info['destination']:
-                        logger.info('subjob %s has been assigned to %s',subjob.getFQID('.'),info['destination'])
+                        logger.info('job %s has been assigned to %s',subjob.getFQID('.'),info['destination'])
                         subjob.backend.actualCE = info['destination']
                  
                     if subjob.backend.status != info['status']:
-                        logger.info('subjob %s has changed status to %s',subjob.getFQID('.'),info['status'])
+                        logger.info('job %s has changed status to %s',subjob.getFQID('.'),info['status'])
                         subjob.backend.status = info['status']
                         subjob.backend.reason = info['reason']
                         subjob.backend.exitcode_lcg = info['exit']
@@ -1814,6 +1814,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.22  2008/12/11 09:15:31  hclee
+# allow to set the max. node number of a glite bulk job
+#
 # Revision 1.21  2008/12/08 08:44:52  hclee
 # make the number of output downloader threads configurable
 #
