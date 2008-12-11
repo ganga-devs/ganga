@@ -1,6 +1,5 @@
-from Ganga.GPIDev.Base import GangaObject
 from Ganga.Utility.logging import getLogger
-from Ganga.Lib.LCG.MTRunner import MTRunner, Data, Algorithm  
+from Ganga.Lib.LCG.MTRunner import MTRunner, Data, Algorithm, DuplicateDataItemError
 from Ganga.Lib.LCG.Utility import * 
 
 logger = getLogger()
@@ -16,6 +15,21 @@ class LCGOutputDownloadTask:
         self.gridObj = gridObj
         self.jobObj  = jobObj
         self.use_wms_proxy = use_wms_proxy
+
+    def __eq__(self, other):
+        """
+        download task comparison based on job's FQID.
+        """
+        if self.jobObj.getFQID('.') == other.jobObj.getFQID('.'):
+            return True
+        else:
+            return False
+
+    def __str__(self):
+        """
+        represents the task by the job object
+        """
+        return 'downloading task for job %s' % self.jobObj.getFQID('.')
 
 class LCGOutputDownloadAlgorithm(Algorithm):
     """
@@ -91,7 +105,13 @@ class LCGOutputDownloader:
 
         task = LCGOutputDownloadTask(grid, job, use_wms_proxy)
         logger.debug( 'add output downloading task: job %s' % job.getFQID('.') )
-        self.data.addItem(task)
+
+        try:
+            self.data.addItem(task)
+        except DuplicateDataItemError, e:
+            logger.debug('skip adding new item: %s' % e.message)
+            pass
+        
         return True
 
     def start(self):

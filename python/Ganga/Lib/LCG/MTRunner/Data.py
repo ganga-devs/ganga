@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 from Queue import Queue
 
+class DuplicateDataItemError(Exception):
+    """
+    Class raised when adding the same item in the Data object.
+    """
+
+    def __init__(self, message):
+        self.message = message 
+
+
 class Data:
     """
     Class to define user dataset collection.
@@ -28,7 +37,12 @@ class Data:
         try to put a new item in the queue. As the queue is defined with infinity number
         of slots, it should never throw "Queue.Full" exception.
         '''
-        self.queue.put(item)
+
+        if item not in self.collection:
+            self.collection.append(item)
+            self.queue.put(item)
+        else:
+            raise DuplicateDataItemError('data item \'%s\' already in the task queue' % str(item))
 
     def getNextItem(self):
         '''
