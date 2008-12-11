@@ -20,7 +20,7 @@ def get_DIRAC_status(jobs):
     # Get status information from DIRAC in bulk operation
     djobids=[j.backend.id for j in jobs]
                     
-    command = DiracUtils.status_command(djobids)            
+    command = status_command(djobids)            
     dw = diracwrapper(command)
     result = dw.getOutput()
             
