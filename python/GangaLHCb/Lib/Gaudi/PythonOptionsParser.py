@@ -4,8 +4,8 @@
 of inputdata, outputdata and output files.'''
 
 __author__ = 'Greig A Cowan'
-__date__ = "$Date: 2008-12-10 17:00:46 $"
-__revision__ = "$Revision: 1.15 $"
+__date__ = "$Date: 2008-12-11 16:15:26 $"
+__revision__ = "$Revision: 1.16 $"
 
 import tempfile, fnmatch
 from Ganga.GPIDev.Lib.File import FileBuffer
@@ -39,8 +39,8 @@ class PythonOptionsParser:
         py_opts.write( self._join_opts_files())
         py_opts.flush()
 
-        gaudirun = 'gaudirun.py -n -v -p %s %s' \
-                   % (tmp_pkl.name, py_opts.name)
+        gaudirun = 'gaudirun.py -n -v -o %s %s' \
+                   % (tmp_py.name, py_opts.name)
         opts_str = ''
         err_msg = ''
         options = {}
@@ -59,7 +59,7 @@ class PythonOptionsParser:
                 err_msg += ' returns valid python syntax' 
         else:
             # new version of gaudirun.py
-            cmd = 'gaudirun.py -n -o %s %s' % (tmp_py.name, py_opts.name)
+            cmd = 'gaudirun.py -n -p %s %s' % (tmp_pkl.name, py_opts.name)
             rc, stdout, m = self.shell.cmd1(cmd)
             if rc == 0 and stdout:
                 opts_str = tmp_py.read()

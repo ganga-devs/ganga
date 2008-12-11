@@ -2,8 +2,8 @@
 '''Application handler for Gaudi applications in LHCb.'''
 
 __author__ = 'Andrew Maier, Greig A Cowan'
-__date__ = "$Date: 2008-11-13 10:02:53 $"
-__revision__ = "$Revision: 1.17 $"
+__date__ = "$Date: 2008-12-11 16:15:26 $"
+__revision__ = "$Revision: 1.18 $"
 
 import os
 import re
@@ -59,7 +59,7 @@ def GaudiDocString(appname):
 
     """
     return doc.replace( "Gaudi", appname )
-
+ 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
