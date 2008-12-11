@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLCGRTHandler.py,v 1.3 2008-12-09 16:32:35 hclee Exp $
+# $Id: AMAAthenaLCGRTHandler.py,v 1.4 2008-12-11 20:35:55 hclee Exp $
 ###############################################################################
 # AMAAthena LCG Runtime Handler
 #
@@ -16,6 +16,14 @@ from Ganga.GPIDev.Lib.File import *
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from GangaAtlas.Lib.Athena.AthenaLCGRTHandler import *
+
+# the config file may have a section
+# aboout monitoring
+
+mc = getConfig('MonitoringServices')
+
+# None by default
+mc.addOption('AMAAthena/LCG', None, 'FIXME')
   
 class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
     """AMAAthena LCG Runtime Handler"""
@@ -77,7 +85,10 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
         else:
             raise ApplicationConfigurationError(None,'AMAAthena works only with StagerDataset and DQ2Dataset as job\'s inputdata')
 
-        return LCGJobConfig(File(exe), inputbox, [], outputbox, environment, [], requirements)
+        lcg_config = LCGJobConfig(File(exe), inputbox, [], outputbox, environment, [], requirements)
+        lcg_config.monitoring_svc = mc['AMAAthena/LCG']
+
+        return lcg_config
 
     def master_prepare( self, app, appconfig ):
         """Prepare the master job"""
