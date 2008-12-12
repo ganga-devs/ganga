@@ -119,7 +119,9 @@ class TaskList(GangaObject):
       """ This is an internal function; the main loop of the background thread """
       ## Wait until Ganga is fully initialized      
       while not ("jobs" in reload(GPI).__dict__):
-         time.sleep(0.5)
+         time.sleep(0.4)
+      while not ("config" in reload(GPI).__dict__):
+         time.sleep(0.4)
 
       time.sleep(0.5)
 
