@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.13 2008-11-13 16:28:09 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.14 2008-12-12 15:04:34 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -217,13 +217,47 @@ def alternateCmtExtraction():
 
     return [currentDir,workArea,athenaVer,groupArea,cacheVer,nightVer]
 
+def getDBDatasets(jobO,trf,dbRelease):
+    # get DB datasets
+    dbrFiles  = {}
+    dbrDsList = []
+    if trf or dbRelease != '':
+        if trf:
+            # parse jobO for TRF
+            tmpItems = jobO.split()
+        else:
+            # mimic a trf parameter to reuse following algorithm
+            tmpItems = ['%DB='+dbRelease]
+        # look for DBRelease
+        for tmpItem in tmpItems:
+            match = re.search('%DB=([^:]+):(.+)$',tmpItem)
+            if match:
+                tmpDbrDS  = match.group(1)
+                tmpDbrLFN = match.group(2)
+                # get files in the dataset
+                if not tmpDbrDS in dbrDsList:
+                    logger.info("Querying files in dataset:%s" % tmpDbrDS)
+                    try:
+                        tmpList = Client.queryFilesInDataset(tmpDbrDS,False)
+                    except:
+                        raise ApplicationConfigurationError(None,"ERROR : error while looking up dataset %s. Perhaps this dataset does not exist?"%tmpDbrDS)
+                    # append
+                    for tmpLFN,tmpVal in tmpList.iteritems():
+                        dbrFiles[tmpLFN] = tmpVal
+                    dbrDsList.append(tmpDbrDS)
+                # check
+                if not dbrFiles.has_key(tmpDbrLFN):
+                    raise ApplicationConfigurationError(None,"ERROR : %s is not in %s"%(tmpDbrLFN,tmpDbrDS))
+    return dbrFiles,dbrDsList
+
+
 class AthenaPandaRTHandler(IRuntimeHandler):
     '''Athena Panda Runtime Handler'''
 
 
     def master_prepare(self,app,appconfig):
         '''Prepare the master job'''
- 
+
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
@@ -232,8 +266,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         sources = 'sources.%s.tar.gz' % commands.getoutput('uuidgen') 
         self.library = '%s.lib.tgz' % self.libDataset
 
+        # validate parameters
+        # check DBRelease
+        if job.backend.dbRelease != '' and job.backend.dbRelease.find(':') == -1:
+            raise ApplicationConfigurationError(None,"ERROR : invalid argument for backend.dbRelease. Must be 'DatasetName:FileName'")
+         
 #       parse job options file
-
         logger.info('Parsing job options file ...')
         job_option_files = ' '.join([ opt_file.name for opt_file in app.option_file ])
 
@@ -426,6 +464,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         flog.dataset = self.libDataset
         flog.destinationDBlock = self.libDataset
         jspec.addFile(flog)
+
+        self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',job.backend.dbRelease)
 
 #       prepare output files
 
@@ -732,7 +772,29 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # FIXME if not options.nobuild:
         param =  '-l %s ' % self.library
         param += '-r %s ' % self.rundirectory
+        # set jobO parameter
         param += '-j "%s" ' % urllib.quote(self.job_options)
+        # DBRelease
+        if job.backend.dbRelease != '':
+            tmpItems = job.backend.dbRelease.split(':')
+            tmpDbrDS  = tmpItems[0]
+            tmpDbrLFN = tmpItems[1]
+            # instantiate  FileSpec
+            fileName = tmpDbrLFN
+            vals     = self.dbrFiles[tmpDbrLFN]
+            file = FileSpec()
+            file.lfn            = fileName
+            file.GUID           = vals['guid']
+            file.fsize          = vals['fsize']
+            file.md5sum         = vals['md5sum']
+            file.dataset        = tmpDbrDS
+            file.prodDBlock     = tmpDbrDS
+            file.dispatchDBlock = tmpDbrDS
+            file.type       = 'input'
+            file.status     = 'ready'
+            jspec.addFile(file)
+            # set DBRelease parameter
+            param += '--dbrFile %s ' % file.lfn
         param += '-i "%s" ' % job.inputdata.names
         param += '-m "[]" ' #%minList FIXME
         param += '-n "[]" ' #%cavList FIXME

@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.13 2008-11-13 16:28:09 dvanders Exp $
+# $Id: Panda.py,v 1.14 2008-12-12 15:04:34 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -132,7 +132,7 @@ class PandaBuildJob(GangaObject):
 class Panda(IBackend):
     '''Panda backend'''
 
-    _schema = Schema(Version(1,2), {
+    _schema = Schema(Version(1,3), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'long'          : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send job to a long queue'),
 #        'blong'         : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send build job to a long queue'),
@@ -153,6 +153,7 @@ class Panda(IBackend):
 #        'araOutFile'    : SimpleItem(defvalue=[],protected=0,copyable=1,doc='define output files for ARA, e.g., [\'output1.root\',\'output2.root\']'),
 #        'trf'           : SimpleItem(defvalue='',protected=0,copyable=1,doc='run transformation, e.g. .trf = "csc_atlfast_trf.py %IN %OUT.AOD.root %OUT.ntuple.root -1 0"'),
         'supStream'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='suppress some output streams. e.g., [\'ESD\',\'TAG\']'),
+        'dbRelease'     : SimpleItem(defvalue='',protected=0,copyable=1,doc='DBRelease or CDRelease (DatasetName:FileName). e.g., ddo.000001.Atlas.Ideal.DBRelease.v050101:DBRelease-5.1.1.tar.gz'),
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='Panda job id'),
         'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Panda job status'),
         'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
@@ -382,6 +383,10 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.13  2008/11/13 16:28:09  dvanders
+# supStream support: suppress some output streams. e.g., ['ESD','TAG']
+# improved logging messages
+#
 # Revision 1.12  2008/10/21 14:30:34  dvanders
 # comment out prints
 #
