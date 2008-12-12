@@ -101,11 +101,12 @@ class EvgenTransform(MCTransform):
    def initialize(self):
       super(EvgenTransform, self).initialize()
       self.name = "Evgen"
+      self.application.mode = "evgen"
+      self.file_type = "evgen.EVNT"
       self.application.number_events_job = 10000
 
    def setup(self):
       super(EvgenTransform,self).setup()
-      self.application.mode = "evgen"
       self.file_type = "evgen.EVNT"
 
    def getJobsForPartitions(self, partitions):
@@ -126,11 +127,12 @@ class SimulTransform(MCTransform):
       super(SimulTransform, self).initialize()
       self.name = "Simul"
       self.application.number_events_job = 50
+      self.application.mode = "simul"
+      self.file_type = "simul.RDO"
       self.inputdata = AthenaMCInputDatasets()
 
    def setup(self):
       super(SimulTransform,self).setup()
-      self.application.mode = "simul"
       self.file_type = "simul.RDO"
 
    def getJobsForPartitions(self, partitions):
@@ -151,11 +153,12 @@ class ReconTransform(MCTransform):
       super(ReconTransform, self).initialize()
       self.name = "Recon"
       self.application.number_events_job = 1000
+      self.application.mode = "recon"
+      self.file_type = "recon.AOD"
       self.inputdata = AthenaMCInputDatasets()
 
    def setup(self):
       super(ReconTransform,self).setup()
-      self.application.mode = "recon"
       self.file_type = "recon.AOD"
 
 
