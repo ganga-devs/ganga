@@ -105,30 +105,32 @@ except ImportError:
     pass
 
 def starttasks():
-    from GangaAtlas.Lib.Tasks.tasklist import TaskList
+    from GangaAtlas.Lib.Tasks.TaskList import TaskList
     from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-    reload(Ganga.GPIDev.Persistency)
-    from Ganga.GPIDev.Persistency import load
     from Ganga.Runtime.GPIexport import exportToGPI
     from Ganga.Utility.Config import getConfig
-    import os
-    import os.path
-    fn = os.path.join(getConfig("Configuration")["gangadir"],"tasks.dat")
+    import os, os.path
+    from sets import Set
+    fn = os.path.join(getConfig("Configuration")["gangadir"],"tasks.xml")
     try:
        os.stat(fn)
-       plists = load(fn)
+       from Ganga.Core.JobRepositoryXML.VStreamer import from_file 
+       plists = from_file(file(fn,"r"))
        if len(plists) > 0:
-          pl = plists[0]
+          tl = plists[0]
           logger.info("Tasks read from file")
        else:
           logger.warning("No Tasks in Persistency! Creating new Task list.")
-          pl = GPIProxyObjectFactory(TaskList())
+          tl = TaskList()
     except OSError:
        logger.info("Starting for first launch - Creating new Task list.")
-       pl = GPIProxyObjectFactory(TaskList())
-
-    exportToGPI('tasks',pl,'Objects','List of all tasks')
-    pl.start()
+       tl = TaskList()
+    import atexit
+    atexit.register(tl.save)
+    tasks = GPIProxyObjectFactory(tl)
+    del tasks.__class__.copy
+    exportToGPI('tasks',GPIProxyObjectFactory(tl),'Objects','List of all tasks')
+    tl.start()
 
 starttasks()
 del starttasks
