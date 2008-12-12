@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.31 2008-12-11 10:54:52 elmsheus Exp $
+# $Id: Athena.py,v 1.32 2008-12-12 11:15:28 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -534,7 +534,7 @@ fi
 
         else:  
             if os.environ.has_key('TMPDIR'):
-                tmp = os.environ['TMPDIR']
+                tmpDir = os.environ['TMPDIR']
             else:
                 cn = os.path.basename( os.path.expanduser( "~" ) )
                 tmpDir = os.path.realpath('/tmp/' + cn )
@@ -959,6 +959,13 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.31  2008/12/11 10:54:52  elmsheus
+# Add Athena.user_area_path: configure path where to put user_area
+#     file which is created during call of prepare()
+#     Changed default to $TMPDIR or /tmp/$USER
+#     If Athena.user_area_path='workspace' old default of ganga workspace
+#     is used
+#
 # Revision 1.30  2008/12/10 15:24:20  elmsheus
 # Fix for the master job numfiles2
 #
