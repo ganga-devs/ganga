@@ -3,6 +3,8 @@
 def get_DIRAC_status(jobs):
     """Retrieve status information from Dirac and return as list"""
 
+    from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
+
     # Translate between the many statuses in DIRAC and the few in Ganga
     statusmapping = {'Checking' : 'submitted',
                      'Completed' : 'completed',
