@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.12 2008-11-24 14:12:04 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.13 2008-12-12 10:17:42 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -19,11 +19,18 @@ from dq2.common.DQException import DQInvalidRequestException
 from dq2.common.client.DQClientException import DQInternalServerException
 from dq2.content.DQContentException import DQFileExistsInDatasetException
 
+from Ganga.GPIDev.Credentials import GridProxy
+
 from Ganga.Utility.GridShell import getShell
+
+
 
 _refreshToACache()
 gridshell = getShell("EDG")
 
+# Extract username from certificate
+proxy = GridProxy()
+username = proxy.identity()
 
 def getLFCmap():
     lfcstrings,lfccloud={},{}
@@ -93,7 +100,6 @@ def getcurl(url,data):
 
 
 def checkpath(path,prefix):
-
     if prefix=="castor":
         cmd="rfdir %s" % path
     else:
@@ -138,22 +144,87 @@ def mapSitesToCloud():
     logger.debug("got mapping regions to sites: %s" % str(clouds)) 
     return clouds
 
+def extractFileNumber(filename):
+    """ Returns the file number contained in the filename (file._00001.root),
+        Returns None and prints a WARNING if unsuccessful"""
+    if isinstance(filename,int):
+        return filename
+    if filename.find("._") != -1:
+        num = filename.split("._")[-1].split(".")[0]
+    else:
+        num = filename.split("_")[-1].split(".")[0]
+    try:
+       return int(num)
+    except ValueError:
+       logger.warning("could not find partition number on %s. Giving up" % filename)
+       return
+
+def matchFile(matchrange, filename):
+    """ Returns True if the filename matches an entry in matchrange = (matchlist, openrange)
+        or, if openrange == True, if it is above the last entry in matchlist in numbering.
+        If (not matchrange) is true, then the matchrange matches all files. """
+    if not matchrange:
+        return True
+    for match in matchrange[0]:
+        if match in filename:
+            return True
+    if matchrange[1]: # in case of an open range
+        lastnum = extractFileNumber(matchrange[0][-1])
+        num = extractFileNumber(filename)
+        if num > lastnum:
+            return True
+    return False
+
+def expandList(partnumbers):
+    openrange = 0
+    if isinstance(partnumbers, list):
+        return (partnumbers, False)
+    protolist=string.split(partnumbers,",")
+    result=[]
+    for block in protolist:
+        block=string.strip(block)
+        if string.find(block,"-")>-1:
+            [begin,end]=string.split(block,"-")
+            begin=string.strip(begin)
+            if begin=="":
+                begin=1 # easy case for open ranges...
+            end=string.strip(end)
+            if end=="":
+                logger.debug("Detected open range towards the end of dataset. Setting flag for future resolution")
+                openrange=string.atoi(begin)
+            if not begin.isdigit():
+                logger.error("Non digit entered in partition list: %s. Invalid list, returning empty handed" %block)
+                return ([],False)
+            if end.isdigit():
+                for i in range(string.atoi(begin),string.atoi(end)+1):
+                    result.append(i)
+        else:
+            if not block.isdigit() :
+                logger.error("Non digit entered in partition list: %s. Invalid list, returning empty handed" %block)
+                return ([],False)
+            result.append(string.atoi(block))
+    result = dict([(i,1)for i in result]).keys() # make results unique
+    result.sort()
+    if not openrange:
+       return (result, False)
+    else:
+       return ([r for r in result if r < openrange] + [openrange], True)
+
 class AthenaMCInputDatasets(Dataset):
     '''AthenaMC Input Datasets class'''
 
-    _schema = Schema(Version(1,0), {
-        'DQ2dataset'    : SimpleItem(defvalue = '', doc = 'DQ2 Dataset Name'),
+    _schema = Schema(Version(2,0), {
+        'DQ2dataset' : SimpleItem(defvalue = '', doc = 'DQ2 Dataset Name'),
         'LFCpath' : SimpleItem(defvalue = '', doc = 'LFC path of directory to find inputfiles on the grid, or local directory path for input datasets (datasetType=local). For all non-DQ2 datasets.'),
-        'inputfiles'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names of subset of files to be processed. Must be used in conjunction of either DQ2dataset or LFCpath.'),
-        'inputpartitions'  : SimpleItem(defvalue ="",doc='String of input file numbers to be used (each block separated by a coma).A block can be a single number or a closed subrange (x-y). Subranges are defined with a dash. Must be used in conjunction of either DQ2dataset or LFCpath. Alternative to inputfiles.'),
-        'number_inputfiles'  : SimpleItem(defvalue="",sequence=0,doc='Number of inputfiles to process.'),
-        'n_infiles_job'    : SimpleItem(defvalue=1,doc='Number of input files processed by one job or subjob. Minimum 1'),
-        'datasetType'      : SimpleItem(defvalue = 'unknown', doc = 'Type of dataset(DQ2,private,unknown or local). DQ2 means the requested dataset is registered in DQ2 catalogs, private is for input datasets registered in a non-DQ2 storage (Tier3) and known to CERN local LFC. local is for local datasets on Local backend only'),
+        'datasetType' : SimpleItem(defvalue = 'unknown', doc = 'Type of dataset(DQ2,private,unknown or local). DQ2 means the requested dataset is registered in DQ2 catalogs, private is for input datasets registered in a non-DQ2 storage (Tier3) and known to CERN local LFC. local is for local datasets on Local backend only'),
+        'number_events_file' : SimpleItem(defvalue=1,sequence=0,doc='Number of "events" per input file. This is used together with application.number_events_job to calculate the number of input files per job, or the number of jobs to inputfiles, respectively. This replaces "n_infiles_job".'),
+        'skip_files' : SimpleItem(defvalue=0,doc='File numbers to skip in the input dataset. This shifts the numbering of the output files: If skip_files = 10 the processing starts with output file number one at input file 11.'),
+        'skip_events' : SimpleItem(defvalue=0,doc='Number of events to skip in the first input file (after skip_files). This shifts the numbering of the output files, so the output file number one will contain the first set of events after skip_files and skip_events.'),
+        'redefine_partitions'  : SimpleItem(defvalue ="",doc='FOR EXPERTS: Redefine the input partitions. There are three possibilities to specify the new input partitions: 1) String of input file numbers to be used (each block separated by a comma). A block can be a single number or a closed subrange (x-y). Subranges are defined with a dash. 2) List of input file numbers as integers 3) List of LFNs of input files as strings. This replaces the "inputfiles" property. To only process some events, it is recommended not to use "redefine_partitions" but rather use an AthenaMCSplitter and j.splitter.input_partitions.', typelist=["str","list"]),
         'cavern' : SimpleItem(defvalue = '', doc = 'Name of the dataset to be used for cavern noise (pileup jobs) or extra input dataset (other transforms). This dataset must be a DQ2 dataset'),
         'n_cavern_files_job': SimpleItem(defvalue =1,doc='Number of input cavern files processed by one job or subjob. Minimum 1'),
         'minbias' : SimpleItem(defvalue = '', doc = 'Name of the dataset to be used for minimum bias (pileup jobs) or extra input dataset (other transforms). This dataset must be a DQ2 dataset'),
-        'n_minbias_files_job': SimpleItem(defvalue =1,doc='Number of input cavern files processed by one job or subjob. Minimum 1')
-        
+        'n_minbias_files_job': SimpleItem(defvalue =1,doc='Number of input cavern files processed by one job or subjob. Minimum 1'),
     })
 
     _category = 'datasets'
@@ -163,60 +234,63 @@ class AthenaMCInputDatasets(Dataset):
 
     # content = [ ]
     # content_tag = [ ]
-
     
     def __init__(self):
         super( AthenaMCInputDatasets, self ).__init__()
+        # Extract username from certificate
+        proxy = GridProxy()
+        username = proxy.identity()
+
         #self.initDQ2hashes()
         #logger.debug(self.baseURLDQ2)
 
-    def expandList(self,partnumbers):
-        protolist=string.split(partnumbers,",")
-        result=[]
-        for block in protolist:
-            block=string.strip(block)
-            if string.find(block,"-")>-1:
-                [begin,end]=string.split(block,"-")
-                begin=string.strip(begin)
-                if begin=="":
-                    begin=1 # easy case for open ranges...
-                end=string.strip(end)
-                if end=="":
-                    logger.debug("Detected open range towards the end of dataset. Setting flag for future resolution")
-                    self.openrange=string.atoi(begin)
-                if not begin.isdigit():
-                    logger.error("Non digit entered in inputdata.inputpartitions: %s. Invalid list, returning empty handed" %block)
-                    return []
-                if end.isdigit():
-                    for i in range(string.atoi(begin),string.atoi(end)+1):
-                        result.append(i)
-            else:
-                if not block.isdigit() :
-                    logger.error("Non digit entered in inputdata.inputpartitions: %s. Invalid list, returning empty handed" %block)
-                    return []
-                result.append(string.atoi(block))
-        result=["_"+string.zfill(i,5) for i in result]       
-        return result
-    
-        
-    def get_dataset(self, app,username):
-        '''seek dataset informations based on job.inputdata information and returns (hopefully) a formatted set of information for all processing jobs (turls, catalog servers, dataset location for each lfn). Called by master_submit'''
+    def numbersToMatcharray(self,partitions):
+        """ Transform a list of input file numbers into a matcharray that can be used on a list of filenames.
+            This is a trivial operation if the user did not redefine the input partitions via redefine_partitions """
+        if not self.redefined_partitions:
+            return ["_"+string.zfill(f, 5) for f in partitions]
+        else:
+            files = []
+            for p in partitions:
+                if p <= len(self.redefined_partitions[0]):
+                    f = self.redefined_partitions[0][p-1]
+                    if isinstance(f,int): # if f is an integer...
+                        f = "_"+string.zfill(f, 5)
+                    files.append(f)
+                elif self.redefined_partitions[1]: # if the partitions redefined had an open range, continue after last element...
+                    files.append("_"+string.zfill(p - len(self.redefined_partitions[0]) + self.redefined_partitions[0][-1], 5))
+                else:
+                    logger.error("Only %i input partitions defined in inputdata.redefine_partitions, but partition %i was requested!", len(self.redefined_partitions[0]), p)
+                    raise
+            return files
 
-        job = app.getJobObject()
-        if not job:
-            logger.warning('Application without job object')
-            return []
+    def filesToNumbers(self,files):
+        """ Transform a list of input file names into a list of input partition numbers.
+            This is a trivial operation if the user did not redefine the input partitions via redefine_partitions """
+        if not self.redefined_partitions:
+            return [extractFileNumber(fn) for fn in files]
+        else:
+            num = []
+            file_numbers = [extractFileNumber(fn) for fn in files]
+            part_numbers = [extractFileNumber(fn) for fn in self.redefined_partitions[0]]
+            numbers = []
+            for i in file_numbers:
+                 try:
+                     numbers.append(1+part_numbers.index(i))
+                 except ValueError:
+                     if self.redefined_partitions[1] and part_numbers[-1] < i:
+                         lastpart = part_numbers[-1]
+                         lastnumber = len(part_numbers)
+                         numbers.append(lastnumber + i - lastpart)
+            return numbers
 
-        if not job.inputdata: return []
-
-        if not job.inputdata._name == 'AthenaMCInputDatasets':
-            logger.warning('Dataset is not of type AthenaMCInputDatasets')
-            return []
+    def get_dataset(self, app, backend):
+        '''seek dataset informations and returns (hopefully) a formatted set of information for all processing jobs (turls, catalog servers, dataset location for each lfn). Called by master_submit'''
 
 
-        dataset=job.inputdata.DQ2dataset
-        path=job.inputdata.LFCpath
-        datasetType=job.inputdata.datasetType
+        dataset=self.DQ2dataset
+        path=self.LFCpath
+        datasetType=self.datasetType
         # consistency checks first:
         if datasetType=="DQ2":
             try:
@@ -230,6 +304,12 @@ class AthenaMCInputDatasets(Dataset):
             except:
                 logger.error("datasetType set to local but no local path declared in LFCpath. Aborting")
                 raise
+        
+        try:
+            assert app.number_events_job != 0
+        except:
+            logger.error("application.number_events_job is zero! Aborting.")
+            raise
 
         if not dataset and not path:
             # set up default values: DQ2 dataset with automatic naming conventions
@@ -243,48 +323,44 @@ class AthenaMCInputDatasets(Dataset):
             if app.version:
                 dataset+="."+str(app.version)
             datasetType="DQ2" # force datasetType to be DQ2 as this is the default mode.
-
-
-        maxfiles=-1
-        if job.inputdata.number_inputfiles:
-            maxfiles=string.atoi(str(job.inputdata.number_inputfiles))
-            
-        matcharray=[]
-        self.openrange=0
-        inputfiles=job.inputdata.inputfiles
-        inputpartnrs=job.inputdata.inputpartitions
-        if len(inputfiles)>0:
-            matcharray=inputfiles # a fully defined list of inputfiles takes precedence over loose matching input list.
-        elif len(inputpartnrs)>0:
-            matcharray=self.expandList(inputpartnrs)
-
-            
-
-
-        logger.debug("maxfiles: %d"%maxfiles)
-        backend=job.backend._name
+      
+        # redefine partitions if necessary 
+        self.redefined_partitions = []
+        if self.redefine_partitions:
+           self.redefined_partitions = expandList(self.redefine_partitions)
+   
+        # get tuple (list, openrange) of partitions to process 
+        partitions = app.getPartitionList()
+        inputfiles = app.getInputsForPartitions(partitions[0], self)
+        matchrange = (self.numbersToMatcharray(inputfiles), partitions[1])
+        logger.debug("Matchrange: %s (open: %s)" % matchrange)
+        if matchrange[1]: # We must not limit dataset collection if we have an open range...
+            matchrange = []
 
         self.turls={}
         self.lfcs={}
         self.sites=[]
+
+        new_backend = backend
         
         if (datasetType=="DQ2" or datasetType=="unknown") and dataset:
             logger.debug("looking for dataset in DQ2, input data is : %s %s" % (dataset,inputfiles))
-            backend = self.getdq2data(dataset,matcharray,backend,maxfiles,"true")
+            new_backend = self.getdq2data(dataset,matchrange,backend,update=True)
                 
         if (datasetType=="private"  or datasetType=="unknown") and path != "":
             logger.debug("scanning CERN LFC for data in Tier 3, input data is : %s %s " % (path,inputfiles))
-            self.getlfcdata(path,matcharray,"prod-lfc-atlas-local.cern.ch",backend)
+            self.getlfcdata(path,matchrange,"prod-lfc-atlas-local.cern.ch",backend)
             
         if datasetType=="local" and path != "":
             logger.debug("getting data from local source: %s " % path)
-            self.getlocaldata(path,matcharray,backend)
+            self.getlocaldata(path,matchrange,backend)
 
         try:
-            assert backend == job.backend._name
+            assert backend == new_backend
         except:
-            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
+            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset, backend, new_backend))
             raise
+
             
         return [self.turls,self.lfcs,self.sites]
 
@@ -296,11 +372,9 @@ class AthenaMCInputDatasets(Dataset):
         self.sites=[]
         job = app.getJobObject()
         dataset=job.inputdata.cavern
-        matcharray=[]
         backend=job.backend._name
-        maxfiles=-1
         
-        backend = self.getdq2data(dataset,matcharray,backend,maxfiles,"")
+        backend = self.getdq2data(dataset,None,backend,update=False)
         try:
             assert backend == job.backend._name
         except:
@@ -316,11 +390,9 @@ class AthenaMCInputDatasets(Dataset):
         self.sites=[]
         job = app.getJobObject()
         dataset=job.inputdata.minbias
-        matcharray=[]
         backend=job.backend._name
-        maxfiles=-1
         
-        backend = self.getdq2data(dataset,matcharray,backend,maxfiles,"")
+        backend = self.getdq2data(dataset,None,backend,update=False)
         try:
             assert backend == job.backend._name
         except:
@@ -348,8 +420,8 @@ class AthenaMCInputDatasets(Dataset):
         finally:
             dq2_lock.release()
         if len(datasets.values())==0:
-            logger.error('Dataset %s is not defined in DQ2 database ! Aborting',dataset)
-            return []      
+            logger.error('Dataset %s is not defined in DQ2 database!',dataset)
+            raise Exception()
         dsetlist=datasets.keys()
         dsetname=dsetlist[0]
         # get list of files in selected dataset.
@@ -360,8 +432,8 @@ class AthenaMCInputDatasets(Dataset):
             dq2_lock.release()
         # Convert 0.3 output to 0.2 style
         if not contents:
-            logger.warning("Empty DQ2 dataset %s. Aborting" % dsetname)
-            return
+            logger.error("Empty DQ2 dataset %s" % dsetname)
+            raise Exception()
         contents = contents[0]
         contents_new = {}
         for guid, info in contents.iteritems():
@@ -390,7 +462,6 @@ class AthenaMCInputDatasets(Dataset):
             dq2_lock.release()
 
         datasetvuid = datasetinfo[dsetname]['vuids'][0]
-       
 
         datasetType="complete"
         allSites=locations[datasetvuid][1]
@@ -412,12 +483,11 @@ class AthenaMCInputDatasets(Dataset):
                 self.lfcs[dsetname]+=lfc+" "
 
         self.sites=[]
-            
+
         return [self.turls,self.lfcs,self.sites]
 
-    def getdq2data(self,dataset,matcharray,backend,maxfiles,update):
+    def getdq2data(self,dataset,matchrange,backend,update):
         allturls={}
-
         try:
             dq2_lock.acquire()
             datasets = dq2.listDatasets('%s' % dataset)
@@ -432,15 +502,15 @@ class AthenaMCInputDatasets(Dataset):
             finally:
                 dq2_lock.release()
             if len(datasets.values())==0:
-                logger.error('Dataset %s is not defined in DQ2 database ! Aborting',dataset)
-                return
+                logger.error('Dataset %s is not defined in DQ2 database!',dataset)
+                raise Exception()
         dsetlist=datasets.keys()
         dsetlist.sort()
         try:
             assert len(datasets.keys())<=1
         except:
             logger.warning("More than one dataset matching your input, please, refine your input. Possible choices are %s " % str(dsetlist))
-            raise
+            raise Exception()
         
         dsetname=dsetlist[0] # update dataset name by using what is found in dq2 (might be different if result of a loose match)
         if update:
@@ -455,8 +525,8 @@ class AthenaMCInputDatasets(Dataset):
             dq2_lock.release()
         # Convert 0.3 output to 0.2 style
         if not contents:
-            logger.warning("Empty DQ2 dataset %s. Aborting" % dsetname)
-            return
+            logger.error("Empty DQ2 dataset %s." % dsetname)
+            raise Exception
         contents = contents[0]
         contents_new = {}
         for guid, info in contents.iteritems():
@@ -465,34 +535,21 @@ class AthenaMCInputDatasets(Dataset):
         
         # sort lfns alphabetically, then get the largest partition number to close the openrange.
         all_lfns=contents.values()
-        all_lfns.sort()
-        logger.debug("All lfns: %s " % str(all_lfns))
-        maxpartnr=all_lfns[-1]
-        imin=string.find(maxpartnr,"._")
-        maxnr=-1
-        if imin <0:
-            logger.error("could not find partition number on %s. Giving up"% maxpartnr)
-        else:
-            imax=string.find(maxpartnr[imin+2:],".")
-            if imax>=0:
-                maxnr=string.atoi(maxpartnr[imin+2:imin+imax+2])
-             
-        if self.openrange>0 and self.openrange<maxnr:
-            for i in range(self.openrange,maxnr+1):
-                matcharray.append("._"+string.zfill(i,5))
-                logger.debug("openrange %i,matcharray: %s" % (self.openrange,str(matcharray)))
+        all_files = [(extractFileNumber(fn), fn) for fn in all_lfns]
+        all_files.sort()
+        logger.debug("All lfns: %s " % str(all_files))
         
+        numbers = []
         for guid, lfn in contents.iteritems():
-            if len(matcharray)==0:
-                allturls[lfn]="guid:"+guid
-            else:
-                for match in matcharray:
-                    if string.find(lfn,match)>-1:
-                        allturls[lfn]="guid:"+guid
-                        break
-        if len(allturls)==0:
-            logger.warning("error, could not find a file matching selection in dataset %s" % dsetname)
-            return 
+            if not matchFile(matchrange, fn):
+                continue
+            num = extractFileNumber(lfn)
+            if num in numbers:
+                logger.warning("In dataset %s there is more than one file with the number %i!" % (dsetname, num))
+                logger.warning("File '%s' ignored!" % (lfn))
+                continue
+            numbers.append(num)
+            allturls[lfn]="guid:"+guid
          
         # now get associated lfcs... by getting list of host sites first...
         try:
@@ -508,7 +565,6 @@ class AthenaMCInputDatasets(Dataset):
             dq2_lock.release()
 
         datasetvuid = datasetinfo[dsetname]['vuids'][0]
-       
 
         datasetType="complete"
         allSites=locations[datasetvuid][1]
@@ -595,7 +651,7 @@ class AthenaMCInputDatasets(Dataset):
         #logger.warning("final lfc list:%s" % str(self.lfcs))
         return backend
     
-    def getlfcdata(self,path,matcharray,lfc,backend):
+    def getlfcdata(self,path,matchrange,lfc,backend):
         if path[-1]=="/":
             path=path[:-1] # pruning path .
         # check that path does not already contain lfc. If yes, then reallocate path and lfc accordingly
@@ -609,50 +665,35 @@ class AthenaMCInputDatasets(Dataset):
         status,output,m=gridshell.cmd1("lfc-ls %s:%s" % (lfc,path),allowed_exit=[0,255])
         if status !=0:
             logger.error("Error accessing LFC %s: %s" %  (lfc,status))
-            return
+            raise Exception()
         # sort lfns alphabetically, then get the largest partition number to close the openrange.
         inputfiles=output.split()
-        inputfiles.sort()
         try:
             assert len(inputfiles)>0
         except AssertionError:
             logger.error("No input files found at specified location %s:%s. Giving up" % (lfc,path))
-            raise
-        maxpartnr=inputfiles[-1]
-        imin=string.find(maxpartnr,"._")
-        maxnr=-1
-        if imin <0:
-            logger.error("could not find partition number on %s. Giving up"% maxpartnr)
-        else:
-            imax=string.find(maxpartnr[imin+2:],".")
-            if imax>=0:
-                maxnr=string.atoi(maxpartnr[imin+2:imin+imax+2])
+            raise Exception()
                 
-        if self.openrange>0 and self.openrange<maxnr:
-            for i in range(self.openrange,maxnr+1):
-                matcharray.append("._"+string.zfill(i,5))
-                
-        for lfn in inputfiles:
-            matchflag="false"
-            if len(matcharray)==0:
-                matchflag="true"
-            else:
-                for match in matcharray:
-                    if string.find(lfn,match)>-1:
-                        matchflag="true"
-                        break
-            if matchflag=="true":
-                status,turl,m=gridshell.cmd1("export LFC_HOST=%s; lcg-lg --vo atlas lfn:%s/%s" % (lfc,path,lfn),allowed_exit=[0,1,255])
-                if status==0:
-                    self.turls[lfn]=turl
+        numbers = []
+        for fn in inputfiles:
+            if not matchFile(matchrange, fn):
+                continue
+            status,turl,m=gridshell.cmd1("export LFC_HOST=%s; lcg-lg --vo atlas lfn:%s/%s" % (lfc,path,lfn),allowed_exit=[0,1,255])
+            num = extractFileNumber(lfn)
+            if status==0:
+                if num in numbers:
+                    logger.warning("In directory %s there is more than one file with the number %i!" % (path, num))
+                    logger.warning("File '%s' ignored!" % (lfn))
+                    continue
+                numbers.append(num)
+                self.turls[lfn]=turl
         self.lfcs[path]=lfc
             
-            
-    def getlocaldata(self,path,matcharray,backend):
+    def getlocaldata(self,path,matchrange,backend):
         
         if backend not in ["LSF","Local","PBS"]:
-            logger.error("Attempt to use a local file on a job due to be submitted remotely. Aborting")
-            return 
+            logger.error("Attempt to use a local file on a job due to be submitted remotely.")
+            raise Exception()
         
         if path[-1]=="/":
             path=path[:-2]
@@ -664,63 +705,45 @@ class AthenaMCInputDatasets(Dataset):
             readcmd="rfdir"
 
         if not checkpath(path,prefix):
-            logger.error("Non existent input path %s, aborting" % path)
-            return 
+            logger.error("Non existent input path %s" % path)
+            raise Exception()
 
 
         output=commands.getoutput("%s %s" % (readcmd,path))
         # sort lfns alphabetically, then get the largest partition number to close the openrange.
         inputfiles=output.split()
-        inputfiles.sort()
         try:
             assert len(inputfiles)>0
         except AssertionError:
             logger.error("No input files found at specified location %s. Giving up" % path)
             raise
+        all_files = [(extractFileNumber(fn), fn) for fn in inputfiles]
+        all_files.sort()
+        logger.debug("All lfns: %s " % str(all_files))
+        inputfiles.sort()
                 
-        maxpartnr=inputfiles[-1]
-        imin=string.find(maxpartnr,"._")
-        maxnr=-1
-        if imin <0:
-            logger.error("could not find partition number on %s. Giving up"% maxpartnr)
-        else:
-            imax=string.find(maxpartnr[imin+2:],".")
-            if imax>=0:
-                maxnr=string.atoi(maxpartnr[imin+2:imin+imax+2])
-                
-        if self.openrange>0 and self.openrange<maxnr:
-            for i in range(self.openrange,maxnr+1):
-                matcharray.append("._"+string.zfill(i,5))
-                
-        for file in inputfiles:
-            matchflag="false"
-            if len(matcharray)==0:
-                matchflag="true"
-            else:
-                for match in matcharray:
-                    if string.find(file,match)>-1 and checkpath(os.path.join(path,file),prefix):
-                        matchflag="true"
-                        break
-            if matchflag=="true":
+        numbers = []
+        for (num, fn) in all_files:
+            if not matchFile(matchrange, fn):
+                continue
+            if checkpath(os.path.join(path,file),prefix):
+                num = extractFileNumber(lfn)
+                if num in numbers:
+                    logger.warning("In directory %s there is more than one file with the number %i!" % (path, num))
+                    logger.warning("File '%s' ignored!" % (lfn))
+                    continue
+                numbers.append(num)
                 self.turls[file]="%s:%s/%s "% (prefix,path,file)
-
-
-
 
 class AthenaMCOutputDatasets(Dataset):
     """AthenaMC Output Dataset class """
     
     _schema = Schema(Version(1,0), {
         'outdirectory'     : SimpleItem(defvalue = '', doc='path of output directory tree for storage. Used for both LFC and physical file locations.'), 
-        'output_dataset'         : SimpleItem(defvalue = '', doc = 'dataset suffix for combined output dataset. If set, it will collect all expected output files for the job. If not set, every output type (histo, HITS, EVGEN...) will have its own output dataset.'),
-        'output_firstfile'   : SimpleItem(defvalue=1,doc='offset for output file partition numbers. First job will generate the partition number output_firstfile, second will generate output_firstfile+1, and so on...'),
-        'logfile'            : SimpleItem(defvalue='',doc='file prefix and dataset suffix for logfiles.'),
-        'outrootfile'        : SimpleItem(defvalue='',doc='file prefix and dataset suffix for primary output root file (EVGEN for evgen jobs, HITS for simul jobs). Placeholder for any type of output file in template mode.'),
-        'outhistfile'          : SimpleItem(defvalue='',doc='file prefix and dataset suffix for histogram files. Placeholder for any type of output file in template mode.'),
-        'outntuplefile'          : SimpleItem(defvalue='',doc='file prefix and dataset suffix for ntuple files. Placeholder for any type of output file in template mode.'),
-        'outrdofile'         : SimpleItem(defvalue='',doc='file prefix and dataset suffix for RDO files. Placeholder for any type of output file in template mode.'),
-       'outesdfile'         : SimpleItem(defvalue='',doc='file prefix and dataset suffix for ESD files. Placeholder for any type of output file in template mode.'),
-        'outaodfile'         : SimpleItem(defvalue='',doc='file prefix and dataset suffix for AOD files. Placeholder for any type of output file in template mode.'),
+        'output_dataset'   : SimpleItem(defvalue = '', doc = 'dataset suffix for combined output dataset. If set, it will collect all expected output files for the job. If not set, every output type (histo, HITS, EVGEN...) will have its own output dataset.'),
+        'output_firstfile'   : SimpleItem(defvalue=1,doc='EXPERT: Number of first output file. The job processing the first partition will generate the file with the number output_firstfile, the second will generate output_firstfile+1, and so on...'),
+        'logfile'          : SimpleItem(defvalue='',doc='file prefix and dataset suffix for logfiles.'),
+        'outrootfiles'     : SimpleItem(defvalue={},typelist=["dict"], doc='file prefixes and dataset suffixes for other output root files. To set for example the evgen file prefix, type: j.outputdata.outrootfiles["EVNT"] = "file.prefix". The keys used are EVNT, HIST, HITS, RDO, ESD, AOD and NTUP. To reset a value to default, type "del j.outputdata.outrootfiles["EVNT"]. To disable creation of a file, type j.outputdata.outrootfiles["EVNT"] = "NONE"'),
         'expected_output'         : SimpleItem(defvalue = [], typelist=['list'], sequence = 1, protected=1,doc = 'List of output files expected to be produced by the job. Should not be visible nor modified by the user.'),
         'actual_output'         : SimpleItem(defvalue = [], typelist=['list'], sequence = 1, protected=1,doc = 'List of output files actually produced by the job followed by their locations. Should not be visible nor modified by the user.')
         })
@@ -736,91 +759,51 @@ class AthenaMCOutputDatasets(Dataset):
         #       logger.debug(self.baseURLDQ2)
         #        self.baseURLDQ2 = 'http://atlddmpro.cern.ch:8000/dq2/'
 
-    def prep_data(self,app,username):
+    def prep_data(self,app):
         ''' generate output paths and file prefixes based on app and outputdata information. Generate corresponding entries in DQ2. '''
-        fileprefixes,outputpaths={},{}
-        job = app.getJobObject()
-        if not job:
-            logger.warning('Application without job object')
-            return fileprefixes,outputpaths
+        fileprefixes,outputpaths=self.outrootfiles.copy(),{}
 
-        
-        fileprefixes["logfile"]=job.outputdata.logfile
-        if not job.outputdata.logfile:
-            fileprefixes["logfile"]="%s.%6.6d.%s.%s.LOG"% (app.production_name,int(app.run_number),app.process_name,app.mode)
-            if app.version:
-                fileprefixes["logfile"]+="."+str(app.version)
+        # The common prefix production.00042.physics.
+        app_prefix = "%s.%6.6d.%s" % (app.production_name,int(app.run_number),app.process_name)
 
+        # The Logfile must be set        
+        if not "LOG" in fileprefixes:
+            fileprefixes["LOG"]="%s.%s.LOG" % (app_prefix,app.mode)
 
-        fileprefixes["rootfile"]=job.outputdata.outrootfile
-        if not job.outputdata.outrootfile:
-            if app.mode=="evgen":
-                fileprefixes["rootfile"]="%s.%6.6d.%s.evgen.EVNT" %  (app.production_name,int(app.run_number),app.process_name)
-            elif app.mode=="simul":
-                fileprefixes["rootfile"]="%s.%6.6d.%s.simul.HITS" %  (app.production_name,int(app.run_number),app.process_name)
-            if app.version and fileprefixes["rootfile"]:
-                fileprefixes["rootfile"]+="."+str(app.version)
+        # Add missing output file names.
+        if app.mode == "evgen":
+            if not "EVNT" in fileprefixes:
+                fileprefixes["EVNT"] = app_prefix + ".evgen.EVNT"
+        elif app.mode == "simul":
+            if not "HITS" in fileprefixes:
+                fileprefixes["HITS"] = app_prefix + ".simul.HITS"
+            if not "RDO" in fileprefixes:
+                fileprefixes["RDO"]  = app_prefix + ".simul.RDO"
+        elif app.mode == "recon":
+            if not "ESD" in fileprefixes:
+                fileprefixes["ESD"]  = app_prefix + ".recon.ESD"
+            if not "AOD" in fileprefixes:
+                fileprefixes["AOD"]  = app_prefix + ".recon.AOD"
+            if not "NTUP" in fileprefixes:
+                fileprefixes["NTUP"] = app_prefix + ".recon.NTUP"
 
-        fileprefixes["histfile"]=job.outputdata.outhistfile
-        if app.version and job.outputdata.outhistfile:
-            fileprefixes["histfile"]+="."+str(app.version)
-
-        fileprefixes["ntuplefile"]=job.outputdata.outntuplefile
-        if not job.outputdata.outntuplefile and app.mode=="recon":
-            fileprefixes["ntuplefile"]="%s.%6.6d.%s.recon.NTUP" % (app.production_name,int(app.run_number),app.process_name)
-            if app.version:
-                fileprefixes["ntuplefile"]+="."+str(app.version)
-
-        fileprefixes["rdofile"]=job.outputdata.outrdofile
-        if not job.outputdata.outrdofile and app.mode=="simul":
-            fileprefixes["rdofile"]="%s.%6.6d.%s.simul.RDO" %  (app.production_name,int(app.run_number),app.process_name)
-            if app.version:
-                fileprefixes["rdofile"]+="."+str(app.version)
-                
-        fileprefixes["esdfile"]=job.outputdata.outesdfile
-        if not job.outputdata.outesdfile and app.mode=="recon":
-            fileprefixes["esdfile"]="%s.%6.6d.%s.recon.ESD" %  (app.production_name,int(app.run_number),app.process_name)
-            if app.version:
-                fileprefixes["esdfile"]+="."+str(app.version)
-                
-        fileprefixes["aodfile"]=job.outputdata.outaodfile
-        if not job.outputdata.outaodfile and app.mode=="recon":
-            fileprefixes["aodfile"]="%s.%6.6d.%s.recon.AOD" %  (app.production_name,int(app.run_number),app.process_name)
-            if app.version:
-                fileprefixes["aodfile"]+="."+str(app.version)
-
-        for type in fileprefixes.keys():
-            if fileprefixes[type]=="":
-                del fileprefixes[type] 
-                continue
+        if app.version:
+            for key in fileprefixes.keys():
+                fileprefixes[key]+="."+str(app.version)
 
         # done with file prefixes. Now generatig datasets out of them...
         datasetbase="%s.%s." % (_usertag,username)
-        maxdsname_length=132
-        if job.outputdata.output_dataset and string.find(job.outputdata.output_dataset,",")<0:
-            dataset=datasetbase+job.outputdata.output_dataset
+        if self.output_dataset and string.find(self.output_dataset,",")<0:
+            dataset=datasetbase+self.output_dataset
             if app.se_name != "local":
-                if len(dataset)>maxdsname_length:
-                    DQ2DS=dataset[0:maxdsname_length]
-                    logger.warning("Chosen dataset name %s is too long. Truncating to %s for DQ2 registration" % (dataset,DQ2DS))
-                    dataset=DQ2DS
                 logger.debug("creating dataset %s in DQ2" % dataset)
                 self.create_dataset(dataset)
         else:
             for type in fileprefixes.keys():
                 if type=="logfile":
                     dataset=datasetbase+"ganga.logfiles."+fileprefixes[type]
-                    if len(dataset)>maxdsname_length and len(dataset)<maxdsname_length+12:
-                        dataset=datasetbase+"log."+fileprefixes[type]
                 else:
                     dataset=datasetbase+"ganga.datafiles."+fileprefixes[type]
-                    if len(dataset)>maxdsname_length and len(dataset)<maxdsname_length+12:
-                        dataset=datasetbase+"data."+fileprefixes[type]
-                if len(dataset)>maxdsname_length:
-                    DQ2DS=dataset[0:maxdsname_length]
-                    logger.warning("Dataset name %s is too long. Truncating to %s for DQ2 registration" % (dataset,DQ2DS))
-                    dataset=DQ2DS
-                logger.debug("creating dataset %s in DQ2" % dataset)        
                 # now generating DQ2 dataset:
                 if app.se_name != "local":
                     logger.debug("creating dataset %s in DQ2" % dataset)
@@ -831,10 +814,10 @@ class AthenaMCOutputDatasets(Dataset):
         # 2) otherwise it is the conversion of outputdata.output_dataset
         # 3) finally, it is the conversion of pre-generated outputfiles.
         for type in fileprefixes.keys():
-            if job.outputdata.outdirectory:
-                outputpaths[type]=job.outputdata.outdirectory
-            elif job.outputdata.output_dataset and string.find(job.outputdata.output_dataset,",")<0:
-                outputpaths[type]="/%s/%s/%s" % (_usertag,username,job.outputdata.output_dataset)
+            if self.outdirectory:
+                outputpaths[type]=self.outdirectory
+            elif self.output_dataset and string.find(self.output_dataset,",")<0:
+                outputpaths[type]="/%s/%s/%s" % (_usertag,username,self.output_dataset)
             else:
                 if type=="logfile":
                     outputpaths[type]="/%s/%s/ganga/logfiles/%s"  % (_usertag,username,fileprefixes[type])
@@ -842,9 +825,6 @@ class AthenaMCOutputDatasets(Dataset):
                     outputpaths[type]="/%s/%s/ganga/datafiles/%s"% (_usertag,username,fileprefixes[type]) 
         return fileprefixes,outputpaths
         
-        
-
-
     def getDQ2Locations(self,se_name):
         ''' Provides the triplet: LFC, site and srm path from input se'''
         lfcstrings=getLFCmap()

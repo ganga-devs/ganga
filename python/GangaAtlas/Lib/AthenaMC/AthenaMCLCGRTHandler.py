@@ -24,10 +24,10 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
+from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import extractFileNumber, matchFile
+
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-
-from Ganga.GPIDev.Credentials import GridProxy
 
 # the config file may have a section
 # aboout monitoring
@@ -43,32 +43,17 @@ mc.addOption('AthenaMC/LCG', None, 'FIXME')
 class AthenaMCLCGRTHandler(IRuntimeHandler):
     """Athena MC LCG Runtime Handler"""
 
-    # Counter for number of subjobs
-    ijob = 0
     turls,cavern_turls,minbias_turls,dbturls={},{},{},{}
     lfcs,cavern_lfcs,minbias_lfcs,dblfcs={},{},{},{}
     sites=[]
-    maxinfiles=0
     outputlocation,lfchosts,lfcstrings={},{},{}
     outsite,outlfc,outlfc2="","",""
     outputpaths,fileprefixes={},{}
-    username=""
-    joboffset=0
-    number_input_jobs=1
-    nsubjob_infile=1
-    inputdataset=""
-    outputdirectory=""
     evgen_job_option=""
     prod_release=""
     atlas_rel=""
     
     def master_prepare(self,app,appmasterconfig):
-        
-        # Extract username from certificate
-        proxy = GridProxy()
-        self.username = proxy.identity()
-        self.username = string.replace(self.username,"'","")
-        
         if app.siteroot:
             os.environ["SITEROOT"]=app.siteroot
         os.environ["CMTSITE"]=app.cmtsite
@@ -80,12 +65,11 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             self.atlas_rel=app.atlas_release
             
         # note: either self.prod_release or app.transform_archive must be set! Otherwise, you won't be able to get any transform!
-        # not true anymore, removing try block
-#        try:
-#            assert self.prod_release or app.transform_archive
-#        except:
-#            logger.error("A reference to the Production archive to be used must be set, either through the declaration of the archive itself in application.transform_archive or by putting the 4-digit production cache release number in application.atlas_release. Neither are set. Aborting.")
-#            raise            
+        try:
+            assert self.prod_release or app.transform_archive
+        except:
+            logger.error("A reference to the Production archive to be used must be set, either through the declaration of the archive itself in application.transform_archive or by putting the 4-digit production cache release number in application.atlas_release. Neither are set. Aborting.")
+            raise
         job = app._getParent()
         if job.backend._name in ["Local","PBS"]:
             try:
@@ -151,83 +135,32 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                     raise
             
         if job.inputdata and job.inputdata._name == 'AthenaMCInputDatasets':
-            inputdata=job.inputdata.get_dataset(app,self.username)
-            if len(inputdata)!= 3:
-                logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-                raise "Input file not found"
-            self.turls=inputdata[0]
-            self.lfcs=inputdata[1]
-            self.sites=inputdata[2]
+            # The input dataset was already read in in AthenaMC.master_configure
+            self.turls=app.turls
+            self.lfcs=app.lfcs
+            self.sites=app.sites
             inputfiles=self.turls.keys()
             logger.debug("inputfiles: %s " % str(inputfiles))
             logger.debug("turls: %s " % str(self.turls))
             logger.debug("lfcs: %s " % str(self.lfcs))
             logger.debug("sites: %s " % str(self.sites))
-            
-            if job.inputdata.number_inputfiles>0 and job.inputdata.number_inputfiles<len(inputfiles) :
-                self.maxinfiles=job.inputdata.number_inputfiles
-            else:
-                self.maxinfiles=len(inputfiles)
-                
-            # job splitting and input file pre allocation must take place HERE!
-            # compute nsubjobs_infile, ninfile_subjobs, etc... , compare with numsubjobs and maxinfiles, do the whole splitting business here!
-            numsubjobs=0
-            njob_infile=1
-            outparts=[]
-            if app._getRoot().splitter:
-                numsubjobs= app._getRoot().splitter.numsubjobs
-                njob_infile=  app._getRoot().splitter.nsubjobs_inputfile
-                outparts=app._getRoot().splitter.output_partitions
-            # now checking maxinfiles
-            n_infiles_job=job.inputdata.n_infiles_job
-            if numsubjobs>0:
-                # formula is wrong as it does not take into account a potential offset in output file number
-                #totalinfile=int((numsubjobs-1)*n_infiles_job/njob_infile)+1
-                offset=0
-                if job.outputdata.output_firstfile>0:
-                    offset= int(job.outputdata.output_firstfile)-1
-                if app.partition_number:
-                    offset=app.partition_number
-                if len(outparts)>0:
-                    outparts.sort()
-                    offset=outparts[-1]-1
-                    offset=offset-len(outparts)# need to compensate for numbsubjobs later (computation of totalinfile), as the last job number is not computed in this particular case, it is given in this list.
-#                logger.warning("offset is %i" % offset)
-                if offset<0:
-                    offset=0
-                totalinfile=int((numsubjobs+offset-1)*n_infiles_job/njob_infile)+1
-                if n_infiles_job >= njob_infile:
-                    totalinfile=int(numsubjobs*n_infiles_job/njob_infile)
-                    
-                if totalinfile>self.maxinfiles:
-                    logger.warning("Not enough input files, need %s got %s" % (totalinfile, self.maxinfiles))
-                    try:
-                        assert self.maxinfiles>=totalinfile-n_infiles_job
-                    except AssertionError:
-                        numsubjobs=int((self.maxinfiles-1)*njob_infile/n_infiles_job)+1
-                        app._getRoot().splitter.numsubjobs=numsubjobs
-                        logger.error("Too many subjobs. Must abort to prevent crashes. Please resubmit with splitter.numsubjobs=%d." % numsubjobs)
-                        raise 
-
-                elif totalinfile<self.maxinfiles:
-                    logger.warning("Too many input files, selecting only the %d first ones" % totalinfile)
-                    self.maxinfiles=totalinfile
                     
             # handling cavern and minbias data now.
             if job.inputdata.cavern:
                 inputdata=job.inputdata.get_cavern_dataset(app)
                 if len(inputdata)!= 3:
                     logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-                    raise "Input file not found"
+                    raise Exception("Input file not found")
                 self.cavern_turls=inputdata[0]
                 self.cavern_lfcs=inputdata[1]
             if job.inputdata.minbias:
                 inputdata=job.inputdata.get_minbias_dataset(app)
                 if len(inputdata)!= 3:
                     logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-                    raise "Input file not found"
+                    raise Exception("Input file not found")
                 self.minbias_turls=inputdata[0]
                 self.minbias_lfcs=inputdata[1]
+
         # Add db release to input data if relevant
         dbrelease=""
         if app.extraArgs:    
@@ -245,13 +178,12 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             inputdata=job.inputdata.get_DBRelease(dbrelease)
             if len(inputdata)!= 3:
                     logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-                    raise "Input file not found"
+                    raise Exception("Input file not found")
             self.dbturls=inputdata[0]
             self.dblfcs=inputdata[1]
 
-            
         # doing output data now
-        self.fileprefixes,self.outputpaths=job.outputdata.prep_data(app,self.username)
+        self.fileprefixes,self.outputpaths=job.outputdata.prep_data(app)
         expected_datasets=""
         for filetype in self.outputpaths.keys():
             dataset=string.replace(self.outputpaths[filetype],"/",".")
@@ -270,7 +202,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(self.sites[0])
             if len(self.sites)>1:
                 [outlfc2,backup,backuplocation]=job.outputdata.getDQ2Locations(self.sites[1])
-                
             
         outloc="CERN-PROD_USERDISK"
         if app.se_name != "none":
@@ -293,7 +224,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             bst=backuplocation[imin+6:imax-1]
             backuplocation=backuplocation[imax:]
        
-            
         environment={'T_LCG_GFAL_INFOSYS' :'atlas-bdii.cern.ch:2170'}
 
         environment["OUTLFC"]=outlfc
@@ -308,7 +238,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
 
         environment["PROD_RELEASE"]=self.prod_release
-
 
         # setting environment["BACKEND"]
         # Local, Condor become "batch". LSF becomes "batch" unless the inputdata is on castor (in this case, it becomes "castor")
@@ -372,17 +301,13 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             for file in job.outputsandbox:
                 outputbox += [ file ]
 
-        
-
-        
         # switch JobTransforms/AtlasProduction package.
         self.isJT=string.find(app.transform_archive,"JobTransform")
         if self.isJT>-1 and app.mode=="evgen":
-            environment['T_CONTEXT'] = app.number_events_job # needed to avoid prodsys failure mechanism based on a hardcoded minimum number of event of 5000 per job
+            environment['T_CONTEXT'] = str(self.number_events_job) # needed to avoid prodsys failure mechanism based on a hardcoded minimum number of event of 5000 per job
 
             
 #       prepare job requirements
-
         requirements = LCGRequirements()
         requirements.other.append('other.GlueCEStateStatus=="Production"') # missing production
         imax=string.rfind(self.atlas_rel,".")
@@ -422,11 +347,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         if job.backend._name=="LCG" or job.backend._name=="Cronus" or job.backend._name=="Condor" or job.backend._name=="NG":
             return LCGJobConfig("",inputbox,[],outputbox,environment,[],requirements)
         else :
-        
             return StandardJobConfig("",inputbox,[],outputbox,environment)
 
     ##### methods for prepare() (individual jobs and subjobs) #####
-
     def getEvgenArgs(self,app):
         """prepare args vector for evgen mode"""
         args=[]
@@ -438,35 +361,35 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         if self.isJT>-1:
             args = [ self.atlas_rel,
                      app.se_name,
-                     self.outputfiles["logfile"],
+                     self.outputfiles["LOG"],
                      app.transform_script,
                      app.run_number,
-                     self.outputfiles["rootfile"],
-                     self.outputfiles["ntuplefile"],
-                     self.firstevent,
-                     app.number_events_job,
+                     self.outputfiles["EVNT"],
+                     self.outputfiles["NTUP"],
+                     str(self.firstevent),
+                     str(self.number_events_job),
                      self.randomseed,
                      self.evgen_job_option,
-                     self.outputfiles["histfile"]
                      ]
+            if "HIST" in self.outputfiles:
+                args.append(self.outputfiles["HIST"])
         else: # AtlasProduction archive in use.
             args =  [ self.atlas_rel,
                       app.se_name,
-                      self.outputfiles["logfile"],
+                      self.outputfiles["LOG"],
                       app.transform_script,
                       "runNumber=%s" % str(app.run_number),
                       "firstEvent=%s" % str(self.firstevent),
-                      "maxEvents=%s" % str(app.number_events_job),
+                      "maxEvents=%s" % str(self.number_events_job),
                       "randomSeed=%s" % str(self.randomseed),
                       "jobConfig=%s" % self.evgen_job_option,
-                      "outputEvgenFile=%s" % self.outputfiles["rootfile"]
+                      "outputEvgenFile=%s" % self.outputfiles["EVNT"]
                       ]
 
-            if "histfile" in self.outputfiles:
-                args.append("histogramFile=%s" % self.outputfiles["histfile"]) # validation histos on request only for csc_evgen_trf.py
-
-            if "ntuplefile" in self.outputfiles:
-                args.append("ntupleFile=%s" % self.outputfiles["ntuplefile"])
+            if "HIST" in self.outputfiles:
+                args.append("histogramFile=%s" % self.outputfiles["HIST"]) # validation histos on request only for csc_evgen_trf.py
+            if "NTUP" in self.outputfiles:
+                args.append("ntupleFile=%s" % self.outputfiles["NTUP"])
             if self.inputfile:
                 args.append("inputGeneratorFile=%s" % self.inputfile)
 
@@ -476,40 +399,38 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
     def getSimulArgs(self,app):
         """prepare args vector for simul-digit mode"""
         args=[]
-        skip=str(string.atoi(self.firstevent)-1)
+        skip=str(self.firstevent-1)
         
         if not app.transform_script:
             app.transform_script="csc_simul_trf.py"
             if self.isJT>-1:
                 app.transform_script="csc.simul.trf"
-                
 
         if self.isJT>-1:    
             args = [ self.atlas_rel,
                      app.se_name,
-                     self.outputfiles["logfile"],
+                     self.outputfiles["LOG"],
                      app.transform_script,
                      self.inputfile,  # set up earlier on in master_prepare
-                     self.outputfiles["rootfile"],
-                     self.outputfiles["rdofile"],
-                     app.number_events_job,
+                     self.outputfiles["HITS"],
+                     self.outputfiles["RDO"],
+                     str(self.number_events_job),
                      skip,
                      self.randomseed
                  ]
         else:
             args = [ self.atlas_rel,
                      app.se_name,
-                     self.outputfiles["logfile"],
+                     self.outputfiles["LOG"],
                      app.transform_script,
-                     "inputEvgenFile=%s" %self.inputfile,# already quoted by construction
-                     "outputHitsFile=%s" % self.outputfiles["rootfile"],
-                     "outputRDOFile=%s" % self.outputfiles["rdofile"],
-                     "maxEvents=%s" % str(app.number_events_job),
+                     "inputEvgenFile=%s" % self.inputfile, # already quoted by construction
+                     "outputHitsFile=%s" % self.outputfiles["HITS"],
+                     "outputRDOFile=%s" % self.outputfiles["RDO"],
+                     "maxEvents=%s" % str(self.number_events_job),
                      "skipEvents=%s" % str(skip),
                      "randomSeed=%s" % str(self.randomseed),
                      "geometryVersion=%s" % app.geometryTag
                      ]
-                
         
         return args
 
@@ -517,7 +438,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
     def getReconArgs(self,app):
         """prepare args vector for recon mode"""
         args=[]
-        skip=str(string.atoi(self.firstevent)-1)
+        skip=str(self.firstevent-1)
             
         if not app.transform_script:
             app.transform_script="csc_reco_trf.py"
@@ -527,37 +448,33 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         if self.isJT>-1:    
             args = [ self.atlas_rel,
                      app.se_name,
-                     self.outputfiles["logfile"],
+                     self.outputfiles["LOG"],
                      app.transform_script,
                      self.inputfile,
-                     self.outputfiles["esdfile"],
-                     self.outputfiles["aodfile"],
-                     self.outputfiles["ntuplefile"],
-                     app.number_events_job,
+                     self.outputfiles["ESD"],
+                     self.outputfiles["AOD"],
+                     self.outputfiles["NTUP"],
+                     str(self.number_events_job),
                      skip
                      ]
         else:
             args = [ self.atlas_rel,
                      app.se_name,
-                     self.outputfiles["logfile"],
+                     self.outputfiles["LOG"],
                      app.transform_script,
                      "inputRDOFile=%s" % self.inputfile,
-                     "maxEvents=%s" % str(app.number_events_job),
+                     "maxEvents=%s" % str(self.number_events_job),
                      "skipEvents=%s" % str(skip),
                      "geometryVersion=%s" % app.geometryTag
                      ]
-            if app.transform_script=="csc_reco_trf.py" or app.transform_script=="csc_recoESD.trf":
-                args.append("outputESDFile=%s" % self.outputfiles["esdfile"])
-            if app.transform_script=="csc_reco_trf.py" or app.transform_script=="csc_recoAOD.trf":
-                args.append("outputAODFile=%s" % self.outputfiles["aodfile"])
+            if "ESD" in self.outputfiles and self.outputfiles["ESD"].upper() != "NONE":
+                args.append("outputESDFile=%s" % self.outputfiles["ESD"])
+            if "AOD" in self.outputfiles and self.outputfiles["AOD"].upper() != "NONE":
+                args.append("outputAODFile=%s" % self.outputfiles["AOD"])
 
             if self.atlas_rel >="12.0.5" :
-                if "ntuplefile" in self.outputfiles :
-                    args.append("ntupleFile=%s" %  self.outputfiles["ntuplefile"])
-                else:
-                    args.append("ntupleFile=NONE")
+                args.append("ntupleFile=%s" %  self.outputfiles["NTUP"])
                 args.append("triggerConfig=%s" % app.triggerConfig)
-
 
         return args
 
@@ -572,14 +489,31 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         logger.warning("Using the new template mode. Please use application.extraArgs and application.extraIncArgs for the transformation parameters")
 
         try:
-            assert "logfile" in self.outputfiles
+            assert "LOG" in self.outputfiles
         except AssertionError:
             logger.error("template mode requires a logfile, set by job.application.outputdata.logfile")
             raise
         args =  [ self.atlas_rel,
                   app.se_name,
-                  self.outputfiles["logfile"],
-                  app.transform_script]
+                  self.outputfiles["LOG"],
+                  app.transform_script,
+                  "runNumber=%s" % str(app.run_number),
+                  "firstEvent=%s" % str(self.firstevent),
+                  "maxEvents=%s" % str(self.number_events_job),
+                  "randomSeed=%s" % str(self.randomseed),]
+
+        if "HIST" in self.outputfiles and self.outputfiles["HIST"].upper() != "NONE":
+            args.append("histogramFile=%s" % self.outputfiles["HIST"]) 
+        if "HITS" in self.outputfiles and self.outputfiles["HITS"].upper() != "NONE":
+            args.append("outputHitsFile=%s" % self.outputfiles["HITS"]) 
+        if "RDO" in self.outputfiles and self.outputfiles["RDO"].upper() != "NONE":
+            args.append("outputRDOFile=%s" % self.outputfiles["RDO"]) 
+        if "ESD" in self.outputfiles and self.outputfiles["ESD"].upper() != "NONE":
+            args.append("outputESDFile=%s" % self.outputfiles["ESD"])
+        if "AOD" in self.outputfiles and self.outputfiles["AOD"].upper() != "NONE":
+            args.append("outputAODFile=%s" % self.outputfiles["AOD"])
+        if "NTUP" in self.outputfiles and self.outputfiles["NTUP"].upper() != "NONE":
+            args.append("ntupleFile=%s" % self.outputfiles["NTUP"])
         return args
         
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -590,109 +524,59 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         environment={}
         environment=jobmasterconfig.env.copy()
        
-        jobnum = self.ijob+1  #current subjob number
+        partition = app.getPartitionList()[0][0] # This function either throws an exception or returns at least one element
         
         job = app._getParent() # Returns job or subjob object
-        if job.outputdata.output_firstfile>0:
-            jobnum += int(job.outputdata.output_firstfile)-1
-
-        logger.debug("job number is %s" % app.partition_number)
-        # should change to :
-        if app.partition_number:
-            jobnum=app.partition_number
-
-        logger.debug("job number is now %i" % jobnum)
 
         self.randomseed = app.random_seed
 
+        (self.firstevent, self.number_events_job) = app.getFirstEvent(partition, job.inputdata)
+        logger.debug("partition %i, first event is %i, processing %i events" % (partition,self.firstevent, self.number_events_job))
 
-        self.firstevent = "%i" % (int(app.number_events_job)*(jobnum-1)+1) # automatic computation: takes into account output job offset to compute firstevent. E.g: let assume that the first job processes file number 55, each input file has 100 events so the actual first event is 5401.
-        if app.firstevent:
-            self.firstevent= "%i" % (int(app.firstevent)+int(app.number_events_job)*self.ijob )# user based numeration. Overrides job offset, but not subjob offset. First event of first job will be app.firstevent, first event of second subjob will be app.firstevent+app.number_events_job, and so on...
-            
-        # Divide the input files over the subjobs and adjust first events
-        njob_infile=1
-        if app._getRoot().splitter and app._getRoot().splitter.nsubjobs_inputfile:
-            njob_infile=app._getRoot().splitter.nsubjobs_inputfile
-            
-        if app.mode!="evgen":
-            
-            # for simul and others, firstevent is the actual offset (skip+1) and should not be bigger than the total number of events in the input file.
-            #self.firstevent = "%i" % (int(app.firstevent)+ int(app.number_events_job)*(self.ijob%njob_infile)) # should be jobnum instead of self.ijob?
-            self.firstevent = "%i" % (int(app.firstevent)+ int(app.number_events_job)*((jobnum-1)%njob_infile))
-        logger.debug("job number is %i, first event is %i" % (int(self.ijob),int(self.firstevent)))
+        inputnumbers = app.getInputsForPartitions([partition], job._getRoot().inputdata)
+        if inputnumbers:
+            matchrange = (job._getRoot().inputdata.numbersToMatcharray(inputnumbers), False)
+        else:
+            matchrange = ([],False)
+        logger.debug("partition %i using input partitions: %s as files: %s" % (partition, inputnumbers, matchrange[0]))
 
-        # If using subjobs, take subjob random seed, modify first event
-        k=0
-        for i in app._getRoot().subjobs:
-            if self.ijob==k:
-                self.randomseed = i.application.random_seed
-            k=k+1   
-
-
-##        filenrs = ["_"+string.zfill(i,5) for i in inputjobnums]
-##        #print "Filenumbers: ", filenrs
-##        #print "InLFNs: ", self.inlfns
-##        have_input = False
-##        if len(filenrs) > 0:
-##            have_input = True
-
-##        for filenr in filenrs:
-##            if not (filenr in self.turls and filenr in self.lfcs and filenr in self.inlfns):
-##                logger.warning("File number %s not found! File stagein disabled!" %filenr)
-##                have_input = False
-##                #raise Exception()
-        inputfiles=self.turls.keys()
+        inputfiles = [fn for fn in self.turls.keys() if matchFile(matchrange, fn)]
         inputfiles.sort()
+
+        if len(inputfiles) < len(inputnumbers):
+            if len(inputfiles) > 0:
+               missing = []
+               for fn in matchrange[0]:
+                   found = False
+                   for infile in inputfiles:
+                       if fn in infile: 
+                           found = True
+                           break
+                   if not found:
+                       missing.append(fn)
+               logger.warning("Not all input files for partition %i found! Missing files: %s" % (partition, missing))
+            else:
+               logger.error("No input files for partition %i found ! Files expected: %s" % (partition, matchrange[0]))
+               raise Exception()
+
         outsite=""
         environment["INPUTTURLS"]=""
         environment["INPUTLFCS"]=""
         environment["INPUTFILES"]=""
         self.inputfile,self.cavernfile,self.minbiasfile="","",""
 
-        if len(inputfiles)>0:        
-            # need to allocate N input turls, lfcs, files to environment vars.
-            # getting N
-            ninfiles_subjob=job.inputdata.n_infiles_job
+        for j in range(0, len(inputfiles)):
+            turl=self.turls[inputfiles[j]]
+            environment["INPUTTURLS"]+="turl[%d]='%s';" % (j,turl.strip())
+            lfc=""
+            for lfcentry in self.lfcs.values():
+                lfc+=lfcentry+" "
+            environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
+            environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[j].strip())
 
-            imin=int((jobnum-1)*ninfiles_subjob/njob_infile)
-            imax=imin+int((ninfiles_subjob-1)/njob_infile)+1
-            if (app.partition_number and not app._getRoot().splitter):
-                # use inputdata.inputfiles to define input data.
-                imin=0
-                imax=imin+ninfiles_subjob
-            else: 
-                job.inputdata.inputfiles=inputfiles[imin:imax]
-            #logger.warning("test: imin %i imax %i mxinfiles %i len(inputfiles):%i" % (imin,imax,self.maxinfiles,len(inputfiles)))
- 
-            if imin>=len(inputfiles):
-                logger.error("subjob has no input data. Aborting")
-                return 
-            if imax>=self.maxinfiles:
-                logger.debug("Reached maximum number of inputfiles provided in job.inputdata.number_inputfiles. This is the last subjob")
-                imax=self.maxinfiles
+        self.inputfile=",".join(inputfiles)
 
-            self.inputfile=",".join([inputfiles[i] for i in range(imin,imax)])
-            if app._getRoot().splitter:
-                logger.debug("Splitting data: %d %d %d %d %d " % (self.maxinfiles , app._getRoot().splitter.numsubjobs,ninfiles_subjob,imin,imax))
-            j=0 # have to reset j to 0 for each subjob (see wrapper.sh for the reason why)
-            for i in range(imin,imax):
-                if i > len(inputfiles):
-                    logger.error("Requesting more inputfiles than available")
-                    break
-                turl=""
-                if inputfiles[i] in self.turls:
-                    turl=self.turls[inputfiles[i]]
-                environment["INPUTTURLS"]+="turl[%d]='%s';" % (j,turl.strip())
-                lfc=""
-                for lfcentry in self.lfcs.values():
-                    lfc+=lfcentry+" "
-                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
-                environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[i].strip())
-                j=j+1
-            
-            logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
-
+        logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
             
         # now handling cavern/minbias input datasets:
         inputfiles=self.cavern_turls.keys()
@@ -700,7 +584,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert len(inputfiles)>= job.inputdata.n_cavern_files_job
             except:
-                logger.error("Not enough input files to sustend a single job (expected %d got %d). Aborting" %(job.inputdata.n_cavern_files_job,len(inputfiles)))
+                logger.error("Not enough cavern input files to sustend a single job (expected %d got %d). Aborting" %(job.inputdata.n_cavern_files_job,len(inputfiles)))
                 raise
 
             random.shuffle(inputfiles) # shuffle cavern files to randomize noise distributions between subjobs
@@ -751,6 +635,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
                 environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,k.strip())
                 j=j+1
+
+
                 
         logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
         
@@ -768,18 +654,20 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
 # now doing output files....
         self.outputfiles={}
+        outpartition = partition + job._getRoot().outputdata.output_firstfile - 1
         for filetype in self.fileprefixes.keys():
-            if filetype=="logfile":
-                self.outputfiles["logfile"]=self.fileprefixes["logfile"]+"._%5.5d.job.log" % jobnum
-            elif  filetype=="histfile":
-                self.outputfiles["histfile"]=self.fileprefixes["histfile"]+"._%5.5d.hist.root" % jobnum
-            elif  filetype=="ntuplefile":
-                self.outputfiles["ntuplefile"]=self.fileprefixes["ntuplefile"]+"._%5.5d.root" % jobnum   
+            if filetype=="LOG":
+                self.outputfiles["LOG"]=self.fileprefixes["LOG"]+"._%5.5d.job.log" % outpartition 
+            elif  filetype=="HIST":
+                self.outputfiles["HIST"]=self.fileprefixes["HIST"]+"._%5.5d.hist.root" % outpartition
+            elif  filetype=="NTUP":
+                self.outputfiles["NTUP"]=self.fileprefixes["NTUP"]+"._%5.5d.root" % outpartition
             else:
-                self.outputfiles[filetype]=self.fileprefixes[filetype]+"._%5.5d.pool.root" % jobnum
+                self.outputfiles[filetype]=self.fileprefixes[filetype]+"._%5.5d.pool.root" % outpartition
             # add the final lfn to the expected output list
-            logger.debug("adding %s to list of expected output" % self.outputfiles[filetype])
-            job.outputdata.expected_output.append(self.outputfiles[filetype])
+            if self.outputfiles[filetype].upper() != "NONE":
+                logger.debug("adding %s to list of expected output" % self.outputfiles[filetype])
+                job.outputdata.expected_output.append(self.outputfiles[filetype])
 
         expected_datasets=""
         for filetype in self.outputpaths.keys():
@@ -825,10 +713,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                     if string.find(val[imin+1:],"first")>-1:
                         newval=str(self.firstevent)
                     if string.find(val[imin+1:],"skip")>-1:
-                        skip=str(string.atoi(self.firstevent)-1)
+                        skip=str(self.firstevent-1)
                         newval=str(skip)
                     if string.find(val[imin+1:],"number_events_job")>-1:
-                        newval=str(app.number_events_job)
+                        newval=str(self.number_events_job)
                     if imin2 > -1 and val[imin2+4:] in self.outputfiles:
                         newval=self.outputfiles[ val[imin2+4:]]
                     try:
@@ -836,7 +724,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                     except AssertionError:
                         logger.error("Error while parsing arguments: %s %d %d" % (val, imin, imin2))
                         raise
-                    
                     newarg="%s=%s" % (key,newval)
                 else:
                     newarg=arg
@@ -849,10 +736,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             NewArgstring=""
             for arg in arglist:
                 key,val=string.split(arg,"=")
-                ival=self.ijob
+                ival=partition
                 if not val.isdigit():
-                    logger.warning("Non digit value entered for extraIncArgs: %s. Using %i as default value" % (str(val),self.ijob))
-
+                    logger.warning("Non digit value entered for extraIncArgs: %s. Using %i as default value" % (str(val),ival))
                 else:
                     ival+=string.atoi(val)
                 newarg="%s=%i" %(key,ival)
@@ -864,50 +750,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         except AssertionError:
             logger.error("Transformation with no arguments. Please check your inputs!")
             raise
-
-        # Save variables in subjobs for later reuse
-        k=0
-        for i in app._getRoot().subjobs:
-            if self.ijob==k:
-                logger.debug("partition number was %s" % i.application.partition_number)
-                if not i.application.partition_number:
-                    i.application.partition_number=str(jobnum)
-                logger.debug("partition number is now %s" % i.application.partition_number)
-                if self.firstevent:
-                    i.application.firstevent = self.firstevent
-##                if len(inputjobnums) > 0:
-##                    i.application.input_firstfile = inputjobnums[0]
-##                if app.number_inputfiles:
-##                    i.application.number_inputfiles=app.number_inputfiles
-##                if app.output_firstfile:
-##                    i.application.output_firstfile= app.output_firstfile
-                if app.transform_script:
-                    i.application.transform_script =  app.transform_script
-## must change to job.outputdata and job.inputdata members
-##                if app.datasets.outdirectory:
-##                    i.application.datasets.outdirectory = app.datasets.outdirectory
-##                if app.datasets.logfile:
-##                    i.application.datasets.logfile = app.datasets.logfile
-##                if app.datasets.outrootfile:
-##                    i.application.datasets.outrootfile = app.datasets.outrootfile
-##                if app.datasets.outntuplefile:
-##                    i.application.datasets.outntuplefile = app.datasets.outntuplefile
-##                if app.datasets.outhistfile:
-##                    i.application.datasets.outhistfile = app.datasets.outhistfile
-##                if app.datasets.indirectory:
-##                    i.application.datasets.indirectory = app.datasets.indirectory
-##                if app.datasets.inputfile:
-##                    i.application.datasets.inputfile = app.datasets.inputfile
-##                if app.datasets.outrdofile:
-##                    i.application.datasets.outrdofile = app.datasets.outrdofile
-##                if app.datasets.outesdfile:
-##                    i.application.datasets.outesdfile = app.datasets.outesdfile
-##                if app.datasets.outaodfile:
-##                    i.application.datasets.outaodfile = app.datasets.outaodfile
-##                if app.datasets.outcbntfile:
-##                    i.application.datasets.outcbntfile = app.datasets.outcbntfile
-            k=k+1   
-
 
 # now filling up environment variables for output data in jdl file...
         outfilelist=""
@@ -938,9 +780,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 #       output sandbox
         outputbox =jobmasterconfig.outputbox
 
-        #Increase subjobs prepare counter
-        self.ijob=self.ijob+1
-
         if job.backend._name=="LCG" or job.backend._name=="Cronus" or job.backend._name=="Condor" or job.backend._name=="NG":
             logger.debug("submission to %s" % job.backend._name)
             #       prepare job requirements
@@ -949,10 +788,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 logger.debug(environment["INPUTTURLS"])
                 if string.find(environment["INPUTTURLS"],"file:")>=0:
                     logger.error("Input file was found to be local, and LCG backend does not support replication of local files to the GRID yet. Please register your input dataset in DQ2 before resubmitting this job. Aborting")
-                    raise "Submission cancelled"
+                    raise Exception("Submission cancelled")
             if string.lower(app.se_name)=="local":
                 logger.error("Output file cannot be committed to local filesystem on a grid job. Please change se_name")
-                raise "Submission cancelled"
+                raise Exception("Submission cancelled")
 
             lcg_job_config = LCGJobConfig(File(exe),inputbox,args,outputbox,environment,inputdata,requirements) 
             lcg_job_config.monitoring_svc = mc['AthenaMC/LCG']

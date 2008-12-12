@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.5 2008-10-21 06:43:09 elmsheus Exp $
+# $Id: AthenaMC.py,v 1.6 2008-12-12 10:17:42 elmsheus Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -20,6 +20,11 @@ from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
+from Ganga.GPIDev.Credentials import GridProxy
+
+from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import matchFile, expandList
+
+
 
 class AthenaMC(IApplication):
     """The main Athena MC Job Handler for JobTransformations"""
@@ -30,7 +35,7 @@ class AthenaMC(IApplication):
         'production_name'    : SimpleItem(defvalue='',doc='Name of the MC production',typelist=["str"]),
         'process_name'       : SimpleItem(defvalue='',doc='Name of the generated physics process',typelist=["str"]),
         'run_number'         : SimpleItem(defvalue='',doc='Run number',typelist=["str"]),
-        'number_events_job'  : SimpleItem(defvalue='1',doc='Number of events per job',typelist=["str"]),
+        'number_events_job'  : SimpleItem(defvalue=1,doc='Number of events per job',typelist=["int"]),
         'atlas_release'      : SimpleItem(defvalue='',doc='ATLAS Software Release',typelist=["str"]),
         'transform_archive'  : SimpleItem(defvalue='',doc='Name or Web location of a modified ATLAS transform archive.',typelist=["str"]),
         'se_name'            : SimpleItem(defvalue='none',doc='Name of prefered SE or DQ2 site (from TierOfAtlas.py) for output',typelist=["str"]),
@@ -67,11 +72,99 @@ class AthenaMC(IApplication):
           job.outputdata.fill()
               
     def prepare(self):
-       """Prepare the job from the user area"""
-       
-       
+       """Prepare each job/subjob from the user area"""
+
+    def getPartitionList(self):
+        """ Calculates the list of partitions that should be processed by this application. 
+            If no splitter is present, the list has always length one.
+            Returns the tuple (list of partitions, boolean 'open'), where 'open' is True if the last 
+            entry in the list is the beginning of an open range. """
+
+        job = self.getJobObject()
+        # If we are in simul/recon mode the partition can be specified using firstevent
+        if self.mode != "evgen" and self.partition_number == None:
+           firstpartition = 1 + (self.firstevent-1)/self.number_events_job
+        else:
+           if self.mode != "evgen" and self.firstevent != 1:
+              logger.error("Except for evgen jobs, app.firstevent is an alternative to app.partition_number. You can not specify both at the same time!")
+              raise Exception()
+           firstpartition = self.partition_number
+        if not job.splitter:
+           return ([firstpartition], False)
+        else:
+           # First, use the splitter variables
+           if (not job.splitter.output_partitions) and (not job.splitter.input_partitions):
+              ## process numsubjobs or all partitions
+              if job.splitter.numsubjobs:
+                 return (range(firstpartition, firstpartition+job.splitter.numsubjobs), False)
+              else:
+                 return ([firstpartition], True) # open range starting at firstpartition
+           elif (not job.splitter.output_partitions) ^ (not job.splitter.input_partitions): # ^ is XOR
+              if job.splitter.output_partitions:
+                 return expandList(job.splitter.output_partitions)
+              else:
+                 inputs = expandList(job.splitter.input_partitions)
+                 return (self.getPartitionsForInputs(inputs[0], job.inputdata), inputs[1]) # propagate open range
+           else:
+              logger.error("Either splitter.output_partitions or splitter.input_partitions can be specified, but not both!")
+              raise Exception()
+
+    def getInputPartitionInfo(self, ids):
+        """ Returns the tuple (jobs_per_input, inputs_per_job, skip_files, skip_jobs). The variables are:
+            jobs_per_input: Number of jobs it takes to process a full input file.
+            inputs_per_job: Number of input files a job processes
+            skip_files: How many input files are skipped
+            skip_jobs: How many jobs are skipped in numbering, i.e. in simulation if the first 1000 events 
+                 of one large input file are skipped, partition number one would start at event number 1001."""
+        if not ids:
+            logger.error("No input dataset specified!")
+            raise Exception()
+        # This strange division rounds correctly, for example -((-10)/10) == 1,
+        jobs_per_input = -((-ids.number_events_file)/self.number_events_job)
+        inputs_per_job = -((-self.number_events_job)/ids.number_events_file)
+        skip_files = ids.skip_files + ids.skip_events/ids.number_events_file
+        skip_jobs = (ids.skip_events % ids.number_events_file) / self.number_events_job
+        return (jobs_per_input, inputs_per_job, skip_files, skip_jobs)
+  
+    def getPartitionsForInputs(self,inputs,ids):
+        """ Returns a list of partition numbers that process the given input files"""
+        (jobs_per_input, inputs_per_job, skip_files, skip_jobs) = self.getInputPartitionInfo(ids)
+        partitions = []
+        # loop over the actual input partition numbers
+        for inputpart in [input - 1 - skip_files for input in inputs]:
+            firstjob = jobs_per_input*inputpart/inputs_per_job + 1 - skip_jobs
+            partitions.extend([i for i in range(firstjob, firstjob + jobs_per_input) if i > 0])
+        partitions = dict([(i,1)for i in partitions]).keys() # make unique
+        partitions.sort()
+        return partitions
+
+    def getInputsForPartitions(self,partitions,ids):
+        """ Returns a list of input files that are needed by the given jobs (given as partition numbers)"""
+        if not ids:
+            return []
+        (jobs_per_input, inputs_per_job, skip_files, skip_jobs) = self.getInputPartitionInfo(ids)
+        inputs = []
+        # loop over the partition numbers and collect inputs
+        for p in partitions:
+            firstinput = inputs_per_job * (p - 1 + skip_jobs)/jobs_per_input + skip_files + 1
+            inputs.extend(range(firstinput, firstinput+inputs_per_job))
+        inputs = dict([(i,1)for i in inputs]).keys() # make unique
+        inputs.sort()
+        return inputs
+
+    def getFirstEvent(self, partition,ids):
+        """ For a given partition, return the first event in the first input file that has to be processed. 
+            Returns a tuple (firstevent, numevents) where numevents is the adjusted number of events to be processed."""
+        if not ids:
+            return (self.firstevent + partition * self.number_events_job, self.number_events_job)
+        (jobs_per_input, inputs_per_job, skip_files, skip_jobs) = self.getInputPartitionInfo(ids)
+        if partition == 1:
+            skip = (ids.skip_events % ids.number_events_file) % self.number_events_job
+        else:
+            skip = 0
+        return (1 + ((partition - 1 + skip_jobs) % jobs_per_input) * self.number_events_job + skip, self.number_events_job - skip)
+ 
     def configure(self,masterappconfig):
-       
        return (None,None)
     
     def master_configure(self):
@@ -95,8 +188,7 @@ class AthenaMC(IApplication):
                assert self.run_number
            except AssertionError:
                logger.error('Please provide a start value for parameters production_name, process_name, run_number')
-               raise 
-       
+               raise
        
        if self.mode == "evgen":
           try:
@@ -140,7 +232,15 @@ class AthenaMC(IApplication):
           except AssertionError:
              logger.error('AthenaMC requires to use AthenaMCInputDatasets for inputdata')
              raise
-                
+          inputdata = self._getRoot().inputdata.get_dataset(self, self._getRoot().backend._name)
+          if len(inputdata)!= 3:
+             logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
+             raise Exception("Input file not found")
+          self.turls=inputdata[0]
+          self.lfcs=inputdata[1]
+          self.sites=inputdata[2]
+
+
         
        return (0,None)
 
@@ -151,9 +251,9 @@ class AthenaMCSplitterJob(ISplitter):
     
     _name = "AthenaMCSplitterJob"
     _schema = Schema(Version(1,0), {
-       'numsubjobs': SimpleItem(defvalue=1,sequence=0, doc='Number of subjobs'),
-       'nsubjobs_inputfile'  : SimpleItem(defvalue=1,sequence=0,doc='Number of subjobs processing one inputfile (N to M splitting)'),
-       'output_partitions' : SimpleItem(defvalue=[],sequence=1,doc='List of output partition numbers to be processed. Useful for resubmitting failed subjobs',typelist=["int"])
+       'numsubjobs': SimpleItem(defvalue=0,sequence=0, doc='Limit the number of subjobs. If this is left at 0, all partitions will be processed.'),
+       'input_partitions' : SimpleItem(defvalue="",doc='List of input file numbers to be processed, either as a string in the format "1,3,5-10,15-" or as a list of integers. Alternative to output_partitions',typelist=["str","list"]),
+       'output_partitions' : SimpleItem(defvalue="",doc='List of partition numbers to be processed, either as a string in the format "1,3,5-10,15-" or as a list of integers. Alternative to input_partitions',typelist=["str","list"])
         } )
 
     ### Splitting based on numsubjobs
@@ -161,27 +261,37 @@ class AthenaMCSplitterJob(ISplitter):
         from Ganga.GPIDev.Lib.Job import Job
         subjobs = []
 
-        if len(self.output_partitions)>0 and self.numsubjobs!=len(self.output_partitions):
-            self.numsubjobs=len(self.output_partitions)
-        
+        partitionList = job.application.getPartitionList()
+        partitions = partitionList[0]
+        openrange = partitionList[1]
+        if self.numsubjobs:
+            partitions = partitions[:self.numsubjobs]
+            if openrange and len(partitions) < self.numsubjobs:
+                missing = self.numsubjobs - len(partitions)
+                partitions.extend(range(partitions[-1]+1, partitions[-1]+1+missing))
+            openrange = False
+        elif openrange:
+
+            inputnumbers = job.application.getInputsForPartitions(partitions, job.inputdata)
+            if inputnumbers:
+                matchrange = (job._getRoot().inputdata.numbersToMatcharray(inputnumbers), openrange)
+            else:
+                matchrange = ([],False)
+            infiles = [fn for fn in job.application.turls.keys() if matchFile(matchrange, fn)]
+            innumbers = job._getRoot().inputdata.filesToNumbers(infiles)
+            partitions = partitions[:-1] # the partition start of the open range beginning is not mandatory 
+            partitions.extend(job.application.getPartitionsForInputs(innumbers, job.inputdata))
+            partitions = dict([(i,1)for i in partitions]).keys() # make unique
+            logger.warning("Number of subjobs %i determined from input dataset!" % len(partitions))
+
         try:
-            assert self.numsubjobs
+            assert partitions
         except AssertionError:
-            logger.error('numsubjobs: No number of subjobs given')
+            logger.error('Partition to process could not be determined! Check if inputdata.skip_files or inputdata.skip_events do not skip your specified input partition!')
             raise
-
         
-        offset = 0
-        if job.outputdata and job.outputdata.output_firstfile>1:
-            offset=job.outputdata.output_firstfile-1
-        logger.debug("doing job splitting: %d subjobs" % self.numsubjobs)
-
-        for i in range(self.numsubjobs):
-            # need to override offset, outputdata.output_firstfile or app.partition_number with contents of self.output_partitions.
-            if len(self.output_partitions)>0:
-                offset=self.output_partitions[i]-1 # 
-                
-            rndtemp = int(job.application.random_seed)+i+offset
+        for p in partitions:
+            rndtemp = int(job.application.random_seed)+p
             j = Job()
             j.application = job.application
             j.application.random_seed = "%s" % rndtemp
@@ -190,13 +300,9 @@ class AthenaMCSplitterJob(ISplitter):
             j.outputdata=job.outputdata
             j.inputsandbox=job.inputsandbox
             j.outputsandbox=job.outputsandbox
-            if len(self.output_partitions)>0:
-                j.application.partition_number=self.output_partitions[i]
-                # application.partition_number overrides the use of outputdata.output_firstfile to set up jobnum and all depending partition variables.
+            j.application.partition_number=p
             subjobs.append(j)
-
         return subjobs
-
 
 config = makeConfig('AthenaMC', 'AthenaMC configuration options')
 logger = getLogger()
@@ -206,6 +312,9 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/10/21 06:43:09  elmsheus
+# Change defvalue of partition_number
+#
 # Revision 1.4  2008/10/15 13:44:05  fbrochu
 # Bug fix for inputdata.inputfiles type, improving timeout evaluation for stage-out, allowing support for stage-in files from SRMV2 space tokens, extending splitter to allow partial resubmission of master jobs (all failed subjobs at once instead of one by one.)
 #
