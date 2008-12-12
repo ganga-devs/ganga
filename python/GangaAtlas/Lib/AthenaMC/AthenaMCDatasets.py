@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.13 2008-12-12 10:17:42 elmsheus Exp $
+# $Id: AthenaMCDatasets.py,v 1.14 2008-12-12 11:06:47 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -743,7 +743,7 @@ class AthenaMCOutputDatasets(Dataset):
         'output_dataset'   : SimpleItem(defvalue = '', doc = 'dataset suffix for combined output dataset. If set, it will collect all expected output files for the job. If not set, every output type (histo, HITS, EVGEN...) will have its own output dataset.'),
         'output_firstfile'   : SimpleItem(defvalue=1,doc='EXPERT: Number of first output file. The job processing the first partition will generate the file with the number output_firstfile, the second will generate output_firstfile+1, and so on...'),
         'logfile'          : SimpleItem(defvalue='',doc='file prefix and dataset suffix for logfiles.'),
-        'outrootfiles'     : SimpleItem(defvalue={},typelist=["dict"], doc='file prefixes and dataset suffixes for other output root files. To set for example the evgen file prefix, type: j.outputdata.outrootfiles["EVNT"] = "file.prefix". The keys used are EVNT, HIST, HITS, RDO, ESD, AOD and NTUP. To reset a value to default, type "del j.outputdata.outrootfiles["EVNT"]. To disable creation of a file, type j.outputdata.outrootfiles["EVNT"] = "NONE"'),
+        'outrootfiles'     : SimpleItem(defvalue={},typelist=["dict","str"], doc='file prefixes and dataset suffixes for other output root files. To set for example the evgen file prefix, type: j.outputdata.outrootfiles["EVNT"] = "file.prefix". The keys used are EVNT, HIST, HITS, RDO, ESD, AOD and NTUP. To reset a value to default, type "del j.outputdata.outrootfiles["EVNT"]. To disable creation of a file, type j.outputdata.outrootfiles["EVNT"] = "NONE"'),
         'expected_output'         : SimpleItem(defvalue = [], typelist=['list'], sequence = 1, protected=1,doc = 'List of output files expected to be produced by the job. Should not be visible nor modified by the user.'),
         'actual_output'         : SimpleItem(defvalue = [], typelist=['list'], sequence = 1, protected=1,doc = 'List of output files actually produced by the job followed by their locations. Should not be visible nor modified by the user.')
         })
