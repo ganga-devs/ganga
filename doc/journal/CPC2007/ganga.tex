@@ -76,18 +76,21 @@
 % \address[label1]{}
 % \address[label2]{}
 
+%FIXME: AUTHOR LIST - Not sure what publication you have chosen, but is it
+%normal/acceptable to include full names instead of initials?
+
 \author[a:Cambridge]{Frederic Brochu}
-\author[a:Imperial]{Ulrik Egede\corauthref{cor1}}
-\corauth[cor1]{Corresponding author}
-\ead{U.Egede@imperial.ac.uk}
-\ead[url]{http://www.imperial.ac.uk/people/u.egede}
+\author[a:Imperial]{Ulrik Egede}
 \author[a:Munich]{Johannes Elmsheuser}
 \author[a:Cambridge]{Karl Harrison}
 \author[a:Lancaster]{Roger Jones}
 \author[a:CERN]{Hurng-Chun Lee\thanksref{HurngChun}}
 \author[a:CERN]{Dietrich Liko}
 \author[a:CERN]{Andrew Maier}
-\author[a:CERN]{Jakub T. Mo{\'s}cicki}
+\author[a:CERN]{Jakub T. Mo{\'s}cicki\corauthref{cor1}}
+\corauth[cor1]{Corresponding author}
+\ead{jakub.moscicki@cern.ch}
+%\ead[url]{http://moscicki.org}
 \author[a:CERN]{Adrian Muraru}
 \author[a:STFC]{Glenn Patrick}
 \author[a:Imperial]{William Reece}
@@ -164,8 +167,8 @@ and simulation tasks.
 \ganga provides an API which can be used either interactively at the \python
 prompt, through a Graphical User Interface~(GUI) or programmatically in
 scripts. The concept of a \emph{job} component is essential as it contains the
-full description of a computational task, including: the code to execute; data
-required for processing; data produced by the application; requirements on
+full description of a computational task, including: the code to execute; input 
+data for processing; data produced by the application; requirements on
 processing environment; post-processing tasks; and meta-data for bookkeeping.
 The purpose of \ganga can then be seen as making it easy for a user to create,
 submit and monitor the progress of jobs. \ganga keeps track of all jobs and
@@ -205,8 +208,8 @@ License\footnote{\ganga is licensed under GPL version 2 or any later version
   of your choice.}~\cite{GPL} and is available for download from
 \url{http://www.cern.ch/ganga}. The installation of \ganga is trivial and
 doesn't require any privileged access or server configuration as part of the
-process. In the 9 month period following January 2007 \ganga has in total been
-used at 83 domains around the world with 950 unique users running about 60k
+process. From January 2007 to December 2008 \ganga has in total been
+used at 83 domains around the world with 2000 unique users running about 60k %FIXME: STATS!
 \ganga sessions\footnote{The usage information is collected from a voluntary
   usage reporting system implemented in \ganga.}.
 
@@ -269,7 +272,7 @@ examples are given of an actual interactive \ganga session using the \GPI.
 
 After submitting a job \ganga takes over the control and a user may not modify
 it, however a copy of the job may be easily created for subsequent
-modification. \ganga monitors the evolution of submitted jobs and categorise
+modification. \ganga monitors the evolution of submitted jobs and categorises
 them into the simplified states \val{submitted},\val{running},
 \val{completed}, \val{failed} or \val{killed}.
 
@@ -423,7 +426,7 @@ describes the plugin attributes and their properties such as the type
 (read-only, read-write, internal), the visibility, user-convenience filters
 and shortcuts.
 
-The user do not interact with the plugin class directly but rather with an
+The user does not interact with the plugin class directly but rather with an
 automatically generated proxy class which is visible in the \GPI. The proxy
 class only includes attributes defined as visible in the schema and methods
 selected for export in the plugin class. The separation of the plugin and
@@ -468,7 +471,7 @@ basis in a directory associated with the job, and a set of sub-directories is
 used to separate specific parts of the job workspace like job input and output
 and workspaces of subjobs.
 
-User may access the files directly in the file-system or via simple commands
+Users may access the files directly in the file-system or via simple commands
 such as \texttt{job.peek()}. Internally \ganga handles the input and output
 files using a simple abstraction layer which gives a possibility to replace
 the implementation in a transparent way. A prototype using a
@@ -501,7 +504,7 @@ flexibly adjusted on per-backend basis.
     \includegraphics[width=1 \textwidth]{monitoring.pdf}
     \caption{The main monitoring thread takes care of checking for valid
       credentials, updating the table of jobs for each backend to monitor and
-      feed the queue of updates. The thread pool subsequently pick tasks from
+      feed the queue of updates. The thread pool subsequently picks tasks from
       the front of the queue.}
     \label{fig:job_status_monitoring_mechanism}
   \end{center}
@@ -565,7 +568,10 @@ the complex configuration of analysis jobs.
 
 \subsection{The \lhcb experiment}
 \label{sec:lhcb}
-Here we describe the way in which \ganga interacts with the application and
+
+The \lhcb experiment is dedicated to studying the properties of B
+mesons (particles containing the b quark) and in this section we
+describe the way in which \ganga interacts with the application and
 backend plug-ins which are specific to \lhcb.
 
 For a specific analysis a user normally supply shared libraries which are
@@ -597,13 +603,13 @@ performed locally with quick response time before launching a large scale
 analysis on the \grid where the response time is longer.
 
 To evaluate the expected performance of a given analysis there is also a large
-usage of the \roofit framework for performing ensemble testing on simplified
+usage of the \roofit \cite{FIXME-roofit} framework for performing ensemble testing on simplified
 Monte Carlo samples. These jobs require large amounts of processing but rely
 on no input data and produce only very small amounts of output. Hence they are
-very easy to deploy on the \grid using the generic \root application component
+very easy to deploy on the \grid using the generic \root \cite{FIXME-root}application component
 in \ganga.
 
-Data analysis using \grid resources in \lhcb are routed through the
+Data analyses using \grid resources in \lhcb are routed through the
 \dirac~\cite{DIRAC} workload management system~(WMS). \dirac is a pilot based
 system where a small script is submitted to the \grid which checks for the
 presence of required software, network connectivity, available memory etc.: If
@@ -614,7 +620,7 @@ improves the reliability of the \grid system towards the user. A \dirac backend
 component is included in \ganga to support submission of jobs to the \dirac
 WMS. Internally this component is using the \python API of
 \dirac~\cite{DIRACAPI}.  Further details of distributed analysis model in
-\lhcb is described in~\cite{lhcb:2005jj}.
+\lhcb are described in~\cite{lhcb:2005jj}.
 
 A specific \emph{splitter} has been implemented for \lhcb which can divide the
 analysis of a large dataset into many smaller subjobs. During the splitting of
@@ -625,8 +631,8 @@ before an analysis can start. To do this a specialised dataset component is
 implemented for \lhcb which has the ability to query the \lhcb file catalogue
 for the location of data replicas.
 
-In the first half of 2007 a total of 10k user jobs has been successfully
-executed through the \dirac system with a maximum of above 1000 simultaneous
+In the first half of 2007 a total of 10k user jobs were successfully
+executed through the \dirac system with a peak exceeding 1000 simultaneous
 jobs. With the \lhcb experiment receiving its first data during 2008 this
 usage is expected to rise dramatically.
 
@@ -640,6 +646,10 @@ long-term trends in the \emph{end-to-end} stability of the system.
 
 \subsection{The \atlas experiment}
 \label{sec:atlas}
+
+ATLAS is a general purpose experiment that is designed to observe new
+phenomena in high energy proton-proton collisions.
+
 The distributed analysis model is based on the \atlas computing
 model~\cite{bib:atlascompmod} which requires that data is distributed at
 various computing sites and user jobs are sent to the data location based on
@@ -660,7 +670,7 @@ well the latter conditions.
 
 Analysis jobs produce large amounts of data which is stored and subsequently
 retrieved within the \grid environment. To support this, the Distributed Data
-Management system DQ2~\cite{bib:atlasdq2} developed within \atlas; it provides
+Management system DQ2~\cite{bib:atlasdq2} was developed within \atlas; it provides
 a set of services to move data between \grid-enabled computing facilities
 whilst maintaining a series of databases to track these data movements.  The
 vast amount of data is also grouped into datasets based on various criteria
@@ -682,7 +692,7 @@ of the specific features are:
   dataset.
 \item The user output data can be saved in the DQ2 system. After the \athena
   programme has finished during the \grid job execution the user output data
-  is stored on the close storage element of the site the job was running at
+  is stored on a nearby storage element of the site the job was running at
   and registered in DQ2.
 \end{itemize}
 
@@ -693,14 +703,14 @@ In total 37k jobs have been successfully processed by \atlas users using
 A second example for a user task is a small scale Monte Carlo (MC) production
 of a few ten thousand events. The \emph{AthenaMC} application component has
 been developed to integrate software used in the official \atlas MC Production
-System~\cite{bib:atlasprodsys}.  The component consist of a set of
+System~\cite{bib:atlasprodsys}.  The component consists of a set of
 configuration files for the three MC production steps for event generation,
 simulation and reconstruction.
 
 \section{Other usage areas}
 \label{sec:other}
-\ganga offers a flexible and extensible user interface which is used beyond
-the original scope of the \atlas and \lhcb collaborations. Here we provide
+\ganga offers a flexible and extensible user interface beyond the original scope of particle physics
+applications in the \atlas and \lhcb experiments. Here we provide
 details on just a few of the other projects that have made use of \ganga in
 various ways.
 
@@ -757,7 +767,7 @@ archive from a storage element, and for unpacking an archive to a destination
 directory. These methods are invoked automatically by \ganga when an
 image-processing job completes: the effect for the user is that a list of
 images is submitted for processing and results are placed in the requested
-output location indenpendent of the backend used.
+output location independent of the backend used.
 
 \subsection{Small collaborations in High Energy Physics}
 \label{sec:smallHEP}
@@ -787,14 +797,14 @@ interfaced to other frameworks and used as a convenient abstraction layer for
 job management. \ganga combined with \diane, a lightweight agent-based
 scheduling layer on top of the \grid~\cite{DIANE}, has been used in a number
 of scientific activities such as: Monte Carlo simulation for dosimetric
-studies in medical physics, statistical regresion testing of Geant 4 software
+studies in medical physics, statistical regresion testing of GEANT 4 software
 with a large number of \grid jobs; in-silico molecular docking in the search
 of the potential drug candidates for Avian Flu~\cite{AvianFlu};
 telecommunication applications; and computational-chemistry workflows. The
 \diane worker agents are executed as \ganga jobs and thus the usage of the
 resources may be controlled by the user from the \ganga interface. This
-approach allowes to combine the efficiency of overlay scheduling systems such
-as \diane with the well structured job management offered by \ganga as well as
+approach allowes the efficiency of overlay scheduling systems such
+as \diane to be combined with the well structured job management offered by \ganga as well as
 combining \grid and non-\grid resources under a uniform interface.
 
 \begin{figure}
@@ -816,9 +826,10 @@ also switch or combine the usage of heterogeneous computing environments (e.g.
 
 \section{Conclusion}
 \label{sec:conclusion}
-We have presented \ganga as a tool for managing jobs in an environment of
-heterogeneous resources. In an easy way it is possible to define a
-computational task which firsth can be executed locally for debugging and
+\ganga has been presented as a tool for job management in an environment of heterogeneous resources
+and is particularly suited to the Grid paradigm that has emerged in large-scale distributed computing.
+In an easy way it is possible to define a
+computational task which first can be executed locally for debugging and
 subsequently to the \grid for large scale data mining. We have shown how \ganga
 will aid the task specification, take care of job submission, monitoring and
 output retrieval and provide an intuitive bookkeeping system.
@@ -827,23 +838,24 @@ We have demonstrated the advantages of having a well defined API which can be
 used either interactively at the \python prompt, through a GUI or
 programmatically in scripts. \ganga is easy to extend to become a specialised
 interface for a new area of science through the plugin system for new
-components. We have provided examples of the use of \ganga from within High
-Energy Physics, medical physics and image processing.
+components. Examples have been provided  from within high
+energy physics, medical physics and image processing.
 
-\ganga has a large user base, is in active development and has adevelopment
+\ganga has a large user base, is in active development and has a development
 team which is keen to provide initial support for new scientific or commercial
 projects which would be interested in using \ganga.
 
 \section{Acknowledgements}
 \label{sec:acknowledgements}
-The development of \ganga has partially been funded by GridPP under grants
-from the research councils PPARC and STFC in the United Kingdom. \ganga makes
-use of results produced by the Enabling Grids for E-sciencE project, a project
-co-funded by the European Commission (under contract number INFSO-RI-031688)
-through the Sixth Framework Programme~\cite{EGEE}.
+The development of \ganga has been partially funded by GridPP under
+grants from the research councils PPARC and STFC in the United
+Kingdom. \ganga makes use of results produced by the Enabling Grids
+for E-sciencE project (EGEE), a project co-funded by the European
+Commission (under contract number INFSO-RI-031688) through the Sixth
+Framework Programme~\cite{EGEE}.
 
 The developers would also like to thanks the large base of users from both
-within and outside High energy Physics for their mutiple suggestions for
+within and outside high energy physics for their mutiple suggestions for
 improving \ganga and their help in debugging problems.
 
 
