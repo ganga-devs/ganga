@@ -1,5 +1,8 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
+
 def get_DIRAC_status(jobs):
     """Retrieve status information from Dirac and return as list"""
 
