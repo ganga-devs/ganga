@@ -269,7 +269,7 @@ def resolve_dq2_local_site_id(ds_locations, site_domain, se_hostname, force_site
 
     return dq2_local_site_id
 
-def make_FileStager_jobOption(pfns, gridcopy=True, optionFileName='input_stager.py'):
+def make_FileStager_jobOption(pfns, gridcopy=True, maxEvent=-1, optionFileName='input_stager.py'):
     '''
     creates the Athena job option file for FileStager.
 
@@ -346,6 +346,9 @@ else:
 svcMgr = theApp.serviceMgr()
 svcMgr.EventSelector.InputCollections = ic
 #svcMgr.EventSelector.SkipBadFiles = True
+
+## override the event number
+theApp.EvtMax = ###MAXEVENT###
 """
 
     ick = False
@@ -354,6 +357,7 @@ svcMgr.EventSelector.InputCollections = ic
         pfns = map(lambda x:'gridcopy://'+x, pfns)
 
     jOption = jOption.replace('###SAMPLELIST###', repr(pfns))
+    jOption = jOption.replace('###MAXEVENT###', repr(maxEvent))
     f = open(optionFileName, 'w')
     f.write(jOption)
     f.close()

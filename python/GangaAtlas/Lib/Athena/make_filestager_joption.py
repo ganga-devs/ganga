@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: make_filestager_joption.py,v 1.1 2008-12-07 19:40:32 mslater Exp $
+# $Id: make_filestager_joption.py,v 1.2 2008-12-15 10:10:55 hclee Exp $
 ###############################################################################
 # making input job option file for FileStager
 
@@ -82,8 +82,16 @@ if (io_type in ['FILE_STAGER']):
 
     print >> sys.stdout, str(pfn_list)
 
+    try:
+        if os.environ.has_key('ATHENA_MAX_EVENTS'):
+            evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
+        else:
+            evtmax = -1
+    except:
+        evtmax = -1
+
     # produce the job option file for Athena/FileStager module
-    dm_util.make_FileStager_jobOption(pfn_list, gridcopy=True, optionFileName='input.py')
+    dm_util.make_FileStager_jobOption(pfn_list, gridcopy=True, maxEvent=evtmax, optionFileName='input.py')
 
 else:
     print >> sys.stderr, "make_filestager_joption.py supports only FILE_STAGER datasettype"
