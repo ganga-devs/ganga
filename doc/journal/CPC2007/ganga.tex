@@ -157,27 +157,29 @@ Grid computing \sep Data mining \sep Task management \sep User interface
 \label{sec:intro}
 \ganga is an easy-to-use frontend for the configuration, execution, and
 management of computational tasks. The implementation uses an object oriented
-design in \python. It started as part of the GridPP
+design in \python~\cite{python}. It started as part of the GridPP
 project~\cite{Faulkner:2006px} to serve as a \grid user interface for data
 analysis within the \atlas~\cite{Armstrong:1994it} and
 \lhcb~\cite{Amato:1998xt} experiments in High Energy Physics where large
 communities of physicists need access to \grid resources for data mining
 and simulation tasks.
 
-\ganga provides an API which can be used either interactively at the \python
-prompt, through a Graphical User Interface~(GUI) or programmatically in
-scripts. The concept of a \emph{job} component is essential as it contains the
-full description of a computational task, including: the code to execute; input 
-data for processing; data produced by the application; requirements on
-processing environment; post-processing tasks; and meta-data for bookkeeping.
-The purpose of \ganga can then be seen as making it easy for a user to create,
-submit and monitor the progress of jobs. \ganga keeps track of all jobs and
-their status through a repository that archives all information between
-independent \ganga sessions. It is possible to switch between executing a job
-on a local PC and on the \grid by changing a single parameter in a job. This
-simplifies the progression from rapid prototyping on a local PC, to
-small-scale tests on a local batch system, to an analysis of a large dataset
-using \grid resources.
+\ganga provides a simple but flexible programming interface which can
+be used either interactively at the \python prompt, through a
+Graphical User Interface~(GUI) or programmatically in scripts. The
+concept of a \emph{job} component is essential as it contains the full
+description of a computational task, including: the code to execute;
+input data for processing; data produced by the application; the
+specification of the required processing environment post-processing
+tasks; and meta-data for bookkeeping.  The purpose of \ganga can then
+be seen as making it easy for a user to create, submit and monitor the
+progress of jobs. \ganga keeps track of all jobs and their status
+through a repository that archives all information between independent
+\ganga sessions. It is possible to switch between executing a job on a
+local computer and on the \grid by changing a single parameter in a
+job. This simplifies the progression from rapid prototyping on a local
+computer, to small-scale tests on a local batch system, to an analysis of a
+large dataset using \grid resources.
 
 It is possible to make \ganga available to a user community with a high level
 of customisation. For example, an expert within a field can implement a custom
@@ -191,25 +193,26 @@ little knowledge about the interfaces of \grid systems. Issues such as
 differences in data access between jobs executing locally and on the
 \grid are similarly hidden.
 
-\ganga has advantages over \grid Portals (see ~\cite{AHE,LEAD} for examples)
-which allow users access to \grid functionality through their web browsers in
-a simplified way. These portals are normally domain specific and allow users
-of a distributed application to run it on the \grid without needing to know
-much about \grid tools. While easy to use, a portal-based system is often too
-restrictive.  In \ganga, the user has programmatic access through an API, and
-has access to applications locally for quick turnaround during development. At
-the same time \ganga may be used as a job management system integrated in a
-larger system. In this case \ganga acts as a library for job submission and
-control.
+\ganga has advantages over \grid Portals (see ~\cite{AHE,LEAD} for
+examples) which allow users access to \grid functionality through
+their web browsers in a simplified way. These portals are normally
+domain specific and allow users of a distributed application to run it
+on the \grid without needing to know much about \grid tools. While
+easy to use, a portal-based system is often too restrictive.  In
+\ganga, the user has programmatic access through an API (Application
+Programmers Interface), and has access to applications locally for
+quick turnaround during development. At the same time \ganga may be
+used as a job management system integrated in a larger system. In this
+case \ganga acts as a library for job submission and control.
 
 The implementation of \ganga follows an object oriented design and is
 implemented in \python. \ganga is licensed under the GNU General Public
 License\footnote{\ganga is licensed under GPL version 2 or any later version
   of your choice.}~\cite{GPL} and is available for download from
 \url{http://www.cern.ch/ganga}. The installation of \ganga is trivial and
-doesn't require any privileged access or server configuration as part of the
+does not require any privileged access or server configuration as part of the
 process. From January 2007 to December 2008 \ganga has in total been
-used at 83 domains around the world with 2000 unique users running about 60k %FIXME: STATS!
+used at 150 sites around the world with 2000 unique users running about 250k %FIXME: STATS!
 \ganga sessions\footnote{The usage information is collected from a voluntary
   usage reporting system implemented in \ganga.}.
 
@@ -226,10 +229,10 @@ can be used.
 \ganga is a user-centric tool which allows easy interaction with heterogeneous
 computational environments, configuration of the applications and coherent
 organisation of jobs. \ganga functionalities may be accessed by a user with a
-help of several interfaces: a text-based command line in \python, file-based
-scripting and a graphical user interface~(GUI). This reflects different
+help of several interfaces: a text-based command line in \python, a file-based
+scripting interface and a graphical user interface~(GUI). This reflects the different
 working styles in different user communities and addresses various usage
-scenarios such as using the GUI for training of new users, command line to
+scenarios such as using the GUI for training of new users, the command line to
 exploit advanced use-cases and scripting for automation of repetitive tasks.
 For \ganga sessions the current usage is divided as (55\%, 40\%, 5\%) between
 the interactive prompt, scripts and the GUI. As shown in
@@ -281,13 +284,13 @@ stored as \code{templates} and easily reused and labelling of jobs allow to
 organise them in a hierarchical \code{jobtree}.
 
 A large computational task may be split into a number of sub-jobs automatically
-according to defined criteria and the output merged at a later stage. Each
+according to user-defined criteria and the output merged at a later stage. Each
 sub-job will execute on its own and the merging of the output will take place
 when they have all finalised.
 
-All job objects are persisted in a job repository database whereas the input
+All job objects are stored in a job repository database, whereas the input
 and output files associated with the jobs are stored in a file workspace. Both
-the repository and the workspace may be in a local filesystem or on remote
+the repository and the workspace may be in a local filesystem or on a remote
 server.
 
 For repetitive use-cases the \code{Robot} has been implemented. It is a \GPI
@@ -303,7 +306,7 @@ allowing for a diverse variety of repetitive use-cases. See
 section~\ref{sec:lhcb} for an example.
 
 The framework does not force developers to support all combinations of
-applications and backends but only the meaningful/interesting ones. To manage
+applications and backends but only the meaningful or interesting ones. To manage
 this, the concept of a {\em submission handler} is introduced. The submission
 handler is a connector between the application and backend components. At
 submission time, it translates the internal representation of the application
@@ -317,15 +320,16 @@ problem domain are considered in the sections dealing with use cases.
 
 \subsection{Application components}
 The application component describes the type of computational task to be
-performed.  It allows characteristics and settings of some
+performed.  It allows the characteristics and settings of some
 %KUBA: we did not introduce the word schema before so I'd rather get rid of it here
-piece of software to be defined, and provides methods specifying actions to be
-taken before and after a job is processed.  The pre-processing (configuration)
-step typically involves examination of the values set for the component
-properties, and may require that these values be used to derive secondary
-information.  For example, one of the properties might specify the path to a
-file that needs to be read.  The post-processing step can be useful for
-validation tasks.
+piece of software to be defined, and provides methods specifying
+actions to be taken before and after a job is processed.  The
+pre-processing (configuration) step typically involves examination of
+the values set for the component properties, and may require that
+these values be used to derive secondary information.  For example,
+one of the properties might specify the path to a file that needs to
+be read.  The post-processing step can be useful for validation tasks
+such as determination of the validity of the application output.
 
 The simplest application component (\texttt{Executable}) has three properties:
 \begin{description}
@@ -355,8 +359,8 @@ and for examining files produced while a job is running.
 
 Backend components have been implemented for a range of widely used processing
 systems, including: local host, batch systems (PBS, LSF, SGE, and
-Condor~\cite{Batch}), and \grid systems like gLite~\cite{LCG} and
-ARC~\cite{NorduGrid}.  As an example, the batch backend component defines
+Condor~\cite{Batch}), and \grid systems like gLite~\cite{LCG},
+ARC~\cite{NorduGrid} and OSG~\cite{OSG}.  As an example, the batch backend component defines
 a single property that may be set by the user:
 \begin{description}
 \item[\code{queue~~~~~~:}] Name of queue to which job should be submitted,
@@ -390,15 +394,15 @@ Specialised splitters deal with creating subjobs that process different parts
 of a dataset.
 
 \subsection{Merger components}
-Merger components deals with combining output of multiple jobs (subjobs). The
-typical output are files containing data in a particular format, for example
-text strings or data representing histograms. As examples, one merger
-component (\code{FileMerger}) concatenates the files of standard output and
-error returned by a set of subjobs, and another (\code{RootMerger}) sums
-histograms produced in ROOT format~\cite{ROOT}.
-
-Merging may be automatically performed in the background when \ganga retrieves
-the job output or it may be controlled manually by the user.
+Merger components deals with combining the output of multiple jobs
+(subjobs). Typical output includes files containing data in a
+particular format, for example text strings or data representing
+histograms. As examples, one merger component (\code{FileMerger})
+concatenates the files of standard output and error returned by a set
+of subjobs, and another (\code{RootMerger}) sums histograms produced
+in ROOT format~\cite{ROOT}. Merging may be automatically performed in
+the background when \ganga retrieves the job output or it may be
+controlled manually by the user.
 
 \section{Implementation}
 \label{sec:implementation}
@@ -431,7 +435,7 @@ automatically generated proxy class which is visible in the \GPI. The proxy
 class only includes attributes defined as visible in the schema and methods
 selected for export in the plugin class. The separation of the plugin and
 proxy levels is very flexible. At the \GPI level the plugin implementation
-details are not visible, all proxy classes follow the same design logic (for
+details are not visible; all proxy classes follow the same design logic (for
 example copy-by-value), persistency is automatic and the threading and session
 level locking is transparent. In this way the low-level, internal API is
 separated from the user-level \GPI.
@@ -439,7 +443,7 @@ separated from the user-level \GPI.
 \subsection{Job persistence}
 \label{sec:persistence}
 The \emph{job repository} provides job persistence in a simple database
-assuring that any subsequent \ganga session have access to all previously
+assuring that any subsequent \ganga session has access to all previously
 defined jobs. Once a job is defined in a \ganga session it is automatically
 saved in the database. The repository provides a bookkeeping system that can
 be used to select particular jobs according to job metadata. The metadata
@@ -452,7 +456,7 @@ standalone solution. The database code is implemented entirely in \python so
 it is supported on any platform. For the remote repository the client relies
 on the AMGA~\cite{AMGA} metadata server. The remote server supports secure
 connections with user authentication and authorisation based on \grid proxy
-certificates. The performance tests of both the local and remote repositories
+certificates {\bf TODO(explain about classic and VOMS proxies, maybe later...)} . The performance tests of both the local and remote repositories
 show good scalability for up to 10 thousand jobs per user, with the average
 time of individual job creation being about 0.2 second. There is scope for
 further optimisation in this area by taking advantage of bulk operations and
@@ -481,8 +485,7 @@ cache is still accessible via the normal file system.
 
 A combination of remote workspace with the remote job repository effectively
 creates a roaming profile where the same \ganga session can be accessed at
-multiple locations in a way that is quite similar to what IMAP provides for an
-email system.
+multiple locations in a way that is quite similar to that provided by  IMAP for email systems.
 
 \section{Monitoring}
 \label{sec:mon}
@@ -512,7 +515,7 @@ flexibly adjusted on per-backend basis.
 
 The monitoring sub-system also keeps track of the time remaining until
 authentication credentials expire. Examples of these are proxy certificates
-for interacting with the \grid, and kerberos tickets for interacting with a
+for interacting with the \grid, and Kerberos \cite{Kerberos} tickets for interacting with a
 file system. The user is notified that renewal is required and if no action is
 taken, \ganga is placed in a safe state where errors will not occur due to
 lack of authentication.
@@ -530,7 +533,7 @@ events are generated when the job is submitted, started, finished and
 periodically while the job executes on the worker node.
 
 Each application and execution component in \ganga can be configured to use a
-different monitoring sensor allowing to send not only generic execution
+different monitoring sensor allowing to send not only the sending of generic execution
 information but also the instrumentation of the application code to report
 specific data.
 
@@ -545,19 +548,19 @@ request and must be activated by the user on a per-job basis.
 \label{sec:useHEP}
 
 The aim of the \atlas and \lhcb experiments is to make discoveries about the
-fundamental aspects of the Universe through production of new particles at the
-energy frontier and precision measurements of particle decays. The experiments
+fundamental aspects of the Universe through production of new particles at 
+high energies and precise measurements of particle decays. The experiments
 are located at the Large Hadron Collider~(\lhc) at the European Laboratory for
 Particle Physics~(CERN), Geneva. Both experiments require processing of data
 volumes of the order of petabytes per year, and rely on computing resources
-distributed across multiple locations. The data-processing applications,
+distributed across multiple locations and multiple Grid implementations. The data-processing applications,
 including simulation, reconstruction and final analysis for the experiments,
 are based on the \gaudi/\athena \code{C++}~\cite{gaudi} framework which
 provides core services, such as message logging, data access, histogramming,
 and a run-time configuration system. 
 
 The data from the experiments will be distributed at computing facilities
-around the world. Users performing data analysis need a random access
+around the world. Users performing data analysis need an on-demand access
 mechanism to allow rapid pre-filtering of data based on certain selection
 criteria so as to identify data of specific interest.
 
@@ -951,7 +954,7 @@ where they ran.
 \normalsize
 
 \vspace{-2ex}
-Finally we provide a view of the graphical user interface. The overview of jobs
+Finally we provide a view of the graphical user interface {\bf TODO:MISSING!}. The overview of jobs
 can be seen to the left, the details of an individual job to the right, and
 partly overlaid the window for contructing a new job.
 
