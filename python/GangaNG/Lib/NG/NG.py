@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.18 2008-12-16 13:07:07 bsamset Exp $
+# $Id: NG.py,v 1.19 2008-12-16 14:06:35 pajchel Exp $
 ###############################################################################
 #
 # NG backend
@@ -1021,23 +1021,23 @@ class NG(IBackend):
         mt = self.middleware.upper()
 
         if not filename:
-            filename = 'stdout.txt'
-            print 'Getting standard output stdout.txt'
+            filename = 'stdout'
+            print 'Getting standard output stdout'
             verbosity = ' '
             outfile = 'tmpstdout.txt'
         elif filename == 'errors':
             print 'Getting the grid manager log file errors'
             verbosity = '-l'
             outfile = 'tmperrors.txt'
-        elif filename == 'stdout.txt':
+        elif filename == 'stdout':
             outfile = 'tmpstdout.txt'
-            print 'Getting standard output stdout.txt'
+            print 'Getting standard output stdout'
             verbosity = ' '
         else:
             print 'You have specified wrong file name.'
             print 'Use:'
-            print 'peek() -> to get the standard output stdout.txt  -  Default '
-            print 'peek(\'stdout.txt\') -> to get the standard output stdout.txt'
+            print 'peek() -> to get the standard output stdout  -  Default '
+            print 'peek(\'stdout\') -> to get the standard output stdout'
             print 'peek(\'errors\') -> to get the grid manager logfile'
             return None
 
@@ -1113,7 +1113,7 @@ class NG(IBackend):
 
       # set the monitoring file by default to the stdout
       if type(self.monInfo) is type({}):
-          self.monInfo['remotefile'] = 'stdout.txt' 
+          self.monInfo['remotefile'] = 'stdout' 
       
       inpw = job.getInputWorkspace()
       packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
@@ -1276,7 +1276,7 @@ class NG(IBackend):
       xrslDict = \
          { 
          'executable' : ex,
-         'stdout' : 'stdout.txt',
+         'stdout' : 'stdout',
          'join'   : 'yes',
          'gmlog' : 'gmlog'         
          }
@@ -1295,7 +1295,7 @@ class NG(IBackend):
 
       outfile = []
       if xrslDict['stdout']:
-         outfile.append("(" + "stdout.txt.gz" + " \"\")")
+         outfile.append("(" + "stdout.gz" + " \"\")")
 
       srm_endpoint = ''
       output_lfn = ''
@@ -1809,6 +1809,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.18  2008/12/16 13:07:07  bsamset
+# Fixed bad lfc registration on NG backend
+#
 # Revision 1.16  2008/12/08 21:32:53  pajchel
 # stdout.txt gzipped
 #

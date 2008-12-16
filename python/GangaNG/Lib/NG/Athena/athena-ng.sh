@@ -438,6 +438,6 @@ echo "GANGATIME3=$GANGATIME3"
 echo "GANGATIME4=$GANGATIME4" 
 echo "GANGATIME5=$GANGATIME5" 
 
-gzip stdout.txt
+gzip stdout
 
 exit $retcode
