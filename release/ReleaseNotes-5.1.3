@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.1.3 (2008/12/15)
+5.1.3 (2008/12/16)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -83,16 +83,14 @@ ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 * Fixes problems with starting ganga after SetupProject
 * Oversized sandbox and outputdata handling lfn de-mangling fixed (requires Dirac v4r3p1)
+* Now use new gaudirun.py -o option if user is using new enough gaudirun.py 
 * Code cleanup
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaNG
 --------------------------------------------------------------------------------------------------------------
-* Added timing and performance information for better use with HammerCloud
-* Minor fixes for DQ2JobSplitter to work
-* Generalized lfc and srm path lookup from ToA, to allow for other output sites than the default NG T2s
-* output.txt is now gzipped
+* stdout.txt -> stdout for better integration in hammercloud
 
 
 --------------------------------------------------------------------------------------------------------------
