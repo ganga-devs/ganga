@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.16 2008-12-08 21:32:53 pajchel Exp $
+# $Id: NG.py,v 1.17 2008-12-16 13:06:13 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -172,6 +172,23 @@ def register_file_in_dataset(datasetname,lfn,guid, size, checksum):
         pass
         
     return 
+
+def getSRMendpoint(sitename):
+  # Get the correctly formatted SRM endpoint from ToA
+
+  srm_endpoint = TiersOfATLAS.getSiteProperty(sitename, 'srm')
+  srm_endpoint_l = srm_endpoint.split(":")
+  if srm_endpoint_l[0]=='token':
+    srm_endpoint_s = ''
+    for i in range(len(srm_endpoint_l)):
+      if i<2:
+        continue
+      srm_endpoint_s=srm_endpoint_s+srm_endpoint_l[i]+":"
+    # Strip tailing ':'
+    srm_endpoint_s = srm_endpoint_s[:-1]
+    srm_endpoint = srm_endpoint_s
+  # print "SRM ENDPOINT: "+srm_endpoint
+  return srm_endpoint
 
 def getTurl(lfn,datasetname):
 
@@ -695,15 +712,20 @@ class Grid:
               checksum =  md5sum
             else:
               checksum = adler32a
-                    
+
             if outp:
               register_file_in_dataset(dataset,lfn,guid, size, checksum)
             else:
               logger.warning('ERROR could not register file in dq2')
 
+            srm_endpoint =  getSRMendpoint(location)
+            usertag = configDQ2['usertag']
+
             lfcinput = {}
             for i in range(len(lfn)):
-                turl = getTurl(lfn[i],dataset)
+
+                username = str(lfn[i]).split('.')[1]
+                turl = srm_endpoint+usertag+"/"+username+"/ganga/"+dataset+"/"+str(lfn[i])
                 
                 lfcinput[guid[i]] = {'lfn': str(lfn[i]),
                                   'surl': turl,
@@ -718,7 +740,7 @@ class Grid:
             for i in range(len(lfchost_l)-1):
               lfchost = lfchost+lfchost_l[i]+":"
             lfchost = lfchost[6:-1]
-            #print "LFCHOST: "+lfchost
+            print "LFCHOST: "+lfchost
 
             try:
               result = bulkRegisterFiles(lfchost,lfcinput)
@@ -1280,55 +1302,21 @@ class NG(IBackend):
       output_lfn = ''
       if job.outputdata and job.outputdata._name=="DQ2OutputDataset":
           # Get TiersOfATLASChache
-          tiersofatlas = getTiersOfATLASCache() 
+          #tiersofatlas = getTiersOfATLASCache() 
           # Set a default site name
           #sitename = 'NDGFT1DISK'
           #spacetoken = 'ATLASUSERDISK'
-          sitename = 'NDGF-T1'
+          sitename = 'NDGF-T1_USERDISK'
           spacetoken = 'USERDISK'
-          
-          # ...but then check if the user has set one
+
           if job.outputdata.location!='':
-              # is it following the srmv2 convention? If so, set sitename and spacetoken
-              sitenamelist = job.outputdata.location.split("_")
-              if len(sitenamelist)==2:
-                sitename = sitenamelist[0]
-                spacetoken=sitenamelist[1]
-              else:
-                sitename = job.outputdata.location
-                spacetoken = ''
+            sitename = job.outputdata.location
 
-          # See if sitename is in TiersOfAtlasCache.py
-          #if not spacetoken:
-
-          sn = sitename
-          if spacetoken!='':
-            sn = sn+"_"+spacetoken
-
-          #print "STORAGE:  "+sn
-          #print "LFC: " + TiersOfATLAS.getLocalCatalog(sn)
-
-          for site, desc in tiersofatlas.sites.iteritems():
-            if site!=sn:
-              continue
-            srm_endpoint = desc['srm'].strip()
-            # Some magic to strip away the space token in the srm path
-            srm_endpoint_l = srm_endpoint.split(":")
-            srm_endpoint_s = ''
-            for i in range(len(srm_endpoint_l)):
-              if i<2:
-                continue
-              srm_endpoint_s=srm_endpoint_s+srm_endpoint_l[i]+":"
-            # Strip tailing ':'
-            srm_endpoint_s = srm_endpoint_s[:-1]
-            srm_endpoint = srm_endpoint_s 
-            # print "SRM ENDPOINT: "+srm_endpoint
-
+          srm_endpoint =  getSRMendpoint(sitename)
+          
           if srm_endpoint=='':
-            logger.error("Couldn't find SRM information for sitename %s in TiersOfAtlasCache" % sn)
-            
-          #else:
-          #    srm_endpoint = 'srm://srm.ndgf.org;spacetoken=ATLASUSERDISK/atlas/disk/'       
+            logger.warning("Couldn't find SRM information for sitename %s in TiersOfAtlasCache, setting NDGF default" % sn)
+            srm_endpoint = 'srm://srm.ndgf.org;spacetoken=ATLASUSERDISK/atlas/disk/'       
 
           if jobconfig.env.has_key('OUTPUT_LFN'):
               output_lfn = jobconfig.env['OUTPUT_LFN']
@@ -1813,6 +1801,8 @@ if config['ARC_ENABLE']:
     logger.info('ARC_ENABLE in config grid = ARC')
     grids['ARC'] = Grid('ARC')
     config.setSessionValue('ARC_ENABLE',grids['ARC'].active)
+
+configDQ2 = getConfig('DQ2')
     
 """
 if config['ARC_ENABLE']:
@@ -1820,6 +1810,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.16  2008/12/08 21:32:53  pajchel
+# stdout.txt gzipped
+#
 # Revision 1.15  2008/12/07 17:22:30  bsamset
 # Fixed a buggy equality
 #
