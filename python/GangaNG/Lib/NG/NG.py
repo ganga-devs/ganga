@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.17 2008-12-16 13:06:13 bsamset Exp $
+# $Id: NG.py,v 1.18 2008-12-16 13:07:07 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -740,8 +740,7 @@ class Grid:
             for i in range(len(lfchost_l)-1):
               lfchost = lfchost+lfchost_l[i]+":"
             lfchost = lfchost[6:-1]
-            print "LFCHOST: "+lfchost
-
+            
             try:
               result = bulkRegisterFiles(lfchost,lfcinput)
               for guid in result:
