@@ -25,8 +25,8 @@ apmonInstance = None
 apmonInit = False
 
 # Monalisa configuration
-apmonUrlList = ["http://lxarda06.cern.ch:40808/ApMonConf"]
-apmonConf = {'lxarda06.cern.ch:8884': {'sys_monitoring' : 0, \
+apmonUrlList = ["http://dashb-atlas-monalisa.cern.ch:40808/ApMonConf"]
+apmonConf = {'dashb-atlas-monalisa.cern.ch:8884': {'sys_monitoring' : 0, \
                                     'general_info'   : 0, \
                                     'job_monitoring' : 0} }
 
