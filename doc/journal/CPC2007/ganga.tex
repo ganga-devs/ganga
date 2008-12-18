@@ -26,9 +26,9 @@
 % The lineno packages adds line numbers. Start line numbering with
 % \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
 % for the whole article with \linenumbers.
-% \usepackage{lineno}
+\usepackage{lineno}
 
-% \linenumbers
+\linenumbers
 
 \def\lhcb {LHC{\em b\/}\xspace}
 \def\dirac{DIRAC\xspace}
@@ -94,6 +94,7 @@
 \author[a:CERN]{A. Muraru}
 \author[a:STFC]{G. Patrick}
 \author[a:Imperial]{W. Reece}
+\author[a:Oslo]{B.H.Samset}
 \author[a:Oxford]{A. Soroko}
 \author[a:Birmingham]{C.L. Tan}
 \author[a:CERN]{D.C.Vanderster}
@@ -106,6 +107,7 @@
 \address[a:STFC]{Science \& Technology Facilities Council, United Kingdom}
 \address[a:Oxford]{University of Oxford, Oxford, United Kingdom}
 \address[a:Birmingham]{University of Birmingham, Birmingham, United Kingdom}
+\address[a:Oslo]{Oslo, FIXME: full address}
 
 \thanks[HurngChun]{On leave from Academia Sinica Grid Computing Centre (ASGC),
   Taiwan.}
@@ -312,12 +314,13 @@ section~\ref{sec:lhcb} for an example.
 
 
 \ganga has the built-in support for handling the Grid certificates for
-the classic Grid proxy and VOMS \cite{VOMS} authentication and for
-handling Kerberos\cite{Kerberos} tokens for AFS \cite{AFS} access. A
-user may renew and destroy the credentials directly using the
-GPI. \ganga gives an early warning to a user if the credentials are
-about to expire. The minimum credential validity time and other
-aspects of the credential management are fully configurable.
+the classic Grid proxy and VOMS (Virtual Organisation Management
+System) authentication and for handling Kerberos\cite{Kerberos} tokens
+for AFS \cite{AFS} access. A user may renew and destroy the
+credentials directly using the GPI. \ganga gives an early warning to a
+user if the credentials are about to expire. The minimum credential
+validity time and other aspects of the credential management are fully
+configurable.
 
 The framework does not force developers to support all combinations of
 applications and backends but only the meaningful or interesting ones. To manage
@@ -372,11 +375,13 @@ jobs after submission, when this is needed.  It also provides methods for
 updating information on job status, for retrieving output of completed jobs
 and for examining files produced while a job is running.
 
-Backend components have been implemented for a range of widely used processing
-systems, including: local host, batch systems (PBS, LSF, SGE, and
-Condor~\cite{Batch}), and \grid systems like gLite~\cite{LCG},
-ARC~\cite{NorduGrid} and OSG~\cite{OSG}.  As an example, the batch backend component defines
-a single property that may be set by the user:
+Backend components have been implemented for a range of widely used
+processing systems, including: local host, batch systems (PBS, LSF,
+SGE, and Condor~\cite{Batch}), and \grid systems like
+gLite~\cite{LCG}, ARC~\cite{NorduGrid} and OSG~\cite{OSG}. Remote
+backend component allows to launch jobs directly on remote machines
+using ssh.  As an example, the batch backend component defines a
+single property that may be set by the user:
 \begin{description}
 \item[\code{queue~~~~~~:}] Name of queue to which job should be submitted,
 \end{description}
@@ -622,10 +627,10 @@ performed locally with quick response time before launching a large scale
 analysis on the \grid where the response time is longer.
 
 To evaluate the expected performance of a given analysis there is also a large
-usage of the \roofit \cite{FIXME-roofit} framework for performing ensemble testing on simplified
+usage of the \roofit \cite{RooFit} framework for performing ensemble testing on simplified
 Monte Carlo samples. These jobs require large amounts of processing but rely
 on no input data and produce only very small amounts of output. Hence they are
-very easy to deploy on the \grid using the generic \root \cite{FIXME-root}application component
+very easy to deploy on the \grid using the generic \root application component
 in \ganga.
 
 Data analyses using \grid resources in \lhcb are routed through the
@@ -999,6 +1004,9 @@ details of an individual job to the right.
 
 \begin{thebibliography}{00}
 
+\bibitem{Python}
+ G. van Rossum, F.L. Drake,Jr. [The Python Language Reference Manual], ISBN-10: 0954161785
+
 \bibitem{Faulkner:2006px}
   P.~J.~W.~Faulkner {\it et al.}  [GridPP Collaboration],
   %``GridPP: Development of the UK computing Grid for particle physics,''
@@ -1029,6 +1037,11 @@ details of an individual job to the right.
   Environment'', submitted to Conference on Interactive Information and
   Processing Systems for Meteorology, Oceanography, and Hydrology, 23rd, San
   Antonio, TX, 14-18 January 2007.
+
+\bibitem{AFS} Andrew File System, http://www.openafs.org
+\bibitem{Kerberos} Kerberos Consortium, http://www.kerberos.org
+
+\bibitem{RooFit} FIXME:
 
 \bibitem{Batch}
 
