@@ -79,23 +79,24 @@
 %FIXME: AUTHOR LIST - Not sure what publication you have chosen, but is it
 %normal/acceptable to include full names instead of initials?
 
-\author[a:Cambridge]{Frederic Brochu}
-\author[a:Imperial]{Ulrik Egede}
-\author[a:Munich]{Johannes Elmsheuser}
-\author[a:Cambridge]{Karl Harrison}
-\author[a:Lancaster]{Roger Jones}
-\author[a:CERN]{Hurng-Chun Lee\thanksref{HurngChun}}
-\author[a:CERN]{Dietrich Liko}
-\author[a:CERN]{Andrew Maier}
-\author[a:CERN]{Jakub T. Mo{\'s}cicki\corauthref{cor1}}
+\author[a:Cambridge]{F. Brochu}
+\author[a:Imperial]{U. Egede}
+\author[a:Munich]{J. Elmsheuser}
+\author[a:Cambridge]{K. Harrison}
+\author[a:Lancaster]{R. Jones}
+\author[a:CERN]{H.C. Lee\thanksref{HurngChun}}
+\author[a:CERN]{D. Liko}
+\author[a:CERN]{A. Maier}
+\author[a:CERN]{J.T. Mo{\'s}cicki\corauthref{cor1}}
 \corauth[cor1]{Corresponding author}
 \ead{jakub.moscicki@cern.ch}
 %\ead[url]{http://moscicki.org}
-\author[a:CERN]{Adrian Muraru}
-\author[a:STFC]{Glenn Patrick}
-\author[a:Imperial]{William Reece}
-\author[a:Oxford]{Alexander Soroko}
-\author[a:Birmingham]{Chun Lik Tan}
+\author[a:CERN]{A. Muraru}
+\author[a:STFC]{G. Patrick}
+\author[a:Imperial]{W. Reece}
+\author[a:Oxford]{A. Soroko}
+\author[a:Birmingham]{C.L. Tan}
+\author[a:CERN]{D.C.Vanderster}
 
 \address[a:Cambridge]{University of Cambridge, Cambridge, United Kingdom}
 \address[a:Imperial]{Imperial College London, London, United Kingdom}
@@ -114,7 +115,7 @@
   the specification, submission, bookkeeping and post processing of
   computational tasks on a wide set of distributed resources.  \ganga
   effectively provides a homogeneous environment for processing data on
-  inhomogeneous resources. We provide examples from High Energy Physics,
+  heterogeneous resources. We provide examples from High Energy Physics,
   demonstrating how an analysis can be developed on a local system and then
   transparently moved to a \grid system for processing of all available data.
   \ganga offers an API which can be used via an interactive interface, in
@@ -170,7 +171,7 @@ Graphical User Interface~(GUI) or programmatically in scripts. The
 concept of a \emph{job} component is essential as it contains the full
 description of a computational task, including: the code to execute;
 input data for processing; data produced by the application; the
-specification of the required processing environment post-processing
+specification of the required processing environment; post-processing
 tasks; and meta-data for bookkeeping.  The purpose of \ganga can then
 be seen as making it easy for a user to create, submit and monitor the
 progress of jobs. \ganga keeps track of all jobs and their status
@@ -245,7 +246,7 @@ core implementation.
   \caption{The overall architecture of \ganga. The user interacts with the
     \ganga Public Interface via the GUI, the command line interface or
     scripts. Plug-ins are provided for different application types and
-    backends where the applications can run. All jobs are persisted in the
+    backends where the applications can run. All jobs are stored in the
     repository.}
   \label{fig:GPI_architecture}
 \end{figure}
@@ -276,17 +277,21 @@ examples are given of an actual interactive \ganga session using the \GPI.
 After submitting a job \ganga takes over the control and a user may not modify
 it, however a copy of the job may be easily created for subsequent
 modification. \ganga monitors the evolution of submitted jobs and categorises
-them into the simplified states \val{submitted},\val{running},
+them into the simplified states \val{submitted}, \val{running},
 \val{completed}, \val{failed} or \val{killed}.
 
 Other features of the \GPI allow frequently used job configurations to be
 stored as \code{templates} and easily reused and labelling of jobs allow to
 organise them in a hierarchical \code{jobtree}.
 
-A large computational task may be split into a number of sub-jobs automatically
-according to user-defined criteria and the output merged at a later stage. Each
-sub-job will execute on its own and the merging of the output will take place
-when they have all finalised.
+A large computational task may be split into a number of sub-jobs
+automatically according to user-defined criteria and the output merged
+at a later stage. Each sub-job will execute on its own and the merging
+of the output will take place when they have all finalised. The
+submission of subjobs is automatically optimised if the backend
+component supports the bulk job submission. For example in the case of
+the gLite \cite{LCG} workload management system the job collection
+mechanism is used transparently to the user.
 
 All job objects are stored in a job repository database, whereas the input
 and output files associated with the jobs are stored in a file workspace. Both
@@ -305,6 +310,15 @@ the existing implementations or implementing the action interface directly,
 allowing for a diverse variety of repetitive use-cases. See
 section~\ref{sec:lhcb} for an example.
 
+
+\ganga has the built-in support for handling the Grid certificates for
+the classic Grid proxy and VOMS \cite{VOMS} authentication and for
+handling Kerberos\cite{Kerberos} tokens for AFS \cite{AFS} access. A
+user may renew and destroy the credentials directly using the
+GPI. \ganga gives an early warning to a user if the credentials are
+about to expire. The minimum credential validity time and other
+aspects of the credential management are fully configurable.
+
 The framework does not force developers to support all combinations of
 applications and backends but only the meaningful or interesting ones. To manage
 this, the concept of a {\em submission handler} is introduced. The submission
@@ -319,17 +333,18 @@ generic examples. More specialised components, designed for a particular
 problem domain are considered in the sections dealing with use cases.
 
 \subsection{Application components}
+
 The application component describes the type of computational task to be
 performed.  It allows the characteristics and settings of some
 %KUBA: we did not introduce the word schema before so I'd rather get rid of it here
 piece of software to be defined, and provides methods specifying
 actions to be taken before and after a job is processed.  The
 pre-processing (configuration) step typically involves examination of
-the values set for the component properties, and may require that
-these values be used to derive secondary information.  For example,
-one of the properties might specify the path to a file that needs to
-be read.  The post-processing step can be useful for validation tasks
-such as determination of the validity of the application output.
+the application properties and may derive the secondary
+information. For example intemediate configuration files for the
+application may be created automatically. The post-processing step can
+be useful for validation tasks such as determination of the validity
+of the application output.
 
 The simplest application component (\texttt{Executable}) has three properties:
 \begin{description}
@@ -450,17 +465,18 @@ be used to select particular jobs according to job metadata. The metadata
 includes such parameters as job name, type of application, type of submission
 backend, and job status. It can be easily extended if required.
 
-Currently \ganga supports both a local and a remote repository. In the local
-repository the database is stored in the local file system thus providing a
-standalone solution. The database code is implemented entirely in \python so
-it is supported on any platform. For the remote repository the client relies
-on the AMGA~\cite{AMGA} metadata server. The remote server supports secure
-connections with user authentication and authorisation based on \grid proxy
-certificates {\bf TODO(explain about classic and VOMS proxies, maybe later...)} . The performance tests of both the local and remote repositories
-show good scalability for up to 10 thousand jobs per user, with the average
-time of individual job creation being about 0.2 second. There is scope for
-further optimisation in this area by taking advantage of bulk operations and
-on-demand job loading.
+Currently \ganga supports both a local and a remote repository. In the
+local repository the database is stored in the local file system thus
+providing a standalone solution. The database code is implemented
+entirely in \python so it is supported on any platform. For the remote
+repository the client relies on the AMGA~\cite{AMGA} metadata
+server. The remote server supports secure connections with user
+authentication and authorisation based on \grid certificates.  The
+performance tests of both the local and remote repositories show good
+scalability for up to 10 thousand jobs per user, with the average time
+of individual job creation being about 0.2 second. There is scope for
+further optimisation in this area by taking advantage of bulk
+operations and on-demand job loading.
 
 The job repository also includes a mechanism to support schema migration in
 case of evolving plug-in components.
@@ -472,8 +488,7 @@ The current implementation use the local file system and has a simple
 interface that allows transparent access to job sandbox files within the
 \ganga framework. These files are automatically stored on a \emph{per job}
 basis in a directory associated with the job, and a set of sub-directories is
-used to separate specific parts of the job workspace like job input and output
-and workspaces of subjobs.
+used for storing job input and output and the subjobs.
 
 Users may access the files directly in the file-system or via simple commands
 such as \texttt{job.peek()}. Internally \ganga handles the input and output
@@ -485,7 +500,8 @@ cache is still accessible via the normal file system.
 
 A combination of remote workspace with the remote job repository effectively
 creates a roaming profile where the same \ganga session can be accessed at
-multiple locations in a way that is quite similar to that provided by  IMAP for email systems.
+multiple locations in a way that is quite similar to that provided by  IMAP 
+protocol for email systems.
 
 \section{Monitoring}
 \label{sec:mon}
@@ -515,7 +531,7 @@ flexibly adjusted on per-backend basis.
 
 The monitoring sub-system also keeps track of the time remaining until
 authentication credentials expire. Examples of these are proxy certificates
-for interacting with the \grid, and Kerberos \cite{Kerberos} tickets for interacting with a
+for interacting with the \grid, and Kerberos  tickets for interacting with a
 file system. The user is notified that renewal is required and if no action is
 taken, \ganga is placed in a safe state where errors will not occur due to
 lack of authentication.
@@ -800,7 +816,8 @@ interfaced to other frameworks and used as a convenient abstraction layer for
 job management. \ganga combined with \diane, a lightweight agent-based
 scheduling layer on top of the \grid~\cite{DIANE}, has been used in a number
 of scientific activities such as: Monte Carlo simulation for dosimetric
-studies in medical physics, statistical regresion testing of GEANT 4 software
+studies in medical physics, statistical regresion testing of Geant 4 \cite{Geant4}
+software
 with a large number of \grid jobs; in-silico molecular docking in the search
 of the potential drug candidates for Avian Flu~\cite{AvianFlu};
 telecommunication applications; and computational-chemistry workflows. The
@@ -836,6 +853,13 @@ computational task which first can be executed locally for debugging and
 subsequently to the \grid for large scale data mining. We have shown how \ganga
 will aid the task specification, take care of job submission, monitoring and
 output retrieval and provide an intuitive bookkeeping system.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=1 \textwidth]{ganga-GUI.png}
+  \caption{\ganga graphical user interface (GUI). }
+  \label{fig:GUI}
+\end{figure}
 
 We have demonstrated the advantages of having a well defined API which can be
 used either interactively at the \python prompt, through a GUI or
@@ -884,7 +908,7 @@ Below we give a set of examples of working with \ganga. For ease of reading,
 \begin{verbatim}
 ~ % ganga
 *** Welcome to Ganga ***
-Version: Ganga-4-4-2
+Version: Ganga-5-1-0
 Documentation and support: http://cern.ch/ganga
 Type help() or help('index') for online help.
 
@@ -903,7 +927,7 @@ it under certain conditions; type license() for details.
 [7]: jobs                     # List jobs
 !
 \begin{verbatim}
-Job listing
+...job listing...
 \end{verbatim}!
 [8]: ^D                       # Quit Ganga.
 \end{lstlisting}
@@ -954,9 +978,24 @@ where they ran.
 \normalsize
 
 \vspace{-2ex}
-Finally we provide a view of the graphical user interface {\bf TODO:MISSING!}. The overview of jobs
-can be seen to the left, the details of an individual job to the right, and
-partly overlaid the window for contructing a new job.
+
+Groups of jobs may be accessed and manipulated using simple methods:
+
+\tiny
+\begin{lstlisting}[escapechar=!]{}
+[1]: jobs.select(status='failed').resubmit()
+[2]: jobs.select(name='testjob').kill()
+[3]: newjobs = jobs.select(status='new')
+[4]: newjobs.select(name='urgent').submit()
+\end{lstlisting}
+\normalsize
+
+\vspace{-2ex}
+
+Finally we provide a view of the graphical user interface
+(Fig.\ref{fig:GUI}). The overview of jobs can be seen to the left, the
+details of an individual job to the right.
+
 
 \begin{thebibliography}{00}
 
