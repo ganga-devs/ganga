@@ -1,0 +1,6 @@
+from GangaLHCb.test import *
+
+j = Job(application=Root(), backend=TestSubmitter())
+
+addDiracTestSubmitter()
+assert(j.submit())
