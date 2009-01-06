@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.14 2008-12-12 11:06:47 elmsheus Exp $
+# $Id: AthenaMCDatasets.py,v 1.15 2009-01-06 11:59:06 ebke Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -541,7 +541,7 @@ class AthenaMCInputDatasets(Dataset):
         
         numbers = []
         for guid, lfn in contents.iteritems():
-            if not matchFile(matchrange, fn):
+            if not matchFile(matchrange, lfn):
                 continue
             num = extractFileNumber(lfn)
             if num in numbers:
