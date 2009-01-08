@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.33 2009-01-08 08:45:10 elmsheus Exp $
+# $Id: Athena.py,v 1.34 2009-01-08 08:57:50 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -533,9 +533,6 @@ fi
             self.user_area.name=mktemp('.tar.gz',self.package, self.user_area_path)
 
         else:  
-                if not self.atlas_cmtconfig in self.exclude_from_user_area:
-                    self.exclude_from_user_area.append( self.atlas_cmtconfig )                    
-                    logger.debug("Remvoing cmt created directories %s from tarfile" %  self.atlas_cmtconfig)
             if os.environ.has_key('TMPDIR'):
                 tmpDir = os.environ['TMPDIR']
             else:
@@ -556,6 +553,9 @@ fi
             if athena_compile==1 or athena_compile==True:
                 if not 'InstallArea' in self.exclude_from_user_area:
                     self.exclude_from_user_area.append( 'InstallArea' )
+                if not self.atlas_cmtconfig in self.exclude_from_user_area:
+                    self.exclude_from_user_area.append( self.atlas_cmtconfig )                    
+                    logger.debug("Remvoing cmt created directories %s from tarfile" %  self.atlas_cmtconfig)
         
         tarcmd = 'tar '
         if self.exclude_from_user_area:
@@ -962,6 +962,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.33  2009/01/08 08:45:10  elmsheus
+# Improve athena package setup and tarball packing
+#
 # Revision 1.32  2008/12/12 11:15:28  elmsheus
 # Small fix
 #
