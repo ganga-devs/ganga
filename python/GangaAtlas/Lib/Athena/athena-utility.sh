@@ -197,78 +197,12 @@ athena_setup () {
 
     if [ -z $USER_AREA ] && [ -z $ATHENA_USERSETUPFILE ]
     then
-        if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
-        then
-            source $SITEROOT/dist/$ATLAS_RELEASE/Control/AthenaRunTime/AthenaRunTime-*/cmt/setup.sh
-        elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ]
-        then
-            source $SITEROOT/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
-            if [ ! -z $ATLAS_PRODUCTION_ARCHIVE ]
-            then
-                wget $ATLAS_PRODUCTION_ARCHIVE
-                export ATLAS_PRODUCTION_FILE=`ls AtlasProduction*.tar.gz`
-                tar xzf $ATLAS_PRODUCTION_FILE
-                export CMTPATH=`ls -d $PWD/work/AtlasProduction/*`
-                export MYTEMPDIR=$PWD
-                cd AtlasProduction/*/AtlasProductionRunTime/cmt
-                cmt config
-                source setup.sh
-                echo $CMTPATH
-                cd $MYTEMPDIR
-            fi
-        fi
-
+	runtime_setup
     elif [ ! -z $ATHENA_USERSETUPFILE ]
     then
         . $ATHENA_USERSETUPFILE
     else
-        mkdir work
-
-        if [ ! -z $ATLAS_PRODUCTION_ARCHIVE ]
-        then
-            wget $ATLAS_PRODUCTION_ARCHIVE
-            export ATLAS_PRODUCTION_FILE=`ls AtlasProduction*.tar.gz`
-            tar xzf $ATLAS_PRODUCTION_FILE -C work
-            export CMTPATH=`ls -d $PWD/work/AtlasProduction/*`
-            export MYTEMPDIR=$PWD
-            cd work/AtlasProduction/*/AtlasProductionRunTime/cmt
-            cmt config
-            source setup.sh
-            echo $CMTPATH
-            cd $MYTEMPDIR
-        fi
-
-        if [ ! -z $GROUP_AREA_REMOTE ] ; then
-            echo "Fetching group area tarball $GROUP_AREA_REMOTE..."
-            wget $GROUP_AREA_REMOTE
-            FILENAME=`echo ${GROUP_AREA_REMOTE} | sed -e 's/.*\///'`
-            tar xzf $FILENAME -C work
-            NUMFILES=`ls work | wc -l`
-            DIRNAME=`ls work`
-            if [ $NUMFILES -eq 1 ]
-            then
-	        mv work/$DIRNAME/* work
-	        rmdir work/$DIRNAME
-            else
-	        echo 'no group area clean up necessary'
-            fi
-        elif [ ! -z $GROUP_AREA ]
-        then
-            tar xzf $GROUP_AREA -C work
-        fi
-        tar xzf $USER_AREA -C work
-        cd work
-        pwd
-        source install.sh; echo $? > retcode.tmp
-        retcode=`cat retcode.tmp`
-        rm -f retcode.tmp
-        if [ $retcode -ne 0 ]; then
-            echo "*************************************************************"
-            echo "*** Compilation warnings. Return Code $retcode            ***"
-            echo "*************************************************************"
-        fi
-        pwd
-        cd ..
+	athena_compile
     fi
 }
 
@@ -659,4 +593,83 @@ make_filestager_joption() {
     fi
 
     return 0
+}
+
+## function for setting up athena runtime environment, no compilation
+runtime_setup () {
+
+    if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
+    then
+        source $SITEROOT/dist/$ATLAS_RELEASE/Control/AthenaRunTime/AthenaRunTime-*/cmt/setup.sh
+    elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ]
+    then
+        source $SITEROOT/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
+        if [ ! -z $ATLAS_PRODUCTION_ARCHIVE ]
+        then
+            wget $ATLAS_PRODUCTION_ARCHIVE
+            export ATLAS_PRODUCTION_FILE=`ls AtlasProduction*.tar.gz`
+            tar xzf $ATLAS_PRODUCTION_FILE
+            export CMTPATH=`ls -d $PWD/work/AtlasProduction/*`
+            export MYTEMPDIR=$PWD
+            cd AtlasProduction/*/AtlasProductionRunTime/cmt
+            cmt config
+            source setup.sh
+            echo $CMTPATH
+            cd $MYTEMPDIR
+        fi
+    fi
+
+}
+
+## compile the packages
+athena_compile()
+{
+    mkdir work
+
+    if [ ! -z $ATLAS_PRODUCTION_ARCHIVE ]
+    then
+        wget $ATLAS_PRODUCTION_ARCHIVE
+        export ATLAS_PRODUCTION_FILE=`ls AtlasProduction*.tar.gz`
+        tar xzf $ATLAS_PRODUCTION_FILE -C work
+        export CMTPATH=`ls -d $PWD/work/AtlasProduction/*`
+        export MYTEMPDIR=$PWD
+        cd work/AtlasProduction/*/AtlasProductionRunTime/cmt
+        cmt config
+        source setup.sh
+        echo $CMTPATH
+        cd $MYTEMPDIR
+    fi
+
+    if [ ! -z $GROUP_AREA_REMOTE ] ; then
+        echo "Fetching group area tarball $GROUP_AREA_REMOTE..."
+        wget $GROUP_AREA_REMOTE
+        FILENAME=`echo ${GROUP_AREA_REMOTE} | sed -e 's/.*\///'`
+        tar xzf $FILENAME -C work
+        NUMFILES=`ls work | wc -l`
+        DIRNAME=`ls work`
+        if [ $NUMFILES -eq 1 ]
+        then
+	        mv work/$DIRNAME/* work
+	        rmdir work/$DIRNAME
+        else
+	        echo 'no group area clean up necessary'
+        fi
+    elif [ ! -z $GROUP_AREA ]
+    then
+        tar xzf $GROUP_AREA -C work
+    fi
+    tar xzf $USER_AREA -C work
+    cd work
+    pwd
+    source install.sh; echo $? > retcode.tmp
+    retcode=`cat retcode.tmp`
+    rm -f retcode.tmp
+    if [ $retcode -ne 0 ]; then
+        echo "*************************************************************"
+        echo "*** Compilation warnings. Return Code $retcode            ***"
+        echo "*************************************************************"
+    fi
+    pwd
+    cd ..
+ 
 }
