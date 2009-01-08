@@ -258,6 +258,11 @@ if os.path.exists('input_files'):
     else:
         theApp.EvtMax = -1
 EOF
+    if [ n$DATASETDATATYPE = n'MuonCalibStream' ] 
+	then
+	sed 's/EventSelector.InputCollections/svcMgr.MuonCalibStreamFileInputSvc.InputFiles/' input.py > input.py.new
+	mv input.py.new input.py
+    fi
     if [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] 
 	then
 	sed 's/EventSelector/ServiceMgr.EventSelector/' input.py > input.py.new

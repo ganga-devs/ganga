@@ -343,8 +343,11 @@ else:
   ic = stagetool.GetSampleList()
 
 ## get a handle on the ServiceManager
-svcMgr = theApp.serviceMgr()
-svcMgr.EventSelector.InputCollections = ic
+if os.environ.has_key('DATASETDATATYPE') and os.environ['DATASETDATATYPE']=='MuonCalibStream':
+  svcMgr.MuonCalibStreamFileInputSvc.InputFiles = ic
+else:
+  svcMgr = theApp.serviceMgr()
+  svcMgr.EventSelector.InputCollections = ic
 #svcMgr.EventSelector.SkipBadFiles = True
 
 ## override the event number
