@@ -54,6 +54,8 @@ if configDiracVersion is None:
     logger.warning("Failed to find the DIRAC Version. Taking the default "
                    "version.")
     configDiracVersion = ''
+else:
+    logger.info("Dirac version is '%s'",configDiracVersion)
 s = Shell(diracEnvSetup,setup_args = [configDiracVersion])
 
 class _DiracWrapper(object):
