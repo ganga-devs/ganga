@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.14 2008-11-23 08:13:19 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.15 2009-01-08 08:42:41 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -288,12 +288,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         # CN: extra condition for TNTSplitter
         if job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter':
             # set up dq2 environment
-            datasetname = j.inputdata.dataset
+            datasetname = job.inputdata.dataset
             environment['DATASETNAME']= ':'.join(datasetname) 
-            environment['DATASETLOCATION'] = ':'.join(j.inputdata.get_locations())
+            environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations())
             environment['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
             environment['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
-            environment['DATASETTYPE']=j.inputdata.type
+            environment['DATASETTYPE']=job.inputdata.type
             if job.inputdata.accessprotocol:
                  environment['DQ2_LOCAL_PROTOCOL'] = job.inputdata.accessprotocol
             if job.inputsandbox: inputbox += job.inputsandbox   
@@ -493,6 +493,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.14  2008/11/23 08:13:19  elmsheus
+#Fix #44426 - DCACHE_RA_BUFFER should be an str for Local/Batch
+#
 #Revision 1.13  2008/11/17 15:38:58  elmsheus
 #Make DCACHE_RA_BUFFER configurable
 #
