@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.32 2008-12-12 11:15:28 elmsheus Exp $
+# $Id: Athena.py,v 1.33 2009-01-08 08:45:10 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -506,7 +506,7 @@ export CMTPATH=$PWD:$CMTPATH
 dum=`echo $LD_LIBRARY_PATH | tr ':' '\n' | egrep -v '^/lib' | egrep -v '^/usr/lib' | tr '\n' ':' `
 export LD_LIBRARY_PATH=$dum
 cmt config
-source setup.sh
+cmt broadcast source setup.sh
 cmt broadcast cmt config
 source setup.sh
 if [ '%(athena_compile_flag)s' = 'True' ]
@@ -533,6 +533,9 @@ fi
             self.user_area.name=mktemp('.tar.gz',self.package, self.user_area_path)
 
         else:  
+                if not self.atlas_cmtconfig in self.exclude_from_user_area:
+                    self.exclude_from_user_area.append( self.atlas_cmtconfig )                    
+                    logger.debug("Remvoing cmt created directories %s from tarfile" %  self.atlas_cmtconfig)
             if os.environ.has_key('TMPDIR'):
                 tmpDir = os.environ['TMPDIR']
             else:
@@ -959,6 +962,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.32  2008/12/12 11:15:28  elmsheus
+# Small fix
+#
 # Revision 1.31  2008/12/11 10:54:52  elmsheus
 # Add Athena.user_area_path: configure path where to put user_area
 #     file which is created during call of prepare()
