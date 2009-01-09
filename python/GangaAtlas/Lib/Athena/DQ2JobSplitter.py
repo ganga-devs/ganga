@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.20 2008-12-07 19:40:32 mslater Exp $
+# $Id: DQ2JobSplitter.py,v 1.21 2009-01-09 13:29:08 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -100,10 +100,10 @@ class DQ2JobSplitter(ISplitter):
         allowed_sites = []
         if job.backend._name == 'LCG':
             if job.backend.requirements._name == 'AtlasLCGRequirements':
-                if job.backend.requirements.cloud:
-                    allowed_sites = job.backend.requirements.list_sites_cloud()
-                elif job.backend.requirements.sites:
+                if job.backend.requirements.sites:
                     allowed_sites = job.backend.requirements.sites
+                elif job.backend.requirements.cloud:
+                    allowed_sites = job.backend.requirements.list_sites_cloud()
                 else: 
                     raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
                 
