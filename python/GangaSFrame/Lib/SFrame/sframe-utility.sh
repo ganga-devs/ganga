@@ -5,12 +5,17 @@
 #
 # marcello.barisonzi@desy.de
 
-compile_SFrame() {
+mail_User() {
     if [ ! -z $USER_EMAIL ]
 	then
-	echo "Compiling SFrame" | mail -s "GangaSFrame status" $USER_EMAIL
-    fi
+	echo "Job " $JOBID ": " $1 | mail -s "GangaSFrame job $JOBID status" $USER_EMAIL
+    fi   
 
+}
+
+compile_SFrame() {
+
+    mail_User "Compiling SFrame"
 
     if [ ! -z $SFRAME_ARCHIVE ]
 	then
@@ -41,10 +46,7 @@ compile_SFrame() {
 
 make_XML() {
 
-    if [ ! -z $USER_EMAIL ]
-	then
-	echo "Modifiyng XML file" | mail -s "GangaSFrame status" $USER_EMAIL
-    fi
+    #mail_User "Modifying XML file"
 
     if [ -e PoolFileCatalog.xml ]
 	then
@@ -59,10 +61,16 @@ make_XML() {
 
 run_SFrame() {
 
-    if [ ! -z $USER_EMAIL ]
-	then
-	echo "Running SFrame" | mail -s "GangaSFrame status" $USER_EMAIL
-    fi
+    mail_User "Running SFrame"
 
     sframe_main ganga_$SFRAME_XML; echo $? > retcode.tmp
+    retcode=`cat retcode.tmp`
+
+    if [ $retcode -eq 0 ]
+	then
+	mail_User "End of job. Job succeeded."
+    else
+	mail_User "End of job. Job failed."
+    fi
+
 }

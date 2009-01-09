@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: SFrameARALCGRTHandler.py,v 1.1 2008-11-19 15:43:01 mbarison Exp $
+# $Id: SFrameARALCGRTHandler.py,v 1.2 2009-01-09 13:53:36 mbarison Exp $
 ###############################################################################
 # SFrameARA Local Runtime Handler
 #
@@ -54,6 +54,12 @@ class SFrameARALCGRTHandler(AthenaLCGRTHandler, SFrameAppLCGRTHandler):
         # we need to merge the inputbox
         inputbox = a_sjc.inputbox + s_sjc.inputbox
 
+        # remove duplicate entries
+        for i in inputbox:
+            if inputbox.count(i) > 1:
+                inputbox.remove(i)
+
+
         # and the environment
         environment = a_sjc.env
         environment.update(s_sjc.env)
@@ -104,3 +110,6 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.1  2008/11/19 15:43:01  mbarison
+#first version
+#

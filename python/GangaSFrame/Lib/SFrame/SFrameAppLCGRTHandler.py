@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: SFrameAppLCGRTHandler.py,v 1.2 2008-11-24 16:12:49 mbarison Exp $
+# $Id: SFrameAppLCGRTHandler.py,v 1.3 2009-01-09 13:53:35 mbarison Exp $
 ################################################################################
 
 import os, socket, pwd, commands, re, xml.dom.minidom
@@ -290,6 +290,8 @@ class SFrameAppLCGRTHandler(IRuntimeHandler):
         # stupid timestamping
         outputbox += ['timestamps.txt']
 
+        environment['JOBID'] = job.fqid
+
         # append a property for monitoring to the jobconfig of subjobs
         lcg_config = LCGJobConfig(File(exe), inputbox, [], outputbox, environment, [], requirements)
         lcg_config.monitoring_svc = mc['Athena']
@@ -529,6 +531,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('SFrameApp')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/11/24 16:12:49  mbarison
+# *** empty log message ***
+#
 # Revision 1.1  2008/11/19 15:42:59  mbarison
 # first version
 #
