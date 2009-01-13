@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.19 2008-12-16 14:06:35 pajchel Exp $
+# $Id: NG.py,v 1.20 2009-01-13 12:22:06 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -362,7 +362,7 @@ class Grid:
     def submit(self,xrslpath,ce=None,rejectedcl=None):
         '''Submit a XRSL file to NG'''
 
-        cmd = 'ngsub -G ldap://atlasgiis.nbi.dk:2135/o=grid/mds-vo-name=Atlas,ldap://arcgiis.titan.uio.no:2135/o=grid/mds-vo-name=Atlas '
+        cmd = 'ngsub -G giises.txt '
         
         if not self.active:
             logger.warning('NG plugin not active.')
@@ -402,7 +402,7 @@ class Grid:
         '''Native bulk submission supported by GLITE middleware.'''
         # Bulk sumission is supported in NG, but the XRSL files need some care.
 
-        cmd = 'ngsub -G ldap://atlasgiis.nbi.dk:2135/o=grid/mds-vo-name=Atlas,ldap://arcgiis.titan.uio.no:2135/o=grid/mds-vo-name=Atlas '
+        cmd = 'ngsub -G giises.txt '
         
         if not self.active:
             logger.warning('NG plugin not active.')
@@ -438,6 +438,8 @@ class Grid:
             match = re.search('(gsiftp:\S+)',line)
             if match:
                 jobids += [match.group(1)]
+            else:
+                jobids += ['None']
 
         if len(jobids) > 0:
             return jobids
@@ -1001,6 +1003,7 @@ class NG(IBackend):
             for sj in rjobs:
                 i = i + 1
                 if i>len(master_jid):
+                    logger.warning("Not enough job IDs for subjobs - job submission most likely incomplete.")
                     continue
                 sj.backend.id=master_jid[i-1]
                 # job submitted update monitorint
@@ -1809,6 +1812,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.19  2008/12/16 14:06:35  pajchel
+# stdout.txt -> stdout
+#
 # Revision 1.18  2008/12/16 13:07:07  bsamset
 # Fixed bad lfc registration on NG backend
 #
