@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.13 2008-11-18 09:40:44 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.14 2009-01-13 11:08:06 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -342,11 +342,12 @@ class DQ2Dataset(Dataset):
 
         return not state is None
     
-    def get_contents(self,backnav=False, overlap=True):
+    def get_contents(self,backnav=False, overlap=True, filesize=False):
         '''Helper function to access dataset content'''
 
         allcontents = []
         diffcontents = {}
+        contents_size = {}
 
         datasets = resolve_container(self.dataset)
 
@@ -376,6 +377,7 @@ class DQ2Dataset(Dataset):
             contents_new = []
             for guid, info in contents.iteritems():
                 contents_new.append( (guid, info['lfn']) )
+                contents_size[guid] = info['filesize'] 
             contents = contents_new
 
             if backnav:
@@ -412,11 +414,30 @@ class DQ2Dataset(Dataset):
             diffcontents[dataset] = contents
             
         self.number_of_files = len(allcontents)
-        if overlap:
-            return allcontents
-        else:
-            return diffcontents
+        # Sum up all dataset filesizes:
+        sumfilesize = 0 
+        for guid, lfn in allcontents:
+            if contents_size.has_key(guid):
+                sumfilesize += contents_size[guid]
+        # Sum up dataset filesize per dataset:
+        sumfilesizeDatasets= {}
+        for datatset, contents in diffcontents.iteritems():
+            sumfilesizeDataset = 0
+            for guid, lfn in contents:
+                if contents_size.has_key(guid):
+                    sumfilesizeDataset += contents_size[guid]
+            sumfilesizeDatasets[datatset] = sumfilesizeDataset        
         
+        if overlap:
+            if filesize:
+                return sumfilesize
+            else:
+                return allcontents
+        else:
+            if filesize:
+                return sumfilesizeDatasets
+            else:
+                return diffcontents
 
     def get_tag_contents(self):
         '''Helper function to access tag datset content'''
@@ -1184,6 +1205,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.13  2008/11/18 09:40:44  elmsheus
+#Change log level of dataset registration
+#
 #Revision 1.12  2008/10/28 10:59:38  elmsheus
 #Fix bug #42944
 #
