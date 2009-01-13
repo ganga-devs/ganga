@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.21 2009-01-09 13:29:08 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.22 2009-01-13 11:10:56 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -127,8 +127,9 @@ class DQ2JobSplitter(ISplitter):
             raise ApplicationConfigurationError(None,'DQ2JobSplitter found no allowed_sites for dataset')
 
         contents = dict(job.inputdata.get_contents(overlap=False))
-
         locations = job.inputdata.get_locations(overlap=False)
+        if job.backend._name == 'NG':
+            datasetSizes = dict(job.inputdata.get_contents(overlap=False, filesize=True))
 
         siteinfos = {}
         allcontents = {}
@@ -194,6 +195,18 @@ class DQ2JobSplitter(ISplitter):
             if self.numfiles > len(guids):
                 self.numfiles = len(guids)
 
+            if job.backend._name == 'NG':
+                warn = False
+                subjobsize = datasetSizes[dataset] / nrjob / (1024*1024)
+                while subjobsize > config['MaxFileSizeNGDQ2JobSplitter']:
+                    warn = True
+                    self.numfiles = self.numfiles - 1 
+                    nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+                    self.numfiles = int(math.ceil(len(guids)/float(nrjob)))
+                    subjobsize = datasetSizes[dataset] / nrjob / (1024*1024)
+                if warn:
+                    logger.warning('Maximum dataset size on NG reached - created more subjobs.')
+
             for i in xrange(0,nrjob):
           
                 j = Job()
@@ -220,3 +233,4 @@ class DQ2JobSplitter(ISplitter):
     
 config = getConfig('Athena')
 config.addOption('MaxJobsDQ2JobSplitter', 1000, 'Maximum number of allowed subjobs of DQ2JobSplitter')
+config.addOption('MaxFileSizeNGDQ2JobSplitter', 5000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the NG backend (im MB)')
