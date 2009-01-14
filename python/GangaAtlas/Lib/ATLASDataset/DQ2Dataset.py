@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.14 2009-01-13 11:08:06 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.15 2009-01-14 09:47:56 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -414,28 +414,30 @@ class DQ2Dataset(Dataset):
             diffcontents[dataset] = contents
             
         self.number_of_files = len(allcontents)
-        # Sum up all dataset filesizes:
-        sumfilesize = 0 
-        for guid, lfn in allcontents:
-            if contents_size.has_key(guid):
-                sumfilesize += contents_size[guid]
-        # Sum up dataset filesize per dataset:
-        sumfilesizeDatasets= {}
-        for datatset, contents in diffcontents.iteritems():
-            sumfilesizeDataset = 0
-            for guid, lfn in contents:
+        diffcontentsNew = {}
+        if filesize:
+            # Sum up all dataset filesizes:
+            sumfilesize = 0 
+            for guid, lfn in allcontents:
                 if contents_size.has_key(guid):
-                    sumfilesizeDataset += contents_size[guid]
-            sumfilesizeDatasets[datatset] = sumfilesizeDataset        
+                    sumfilesize += contents_size[guid]
+            # Sum up dataset filesize per dataset:
+            sumfilesizeDatasets = {}
+            for dataset, contents in diffcontents.iteritems():
+                sumfilesizeDataset = 0
+                for guid, lfn in contents:
+                    if contents_size.has_key(guid):
+                        sumfilesizeDataset += contents_size[guid]
+                diffcontentsNew[dataset] = (contents, sumfilesizeDataset)        
         
         if overlap:
             if filesize:
-                return sumfilesize
+                return allcontents, sumfilesize
             else:
                 return allcontents
         else:
             if filesize:
-                return sumfilesizeDatasets
+                return diffcontentsNew
             else:
                 return diffcontents
 
@@ -1205,6 +1207,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.14  2009/01/13 11:08:06  elmsheus
+#Introduce get_contents(filesize=True) - returns the dataset filesize
+#
 #Revision 1.13  2008/11/18 09:40:44  elmsheus
 #Change log level of dataset registration
 #
