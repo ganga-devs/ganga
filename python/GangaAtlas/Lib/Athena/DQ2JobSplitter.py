@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.22 2009-01-13 11:10:56 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.23 2009-01-14 09:47:16 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -74,13 +74,15 @@ class DQ2JobSplitter(ISplitter):
         'use_lfc'           : SimpleItem(defvalue = False, doc = 'Use LFC catalog instead of default site catalog/tracker service'),
         'update_siteindex'  : SimpleItem(defvalue = True, doc = 'Update siteindex during job submission to get the latest file location distribution.'),
         'use_blacklist'     : SimpleItem(defvalue = True, doc = 'Use black list of sites create by GangaRobot functional tests.'),
+        'filesize'          : SimpleItem(defvalue=0, doc = 'Maximum filesize sum per subjob im MB.'),
     })
 
-    _GUIPrefs = [ { 'attribute' : 'numfiles',        'widget' : 'Int' },
-                  { 'attribute' : 'numsubjobs',      'widget' : 'Int' },
-                  { 'attribute' : 'use_lfc',         'widget' : 'Bool' },
+    _GUIPrefs = [ { 'attribute' : 'numfiles',         'widget' : 'Int' },
+                  { 'attribute' : 'numsubjobs',       'widget' : 'Int' },
+                  { 'attribute' : 'use_lfc',          'widget' : 'Bool' },
                   { 'attribute' : 'update_siteindex', 'widget' : 'Bool' },
-                  { 'attribute' : 'use_blacklist',    'widget' : 'Bool' }
+                  { 'attribute' : 'use_blacklist',    'widget' : 'Bool' },
+                  { 'attribute' : 'filesize',         'widget' : 'Int' }
                   ]
 
 
@@ -121,15 +123,19 @@ class DQ2JobSplitter(ISplitter):
             runPandaBrokerage(job)
             allowed_sites = queueToAllowedSites(job.backend.site)
         elif job.backend._name == 'NG':
-            allowed_sites = [ 'NDGF-T1_MCDISK', 'NDGF-T1_DATADISK' ]
+            allowed_sites = [ 'NDGF-T1_MCDISK', 'NDGF-T1_DATADISK', 'NDGF-T1_USERDISK'  ]
 
         if not allowed_sites:
             raise ApplicationConfigurationError(None,'DQ2JobSplitter found no allowed_sites for dataset')
 
-        contents = dict(job.inputdata.get_contents(overlap=False))
+        contents_temp = job.inputdata.get_contents(overlap=False, filesize=True)
+        contents = {}
+        datasetSizes = {}
+        for dataset, content in contents_temp.iteritems():
+            contents[dataset] = content[0]
+            datasetSizes[dataset] = content[1]
+        
         locations = job.inputdata.get_locations(overlap=False)
-        if job.backend._name == 'NG':
-            datasetSizes = dict(job.inputdata.get_contents(overlap=False, filesize=True))
 
         siteinfos = {}
         allcontents = {}
@@ -195,17 +201,31 @@ class DQ2JobSplitter(ISplitter):
             if self.numfiles > len(guids):
                 self.numfiles = len(guids)
 
-            if job.backend._name == 'NG':
+            # Restriction based on the maximum dataset filesize
+            if self.filesize > 0 or job.backend._name in [ 'NG', 'Panda']:
                 warn = False
+                maxsize = self.filesize
+                
+                if job.backend._name == 'NG':
+                    maxsize = config['MaxFileSizeNGDQ2JobSplitter']
+                elif job.backend._name == 'Panda':
+                    maxsize = config['MaxFileSizePandaDQ2JobSplitter']
+                elif job.backend._name == 'LCG':
+                    nrjob = 1
+                    self.numfiles = len(guids)
+                    
                 subjobsize = datasetSizes[dataset] / nrjob / (1024*1024)
-                while subjobsize > config['MaxFileSizeNGDQ2JobSplitter']:
+                while subjobsize > maxsize:
                     warn = True
-                    self.numfiles = self.numfiles - 1 
+                    self.numfiles = self.numfiles - 1
+                    if self.numfiles < 1:
+                        self.numfiles = 1
+                    
                     nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
                     self.numfiles = int(math.ceil(len(guids)/float(nrjob)))
                     subjobsize = datasetSizes[dataset] / nrjob / (1024*1024)
                 if warn:
-                    logger.warning('Maximum dataset size on NG reached - created more subjobs.')
+                    logger.warning('Maximum dataset size reached - creating more subjobs.')
 
             for i in xrange(0,nrjob):
           
@@ -234,3 +254,4 @@ class DQ2JobSplitter(ISplitter):
 config = getConfig('Athena')
 config.addOption('MaxJobsDQ2JobSplitter', 1000, 'Maximum number of allowed subjobs of DQ2JobSplitter')
 config.addOption('MaxFileSizeNGDQ2JobSplitter', 5000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the NG backend (im MB)')
+config.addOption('MaxFileSizePandaDQ2JobSplitter', 5000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (im MB)')
