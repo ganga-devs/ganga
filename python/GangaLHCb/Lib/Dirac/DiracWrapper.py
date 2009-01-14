@@ -58,6 +58,15 @@ else:
     logger.info("Dirac version is '%s'",configDiracVersion)
 s = Shell(diracEnvSetup,setup_args = [configDiracVersion])
 
+#check that SetupProject Dirac worked
+if s.env.get('GANGA_DIRAC_SETUP_STATUS',True):
+    try:
+        status = int(s.env['GANGA_DIRAC_SETUP_STATUS'])
+        if status: raise Exception #just go to printout
+    except: #printout if its not a number
+        logger.error("Setting up the Dirac client failed. Check your Dirac installation."\
+                     " The command 'SetupProject Dirac %s' must work correctly from your command prompt.",configDiracVersion)
+
 class _DiracWrapper(object):
     
     def __init__(self):
