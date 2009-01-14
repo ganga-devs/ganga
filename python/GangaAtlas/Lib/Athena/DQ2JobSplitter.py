@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.23 2009-01-14 09:47:16 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.24 2009-01-14 10:17:27 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -123,7 +123,7 @@ class DQ2JobSplitter(ISplitter):
             runPandaBrokerage(job)
             allowed_sites = queueToAllowedSites(job.backend.site)
         elif job.backend._name == 'NG':
-            allowed_sites = [ 'NDGF-T1_MCDISK', 'NDGF-T1_DATADISK', 'NDGF-T1_USERDISK'  ]
+            allowed_sites = config['AllowedSitesNGDQ2JobSplitter']
 
         if not allowed_sites:
             raise ApplicationConfigurationError(None,'DQ2JobSplitter found no allowed_sites for dataset')
@@ -255,3 +255,4 @@ config = getConfig('Athena')
 config.addOption('MaxJobsDQ2JobSplitter', 1000, 'Maximum number of allowed subjobs of DQ2JobSplitter')
 config.addOption('MaxFileSizeNGDQ2JobSplitter', 5000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the NG backend (im MB)')
 config.addOption('MaxFileSizePandaDQ2JobSplitter', 5000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (im MB)')
+config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_MCDISK', 'NDGF-T1_PRODDISK', 'NDGF-T1_USERDISK' ], 'Allowed space tokens/sites for DQ2JobSplitter on NG backend' )
