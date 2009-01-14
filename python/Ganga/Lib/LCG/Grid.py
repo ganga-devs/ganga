@@ -80,14 +80,14 @@ class Grid(object):
 
 #       find out how the VO has been specified
 
-        self.submit_option = ''
+        submit_option = ''
 
         msg = 'using the VO defined '
 
         # VO specific WMS options (no longer used by glite-wms-job-submit command)
         if self.config['ConfigVO']: # 1. vo specified in the configuration file
             if self.middleware == 'EDG':
-                self.submit_option = '--config-vo %s' % self.config['ConfigVO']
+                submit_option = '--config-vo %s' % self.config['ConfigVO']
                 if not os.path.exists(self.config['ConfigVO']):
                     raise Ganga.Utility.Config.ConfigError('')
                 else:
@@ -98,23 +98,23 @@ class Grid(object):
         elif self.__get_proxy_voname__(): # 2. vo attached in the voms proxy
             msg += 'as %s.' % self.__get_proxy_voname__()
         elif self.config['VirtualOrganisation']: # 3. vo is given explicitely 
-            self.submit_option = '--vo %s' % self.config['VirtualOrganisation']
+            submit_option = '--vo %s' % self.config['VirtualOrganisation']
             msg += 'as %s.' % self.config['VirtualOrganisation']
         else: # 4. no vo information is found
             logger.warning('No Virtual Organisation specified in the configuration. The plugin has been disabeled.')
-            return False
+            return None 
 
         # general WMS options
         # NB. please be aware the config for gLite WMS is NOT compatible with the config for EDG RB
         #     although both shares the same command option: '--config'
         if self.config['Config']:
-            self.submit_option += ' --config %s' % self.config['Config']
+            submit_option += ' --config %s' % self.config['Config']
 
-        self.submit_option = ' %s ' % self.submit_option
+        submit_option = ' %s ' % submit_option
 
         logger.debug(msg)
 
-        return True
+        return submit_option
 
     def __print_gridcmd_log__(self,regxp_logfname,cmd_output):
 
@@ -188,13 +188,15 @@ class Grid(object):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return
 
-        if not self.__set_submit_option__():
+        submit_opt = self.__set_submit_option__()
+
+        if not submit_opt:
             return
+        else:
+            cmd += submit_opt
 
         if ce:
             cmd = cmd + ' -r %s' % ce
-
-        cmd += self.submit_option
 
         cmd = '%s --nomsg %s < /dev/null' % (cmd,jdlpath)
 
