@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.6 2008-12-12 10:17:42 elmsheus Exp $
+# $Id: AthenaMC.py,v 1.7 2009-01-14 17:28:09 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -79,18 +79,31 @@ class AthenaMC(IApplication):
             If no splitter is present, the list has always length one.
             Returns the tuple (list of partitions, boolean 'open'), where 'open' is True if the last 
             entry in the list is the beginning of an open range. """
+        try:
+           job = self.getJobObject()
+        except AssertionError:
+           job = None # Unassociated application - returns open range
 
-        job = self.getJobObject()
-        # If we are in simul/recon mode the partition can be specified using firstevent
-        if self.mode != "evgen" and self.partition_number == None:
-           firstpartition = 1 + (self.firstevent-1)/self.number_events_job
+        # Treat evgen, partition only specified by partition_number
+        if self.mode == "evgen":
+           if self.partition_number == None:
+              firstpartition = 1
+           else:
+              firstpartition = self.partition_number
         else:
-           if self.mode != "evgen" and self.firstevent != 1:
+        # If we are in simul/recon mode the partition can be specified using firstevent XOR partition_number
+           if self.partition_number == None:
+              firstpartition = 1 + (self.firstevent-1)/self.number_events_job
+           elif self.firstevent == 1:
+              firstpartition = self.partition_number
+           else:
               logger.error("Except for evgen jobs, app.firstevent is an alternative to app.partition_number. You can not specify both at the same time!")
               raise Exception()
-           firstpartition = self.partition_number
-        if not job.splitter:
+
+        if job and not job.splitter:
            return ([firstpartition], False)
+        elif not job:
+           return ([firstpartition], True)
         else:
            # First, use the splitter variables
            if (not job.splitter.output_partitions) and (not job.splitter.input_partitions):
@@ -312,6 +325,9 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.6  2008/12/12 10:17:42  elmsheus
+# Changes for improved data handling and more splitting capabilities, goes along with new Tasks version from Johannes Ebke
+#
 # Revision 1.5  2008/10/21 06:43:09  elmsheus
 # Change defvalue of partition_number
 #
