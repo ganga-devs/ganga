@@ -69,6 +69,7 @@ p.add_option('--use_shortfilename', action='store_true', help='Use shorter versi
 # Job splitting
 p.add_option('--split', '-s', action='store', type='int', dest='numsubjobs', help='Number of subjobs, if a job should be splitted. The splitting is done via the list of inputfile')
 p.add_option('--splitfiles', action='store', type='int', dest='numfiles_subjob', help='Number of files per subjob, if a job should be splitted.')
+p.add_option('--splitfilesize', action='store', type='int', dest='filesize', help='Maximum filesize sum per subjob im MB, if a job should be splitted.')
 p.add_option('--match_subjobs_files', action='store_const', const='match_subjobs_files', dest='match_subjobs_files', help='Match the number of subjobs to the number of inputfiles"')
 
 # Backends
@@ -300,7 +301,7 @@ if opt.backend=='panda':
 if opt.numsubjobs > 1:
     if (opt.backend == 'lcg' or opt.glite) and not opt.site:
         j.splitter = DQ2JobSplitter()
-    elif (opt.backend == 'panda'):
+    elif (opt.backend in [ 'panda', 'ng' ]):
         j.splitter = DQ2JobSplitter()
     else:
         j.splitter = AthenaSplitterJob()
@@ -312,12 +313,23 @@ elif opt.numfiles_subjob>1:
     if (opt.backend == 'lcg' or opt.glite) and not opt.site:
         j.splitter = DQ2JobSplitter()
         j.splitter.numfiles = opt.numfiles_subjob
-    elif (opt.backend == 'panda'):
+    elif (opt.backend in [ 'panda', 'ng' ]):
         j.splitter = DQ2JobSplitter()
         j.splitter.numfiles = opt.numfiles_subjob
     else:
         j.splitter = AthenaSplitterJob()
         j.splitter.numfiles_subjob = opt.numfiles_subjob
+
+    if opt.outputdata:
+        j.merger=AthenaOutputMerger()
+
+elif opt.filesize>0:
+    if (opt.backend == 'lcg' or opt.glite) and not opt.site:
+        j.splitter = DQ2JobSplitter()
+        j.splitter.filesize = opt.filesize
+    elif (opt.backend in [ 'panda', 'ng' ]):
+        j.splitter = DQ2JobSplitter()
+        j.splitter.filesize = opt.filesize
 
     if opt.outputdata:
         j.merger=AthenaOutputMerger()
