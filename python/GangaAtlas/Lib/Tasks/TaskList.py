@@ -4,23 +4,21 @@ import os, time, thread
 class TaskList(GangaObject):
    """This command is the main interface to Ganga Tasks. For a short introduction and 'cheat sheet', try tasks.help()"""
    _schema = Schema(Version(2,0), {
-        'print_help'   : SimpleItem(defvalue=True,copyable=1,doc='If True print the Help every time tasks is first typed in a session.',typelist=["bool"]),
         'tasks'        : ComponentItem('tasks',defvalue=[],sequence=1,hidden=1,copyable=1,doc='list of tasks'),
         'next_task_id' : SimpleItem(defvalue=0,protected=1,hidden=1,copyable=1,doc='the number of the next created task.',typelist=["int"]),
+        'print_help'   : SimpleItem(defvalue=True,copyable=1,doc='If True print the Help every time tasks is first typed in a session.',typelist=["bool"]),
         })    
    _category = 'tasklists'
    _name = 'TaskList'
-   _exportmethods = ['get', 'remove', 'help', 'table', '__str__']
+   _exportmethods = ['help', 'table', '__str__', '__call__']
 
    _help_printed = False
    _run_thread = False
    _thread = None
 
-   def __init__(self):
-      super(TaskList,self).__init__()
-
    def save(self):
       """Writes all tasks to a file 'tasks.xml' in the job repository. This function is usually called automatically. """
+      # TODO: Add check if this object is correctly initialized, and the tasks are actually tasks
       # First write to tasks.dat.tmp to avoid losing the content in case of crash
       fna = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml.tmp")
       fnb = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml")
@@ -31,90 +29,27 @@ class TaskList(GangaObject):
       except OSError:
          logger.debug("Saving resulted in no file being created. This is normal during startup.")
 
-   def setup(self):
-      """ Setup the task structure, scan the applications and correct ids.
-          MUST not reset user settings. """
-      # Call tasks setup first
+   def startup(self):
+      """Called on ganga startup after the complete tasks tree has been loaded """
       for t in self.tasks:
-         t.setup()
-      # Search jobs for task-supporting applications
-      for j in GPI.jobs:
-         if "tasks_id" in j.application._impl._data:
-            try:
-               if j.subjobs:
-                  for sj in j.subjobs:
-                     app = sj.application._impl
-                     app.getTransform()._impl.setAppStatus(app,app._getParent().status)
-               else:
-                  app = j.application._impl
-                  app.getTransform()._impl.setAppStatus(app,app._getParent().status)
-            except AttributeError, e:
-               logger.error("%s",e)
-      self.save()
+         t.startup()
 
    def register(self,chi):
       """ Adds a task 'chi' to the task list. Should only be called by the Task constructor """
       self.tasks.append(chi)
       chi.id = self.next_task_id
       self.next_task_id += 1
+      chi._setParent(self) # Should not be necessary after fixing ganga bug
       self.save()
-      chi.setup()
-      chi.update()
 
-   def table(self):
-      """Prints a more detailed table of tasks and their transforms"""
-      return self.__str__(False)
-
-   def __str__(self, short=True):
-      """Prints an overview over the currently running tasks"""
-      if self.print_help and not self._help_printed:
-         self.help(short = True)
-         self._help_printed = True
-         print "If you don't want to see this help message again each session, type 'tasks.print_help = False'."
-         print "To show this help message again, type 'tasks.help()'."
-         print
-
-      fstring = " %3s | %17s | %12s | %9s | %33s | %5s\n"
-      ds = "\n" + fstring % ("#", "Type", "Name", "State", "%4s: %4s/ %4s/ %4s/ %4s/ %4s" % (
-           "Jobs",markup("done",overview_colours["completed"])," "+markup("run",overview_colours["running"]),markup("fail",overview_colours["failed"]),markup("hold",overview_colours["hold"])," "+markup("bad",overview_colours["bad"])), "Float")
-      ds += "-"*96 + "\n"
-      for p in self.tasks:
-         stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4i" % (
-                p.n_all(), p.n_status("completed"),p.n_status("running"),p.n_status("failed"),p.n_status("hold"),p.n_status("bad"))
-         ds += markup(fstring % (p.id, p.__class__.__name__, p.name, p.status, stat, p.float), status_colours[p.status])
-         if short:
-            continue
-         for t in p.transforms:
-            if t.__class__.__name__ == "DQ2Input":
-               ds += markup(fstring[:19] % (".%i"%t.id, t.__class__.__name__, t.name), status_colours[t.status]) + "\n"
-            else:
-               stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4s" % (
-                      t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
-               ds += markup(fstring % (".%i"%t.id, t.__class__.__name__, t.name, t.status, stat, ""), status_colours[t.status])
-         ds += "-"*96 + "\n"
-      return ds + "\n"
-
-   def get(self,id):
-      """Returns the task"""
+   def __call__(self,id):
+      """Returns the task with the given id"""
       ps = [p for p in self.tasks if p.id == id]
       if len(ps) > 0:
          return addProxy(ps[0])
       logger.error("No Task with ID #%i" % id)
 
-   def remove(self,id,really=False):
-      """Delete the task"""
-      for i in range(0,len(self.tasks)):
-         if self.tasks[i].id == id:
-            if not really == True:
-               print "You want to remove the task %i named '%s'." % (id,self.tasks[i].name)
-               print "Since this operation cannot be easily undone, please call this command again as tasks.remove(%i,really=True)" % (id)
-               return
-            del self.tasks[i]
-            logger.info("Task #%s deleted" % id)
-            self.save()
-            return
-      logger.error("No Task with ID #%i" % id)
-
+## Thread methods
    def _thread_main(self):
       """ This is an internal function; the main loop of the background thread """
       ## Wait until Ganga is fully initialized      
@@ -122,11 +57,8 @@ class TaskList(GangaObject):
          time.sleep(0.4)
       while not ("config" in reload(GPI).__dict__):
          time.sleep(0.4)
-
       time.sleep(0.5)
-
-      ## Setup all relations
-      self.setup()
+      ## .. hopefully ganga is now initialized. TODO: better way to find this out.
 
       ## Main loop
       while self._run_thread: 
@@ -146,7 +78,7 @@ class TaskList(GangaObject):
                   p.pause()
                   logger.error("Task %s paused - %i jobs have failed while only %i jobs have completed successfully." % (p.name,f, c))
                   logger.error("Please investigate the cause of the failing jobs and then remove the previously failed jobs using job.remove()")
-                  logger.error("You can then continue to run this task with tasks.get(%i).run()" % p.id)
+                  logger.error("You can then continue to run this task with tasks(%i).run()" % p.id)
                   continue
                p.submitJobs()
             except Exception, x:
@@ -164,12 +96,48 @@ class TaskList(GangaObject):
       self._run_thread = True
       self._thread = thread.start_new(self._thread_main, ())
 
+
+## Information methods
+   def table(self):
+      """Prints a more detailed table of tasks and their transforms"""
+      return self.__str__(False)
+
+   def __str__(self, short=True):
+      """Prints an overview over the currently running tasks"""
+      if self.print_help and not self._help_printed:
+         self.help(short = True)
+         self._help_printed = True
+         print "If you don't want to see this help message again each session, type 'tasks.print_help = False'."
+         print "To show this help message again, type 'tasks.help()'."
+         print
+         print " The following is the output of "+markup("tasks.table()",fgcol("blue"))
+         short = False
+
+      fstring = " %5s | %17s | %12s | %9s | %33s | %5s\n"
+      lenfstring = 98
+      ds = "\n" + fstring % ("#", "Type", "Name", "State", "%4s: %4s/ %4s/ %4s/ %4s/ %4s" % (
+           "Jobs",markup("done",overview_colours["completed"])," "+markup("run",overview_colours["running"]),markup("fail",overview_colours["failed"]),markup("hold",overview_colours["hold"])," "+markup("bad",overview_colours["bad"])), "Float")
+      ds += "-"*lenfstring + "\n"
+      for p in self.tasks:
+         stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4i" % (
+                p.n_all(), p.n_status("completed"),p.n_status("running"),p.n_status("failed"),p.n_status("hold"),p.n_status("bad"))
+         ds += markup(fstring % (p.id, p.__class__.__name__, p.name, p.status, stat, p.float), status_colours[p.status])
+         if short:
+            continue
+         for ti in range(0, len(p.transforms)):
+            t = p.transforms[ti]
+            stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4s" % (
+                   t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
+            ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name, t.status, stat, ""), status_colours[t.status])
+         ds += "-"*lenfstring + "\n"
+      return ds + "\n"
+
    def help(self, short=False):
       """Print a short introduction and 'cheat sheet' for the Ganga Tasks package"""
       print
       print markup(" *** Ganga Tasks: Short Introduction and 'Cheat Sheet' ***", fgcol("blue"))
       print 
-      print markup("Definitions: ", fgcol("red")) + "'Partition'     - A unit of processing, for example processing a file or processing some events from a file"
+      print markup("Definitions: ", fgcol("red")) + "'Partition' - A unit of processing, for example processing a file or processing some events from a file"
       print "             'Transform' - A group of partitions that have a common Ganga Application and Backend."
       print "             'Task'      - A group of one or more 'Transforms' that can have dependencies on each other"
       print 
@@ -186,7 +154,7 @@ class TaskList(GangaObject):
          return markup(s,fgcol("blue"))
       print markup("Important commands:", fgcol("red"))
       print " Get a quick overview     : "+c("tasks")+"                  Get a detailed view    : "+c("tasks.table()") 
-      print " Access an existing task  : "+c("t = tasks.get(id)")+"      Remove a Task          : "+c("tasks.remove(id)")
+      print " Access an existing task  : "+c("t = tasks(id)")+"          Remove a Task          : "+c("tasks(id).remove()")
       print " Create a new (MC) Task   : "+c("t = MCTask()")+"           Copy a Task            : "+c("nt = t.copy()")
       print " Show task configuration  : "+c("t.info()")+"               Show processing status : "+c("t.overview()")
       print " Set the float of a Task  : "+c("t.float = 100")+"          Set the name of a task : "+c("t.name = 'My Own Task v1'")
@@ -200,7 +168,9 @@ class TaskList(GangaObject):
       print " Manually change the status of partitions: "+c("tf.setPartitionStatus(partition, 'status')")
       print 
       print " For a Monte Carlo Production Example and specific help type: "+c("MCTask?")
+      print " For an Analysis Example and help type: "+c("AnaTask?")
       print 
+
       if not True:
 #      if not short:
          print "ADVANCED COMMANDS:"

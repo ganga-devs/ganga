@@ -5,16 +5,8 @@ from new import classobj
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 def __task__init__(self):
-    ## This assumes TaskApplication is first in MRO ( the list of methods )
+    ## This assumes TaskApplication is #1 in MRO ( the list of methods )
     baseclass = self.__class__.mro()[2]
-    # some black magic to allow derived classes to specify inherited methods in
-    # the _exportmethods variable without redefining them
-    from Ganga.GPIDev.Base.Proxy import ProxyMethodDescriptor
-    for t in baseclass.__dict__:
-        if (not t in self._proxyClass.__dict__) and (t in self._exportmethods):
-            f = ProxyMethodDescriptor(t,t)
-            f.__doc__ = baseclass.__dict__[t].__doc__
-            setattr(self._proxyClass, t, f)
     baseclass.__init__(self)
     ## Now do a trick to convince classes to use us if they foolishly check the name
     ## (this is a bug workaround)
@@ -38,7 +30,7 @@ def taskify(baseclass,name):
         "_schema"   : Schema(Version(smajor,sminor), dict(baseclass._schema.datadict.items() + schema_items)), 
         "_category" : baseclass._category,
         "_name"     : name,
-        "__init__"  : __task__init__
+        "__init__"  : __task__init__,
         }
 
     for var in ["_GUIPrefs","_GUIAdvancedPrefs","_exportmethods"]:
@@ -53,14 +45,24 @@ def taskify(baseclass,name):
 
 class TaskApplication(object):
     def getTransform(self):
-        return GPI.tasks.get(int(self.tasks_id.split(":")[0])).transforms[int(self.tasks_id.split(":")[1])]
+        tid = self.tasks_id.split(":")
+        if len(tid) == 2 and tid[0].isdigit() and tid[1].isdigit():
+           task = GPI.tasks(int(tid[0]))
+           if task:
+              return task.transforms[int(tid[1])]
+        return None 
 
     def transition_update(self,new_status):
         #print "Transition Update of app ", self.id, " to ",new_status
         try:
-            if self.tasks_id == "00": ## Silent job
+            if self.tasks_id == "00": ## Master job
+               if new_status == "new": ## something went wrong with submission
+                  for sj in self._getParent().subjobs:
+                     sj.application.transition_update(new_status)
                return
-            self.getTransform()._impl.setAppStatus(self, new_status)
+            transform = self.getTransform()
+            if transform:
+               transform._impl.setAppStatus(self, new_status)
         except Exception, x:
             logger.error("Exception in call to transform[%s].setAppStatus(%i, %s)", self.tasks_id, self.id, new_status)
             logger.error("%s", x)
@@ -73,16 +75,50 @@ class TaskSplitter(object):
         ## Get information about the transform
         transform = job.application.getTransform()._impl
         id = job.application.id
-        tasksid = job.application.tasks_id
         partition = transform._app_partition[id]
         ## Tell the transform this job will never be executed ...
         transform.setAppStatus(job.application, "removed")
         ## .. but the subjobs will be
         for i in range(0,len(subjobs)):
-            subjobs[i].application.tasks_id = tasksid
+            subjobs[i].application.tasks_id = job.application.tasks_id
             subjobs[i].application.id = transform.getNewAppID(subjobs[i].application.partition_number)
-            transform.setAppStatus(subjobs[i].application, "submitting")
+            # Do not set to submitting - failed submission will make the applications stuck...
+            # transform.setAppStatus(subjobs[i].application, "submitting")
+        job.application.tasks_id = "00"
         return subjobs
+
+from Ganga.GPIDev.Adapters.ISplitter import ISplitter
+
+class AnaTaskSplitterJob(ISplitter):
+    """AnaTask handler for job splitting"""
+    _name = "AnaTaskSplitterJob"
+    _category = "splitters"
+    _schema = Schema(Version(1,0), {
+        'subjobs'           : SimpleItem(defvalue=[],sequence=1, doc="List of subjobs", typelist=["int"]),
+    } )
+    def split(self,job):
+        from Ganga.GPIDev.Lib.Job import Job
+        logger.debug("AnaTaskSplitterJob split called")
+        sjl = []
+        transform = stripProxy(job.application.getTransform())
+        transform.setAppStatus(job.application, "removed")
+        # Do the splitting
+        for sj in self.subjobs:
+            j = Job()
+            j.inputdata = transform.partitions_data[sj-1]
+            j.outputdata = job.outputdata
+            j.application = job.application
+            j.application.atlas_environment.append("OUTPUT_FILE_NUMBER=%i" % sj)
+            j.backend = job.backend
+            j.inputsandbox = job.inputsandbox
+            j.outputsandbox = job.outputsandbox
+            sjl.append(j)
+            # Task handling
+            j.application.tasks_id = job.application.tasks_id
+            j.application.id = transform.getNewAppID(sj)
+            #transform.setAppStatus(j.application, "submitting")
+        job.application.tasks_id = "00"
+        return sjl
 
 from Ganga.Lib.Executable.Executable import Executable
 from GangaAtlas.Lib.AthenaMC.AthenaMC import AthenaMC, AthenaMCSplitterJob

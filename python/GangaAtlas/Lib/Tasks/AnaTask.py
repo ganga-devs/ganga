@@ -29,48 +29,38 @@ task_help = o
 class AnaTask(Task):
    __doc__ = task_help
    _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + {
-        'analysis': ComponentItem('transforms', defvalue=None, transient=1, optional=1, load_default=False, doc='Analysis Transform'),
+        'analysis': SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Analysis Transform'),
        }.items()))
    _category = 'tasks'
    _name = 'AnaTask'
    _exportmethods = Task._exportmethods + ["setDataset"]
 
    def initialize(self):
+      super(AnaTask, self).initialize()
       analysis = AnaTransform()
       analysis.exclude_from_user_area=["*.root*"]
       analysis.name = "Analysis"
       self.transforms = [analysis]
-      self.fillTransient()
       self.setBackend(GPI.LCG())
-      self.reSetup()
 
-   def fillTransient(self):
+   def startup(self):
+      super(AnaTask,self).startup()
+      self.initAliases()
+
+   def check(self):
+      self.initAliases()
+      super(AnaTask,self).check()
+
+   def initAliases(self):
       self.analysis = None
       for tf in self.transforms:
          if "Ana" in tf.__class__.__name__:
             self.analysis = tf
-
-   def setup(self):
-      self.fillTransient()
-      for i in range(0,len(self.transforms)):
-         self.transforms[i].id = i
-         self.transforms[i].task_id = self.id
-      self.setupPartitions()
-      super(AnaTask, self).setup()
-
-   def setupPartitions(self, total_events=-1):
-      if self.analysis:
-         if self.analysis.getPartitionStatus(1) == "ignored":
-            self.analysis.setPartitionsStatus([1],"ready")
-
-   def info(self):
-      super(MCTask,self).info()
 
    def help(self):
       print task_help
 
    def setDataset(self,ds):
       self.analysis.inputdata.dataset = ds
-      self.reSetup()
-    
+      self.check() 
 

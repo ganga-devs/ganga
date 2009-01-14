@@ -20,7 +20,7 @@ settings["ReconTransform"] = athenamcsettings + ["triggerConfig", "geometryTag"]
 
 class MCTransform(Transform):
    _schema = Schema(Version(1,0), dict(Transform._schema.datadict.items() + {
-       'file_type': SimpleItem(defvalue=1, hidden=1, doc='string in the output file, pe. evgen.EVNT..',modelist=["int"]),
+       'file_type': SimpleItem(defvalue=1, hidden=1, doc='string in the output file, pe. evgen.EVNT..',modelist=["str"]),
 
 }.items()))
    _category = 'transforms'
@@ -28,11 +28,13 @@ class MCTransform(Transform):
    _hidden = 1
    _exportmethods = Transform._exportmethods
 
+## Special methods
    def initialize(self):
       super(MCTransform, self).initialize()
       self.application = AthenaMCTask()
       self.outputdata = AthenaMCOutputDatasets()
 
+## Private methods (overridden from Transforms)
    def checkCompletedApp(self, app):
       j = app._getParent()
       for f in j.outputdata.actual_output:
@@ -68,11 +70,11 @@ class MCTransform(Transform):
          elif "completed" in dep_status:
             self.setPartitionsStatus([c],"ready")
          else: # if all dependencies are on "bad", mark this as bad as well
-            logger.warning("All input files of partition %i in transform %s in task %s are marked as 'bad' or 'ignored'. This partition is marked as 'bad' as well.", partition, self.name, self.task_id)
+            logger.warning("All input files of partition %i in %s are marked as 'bad' or 'ignored'. This partition is marked as 'bad' as well.", partition, self.fqn())
             self.setPartitionsStatus([c],"bad")
 
+## Information methods
    def info(self):
-      self.task_update()
       print markup("%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status])
       skipstring = ""
       if self.inputdata and self.inputdata.skip_files > 0:
@@ -92,6 +94,22 @@ class MCTransform(Transform):
       for setting in settings[self.__class__.__name__]:
          print "  - %20s: %s" % (setting, self.application._data[setting])
 
+   def overview(self):
+      if self.inputdata and self._getParent() and self._getParent().transforms.index(self) == 0:
+         # compare MCTask.py check() function
+         dataset = self.inputdata.get_dataset(self.application, self.backend._name)
+         partitions = self.inputdata.filesToNumbers(dataset[0].keys())
+         partitions.sort()
+         o = markup("Inputdataset '%s' of %s '%s':\n" % (self.inputdata.DQ2dataset, self.__class__.__name__, self.name), status_colours["running"])
+         for p in range(partitions[0], partitions[-1]+1):
+            if p in partitions:
+               o += markup("%i " % p, overview_colours["completed"])
+            else:
+               o += markup("%i " % p, overview_colours["hold"])
+            if p % 20 == 0: o+="\n"
+         print o
+      super(MCTransform, self).overview()
+
 class EvgenTransform(MCTransform):
    _schema = Schema(Version(1,0), dict(MCTransform._schema.datadict.items() + {}.items()))
    _category = 'transforms'
@@ -102,11 +120,7 @@ class EvgenTransform(MCTransform):
       super(EvgenTransform, self).initialize()
       self.name = "Evgen"
       self.application.mode = "evgen"
-      self.file_type = "evgen.EVNT"
       self.application.number_events_job = 10000
-
-   def setup(self):
-      super(EvgenTransform,self).setup()
       self.file_type = "evgen.EVNT"
 
    def getJobsForPartitions(self, partitions):
@@ -115,7 +129,6 @@ class EvgenTransform(MCTransform):
          if j.inputdata:
             j.application.extraArgs=' inputGeneratorFile=`pwd`/atlas.tmp$$/*._%05i.tar.gz' % (partitions[0])
       return jl
-
 
 class SimulTransform(MCTransform):
    _schema = Schema(Version(1,0), dict(MCTransform._schema.datadict.items() + {}.items()))
@@ -131,13 +144,8 @@ class SimulTransform(MCTransform):
       self.file_type = "simul.RDO"
       self.inputdata = AthenaMCInputDatasets()
 
-   def setup(self):
-      super(SimulTransform,self).setup()
-      self.file_type = "simul.RDO"
-
    def getJobsForPartitions(self, partitions):
       jl = super(SimulTransform, self).getJobsForPartitions(partitions)
-
       for j in jl:
          if j.application.atlas_release[:2] >= "13":
             j.application.extraArgs=' digiSeedOffset1=%s digiSeedOffset2=%s ' % (random.randint(1,2**15),random.randint(1,2**15))
@@ -156,9 +164,4 @@ class ReconTransform(MCTransform):
       self.application.mode = "recon"
       self.file_type = "recon.AOD"
       self.inputdata = AthenaMCInputDatasets()
-
-   def setup(self):
-      super(ReconTransform,self).setup()
-      self.file_type = "recon.AOD"
-
 

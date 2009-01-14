@@ -33,7 +33,7 @@ mctask_help = o
 class MCTask(Task):
    __doc__ = mctask_help
    _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + {
-        'total_events': SimpleItem(defvalue=1000, doc="Total number of events to generate", checkset="dirty", typelist=["int"]),
+        'total_events': SimpleItem(defvalue=1000, doc="Total number of events to generate", typelist=["int"]),
         'evgen': SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Evgen Transform'),
         'simul': SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Simul Transform'),
         'recon': SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Recon Transform'),
@@ -44,16 +44,41 @@ class MCTask(Task):
                     'initializeFromGenerator', 'initializeFromEvgen', 'initializeFromSimul',
                     ]
 
-   def initialize(self, fake=False):
+## Special methods
+   def initialize(self):
+      super(MCTask,self).initialize()
       evgen = EvgenTransform()
       simul = SimulTransform()
       recon = ReconTransform()
       self.transforms = [evgen,simul,recon]
-      self.fillESR()
       self.setBackend(GPI.LCG())
-      self.dirty()
 
-   def fillESR(self):
+   def startup(self):
+      super(MCTask,self).startup()
+      self.initAliases()
+
+   def check(self):
+      self.initAliases()
+      # Set the status in reverse order so the propagation works correctly
+      # the minus signs are used to get a correct rounding behaviour
+      for i in range(1,len(self.transforms)):
+         self.transforms[i].inputdata.number_events_file = self.transforms[i-1].application.number_events_job
+      for i in range(len(self.transforms)-1,-1,-1):
+         tf = self.transforms[i]
+         lastpartition = -((-self.total_events)/tf.application.number_events_job)
+         tf.setPartitionsLimit(lastpartition+1)
+         tf.setPartitionsStatus([c for c in range(1,lastpartition+1) if tf.getPartitionStatus(c) == "ignored"], "ready")
+      # if the first transformation has an input dataset, check which partitions are ready
+      if len(self.transforms) > 0 and self.transforms[0].inputdata:
+         tf = self.transforms[0]
+         dataset = tf.inputdata.get_dataset(tf.application, tf.backend._name)
+         inputnumbers = tf.inputdata.filesToNumbers(dataset[0].keys())
+         partitions = tf.application.getPartitionsForInputs(inputnumbers, tf.inputdata)
+         tf.setPartitionsStatus([c for c in range(1,lastpartition+1) if c in partitions], "ready")
+         tf.setPartitionsStatus([c for c in range(1,lastpartition+1) if not c in partitions], "hold")
+      super(MCTask,self).check()
+
+   def initAliases(self):
       self.evgen = None
       self.simul = None
       self.recon = None
@@ -65,44 +90,29 @@ class MCTask(Task):
          elif "Evgen" in tf.__class__.__name__:
             self.evgen = tf
 
-   def setup(self):
-      self.fillESR()
-      super(MCTask, self).setup()
-
-   def update(self):
-      # Set the status in reverse order so the propagation works correctly
-      # the minus signs are used to get a correct rounding behaviour
-      #for tf in self.transforms.__reversed__(): (Does not work!!)
-      if not super(MCTask, self).update():
-         return False
-      self.fillESR()
-      for i in range(1,len(self.transforms)):
-         self.transforms[i].inputdata.number_events_file = self.transforms[i-1].application.number_events_job
-      for i in range(len(self.transforms)-1,-1,-1):
-         tf = self.transforms[i]
-         lastpartition = -((-self.total_events)/tf.application.number_events_job)
-         tf.setPartitionsLimit(lastpartition+1)
-         tf.setPartitionsStatus([c for c in range(1,lastpartition+1) if tf.getPartitionStatus(c) == "ignored"], "ready")
-      return True
-
+## Public methods
    def initializeFromGenerator(self,dataset,events_per_file):
       self.initialize()
+      self.transforms[0].inputdata.DQ2dataset = dataset
+      self.transforms[0].inputdata.number_events_file = events_per_file
+      self.check()
 
    def initializeFromEvgen(self,dataset,events_per_file):
       self.initialize()
       self.removeTransform(0) # remove evgen
-      self.evgen = None
+      self.transforms[0].inputdata.DQ2dataset = dataset
+      self.transforms[0].inputdata.number_events_file = events_per_file
+      self.check()
 
    def initializeFromSimul(self,dataset,events_per_file):
       self.initialize()
       self.removeTransform(0) # remove evgen
       self.removeTransform(0) # remove simul
-      self.evgen = None
-      self.simul = None
+      self.transforms[0].inputdata.DQ2dataset = dataset
+      self.transforms[0].inputdata.number_events_file = events_per_file
+      self.check()
 
-   def addDQ2Download(self,path):
-      pass
- 
+## Information methods
    def info(self):
       print "* total events: %i\n" % (self.total_events) 
       super(MCTask,self).info()
