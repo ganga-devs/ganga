@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.15 2009-01-06 11:59:06 ebke Exp $
+# $Id: AthenaMCDatasets.py,v 1.16 2009-01-15 13:33:41 ebke Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -234,6 +234,7 @@ class AthenaMCInputDatasets(Dataset):
 
     # content = [ ]
     # content_tag = [ ]
+    redefined_partitions = None
     
     def __init__(self):
         super( AthenaMCInputDatasets, self ).__init__()
@@ -247,6 +248,14 @@ class AthenaMCInputDatasets(Dataset):
     def numbersToMatcharray(self,partitions):
         """ Transform a list of input file numbers into a matcharray that can be used on a list of filenames.
             This is a trivial operation if the user did not redefine the input partitions via redefine_partitions """
+        # redefine partitions if necessary 
+
+        if self.redefine_partitions:
+           if not self.redefined_partitions:
+              self.redefined_partitions = expandList(self.redefine_partitions)
+        else:
+           self.redefined_partitions = []
+          
         if not self.redefined_partitions:
             return ["_"+string.zfill(f, 5) for f in partitions]
         else:
@@ -267,6 +276,12 @@ class AthenaMCInputDatasets(Dataset):
     def filesToNumbers(self,files):
         """ Transform a list of input file names into a list of input partition numbers.
             This is a trivial operation if the user did not redefine the input partitions via redefine_partitions """
+        if self.redefine_partitions:
+           if not self.redefined_partitions:
+              self.redefined_partitions = expandList(self.redefine_partitions)
+        else:
+           self.redefined_partitions = []
+
         if not self.redefined_partitions:
             return [extractFileNumber(fn) for fn in files]
         else:
@@ -324,11 +339,7 @@ class AthenaMCInputDatasets(Dataset):
                 dataset+="."+str(app.version)
             datasetType="DQ2" # force datasetType to be DQ2 as this is the default mode.
       
-        # redefine partitions if necessary 
-        self.redefined_partitions = []
-        if self.redefine_partitions:
-           self.redefined_partitions = expandList(self.redefine_partitions)
-   
+
         # get tuple (list, openrange) of partitions to process 
         partitions = app.getPartitionList()
         inputfiles = app.getInputsForPartitions(partitions[0], self)
