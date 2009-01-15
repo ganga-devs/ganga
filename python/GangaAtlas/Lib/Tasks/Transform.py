@@ -304,7 +304,7 @@ class Transform(GangaObject):
    def fqn(self):
       task = self._getParent()
       if task:
-         return "Task %i Transform %i" % (task, task.transforms.index(self))
+         return "Task %i Transform %i" % (task.id, task.transforms.index(self))
       else:
          return "Unassigned Transform '%s'" % (self.name)
 

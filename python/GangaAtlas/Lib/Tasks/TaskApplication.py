@@ -53,7 +53,7 @@ class TaskApplication(object):
         return None 
 
     def transition_update(self,new_status):
-        #print "Transition Update of app ", self.id, " to ",new_status
+        print "Transition Update of app ", self.id, " to ",new_status
         try:
             if self.tasks_id == "00": ## Master job
                if new_status == "new": ## something went wrong with submission
@@ -66,6 +66,7 @@ class TaskApplication(object):
         except Exception, x:
             logger.error("Exception in call to transform[%s].setAppStatus(%i, %s)", self.tasks_id, self.id, new_status)
             logger.error("%s", x)
+            raise
 
 
 class TaskSplitter(object):
