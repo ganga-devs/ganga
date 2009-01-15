@@ -62,7 +62,8 @@ class MCTask(Task):
       # Set the status in reverse order so the propagation works correctly
       # the minus signs are used to get a correct rounding behaviour
       for i in range(1,len(self.transforms)):
-         self.transforms[i].inputdata.number_events_file = self.transforms[i-1].application.number_events_job
+         if self.transforms[i].inputdata:
+            self.transforms[i].inputdata.number_events_file = self.transforms[i-1].application.number_events_job
       for i in range(len(self.transforms)-1,-1,-1):
          tf = self.transforms[i]
          lastpartition = -((-self.total_events)/tf.application.number_events_job)
