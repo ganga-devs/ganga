@@ -354,7 +354,7 @@ class Dirac(IBackend):
                             for f in files:
                                 downloadedFiles.append(os.path.basename(f))
                             for n in names:
-                                if not n in downloadedFiles:
+                                if not os.path.basename(n) in downloadedFiles:
                                     logger.warning("Output download failed ' \
                                                    'for file: '%s'", str(n))
 

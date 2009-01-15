@@ -151,20 +151,75 @@ def getFiles():
         os.chdir(pwd)
     return result
 
+def getLFNs(lfns):
+    pwd = os.getcwd()
+    output_files = []
+    OK = True
+    try:
+        #call now downloads oversized sandboxes if there are there
+        os.chdir(outputdir)
+        for l in lfns:
+            r = dirac.getFile(l)
+            if r and r.get('OK',False):
+                success = r['Value']['Successful']
+                if success.has_key(l):
+                    output_files.append(success[l])
+            else:
+                OK = False
+    finally:
+        os.chdir(pwd)
+    return {'OK':OK, 'Value':output_files}
+
+def findLFNs():
+    lfns = []
+    for f in files:
+        if f.startswith('/'):
+            lfns.append(f)
+    good_lfns = []
+    if lfns:
+        #only download files that exist
+        rep = dirac.getReplicas(lfns)
+        if rep and rep.get('OK',False):
+            success = rep['Value']['Successful']
+            good_lfns = success.keys()
+        #clean out files (including lfns that don't exist)
+        [files.remove(l) for l in lfns]
+    return good_lfns
+
+lfns = findLFNs()
 result = None
+lfn_result = None
 for i in range(3): #retry
-    if not hasattr(dirac,'getJobOutputData'):
-        result = {'OK':False,'Message':'The version of the Dirac client ' \
-                  'needs to be upgraded for this to work!'}
-        break
-    result = getFiles()
-    if result is not None and result.get('OK',False):
+
+    if lfns:
+        lfn_result = getLFNs(lfns)
+        if not files and lfn_result and lfn_result.get('OK',False):
+            rc = 0
+            break
+
+    if files:
+
+        if not hasattr(dirac,'getJobOutputData'):
+            result = {'OK':False,'Message':'The version of the Dirac client '                       'needs to be upgraded for this to work!'}
+            break
+        result = getFiles()
+        if not lfns and result and result.get('OK',False):
+            result = lfn_result
+            rc = 0
+            break
+        
+    if result is not None and result.get('OK',False) and lfn_result and lfn_result.get('OK',False):
         rc = 0
         break
-if result is None:
-    result = {'OK':False,'Message':'Failed to download the outputdata ' \
-              'files. The reason is not known'}
-storeResult(result)
+if result is None and lfn_result is None:
+    result = {'OK':False,'Message':'Failed to download the outputdata '               'files. The reason is not known'}
+elif result is not None:
+    if lfn_result is not None:
+        result['Value'].extend(lfn_result['Value'])
+        result['OK'] = result['OK'] and lfn_result['OK']
+else:
+    result = lfn_result
+storeResult(result)    
     """ % {'FILES':str(names),'OUTPUTDIR':dir,'ID':id}
 
 
