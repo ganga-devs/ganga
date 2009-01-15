@@ -44,11 +44,13 @@
 \def\grid {Grid\xspace}
 \def\GPI{GPI\xspace}
 \def\roofit{\textsc{RooFit}\xspace}
+\def\panda{PANDA}
+\def\ARC{ARC}
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\val}[1]{\emph{#1}}
 
-\begin{document}
 
+\begin{document}
 \begin{frontmatter}
 
 % Title, authors and addresses
@@ -66,6 +68,7 @@
 % \corauth[cor1]{}
 % \address{Address\thanksref{label3}}
 % \thanks[label3]{}
+
 
 \title{Ganga -- a tool for computational-task management and easy access to \grid
   resources}
@@ -93,11 +96,12 @@
 %\ead[url]{http://moscicki.org}
 \author[a:CERN]{A. Muraru}
 \author[a:STFC]{G. Patrick}
+\author[a:Oslo]{K. Pajchel}
 \author[a:Imperial]{W. Reece}
-\author[a:Oslo]{B.H.Samset}
+\author[a:Oslo]{B.H. Samset}
 \author[a:Oxford]{A. Soroko}
 \author[a:Birmingham]{C.L. Tan}
-\author[a:CERN]{D.C.Vanderster}
+\author[a:CERN]{D.C. Vanderster}
 
 \address[a:Cambridge]{University of Cambridge, Cambridge, United Kingdom}
 \address[a:Imperial]{Imperial College London, London, United Kingdom}
@@ -107,7 +111,7 @@
 \address[a:STFC]{Science \& Technology Facilities Council, United Kingdom}
 \address[a:Oxford]{University of Oxford, Oxford, United Kingdom}
 \address[a:Birmingham]{University of Birmingham, Birmingham, United Kingdom}
-\address[a:Oslo]{Oslo, FIXME: full address}
+\address[a:Oslo]{University of Oslo, Oslo, Norway}
 
 \thanks[HurngChun]{On leave from Academia Sinica Grid Computing Centre (ASGC),
   Taiwan.}
@@ -162,8 +166,8 @@ Grid computing \sep Data mining \sep Task management \sep User interface
 management of computational tasks. The implementation uses an object oriented
 design in \python~\cite{python}. It started as part of the GridPP
 project~\cite{Faulkner:2006px} to serve as a \grid user interface for data
-analysis within the \atlas~\cite{Armstrong:1994it} and
-\lhcb~\cite{Amato:1998xt} experiments in High Energy Physics where large
+analysis within the \atlas~\cite{ATLAS} and
+\lhcb~\cite{LHCb} experiments in High Energy Physics where large
 communities of physicists need access to \grid resources for data mining
 and simulation tasks.
 
@@ -179,14 +183,14 @@ be seen as making it easy for a user to create, submit and monitor the
 progress of jobs. \ganga keeps track of all jobs and their status
 through a repository that archives all information between independent
 \ganga sessions. It is possible to switch between executing a job on a
-local computer and on the \grid by changing a single parameter in a
-job. This simplifies the progression from rapid prototyping on a local
-computer, to small-scale tests on a local batch system, to an analysis of a
+local computer and on the \grid by changing a single parameter of a job object. 
+This simplifies the progression from rapid prototyping on a local
+computer, to small-scale tests on a local batch system, to the analysis of a
 large dataset using \grid resources.
 
 It is possible to make \ganga available to a user community with a high level
 of customisation. For example, an expert within a field can implement a custom
-application class describing a specific computational task. The class will
+application class describing the specific computational task. The class will
 encapsulate all low-level configuration of the application, which is always
 the same, and only expose a few parameters for configuration of a specific
 task. The plug-in system provided in \ganga means that this expert
@@ -208,13 +212,12 @@ quick turnaround during development. At the same time \ganga may be
 used as a job management system integrated in a larger system. In this
 case \ganga acts as a library for job submission and control.
 
-The implementation of \ganga follows an object oriented design and is
-implemented in \python. \ganga is licensed under the GNU General Public
+\ganga is licensed under the GNU General Public
 License\footnote{\ganga is licensed under GPL version 2 or any later version
   of your choice.}~\cite{GPL} and is available for download from
 \url{http://www.cern.ch/ganga}. The installation of \ganga is trivial and
-does not require any privileged access or server configuration as part of the
-process. From January 2007 to December 2008 \ganga has in total been
+does not require any privileged access or server configuration. 
+From January 2007 to December 2008 \ganga has in total been
 used at 150 sites around the world with 2000 unique users running about 250k %FIXME: STATS!
 \ganga sessions\footnote{The usage information is collected from a voluntary
   usage reporting system implemented in \ganga.}.
@@ -303,7 +306,7 @@ server.
 For repetitive use-cases the \code{Robot} has been implemented. It is a \GPI
 script which acts as a driver to periodically execute a series of
 actions in the context of a \ganga session, where the actions are defined by
-implementations of an action interface.  Without any coding, the driver can be
+implementations of an action interface.  Without programming, the driver can be
 configured using existing action implementations to submit saved jobs, wait
 for the jobs to complete, extract data about the jobs to an XML file, generate
 plain text or HTML summary reports, and email the reports to interested
@@ -313,9 +316,9 @@ allowing for a diverse variety of repetitive use-cases. See
 section~\ref{sec:lhcb} for an example.
 
 
-\ganga has the built-in support for handling the Grid certificates for
-the classic Grid proxy and VOMS (Virtual Organisation Management
-System) authentication and for handling Kerberos\cite{Kerberos} tokens
+\ganga has the built-in support for handling the \grid certificates for
+the classic \grid proxy and VOMS (Virtual Organisation Management
+System) \cite{VOMS} authentication and for handling Kerberos\cite{Kerberos} tokens
 for AFS \cite{AFS} access. A user may renew and destroy the
 credentials directly using the GPI. \ganga gives an early warning to a
 user if the credentials are about to expire. The minimum credential
@@ -414,10 +417,10 @@ Specialised splitters deal with creating subjobs that process different parts
 of a dataset.
 
 \subsection{Merger components}
-Merger components deals with combining the output of multiple jobs
+Merger components deal with combining the output of multiple jobs
 (subjobs). Typical output includes files containing data in a
 particular format, for example text strings or data representing
-histograms. As examples, one merger component (\code{FileMerger})
+histograms. As examples, one merger component (\code{TextMerger})
 concatenates the files of standard output and error returned by a set
 of subjobs, and another (\code{RootMerger}) sums histograms produced
 in ROOT format~\cite{ROOT}. Merging may be automatically performed in
@@ -432,7 +435,7 @@ most important parts of \ganga.
 \subsection{Components}
 \label{sec:ComponentImplementation}
 Job components are implemented as plug-in classes. They are imported by \ganga
-at start-up if enabled in a user configuration file. In this way a given user
+at start-up if enabled in a user configuration file. In this way users
 will only see the components that are relevant for their specific area of
 work.
 
@@ -444,11 +447,11 @@ work.
   \label{fig:Components}
 \end{figure}
 Plugin development is simplified thanks to a set of internal interfaces and a
-proxy generation mechanism. Component classes inherit from an interface class
+proxy class generation mechanism \cite{GoF}. Component classes inherit from an interface class
 as seen in Fig.~\ref{fig:Components}. Each plugin class defines a schema which
 describes the plugin attributes and their properties such as the type
 (read-only, read-write, internal), the visibility, user-convenience filters
-and shortcuts.
+and syntax shortcuts.
 
 The user does not interact with the plugin class directly but rather with an
 automatically generated proxy class which is visible in the \GPI. The proxy
@@ -505,7 +508,7 @@ cache is still accessible via the normal file system.
 
 A combination of remote workspace with the remote job repository effectively
 creates a roaming profile where the same \ganga session can be accessed at
-multiple locations in a way that is quite similar to that provided by  IMAP 
+multiple locations in a way that is quite similar to that provided by  IMAP \cite{IMAP}
 protocol for email systems.
 
 \section{Monitoring}
@@ -535,7 +538,7 @@ flexibly adjusted on per-backend basis.
 \end{figure}
 
 The monitoring sub-system also keeps track of the time remaining until
-authentication credentials expire. Examples of these are proxy certificates
+authentication credentials expire. Examples of these are \grid proxy certificates
 for interacting with the \grid, and Kerberos  tickets for interacting with a
 file system. The user is notified that renewal is required and if no action is
 taken, \ganga is placed in a safe state where errors will not occur due to
@@ -563,7 +566,8 @@ is the Atlas Dashboard application monitoring\footnote{See
   \url{http://dashb-atlas-job.cern.ch/dashboard/request.py/jobsummary}.}.
 Another is a custom service which allows the \ganga user to peek the standard
 output produced by the job in real-time on the \grid. The streaming is done on
-request and must be activated by the user on a per-job basis.
+request and must be activated by the user on a per-job basis. The streaming service
+is not enabled by default and must be set up for each user community separately.
 
 \section{Use in High Energy Physics}
 \label{sec:useHEP}
@@ -574,7 +578,7 @@ high energies and precise measurements of particle decays. The experiments
 are located at the Large Hadron Collider~(\lhc) at the European Laboratory for
 Particle Physics~(CERN), Geneva. Both experiments require processing of data
 volumes of the order of petabytes per year, and rely on computing resources
-distributed across multiple locations and multiple Grid implementations. The data-processing applications,
+distributed across multiple locations and multiple \grid implementations. The data-processing applications,
 including simulation, reconstruction and final analysis for the experiments,
 are based on the \gaudi/\athena \code{C++}~\cite{gaudi} framework which
 provides core services, such as message logging, data access, histogramming,
@@ -628,19 +632,19 @@ analysis on the \grid where the response time is longer.
 
 To evaluate the expected performance of a given analysis there is also a large
 usage of the \roofit \cite{RooFit} framework for performing ensemble testing on simplified
-Monte Carlo samples. These jobs require large amounts of processing but rely
-on no input data and produce only very small amounts of output. Hence they are
+Monte Carlo samples. These jobs require large amounts of processing but do not require
+input data and produce only small amounts of output. Hence they are
 very easy to deploy on the \grid using the generic \root application component
 in \ganga.
 
 Data analyses using \grid resources in \lhcb are routed through the
 \dirac~\cite{DIRAC} workload management system~(WMS). \dirac is a pilot based
-system where a small script is submitted to the \grid which checks for the
+system where a generic script is submitted to the \grid which checks for the
 presence of required software, network connectivity, available memory etc.: If
 all requirements are satisfied the application itself is pulled from the WMS
 and started; If the requirements are not satisfied the pilot will simply
 terminate and the WMS will send a new pilot to the \grid. The system thus
-improves the reliability of the \grid system towards the user. A \dirac backend
+improves the reliability of the \grid system for the user. A \dirac backend
 component is included in \ganga to support submission of jobs to the \dirac
 WMS. Internally this component is using the \python API of
 \dirac~\cite{DIRACAPI}.  Further details of distributed analysis model in
@@ -701,7 +705,16 @@ vast amount of data is also grouped into datasets based on various criteria
 (e.g.  physics characteristics, production batch run, etc.) for more efficient
 query and retrieval.
 
-\subsubsection{\atlas User Analysis}
+\subsubsection{\atlas \grid infrastructures}
+
+The \atlas experiment employs three \grid infrastructures for user
+analysis and Monte Carlo production. The European \grid (EGEE) is
+connected via the gLite middleware, the North American \grid (OSG)
+employs the \panda system, and the Nordic \grid uses the ARC
+middleware. \ganga is able to seamlessly submit jobs to all these three
+grid flavours.
+
+\subsubsection{\atlas user analysis}
 A typical \atlas user analysis consists of an event selection algorithm
 developed in the Athena software framework. Large amounts of data are skimmed
 for events that meet certain selection criteria. The events of interest are
@@ -720,16 +733,25 @@ of the specific features are:
   and registered in DQ2.
 \end{itemize}
 
-In total 37k jobs have been successfully processed by \atlas users using
-\ganga on the \grid in the first half of 2007.
+In total over 400k jobs have been processed by \atlas users
+using \ganga on the Grid in the second half of 2008. Similarly as
+described in the LHCb experiments section, daily GangaRobot tests are
+executed on the EGEE, NDGF and OSG/Panda \grid resources to test the
+availability and functionality of the various \atlas software enabled
+sites. These tests are used to guide users to only well-tested sites and
+prevent job failures on temporarily misconfigured sites.
 
-\subsubsection{\atlas User Monte Carlo simulations}
+\subsubsection{\atlas user Monte Carlo simulations}
 A second example for a user task is a small scale Monte Carlo (MC) production
 of a few ten thousand events. The \emph{AthenaMC} application component has
 been developed to integrate software used in the official \atlas MC Production
-System~\cite{bib:atlasprodsys}.  The component consists of a set of
-configuration files for the three MC production steps for event generation,
-simulation and reconstruction.
+System. %~\cite{bib:atlasprodsys}.  
+
+The component consists of a set of python classes to handle input
+parameters, input datasets and output datasets for the three
+production steps: event generation, simulation and reconstruction. As
+for the User Analysis in the previous section, datasets are managed by
+the DQ2 data management system.  simulation and reconstruction.
 
 \section{Other usage areas}
 \label{sec:other}
@@ -813,6 +835,24 @@ the input sandbox of the job. The histogram and text output is returned in the
 output sandbox. Such a simple approach allows to integrate certain
 applications in just a few hours --- as it was the case for \garfield.
 
+\subsection{\ganga integrated with lightweight grid middleware}
+
+The ARC (Advanced Resource Connector) grid middleware\cite{ARC} is a
+product of the NorduGrid collaboration\cite{NG}, used by many academic
+institutions in the Nordic countries. The ARC standalone user client
+is very lightweight, and support for submission to ARC--enabled grid
+sites has been integrated in \ganga. On installation of \ganga, the user
+can request to have the ARC middleware automatically installed as an
+external dependency. Specifying the dedicated NorduGrid backend to a
+\ganga job then gives immediate access to ARC resources.
+
+The main user of this integration is the \atlas experiment (see
+section \ref{sec:atlas}), as ARC--enabled resources make up one of the
+three major computing grid used by this collaboration. ATLAS--specific
+applications with NorduGrid functionality have been delveoped. An
+initiative also exists to employ \ganga as a general job submission
+tool for the next generation of ARC middleware, KnowARC.
+
 \subsection{\ganga interfaced to other frameworks}
 \label{sec:GangaInOtherFrameworks}
 The \ganga Public Interface is a backend and application neutral job
@@ -832,7 +872,7 @@ approach allowes the efficiency of overlay scheduling systems such
 as \diane to be combined with the well structured job management offered by \ganga as well as
 combining \grid and non-\grid resources under a uniform interface.
 
-\begin{figure}
+\begin{figure}[h!]
   \centering
   \includegraphics[width=1 \textwidth]{ganga-diane-portal.pdf}
   \caption{Ganga as a job management component embedded in DIANE and
@@ -852,19 +892,12 @@ also switch or combine the usage of heterogeneous computing environments (e.g.
 \section{Conclusion}
 \label{sec:conclusion}
 \ganga has been presented as a tool for job management in an environment of heterogeneous resources
-and is particularly suited to the Grid paradigm that has emerged in large-scale distributed computing.
+and is particularly suited to the \grid paradigm that has emerged in large-scale distributed computing.
 In an easy way it is possible to define a
 computational task which first can be executed locally for debugging and
 subsequently to the \grid for large scale data mining. We have shown how \ganga
 will aid the task specification, take care of job submission, monitoring and
 output retrieval and provide an intuitive bookkeeping system.
-
-\begin{figure}[h!]
-  \centering
-  \includegraphics[width=1 \textwidth]{ganga-GUI.png}
-  \caption{\ganga graphical user interface (GUI). }
-  \label{fig:GUI}
-\end{figure}
 
 We have demonstrated the advantages of having a well defined API which can be
 used either interactively at the \python prompt, through a GUI or
@@ -881,7 +914,8 @@ projects which would be interested in using \ganga.
 \label{sec:acknowledgements}
 The development of \ganga has been partially funded by GridPP under
 grants from the research councils PPARC and STFC in the United
-Kingdom. \ganga makes use of results produced by the Enabling Grids
+Kingdom and by the D-Grid project funded by the BMBF, Germany.  
+\ganga makes use of results produced by the Enabling Grids
 for E-sciencE project (EGEE), a project co-funded by the European
 Commission (under contract number INFSO-RI-031688) through the Sixth
 Framework Programme~\cite{EGEE}.
@@ -1001,11 +1035,18 @@ Finally we provide a view of the graphical user interface
 (Fig.\ref{fig:GUI}). The overview of jobs can be seen to the left, the
 details of an individual job to the right.
 
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=1 \textwidth]{ganga-GUI.png}
+  \caption{\ganga graphical user interface (GUI). }
+  \label{fig:GUI}
+\end{figure}
+
 
 \begin{thebibliography}{00}
 
-\bibitem{Python}
- G. van Rossum, F.L. Drake,Jr. [The Python Language Reference Manual], ISBN-10: 0954161785
+\bibitem{python}
+ G. van Rossum, F.L. Drake, Jr. [The Python Language Reference Manual], ISBN-10: 0954161785
 
 \bibitem{Faulkner:2006px}
   P.~J.~W.~Faulkner {\it et al.}  [GridPP Collaboration],
@@ -1013,19 +1054,27 @@ details of an individual job to the right.
   J.\ Phys.\ G {\bf 32} (2006) N1.
   %%CITATION = JPHGB,G32,N1;%%
 
-\bibitem{Armstrong:1994it}
-  W.~W.~Armstrong {\it et al.}  [ATLAS Collaboration],
-  ``ATLAS: Technical proposal for a general-purpose p p experiment at the
-  Large Hadron Collider at CERN'', CERN-LHCC-94-43.
-  %%CITATION = CERN-LHCC-94-43;%%
+\bibitem{ATLAS}
+G.~Aad {\it et al.}  [ATLAS Collaboration], ``The ATLAS Experiment at the CERN Large Hadron Collider'',
+JINST {\bf 3} (2008) S08003
 
-\bibitem{Amato:1998xt}
-  S.~Amato {\it et al.}  [LHCb Collaboration],
-  ``LHCb technical proposal'', CERN-LHCC-98-004.
-  %%CITATION = CERN-LHCC-P-4;%%
-\bibitem{GPL} 
-  The GNU General Public License,
-  \url{http://www.gnu.org/licenses/gpl.html}.
+ %%CITATION = JINST,3,S08003;%%
+
+%\bibitem{Armstrong:1994it}
+%  W.~W.~Armstrong {\it et al.}  [ATLAS Collaboration],
+%  ``ATLAS: Technical proposal for a general-purpose p p experiment at the
+%  Large Hadron Collider at CERN'', CERN-LHCC-94-43.
+%  %%CITATION = CERN-LHCC-94-43;%%
+
+\bibitem{Alves:2008zz}
+ A.~A.~Alves {\it et al.}  [LHCb Collaboration], ``The LHCb Detector At The LHC,'', 
+JINST {\bf 3} (2008) S08005.
+ %%CITATION = JINST,3,S08005;%%
+
+%\bibitem{Amato:1998xt}
+%  S.~Amato {\it et al.}  [LHCb Collaboration],
+%  ``LHCb technical proposal'', CERN-LHCC-98-004.
+%  %%CITATION = CERN-LHCC-P-4;%%
 
 \bibitem{AHE} 
   P.~ V.~Coveney {\it et al.}, ``The Application Hosting Environment:
@@ -1038,10 +1087,20 @@ details of an individual job to the right.
   Processing Systems for Meteorology, Oceanography, and Hydrology, 23rd, San
   Antonio, TX, 14-18 January 2007.
 
+\bibitem{GPL} 
+  The GNU General Public License,
+  \url{http://www.gnu.org/licenses/gpl.html}.
+
+\bibitem{LCG}
+Worldwide LHC Computing Grid, \url{http://www.cern.ch/LHCgrid}.
+
+\bibitem{VOMS} TODO
+
 \bibitem{AFS} Andrew File System, http://www.openafs.org
 \bibitem{Kerberos} Kerberos Consortium, http://www.kerberos.org
 
-\bibitem{RooFit} FIXME:
+\bibitem{RooFit} W. Verkerke, D. Kirkby, ``The RooFit toolkit for data modeling'',
+arXiv:physics/0306116, 2003, see also: http://roofit.sourceforge.net
 
 \bibitem{Batch}
 
@@ -1051,19 +1110,24 @@ details of an individual job to the right.
   Concurrency and Computation: Practice and Experience'', {\bf 17, 2-4}
   (2005), 323, \url{http://www.cs.wisc.edu/condor/}
 
-\bibitem{LCG}
-Worldwide LHC Computing Grid, \url{http://www.cern.ch/LHCgrid}.
 
 \bibitem{NorduGrid} 
   M.~Ellert {\it et al.}, ``Advanced Resource Connector middleware for
   lightweight computational Grids'', Future Generation Computer Systems
   (2007) {\bf23}.
   
+\bibitem{OSG} T.~Maeno [ATLAS Collaboration], ``PanDA: Distributed production and distributed analysis system for
+ATLAS,'', J.\ Phys.\ Conf.\ Ser.\  {\bf 119} (2008) 062036.
+
 \bibitem{ROOT}
-  Rene Brun and Fons Rademakers, ``ROOT - An Object Oriented Data Analysis
+  R. Brun and F. Rademakers, ``ROOT - An Object Oriented Data Analysis
   Framework'', Proceedings AIHENP'96 Workshop, Lausanne, Sep. 1996, Nuclear
   Ins. Methods Phys. Res., {\bf A389} (1997) 81. See also
   \url{http://root.cern.ch}.
+
+\bibitem{GoF}
+  E. Gamma et al.: Design Patterns: Elements of Reusable Object--Orientated Software, 
+  Addison--Wesley, 1995
 
 \bibitem{IPython} The enhanced interactive Python shell IPython.
   \url{http://ipython.scipy.org/}
@@ -1074,6 +1138,8 @@ Worldwide LHC Computing Grid, \url{http://www.cern.ch/LHCgrid}.
 \bibitem{WebDav} WebDav is a set of extensions to the HTTP protocol which
   allows users to collaboratively edit and manage files on remote web servers.
   Specification in RFC4918. See also \url{http://www.webdav.org/}.
+
+\bibitem{IMAP}
 
 \bibitem{lhcb:2005jj}
     Antunes-Nobrega, R {\it et al.} [LHCb Collaboration],
@@ -1096,13 +1162,19 @@ Worldwide LHC Computing Grid, \url{http://www.cern.ch/LHCgrid}.
 \bibitem{bib:atlascompmod}
   ATLAS Computing TDR, CERN-LHCC-2005-022.
 
-\bibitem{bib:atlasdq2}
-  ATLAS DQ2/DDM project wiki, 
-  \url{https://twiki.cern.ch/twiki/bin/view/Atlas/DistributedDataManagement}.
+\bibitem{bib:atlasdq2} %{Branco:2008zz}
+ M.~Branco {\it et al.}  [ATLAS Collaboration],
+ ``Managing ATLAS data on a petabyte-scale with DQ2'',
+ J.\ Phys.\ Conf.\ Ser.\  {\bf 119} (2008) 062017.
+ %%CITATION = 00462,119,062017;%%
 
-\bibitem{bib:atlasprodsys}
-  ATLAS Production System
-  \url{https://twiki.cern.ch/twiki/bin/view/Atlas/ProdSys}.
+%\bibitem{bib:atlasdq2}
+%  ATLAS DQ2/DDM project wiki, 
+%  \url{https://twiki.cern.ch/twiki/bin/view/Atlas/DistributedDataManagement}.
+
+%\bibitem{bib:atlasprodsys}
+%  ATLAS Production System
+%  \url{https://twiki.cern.ch/twiki/bin/view/Atlas/ProdSys}.
 
 \bibitem{Garfield} 
   The Garfield program for simulation of drift chambers.
@@ -1112,6 +1184,9 @@ Worldwide LHC Computing Grid, \url{http://www.cern.ch/LHCgrid}.
   HEP and interdisciplinary applications'', Nuclear Ins. Methods Phys. Res.,
   (2003) {\bf A502}, 426. See also
   \url{http://www.cern.ch/diane}.
+
+\bibitem{Geant4}J.Allison et al., Geant 4 - a simulation toolkit, Nuclear Instruments 
+and Methods in Physics Research,  A 506 (2003) 250-303, doi:10.1016/S0168-9002(03)01368-8 
 
 \bibitem{AvianFlu}
   H.~C.~Lee {\it et al}, ``Grid-enabled high-throughput in silico screening
