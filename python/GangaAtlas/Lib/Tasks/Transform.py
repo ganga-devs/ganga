@@ -48,6 +48,9 @@ class Transform(GangaObject):
    def initialize(self):
       self.backend = stripProxy(GPI.Local()) 
 
+   def check(self):
+      pass
+
    def startup(self):
       """This function is used to set the status after restarting Ganga"""
       ## Create the reverse map _partition_apps from _app_partition 
