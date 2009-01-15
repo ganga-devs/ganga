@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.34 2009-01-08 08:57:50 elmsheus Exp $
+# $Id: Athena.py,v 1.35 2009-01-15 08:31:40 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -212,6 +212,16 @@ class Athena(IApplication):
             f_out.close()
             f_in.close()
 
+        # Compress NG stdout (fix for problem of gzip broken on some NG sites)
+        if 'stdout' in os.listdir(job.outputdir):
+            fileNameIn = os.path.join(job.outputdir,'stdout')
+            fileNameOut = os.path.join(job.outputdir,'stdout.gz')
+            f_in = open(fileNameIn, 'rb')
+            f_out = gzip.open(fileNameOut, 'wb')
+            f_out.writelines(f_in)
+            f_out.close()
+            f_in.close()
+
         # collect stats from __jobscript__.log
         if '__jobscript__.log' in os.listdir(job.outputdir):
             fileName = os.path.join(job.outputdir,'__jobscript__.log' )
@@ -225,7 +235,7 @@ class Athena(IApplication):
 
         # collect stats from stderr
         try:
-            if 'stderr.gz' in os.listdir(job.outputdir) or 'stdout.txt.gz' in os.listdir(job.outputdir):
+            if 'stderr.gz' in os.listdir(job.outputdir) or 'stdout.txt.gz' in os.listdir(job.outputdir) or 'stdout.gz' in os.listdir(job.outputdir):
                 percentcpu = 0
                 ipercentcpu = 0
                 wallclock = 0
@@ -235,8 +245,10 @@ class Athena(IApplication):
                 if 'stderr.gz' in os.listdir(job.outputdir):
                     zfile = os.popen('zcat '+os.path.join(job.outputdir,'stderr.gz' ))
                 # NG has stdout.txt as output
-                if 'stdout.txt.gz' in os.listdir(job.outputdir):
+                elif 'stdout.txt.gz' in os.listdir(job.outputdir):
                     zfile = os.popen('zcat '+os.path.join(job.outputdir,'stdout.txt.gz' ))
+                elif 'stdout.gz' in os.listdir(job.outputdir):  
+                    zfile = os.popen('zcat '+os.path.join(job.outputdir,'stdout.gz' ))   
                 for line in zfile:
                     if line.find('Percent of CPU this job got')>-1:
                         percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
@@ -278,7 +290,7 @@ class Athena(IApplication):
 
         # collect stats from stdout
         try:
-            if 'stdout.gz' in os.listdir(job.outputdir) or 'stdout.txt' in os.listdir(job.outputdir):
+            if 'stdout.gz' in os.listdir(job.outputdir) or 'stdout.txt.gz' in os.listdir(job.outputdir):
                 totalevents = 0
                 itotalevents = 0
                 jtotalevents = 0
@@ -355,6 +367,13 @@ class Athena(IApplication):
 
         if '__jdlfile__' in os.listdir(job.inputdir):
             self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
+
+        if job.backend.__class__.__name__ in [ 'NG' ]:
+            if self.stats.has_key('gangatime1'):
+                self.stats['starttime'] = self.stats['gangatime1'] 
+            if self.stats.has_key('gangatime5'):
+                self.stats['stoptime'] = self.stats['gangatime5'] 
+
 
     def postprocess(self):
         """Determine outputdata and outputsandbox locations of finished jobs
@@ -962,6 +981,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.34  2009/01/08 08:57:50  elmsheus
+# Put patch at correct place
+#
 # Revision 1.33  2009/01/08 08:45:10  elmsheus
 # Improve athena package setup and tarball packing
 #
