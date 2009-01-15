@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.23 2008-12-11 11:14:33 hclee Exp $
+# $Id: LCG.py,v 1.24 2009-01-15 13:16:31 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -381,6 +381,9 @@ class LCG(IBackend):
         runner.join()
 
         if len(runner.getDoneList()) < num_chunks:
+            ## not all bulk jobs are successfully submitted. canceling the submitted jobs on WMS immediately
+            logger.error('some bulk jobs not successfully re-submitted, canceling submitted bulk jobs on WMS')
+            grids[mt].cancelMultiple( runner.getResults().values() )
             return None
         else:
             return runner.getResults()
@@ -474,9 +477,7 @@ class LCG(IBackend):
         profiler.checkAndStart('job submission elapsed time')
 
         status = False
-        if not results:
-            logger.error('Some bulk jobs not successfully submitted')
-        else: 
+        if results:
             offsets = results.keys()
             offsets.sort()
          
@@ -517,9 +518,7 @@ class LCG(IBackend):
         results = self.__mt_bulk_submit(node_jdls, max_node=max_node)
 
         status = False
-        if not results:
-            logger.error('Some bulk jobs not successfully re-submitted')
-        else: 
+        if results:
             offsets = results.keys()
             offsets.sort()
          
@@ -1814,6 +1813,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.23  2008/12/11 11:14:33  hclee
+# clean up logging messages
+#
 # Revision 1.22  2008/12/11 09:15:31  hclee
 # allow to set the max. node number of a glite bulk job
 #
