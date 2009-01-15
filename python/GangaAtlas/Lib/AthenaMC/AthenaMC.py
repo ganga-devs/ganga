@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.7 2009-01-14 17:28:09 ebke Exp $
+# $Id: AthenaMC.py,v 1.8 2009-01-15 09:50:42 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -167,9 +167,10 @@ class AthenaMC(IApplication):
 
     def getFirstEvent(self, partition,ids):
         """ For a given partition, return the first event in the first input file that has to be processed. 
-            Returns a tuple (firstevent, numevents) where numevents is the adjusted number of events to be processed."""
+            Returns a tuple (firstevent, numevents) where numevents is the adjusted number of events to be processed.
+            ids is an input dataset that is used"""
         if not ids:
-            return (self.firstevent + partition * self.number_events_job, self.number_events_job)
+            return (self.firstevent + (partition - 1) * self.number_events_job, self.number_events_job)
         (jobs_per_input, inputs_per_job, skip_files, skip_jobs) = self.getInputPartitionInfo(ids)
         if partition == 1:
             skip = (ids.skip_events % ids.number_events_file) % self.number_events_job
@@ -325,6 +326,10 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.7  2009/01/14 17:28:09  ebke
+# * partition_number=None made evgen fail, fixed
+# * getPartitionList now works without job object, then returns an open range starting at the first partition
+#
 # Revision 1.6  2008/12/12 10:17:42  elmsheus
 # Changes for improved data handling and more splitting capabilities, goes along with new Tasks version from Johannes Ebke
 #
