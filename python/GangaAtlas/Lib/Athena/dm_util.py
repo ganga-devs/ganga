@@ -298,6 +298,21 @@ from FileStager.FileStagerTool import FileStagerTool
 #stagetool = FileStagerTool(sampleList=mySampleList)
 stagetool = FileStagerTool(sampleFile=mySampleFile)
 
+## load the lcg-cp wrapper if it exists on the WN 
+import os, os.path
+lcgcp_wrapper = os.path.join( os.getcwd(), 'lcg-cp.sh' )
+if os.path.exists( lcgcp_wrapper ):
+    stagetool.CpCommand = lcgcp_wrapper
+    stagetool.CpArguments = ['-v', '--vo', 'atlas', '-t', '1200']
+
+print '*******'
+print stagetool.CpCommand
+print stagetool.CpArguments
+print '*******'
+
+## enforce storing copied files in current working directory
+stagetool.tmpDir = os.getcwd()
+
 ## Configure rf copy command used by the stager; default is 'lcg-cp -v --vo altas -t 1200'
 #stagetool.CpCommand = "rfcp"
 #stagetool.CpArguments = []
@@ -323,7 +338,7 @@ if stagetool.DoStaging():
    thejob += FileStagerAlg('FileStager')
    thejob.FileStager.InputCollections = stagetool.GetSampleList()
    #thejob.FileStager.PipeLength = 2
-   #thejob.FileStager.VerboseStager = True
+   thejob.FileStager.VerboseStager = True
    thejob.FileStager.BaseTmpdir    = stagetool.GetTmpdir()
    thejob.FileStager.InfilePrefix  = stagetool.InfilePrefix
    thejob.FileStager.OutfilePrefix = stagetool.OutfilePrefix
@@ -339,6 +354,7 @@ if stagetool.DoStaging():
 ic = []
 if stagetool.DoStaging():
   ic = stagetool.GetStageCollections()
+  #stagetool.VerboseStager = True
 else:
   ic = stagetool.GetSampleList()
 
