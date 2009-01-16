@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.24 2009-01-14 10:17:27 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.25 2009-01-16 13:44:35 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -156,98 +156,83 @@ class DQ2JobSplitter(ISplitter):
         
         subjobs = []
         for dataset, siteinfo in siteinfos.iteritems():
-            if self.numfiles <= 0: 
-                self.numfiles = 1
+            for sites, guids in siteinfo.iteritems():
 
-            if siteinfo.keys():
-                sites = siteinfo.keys()[0]
-                #sitestemp = []
-                #for site in sites:
-                #    if site.startswith('SARA-MATRIX'):
-                #        temp = site
-                #        temp.replace('SARA-MATRIX','NIKHEF-ELPROD')
-                #        sitestemp.append(temp)
-                #sites = sites + sitestemp
-                
-            else:
-                sites = []
-            if siteinfo.values():
-                guids = siteinfo.values()[0]
-            else:
-                guids = []
+                if self.numfiles <= 0: 
+                    self.numfiles = 1
 
-            allcontent = allcontents[dataset]
-            
-            # Fix bug 42044
-            # drop unused guids
-            removal = []
-            for g in guids:
-                if not g in allcontent.keys():
-                    logger.debug("Removing guid %s" % g)
-                    removal += [g]
+                allcontent = allcontents[dataset]
 
-            for g in removal:
-                guids.remove(g)
+                # Fix bug 42044
+                # drop unused guids
+                removal = []
+                for g in guids:
+                    if not g in allcontent.keys():
+                        logger.debug("Removing guid %s" % g)
+                        removal += [g]
 
-            nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
-            if nrjob > self.numsubjobs and self.numsubjobs!=0:
-                self.numfiles = int(math.ceil(len(guids)/float(self.numsubjobs)))
+                for g in removal:
+                    guids.remove(g)
+
                 nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
-            
-            if nrjob > config['MaxJobsDQ2JobSplitter']:
-                self.numfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
-                nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
-        
-            if self.numfiles > len(guids):
-                self.numfiles = len(guids)
-
-            # Restriction based on the maximum dataset filesize
-            if self.filesize > 0 or job.backend._name in [ 'NG', 'Panda']:
-                warn = False
-                maxsize = self.filesize
-                
-                if job.backend._name == 'NG':
-                    maxsize = config['MaxFileSizeNGDQ2JobSplitter']
-                elif job.backend._name == 'Panda':
-                    maxsize = config['MaxFileSizePandaDQ2JobSplitter']
-                elif job.backend._name == 'LCG':
-                    nrjob = 1
-                    self.numfiles = len(guids)
-                    
-                subjobsize = datasetSizes[dataset] / nrjob / (1024*1024)
-                while subjobsize > maxsize:
-                    warn = True
-                    self.numfiles = self.numfiles - 1
-                    if self.numfiles < 1:
-                        self.numfiles = 1
-                    
+                if nrjob > self.numsubjobs and self.numsubjobs!=0:
+                    self.numfiles = int(math.ceil(len(guids)/float(self.numsubjobs)))
                     nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
-                    self.numfiles = int(math.ceil(len(guids)/float(nrjob)))
+
+                if nrjob > config['MaxJobsDQ2JobSplitter']:
+                    self.numfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
+                    nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+
+                if self.numfiles > len(guids):
+                    self.numfiles = len(guids)
+
+                # Restriction based on the maximum dataset filesize
+                if self.filesize > 0 or job.backend._name in [ 'NG', 'Panda']:
+                    warn = False
+                    maxsize = self.filesize
+
+                    if job.backend._name == 'NG':
+                        maxsize = config['MaxFileSizeNGDQ2JobSplitter']
+                    elif job.backend._name == 'Panda':
+                        maxsize = config['MaxFileSizePandaDQ2JobSplitter']
+                    elif job.backend._name == 'LCG':
+                        nrjob = 1
+                        self.numfiles = len(guids)
+
                     subjobsize = datasetSizes[dataset] / nrjob / (1024*1024)
-                if warn:
-                    logger.warning('Maximum dataset size reached - creating more subjobs.')
+                    while subjobsize > maxsize:
+                        warn = True
+                        self.numfiles = self.numfiles - 1
+                        if self.numfiles < 1:
+                            self.numfiles = 1
 
-            for i in xrange(0,nrjob):
-          
-                j = Job()
+                        nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+                        self.numfiles = int(math.ceil(len(guids)/float(nrjob)))
+                        subjobsize = datasetSizes[dataset] / nrjob / (1024*1024)
+                    if warn:
+                        logger.warning('Maximum dataset size reached - creating more subjobs.')
 
-                j.name = job.name
-                
-                j.inputdata       = job.inputdata
-                j.inputdata.dataset = dataset
-                j.inputdata.guids = guids[i*self.numfiles:(i+1)*self.numfiles]
-                j.inputdata.names = [ allcontent[guid] for guid in j.inputdata.guids ]
-                j.inputdata.number_of_files = len(j.inputdata.guids)
-            
-                j.outputdata    = job.outputdata
-                j.application   = job.application
-                j.backend       = job.backend
-                if j.backend._name == 'LCG':
-                    j.backend.requirements.sites = sites.split(':')
-                j.inputsandbox  = job.inputsandbox
-                j.outputsandbox = job.outputsandbox 
+                for i in xrange(0,nrjob):
 
-                subjobs.append(j)
+                    j = Job()
+
+                    j.name = job.name
+
+                    j.inputdata       = job.inputdata
+                    j.inputdata.dataset = dataset
+                    j.inputdata.guids = guids[i*self.numfiles:(i+1)*self.numfiles]
+                    j.inputdata.names = [ allcontent[guid] for guid in j.inputdata.guids ]
+                    j.inputdata.number_of_files = len(j.inputdata.guids)
+
+                    j.outputdata    = job.outputdata
+                    j.application   = job.application
+                    j.backend       = job.backend
+                    if j.backend._name == 'LCG':
+                        j.backend.requirements.sites = sites.split(':')
+                    j.inputsandbox  = job.inputsandbox
+                    j.outputsandbox = job.outputsandbox 
+
+                    subjobs.append(j)
 
         return subjobs
     
