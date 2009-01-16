@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.24 2009-01-15 13:16:31 hclee Exp $
+# $Id: LCG.py,v 1.25 2009-01-16 09:15:11 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -910,8 +910,8 @@ wdir = os.getcwd()
 if scratchdir:
     printInfo('Changed working directory to scratch directory %s' % tmpdir)
     try:
-        os.system("ln -s %s %s" % (os.path.join(wdir, 'stdout'), os.path.join(orig_wdir, 'stdout')))
-        os.system("ln -s %s %s" % (os.path.join(wdir, 'stderr'), os.path.join(orig_wdir, 'stderr')))
+        os.system("ln -s %s %s" % (os.path.join(orig_wdir, 'stdout'), os.path.join(wdir, 'stdout')))
+        os.system("ln -s %s %s" % (os.path.join(orig_wdir, 'stderr'), os.path.join(wdir, 'stderr')))
     except Exception,e:
         printError(sys.exc_info()[0])
         printError(sys.exc_info()[1])
@@ -980,10 +980,16 @@ try:
         printInfo('Load application executable with separate threads')
         status = execSyscmdEnhanced('%s %s' % (appexec,appargs), wdir)
 
+    os.system("cp %s/stdout stdout.1" % orig_wdir)
+    os.system("cp %s/stderr stderr.1" % orig_wdir)
+
     printInfo('GZipping stdout and stderr...')
-    os.system("gzip stdout stderr")
+
+    os.system("gzip stdout.1 stderr.1")
+
     # move them to the original wdir so they can be picked up
-    os.system("mv stdout.gz stderr.gz %s" % orig_wdir)
+    os.system("mv stdout.1.gz %s/stdout.gz" % orig_wdir)
+    os.system("mv stderr.1.gz %s/stderr.gz" % orig_wdir)
 
     if not status:
         raise Exception('Application execution failed.')
@@ -1813,6 +1819,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.24  2009/01/15 13:16:31  hclee
+# killing partially submitted bulk jobs on WMS immediately if the whole job submission is not done properly
+#
 # Revision 1.23  2008/12/11 11:14:33  hclee
 # clean up logging messages
 #
