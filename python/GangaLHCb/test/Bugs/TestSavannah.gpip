@@ -92,8 +92,9 @@ class Savannah33992(ICheckTest):
 
     def checkTest(self):
         assert(self.j.status == 'failed'), 'Job should fail'
-        assert(os.path.exists(os.path.join(self.j.outputdir,'__jobstatus__')))
-        assert file_contains(fileName, 'EXITCODE: 45'), 'Incorrect exit code'
+        f = os.path.join(self.j.outputdir,'__jobstatus__')
+        assert os.path.exists(f)
+        assert file_contains(f, 'EXITCODE: 45'), 'Incorrect exit code'
 
 
 
