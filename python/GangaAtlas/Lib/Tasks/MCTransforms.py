@@ -36,6 +36,8 @@ class MCTransform(Transform):
 
 ## Private methods (overridden from Transforms)
    def checkCompletedApp(self, app):
+      if "dryrun" in stripProxy(app)._data and app.dryrun:
+         return True
       j = app._getParent()
       for f in j.outputdata.actual_output:
          if self.file_type in f:

@@ -108,6 +108,13 @@ if [ ! -z "$CUSTOM_JOB_OPTION" -a -e $T_HOMEDIR/$CUSTOM_JOB_OPTION ]; then
      cp $T_HOMEDIR/$CUSTOM_JOB_OPTION AtlasProduction/*/InstallArea/jobOptions/*[Jj]ob[Oo]ptions
 fi
 
+# Insert dry-run possibility
+if [ ! -z "$DRYRUN" ]; then
+   if ((0==$(($RANDOM % 5)))); then exit 128; fi
+   echo "./$T_TRF $T_JTFLAGS $T_ARGS"
+   exit 0
+fi
+
 # 13.0.30 turnaround: saving local LCG setup as 13.0.30 breaks LCg tools with useless, obsolete stuff shipped in.
 export LD_LIBRARY_PATH_SAVE=$LD_LIBRARY_PATH
 export PATH_SAVE=$PATH

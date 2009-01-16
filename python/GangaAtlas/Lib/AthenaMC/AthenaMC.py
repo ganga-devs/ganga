@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.8 2009-01-15 09:50:42 ebke Exp $
+# $Id: AthenaMC.py,v 1.9 2009-01-16 14:09:22 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -54,7 +54,8 @@ class AthenaMC(IApplication):
         'version' : SimpleItem(defvalue='',doc='version tag to insert in the output dataset and file names',typelist=["str"]),
         'verbosity' : SimpleItem(defvalue='ERROR',doc='Verbosity of transformation for log files',typelist=["str"]),
         'siteroot' : SimpleItem(defvalue='',doc='location of experiment software area for non-grid backends.',typelist=["str"]),
-        'cmtsite' : SimpleItem(defvalue='',doc='flag to use kit or cern AFS installation. Set to CERN for the latter, leave unset otherwise.',typelist=["str"])
+        'cmtsite' : SimpleItem(defvalue='',doc='flag to use kit or cern AFS installation. Set to CERN for the latter, leave unset otherwise.',typelist=["str"]),
+        'dryrun' : SimpleItem(defvalue=False,doc='flag to not do stagein/stageout, for testing.',typelist=["bool"]),
         })
     
     _category = 'applications'
@@ -240,7 +241,7 @@ class AthenaMC(IApplication):
           raise
 
        # doing the cross-check of splitter variables.
-       if self._getRoot().inputdata:
+       if self._getRoot().inputdata and not self.dryrun:
           try:
              assert self._getRoot().inputdata._name=="AthenaMCInputDatasets"
           except AssertionError:
@@ -326,6 +327,9 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.8  2009/01/15 09:50:42  ebke
+# Fix for firstevent in AthenaMC
+#
 # Revision 1.7  2009/01/14 17:28:09  ebke
 # * partition_number=None made evgen fail, fixed
 # * getPartitionList now works without job object, then returns an open range starting at the first partition

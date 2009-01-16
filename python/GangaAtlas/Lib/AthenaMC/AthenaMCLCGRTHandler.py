@@ -72,6 +72,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             raise
         job = app._getParent()
         if job.backend._name in ["Local","PBS"]:
+            if app.dryrun:
+                os.environ["SITEROOT"]  = "NONE"
+                os.environ["CMTSITE"]  = "NONE"
             try:
                 assert "SITEROOT" in os.environ
             except:
@@ -134,7 +137,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                     logger.error("You are not allowed to write output data in any production space token: %s. Please select a site with ATLASUSERDISK or ATLASLOCALGROUPDISK space token or a srmv1 endpoint" % app.se_name)
                     raise
             
-        if job.inputdata and job.inputdata._name == 'AthenaMCInputDatasets':
+        if not app.dryrun and job.inputdata and job.inputdata._name == 'AthenaMCInputDatasets':
             # The input dataset was already read in in AthenaMC.master_configure
             self.turls=app.turls
             self.lfcs=app.lfcs
@@ -543,7 +546,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         inputfiles = [fn for fn in self.turls.keys() if matchFile(matchrange, fn)]
         inputfiles.sort()
 
-        if len(inputfiles) < len(inputnumbers):
+        if not app.dryrun and len(inputfiles) < len(inputnumbers):
             if len(inputfiles) > 0:
                missing = []
                for fn in matchrange[0]:
@@ -770,6 +773,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             jid = "%d" % job.id
         
         environment["OUTPUT_JOBID"]=str(jid) # used for versionning
+        if app.dryrun:
+            environment["DRYRUN"] = "TRUE"
         
         inputdata = []
 
