@@ -69,17 +69,20 @@ class TestDirac(GangaGPITestCase):
         j = Job(backend=Dirac())
         j.submit()
         stdout = sys.stdout
-        f = open('./__tmpstdout__','w')
+        tmpdir = tempfile.mktemp()
+        f = tempfile.NamedTemporaryFile()
+        #f = open('./__tmpstdout__','w')
         sys.stdout = f
         j.backend._impl.peek()        
         sys.stdout = stdout
         j.kill()
-        f.close()
-        f = open('./__tmpstdout__','r')
-        s = f.read()
+        f.flush()
+        #f = open('./__tmpstdout__','r')
+        fstdout = open(f.name,'r')
+        s = fstdout.read()
         assert s, 'Something should have been written to std output'
-        f.close()
-        os.system('rm -f ./__tmpstdout__')
+        #f.close()
+        #os.system('rm -f ./__tmpstdout__')
 
     # not sure how to test this w/o running a complete job
     #def test_Dirac_getOutput(self):
