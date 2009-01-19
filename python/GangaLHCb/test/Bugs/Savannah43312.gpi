@@ -1,9 +1,0 @@
-from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
-
-j= Job(application = 'Gauss', backend = 'Local')
-try:
-    j.submit()
-except AttributeError,e:
-    assert(False,e)
-
-   
