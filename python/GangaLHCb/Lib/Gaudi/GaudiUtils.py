@@ -2,8 +2,8 @@
 '''Utility methods used by various classes in GangaLHCb.Lib.Gaudi.'''
 
 __author__ = 'Greig A Cowan, Ulrik Egede, Andrew Maier, Mike Williams'
-__date__ = "$Date: 2008-12-05 12:42:04 $"
-__revision__ = "$Revision: 1.3 $"
+__date__ = "$Date: 2009-01-19 11:43:23 $"
+__revision__ = "$Revision: 1.4 $"
 
 import os
 import os.path
@@ -199,8 +199,8 @@ else:
   script+="""# check that SetupProject.sh script exists, then execute it    
 setup_script = os.environ['LHCBSCRIPTS'] + '/SetupProject.sh'
 if os.path.exists(setup_script):
-    os.system('source %s %s %s %s && printenv > env.tmp' \
-              % (setup_script,project_opts,app,version))
+    os.system('/usr/bin/env bash -c \"source %s %s %s %s && printenv > \
+env.tmp\"' % (setup_script,project_opts,app,version))
     for line in open('env.tmp').readlines():
         varval = line.strip().split('=')
         os.environ[varval[0]] = ''.join(varval[1:])
