@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.29 2008-12-11 12:39:59 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.30 2009-01-19 11:25:10 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -581,7 +581,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
             evtmax = -1
         outFile.write('theApp.EvtMax = %d\n' %evtmax)
         if dtype == 'DATA':
-            outFile.write('ByteStreamInputSvc.FullFileName = [')
+            outFile.write('%sByteStreamInputSvc.FullFileName = ['%versionString)
         elif dtype == 'MC':
             outFile.write('%sEventSelector.InputCollections = ['%versionString)
         elif dtype == 'MuonCalibStream':
