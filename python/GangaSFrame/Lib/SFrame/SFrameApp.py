@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: SFrameApp.py,v 1.2 2008-11-24 16:12:49 mbarison Exp $
+# $Id: SFrameApp.py,v 1.3 2009-01-19 10:10:18 mbarison Exp $
 ################################################################################
 import os, socket, pwd, commands, re, string
 from xml.dom.minidom import Node
@@ -69,9 +69,13 @@ def sframe_find( arg, dirname, fnames ):
 
     logger.debug("dirname: %s fnames: %s" % (dirname, fnames))
 
-    # Remove CVS directories from the search path:
+    # Remove CVS and svn directories from the search path:
     for i in range( fnames.count( "CVS" ) ):
         fnames.remove( "CVS" )
+
+    for i in range( fnames.count( ".svn" ) ):
+        fnames.remove( ".svn" )   
+
 
     logger.debug("Basename: %s Found: %s" % (os.path.basename( dirname ), "SFrame" in os.path.basename( dirname )))
 
@@ -88,9 +92,12 @@ def package_find( arg, dirname, fnames ):
 
     logger.debug("dirname: %s fnames: %s" % (dirname, fnames))
 
-    # Remove CVS directories from the search path:
+    # Remove CVS and svn directories from the search path:
     for i in range( fnames.count( "CVS" ) ):
         fnames.remove( "CVS" )
+
+    for i in range( fnames.count( ".svn" ) ):
+        fnames.remove( ".svn" )
 
     # Remove the main SFrame source from the search path:
     for i in range( fnames.count( "SFrame" ) ):
@@ -314,7 +321,7 @@ class SFrameApp(IApplication):
 
                 os.chdir(self.sframe_dir.name)
 
-                os.system("tar -czhf %s bin lib dev/JobConfig.dtd --exclude CVS 2>/dev/null" % self.sframe_archive.name)
+                os.system("tar -czhf %s bin lib user/config/JobConfig.dtd --exclude CVS 2>/dev/null" % self.sframe_archive.name)
 
                 os.chdir(savedir)
 
@@ -609,6 +616,9 @@ mc = getConfig('MonitoringServices')
 mc.addOption('SFrameApp', None, 'FIXME')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/11/24 16:12:49  mbarison
+# *** empty log message ***
+#
 # Revision 1.1  2008/11/19 15:42:58  mbarison
 # first version
 #

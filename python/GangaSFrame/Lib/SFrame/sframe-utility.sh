@@ -21,23 +21,31 @@ compile_SFrame() {
 	then
 	if [ -z $SFRAME_COMPILE ]
 	    then  # simple extraction
-	    tar xzf $SFRAME_ARCHIVE	
-	    ln -s dev/JobConfig.dtd .
+
+	    mkdir SFrame
+
+	    tar xzvf $SFRAME_ARCHIVE -C SFrame	
+	    ln -s SFrame/user/config/JobConfig.dtd .
+
+	    export SFRAME_DIR=$PWD/SFrame
+
 	else
 	    ./compile_archive.py $SFRAME_ARCHIVE
 
 	    rm -rf  $SFRAME_ARCHIVE
 
 	    export SFRAME_DIR=`cat sfdir.tmp`
-	    export SFRAME_BIN_PATH=$SFRAME_DIR/bin
-	    export SFRAME_LIB_PATH=$SFRAME_DIR/lib
-	    
-	    export  PATH=$SFRAME_BIN_PATH:$PATH
-	    export  LD_LIBRARY_PATH=$SFRAME_LIB_PATH:$LD_LIBRARY_PATH
-	    
-	    rm -rf sfdir.tmp
 
+	    rm -rf sfdir.tmp
 	fi
+
+	export SFRAME_BIN_PATH=$SFRAME_DIR/bin
+	export SFRAME_LIB_PATH=$SFRAME_DIR/lib
+	    
+	export  PATH=$SFRAME_BIN_PATH:$PATH
+	export  LD_LIBRARY_PATH=$SFRAME_LIB_PATH:$LD_LIBRARY_PATH
+	    
+
     fi
 
     echo "SFrame base directory: " $SFRAME_DIR
