@@ -1,0 +1,19 @@
+import os, tempfile, sys
+
+j = Job(backend = Dirac())
+
+lfns = ['/lhcb/production/DC06/phys-v2-lumi2/00001889/DST/0000/00001889_00000003_5.dst','/foo/bar/doesnt_exist.dst']
+
+tmpdir = tempfile.mktemp()
+os.mkdir(tmpdir)
+j.backend._impl.id = 123 #hack as we don't have a job
+output = j.backend.getOutputData(dir = tmpdir, names = lfns)
+
+assert len(output) == 1, 'Only one file should have been downloaded - %s' % output
+
+outfile = os.path.join(tmpdir,os.path.basename(lfns[0]))
+assert os.path.exists(outfile), 'File should exist'
+
+#clean up
+os.unlink(outfile)
+os.rmdir(tmpdir)

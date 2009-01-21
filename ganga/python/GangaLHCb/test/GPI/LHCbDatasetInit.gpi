@@ -1,0 +1,3 @@
+files=['LFN:/lhcb/production/DC06/phys-v2-lumi2/00001889/DST/0000/00001889_00000003_5.dst','LFN:/lhcb/production/DC06/phys-v2-lumi2/00001889/DST/0000/00001889_00000011_5.dst']
+ds=LHCbDataset(files)
+assert(ds.files[0].name is files[0])
