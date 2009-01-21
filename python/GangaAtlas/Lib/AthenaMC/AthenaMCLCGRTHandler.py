@@ -568,7 +568,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         environment["INPUTFILES"]=""
         self.inputfile,self.cavernfile,self.minbiasfile="","",""
 
-        infile_nr = 0
+        infilenr = 0
         for j in range(0, len(inputfiles)):
             turl=self.turls[inputfiles[j]]
             environment["INPUTTURLS"]+="turl[%d]='%s';" % (infilenr,turl.strip())
