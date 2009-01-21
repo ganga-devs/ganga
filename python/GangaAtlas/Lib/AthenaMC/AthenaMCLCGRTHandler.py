@@ -568,14 +568,16 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         environment["INPUTFILES"]=""
         self.inputfile,self.cavernfile,self.minbiasfile="","",""
 
+        infile_nr = 0
         for j in range(0, len(inputfiles)):
             turl=self.turls[inputfiles[j]]
-            environment["INPUTTURLS"]+="turl[%d]='%s';" % (j,turl.strip())
+            environment["INPUTTURLS"]+="turl[%d]='%s';" % (infilenr,turl.strip())
             lfc=""
             for lfcentry in self.lfcs.values():
                 lfc+=lfcentry+" "
-            environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
-            environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[j].strip())
+            environment["INPUTLFCS"]+="lfc[%d]='%s';" % (infilenr,lfc.strip())
+            environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,inputfiles[j].strip())
+            infilenr += 1
 
         self.inputfile=",".join(inputfiles)
 
@@ -597,13 +599,13 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 turl=""
                 if inputfiles[i] in self.cavern_turls:
                     turl=self.cavern_turls[inputfiles[i]]
-                environment["INPUTTURLS"]+="turl[%d]='%s';" % (j,turl.strip())
+                environment["INPUTTURLS"]+="turl[%d]='%s';" % (infilenr,turl.strip())
                 lfc=""
                 for lfcentry in self.cavern_lfcs.values():
                     lfc+=lfcentry+" "
-                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
-                environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[i].strip())
-                j=j+1
+                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (infilenr,lfc.strip())
+                environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,inputfiles[i].strip())
+                infilenr += 1
             logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
 
         inputfiles=self.minbias_turls.keys()
@@ -621,24 +623,24 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 turl=""
                 if inputfiles[i] in self.minbias_turls:
                     turl=self.minbias_turls[inputfiles[i]]
-                environment["INPUTTURLS"]+="turl[%d]='%s';" % (j,turl.strip())
+                environment["INPUTTURLS"]+="turl[%d]='%s';" % (infilenr,turl.strip())
                 lfc=""
                 for lfcentry in self.minbias_lfcs.values():
                     lfc+=lfcentry+" "
-                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
-                environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,inputfiles[i].strip())
-                j=j+1
+                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (infilenr,lfc.strip())
+                environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,inputfiles[i].strip())
+                infilenr += 1
+
         inputfiles=self.dbturls.keys()
         if len(inputfiles)>0:
             for (k,v) in self.dbturls.items():
-                environment["INPUTTURLS"]+="turl[%d]='%s';" % (j,v.strip())
+                environment["INPUTTURLS"]+="turl[%d]='%s';" % (infilenr,v.strip())
                 lfc=""
                 for lfcentry in self.dblfcs.values():
                     lfc+=lfcentry+" "
-                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (j,lfc.strip())
-                environment["INPUTFILES"]+="lfn[%d]='%s';" %(j,k.strip())
-                j=j+1
-
+                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (infilenr,lfc.strip())
+                environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,k.strip())
+                infilenr += 1
 
                 
         logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
