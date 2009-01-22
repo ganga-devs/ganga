@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.15 2009-01-08 08:42:41 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.16 2009-01-22 16:57:45 dvanders Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -435,7 +435,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 raise ConfigError("j.inputdata.dataset='' - DQ2 dataset name needs to be specified.")
             
             if job.inputdata.tagdataset:
-                environment['TAGDATASETNAME']= job.inputdata.tagdataset
+                environment['TAGDATASETNAME'] = ':'.join(job.inputdata.tagdataset)
 
         exe = os.path.join(os.path.dirname(__file__), 'run-athena-local.sh')
 
@@ -493,6 +493,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.15  2009/01/08 08:42:41  elmsheus
+#Fix typo TNTJobSplitter
+#
 #Revision 1.14  2008/11/23 08:13:19  elmsheus
 #Fix #44426 - DCACHE_RA_BUFFER should be an str for Local/Batch
 #
