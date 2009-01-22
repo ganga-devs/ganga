@@ -496,15 +496,23 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         except AssertionError:
             logger.error("template mode requires a logfile, set by job.application.outputdata.logfile")
             raise
+## Not a minimal set. runNumber only exists in evgen type transforms, therefore the commented stuff breaks all other transforms. Just leave it to extraArgs for Pete's sake.
+        
+##        args =  [ self.atlas_rel,
+##                  app.se_name,
+##                  self.outputfiles["LOG"],
+##                  app.transform_script,
+##                  "runNumber=%s" % str(app.run_number),
+##                  "firstEvent=%s" % str(self.firstevent),
+##                  "maxEvents=%s" % str(self.number_events_job),
+##                  "randomSeed=%s" % str(self.randomseed),]
+        
+## Back to minimal set. The rest will be set in extraArgs.
         args =  [ self.atlas_rel,
-                  app.se_name,
-                  self.outputfiles["LOG"],
-                  app.transform_script,
-                  "runNumber=%s" % str(app.run_number),
-                  "firstEvent=%s" % str(self.firstevent),
-                  "maxEvents=%s" % str(self.number_events_job),
-                  "randomSeed=%s" % str(self.randomseed),]
-
+                 app.se_name,
+                 self.outputfiles["LOG"],
+                 app.transform_script
+                 ]
         if "HIST" in self.outputfiles and self.outputfiles["HIST"].upper() != "NONE":
             args.append("histogramFile=%s" % self.outputfiles["HIST"]) 
         if "HITS" in self.outputfiles and self.outputfiles["HITS"].upper() != "NONE":
