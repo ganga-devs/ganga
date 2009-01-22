@@ -10,7 +10,7 @@ def get_DIRAC_status(jobs):
 
     # Translate between the many statuses in DIRAC and the few in Ganga
     statusmapping = {'Checking' : 'submitted',
-                     'Completed' : 'completed',
+                     'Completed' : 'running',
                      'Deleted' : 'failed',
                      'Done' : 'completed',
                      'Failed' : 'failed',
