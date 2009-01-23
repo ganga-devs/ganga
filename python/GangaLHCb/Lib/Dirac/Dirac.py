@@ -97,7 +97,7 @@ class Dirac(IBackend):
     
     _schema = Schema(Version(2, 0),schema)
 
-    _exportmethods = ['getOutput','getOutputData','peek']
+    _exportmethods = ['getOutput','getOutputData','getOutputSandbox','peek']
     _packed_input_sandbox = True
     _category="backends"
     _name = 'Dirac'
@@ -435,6 +435,36 @@ class Dirac(IBackend):
         job.getInputWorkspace().writefile(FileBuffer('jobscript.py',script),
                                           executable=1)
   
+    def getOutputSandbox(self):
+        """Downloads the outputsandbox into the job outputdir."""
+        import Ganga.Core.Sandbox as Sandbox
+
+        j = self.getJobObject()
+        outputsandboxname = Sandbox.OUTPUT_TARBALL_NAME
+        outw = j.getOutputWorkspace()
+        jobDir = outw.getPath()
+        tmpdir = tempfile.mkdtemp()
+
+        # Get output sandbox from DIRAC WMS
+        filelist = j.backend.getOutput(tmpdir)
+
+        import os
+        import shutil
+                
+        for f in filelist:
+            try:
+                # Handle the untaring of the sandbox
+                if os.path.basename(f) == outputsandboxname:
+                    Sandbox.getPackedOutputSandbox(os.path.dirname(f),
+                                                           jobDir)
+                else:
+                    shutil.copy2(f,jobDir)
+                    os.unlink(f)
+            except OSError:
+                logger.warning("Failed to move file '%s' file from " \
+                                       "'%s'", f, tmpdir)
+                
+  
     def updateMonitoringInformation( jobs ):
         """Check the status of jobs and retrieve output sandboxes"""
 
@@ -461,34 +491,9 @@ class Dirac(IBackend):
                 from Ganga.Core import Sandbox
                 
                 j.updateStatus("completing")
-                outputsandboxname = Sandbox.OUTPUT_TARBALL_NAME
-                outw=j.getOutputWorkspace()
-                jobDir = outw.getPath()
-                tmpdir = tempfile.mkdtemp()
-
-                # Get output sandbox from DIRAC WMS
-                filelist = j.backend.getOutput(tmpdir)
-
-                import os
-                import shutil
+                j.backend.getOutputSandbox()
+                outw = j.getOutputWorkspace()
                 
-                for f in filelist:
-                    try:
-                        # Handle the untaring of the sandbox
-                        if os.path.basename(f) == outputsandboxname:
-                            Sandbox.getPackedOutputSandbox(os.path.dirname(f),
-                                                           jobDir)
-                        else:
-                            shutil.copy2(f,jobDir)
-                        os.unlink(f)
-                    except OSError:
-                        logger.warning("Failed to move file '%s' file from " \
-                                       "'%s'", f, tmpdir)
-                
-                # Get sandbox from SE if uploaded there
-                if outputsandboxname+'.note' in filelist:
-                    j.backend.getOutputData(names=[outputsandboxname])
-
                 # try to get the application exit code from the status file
                 try:
                   statusfile = os.path.join(outw.getPath(),'__jobstatus__')
