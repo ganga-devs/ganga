@@ -99,6 +99,7 @@
 \author[a:Oslo]{K. Pajchel}
 \author[a:Imperial]{W. Reece}
 \author[a:Oslo]{B.H. Samset}
+\author[a:?]{M.Slater}
 \author[a:Oxford]{A. Soroko}
 \author[a:Birmingham]{C.L. Tan}
 \author[a:CERN]{D.C. Vanderster}
@@ -133,7 +134,8 @@
 \end{abstract}
 
 \begin{keyword}
-Grid computing \sep Data mining \sep Task management \sep User interface
+Grid computing \sep Data mining \sep Task management \sep User interface \sep Interoperability
+
 % keywords here, in the form: keyword \sep keyword
 
 % 07. 	Instruments, apparatus, and components common to several branches of
@@ -159,6 +161,16 @@ Grid computing \sep Data mining \sep Task management \sep User interface
 \end{frontmatter}
 
 % main text
+
+\section{TODO}
+
+ADD INTEROPERABILITY!
+
+ADD CONFIGURATION?
+
+ADD RELEASE PROCESS?
+
+ADD SSH?
 
 \section{Introduction}
 \label{sec:intro}
@@ -247,7 +259,7 @@ the \ganga Public Interface~(\GPI) which in turn provides access to the \ganga
 core implementation.
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=14cm]{GangaOverview.pdf}
+  \includegraphics[width=14cm]{ganga-architecture.png}
   \caption{The overall architecture of \ganga. The user interacts with the
     \ganga Public Interface via the GUI, the command line interface or
     scripts. Plug-ins are provided for different application types and
@@ -267,7 +279,7 @@ aggregation of sub-job outputs. The overall component structure of a job is
 illustrated in Fig.~\ref{fig:JobComponents}
 \begin{figure}
   \centering
-  \includegraphics[width=14cm]{GangaJob.pdf}
+  \includegraphics[width=14cm]{job-uml.png}
   \caption{A set of components in \ganga can be combined to form a complete
     job. The application to run and the backend where it will run are
     mandatory while all other components are optional.}
@@ -381,7 +393,7 @@ and for examining files produced while a job is running.
 Backend components have been implemented for a range of widely used
 processing systems, including: local host, batch systems (PBS, LSF,
 SGE, and Condor~\cite{Batch}), and \grid systems like
-gLite~\cite{LCG}, ARC~\cite{NorduGrid} and OSG~\cite{OSG}. Remote
+gLite/EGEE/WLCG \cite{LCG}, ARC/NorduGrid~\cite{NorduGrid} and OSG~\cite{OSG}. Remote
 backend component allows to launch jobs directly on remote machines
 using ssh.  As an example, the batch backend component defines a
 single property that may be set by the user:
@@ -835,23 +847,29 @@ the input sandbox of the job. The histogram and text output is returned in the
 output sandbox. Such a simple approach allows to integrate certain
 applications in just a few hours --- as it was the case for \garfield.
 
-\subsection{\ganga integrated with lightweight grid middleware}
+\subsection{\ganga integrated with lightweight \grid middleware}
 
-The ARC (Advanced Resource Connector) grid middleware\cite{ARC} is a
-product of the NorduGrid collaboration\cite{NG}, used by many academic
-institutions in the Nordic countries. The ARC standalone user client
-is very lightweight, and support for submission to ARC--enabled grid
-sites has been integrated in \ganga. On installation of \ganga, the user
-can request to have the ARC middleware automatically installed as an
-external dependency. Specifying the dedicated NorduGrid backend to a
-\ganga job then gives immediate access to ARC resources.
+The ARC (Advanced Resource Connector) \grid middleware\cite{ARC}, a
+product of the NorduGrid collaboration\cite{NorduGrid}, is deployed on a
+number of Nordic and European \grid sites. In ARC jobs are accepted and
+brokered by a \grid manager, running at site level, and resource lookup
+is done through load balancing and runtime environments advertised by
+individual sites. File storage and access is 'cloudy', meaning that
+all files registered in \grid--wide catalogues are accessible to all
+worker nodes. File transfers are handled by the \grid manager, between
+job acceptance and execution. ARC--connected resources are used
+e.g. by researches in bioinformatics, genomics, meteorology, in
+addition to high--energy physics.
 
-The main user of this integration is the \atlas experiment (see
-section \ref{sec:atlas}), as ARC--enabled resources make up one of the
-three major computing grid used by this collaboration. ATLAS--specific
-applications with NorduGrid functionality have been delveoped. An
-initiative also exists to employ \ganga as a general job submission
-tool for the next generation of ARC middleware, KnowARC.
+\ganga has been interfaced to ARC through a backend, which translates
+ganga input into ARC--readable xRSL language. The ARC user client is
+lightweight, and binaries are provided as an external library at \ganga
+install time. The main user of this integration is the ATLAS
+experiment (see sec.~\ref{ATLASsection}), where it is the main user
+access portal to one of the experiment's three main computing
+grids. Further collaboration between ARC and \ganga is envisaged, to
+employ \ganga as a fully featured frontend to ARC.
+
 
 \subsection{\ganga interfaced to other frameworks}
 \label{sec:GangaInOtherFrameworks}
@@ -1110,12 +1128,8 @@ arXiv:physics/0306116, 2003, see also: http://roofit.sourceforge.net
   Concurrency and Computation: Practice and Experience'', {\bf 17, 2-4}
   (2005), 323, \url{http://www.cs.wisc.edu/condor/}
 
+\bibitem{NorduGrid} http://www.nordugrid.org
 
-\bibitem{NorduGrid} 
-  M.~Ellert {\it et al.}, ``Advanced Resource Connector middleware for
-  lightweight computational Grids'', Future Generation Computer Systems
-  (2007) {\bf23}.
-  
 \bibitem{OSG} T.~Maeno [ATLAS Collaboration], ``PanDA: Distributed production and distributed analysis system for
 ATLAS,'', J.\ Phys.\ Conf.\ Ser.\  {\bf 119} (2008) 062036.
 
@@ -1180,6 +1194,11 @@ ATLAS,'', J.\ Phys.\ Conf.\ Ser.\  {\bf 119} (2008) 062036.
   The Garfield program for simulation of drift chambers.
   \url{http://www.cern.ch/garfield}
 
+\bibitem{ARC}
+  M.~Ellert {\it et al.}, ``Advanced Resource Connector middleware for
+  lightweight computational Grids'', Future Generation Computer Systems
+  (2007) {\bf23} 219-240.
+  
 \bibitem{DIANE} J.~T.~Mo{\'s}cicki, ``Distributed analysis environment for
   HEP and interdisciplinary applications'', Nuclear Ins. Methods Phys. Res.,
   (2003) {\bf A502}, 426. See also
