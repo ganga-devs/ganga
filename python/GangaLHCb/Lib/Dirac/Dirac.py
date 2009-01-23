@@ -97,7 +97,7 @@ class Dirac(IBackend):
     
     _schema = Schema(Version(2, 0),schema)
 
-    _exportmethods = ['getOutput','getOutputData','getOutputSandbox','peek']
+    _exportmethods = ['getOutput','getOutputData','getOutputSandbox','getOutputDataLFNs','peek']
     _packed_input_sandbox = True
     _category="backends"
     _name = 'Dirac'
@@ -367,7 +367,31 @@ class Dirac(IBackend):
         
         return downloadedFiles
 
-  
+    def getOutputDataLFNs(self):
+        """Get a list of outputdata that has been uploaded by Dirac. Excludes the outputsandbox if it is there."""
+        
+        job = self.getJobObject()
+        if not job.status == 'completed':
+            logger.warning('LFN query will only work for completed jobs')
+            return []
+        if not job.outputdata:
+            logger.warning('The job has no outputdata, and so no LFNs')
+            return []
+        
+        command = DiracUtils.getOutputDataLFNs_command(self.id)
+        dw = diracwrapper(command)
+        result = dw.getOutput()
+        lfns = []
+        if result is not None:
+            if not result.get('OK',False):
+                logger.warning("LFNs not found - Message was '%s'.",result.get('Message',''))
+            else:
+                lfns = result.get('Value',[])
+        else:
+            logger.warning('LFN query failed for an unknow reason')
+        
+        return lfns
+      
     def _handleInputSandbox(self,subjobconfig,master_input_sandbox):
         """Default implementation. Just deals with input sandbox"""
         job=self.getJobObject()

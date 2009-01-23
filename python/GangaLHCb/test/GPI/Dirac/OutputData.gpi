@@ -23,8 +23,12 @@ jscript.application.args=[]
 jscript.outputdata=['output.txt']
 jscript.submit()
 
-assert(sleep_until_completed(jscript,1800))
+sleep_until_completed(jscript)
+assert jscript.status == 'completed', 'job must complete'
 
 jscript.backend.getOutputData()
 
 assert(file_contains(join(jscript.outputdir,'output.txt'),'This is a test'))
+lfns = jscript.backend.getOutputDataLFNs()
+assert len(lfns) == 1, 'We only expect one LFN'
+assert basename(lfns[0]) == 'output.txt', 'Check the LFN is as expected'

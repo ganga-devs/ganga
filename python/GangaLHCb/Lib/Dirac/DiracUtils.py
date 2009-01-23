@@ -222,6 +222,47 @@ else:
 storeResult(result)    
     """ % {'FILES':str(names),'OUTPUTDIR':dir,'ID':id}
 
+def getOutputDataLFNs_command(id):
+    
+        command = """
+id = %d
+parameters = dirac.parameters(id)
+        
+lfns = []
+
+OK = False
+Message = 'The outputdata LFNs could not be found.'
+        
+if parameters is not None and parameters.get('OK',False):
+    parameters = parameters['Value']
+            
+    #remove the sandbox if it has been uploaded
+    sandbox = None
+    if parameters.has_key('OutputSandboxLFN'):
+        sandbox = parameters['OutputSandboxLFN']
+        
+    #now find out about the outputdata
+    if parameters.has_key('UploadedOutputData'):
+        lfn_list = parameters['UploadedOutputData']
+        lfns = lfn_list.split(',')
+                
+        if sandbox is not None and sandbox in lfns:
+            lfns.remove(sandbox)
+            
+        OK = True
+elif parameters is not None and parameters.has_key('Message'):
+    Message = parameters['Message']
+
+result = {'OK':OK}
+if OK:
+    result['Value'] = lfns
+else:
+    result['Message'] = Message
+rc = 0
+if parameters is None: rc = 1
+storeResult(result)
+        """ % id
+        return command
 
 def application_script():
     return """#!/usr/bin/env python
