@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.25 2009-01-16 09:15:11 hclee Exp $
+# $Id: LCG.py,v 1.26 2009-01-26 16:11:33 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -1278,10 +1278,14 @@ sys.exit(0)
         input_sandbox  = inputs['local'] + [scriptPath]
 
         ## compose output sandbox to include by default the following files:
-        ##  - stdout
-        ##  - stderr
+        ##  - gzipped stdout (transferred only when the JobLogHandler is WMS)
+        ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
         ##  - __jobscript__.log (job wrapper's log)
-        output_sandbox = ['stdout.gz','stderr.gz',wrapperlog]
+        output_sandbox = [wrapperlog]
+        
+        if config['JobLogHandler'] == 'WMS':
+            output_sandbox += ['stdout.gz','stderr.gz']
+
         if len(jobconfig.outputbox):
             output_sandbox += [Sandbox.OUTPUT_TARBALL_NAME]
 
@@ -1289,7 +1293,7 @@ sys.exit(0)
         jdl = {
             'VirtualOrganisation' : config['VirtualOrganisation'],
             'Executable' : os.path.basename(scriptPath),
-            'Environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'LFC_HOST': lfc_host},
+            'Environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
             'StdOutput' : 'stdout',
             'StdError' : 'stderr',
             'InputSandbox' : input_sandbox,
@@ -1798,6 +1802,8 @@ config.addOption('SubmissionThread', 10, 'sets the number of concurrent threads 
 config.addOption('OutputDownloaderThread', 10, 'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
 
 config.addOption('SandboxTransferTimeout', 60, 'sets the transfer timeout of the oversized input sandbox')
+
+config.addOption('JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
 #config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
 
 # apply preconfig and postconfig handlers
@@ -1819,6 +1825,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.25  2009/01/16 09:15:11  hclee
+# fix for glite perusable function
+#
 # Revision 1.24  2009/01/15 13:16:31  hclee
 # killing partially submitted bulk jobs on WMS immediately if the whole job submission is not done properly
 #
