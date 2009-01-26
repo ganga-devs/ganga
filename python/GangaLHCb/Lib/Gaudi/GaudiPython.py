@@ -3,8 +3,8 @@
 '''Application handler for GaudiPython applications in LHCb.'''
 
 __author__ = 'Ulrik Egede'
-__date__ = "$Date: 2008-12-05 16:11:48 $"
-__revision__ = "$Revision: 1.9 $"
+__date__ = "$Date: 2009-01-26 10:13:03 $"
+__revision__ = "$Revision: 1.10 $"
 
 import os
 import re
@@ -146,5 +146,69 @@ allHandlers.add('GaudiPython', 'SGE', GaudiPythonLSFRunTimeHandler)
 allHandlers.add('GaudiPython', 'Local', GaudiPythonLSFRunTimeHandler)
 allHandlers.add('GaudiPython', 'Dirac', GaudiPythonDiracRunTimeHandler)
 allHandlers.add('GaudiPython', 'Condor', GaudiPythonLSFRunTimeHandler)
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
+class Bender(GaudiPython):
+    """Bender application.
+
+    Hack to convert Bender into a Ganga application.
+
+"""
+    _name = 'Bender'
+    _category = 'applications'
+
+    schema = {}
+    docstr = 'The name of the script to execute. A copy will be made ' + \
+             'at submission time'
+    schema['script'] = FileItem(sequence=1,strict_sequence=0,defvalue=[],
+                                doc=docstr)
+    docstr = 'The version of the application (like "v19r2")'
+    schema['version'] = SimpleItem(defvalue=None,
+                                   typelist=['str','type(None)'],doc=docstr)
+    docstr = 'The platform the application is configured for (e.g. ' + \
+             '"slc4_ia32_gcc34")'
+    schema['platform'] = SimpleItem(defvalue=None,
+                                    typelist=['str','type(None)'],doc=docstr)
+    docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
+    schema['project'] = SimpleItem(defvalue='Bender',
+                                   typelist=['str','type(None)'],hidden=1,
+                                   doc=docstr)
+    docstr = 'Extra options to be passed onto the SetupProject command ' + \
+             'used for configuring the environment. As an example ' + \
+             'setting it to \'--dev\' will give access to the DEV area. ' + \
+             'For full documentation of the available options see ' + \
+             'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
+    schema['setupProjectOptions'] = SimpleItem(defvalue='',
+                                               typelist=['str','type(None)'],
+                                               doc=docstr)  
+    _schema = Schema(Version(1, 1), schema)                                    
+
+    def _check_inputs(self):
+        """Checks the validity of user's entries for GaudiPython schema"""
+        
+        check_gaudi_inputs(self.script,self.project)
+
+        if len(self.script)==0:
+            logger.warning("No script defined. Will use a default " + \
+                           'script which is probably not what you want.')
+            self.script = [File(os.path.join(
+                os.path.dirname(inspect.getsourcefile(GaudiPython)),
+                'options/BenderExample.py'))]
+        return
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
+#
+# Associate the correct run-time handlers to Bender for various backends.
+#
+
+allHandlers.add('Bender', 'LSF', GaudiPythonLSFRunTimeHandler)
+allHandlers.add('Bender', 'Interactive', GaudiPythonLSFRunTimeHandler)
+allHandlers.add('Bender', 'PBS', GaudiPythonLSFRunTimeHandler)
+allHandlers.add('Bender', 'SGE', GaudiPythonLSFRunTimeHandler)
+allHandlers.add('Bender', 'Local', GaudiPythonLSFRunTimeHandler)
+allHandlers.add('Bender', 'Dirac', GaudiPythonDiracRunTimeHandler)
+allHandlers.add('Bender', 'Condor', GaudiPythonLSFRunTimeHandler)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
