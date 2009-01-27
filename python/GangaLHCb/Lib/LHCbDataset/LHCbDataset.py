@@ -36,8 +36,6 @@ storeResult(result)
     dw = diracwrapper(command)
     result = dw.getOutput()
 
-    print 'result here is ', result
-        
     if dw.returnCode != 0 or result is None or \
            (result is not None and not result['OK']):
         logger.warning('The LFC query did not return cleanly. '\
@@ -72,7 +70,8 @@ class LHCbDataset(Dataset):
     _schema = Schema(Version(2,2), schema)
     _category = 'datasets'
     _name = "LHCbDataset"
-    _exportmethods = ['updateReplicaCache','__len__','cacheOutOfDate']
+    _exportmethods = ['updateReplicaCache','__len__','cacheOutOfDate',
+                      'hasLFNs']
 
     def __init__(self, files=[]):
         super(LHCbDataset, self).__init__()
@@ -221,6 +220,10 @@ class LHCbDataset(Dataset):
             self.cache_date = time.asctime()
             self.new_cache = False
 
+    def hasLFNs(self):
+        for f in self.files:
+            if f.isLFN(): return True
+        return False
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -237,7 +240,7 @@ class LHCbDataFile(GangaObject):
 
     _category='datafiles'
     _name='LHCbDataFile'
-    _exportmethods = ['updateReplicaCache']
+    _exportmethods = ['updateReplicaCache','isLFN']
 
     def __init__(self):
         super(LHCbDataFile,self).__init__()
