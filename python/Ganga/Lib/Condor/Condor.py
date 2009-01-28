@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Condor.py,v 1.4 2008-11-02 18:03:46 karl Exp $
+# $Id: Condor.py,v 1.5 2009-01-28 18:42:29 karl Exp $
 ###############################################################################
 # File: Condor.py
 # Author: K. Harrison
@@ -30,12 +30,20 @@
 # KH - 081008 : Added typelist information for schema property "submit_options"
 #
 # KH - 081102 : Remove spurious print statement
+#
+# KH - 090128 : Added getenv property to Condor class, to allow environment of
+#               submit machine to be passed to worker node
+#
+#               Added creation of bash job wrapper, to allow environment
+#               setup by defining BASH_ENV to point to setup script
+#
+#               Set status to failed for job with non-zero exit code
 
 """Module containing class for handling job submission to Condor backend"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "2 November 2008"
-__version__ = "2.0"
+__date__    = "28 January 2009"
+__version__ = "2.1"
 
 from CondorRequirements import CondorRequirements
 
@@ -68,6 +76,8 @@ class Condor( IBackend ):
          doc = "Requirements for selecting execution host" ),
       "env" : SimpleItem( defvalue = {},
          doc = 'Environment settings for execution host' ),
+      "getenv" : SimpleItem( defvalue = "False",
+         doc = 'Flag to pass current envrionment to execution host' ),
       "rank" : SimpleItem( defvalue = "Memory",
          doc = "Ranking scheme to be used when selecting execution host" ),
       "submit_options" : SimpleItem( defvalue = [], typelist = [ "str" ], \
@@ -254,6 +264,13 @@ class Condor( IBackend ):
       for filePath in infileList:
          fileList.append( os.path.basename( filePath ) )
 
+      if job.name:
+         name = job.name
+      else:
+         name = job.application._name 
+      name = "_".join( name.split() )
+      wrapperName = "_".join( [ "Ganga", str( job.id ), name ] )
+
       commandList = [
          "#!/usr/bin/env python",
          "# Condor job wrapper created by Ganga",
@@ -270,23 +287,28 @@ class Condor( IBackend ):
          "for inFile in %s:" % str( fileList ),
          "   getPackedInputSandbox( inFile )",
          "",
+         "exePath = '%s'" % exeString,
          "if os.path.isfile( '%s' ):" % os.path.basename( exeString ),
          "   os.chmod( '%s', 0755 )" % os.path.basename( exeString ),
-         "result = os.system( '%s' )" % exeCmdString,
+         "   exePath = os.path.abspath( '%s' )" % os.path.basename( exeString ),
+         "wrapperName = '%s_bash_wrapper.sh'" % wrapperName,
+         "wrapperFile = open( wrapperName, 'w' )",
+         "wrapperFile.write( '#!/bin/bash\\n' )",
+         "wrapperFile.write( '%s\\n' % exePath )",
+         "wrapperFile.write( 'exit ${?}\\n' )",
+         "wrapperFile.close()",
+         "os.chmod( wrapperName, 0755 )",
+         "result = os.system( './%s' % wrapperName )",
+         "os.remove( wrapperName )",
          "",
          "endTime = time.strftime"\
             + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
          "print '\\nJob start: ' + startTime",
          "print 'Job end: ' + endTime",
-         "print 'Exit code: %s\\n' % str( result )",
-         "" ]
+         "print 'Exit code: %s' % str( result )"
+         ]
 
       commandString = "\n".join( commandList )
-      if job.name:
-         name = job.name
-      else:
-         name = job.application._name 
-      wrapperName = "_".join( [ "Ganga", str( job.id ), name ] )
       wrapper = job.getInputWorkspace().writefile\
          ( FileBuffer( wrapperName, commandString), executable = 1 )
 
@@ -308,17 +330,28 @@ class Condor( IBackend ):
          'output' : 'stdout',
          'log' : 'condorLog',
          'stream_output' : 'false',
-         'stream_error' : 'false'         
+         'stream_error' : 'false',
+         'getenv' : self.getenv
          }
 
       envList = []
       if self.env:
          for key in self.env.keys():
-            envList.append( "=".join( [ key, str( self.env[ key ] ) ] ) )
+            value = self.env[ key ]
+            if ( type( value ) == type( "" ) ):
+              value = os.path.expandvars( value )
+            else:
+              value = str( value )
+            envList.append( "=".join( [ key, value ] ) )
       envString = ";".join( envList )
       if jobconfig.env:
          for key in jobconfig.env.keys():
-            envList.append( "=".join( [ key, str( jobconfig.env[ key ] ) ] ) )
+            value = jobconfig.env[ key ]
+            if ( type( value ) == type( "" ) ):
+              value = os.path.expandvars( value )
+            else:
+              value = str( value )
+            envList.append( "=".join( [ key, value ] ) )
       envString = ";".join( envList )
       if envString:
          cdfDict[ 'environment' ] = envString
@@ -432,7 +465,22 @@ class Condor( IBackend ):
          else:
             printStatus = True
             jobDict[ id ].backend.status = ""
-            jobDict[ id ].updateStatus( "completed" )
+            outDir = jobDict[ id ].getOutputWorkspace().getPath()
+            stdoutPath = "".join( [ outDir, "stdout" ] )
+            jobStatus = "failed"
+            if os.path.isfile( stdoutPath ):
+              stdout = open( stdoutPath )
+              lineList = stdout.readlines()
+              stdout.close()
+              try:
+                exitLine = lineList[ -1 ]
+                exitCode = exitLine.strip().split()[ -1 ]
+              except IndexError:
+                exitCode = -1
+              if 0 == int( exitCode ):
+                jobStatus = "completed"
+
+            jobDict[ id ].updateStatus( jobStatus )
 
          if printStatus:
             if jobDict[ id ].backend.actualCE:
