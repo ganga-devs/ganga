@@ -2,8 +2,8 @@
 '''Application handler for Gaudi applications in LHCb.'''
 
 __author__ = 'Andrew Maier, Greig A Cowan'
-__date__ = "$Date: 2008-12-11 16:15:26 $"
-__revision__ = "$Revision: 1.18 $"
+__date__ = "$Date: 2009-01-28 13:18:19 $"
+__revision__ = "$Revision: 1.19 $"
 
 import os
 import re
@@ -217,6 +217,10 @@ class Gaudi(IApplication):
         config=Ganga.Utility.Config.getConfig('LHCb')
         self.extra._LocalSite = config['LocalSite']
         self.extra._SEProtocol = config['SEProtocol']
+
+        if self.extra.inputdata.hasLFNs():
+            self.extra.xml_catalog_str = gen_catalog(self.extra.inputdata,
+                                                     self.extra._LocalSite)
         
         return (inputs, self.extra)
 
@@ -304,6 +308,7 @@ class GaudiExtras:
     outputdata = []
     _name = "GaudiExtras"
     _category = "extras"
+    xml_catalog_str = ''
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

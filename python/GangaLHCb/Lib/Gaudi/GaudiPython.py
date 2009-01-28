@@ -3,8 +3,8 @@
 '''Application handler for GaudiPython applications in LHCb.'''
 
 __author__ = 'Ulrik Egede'
-__date__ = "$Date: 2009-01-26 10:13:03 $"
-__revision__ = "$Revision: 1.10 $"
+__date__ = "$Date: 2009-01-28 13:18:19 $"
+__revision__ = "$Revision: 1.11 $"
 
 import os
 import re
@@ -104,7 +104,11 @@ class GaudiPython(IApplication):
         if job.inputdata:
             self.extra.inputdata = job.inputdata
             self.extra.inputdata.datatype_string=job.inputdata.datatype_string
-
+            if self.extra.inputdata.hasLFNs():
+                config = Ganga.Utility.Config.getConfig('LHCb') 
+                self.extra.xml_catalog_str = gen_catalog(self.extra.inputdata,
+                                                         config['LocalSite'])
+        
         self.package = available_packs(self.project)
 
         return (None,None)

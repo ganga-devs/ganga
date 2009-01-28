@@ -3,8 +3,8 @@
 the backends sharing the local filesystem."""
 
 __author__ = 'Ulrik Egede'
-__date__ = "$Date: 2008-11-13 10:02:53 $"
-__revision__ = "$Revision: 1.5 $"
+__date__ = "$Date: 2009-01-28 13:18:19 $"
+__revision__ = "$Revision: 1.6 $"
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 import os,os.path
@@ -33,6 +33,8 @@ class GaudiPythonLSFRunTimeHandler(IRuntimeHandler):
 
     sandbox = [f for f in job.inputsandbox]
     sandbox += [script for script in job.application.script]
+    if(app.extra.xml_catalog_str):
+      sandbox.append(FileBuffer('myFiles.xml', app.extra.xml_catalog_str))
     logger.debug("Master input sandbox: %s: ",str(sandbox))
 
     return StandardJobConfig( '', inputbox=sandbox, args=[])
@@ -61,8 +63,6 @@ class GaudiPythonLSFRunTimeHandler(IRuntimeHandler):
     job = app.getJobObject()
     config = Ganga.Utility.Config.getConfig('LHCb') 
     appname = app.project
-    site = config['LocalSite']
-    protocol = config['SEProtocol']
     outputdata = collect_lhcb_filelist(job.outputdata)
     job = app.getJobObject()
 
@@ -70,7 +70,7 @@ class GaudiPythonLSFRunTimeHandler(IRuntimeHandler):
     user_release_area = None
     opts = None
 
-    return create_lsf_runscript(app,appname,site,protocol,package,opts,
+    return create_lsf_runscript(app,appname,'myFiles.xml',package,opts,
                                 user_release_area,outputdata,job,'GaudiPython')
 
     

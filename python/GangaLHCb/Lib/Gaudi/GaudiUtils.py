@@ -2,13 +2,14 @@
 '''Utility methods used by various classes in GangaLHCb.Lib.Gaudi.'''
 
 __author__ = 'Greig A Cowan, Ulrik Egede, Andrew Maier, Mike Williams'
-__date__ = "$Date: 2009-01-26 10:13:03 $"
-__revision__ = "$Revision: 1.5 $"
+__date__ = "$Date: 2009-01-28 13:18:19 $"
+__revision__ = "$Revision: 1.6 $"
 
 import os
 import os.path
 import pprint
 import sys
+import tempfile
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from Ganga.Utility.Shell import Shell
 from Ganga.Utility.files import expandfilename, fullpath
@@ -144,6 +145,12 @@ def dataset_to_options_string(ds):
     s+="""\n};"""
     return s
 
+def dataset_to_lfn_string(ds):
+    s=''
+    if not ds: return s
+    for k in ds.files:
+      if k.isLFN(): s += ' %s' % k.name
+    return s
     
 def get_user_platform(env=os.environ):
   if env.has_key('CMTCONFIG'):
@@ -153,7 +160,22 @@ def get_user_platform(env=os.environ):
     logger.info(msg)
   return ''
 
-def create_lsf_runscript(app,appname,site,protocol,package,opts,
+def gen_catalog(dataset,site):
+  from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
+  lfns = dataset_to_lfn_string(dataset)
+  tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
+  cmd = "os.system('dirac-lhcb-generate-catalog -n %s -f %s %s')" \
+            % (site,tmp_xml.name,lfns)
+
+  #logger.info('About to generate XML catalog, this may take a while...')
+  if diracwrapper(cmd).returnCode != 0:
+    msg = "Error getting PFN's from LFN's (couldn't build catalog)"
+    logger.error()
+    raise ApplicationConfigurationError(None,msg)
+
+  return tmp_xml.read()
+
+def create_lsf_runscript(app,appname,xml_catalog,package,opts,
                          user_release_area,outputdata,job,which):
 
   import Ganga.Utility.Config 
@@ -170,14 +192,13 @@ def create_lsf_runscript(app,appname,site,protocol,package,opts,
   script =  "#!/usr/bin/env python\n\nimport os,sys\n\n"
   script += 'user_release_area = \'%s\'\n' % user_release_area
   script += 'data_output = %s\n' % outputdata
+  script += 'xml_cat = \'%s\'\n' % xml_catalog
   script += 'data_opts = \'dataopts.opts\'\n'
   script += 'opts = \'%s\'\n' % opts
   script += 'project_opts = \'%s\'\n' % projectopts
   script += 'app = \'%s\'\n' % appname
   script += 'app_upper = \'%s\'\n' % app_upper
   script += 'version = \'%s\'\n' % version
-  script += 'site = \'%s\'\n' % site
-  script += 'seprotocol = \'%s\'\n' % protocol
   script += 'package = \'%s\'\n' % package
   script += 'job_output_dir = \'%s/%s/outputdata\'\n' % (joboutdir,jstr)
   script += 'cp = \'%s\'\n' % copy_cmd
@@ -211,12 +232,10 @@ else:
     sys.stdout.flush()
     
 # create an xml slice
-if os.path.exists(data_opts):
-    os.system('genCatalog -o %s -p myFiles.xml -s %s -P %s' \
-              % (data_opts,site,seprotocol))
+if os.path.exists(data_opts) and os.path.exists(xml_cat):
     f = open(data_opts,'a')
     f.write('\\n')
-    f.write('FileCatalog.Catalogs += { \\"xmlcatalog_file:myFiles.xml\\" };')
+    f.write('FileCatalog.Catalogs += { \\"xmlcatalog_file:%s\\" };' % xml_cat)
     f.close()
     
 """
