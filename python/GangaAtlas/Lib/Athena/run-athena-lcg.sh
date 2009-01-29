@@ -186,7 +186,9 @@ if [ -e input_files ]
 then
     if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
         make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
+	echo 'input.txt start ----------'
 	cat input.txt
+	echo 'input.txt end ----------'
     else
         stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
     fi
@@ -254,10 +256,10 @@ then
 		mv $ATLAS_DBRELEASE/* .
 		echo successfully retrieved $ATLAS_DBFILE
 		tar xzf $ATLAS_DBFILE
-		cd DBRelease/current/cmt
-		cmt config
-		source setup.sh
-		cd ../../..
+		cd DBRelease/current/
+		python setup.py | grep = | sed -e 's/^/export /' > dbsetups.sh
+		source dbsetup.sh
+		cd ../../
 		break
 	    else
 		echo 'ERROR: dq2-get of DBRELEASE failed !'

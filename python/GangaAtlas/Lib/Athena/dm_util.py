@@ -386,7 +386,7 @@ theApp.EvtMax = ###MAXEVENT###
     flatFile = 'input.txt'
     outFlatFile = open(flatFile,'w')
     for pfn in pfns:
-       outFlatFile.write('%s\n' %pfns)
+       outFlatFile.write('%s\n' %pfn)
     outFlatFile.close()
 
     return ick
