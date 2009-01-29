@@ -1,8 +1,8 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """Merges DST files."""
 
-__date__ = "$Date: 2008-12-05 12:42:04 $"
-__revision__ = "$Revision: 1.3 $"
+__date__ = "$Date: 2009-01-29 11:16:15 $"
+__revision__ = "$Revision: 1.4 $"
 
 import commands
 import inspect
@@ -161,7 +161,7 @@ class DSTMerger(AbstractMerger):
         self.merge_tool.merge_opts = self.merge_opts
         self.merge_tool.version = self.version
         #needed as exportmethods doesn't seem to cope with inheritance
-        return super(DTSMerger,self).merge(jobs, outputdir, ignorefailed,
+        return super(DSTMerger,self).merge(jobs, outputdir, ignorefailed,
                                            overwrite)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
