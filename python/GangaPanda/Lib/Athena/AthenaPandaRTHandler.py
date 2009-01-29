@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.16 2009-01-29 16:39:45 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.17 2009-01-29 17:22:27 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -150,6 +150,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             except IOError:
                 os.makedirs(dir)
                 shutil.copy(opt_file.name,dir)
+
+        for extFile in job.backend.extFile:
+            try:
+                shutil.copy(extFile,dir)
+            except IOError:
+                os.makedirs(dir)
+                shutil.copy(extFile,dir)
 
 #       now tar it up again
 

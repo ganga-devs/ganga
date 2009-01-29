@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.15 2009-01-29 14:14:05 dvanders Exp $
+# $Id: Panda.py,v 1.16 2009-01-29 17:22:27 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -132,7 +132,7 @@ class PandaBuildJob(GangaObject):
 class Panda(IBackend):
     '''Panda backend'''
 
-    _schema = Schema(Version(1,3), {
+    _schema = Schema(Version(1,4), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'long'          : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send job to a long queue'),
 #        'blong'         : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send build job to a long queue'),
@@ -144,6 +144,7 @@ class Panda(IBackend):
 #        'fileList'      : SimpleItem(defvalue='',protected=0,copyable=1,doc='List of files in the input dataset to be run'),        
 #        'shipinput'     : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Ship input files to remote WNs'),        
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
+        'extFile'       : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='Extra files to ship to the worker node'),
 #        'addPoolFC'     : SimpleItem(defvalue='',protected=0,copyable=1,doc='file names to be inserted into PoolFileCatalog.xml except input files. e.g., MyCalib1.root,MyGeom2.root'),        
         'corCheck'      : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Enable a checker to skip corrupted files'),        
         'notSkipMissing': SimpleItem(defvalue=False,protected=0,copyable=1,doc='If input files are not read from SE, they will be skipped by default. This option disables the functionality'),
@@ -385,6 +386,10 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.15  2009/01/29 14:14:05  dvanders
+# use panda-client 0.1.6
+# use AthenaUtils to extract run config and detect athena env
+#
 # Revision 1.14  2008/12/12 15:04:34  dvanders
 # dbRelease option
 #
