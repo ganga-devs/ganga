@@ -2,8 +2,8 @@
 '''Utility methods used by various classes in GangaLHCb.Lib.Gaudi.'''
 
 __author__ = 'Greig A Cowan, Ulrik Egede, Andrew Maier, Mike Williams'
-__date__ = "$Date: 2009-01-28 13:18:19 $"
-__revision__ = "$Revision: 1.6 $"
+__date__ = "$Date: 2009-01-29 11:42:27 $"
+__revision__ = "$Revision: 1.7 $"
 
 import os
 import os.path
@@ -274,36 +274,20 @@ for f in data_output:
 """    
   return script
 
-def get_user_release_area(user_release_area,env=os.environ):
-  """
-  Get the User release area for the job. For the moment only rely on
-  environment. Should be updated to take into account the properties in the
-  Gaudi job
-  """
-  release_area=''
-  if env.has_key('User_release_area'):
-    release_area=env['User_release_area']
-  else:
-    logger.info('"User_release_area" is not set. Expect problems with ' + \
-                'configuring your job')
+def update_cmtproject_path(user_release_area,env=os.environ):
 
-  if user_release_area and release_area != user_release_area:
+  if user_release_area:
     if env.has_key('CMTPROJECTPATH'):
       cmtpp=env['CMTPROJECTPATH'].split(':')
       if cmtpp[0] != user_release_area:
         cmtpp[0] = user_release_area
         env['CMTPROJECTPATH']=':'.join(cmtpp)
-        
-    release_area = user_release_area.split(':')[0]
 
-  return release_area
+def get_user_dlls(appname,version,user_release_area,platform,shell):
 
-
-def get_user_dlls(appname,version,user_release_area,shell):
-
-  user_ra = get_user_release_area(user_release_area)
+  user_ra = user_release_area
+  update_cmtproject_path(user_release_area)
   full_user_ra = fullpath(user_ra) # expand any symbolic links
-  platform = get_user_platform()
         
   # Work our way through the CMTPROJECTPATH until we find a cmt directory
   projectdirs = shell.env['CMTPROJECTPATH'].split(os.pathsep)

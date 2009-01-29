@@ -4,8 +4,8 @@
 of inputdata, outputdata and output files.'''
 
 __author__ = 'Greig A Cowan'
-__date__ = "$Date: 2008-12-11 16:15:26 $"
-__revision__ = "$Revision: 1.16 $"
+__date__ = "$Date: 2009-01-29 11:42:39 $"
+__revision__ = "$Revision: 1.17 $"
 
 import tempfile, fnmatch
 from Ganga.GPIDev.Lib.File import FileBuffer
@@ -73,7 +73,7 @@ class PythonOptionsParser:
                 logger.error('Cannot eval() the options file. Exception: %s',e)
                 from traceback import print_exc
                 logger.error(' ', print_exc())
-                raise ApplicationConfigurationError(None,err_msg)
+                raise ApplicationConfigurationError(None,stdout)
             try:
                 opts_pkl_string = tmp_pkl.read()        
             except IOError, e:
@@ -82,10 +82,10 @@ class PythonOptionsParser:
 
         
         if not rc ==0:
-            msg = 'Problem with syntax in options file'
-            raise ApplicationConfigurationError(None,msg)
-            logger.error('Cannot run: %s', gaudirun)
-            logger.error('Output was %s', stdout)
+            logger.debug('Failed to run: %s', gaudirun) 
+            raise ApplicationConfigurationError(None,stdout)
+            
+            
         
         tmp_pkl.close()
         py_opts.close()

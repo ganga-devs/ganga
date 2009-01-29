@@ -2,12 +2,13 @@
 '''Application handler for Gaudi applications in LHCb.'''
 
 __author__ = 'Andrew Maier, Greig A Cowan'
-__date__ = "$Date: 2009-01-28 13:18:19 $"
-__revision__ = "$Revision: 1.19 $"
+__date__ = "$Date: 2009-01-29 11:42:27 $"
+__revision__ = "$Revision: 1.20 $"
 
 import os
 import re
 import sys
+import tempfile
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Schema import *
 from Ganga.Core import ApplicationConfigurationError
@@ -163,6 +164,13 @@ class Gaudi(IApplication):
         configuration. In this case this is the flattened options file (as a
         string) The extra information is its own class'''
 
+        debug_dir = self.getJobObject().outputdir
+        debug_dir = debug_dir.rstrip('/')
+        debug_dir = debug_dir.rstrip('/output')
+        debug_dir += '/debug'
+        if os.path.exists(debug_dir):
+            os.system('rm -f %s/*' % debug_dir)
+
         self.shell = gaudishell_setenv(self)
         inputs = self._check_inputs() 
         self.extra = GaudiExtras()
@@ -170,9 +178,20 @@ class Gaudi(IApplication):
                         
         try:
             parser = PythonOptionsParser(optsfiles,self.extraopts,self.shell)
-        except Exception, e:
-            msg = 'Unable to parse the job options. Please check options ' + \
-                  'files and extraopts.'
+        except ApplicationConfigurationError, e:
+            os.system('mkdir -p %s' % debug_dir)
+            f = open(debug_dir + '/gaudirun.stdout','w')
+            f.write(e.message)
+            f.close()
+            msg = 'Unable to parse job options! Please check options ' \
+                  'files and extraopts. The output from gaudyrun.py can be ' \
+                  'found in %s. You can also view this from within ganga '\
+                  'by doing job.peek(\'../debug/gaudirun.stdout\').' % f.name
+            logger.error(msg)
+            msg = 'Unable to parse user options! To see the ouput from ' \
+                  'gaudirun.py do job.peek(\'../debug/gaudirun.stdout\'). ' \
+                  ' The full path to the file containing this info is given '\
+                  'in the error message above.'
             raise ApplicationConfigurationError(None,msg)
 
         self.extra.opts_pkl_str = parser.opts_pkl_str
@@ -206,6 +225,7 @@ class Gaudi(IApplication):
         userdlls, mergedpys, subdirpys = get_user_dlls(self.appname,
                                                        self.version,
                                                        self.user_release_area,
+                                                       self.platform,
                                                        self.shell)
         self.extra._userdlls = userdlls
         self.extra._merged_pys, self.extra._subdir_pys = mergedpys, subdirpys
@@ -309,6 +329,7 @@ class GaudiExtras:
     _name = "GaudiExtras"
     _category = "extras"
     xml_catalog_str = ''
+
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
