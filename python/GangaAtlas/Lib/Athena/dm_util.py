@@ -382,6 +382,13 @@ theApp.EvtMax = ###MAXEVENT###
     f.close()
     ick = True
 
+    # Write flatfile input.txt for ARA
+    flatFile = 'input.txt'
+    outFlatFile = open(flatFile,'w')
+    for pfn in pfns:
+       outFlatFile.write('%s\n' %pfns)
+    outFlatFile.close()
+
     return ick
 
 def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
