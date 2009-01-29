@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.26 2009-01-29 10:50:11 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.27 2009-01-29 11:30:55 hclee Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -388,7 +388,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         ## insert more scripts to inputsandbox for FileStager
         if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type in ['FILE_STAGER']:
-            _append_files(inputbox,'make_filestager_joption.py','dm_util.py')
+            _append_files(inputbox,'make_filestager_joption.py','dm_util.py','fs-copy.py')
+            #_append_files(inputbox,'make_filestager_joption.py','dm_util.py')
 
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             #if not job.outputdata.location:
@@ -556,6 +557,11 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             'output_location',
             'output_data'
         ]
+
+        ## retrieve the FileStager log
+        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type in ['FILE_STAGER']:
+            outputbox += ['FileStager.out', 'FileStager.err']
+
         if job.outputsandbox: outputbox += job.outputsandbox
 
         return LCGJobConfig(File(exe),inputbox,[],outputbox,environment,[],requirements) 

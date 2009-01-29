@@ -595,6 +595,11 @@ make_filestager_joption() {
     MY_PATH_ORG=$2
     MY_PYTHONPATH_ORG=$3
 
+    # setting up the filestager copy wrapper with retry mechanism
+    if [ -f fs-copy.py ]; then
+        chmod +x fs-copy.py
+    fi
+
     if [ -f make_filestager_joption.py ]; then
         chmod +x make_filestager_joption.py
 
