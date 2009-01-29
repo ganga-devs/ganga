@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.25 2009-01-16 13:44:35 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.26 2009-01-29 15:09:14 dvanders Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -131,10 +131,12 @@ class DQ2JobSplitter(ISplitter):
         contents_temp = job.inputdata.get_contents(overlap=False, filesize=True)
         contents = {}
         datasetSizes = {}
+        datasetLength = {}
         for dataset, content in contents_temp.iteritems():
             contents[dataset] = content[0]
             datasetSizes[dataset] = content[1]
-        
+            datasetLength[dataset] = len(contents[dataset])
+
         locations = job.inputdata.get_locations(overlap=False)
 
         siteinfos = {}
@@ -186,21 +188,23 @@ class DQ2JobSplitter(ISplitter):
                 if self.numfiles > len(guids):
                     self.numfiles = len(guids)
 
+                totalsize = datasetSizes[dataset] * len(guids) / datasetLength[dataset]
+
                 # Restriction based on the maximum dataset filesize
                 if self.filesize > 0 or job.backend._name in [ 'NG', 'Panda']:
                     warn = False
                     maxsize = self.filesize
 
-                    if job.backend._name == 'NG':
+                    if job.backend._name == 'NG' and (maxsize < 1 or config['MaxFileSizeNGDQ2JobSplitter'] < maxsize):
                         maxsize = config['MaxFileSizeNGDQ2JobSplitter']
-                    elif job.backend._name == 'Panda':
+                    elif job.backend._name == 'Panda' and (maxsize < 1 or config['MaxFileSizePandaDQ2JobSplitter'] < maxsize):
                         maxsize = config['MaxFileSizePandaDQ2JobSplitter']
                     elif job.backend._name == 'LCG':
                         nrjob = 1
                         self.numfiles = len(guids)
 
-                    subjobsize = datasetSizes[dataset] / nrjob / (1024*1024)
-                    while subjobsize > maxsize:
+                    subjobsize = totalsize / nrjob / (1024*1024)
+                    while subjobsize > maxsize and self.numfiles > 1:
                         warn = True
                         self.numfiles = self.numfiles - 1
                         if self.numfiles < 1:
@@ -208,9 +212,11 @@ class DQ2JobSplitter(ISplitter):
 
                         nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
                         self.numfiles = int(math.ceil(len(guids)/float(nrjob)))
-                        subjobsize = datasetSizes[dataset] / nrjob / (1024*1024)
+                        subjobsize = totalsize / nrjob / (1024*1024)
                     if warn:
-                        logger.warning('Maximum dataset size reached - creating more subjobs.')
+                        logger.warning('Maximum data size per subjob (%d MB) reached - creating more subjobs.'%maxsize)
+                    if subjobsize > maxsize:
+                        logger.warning('Failed to split job on filesize constraint. Subjob size %d MB > requested size %d MB'%(subjobsize,maxsize))
 
                 for i in xrange(0,nrjob):
 
