@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ATLASDataset.py,v 1.4 2008-08-19 13:15:32 elmsheus Exp $
+# $Id: ATLASDataset.py,v 1.5 2009-01-29 15:46:50 mslater Exp $
 ###############################################################################
 # A simple ATLAS dataset
 #
@@ -157,7 +157,7 @@ class Download:
             except:
                 pythonpath = ''
             gridshell.env['PYTHONPATH'] = gridshell.env['PYTHONPATH']+':'+pythonpath
-            print gridshell.env['PYTHONPATH']
+
             rc, out, m = gridshell.cmd1(self.cmd,allowed_exit=[0,255])
             if (rc==0):
                 logger.debug("dq2_get finished: %s", self.cmd)
@@ -548,6 +548,9 @@ class ATLASOutputDataset(Dataset):
 config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
 
 #$Log: not supported by cvs2svn $
+#Revision 1.4  2008/08/19 13:15:32  elmsheus
+#Fix bug #39010, Add ATLASLocalDataset support for list of datasets
+#
 #Revision 1.3  2008/07/28 15:02:30  elmsheus
 #Fix for bug #35256
 #
