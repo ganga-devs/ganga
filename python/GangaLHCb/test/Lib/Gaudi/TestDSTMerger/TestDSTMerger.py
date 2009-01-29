@@ -9,11 +9,14 @@ from Ganga.GPIDev.Adapters.IMerger import MergerError
 
 class TestDSTMerger(GangaGPITestCase):
 
+    # add some coverage for the public interface
+    def test_DSTMerger_merge(self):
+        d = DSTMerger()
+        d.merge([])
+
     # Since DSTMerger::merge is just a thin wrapper around this method, there's
     # no real point to including a separate test.
-    #def test__DSTMergeTool_mergefiles(self):
-        
-    def test_DSTMerger_merge(self):
+    def test__DSTMergeTool_mergefiles(self):
         
         dst = './test.dst'  # test file w/ 1 event
         assert os.path.exists(dst), 'The original file should exist'
