@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.29 2009-01-29 14:59:11 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.30 2009-01-29 17:35:19 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -193,6 +193,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             # Extract username from certificate
             proxy = GridProxy()
             username = proxy.identity()
+            # Remove apostrophe
+            username = re.sub("'","",username)
 
             jobdate = time.strftime('%Y%m%d')
 

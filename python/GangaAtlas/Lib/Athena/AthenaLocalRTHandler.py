@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.17 2009-01-29 10:50:11 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.18 2009-01-29 17:35:19 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -170,6 +170,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             # Extract username from certificate
             proxy = GridProxy()
             username = proxy.identity()
+            # Remove apostrophe
+            username = re.sub("'","",username)
 
             import time
             tempdate = time.localtime()
@@ -504,6 +506,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.17  2009/01/29 10:50:11  elmsheus
+#Support for TRFs in the Athena application
+#
 #Revision 1.16  2009/01/22 16:57:45  dvanders
 #handle TAGDATASETNAME list
 #
