@@ -223,6 +223,55 @@ if os.environ.has_key('ATHENA_MAX_EVENTS'):
 EOF
 fi
 
+################################################
+# Download DBRelease
+
+if [ ! -z $ATLAS_DBRELEASE ] && [ ! -z $ATLAS_DBFILE ]
+then
+    # Setup new dq2- tools
+    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+        then
+        source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+    else
+        echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
+        echo '1'>retcode.tmp
+    fi
+    # Set DQ2_LOCAL_SITE_ID to dataset location
+    if [ -e dq2localid.txt ]
+        then
+        export DQ2_LOCAL_SITE_ID=`cat dq2localid.txt`
+        export DQ2_LOCAL_ID_BACKUP=$DQ2_LOCAL_ID
+    fi
+
+    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+	then
+	for ((i=1;i<=3;i+=1)); do
+	    echo Copying $ATLAS_DBFILE, attempt $i of 3
+	    dq2-get -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
+	    if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]
+		then
+		mv $ATLAS_DBRELEASE/* .
+		echo successfully retrieved $ATLAS_DBFILE
+		tar xzf $ATLAS_DBFILE
+		cd DBRelease/current/cmt
+		cmt config
+		source setup.sh
+		break
+	    else
+		echo 'ERROR: dq2-get of DBRELEASE failed !'
+		echo '1'>retcode.tmp
+	    fi
+	done
+    else
+	echo 'ERROR: DQ2Clients with dq2-get are not installed at the
+site - please contact Ganga support mailing list.'
+	echo '1'>retcode.tmp
+    fi
+
+
+
+fi
+
 ls -rtla
 
 GANGATIME3=`date +'%s'`
@@ -315,7 +364,6 @@ EOF
 	if [ -e $DBDATASETNAME/$DBFILENAME ]
 	    then
 	    mv $DBDATASETNAME/* .
-	    echo $file > input.txt
 	    echo successfully retrieved $DBFILENAME
 	    break
 	else

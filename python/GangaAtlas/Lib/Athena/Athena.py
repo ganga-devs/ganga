@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.37 2009-01-29 14:33:38 mslater Exp $
+# $Id: Athena.py,v 1.38 2009-01-29 14:59:11 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -61,6 +61,7 @@ class Athena(IApplication):
                  'atlas_cmtconfig'        : SimpleItem(defvalue='',doc='ATLAS CMTCONFIG environment variable'),
                  'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT, TRF '),
                  'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
+                 'atlas_dbrelease'        : SimpleItem(defvalue='',doc='ATLAS DBRelease DQ2 dataset and DQ2Release tar file'),
                  'trf_parameter'          : SimpleItem(defvalue={},typelist=["dict","str"], doc='Parameters for transformations'),
                  'user_area'              : FileItem(doc='A tar file of the user area'),
                  'user_area_path'         : SimpleItem(defvalue='', doc='Path where user_area tarfile is created'),
@@ -986,6 +987,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.37  2009/01/29 14:33:38  mslater
+# Fix to make sure the merger works on DQ2OutputDataset
+#
 # Revision 1.36  2009/01/29 10:50:11  elmsheus
 # Support for TRFs in the Athena application
 #

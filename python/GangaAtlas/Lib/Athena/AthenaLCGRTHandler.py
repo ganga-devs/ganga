@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.28 2009-01-29 14:32:44 mslater Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.29 2009-01-29 14:59:11 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -546,6 +546,13 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 pass
             requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
             environment['DQ2_CLIENT_VERSION'] = dq2client_version
+
+        if app.atlas_dbrelease:
+            try:
+                environment['ATLAS_DBRELEASE'] = app.atlas_dbrelease.split(':')[0]
+                environment['ATLAS_DBFILE'] = app.atlas_dbrelease.split(':')[1]
+            except:
+                logger.warning('Problems with the atlas_dbrelease configuration')
 
 #       jobscript
 
