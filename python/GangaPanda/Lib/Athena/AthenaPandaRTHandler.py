@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.15 2009-01-29 14:14:05 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.16 2009-01-29 16:39:45 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -658,10 +658,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if matchURL != None:
             param += " --sourceURL %s " % matchURL.group(1)
         # use ARA 
+        if job.backend.ares:
+            job.backend.ara = True
         if job.backend.ara:
             param += '--trf '
             param += '--ara '
-
  
         jspec.jobParameters = param
         
