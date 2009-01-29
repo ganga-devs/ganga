@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.15 2009-01-14 09:47:56 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.16 2009-01-29 14:34:32 mslater Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1113,6 +1113,12 @@ class DQ2OutputDataset(Dataset):
         
         job = self._getParent()
 
+        # call the subjob retrieve method if available
+        if len(job.subjobs) > 0:
+            for sj in job.subjobs:
+                sj.outputdata.retrieve()
+            return
+       
         if job.backend._name == 'LCG':
             Download.prefix_hack = job.backend.middleware
         else:
@@ -1153,17 +1159,21 @@ class DQ2OutputDataset(Dataset):
                 # User job repository location
                 outputlocation = job.outputdir
             
+            # loop over all filenames
+            filenames = job.outputdata.output
+            for fileinfo in filenames:
+                filename = fileinfo.split(',')[1]
 
-            exe = 'DQ2_LOCAL_SITE_ID=ROAMING; dq2-get -a -d -D '
-            cmd = '%s -H %s %s ' %(exe,outputlocation, job.outputdata.datasetname)
+                exe = 'dq2-get -L ROAMING -a -d -D '
+                cmd = '%s -H %s -f %s %s' %(exe,outputlocation, filename, job.outputdata.datasetname)
+                
+                logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
 
-            logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
-
-            threads=[]
-            thread = Download.download_dq2(cmd)
-            thread.setDaemon(True)
-            thread.start()
-            threads.append(thread)
+                threads=[]
+                thread = Download.download_dq2(cmd)
+                thread.setDaemon(True)
+                thread.start()
+                threads.append(thread)
                 
             #for thread in threads:
             #    thread.join()
@@ -1207,6 +1217,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.15  2009/01/14 09:47:56  elmsheus
+#Change algorithm for filesize retrieval and return
+#
 #Revision 1.14  2009/01/13 11:08:06  elmsheus
 #Introduce get_contents(filesize=True) - returns the dataset filesize
 #
