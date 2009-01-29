@@ -434,6 +434,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                      "randomSeed=%s" % str(self.randomseed),
                      "geometryVersion=%s" % app.geometryTag
                      ]
+            if self.atlas_rel >="12.0.5" :
+                args.append("triggerConfig=%s" % app.triggerConfig)
         
         return args
 
