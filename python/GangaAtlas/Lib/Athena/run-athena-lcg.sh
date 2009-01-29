@@ -257,7 +257,7 @@ then
 		echo successfully retrieved $ATLAS_DBFILE
 		tar xzf $ATLAS_DBFILE
 		cd DBRelease/current/
-		python setup.py | grep = | sed -e 's/^/export /' > dbsetups.sh
+		python setup.py | grep = | sed -e 's/^/export /' > dbsetup.sh
 		source dbsetup.sh
 		cd ../../
 		break
