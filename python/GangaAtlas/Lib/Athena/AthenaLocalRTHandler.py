@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.16 2009-01-22 16:57:45 dvanders Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.17 2009-01-29 10:50:11 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -303,6 +303,17 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             if job.inputdata.dataset:
                 environment['DATASETNAME'] = job.inputdata.dataset[0]
 
+        # Write trf parameters
+        trf_params = ' '
+        for key, value in job.application.trf_parameter.iteritems():
+            if key == 'dbrelease':
+                environment['DBDATASETNAME'] = value.split(':')[0]
+                environment['DBFILENAME'] = value.split(':')[1]
+            else:
+                trf_params = trf_params + key + '=' + str(value) + ' '
+        if trf_params!=' ' and job.application.atlas_exetype=='TRF':
+           _append_file_buffer(inputbox,'trf_params', [ trf_params ]) 
+
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
     def master_prepare( self, app, appconfig ):
@@ -493,6 +504,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.16  2009/01/22 16:57:45  dvanders
+#handle TAGDATASETNAME list
+#
 #Revision 1.15  2009/01/08 08:42:41  elmsheus
 #Fix typo TNTJobSplitter
 #

@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.25 2009-01-15 13:35:43 ebke Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.26 2009-01-29 10:50:11 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -319,6 +319,17 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         # Work around for glite WMS spaced environement variable problem
         inputbox.append(FileBuffer('athena_options',environment['ATHENA_OPTIONS']+'\n'))
+
+        # Write trf parameters
+        trf_params = ' '
+        for key, value in job.application.trf_parameter.iteritems():
+            if key == 'dbrelease':
+                environment['DBDATASETNAME'] = value.split(':')[0]
+                environment['DBFILENAME'] = value.split(':')[1]
+            else:
+                trf_params = trf_params + key + '=' + str(value) + ' '
+        if trf_params!=' ' and job.application.atlas_exetype=='TRF':
+           _append_file_buffer(inputbox,'trf_params', [ trf_params ] ) 
 
 # append a property for monitoring to the jobconfig of subjobs
         lcg_config = LCGJobConfig(File(exe), inputbox, [], outputbox, environment, [], requirements)

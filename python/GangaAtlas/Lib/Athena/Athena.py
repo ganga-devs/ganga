@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.35 2009-01-15 08:31:40 elmsheus Exp $
+# $Id: Athena.py,v 1.36 2009-01-29 10:50:11 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -59,8 +59,9 @@ class Athena(IApplication):
                  'atlas_production'       : SimpleItem(defvalue='',doc='ATLAS Production Software Release'),
                  'atlas_project'          : SimpleItem(defvalue='',doc='ATLAS Project Name'),
                  'atlas_cmtconfig'        : SimpleItem(defvalue='',doc='ATLAS CMTCONFIG environment variable'),
-                 'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT '),
+                 'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT, TRF '),
                  'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
+                 'trf_parameter'          : SimpleItem(defvalue={},typelist=["dict","str"], doc='Parameters for transformations'),
                  'user_area'              : FileItem(doc='A tar file of the user area'),
                  'user_area_path'         : SimpleItem(defvalue='', doc='Path where user_area tarfile is created'),
                  'group_area'             : FileItem(doc='A tar file of the group area'),
@@ -82,7 +83,7 @@ class Athena(IApplication):
                   { 'attribute' : 'atlas_production',  'widget' : 'String' },
                   { 'attribute' : 'atlas_project',     'widget' : 'String' },
                   { 'attribute' : 'atlas_cmtconfig',   'widget' : 'String' },
-                  { 'attribute'  : 'atlas_exetype',    'widget' : 'String_Choice', 'choices':['ATHENA', 'PYARA', 'ROOT' ]},
+                  { 'attribute'  : 'atlas_exetype',    'widget' : 'String_Choice', 'choices':['ATHENA', 'PYARA', 'ROOT', 'TRF' ]},
                   { 'attribute' : 'atlas_environment', 'widget' : 'String_List' },
                   { 'attribute' : 'user_area',         'widget' : 'FileOrString' },
                   { 'attribute' : 'user_area_path',    'widget' : 'String' },
@@ -981,6 +982,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.35  2009/01/15 08:31:40  elmsheus
+# Some NG statistics patches
+#
 # Revision 1.34  2009/01/08 08:57:50  elmsheus
 # Put patch at correct place
 #
