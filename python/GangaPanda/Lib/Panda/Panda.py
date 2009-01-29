@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.14 2008-12-12 15:04:34 dvanders Exp $
+# $Id: Panda.py,v 1.15 2009-01-29 14:14:05 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -140,16 +140,18 @@ class Panda(IBackend):
 #        'SkipFiles'    : SimpleItem(defvalue=0,protected=0,copyable=1,doc='Skip N files in the input dataset'),
         'cloud'         : SimpleItem(defvalue='US',protected=0,copyable=1,doc='cloud where jobs are submitted (default:US)'),
 #        'noBuild'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Skip buildJob'),
-#        'memory'        : SimpleItem(defvalue=-1,protected=0,copyable=1,doc='Required memory size'),
+        'memory'        : SimpleItem(defvalue=-1,protected=0,copyable=1,doc='Required memory size'),
 #        'fileList'      : SimpleItem(defvalue='',protected=0,copyable=1,doc='List of files in the input dataset to be run'),        
 #        'shipinput'     : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Ship input files to remote WNs'),        
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
 #        'addPoolFC'     : SimpleItem(defvalue='',protected=0,copyable=1,doc='file names to be inserted into PoolFileCatalog.xml except input files. e.g., MyCalib1.root,MyGeom2.root'),        
         'corCheck'      : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Enable a checker to skip corrupted files'),        
-        'notSkipMissing': SimpleItem(defvalue=False,protected=0,copyable=1,doc='If input files are not read from SE, they will be skipped by default. This option disables the functionality'),        
+        'notSkipMissing': SimpleItem(defvalue=False,protected=0,copyable=1,doc='If input files are not read from SE, they will be skipped by default. This option disables the functionality'),
+        'useAIDA'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='use AIDA'),
 #        'pfnList'       : SimpleItem(defvalue='',protected=0,copyable=1,doc='Name of file which contains a list of input PFNs. Those files can be un-registered in DDM'),        
 #        'mcData'        : SimpleItem(defvalue='',protected=0,copyable=1,doc='Create a symlink with linkName to .dat which is contained in input file'),
         'ara'           : SimpleItem(defvalue=False,protected=0,copyable=1,doc='use Athena ROOT Access'),
+        'ares'          : SimpleItem(defvalue=False,protected=0,copyable=1,doc='use Athena ROOT Access + PyAthena, i.e., use athena.py instead of python on WNs'),
 #        'araOutFile'    : SimpleItem(defvalue=[],protected=0,copyable=1,doc='define output files for ARA, e.g., [\'output1.root\',\'output2.root\']'),
 #        'trf'           : SimpleItem(defvalue='',protected=0,copyable=1,doc='run transformation, e.g. .trf = "csc_atlfast_trf.py %IN %OUT.AOD.root %OUT.ntuple.root -1 0"'),
         'supStream'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='suppress some output streams. e.g., [\'ESD\',\'TAG\']'),
@@ -383,6 +385,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.14  2008/12/12 15:04:34  dvanders
+# dbRelease option
+#
 # Revision 1.13  2008/11/13 16:28:09  dvanders
 # supStream support: suppress some output streams. e.g., ['ESD','TAG']
 # improved logging messages

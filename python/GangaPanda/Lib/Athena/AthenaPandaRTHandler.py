@@ -1,13 +1,13 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.14 2008-12-12 15:04:34 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.15 2009-01-29 14:14:05 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
 # ATLAS/ARDA
 
-import os, sys, pwd, commands, re, shutil, urllib, time 
+import os, sys, pwd, commands, re, shutil, urllib, time, string 
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -22,200 +22,8 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 import Client
 from taskbuffer.JobSpec import JobSpec
 from taskbuffer.FileSpec import FileSpec
+import AthenaUtils
 
-def extractConfiguration(jobOptions,trf=False,supStream=[]):
-
-    config = {
-       'outHist'     : False,
-       'outNtuple'   : [],
-       'outRDO'      : False,
-       'outESD'      : False,
-       'outAOD'      : False,
-       'outTAG'      : False,
-       'outAANT'     : [],
-       'outTHIST'    : [],
-       'outIROOT'    : [],
-       'outStream1'  : False,
-       'outStream2'  : False,
-       'outBS'       : False,
-       'outStreamG'  : [],
-       'outMeta'     : [],
-       'inBS'        : False,
-       'inColl'      : False,
-       'inMinBias'   : False,
-       'inCavern'    : False,
-       'inBeamGas'   : False,
-       'inBeamHalo'  : False,
-       'backNavi'    : False,
-       'shipFiles'   : [],
-       'rndmStream'  : [],
-       'rndmNumbers' : [],
-       'extOutFile'  : [],
-
-# need to be made user options:
-       'shipinput'   : False,
-       'memory'      : -1,
-       'addPoolFC'   : '',
-       'pfnList'        : '',
-       'mcData'         : ''
-    }
-
-    if not trf:
-        # run ConfigExtractor for normal jobO
-        jobOpt1 = os.path.join(os.environ['CONFIGEXTRACTOR_PATH'],'FakeAppMgr.py')
-        jobOpt2 = os.path.join(os.environ['CONFIGEXTRACTOR_PATH'],'ConfigExtractor.py') 
-        rc, output = commands.getstatusoutput('athena.py %s %s %s' % (jobOpt1,jobOptions,jobOpt2))
-        if rc>>8 :
-            logger.warning('Return code of athena was %d from the ConfigExtractor. This is probably harmless.' % (rc>>8))
-
-        fail = True
-        for line in output.split('\n'):
-            if not line.startswith('ConfigExtractor >'): continue
-
-            fail = False
-            item = line[18:].split()
-            if item[0].startswith("Output="):
-                logger.info('Detected output stream %s'%item[0])
-                tmpSt = item[0].replace('=',' ').split()[-1]
-                if tmpSt.upper() in supStream:
-                    logger.info('Supressing output stream %s'%item[0])
-                    continue
-
-            if   item[0] == 'Output=HIST':
-                config['outHist'] = True
-            elif item[0] == 'Output=NTUPLE':
-                config['outNtuple'].append(item[1])
-            elif item[0] == 'Output=RDO':
-                config['outRDO'] = True
-            elif item[0] == 'Output=ESD':
-                config['outESD'] = True
-            elif item[0] == 'Output=AOD':
-                config['outAOD'] = True
-            elif item[0] == 'Output=TAG':
-                config['outTAG'] = True
-            elif item[0] == 'Output=AANT':
-                config['outAANT'].append(tuple(item[1:]))
-            elif item[0] == 'Output=THIST':
-                config['outTHIST'].append(item[1])
-            elif item[0] == 'Output=IROOT':
-                config['outIROOT'].append(item[1])
-            elif item[0] == 'Output=STREAM1':
-                config['outStream1'] = True
-            elif item[0] == 'Output=STREAM2':
-                config['outStream2'] = True
-            elif item[0] == 'Output=BS':
-                config['outBS'] = True
-            elif item[0] == 'Output=STREAMG':
-                config['outStreamG'].append(item[1])
-            elif item[0] == 'Output=META':
-                config['outMeta'].append(tuple(item[1:]))
-            elif item[0] == 'Input=BS':
-                config['inBS'] = True
-            elif item[0] == 'Input=COLL':
-                config['inColl'] = True
-            elif item[0] == 'Input=MINBIAS':
-                config['inMinBias'] = True
-            elif item[0] == 'Input=CAVERN':
-                config['inCavern'] = True
-            elif item[0] == 'Input=BEAMHALO':
-                config['inBeamHalo'] = True
-            elif item[0] == 'Input=BEAMGAS':
-                config['inBeamGas'] = True
-            elif item[0] == 'BackNavigation=ON':
-                config['backNavi'] = True
-            elif item[0] == 'RndmStream':
-                config['rndmStream'].append(item[1])
-            elif item[0] == 'RndmGenFile':
-                config['rndmGenFile'].append(item[-1])
-            elif item[0] == 'InputFiles':
-                if config['shipinput']:
-                    config['shipFiles'].append(item[1])
-                else:
-                    continue
-            elif item[0] == 'CondInput':
-                if config['addPoolFC'] == "":
-                    config['addPoolFC'].append(item[-1])
-                else:
-                    config['addPoolFC'].append(",%s" % item[-1])
-        if fail: raise ApplicationConfigurationError(None,'Extractor could not parse job')
-
-    else:
-        # parse parameters for trf
-        for tmpItem in jobOptions.split():
-            match = re.search('^\%OUT\.(.+)',tmpItem)
-            if match:
-                # append basenames to extOutFile
-                config['extOutFile'].append(match.group(1))
-
-    if logger.isEnabledFor(10):
-       for key, value in config.iteritems():
-           if value:
-               logger.debug('%s : %s',key,value) 
-
-    return config
-
-
-def alternateCmtExtraction():
-    import os
-    import commands
-
-    # save current dir
-    currentDir = os.path.realpath(os.getcwd())
-
-    # get project parameters
-    out = commands.getoutput('cmt show projects')
-    lines = out.split('\n')
-    # remove CMT warnings
-    tupLines = tuple(lines)
-    lines = []
-    for line in tupLines:
-        if not line.startswith('#'):
-            lines.append(line)
-    if len(lines)<2:
-        print out
-        raise ApplicationConfigurationError(None,"ERROR : cmt show projects")
-
-    # private work area
-    res = re.search('\(in ([^\)]+)\)',lines[0])
-    if res==None:
-        print lines[0]
-        raise ApplicationConfigurationError(None,"ERROR : could not get path to private work area")
-    workArea = os.path.realpath(res.group(1))
-
-    # get Athena version and group area
-    athenaVer = ''
-    groupArea = ''
-    cacheVer  = ''
-    nightVer  = ''
-    for line in lines[1:]:
-        res = re.search('\(in ([^\)]+)\)',line)
-        if res != None:
-            items = line.split()
-            if items[0] in ('dist','AtlasRelease','AtlasOffline'):
-                # Atlas release
-                athenaVer = os.path.basename(res.group(1))
-                # nightly
-                if athenaVer.startswith('rel'):
-                   if re.search('/bugfix',line) != None:
-                      nightVer  = '/bugfix'
-                   elif re.search('/dev',line) != None:
-                      nightVer  = '/dev'
-                   else:
-                      raise ApplicationConfigurationError(None, "ERROR : unsupported nightly %s" % line)
-                break
-            elif items[0] in ['AtlasProduction','AtlasPoint1','AtlasTier0','AtlasP1HLT']:
-                # production cache
-                cacheVer = '-%s_%s' % (items[0],os.path.basename(res.group(1)))
-            else:
-            # group area
-                groupArea = os.path.realpath(res.group(1))
-    # error
-    if athenaVer == '':
-        for line in lines:
-            print line
-        raise ApplicationConfigurationError(None,"ERROR : could not get Athena version")
-
-    return [currentDir,workArea,athenaVer,groupArea,cacheVer,nightVer]
 
 def getDBDatasets(jobO,trf,dbRelease):
     # get DB datasets
@@ -272,11 +80,19 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             raise ApplicationConfigurationError(None,"ERROR : invalid argument for backend.dbRelease. Must be 'DatasetName:FileName'")
          
 #       parse job options file
-        logger.info('Parsing job options file ...')
+        if job.backend.ares:
+            job.backend.ara = True
+        if not job.backend.ara:
+            logger.info('Parsing job options file ...')
         job_option_files = ' '.join([ opt_file.name for opt_file in app.option_file ])
-
         upperSupStream = [s.upper() for s in job.backend.supStream]
-        self.config = extractConfiguration(job_option_files,job.backend.ara,upperSupStream)
+        shipInput = False
+        trf = job.backend.ara
+        ret, self.runConfig = AthenaUtils.extractRunConfig(job_option_files,upperSupStream,job.backend.useAIDA,shipInput,trf)
+        if not ret:
+            raise ApplicationConfigurationError(None,"ERROR: Unable to extract run configuration")
+        if not job.backend.ara:
+            logger.info('Detected runConfig: %s'%self.runConfig)
 
 #       unpack library
         logger.debug('Creating source tarball ...')        
@@ -308,7 +124,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,'More then one run directory found.')
             self.rundirectory = lines[0]
         else:
-            [currentDir,workArea,ignore,ignore,ignore,ignore] = alternateCmtExtraction()
+            ret,retval=AthenaUtils.getAthenaVer()
+            currentDir = os.path.realpath(os.getcwd())
+            workArea = retval['workArea']
+            
             sString=re.sub('[\+]','.',workArea)
             runDir = re.sub('^%s' % sString, '', currentDir)
             if runDir == currentDir:
@@ -395,14 +214,15 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # output files for ARA
         if job.backend.ara and not job.outputdata.outputdata:
             raise ApplicationConfigurationError(None,'job.outputdata.outputdata is required for ARA jobs (i.e. job.backend.ara = True)"')
+        self.extOutFile = []
         for tmpName in job.outputdata.outputdata:
             if tmpName != '':
-                self.config['extOutFile'].append(tmpName)
+                self.extOutFile.append(tmpName)
 
         # add extOutFiles
         for tmpName in job.backend.extOutFile:
             if tmpName != '':
-                self.config['extOutFile'].append(tmpName)
+                self.extOutFile.append(tmpName)
 
 #       job options
 
@@ -414,7 +234,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         # ARA uses trf I/F
         if job.backend.ara:
-            if self.job_options.endswith(".C"):
+            if job.backend.ares:
+                self.job_options = "athena.py " + self.job_options
+            elif self.job_options.endswith(".C"):
                 self.job_options = "root -l " + self.job_options
             else:
                 self.job_options = "python " + self.job_options
@@ -550,8 +372,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.assignedPriority  = 1000
         jspec.cloud             = cloud
         # memory
-        if self.config['memory'] != -1:
-            jspec.minRamCount = self.config['memory']
+        if job.backend.memory != -1:
+            jspec.minRamCount = job.backend.memory
         jspec.computingSite     = site
 
 #       library (source files)
@@ -580,9 +402,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
 #       output files
         outMap = {}
-        if self.config['outNtuple']:
+        if self.runConfig.output.outNtuple:
             self.indexNT += 1
-            for name in self.config['outNtuple']:
+            for name in self.runConfig.output.outNtuple:
                 fout = FileSpec()
                 fout.dataset           = job.outputdata.datasetname 
                 fout.lfn               = '%s.%s._%05d.root' % (job.outputdata.datasetname,name,self.indexNT)
@@ -594,7 +416,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['ntuple'] = []
                 outMap['ntuple'].append((name,fout.lfn))
 
-        if self.config['outHist']:
+        if self.runConfig.output.outHist:
             self.indexHIST += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -605,7 +427,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['hist'] = fout.lfn
 
-        if self.config['outRDO']:
+        if self.runConfig.output.outRDO:
             self.indexRDO += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -616,7 +438,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['RDO'] = fout.lfn
 
-        if self.config['outESD']:
+        if self.runConfig.output.outESD:
             self.indexESD += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -627,7 +449,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['ESD'] = fout.lfn
 
-        if self.config['outAOD']:
+        if self.runConfig.output.outAOD:
             self.indexAOD += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -638,7 +460,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['AOD'] = fout.lfn
 
-        if self.config['outTAG']:
+        if self.runConfig.output.outTAG:
             self.indexTAG += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -649,10 +471,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['TAG'] = fout.lfn
 
-        if self.config['outAANT']:
+        if self.runConfig.output.outAANT:
             self.indexAANT += 1
             sNameList = []
-            for aName,sName in self.config['outAANT']:
+            for aName,sName in self.runConfig.output.outAANT:
                 fout = FileSpec()
                 fout.dataset           = job.outputdata.datasetname
                 fout.lfn               = '%s.%s._%05d.root' % (job.outputdata.datasetname,sName,self.indexAANT)
@@ -666,9 +488,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['AANT'] = []
                 outMap['AANT'].append((aName,sName,fout.lfn))
 
-        if self.config['outTHIST']:
+        if self.runConfig.output.outTHIST:
             self.indexTHIST += 1
-            for name in self.config['outTHIST']:
+            for name in self.runConfig.output.outTHIST:
                 fout = FileSpec()
                 fout.dataset           = job.outputdata.datasetname
                 fout.lfn               = '%s.%s._%05d.root' % (job.outputdata.datasetname,name,self.indexTHIST)
@@ -680,9 +502,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['THIST'] = []
                 outMap['THIST'].append((name,fout.lfn))   
 
-        if self.config['outIROOT']:
+        if self.runConfig.output.outIROOT:
             self.indexIROOT += 1
-            for idx, name in enumerate(self.config['outIROOT']):
+            for idx, name in enumerate(self.runConfig.output.outIROOT):
                 fout = FileSpec()
                 fout.dataset           = job.outputdata.datasetname
                 fout.lfn               = '%s.iROOT%d._%05d.%s' % (job.outputdata.datasetname,idx,self.indexIROOT,name)
@@ -694,9 +516,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['IROOT'] = []
                 outMap['IROOT'].append((name,fout.lfn))   
 
-        if self.config['extOutFile']:
+        if self.extOutFile:
             self.indexEXT += 1
-            for idx, name in enumerate(self.config['extOutFile']):
+            for idx, name in enumerate(self.extOutFile):
                 fout = FileSpec()
                 fout.dataset           = job.outputdata.datasetname
                 fout.lfn               = '%s.EXT%d._%05d.%s' % (job.outputdata.datasetname,idx,self.indexEXT,name)
@@ -708,7 +530,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['IROOT'] = []
                 outMap['IROOT'].append((name,fout.lfn))   
 
-        if self.config['outStream1']:
+        if self.runConfig.output.outStream1:
             self.indexStream1 += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -719,7 +541,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['Stream1'] = fout.lfn
 
-        if self.config['outStream2']:
+        if self.runConfig.output.outStream2:
             self.indexStream2 += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -730,7 +552,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['Stream2'] = fout.lfn
 
-        if self.config['outBS']:
+        if self.runConfig.output.outBS:
             self.indexBS += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -741,9 +563,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['BS'] = fout.lfn
 
-        if self.config['outStreamG']:
+        if self.runConfig.output.outStreamG:
             self.indexStreamG += 1
-            for name in self.config['outStreamG']:
+            for name in self.runConfig.output.outStreamG:
                 fout = FileSpec()
                 fout.dataset           = job.outputdata.datasetname
                 fout.lfn               = '%s.%s._%05d.root' % (job.outputdata.datasetname,name,self.indexStreamG)
@@ -804,21 +626,21 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         #if bgasList != []:
         #    param += '--beamGas "%s" ' % bgasList
         param += '-o "%s" ' % outMap
-        if self.config['inColl']: 
+        if self.runConfig.input.inColl: 
             param += '-c '
-        if self.config['inBS']: 
+        if self.runConfig.input.inBS: 
             param += '-b '
-        if self.config['backNavi']: 
+        if self.runConfig.input.backNavi: 
             param += '-e '
-        if self.config['shipinput']: 
-            param += '--shipInput '
+        #if self.config['shipinput']: 
+        #    param += '--shipInput '
         #FIXME options.rndmStream
         nEventsToSkip = 0
         if app.max_events > 0:
             param += '-f "theApp.EvtMax=%d;EventSelector.SkipEvents=%s" ' % (app.max_events,nEventsToSkip)
         # addPoolFC
-        if self.config['addPoolFC'] != "":
-            param += '--addPoolFC %s ' % self.config['addPoolFC']
+        #if self.config['addPoolFC'] != "":
+        #    param += '--addPoolFC %s ' % self.config['addPoolFC']
         # use corruption checker
         if job.backend.corCheck:
             param += '--corCheck '
@@ -826,11 +648,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.backend.notSkipMissing:
             param += '--notSkipMissing '
         # given PFN 
-        if self.config['pfnList'] != '':
-            param += '--givenPFN '
+        #if self.config['pfnList'] != '':
+        #    param += '--givenPFN '
         # create symlink for MC data
-        if self.config['mcData'] != '':
-            param += '--mcData %s ' % self.config['mcData']
+        #if self.config['mcData'] != '':
+        #    param += '--mcData %s ' % self.config['mcData']
         # source URL
         matchURL = re.search("(http.*://[^/]+)/",Client.baseURLSSL)
         if matchURL != None:
