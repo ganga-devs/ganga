@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: make_filestager_joption.py,v 1.2 2008-12-15 10:10:55 hclee Exp $
+# $Id: make_filestager_joption.py,v 1.3 2009-01-29 11:26:33 hclee Exp $
 ###############################################################################
 # making input job option file for FileStager
 
@@ -10,6 +10,7 @@ import os
 import os.path
 import sys
 import re
+import pickle
 import dm_util
 
 io_type = os.environ['DATASETTYPE']
@@ -67,20 +68,32 @@ if (io_type in ['FILE_STAGER']):
     print >> sys.stdout, 'LFC_HOST: %s' % lfc_host
 
     # resolve PFNs given the LFC_HOST and a list of GUIDs
-    pfns = dm_util.get_pfns(lfc_host, guids)
+    pfns,csum = dm_util.get_pfns(lfc_host, guids)
+
+    #for guid in csum.keys():
+    #    print >> sys.stdout, '%s %s:%s' % (guid, csum[guid]['csumtype'], csum[guid]['csumvalue'])
 
     # count only the PFNs on local site by match srm_endpoint of the dq2 site
     srm_endpt_info  = dm_util.get_srm_endpoint(dq2_site_id)
     print >> sys.stdout, str(srm_endpt_info)
     re_endpt = re.compile('^.*%s.*%s.*\s*$' % (srm_endpt_info['se_host'], srm_endpt_info['se_path']) )
     pfn_list = []
+    pfn_csum = {}
     for guid in pfns.keys():
         print >> sys.stdout, 'guid:%s pfns:%s' % ( guid, repr(pfns[guid]) )
         for pfn in pfns[guid]:
             if re_endpt.match(pfn):
                 pfn_list.append(pfn)
+                pfn_csum[pfn] = csum[guid]
 
-    print >> sys.stdout, str(pfn_list)
+    # print out the PFNs and the checksum info. in LFC
+    for pfn in pfn_csum.keys():
+        print >> sys.stdout, '%s %s:%s' % (pfn, pfn_csum[pfn]['csumtype'], pfn_csum[pfn]['csumvalue'])
+    # create a checksum list in pickle format
+    fcsum = open('lfc_checksum.pickle','w')
+    pickle.dump(pfn_csum, fcsum)
+    fcsum.close()
+    print >> sys.stdout, 'LFC checksum pickle: %s' % os.path.join(os.getcwd(), 'lfc_checksum.pickle')
 
     try:
         if os.environ.has_key('ATHENA_MAX_EVENTS'):

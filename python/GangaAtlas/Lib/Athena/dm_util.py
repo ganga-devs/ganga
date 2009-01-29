@@ -298,12 +298,12 @@ from FileStager.FileStagerTool import FileStagerTool
 #stagetool = FileStagerTool(sampleList=mySampleList)
 stagetool = FileStagerTool(sampleFile=mySampleFile)
 
-## load the lcg-cp wrapper if it exists on the WN 
+## load the copy command wrapper if it exists on the WN
 import os, os.path
-lcgcp_wrapper = os.path.join( os.getcwd(), 'lcg-cp.sh' )
+lcgcp_wrapper = os.path.join( os.getcwd(), 'fs-copy.py' )
 if os.path.exists( lcgcp_wrapper ):
     stagetool.CpCommand = lcgcp_wrapper
-    stagetool.CpArguments = ['-v', '--vo', 'atlas', '-t', '1200']
+    stagetool.CpArguments = ['-p', 'lcgcp', '--vo', 'atlas', '-t', '1200', '--mt', '3']
 
 print '*******'
 print stagetool.CpCommand
@@ -386,7 +386,7 @@ theApp.EvtMax = ###MAXEVENT###
 
 def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
     '''
-    getting pfns corresponding to the given list of files represented
+    getting pfns and checksum type/value corresponding to the given list of files represented
     by guids.
 
     @param lfc_host specifies the host of the local file catalogue
@@ -399,6 +399,12 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
 
         pfns = { guid_1: [replica_1_pfn, replica_2_pfn, ...],
                  guid_2: [replica_1_pfn, replica_2_pfn, ...],
+                 ... }
+
+        and a dictionary of checksum type/value in the following format:
+
+        csum = { guid_1: {'csumtype': checksum_type, 'csumvalue': checksum_value},
+                 guid_2: {'csumtype': checksum_type, 'csumvalue': checksum_value},
                  ... }
 
     It uses the LFC multi-thread library: lfcthr, each worker thread works
@@ -418,6 +424,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
         return {}
 
     pfns = {}
+    csum = {}
 
     # divide guids into chunks if the list is too large
     chunk_size = 1000
@@ -480,7 +487,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
                     result, list1 = lfcthr.lfc_getreplicas(guids[idx_beg:idx_end],"")
 
                     if len(list1) > 0:
-                        ## fill up global pfns dictionary
+                        ## fill up global pfns dictionary and global csum dictionary
                         mylock.acquire()
                         for s in list1:
                             if s != None:
@@ -488,6 +495,11 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
                                     if not pfns.has_key(s.guid):
                                         pfns[s.guid] = []
                                     pfns[s.guid].append(s.sfn)
+                                    csum[s.guid] = {'csumtype':'', 'csumvalue':''}
+                                if s.csumtype:
+                                    csum[s.guid]['csumtype'] = s.csumtype
+                                if s.csumvalue:
+                                    csum[s.guid]['csumvalue'] = s.csumvalue
                         mylock.release()
                 except Empty:
                     pass
@@ -519,7 +531,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
     if lfc_backup:
         os.putenv('LFC_HOST', lfc_host)
 
-    return pfns
+    return pfns, csum
 
 def get_srmv2_sites(cloud=None, token=None, debug=False):
     '''
@@ -619,7 +631,11 @@ if __name__ == '__main__':
     print >> sys.stdout, 'LFC_HOST: %s' % lfc_host
 
     # resolve PFNs given the LFC_HOST and a list of GUIDs
-    pfns = get_pfns(lfc_host, guids)
+    pfns, csum = get_pfns(lfc_host, guids)
+
+    # write out the checksum information
+    for guid in csum.keys():
+        print >> sys.stdout, '%s %s:%s' % (guid, csum[guid]['csumtype'], csum[guid]['csumvalue'])
 
     # count only the PFNs on local site by match srm_endpoint of the dq2 site
     srm_endpt_info  = get_srm_endpoint(dq2_site_id)
