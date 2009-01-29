@@ -186,6 +186,7 @@ if [ -e input_files ]
 then
     if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
         make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
+	cat input.txt
     else
         stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
     fi
@@ -256,6 +257,7 @@ then
 		cd DBRelease/current/cmt
 		cmt config
 		source setup.sh
+		cd ../../..
 		break
 	    else
 		echo 'ERROR: dq2-get of DBRELEASE failed !'
