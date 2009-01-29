@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.36 2009-01-29 10:50:11 elmsheus Exp $
+# $Id: Athena.py,v 1.37 2009-01-29 14:33:38 mslater Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -856,7 +856,11 @@ class AthenaOutputMerger(IMerger):
                         pfn = os.path.join(outputlocation,lfn)
                         
                         if not os.path.exists(pfn):
-                            pfn = isubjob.outputdata.output[iline]
+                            if job.outputdata._name=='DQ2OutputDataset':
+                                # fall back on usual place
+                                pfn = os.path.join( isubjob.outputdir , lfn )
+                            else:
+                                pfn = isubjob.outputdata.output[iline]
                         
                         for name in isubjob.outputdata.outputdata:
                             if name in lfn:
@@ -982,6 +986,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.36  2009/01/29 10:50:11  elmsheus
+# Support for TRFs in the Athena application
+#
 # Revision 1.35  2009/01/15 08:31:40  elmsheus
 # Some NG statistics patches
 #
