@@ -41,7 +41,7 @@ class ARDADashboardLCGAthena(ARDADashboardLCG):
 
                         
             # activity
-            if self.application in ['Athena', 'AthenaMC']:
+            if self.application in ['Athena', 'AthenaMC', 'AMAAthena']:
                 self.activity = 'analysis'
             else:
                 activity = 'unknown'
