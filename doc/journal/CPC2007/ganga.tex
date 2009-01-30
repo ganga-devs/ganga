@@ -540,11 +540,8 @@ to avoid deadlocks from slowly-responding backends. The poll rate may be
 flexibly adjusted on per-backend basis.
 \begin{figure}[htbp]
   \begin{center}
-    \includegraphics[width=1 \textwidth]{monitoring.pdf}
-    \caption{The main monitoring thread takes care of checking for valid
-      credentials, updating the table of jobs for each backend to monitor and
-      feed the queue of updates. The thread pool subsequently picks tasks from
-      the front of the queue.}
+    \includegraphics[width=1 \textwidth]{monitoring}
+    \caption{The internal monitoring updates the status of jobs using a pool of threads running in the \ganga core. Additional monitoring thread runs in a job wrapper and sends the monitoring information to external services. }
     \label{fig:job_status_monitoring_mechanism}
   \end{center}
 \end{figure}
