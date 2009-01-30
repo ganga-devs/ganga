@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ICredential.py,v 1.3 2008-11-08 16:54:17 ctan Exp $
+# $Id: ICredential.py,v 1.4 2009-01-30 18:42:17 karl Exp $
 ################################################################################
 #
 # File: ICredential.py
@@ -49,13 +49,6 @@
 #
 # 13 03/2008 KH:  Update for change in configuration system
 #                 (use "defaults_" instead of "_Properties")
-#
-# 07/11/2008 CLT: Added mechanism to differentiate exitcodes to allow for 
-#                 immediate failure without retry. Fix for bug #40111.
-#
-# 08/11/2008 CLT: Halt credential creation/renewal when Internal Services 
-#                 has been disabled.
-
 
 """Module defining interface class for working with credentials"""
                                                                                 
@@ -63,7 +56,7 @@ __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__    = "20 May 2008"
 __version__ = "1.10"
 
-import os, threading, time, tempfile #, inspect, pprint
+import os, threading, time, tempfile
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
@@ -275,9 +268,6 @@ class ICredential( GangaObject ):
          else: # Non-GUI credential renewal/creation
             # Check if renewal is from main process (i.e. by bootstrap or user)
             if threading.currentThread().getName() == 'MainThread':
-               if not Coordinator.servicesEnabled:
-                  logger.warning( "Internal Services disabled. Skipping credential creation/renewal." )
-                  return False
                if self.command.init_parameters.has_key( "valid" ):
                   self.command.currentOpts\
                      [ self.command.init_parameters[ 'valid' ] ] = validity
@@ -285,23 +275,13 @@ class ICredential( GangaObject ):
                # Append option value pairs
                for optName, optVal in self.command.currentOpts.iteritems():
                   initList.append( "%s %s" % ( optName, optVal ) )
-#               pprint.pprint( [x for x in inspect.stack()] )
-               status, output, message = \
-                  self.shell.cmd1( " ".join( initList ), self.command.init_parameters[ 'exitcodes' ][ 'success' ] )
-               if status in self.command.init_parameters[ 'exitcodes' ][ 'success' ]:
+               status = self.shell.system( " ".join( initList ) )
+               if status == 0:
                   logger.info( "%s creation/renewal successful." % self._name )
                   return True
                else:
-#                  print "%s creation/renewal failed [%s].\n%s\n%s\n" % ( self._name, status, output, message )
-                  logger.warning( "%s creation/renewal failed [%s].\n%s\n%s\n" % ( self._name, status, output, message ) )
-                  logger.warning( "status = %s, %s" % (status, status in self.command.init_parameters[ 'exitcodes' ][ 'fail_immediate' ]) )
-                  if status in self.command.init_parameters[ 'exitcodes' ][ 'fail_immediate' ]:
-                     Coordinator.notifyInvalidCredential( self )
-                     return False
+                  logger.warning( "%s creation/renewal failed [%s]." % ( self._name, status ) )
             else: # create initiated from worker thread from monitoring component.
-               if not Coordinator.serviceEnabled:
-                  logger.warning( "Internal Services disabled. Skipping credential creation/renewal." )
-                  return False
                currTime = time.time()
                if currTime - logTimeStamp >= logRepeatDuration:
                   logTimeStamp = currTime
