@@ -129,7 +129,7 @@ class EvgenTransform(MCTransform):
       jl = super(EvgenTransform, self).getJobsForPartitions(partitions)
       for j in jl:
          if j.inputdata:
-            j.application.extraArgs=' inputGeneratorFile=`pwd`/atlas.tmp$$/*._%05i.tar.gz' % (partitions[0])
+            j.application.extraArgs += ' inputGeneratorFile=`pwd`/atlas.tmp$$/*._%05i.tar.gz' % (partitions[0])
       return jl
 
 class SimulTransform(MCTransform):
@@ -149,8 +149,8 @@ class SimulTransform(MCTransform):
    def getJobsForPartitions(self, partitions):
       jl = super(SimulTransform, self).getJobsForPartitions(partitions)
       for j in jl:
-         if j.application.atlas_release[:2] >= "13":
-            j.application.extraArgs=' digiSeedOffset1=%s digiSeedOffset2=%s ' % (random.randint(1,2**15),random.randint(1,2**15))
+         if j.application.atlas_release[:2] >= "13" and not "digiSeedOffset" in j.application.extraArgs:
+            j.application.extraArgs += ' digiSeedOffset1=%s digiSeedOffset2=%s ' % (random.randint(1,2**15),random.randint(1,2**15))
       return jl
 
 class ReconTransform(MCTransform):
