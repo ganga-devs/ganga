@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridProxy.py,v 1.2 2008-11-07 22:46:52 ctan Exp $
+# $Id: GridProxy.py,v 1.3 2009-01-30 18:37:09 karl Exp $
 ################################################################################
 #
 # File: GridProxy.py
@@ -68,16 +68,17 @@
 #
 # 27/02/2008 KH : Setup shell in GridProxy constructor, if middleware is defined
 #
-# 07/11/2008 CLT: Added mechanism to differentiate exitcodes to allow for 
-#                 immediate failure without retry. Fix for bug #40111.
+# 30/01/2009 KH : Added possibility to request that GridProxy.identity()
+#                 returns string with non-alphanumeric characters stripped out
 
 """Module defining class for creating, querying and renewing Grid proxy"""
                                                                                 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "20 May 2008"
-__version__ = "1.16"
+__date__    = "30 January 2009"
+__version__ = "1.17"
 
 import os
+import re
 
 from ICredential import ICommandSet
 from ICredential import ICredential
@@ -97,11 +98,7 @@ class GridCommand( ICommandSet ):
    _schema['init']._meta['defvalue'] = "grid-proxy-init"
    _schema['info']._meta['defvalue'] = "grid-proxy-info"
    _schema['destroy']._meta['defvalue'] = "grid-proxy-destroy"
-   _schema['init_parameters']._meta['defvalue'] = {\
-      "pipe" : "-pwstdin",\
-      "valid" : "-valid",\
-      "exitcodes" : { "success" : (0,), "fail_immediate" : (2,) }\
-   }
+   _schema['init_parameters']._meta['defvalue'] = { "pipe" : "-pwstdin", "valid" : "-valid" }
    _schema['destroy_parameters']._meta['defvalue'] = {}
    _schema['info_parameters']._meta['defvalue'] = {}
 
@@ -127,14 +124,8 @@ class VomsCommand( ICommandSet ):
    _schema['init']._meta['defvalue'] = "voms-proxy-init"
    _schema['info']._meta['defvalue'] = "voms-proxy-info"
    _schema['destroy']._meta['defvalue'] = "voms-proxy-destroy"
-#   _schema['init_parameters']._meta['defvalue'] = { "pipe" : "-pwstdin", "valid" : "-valid", \
-#         "voms" : "-voms" }
-   _schema['init_parameters']._meta['defvalue'] = {\
-      "pipe" : "-pwstdin",\
-      "valid" : "-valid",\
-      "voms" : "-voms",\
-      "exitcodes" : { "success" : (0,), "fail_immediate" : (1,) }\
-   }
+   _schema['init_parameters']._meta['defvalue'] = { "pipe" : "-pwstdin", "valid" : "-valid", \
+         "voms" : "-voms" }
    _schema['destroy_parameters']._meta['defvalue'] = {}
    _schema['info_parameters']._meta['defvalue'] = { "vo" : "-vo" }
 
@@ -250,11 +241,15 @@ class GridProxy ( ICredential ):
 
       return proxyPath
 
-   def identity( self ):
+   def identity( self, safe = False ):
       """
       Return user's identify
 
-      No arguments other than self
+      Argument:
+         safe - logical flag
+                =>  False : return identity exactly as obtained from proxy
+                =>  True  : return identity after stripping out
+                            non-alphanumeric characters
 
       => The identity is determined from the user proxy if possible,
          or otherwise from the user's top-level directory
@@ -278,6 +273,8 @@ class GridProxy ( ICredential ):
          pass
 
       id = "".join( cn.split() )
+      if safe:
+         id = re.sub( "[^a-zA-Z0-9]", "" ,id )
 
       return id
 
