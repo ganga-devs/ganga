@@ -127,9 +127,15 @@ def starttasks():
        tl = TaskList()
     import atexit
     atexit.register(tl.save)
+    for t in tl.tasks:
+       t._setParent(tl)
+       for tf in t.transforms:
+          tf._setParent(t)
+    
     tasks = GPIProxyObjectFactory(tl)
     del tasks.__class__.copy
     exportToGPI('tasks',GPIProxyObjectFactory(tl),'Objects','List of all tasks')
+    tl.startup()
     tl.start()
 
 starttasks()
