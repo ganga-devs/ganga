@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.18 2009-01-29 17:35:19 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.19 2009-02-01 09:52:42 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -356,6 +356,11 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             else:
                 _append_files(inputbox,'ganga-stagein.py')
 
+        ## insert more scripts to inputsandbox for FileStager
+        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type in ['FILE_STAGER']:
+            _append_files(inputbox,'make_filestager_joption.py','dm_util.py','fs-copy.py')
+            #_append_files(inputbox,'make_filestager_joption.py','dm_util.py')
+
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             if not job.outputdata.location:
                 raise ApplicationConfigurationError(None,'j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
@@ -506,6 +511,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.18  2009/01/29 17:35:19  elmsheus
+#Remove apostrophe from DN
+#
 #Revision 1.17  2009/01/29 10:50:11  elmsheus
 #Support for TRFs in the Athena application
 #
