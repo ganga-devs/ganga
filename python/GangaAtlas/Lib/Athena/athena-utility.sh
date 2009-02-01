@@ -154,7 +154,6 @@ fix_gcc_issue () {
     if [ $retcode -eq 0 ] && ( [ $SC41 -gt 0 ] || [ $SC42 -gt 0 ] ) ; then
         mkdir comp
         cd comp
-
         cat - >gcc <<EOF
 #!/bin/sh
 
@@ -549,35 +548,71 @@ run_athena () {
 		    source /afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/latest/setup.sh
 		    export DQ2_LOCAL_SITE_ID=CERN
 		fi
-		dq2-get -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
-		if [ -e $DBDATASETNAME/$DBFILENAME ]
+		if [ ! -z $DBDATASETNAME ] && [ ! -z $DBFILENAME ]
 		    then
-		    mv $DBDATASETNAME/* .
-		    echo $file > input.txt
-		    echo successfully retrieved $DBFILENAME
-		    break
-		else
-		    echo 'ERROR: dq2-get of $DBDATASETNAME failed !'
-		    echo '1'>retcode.tmp
+		    dq2-get -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
+		    if [ -e $DBDATASETNAME/$DBFILENAME ]
+			then
+			mv $DBDATASETNAME/* .
+			echo successfully retrieved $DBFILENAME
+			break
+		    else
+			echo 'ERROR: dq2-get of $DBDATASETNAME failed !'
+			echo '1'>retcode.tmp
+		    fi
 		fi
-
 	    fi
-
-	    grep 'ServiceMgr.EventSelector.InputCollections' input.py > input.py.new
-	    sed 's/ServiceMgr.EventSelector.InputCollections = \[//' input.py.new > input.py.new2
-	    sed 's/,\]//' input.py.new2 > input.py.new3
-	    mv input.py.new3 input.py
 	    ##
-	    echo ' ...'
+	    echo 'input.py start ...'
 	    cat input.py
+	    echo 'input.py end ...'
+	    ##
+	    cat - >parse_input_files.py <<EOF
+#!/usr/bin/env python
+lfns = [ line.strip() for line in file('input_files') ]
+alllfns = ''
+for lfn in lfns:
+    alllfns = alllfns + lfn + ','
+print alllfns[:-1]
+EOF
+	    chmod +x ./parse_input_files.py
+	    $pybin ./parse_input_files.py > input_files.txt            
+	    echo 'input_files.txt start ...'
+	    cat input_files.txt
+	    echo 'input_files.txt end ...'
 	    ##
 	    ls -rtla
             ## need to remove local link to db, or the dbrelease specified in the trf will not have any effect
 	    rm -rf sqlite200/ALLP200.db
+	    ## Parse inputfile string from transformation 
+	    inputfile=`$ATHENA_OPTIONS | grep input | awk '{print $4}' | sed 's/<//' | sed 's/>//'`
+	    echo 'TRF inputtype start ...'
+	    echo $inputfile
+	    echo 'TRF inputtype end ...'
 	    ##
-	    $timecmd $ATHENA_OPTIONS 'inputbsfile='`cat input.py` `cat trf_params` 'dbrelease='$DBFILENAME; echo $? > retcode.tmp
+	    if [ ! -z $DBFILENAME ]
+		then
+		$timecmd $ATHENA_OPTIONS $inputfile'='`cat input_files.txt` `cat trf_params` 'dbrelease='$DBFILENAME ; echo $? > retcode.tmp
+	    else
+		$timecmd $ATHENA_OPTIONS $inputfile'='`cat input_files.txt` `cat trf_params`; echo $? > retcode.tmp
+	    fi
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
+
+            # Rename output files
+            cat output_files.new | while read outfiles
+              do
+              for ofile in $outfiles
+                do
+                mv $ofile ${ofile}.$I
+                echo "${ofile}.$I" >> output_files.copy
+              done
+            done
+	    if [ -e output_files.copy ]
+		then
+		mv output_files.new output_files.new.old
+		mv output_files.copy output_files.new
+	    fi
 	else
 	    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 	    retcode=`cat retcode.tmp`

@@ -90,7 +90,27 @@ retcode=0
 
 ################################################
 # state the inputs
-stage_inputs
+
+if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
+    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ] || [ -e /afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/latest/setup.sh ]
+	then
+	if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+	    then
+	    $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+	elif [ -e /afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/latest/setup.sh ]
+	    then
+	    source /afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/latest/setup.sh
+	    export DQ2_LOCAL_SITE_ID=CERN
+	fi
+    fi
+    make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
+    echo 'input.txt start ----------'
+    cat input.txt
+    echo 'input.txt end ----------'
+else
+    stage_inputs 
+fi
+
 
 ################################################
 # create the input.py file
