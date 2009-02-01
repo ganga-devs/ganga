@@ -364,16 +364,19 @@ EOF
 
     if [ n$ATLAS_EXETYPE == n'TRF' ] && [ -e trf_params ]
 	then
-	dq2-get -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
-	if [ -e $DBDATASETNAME/$DBFILENAME ]
+	if [ ! -z $DBDATASETNAME ] && [ ! -z $DBFILENAME ]
 	    then
-	    mv $DBDATASETNAME/* .
-	    echo successfully retrieved $DBFILENAME
-	    break
-	else
-	    echo 'ERROR: dq2-get of $DBDATASETNAME failed !'
-	    echo '1'>retcode.tmp
-	fi
+	    dq2-get -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
+	    if [ -e $DBDATASETNAME/$DBFILENAME ]
+		then
+		mv $DBDATASETNAME/* .
+		echo successfully retrieved $DBFILENAME
+		break
+	    else
+		echo 'ERROR: dq2-get of $DBDATASETNAME failed !'
+		echo '1'>retcode.tmp
+	    fi
+        fi
     fi
 
     cat input_files | while read filespec
@@ -440,20 +443,21 @@ site - please contact Ganga support mailing list.'
 		rm -f retcode.tmp
 	    elif [ n$ATLAS_EXETYPE == n'TRF' ] && [ -e trf_params ]
 		then
-
-		grep 'ServiceMgr.EventSelector.InputCollections' input.py > input.py.new
-		sed 's/ServiceMgr.EventSelector.InputCollections = \[//' input.py.new > input.py.new2
-		sed 's/,\]//' input.py.new2 > input.py.new3
-		mv input.py.new3 input.py
-	        ##
-		echo ' ...'
-		cat input.py
-	        ##
-		ls -rtla
                 ## need to remove local link to db, or the dbrelease specified in the trf will not have any effect
 		rm -rf sqlite200/ALLP200.db
-	        ##
-		$timecmd $ATHENA_OPTIONS 'inputbsfile='$file `cat trf_params` 'dbrelease='$DBFILENAME; echo $? > retcode.tmp
+	        ## Parse inputfile string from transformation 
+		inputfile=`$ATHENA_OPTIONS | grep input | awk '{print $4}' | sed 's/<//' | sed 's/>//'`
+		echo 'TRF inputtype start ...'
+		echo $inputfile
+		echo 'TRF inputtype end ...'
+	        ## Start TRF
+		if [ ! -z $DBFILENAME ]
+		    then
+		    $timecmd $ATHENA_OPTIONS $inputfile'='$file `cat trf_params` 'dbrelease='$DBFILENAME; echo $? > retcode.tmp
+		else
+		    $timecmd $ATHENA_OPTIONS $inputfile'='$file `cat trf_params`; echo $? > retcode.tmp
+		fi
+		##
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    else
