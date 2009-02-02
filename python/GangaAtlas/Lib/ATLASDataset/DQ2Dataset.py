@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.16 2009-01-29 14:34:32 mslater Exp $
+# $Id: DQ2Dataset.py,v 1.17 2009-02-02 13:16:54 mslater Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1165,7 +1165,7 @@ class DQ2OutputDataset(Dataset):
                 filename = fileinfo.split(',')[1]
 
                 exe = 'dq2-get -L ROAMING -a -d -D '
-                cmd = '%s -H %s -f %s %s' %(exe,outputlocation, filename, job.outputdata.datasetname)
+                cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, outputlocation, filename, job.outputdata.datasetname)
                 
                 logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
 
@@ -1217,6 +1217,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.16  2009/01/29 14:34:32  mslater
+#Fix to DQ2OutputDataset.retrieve() method
+#
 #Revision 1.15  2009/01/14 09:47:56  elmsheus
 #Change algorithm for filesize retrieval and return
 #
