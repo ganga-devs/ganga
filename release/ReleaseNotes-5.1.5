@@ -1,5 +1,17 @@
 **************************************************************************************************************
-5.1.5 (2009/1/30)
+5.1.5 (2009/2/2)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+bugfixes: 
+
+- bug #45679: j.application.transition_update("removed") is not called on j.remove()
+- bug #44934: Didn't create .gangarc on first usage
+- bug #43249: jobs.remove(10) works, removes all jobs
+
+added testecase for bug #40399: Problems with GenericSplitter
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -21,12 +33,21 @@ script using:
 
 
 --------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard
+--------------------------------------------------------------------------------------------------------------
+added AMAAthena (request from Hurng-Chung)
+
+
+--------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 Athena:
 -------
 * Add Athena.trf_parameter dictionary to support Transformation parameters
   in Athena application
+  Can be used with:
+  - DQ2_COPY mode of DQ2Dataset and DQ2OutputDataset on LCG backend
+  - ATLASLocalDataset and ATLASOutputDataset on Local/Batch backend 
 * Improvements of the FILE_STAGER access mode
 * Feature request #46205: non local dbrelease on LCG supported now
   Should be used with:
@@ -52,9 +73,13 @@ AthenaMC:
   and writing modes
 * Added dryrun functionality to AthenaMC 
 
+Tasks:
+------
+* Bugfix for overwriting extraArgs! 
+
 test:
 -----
-* propagating changes from AthenaMC classes 
+* propagating changes from AthenaMC classes and change middleware
 
 Misc:
 -----
