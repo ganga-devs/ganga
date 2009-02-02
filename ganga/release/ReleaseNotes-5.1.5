@@ -1,0 +1,103 @@
+**************************************************************************************************************
+5.1.5 (2009/2/2)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Condor
+--------------------------------------------------------------------------------------------------------------
+- Added "getenv" property to Condor class.  The (string) value assigned is passed to the Condor description file.  The valid 
+assignements are:
+   backend = Condor()
+   backend.getenv = "True" # environment on submission machine passed to execution node
+   backend.getenv = "False" # environment on submission machine not passed to execution node
+  
+- Condor wrapper script modified so that all applications are run in a bash shell.  This allows environment setup to be performed by  
+defining BASH_ENV on the execution node to point to a setup script.  For example, /myDir/myScript.sh can be defined as setup 
+script using:
+   backend = Condor()
+   backend.env = { "BASH_ENV" : "/myDir/myScript.sh" }
+
+- Job status set to "failed" in case of non-zero exit code.  (Previously,  status never set to "failed" for Condor jobs.)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard
+--------------------------------------------------------------------------------------------------------------
+added AMAAthena (request from Hurng-Chung)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Add Athena.trf_parameter dictionary to support Transformation parameters
+  in Athena application
+  Can be used with:
+  - DQ2_COPY mode of DQ2Dataset and DQ2OutputDataset on LCG backend
+  - ATLASLocalDataset and ATLASOutputDataset on Local/Batch backend 
+* Improvements of the FILE_STAGER access mode
+* Feature request #46205: non local dbrelease on LCG supported now
+  Should be used with:
+  j.application.atlas_dbrelease='ddo.000001.Atlas.Ideal.DBRelease.v050801:DBRelease-5.8.1.tar.gz'
+* Athena.py: Fixed the merging code so it looks for DQ2 dataset files in 
+  the correct place
+* AthenaLCGRTHandler: Fix for DATASETLOCATION to be properly filled for 
+  split kjobs
+* DQ2Dataset.py: Fixed the DQ2OutputDataset.retrieve() method
+* Bug #46168: AthenaLocalRTHandler.py: handle TAGDATASETNAME list
+* Bug #46304: Improvements of DQ2JobSplitter filesize splitting for
+  incomplete datasets
+* Featrue request #46268: input.txt is now also produced if
+  FILE_STAGER mode is used - this can be used in ARA jobs.
+* Remove apostrophe from DN for DQ2OutputDataset used on LCG/Local backend
+
+AthenaMC:
+--------
+* AthenaMCLCGRTHandler.py: bugfix for template mode, removed unwanted default 
+  parameters breaking non-evgen transforms. 
+  added triggerConfig to simulation jobs
+* AthenaMCDatasets.py: full support for dataset containers, in both reading 
+  and writing modes
+* Added dryrun functionality to AthenaMC 
+
+Tasks:
+------
+* Bugfix for overwriting extraArgs! 
+
+test:
+-----
+* propagating changes from AthenaMC classes and change middleware
+
+Misc:
+-----
+* Upgrade to DQ2Clients 0.1.24
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+We have added the ability for users to obtain the stdout from gaudirun.py in the case where there is
+an error parsing the users' options. The user can now - after a failed job submission due to a
+parsing error - do: job.peek('../debug/gaudirun.stdout') and see the output.  
+
+Switched to the new bookkeeping.  Ganga no longer uses genCatalog and only attempts to generate a 
+catalog if the job contains LFNs (this is also now done during submission). 
+
+Two new functions have been added to the Dirac backend:
+
+* getOutputSandbox() which enables users to asynchronously download the outputsandbox into their job
+output directory.
+* getOutputDataLFNs() which provides a list of LFNs for outputdata which has been uploaded. Allows
+for the creation of custom guadi cards.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+added Panda backend options: memory, useAIDA, ares, extFile.
+extFile fixes https://savannah.cern.ch/bugs/index.php?43691
+use panda-client 0.1.6
+use AthenaUtils
+
+**************************************************************************************************************

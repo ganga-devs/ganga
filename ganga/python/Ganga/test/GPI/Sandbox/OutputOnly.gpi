@@ -1,0 +1,14 @@
+j = Job()
+j.application.exe='python'
+j.application.args=["-c","file('output.out','w').write('output test')"]
+j.outputsandbox = ['*.out']
+j.submit()
+
+from GangaTest.Framework.utils import sleep_until_state
+
+sleep_until_state(j,60,'completed')
+
+import filecmp
+
+assert(file(j.outputdir+'/output.out').read()=='output test')
+
