@@ -118,7 +118,7 @@ class Task(GangaObject):
             if name in tf.application._data:
                addProxy(tf.application).__setattr__(name, parm)
             else:
-               logger.warning("Transform %i was not affected!", tf.id)
+               logger.warning("Transform %i was not affected!", tf.name)
 
    def insertTransform(self, id, tf):
       """Insert transfrm tf before index id (counting from 0)"""
