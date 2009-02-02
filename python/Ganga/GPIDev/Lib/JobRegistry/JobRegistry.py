@@ -1,8 +1,24 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistry.py,v 1.2 2008-08-18 13:18:58 moscicki Exp $
+# $Id: JobRegistry.py,v 1.3 2009-02-02 14:22:56 moscicki Exp $
 ################################################################################
+
+def apply_keyword_args(ns,d,**kwds):
+    """ Helper function which mimics the parsing of keyword arguments.
+    Check if d contains only the arguments defined in kwds, and use the default
+    values defined in kwds if missing in d.
+    Updates the namespace ns accordingly.
+    """
+    for k in kwds:
+        try:
+            ns[k] = d[k]
+            del d[k]
+        except KeyError:
+            ns[k] = kwds[k]
+
+    if d:
+        raise AttributeError('invalid argument(s): %s'%d.keys())
 
 class JobRegistryInterface:
     """This object is an access list of jobs defined in Ganga. 
@@ -25,39 +41,47 @@ class JobRegistryInterface:
     def __init__(self,_impl):
         self.__dict__['_impl'] = _impl
         
-    def submit(self,keep_going=True):
-        """ Submit all jobs.
+    def submit(self,**kwds):
+        """ Submit all jobs. Keyword arguments: keep_going=True
         """
-        return self._impl.submit(keep_going)
+        apply_keyword_args(globals(),kwds, keep_going=True)
+        return self._impl.submit(keep_going=keep_going)
 
-    def resubmit(self,keep_going=True):
-        """ Resubmit all jobs.
+    def resubmit(self,**kwds):
+        """ Resubmit all jobs. Keyword arguments: keep_going=True
         """
-        return self._impl.resubmit(keep_going)    
+        apply_keyword_args(globals(),kwds, keep_going=True)
+        return self._impl.resubmit(keep_going=keep_going)    
 
-    def kill(self,keep_going=True):
-        """ Kill all jobs.
+    def kill(self,**kwds):
+        """ Kill all jobs. Keyword arguments: keep_going=True
         """
-        return self._impl.kill(keep_going)
+        apply_keyword_args(globals(),kwds, keep_going=True)
+        return self._impl.kill(keep_going=keep_going)
 
-    def remove(self,keep_going=True,force=False):
-        """ Remove all jobs.
+    def remove(self,**kwds):
+        """ Remove all jobs. Keyword arguments: keep_going=True, force=False 
         """
+        apply_keyword_args(globals(),kwds, keep_going=True,force=False)
         return self._impl.remove(keep_going=keep_going,force=force)
 
-    def fail(self,keep_going=True,force=False):
-        """ Fail all jobs.
+    def fail(self,**kwds):
+        """ Fail all jobs. Keyword arguments: keep_going=True, force=False 
         """
+        apply_keyword_args(globals(),kwds, keep_going=True,force=False)
         return self._impl.fail(keep_going,force=force)
 
-    def force_status(self,status,keep_going=True,force=False):
+    def force_status(self,status, **kwds):
         """ Force status of all jobs to 'completed' or 'failed'.
+        Keyword arguments: keep_going=True, force=False 
         """
+        apply_keyword_args(globals(),kwds, keep_going=True,force=False)
         return self._impl.force_status(status,keep_going,force=force)
 
-    def copy(self,keep_going=True):
-        """ Copy all jobs.
+    def copy(self,**kwds):
+        """ Copy all jobs. Keyword arguments: keep_going=True
         """        
+        apply_keyword_args(globals(),kwds, keep_going=True)
         return JobRegistryInterface(self._impl.copy(keep_going))
 
     def ids(self,minid=None,maxid=None):
@@ -158,6 +182,10 @@ def _unwrap(obj):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/08/18 13:18:58  moscicki
+# added force_status() method to replace job.fail(), force_job_failed() and
+# force_job_completed()
+#
 # Revision 1.1  2008/07/17 16:40:54  moscicki
 # migration of 5.0.2 to HEAD
 #
