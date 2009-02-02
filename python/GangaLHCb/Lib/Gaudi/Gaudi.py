@@ -2,8 +2,8 @@
 '''Application handler for Gaudi applications in LHCb.'''
 
 __author__ = 'Andrew Maier, Greig A Cowan'
-__date__ = "$Date: 2009-01-29 11:42:27 $"
-__revision__ = "$Revision: 1.20 $"
+__date__ = "$Date: 2009-02-02 14:16:53 $"
+__revision__ = "$Revision: 1.21 $"
 
 import os
 import re
@@ -126,7 +126,7 @@ class Gaudi(IApplication):
 
     _schema = Schema(Version(2, 1), schema)
     _category = 'applications'
-    _exportmethods = ['getpack', 'make', 'cmt']
+    _exportmethods = ['getpack', 'make', 'cmt','readInputData']
 
     def _auto__init__(self):
         self.configured=0
@@ -152,6 +152,32 @@ class Gaudi(IApplication):
         if (not self.platform):
             self.platform = get_user_platform()
         
+    def readInputData(self,optsfiles,extraopts=False):
+        """Returns a LHCbDataSet object from a list of options files. The optional
+        argument extraopts will decide if the extraopts string inside the application
+        is considered or not. """
+
+        if type(optsfiles)!=type([]):
+            optsfiles=[optsfiles]
+
+        self.shell = gaudishell_setenv(self)
+        inputs = self._check_inputs() 
+        self.extra = GaudiExtras()
+        if extraopts: 
+            extraopts=self.extraopts
+        else:
+            extraopts=""
+
+        try:
+            parser = PythonOptionsParser(optsfiles,extraopts,self.shell)
+        except Exception, e:
+            msg = 'Unable to parse the job options. Please check options ' + \
+                  'files and extraopts.'
+            raise ApplicationConfigurationError(None,msg)
+
+      #  extra.opts_pkl_str = parser.opts_pkl_str
+        inputdata = parser.get_input_data()
+        return inputdata
     def master_configure(self):
         '''The configure method configures the application. Here, the
         application handler simply flattens the options file. For this it has
@@ -363,6 +389,9 @@ class Gauss(Gaudi):
         
     def cmt(self,command):
         return super(Gauss,self).cmt(command)
+
+    def readInputData(self,options,extraopts=False):
+        return super(Gauss,self).readInputData(options,extraopts)
    
     for method in Gaudi._exportmethods:
         setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
@@ -389,6 +418,9 @@ class Boole(Gaudi):
     def cmt(self,command):
         return super(Boole,self).cmt(command)
 
+    def readInputData(self,options,extraopts=False):
+        return super(Boole,self).readInputData(options,extraopts)
+
     for method in Gaudi._exportmethods:
         setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
 
@@ -413,6 +445,10 @@ class Brunel(Gaudi):
     
     def cmt(self,command):
         return super(Brunel,self).cmt(command)
+
+    def readInputData(self,options,extraopts=False):
+        return super(Brunel,self).readInputData(options,extraopts)
+
 
     for method in Gaudi._exportmethods:
         setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
@@ -439,6 +475,10 @@ class DaVinci(Gaudi):
     def cmt(self,command):
         return super(DaVinci,self).cmt(command)
 
+    def readInputData(self,options,extraopts=False):
+        return super(DaVinci,self).readInputData(options,extraopts)
+
+
     for method in Gaudi._exportmethods:
         setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
 
@@ -464,6 +504,10 @@ class Euler(Gaudi):
     def cmt(self,command):
         return super(Euler,self).cmt(command)
 
+    def readInputData(self,options,extraopts=False):
+        return super(Euler,self).readInputData(options,extraopts)
+
+
     for method in Gaudi._exportmethods:
         setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
 
@@ -488,6 +532,10 @@ class Moore(Gaudi):
     
     def cmt(self,command):
         return super(Moore,self).cmt(command)
+
+    def readInputData(self,options,extraopts=False):
+        return super(Moore,self).readInputData(options,extraopts)
+
 
     for method in Gaudi._exportmethods:
         setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
@@ -515,6 +563,10 @@ class Vetra(Gaudi):
     def cmt(self,command):
         return super(Vetra,self).cmt(command)
 
+    def readInputData(self,options,extraopts=False):
+        return super(Vetra,self).readInputData(options,extraopts)
+
+
     for method in Gaudi._exportmethods:
         setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
 
@@ -539,6 +591,10 @@ class Panoptes(Gaudi):
     
     def cmt(self,command):
         return super(Panoptes,self).cmt(command)
+
+    def readInputData(self,options,extraopts=False):
+        return super(Panoptes,self).readInputData(options,extraopts)
+
 
     # Copy documentation from Gaudi class
     for method in Gaudi._exportmethods:

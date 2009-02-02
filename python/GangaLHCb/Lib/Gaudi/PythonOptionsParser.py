@@ -4,8 +4,8 @@
 of inputdata, outputdata and output files.'''
 
 __author__ = 'Greig A Cowan'
-__date__ = "$Date: 2009-01-29 11:42:39 $"
-__revision__ = "$Revision: 1.17 $"
+__date__ = "$Date: 2009-02-02 14:16:53 $"
+__revision__ = "$Revision: 1.18 $"
 
 import tempfile, fnmatch
 from Ganga.GPIDev.Lib.File import FileBuffer
@@ -15,6 +15,7 @@ import Ganga.Utility.Config
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset, LHCbDataFile
 from GaudiUtils import collect_lhcb_filelist
 from Ganga.Core import ApplicationConfigurationError
+from Ganga.Utility.files import expandfilename
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -96,7 +97,7 @@ class PythonOptionsParser:
         joined_py_opts = ''
         for name in self.optsfiles:
             try:
-                file = open( name,'r')
+                file = open( expandfilename(name),'r')
                 import os.path
                 if os.path.splitext( name)[1] == '.py':
                     joined_py_opts += file.read()
@@ -107,6 +108,7 @@ class PythonOptionsParser:
                     msg = 'Only extensions of type ".opts" and ".py" allowed'
                     raise TypeError(msg)
             except IOError, e:
+                logger.error('%s',e)
                 logger.error('There was an IOError with the options file: %s',
                              name)
                     
