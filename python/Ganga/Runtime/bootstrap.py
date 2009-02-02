@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.9 2008-11-27 15:49:03 moscicki Exp $
+# $Id: bootstrap.py,v 1.10 2009-02-02 13:43:26 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -153,6 +153,8 @@ under certain conditions; type license() for details.
             except IOError,x:
                self.exit(message,x)
 
+        self.options.config_file_set_explicitly = not self.options.config_file is None
+
         # use GANGA_CONFIG_FILE env var if it's set
         if self.options.config_file is None:
            self.options.config_file = os.environ.get('GANGA_CONFIG_FILE',None)
@@ -189,7 +191,7 @@ under certain conditions; type license() for details.
         gangadir = os.path.expanduser('~/gangadir')
         if not os.path.exists(gangadir) \
            and not os.path.exists(self.default_config_file) \
-           and self.options.config_file is None:
+           and not self.options.config_file_set_explicitly:
 
             if self.options.prompt:
                 print >> sys.stderr, 'It seems that you run Ganga for the first time'
@@ -949,6 +951,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.9  2008/11/27 15:49:03  moscicki
+# extra exception output if cannot load the plugins...
+#
 # Revision 1.8  2008/11/21 16:34:22  moscicki
 # bug #43917: Implement Batch backend as alias to default backend at a given site
 #
