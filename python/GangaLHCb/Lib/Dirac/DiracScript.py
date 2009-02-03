@@ -56,6 +56,10 @@ class DiracScript:
             indata.append( lfn[4:])
     if len(indata) > 0:
         self.append( 'setInputData(' +str(indata) + ')')
+        
+  def ancestordepth(self, depth):
+    if depth:
+        self.append('setAncestorDepth(%d)' % depth)
 
   def outputdata(self,dataset,SE=None):
     """Append the options to the DIRAC script for output data to be uploaded

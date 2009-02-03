@@ -58,7 +58,9 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
         diracScript.setName('Ganga_ROOT_%s' % app.version)
 
         if job.inputdata:
-            diracScript.inputdata([f.name for f in job.inputdata.files])
+            diracScript.inputdata(job.inputdata)
+            if hasattr(job.inputdata,'depth'):
+                diracScript.ancestordepth(job.inputdata.depth)
 
         if job.outputdata:
             diracScript.outputdata([f.name for f in job.outputdata.files])

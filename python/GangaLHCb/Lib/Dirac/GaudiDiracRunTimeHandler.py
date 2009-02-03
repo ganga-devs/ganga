@@ -69,6 +69,8 @@ class GaudiDiracRunTimeHandler(IRuntimeHandler):
                                          logFile)
         diracScript.setName( 'Ganga_%s_%s' % (app._name, app.version) )
         diracScript.inputdata( app.extra.inputdata)
+        if hasattr(app.extra.inputdata,'depth'):
+            diracScript.ancestordepth(app.extra.inputdata.depth)
         diracScript.outputdata(app.extra.outputdata)
 
         c.script=diracScript

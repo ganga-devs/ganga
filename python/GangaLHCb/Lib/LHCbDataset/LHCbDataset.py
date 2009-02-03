@@ -66,8 +66,10 @@ class LHCbDataset(Dataset):
              'to tell Gaudi how to read the data. If reading raw data ' + \
              '(mdf files) it should be set to "SVC=\'LHCb::MDFSelector\'"'
     schema['datatype_string'] = SimpleItem(defvalue=defvaluestr, doc=docstr)
+    docstr = 'Ancestor depth to be queried from the Bookkeeping system.'
+    schema['depth'] = SimpleItem(defvalue = 0 , doc=docstr)
 
-    _schema = Schema(Version(2,2), schema)
+    _schema = Schema(Version(2,3), schema)
     _category = 'datasets'
     _name = "LHCbDataset"
     _exportmethods = ['updateReplicaCache','__len__','cacheOutOfDate',

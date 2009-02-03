@@ -64,6 +64,8 @@ class GaudiPythonDiracRunTimeHandler(IRuntimeHandler):
         diracScript.setName("Ganga_GaudiPython")
         if job.inputdata:
             diracScript.inputdata(job.inputdata)
+            if hasattr(job.inputdata,'depth'):
+                diracScript.ancestordepth(job.inputdata.depth)
 
         outdata = []
         if job.outputdata:
