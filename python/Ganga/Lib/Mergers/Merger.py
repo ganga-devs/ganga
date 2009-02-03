@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Merger.py,v 1.3 2008-10-27 14:33:14 wreece Exp $
+# $Id: Merger.py,v 1.4 2009-02-03 09:31:12 wreece Exp $
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IMerger import MergerError
@@ -282,17 +282,23 @@ class _TextMergeTool(IMergeTool):
 
         import time
 
-        if not self.compress:
-            out_file = file(output_file,'w')
-        else:
+        if self.compress or output_file.lower().endswith('.gz'):
             #use gzip
             import gzip
-            out_file = gzip.GzipFile('%s.gz' % output_file,'w')
-            
+            if not output_file.lower().endswith('.gz'):
+                output_file += '.gz'
+            out_file = gzip.GzipFile(output_file,'w')
+        else:
+            out_file = file(output_file,'w')
+
         out_file.write('# Ganga TextMergeTool - %s #\n' % time.asctime())
         for f in file_list:
 
-            in_file = file(f)
+            if not f.lower().endswith('.gz'):
+                in_file = file(f)
+            else:
+                import gzip
+                in_file = gzip.GzipFile(f)
 
             out_file.write('# Start of file %s #\n' % str(f))
             out_file.write(in_file.read())
