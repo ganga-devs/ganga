@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-release,v 1.11 2008-11-26 15:01:54 moscicki Exp $
+# $Id: ganga-release,v 1.12 2009-02-03 15:51:19 gangage Exp $
 ################################################################################
 
 import os,sys,time,re,shutil
@@ -33,12 +33,12 @@ except IndexError:
 CONFIG = {}
 CONFIG['top'] = '/afs/cern.ch/sw/ganga'
 CONFIG['platf'] = 'slc4_amd64_gcc34'
-CONFIG['cvsroot'] = ':kserver:isscvs.cern.ch:/local/reps/ganga'
+CONFIG['cvsroot'] = ':gserver:isscvs.cern.ch:/local/reps/ganga'
 
 CONFIG['version'] = version
 CONFIG['version-pre'] = version+'-pre'
 CONFIG['plugin_packages_gcc323']='GangaGUI,GangaLHCb,GangaAtlas,GangaPlotter,GangaTest,GangaNG,GangaPanda'
-CONFIG['plugin_packages_gcc34']='GangaTest,GangaAtlas,GangaNG,GangaPanda'
+CONFIG['plugin_packages_gcc34']='GangaGUI,GangaLHCb,GangaPlotter,GangaTest,GangaAtlas,GangaNG,GangaPanda'
 CONFIG['prereldir'] = os.path.join(CONFIG['top'], 'install',CONFIG['version-pre'])
 CONFIG['reldir'] = os.path.join(CONFIG['top'],'install',CONFIG['version'])
 CONFIG['installdir'] = os.path.join(CONFIG['top'],'install')
@@ -104,7 +104,7 @@ class PrereleaseCommand:
     "PRE: create the PRE-RELEASE in the prereldir"
     
     def do(self):
-        import glob,re
+        import os,glob,re
         if os.path.isdir(CONFIG['prereldir']):
             print 'the current prerelease is %(prereldir)s'%CONFIG
             prm = re.compile('(\S)+-pre(?P<num>\d+)')
@@ -256,10 +256,10 @@ class TestReportCommand:
             
                 try:
                     tf = tarfile.open(join(path,fname),'r:gz')
-                except TarError:
+                except Exception,e: 
                     print "Test file %s could not be retrieved."
                     print "Will just ignore this and continue without it."
-                    return
+                    continue
                 for f in tf.getnames():
                     tf.extract(f,path)
                 os.remove(join(path,fname))
