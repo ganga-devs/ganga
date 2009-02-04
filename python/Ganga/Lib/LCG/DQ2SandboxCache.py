@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2SandboxCache.py,v 1.2 2008-11-03 15:27:18 hclee Exp $
+# $Id: DQ2SandboxCache.py,v 1.3 2009-02-04 17:01:02 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -61,7 +61,7 @@ class DQ2SandboxCache(GridSandboxCache):
 
     dq2_sandbox_cache_schema_datadict.update({
         'setup'          : SimpleItem(defvalue='/afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/latest/setup.sh', doc='the DQ2 setup script'),
-        'local_site_id'  : SimpleItem(defvalue='CERN-PROD_USERDISK', copyable=0, doc='the DQ2 local site id'),
+        'local_site_id'  : SimpleItem(defvalue='CERN-PROD_USERDISK', copyable=1, doc='the DQ2 local site id'),
         #'remote_site_id' : SimpleItem(defvalue='CERN-PROD_USERDISK', copyable=0, doc='the DQ2 remote site id'),
         'dataset_name'   : SimpleItem(defvalue='', copyable=0, doc='the DQ2 dataset name')
         } )
@@ -121,7 +121,7 @@ class DQ2SandboxCache(GridSandboxCache):
             finfo[tmp_fname]['local_fpath']  = urlparse(f)[2]
 
         # compose dq2-put command 
-        cmd = 'source %s; dq2-put -a -d ' % (self.setup)
+        cmd = 'source %s; dq2-put -a -d -C ' % (self.setup)
 
         if self.local_site_id:
             cmd += '-L %s ' % self.local_site_id
@@ -174,10 +174,29 @@ class DQ2SandboxCache(GridSandboxCache):
 
 #    def impl_delete(self, files=[], opts=''):
 #        """
-#        Deletes multiple files from remote grid storages. 
+#        Deletes whole dataset from the sit
 #        """
 #
-#        return False
+#        ## ToDo: a better implementation
+#        ##   1. get list of SURLs from the dataset
+#        ##   2. if the given files is a subset - remove files with lcg-del and call dq2-check-replica-consistency
+#        ##   3. if the given files covers all files in dataset - call dq2-delete-replicas
+#
+#
+#        isDone = False
+#
+#        shell = getShell(self.middleware)
+#
+#        cmd = 'source %s; dq2-delete-replicas -d %s %s' % (self.setup, self.dataset_name, self.local_site_id)
+#
+#        rc,output,m = self.__cmd_retry_loop__(shell, cmd, self.max_try)
+#
+#        logger.debug(output)
+#
+#        if rc == 0:
+#            isDone = True
+#
+#        return files
 
     def impl_parseIndexFile(self, opts=''):
         """

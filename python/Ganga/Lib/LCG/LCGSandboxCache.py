@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCGSandboxCache.py,v 1.3 2008-09-18 16:34:58 hclee Exp $
+# $Id: LCGSandboxCache.py,v 1.4 2009-02-04 17:01:02 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -60,11 +60,11 @@ class LCGSandboxCache(GridSandboxCache):
     '''
 
     lcg_sandbox_cache_schema_datadict.update({
-        'se'          : SimpleItem(defvalue='', copyable=0, doc='the LCG SE hostname'),
-        'se_type'     : SimpleItem(defvalue='srmv2', copyable=0, doc='the LCG SE type'),
-        'se_rpath'    : SimpleItem(defvalue='generated', copyable=0, doc='the relative path to the VO directory on the SE'),
-        'lfc_host'    : SimpleItem(defvalue='', copyable=0, doc='the LCG LFC hostname'),
-        'srm_token'   : SimpleItem(defvalue='', copyable=0, doc='the SRM space token, meaningful only when se_type is set to srmv2')
+        'se'          : SimpleItem(defvalue='', copyable=1, doc='the LCG SE hostname'),
+        'se_type'     : SimpleItem(defvalue='srmv2', copyable=1, doc='the LCG SE type'),
+        'se_rpath'    : SimpleItem(defvalue='generated', copyable=1, doc='the relative path to the VO directory on the SE'),
+        'lfc_host'    : SimpleItem(defvalue='', copyable=1, doc='the LCG LFC hostname'),
+        'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2')
         } )
 
     _schema   = Schema( Version(1,0), lcg_sandbox_cache_schema_datadict )

@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridSandboxCache.py,v 1.4 2008-11-05 13:51:57 hclee Exp $
+# $Id: GridSandboxCache.py,v 1.5 2009-02-04 17:01:02 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -62,7 +62,7 @@ class GridSandboxCache(GangaObject):
     _schema = Schema(Version(1,0), {
        'vo'         : SimpleItem(defvalue='dteam', hidden=1, copyable=0, doc='the Grid virtual organization'),
        'middleware' : SimpleItem(defvalue='EDG', hidden=1, copyable=1, doc='the LCG middleware type'),
-       'protocol'   : SimpleItem(defvalue='', doc='file transfer protocol'),
+       'protocol'   : SimpleItem(defvalue='', copyable=1, doc='file transfer protocol'),
        'max_try'    : SimpleItem(defvalue=1, doc='max. number of tries in case of failures'),
        'timeout'    : SimpleItem(defvalue=180, copyable=0, hidden=1, doc='transfer timeout in seconds'),
        'index_file' : SimpleItem(defvalue='', copyable=0, hidden=1, doc='the file for keepping the index of files on the grid')
@@ -124,7 +124,7 @@ class GridSandboxCache(GangaObject):
         @return True if files are successfully downloaded; otherwise it returns False
         """
         status  = False
-        myFiles = self.__get_file_index_objects(files)
+        myFiles = self.__get_file_index_objects__(files)
         downloadedFiles = self.impl_download(files=myFiles, dest_dir=dest_dir, opts=opts)
 
         if len(downloadedFiles) == len(myFiles):
@@ -145,7 +145,7 @@ class GridSandboxCache(GangaObject):
         @return True if files are successfully deleted; otherwise it returns False
         """
         status  = False
-        myFiles = self.__get_file_index_objects(files)
+        myFiles = self.__get_file_index_objects__(files)
         deletedFiles = self.impl_delete(files=myFiles, opts=opts)
 
         if len(deletedFiles) == len(myFiles):
@@ -239,9 +239,9 @@ class GridSandboxCache(GangaObject):
         @return a list of files represented by GridFileIndex objects
         """
         raise NotImplementedError
-
+    
     ## private methods
-    def __get_file_index_objects(self, files=[]):
+    def __get_file_index_objects__(self, files=[]):
         '''Gets file index object according to the given file list
              - try to get the GridFileIndex object from the local index file.  
 
