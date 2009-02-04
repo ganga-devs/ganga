@@ -148,7 +148,7 @@ class Grid(object):
         rc, output, m = self.shell.cmd1('%s --vo %s lfc' % (cmd,self.config['VirtualOrganisation']),allowed_exit=[0,255])
 
         if rc != 0:
-            self.__print_gridcmd_log__('lcg-infosites',output)
+            #self.__print_gridcmd_log__('lcg-infosites',output)
             return None
         else:
             lfc_list = output.strip().split('\n')
@@ -292,6 +292,11 @@ class Grid(object):
 
         if rc != 0:
             self.__print_gridcmd_log__('(.*-job-status.*\.log)',output)
+
+            # note about how to fix bug #45820
+            # 1. parse the log file and extract the ids of the missing jobs in WMS
+            # 2. create info dictionary with id, is_node (dep. on is_collection option to this function),
+            #    status = ??, reason = 'job removed from WMS'
 
         re_id = re.compile('^\s*Status info for the Job : (https://.*\S)\s*$')
         re_status = re.compile('^\s*Current Status:\s+(.*\S)\s*$')
