@@ -695,11 +695,6 @@ improves the reliability of the \grid system as seen by the user. \ganga
 provides a \dirac backend
 component that supports submission of jobs to the \dirac
 WMS, making use internally of \dirac's \python API~\cite{DIRACAPI}.
-In the first half of 2007, a total of $10^4$ user jobs were successfully
-executed using the \dirac system with a peak exceeding 1000 simultaneous
-jobs.   This usage is expected to rise dramatically after the start of the
-\lhcb data taking.
-
 
 A \emph{splitter} component implemented specifically for \lhcb is able to divide
 the
@@ -710,6 +705,13 @@ available in its entirety at at least one location on the \grid. This gives
 significant optimisation, as it avoids subjobs having to copy data across the
 network
 before an analysis can start.
+
+In total above 300k user jobs finished successfully in 2008 with a total
+CPU consumption of 87 CPU years. The jobs ran at a total of 140 Grid
+sites across the globe. The system was responsive to a highly irregular
+usage pattern and spikes of several thousand simulataneous jobs were
+observed during the year. This usage is expected to rise dramatically after the start of the
+\lhcb data taking.
 
 The \code{Robot} in \ganga is used within \lhcb for \emph{end-to-end} testing
 of the distributed analysis model. It submits a representative set of
@@ -934,11 +936,14 @@ telecommunication applications; and computational-chemistry workflows. The
 may be controlled by the user from the \ganga interface. This
 approach allows the efficiency of the \diane overlay scheduling system
 to be combined with the well-structured job management offered by \ganga, as well as
-combining \grid and non-\grid resources under a uniform interface.
+combining \grid and non-\grid resources under a uniform interface. This approach
+allows to efficiently implement low-latency access to the \grid resources and implement
+responsiveness as the capacity to support on-demand computing and interactivity 
+\cite{SchedulingForResponsiveGrids}.
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[width=1 \textwidth]{ganga-diane-portal.pdf}
+  \includegraphics[width=1 \textwidth]{ganga-diane-portal}
   \caption{Ganga as a job management component embedded in \diane,
     with an application portal.}
   \label{fig:webportal}
@@ -987,9 +992,10 @@ co-funded by the European Commission (contract number INFSO-RI-031688) through t
 Framework Programme.
 
 \ganga received contributions from many individuals at different
-phases of the project, in particular Pere Mato, Craig Tull, Wim
-Lavrijsen, David Adams, Janusz Martyniak, Ruth Dixon del Tufo, David
-Tuckett, Rebecca Ronke, Vladimir Romanovski and Mike Williams.
+phases of the project, in particular David Adams, Marcello Barisonzi, Johannes Ebke, 
+Mike Kenyon, Wim Lavrijsen, Janusz Martyniak, Pere Mato, Caitriana Nicholson, 
+Rebecca Ronke, Vladimir Romanovski, David Tuckett, Ruth Dixon del Tufo, 
+Craig Tull and Mike Williams.
 
 The developers would also like to thank the large number of users, from both
 within and outside particle physics, for their valuable suggestions for
@@ -1458,15 +1464,19 @@ neuraminidase},
 \href{http://dx.doi.org/10.1109/TNB.2006.887943}
 {IEEE Trans.\ NanoBioscience \textbf{5-4} (2006) 288}.
 
+\bibitem{SchedulingForResponsiveGrids}
+  C.~Germain-Renaud, C.~Loomis , J.~T.~Mo{\'s}cicki and R.~Texier,
+\textit{Scheduling for Responsive Grids}, 
+\href{http://dx/doi.org/10.1007/s10723-007-9086-4}
+{J. Grid Computing \textbf{6}, (2008) 15-27 }
+
 %\bibitem{EGEE} 
 %  EGEE brings together 91 partners in 32 countries to provide a seamless Grid
 %  infrastructure available to the European research community 24 hours a day.
 %  \url{http://www.eu-egee.org}.
 %%%>>>>>>> 1.7.2.1
 
-%  C.~Germain-Renaud, C.~Loomis , J.~T.~Mo{\'s}cicki and R.~Texier,
-%  ``Scheduling for Responsive Grids'', Jour. of Grid Computing, Springer, 
-% DOI: 10.1007/s10723-007-9086-4
+
 
 % Text of bibliographic item
 
