@@ -182,7 +182,6 @@ Grid computing \sep Data mining \sep Task management \sep User interface \sep In
 %ADD RELEASE PROCESS?
 %ADD SSH?
 %ADD DIANE reference for low latency
-%ADD GUI?
 
 \section{Introduction}
 \label{sec:intro}
@@ -250,13 +249,16 @@ used at 150 sites around the world, with 2000 unique users running about 250k %F
 \ganga sessions\footnote{The usage information was collected from a voluntary
   usage reporting system implemented in \ganga.}.
 
-In this paper, we describe in section~\ref{sec:functionality} the overall
-functionality, in section~\ref{sec:implementation} details of the
-implementation, and in section~\ref{sec:mon} how the progress of jobs is
-monitored. In sections~\ref{sec:useHEP} and~\ref{sec:other} we discuss how
-\ganga is customised for specific user communities. In
-appendix~\ref{sec:examples} we provide some examples of how the API in \ganga
-can be used.
+In this paper, we describe in section~\ref{sec:functionality} the
+overall functionality, in section~\ref{sec:implementation} details of
+the implementation, and in section~\ref{sec:mon} how the progress of
+jobs is monitored. Section~\ref{sec:GUI} gives an overview of the
+Graphical User Interface.  In sections~\ref{sec:useHEP}
+and~\ref{sec:other} we discuss how \ganga is customised for specific
+user communities. Interfacing and embedding \ganga in other frameworks
+is presented in section~\ref{sec:GangaInOtherFrameworks}. In
+appendix~\ref{sec:examples} we provide some examples of how the API in
+\ganga can be used.
 
 \section{Functionality}
 \label{sec:functionality}
@@ -481,7 +483,7 @@ work.
 
 \begin{figure}
   \centering
-  \includegraphics[width=14cm]{GangaPlugin.pdf}  
+  \includegraphics[width=14cm]{ganga-objects}  
   \caption{A component class implements one of the abstract interfaces
     corresponding to the different parts of a job.}
   \label{fig:Components}
@@ -816,7 +818,7 @@ are the \grid developed in the context of Enabling  Grids for e-Science
 middleware~\cite{andreetto_2008}, the Open Science Grid (OSG, mainly North
 America)~\cite{OSG}, accessed using the PanDA system~\cite{maeno_2008}, and
 NorduGrid (mainly Nordic countries)~\cite{ellert_2003}, accessed using the
-ARC middleware~\cite{ellert_2007}.  \ganga seamlessly submits jobs to all
+\ARC middleware~\cite{ellert_2007}.  \ganga seamlessly submits jobs to all
 three \grid flavours.
 
 \subsubsection{\atlas user analysis}
@@ -949,30 +951,33 @@ output sandbox. This simple approach allowed integration of
 
 \subsection{\ganga integrated with lightweight \grid middleware}
 
-The ARC (Advanced Resource Connector) \grid middleware~\cite{ellert_2007}, a
-product of the NorduGrid project~\cite{ellert_2003}, is used by many academic
+Open plugin architecture of \ganga allows to easily integrate other
+\grid middleware. An example of the \ARC (Advanced Resource Connector)
+\grid middleware~\cite{ellert_2007} is given in this section.
+
+The \ARC \grid middleware, a product of the NorduGrid project~\cite{ellert_2003}, is used by many academic
 %ARC->\cite{ellert_2007}
 %NG->\cite{ellert_2003}
-institutions in the Nordic, and other European, countries. ARC jobs are accepted and
+institutions in the Nordic, and other European, countries. \ARC jobs are accepted and
 brokered by a \grid manager, running at site level, and resource lookup
 is done through load balancing and runtime environments advertised by
 individual sites. File storage and access is 'cloudy', meaning that
 all files registered in \grid--wide catalogues are accessible to all
 worker nodes. File transfers are handled by the \grid manager, between
-job acceptance and execution. ARC--connected resources are used
+job acceptance and execution. \ARC--connected resources are used
 e.g. by researches in bioinformatics, genomics, meteorology, in
 addition to high--energy physics.
 
-\ganga has been interfaced to ARC through a backend, which translates
-ganga input into ARC--readable xRSL language. The ARC user client is
+\ganga has been interfaced to \ARC through a backend, which translates
+ganga input into \ARC--readable xRSL language. The \ARC user client is
 lightweight, and binaries are provided as an external library at \ganga
-install time. The main user of this integration is the ATLAS
+install time. The main user of this integration is the \atlas
 experiment (see sec.~\ref{sec:atlas}), where it is the main user
 access portal to one of the experiment's three main computing
-grids. Further collaboration between ARC and \ganga is envisaged, to
-employ \ganga as a fully featured frontend to ARC.
+grids. Further collaboration between \ARC and \ganga is envisaged, to
+employ \ganga as a fully featured frontend to \ARC.
 
-\subsection{Interfacing to other frameworks}
+\section{Interfacing to other frameworks}
 \label{sec:GangaInOtherFrameworks}
 The \ganga Public Interface constitutes an API for generic job submission
 and management.  As a result, \ganga may be programmatically
@@ -981,11 +986,11 @@ job management. \ganga has been used in combination with \diane~\cite{DIANE},
 a lightweight agent-based
 scheduling layer on top of the \grid, in a number
 of scientific activities.  These have included: dosimetry-related simulation
-studies in medical physics; regression testing of the Geant~4~\cite{Geant4}
+studies in medical physics~\cite{Geant4MedicalDIANE}; regression testing of the Geant~4~\cite{Geant4}
 detector-simulation toolkit;
 in-silico molecular docking in searches for 
 new drugs against potential variants of an influenza virus~\cite{AvianFlu};
-telecommunication applications; and computational-chemistry workflows. The
+telecommunication applications~\cite{ITU}; and theoretical physics~\cite{LQCD}. The
 \diane worker agents are executed as \ganga jobs, so that resource usage
 may be controlled by the user from the \ganga interface. This
 approach allows the efficiency of the \diane overlay scheduling system
@@ -1501,6 +1506,11 @@ applications},
 \href{http://dx.doi.org/10.1016/S0168-9002(03)00459-5}
 {Nucl.\ Instrum.\ Methods \textbf{A502} (2003) 426}.
 
+\bibitem{Geant4MedicalDIANE} J.T.~Mo\'scicki \etal,
+\textit{Distributed Geant4 Simulation in Medical and Space Science Applications
+using DIANE framework and the GRID},
+{Nucl.\ Phys. B (Proc. Suppl.) \textbf{125} (2003) 327-331}
+
 \bibitem{Geant4} J~.Allison \etal,
 \textit{Geant 4 - a simulation toolkit},
 \href{http://dx.doi.org/10.1016/S0168-9002(03)01368-8}
@@ -1511,6 +1521,14 @@ applications},
 neuraminidase},
 \href{http://dx.doi.org/10.1109/TNB.2006.887943}
 {IEEE Trans.\ NanoBioscience \textbf{5-4} (2006) 288}.
+
+\bibitem{ITU} J.T.~Mo\'scicki \etal,
+\textit{ITU RRC06 on the Grid},
+{in prep. for Journal of Grid Computing }
+
+\bibitem{LQCD} J.T.~Mo\'scicki \etal,
+\textit{Lattice QCD on the Grid}
+{in prep. for Computer Physics Communications}
 
 \bibitem{SchedulingForResponsiveGrids}
   C.~Germain-Renaud, C.~Loomis , J.~T.~Mo{\'s}cicki and R.~Texier,
