@@ -325,7 +325,7 @@ at a later stage. Each subjob will execute on its own and the merging
 of the output will take place when all have finalised. The
 submission of subjobs is automatically optimised if the backend
 component supports bulk job submission. For example, when submitting to
-the gLite workload management system \cite{andreetto_2008} the job collection
+the gLite workload management system~\cite{andreetto_2008} the job collection
 mechanism is used transparently to the user.
 
 The \GPI allows frequently used job configurations to be
@@ -334,8 +334,8 @@ jobs to be labelled and organised in a hierarchical \code{jobtree}.
 
 \ganga has the built-in support for handling user credentials, including
 classic \grid proxies, proxies with extensions for a Virtual Organisation Management
-Service (VOMS) \cite{VOMS}, and Kerberos \cite{kerberos} tokens
-for access to an Andrew filesystem (AFS) \cite{AFS}. A user may renew and destroy the
+Service (VOMS)~\cite{VOMS}, and Kerberos~\cite{kerberos} tokens
+for access to an Andrew filesystem (AFS)~\cite{AFS}. A user may renew and destroy the
 credentials directly using the GPI. \ganga gives an early warning to a
 user if the credentials are about to expire. The minimum credential
 validity and other aspects of the credential management are fully
@@ -487,7 +487,7 @@ work.
   \label{fig:Components}
 \end{figure}
 Plugin development is simplified by having a set of internal interfaces and a
-mechanism for generating proxy classes \cite{GoF}. Component classes inherit from an interface class,
+mechanism for generating proxy classes~\cite{GoF}. Component classes inherit from an interface class,
 as seen in Fig.~\ref{fig:Components}. Each plugin class defines a schema, which
 describes the plugin attributes, specifying type
 (read-only, read-write, internal), visibility, associated user-convenience filters
@@ -606,11 +606,65 @@ different monitoring sensors, allowing collection of both generic execution
 information and application-specific data.
 
 Use is currently made of two implementations of external monitoring sensors. One
-is the \atlas Dashboard application monitoring\cite{andreeva_2008}.
+is the \atlas Dashboard application monitoring~\cite{andreeva_2008}.
 Another is a custom service that allows the \ganga user to examine job output
 in real-time on the \grid.  This streaming service
 is not enabled by default, but must be set up for each user community separately,
 and may then be requested by a user for specific jobs.
+
+\section{Graphical User Interface}
+\label{sec:GUI}
+
+The \ganga Graphical User Interface (GUI), shown in  Fig.\ref{fig:GUI} and
+built using PyQt3~\cite{rempt_2001}, makes available all of the job-management
+functionality provided at the level of the \ganga Public Interface.  The
+GUI incorporates various convenience features, and its multi-threaded nature
+results in a degree of parallelism not possible at the command line:
+job monitoring and most job-management actions run concurrently, ensuring
+a good response time for the user.
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=1 \textwidth]{ganga-GUI.png}
+  \caption{\ganga graphical user interface (GUI).  The overview of jobs
+   can be seen to the left, and the details of an individual job are to
+   the right.}
+  \label{fig:GUI}
+\end{figure}
+
+The job monitoring window takes centre stage,
+with job status and other monitored attributes displayed
+in table format. Other features include subjob monitoring, subjob  
+folding/hiding, a job-details display drawer, a logical-collections  
+drawer, and a text-based job-search facility. Many characteristics of the
+monitoring window can be customised, allowing, for example, selection of
+the job attributes to be monitored, and of the colours used to denote
+different job states.
+
+The construction of a job, entailing selection of the required plugins and  
+the entry of attribute values, is achieved from a job-builder window. This
+displays a foldable tree of job attributes, and associated data-entry
+widgets, The tree and widgets are generated dynamically based
+on plugin schemas, ensuring that the GUI automatically supports
+user-defined plugins without any change being needed to the GUI code.  To
+assist with data entry, drop-down menus list allowed values, wherever
+these are defined; and tool tips provide explanations of individual job
+attributes.  The job-builder window also features tool buttons for
+performing a wide range of job-related actions, including
+creation, saving, copying, submission, termination and removal.  Finally,
+a multifunction \code{Extras} tool button provides access to arbitrary
+additional functionality implemented in the plugins.
+
+The GUI also has a scriptor window, providing a
+favourite-scripts collection, a job-script editor and an embedded \python
+session.  The favourite-scripts collection allows frequently used \ganga
+scripts to be created, imported, exported and cloned; the job-script editor
+facilitates quick modification and execution of scripts; and the
+embedded \python session allows interactive use of \ganga commands.
+
+Finally, a scrollable log window collects and displays all messages  
+generated by \ganga.
+
 
 \section{Use in experiments at the Large Hadron Collider}
 \label{sec:useHEP}
@@ -675,7 +729,7 @@ performed locally, with quick response time, before launching a large-scale
 analysis on the \grid, where response times tend to be longer.
 
 Some studies in \lhcb, rather than being based on \gaudi, are performed using
-the \roofit \cite{RooFit} framework, most notably studies that make use of
+the \roofit~\cite{RooFit} framework, most notably studies that make use of
 simplified event simulations.   Jobs for these studies require large amounts
 of processing power, but do not require
 input data and produce only small amounts of output. This makes them
@@ -895,8 +949,8 @@ output sandbox. This simple approach allowed integration of
 
 \subsection{\ganga integrated with lightweight \grid middleware}
 
-The ARC (Advanced Resource Connector) \grid middleware\cite{ellert_2007}, a
-product of the NorduGrid project\cite{ellert_2003}, is used by many academic
+The ARC (Advanced Resource Connector) \grid middleware~\cite{ellert_2007}, a
+product of the NorduGrid project~\cite{ellert_2003}, is used by many academic
 %ARC->\cite{ellert_2007}
 %NG->\cite{ellert_2003}
 institutions in the Nordic, and other European, countries. ARC jobs are accepted and
@@ -927,7 +981,7 @@ job management. \ganga has been used in combination with \diane~\cite{DIANE},
 a lightweight agent-based
 scheduling layer on top of the \grid, in a number
 of scientific activities.  These have included: dosimetry-related simulation
-studies in medical physics; regression testing of the Geant 4 \cite{Geant4}
+studies in medical physics; regression testing of the Geant~4~\cite{Geant4}
 detector-simulation toolkit;
 in-silico molecular docking in searches for 
 new drugs against potential variants of an influenza virus~\cite{AvianFlu};
@@ -983,7 +1037,7 @@ infrastructures.
 \section{Acknowledgements}
 \label{sec:acknowledgements}
 The development of \ganga has been supported by the GridPP project in the
-United Kingdom ~\cite{Faulkner:2006px}, with funding from the Science and Technology
+United Kingdom~\cite{Faulkner:2006px}, with funding from the Science and Technology
 Facilities Council (STFC) and its predecessor, the Particle Physics and
 Astronomy Research Council (PPARC); by the D-Grid project in Germany,
 with funding from the Bundesministerium f\"ur Bildung und Forschung
@@ -991,8 +1045,9 @@ with funding from the Bundesministerium f\"ur Bildung und Forschung
 co-funded by the European Commission (contract number INFSO-RI-031688) through the Sixth
 Framework Programme.
 
-\ganga received contributions from many individuals at different
-phases of the project, in particular David Adams, Marcello Barisonzi, Johannes Ebke, 
+\ganga has received contributions over the years from a number of
+individuals.  Particular thanks are due to 
+David Adams, Marcello Barisonzi, Johannes Ebke, 
 Mike Kenyon, Wim Lavrijsen, Janusz Martyniak, Pere Mato, Caitriana Nicholson, 
 Rebecca Ronke, Vladimir Romanovski, David Tuckett, Ruth Dixon del Tufo, 
 Craig Tull and Mike Williams.
@@ -1106,18 +1161,6 @@ Groups of jobs may be accessed and manipulated using simple methods:
 \normalsize
 
 \vspace{-2ex}
-
-Finally, we provide a view of the graphical user interface
-(Fig.\ref{fig:GUI}). The overview of jobs can be seen to the left, and the
-details of an individual job are to the right.
-
-\begin{figure}[ht!]
-  \centering
-  \includegraphics[width=1 \textwidth]{ganga-GUI.png}
-  \caption{\ganga graphical user interface (GUI). }
-  \label{fig:GUI}
-\end{figure}
-
 
 \begin{thebibliography}{00}
 
@@ -1332,12 +1375,17 @@ an introduction},
 \bibitem{IMAP} P.~Heinlein and P.~Hartleban,
 \href{http://nostarch.com/imap.htm}
 {\textit{The book of IMAP: building a mail server with Courier and Cyrus}}
-(No Startch Press, San Francisco, 2008).
+(No Startch Press, San Francisco, CA, 2008).
 
 \bibitem{andreeva_2008} J.~Andreeva \etal,
 \textit{Dashboard for the LHC experiments},
 \href{http://dx.doi.org/10.1088/1742-6596/119/6/062008}
 {J.\ Phys.\ Conf.\ Ser.\ \textbf{119} (2008) 062008}.
+
+\bibitem{rempt_2001} B.~Rempt,
+\href{http://www.commandprompt.com/community/pyqt/}
+{\textit{GUI programming with Python: QT edition}}
+(Command Prompt Inc, White Salmon, WA, 2001).
 
 \bibitem{gaudi} G.~Barrand \etal,
 \textit{GAUDI - a software architecture and framework for building HEP
