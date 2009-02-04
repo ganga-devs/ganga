@@ -148,10 +148,12 @@ get_pybin
 #################################################
 # Determine SE type
 
+source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+
 # Unpack dq2info.tar.gz
-if [ -e dq2info.tar.gz ]; then
-    tar xzf dq2info.tar.gz
-fi
+#if [ -e dq2info.tar.gz ]; then
+#    tar xzf dq2info.tar.gz
+#fi
 detect_setype
 
 #################################################

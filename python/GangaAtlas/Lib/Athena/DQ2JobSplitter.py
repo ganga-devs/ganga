@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.27 2009-02-04 05:36:42 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.28 2009-02-04 06:52:41 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -140,7 +140,7 @@ class DQ2JobSplitter(ISplitter):
                                     if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and not sitename in db_allowed_sites:
                                         db_allowed_sites.append(sitename)
                     allowed_sites = db_allowed_sites
-                
+                    
         elif job.backend._name == 'Panda':
             from GangaPanda.Lib.Panda.Panda import runPandaBrokerage,queueToAllowedSites
             runPandaBrokerage(job)
