@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.30 2009-01-29 17:35:19 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.31 2009-02-04 05:36:42 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -405,6 +405,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         #       add libDCache.so and libRFIO.so to fix broken access in athena 12.0.x
         if not 'ganga-stage-in-out-dq2.py' in [ os.path.basename(file.name) for file in inputbox ]:
             _append_files(inputbox, 'ganga-stage-in-out-dq2.py')
+        if not 'db_dq2localid.py' in [ os.path.basename(file.name) for file in inputbox ]:
+            _append_files(inputbox, 'db_dq2localid.py')
+
         if str(app.atlas_release).find('12.')>=0:
             _append_files(inputbox, 'libDCache.so','libRFIO.so','libdcap.so')
         elif str(app.atlas_release).find('13.')>=0:
@@ -537,8 +540,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         else:
             requirements.software = ['VO-atlas-production-%s' % app.atlas_release ]
 
-#       add software requirement of dq2clients
-        if job.inputdata and job.inputdata.type in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER']:
+        #       add software requirement of dq2clients
+        if job.inputdata and job.inputdata.type in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease:
             dq2client_version = requirements.dq2client_version
             try:
                 # override the default one if the dq2client_version is presented 
@@ -550,6 +553,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             environment['DQ2_CLIENT_VERSION'] = dq2client_version
 
         if app.atlas_dbrelease:
+            if not (job.splitter and job.splitter._name == 'DQ2JobSplitter'):
+                raise ApplicationConfigurationError(None,'Job submission failed ! Please use DQ2JobSplitter if you are using j.application.atlas_dbrelease !')
+                            
             try:
                 environment['ATLAS_DBRELEASE'] = app.atlas_dbrelease.split(':')[0]
                 environment['ATLAS_DBFILE'] = app.atlas_dbrelease.split(':')[1]

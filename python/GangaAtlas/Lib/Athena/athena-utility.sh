@@ -538,19 +538,20 @@ run_athena () {
 	    rm -f retcode.tmp
 	elif [ n$ATLAS_EXETYPE == n'TRF' ] && [ -e trf_params ]
 	    then
-	    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ] || [ -e /afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/latest/setup.sh ]
+	    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ] 
 		then
-		if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ] 
+		source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh 
+                # Set DQ2_LOCAL_SITE_ID to db dataset location
+		if [ -e db_dq2localid.py ]
 		    then
-		    $VO_ATLAS_SW_DIR/ddm/latest/setup.sh 
-		elif [ -e /afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/latest/setup.sh ]
-		    then
-		    source /afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/latest/setup.sh
-		    export DQ2_LOCAL_SITE_ID=CERN
+		    export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
+		    chmod +x db_dq2localid.py
+		    ./db_dq2localid.py
+		    export DQ2_LOCAL_SITE_ID=`cat db_dq2localid.txt`
 		fi
 		if [ ! -z $DBDATASETNAME ] && [ ! -z $DBFILENAME ]
 		    then
-		    dq2-get -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
+		    dq2-get -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
 		    if [ -e $DBDATASETNAME/$DBFILENAME ]
 			then
 			mv $DBDATASETNAME/* .

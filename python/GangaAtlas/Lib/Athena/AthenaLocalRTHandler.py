@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.20 2009-02-01 10:20:30 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.21 2009-02-04 05:36:42 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -315,6 +315,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 trf_params = trf_params + key + '=' + str(value) + ' '
         if trf_params!=' ' and job.application.atlas_exetype=='TRF':
            _append_file_buffer(inputbox,'trf_params', [ trf_params ]) 
+           if not 'db_dq2localid.py' in [ os.path.basename(file.name) for file in inputbox ]:
+               _append_files(inputbox, 'db_dq2localid.py')
+
+                           
 
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
@@ -506,6 +510,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.20  2009/02/01 10:20:30  elmsheus
+#Revert FileStager inclusion
+#
 #Revision 1.19  2009/02/01 09:52:42  elmsheus
 #Add FileStager files
 #

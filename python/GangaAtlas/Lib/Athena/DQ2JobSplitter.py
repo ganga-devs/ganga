@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.26 2009-01-29 15:09:14 dvanders Exp $
+# $Id: DQ2JobSplitter.py,v 1.27 2009-02-04 05:36:42 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -117,6 +117,29 @@ class DQ2JobSplitter(ISplitter):
                         if site in allowed_sites_all:
                             newsites.append(site)
                     allowed_sites = newsites
+                # Check atlas_dbrelease
+                if job.application.atlas_dbrelease:
+                    try:
+                        db_dataset = job.application.atlas_dbrelease.split(':')[0]
+                    except:
+                        raise ApplicationConfigurationError(None,'Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
+                    from dq2.clientapi.DQ2 import DQ2
+                    from dq2.info import TiersOfATLAS
+                    dq2=DQ2()
+                    try:
+                        db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1]
+                    except:
+                        raise ApplicationConfigurationError(None,'Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
+                    db_allowed_sites=[]
+                    for site in allowed_sites:
+                        if site in db_locations:
+                            db_allowed_sites.append(site)
+                            dq2alternatename = TiersOfATLAS.getSiteProperty(site,'alternateName')
+                            for sitename in TiersOfATLAS.getAllSources():
+                                if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
+                                    if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and not sitename in db_allowed_sites:
+                                        db_allowed_sites.append(sitename)
+                    allowed_sites = db_allowed_sites
                 
         elif job.backend._name == 'Panda':
             from GangaPanda.Lib.Panda.Panda import runPandaBrokerage,queueToAllowedSites
@@ -155,7 +178,7 @@ class DQ2JobSplitter(ISplitter):
                 siteinfo = dq2_siteinfo( dataset, allowed_sites, locations[dataset], udays )
             siteinfos[dataset]=siteinfo
             allcontents[dataset]=content
-        
+
         subjobs = []
         for dataset, siteinfo in siteinfos.iteritems():
             for sites, guids in siteinfo.iteritems():

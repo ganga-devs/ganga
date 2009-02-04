@@ -239,18 +239,21 @@ then
         echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
         echo '1'>retcode.tmp
     fi
-    # Set DQ2_LOCAL_SITE_ID to dataset location
-    if [ -e dq2localid.txt ]
+
+    # Set DQ2_LOCAL_SITE_ID to db dataset location
+    if [ -e db_dq2localid.py ]
         then
-        export DQ2_LOCAL_SITE_ID=`cat dq2localid.txt`
-        export DQ2_LOCAL_ID_BACKUP=$DQ2_LOCAL_ID
+        export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
+	chmod +x db_dq2localid.py
+	./db_dq2localid.py
+        export DQ2_LOCAL_SITE_ID=`cat db_dq2localid.txt`
     fi
 
     if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 	then
 	for ((i=1;i<=3;i+=1)); do
 	    echo Copying $ATLAS_DBFILE, attempt $i of 3
-	    dq2-get -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
+	    dq2-get -L `cat db_dq2localid.txt`-d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
 	    if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]
 		then
 		mv $ATLAS_DBRELEASE/* .
@@ -267,12 +270,16 @@ then
 	    fi
 	done
     else
-	echo 'ERROR: DQ2Clients with dq2-get are not installed at the
-site - please contact Ganga support mailing list.'
+	echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
 	echo '1'>retcode.tmp
     fi
 
-
+    # Set DQ2_LOCAL_SITE_ID to dataset location
+    if [ -e dq2localid.txt ]
+        then
+        export DQ2_LOCAL_SITE_ID=`cat dq2localid.txt`
+        export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
+    fi
 
 fi
 
@@ -341,7 +348,7 @@ EOF
     if [ -e dq2localid.txt ]
 	then
 	export DQ2_LOCAL_SITE_ID=`cat dq2localid.txt`
-	export DQ2_LOCAL_ID_BACKUP=$DQ2_LOCAL_ID
+	export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
     fi
     
     if [ n$GANGA_SETYPE = n'DCACHE' ]
@@ -366,7 +373,15 @@ EOF
 	then
 	if [ ! -z $DBDATASETNAME ] && [ ! -z $DBFILENAME ]
 	    then
-	    dq2-get -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
+            # Set DQ2_LOCAL_SITE_ID to db dataset location
+	    if [ -e db_dq2localid.py ]
+		then
+		export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
+		chmod +x db_dq2localid.py
+		./db_dq2localid.py
+		export DQ2_LOCAL_SITE_ID=`cat db_dq2localid.txt`
+	    fi
+	    dq2-get -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
 	    if [ -e $DBDATASETNAME/$DBFILENAME ]
 		then
 		mv $DBDATASETNAME/* .
@@ -376,6 +391,13 @@ EOF
 		echo 'ERROR: dq2-get of $DBDATASETNAME failed !'
 		echo '1'>retcode.tmp
 	    fi
+            # Set DQ2_LOCAL_SITE_ID to dataset location
+	    if [ -e dq2localid.txt ]
+		then
+		export DQ2_LOCAL_SITE_ID=`cat dq2localid.txt`
+		export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
+	    fi
+
         fi
     fi
 
