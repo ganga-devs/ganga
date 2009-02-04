@@ -245,7 +245,23 @@ then
         then
         export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
 	chmod +x db_dq2localid.py
-	./db_dq2localid.py
+	if [ ! -z $python32bin ]; then
+	    $python32bin ./db_dq2localid.py; echo $? > retcode.tmp
+	else
+	    if [ -e /usr/bin32/python ]
+                then
+		/usr/bin32/python ./db_dq2localid.py; echo $? > retcode.tmp
+	    else
+		./db_dq2localid.py; echo $? > retcode.tmp
+	    fi
+	fi
+	retcode=`cat retcode.tmp`
+	rm -f retcode.tmp
+	if [ $retcode -ne 0 ]; then
+	    $pybin ./db_dq2localid.py; echo $? > retcode.tmp
+	    retcode=`cat retcode.tmp`
+	    rm -f retcode.tmp
+	fi
         export DQ2_LOCAL_SITE_ID=`cat db_dq2localid.txt`
     fi
 
@@ -253,7 +269,7 @@ then
 	then
 	for ((i=1;i<=3;i+=1)); do
 	    echo Copying $ATLAS_DBFILE, attempt $i of 3
-	    dq2-get -L `cat db_dq2localid.txt`-d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
+	    dq2-get -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
 	    if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]
 		then
 		mv $ATLAS_DBRELEASE/* .
@@ -374,11 +390,28 @@ EOF
 	if [ ! -z $DBDATASETNAME ] && [ ! -z $DBFILENAME ]
 	    then
             # Set DQ2_LOCAL_SITE_ID to db dataset location
+
 	    if [ -e db_dq2localid.py ]
 		then
 		export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
 		chmod +x db_dq2localid.py
-		./db_dq2localid.py
+		if [ ! -z $python32bin ]; then
+		    $python32bin ./db_dq2localid.py; echo $? > retcode.tmp
+		else
+		    if [ -e /usr/bin32/python ]
+			then
+			/usr/bin32/python ./db_dq2localid.py; echo $? > retcode.tmp
+		    else
+			./db_dq2localid.py; echo $? > retcode.tmp
+		    fi
+		fi
+		retcode=`cat retcode.tmp`
+		rm -f retcode.tmp
+		if [ $retcode -ne 0 ]; then
+		    $pybin ./db_dq2localid.py; echo $? > retcode.tmp
+		    retcode=`cat retcode.tmp`
+		    rm -f retcode.tmp
+		fi
 		export DQ2_LOCAL_SITE_ID=`cat db_dq2localid.txt`
 	    fi
 	    dq2-get -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
