@@ -50,7 +50,7 @@ stageInLCG(){
 	echo "found the following replicas in $lfc: $turls"
 	for turl in $turls; do
 	    echo $turl
-	    timeout 1 600 "lcg-cp --vo atlas $turl file:$PWD/$LFN"
+	    timeout 1 800 "lcg-cp -t 600 --vo atlas $turl file:$PWD/$LFN"
 	    # note to self: timeout value (second arg) should be proportional to requested file size...
 	    status=$?
 	    if [ $status -eq 0 ]; then
@@ -59,7 +59,7 @@ stageInLCG(){
 	    fi
 	       #echo "failed to download $turl, looping to next replica"
 	    echo "failed to download $turl, trying with srmv2 token:"
-	    timeout 1 600 "lcg-cp -T srmv2 --vo atlas $turl file:$PWD/$LFN"
+	    timeout 1 800 "lcg-cp -t 600 -T srmv2 --vo atlas $turl file:$PWD/$LFN"
 	    if [ $status -eq 0 ]; then
 		echo "got file $LFN from $lfc, leaving loop"
 		return 0;

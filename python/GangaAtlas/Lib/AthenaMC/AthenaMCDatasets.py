@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.17 2009-01-22 15:58:25 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.18 2009-02-04 14:05:49 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -989,33 +989,36 @@ class AthenaMCOutputDatasets(Dataset):
 ##            dq2_lock.release()
 
     def create_dataset(self, dataset,job):
-        # no need to create container now. can be done in fill()...
-        """ build final output dataset name using dataset and jobid, then create an entry in central DQ2 database"""
-        # first, create the jid suffix. First part is the job id, zfill to make it 6 digits.
-        try:
-            assert job.id
-        except:
-            logger.error("Problem to get job ID. Aborting")
-            raise Exception()
-        suffix=".jid"+string.zfill(job.id,6)
-        logger.debug("job id retrieved is %s",suffix)
-        datasetname=dataset+suffix
-        # then the timestamp: timestamp will be vX, where X is the  number of already existing subdatasets with the same jid
-        dsetlist=[]
-        try:
-            dq2_lock.acquire()
-            dsetlist = dq2.listDatasets('%s*' % datasetname)
-        finally:
-            dq2_lock.release()
-        if len(dsetlist)>0:
-            suffix+="v%d" % len(dsetlist)
-        datasetname=dataset+suffix
+        """ build final output dataset name using dataset. No jobid inserted yet, as it breaks MCTask (AthenaMCInputDataset only scanning one input dataset)"""
+        #        """ build final output dataset name using dataset and jobid, then create an entry in central DQ2 database"""
+        #        # first, create the jid suffix. First part is the job id, zfill to make it 6 digits.
+##        try:
+##            assert job.id
+##        except:
+##            logger.error("Problem to get job ID. Aborting")
+##            raise Exception()
+##        suffix=".jid"+string.zfill(job.id,6)
+##        logger.debug("job id retrieved is %s",suffix)
+##        datasetname=dataset+suffix
+        
+##        # then the timestamp: timestamp will be vX, where X is the  number of already existing subdatasets with the same jid
+##        dsetlist=[]
+##        try:
+##            dq2_lock.acquire()
+##            dsetlist = dq2.listDatasets('%s*' % datasetname)
+##        finally:
+##            dq2_lock.release()
+##        if len(dsetlist)>0:
+##            suffix+="v%d" % len(dsetlist)
+##        datasetname=dataset+suffix
+        datasetname=dataset
         logger.debug("final dataset name is %s",datasetname)
-        try:
-            dq2_lock.acquire()
-            dq2.registerNewDataset(datasetname)
-        finally:
-            dq2_lock.release()
+##        try:
+##            dq2_lock.acquire()
+##            dq2.registerNewDataset(datasetname)
+##        finally:
+##            dq2_lock.release()
+        suffix=""
         return suffix  # return job dataset suffix
     
     def register_dataset_location(self, datasetname, siteID):
@@ -1095,7 +1098,11 @@ class AthenaMCOutputDatasets(Dataset):
             except ValueError:
                 continue
             size = long(size)
-            md5sum = 'md5:'+md5sum
+            #            md5sum = 'md5:'+md5sum
+            adler32='ad:'+md5sum
+            print len(md5sum)
+            if len(md5sum)==36:
+                adler32='md5:'+md5sum
             siteID=siteID.strip() # remove \n from last component
             datasets.append(dataset)
             regline=dataset+","+siteID
@@ -1104,11 +1111,22 @@ class AthenaMCOutputDatasets(Dataset):
                 #continue
             else:
                 reglines.append(regline)
-                logger.debug("Registering dataset %s in %s" % (dataset,siteID))
+                logger.warning("Registering dataset %s in %s" % (dataset,siteID))
                 self.actual_output.append("%s %s" % (lfn,siteID))
+                try:
+                    dq2_lock.acquire()
+                    dsetlist = dq2.listDatasets('%s' % dataset)
+                finally:
+                    dq2_lock.release()
+                if len(dsetlist)==0:
+                    try:
+                        dq2_lock.acquire()
+                        dq2.registerNewDataset(dataset)
+                    finally:
+                        dq2_lock.release()
                 self.register_dataset_location(dataset,siteID)
 
-            self.register_file_in_dataset(dataset,[lfn],[guid], [size],[md5sum])
+            self.register_file_in_dataset(dataset,[lfn],[guid], [size],[adler32])
         return datasets
     
     def fill(self, type=None, name=None, **options ):
@@ -1151,35 +1169,35 @@ class AthenaMCOutputDatasets(Dataset):
                 logger.warning("Missing output file: %s" % missing)
             
         # closing a job: freeze the jid dataset, create container if needed and add to container.
-        if not job.master:
-            # loop over list of datasets from self.register_datasets_details
-            logger.debug("finalizing master job")
-            for subjob in job.subjobs:
-                dsets=subjob.outputdata.store_datasets
-                for dset in dsets:
-                    if dset not in self.store_datasets:
-                        self.store_datasets.append(dset)
-            logger.debug("list of datasets: %s" % str(self.store_datasets))
-            for dset in self.store_datasets:
-                # freeze each dataset, create container if needed then register dataset on container.
-                dq2.freezeDataset(dset)
-                imax=string.find(dset,".jid")
-                containername=dset[:imax]+"/"
-                logger.debug("attempting to create container %s from %s" % (containername,dset))
-                try:
-                    dq2_lock.acquire()
-                    dsetlist = dq2.listDatasets('%s' % containername)
-                finally:
-                    dq2_lock.release()
-                logger.debug("found %s" % str(dsetlist))
-                if len(dsetlist)==0:
-                    logger.debug("creating container: %s", containername)
-                    try:
-                        dq2_lock.acquire()
-                        containerClient.create(containername)
-                    finally:
-                        dq2_lock.release()
-                containerClient.register(containername,[dset])
+##        if not job.master:
+##            # loop over list of datasets from self.register_datasets_details
+##            logger.debug("finalizing master job")
+##            for subjob in job.subjobs:
+##                dsets=subjob.outputdata.store_datasets
+##                for dset in dsets:
+##                    if dset not in self.store_datasets:
+##                        self.store_datasets.append(dset)
+##            logger.debug("list of datasets: %s" % str(self.store_datasets))
+##            for dset in self.store_datasets:
+##                # freeze each dataset, create container if needed then register dataset on container.
+##                dq2.freezeDataset(dset)
+##                imax=string.find(dset,".jid")
+##                containername=dset[:imax]+"/"
+##                logger.debug("attempting to create container %s from %s" % (containername,dset))
+##                try:
+##                    dq2_lock.acquire()
+##                    dsetlist = dq2.listDatasets('%s' % containername)
+##                finally:
+##                    dq2_lock.release()
+##                logger.debug("found %s" % str(dsetlist))
+##                if len(dsetlist)==0:
+##                    logger.debug("creating container: %s", containername)
+##                    try:
+##                        dq2_lock.acquire()
+##                        containerClient.create(containername)
+##                    finally:
+##                        dq2_lock.release()
+##                containerClient.register(containername,[dset])
 #       Output files in the sandbox 
         outputsandboxfiles = job.outputsandbox
         output=[]

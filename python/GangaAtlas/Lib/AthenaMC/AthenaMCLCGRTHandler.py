@@ -211,6 +211,42 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             outloc=app.se_name
         if outsite=="" :
             [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(outloc)
+        # outlfc is now set. Clearing up all inputlfcs lists accordingly:
+        if len(self.lfcs)>0:
+            print self.lfcs
+            for dst in self.lfcs.keys():
+                try:
+                    assert string.find(self.lfcs[dst],outlfc)>-1
+                except:
+                    logger.error("Signal input data not in destination cloud. Aborting %s %s" % (outlfc,str(self.lfcs[dst])))
+                    raise Exception()
+                self.lfcs[dst]=outlfc
+        if len(self.cavern_lfcs)>0:
+            for dst in self.cavern_lfcs.keys():
+                try:
+                    assert string.find(self.cavern_lfcs[dst],outlfc)>-1
+                except:
+                    logger.error("Cavern input data not in destination cloud. Aborting %s %s" % (outlfc,str(self.cavern_lfcs[dst])))
+                    raise Exception()
+                self.cavern_lfcs[dst]=outlfc
+        if len(self.minbias_lfcs)>0:
+            for dst in self.minbias_lfcs.keys():
+                try:
+                    assert string.find(self.minbias_lfcs[dst],outlfc)>-1
+                except:
+                    logger.error("Minbias input data not in destination cloud. Aborting %s %s" % (outlfc,str(self.minbias_lfcs[dst])))
+                    raise Exception()
+                self.minbias_lfcs[dst]=outlfc
+        if len(self.dblfcs)>0:
+            for dst in self.dblfcs.keys():
+                try:
+                    assert string.find(self.dblfcs[dst],outlfc)>-1
+                except:
+                    logger.error("DBRelease input data not in destination cloud. Aborting %s %s" % (outlfc,str(self.dblfcs[dst])))
+                    raise Exception()
+                self.dblfcs[dst]=outlfc
+         
+        
 
         # srmv2 sites special treatment: the space token has been prefixed to the outputlocation and must be removed now:
         imin=string.find(outputlocation,"token:")

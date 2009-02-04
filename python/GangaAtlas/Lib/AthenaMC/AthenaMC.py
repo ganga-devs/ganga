@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.9 2009-01-16 14:09:22 ebke Exp $
+# $Id: AthenaMC.py,v 1.10 2009-02-04 14:05:49 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -231,7 +231,12 @@ class AthenaMC(IApplication):
                assert self._getRoot().splitter._name=="AthenaMCSplitterJob"
            except AssertionError:
                logger.error('If you want to use a job splitter with the AthenaMC application, you have to use AthenaMCSplitterJob')
-               raise
+               raise Exception()
+           try:
+               assert self._getRoot().splitter.numsubjobs < 200
+           except AssertionError:
+               logger.error("You are requesting too many subjobs. The AthenaMC module is only for small scale production. Aborting.")
+               raise Exception()
 
        # enforce the use of AthenaMCOutputDataset
        try:
@@ -327,6 +332,9 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.9  2009/01/16 14:09:22  ebke
+# Added dryrun functionality to AthenaMC
+#
 # Revision 1.8  2009/01/15 09:50:42  ebke
 # Fix for firstevent in AthenaMC
 #

@@ -79,7 +79,10 @@ stageOutLCG(){
     echo "TIMEOUT set to $timelim"
 
     lfc-mkdir -p /grid/atlas/$lcn
-    stageoutcmd="lcg-cr --vo atlas -v $stflag -d $DEST -l $LFN $guidflag file:$PWD/$file"
+    let lcgtm=$timelim/10*8
+    echo "LCG TIMEOUT set to $lcgtm"
+
+    stageoutcmd="lcg-cr -t $lcgtm --vo atlas -v $stflag -d $DEST -l $LFN $guidflag file:$PWD/$file"
     timeout 1 $timelim $stageoutcmd
     status=$?
     if [ $status -ne 0 -a ! -z "$BACKUP" ]; then
@@ -87,7 +90,7 @@ stageOutLCG(){
         if [ ! -z "$OUTLFC2" ]; then
            export LFC_HOST=$OUTLFC2
         fi
-	stageoutcmd="lcg-cr --vo atlas -v $bstflag -d $BACKUP -l $LFN $guidflag file:$PWD/$file"
+	stageoutcmd="lcg-cr -t $lcgtm --vo atlas -v $bstflag -d $BACKUP -l $LFN $guidflag file:$PWD/$file"
 	timeout 1 $timelim $stageoutcmd
 	status=$?
      fi
@@ -102,6 +105,7 @@ stageOutLCG(){
     export dataset=`echo $lcn | sed -e 's:/:\.:g'`
     filesize=`ls -l $file | awk '{ print $5}'`
     md5sumfile=`md5sum $file | awk '{ print $1}'`
+    adler32=`adler32 $file`
 
     echo $guid >> output_guids
     echo $OUTSITE >> output_location
@@ -109,7 +113,7 @@ stageOutLCG(){
 	echo "file was not registered in lfc, aborting"
 	return 113
     fi
-    echo "$dataset,$file.$TIMESTAMP.$OUTPUT_JOBID,$guid,$filesize,$md5sumfile,$OUTSITE" >> output_data
+    echo "$dataset,$file.$TIMESTAMP.$OUTPUT_JOBID,$guid,$filesize,$adler32,$OUTSITE" >> output_data
     return 0;
 }
 stageOutNG(){
