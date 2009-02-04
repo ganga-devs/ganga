@@ -67,7 +67,7 @@ class LHCbDataset(Dataset):
              '(mdf files) it should be set to "SVC=\'LHCb::MDFSelector\'"'
     schema['datatype_string'] = SimpleItem(defvalue=defvaluestr, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping system.'
-    schema['depth'] = SimpleItem(defvalue = 0 , doc=docstr)
+    schema['depth'] = SimpleItem(defvalue = 1 , doc=docstr)
 
     _schema = Schema(Version(2,3), schema)
     _category = 'datasets'

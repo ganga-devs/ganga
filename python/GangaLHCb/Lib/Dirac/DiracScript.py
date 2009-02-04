@@ -58,7 +58,8 @@ class DiracScript:
         self.append( 'setInputData(' +str(indata) + ')')
         
   def ancestordepth(self, depth):
-    if depth:
+    from GangaLHCb.Lib.LHCbDataset import LHCbDataset
+    if depth != LHCbDataset._schema.getDefaultValue('depth'):
         self.append('setAncestorDepth(%d)' % depth)
 
   def outputdata(self,dataset,SE=None):
