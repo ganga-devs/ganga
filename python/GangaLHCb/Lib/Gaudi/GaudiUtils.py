@@ -2,8 +2,8 @@
 '''Utility methods used by various classes in GangaLHCb.Lib.Gaudi.'''
 
 __author__ = 'Greig A Cowan, Ulrik Egede, Andrew Maier, Mike Williams'
-__date__ = "$Date: 2009-01-29 11:42:27 $"
-__revision__ = "$Revision: 1.7 $"
+__date__ = "$Date: 2009-02-04 18:03:52 $"
+__revision__ = "$Revision: 1.8 $"
 
 import os
 import os.path
@@ -163,9 +163,10 @@ def get_user_platform(env=os.environ):
 def gen_catalog(dataset,site):
   from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
   lfns = dataset_to_lfn_string(dataset)
+  depth = dataset.depth
   tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
-  cmd = "os.system('dirac-lhcb-generate-catalog -n %s -f %s %s')" \
-            % (site,tmp_xml.name,lfns)
+  cmd = "os.system('dirac-lhcb-generate-catalog -d %d -n %s -f %s %s')" \
+            % (depth,site,tmp_xml.name,lfns)
 
   #logger.info('About to generate XML catalog, this may take a while...')
   if diracwrapper(cmd).returnCode != 0:
