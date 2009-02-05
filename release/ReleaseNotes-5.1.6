@@ -24,11 +24,36 @@ ganga/python/Ganga/GPIDev/Credentials
 
 
 --------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* reusing DQ2 dataset for oversized inputsandboxes: https://savannah.cern.ch/bugs/?43502
+* introducing AllowZippedISB=false in glite JDL to avoid the glite WMS bug causing long sleeping
+jobs on the WN: https://savannah.cern.ch/bugs/?46618
+* other bug fixes:
+  - https://savannah.cern.ch/bugs/?45071
+
+
+--------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 Athena:
 -------
 * Fixes to download the DBRelease only from the local storage
+* Fix bug #46621: Remove use_datasetname from DQ2OutputDatatset
+* Fix feature request #46520: change md5 to adler32 for DQ2 output
+
+AthenaMC:
+---------
+- AthenaMCDatasets.py: 
+  * added protection against cross-cloud replication of input data
+  * curb proliferation of empty datasets by moving dataset creation to 
+    the end of the job (fill() method).
+  * rolled back output dataset containers and job subdatasets, as it 
+    breaks the Task package.
+- staging scripts:
+  * in/out: enforced use of built-in timeout in lcg tools on top of 
+    external timeout mecanism.
+  * out: added support for adler32 checksum
 
 Tasks:
 ------
@@ -42,6 +67,8 @@ Small fixes
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
-Adds a new method getOutputDataLFN to the Dirac backend
+* Adds depth parameter to LHCbDataset for getting access to file ancesters.
+* Implements support for ancestor files for Gaudi jobs on the Local, Interactive, Batch and Dirac
+backends.
 
 **************************************************************************************************************
