@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.30 2009-01-19 11:25:10 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.31 2009-02-05 09:59:06 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -665,6 +665,50 @@ def hexify(str):
     return r
 
 
+def __adler32(filename):
+    import zlib
+    #adler starting value is _not_ 0L
+    adler=1L
+
+    try:
+        openFile = open(filename, 'rb')
+
+        for line in openFile:
+            adler=zlib.adler32(line, adler)
+
+    except:
+        raise Exception('Could not get checksum of %s'%filename)
+
+    openFile.close()
+
+    #backflip on 32bit
+    if adler < 0:
+        adler = adler + 2**32
+
+    return str('%08x'%adler) #return as padded hexified string
+
+
+def getLocalFileMetadata_adler32(file):
+    # check file exists
+    if not os.access(file,os.R_OK):
+        return -1,-1
+    size=os.stat(file)[6]
+    # get adler32
+    try:
+        adler32 =  __adler32(file)
+    except MemoryError:
+        cmd = 'adler32 %s' % file
+        rc, out = commands.getstatusoutput(cmd)
+        if rc != 0:
+            print 'ERROR during execution of %s' %cmd
+            print rc, out
+            adler32 = -1
+        else:
+            adler32 = out.split('')[-1]
+        
+    return size, adler32
+
+
 def getLocalFileMetadata(file):
     # check file exists
     if not os.access(file,os.R_OK):
@@ -734,7 +778,7 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
         return -1, -1, -1
 
     # size and md5sum
-    size, md5sum = getLocalFileMetadata(filename)
+    size, md5sum = getLocalFileMetadata_adler32(filename)
     
     return guid, size, md5sum
 

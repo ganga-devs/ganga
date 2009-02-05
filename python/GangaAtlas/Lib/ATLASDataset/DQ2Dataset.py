@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.18 2009-02-05 09:50:53 dvanders Exp $
+# $Id: DQ2Dataset.py,v 1.19 2009-02-05 10:00:36 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -973,7 +973,10 @@ class DQ2OutputDataset(Dataset):
             except ValueError:
                 continue
             size = long(size)
-            md5sum = 'md5:'+md5sum
+            adler32='ad:'+md5sum
+            if len(md5sum)==36:
+                adler32='md5:'+md5sum
+            
             siteID=siteID.strip() # remove \n from last component
             regline=dataset+","+siteID
             if regline in reglines:
@@ -1003,7 +1006,7 @@ class DQ2OutputDataset(Dataset):
                         dq2_lock.release()
 
                         
-            self.register_file_in_dataset(dataset,[lfn],[guid],[size],[md5sum])
+            self.register_file_in_dataset(dataset,[lfn],[guid],[size],[adler32])
 
     def fill(self, type=None, name=None, **options ):
         """Determine outputdata and outputsandbox locations of finished jobs
@@ -1217,6 +1220,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.18  2009/02/05 09:50:53  dvanders
+#Remove DQ2OutputDataset.use_datasetname
+#
 #Revision 1.17  2009/02/02 13:16:54  mslater
 #Small fix for odd dq2-get issue
 #
