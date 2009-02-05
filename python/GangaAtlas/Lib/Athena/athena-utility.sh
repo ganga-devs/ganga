@@ -288,10 +288,14 @@ stage_inputs () {
     MY_PYTHONPATH_ORG=$3
 
     # Unpack dq2info.tar.gz
-    #if [ -e dq2info.tar.gz ]; then
-    #    tar xzf dq2info.tar.gz
-    #fi
-    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+        then
+        source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+    else
+	if [ -e dq2info.tar.gz ]; then
+	    tar xzf dq2info.tar.gz
+	fi
+    fi
 
     if [ -e input_files ]; then
 	echo "Preparing input data ..."
