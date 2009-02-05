@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-checkout,v 1.1 2008-07-17 16:41:39 moscicki Exp $
+# $Id: ganga-checkout,v 1.2 2009-02-05 07:28:24 gangage Exp $
 ################################################################################
 
 import os,sys
@@ -12,7 +12,7 @@ import getopt
 
 def usage():
     print '''
-usage: ganga-checkout [-d CVSROOT] [-f PACKAGES|-v VERSION] [--platf=slc3_gcc323] [--export|--checkout] topdir
+usage: ganga-checkout [-d CVSROOT] [-f PACKAGES|-v VERSION] [--platf=slc4_ia32_gcc34] [--export|--checkout] topdir
 
 Checkout ganga release as defined in the PACKAGES file to the topdir. This is the release helper tool.
 
@@ -26,8 +26,8 @@ Exactly one option -f PACKAGES or -v VERSION must be provided:
 
 dryrun = 0
 cvscmd = 'co'
-cvsroot = ':kserver:isscvs.cern.ch:/local/reps/ganga'
-platf = 'slc3_gcc323'
+cvsroot = ':gserver:isscvs.cern.ch:/local/reps/ganga'
+platf = 'slc4_ia32_gcc34'
 
 def shellcmd(cmd):
     print 'doing:',cmd

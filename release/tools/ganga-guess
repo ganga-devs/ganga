@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-guess,v 1.1 2008-07-17 16:41:39 moscicki Exp $
+# $Id: ganga-guess,v 1.2 2009-02-05 07:28:24 gangage Exp $
 ################################################################################
 
 import os.path, sys, os
@@ -23,7 +23,7 @@ def usage(error=None):
 # defaults if no command line arguments...
 prefixStr = '/afs/cern.ch/sw/ganga/install'
 versionStr = None
-platfStr = 'slc3_gcc323'
+platfStr = 'slc4_ia32_gcc34'
 compStr = None
 
 if len(sys.argv) < 2:
