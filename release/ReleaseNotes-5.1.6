@@ -1,0 +1,47 @@
+**************************************************************************************************************
+5.1.6 (2009/2/5)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+bugfixes:
+
+- bug #45679: j.application.transition_update("removed") is not called on j.remove()
+- bug #44934: Didn't create .gangarc on first usage
+- bug #43249: jobs.remove(10) works, removes all jobs
+
+added testecase for bug #40399: Problems with GenericSplitter
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/GPIDev/Credentials
+--------------------------------------------------------------------------------------------------------------
+* Modified GridProxy.identity() to take argument "safe", with default value "False"
+   safe = False: return identity exactly as obtained from proxy
+   safe = True:  return identity after stripping out non-alphanumeric characters
+   => Change made following discussions in relation to Savannah report #44330
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Fixes to download the DBRelease only from the local storage
+
+Tasks:
+------
+Small fixes
+
+test:
+-----
+Small fixes
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Adds a new method getOutputDataLFN to the Dirac backend
+
+**************************************************************************************************************
