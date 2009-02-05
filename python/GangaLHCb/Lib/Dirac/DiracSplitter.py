@@ -2,8 +2,8 @@
 
 ''' Splitter for DIRAC jobs. '''
 
-__date__ = "$Date: 2008-11-13 09:56:54 $"
-__revision__ = "$Revision: 1.1 $"
+__date__ = "$Date: 2009-02-05 09:28:05 $"
+__revision__ = "$Revision: 1.2 $"
 
 import string
 from GangaLHCb.Lib.LHCbDataset import *
@@ -97,10 +97,12 @@ class _diracSplitter(object):
         self.maxFiles = maxFiles
         self.ignoremissing = ignoremissing
 
-    def _copyToDataSet(self, data, replica_map, date = ''):
+    def _copyToDataSet(self, data, replica_map, date = '',\
+                       depth = LHCbDataset._schema.getDefaultValue('depth')):
 
         dataSet = LHCbDataset()
         dataSet.cache_date = date
+        dataSet.depth = depth
         for d in data:
             lhcbFile = string_datafile_shortcut(d.name,None)
             lhcbFile.replicas = replica_map[d.name]
@@ -114,7 +116,8 @@ class _diracSplitter(object):
         
         if data_set is None:
             data_set = LHCbDataset()
-            data_set.datatype_string=inputs.datatype_string
+            data_set.datatype_string = inputs.datatype_string
+            data_set.depth = inputs.depth
             data_set.files = inputs.files
 
         if data_set.cacheOutOfDate():
@@ -124,6 +127,7 @@ class _diracSplitter(object):
                         (estimated_query_time % 60))
         data_set.updateReplicaCache()
         cache_date = data_set.cache_date
+        depth = data_set.depth
 
         #make a map of replicas
         bad_file_list = []
@@ -185,7 +189,7 @@ class _diracSplitter(object):
                     end = start + self.filesPerJob
                     #add a sublist of files
                     result.append(self._copyToDataSet(files[k][start:end],
-                                                      bulk,cache_date))
+                                                      bulk,cache_date,depth))
                     logger.debug('Added a separate job with the files ' + \
                                  '%s - sites are %s.',str(files[k][start:end]),
                                  str(k))
@@ -268,7 +272,7 @@ class _diracSplitter(object):
             logger.debug('Merge list is now %s', merge_list)
             #append
             logger.debug('Adding the subjob %s', added)
-            result.extend([self._copyToDataSet(a,bulk,cache_date) \
+            result.extend([self._copyToDataSet(a,bulk,cache_date,depth) \
                            for a in added])
             logger.debug('We now have %d subjobs.',len(result))
 
@@ -277,7 +281,7 @@ class _diracSplitter(object):
             if not len(merge_list[k]): continue
             
             assert(len(merge_list[k]) < self.filesPerJob)
-            result.append(self._copyToDataSet(merge_list[k],bulk,cache_date))
+            result.append(self._copyToDataSet(merge_list[k],bulk,cache_date,depth))
 
         unique_files = []
         for r in result:

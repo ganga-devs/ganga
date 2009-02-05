@@ -2,8 +2,8 @@ from __future__ import division
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Splitters for Gaudi applications in LHCb.'''
 
-__date__ = "$Date: 2008-12-10 14:32:42 $"
-__revision__ = "$Revision: 1.10 $"
+__date__ = "$Date: 2009-02-05 09:28:05 $"
+__revision__ = "$Revision: 1.11 $"
 
 import time
 import string
@@ -49,6 +49,7 @@ class SplitByFiles(ISplitter):
         self._extra = job.application.extra
         inputs = LHCbDataset()
         inputs.datatype_string=self._extra.inputdata.datatype_string
+        inputs.depth = self._extra.inputdata.depth
         if int(self.maxFiles) == -1:
             inputs.files=self._extra.inputdata.files[:]
             logger.info("Using all %d input files for splitting" % len(inputs))
@@ -125,6 +126,7 @@ class _simpleSplitter(object):
             #add a sublist of files
             dataset = LHCbDataset()
             dataset.datatype_string=inputs.datatype_string
+            dataset.depth=inputs.depth
             dataset.files = inputs.files[start:end]
             dataset.cache_date = inputs.cache_date
             result.append(dataset)
@@ -132,6 +134,7 @@ class _simpleSplitter(object):
         if end < (inputs_length):
             dataset = LHCbDataset()
             dataset.datatype_string=inputs.datatype_string
+            dataset.depth=inputs.depth
             dataset.files = inputs.files[end:]
             dataset.cache_date = inputs.cache_date
             result.append(dataset)
