@@ -35,7 +35,7 @@
 % for the whole article with \linenumbers.
 \usepackage{lineno}
 
-\linenumbers
+%\linenumbers
 
 \def\lhcb {LHC{\em b\/}\xspace}
 \def\dirac{DIRAC\xspace}
@@ -59,6 +59,7 @@
 
 
 \begin{document}
+
 \begin{frontmatter}
 
 % Title, authors and addresses
@@ -80,10 +81,12 @@
 
 %\title{Ganga -- a tool for computational-task\\
 %management and easy access to \grid resources}
+
 %~\vspace{-1.5\baselineskip}
 
-\title{\large{Ganga: a tool for computational-task
-management and easy access to \grid resources}}
+%\large{}
+
+\title{Ganga: a tool for computational-task management and easy access to \grid resources}
 
 %~\vspace{-1.5\baselineskip}
 
@@ -100,7 +103,8 @@ management and easy access to \grid resources}}
 \author[a:Munich]{J.~Elmsheuser},
 \author[a:Cambridge]{K.~Harrison},
 \author[a:Lancaster]{R.W.L.~Jones},
-\author[a:CERN]{H.C.~Lee\thanksref{HurngChun}},
+%\author[a:NIKHEF]{H.C.~Lee},%\thanksref{HurngChun}},
+\author[a:NIKHEF]{H.C.~Lee,\thanksref{HurngChun}},
 \author[a:CERN]{D.~Liko},
 \author[a:CERN]{A.~Maier},
 \author[a:CERN]{J.T.~Mo{\'s}cicki\corauthref{cor1}},
@@ -121,14 +125,14 @@ management and easy access to \grid resources}}
 \address[a:Imperial]{Imperial College London, London, United Kingdom}
 \address[a:Munich]{Ludwig-Maximilians-Universit\"{a}t, Munich, Germany}
 \address[a:Lancaster]{Lancaster University, Lancaster, United Kingdom}
+\address[a:NIKHEF]{NIKHEF, Amsterdam, The Netherlands}
 \address[a:CERN]{CERN, Geneva, Switzerland}
 \address[a:STFC]{Science \& Technology Facilities Council, United Kingdom}
 \address[a:Oxford]{University of Oxford, Oxford, United Kingdom}
 \address[a:Birmingham]{University of Birmingham, Birmingham, United Kingdom}
 \address[a:Oslo]{University of Oslo, Oslo, Norway}
 
-\thanks[HurngChun]{On leave from Academia Sinica Grid Computing Centre (ASGC),
-  Taiwan.}
+\thanks[HurngChun]{On leave from University of Insbruck, Austria.}
 
 \begin{abstract}
   We present the computational task-management tool \ganga, which allows for
@@ -182,7 +186,7 @@ Grid computing \sep Data mining \sep Task management \sep User interface \sep In
 %ADD RELEASE PROCESS?
 %ADD SSH?
 %ADD DIANE reference for low latency
-
+\begin{linenumbers}
 \section{Introduction}
 \label{sec:intro}
 \ganga is an easy-to-use frontend for the configuration, execution, and
@@ -1558,6 +1562,6 @@ neuraminidase},
 % \end{subbibitems}
 
 \end{thebibliography}
-
+\end{linenumbers}
 \end{document}
 
