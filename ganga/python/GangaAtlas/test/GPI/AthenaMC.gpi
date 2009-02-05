@@ -1,0 +1,97 @@
+# testing structure for AthenaMC application
+# reproduce the ganga 4.2.7 tutorial (Edimburg 1-2 February 2007)
+# this test-case is CERN AFS dependent since it use setup files located in /afs/cern.ch/sw/ganga/install/TEST/athenaMC_testing_data
+
+import re,sys,popen2,time,getpass
+
+import os
+
+#transform_archive_path = '/tmp/ganga_athenaMC_testing_data-%s/AtlasProduction_12_0_4_1_noarch.tar.gz' % getpass.getuser()
+
+evgen=Job()
+evgen.application=AthenaMC()
+evgen.application.random_seed='1102362401'
+evgen.application.evgen_job_option='DC3.007004.singlepart_e_Et40.py'
+evgen.application.production_name='tutorial'   
+evgen.application.process_name='single_e_Et40'
+evgen.application.run_number='000001'
+evgen.application.firstevent=1
+evgen.application.number_events_job=30
+evgen.application.atlas_release='12.0.4.1'
+#evgen.application.transform_archive=transform_archive_path
+#evgen.application.transform_archive='AtlasProduction_12_0_4_1_noarch.tar.gz'
+evgen.application.mode='evgen'
+evgen.application.se_name='UKI-SOUTHGRID-CAM-HEP_USERDISK'
+evgen.backend=LCG()
+evgen.backend.middleware='GLITE'
+evgen.outputdata=AthenaMCOutputDatasets()
+
+assert (evgen.submit()==True)
+
+simul=Job()
+simul.application=AthenaMC()
+simul.application.random_seed='1102362401'
+simul.application.production_name='tutorial'   
+simul.application.process_name='single_e_Et40'
+simul.application.run_number='000001'
+simul.application.firstevent=1
+simul.application.number_events_job=1
+simul.application.atlas_release='12.0.4'
+#simul.application.transform_archive=transform_archive_path
+simul.application.transform_archive='AtlasProduction_12_0_4_1_noarch.tar.gz'
+simul.application.mode='simul'
+simul.application.geometryTag = 'ATLAS-DC3-05' 
+simul.inputdata=AthenaMCInputDatasets()
+simul.inputdata.DQ2dataset='users.fredericbrochu.ganga.datafiles.testprod.000001.evgen.test'
+simul.inputdata.datasetType='DQ2'
+simul.inputdata.number_events_file=3
+simul.backend=LCG()
+simul.backend.middleware='GLITE'
+simul.outputdata=AthenaMCOutputDatasets()
+simul.splitter=AthenaMCSplitterJob()
+simul.splitter.numsubjobs = 3
+#simul.splitter.nsubjobs_inputfile=3
+#
+assert(simul.submit()==True)
+
+reco=Job()
+reco.application=AthenaMC()
+reco.application.random_seed='1102362401'
+reco.application.production_name='tutorial'   
+reco.application.process_name='single_e_Et40'
+reco.application.run_number='000001'
+reco.application.firstevent=1
+reco.application.number_events_job=1
+reco.application.atlas_release='12.0.4.1'
+#reco.application.transform_archive=transform_archive_path
+#reco.application.transform_archive='AtlasProduction_12_0_4_1_noarch.tar.gz'
+reco.application.mode='recon'
+#reco.application.se_name='CAM'
+reco.inputdata=AthenaMCInputDatasets()
+reco.inputdata.DQ2dataset='users.fredericbrochu.ganga.datafiles.tutorial.000001.single_e_Et40.simul.RDO'
+reco.inputdata.datasetType='DQ2'
+reco.inputdata.number_events_file=1
+#reco.inputdata.n_infiles_job=1
+reco.backend=LCG()
+reco.backend.middleware='GLITE'
+reco.outputdata=AthenaMCOutputDatasets()
+reco.splitter=AthenaMCSplitterJob()
+reco.splitter.numsubjobs = 3
+
+#
+assert(reco.submit()==True)
+
+# more tests: checking that the jdlfiles are correctly formed.
+#evgen_jdlfile=open(evgen.inputdir+"/__jdlfile__")
+#jdllines=evgen_jdlfile.readlines()
+#for lines in jdllines:
+#perform all sort of checks line by line...
+os.system("cat %s/__jdlfile__" % evgen.inputdir )
+os.system("cat %s/__jdlfile__" % simul.subjobs[0].inputdir)
+os.system("cat %s/__jdlfile__" % reco.subjobs[0].inputdir)
+
+
+# removing all jobs
+evgen.remove()
+simul.remove()
+reco.remove()

@@ -1,0 +1,49 @@
+from GangaLHCb.Lib.Dirac.DiracShared import *
+
+assert getPickleFileName(), 'Function called without error'
+
+fName = getPickleFileName()
+result = {'OK':True}
+assert fName == storeResult(result), 'Result is stored and the filename returned'
+
+assert result == getResult(), 'Must correctly reload the result'
+assert getResult() is None, 'File no longer exists and so must return None'
+
+assert getGenericRunScript(), 'Must return something sensible'
+
+
+# test the directory listing - all of this is savannah 44414
+import os,tempfile
+
+def writeFile(fname):
+    try:
+        f = file(fname,'w')
+        f.write('foo')
+    finally:
+        f.close()
+
+tmpdir = tempfile.mktemp()
+os.mkdir(tmpdir)
+assert os.path.exists(tmpdir), 'Must create directory'
+file1 = 'foo.txt'
+file1name = os.path.join(tmpdir,file1)
+writeFile(file1name)
+assert os.path.exists(file1name), 'first file must exist'
+dir1 = 'bar'
+dir1name = os.path.join(tmpdir,dir1)
+os.mkdir(dir1name)
+file2 = 'whatever.dat'
+file2name = os.path.join(dir1name,file2)
+writeFile(file2name)
+
+def testDirList(dirlist):
+    print dirlist1
+    assert len(dirlist1) == 2, 'there are only two files'
+    assert file1name in dirlist, 'Must contain "%s"' % file1name
+    assert file2name in dirlist, 'Must contain "%s"' % file2name
+
+dirlist1 = listdirs(tmpdir)
+testDirList(dirlist1)
+#must get the same thing the second time
+dirlist2 = listdirs(tmpdir)
+testDirList(dirlist2)
