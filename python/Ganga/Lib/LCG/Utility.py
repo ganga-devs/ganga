@@ -1,5 +1,11 @@
 #!/usr/bin/env python
-import re, md5, time, random
+import re
+import md5
+import time
+import random
+import gzip
+from Ganga.Utility.logging import getLogger
+from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
 def get_uuid(*args):
     ''' Generates a universally unique ID. '''
@@ -68,10 +74,26 @@ def filter_string_list(allList, filterList, type=0):
 
     return matchedDict.keys()
 
-def get_md5sum(fname):
+def get_md5sum(fname, ignoreGzipTimestamp=False):
     ''' Calculates the MD5 checksum of a file '''
 
-    f = open(fname, 'rb')
+    profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
+    profiler.start()
+
+
+    ## if the file is a zipped format (determined by extension),
+    ## try to get checksum from it's content. The reason is that
+    ## gzip file contains a timestamp in the header, which causes
+    ## different md5sum value even the contents are the same.
+    re_gzipfile = re.compile('.*[\.tgz|\.gz].*$')
+
+    f = None
+
+    if ignoreGzipTimestamp and re_gzipfile.match(fname):
+        f = gzip.open(fname,'rb')
+    else:
+        f = open(fname, 'rb')
+
     m = md5.new()
     while True:
         d = f.read(8096)
@@ -79,4 +101,9 @@ def get_md5sum(fname):
             break
         m.update(d)
     f.close()
-    return m.hexdigest()
+
+    md5sum = m.hexdigest()
+
+    profiler.check('md5sum calculation time')
+
+    return md5sum

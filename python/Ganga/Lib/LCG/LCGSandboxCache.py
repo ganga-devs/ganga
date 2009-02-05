@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCGSandboxCache.py,v 1.4 2009-02-04 17:01:02 hclee Exp $
+# $Id: LCGSandboxCache.py,v 1.5 2009-02-05 19:35:36 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -9,7 +9,14 @@
 # ATLAS/ARDA
 #
 # Date:   January 2007
-import os, os.path, sys, re, tempfile, time, random, md5
+import os
+import os.path
+import sys
+import re
+import tempfile
+import time
+import random
+import md5
 from types import *
 from urlparse import urlparse
 
@@ -107,7 +114,8 @@ class LCGSandboxCache(GridSandboxCache):
                 fsize    = os.path.getsize( urlparse(file)[2] )
                 fname    = os.path.basename( urlparse(file)[2] )
                 fpath    = os.path.abspath( urlparse(file)[2] )
-                md5sum   = get_md5sum(fpath)
+
+                md5sum   = get_md5sum(fpath, ignoreGzipTimestamp=True)
                 nbstream = int((fsize*1.0)/(10.0*1024*1024*1024))
           
                 if nbstream < 1: nbstream = 1 # min stream
@@ -244,7 +252,7 @@ class LCGSandboxCache(GridSandboxCache):
 
         ## update the local index file
         del_files = runner.getResults().values()
-        all_files = self.get_uploaded_files()
+        all_files = self.get_cached_files()
 
         left_files = []
         for f in all_files:
@@ -254,33 +262,6 @@ class LCGSandboxCache(GridSandboxCache):
         self.impl_bookkeepUploadedFiles(left_files, append=False)
 
         return del_files
-
-    def impl_parseIndexFile(self, opts=''):
-        """
-        implementation for parsing the index file used for bookkeeping the uploaded files. 
-        """
-
-        files = [] 
-
-        if not os.path.exists(self.index_file):
-            logger.warning('file not found: %s' % self.index_file)
-        else:
-            f = open(self.index_file,'r')
-            lines = map(lambda x:x.strip(), f.readlines())
-            f.close()
-
-            for l in lines:
-                info   = l.split('\t')
-                try:
-                    guid   = info[0]
-                    lfc    = info[1]
-                    fpath  = info[2]
-                    md5sum = info[3]
-                    files.append(LCGFileIndex(guid, lfc, fpath, md5sum))
-                except IndexError, e:
-                    pass
-
-        return files 
 
     # For GUID protocol
     def __lfc_mkdir__(self, shell, path, mode='775'):

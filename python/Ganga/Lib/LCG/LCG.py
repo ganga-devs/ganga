@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.28 2009-02-05 09:00:40 hclee Exp $
+# $Id: LCG.py,v 1.29 2009-02-05 19:35:36 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -10,7 +10,15 @@
 #
 # Date:   August 2005
 
-import os, sys, md5, re, tempfile, time, errno, socket, math
+import os
+import sys
+import md5
+import re
+import tempfile
+import time
+import errno
+import socket
+import math
 from types import *
 from urlparse import urlparse
 
@@ -198,8 +206,6 @@ class LCG(IBackend):
             for sj in job.subjobs:
                 sj.backend.sandboxcache.dataset_name = self.sandboxcache.dataset_name
 
-        self.sandboxcache.index_file = os.path.join(job.inputdir,'__iocache__')
-
         return True
 
     def __check_and_prestage_inputfile__(self, file):
@@ -231,14 +237,12 @@ class LCG(IBackend):
 
         ## getting the uploaded file list from the master job
         if job.master:
-            if os.path.exists(job.master.backend.sandboxcache.index_file):
-                uploadedFiles = job.master.backend.sandboxcache.get_uploaded_files()
+            uploadedFiles += job.master.backend.sandboxcache.get_cached_files()
 
         ## set and get the $LFC_HOST for uploading oversized sandbox
         self.__setup_sandboxcache__(job)
 
-        if os.path.exists(self.sandboxcache.index_file):
-            uploadedFiles += self.sandboxcache.get_uploaded_files()
+        uploadedFiles += self.sandboxcache.get_cached_files()
         
         ## in general, take the one from the local grid shell environment.
         lfc_host = grids[self.sandboxcache.middleware.upper()].shell.env['LFC_HOST']
@@ -251,12 +255,11 @@ class LCG(IBackend):
 
         idx['lfc_host'] = lfc_host
 
-
         abspath = os.path.abspath(file)
         fsize   = os.path.getsize(abspath)
         if fsize > config['BoundSandboxLimit']:
 
-            md5sum  = get_md5sum(abspath)
+            md5sum  = get_md5sum(abspath, ignoreGzipTimestamp=True)
 
             doUpload = True
             for uf in uploadedFiles:
@@ -271,7 +274,7 @@ class LCG(IBackend):
                 logger.warning('The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file,config['BoundSandboxLimit']) )
 
                 if self.sandboxcache.upload( [abspath] ):
-                    remote_sandbox = self.sandboxcache.get_uploaded_files()[-1]
+                    remote_sandbox = self.sandboxcache.get_cached_files()[-1]
                     idx['remote'][remote_sandbox.name] = remote_sandbox.id
                 else:
                     logger.error('Oversized sandbox not successfully pre-staged')
@@ -1902,6 +1905,10 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.28  2009/02/05 09:00:40  hclee
+# add AllowZippedISB=false to glite JDL
+#  - workaround for WMS bug: https://savannah.cern.ch/bugs/index.php?32345
+#
 # Revision 1.27  2009/02/04 17:01:02  hclee
 # enhancement for bug: https://savannah.cern.ch/bugs/?43502
 #

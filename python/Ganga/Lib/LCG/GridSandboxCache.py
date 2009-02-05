@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridSandboxCache.py,v 1.5 2009-02-04 17:01:02 hclee Exp $
+# $Id: GridSandboxCache.py,v 1.6 2009-02-05 19:35:36 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -9,7 +9,16 @@
 # ATLAS/ARDA
 #
 # Date:   January 2007
-import os, os.path, sys, re, tempfile, time, random, md5
+import os
+import os.path
+import sys
+import re
+import tempfile
+import time
+import random
+import md5
+
+from sets import Set
 from types import *
 from urlparse import urlparse
 
@@ -59,18 +68,18 @@ class GridSandboxCache(GangaObject):
     '''Helper class for upladong/downloading/deleting sandbox files on a grid cache. 
     '''
  
-    _schema = Schema(Version(1,0), {
+    _schema = Schema(Version(1,1), {
        'vo'         : SimpleItem(defvalue='dteam', hidden=1, copyable=0, doc='the Grid virtual organization'),
        'middleware' : SimpleItem(defvalue='EDG', hidden=1, copyable=1, doc='the LCG middleware type'),
        'protocol'   : SimpleItem(defvalue='', copyable=1, doc='file transfer protocol'),
        'max_try'    : SimpleItem(defvalue=1, doc='max. number of tries in case of failures'),
        'timeout'    : SimpleItem(defvalue=180, copyable=0, hidden=1, doc='transfer timeout in seconds'),
-       'index_file' : SimpleItem(defvalue='', copyable=0, hidden=1, doc='the file for keepping the index of files on the grid')
+       'uploaded_files' : ComponentItem('GridFileIndex', defvalue=[], sequence=1, protected=1, copyable=0, hidden=1, doc='a repository record for the uploaded files')
     })
  
     _category = 'GridSandboxCache'
     _name = 'GridSandboxCache'
-    _exportmethods = ['upload', 'download', 'delete', 'get_uploaded_files', 'cleanup' ] 
+    _exportmethods = ['upload', 'download', 'delete', 'get_cached_files', 'list_cached_files', 'cleanup']
 
     logger = getLogger()
 
@@ -96,10 +105,6 @@ class GridSandboxCache(GangaObject):
                 paths.append('file://%s' % f)
             else:
                 logger.warning('unknown file expression: %s' % repr(f))
-
-        ## check or create the index file for local bookkeeping
-        if not self.index_file:
-            self.index_file = tempfile.mkstemp(suffix='.idx', prefix='_ganga_grid_sandbox_')[1]
 
         uploaded_files = self.impl_upload(files=paths, opts=opts)
         status = self.impl_bookkeepUploadedFiles(uploaded_files, append=True, opts=opts)
@@ -163,7 +168,7 @@ class GridSandboxCache(GangaObject):
         """
         status = False
 
-        all_files = self.get_uploaded_files()
+        all_files = self.get_cached_files()
 
         f_ids = []
         for f in all_files:
@@ -171,14 +176,33 @@ class GridSandboxCache(GangaObject):
 
         return self.delete(files=f_ids)
 
-    def get_uploaded_files(self, opts=''):
+    def get_cached_files(self, opts=''):
         """
         Gets the indexes of the uploaded files on the grid. 
 
         @return the dictionary indexing the uploaded files on the grid.
                 The key of the dictionary should be the main index (e.g. GUID) of the grid files.
         """
-        return self.impl_parseIndexFile(opts=opts)
+        return self.impl_getUploadedFiles(opts=opts)
+
+    def list_cached_files(self, loop=True, opts=''):
+        """
+        Lists the uploaded files.
+
+        if loop = True, it prints also the uploaded files associated with subjobs.
+        """
+
+        for f in self.get_cached_files(opts=opts):
+            print f
+
+        if loop:
+            ## try to get uploaded files in subjobs
+            j = self.getJobObject()
+
+            if j:
+                for sj in j.subjobs:
+                    for f in sj.backend.sandboxcache.get_cached_files(opts=opts):
+                        print f
 
     ## methods to be implemented in the child classes 
     def impl_upload(self, files=[], opts=''):
@@ -215,30 +239,26 @@ class GridSandboxCache(GangaObject):
     def impl_bookkeepUploadedFiles(self, files=[], append=True, opts=''):
         """
         basic implementation for bookkeeping the uploaded files.
-        It simply writes out the given GridFileIndex objects. 
+        It simply keeps the GridFileIndex objects in the job repository.
 
         @param files is a list of files represented by GridFileIndex objects 
         @return True if files are successfully logged in the local index file 
         """
 
-        fmode = 'w'
-        if append:
-            fmode = 'a'
-
-        f_idx = open(self.index_file, fmode)
-        for f in files:
-            f_idx.write( '%s\n' % f )
-        f_idx.close()
+        self.uploaded_files = files
 
         return True
 
-    def impl_parseIndexFile(self, opts=''):
+    def impl_getUploadedFiles(self, opts=''):
         """
-        implementation for parsing the index file used for bookkeeping the uploaded files
+        basic implementation for getting the previously uploaded files from the
+        job repository.
 
         @return a list of files represented by GridFileIndex objects
         """
-        raise NotImplementedError
+        files = self.uploaded_files
+
+        return files
     
     ## private methods
     def __get_file_index_objects__(self, files=[]):
@@ -249,7 +269,7 @@ class GridSandboxCache(GangaObject):
         @return a list of files represented by GridFileIndex objects
         '''
 
-        cachedFiles = self.get_uploaded_files()
+        cachedFiles = self.get_cached_files()
         myFiles = []
         for f in cachedFiles:
             if f.id in files:
