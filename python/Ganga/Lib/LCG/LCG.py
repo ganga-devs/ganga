@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.27 2009-02-04 17:01:02 hclee Exp $
+# $Id: LCG.py,v 1.28 2009-02-05 09:00:40 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -381,7 +381,7 @@ class LCG(IBackend):
             else:
                 return self.master_bulk_kill()
 
-    def __mt_bulk_submit(self, node_jdls, max_node):
+    def __mt_bulk_submit__(self, node_jdls, max_node):
         '''submitting bulk jobs in multiple threads'''
 
         job = self.getJobObject() 
@@ -402,7 +402,7 @@ class LCG(IBackend):
                 my_node_jdls   = node_info['jdls']
                 coll_jdl_name  = '__jdlfile__%d_%d__' % (my_node_offset, my_node_offset + len(my_node_jdls))
                 # compose master JDL for collection job
-                jdl_cnt  = self.__make_collection_jdl(my_node_jdls, offset=my_node_offset)
+                jdl_cnt  = self.__make_collection_jdl__(my_node_jdls, offset=my_node_offset)
                 jdl_path = self.inpw.writefile( FileBuffer(coll_jdl_name, jdl_cnt) )
                 master_jid = self.gridObj.submit(jdl_path, ce=None)
 
@@ -412,7 +412,7 @@ class LCG(IBackend):
                     self.__appendResult__( my_node_offset, master_jid )
                     return True
 
-            def __make_collection_jdl(self,nodeJDLFiles=[], offset=0):
+            def __make_collection_jdl__(self,nodeJDLFiles=[], offset=0):
                 '''Compose the collection JDL for the master job'''
    
                 nodes = ',\n'.join(map(lambda x:'[file = "%s";]' % x, nodeJDLFiles))
@@ -469,7 +469,7 @@ class LCG(IBackend):
         else:
             return runner.getResults()
 
-    def _mt_job_prepare(self, rjobs, subjobconfigs, masterjobconfig):
+    def __mt_job_prepare__(self, rjobs, subjobconfigs, masterjobconfig):
         '''preparing jobs in multiple threads'''
 
         logger.warning('preparing %d subjobs ... it may take a while' % len(rjobs))
@@ -546,7 +546,7 @@ class LCG(IBackend):
         assert(implies(rjobs,len(subjobconfigs)==len(rjobs)))
 
         # prepare the subjobs, jdl repository before bulk submission
-        node_jdls = self._mt_job_prepare(rjobs, subjobconfigs, masterjobconfig)
+        node_jdls = self.__mt_job_prepare__(rjobs, subjobconfigs, masterjobconfig)
 
         if not node_jdls:
             logger.error('Some jobs not successfully prepared')
@@ -561,7 +561,7 @@ class LCG(IBackend):
         profiler.checkAndStart('job state transition (submitting) elapsed time')
 
         max_node = config['GliteBulkJobSize']
-        results  = self.__mt_bulk_submit(node_jdls, max_node=max_node)
+        results  = self.__mt_bulk_submit__(node_jdls, max_node=max_node)
 
         profiler.checkAndStart('job submission elapsed time')
 
@@ -604,7 +604,7 @@ class LCG(IBackend):
 
         max_node = config['GliteBulkJobSize']
 
-        results = self.__mt_bulk_submit(node_jdls, max_node=max_node)
+        results = self.__mt_bulk_submit__(node_jdls, max_node=max_node)
 
         status = False
         if results:
@@ -1372,13 +1372,18 @@ sys.exit(0)
             'OutputSandbox' : output_sandbox
         }
 
-        if self.middleware.upper() == 'GLITE' and self.perusable:
-            logger.debug("Adding persual info to JDL")
-            # remove the ExpiryTime attribute as it's absolute timestamp that will cause the re-submitted job being
-            # ignored by the WMS. TODO: fix it in a better way.
-            # jdl['ExpiryTime'] = time.time() + config['JobExpiryTime']
-            jdl['PerusalFileEnable']='true'
-            jdl['PerusalTimeInterval']=120
+        if self.middleware.upper() == 'GLITE':
+
+            # workaround of glite WMS bug: https://savannah.cern.ch/bugs/index.php?32345
+            jdl['AllowZippedISB']='false'
+
+            if self.perusable:
+                logger.debug("Adding persual info to JDL")
+                # remove the ExpiryTime attribute as it's absolute timestamp that will cause the re-submitted job being
+                # ignored by the WMS. TODO: fix it in a better way.
+                # jdl['ExpiryTime'] = time.time() + config['JobExpiryTime']
+                jdl['PerusalFileEnable']='true'
+                jdl['PerusalTimeInterval']=120
 
         if self.CE:
             jdl['Requirements'] = ['other.GlueCEUniqueID=="%s"' % self.CE ]
@@ -1897,6 +1902,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.27  2009/02/04 17:01:02  hclee
+# enhancement for bug: https://savannah.cern.ch/bugs/?43502
+#
 # Revision 1.26  2009/01/26 16:11:33  hclee
 # modification for handling stdout/err in different ways
 #  - add config.LCG.JobLogHandler, default value is 'WMS', meaning that stdout/err
