@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.31 2009-02-04 05:36:42 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.32 2009-02-05 09:50:53 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -212,10 +212,10 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
                 else:
                     # append user datasetname for new configuration
-                    if job.outputdata.use_datasetname and job.outputdata.datasetname:
-                        output_datasetname = job.outputdata.datasetname
-                    else:
-                        output_datasetname = '%s.%s.ganga.%s' % (usertag, username,job.outputdata.datasetname)
+#                    if job.outputdata.use_datasetname and job.outputdata.datasetname:
+#                        output_datasetname = job.outputdata.datasetname
+#                    else:
+                    output_datasetname = '%s.%s.ganga.%s' % (usertag, username,job.outputdata.datasetname)
 
                     output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
             else:

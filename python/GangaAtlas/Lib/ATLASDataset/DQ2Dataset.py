@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.17 2009-02-02 13:16:54 mslater Exp $
+# $Id: DQ2Dataset.py,v 1.18 2009-02-05 09:50:53 dvanders Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -791,7 +791,7 @@ class DQ2OutputDataset(Dataset):
         'datasetList'    : SimpleItem(defvalue = [], typelist=['str'],  sequence = 1,protected=1, doc='List of DQ2 output datasets automatically filled by the AthenaMC job'),
         'location'       : SimpleItem(defvalue='',doc='SE output path location'),
         'local_location' : SimpleItem(defvalue='',doc='Local output path location'),
-        'use_datasetname' : SimpleItem(defvalue = False, doc = 'Use datasetname as it is and do not prepend users.myname.ganga'),
+#        'use_datasetname' : SimpleItem(defvalue = False, doc = 'Use datasetname as it is and do not prepend users.myname.ganga'),
         'use_shortfilename' : SimpleItem(defvalue = False, doc = 'Use shorter version of filenames and do not prepend users.myname.ganga')
         })
     
@@ -806,7 +806,7 @@ class DQ2OutputDataset(Dataset):
                   { 'attribute' : 'datasetList',    'widget' : 'String_List' },
                   { 'attribute' : 'location',       'widget' : 'String_List' },
                   { 'attribute' : 'local_location', 'widget' : 'File' },
-                  { 'attribute' : 'use_datasetname',    'widget' : 'Bool' },
+#                  { 'attribute' : 'use_datasetname',    'widget' : 'Bool' },
                   { 'attribute' : 'use_shortfilename',    'widget' : 'Bool' }
                   ]
     
@@ -1217,6 +1217,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.17  2009/02/02 13:16:54  mslater
+#Small fix for odd dq2-get issue
+#
 #Revision 1.16  2009/01/29 14:34:32  mslater
 #Fix to DQ2OutputDataset.retrieve() method
 #

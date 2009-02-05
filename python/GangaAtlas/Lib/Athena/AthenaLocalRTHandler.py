@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.21 2009-02-04 05:36:42 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.22 2009-02-05 09:50:54 dvanders Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -191,10 +191,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     output_lfn = 'users/%s/ganga/%s/' % (username,output_datasetname)
                 else:
                     # append user datasetname for new configuration
-                    if job.outputdata.use_datasetname and job.outputdata.datasetname:
-                        output_datasetname = job.outputdata.datasetname
-                    else:
-                        output_datasetname = 'users.%s.ganga.%s' % (username,job.outputdata.datasetname)
+#                    if job.outputdata.use_datasetname and job.outputdata.datasetname:
+#                        output_datasetname = job.outputdata.datasetname
+#                    else:
+                    output_datasetname = 'users.%s.ganga.%s' % (username,job.outputdata.datasetname)
 
                     #output_lfn = 'users/%s/ganga/%s/' % (username,job.outputdata.datasetname)
                     #output_lfn = 'users/%s/ganga/' % (username)
@@ -510,6 +510,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.21  2009/02/04 05:36:42  elmsheus
+#Correction for dbrelease dataset handling
+#
 #Revision 1.20  2009/02/01 10:20:30  elmsheus
 #Revert FileStager inclusion
 #

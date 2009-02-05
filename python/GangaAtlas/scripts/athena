@@ -62,7 +62,7 @@ p.add_option('--outputtype', action='store', type='choice', dest='outputtype', c
 p.add_option('--outDS', action='store', type='string', dest='output_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname for the job output, will be of the type: user.username.ganga.DATSETNAME')
 p.add_option('--outputlocation', action='store', type='string', dest='output_location', help='Location and path of the job output on the remote storage element for grid jobs or local path for local or batch jobs, e.g. sfn://castorgrid.cern.ch/castor/cern.ch/atlas/scratch/$USER/ganga or /path/to/storefiles/')
 p.add_option('--outputlocallocation', action='store', type='string', dest='output_local_location', help='Local path to store output that is transfered with retrieve() method')
-p.add_option('--use_datasetname', action='store_true', help='Use datasetname as it is and do not prepend users.myname.ganga' )
+#p.add_option('--use_datasetname', action='store_true', help='Use datasetname as it is and do not prepend users.myname.ganga' )
 p.add_option('--use_shortfilename', action='store_true', help='Use shorter version of filenames and do not prepend users.myname.ganga' )
 
 
@@ -287,8 +287,8 @@ if opt.outputdata:
         j.outputdata.location = opt.output_location
     if opt.output_local_location:
         j.outputdata.local_location = opt.output_local_location
-    if opt.use_datasetname:
-        j.outputdata.use_datasetname = True
+#    if opt.use_datasetname:
+#        j.outputdata.use_datasetname = True
     if opt.use_shortfilename:
         j.outputdata.use_shortfilename = True
 
