@@ -32,7 +32,8 @@ class MockDataset(Dataset):
     _schema = Schema(Version(1,0), {
         'files':ComponentItem(category='datafiles',defvalue=[],sequence=1),
         'cache_date': SimpleItem(defvalue = '', doc = 'The date the last full cache update was run.'),
-        'new_cache' : SimpleItem(defvalue = True, doc = 'True when the cache has never been updated before',hidden = 1)
+        'new_cache' : SimpleItem(defvalue = True, doc = 'True when the cache has never been updated before',hidden = 1),
+        'depth' : SimpleItem(defvalue = 1)
         })
     _category = 'datasets'
     _name = "MockDataset"
