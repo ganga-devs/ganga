@@ -26,10 +26,10 @@ class AnaTransform(Transform):
 ## Internal methods
    def checkCompletedApp(self, app):
       j = app._getParent()
-      for f in j.outputdata.actual_output:
+      for f in j.outputdata.output:
          if "root" in f:
             return True
-      logger.error("Job %s has not produced %s file, only: %s" % (j.id, "root", j.outputdata.actual_output))
+      logger.error("Job %s has not produced %s file, only: %s" % (j.id, "root", j.outputdata.output))
       return False
 
    def getOutputDataset(self):
