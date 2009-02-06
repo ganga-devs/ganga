@@ -2,8 +2,8 @@
 '''Utility methods used by various classes in GangaLHCb.Lib.Gaudi.'''
 
 __author__ = 'Greig A Cowan, Ulrik Egede, Andrew Maier, Mike Williams'
-__date__ = "$Date: 2009-02-04 18:03:52 $"
-__revision__ = "$Revision: 1.8 $"
+__date__ = "$Date: 2009-02-06 14:31:56 $"
+__revision__ = "$Revision: 1.9 $"
 
 import os
 import os.path
@@ -281,7 +281,7 @@ def update_cmtproject_path(user_release_area,env=os.environ):
     if env.has_key('CMTPROJECTPATH'):
       cmtpp=env['CMTPROJECTPATH'].split(':')
       if cmtpp[0] != user_release_area:
-        cmtpp[0] = user_release_area
+        cmtpp = [user_release_area] + cmtpp
         env['CMTPROJECTPATH']=':'.join(cmtpp)
 
 def get_user_dlls(appname,version,user_release_area,platform,shell):
