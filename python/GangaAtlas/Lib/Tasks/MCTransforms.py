@@ -49,14 +49,19 @@ class MCTransform(Transform):
       """Create Ganga Jobs for the next N partitions that are ready and submit them."""
       j = self.createNewJob(partitions[0])
       # Set random seed - random.seed() initializes with nanosecond time
-      random.seed()
-      j.application.random_seed = "%s" % random.randint(2**16,2**23)
+
+      for part in partitions:
+         random.seed()
+         if not part in self.random_seeds:
+            self.random_seeds[part] = random.randint(2**16,2**23)
       # Set splitter if number > 1
       if len(partitions) > 1:
          j.splitter=GPI.AthenaMCTaskSplitterJob()
          j.splitter.output_partitions = partitions
+         j.splitter.random_seeds = [self.random_seeds[part] for part in partitions]
       else:
          j.application.partition_number = partitions[0]
+         j.application.random_seed = "%s" % self.random_seeds[partitions[0]]
       return [j]
 
    def updateInputStatus(self, ltf, partition):
@@ -148,9 +153,6 @@ class SimulTransform(MCTransform):
 
    def getJobsForPartitions(self, partitions):
       jl = super(SimulTransform, self).getJobsForPartitions(partitions)
-      for j in jl:
-         if j.application.atlas_release[:2] >= "13" and not "digiSeedOffset" in j.application.extraArgs:
-            j.application.extraArgs += ' digiSeedOffset1=%s digiSeedOffset2=%s ' % (random.randint(1,2**15),random.randint(1,2**15))
       return jl
 
 class ReconTransform(MCTransform):

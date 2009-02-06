@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.10 2009-02-04 14:05:49 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.11 2009-02-06 13:14:06 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -273,7 +273,8 @@ class AthenaMCSplitterJob(ISplitter):
     _schema = Schema(Version(1,0), {
        'numsubjobs': SimpleItem(defvalue=0,sequence=0, doc='Limit the number of subjobs. If this is left at 0, all partitions will be processed.'),
        'input_partitions' : SimpleItem(defvalue="",doc='List of input file numbers to be processed, either as a string in the format "1,3,5-10,15-" or as a list of integers. Alternative to output_partitions',typelist=["str","list"]),
-       'output_partitions' : SimpleItem(defvalue="",doc='List of partition numbers to be processed, either as a string in the format "1,3,5-10,15-" or as a list of integers. Alternative to input_partitions',typelist=["str","list"])
+       'output_partitions' : SimpleItem(defvalue="",doc='List of partition numbers to be processed, either as a string in the format "1,3,5-10,15-" or as a list of integers. Alternative to input_partitions',typelist=["str","list"]),
+       'random_seeds' : SimpleItem(defvalue=[],doc='List of random seeds to use for the subjobs. Only used if it is a list',typelist=["str","list"])
         } )
 
     ### Splitting based on numsubjobs
@@ -310,8 +311,12 @@ class AthenaMCSplitterJob(ISplitter):
             logger.error('Partition to process could not be determined! Check if inputdata.skip_files or inputdata.skip_events do not skip your specified input partition!')
             raise
         
+        i = 0
         for p in partitions:
             rndtemp = int(job.application.random_seed)+p
+            if len(self.random_seeds) > i:
+               rndtemp = self.random_seeds[i]
+            i+=1
             j = Job()
             j.application = job.application
             j.application.random_seed = "%s" % rndtemp
@@ -332,6 +337,9 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.10  2009/02/04 14:05:49  fbrochu
+# Roll back creation of output containers and job subdatasets, added protection against cross-cloud input data replication, support for adler32 and use of lcg tools built-in timeout mecanism on top of existing timeout mecanism
+#
 # Revision 1.9  2009/01/16 14:09:22  ebke
 # Added dryrun functionality to AthenaMC
 #

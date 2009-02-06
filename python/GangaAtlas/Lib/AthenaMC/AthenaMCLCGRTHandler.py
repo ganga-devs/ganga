@@ -472,6 +472,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                      ]
             if self.atlas_rel >="12.0.5" :
                 args.append("triggerConfig=%s" % app.triggerConfig)
+            if self.atlas_rel >="13" and not "digiSeedOffset" in app.extraArgs:
+                random.seed(int(self.randomseed))
+                app.extraArgs += ' digiSeedOffset1=%s digiSeedOffset2=%s ' % (random.randint(1,2**15),random.randint(1,2**15))
         
         return args
 
