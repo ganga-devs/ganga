@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.18 2009-02-04 14:05:49 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.19 2009-02-06 12:22:09 ebke Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -586,6 +586,9 @@ class AthenaMCInputDatasets(Dataset):
                 dq2_lock.acquire()
                 data = dq2.listDatasetReplicas(dset)
                 locs=data.values()
+                # Avoid crashes if empty datasets are in containers
+                if (len(locs) == 0) or (len(locs[0]) < 2):
+                   continue
                 locations[0]+=locs[0][0]
                 locations[1]+=locs[0][1]
             finally:
