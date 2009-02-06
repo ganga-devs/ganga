@@ -37,6 +37,6 @@ class TestGaudiPythonLSFRunTimeHandler(GangaGPITestCase):
     def test_GaudiLSFRunTimeHandler_create_runscript(self):
         script = self.rth.create_runscript(self.app,None)
         config = Ganga.Utility.Config.getConfig('LHCb')
-        strs = [config['LocalSite'], config['SEProtocol']]
+        strs = ['gaudiPythonwrapper.py']
         for s in strs:
             assert script.rfind(s) >= 0, 'script should contain %s' % s

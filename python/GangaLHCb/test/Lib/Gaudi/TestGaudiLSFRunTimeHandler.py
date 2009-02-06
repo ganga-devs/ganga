@@ -43,12 +43,9 @@ class TestGaudiLSFRunTimeHandler(GangaGPITestCase):
         self.app.user_release_area = 'TestURA'
         self.app.package = 'TestPackage'
         extra = GaudiExtras()
-        extra._LocalSite = 'TestSite'
-        extra._SEProtocol = 'TestSEProtocol'
         extra.outputdata = ['test1.out','test2.out']
         script = self.rth.create_runscript(self.app,extra)
-        strs = ['TestURA','TestPackage','TestSite','TestSEProtocol',
-                str(extra.outputdata)]
+        strs = ['TestURA','TestPackage', str(extra.outputdata)]
         for s in strs:
             assert script.rfind(s) >= 0, 'script should contain %s' % s
 

@@ -10,6 +10,7 @@ class TestGaudiUtils(GangaGPITestCase):
         self.apps = available_apps()
         self.apps.remove('Gaudi')
         self.apps.remove('Panoramix')
+        self.apps.remove('Bender')
         srcdir = os.path.dirname(inspect.getsourcefile(GaudiPython))
         self.optsfile = [File(os.path.join(srcdir,
                                            'options/GaudiPythonExample.py'))]
@@ -88,26 +89,25 @@ class TestGaudiUtils(GangaGPITestCase):
         # run full jobs...which should be done elsewhere in the testing.
         dv = DaVinci()
         j = Job(application=dv)
-        create_lsf_runscript(app=dv,appname='',site='',protocol='',package='',
+        create_lsf_runscript(app=dv,appname='',xml_catalog='',package='',
                              opts='dummy.opts',user_release_area='',
                              outputdata='',job=j,which='Gaudi')
-        create_lsf_runscript(app=dv,appname='',site='',protocol='',package='',
+        create_lsf_runscript(app=dv,appname='',xml_catalog='',package='',
                              opts='dummy.opts',user_release_area='',
                              outputdata='',job=j,which='GaudiPython')
 
-    def test_get_user_release_area(self):
-        env = {'User_release_area' : 'DUMMY'}
-        ra = get_user_release_area('',env)
-        assert ra == 'DUMMY','no supplied ura, ra should come from env'
-        ra = get_user_release_area('SOMETHING',env)
-        assert ra != 'DUMMY','supplied ura, ra should not come from env'
+    def test_update_cmtproject_path(self):
+        env = {'CMTPROJECTPATH' : 'DUMMY'}
+        update_cmtproject_path('SOMETHING',env)
+        assert env['CMTPROJECTPATH'] == 'SOMETHING:DUMMY'
 
     def test_get_user_dlls(self):
         # FIXME: This only really tests coverage. A more involved test would
         # check if the files that should be found are found.
         dv = DaVinci() 
         shell = gaudishell_setenv(dv._impl)
-        get_user_dlls('DaVinci',dv.version,dv.user_release_area,shell)
+        get_user_dlls('DaVinci',dv.version,dv.user_release_area,
+                      dv.platform,shell)
 
         
 
