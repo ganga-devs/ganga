@@ -23,7 +23,7 @@ class Transform(GangaObject):
    _name = 'Transform'
    _exportmethods = [ 
                       'run', 'pause', # Operations
-                      'setPartitionStatus', 'setRunlimit', # Control Partitions
+                      'setPartitionStatus', 'setRunlimit', 'setFailed', # Control Partitions
                       'overview', 'info', 'n_all', 'n_status' # Info
                     ]
 
@@ -118,6 +118,16 @@ class Transform(GangaObject):
       """ Set the Status of the given partition to "ready", "hold", "bad" or "completed".
           The status is then updated to the status indicated by the applications"""
       self.setPartitionsStatus([partition],status) 
+
+   def setFailed(self, partition):
+      """ Tells Tasks that all Applications that have executed this partition have actually failed."""
+      for aid in self._app_partition:
+         if aid in self._app_status and self._app_status[aid] == "removed":
+            continue
+         # Save the status
+         self._app_status[aid] = "failed"
+         # Update the corresponding partition status
+      self.setPartitionStatus(partition, "ready")
 
 ## Internal methods
    def submitJobs(self, n):
