@@ -10,7 +10,7 @@ class AnaTransform(Transform):
    _schema = Schema(Version(1,0), dict(Transform._schema.datadict.items() + {
        'files_per_job'   : SimpleItem(defvalue=5, doc='files per job', modelist=["int"]),
        'partitions_data'   : ComponentItem('datasets', defvalue=[], sequence=1, hidden=1, doc='Input dataset for each partition'),
-       'partitions_sites'  : SimpleItem(defvalue=[], sequence=1, hidden=1, modelist=["str","list"],doc='Input site for each partition'),
+       'partitions_sites'  : SimpleItem(defvalue=[], hidden=1, modelist=["str","list"],doc='Input site for each partition'),
        'outputdata'      : ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset'),
        }.items()))
    _category = 'transforms'
