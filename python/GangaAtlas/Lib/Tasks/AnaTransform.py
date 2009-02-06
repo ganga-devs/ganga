@@ -9,7 +9,8 @@ class AnaTransform(Transform):
    """ Analyzes Events """
    _schema = Schema(Version(1,0), dict(Transform._schema.datadict.items() + {
        'files_per_job'   : SimpleItem(defvalue=5, doc='files per job', modelist=["int"]),
-       'partitions_data'     : ComponentItem('datasets', defvalue=[], sequence=1, hidden=1, doc='Input dataset for each partition'),
+       'partitions_data'   : ComponentItem('datasets', defvalue=[], sequence=1, hidden=1, doc='Input dataset for each partition'),
+       'partitions_sites'  : SimpleItem(defvalue=[], sequence=1, hidden=1, modelist=["str","list"],doc='Input site for each partition'),
        'outputdata'      : ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset'),
        }.items()))
    _category = 'transforms'
@@ -66,6 +67,7 @@ class AnaTransform(Transform):
       self.outputsandbox = []
       sjl = splitter.split(self) # This works even for Panda, no special "Job" properties are used anywhere.
       self.partitions_data = [sj.inputdata for sj in sjl]
+      self.partitions_sites = [sj.backend.requirements.sites for sj in sjl]
       self.setPartitionsLimit(len(self.partitions_data)+1)
       self.setPartitionsStatus([c for c in range(1,len(self.partitions_data)+1) if self.getPartitionStatus(c) != "completed"], "ready")
       ods = self.getOutputDataset()
@@ -78,6 +80,8 @@ class AnaTransform(Transform):
           j.splitter = AnaTaskSplitterJob()
           j.splitter.subjobs = partitions
       j.inputdata = self.partitions_data[partitions[0]-1]
+      if stripProxy(j.backend)._name == 'LCG':
+         j.backend.requirements.sites = self.partitions_sites[partitions[0]-1]
       j.outputdata = self.outputdata
       return [j]
 

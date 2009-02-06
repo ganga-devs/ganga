@@ -110,6 +110,8 @@ class AnaTaskSplitterJob(ISplitter):
             j.application = job.application
             j.application.atlas_environment.append("OUTPUT_FILE_NUMBER=%i" % sj)
             j.backend = job.backend
+            if stripProxy(j.backend)._name == 'LCG':
+                j.backend.requirements.sites = transform.partitions_sites[sj-1]
             j.inputsandbox = job.inputsandbox
             j.outputsandbox = job.outputsandbox
             sjl.append(j)
