@@ -3,8 +3,8 @@
 the backends sharing the local filesystem."""
 
 __author__ = 'Ulrik Egede'
-__date__ = "$Date: 2009-01-28 13:18:19 $"
-__revision__ = "$Revision: 1.6 $"
+__date__ = "$Date: 2009-02-06 13:47:03 $"
+__revision__ = "$Revision: 1.7 $"
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 import os,os.path
@@ -33,8 +33,8 @@ class GaudiPythonLSFRunTimeHandler(IRuntimeHandler):
 
     sandbox = [f for f in job.inputsandbox]
     sandbox += [script for script in job.application.script]
-    if(app.extra.xml_catalog_str):
-      sandbox.append(FileBuffer('myFiles.xml', app.extra.xml_catalog_str))
+    if(extra.xml_catalog_str):
+      sandbox.append(FileBuffer('myFiles.xml', extra.xml_catalog_str))
     logger.debug("Master input sandbox: %s: ",str(sandbox))
 
     return StandardJobConfig( '', inputbox=sandbox, args=[])

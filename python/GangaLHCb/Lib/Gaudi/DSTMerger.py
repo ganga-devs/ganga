@@ -1,8 +1,8 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """Merges DST files."""
 
-__date__ = "$Date: 2009-01-29 11:16:15 $"
-__revision__ = "$Revision: 1.4 $"
+__date__ = "$Date: 2009-02-06 13:47:03 $"
+__revision__ = "$Revision: 1.5 $"
 
 import commands
 import inspect
