@@ -21,6 +21,7 @@ settings["ReconTransform"] = athenamcsettings + ["triggerConfig", "geometryTag"]
 class MCTransform(Transform):
    _schema = Schema(Version(1,0), dict(Transform._schema.datadict.items() + {
        'file_type': SimpleItem(defvalue=1, hidden=1, doc='string in the output file, pe. evgen.EVNT..',modelist=["str"]),
+       'random_seeds': SimpleItem(defvalue={}, doc='random seeds to be used in the partition',modelist=["dict","int"]),
 
 }.items()))
    _category = 'transforms'
