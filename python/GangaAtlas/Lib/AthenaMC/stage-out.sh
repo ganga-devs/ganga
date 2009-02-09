@@ -105,13 +105,28 @@ stageOutLCG(){
     export dataset=`echo $lcn | sed -e 's:/:\.:g'`
     filesize=`ls -l $file | awk '{ print $5}'`
     md5sumfile=`md5sum $file | awk '{ print $1}'`
-    adler32=`adler32 $file`
-
+    adler32=`adler32 $file | tail -1`
+    if [-z "$adler32" ]; then
+	chmod +x adler32.py
+	echo "using imported adler32.py script"
+	adler32=`./adler32.py $file`
+    fi
     echo $guid >> output_guids
     echo $OUTSITE >> output_location
     if [ -z "$guid" ]; then
 	echo "file was not registered in lfc, aborting"
 	return 113
+    fi
+    if [ -z "$dataset" -o -z "$file" -o -z "$guid" -o -z "$filesize" -o -z "$adler32" -o -z "$OUTSITE" ]; then
+	echo "Missing data, will have to skip registration on this one!"
+	echo "one of the following is not set properly:"
+	echo "DATASET=$dataset"
+	echo "FILE=$file.$TIMESTAMP.$OUTPUT_JOBID"
+	echo "guid=$guid"
+	echo "file size=$filesize"
+	echo "checksum (adler32)=$adler32"
+	echo "site=$OUTSITE"
+	return 431303;
     fi
     echo "$dataset,$file.$TIMESTAMP.$OUTPUT_JOBID,$guid,$filesize,$adler32,$OUTSITE" >> output_data
     return 0;

@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.11 2009-02-06 13:14:06 ebke Exp $
+# $Id: AthenaMC.py,v 1.12 2009-02-09 14:33:49 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -232,11 +232,11 @@ class AthenaMC(IApplication):
            except AssertionError:
                logger.error('If you want to use a job splitter with the AthenaMC application, you have to use AthenaMCSplitterJob')
                raise Exception()
-           try:
-               assert self._getRoot().splitter.numsubjobs < 200
-           except AssertionError:
-               logger.error("You are requesting too many subjobs. The AthenaMC module is only for small scale production. Aborting.")
-               raise Exception()
+##           try:
+##               assert self._getRoot().splitter.numsubjobs < 200
+##           except AssertionError:
+##               logger.error("You are requesting too many subjobs. The AthenaMC module is only for small scale production. Aborting.")
+##               raise Exception()
 
        # enforce the use of AthenaMCOutputDataset
        try:
@@ -270,7 +270,7 @@ class AthenaMCSplitterJob(ISplitter):
     """AthenaMC handler job splitting"""
     
     _name = "AthenaMCSplitterJob"
-    _schema = Schema(Version(1,0), {
+    _schema = Schema(Version(2,0), {
        'numsubjobs': SimpleItem(defvalue=0,sequence=0, doc='Limit the number of subjobs. If this is left at 0, all partitions will be processed.'),
        'input_partitions' : SimpleItem(defvalue="",doc='List of input file numbers to be processed, either as a string in the format "1,3,5-10,15-" or as a list of integers. Alternative to output_partitions',typelist=["str","list"]),
        'output_partitions' : SimpleItem(defvalue="",doc='List of partition numbers to be processed, either as a string in the format "1,3,5-10,15-" or as a list of integers. Alternative to input_partitions',typelist=["str","list"]),
@@ -337,6 +337,9 @@ logger = getLogger()
 
 
 # $Log: not supported by cvs2svn $
+# Revision 1.11  2009/02/06 13:14:06  ebke
+# *** empty log message ***
+#
 # Revision 1.10  2009/02/04 14:05:49  fbrochu
 # Roll back creation of output containers and job subdatasets, added protection against cross-cloud input data replication, support for adler32 and use of lcg tools built-in timeout mecanism on top of existing timeout mecanism
 #

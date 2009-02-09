@@ -20,6 +20,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Lib.LCG import LCGRequirements, LCGJobConfig
+from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
@@ -45,7 +46,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
     turls,cavern_turls,minbias_turls,dbturls={},{},{},{}
     lfcs,cavern_lfcs,minbias_lfcs,dblfcs={},{},{},{}
-    sites=[]
+    sites,cavern_sites,minbias_sites,dbsites=[],[],[],[]
     outputlocation,lfchosts,lfcstrings={},{},{}
     outsite,outlfc,outlfc2="","",""
     outputpaths,fileprefixes={},{}
@@ -134,7 +135,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 try:
                     assert token not in app.se_name
                 except:
-                    logger.error("You are not allowed to write output data in any production space token: %s. Please select a site with ATLASUSERDISK or ATLASLOCALGROUPDISK space token or a srmv1 endpoint" % app.se_name)
+                    logger.error("You are not allowed to write output data in any production space token: %s. Please select a site with ATLASUSERDISK or ATLASLOCALGROUPDISK space token" % app.se_name)
                     raise
             
         if not app.dryrun and job.inputdata and job.inputdata._name == 'AthenaMCInputDatasets':
@@ -156,6 +157,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                     raise Exception("Input file not found")
                 self.cavern_turls=inputdata[0]
                 self.cavern_lfcs=inputdata[1]
+                self.cavern_sites=inputdata[2]
             if job.inputdata.minbias:
                 inputdata=job.inputdata.get_minbias_dataset(app)
                 if len(inputdata)!= 3:
@@ -163,6 +165,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                     raise Exception("Input file not found")
                 self.minbias_turls=inputdata[0]
                 self.minbias_lfcs=inputdata[1]
+                self.minbias_sites=inputdata[2]
 
         # Add db release to input data if relevant
         dbrelease=""
@@ -178,12 +181,13 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             logger.debug("Detected numeric value for DBRelease. Looking for match in DQ2 database")
             if not job.inputdata:
                 job.inputdata=AthenaMCInputDatasets()
-            inputdata=job.inputdata.get_DBRelease(dbrelease)
+            inputdata=job.inputdata.get_DBRelease(app,dbrelease)
             if len(inputdata)!= 3:
                     logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
                     raise Exception("Input file not found")
             self.dbturls=inputdata[0]
             self.dblfcs=inputdata[1]
+            self.dbsites=inputdata[2]
 
         # doing output data now
         self.fileprefixes,self.outputpaths=job.outputdata.prep_data(app)
@@ -211,42 +215,59 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             outloc=app.se_name
         if outsite=="" :
             [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(outloc)
-        # outlfc is now set. Clearing up all inputlfcs lists accordingly:
-        if len(self.lfcs)>0:
-            print self.lfcs
-            for dst in self.lfcs.keys():
-                try:
-                    assert string.find(self.lfcs[dst],outlfc)>-1
-                except:
-                    logger.error("Signal input data not in destination cloud. Aborting %s %s" % (outlfc,str(self.lfcs[dst])))
-                    raise Exception()
-                self.lfcs[dst]=outlfc
-        if len(self.cavern_lfcs)>0:
-            for dst in self.cavern_lfcs.keys():
-                try:
-                    assert string.find(self.cavern_lfcs[dst],outlfc)>-1
-                except:
-                    logger.error("Cavern input data not in destination cloud. Aborting %s %s" % (outlfc,str(self.cavern_lfcs[dst])))
-                    raise Exception()
-                self.cavern_lfcs[dst]=outlfc
-        if len(self.minbias_lfcs)>0:
-            for dst in self.minbias_lfcs.keys():
-                try:
-                    assert string.find(self.minbias_lfcs[dst],outlfc)>-1
-                except:
-                    logger.error("Minbias input data not in destination cloud. Aborting %s %s" % (outlfc,str(self.minbias_lfcs[dst])))
-                    raise Exception()
-                self.minbias_lfcs[dst]=outlfc
-        if len(self.dblfcs)>0:
-            for dst in self.dblfcs.keys():
-                try:
-                    assert string.find(self.dblfcs[dst],outlfc)>-1
-                except:
-                    logger.error("DBRelease input data not in destination cloud. Aborting %s %s" % (outlfc,str(self.dblfcs[dst])))
-                    raise Exception()
-                self.dblfcs[dst]=outlfc
-         
-        
+        # outlfc is now set. Clearing up all input sites lists accordingly:
+        imax=string.find(outsite,"_")
+        outsite_short=outsite[:imax] # remove space token for easier match
+        if len(self.sites)>0:
+            selsite=""
+            for site in self.sites:
+                if string.find(site,outsite_short)>-1:
+                     selsite=site
+                     break
+            try:
+                assert selsite!=""
+            except:
+                logger.error("Input data not in destination site %s. Please subscribe the input dataset to the destination site or choose another site.Aborting " % outsite)
+                raise Exception()
+            self.sites=[selsite]
+        if len(self.cavern_sites)>0:
+            selsite=""
+            for site in self.cavern_sites:
+                if string.find(site,outsite_short)>-1:
+                    selsite=site
+                    break
+            try:
+                assert selsite!=""
+            except:
+                logger.error("Cavern input data not in destination site %s. Please subscribe the cavern dataset to the destination site or choose another site.Aborting " % outsite)
+                raise Exception()
+            self.cavern_sites=[selsite]
+        if len(self.minbias_sites)>0:
+            selsite=""
+            for site in self.minbias_sites:
+                if string.find(site,outsite_short)>-1:
+                    selsite=site
+                    break
+            try:
+                assert selsite!=""
+            except:
+                logger.error("Minbias input data not in destination site %s. Please subscribe the minbias dataset to the destination site or choose another site.Aborting " % outsite)
+                raise Exception()
+            self.minbias_sites=[selsite]
+        if len(self.dbsites)>0:
+            selsite=""
+            for site in self.dbsites:
+                if string.find(site,outsite_short)>-1:
+                     selsite=site
+                     break
+             try:
+                 assert selsite!=""
+             except:
+                 logger.error("DBRelease dataset not in destination site %s. Please subscribe the cavern dataset to the destination site or choose another site.Aborting " % outsite)
+                 raise Exception()
+             self.dbsites=[selsite]
+             
+            
 
         # srmv2 sites special treatment: the space token has been prefixed to the outputlocation and must be removed now:
         imin=string.find(outputlocation,"token:")
@@ -300,7 +321,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         inputbox = [ 
             File(os.path.join(os.path.dirname(__file__),'setup-release.sh')),
             File(os.path.join(os.path.dirname(__file__),'stage-in.sh')),
-            File(os.path.join(os.path.dirname(__file__),'stage-out.sh'))
+            File(os.path.join(os.path.dirname(__file__),'stage-out.sh')),
+            File(os.path.join(os.path.dirname(__file__),'adler32.py'))
         ]
 
         if os.path.exists(app.transform_archive):
@@ -347,7 +369,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
             
 #       prepare job requirements
-        requirements = LCGRequirements()
+        requirements = AtlasLCGRequirements()
         requirements.other.append('other.GlueCEStateStatus=="Production"') # missing production
         imax=string.rfind(self.atlas_rel,".")
         rel=string.atof(self.atlas_rel[:imax]) # to deal with string comparisons: [2-9].0.0 > 11.0.0. 
@@ -366,21 +388,24 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 requirements.software=['VO-atlas-production-%s' % self.prod_release]
             elif self.atlas_rel>= "14.0.0" :
                 requirements.software=['VO-atlas-production-%s-i686-slc4-gcc34-opt' % self.prod_release]
-        
-        # job to data: if inputdata (len(self.sites)>0) then build the string using outlfc to retrieve the cloud and the SEs matching the cloud (dedicated method of outputdata)
-        # if no inputdata, use outlfc anyway (or app.se_name if set to anything which is not a DQ2 site) to force the job submission to the matching site.
-        # Exception: app.se_name not set and no inputdata -> no constraint.
-        targetCloud=""
-        if app.se_name!="none"  or job.inputdata:
-            targetCloud=job.outputdata.makeLCGmatch(outlfc,app.se_name)
-            if targetCloud:
-                requirements.other.append(targetCloud)
-            logger.debug("targetCloud result:%s" % targetCloud)
-            ##if string.find(targetCloud,"VO-atlas-cloud")>-1 and not string.find(targetCloud,"VO-atlas-cloud-T0")>-1:
-            #requirements.other.append('( ! Member("VO-atlas-tier-T0",other.GlueHostApplicationSoftwareRunTimeEnvironment) && ! Member("VO-atlas-tier-T1",other.GlueHostApplicationSoftwareRunTimeEnvironment))')
-            requirements.other.append('( ! Member("VO-atlas-tier-T1",other.GlueHostApplicationSoftwareRunTimeEnvironment))')
-            #### Applying computing model: Tier 0 and Tier 1s should be reserved to official production. Users jobs must use other sites.
-            #### Allowing T0 as CERN T2 is not properly tagged .
+                
+        # job to data, strict: target outsite and nothing else.
+        requirements.sites=outsite
+
+##        # job to data: if inputdata (len(self.sites)>0) then build the string using outlfc to retrieve the cloud and the SEs matching the cloud (dedicated method of outputdata)
+##        # if no inputdata, use outlfc anyway (or app.se_name if set to anything which is not a DQ2 site) to force the job submission to the matching site.
+##        # Exception: app.se_name not set and no inputdata -> no constraint.
+##        targetCloud=""
+##        if app.se_name!="none"  or job.inputdata:
+##            targetCloud=job.outputdata.makeLCGmatch(outlfc,app.se_name)
+##            if targetCloud:
+##                requirements.other.append(targetCloud)
+##            logger.debug("targetCloud result:%s" % targetCloud)
+##            ##if string.find(targetCloud,"VO-atlas-cloud")>-1 and not string.find(targetCloud,"VO-atlas-cloud-T0")>-1:
+##            #requirements.other.append('( ! Member("VO-atlas-tier-T0",other.GlueHostApplicationSoftwareRunTimeEnvironment) && ! Member("VO-atlas-tier-T1",other.GlueHostApplicationSoftwareRunTimeEnvironment))')
+##            requirements.other.append('( ! Member("VO-atlas-tier-T1",other.GlueHostApplicationSoftwareRunTimeEnvironment))')
+##            #### Applying computing model: Tier 0 and Tier 1s should be reserved to official production. Users jobs must use other sites.
+##            #### Allowing T0 as CERN T2 is not properly tagged .
             
         logger.debug("master job submit?")
         if job.backend._name=="LCG" or job.backend._name=="Cronus" or job.backend._name=="Condor" or job.backend._name=="NG":
@@ -612,94 +637,76 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                raise Exception()
 
         outsite=""
-        environment["INPUTTURLS"]=""
-        environment["INPUTLFCS"]=""
+        # migration to using dq2-get in stage-in: environment["INPUTTURLS"] is deprecated, as well as environment["INPUTLFCS"]. They are replaced by environment["INPUTDATASETS"] and environment["INPUTSITES"]
+       
+        environment["INPUTDATASETS"]=""
+        environment["INPUTSITES"]=""
         environment["INPUTFILES"]=""
         self.inputfile,self.cavernfile,self.minbiasfile="","",""
 
-        infilenr = 0
-        for j in range(0, len(inputfiles)):
-            turl=self.turls[inputfiles[j]]
-            environment["INPUTTURLS"]+="turl[%d]='%s';" % (infilenr,turl.strip())
-            lfc=""
-            for lfcentry in self.lfcs.values():
-                lfc+=lfcentry+" "
-            environment["INPUTLFCS"]+="lfc[%d]='%s';" % (infilenr,lfc.strip())
-            environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,inputfiles[j].strip())
+        dsetmap,sitemap={},{}
+        
+        for infile in inputfiles:
+            dsetmap[infile]=self.lfcs.keys()[0]
+            #            sitemap[infile]=string.join(self.sites," ")
+            sitemap[infile]=self.sites[0]
+        self.inputfile=",".join(inputfiles)
+        # adding cavern/minbias/dbrelease to the mapping
+        cavernfiles= self.cavern_turls.keys()
+        for infile in cavernfiles:
+            dsetmap[infile]=self.cavern_lfcs.keys()[0]
+            #            sitemap[infile]=string.join(self.cavern_sites," ")
+            sitemap[infile]=self.cavern_sites[0]
+        mbfiles= self.minbias_turls.keys()
+        for infile in mbfiles:
+            dsetmap[infile]=self.minbias_lfcs.keys()[0]
+            #           sitemap[infile]=string.join(self.minbias_sites," ")
+            sitemap[infile]=self.minbias_sites[0]
+        dbfiles=self.dbturls.keys()
+        for infile in dbfiles:
+            dsetmap[infile]=self.dblfcs.keys()[0]
+            #            sitemap[infile]=string.join(self.dbsites," ")
+            sitemap[infile]=self.dbsites[0]
+        random.shuffle(cavernfiles)
+        if job.inputdata and len(cavernfiles) >0 and job.inputdata.n_cavern_files_job:
+            imax=job.inputdata.n_cavern_files_job
+            try:
+                assert len(cavernfiles)>= imax
+            except:
+                logger.error("Not enough cavern input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(cavernfiles)))
+                raise Exception()
+            self.cavernfile=",".join([cavernfiles[i] for i in range(imax)])
+            cavernfiles=cavernfiles[:imax-1]
+
+        random.shuffle(mbfiles)
+        if job.inputdata and len(mbfiles) >0 and job.inputdata.n_minbias_files_job:
+            imax=job.inputdata.n_minbias_files_job
+            try:
+                assert len(mbfiles)>= imax
+            except:
+                logger.error("Not enough minbias input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(mbfiles)))
+                raise Exception()
+            self.minbiasfile=",".join([mbfiles[i] for i in range(imax)])
+            mbfiles=mbfiles[:imax-1]
+
+        alllfns=inputfiles+cavernfiles+mbfiles+dbfiles
+        infilenr=0
+        for infile in alllfns:
+            environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,infile)
+            environment["INPUTDATASETS"]+="dset[%d]='%s';"%(infilenr,dsetmap[infile])
+            environment["INPUTSITES"]+="site[%d]='%s';"%(infilenr,sitemap[infile])
             infilenr += 1
 
-        self.inputfile=",".join(inputfiles)
-
-        logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
-            
-        # now handling cavern/minbias input datasets:
-        inputfiles=self.cavern_turls.keys()
-        if len(inputfiles)>0:
-            try:
-                assert len(inputfiles)>= job.inputdata.n_cavern_files_job
-            except:
-                logger.error("Not enough cavern input files to sustend a single job (expected %d got %d). Aborting" %(job.inputdata.n_cavern_files_job,len(inputfiles)))
-                raise
-
-            random.shuffle(inputfiles) # shuffle cavern files to randomize noise distributions between subjobs
-            imax=job.inputdata.n_cavern_files_job 
-            self.cavernfile=",".join([inputfiles[i] for i in range(imax)])
-            for i in range(imax):
-                turl=""
-                if inputfiles[i] in self.cavern_turls:
-                    turl=self.cavern_turls[inputfiles[i]]
-                environment["INPUTTURLS"]+="turl[%d]='%s';" % (infilenr,turl.strip())
-                lfc=""
-                for lfcentry in self.cavern_lfcs.values():
-                    lfc+=lfcentry+" "
-                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (infilenr,lfc.strip())
-                environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,inputfiles[i].strip())
-                infilenr += 1
-            logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
-
-        inputfiles=self.minbias_turls.keys()
-        if len(inputfiles)>0:
-            try:
-                assert len(inputfiles)>= job.inputdata.n_minbias_files_job
-            except:
-                logger.error("Not enough minbias input files to sustend a single job (expected %d got %d). Aborting" %(job.inputdata.n_minbias_files_job,len(inputfiles)))
-                raise
-
-            random.shuffle(inputfiles) # shuffle cavern files to randomize noise distributions between subjobs
-            imax=job.inputdata.n_minbias_files_job 
-            self.minbiasfile=",".join([inputfiles[i] for i in range(imax)])
-            for i in range(imax):
-                turl=""
-                if inputfiles[i] in self.minbias_turls:
-                    turl=self.minbias_turls[inputfiles[i]]
-                environment["INPUTTURLS"]+="turl[%d]='%s';" % (infilenr,turl.strip())
-                lfc=""
-                for lfcentry in self.minbias_lfcs.values():
-                    lfc+=lfcentry+" "
-                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (infilenr,lfc.strip())
-                environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,inputfiles[i].strip())
-                infilenr += 1
-
-        inputfiles=self.dbturls.keys()
-        if len(inputfiles)>0:
-            for (k,v) in self.dbturls.items():
-                environment["INPUTTURLS"]+="turl[%d]='%s';" % (infilenr,v.strip())
-                lfc=""
-                for lfcentry in self.dblfcs.values():
-                    lfc+=lfcentry+" "
-                environment["INPUTLFCS"]+="lfc[%d]='%s';" % (infilenr,lfc.strip())
-                environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,k.strip())
-                infilenr += 1
 
                 
-        logger.debug("%s %s %s" % (str(environment["INPUTTURLS"]),str(environment["INPUTLFCS"]),str(environment["INPUTFILES"])))
+        logger.debug("%s %s %s" % (str(environment["INPUTDATASETS"]),str(environment["INPUTSITES"]),str(environment["INPUTFILES"])))
         
-        if environment["INPUTTURLS"] :
+        if environment["INPUTDATASETS"] :
             # Work around for glite WMS spaced environement variable problem
-            inputbox += [ FileBuffer('inputturls.conf',environment['INPUTTURLS']+'\n') ]
-        if environment["INPUTLFCS"] :
+            inputbox += [ FileBuffer('inputturls.conf',environment['INPUTDATASETS']+'\n') ]
+        if environment["INPUTSITES"] :
             # Work around for glite WMS spaced environement variable problem
-            inputbox += [ FileBuffer('inputlfcs.conf',environment['INPUTLFCS']+'\n') ]
+            inputbox += [ FileBuffer('inputlfcs.conf',environment['INPUTSITES']+'\n') ]
         if environment["INPUTFILES"] :
             # Work around for glite WMS spaced environement variable problem
             inputbox += [ FileBuffer('inputfiles.conf',environment['INPUTFILES']+'\n') ]

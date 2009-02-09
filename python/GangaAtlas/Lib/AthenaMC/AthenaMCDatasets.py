@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.19 2009-02-06 12:22:09 ebke Exp $
+# $Id: AthenaMCDatasets.py,v 1.20 2009-02-09 14:33:49 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -108,21 +108,6 @@ def checkpath(path,prefix):
     return not status
 
 
-def register_files(turls,lfcs,target_lfc):
-    for file in turls.keys():
-        status,pfn,m=gridshell.cmd1("export LFC_HOST=%s; lcg-lr --vo atlas %s" % (lfcs[file],turls[file]),allowed_exit=[0,255])
-        if status>0:
-            logger.error(" lcg-lr --vo atlas %s failed.   " % turls[file])
-            continue
-        status,lfn,m=gridshell.cmd1("export LFC_HOST=%s;lcg-la --vo atlas %s" %(lfcs[file],turls[file]),allowed_exit=[0,255])
-        if status>0:
-            logger.error(" lcg-la --vo atlas %s failed.   " % turls[file])
-            continue
-        
-        status,output,m=gridshell.cmd1("export LFC_HOST=%s;lcg-rf --vo atlas -g %s -l %s %s" % (target_lfc,turls[file],lfn,pfn),allowed_exit=[0,255])
-        if status>0:
-            logger.error("registration failed:lcg-rf --vo atlas -g %s -l %s %s" % (turls[file],lfn,pfn))
-            continue
 
 def mapSitesToCloud():
     # create dictionnary cloud[site]
@@ -244,6 +229,30 @@ class AthenaMCInputDatasets(Dataset):
 
         #self.initDQ2hashes()
         #logger.debug(self.baseURLDQ2)
+
+## additional class methods to support migration ################################
+    def getMigrationClass(cls, version):
+        """This class method returns a (stub) class compatible with the schema <version>.
+        Alternatively, it may return a (stub) class with a schema more recent than schema <version>,
+        but in this case the returned class must have "getMigrationClass" and "getMigrationObject"
+        methods implemented, so that a chain of convertions can be applied."""
+        return AthenaMCInputDatasetsMigration12
+    getMigrationClass = classmethod(getMigrationClass)
+
+    def getMigrationObject(cls, obj):
+        """This method takes as input an object of the class returned by the "getMigrationClass" method,
+        performs object transformation and returns migrated object of this class (cls)."""
+        converted_obj = cls()
+        for attr, item in converted_obj._schema.allItems():
+            # specific convertion stuff
+            if attr == 'option_file':
+                setattr(converted_obj, attr, [getattr(obj, attr)]) # correction: []
+            else:
+                setattr(converted_obj, attr, getattr(obj, attr))
+            return converted_obj
+    getMigrationObject = classmethod(getMigrationObject)
+## end of additional class methods to support migration ################################
+
 
     def numbersToMatcharray(self,partitions):
         """ Transform a list of input file numbers into a matcharray that can be used on a list of filenames.
@@ -412,7 +421,7 @@ class AthenaMCInputDatasets(Dataset):
         return [self.turls,self.lfcs,self.sites]
 
 
-    def get_DBRelease(self, release):
+    def get_DBRelease(self, app, release):
         '''Get macthing DBrelease dataset from DQ2 database and useful information like guid for downloads'''
 
         self.turls={}
@@ -435,66 +444,15 @@ class AthenaMCInputDatasets(Dataset):
             raise Exception()
         dsetlist=datasets.keys()
         dsetname=dsetlist[0]
-        # get list of files in selected dataset.
+        # got exact dataset name from DQ2 catalog, now getting the files:
+        job = app.getJobObject()
+        backend=job.backend._name
+        backend = self.getdq2data(dsetname,None,backend,update=False)
         try:
-            dq2_lock.acquire()
-            contents = dq2.listFilesInDataset(dsetname)
-        finally:
-            dq2_lock.release()
-        # Convert 0.3 output to 0.2 style
-        if not contents:
-            logger.error("Empty DQ2 dataset %s" % dsetname)
-            raise Exception()
-        contents = contents[0]
-        contents_new = {}
-        for guid, info in contents.iteritems():
-            contents_new[guid]=info['lfn']
-        contents = contents_new
-        for guid, lfn in contents.iteritems():
-            allturls[lfn]="guid:"+guid
-        # Now filling up self.turls...
-        self.turls=allturls # as easy as that....
-        # now get associated lfcs... by getting list of host sites first...
-        try:
-            dq2_lock.acquire()
-            locations = dq2.listDatasetReplicas(dsetname)
-        finally:
-            dq2_lock.release()
-
-        try:
-            assert len(locations)>0
+            assert backend == job.backend._name
         except:
-            logger.error("Requested input dataset %s has no registered location in DQ2 catalog. Aborting" % dsetname)
-            raise
-        try:
-            dq2_lock.acquire()
-            datasetinfo = dq2.listDatasets(dsetname)
-        finally:
-            dq2_lock.release()
-
-        datasetvuid = datasetinfo[dsetname]['vuids'][0]
-
-        datasetType="complete"
-        allSites=locations[datasetvuid][1]
-        self.lfcs[dsetname]=""
-        LFCmap=getLFCmap()
-        lfclist=[]
-        for site in allSites:
-            if site not in LFCmap:
-                logger.error("No file catalog found for site: %s "%site)
-                continue
-            catalog=LFCmap[site]
-            imin=string.find(catalog,"lfc://") # in ToA, lfcs are coded as lfc://server
-            imax=string.rfind(catalog,":")
-            if imin <0:
-                continue
-            lfc=catalog[imin+6:imax]
-            if lfc not in lfclist:
-                lfclist.append(lfc)
-                self.lfcs[dsetname]+=lfc+" "
-
-        self.sites=[]
-
+            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s or subscribe the DB release dataset to the desired site" % ( dataset,job.backend._name,backend))
+            raise        
         return [self.turls,self.lfcs,self.sites]
 
     def getdq2data(self,dataset,matchrange,backend,update):
@@ -677,14 +635,17 @@ class AthenaMCInputDatasets(Dataset):
                     self.lfcs[dsetname]+=lfc+" "
         # self.lfc done, now to self.site...
         # self.sites[dsetname] is selected among sites using prodCatalog
-        iter=1
-        shuffled=allSites
-        random.shuffle(shuffled)
-        for site in shuffled:
-            if LFCmap[site]==prodCatalog:
-                self.sites.append(site)# 
-                if iter==2: break # pick 2 sites: one to be used as backup.
-                iter+=1
+
+        self.sites=allSites # collecting all sites from now on, doing the selection externally.
+        
+##        iter=1
+##        shuffled=allSites
+##        random.shuffle(shuffled)
+##        for site in shuffled:
+##            if LFCmap[site]==prodCatalog:
+##                self.sites.append(site)# 
+##                if iter==2: break # pick 2 sites: one to be used as backup.
+##                iter+=1
                 
         # Now filling up self.turls...
         self.turls=allturls # as easy as that....
@@ -778,7 +739,7 @@ class AthenaMCInputDatasets(Dataset):
 class AthenaMCOutputDatasets(Dataset):
     """AthenaMC Output Dataset class """
     
-    _schema = Schema(Version(1,0), {
+    _schema = Schema(Version(2,0), {
         'outdirectory'     : SimpleItem(defvalue = '', doc='path of output directory tree for storage. Used for both LFC and physical file locations.'), 
         'output_dataset'   : SimpleItem(defvalue = '', doc = 'dataset suffix for combined output dataset. If set, it will collect all expected output files for the job. If not set, every output type (histo, HITS, EVGEN...) will have its own output dataset.'),
         'output_firstfile'   : SimpleItem(defvalue=1,doc='EXPERT: Number of first output file. The job processing the first partition will generate the file with the number output_firstfile, the second will generate output_firstfile+1, and so on...'),
@@ -800,6 +761,29 @@ class AthenaMCOutputDatasets(Dataset):
         #       self.initDQ2hashes()
         #       logger.debug(self.baseURLDQ2)
         #        self.baseURLDQ2 = 'http://atlddmpro.cern.ch:8000/dq2/'
+
+## additional class methods to support migration ################################
+    def getMigrationClass(cls, version):
+        """This class method returns a (stub) class compatible with the schema <version>.
+        Alternatively, it may return a (stub) class with a schema more recent than schema <version>,
+        but in this case the returned class must have "getMigrationClass" and "getMigrationObject"
+        methods implemented, so that a chain of convertions can be applied."""
+        return AthenaMCOutputDatasetsMigration12
+    getMigrationClass = classmethod(getMigrationClass)
+
+    def getMigrationObject(cls, obj):
+        """This method takes as input an object of the class returned by the "getMigrationClass" method,
+        performs object transformation and returns migrated object of this class (cls)."""
+        converted_obj = cls()
+        for attr, item in converted_obj._schema.allItems():
+            # specific convertion stuff
+            if attr == 'option_file':
+                setattr(converted_obj, attr, [getattr(obj, attr)]) # correction: []
+            else:
+                setattr(converted_obj, attr, getattr(obj, attr))
+            return converted_obj
+    getMigrationObject = classmethod(getMigrationObject)
+## end of additional class methods to support migration ################################
 
     def prep_data(self,app):
         ''' generate output paths and file prefixes based on app and outputdata information. Generate corresponding entries in DQ2. '''
@@ -1114,7 +1098,7 @@ class AthenaMCOutputDatasets(Dataset):
                 #continue
             else:
                 reglines.append(regline)
-                logger.warning("Registering dataset %s in %s" % (dataset,siteID))
+                logger.debug("Registering dataset %s in %s" % (dataset,siteID))
                 self.actual_output.append("%s %s" % (lfn,siteID))
                 try:
                     dq2_lock.acquire()
@@ -1219,6 +1203,57 @@ class AthenaMCOutputDatasets(Dataset):
         logger.error("Nothing to download")
         return
 
+###### migration class #############################################################
+class AthenaMCInputDatasetsMigration12(AthenaMCInputDatasets):
+    """This is a migration class for Athena Job Handler with schema version 1.2.
+    There is no need to implement any methods in this class, because they will not be used.
+    However, the class may have "getMigrationClass" and "getMigrationObject" class 
+    methods, so that a chain of convertions can be applied."""
+
+    _schema = Schema(Version(1,0), {
+        'DQ2dataset'    : SimpleItem(defvalue = '', doc = 'DQ2 Dataset Name'),
+        'LFCpath' : SimpleItem(defvalue = '', doc = 'LFC path of directory to find inputfiles on the grid, or local directory path for input datasets (datasetType=local). For all non-DQ2 datasets.'),
+        'inputfiles'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names of subset of files to be processed. Must be used in conjunction of either DQ2dataset or LFCpath.'),
+        'inputpartitions'  : SimpleItem(defvalue ="",doc='String of input file numbers to be used (each block separated by a coma).A block can be a single number or a closed subrange (x-y). Subranges are defined with a dash. Must be used in conjunction of either DQ2dataset or LFCpath. Alternative to inputfiles.'),
+        'number_inputfiles'  : SimpleItem(defvalue="",sequence=0,doc='Number of inputfiles to process.'),
+        'n_infiles_job'    : SimpleItem(defvalue=1,doc='Number of input files processed by one job or subjob. Minimum 1'),
+        'datasetType'      : SimpleItem(defvalue = 'unknown', doc = 'Type of dataset(DQ2,private,unknown or local). DQ2 means the requested dataset is registered in DQ2 catalogs, private is for input datasets registered in a non-DQ2 storage (Tier3) and known to CERN local LFC. local is for local datasets on Local backend only'),
+        'cavern' : SimpleItem(defvalue = '', doc = 'Name of the dataset to be used for cavern noise (pileup jobs) or extra input dataset (other transforms). This dataset must be a DQ2 dataset'),
+        'n_cavern_files_job': SimpleItem(defvalue =1,doc='Number of input cavern files processed by one job or subjob. Minimum 1'),
+        'minbias' : SimpleItem(defvalue = '', doc = 'Name of the dataset to be used for minimum bias (pileup jobs) or extra input dataset (other transforms). This dataset must be a DQ2 dataset'),
+        'n_minbias_files_job': SimpleItem(defvalue =1,doc='Number of input cavern files processed by one job or subjob. Minimum 1')
+        })
+
+    _category = 'application_converters' # put this class in different category
+    _name = 'AthenaMCInputDatasetsMigration12'
+###### end of migration class #######################################################
+
+
+###### migration class #############################################################
+class AthenaMCOutputDatasetsMigration12(AthenaMCOutputDatasets):
+    """This is a migration class for Athena Job Handler with schema version 1.2.
+    There is no need to implement any methods in this class, because they will not be used.
+    However, the class may have "getMigrationClass" and "getMigrationObject" class 
+    methods, so that a chain of convertions can be applied."""
+
+    _schema = Schema(Version(1,0), {
+        'outdirectory'     : SimpleItem(defvalue = '', doc='path of output directory tree for storage. Used for both LFC and physical file locations.'), 
+        'output_dataset'         : SimpleItem(defvalue = '', doc = 'dataset suffix for combined output dataset. If set, it will collect all expected output files for the job. If not set, every output type (histo, HITS, EVGEN...) will have its own output dataset.'),
+        'output_firstfile'   : SimpleItem(defvalue=1,doc='offset for output file partition numbers. First job will generate the partition number output_firstfile, second will generate output_firstfile+1, and so on...'),
+        'logfile'            : SimpleItem(defvalue='',doc='file prefix and dataset suffix for logfiles.'),
+        'outrootfile'        : SimpleItem(defvalue='',doc='file prefix and dataset suffix for primary output root file (EVGEN for evgen jobs, HITS for simul jobs). Placeholder for any type of output file in template mode.'),
+        'outhistfile'          : SimpleItem(defvalue='',doc='file prefix and dataset suffix for histogram files. Placeholder for any type of output file in template mode.'),
+        'outntuplefile'          : SimpleItem(defvalue='',doc='file prefix and dataset suffix for ntuple files. Placeholder for any type of output file in template mode.'),
+        'outrdofile'         : SimpleItem(defvalue='',doc='file prefix and dataset suffix for RDO files. Placeholder for any type of output file in template mode.'),
+       'outesdfile'         : SimpleItem(defvalue='',doc='file prefix and dataset suffix for ESD files. Placeholder for any type of output file in template mode.'),
+        'outaodfile'         : SimpleItem(defvalue='',doc='file prefix and dataset suffix for AOD files. Placeholder for any type of output file in template mode.'),
+        'expected_output'         : SimpleItem(defvalue = [], typelist=['list'], sequence = 1, protected=1,doc = 'List of output files expected to be produced by the job. Should not be visible nor modified by the user.'),
+        'actual_output'         : SimpleItem(defvalue = [], typelist=['list'], sequence = 1, protected=1,doc = 'List of output files actually produced by the job followed by their locations. Should not be visible nor modified by the user.')
+        })
+
+    _category = 'application_converters' # put this class in different category
+    _name = 'AthenaMCOutputDatasetsMigration12'
+###### end of migration class #######################################################
 
 
 from Ganga.Utility.logging import getLogger
