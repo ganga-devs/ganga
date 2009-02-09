@@ -260,12 +260,12 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 if string.find(site,outsite_short)>-1:
                      selsite=site
                      break
-             try:
-                 assert selsite!=""
-             except:
-                 logger.error("DBRelease dataset not in destination site %s. Please subscribe the cavern dataset to the destination site or choose another site.Aborting " % outsite)
-                 raise Exception()
-             self.dbsites=[selsite]
+            try:
+                assert selsite!=""
+            except:
+                logger.error("DBRelease dataset not in destination site %s. Please subscribe the cavern dataset to the destination site or choose another site.Aborting " % outsite)
+                raise Exception()
+            self.dbsites=[selsite]
              
             
 
