@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.12 2009-02-09 14:33:49 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.13 2009-02-09 15:00:42 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -270,12 +270,13 @@ class AthenaMCSplitterJob(ISplitter):
     """AthenaMC handler job splitting"""
     
     _name = "AthenaMCSplitterJob"
-    _schema = Schema(Version(2,0), {
+    _schema = Schema(Version(1,0), {
        'numsubjobs': SimpleItem(defvalue=0,sequence=0, doc='Limit the number of subjobs. If this is left at 0, all partitions will be processed.'),
        'input_partitions' : SimpleItem(defvalue="",doc='List of input file numbers to be processed, either as a string in the format "1,3,5-10,15-" or as a list of integers. Alternative to output_partitions',typelist=["str","list"]),
        'output_partitions' : SimpleItem(defvalue="",doc='List of partition numbers to be processed, either as a string in the format "1,3,5-10,15-" or as a list of integers. Alternative to input_partitions',typelist=["str","list"]),
        'random_seeds' : SimpleItem(defvalue=[],doc='List of random seeds to use for the subjobs. Only used if it is a list',typelist=["str","list"])
         } )
+
 
     ### Splitting based on numsubjobs
     def split(self,job):
@@ -334,9 +335,10 @@ logger = getLogger()
 
 # some default values
 
-
-
 # $Log: not supported by cvs2svn $
+# Revision 1.12  2009/02/09 14:33:49  fbrochu
+# Migration to use of dq2-get for input data and strict job to data policy. Added migration classes in AthenaMCDatasets.py to allow display of old jobs. Bug fix for collection of adler32 checksum numbers of output files and improved debug output from stage-out script.
+#
 # Revision 1.11  2009/02/06 13:14:06  ebke
 # *** empty log message ***
 #
