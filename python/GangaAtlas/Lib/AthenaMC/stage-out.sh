@@ -105,11 +105,11 @@ stageOutLCG(){
     export dataset=`echo $lcn | sed -e 's:/:\.:g'`
     filesize=`ls -l $file | awk '{ print $5}'`
     md5sumfile=`md5sum $file | awk '{ print $1}'`
-    adler32=`adler32 $file | tail -1`
-    if [-z "$adler32" ]; then
-	chmod +x adler32.py
-	echo "using imported adler32.py script"
-	adler32=`./adler32.py $file`
+    chmod +x adler32.py
+    adler32=`./adler32.py $file`
+    if [ -z "$adler32" ]; then
+	echo "using local adler32"
+	adler32=`adler32 $file | tail -1`
     fi
     echo $guid >> output_guids
     echo $OUTSITE >> output_location
