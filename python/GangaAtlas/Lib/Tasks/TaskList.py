@@ -76,9 +76,9 @@ class TaskList(GangaObject):
                # TODO: Make this user-configurable and add better error message 
                if (p.n_status("failed")*100.0/(20+p.n_status("completed")) > 20):
                   p.pause()
-                  logger.error("Task %s paused - %i jobs have failed while only %i jobs have completed successfully." % (p.name,f, c))
-                  logger.error("Please investigate the cause of the failing jobs and then remove the previously failed jobs using job.remove()")
-                  logger.error("You can then continue to run this task with tasks(%i).run()" % p.id)
+                  print ("Task %s paused - %i jobs have failed while only %i jobs have completed successfully." % (p.name,p.n_status("failed"), p.n_status("completed")))
+                  print ("Please investigate the cause of the failing jobs and then remove the previously failed jobs using job.remove()")
+                  print ("You can then continue to run this task with tasks(%i).run()" % p.id)
                   continue
                p.submitJobs()
             except Exception, x:
