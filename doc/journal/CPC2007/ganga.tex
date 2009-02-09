@@ -52,8 +52,8 @@
 \def\grid {Grid\xspace}
 \def\GPI{GPI\xspace}
 \def\roofit{\textsc{RooFit}\xspace}
-\def\panda{PANDA}
-\def\ARC{ARC}
+\def\panda{PANDA\xspace}
+\def\ARC{ARC\xspace}
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\val}[1]{\emph{#1}}
 
@@ -127,7 +127,7 @@
 \address[a:Lancaster]{Lancaster University, Lancaster, United Kingdom}
 \address[a:NIKHEF]{NIKHEF, Amsterdam, The Netherlands}
 \address[a:CERN]{CERN, Geneva, Switzerland}
-\address[a:STFC]{Science \& Technology Facilities Council, United Kingdom}
+\address[a:STFC]{STFC Rutherford Appleton Laboratory, Didcot, United Kingdom}
 \address[a:Oxford]{University of Oxford, Oxford, United Kingdom}
 \address[a:Birmingham]{University of Birmingham, Birmingham, United Kingdom}
 \address[a:Oslo]{University of Oslo, Oslo, Norway}
@@ -198,7 +198,7 @@ analysis within the \atlas~\cite{ATLAS} and
 \lhcb~\cite{LHCb} experiments in High Energy Physics where large
 communities of physicists need access to \grid resources for data mining
 and simulation tasks. A list of projects which supported the development of \ganga
-may be found in the section \ref{sec:acknowledgements}.
+may be found in section \ref{sec:acknowledgements}.
 
 \ganga provides a simple but flexible programming interface that can
 be used either interactively at the \python prompt, through a
@@ -243,7 +243,7 @@ domain specific and allow users of a distributed application to run it
 on the \grid without needing to know much about \grid tools. 
 
 \ganga is licensed under the GNU General Public
-License\footnote{\ganga is licensed under GPL version 2 or, as preferred by
+License\footnote{\ganga is licensed under GPL version 2 or, if preferred by
 the user, any later version.  Details of the GPL are available at
 \url{http://www.gnu.org/licenses/gpl.html}.} and is available for download from
 the project website: \url{http://www.cern.ch/ganga}. The installation of \ganga is trivial and
@@ -410,7 +410,7 @@ Load Sharing Facility (LSF)~\cite{schwickerath_2008},
 Sun Grid Engine (SGE)~\cite{gentzsch_2001},
 and Condor~\cite{thain_2005}), and \grid systems, for example  based on
 gLite~\cite{andreetto_2008}, ARC~\cite{ellert_2007} and OSG~\cite{OSG}.
-Remote backend component allows to launch jobs directly on remote machines 
+Remote backend component allows jobs to be launched directly on remote machines 
 using ssh.  
 
 %SGE, and Condor~\cite{Batch}), and \grid systems like
@@ -419,7 +419,7 @@ using ssh.
 As an example, the batch backend component defines a
 single property that may be set by the user:
 \begin{description}
-\item[\code{queue~~~~~~:}] Name of queue to which job should be submitted,
+\item[\code{queue~~~~~~:}] name of queue to which job should be submitted,
 \end{description}
 and defines three properties for storing system information:
 \begin{description}
@@ -428,7 +428,7 @@ and defines three properties for storing system information:
 \item[\code{actualqueue:}] name of queue to which job has been submitted.
 \end{description}
 
-In addition, a remote-backend component allows a job defined in a Ganga
+In addition, a remote-backend component allows a job defined in a \ganga
 session running on one machine to be submitted to a processing system
 known to a remote machine to which the user has access.  For example,
 a user who has accounts on two clusters may submit jobs to the batch system
@@ -447,7 +447,7 @@ A strict distinction is made between the datasets and the sandbox (job)
 files.  The former are the files or databases which are stored
 externally.  The sandbox consists of files which are transferred from
 the user's filesystem together with the job.  The sandbox mechanism is
-designed to handle small files (typically up to 10Mb) while the
+designed to handle small files (typically up to 10MB) while the
 datasets may be arbitrarily large.
 
 \subsection{Splitter components}
@@ -457,7 +457,7 @@ one splitter component (\code{ArgSplitter}) deals with executing the same task
 many times over, but changing the arguments of the application executable each
 time. It defines a single property:
 \begin{description}
-\item[args:] List of sets of arguments to be passed to an application.
+\item[args:] list of sets of arguments to be passed to an application.
 \end{description}
 Specialised splitters deal with creating subjobs that process different parts
 of a dataset.
@@ -502,7 +502,7 @@ and syntax shortcuts.
 The user does not interact with the plugin class directly but rather with an
 automatically generated proxy class, visible in the \GPI. The proxy
 class only includes attributes defined as visible in the schema and methods
-selected for export in the plugin class. The separation of the plugin and
+selected for export in the plugin class. This separation of the plugin and
 proxy levels is very flexible. At the \GPI level, the plugin implementation
 details are not visible; all proxy classes follow the same design logic (for
 example, copy-by-value); persistence is automatic, session-level locking
@@ -510,7 +510,7 @@ is transparent. In this way the low-level, internal API is
 separated from the user-level \GPI.
 
 The framework does not force developers to support all combinations of
-applications and backends but only the ones that are meaningful or interesting. To manage
+applications and backends, but only the ones that are meaningful or interesting. To manage
 this, the concept of a {\em submission handler} is introduced. The submission
 handler is a connector between the application and backend components. At
 submission time, it translates the internal representation of the application
@@ -554,7 +554,7 @@ interface that allows transparent access to job files within the
 directory, with sub-directories for input and output and for each subjob.
 
 Users may access the job files directly in the file-system or using \ganga commands
-such as \texttt{job.peek()}. Internally \ganga handles the input and output
+such as \texttt{job.peek()}. Internally, \ganga handles the input and output
 files using a simple abstraction layer which allows for trivial integration
 of additional workspace implementations.
 Tests with a prototype using a WebDav~\cite{WebDav}
@@ -621,7 +621,7 @@ and may then be requested by a user for specific jobs.
 \section{Graphical User Interface}
 \label{sec:GUI}
 
-The \ganga Graphical User Interface (GUI), shown in  Fig.\ref{fig:GUI} and
+The \ganga Graphical User Interface (GUI), shown in  Fig.~\ref{fig:GUI} and
 built using PyQt3~\cite{rempt_2001}, makes available all of the job-management
 functionality provided at the level of the \ganga Public Interface.  The
 GUI incorporates various convenience features, and its multi-threaded nature
@@ -680,7 +680,7 @@ fundamental nature of the Universe by detecting new particles at
 high energies, and by performing high-precision measurements of
 particle decays. The experiments
 are located at the Large Hadron Collider~(\lhc) at the European Laboratory for
-Particle Physics~(CERN), Geneva, with first particle collisions (events) in
+Particle Physics~(CERN), Geneva, with first particle collisions (events) expected in
 2009. Both experiments require processing of data
 volumes of the order of petabytes per year, rely on computing resources
 distributed across multiple locations, and exploit several \grid implementations. The data-processing applications,
@@ -696,7 +696,7 @@ criteria so as to identify data of specific interest.
 
 The role of \ganga within \atlas and \lhcb is to act as the interface for data
 analysis by a large number of individual physicists. \ganga also allows for
-the easy exchange of jobs between users, something that can otherwise can be difficult
+the easy exchange of jobs between users, something that can otherwise be difficult
 because of the complex configuration of analysis jobs.
 
 \subsection{The \lhcb experiment}
@@ -761,12 +761,12 @@ the
 analysis of a large dataset into many smaller subjobs. During the splitting,
 a file catalogue is queried to ensure that all data associated with an
 individual subjob is
-available in its entirety at at least one location on the \grid. This gives
+available in its entirety at a minimum of one location on the \grid. This gives
 significant optimisation, as it avoids subjobs having to copy data across the
 network
 before an analysis can start.
 
-In total above 300k user jobs finished successfully in 2008 with a total
+In total, above 300k user jobs finished successfully in 2008 with a total
 CPU consumption of 87 CPU years. The jobs ran at a total of 140 Grid
 sites across the globe. The system was responsive to a highly irregular
 usage pattern and spikes of several thousand simulataneous jobs were
@@ -969,11 +969,11 @@ individual sites. File storage and access is 'cloudy', meaning that
 all files registered in \grid--wide catalogues are accessible to all
 worker nodes. File transfers are handled by the \grid manager, between
 job acceptance and execution. \ARC--connected resources are used
-e.g. by researches in bioinformatics, genomics, meteorology, in
+e.g. by researchers in bioinformatics, genomics, meteorology, in
 addition to high--energy physics.
 
 \ganga has been interfaced to \ARC through a backend, which translates
-ganga input into \ARC--readable xRSL language. The \ARC user client is
+\ganga input into \ARC--readable xRSL language. The \ARC user client is
 lightweight, and binaries are provided as an external library at \ganga
 install time. The main user of this integration is the \atlas
 experiment (see sec.~\ref{sec:atlas}), where it is the main user
@@ -999,10 +999,8 @@ telecommunication applications~\cite{ITU}; and theoretical physics~\cite{LQCD}. 
 may be controlled by the user from the \ganga interface. This
 approach allows the efficiency of the \diane overlay scheduling system
 to be combined with the well-structured job management offered by \ganga, as well as
-combining \grid and non-\grid resources under a uniform interface. This approach
-allows to efficiently implement low-latency access to the \grid resources and implement
-responsiveness as the capacity to support on-demand computing and interactivity 
-\cite{SchedulingForResponsiveGrids}.
+combining \grid and non-\grid resources under a uniform interface. 
+Also, this allows the efficient implementation of low-latency access to \grid resources and improvements to responsiveness when supporting on-demand computing and interactivity \cite{SchedulingForResponsiveGrids}.
 
 \begin{figure}[h!]
   \centering
@@ -1199,7 +1197,7 @@ G.~Aad \etal\ [ATLAS Collaboration],
 
 \bibitem{LHCb}
 A.A.~Alves Jr.\ \etal\ [LHCb Collaboration],
-\textit{The LHCb Detector At The LHC},
+\textit{The LHCb Detector at the LHC},
 \href{http://dx.doi.org/10.1088/1748-0221/3/08/S08005}
 {JINST {\bf 3} (2008) S08005}.
  %%CITATION = JINST,3,S08005;%%
@@ -1441,7 +1439,7 @@ ATLAS},
 \bibitem{ballintijn_2006} M.~Ballintijn \etal,
 \textit{Parallel interactive data analysis with PROOF},
 \href{http://dx.doi.org/10.1016/j.nima.2005.11.100}
-{Nucl.\ Instrum.\ Methods \textbf{559} 13}.
+{Nucl.\ Instrum.\ Methods \textbf{559} (2006) 13}.
 
 \bibitem{jones_2005} R.~Jones,
 \textit{An overview of the EGEE project},
