@@ -1,18 +1,33 @@
 
-def browseBK():
+
+def browseBK(gui=True):
+    """
+Utility function to launch the new LHCb bookkeeping from inside Ganga.
+The function returns an LHCbDataset object. 
+
+After browsing and selecting the desired datafiles, click on the
+"Save as ..." button. The Browser will quit and save the seleted files
+as an LHCbDataset object
+
+Usage:
+# retrieve an LHCbDataset object with the selected files and store
+# them in the variable l
+l=browseBK()
+
+# retrieve an LHCbDataset object with the selected files and store
+# them in the jobs inputdata field, ready for submission
+j.inputdata=browseBK()    
+    """
     import Ganga.Utility.logging
     logger = Ganga.Utility.logging.getLogger()
     try: 
-        import GangaGUI.LHCB_BKDB_browser.browser_mod
+        from GangaLHCb.Lib.Dirac.Bookkeeping import Bookkeeping
+        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
     except ImportError:
-        logger.warning("Could not import the GangaGUI. ")
-        logger.warning("The LHCb bookkeeping browser will not be available")
-        logger.warning("Try to add 'GangaGUI' to your RUNTIME_PATH")
-        logger.warning("in your .gangarc file or start ganga with options:")
-        logger.warning('''"ganga -o'[Configuration]RUNTIME_PATH=GangaGUI'"''')
+        logger.warning('''Could not start Bookkeeping Browser''')
         return None
-    list = GangaGUI.LHCB_BKDB_browser.browser_mod.browse()
-    return LHCbDataset(files=[File(name=n) for n in list])
+    bkk=Bookkeeping()
+    return  bkk.browse(gui)
 
         
     
