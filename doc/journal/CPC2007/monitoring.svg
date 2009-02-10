@@ -2943,8 +2943,8 @@
    width="1052.3622px"
    height="744.09449px"
    inkscape:zoom="1.0173439"
-   inkscape:cx="393.30887"
-   inkscape:cy="351.39003"
+   inkscape:cx="524.63749"
+   inkscape:cy="76.163531"
    inkscape:window-x="0"
    inkscape:window-y="25"
    inkscape:current-layer="Layer_1"
@@ -2983,13 +2983,7 @@
    id="layer2"
    transform="translate(-33.84144,57.69268)"
    inkscape:groupmode="layer" />
-<rect
-   style="fill:none"
-   id="rect67"
-   width="42.170116"
-   y="223.96288"
-   x="192.69357"
-   height="16.509756" />
+
 <text
    xml:space="preserve"
    style="font-size:12px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -3000,6 +2994,7 @@
      id="tspan5184"
      y="109.18333"
      x="229.13277" /></text>
+
 
 
 
@@ -3022,6 +3017,7 @@
 
 
 
+
 <text
    xml:space="preserve"
    style="font-size:5.80368614px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Sans"
@@ -3037,6 +3033,7 @@
      id="tspan6167"
      y="31.249649"
      x="30.417896">&amp; Retrive output</tspan></text>
+
 
 
 
@@ -3092,6 +3089,7 @@
      sodipodi:role="line">management</tspan></text>
 
 
+
 <rect
    style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.94287157;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
    id="rect8728"
@@ -3110,6 +3108,7 @@
      id="tspan9243"
      x="199.48537"
      y="396.75839">Ganga Core</tspan></text>
+
 
 
 <g
@@ -3149,6 +3148,7 @@
      y="535.52673"
      x="356.74738"
      sodipodi:role="line">MyProxy</tspan></text>
+
 
 
 </g><g
@@ -3222,6 +3222,7 @@
      x="-144.54526">monitoring threads</tspan></text>
 
 
+
 <text
    id="text77458"
    y="345.05872"
@@ -3233,6 +3234,7 @@
      x="-133.51807"
      id="tspan77460"
      sodipodi:role="line">  Grid   Batch   Condor ...</tspan></text>
+
 
 
 </g></g></g></g><g
@@ -3255,6 +3257,7 @@
      x="188.6683"
      id="tspan7769"
      sodipodi:role="line">Ganga Job Wrapper</tspan></text>
+
 
 
 
@@ -3295,6 +3298,7 @@
      y="84.490921"
      style="font-size:37.2179985px" /></text>
 
+
 <text
    xml:space="preserve"
    style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -3307,6 +3311,7 @@
      x="54.793304"
      y="71.941124" /></text>
 
+
 <text
    xml:space="preserve"
    style="font-size:3.86912417px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -3317,6 +3322,7 @@
      id="tspan2974"
      x="202.51273"
      y="6.2999635">Application</tspan></text>
+
 
 </g><path
    style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.77285326;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-miterlimit:4;stroke-dasharray:0.77285324, 0.77285324;stroke-dashoffset:0;stroke-opacity:1"
@@ -3338,6 +3344,7 @@
      id="tspan7785">monitoring</tspan></text>
 
 
+
 <text
    xml:space="preserve"
    style="font-size:7.73824835px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -3353,6 +3360,7 @@
      y="117.89024"
      id="tspan98740"
      style="-inkscape-font-specification:Bitstream Vera Sans">Services &amp; Dashboards</tspan></text>
+
 
 
 <g
@@ -3409,6 +3417,7 @@
      sodipodi:role="line">User</tspan></text>
 
 
+
 </g><g
    id="g98765"><path
      d="M 83.327639,9.6031037 C 90.323833,41.063639 90.323833,41.063639 90.323833,41.063639"
@@ -3457,6 +3466,7 @@
      x="263.24988"
      id="tspan3822">data via external means</tspan></text>
 
+
 <text
    xml:space="preserve"
    style="font-size:5.80368614px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Sans"
@@ -3468,6 +3478,7 @@
      y="-5.6079397"
      x="171.81564"
      id="tspan3828">Interaction via GPI</tspan></text>
+
 
 <g
    id="g829"

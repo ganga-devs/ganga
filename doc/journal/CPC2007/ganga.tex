@@ -20,12 +20,15 @@
 
 \usepackage{listings}
 
-\ifx\pdftexversion\undefined
-  \usepackage[dvips]{graphicx}
-  \usepackage[dvips]{hyperref}
-\else
+%\ifx\pdftexversion\undefined
+\RequirePackage{ifpdf}
+\ifpdf
   \usepackage[pdftex]{graphicx}
   \usepackage[pdftex,colorlinks]{hyperref}
+\else
+  \usepackage[dvips]{graphicx}
+  \usepackage[dvips]{hyperref}
+
   %\usepackage[pdftex]{hyperref}
 \fi
 
@@ -281,7 +284,7 @@ the \ganga Public Interface~(\GPI) which in turn provides access to the \ganga
 core implementation.
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=14cm]{ganga-architecture.png}
+  \includegraphics[width=14cm]{ganga-architecture}
   \caption{The overall architecture of \ganga. The user interacts with the
     \ganga Public Interface (GPI) via the Graphical User Interface (GUI), the
     Command-Line Interface in Python (CLIP), or
@@ -302,7 +305,7 @@ aggregation of subjob outputs. The overall component structure of a job is
 illustrated in Fig.~\ref{fig:JobComponents}
 \begin{figure}
   \centering
-  \includegraphics[width=14cm]{job-uml.png}
+  \includegraphics[width=14cm]{job-uml}
   \caption{A set of components in \ganga can be combined to form a complete
     job. The application to run and the backend where it will run are
     mandatory while all other components are optional.}
@@ -631,7 +634,7 @@ a good response time for the user.
 
 \begin{figure}[ht!]
   \centering
-  \includegraphics[width=1 \textwidth]{ganga-GUI.png}
+  \includegraphics[width=1 \textwidth]{ganga-GUI}
   \caption{\ganga graphical user interface (GUI).  The overview of jobs
    can be seen to the left, and the details of an individual job are to
    the right.}
@@ -888,7 +891,7 @@ additional image classification modules or image context and metadata can
 easily be integrated into the index.
 \begin{figure}[htb]
   \begin{center}
-    \includegraphics[width=0.85 \textwidth]{camtologyfigure.pdf}
+    \includegraphics[width=0.85 \textwidth]{camtologyfigure}
   \end{center}
   \caption{Schematic representation of the image-retrieval system developed by
 Imense Ltd. Image characteristics are determined by applying feature-extraction
