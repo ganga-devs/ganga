@@ -42,11 +42,9 @@ class Bookkeeping(GangaObject):
         from GangaLHCb.Lib.LHCbDataset.LHCbDataset import string_dataset_shortcut
         f=self._createTmpFile()
         if gui:
-            print f
             dw=diracwrapper(DiracUtils.bookkeeping_browse_command(f))
             rc= dw.getOutput()
             l=self.fileToList(f)
-            print l
             ds=string_dataset_shortcut(l,None)
             return ds
     
