@@ -88,6 +88,13 @@ if not result.get('OK',False): rc = -1
 storeResult(result)        
 """ % id
 
+def bookkeeping_browse_command(file):
+    
+    return '''
+import os
+rc = os.system('dirac-bookkeeping-gui %s')
+#storeResult(rc)
+    ''' % file
 
 def getOutput_command(dir,id):
     return """
