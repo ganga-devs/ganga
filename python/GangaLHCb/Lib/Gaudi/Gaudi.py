@@ -2,8 +2,8 @@
 '''Application handler for Gaudi applications in LHCb.'''
 
 __author__ = 'Andrew Maier, Greig A Cowan'
-__date__ = "$Date: 2009-02-02 14:16:53 $"
-__revision__ = "$Revision: 1.21 $"
+__date__ = "$Date: 2009-02-10 10:31:03 $"
+__revision__ = "$Revision: 1.22 $"
 
 import os
 import re
@@ -155,18 +155,47 @@ class Gaudi(IApplication):
     def readInputData(self,optsfiles,extraopts=False):
         """Returns a LHCbDataSet object from a list of options files. The optional
         argument extraopts will decide if the extraopts string inside the application
-        is considered or not. """
+        is considered or not. 
+        
+        Usage examples:
+        # Creata an LHCbDataset object with the data found in the optionsfile
+        l=DaVinci(version='v22r0p2').readInputData(["~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py"]) 
+        # Get the data from an options file and assign it to the jobs inputdata field
+        j.inputdata = j.application.readInputData(["~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py"])
+        
+        # Assuming you have data in your extraopts, you can use the extraopts.
+        # In this case your extraopts need to be fully parseable by gaudirun.py
+        # So you must make sure that you have the proper import statements. e.g.
+        from Gaudi.Configuration import * 
+        # If you mix optionsfiles and extraopts, as usual extraopts may overwright
+        # your options
+        # 
+        # Use this to create a new job with data from extraopts of an old job
+        j=Job(inputdata=jobs[-1].application.readInputData([],True))
+        """
+       
+
+        def dummyfile():
+            import tempfile,os
+            temp_fd,temp_filename=tempfile.mkstemp(text=True,suffix='.py')
+            os.write(temp_fd,"#Dummy file to keep the Optionsparser happy")
+            os.close(temp_fd)
+            return temp_filename
 
         if type(optsfiles)!=type([]):
             optsfiles=[optsfiles]
 
+        if len(optsfiles)==0:
+            # use a dummy file to keep the parser happy
+            optsfiles.append(dummyfile())
+
         self.shell = gaudishell_setenv(self)
         inputs = self._check_inputs() 
-        self.extra = GaudiExtras()
         if extraopts: 
             extraopts=self.extraopts
         else:
             extraopts=""
+        self.extra = GaudiExtras()
 
         try:
             parser = PythonOptionsParser(optsfiles,extraopts,self.shell)
@@ -175,7 +204,7 @@ class Gaudi(IApplication):
                   'files and extraopts.'
             raise ApplicationConfigurationError(None,msg)
 
-      #  extra.opts_pkl_str = parser.opts_pkl_str
+        self.extra.opts_pkl_str = parser.opts_pkl_str
         inputdata = parser.get_input_data()
         return inputdata
     def master_configure(self):
