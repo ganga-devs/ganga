@@ -1,5 +1,5 @@
 from common import *
-import os, time, thread
+import os, time, threading
 
 class TaskList(GangaObject):
    """This command is the main interface to Ganga Tasks. For a short introduction and 'cheat sheet', try tasks.help()"""
@@ -15,6 +15,11 @@ class TaskList(GangaObject):
    _help_printed = False
    _run_thread = False
    _thread = None
+
+   def atexit(self):
+      self.save()
+      self._run_thread = False
+      time.sleep(1)
 
    def save(self):
       """Writes all tasks to a file 'tasks.xml' in the job repository. This function is usually called automatically. """
@@ -59,7 +64,6 @@ class TaskList(GangaObject):
          time.sleep(0.4)
       time.sleep(0.5)
       ## .. hopefully ganga is now initialized. TODO: better way to find this out.
-
       ## Main loop
       while self._run_thread: 
          logger.debug("Background task thread waking up...")
@@ -85,8 +89,7 @@ class TaskList(GangaObject):
                   logger.error("Exception occurred in task monitoring loop: %s\nThe offending task was paused." % x)
                   p.pause()
                   self.save()
-         time.sleep(10)
-      logger.error("Backgroud task thread stopped manually.")
+         time.sleep(2)
 
    def start(self):
       """ Start a background thread that periodically run()s"""
@@ -94,7 +97,8 @@ class TaskList(GangaObject):
          logger.warning("It seems that the task thread is already running.")
          return
       self._run_thread = True
-      self._thread = thread.start_new(self._thread_main, ())
+      self._thread = threading.Thread(name="GangaTasks", target=self._thread_main)
+      self._thread.start()
 
 
 ## Information methods
