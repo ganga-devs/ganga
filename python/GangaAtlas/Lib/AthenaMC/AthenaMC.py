@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.13 2009-02-09 15:00:42 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.14 2009-02-11 17:26:10 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -13,6 +13,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 
 from Ganga.Core import FileWorkspace
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from Ganga.Utility.Config import makeConfig, ConfigError
 from Ganga.Utility.logging import getLogger
@@ -98,8 +99,7 @@ class AthenaMC(IApplication):
            elif self.firstevent == 1:
               firstpartition = self.partition_number
            else:
-              logger.error("Except for evgen jobs, app.firstevent is an alternative to app.partition_number. You can not specify both at the same time!")
-              raise Exception()
+              raise ApplicationConfigurationError(None,"Except for evgen jobs, app.firstevent is an alternative to app.partition_number. You can not specify both at the same time!")
 
         if job and not job.splitter:
            return ([firstpartition], False)
@@ -120,8 +120,7 @@ class AthenaMC(IApplication):
                  inputs = expandList(job.splitter.input_partitions)
                  return (self.getPartitionsForInputs(inputs[0], job.inputdata), inputs[1]) # propagate open range
            else:
-              logger.error("Either splitter.output_partitions or splitter.input_partitions can be specified, but not both!")
-              raise Exception()
+              raise ApplicationConfigurationError(None,"Either splitter.output_partitions or splitter.input_partitions can be specified, but not both!")
 
     def getInputPartitionInfo(self, ids):
         """ Returns the tuple (jobs_per_input, inputs_per_job, skip_files, skip_jobs). The variables are:
@@ -131,8 +130,7 @@ class AthenaMC(IApplication):
             skip_jobs: How many jobs are skipped in numbering, i.e. in simulation if the first 1000 events 
                  of one large input file are skipped, partition number one would start at event number 1001."""
         if not ids:
-            logger.error("No input dataset specified!")
-            raise Exception()
+            raise ApplicationConfigurationError(None,"No input dataset specified!")
         # This strange division rounds correctly, for example -((-10)/10) == 1,
         jobs_per_input = -((-ids.number_events_file)/self.number_events_job)
         inputs_per_job = -((-self.number_events_job)/ids.number_events_file)
@@ -230,13 +228,11 @@ class AthenaMC(IApplication):
            try:
                assert self._getRoot().splitter._name=="AthenaMCSplitterJob"
            except AssertionError:
-               logger.error('If you want to use a job splitter with the AthenaMC application, you have to use AthenaMCSplitterJob')
-               raise Exception()
+               raise ApplicationConfigurationError(None,'If you want to use a job splitter with the AthenaMC application, you have to use AthenaMCSplitterJob')
 ##           try:
 ##               assert self._getRoot().splitter.numsubjobs < 200
 ##           except AssertionError:
-##               logger.error("You are requesting too many subjobs. The AthenaMC module is only for small scale production. Aborting.")
-##               raise Exception()
+##               raise ApplicationConfigurationError(None,"You are requesting too many subjobs. The AthenaMC module is only for small scale production. Aborting.")
 
        # enforce the use of AthenaMCOutputDataset
        try:
@@ -254,8 +250,7 @@ class AthenaMC(IApplication):
              raise
           inputdata = self._getRoot().inputdata.get_dataset(self, self._getRoot().backend._name)
           if len(inputdata)!= 3:
-             logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-             raise Exception("Input file not found")
+             raise ApplicationConfigurationError(None,"Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
           self.turls=inputdata[0]
           self.lfcs=inputdata[1]
           self.sites=inputdata[2]
@@ -336,6 +331,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.13  2009/02/09 15:00:42  fbrochu
+# *** empty log message ***
+#
 # Revision 1.12  2009/02/09 14:33:49  fbrochu
 # Migration to use of dq2-get for input data and strict job to data policy. Added migration classes in AthenaMCDatasets.py to allow display of old jobs. Bug fix for collection of adler32 checksum numbers of output files and improved debug output from stage-out script.
 #

@@ -14,6 +14,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.Core import FileWorkspace
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.Utility.Config import getConfig, ConfigError
@@ -154,7 +155,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 inputdata=job.inputdata.get_cavern_dataset(app)
                 if len(inputdata)!= 3:
                     logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-                    raise Exception("Input file not found")
+                    raise  ApplicationConfigurationError(None,"Input file not found")
                 self.cavern_turls=inputdata[0]
                 self.cavern_lfcs=inputdata[1]
                 self.cavern_sites=inputdata[2]
@@ -162,7 +163,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 inputdata=job.inputdata.get_minbias_dataset(app)
                 if len(inputdata)!= 3:
                     logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-                    raise Exception("Input file not found")
+                    raise ApplicationConfigurationError(None,"Input file not found")
                 self.minbias_turls=inputdata[0]
                 self.minbias_lfcs=inputdata[1]
                 self.minbias_sites=inputdata[2]
@@ -184,7 +185,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             inputdata=job.inputdata.get_DBRelease(app,dbrelease)
             if len(inputdata)!= 3:
                     logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-                    raise Exception("Input file not found")
+                    raise ApplicationConfigurationError(None,"Input file not found")
             self.dbturls=inputdata[0]
             self.dblfcs=inputdata[1]
             self.dbsites=inputdata[2]
@@ -227,8 +228,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert selsite!=""
             except:
-                logger.error("Input data not in destination site %s. Please subscribe the input dataset to the destination site or choose another site.Aborting " % outsite)
-                raise Exception()
+                raise ApplicationConfigurationError(None,"Input data not in destination site %s. Please subscribe the input dataset to the destination site or choose another site.Aborting " % outsite)
             self.sites=[selsite]
         if len(self.cavern_sites)>0:
             selsite=""
@@ -239,8 +239,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert selsite!=""
             except:
-                logger.error("Cavern input data not in destination site %s. Please subscribe the cavern dataset to the destination site or choose another site.Aborting " % outsite)
-                raise Exception()
+                raise ApplicationConfigurationError(None,"Cavern input data not in destination site %s. Please subscribe the cavern dataset to the destination site or choose another site.Aborting " % outsite)
             self.cavern_sites=[selsite]
         if len(self.minbias_sites)>0:
             selsite=""
@@ -251,8 +250,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert selsite!=""
             except:
-                logger.error("Minbias input data not in destination site %s. Please subscribe the minbias dataset to the destination site or choose another site.Aborting " % outsite)
-                raise Exception()
+                raise ApplicationConfigurationError(None,"Minbias input data not in destination site %s. Please subscribe the minbias dataset to the destination site or choose another site.Aborting " % outsite)
             self.minbias_sites=[selsite]
         if len(self.dbsites)>0:
             selsite=""
@@ -263,8 +261,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert selsite!=""
             except:
-                logger.error("DBRelease dataset not in destination site %s. Please subscribe the cavern dataset to the destination site or choose another site.Aborting " % outsite)
-                raise Exception()
+                raise ApplicationConfigurationError(None,"DBRelease dataset not in destination site %s. Please subscribe the cavern dataset to the destination site or choose another site.Aborting " % outsite)
             self.dbsites=[selsite]
              
             
@@ -633,8 +630,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                        missing.append(fn)
                logger.warning("Not all input files for partition %i found! Missing files: %s" % (partition, missing))
             else:
-               logger.error("No input files for partition %i found ! Files expected: %s" % (partition, matchrange[0]))
-               raise Exception()
+               raise ApplicationConfigurationError(None,"No input files for partition %i found ! Files expected: %s" % (partition, matchrange[0]))
 
         outsite=""
         # migration to using dq2-get in stage-in: environment["INPUTTURLS"] is deprecated, as well as environment["INPUTLFCS"]. They are replaced by environment["INPUTDATASETS"] and environment["INPUTSITES"]
@@ -673,8 +669,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert len(cavernfiles)>= imax
             except:
-                logger.error("Not enough cavern input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(cavernfiles)))
-                raise Exception()
+                raise ApplicationConfigurationError(None,"Not enough cavern input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(cavernfiles)))
             self.cavernfile=",".join([cavernfiles[i] for i in range(imax)])
             cavernfiles=cavernfiles[:imax-1]
 
@@ -684,8 +679,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert len(mbfiles)>= imax
             except:
-                logger.error("Not enough minbias input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(mbfiles)))
-                raise Exception()
+                raise ApplicationConfigurationError(None,"Not enough minbias input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(mbfiles)))
             self.minbiasfile=",".join([mbfiles[i] for i in range(imax)])
             mbfiles=mbfiles[:imax-1]
 
@@ -850,11 +844,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             if "INPUTTURLS" in environment:
                 logger.debug(environment["INPUTTURLS"])
                 if string.find(environment["INPUTTURLS"],"file:")>=0:
-                    logger.error("Input file was found to be local, and LCG backend does not support replication of local files to the GRID yet. Please register your input dataset in DQ2 before resubmitting this job. Aborting")
-                    raise Exception("Submission cancelled")
+                    raise ApplicationConfigurationError(None,"Input file was found to be local, and LCG backend does not support replication of local files to the GRID yet. Please register your input dataset in DQ2 before resubmitting this job. Aborting")
             if string.lower(app.se_name)=="local":
-                logger.error("Output file cannot be committed to local filesystem on a grid job. Please change se_name")
-                raise Exception("Submission cancelled")
+                raise ApplicationConfigurationError(None,"Output file cannot be committed to local filesystem on a grid job. Please change se_name")
 
             lcg_job_config = LCGJobConfig(File(exe),inputbox,args,outputbox,environment,inputdata,requirements) 
             lcg_job_config.monitoring_svc = mc['AthenaMC/LCG']
