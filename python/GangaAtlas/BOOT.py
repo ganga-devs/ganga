@@ -126,7 +126,7 @@ def starttasks():
        logger.info("Starting for first launch - Creating new Task list.")
        tl = TaskList()
     import atexit
-    atexit.register(tl.save)
+    atexit.register(tl.atexit)
     for t in tl.tasks:
        t._setParent(tl)
        for tf in t.transforms:
