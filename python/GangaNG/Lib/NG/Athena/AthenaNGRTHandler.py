@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.5 2008-12-05 11:26:24 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.6 2009-02-11 13:05:40 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -214,16 +214,13 @@ class AthenaNGRTHandler(IRuntimeHandler):
                     else:
                         output_datasetname = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
                         
-                    output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
                 else:
                     
                     # append user datasetname for new configuration
-                    if job.outputdata.use_datasetname and job.outputdata.datasetname:
-                        output_datasetname = job.outputdata.datasetname
-                    else:
-                        output_datasetname = '%s.%s.ganga.%s' % (usertag, username,job.outputdata.datasetname)
+                    output_datasetname = '%s.%s.ganga.%s' % (usertag, username,job.outputdata.datasetname)
 
-                    output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
+                output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
+
             else:
                 # No datasetname is given
                 output_datasetname = '%s.%s.ganga.%s.%s' % (usertag,username,jobid, jobdate)
@@ -561,6 +558,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/12/05 11:26:24  bsamset
+# Take lfc, srm info from ToA, allow for writing to remote storage, add timing info for HammerCloud
+#
 # Revision 1.4  2008/11/27 10:21:22  bsamset
 # Removed superflous useridARC check
 #
