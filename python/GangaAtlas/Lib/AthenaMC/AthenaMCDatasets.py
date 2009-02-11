@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.20 2009-02-09 14:33:49 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.21 2009-02-11 12:11:15 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -525,8 +525,8 @@ class AthenaMCInputDatasets(Dataset):
             if not matchFile(matchrange, lfn):
                 continue
             num = extractFileNumber(lfn)
-            if num in numbers:
-                logger.warning("In dataset %s there is more than one file with the number %i!" % (dsetname, num))
+            if num and num in numbers: # extra protection to cover the case where extractFileNumber returns "".
+                logger.warning("In dataset %s there is more than one file with the number %i!" % (dsetname, int(num)))
                 logger.warning("File '%s' ignored!" % (lfn))
                 continue
             numbers.append(num)
@@ -682,7 +682,7 @@ class AthenaMCInputDatasets(Dataset):
             status,turl,m=gridshell.cmd1("export LFC_HOST=%s; lcg-lg --vo atlas lfn:%s/%s" % (lfc,path,lfn),allowed_exit=[0,1,255])
             num = extractFileNumber(lfn)
             if status==0:
-                if num in numbers:
+                if num and num in numbers:
                     logger.warning("In directory %s there is more than one file with the number %i!" % (path, num))
                     logger.warning("File '%s' ignored!" % (lfn))
                     continue
@@ -729,7 +729,7 @@ class AthenaMCInputDatasets(Dataset):
                 continue
             if checkpath(os.path.join(path,file),prefix):
                 num = extractFileNumber(lfn)
-                if num in numbers:
+                if num and num in numbers:
                     logger.warning("In directory %s there is more than one file with the number %i!" % (path, num))
                     logger.warning("File '%s' ignored!" % (lfn))
                     continue
