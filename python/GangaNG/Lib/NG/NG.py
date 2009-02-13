@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.20 2009-01-13 12:22:06 bsamset Exp $
+# $Id: NG.py,v 1.21 2009-02-13 14:23:03 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -359,10 +359,12 @@ class Grid:
 
         return
             
-    def submit(self,xrslpath,ce=None,rejectedcl=None):
+    def submit(self,xrslpath,ce=None,rejectedcl=None,timeout=20):
         '''Submit a XRSL file to NG'''
 
-        cmd = 'ngsub -G giises.txt '
+        cmd = 'ngsub -G giises.txt -t %s ' % str(timeout)
+
+        print cmd
         
         if not self.active:
             logger.warning('NG plugin not active.')
@@ -398,11 +400,13 @@ class Grid:
 
         return   
 
-    def native_master_submit(self,xrslpath,ce=None,rejectedcl=None):
+    def native_master_submit(self,xrslpath,ce=None,rejectedcl=None, timeout = 20):
         '''Native bulk submission supported by GLITE middleware.'''
         # Bulk sumission is supported in NG, but the XRSL files need some care.
 
-        cmd = 'ngsub -G giises.txt '
+        print cmd
+
+        cmd = 'ngsub -G giises.txt -t %s ' % str(timeout)
         
         if not self.active:
             logger.warning('NG plugin not active.')
@@ -1079,7 +1083,7 @@ class NG(IBackend):
             logger.warning('Empty xrsl file returned. No data files present for selected dataset?')
             return None
                     
-        self.id = grids[mt].submit(xrslpath,self.CE,self.RejectCE)
+        self.id = grids[mt].submit(xrslpath,self.CE,self.RejectCE,self.requirements.timeout)
         return not self.id is None
 
     def kill(self):
@@ -1150,6 +1154,9 @@ class NG(IBackend):
       if job.inputdata and job.inputdata._name == 'ATLASLocalDataset':
           for filePath in job.inputdata.names:
               infileList.append( filePath )
+      elif job.inputdata and job.inputdata._name == 'NGInputData':
+          for f in job.inputdata.names:
+            infileList.append(f)                    
       elif job.inputdata and job.inputdata._name == 'DQ2Dataset':
 
           # prepare the dataset namelist with tids - needed for check availability and paths
@@ -1812,6 +1819,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.20  2009/01/13 12:22:06  bsamset
+# Added support for giis list, fixed bug in assigning subjob IDs when some jobs failed to submit
+#
 # Revision 1.19  2008/12/16 14:06:35  pajchel
 # stdout.txt -> stdout
 #
