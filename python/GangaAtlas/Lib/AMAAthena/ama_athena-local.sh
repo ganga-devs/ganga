@@ -52,17 +52,17 @@ print_ext_wn_info
 # setup DQ2Client environment
 # !TO BE CHECKED! the dq2client_setup assumes a preinstalled DQ2Clients
 # !TO BE CHECKED! which may not be available on the local resource
-dq2client_setup
-
-if [ $? -ne 0 ]; then
-    echo "DQ2 client not available" 1>&2
-
-    # when DATASETTYPE is defined, it means DQ2 client is needed.
-    # in this case, the job should be stopped if dq2client_setup failed
-    if [ ! -z $DATASETTYPE ]; then
-        exit $EC_ATLAS_SOFTWARE_UNAVAILABLE
-    fi
-fi
+#dq2client_setup
+#
+#if [ $? -ne 0 ]; then
+#    echo "DQ2 client not available" 1>&2
+#
+#    # when DATASETTYPE is defined, it means DQ2 client is needed.
+#    # in this case, the job should be stopped if dq2client_setup failed
+#    if [ ! -z $DATASETTYPE ]; then
+#        exit $EC_ATLAS_SOFTWARE_UNAVAILABLE
+#    fi
+#fi
 
 ################################################
 # setup CMT 

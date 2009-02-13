@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLocalRTHandler.py,v 1.2 2008-11-27 15:38:25 hclee Exp $
+# $Id: AMAAthenaLocalRTHandler.py,v 1.3 2009-02-13 19:32:09 hclee Exp $
 ###############################################################################
 # AMAAthena Local Runtime Handler
 #
@@ -103,7 +103,12 @@ class AMAAthenaLocalRTHandler(AthenaLocalRTHandler):
         ## N.B. job.master returns the job's master job if it has one, if not, the
         ##      job itself is the master job.
         if (not job.master) and (job.inputdata._name == 'StagerDataset'):
-            job.inputdata.fill_guids()
+            if job.inputdata.type in ['LOCAL']:
+                ## here we don't need DQ2 client on the WN
+                pass
+            else: 
+                ## here we need DQ2 client on the WN
+                job.inputdata.fill_guids()
 
         athena_jc = AthenaLocalRTHandler.master_prepare(self, app, appconfig)
 
