@@ -1,5 +1,5 @@
 
 import os
-tmpdir = '/tmp/ganga_athenalcg_testing_data-$USER'
-print 'removing AthenaLCG testing data',tmpdir
+tmpdir = '/tmp/ganga_athena_dq2_lcg_testing_data-$USER'
+print 'removing Athena_DQ2_LCG testing data',tmpdir
 os.system('rm -rf %s'%tmpdir)

@@ -4,8 +4,8 @@
 from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_file,sleep_until_state
 import getpass
 
-joboption = '/tmp/ganga_athenalcg_testing_data-%s/AnalysisSkeleton_topOptions_v14220.py' % getpass.getuser()
-archivefile = '/tmp/ganga_athenalcg_testing_data-%s/UserAnalysis-00003.tar.gz' % getpass.getuser()
+joboption = '/tmp/ganga_athena_dq2_lcg_testing_data-%s/AnalysisSkeleton_topOptions_v14220.py' % getpass.getuser()
+archivefile = '/tmp/ganga_athena_dq2_lcg_testing_data-%s/UserAnalysis-00003.tar.gz' % getpass.getuser()
 
 config['TestingFramework']['timeout']=1200
 
@@ -17,8 +17,7 @@ j.application.user_area=archivefile
 j.application.max_events=100
 j.inputdata=DQ2Dataset()
 j.inputdata.dataset='mc08.105401.SU1_jimmy_susy.recon.AOD.e352_s462_r541_tid026109'
-#j.inputdata.type='DQ2_COPY'
-#j.inputdata.type='FILE_STAGER'
+j.inputdata.type='DQ2_COPY'
 j.outputdata=DQ2OutputDataset()
 j.outputdata.outputdata=['muTri.root' ]
 j.splitter=DQ2JobSplitter()
