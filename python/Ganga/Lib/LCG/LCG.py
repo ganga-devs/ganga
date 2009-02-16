@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.29 2009-02-05 19:35:36 hclee Exp $
+# $Id: LCG.py,v 1.30 2009-02-16 14:10:05 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -200,7 +200,7 @@ class LCG(IBackend):
             if not self.sandboxcache.dataset_name:
                 uname = grids[self.middleware.upper()].credential.identity()
                 uname = re.sub(r'[\s_\-\(\)\=\+\?\*]*', r'', uname)
-                self.sandboxcache.dataset_name = 'users.%s.ganga.%s.input' % (uname, get_uuid())
+                self.sandboxcache.dataset_name = 'user%s.%s.ganga.%s.input' % (time.strftime('%y',time.gmtime()), uname, get_uuid())
 
             ## subjobs inherits the dataset name from the master job
             for sj in job.subjobs:
@@ -1905,6 +1905,11 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.29  2009/02/05 19:35:36  hclee
+# GridSandboxCache enhancement:
+#  - put cached file information in job repository (instead of __iocache__ file)
+#  - add and expose method: list_cached_files()
+#
 # Revision 1.28  2009/02/05 09:00:40  hclee
 # add AllowZippedISB=false to glite JDL
 #  - workaround for WMS bug: https://savannah.cern.ch/bugs/index.php?32345
