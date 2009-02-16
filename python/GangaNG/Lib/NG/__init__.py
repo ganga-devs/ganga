@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: __init__.py,v 1.1 2008-07-17 16:41:29 moscicki Exp $
+# $Id: __init__.py,v 1.2 2009-02-16 09:50:00 bsamset Exp $
 ###############################################################################
 # File: NG/__init__.py
 # Author: K. Pajchel, B. Samset
@@ -17,5 +17,5 @@ __version__ = "1.0"
 # When using NG
 from NG import *
 from NGRTHandler import *
-
+from NGInputData import *
 
