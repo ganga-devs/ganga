@@ -2,8 +2,8 @@
 '''Utility methods used by various classes in GangaLHCb.Lib.Gaudi.'''
 
 __author__ = 'Greig A Cowan, Ulrik Egede, Andrew Maier, Mike Williams'
-__date__ = "$Date: 2009-02-06 14:31:56 $"
-__revision__ = "$Revision: 1.9 $"
+__date__ = "$Date: 2009-02-16 14:30:34 $"
+__revision__ = "$Revision: 1.10 $"
 
 import os
 import os.path
@@ -16,6 +16,7 @@ from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.logging
+from GangaLHCb.Lib.Gaudi.CMTscript import parse_master_package
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -74,8 +75,8 @@ def check_gaudi_inputs(optsfile,appname):
 
 def gaudishell_setenv(gaudiapp):
     # generate shell script
-    ver=gaudiapp.version
-    pack=gaudiapp.appname 
+    ver  = gaudiapp.version
+    pack = gaudiapp.appname 
     opts = gaudiapp.setupProjectOptions
 
     import tempfile
@@ -86,8 +87,15 @@ def gaudishell_setenv(gaudiapp):
                   expandfilename(gaudiapp.user_release_area)
     except AttributeError:
         pass
-    script +='. ${LHCBSCRIPTS}/SetupProject.sh %s %s %s\n'\
-              % (opts, pack, ver)
+    useflag = ''
+    try:
+      if(gaudiapp.masterpackage):
+        (mpack, malg, mver) = parse_master_package(gaudiapp.masterpackage)
+        useflag = '\"--use %s %s %s\"' % (malg, mver, mpack)
+    except AttributeError:
+      pass
+    script +='. ${LHCBSCRIPTS}/SetupProject.sh %s %s %s %s\n'\
+              % (useflag, opts, pack, ver)
     fd.write(script)
     fd.flush()
     logger.debug(script)
