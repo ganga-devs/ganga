@@ -3,18 +3,6 @@
 
 \documentclass{elsart}
 
-% Use the option doublespacing or reviewcopy to obtain double line spacing
-% \documentclass[doublespacing]{elsart}
-
-% if you use PostScript figures in your article
-% use the graphics package for simple commands
-% \usepackage{graphics}
-% or use the graphicx package for more complicated commands
-%\usepackage{graphicx}
-% or use the epsfig package if you prefer to use the old commands
-% \usepackage{epsfig}
-
-% The amssymb package provides various useful mathematical symbols
 \usepackage{amssymb}
 \usepackage{xspace}
 
@@ -38,6 +26,8 @@
 % for the whole article with \linenumbers.
 \usepackage{lineno}
 
+% Don't turn on the linenumbers here as it will mess up the front matter
+% See the \begin{linenumbers} environment below
 %\linenumbers
 
 \def\lhcb {LHC{\em b\/}\xspace}
@@ -67,46 +57,13 @@
 
 % Title, authors and addresses
 
-% use the thanksref command within \title, \author or \address for footnotes;
-% use the corauthref command within \author for corresponding author footnotes;
-% use the ead command for the email address,
-% and the form \ead[url] for the home page:
-% \title{Title\thanksref{label1}}
-% \thanks[label1]{}
-% \author{Name\corauthref{cor1}\thanksref{label2}}
-% \ead{email address}
-% \ead[url]{home page}
-% \thanks[label2]{}
-% \corauth[cor1]{}
-% \address{Address\thanksref{label3}}
-% \thanks[label3]{}
-
-
-%\title{Ganga -- a tool for computational-task\\
-%management and easy access to \grid resources}
-
-%~\vspace{-1.5\baselineskip}
-
-%\large{}
-
 \title{Ganga: a tool for computational-task management and easy access to \grid resources}
-
-%~\vspace{-1.5\baselineskip}
-
-% use optional labels to link authors explicitly to addresses:
-% \author[label1,label2]{}
-% \address[label1]{}
-% \address[label2]{}
-
-%FIXME: AUTHOR LIST - Not sure what publication you have chosen, but is it
-%normal/acceptable to include full names instead of initials?
 
 \author[a:Cambridge]{F.~Brochu},
 \author[a:Imperial]{U.~Egede},
 \author[a:Munich]{J.~Elmsheuser},
 \author[a:Cambridge]{K.~Harrison},
 \author[a:Lancaster]{R.W.L.~Jones},
-%\author[a:NIKHEF]{H.C.~Lee},%\thanksref{HurngChun}},
 \author[a:NIKHEF]{H.C.~Lee,\thanksref{HurngChun}},
 \author[a:CERN]{D.~Liko},
 \author[a:CERN]{A.~Maier},
@@ -183,13 +140,8 @@ Grid computing \sep Data mining \sep Task management \sep User interface \sep In
 
 % main text
 
-%\section{TODO}
-%ADD INTEROPERABILITY!
-%ADD CONFIGURATION?
-%ADD RELEASE PROCESS?
-%ADD SSH?
-%ADD DIANE reference for low latency
-\begin{linenumbers}
+%%\begin{linenumbers}
+
 \section{Introduction}
 \label{sec:intro}
 \ganga is an easy-to-use frontend for the configuration, execution, and
@@ -370,7 +322,6 @@ problem domain, are considered in sections \ref{sec:useHEP} and \ref{sec:other}.
 
 The application component describes the type of computational task to be
 performed.  It allows the characteristics and settings of some
-%KUBA: we did not introduce the word schema before so I'd rather get rid of it here
 piece of software to be defined, and provides methods specifying
 actions to be taken before and after a job is processed.  The
 pre-processing (configuration) step typically involves examination of
@@ -415,9 +366,6 @@ and Condor~\cite{thain_2005}), and \grid systems, for example  based on
 gLite~\cite{andreetto_2008}, ARC~\cite{ellert_2007} and OSG~\cite{OSG}.
 Remote backend component allows jobs to be launched directly on remote machines 
 using ssh.  
-
-%SGE, and Condor~\cite{Batch}), and \grid systems like
-%gLite/EGEE/WLCG \cite{LCG}, ARC/NorduGrid~\cite{NorduGrid} and OSG~\cite{OSG}. 
 
 As an example, the batch backend component defines a
 single property that may be set by the user:
@@ -963,8 +911,6 @@ Open plugin architecture of \ganga allows to easily integrate other
 \grid middleware~\cite{ellert_2007} is given in this section.
 
 The \ARC \grid middleware, a product of the NorduGrid project~\cite{ellert_2003}, is used by many academic
-%ARC->\cite{ellert_2007}
-%NG->\cite{ellert_2003}
 institutions in the Nordic, and other European, countries. \ARC jobs are accepted and
 brokered by a \grid manager, running at site level, and resource lookup
 is done through load balancing and runtime environments advertised by
@@ -1012,8 +958,6 @@ Also, this allows the efficient implementation of low-latency access to \grid re
     with an application portal.}
   \label{fig:webportal}
 \end{figure}
-%KUBA: text updated, figure not yet, it will be replaced by a schematic
-%KUBA: diagram of portal/ganga/diane
 \ganga may be embedded in web-based services such as the
 bio-informatics portal developed by ASGC, Taipei. The portal is fully
 customized for analysis of candidate drugs against avian flu.  The portal
@@ -1192,64 +1136,13 @@ G.~Aad \etal\ [ATLAS Collaboration],
 \href{http://dx.doi.org/10.1088/1748-0221/3/08/S08003}
 {JINST {\bf 3} (2008) S08003}.
 
-%\bibitem{Armstrong:1994it}
-%  W.~W.~Armstrong {\it et al.}  [ATLAS Collaboration],
-%  ``ATLAS: Technical proposal for a general-purpose p p experiment at the
-%  Large Hadron Collider at CERN'', CERN-LHCC-94-43.
-%  %%CITATION = CERN-LHCC-94-43;%%
 
 \bibitem{LHCb}
 A.A.~Alves Jr.\ \etal\ [LHCb Collaboration],
 \textit{The LHCb Detector at the LHC},
 \href{http://dx.doi.org/10.1088/1748-0221/3/08/S08005}
 {JINST {\bf 3} (2008) S08005}.
- %%CITATION = JINST,3,S08005;%%
 
-%\bibitem{Amato:1998xt}
-%  S.~Amato {\it et al.}  [LHCb Collaboration],
-%  ``LHCb technical proposal'', CERN-LHCC-98-004.
-%  %%CITATION = CERN-LHCC-P-4;%%
-
-%%%<<<<<<< ganga.tex
-%%%\bibitem{AHE} 
-%%%  P.~ V.~Coveney {\it et al.}, ``The Application Hosting Environment:
-%%%  Lightweight Middleware for Grid-Based Computational Science'',
-%%%  Comp.~Phys.~Comm., {\bf 176} (2007), 406.
-%%%
-%%%\bibitem{LEAD}
-%%%  Dennis Gannon {\it et al.}, ``The LEAD Science Portal Problem Solving
-%%%  Environment'', submitted to Conference on Interactive Information and
-%%%  Processing Systems for Meteorology, Oceanography, and Hydrology, 23rd, San
-%%%  Antonio, TX, 14-18 January 2007.
-%%%
-%%%\bibitem{GPL} 
-%%%  The GNU General Public License,
-%%%  \url{http://www.gnu.org/licenses/gpl.html}.
-%%%
-%%%\bibitem{LCG}
-%%%Worldwide LHC Computing Grid, \url{http://www.cern.ch/LHCgrid}.
-%%%
-%%%\bibitem{VOMS} TODO
-%%%
-%%%\bibitem{AFS} Andrew File System, http://www.openafs.org
-%%%\bibitem{Kerberos} Kerberos Consortium, http://www.kerberos.org
-%%%
-%%%\bibitem{RooFit} W. Verkerke, D. Kirkby, ``The RooFit toolkit for data modeling'',
-%%%arXiv:physics/0306116, 2003, see also: http://roofit.sourceforge.net
-%%%
-%%%\bibitem{Batch}
-%%%
-%%%  LSF \url{http://www.platform.com}, PBS \url{http://www.openpbs.org}, SGE
-%%%  \url{http://gridengine.sunsource.net}, Condor, D.~Thain, T.~Tannenbaum, and
-%%%  M.~Livny, ``Distributed Computing in Practice: The Condor Experience"
-%%%  Concurrency and Computation: Practice and Experience'', {\bf 17, 2-4}
-%%%  (2005), 323, \url{http://www.cs.wisc.edu/condor/}
-%%%
-%%%\bibitem{NorduGrid} http://www.nordugrid.org
-%%%
-%%%\bibitem{OSG} T.~Maeno [ATLAS Collaboration], ``PanDA: Distributed production and distributed analysis system for
-%%%ATLAS,'', J.\ Phys.\ Conf.\ Ser.\  {\bf 119} (2008) 062036.
-%%%=======
 \bibitem{thomas_2005} M.P.~Thomas \etal,
 \textit{Grid portal achitectures for scientific applications},
 \href{http://dx.doi.org/10.1088/1742-6596/16/1/083}
@@ -1262,20 +1155,6 @@ A.A.~Alves Jr.\ \etal\ [LHCb Collaboration],
 \textit{Grid computing: software environments and tools}}
 (Springer-Verlag London Ltd, 2006).
 
-%\bibitem{AHE} 
-%  P.~ V.~Coveney {\it et al.}, ``The Application Hosting Environment:
-%  Lightweight Middleware for Grid-Based Computational Science'',
-%  Comp.~Phys.~Comm., {\bf 176} (2007), 406.
-
-%\bibitem{LEAD}
-%  Dennis Gannon {\it et al.}, ``The LEAD Science Portal Problem Solving
-%  Environment'', submitted to Conference on Interactive Information and
-%  Processing Systems for Meteorology, Oceanography, and Hydrology, 23rd, San
-%  Antonio, TX, 14-18 January 2007.
-
-%\bibitem{GPL} 
-%  The GNU General Public License,
-%  \url{http://www.gnu.org/licenses/gpl.html}.
 
 \bibitem{andreetto_2008} P.~Andreett \etal,
 \textit{The gLite workload management system},
@@ -1298,13 +1177,6 @@ environment},
 \href{http://dx.doi.org/10.1145/5666.5671}
 {Commun.\ ACM \textbf{29-3} (1986) 184}.
 
-%\bibitem{Batch}
-%
-%  LSF \url{http://www.platform.com}, PBS \url{http://www.openpbs.org}, SGE
-%  \url{http://gridengine.sunsource.net}, Condor, D.~Thain, T.~Tannenbaum, and
-%  M.~Livny, ``Distributed Computing in Practice: The Condor Experience"
-%  Concurrency and Computation: Practice and Experience'', {\bf 17, 2-4}
-%  (2005), 323, \url{http://www.cs.wisc.edu/condor/}
 
 \bibitem{henderson_1995} R.L.~Henderson,
 \textit{Job scheduling under the Portable Batch System},
@@ -1336,20 +1208,12 @@ computational Grids},
 \href{http://dx.doi.org/10.1016/j.future.2006.05.008}
 {Future Generation Computer Systems \textbf{23} (2007) 219}.
   
-%\bibitem{OSG} T.~Maeno [ATLAS Collaboration], ``PanDA: Distributed production and distributed analysis system for
-%ATLAS,'', J.\ Phys.\ Conf.\ Ser.\  {\bf 119} (2008) 062036.
-%%%>>>>>>> 1.7.2.1
-
 \bibitem{OSG} R.~Pordes \etal,
 \textit{The Open Science Grid},
 \href{http://dx.doi.org/10.1088/1742-6596/78/1/012057}
 {J.~Phys.: Conf.\ Ser.\ \textbf{78} (2007) 012057}.
 
 \bibitem{ROOT} R.~Brun and F.~Rademakers,
-%  R. Brun and F. Rademakers, ``ROOT - An Object Oriented Data Analysis
-%  Framework'', Proceedings AIHENP'96 Workshop, Lausanne, Sep. 1996, Nuclear
-%  Ins. Methods Phys. Res., {\bf A389} (1997) 81. See also
-%  \url{http://root.cern.ch}.
 \textit{ROOT - an object oriented data analysis framework},
 \href{http://dx.doi.org/10.1016/S0168-9002(97)00048-X}
 {Nucl.\ Instrum.\ Methods \textbf{A389} (1997) 81}.
@@ -1458,42 +1322,6 @@ infrastructure}
 \href{http://dx.doi.org/10.1016/S0168-9002(03)00453-4}
 {Nucl.\ Instrum.\ Methods \bf{A502} (2003) 407}.
 
-%\bibitem{bib:atlasdq2}
-%  ATLAS DQ2/DDM project wiki, 
-%  \url{https://twiki.cern.ch/twiki/bin/view/Atlas/DistributedDataManagement}.
-
-%\bibitem{bib:atlasprodsys}
-%  ATLAS Production System
-%  \url{https://twiki.cern.ch/twiki/bin/view/Atlas/ProdSys}.
-
-%%%<<<<<<< ganga.tex
-%%%\bibitem{Garfield} 
-%%%  The Garfield program for simulation of drift chambers.
-%%%  \url{http://www.cern.ch/garfield}
-%%%
-%%%\bibitem{ARC}
-%%%  M.~Ellert {\it et al.}, ``Advanced Resource Connector middleware for
-%%%  lightweight computational Grids'', Future Generation Computer Systems
-%%%  (2007) {\bf23} 219-240.
-%%%  
-%%%\bibitem{DIANE} J.~T.~Mo{\'s}cicki, ``Distributed analysis environment for
-%%%  HEP and interdisciplinary applications'', Nuclear Ins. Methods Phys. Res.,
-%%%  (2003) {\bf A502}, 426. See also
-%%%  \url{http://www.cern.ch/diane}.
-%%%
-%%%\bibitem{Geant4}J.Allison et al., Geant 4 - a simulation toolkit, Nuclear Instruments 
-%%%and Methods in Physics Research,  A 506 (2003) 250-303, doi:10.1016/S0168-9002(03)01368-8 
-%%%
-%%%\bibitem{AvianFlu}
-%%%  H.~C.~Lee {\it et al}, ``Grid-enabled high-throughput in silico screening
-%%%  against influenza A neuraminidase'', IEEE Trans Nanobioscience (2006), 
-%%%  {\bf 5(4)}, 288, doi:10.1109/TNB.2006.887943.
-%%%
-%%%\bibitem{EGEE} 
-%%%  EGEE brings together 91 partners in 32 countries to provide a seamless Grid
-%%%  infrastructure available to the European research community 24 hours a day.
-%%%  \url{http://www.eu-egee.org}.
-%%%=======
 \bibitem{town_2004} C.~Town and D.~Sinclair,
 \textit{Language-based querying of image collections on the basis of an
 extensible ontology},
@@ -1541,14 +1369,6 @@ neuraminidase},
 \href{http://dx/doi.org/10.1007/s10723-007-9086-4}
 {J. Grid Computing \textbf{6}, (2008) 15-27 }
 
-%\bibitem{EGEE} 
-%  EGEE brings together 91 partners in 32 countries to provide a seamless Grid
-%  infrastructure available to the European research community 24 hours a day.
-%  \url{http://www.eu-egee.org}.
-%%%>>>>>>> 1.7.2.1
-
-
-
 % Text of bibliographic item
 
 % notes:
@@ -1563,6 +1383,6 @@ neuraminidase},
 % \end{subbibitems}
 
 \end{thebibliography}
-\end{linenumbers}
+%%\end{linenumbers}
 \end{document}
 
