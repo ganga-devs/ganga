@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridSandboxCache.py,v 1.6 2009-02-05 19:35:36 hclee Exp $
+# $Id: GridSandboxCache.py,v 1.7 2009-02-16 14:11:48 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -34,9 +34,15 @@ from Ganga.Utility.util import isStringLike
 from Ganga.Utility.GridShell import getShell 
 from Ganga.Lib.LCG.Utility import *
 
+from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Background, Effects
+
 class GridFileIndex(GangaObject):
 
-    '''Data object for indexing a file on the grid. 
+    '''
+    Data object for indexing a file on the grid. 
+
+    @author: Hurng-Chun Lee 
+    @contact: hurngchunlee@gmail.com
     '''
  
     _schema = Schema(Version(1,0), {
@@ -50,22 +56,20 @@ class GridFileIndex(GangaObject):
     _name = 'GridFileIndex'
 
     logger = getLogger()
-
+ 
     def __init__(self):
         super(GridFileIndex,self).__init__()
-
-    def __str__(self):
-        my_dict = self.attributes
-        my_dict['id'] = self.id
-
-        return rep(my_dict)
 
     def __eq__(self, other):
         return other.id == self.id
 
 class GridSandboxCache(GangaObject):
 
-    '''Helper class for upladong/downloading/deleting sandbox files on a grid cache. 
+    '''
+    Helper class for upladong/downloading/deleting sandbox files on a grid cache. 
+
+    @author: Hurng-Chun Lee 
+    @contact: hurngchunlee@gmail.com
     '''
  
     _schema = Schema(Version(1,1), {
@@ -192,17 +196,73 @@ class GridSandboxCache(GangaObject):
         if loop = True, it prints also the uploaded files associated with subjobs.
         """
 
-        for f in self.get_cached_files(opts=opts):
-            print f
+        fc = 0
+        ds = ''
 
-        if loop:
-            ## try to get uploaded files in subjobs
-            j = self.getJobObject()
+        doColoring = True
+
+        fg = Foreground()
+        fx = Effects()
+
+        status_colors = {'inuse':fg.orange,
+                         'free' :fg.blue,
+                         'gone' :fg.red}
+
+        status_mapping = {'new'       : 'inuse',
+                          'submitted' : 'inuse',
+                          'submitting':'inuse',
+                          'running'   : 'inuse',
+                          'completed' : 'free',
+                          'completing': 'free',
+                          'failed'    : 'free',
+                          'killed'    : 'free'}
+
+        if doColoring:
+            markup = ANSIMarkup()
+        else:
+            markup = NoMarkup()
+
+        def __markup_by_status__(fileIndex, counter, status):
+
+            fmtStr = '\n%4d\t%-30s\t%-12s\t%s' % (counter, fileIndex.name, status, fileIndex.id)
+
+            try:
+                return markup(fmtStr, status_colors[status])
+            except KeyError:
+                return markup(fmtStr, fx.normal)
+
+        j = self.getJobObject()
+        
+        for f in self.get_cached_files(opts=opts):
+            
+            my_status = 'unknown'
 
             if j:
-                for sj in j.subjobs:
-                    for f in sj.backend.sandboxcache.get_cached_files(opts=opts):
-                        print f
+                try:
+                    my_status = status_mapping[j.status]
+                except KeyError:
+                    pass
+
+            ds += __markup_by_status__(f, fc, my_status)
+
+            fc += 1
+
+        if j and loop:
+            for sj in j.subjobs:
+                for f in sj.backend.sandboxcache.get_cached_files(opts=opts):
+
+                    my_status = 'unknown'
+
+                    try:
+                        my_status = status_mapping[sj.status]
+                    except KeyError:
+                        pass
+
+                    ds += __markup_by_status__(f, fc, my_status)
+
+                    fc += 1
+
+        return ds
 
     ## methods to be implemented in the child classes 
     def impl_upload(self, files=[], opts=''):
