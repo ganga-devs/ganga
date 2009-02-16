@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2SandboxCache.py,v 1.4 2009-02-05 19:35:36 hclee Exp $
+# $Id: DQ2SandboxCache.py,v 1.5 2009-02-16 14:12:28 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -30,7 +30,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.GridShell import getShell 
 
-from Ganga.Lib.LCG.GridSandboxCache import GridFileIndex, GridSandboxCache
+from Ganga.Lib.LCG.GridSandboxCache import GridSandboxCache, GridFileIndex
 from Ganga.Lib.LCG.MTRunner import MTRunner, Data, Algorithm  
 from Ganga.Lib.LCG.Utility import *
 
@@ -44,27 +44,35 @@ class DQ2FileIndex(GridFileIndex):
     @author: Hurng-Chun Lee 
     @contact: hurngchunlee@gmail.com
     """
+    dq2_file_index_schema_datadict.update({
+        'dataset'        : SimpleItem(defvalue='', doc='the DQ2 dataset name'),
+        'site'           : SimpleItem(defvalue='', doc='the DQ2 site id')
+        } )
 
     _schema   = Schema( Version(1,0), dq2_file_index_schema_datadict )
     _category = 'GridFileIndex'
     _name = 'DQ2FileIndex'
 
-    def __init__(self, surl, dataset, site, name, md5sum):
-
+    def __init__(self):
         super(DQ2FileIndex,self).__init__()
 
-        self.id     = surl
-        self.name   = name
-        self.md5sum = md5sum
-        self.attributes['dataset'] = dataset
-        self.attributes['site']    = site
-
-    def __str__(self):
-        return '%s\t%s\t%s\t%s\t%s' % (self.name, self.id, self.attributes['dataset'], self.attributes['site'], self.md5sum)
+#    def __init__(self, surl, dataset, site, name, md5sum):
+#
+#        self.__init__()
+#
+#        self.id     = surl
+#        self.name   = name
+#        self.md5sum = md5sum
+#        self.attributes['dataset'] = dataset
+#        self.attributes['site']    = site
 
 class DQ2SandboxCache(GridSandboxCache):
 
-    '''Helper class for upladong/downloading/deleting files/datasets using DQ2 libraries.
+    '''
+    Helper class for upladong/downloading/deleting files/datasets using DQ2 libraries.
+
+    @author: Hurng-Chun Lee 
+    @contact: hurngchunlee@gmail.com
     '''
 
     dq2_sandbox_cache_schema_datadict.update({
@@ -164,7 +172,16 @@ class DQ2SandboxCache(GridSandboxCache):
                     name   = os.path.basename( finfo[f]['local_fpath'] )
                     surl   = finfo[f]['surl']
                     md5sum = finfo[f]['md5sum']
-                    file_idx.append( DQ2FileIndex(surl=surl, name=name, dataset=self.dataset_name, site=self.local_site_id, md5sum=md5sum) )
+
+                    ## create DQ2FileIndex of the uploaded file 
+                    fidx = DQ2FileIndex()
+                    fidx.id = surl
+                    fidx.name = name
+                    fidx.dataset = self.dataset_name
+                    fidx.site = self.local_site_id
+                    fidx.md5sum = md5sum
+
+                    file_idx.append( fidx )
 
         ## removing the temporary directory in any case
         shutil.rmtree(src_dir)

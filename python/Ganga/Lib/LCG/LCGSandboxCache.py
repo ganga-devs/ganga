@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCGSandboxCache.py,v 1.5 2009-02-05 19:35:36 hclee Exp $
+# $Id: LCGSandboxCache.py,v 1.6 2009-02-16 14:12:28 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -29,7 +29,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.GridShell import getShell 
 
-from Ganga.Lib.LCG.GridSandboxCache import GridFileIndex, GridSandboxCache
+from Ganga.Lib.LCG.GridSandboxCache import GridSandboxCache, GridFileIndex
 from Ganga.Lib.LCG.MTRunner import MTRunner, Data, Algorithm  
 from Ganga.Lib.LCG.Utility import * 
 
@@ -44,26 +44,24 @@ class LCGFileIndex(GridFileIndex):
     @contact: hurngchunlee@gmail.com
     """
 
+    lcg_file_index_schema_datadict.update({
+        'lfc_host'    : SimpleItem(defvalue='', copyable=1, doc='the LFC hostname'),
+        'local_fpath' : SimpleItem(defvalue='', copyable=1, doc='the original file path on local machine')
+        } )
+
     _schema   = Schema( Version(1,0), lcg_file_index_schema_datadict )
     _category = 'GridFileIndex'
     _name = 'LCGFileIndex'
 
-    def __init__(self, guid, lfc_host, local_fpath, md5sum):
-
+    def __init__(self):
         super(LCGFileIndex,self).__init__()
 
-        self.id     = guid
-        self.name   = os.path.basename(local_fpath)
-        self.md5sum = md5sum
-        self.attributes['lfc_host']    = lfc_host
-        self.attributes['local_fpath'] = local_fpath
-
-    def __str__(self):
-        return '%s\t%s\t%s\t%s' % (self.id, self.attributes['lfc_host'], self.attributes['local_fpath'], self.md5sum)
-
 class LCGSandboxCache(GridSandboxCache):
+    '''
+    Helper class for upladong/downloading/deleting sandbox files using lcg-cr/lcg-cp/lcg-del commands. 
 
-    '''Helper class for upladong/downloading/deleting sandbox files using lcg-cr/lcg-cp/lcg-del commands. 
+    @author: Hurng-Chun Lee 
+    @contact: hurngchunlee@gmail.com
     '''
 
     lcg_sandbox_cache_schema_datadict.update({
@@ -146,7 +144,15 @@ class LCGSandboxCache(GridSandboxCache):
                     match = re.search('(guid:\S+)',output)
                     if match:
                         guid = match.group(1)
-                        self.__appendResult__( file, LCGFileIndex(guid,self.cacheObj.lfc_host,fpath,md5sum) )
+
+                        fidx = LCGFileIndex()
+                        fidx.id = guid
+                        fidx.name = fname
+                        fidx.md5sum = md5sum
+                        fidx.lfc_host = self.cacheObj.lfc_host
+                        fidx.local_fpath = fpath
+
+                        self.__appendResult__( file, fidx )
                         return True
                     else:
                         return False

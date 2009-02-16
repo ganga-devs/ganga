@@ -6,4 +6,3 @@ from LCGSandboxCache import *
 from DQ2SandboxCache import *
 from ElapsedTimeProfiler import *
 from LCGOutputDownloader import *
-
