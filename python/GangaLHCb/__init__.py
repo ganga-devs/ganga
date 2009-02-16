@@ -46,6 +46,13 @@ plugin in Ganga'
 configDirac.addOption('DiracLoggerLevel','ERROR',dscrpt)
 configDirac.addOption('AllowedPlatforms',['slc4_ia32_gcc34'],
                       'Allowed platforms for submission to DIRAC')
+dcsrpt = 'A dictionary mapping Dirac service names'
+services = {'Bookkeeping':'Bookkeeping/BookkeepingManager',
+            'Inputsandbox':'WorkloadManagement/InputSandbox',
+            'Outputsandbox':'WorkloadManagement/OutputSandbox'
+            }
+configDirac.addOption('DIRACServices',services,dscrpt)
+
 
     
 def getEnvironment( config = {} ):
