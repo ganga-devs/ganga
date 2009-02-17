@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.6 2009-02-11 13:05:40 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.7 2009-02-17 13:17:17 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -94,6 +94,14 @@ class AthenaNGRTHandler(IRuntimeHandler):
                     input_files = job.inputdata.names
                     input_guids = get_guids( input_files )
 
+                elif job.inputdata._name == 'NGInputData':
+                    input_guids = []
+                    input_files = []
+                    for f in job.inputdata.names:
+                        fs = f.split('/')
+                        input_files.append(fs[-1])
+                        input_guids.append("00000000-0000-0000-0000-000000000000") #No guids needed, just for input file parsing
+                    
                 elif job.inputdata._name == 'DQ2Dataset': 
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
                     #if not job.inputdata.names: raise Exception('No inputdata has been specified.')
@@ -111,6 +119,14 @@ class AthenaNGRTHandler(IRuntimeHandler):
                 if job.inputdata._name == 'ATLASLocalDataset':
                     input_files = ATLASLocalDataset.get_filenames(app)
                     input_guids = get_guids( input_files )
+
+                elif job.inputdata._name == 'NGInputData':
+                    input_files = []
+                    input_guids = []
+                    for f in job.inputdata.names:
+                        fs = f.split('/')
+                        input_files.append(fs[-1])
+                        input_guids.append("00000000-0000-0000-0000-000000000000") #No guids needed, just for input file parsing
                     
                 elif job.inputdata._name == 'DQ2Dataset':
                     if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD']:
@@ -558,6 +574,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.6  2009/02/11 13:05:40  bsamset
+# Removed reference to outputdata.use_dataset
+#
 # Revision 1.5  2008/12/05 11:26:24  bsamset
 # Take lfc, srm info from ToA, allow for writing to remote storage, add timing info for HammerCloud
 #
