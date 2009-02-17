@@ -19,15 +19,17 @@ l=browseBK()
 j.inputdata=browseBK()    
     """
     import Ganga.Utility.logging
+    from Ganga.GPIDev.Base.Proxy import addProxy
     logger = Ganga.Utility.logging.getLogger()
     try: 
         from GangaLHCb.Lib.Dirac.Bookkeeping import Bookkeeping
-        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
+#        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
+        from Ganga.GPI import LHCbDataset
     except ImportError:
         logger.warning('''Could not start Bookkeeping Browser''')
         return None
     bkk=Bookkeeping()
-    return  bkk.browse(gui)
+    return  addProxy(bkk.browse(gui))
 
         
     
