@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NGInputData.py,v 1.1 2009-02-13 14:22:13 bsamset Exp $
+# $Id: NGInputData.py,v 1.2 2009-02-17 11:00:23 bsamset Exp $
 ###############################################################################
 # A simple NG input data class
 #
@@ -17,25 +17,6 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Shell import Shell
 from Ganga.Utility.files import expandfilename
 from Ganga.Utility.GridShell import getShell
-
-#class NGFile(File):
-#    """NG input file"""
-#    
-#    _schema = Schema(Version(1,0), {
-#        'lfn': SimpleItem(defvalue = [], typelist=['str'], sequence=0, doc='Name of input file'),
-#        'location': SimpleItem(defvalue='',typelist=['str'], sequence=0, doc='Grid location on SRM, LFC, http, ...')        
-#        })
-#    
-#    _category = 'files'
-#    _name = 'NGFile'
-#
-#
-#    _GUIPrefs = [ { 'attribute' : 'lfn',  'widget' : 'String' },
-#                  { 'attribute' : 'location',  'widget' : 'String' } ]
-#
-#    def __init__(self):
-#        super(NGFile, self).__init__()
-
 
 class NGInputData(Dataset):
     """NGInputData is a list of files on NG storage"""
