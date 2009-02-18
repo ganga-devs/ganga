@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.23 2009-02-18 14:36:55 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.24 2009-02-18 14:53:42 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -169,7 +169,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
 
             # Extract username from certificate
             proxy = GridProxy()
-            username = proxy.identity()
+            username = proxy.identity(safe=True)
             # Remove apostrophe
             username = re.sub("'","",username)
 
@@ -510,6 +510,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.23  2009/02/18 14:36:55  elmsheus
+#add proper DATASETLOCATION for  FILE_STAGER mode
+#
 #Revision 1.22  2009/02/05 09:50:54  dvanders
 #Remove DQ2OutputDataset.use_datasetname
 #

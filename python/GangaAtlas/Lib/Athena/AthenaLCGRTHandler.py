@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.33 2009-02-18 14:36:55 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.34 2009-02-18 14:53:42 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -192,7 +192,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
             # Extract username from certificate
             proxy = GridProxy()
-            username = proxy.identity()
+            username = proxy.identity(safe=True)
             # Remove apostrophe
             username = re.sub("'","",username)
 
