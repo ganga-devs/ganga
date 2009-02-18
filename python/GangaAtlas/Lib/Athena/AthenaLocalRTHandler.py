@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.22 2009-02-05 09:50:54 dvanders Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.23 2009-02-18 14:36:55 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -301,7 +301,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             if job.inputsandbox: inputbox += job.inputsandbox   
 
         # Fix DATASETNAME env variable for DQ2_COPY mode
-        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type=='DQ2_COPY' :
+        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and (job.inputdata.type=='DQ2_LOCAL' or job.inputdata.type=='DQ2_COPY' or job.inputdata.type=='FILE_STAGER'):
             if job.inputdata.dataset:
                 environment['DATASETNAME'] = job.inputdata.dataset[0]
 
@@ -510,6 +510,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.22  2009/02/05 09:50:54  dvanders
+#Remove DQ2OutputDataset.use_datasetname
+#
 #Revision 1.21  2009/02/04 05:36:42  elmsheus
 #Correction for dbrelease dataset handling
 #
