@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.31 2009-02-05 09:59:06 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.32 2009-02-18 15:54:25 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1438,7 +1438,7 @@ if __name__ == '__main__':
                 for key in os.environ.keys():
                     if key.find('DQ2_') == 0:
                         print 'export %s=%s' % (key, os.environ[key])
-                cmd = '%s %s -s %s -t %s -p lcg -D -H %s -f %s %s' % (pythoncmd, dq2_get_path, os.environ['DQ2_LOCAL_SITE_ID'], timeout, directory, flist, datasetname)
+                cmd = '%s %s --client-id=ganga -s %s -t %s -p lcg -D -H %s -f %s %s' % (pythoncmd, dq2_get_path, os.environ['DQ2_LOCAL_SITE_ID'], timeout, directory, flist, datasetname)
                 cmdretry = '%s %s -s %s -t %s -p lcg -D -H %s -f %s %s' % (pythoncmd, dq2_get_path, 'CERN-PROD_DATADISK', timeout, directory, flist, datasetname)
 
             elif datasettype == 'LFC':
@@ -1695,8 +1695,8 @@ if __name__ == '__main__':
             for tagdatasetname in tagdatasetnames:
                 #cmd = 'DQ2_LOCAL_ID= ; %s ./dq2_get -rcv -t %s %s ' % (pythoncmd,timeout,tagdatasetname)
                 #cmdretry = ' DQ2_LOCAL_ID= ; %s ./dq2_get -rcv -s BNL -t %s %s ' % (pythoncmd,timeout,tagdatasetname)
-                cmd = 'source %s; dq2-get --automatic --local-site=%s --no-directories --timeout %s -p lcg %s' % (dq2setuppath, dq2localsiteid ,timeout, tagdatasetname)
-                cmdretry = 'source %s; dq2-get --automatic --local-site=CERN-PROD_DATADISK --no-directories --timeout %s -p lcg %s' % (dq2setuppath, dq2localsiteid ,timeout, tagdatasetname)
+                cmd = 'source %s; dq2-get --client-id=ganga --automatic --local-site=%s --no-directories --timeout %s -p lcg %s' % (dq2setuppath, dq2localsiteid ,timeout, tagdatasetname)
+                cmdretry = 'source %s; dq2-get --client-id=ganga --automatic --local-site=CERN-PROD_DATADISK --no-directories --timeout %s -p lcg %s' % (dq2setuppath, dq2localsiteid ,timeout, tagdatasetname)
                 # execute dq2 command
                 rc, out = getstatusoutput(cmd)
                 print out

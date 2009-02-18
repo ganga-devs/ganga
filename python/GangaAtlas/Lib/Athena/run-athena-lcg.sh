@@ -274,7 +274,7 @@ then
 	then
 	for ((i=1;i<=3;i+=1)); do
 	    echo Copying $ATLAS_DBFILE, attempt $i of 3
-	    dq2-get -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
+	    dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
 	    if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]
 		then
 		mv $ATLAS_DBRELEASE/* .
@@ -419,7 +419,7 @@ EOF
 		fi
 		export DQ2_LOCAL_SITE_ID=`cat db_dq2localid.txt`
 	    fi
-	    dq2-get -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
+	    dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
 	    if [ -e $DBDATASETNAME/$DBFILENAME ]
 		then
 		mv $DBDATASETNAME/* .
@@ -451,7 +451,7 @@ EOF
 	    then
 	    for ((i=1;i<=3;i+=1)); do
 		echo Copying $file, attempt $i of 3
-		dq2-get -d --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
+		dq2-get --client-id=ganga -d --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
 		if [ -e $DATASETNAME/$file ]
 		    then
 		    mv $DATASETNAME/* .

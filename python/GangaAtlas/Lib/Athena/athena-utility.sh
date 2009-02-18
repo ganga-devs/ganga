@@ -556,7 +556,7 @@ run_athena () {
 		fi
 		if [ ! -z $DBDATASETNAME ] && [ ! -z $DBFILENAME ]
 		    then
-		    dq2-get -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
+		    dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
 		    if [ -e $DBDATASETNAME/$DBFILENAME ]
 			then
 			mv $DBDATASETNAME/* .

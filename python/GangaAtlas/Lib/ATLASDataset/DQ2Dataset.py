@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.19 2009-02-05 10:00:36 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.20 2009-02-18 15:54:25 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1167,7 +1167,7 @@ class DQ2OutputDataset(Dataset):
             for fileinfo in filenames:
                 filename = fileinfo.split(',')[1]
 
-                exe = 'dq2-get -L ROAMING -a -d -D '
+                exe = 'dq2-get --client-id=ganga -L ROAMING -a -d -D '
                 cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, outputlocation, filename, job.outputdata.datasetname)
                 
                 logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
@@ -1220,6 +1220,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.19  2009/02/05 10:00:36  elmsheus
+#Change to adler32
+#
 #Revision 1.18  2009/02/05 09:50:53  dvanders
 #Remove DQ2OutputDataset.use_datasetname
 #
