@@ -9,6 +9,7 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import DiracShared
 import DiracUtils
 import Ganga.Utility.logging
+from GangaLHCb.Lib.Dirac.DiracUtils import mangleJobName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -61,7 +62,7 @@ class GaudiPythonDiracRunTimeHandler(IRuntimeHandler):
         diracScript.runApplicationScript(app.project, app.version,
                                          DiracShared.getGenericRunScript(job),
                                          logFile)
-        diracScript.setName("Ganga_GaudiPython")
+        diracScript.setName(mangleJobName(job))
         if job.inputdata:
             diracScript.inputdata(job.inputdata)
             if hasattr(job.inputdata,'depth'):

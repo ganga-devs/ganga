@@ -4,6 +4,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from DiracScript import DiracScript
+from GangaLHCb.Lib.Dirac.DiracUtils import mangleJobName
 
 import DiracShared
 
@@ -27,7 +28,7 @@ class ExeDiracRunTimeHandler(IRuntimeHandler):
         logFile = 'GangaExcutable.log'
         diracScript.setExecutable(logFile=logFile,
                                   command=DiracShared.getGenericRunScript(job))
-        diracScript.setName("Ganga_Executable")
+        diracScript.setName(mangleJobName(job))
 
         if job.inputdata:
             diracScript.inputdata(job.inputdata)

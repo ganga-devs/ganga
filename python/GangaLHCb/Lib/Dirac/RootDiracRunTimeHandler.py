@@ -17,6 +17,7 @@ import DiracShared
 import DiracUtils
 import RootVersions
 from DiracScript import DiracScript
+from GangaLHCb.Lib.Dirac.DiracUtils import mangleJobName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -55,7 +56,7 @@ class RootDiracRunTimeHandler(IRuntimeHandler):
         diracScript.runApplicationScript('DaVinci',version,
                                          DiracShared.getGenericRunScript(job),
                                          logFile)
-        diracScript.setName('Ganga_ROOT_%s' % app.version)
+        diracScript.setName(mangleJobName(job))
 
         if job.inputdata:
             diracScript.inputdata(job.inputdata)
