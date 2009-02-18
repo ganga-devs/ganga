@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.28 2009-02-04 06:52:41 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.29 2009-02-18 14:36:01 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -262,6 +262,9 @@ class DQ2JobSplitter(ISplitter):
                     j.outputsandbox = job.outputsandbox 
 
                     subjobs.append(j)
+
+        if not subjobs:
+            raise ApplicationConfigurationError(None,'DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')
 
         return subjobs
     
