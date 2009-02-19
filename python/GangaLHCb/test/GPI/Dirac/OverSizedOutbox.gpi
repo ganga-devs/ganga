@@ -1,6 +1,6 @@
 from GangaTest.Framework.utils import sleep_until_completed, write_file, file_contains
 from os import mkdir
-from os.path import join,basename
+from os.path import join,basename,exists
 import tempfile
 
 # Job with a script
@@ -22,6 +22,10 @@ jscript.application.args=[]
 jscript.outputsandbox=['output.txt']
 jscript.submit()
 
-assert(sleep_until_completed(jscript,1800))
+sleep_until_completed(jscript)
+assert jscript.status == 'completed', 'Job should complete'
 
-assert(file_contains(join(jscript.outputdir,'output.txt'),'This is a test'))
+output_file = join(jscript.outputdir,'output.txt')
+assert exists(output_file), 'File must exist'
+
+assert file_contains(output_file,'This is a test'), 'looking for text failed'

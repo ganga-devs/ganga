@@ -1,6 +1,6 @@
 from GangaTest.Framework.utils import sleep_until_completed, write_file, file_contains
 from os import mkdir, chmod
-from os.path import join,basename
+from os.path import join,basename,exists
 import tempfile
 
 # Job with a script
@@ -26,9 +26,15 @@ jscript.submit()
 sleep_until_completed(jscript)
 assert jscript.status == 'completed', 'job must complete'
 
-jscript.backend.getOutputData()
+downloadedFiles = jscript.backend.getOutputData()
+# TODO: This seems to be broken
+#assert 'output.txt' in downloadedFiles, 'output.txt must be downloaded - %s' \
+#    % str(downloadedFiles)
 
-assert(file_contains(join(jscript.outputdir,'output.txt'),'This is a test'))
+output_file = join(jscript.outputdir,'output.txt')
+assert exists(output_file), 'File must exist'
+
+assert(file_contains(output_file,'This is a test'))
 lfns = jscript.backend.getOutputDataLFNs()
 assert len(lfns) == 1, 'We only expect one LFN'
 assert basename(lfns[0]) == 'output.txt', 'Check the LFN is as expected'
