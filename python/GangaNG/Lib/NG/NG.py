@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.21 2009-02-13 14:23:03 bsamset Exp $
+# $Id: NG.py,v 1.22 2009-02-19 13:37:33 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -45,6 +45,7 @@ from dq2.info import TiersOfATLAS
 from dq2.filecatalog.lfc.lfcconventions import to_native_lfn
 #from dq2.filecatalog.lfc.LFCFileCatalog import LFCFileCatalogException
 from GangaNG.Lib.NG.LFCTools import *
+from GangaNG.Lib.NG.NGStatTools import testNGStatTools
 
 # Configuration for later
 lfchost = 'lfc1.ndgf.org' # This is production server
@@ -364,8 +365,6 @@ class Grid:
 
         cmd = 'ngsub -G giises.txt -t %s ' % str(timeout)
 
-        print cmd
-        
         if not self.active:
             logger.warning('NG plugin not active.')
             return
@@ -403,8 +402,6 @@ class Grid:
     def native_master_submit(self,xrslpath,ce=None,rejectedcl=None, timeout = 20):
         '''Native bulk submission supported by GLITE middleware.'''
         # Bulk sumission is supported in NG, but the XRSL files need some care.
-
-        print cmd
 
         cmd = 'ngsub -G giises.txt -t %s ' % str(timeout)
         
@@ -852,7 +849,7 @@ class NG(IBackend):
 
     _category = 'backends'
     _name =  'NG'
-    _exportmethods = ['check_proxy','peek','update_crls','setup']
+    _exportmethods = ['check_proxy','peek','update_crls','setup','printstats']
     
     def __init__(self):
         super(NG,self).__init__()
@@ -1155,8 +1152,20 @@ class NG(IBackend):
           for filePath in job.inputdata.names:
               infileList.append( filePath )
       elif job.inputdata and job.inputdata._name == 'NGInputData':
+
+          # number of input files
+          arguments += [len(job.inputdata.names)]
+
+          for i in range(len(job.inputdata.names)):
+              arguments += [job.inputdata.names[i]]
+              # Add guids to the app string if the job is to be run through athena-ng.py
+              if job.application and job.application._name == 'Athena':
+                arguments += ["00000000-0000-0000-0000-000000000000"]
+
           for f in job.inputdata.names:
             infileList.append(f)                    
+
+
       elif job.inputdata and job.inputdata._name == 'DQ2Dataset':
 
           # prepare the dataset namelist with tids - needed for check availability and paths
@@ -1290,6 +1299,7 @@ class NG(IBackend):
          'join'   : 'yes',
          'gmlog' : 'gmlog'         
          }
+
       
       # pass athena job options through arguments, must come before the output files
       if jobconfig.env.has_key('ATHENA_OPTIONS'):
@@ -1382,7 +1392,9 @@ class NG(IBackend):
       xrslList = [
          "&" 
          "(* XRSL File created by Ganga *)",
-         "(* %s" % ( time.strftime( "%c" ) ) + " *)"]
+         "(* %s" % ( time.strftime( "%c" ) ) + " *)",
+         "(queue!=atlas-t1-repro)",
+         "(queue!=atlas-t1-reprocessing)"]
       for key, value in xrslDict.iteritems():
          xrslList.append( "(%s = %s)" % ( key, value ) )
       ## User requiremants   
@@ -1415,6 +1427,9 @@ class NG(IBackend):
           # ROOT env
           if jobconfig.env.has_key('ROOTSYS'):
               xrslList.append("(ROOTSYS  %s" % str( jobconfig.env['ROOTSYS'] ) + ")")
+
+          if job.backend.requirements.move_links_locally:
+            xrslList.append("(MOVE_LINKS_HERE 1)")
           
           xrslList.append(" ) ") 
       
@@ -1676,6 +1691,10 @@ class NG(IBackend):
         # Update crls list
         mt = self.middleware.upper()
         return grids[mt].update_crls()
+
+    def printstats(self):
+        outputdir = self.getJobObject().outputdir
+        testNGStatTools(outputdir)
     
 
 class NGJobConfig(StandardJobConfig):
@@ -1819,6 +1838,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.21  2009/02/13 14:23:03  bsamset
+# Added timeout functionality to ngsub
+#
 # Revision 1.20  2009/01/13 12:22:06  bsamset
 # Added support for giis list, fixed bug in assigning subjob IDs when some jobs failed to submit
 #
