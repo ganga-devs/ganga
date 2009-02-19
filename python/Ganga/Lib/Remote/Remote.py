@@ -100,6 +100,8 @@ class Remote( IBackend ):
    _schema = Schema( Version( 1, 0 ), {\
       "remote_backend": ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
       "host" : SimpleItem( defvalue="", doc="The remote host and port number ('host:port') to use. Default port is 22." ),
+      "ssh_key" : SimpleItem( defvalue="", doc="Set to true to the location of the the ssh key to use for authentication, e.g. /home/mws/.ssh/id_rsa. Note, you should make sure 'key_type' is also set correctly." ),
+      "key_type" : SimpleItem( defvalue="RSA", doc="Set to the type of ssh key to use (if required). Possible values are 'RSA' and 'DSS'."),
       "username" : SimpleItem( defvalue="", doc="The username at the remote host" ),
       "ganga_dir" : SimpleItem( defvalue="", doc="The directory to use for the remote workspace, repository, etc." ),
       "ganga_cmd" : SimpleItem( defvalue="", doc="Command line to start ganga on the remote host" ),
@@ -191,10 +193,10 @@ print "***_FINISHED_***"
          
       # Ask user for password - give three tries
       num_try = 0
+      password = ""
       while num_try < 3:
       
          try:
-            password = getpass.getpass('Password for %s@%s: ' % (self.username, self.host))
             temp_host = self.host
             temp_port = self._port
             if self.host.find(":") != -1:
@@ -203,7 +205,28 @@ print "***_FINISHED_***"
                temp_host = self.host[ : self.host.find(":") ]
                
             self._transport = paramiko.Transport((temp_host, temp_port))
-            self._transport.connect(username=self.username, password=password)
+            if self.ssh_key != "" and os.path.exists(os.path.expanduser( os.path.expandvars( self.ssh_key ) ) ):
+               privatekeyfile = os.path.expanduser( os.path.expandvars( self.ssh_key ) )
+               
+               if self.key_type == "RSA":
+                  password = getpass.getpass('Enter passphrase for key \'%s\': ' % (self.ssh_key))
+                  mykey = paramiko.RSAKey.from_private_key_file(privatekeyfile,password=password )
+               elif self.key_type == "DSS":
+                  password = getpass.getpass('Enter passphrase for key \'%s\': ' % (self.ssh_key))
+                  mykey = paramiko.DSSKey.from_private_key_file(privatekeyfile,password=password )
+               else:
+                  logger.error("Unknown ssh key_type '%s'. Unable to connect." % self.key_type)
+                  return False
+                  
+               self._transport.connect(username = self.username, pkey = mykey)
+            else:
+               password = getpass.getpass('Password for %s@%s: ' % (self.username, self.host)) 
+               self._transport.connect(username=self.username, password=password)
+
+                        
+            # blank the password just in case
+            password = "                 "
+            
             channel = self._transport.open_session()
             channel.exec_command( 'mkdir -p ' + self.ganga_dir )
             self._sftp = paramiko.SFTPClient.from_transport(self._transport)
@@ -219,9 +242,6 @@ print "***_FINISHED_***"
             self._sftp = None
 
          num_try = num_try + 1
-         
-      # blank the password just in case
-      password = ""
 
       if num_try == 3:
          logger.error("Could not logon to remote host " + self.username + "@" + self.host)
