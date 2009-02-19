@@ -95,6 +95,33 @@ def get_se_hostname(sename_replacements={}):
 
     return sename
 
+def get_transfer_protocols(sename=None):
+    '''
+    Tries to detect the data transfer protocols supported by the specified storage element.
+    '''
+
+    protocols = []
+
+    if not sename:
+        sename = get_se_hostname()
+
+    cmd = 'lcg-info --list-se --query SE=\'%s\' --attr Protocol --sed'
+
+    f = os.popen(cmd)
+    output = f.readlines()
+    rc = f.close()
+
+    if (not rc) and (len(output) == 1):
+
+        re_se = re.compile('^%s' % sename.lower())
+
+        if re_se.match(output[0].lower()):
+            se, protocol_str = output[0].strip().split('%')
+            if protocol_str:
+                protocols = protocol_str.split('&')
+
+    return protocols
+    
 def get_site_domain(domain_replacements={}):
     '''
     Tries to determine the site domain from varies approaches:
@@ -303,7 +330,8 @@ import os, os.path
 lcgcp_wrapper = os.path.join( os.getcwd(), 'fs-copy.py' )
 if os.path.exists( lcgcp_wrapper ):
     stagetool.CpCommand = lcgcp_wrapper
-    stagetool.CpArguments = ['-p', 'lcgcp', '--vo', 'atlas', '-t', '1200', '--mt', '3']
+    stagetool.CpArguments = []
+    #stagetool.CpArguments = ['-p', 'lcgcp', '--vo', 'atlas', '-t', '1200', '--mt', '3']
 
 print '*******'
 print stagetool.CpCommand
@@ -587,80 +615,3 @@ def get_srmv2_sites(cloud=None, token=None, debug=False):
                 srmv2_sites.append(site)
 
     return srmv2_sites
-
-########################################################################
-if __name__ == '__main__':
-
-    ### Main program testing and demonstrating the routines ###
-
-    guids = ['52F43B39-5038-DD11-9600-0030487C782A','16536D6C-5038-DD11-8FCF-000423D94C90']
-    ds_locations = ['CSTCDIE_DATADISK', 'NIKHEF-ELPROD_DATADISK', 'RRC-KI_DATADISK', 'RU-PNPI_DATADISK']
-
-    # determin site domain
-    domain_replacements = {'grika.de': 'fzk.de'}
-    site_domain = get_site_domain(domain_replacements)
-    print >> sys.stdout, 'detected site domain: %s' % site_domain
-
-    # determin close se
-    se_replacements = {'srm.cern.ch': 'srm-atlas.cern.ch'}
-    close_se = get_se_hostname(se_replacements)
-    print >> sys.stdout, 'detected closed SE: %s' % close_se
-
-    # resolve the dq2_local_site_id taking into account
-    #  - file locations
-    #  - site_domain
-    #  - se_hostname
-    #  - site configurations (for some special sites)
-
-    # define a list of possible site ids for combined sara-nikhef site
-    # allowing jobs at NIKHEF to read data from SARA and vice versa
-    nl_sites = get_srmv2_sites(cloud='NL')
-    sara_nikhef_combine = []
-    for s in nl_sites:
-        if ( s.find('SARA-MATRIX') >= 0 ) or ( s.find('NIKHEF-ELPROD') >= 0 ):
-            sara_nikhef_combine.append(s)
-
-    force_siteid_domain = {'.*nikhef.nl.*': sara_nikhef_combine,
-                           '.*sara.nl.*'  : sara_nikhef_combine}
-
-    force_siteid_se = {'dpm01.grid.sinica.edu.tw'  : ['ASGCDISK'],
-                       'atlasse.phys.sinica.edu.tw': ['TW-FTT'],
-                       'srm-disk.pic.es'           : ['PIC_DATADISK']}
-    
-    dq2_site_id = resolve_dq2_local_site_id(ds_locations, site_domain, close_se, \
-                        force_siteid_domain=force_siteid_domain, \
-                        force_siteid_se=force_siteid_se)
-
-    print >> sys.stdout, 'detected DQ2_LOCAL_SITE_ID: %s' % dq2_site_id
-
-    # get LFC_HOST associated with the dq2_site_id
-    lfc_host = get_lfc_host(dq2_site_id)
-    print >> sys.stdout, 'LFC_HOST: %s' % lfc_host
-
-    # resolve PFNs given the LFC_HOST and a list of GUIDs
-    pfns, csum = get_pfns(lfc_host, guids)
-
-    # write out the checksum information
-    for guid in csum.keys():
-        print >> sys.stdout, '%s %s:%s' % (guid, csum[guid]['csumtype'], csum[guid]['csumvalue'])
-
-    # count only the PFNs on local site by match srm_endpoint of the dq2 site
-    srm_endpt_info  = get_srm_endpoint(dq2_site_id)
-    print >> sys.stdout, str(srm_endpt_info)
-    re_endpt = re.compile('^.*%s.*%s.*\s*$' % (srm_endpt_info['se_host'], srm_endpt_info['se_path']) )
-    pfn_list = []
-    for guid in pfns.keys():
-        print >> sys.stdout, 'guid:%s pfns:%s' % ( guid, repr(pfns[guid]) )
-        for pfn in pfns[guid]:
-            if re_endpt.match(pfn):
-                pfn_list.append(pfn)
-
-    print >> sys.stdout, str(pfn_list)
-
-    # produce the job option file for Athena/FileStager module
-    make_FileStager_jobOption(pfn_list, gridcopy=True, optionFileName='input_stager.py')
-    print >> sys.stdout, '##### File Stager Job Option #####'
-    f = open('input_stager.py','r')
-    for l in f.readlines():
-        print >> sys.stdout, l.strip()
-    f.close()
