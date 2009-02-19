@@ -526,7 +526,20 @@ run_athena () {
 	export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH:$LD_LIBRARY_PATH_ORIG
 
         echo "Running Athena ..."
-    if [ n$ATLAS_EXETYPE == n'ATHENA' ]
+
+	# Network traffic
+	ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
+	if [ ! -z $ETH ] 
+	    then
+	    echo $ETH
+	    NET_ETH_RX_PREATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $2}'`
+	else
+	    echo 'eth0'
+	    NET_ETH_RX_PREATHENA=`cat /proc/net/dev | grep eth0 | awk '{print $2}'`
+	fi
+	echo NET_ETH_RX_PREATHENA=$NET_ETH_RX_PREATHENA
+
+	if [ n$ATLAS_EXETYPE == n'ATHENA' ]
 	    then 
 	    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 	    retcode=`cat retcode.tmp`
@@ -624,6 +637,17 @@ EOF
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	fi
+    
+    # Network traffic
+	if [ ! -z $ETH ] 
+	    then
+	    echo $ETH
+	    NET_ETH_RX_AFTERATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $2}'`
+	else
+	    echo 'eth0'
+	    NET_ETH_RX_AFTERATHENA=`cat /proc/net/dev | grep eth0 | awk '{print $2}'`
+	fi
+	echo NET_ETH_RX_AFTERATHENA=$NET_ETH_RX_AFTERATHENA
 	
     fi
 }

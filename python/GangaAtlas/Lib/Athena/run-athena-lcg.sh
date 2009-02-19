@@ -443,9 +443,21 @@ EOF
       do
       for file in $filespec
 	do
+	
+    # Network traffic
+	ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
+	if [ ! -z $ETH ] 
+	    then
+	    echo $ETH
+	    NET_ETH_RX_PREATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $2}'`
+	else
+	    echo 'eth0'
+	    NET_ETH_RX_PREATHENA=`cat /proc/net/dev | grep eth0 | awk '{print $2}'`
+	fi
+	echo NET_ETH_RX_PREATHENA=$NET_ETH_RX_PREATHENA
+
 	echo "Downloading input file $file ..."
 	let "I += 1"
-	
         # use dq2-get to download input file
 	if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 	    then
@@ -556,6 +568,18 @@ site - please contact Ganga support mailing list.'
 	mv output_files.new output_files.new.old
 	mv output_files.copy output_files.new
     fi
+
+    
+    # Network traffic
+    if [ ! -z $ETH ] 
+	then
+	echo $ETH
+	NET_ETH_RX_AFTERATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $2}'`
+    else
+	echo 'eth0'
+	NET_ETH_RX_AFTERATHENA=`cat /proc/net/dev | grep eth0 | awk '{print $2}'`
+    fi
+    echo NET_ETH_RX_AFTERATHENA=$NET_ETH_RX_AFTERATHENA
 
 fi
 
