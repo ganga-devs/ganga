@@ -194,6 +194,8 @@ athena_setup () {
 
     echo "Setting up the Athena environment ..."
 
+    retcode=0
+
     if [ -z $USER_AREA ] && [ -z $ATHENA_USERSETUPFILE ]
     then
 	runtime_setup
@@ -202,7 +204,10 @@ athena_setup () {
         . $ATHENA_USERSETUPFILE
     else
 	athena_compile
+    retcode=$?
     fi
+
+    return $retcode
 }
 
 # Determine PYTHON executable in ATLAS release
@@ -772,5 +777,7 @@ athena_compile()
     fi
     pwd
     cd ..
+
+    return $retcode
  
 }
