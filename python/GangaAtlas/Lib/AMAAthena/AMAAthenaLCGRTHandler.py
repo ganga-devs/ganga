@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLCGRTHandler.py,v 1.5 2009-02-19 15:38:26 hclee Exp $
+# $Id: AMAAthenaLCGRTHandler.py,v 1.6 2009-02-19 22:31:57 hclee Exp $
 ###############################################################################
 # AMAAthena LCG Runtime Handler
 #
@@ -60,7 +60,8 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
             sample_name = job.name
 
         environment['AMA_SAMPLE_NAME']=sample_name
-        outputbox += [ 'summary/summary_%s_confFile_%s_nEvts_%s.root' % (sample_name, conf_name, str(max_events) ) ]
+        #outputbox += [ 'summary/summary_%s_confFile_%s_nEvts_%s.root' % (sample_name, conf_name, str(max_events) ) ]
+        outputbox += [ 'summary/*.root' ]
 
         if job.inputdata._name == 'StagerDataset':
             ## needs a valid dataset name 

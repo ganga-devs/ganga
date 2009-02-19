@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLocalRTHandler.py,v 1.4 2009-02-19 15:38:26 hclee Exp $
+# $Id: AMAAthenaLocalRTHandler.py,v 1.5 2009-02-19 22:31:57 hclee Exp $
 ###############################################################################
 # AMAAthena Local Runtime Handler
 #
@@ -58,7 +58,8 @@ class AMAAthenaLocalRTHandler(AthenaLocalRTHandler):
         environment['AMA_FLAG_LIST'] = app.driver_flags 
 
         environment['AMA_SAMPLE_NAME']=sample_name
-        outputbox += [ 'summary/summary_%s_confFile_%s_nEvts_%s.root' % ( sample_name, conf_name, str(max_events) ) ]
+        #outputbox += [ 'summary/summary_%s_confFile_%s_nEvts_%s.root' % ( sample_name, conf_name, str(max_events) ) ]
+        outputbox += [ 'summary/*.root' ]
 
         if job.inputdata._name == 'StagerDataset':
             if not job.inputdata.dataset:
