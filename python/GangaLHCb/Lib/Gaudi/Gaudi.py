@@ -2,8 +2,8 @@
 '''Application handler for Gaudi applications in LHCb.'''
 
 __author__ = 'Andrew Maier, Greig A Cowan'
-__date__ = "$Date: 2009-02-10 10:31:03 $"
-__revision__ = "$Revision: 1.22 $"
+__date__ = "$Date: 2009-02-19 11:07:03 $"
+__revision__ = "$Revision: 1.23 $"
 
 import os
 import re
@@ -146,35 +146,36 @@ class Gaudi(IApplication):
         logger.debug("Set user_release_area to: %s",
                      str(self.user_release_area))        
         
-        if not self.version:  
-            self.version = guess_version(self.appname)
+        if not self.version: self.version = guess_version(self.appname)
         self.package = available_packs(self.appname)
-        if (not self.platform):
-            self.platform = get_user_platform()
+        if (not self.platform): self.platform = get_user_platform()
         
     def readInputData(self,optsfiles,extraopts=False):
-        """Returns a LHCbDataSet object from a list of options files. The optional
-        argument extraopts will decide if the extraopts string inside the application
-        is considered or not. 
+        """Returns a LHCbDataSet object from a list of options files. The
+        optional argument extraopts will decide if the extraopts string inside
+        the application is considered or not. 
         
         Usage examples:
         # Creata an LHCbDataset object with the data found in the optionsfile
-        l=DaVinci(version='v22r0p2').readInputData(["~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py"]) 
-        # Get the data from an options file and assign it to the jobs inputdata field
-        j.inputdata = j.application.readInputData(["~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py"])
+        l=DaVinci(version='v22r0p2').readInputData([\"~/cmtuser/\" \
+        \"DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"]) 
+        # Get the data from an options file and assign it to the jobs inputdata
+        field
+        j.inputdata = j.application.readInputData([\"~/cmtuser/\" \
+        \"DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"])
         
         # Assuming you have data in your extraopts, you can use the extraopts.
         # In this case your extraopts need to be fully parseable by gaudirun.py
-        # So you must make sure that you have the proper import statements. e.g.
+        # So you must make sure that you have the proper import statements.
+        # e.g.
         from Gaudi.Configuration import * 
-        # If you mix optionsfiles and extraopts, as usual extraopts may overwright
-        # your options
+        # If you mix optionsfiles and extraopts, as usual extraopts may
+        # overwright your options
         # 
         # Use this to create a new job with data from extraopts of an old job
         j=Job(inputdata=jobs[-1].application.readInputData([],True))
         """
-       
-
+        
         def dummyfile():
             import tempfile,os
             temp_fd,temp_filename=tempfile.mkstemp(text=True,suffix='.py')
@@ -207,6 +208,7 @@ class Gaudi(IApplication):
         self.extra.opts_pkl_str = parser.opts_pkl_str
         inputdata = parser.get_input_data()
         return inputdata
+    
     def master_configure(self):
         '''The configure method configures the application. Here, the
         application handler simply flattens the options file. For this it has
@@ -292,10 +294,6 @@ class Gaudi(IApplication):
         config=Ganga.Utility.Config.getConfig('LHCb')
         self.extra._LocalSite = config['LocalSite']
         self.extra._SEProtocol = config['SEProtocol']
-
-        if self.extra.inputdata.hasLFNs():
-            self.extra.xml_catalog_str = gen_catalog(self.extra.inputdata,
-                                                     self.extra._LocalSite)
         
         return (inputs, self.extra)
 
@@ -383,8 +381,6 @@ class GaudiExtras:
     outputdata = []
     _name = "GaudiExtras"
     _category = "extras"
-    xml_catalog_str = ''
-
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -394,251 +390,35 @@ class GaudiExtras:
 # properties except the optsfile.
 #
 
+from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+
 # Some generic stuff common to all classes
 myschema = Gaudi._schema.inherit_copy()
 myschema['appname']._meta['protected'] = 1
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-class Gauss(Gaudi):
-    
-    _name = 'Gauss'
+class_str = """
+class ###CLASS###(Gaudi):
+    _name = '###CLASS###'
     __doc__ = GaudiDocString(_name)
     _schema = myschema.inherit_copy()
-    
+
     def __init__(self):
-        super(Gauss, self).__init__()
-        self.appname = "Gauss"
-        
-    def getpack(self,options=''):
-        return super(Gauss,self).getpack(options)
-        
-    def make(self,argument=''):
-        return super(Gauss,self).make(argument)
-        
-    def cmt(self,command):
-        return super(Gauss,self).cmt(command)
-
-    def readInputData(self,options,extraopts=False):
-        return super(Gauss,self).readInputData(options,extraopts)
-   
-    for method in Gaudi._exportmethods:
-        setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
-
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-class Boole(Gaudi):
-    
-    _name = 'Boole'
-    __doc__ = GaudiDocString(_name)
-    _schema = myschema.inherit_copy()
-    
-    def __init__(self):
-        super(Boole, self).__init__()
-        self.appname = "Boole"
-        
-    def getpack(self,options=''):
-        return super(Boole,self).getpack(options)
-    
-    def make(self,argument=''):
-        return super(Boole,self).make(argument)
-    
-    def cmt(self,command):
-        return super(Boole,self).cmt(command)
-
-    def readInputData(self,options,extraopts=False):
-        return super(Boole,self).readInputData(options,extraopts)
-
-    for method in Gaudi._exportmethods:
-        setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
-
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-class Brunel(Gaudi):
-    
-    _name = 'Brunel'
-    __doc__ = GaudiDocString(_name)
-    _schema = myschema.inherit_copy()
-    
-    def __init__(self):
-        super(Brunel, self).__init__()
-        self.appname = "Brunel"
-        
-    def getpack(self,options=''):
-        return super(Brunel,self).getpack(options)
-    
-    def make(self,argument=''):
-        return super(Brunel,self).make(argument)
-    
-    def cmt(self,command):
-        return super(Brunel,self).cmt(command)
-
-    def readInputData(self,options,extraopts=False):
-        return super(Brunel,self).readInputData(options,extraopts)
-
-
-    for method in Gaudi._exportmethods:
-        setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
-
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-class DaVinci(Gaudi):
-    
-    _name = 'DaVinci'
-    __doc__ = GaudiDocString(_name)
-    _schema = myschema.inherit_copy()
-    
-    def __init__(self):
-        super(DaVinci, self).__init__()
-        self.appname = "DaVinci"
-        
-    def getpack(self,options=''):
-        return super(DaVinci,self).getpack(options)
-    
-    def make(self,argument=''):
-        return super(DaVinci,self).make(argument)
-    
-    def cmt(self,command):
-        return super(DaVinci,self).cmt(command)
-
-    def readInputData(self,options,extraopts=False):
-        return super(DaVinci,self).readInputData(options,extraopts)
-
-
-    for method in Gaudi._exportmethods:
-        setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
-
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-class Euler(Gaudi):
-    
-    _name = 'Euler'
-    __doc__ = GaudiDocString(_name)
-    _schema = myschema.inherit_copy()
-    
-    def __init__(self):
-        super(Euler, self).__init__()
-        self.appname = "Euler"
-        
-    def getpack(self,options=''):
-        return super(Euler,self).getpack(options)
-    
-    def make(self,argument=''):
-        return super(Euler,self).make(argument)
-    
-    def cmt(self,command):
-        return super(Euler,self).cmt(command)
-
-    def readInputData(self,options,extraopts=False):
-        return super(Euler,self).readInputData(options,extraopts)
-
-
-    for method in Gaudi._exportmethods:
-        setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
-
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-class Moore(Gaudi):
-    
-    _name = 'Moore'
-    __doc__ = GaudiDocString(_name)
-    _schema = myschema.inherit_copy()
-    
-    def __init__(self):
-        super(Moore, self).__init__()
-        self.appname = "Moore"
-        
-    def getpack(self,options=''):
-        return super(Moore,self).getpack(options)
-    
-    def make(self,argument=''):
-        return super(Moore,self).make(argument)
-    
-    def cmt(self,command):
-        return super(Moore,self).cmt(command)
-
-    def readInputData(self,options,extraopts=False):
-        return super(Moore,self).readInputData(options,extraopts)
-
-
-    for method in Gaudi._exportmethods:
-        setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
-
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-class Vetra(Gaudi):
-    
-    _name = 'Vetra'
-    __doc__ = GaudiDocString(_name)
-    _schema = myschema.inherit_copy()
-    
-    def __init__(self):
-        super(Vetra, self).__init__()
-        self.appname = "Vetra"
-        self.lhcb_release_area=os.path.expandvars("$Vetra_release_area")
-        
-    def getpack(self,options=''):
-        return super(Vetra,self).getpack(options)
-    
-    def make(self,argument=''):
-        return super(Vetra,self).make(argument)
-    
-    def cmt(self,command):
-        return super(Vetra,self).cmt(command)
-
-    def readInputData(self,options,extraopts=False):
-        return super(Vetra,self).readInputData(options,extraopts)
-
-
-    for method in Gaudi._exportmethods:
-        setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
-
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-class Panoptes(Gaudi):
-    
-    _name = 'Panoptes'
-    __doc__ = GaudiDocString(_name)
-    _schema = myschema.inherit_copy()
-    
-    def __init__(self):
-        super(Panoptes, self).__init__()
-        self.appname = 'Panoptes'
-        
-    def getpack(self,options=''):
-        return super(Panoptes,self).getpack(options)
-    
-    def make(self,argument=''):
-        return super(Panoptes,self).make(argument)
-    
-    def cmt(self,command):
-        return super(Panoptes,self).cmt(command)
-
-    def readInputData(self,options,extraopts=False):
-        return super(Panoptes,self).readInputData(options,extraopts)
-
-
-    # Copy documentation from Gaudi class
-    for method in Gaudi._exportmethods:
-        setattr(eval(method), "__doc__", getattr(Gaudi, method).__doc__)
-
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-#
-# Associate the correct run-time handlers to Gaudi for various backends. 
-#
-
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+        super(###CLASS###, self).__init__()
+        self.appname = '###CLASS###'
+        ###SETLHCBRA###
+"""
 
 for app in available_apps():
+    exec_str = class_str.replace('###CLASS###', app)
+    if app is 'Vetra':
+        lhcbra = os.path.expandvars("$Vetra_release_area")
+        exec_str = exec_str.replace('###SETLHCBRA###',
+                                    'self.lhcb_release_area = "%s"' % lhcbra)
+    else:
+        exec_str = exec_str.replace('###SETLHCBRA###', '')
+    if app is not 'Gaudi':
+        exec(exec_str)
+    
     allHandlers.add(app, 'LSF', GaudiLSFRunTimeHandler)
     allHandlers.add(app, 'Interactive', GaudiLSFRunTimeHandler)
     allHandlers.add(app, 'PBS', GaudiLSFRunTimeHandler)
@@ -648,3 +428,4 @@ for app in available_apps():
     allHandlers.add(app, 'Condor', GaudiLSFRunTimeHandler)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+

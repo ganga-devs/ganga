@@ -2,8 +2,8 @@
 '''Provide a run-time handler for Gaudi applications the LSF backend.'''
 
 __author__ = ' Andrew Maier, Greig A Cowan'
-__date__ = "$Date: 2009-01-28 13:18:19 $"
-__revision__ = "$Revision: 1.7 $"
+__date__ = "$Date: 2009-02-19 11:07:03 $"
+__revision__ = "$Revision: 1.8 $"
 
 import os
 from Ganga.GPIDev.Lib.Job import Job
@@ -13,7 +13,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer, File
 from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from GaudiUtils import create_lsf_runscript
+from GaudiUtils import create_lsf_runscript, gen_catalog
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -57,8 +57,9 @@ class GaudiLSFRunTimeHandler(IRuntimeHandler):
     sandbox += job.inputsandbox
     
     sandbox.append(FileBuffer('options.pkl', extra.opts_pkl_str))
-    if(extra.xml_catalog_str):
-      sandbox.append(FileBuffer('myFiles.xml', extra.xml_catalog_str))
+    if extra.inputdata and extra.inputdata.hasLFNs():
+      xml_catalog_str = gen_catalog(extra.inputdata, extra._LocalSite)
+      sandbox.append(FileBuffer('myFiles.xml', xml_catalog_str))
     logger.debug("Input sandbox: %s: ",str(sandbox))
     
     return StandardJobConfig( '', inputbox=sandbox, args=[])

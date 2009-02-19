@@ -3,8 +3,8 @@
 '''Application handler for GaudiPython applications in LHCb.'''
 
 __author__ = 'Ulrik Egede'
-__date__ = "$Date: 2009-01-28 13:18:19 $"
-__revision__ = "$Revision: 1.11 $"
+__date__ = "$Date: 2009-02-19 11:07:03 $"
+__revision__ = "$Revision: 1.12 $"
 
 import os
 import re
@@ -25,7 +25,7 @@ logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class GaudiPython(IApplication):
-    """The Gaudi Application handler
+    """The GaudiPython Application handler
     
     The GaudiPython application handler is for running LHCb GaudiPython
     jobs. This means running scripts where you are in control of the events
@@ -104,10 +104,6 @@ class GaudiPython(IApplication):
         if job.inputdata:
             self.extra.inputdata = job.inputdata
             self.extra.inputdata.datatype_string=job.inputdata.datatype_string
-            if self.extra.inputdata.hasLFNs():
-                config = Ganga.Utility.Config.getConfig('LHCb') 
-                self.extra.xml_catalog_str = gen_catalog(self.extra.inputdata,
-                                                         config['LocalSite'])
         
         self.package = available_packs(self.project)
 
@@ -133,25 +129,10 @@ class GaudiPython(IApplication):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-#
-# Associate the correct run-time handlers to GaudiPython for various backends.
-#
-
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from GangaLHCb.Lib.Gaudi.GaudiPythonLSFRunTimeHandler \
-     import GaudiPythonLSFRunTimeHandler
-from GangaLHCb.Lib.Dirac.GaudiPythonDiracRunTimeHandler \
-     import GaudiPythonDiracRunTimeHandler
-
-allHandlers.add('GaudiPython', 'LSF', GaudiPythonLSFRunTimeHandler)
-allHandlers.add('GaudiPython', 'Interactive', GaudiPythonLSFRunTimeHandler)
-allHandlers.add('GaudiPython', 'PBS', GaudiPythonLSFRunTimeHandler)
-allHandlers.add('GaudiPython', 'SGE', GaudiPythonLSFRunTimeHandler)
-allHandlers.add('GaudiPython', 'Local', GaudiPythonLSFRunTimeHandler)
-allHandlers.add('GaudiPython', 'Dirac', GaudiPythonDiracRunTimeHandler)
-allHandlers.add('GaudiPython', 'Condor', GaudiPythonLSFRunTimeHandler)
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+bschema = GaudiPython._schema.inherit_copy()
+bschema['project']._meta['protected'] = 1
+bschema['project']._meta['hidden'] = 1
+bschema['project']._meta['defvalue'] = 'Bender'
 
 class Bender(GaudiPython):
     """Bender application.
@@ -161,33 +142,8 @@ class Bender(GaudiPython):
 """
     _name = 'Bender'
     _category = 'applications'
-
-    schema = {}
-    docstr = 'The name of the script to execute. A copy will be made ' + \
-             'at submission time'
-    schema['script'] = FileItem(sequence=1,strict_sequence=0,defvalue=[],
-                                doc=docstr)
-    docstr = 'The version of the application (like "v19r2")'
-    schema['version'] = SimpleItem(defvalue=None,
-                                   typelist=['str','type(None)'],doc=docstr)
-    docstr = 'The platform the application is configured for (e.g. ' + \
-             '"slc4_ia32_gcc34")'
-    schema['platform'] = SimpleItem(defvalue=None,
-                                    typelist=['str','type(None)'],doc=docstr)
-    docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
-    schema['project'] = SimpleItem(defvalue='Bender',
-                                   typelist=['str','type(None)'],hidden=1,
-                                   doc=docstr)
-    docstr = 'Extra options to be passed onto the SetupProject command ' + \
-             'used for configuring the environment. As an example ' + \
-             'setting it to \'--dev\' will give access to the DEV area. ' + \
-             'For full documentation of the available options see ' + \
-             'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
-    schema['setupProjectOptions'] = SimpleItem(defvalue='',
-                                               typelist=['str','type(None)'],
-                                               doc=docstr)  
-    _schema = Schema(Version(1, 1), schema)                                    
-
+    _schema = bschema.inherit_copy()
+    
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""
         
@@ -204,15 +160,22 @@ class Bender(GaudiPython):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 #
-# Associate the correct run-time handlers to Bender for various backends.
+# Associate the correct run-time handlers to GaudiPython for various backends.
 #
 
-allHandlers.add('Bender', 'LSF', GaudiPythonLSFRunTimeHandler)
-allHandlers.add('Bender', 'Interactive', GaudiPythonLSFRunTimeHandler)
-allHandlers.add('Bender', 'PBS', GaudiPythonLSFRunTimeHandler)
-allHandlers.add('Bender', 'SGE', GaudiPythonLSFRunTimeHandler)
-allHandlers.add('Bender', 'Local', GaudiPythonLSFRunTimeHandler)
-allHandlers.add('Bender', 'Dirac', GaudiPythonDiracRunTimeHandler)
-allHandlers.add('Bender', 'Condor', GaudiPythonLSFRunTimeHandler)
+from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaLHCb.Lib.Gaudi.GaudiPythonLSFRunTimeHandler \
+     import GaudiPythonLSFRunTimeHandler
+from GangaLHCb.Lib.Dirac.GaudiPythonDiracRunTimeHandler \
+     import GaudiPythonDiracRunTimeHandler
+
+for app in ['GaudiPython','Bender']:
+    allHandlers.add(app, 'LSF', GaudiPythonLSFRunTimeHandler)
+    allHandlers.add(app, 'Interactive', GaudiPythonLSFRunTimeHandler)
+    allHandlers.add(app, 'PBS', GaudiPythonLSFRunTimeHandler)
+    allHandlers.add(app, 'SGE', GaudiPythonLSFRunTimeHandler)
+    allHandlers.add(app, 'Local', GaudiPythonLSFRunTimeHandler)
+    allHandlers.add(app, 'Dirac', GaudiPythonDiracRunTimeHandler)
+    allHandlers.add(app, 'Condor', GaudiPythonLSFRunTimeHandler)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

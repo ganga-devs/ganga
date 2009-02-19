@@ -3,17 +3,17 @@
 the backends sharing the local filesystem."""
 
 __author__ = 'Ulrik Egede'
-__date__ = "$Date: 2009-02-06 13:47:03 $"
-__revision__ = "$Revision: 1.7 $"
+__date__ = "$Date: 2009-02-19 11:07:03 $"
+__revision__ = "$Revision: 1.8 $"
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 import os,os.path
 from Ganga.GPIDev.Lib.File import FileBuffer
-import Ganga.Utility.Config 
+import Ganga.Utility.Config  
 from Ganga.Utility.util import unique
 import Ganga.Utility.logging
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from GaudiUtils import create_lsf_runscript,collect_lhcb_filelist
+from GaudiUtils import create_lsf_runscript,collect_lhcb_filelist, gen_catalog
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -33,8 +33,11 @@ class GaudiPythonLSFRunTimeHandler(IRuntimeHandler):
 
     sandbox = [f for f in job.inputsandbox]
     sandbox += [script for script in job.application.script]
-    if(extra.xml_catalog_str):
-      sandbox.append(FileBuffer('myFiles.xml', extra.xml_catalog_str))
+    if extra.inputdata and extra.inputdata.hasLFNs():
+      config = Ganga.Utility.Config.getConfig('LHCb') 
+      xml_catalog_str = gen_catalog(extra.inputdata, config['LocalSite'])
+      sandbox.append(FileBuffer('myFiles.xml', xml_catalog_str))
+      
     logger.debug("Master input sandbox: %s: ",str(sandbox))
 
     return StandardJobConfig( '', inputbox=sandbox, args=[])

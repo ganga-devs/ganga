@@ -2,8 +2,8 @@
 '''Utility methods used by various classes in GangaLHCb.Lib.Gaudi.'''
 
 __author__ = 'Greig A Cowan, Ulrik Egede, Andrew Maier, Mike Williams'
-__date__ = "$Date: 2009-02-16 14:30:34 $"
-__revision__ = "$Revision: 1.10 $"
+__date__ = "$Date: 2009-02-19 11:07:03 $"
+__revision__ = "$Revision: 1.11 $"
 
 import os
 import os.path
@@ -24,7 +24,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 def available_apps():
   return ["Gauss", "Boole", "Brunel", "DaVinci","Euler", "Moore", "Vetra",
-          "Panoramix","Panoptes", "Gaudi", "Bender"]
+          "Panoramix","Panoptes", "Gaudi"]
 
 def available_packs(appname):
   packs={'Gauss'   : 'Sim',
