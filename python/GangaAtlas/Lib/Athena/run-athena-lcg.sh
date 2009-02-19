@@ -446,14 +446,11 @@ EOF
 	
     # Network traffic
 	ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
-	if [ ! -z $ETH ] 
+	if [ -z $ETH ] 
 	    then
-	    echo $ETH
-	    NET_ETH_RX_PREATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $2}'`
-	else
-	    echo 'eth0'
-	    NET_ETH_RX_PREATHENA=`cat /proc/net/dev | grep eth0 | awk '{print $2}'`
+	    ETH='eth0'
 	fi
+	NET_ETH_RX_PREATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $1}' | cut -d : -f 2`
 	echo NET_ETH_RX_PREATHENA=$NET_ETH_RX_PREATHENA
 
 	echo "Downloading input file $file ..."
@@ -569,16 +566,8 @@ site - please contact Ganga support mailing list.'
 	mv output_files.copy output_files.new
     fi
 
-    
     # Network traffic
-    if [ ! -z $ETH ] 
-	then
-	echo $ETH
-	NET_ETH_RX_AFTERATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $2}'`
-    else
-	echo 'eth0'
-	NET_ETH_RX_AFTERATHENA=`cat /proc/net/dev | grep eth0 | awk '{print $2}'`
-    fi
+    NET_ETH_RX_AFTERATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $1}' | cut -d : -f 2`
     echo NET_ETH_RX_AFTERATHENA=$NET_ETH_RX_AFTERATHENA
 
 fi
