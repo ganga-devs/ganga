@@ -124,7 +124,7 @@ else
     echo "===== input.py end. ====="
 
     prepare_athena
-    ama_run_athena $ATHENA_OPTIONS input.py
+    ama_run_athena $ATHENA_OPTIONS AMAConfigFile.py input.py
 fi
 
 if [ $? -ne 0 ]; then
