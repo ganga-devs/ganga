@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.24 2009-02-18 14:53:42 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.25 2009-02-19 11:29:11 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -303,7 +303,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         # Fix DATASETNAME env variable for DQ2_COPY mode
         if job.inputdata and job.inputdata._name == 'DQ2Dataset' and (job.inputdata.type=='DQ2_LOCAL' or job.inputdata.type=='DQ2_COPY' or job.inputdata.type=='FILE_STAGER'):
             if job.inputdata.dataset:
-                environment['DATASETNAME'] = job.inputdata.dataset[0]
+                from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import resolve_container
+                datasets = resolve_container(job.inputdata.dataset) 
+                environment['DATASETNAME'] = datasets[0]
 
         # Write trf parameters
         trf_params = ' '
@@ -510,6 +512,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.24  2009/02/18 14:53:42  elmsheus
+#Add proxy.identity(safe=True)
+#
 #Revision 1.23  2009/02/18 14:36:55  elmsheus
 #add proper DATASETLOCATION for  FILE_STAGER mode
 #

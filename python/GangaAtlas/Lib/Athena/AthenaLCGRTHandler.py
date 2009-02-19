@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.34 2009-02-18 14:53:42 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.35 2009-02-19 11:29:10 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -316,8 +316,10 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         # Fix DATASETNAME env variable for DQ2_COPY mode
         if job.inputdata and job.inputdata._name == 'DQ2Dataset' and (job.inputdata.type=='DQ2_LOCAL' or job.inputdata.type=='DQ2_COPY' or job.inputdata.type=='FILE_STAGER'):
             if job.inputdata.dataset:
-                environment['DATASETNAME'] = job.inputdata.dataset[0]
-                environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations(overlap=False)[ job.inputdata.dataset[0] ])
+                from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import resolve_container
+                datasets = resolve_container(job.inputdata.dataset)
+                environment['DATASETNAME'] = datasets[0]
+                environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations(overlap=False)[ datasets[0] ])
 
         # Work around for glite WMS spaced environement variable problem
         inputbox.append(FileBuffer('athena_options',environment['ATHENA_OPTIONS']+'\n'))
