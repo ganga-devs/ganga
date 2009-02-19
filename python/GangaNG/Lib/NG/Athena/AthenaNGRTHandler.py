@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.7 2009-02-17 13:17:17 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.8 2009-02-19 13:36:36 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -407,7 +407,12 @@ class AthenaNGRTHandler(IRuntimeHandler):
         #    if not File(os.path.join(os.path.dirname(__file__),'ganga-stage-in-out-dq2.py')) in inputbox:
         #        inputbox += [ File(os.path.join(os.path.dirname(__file__),'ganga-stage-in-out-dq2.py'))]
         #        inputbox += [ File(os.path.join(os.path.dirname(__file__),'ganga-joboption-parse.py')) ]
-                                            
+
+        # Add move-linked-files-here.py to input sandbox
+        inputbox += [
+            File(os.path.join(os.path.dirname(__file__),'move-linked-files-here.py'))
+            ]
+                                                    
         if (job.inputsandbox):
             for file in job.inputsandbox:
                 inputbox += [ file ]
@@ -574,6 +579,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.7  2009/02/17 13:17:17  bsamset
+# Fixed guid handling
+#
 # Revision 1.6  2009/02/11 13:05:40  bsamset
 # Removed reference to outputdata.use_dataset
 #

@@ -30,6 +30,16 @@ echo $ATHENA_USERSETUPFILE
 echo 'SITEROOT'
 echo $SITEROOT
 
+# move links here if requested (temp feature)
+echo 'MOVE_LINKS_HERE'
+echo $MOVE_LINKS_HERE
+if [ ! -z $MOVE_LINKS_HERE ]
+then
+    echo "Moving all symbolic links containting .root in the name to local area"
+    python move-linked-files-here.py
+fi
+
+
 # if not defined URER_AREA or ATHENA_USERSETUPFILE
 if [ -z $USER_AREA ] && [ -z $ATHENA_USERSETUPFILE ]
 then

@@ -6,13 +6,15 @@ from Ganga.Utility.logging import getLogger
 class NGRequirements(GangaObject):
      '''Helper class to group requirements'''
 
-     _schema = Schema(Version(1,0), {
+     _schema = Schema(Version(1,2), {
           "runtimeenvironment": SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc='Runtimeenvironment'),
           "cputime" : SimpleItem( defvalue = 30, typelist=['int'], doc = "Requested cpu time" ),
           "walltime" : SimpleItem( defvalue = 30, typelist=['int'],  doc = "Requested wall time" ),
           "memory" : SimpleItem( defvalue = 500, typelist=['int'], doc = "Mininum virtual  memory" ),
           "disk" : SimpleItem( defvalue = 500, typelist=['int'], doc = "Minimum memory" ),
-          "other" : SimpleItem( defvalue=[], typelist=['str'], sequence=1, doc= "Other requirements" )
+          "timeout" : SimpleItem( defvalue = 5, typelist=['int'], doc = "Submission timeout" ),
+          "other" : SimpleItem( defvalue=[], typelist=['str'], sequence=1, doc= "Other requirements" ),
+          'move_links_locally' : SimpleItem( defvalue=0,typelist=['int'],sequence=0, doc= "Set to 1 to move links to local disk before running (NOT RECOMMENDED!)")
           } )
 
      _category = 'ng_requirements'
