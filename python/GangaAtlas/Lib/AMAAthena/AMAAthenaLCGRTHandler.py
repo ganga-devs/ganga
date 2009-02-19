@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLCGRTHandler.py,v 1.4 2008-12-11 20:35:55 hclee Exp $
+# $Id: AMAAthenaLCGRTHandler.py,v 1.5 2009-02-19 15:38:26 hclee Exp $
 ###############################################################################
 # AMAAthena LCG Runtime Handler
 #
@@ -52,6 +52,8 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
         ## AMAAthena specific setup 
         conf_name = os.path.basename(app.driver_config.config_file.name)
         environment['AMA_DRIVER_CONF'] = conf_name
+
+        environment['AMA_FLAG_LIST'] = app.driver_flags 
 
         sample_name = 'mySample'
         if job.name:

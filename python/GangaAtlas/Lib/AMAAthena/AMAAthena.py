@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthena.py,v 1.2 2008-12-09 16:21:25 hclee Exp $
+# $Id: AMAAthena.py,v 1.3 2009-02-19 15:38:26 hclee Exp $
 ###############################################################################
 # AMAAthena Job Handler
 #
@@ -21,6 +21,7 @@ class AMAAthena(Athena):
 
     amaathena_schema_datadict.update( {
         'driver_config': ComponentItem('AMADriverConfig', doc='Configuration of AMADriver'),
+        'driver_flags' : SimpleItem(defvalue='', typelist=['str'], doc='AMADriver flags'),
         'max_events'   : SimpleItem(defvalue=-1, typelist=['int'], doc='Maximum number of events')
         } )
 

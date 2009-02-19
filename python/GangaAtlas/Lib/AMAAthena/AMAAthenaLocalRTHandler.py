@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLocalRTHandler.py,v 1.3 2009-02-13 19:32:09 hclee Exp $
+# $Id: AMAAthenaLocalRTHandler.py,v 1.4 2009-02-19 15:38:26 hclee Exp $
 ###############################################################################
 # AMAAthena Local Runtime Handler
 #
@@ -54,6 +54,8 @@ class AMAAthenaLocalRTHandler(AthenaLocalRTHandler):
         sample_name = 'mySample'
         if job.name:
             sample_name = job.name
+
+        environment['AMA_FLAG_LIST'] = app.driver_flags 
 
         environment['AMA_SAMPLE_NAME']=sample_name
         outputbox += [ 'summary/summary_%s_confFile_%s_nEvts_%s.root' % ( sample_name, conf_name, str(max_events) ) ]
