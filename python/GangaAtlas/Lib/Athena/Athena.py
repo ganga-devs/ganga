@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.41 2009-02-20 10:07:55 elmsheus Exp $
+# $Id: Athena.py,v 1.42 2009-02-20 10:13:54 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -350,7 +350,7 @@ class Athena(IApplication):
                         if line.find('NET_ETH_RX_PREATHENA')==0:
                             self.stats['NET_ETH_RX_PREATHENA'] = int(re.match('NET_ETH_RX_PREATHENA=(.*)',line).group(1))
                         if line.find('NET_ETH_RX_AFTERATHENA')==0:
-                            net_temp = int(re.match('NET_ETH_RX_AFTERATHENA=(.*)',line).group(1)
+                            net_temp = re.match('NET_ETH_RX_AFTERATHENA=(.*)',line).group(1)
                             self.stats['NET_ETH_RX_AFTERATHENA'] = int(net_temp.split(' ')[0])
                     except:
                         self.stats['NET_ETH_RX_PREATHENA'] = 0
@@ -997,6 +997,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.41  2009/02/20 10:07:55  elmsheus
+# Fix for network
+#
 # Revision 1.40  2009/02/20 09:41:08  elmsheus
 # Fix for network
 #
