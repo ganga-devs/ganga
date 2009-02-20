@@ -539,6 +539,10 @@ run_athena () {
 	    ETH='eth0'
 	fi
 	NET_ETH_RX_PREATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $1}' | cut -d : -f 2`
+	if [ -z $NET_ETH_RX_PREATHENA ] 
+	    then
+	    NET_ETH_RX_PREATHENA=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+	fi
 	echo NET_ETH_RX_PREATHENA=$NET_ETH_RX_PREATHENA
 
 	if [ n$ATLAS_EXETYPE == n'ATHENA' ]
@@ -642,6 +646,10 @@ EOF
     
     # Network traffic
 	NET_ETH_RX_AFTERATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $1}' | cut -d : -f 2`
+	if [ -z $NET_ETH_RX_AFTERATHENA ] 
+	    then
+	    NET_ETH_RX_AFTERATHENA=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+	fi
 	echo NET_ETH_RX_AFTERATHENA=$NET_ETH_RX_AFTERATHENA
 	
     fi

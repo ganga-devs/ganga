@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.39 2009-02-19 09:46:53 elmsheus Exp $
+# $Id: Athena.py,v 1.40 2009-02-20 09:41:08 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -346,10 +346,14 @@ class Athena(IApplication):
                     if line.find('GANGATIME5')==0:
                         self.stats['gangatime5'] = int(re.match('GANGATIME5=(.*)',line).group(1))
 
-                    if line.find('NET_ETH_RX_PREATHENA')==0:
-                        self.stats['NET_ETH_RX_PREATHENA'] = int(re.match('NET_ETH_RX_PREATHENA=(.*)',line).group(1))
-                    if line.find('NET_ETH_RX_AFTERATHENA')==0:
-                        self.stats['NET_ETH_RX_AFTERATHENA'] = int(re.match('NET_ETH_RX_AFTERATHENA=(.*)',line).group(1))
+                    try:
+                        if line.find('NET_ETH_RX_PREATHENA')==0:
+                            self.stats['NET_ETH_RX_PREATHENA'] = int(re.match('NET_ETH_RX_PREATHENA=(.*)',line).group(1))
+                        if line.find('NET_ETH_RX_AFTERATHENA')==0:
+                            self.stats['NET_ETH_RX_AFTERATHENA'] = int(re.match('NET_ETH_RX_AFTERATHENA=(.*)',line).group(1))
+                    except:
+                        self.stats['NET_ETH_RX_PREATHENA'] = 0
+                        self.stats['NET_ETH_RX_AFTERATHENA'] = 0
 
                 self.stats['numfiles2'] = numfiles2
 
@@ -992,6 +996,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.39  2009/02/19 09:46:53  elmsheus
+# Add network traffic information to Athena.stats
+#
 # Revision 1.38  2009/01/29 14:59:11  elmsheus
 # #4620, Add dbrelease support
 #
