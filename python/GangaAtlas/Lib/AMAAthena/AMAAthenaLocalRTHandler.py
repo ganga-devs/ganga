@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLocalRTHandler.py,v 1.5 2009-02-19 22:31:57 hclee Exp $
+# $Id: AMAAthenaLocalRTHandler.py,v 1.6 2009-02-20 17:27:34 hclee Exp $
 ###############################################################################
 # AMAAthena Local Runtime Handler
 #
@@ -91,9 +91,11 @@ class AMAAthenaLocalRTHandler(AthenaLocalRTHandler):
             proxy = os.environ['X509_USER_PROXY']
         except KeyError:
             proxy = '/tmp/x509up_u%s' % os.getuid()
-        
-        REMOTE_PROXY = '%s:%s' % (socket.getfqdn(),proxy)
-        environment['REMOTE_PROXY'] = REMOTE_PROXY
+      
+        ## no need to copy remote proxy if running right on the local machine
+        if job.backend._name not in ['Local']: 
+            REMOTE_PROXY = '%s:%s' % (socket.getfqdn(),proxy)
+            environment['REMOTE_PROXY'] = REMOTE_PROXY
 
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
