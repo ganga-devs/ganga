@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.20 2009-02-18 15:54:25 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.21 2009-02-20 09:28:58 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -503,11 +503,13 @@ class DQ2Dataset(Dataset):
                 datasetvuid = datasetinfo[dataset]['vuids'][0]
             except KeyError:
                 logger.warning('Dataset %s not found',dataset)
-                return []
+                continue
+                #return []
 
             if not locations.has_key(datasetvuid):
                 logger.warning('Dataset %s not found',dataset)
-                return []
+                continue
+                #return []
             if complete==0:
                 templocations = locations[datasetvuid][0] + locations[datasetvuid][1]
             else:
@@ -1220,6 +1222,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.20  2009/02/18 15:54:25  elmsheus
+#Add --client-id=ganga tp dq2-get calls
+#
 #Revision 1.19  2009/02/05 10:00:36  elmsheus
 #Change to adler32
 #
