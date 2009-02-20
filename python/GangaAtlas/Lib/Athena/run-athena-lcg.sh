@@ -571,6 +571,11 @@ site - please contact Ganga support mailing list.'
     fi
 
     # Network traffic
+    ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
+    if [ -z $ETH ] 
+	then
+	ETH='eth0'
+    fi
     NET_ETH_RX_AFTERATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $1}' | cut -d : -f 2`
     if [ -z $NET_ETH_RX_AFTERATHENA ] 
 	then
