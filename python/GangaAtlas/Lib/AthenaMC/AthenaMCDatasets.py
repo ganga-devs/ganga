@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.21 2009-02-11 12:11:15 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.22 2009-02-20 16:58:04 ebke Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1088,7 +1088,7 @@ class AthenaMCOutputDatasets(Dataset):
             #            md5sum = 'md5:'+md5sum
             adler32='ad:'+md5sum
             print len(md5sum)
-            if len(md5sum)==36:
+            if len(md5sum)==32:
                 adler32='md5:'+md5sum
             siteID=siteID.strip() # remove \n from last component
             datasets.append(dataset)
