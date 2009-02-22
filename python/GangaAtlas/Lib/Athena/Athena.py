@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.43 2009-02-22 14:20:12 elmsheus Exp $
+# $Id: Athena.py,v 1.44 2009-02-22 15:32:21 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -298,6 +298,7 @@ class Athena(IApplication):
                 jtotalevents = 0
                 numfiles = 0
                 numfiles2 = 0
+                numfiles3 = 0
                 if 'stdout.gz' in os.listdir(job.outputdir):
                     zfile = os.popen('zcat '+os.path.join(job.outputdir,'stdout.gz' ))
                 # NG has stdout.txt as output
@@ -325,6 +326,8 @@ class Athena(IApplication):
                         jtotalevents = itotalevents
                     if line.find('cObj_DataHeader...')>-1:
                         numfiles2 = numfiles2 + int(re.match('.* #=(.*)',line).group(1))
+                    if line.find('"PFN:')>-1:
+                        numfiles3 = numfiles3 + 1
                     if line.find('rfio://')>-1 and line.find('Always Root file version')>-1:
                         try:
                             self.stats['server'] = re.match('(.+://.+)//.*',line).group(1)
@@ -361,13 +364,15 @@ class Athena(IApplication):
                     if job.inputdata.type == 'DQ2_COPY':
                         self.stats['numfiles'] = numfiles / 2
                         self.stats['totalevents'] = totalevents
+                        self.stats['numfiles3'] = numfiles3 / 2
                     elif job.inputdata.type == 'FILE_STAGER':
                         self.stats['numfiles'] = (numfiles - 2)/2
                         self.stats['totalevents'] = jtotalevents
+                        self.stats['numfiles3'] = numfiles3 - 1
                     else:
                         self.stats['numfiles'] = numfiles - 1
                         self.stats['totalevents'] = jtotalevents
-
+                        self.stats['numfiles3'] = numfiles3 - 1
 
                 if zfile:        
                     zfile.close()
@@ -996,6 +1001,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.43  2009/02/22 14:20:12  elmsheus
+# Corrections for Network stats
+#
 # Revision 1.42  2009/02/20 10:13:54  elmsheus
 # Fix for network
 #
