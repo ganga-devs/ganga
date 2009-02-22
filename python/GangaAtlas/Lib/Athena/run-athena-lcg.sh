@@ -444,16 +444,17 @@ EOF
       for file in $filespec
 	do
 	
-    # Network traffic
+        # Network traffic
+	NET_ETH_RX_PREATHENA=0
 	ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
 	if [ -z $ETH ] 
 	    then
 	    ETH='eth0'
 	fi
-	NET_ETH_RX_PREATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $1}' | cut -d : -f 2`
+	NET_ETH_RX_PREATHENA=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
 	if [ -z $NET_ETH_RX_PREATHENA ] 
 	    then
-	    NET_ETH_RX_PREATHENA=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+	    NET_ETH_RX_PREATHENA=`/usr/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
 	fi
 	echo NET_ETH_RX_PREATHENA=$NET_ETH_RX_PREATHENA
 
@@ -571,15 +572,16 @@ site - please contact Ganga support mailing list.'
     fi
 
     # Network traffic
+    NET_ETH_RX_AFTERATHENA=0
     ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
     if [ -z $ETH ] 
 	then
 	ETH='eth0'
     fi
-    NET_ETH_RX_AFTERATHENA=`cat /proc/net/dev | grep $ETH | awk '{print $1}' | cut -d : -f 2`
+    NET_ETH_RX_AFTERATHENA=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
     if [ -z $NET_ETH_RX_AFTERATHENA ] 
 	then
-	NET_ETH_RX_AFTERATHENA=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+	NET_ETH_RX_AFTERATHENA=`/usr/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
     fi
     echo NET_ETH_RX_AFTERATHENA=$NET_ETH_RX_AFTERATHENA
 
