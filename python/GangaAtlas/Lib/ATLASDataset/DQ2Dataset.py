@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.21 2009-02-20 09:28:58 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.22 2009-02-22 15:31:27 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -976,7 +976,7 @@ class DQ2OutputDataset(Dataset):
                 continue
             size = long(size)
             adler32='ad:'+md5sum
-            if len(md5sum)==36:
+            if len(md5sum)==32:
                 adler32='md5:'+md5sum
             
             siteID=siteID.strip() # remove \n from last component
@@ -1222,6 +1222,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.21  2009/02/20 09:28:58  elmsheus
+#Fix for no replica datasets
+#
 #Revision 1.20  2009/02/18 15:54:25  elmsheus
 #Add --client-id=ganga tp dq2-get calls
 #
