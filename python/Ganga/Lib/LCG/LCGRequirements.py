@@ -54,8 +54,8 @@ class LCGRequirements(GangaObject):
 
       requirements = [ 'Member("%s",other.GlueHostApplicationSoftwareRunTimeEnvironment)' % sw for sw in self.software ]
       if self.memory:         requirements += [ 'other.GlueHostMainMemoryVirtualSize >= %s' % str(self.memory) ]
-      if self.cputime:        requirements += [ 'other.GlueCEPolicyMaxCPUTime >= %s || other.GlueCEPolicyMaxCPUTime == 0' % str(self.cputime) ]
-      if self.walltime:       requirements += [ 'other.GlueCEPolicyMaxWallClockTime >= %s || other.GlueCEPolicyMaxWallClockTime == 0' % str(self.walltime) ]
+      if self.cputime:        requirements += [ '(other.GlueCEPolicyMaxCPUTime >= %s || other.GlueCEPolicyMaxCPUTime == 0)' % str(self.cputime) ]
+      if self.walltime:       requirements += [ '(other.GlueCEPolicyMaxWallClockTime >= %s || other.GlueCEPolicyMaxWallClockTime == 0)' % str(self.walltime) ]
       if self.ipconnectivity: requirements += [ 'other.GlueHostNetworkAdapterOutboundIP==true' ]
       requirements += self.other
 
