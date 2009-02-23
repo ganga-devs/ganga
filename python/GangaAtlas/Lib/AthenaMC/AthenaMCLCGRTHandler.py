@@ -606,17 +606,33 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
         (self.firstevent, self.number_events_job) = app.getFirstEvent(partition, job.inputdata)
         logger.debug("partition %i, first event is %i, processing %i events" % (partition,self.firstevent, self.number_events_job))
-
-        inputnumbers = app.getInputsForPartitions([partition], job._getRoot().inputdata)
+        
+        inputnumbers = app.getInputsForPartitions([partition], job._getRoot().inputdata) # getInputsForPartitions get the subset of inputfiles needed by partition i. So far so good. 
         if inputnumbers:
             matchrange = (job._getRoot().inputdata.numbersToMatcharray(inputnumbers), False)
         else:
             matchrange = ([],False)
         logger.debug("partition %i using input partitions: %s as files: %s" % (partition, inputnumbers, matchrange[0]))
-
+        
         inputfiles = [fn for fn in self.turls.keys() if matchFile(matchrange, fn)]
         inputfiles.sort()
+        
+        # Strict matching must be discarded if neither splitter.input_partitions nor inputdata.redefine_partitions are used.
+        
+        if job._getRoot().inputdata and job._getRoot().inputdata.redefine_partitions == "" and job._getRoot().splitter and job._getRoot().splitter.input_partitions == "":
+            inputfiles=[]
+            inlfns=self.turls.keys()
+            inlfns.sort()
+            for i in inputnumbers:
+                try:
+                    assert len(inlfns)>= i
+                except:
+                    logger.error("Not enough input files, got %i expected %i" % (len(inlfns),i))
+                    raise Exception()
 
+                inputfiles.append(inlfns[i-1])
+
+        
         if not app.dryrun and len(inputfiles) < len(inputnumbers):
             if len(inputfiles) > 0:
                missing = []

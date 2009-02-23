@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.22 2009-02-20 16:58:04 ebke Exp $
+# $Id: AthenaMCDatasets.py,v 1.23 2009-02-23 14:22:09 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -354,8 +354,8 @@ class AthenaMCInputDatasets(Dataset):
         inputfiles = app.getInputsForPartitions(partitions[0], self)
         matchrange = (self.numbersToMatcharray(inputfiles), partitions[1])
         logger.debug("Matchrange: %s (open: %s)" % matchrange)
-        if matchrange[1]: # We must not limit dataset collection if we have an open range...
-            matchrange = []
+        if matchrange[1] or self.redefine_partitions=="": # We must not limit dataset collection if we have an open range...
+            matchrange = ([],True)
 
         self.turls={}
         self.lfcs={}
@@ -522,7 +522,7 @@ class AthenaMCInputDatasets(Dataset):
         
         numbers = []
         for guid, lfn in contents.iteritems():
-            if not matchFile(matchrange, lfn):
+            if matchrange[0] and not matchFile(matchrange, lfn):
                 continue
             num = extractFileNumber(lfn)
             if num and num in numbers: # extra protection to cover the case where extractFileNumber returns "".
@@ -1083,13 +1083,18 @@ class AthenaMCOutputDatasets(Dataset):
             try:
                 [dataset,lfn,guid,size,md5sum,siteID]=line.split(",")
             except ValueError:
+                logger.warning("Missing data information from job, skipping: %s" % line)
                 continue
             size = long(size)
             #            md5sum = 'md5:'+md5sum
             adler32='ad:'+md5sum
-            print len(md5sum)
             if len(md5sum)==32:
                 adler32='md5:'+md5sum
+            try:
+                assert len(md5sum)<=32
+            except:
+                logger.warning("Wrong checksum information, skipping registration %s"%  md5sum)
+                continue
             siteID=siteID.strip() # remove \n from last component
             datasets.append(dataset)
             regline=dataset+","+siteID
