@@ -1,7 +1,0 @@
-
-j = Job()
-id = j.id
-
-for i in xrange(1,50):
-    j = j.copy()
-    assert j.id == id + i, 'ID should be incremented by one (%d vs %d)' % (j.id,id+i)

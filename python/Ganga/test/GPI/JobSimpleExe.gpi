@@ -1,3 +1,0 @@
-j = Job()
-j.application.exe = 'my.exe'
-
