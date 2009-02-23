@@ -209,7 +209,11 @@ ama_run_athena () {
 
     echo "Running Athena ..."
 
-    $timecmd athena.py $job_options; echo $? > retcode.tmp
+    if [ -z $AMA_LOG_LEVEL ]; then
+        export AMA_LOG_LEVEL=INFO
+    fi
+
+    $timecmd athena.py -l $AMA_LOG_LEVEL $job_options; echo $? > retcode.tmp
     retcode=`cat retcode.tmp`
     rm -f retcode.tmp
 
@@ -275,6 +279,10 @@ EOF
     # Parse jobs jobOptions and set timing command
 	prepare_athena
 
+    if [ -z $AMA_LOG_LEVEL ]; then
+        export AMA_LOG_LEVEL=INFO
+    fi
+
     cat input_files | while read filespec; do
         for file in $filespec; do
 	        echo "Downloading input file $file ..."
@@ -312,7 +320,7 @@ EOF
 
             if [ $retcode -eq 0 ] && [ -e $file ]; then
 	            echo "Running Athena ..."
-		        $timecmd athena.py $ATHENA_OPTIONS AMAConfigFile.py input.py; echo $? > retcode.tmp
+		        $timecmd athena.py -l $AMA_LOG_LEVEL $ATHENA_OPTIONS AMAConfigFile.py input.py; echo $? > retcode.tmp
 		        retcode=`cat retcode.tmp`
 		        rm -f retcode.tmp
 
