@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.1.7 (2009/2/20)
+5.1.7 (2009/2/23)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -37,7 +37,8 @@ Athena:
 * Fix #44330: Add safe proxy identity handling to remove special
   characters from the DN
 * Added --client-id=ganga to dq2-get calls
-* Add network traffic information in Athena.stats field
+* Add network traffic information and additional numfiles in Athena.stats 
+  field
 
 AthenaMC:
 --------
@@ -53,6 +54,7 @@ AthenaMC:
 * Avoid crashes if empty datasets are in containers
 * indentation fix in AthenaMCLCGRTHandler.py and added adler32.py
 * promoted use of new script adler32.py in stage-out script
+* Added --client-id=ganga to dq2-get calls
 
 Tasks:
 ------
@@ -74,7 +76,6 @@ AMAAthena:
   flags
 * fix the ama_athena wrappers to generate proper extra job option 
   files for loading AMAAthena Driver
-
 
 DQ2Clients:
 -----------
