@@ -1,0 +1,5 @@
+r1 = jobs
+Job()
+r2 = jobs
+assert(r1 is r2)
+assert(len(jobs) == 1)

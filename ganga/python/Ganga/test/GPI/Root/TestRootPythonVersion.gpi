@@ -1,0 +1,16 @@
+from Ganga.Lib.Root import shared
+from Ganga.Utility.root import getrootsys
+
+#uses RConfigure.h
+root_sys = getrootsys('5.14.00e')
+version = shared.findPythonVersion(root_sys)
+assert version is not None, 'Must find version'
+assert version == '2.4.2','Python version found is not as expected' 
+
+#uses root-config
+root_sys = getrootsys('5.18.00d')
+version = shared.findPythonVersion(root_sys)
+assert version is not None, 'Must find version'
+assert version == '2.5','Python version found is not as expected' 
+ 
+ 
