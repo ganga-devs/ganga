@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.9 2009-02-02 12:54:55 moscicki Exp $
+# $Id: Job.py,v 1.10 2009-02-24 14:59:34 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -702,15 +702,17 @@ class Job(GangaObject):
                 log_user_exception(logger)                
                 logger.warning('unhandled exception in j.kill(), job id=%d',self.id)
 
-        # tell the backend that the job was removed (this is used by Remote backend to remove the jobs remotely)
-        if hasattr(self.backend,'remove'): #bug #44256: Job in state "incomplete" is impossible to remove
-            self.backend.remove()
+        # incomplete or unknown jobs may not have valid application or backend objects
+        if not self.status in ['incomplete','unknown']:
+            # tell the backend that the job was removed
+            # this is used by Remote backend to remove the jobs remotely
+            if hasattr(self.backend,'remove'): #bug #44256: Job in state "incomplete" is impossible to remove
+                self.backend.remove()
 
-        # tell the application that the job was removed
-        self.application.transition_update("removed")
-        for sj in self.subjobs:
-            sj.application.transition_update("removed")
-
+            # tell the application that the job was removed
+            self.application.transition_update("removed")
+            for sj in self.subjobs:
+                sj.application.transition_update("removed")
         
         if self._registry:
             self._registry._remove_by_object(self,auto_removed=1)
@@ -989,6 +991,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.9  2009/02/02 12:54:55  moscicki
+# bugfix: bug #45679: j.application.transition_update("removed") is not called on j.remove()
+#
 # Revision 1.8  2008/11/21 13:45:58  moscicki
 # #bug #44256: Job in state "incomplete" is impossible to remove
 #
