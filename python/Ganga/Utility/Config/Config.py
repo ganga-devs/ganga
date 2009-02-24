@@ -395,6 +395,7 @@ _after_bootstrap = False
     
 # Scope used by eval when reading-in the configuration.
 # Symbols defined in this scope will be correctly evaluated. For example, File class adds itself here.
+# This dictionary may also be used by other parts of the system, e.g. XML repository.
 config_scope = {}
 
 class PackageConfig:
@@ -833,17 +834,17 @@ def getFlavour():
     runtimepath = getConfig('Configuration')['RUNTIME_PATH']
 
     if 'GangaLHCb' in runtimepath:
-    	lhcb = True
+        lhcb = True
     else:
-    	lhcb = False
+        lhcb = False
     
     if 'GangaAtlas' in runtimepath:
-    	atlas = True
+        atlas = True
     else:
-    	atlas = False
+        atlas = False
 
     if lhcb and atlas:
-    	raise ConfigError('Atlas and LHCb conflict')
+        raise ConfigError('Atlas and LHCb conflict')
 
     if lhcb:
         return 'LHCb'
