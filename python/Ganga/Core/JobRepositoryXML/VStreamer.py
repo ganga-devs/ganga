@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: VStreamer.py,v 1.1 2008-07-17 16:40:51 moscicki Exp $
+# $Id: VStreamer.py,v 1.2 2009-02-24 14:56:28 moscicki Exp $
 ################################################################################
 
 # dump object (job) to file f (or stdout)
@@ -32,6 +32,9 @@ def unescape(s):
 
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef as makeGangaListByRef
+
+# config_scope is namespace used for evaluating simple objects (e.g. File) 
+from Ganga.Utility.Config import config_scope
 
 #def makeGangaList(l):
 #    return l[:]
@@ -172,7 +175,7 @@ class Loader:
         self.errors = [] # list of exception objects in case of data errors
         self.value_construct = None #buffer for <value> elements (evaled as python expressions)
         self.sequence_start = [] # buffer for building sequences (FIXME: what about nested sequences?)
-         
+
     def parse(self,s):
         """ Parse and load object from string s using internal XML parser (expat).
         """
@@ -249,7 +252,7 @@ class Loader:
                 # unescape the special characters
                 s = unescape(self.value_construct)
                 ###logger.debug('string value: %s',s)
-                val = eval(s)
+                val = eval(s,config_scope)
                 ###logger.debug('evaled value: %s type=%s',repr(val),type(val))
                 self.stack.append(val)
                 self.value_construct = None
@@ -270,7 +273,7 @@ class Loader:
                 for attr, item in obj._schema.allItems():
                     if not attr in obj._data:
                         obj._data[attr] = obj._schema.getDefaultValue(attr)
-                obj.__setstate__(obj.__dict__)
+                obj.__setstate__(obj.__dict__) # this sets the parent
                 
         def char_data(data):
             # char_data may be called many times in one CDATA section so we need to build up
