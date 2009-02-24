@@ -24,34 +24,37 @@ for s in j.subjobs:
     assert(s.id != None)
 
 # check ci/co
-#repository.commitJobs([j._impl])
+repository.commitJobs([j._impl]+j._impl.subjobs)
 mid = j.id
 j = repository.checkoutJobs([mid])[0]
 assert(len(j.subjobs) == LN)
 
-j1 = j.subjobs[1]
-#j1._data['splitter']=ExeSplitter()._impl #???
-j1.splitter = ArgSplitter()._impl
-LEN = 5
-j1.splitter.args =[['%d'%i] for i in range(LEN)]
-j1.application.exe='/bin/ls'
-
-assert(not j1.subjobs)
-assert(len(j1.subjobs) == 0)
-
-# split j1
-rjobs1 = j1.splitter.validatedSplit(j1)
-j1.subjobs = rjobs1
-LN1 = len(rjobs1)
-
-# check registration
-repository.registerJobs(j1.subjobs, masterJob = j1)
-for s in j1.subjobs:
-    assert(s.master is j1)
-    assert(s.id != None)
-
-# check ci/co
-#repository.commitJobs([j1])
-mid1 = j1.id
-j1 = repository.checkoutJobs([(mid, mid1)])[0]
-assert(len(j1.subjobs) == LN1)
+### subjobs of subjobs not supported
+#
+#
+###j1 = j.subjobs[1]
+####j1._data['splitter']=ExeSplitter()._impl #???
+###j1.splitter = ArgSplitter()._impl
+###LEN = 5
+###j1.splitter.args =[['%d'%i] for i in range(LEN)]
+###j1.application.exe='/bin/ls'
+###
+###assert(not j1.subjobs)
+###assert(len(j1.subjobs) == 0)
+###
+#### split j1
+###rjobs1 = j1.splitter.validatedSplit(j1)
+###j1.subjobs = rjobs1
+###LN1 = len(rjobs1)
+###
+#### check registration
+###repository.registerJobs(j1.subjobs, masterJob = j1)
+###for s in j1.subjobs:
+###    assert(s.master is j1)
+###    assert(s.id != None)
+###
+#### check ci/co
+###repository.commitJobs([j1]+j1.subjobs)
+###mid1 = j1.id
+###j1 = repository.checkoutJobs([(mid, mid1)])[0]
+###assert(len(j1.subjobs) == LN1)

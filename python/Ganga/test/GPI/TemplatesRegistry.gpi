@@ -1,4 +1,4 @@
-t = JobTemplate(exe='y')
+t = JobTemplate()
 
 assert(len(templates) == 1)
 assert(len(jobs) == 0)
