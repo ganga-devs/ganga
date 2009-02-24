@@ -58,7 +58,20 @@ def bootstrap():
             import profile
             profile.runctx('r._scan_repository()',globals(),{'r':r},PROFN)
         else:
-            r._scan_repository()
+            try:
+                r._scan_repository()
+            except Exception,x:
+                s = print_error(x)
+                log_user_exception(logger)
+                logger.critical('the repository cannot be loaded (dir=%s)',r.repository.dir)
+                import tempfile, tarfile
+                fn = tempfile.mktemp(suffix='.tgz',prefix='Ganga-Repository-XML')
+                tf = tarfile.open(fn,mode='w:gz')
+                tf.add(r.repository.dir,"Ganga-Repository-XML",recursive=True)
+                tf.close()
+                logger.critical('the repository was dumped to %s (%s) for debugging',fn,Ganga.Utility.util.hostname())
+                raise x
+
         # commit the migrated jobs (if any)
         #r._flush(migrated_jobs)
         #migrated_jobs[:] = []
