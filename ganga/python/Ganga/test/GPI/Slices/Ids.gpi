@@ -1,0 +1,14 @@
+#-*-python-*-
+
+first = Job().id
+Job()
+Job()
+Job()
+
+def test_ids(reg):
+    print reg.ids()
+    assert(reg.ids() == [first,first+1,first+2,first+3])
+
+test_ids(jobs)
+test_ids(jobs.select())
+test_ids(jobs[:])
