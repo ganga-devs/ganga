@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
+# $Id: Objects.py,v 1.3 2009-02-24 14:57:56 moscicki Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -36,14 +36,13 @@ class Node(object):
         def setParent(v):
             if isinstance(v, Node):
                 v._setParent(self)
-                return True
-            else:
-                return False
+
         for n, v in dict['_data'].items():
-            if not setParent(v):
-                if not isStringLike(v) and canLoopOver(v):
-                    for i in v:
-                        setParent(i)
+            setParent(v)
+            # set the parent of the list or dictionary (or other iterable) items
+            if not isStringLike(v) and canLoopOver(v):
+                for i in v:
+                    setParent(i)
         self.__dict__ = dict
 
     def __copy__(self, memo = None):
@@ -476,6 +475,11 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/09/09 14:37:16  moscicki
+# bugfix #40220: Ensure that default values satisfy the declared types in the schema
+#
+# factored out type checking into schema module, fixed a number of wrongly declared schema items in the core
+#
 # Revision 1.1  2008/07/17 16:40:52  moscicki
 # migration of 5.0.2 to HEAD
 #
