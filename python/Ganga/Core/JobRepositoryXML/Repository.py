@@ -32,12 +32,14 @@ class Repository:
         # dictionary of counters (None is the main counter, others are for subjobs)
         self.counters = {None:Counter(self.dir)}
         
-    def registerJobs(self, jobs, master=None):
+    def registerJobs(self, jobs, masterJob=None):
         """ Register new jobs (or subjobs if master job is specified).
         After registration the objects must be commited.
         """
+
         ###logger.debug('registerJobs #jobs=%d master=%d',len(jobs), bool(master))
         dir = self.dir
+        master = masterJob
 
         def make_new_ids(j,cnt):
             try:
@@ -95,6 +97,10 @@ class Repository:
     
     def _getJobIds(self, dir,meta={}):
         ###logger.debug('getJobIds meta=%s', meta)
+
+        if meta:
+            logger.warning('metadata selection not implemented (meta=%s)',meta)
+
         ids = []
         for x in os.listdir(dir):
             try:
