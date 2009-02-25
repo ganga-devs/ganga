@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.23 2009-02-23 14:22:09 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.24 2009-02-25 15:53:58 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -12,7 +12,7 @@ from Ganga.GPIDev.Schema import *
 from Ganga.Utility.files import expandfilename
 
 from dq2.common.DQException import *
-from dq2.info.TiersOfATLAS import _refreshToACache, ToACache
+from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites
 from dq2.repository.DQRepositoryException import DQUnknownDatasetException
 from dq2.location.DQLocationException import DQLocationExistsException
 from dq2.common.DQException import DQInvalidRequestException
@@ -338,12 +338,12 @@ class AthenaMCInputDatasets(Dataset):
         if not dataset and not path:
             # set up default values: DQ2 dataset with automatic naming conventions
             if app.mode=='simul':
-                dataset = "%s.%s.ganga.datafiles.%s.%6.6d.%s.evgen.EVNT" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
+                dataset = "%s.%s.ganga.%s.%6.6d.%s.evgen.EVNT" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
             elif app.mode=="recon":
                 if app.transform_script=="csc_recoAOD_trf.py":
-                    dataset = "%s.%s.ganga.datafiles.%s.%6.6d.%s.recon.ESD" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
+                    dataset = "%s.%s.ganga.%s.%6.6d.%s.recon.ESD" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
                 else:
-                    dataset = "%s.%s.ganga.datafiles.%s.%6.6d.%s.simul.RDO" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
+                    dataset = "%s.%s.ganga.%s.%6.6d.%s.simul.RDO" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
             if app.version:
                 dataset+="."+str(app.version)
             datasetType="DQ2" # force datasetType to be DQ2 as this is the default mode.
@@ -458,20 +458,16 @@ class AthenaMCInputDatasets(Dataset):
     def getdq2data(self,dataset,matchrange,backend,update):
         allturls={}
         dsetname=""
-        
+        if string.find(dataset,"DBRelease")>-1:
+            dsetmatch=dataset # strict dataset matching for DBRelease
+        else:
+            dsetmatch='*%s*' % dataset
+            
         try:
             dq2_lock.acquire()
-            datasets = dq2.listDatasets('%s' % dataset)
+            datasets = dq2.listDatasets(dsetmatch)
         finally:
             dq2_lock.release()
-
-        if len(datasets.values())==0:
-            logger.debug("Attempting to find matching container name")
-            try:
-                dq2_lock.acquire()
-                datasets = dq2.listDatasets('*%s*' % dataset)
-            finally:
-                dq2_lock.release()
 
         if len(datasets.values())==0:
             logger.error('no Dataset matching %s is registered in DQ2 database! Aborting',dataset)
@@ -482,9 +478,12 @@ class AthenaMCInputDatasets(Dataset):
         dsetname=dsetlist[0]
         containers=[]
         container=""
+        inputdsets=[]
         for dset in dsetlist:
             if string.find(dset,"/")>-1:
                 containers.append(dset)
+            else:
+                inputdsets.append(dset)
         try:
             assert len(containers)<2
         except:
@@ -497,32 +496,50 @@ class AthenaMCInputDatasets(Dataset):
         if update:
             self.DQ2dataset=dsetname # update job with result of dataset search
             self.datasetType="DQ2"
-                
-        # get list of files in selected dataset.
-        try:
-            dq2_lock.acquire()
-            contents = dq2.listFilesInDataset(dsetname)
-        finally:
-            dq2_lock.release()
-        # Convert 0.3 output to 0.2 style
-        if not contents:
-            logger.error("Empty DQ2 dataset %s." % dsetname)
-            raise Exception
-        contents = contents[0]
+
+        # get list of files from dataset list
         contents_new = {}
-        for guid, info in contents.iteritems():
-            contents_new[guid]=info['lfn']
-        contents = contents_new
+
+        for dset in inputdsets:
+            try:
+                dq2_lock.acquire()
+                contents=dq2.listFilesInDataset(dset)
+            finally:
+                dq2_lock.release()
+            if not contents:
+                logger.error("Empty DQ2 dataset %s." % dsetname)
+                continue
+            data = contents[0]
+            for guid, info in data.iteritems():
+                contents_new[guid]=info['lfn']
+        contents=contents_new
+        
+#                contents = contents_new            
+##        # get list of files in selected dataset.
+##        try:
+##            dq2_lock.acquire()
+##            contents = dq2.listFilesInDataset(dsetname)
+##        finally:
+##            dq2_lock.release()
+        # Convert 0.3 output to 0.2 style
+
+##        if not contents:
+##            logger.error("Empty DQ2 dataset %s." % dsetname)
+##            raise Exception
+##        contents = contents[0]
+##        contents_new = {}
+##        for guid, info in contents.iteritems():
+##            contents_new[guid]=info['lfn']
+##        contents = contents_new
         
         # sort lfns alphabetically, then get the largest partition number to close the openrange.
         all_lfns=contents.values()
         all_files = [(extractFileNumber(fn), fn) for fn in all_lfns]
         all_files.sort()
         logger.debug("All lfns: %s " % str(all_files))
-        
         numbers = []
         for guid, lfn in contents.iteritems():
-            if matchrange[0] and not matchFile(matchrange, lfn):
+            if matchrange and matchrange[0] and not matchFile(matchrange, lfn):
                 continue
             num = extractFileNumber(lfn)
             if num and num in numbers: # extra protection to cover the case where extractFileNumber returns "".
@@ -565,87 +582,34 @@ class AthenaMCInputDatasets(Dataset):
                     allSites.append(site)
             datasetType="incomplete"
 
+        
+
         try:
             assert len(allSites)>0
         except:
             logger.error("dataset %s has no registered locations. Aborting" % dsetname)
             raise Exception()
             
-        # using the site list allSites, map to LFCs and decide on backends.
-        # basically, all lfcs are LCG, while NDGF lrc points to nordugrid and all other lrcs point to OSG.
-
-        LFCmap=getLFCmap()
-        nsitesLFC={}
-        possibleBackends=[]
-        catalogGrid={}
-        matchdone={}
-        #logger.warning("Allsites is: %s" % str(allSites))
+        # using the site list allSites, map to clouds and reject forbidden sites depending on backend.
+        USsites=getSites('USASITES')
+        NGsites=getSites('NDGF')
+        selectedSites=[]
         for site in allSites:
-            if site not in LFCmap:
-                logger.error("No file catalog found for site: %s "%site)
+            if backend=="Panda" and site in USsites:
+                selectedSites.append(site)
                 continue
-            catalog=LFCmap[site]
-            # count number of sites pointing to the same LFC. Needed to determine the origin cloud of the dataset.
-            if catalog in nsitesLFC:
-                nsitesLFC[catalog]+=1
-            else:
-                nsitesLFC[catalog]=1
-            if string.find(catalog,"lfc")>-1 :
-                catalogGrid[catalog]="LCG"
-                if "LCG" not in possibleBackends:
-                    possibleBackends.append("LCG")
-                
-            elif string.find(catalog,"cpt.uio.no")>-1:
-                catalogGrid[catalog]="NG"
-                if "NG" not in possibleBackends:
-                    possibleBackends.append("NG")
-                    
-            else:
-                possibleBackends.append("Panda")
-                catalogGrid[catalog]="Panda"
-        # get "production" cloud: it should be the LFC most referenced in the list of sites, as both Tier1 and tier2s of the same cloud, using the same catalog, have participated to the making of the dataset. Replicas are usually made in one single site (Tier1) of other clouds.
-        maxcount=0
-        #logger.warning("catalog is: %s" % str(catalogGrid))
+            if backend=="LCG" and site not in USsites and site not in NGsites:
+                selectedSites.append(site)
+            #if backend=="NG" and site in NGSites:
+            #   selectedSites.append(site)
+        if len(selectedSites)==0:
+            logger.error("Dataset not registered in %s, aborting. Please subscribe your dataset from one of these sites %s to a target site from the %s grid or change your backend" % (backend,str(allSites),backend))
+            raise Exception()
 
-        for catalog in nsitesLFC.keys():
-            if nsitesLFC[catalog]>maxcount:
-                maxcount=nsitesLFC[catalog]
-                prodCatalog=catalog
+        allSites=selectedSites
 
-        # Now analysis.First, backend selection:
-
-        if backend not in possibleBackends:
-            #If two choices are possible, use "origin" cloud and update backend.
-            # Warning: do not forget about Local backends!
-            if string.find(prodCatalog,"lfc")>-1:
-                backend="LCG"
-            elif string.find(prodCatalog,"cpt.uio.no")>-1:
-                backend="NG"
-            else:
-                backend="Panda"
-
-        # Once backend selection is done, restrict catalog list to catalogGrid[catalog]=selected backend. Set self.lfcs to this restricted list (LCG only)
-        if backend=="LCG":
-            self.lfcs[dsetname]=""
-            for catalog in catalogGrid:
-                if catalogGrid[catalog]==backend:
-                    imin=string.find(catalog,"lfc://") # in ToA, lfcs are coded as lfc://server
-                    imax=string.rfind(catalog,":")
-                    lfc=catalog[imin+6:imax]
-                    self.lfcs[dsetname]+=lfc+" "
-        # self.lfc done, now to self.site...
-        # self.sites[dsetname] is selected among sites using prodCatalog
-
+        self.lfcs[dsetname]=""
         self.sites=allSites # collecting all sites from now on, doing the selection externally.
-        
-##        iter=1
-##        shuffled=allSites
-##        random.shuffle(shuffled)
-##        for site in shuffled:
-##            if LFCmap[site]==prodCatalog:
-##                self.sites.append(site)# 
-##                if iter==2: break # pick 2 sites: one to be used as backup.
-##                iter+=1
                 
         # Now filling up self.turls...
         self.turls=allturls # as easy as that....
@@ -829,10 +793,10 @@ class AthenaMCOutputDatasets(Dataset):
                 fileprefixes[type]+=dsetsuffix
         else:
             for type in fileprefixes.keys():
-                if type=="logfile":
-                    dataset=datasetbase+"ganga.logfiles."+fileprefixes[type]
-                else:
-                    dataset=datasetbase+"ganga.datafiles."+fileprefixes[type]
+##                if type=="logfile":
+##                    dataset=datasetbase+"ganga."+fileprefixes[type]
+##                else:
+                dataset=datasetbase+"ganga."+fileprefixes[type]
                 # now generating DQ2 dataset:
                 dsetsuffix=""
                 if app.se_name != "local":
@@ -850,10 +814,10 @@ class AthenaMCOutputDatasets(Dataset):
             elif self.output_dataset and string.find(self.output_dataset,",")<0:
                 outputpaths[type]="/%s/%s/%s" % (_usertag,username,self.output_dataset)
             else:
-                if type=="logfile":
-                    outputpaths[type]="/%s/%s/ganga/logfiles/%s"  % (_usertag,username,fileprefixes[type])
-                else:
-                    outputpaths[type]="/%s/%s/ganga/datafiles/%s"% (_usertag,username,fileprefixes[type]) 
+##                if type=="logfile":
+##                    outputpaths[type]="/%s/%s/ganga/%s"  % (_usertag,username,fileprefixes[type])
+##                else:
+                outputpaths[type]="/%s/%s/ganga/%s"% (_usertag,username,fileprefixes[type]) 
         return fileprefixes,outputpaths
         
     def getDQ2Locations(self,se_name):

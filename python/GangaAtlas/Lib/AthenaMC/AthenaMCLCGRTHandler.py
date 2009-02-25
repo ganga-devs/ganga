@@ -154,16 +154,14 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             if job.inputdata.cavern:
                 inputdata=job.inputdata.get_cavern_dataset(app)
                 if len(inputdata)!= 3:
-                    logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-                    raise  ApplicationConfigurationError(None,"Input file not found")
+                    raise  ApplicationConfigurationError(None,"Error, wrong format for inputdata %d, %s. Input files not found" % (len(inputdata),inputdata))
                 self.cavern_turls=inputdata[0]
                 self.cavern_lfcs=inputdata[1]
                 self.cavern_sites=inputdata[2]
             if job.inputdata.minbias:
                 inputdata=job.inputdata.get_minbias_dataset(app)
                 if len(inputdata)!= 3:
-                    logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-                    raise ApplicationConfigurationError(None,"Input file not found")
+                    raise  ApplicationConfigurationError(None,"Error, wrong format for inputdata %d, %s. Input files not found" % (len(inputdata),inputdata))
                 self.minbias_turls=inputdata[0]
                 self.minbias_lfcs=inputdata[1]
                 self.minbias_sites=inputdata[2]
@@ -184,8 +182,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 job.inputdata=AthenaMCInputDatasets()
             inputdata=job.inputdata.get_DBRelease(app,dbrelease)
             if len(inputdata)!= 3:
-                    logger.error("Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-                    raise ApplicationConfigurationError(None,"Input file not found")
+                raise  ApplicationConfigurationError(None,"Error, wrong format for inputdata %d, %s. Input files not found" % (len(inputdata),inputdata))
             self.dbturls=inputdata[0]
             self.dblfcs=inputdata[1]
             self.dbsites=inputdata[2]
