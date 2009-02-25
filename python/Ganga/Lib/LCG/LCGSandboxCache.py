@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCGSandboxCache.py,v 1.6 2009-02-16 14:12:28 hclee Exp $
+# $Id: LCGSandboxCache.py,v 1.7 2009-02-25 08:39:20 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -30,7 +30,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.GridShell import getShell 
 
 from Ganga.Lib.LCG.GridSandboxCache import GridSandboxCache, GridFileIndex
-from Ganga.Lib.LCG.MTRunner import MTRunner, Data, Algorithm  
+from Ganga.Lib.LCG.GangaThread.MTRunner import MTRunner, Data, Algorithm  
 from Ganga.Lib.LCG.Utility import * 
 
 lcg_sandbox_cache_schema_datadict = GridSandboxCache._schema.inherit_copy().datadict
@@ -160,10 +160,9 @@ class LCGSandboxCache(GridSandboxCache):
         myAlg  = MyAlgorithm(cacheObj=self)
         myData = Data(collection=files)
 
-        runner = MTRunner(myAlg, myData)
-        runner.debug = False 
+        runner = MTRunner(name='sandboxcache_lcgcr', algorithm=myAlg, data=myData)
         runner.start()
-        runner.join()
+        runner.join(-1)
 
         return runner.getResults().values()
 
@@ -208,10 +207,9 @@ class LCGSandboxCache(GridSandboxCache):
         myAlg  = MyAlgorithm(cacheObj=self)
         myData = Data(collection=files)
 
-        runner = MTRunner(myAlg, myData)
-        runner.debug = False 
+        runner = MTRunner(name='sandboxcache_lcgcp', algorithm=myAlg, data=myData)
         runner.start()
-        runner.join()
+        runner.join(-1)
 
         return runner.getResults().values()
 
@@ -251,10 +249,9 @@ class LCGSandboxCache(GridSandboxCache):
         myAlg  = MyAlgorithm(cacheObj=self)
         myData = Data(collection=files)
 
-        runner = MTRunner(myAlg, myData)
-        runner.debug = False 
+        runner = MTRunner(name='sandboxcache_lcgdel', algorithm=myAlg, data=myData)
         runner.start()
-        runner.join()
+        runner.join(-1)
 
         ## update the local index file
         del_files = runner.getResults().values()

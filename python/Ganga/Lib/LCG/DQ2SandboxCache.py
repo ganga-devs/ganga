@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2SandboxCache.py,v 1.5 2009-02-16 14:12:28 hclee Exp $
+# $Id: DQ2SandboxCache.py,v 1.6 2009-02-25 08:39:20 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -31,7 +31,6 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.GridShell import getShell 
 
 from Ganga.Lib.LCG.GridSandboxCache import GridSandboxCache, GridFileIndex
-from Ganga.Lib.LCG.MTRunner import MTRunner, Data, Algorithm  
 from Ganga.Lib.LCG.Utility import *
 
 dq2_sandbox_cache_schema_datadict = GridSandboxCache._schema.inherit_copy().datadict

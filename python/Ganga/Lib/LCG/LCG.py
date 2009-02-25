@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.30 2009-02-16 14:10:05 hclee Exp $
+# $Id: LCG.py,v 1.31 2009-02-25 08:39:20 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -35,7 +35,7 @@ from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.Utility.util import isStringLike
 from Ganga.Utility.GridShell import getShell
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
-from Ganga.Lib.LCG.MTRunner import MTRunner, Data, Algorithm  
+from Ganga.Lib.LCG.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader, LCGOutputDownloadTask
 from Ganga.Lib.LCG.Utility import *
 
@@ -59,19 +59,22 @@ def start_lcg_output_downloader():
     global lcg_output_downloader
     lcg_output_downloader = None
     if not lcg_output_downloader:
-        lcg_output_downloader = LCGOutputDownloader(keepAlive=True, numThread=10)
+        lcg_output_downloader = LCGOutputDownloader(numThread=10)
         lcg_output_downloader.start()
 
 def get_lcg_output_downloader():
     global lcg_output_downloader
     return lcg_output_downloader
 
-def stop_lcg_output_downloader():
-    if lcg_output_downloader:
-        lcg_output_downloader.stop()
+def stop_ganga_thread_pool():
+    from Ganga.Lib.LCG.GangaThread.GangaThreadPool import GangaThreadPool
+
+    tpool = GangaThreadPool.getInstance()
+    tpool.SHUTDOWN_TIMEOUT = 5
+    tpool.shutdown()
 
 start_lcg_output_downloader()
-atexit.register( (-999, stop_lcg_output_downloader) )
+atexit.register( (-998, stop_ganga_thread_pool) )
     
 class LCG(IBackend):
     '''LCG backend - submit jobs to the EGEE/LCG Grid using gLite/EDG middleware.
@@ -459,14 +462,13 @@ class LCG(IBackend):
         myAlg  = MyAlgorithm(gridObj=grids[mt],masterInputWorkspace=job.getInputWorkspace())
         myData = Data(collection=mt_data)
 
-        runner = MTRunner(myAlg, myData, numThread=config['SubmissionThread'])
-        runner.debug = False
+        runner = MTRunner(name='lcg_jsubmit', algorithm=myAlg, data=myData, numThread=config['SubmissionThread'])
         runner.start()
-        runner.join()
+        runner.join(timeout=-1)
 
         if len(runner.getDoneList()) < num_chunks:
             ## not all bulk jobs are successfully submitted. canceling the submitted jobs on WMS immediately
-            logger.error('some bulk jobs not successfully re-submitted, canceling submitted bulk jobs on WMS')
+            logger.error('some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
             grids[mt].cancelMultiple( runner.getResults().values() )
             return None
         else:
@@ -519,10 +521,9 @@ class LCG(IBackend):
         myAlg  = MyAlgorithm()
         myData = Data(collection=mt_data)
 
-        runner = MTRunner(myAlg, myData, numThread=config['OutputDownloaderThread'])
-        runner.debug = False
+        runner = MTRunner(name='lcg_jprepare', algorithm=myAlg, data=myData, numThread=10)
         runner.start()
-        runner.join()
+        runner.join(-1)
 
         if len(runner.getDoneList()) < len(mt_data):
             return None
@@ -1905,6 +1906,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.30  2009/02/16 14:10:05  hclee
+# change basedir of DQ2SandboxCache from users to userxx where xx represents the last two digits of year
+#
 # Revision 1.29  2009/02/05 19:35:36  hclee
 # GridSandboxCache enhancement:
 #  - put cached file information in job repository (instead of __iocache__ file)

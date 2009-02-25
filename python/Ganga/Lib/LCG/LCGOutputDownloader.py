@@ -1,5 +1,5 @@
 from Ganga.Utility.logging import getLogger
-from Ganga.Lib.LCG.MTRunner import MTRunner, Data, Algorithm, DuplicateDataItemError
+from Ganga.Lib.LCG.GangaThread.MTRunner import MTRunner, Data, Algorithm, DuplicateDataItemError
 from Ganga.Lib.LCG.Utility import * 
 
 logger = getLogger()
@@ -76,63 +76,25 @@ class LCGOutputDownloadAlgorithm(Algorithm):
 
         return True
 
-class LCGOutputDownloader:
+class LCGOutputDownloader(MTRunner):
 
     """
-    Class for managing the LCG output downloading activities.
+    Class for managing the LCG output downloading activities based on MTRunner.
     """
 
-    _attributes = ('data','algorithm','runner','keepAlive','numThread')
+    def __init__(self, numThread=10):
 
-    def __init__(self, keepAlive=True, numThread=10):
-
-        self.data      = Data(collection=[])
-        self.algorithm = LCGOutputDownloadAlgorithm()
-        self.keepAlive = keepAlive
-        self.runner    = None
+        MTRunner.__init__(self, name='lcg_output_downloader', data=Data(collection=[]), algorithm=LCGOutputDownloadAlgorithm())
+        
+        self.keepAlive = True
         self.numThread = numThread
- 
-    def __create_new_runner__(self):
-        self.runner = MTRunner(self.algorithm, self.data, numThread=self.numThread)
-        ## the runner thread's name should have the prefix "GANGA_Updata_Thread" 
-        ## so the the logging info can be cached until the next IPython prompt
-        self.runner.setName('GANGA_Update_Thread_lcg_output_downloader')
-        self.runner.debug = False
-        self.runner.setDaemon(True)
-        self.runner.keepAlive = self.keepAlive
 
     def addTask(self, grid, job, use_wms_proxy):
 
         task = LCGOutputDownloadTask(grid, job, use_wms_proxy)
+        
         logger.debug( 'add output downloading task: job %s' % job.getFQID('.') )
 
-        try:
-            self.data.addItem(task)
-        except DuplicateDataItemError, e:
-            logger.debug('skip adding new item: %s' % e.message)
-            pass
+        self.addDataItem(task)
         
         return True
-
-    def start(self):
-
-        if self.runner and self.runner.isAlive():
-            ## do nothing if there is already a alive runner
-            pass
-        else:
-            self.__create_new_runner__()
-            self.runner.start()
-            logger.debug('LCGOutputDownloader started')
-
-    def stop(self):
-        self.runner.stop()
-
-        # try to join for 10 sec.
-        self.runner.join(10)
-
-        # if the runner is still alive, join again and print the warning message 
-        if self.runner.isAlive():
-            logger.warning('waiting for activated output downloading processes to be finished properly.')
-            self.runner.join()
-
-        logger.debug('... LCGOutputDownloader stopped')
