@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.32 2009-02-18 15:54:25 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.33 2009-02-26 14:48:58 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1804,10 +1804,19 @@ if __name__ == '__main__':
         else:
             output_files = args
 
+        dir = os.listdir('.')
         for i in xrange(0,len(output_files_new)):
             try:
                 open(output_files_new[i],'r')
                 output_files.append(output_files_new[i])
+                # Fail over if Athena has produced more than one outputfile due to file size limit 
+                filepat = re.sub('\.(\w+)$','', output_files_new[i])
+                pat = re.compile(filepat)
+                for altfile in dir:
+                    found = re.findall(pat, altfile)
+                    if found and not altfile in output_files:
+                        output_files.append(altfile)
+
             except IOError:
                 try:
                     open(output_files_orig[i],'r')
@@ -1834,12 +1843,12 @@ if __name__ == '__main__':
 
         # Set siteID
         siteID = os.environ[ 'DQ2_LOCAL_SITE_ID' ]
-        if siteID in [ 'PIC', 'IFIC', 'CNAF', 'RAL', 'SARA', 'FZK', 'ASGC', 'LYON', 'TRIUMF', 'TIER0' ]:
-            if re.search('DISK$',siteID) == None:
-                siteID += 'DISK'
+        #if siteID in [ 'PIC', 'IFIC', 'CNAF', 'RAL', 'SARA', 'FZK', 'ASGC', 'LYON', 'TRIUMF', 'TIER0' ]:
+        #    if re.search('DISK$',siteID) == None:
+        #        siteID += 'DISK'
 
-        elif siteID in [ 'CERN', 'TIER0DISK', 'TIER0TAPE', 'CERNPROD']:
-            siteID = 'CERN'
+        #elif siteID in [ 'CERN', 'TIER0DISK', 'TIER0TAPE', 'CERNPROD']:
+        #    siteID = 'CERN'
 
         # Get output location
         output_locations = { }
