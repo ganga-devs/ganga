@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-release,v 1.12 2009-02-03 15:51:19 gangage Exp $
+# $Id: ganga-release,v 1.13 2009-02-26 14:45:43 wreece Exp $
 ################################################################################
 
 import os,sys,time,re,shutil
@@ -217,7 +217,7 @@ class PretestCommand:
             #runganga = "cd %(prereldir)s/ganga/python/Ganga/test && %(prereldir)s/ganga/bin/ganga " % CONFIG
 
             runtest = 'rm -rf ~/gangadir_testing && %(prereldir)s/bin/ganga'%CONFIG
-            args = ' --test -o\'[Configuration]RUNTIME_PATH=GangaTest\' -o\'[TestingFramework]ReleaseTesting=True\' -o\'Config=local.ini\' %s/test 2>&1 | tee %s/%s.out ' % (name,outputdir,name)
+            args = ' --test -o\'[Configuration]RUNTIME_PATH=GangaTest\' -o\'[TestingFramework]ReleaseTesting=True\' -o\'Config=local.ini:localxml.ini\' %s/test 2>&1 | tee %s/%s.out ' % (name,outputdir,name)
             
             cmd = runtest+args
             print '*'*40
