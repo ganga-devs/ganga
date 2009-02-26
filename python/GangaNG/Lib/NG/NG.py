@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.22 2009-02-19 13:37:33 bsamset Exp $
+# $Id: NG.py,v 1.23 2009-02-26 14:38:20 bsamset Exp $
 ###############################################################################
 #
 # NG backend
@@ -440,7 +440,7 @@ class Grid:
             if match:
                 jobids += [match.group(1)]
             else:
-                jobids += ['None']
+                jobids += ['']
 
         if len(jobids) > 0:
             return jobids
@@ -1838,6 +1838,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.22  2009/02/19 13:37:33  bsamset
+# Added capability to move files to local disk from symlinks, also added banned reprod queues to xrsl
+#
 # Revision 1.21  2009/02/13 14:23:03  bsamset
 # Added timeout functionality to ngsub
 #
