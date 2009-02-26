@@ -1,7 +1,7 @@
-##############################################################################
+###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.24 2009-02-25 15:53:58 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.25 2009-02-26 17:00:14 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -458,10 +458,12 @@ class AthenaMCInputDatasets(Dataset):
     def getdq2data(self,dataset,matchrange,backend,update):
         allturls={}
         dsetname=""
-        if string.find(dataset,"DBRelease")>-1:
-            dsetmatch=dataset # strict dataset matching for DBRelease
-        else:
-            dsetmatch='*%s*' % dataset
+        dsetmatch=dataset
+        if dataset[-1]=="/":
+            dsetmatch=dataset[:-1] # turning container name into dataset root for matching
+        if string.find(dataset,"DBRelease")<0:
+            dsetmatch='*%s*' % dataset # loose matching for all input datasets except DBRelease ones.
+        #print "DSETMATCH",dsetmatch
             
         try:
             dq2_lock.acquire()
@@ -755,9 +757,11 @@ class AthenaMCOutputDatasets(Dataset):
 
         # The common prefix production.00042.physics.
         app_prefix = "%s.%6.6d.%s" % (app.production_name,int(app.run_number),app.process_name)
+        if self.output_dataset and string.find(self.output_dataset,",")<0:
+            app_prefix=self.output_dataset
 
-        job=app._getParent()
-
+        job=app._getParent()# prep_data called from master_prepare(), so it should be the master job
+        jid=job.id
         # The Logfile must be set        
         if not "LOG" in fileprefixes:
             fileprefixes["LOG"]="%s.%s.LOG" % (app_prefix,app.mode)
@@ -782,42 +786,16 @@ class AthenaMCOutputDatasets(Dataset):
         if app.version:
             for key in fileprefixes.keys():
                 fileprefixes[key]+="."+str(app.version)
-
-        # done with file prefixes. Now generatig datasets out of them...
-        datasetbase="%s.%s." % (_usertag,username)
-        if self.output_dataset and string.find(self.output_dataset,",")<0:
-            dataset=datasetbase+self.output_dataset
-            if app.se_name != "local":
-                logger.debug("creating dataset %s in DQ2" % dataset)
-                dsetsuffix=self.create_dataset(dataset,job)
-                fileprefixes[type]+=dsetsuffix
-        else:
-            for type in fileprefixes.keys():
-##                if type=="logfile":
-##                    dataset=datasetbase+"ganga."+fileprefixes[type]
-##                else:
-                dataset=datasetbase+"ganga."+fileprefixes[type]
-                # now generating DQ2 dataset:
-                dsetsuffix=""
-                if app.se_name != "local":
-                    logger.debug("creating dataset %s in DQ2" % dataset)
-                    dsetsuffix=self.create_dataset(dataset,job)
-                    fileprefixes[type]+=dsetsuffix
                 
         # now generating output paths.
-        # 1) outputdata.outdirectory overrides anything.
         # 2) otherwise it is the conversion of outputdata.output_dataset
         # 3) finally, it is the conversion of pre-generated outputfiles.
         for type in fileprefixes.keys():
-            if self.outdirectory:
-                outputpaths[type]=self.outdirectory
-            elif self.output_dataset and string.find(self.output_dataset,",")<0:
-                outputpaths[type]="/%s/%s/%s" % (_usertag,username,self.output_dataset)
-            else:
-##                if type=="logfile":
-##                    outputpaths[type]="/%s/%s/ganga/%s"  % (_usertag,username,fileprefixes[type])
-##                else:
-                outputpaths[type]="/%s/%s/ganga/%s"% (_usertag,username,fileprefixes[type]) 
+            # get dataset suffix now.
+            protodataset="%s.%s.ganga.%s" % (_usertag,username,fileprefixes[type])
+            suffix=self.get_dataset_suffix(protodataset,jid)
+            outputpaths[type]="/%s/%s/ganga/%s.%s"% (_usertag,username,fileprefixes[type],suffix)
+            
         return fileprefixes,outputpaths
         
     def getDQ2Locations(self,se_name):
@@ -939,38 +917,27 @@ class AthenaMCOutputDatasets(Dataset):
 ##        finally:
 ##            dq2_lock.release()
 
-    def create_dataset(self, dataset,job):
-        """ build final output dataset name using dataset. No jobid inserted yet, as it breaks MCTask (AthenaMCInputDataset only scanning one input dataset)"""
-        #        """ build final output dataset name using dataset and jobid, then create an entry in central DQ2 database"""
-        #        # first, create the jid suffix. First part is the job id, zfill to make it 6 digits.
-##        try:
-##            assert job.id
-##        except:
-##            logger.error("Problem to get job ID. Aborting")
-##            raise Exception()
-##        suffix=".jid"+string.zfill(job.id,6)
-##        logger.debug("job id retrieved is %s",suffix)
-##        datasetname=dataset+suffix
+    def get_dataset_suffix(self, dataset,jobid):
+        """generate final output dataset name using dataset and jobid. Returns the created suffix"""
+        # first, create the jid suffix. First part is the job id, zfill to make it 6 digits.
+
+        suffix="jid"+string.zfill(jobid,6)
+        #print "job id retrieved is %s",suffix
+        datasetname=dataset+suffix
         
-##        # then the timestamp: timestamp will be vX, where X is the  number of already existing subdatasets with the same jid
-##        dsetlist=[]
-##        try:
-##            dq2_lock.acquire()
-##            dsetlist = dq2.listDatasets('%s*' % datasetname)
-##        finally:
-##            dq2_lock.release()
-##        if len(dsetlist)>0:
-##            suffix+="v%d" % len(dsetlist)
-##        datasetname=dataset+suffix
-        datasetname=dataset
-        logger.debug("final dataset name is %s",datasetname)
-##        try:
-##            dq2_lock.acquire()
-##            dq2.registerNewDataset(datasetname)
-##        finally:
-##            dq2_lock.release()
-        suffix=""
-        return suffix  # return job dataset suffix
+        # then the timestamp: timestamp will be vX, where X is the  number of already existing subdatasets with the same jid
+        dsetlist=[]
+        try:
+            dq2_lock.acquire()
+            dsetlist = dq2.listDatasets('%s*' % datasetname)
+        finally:
+            dq2_lock.release()
+        if len(dsetlist)>0:
+            suffix+="v%d" % len(dsetlist)
+        datasetname=dataset+"."+suffix
+        #print"final dataset name is",datasetname
+
+        return suffix
     
     def register_dataset_location(self, datasetname, siteID):
         """Register location of dataset into DQ2 database"""
@@ -1082,6 +1049,7 @@ class AthenaMCOutputDatasets(Dataset):
                         dq2_lock.release()
                 self.register_dataset_location(dataset,siteID)
 
+
             self.register_file_in_dataset(dataset,[lfn],[guid], [size],[adler32])
         return datasets
     
@@ -1091,7 +1059,10 @@ class AthenaMCOutputDatasets(Dataset):
         from Ganga.GPIDev.Lib.Job import Job
         from GangaAtlas.Lib.ATLASDataset import filecheck
         job = self._getParent()
-
+##        jid=job.id
+##        if job.master:
+##            jid=job.master.id
+#        print "JOB ID",jid
         pfn = job.outputdir + "output_data"
         fsize = filecheck(pfn)
         outdata=""
@@ -1105,6 +1076,7 @@ class AthenaMCOutputDatasets(Dataset):
         logger.debug("outdata: %s" % outdata)
         # Register all files and dataset location into DQ2
         if outdata: # outdata is only filled by subjobs...
+#            self.store_datasets=self.register_datasets_details(outdata)
             self.store_datasets=self.register_datasets_details(outdata)
             logger.debug("output job contents: %s" % str(self.actual_output))
             logger.debug("expected: %s" % str(self.expected_output))
@@ -1125,35 +1097,35 @@ class AthenaMCOutputDatasets(Dataset):
                 logger.warning("Missing output file: %s" % missing)
             
         # closing a job: freeze the jid dataset, create container if needed and add to container.
-##        if not job.master:
-##            # loop over list of datasets from self.register_datasets_details
-##            logger.debug("finalizing master job")
-##            for subjob in job.subjobs:
-##                dsets=subjob.outputdata.store_datasets
-##                for dset in dsets:
-##                    if dset not in self.store_datasets:
-##                        self.store_datasets.append(dset)
-##            logger.debug("list of datasets: %s" % str(self.store_datasets))
-##            for dset in self.store_datasets:
-##                # freeze each dataset, create container if needed then register dataset on container.
-##                dq2.freezeDataset(dset)
-##                imax=string.find(dset,".jid")
-##                containername=dset[:imax]+"/"
-##                logger.debug("attempting to create container %s from %s" % (containername,dset))
-##                try:
-##                    dq2_lock.acquire()
-##                    dsetlist = dq2.listDatasets('%s' % containername)
-##                finally:
-##                    dq2_lock.release()
-##                logger.debug("found %s" % str(dsetlist))
-##                if len(dsetlist)==0:
-##                    logger.debug("creating container: %s", containername)
-##                    try:
-##                        dq2_lock.acquire()
-##                        containerClient.create(containername)
-##                    finally:
-##                        dq2_lock.release()
-##                containerClient.register(containername,[dset])
+        if not job.master:
+            # loop over list of datasets from self.register_datasets_details
+            logger.debug("finalizing master job")
+            for subjob in job.subjobs:
+                dsets=subjob.outputdata.store_datasets
+                for dset in dsets:
+                    if dset not in self.store_datasets:
+                        self.store_datasets.append(dset)
+            logger.debug("list of datasets: %s" % str(self.store_datasets))
+            for dset in self.store_datasets:
+                # freeze each dataset, create container if needed then register dataset on container.
+                dq2.freezeDataset(dset)
+                imax=string.find(dset,".jid")
+                containername=dset[:imax]+"/"
+                logger.debug("attempting to create container %s from %s" % (containername,dset))
+                try:
+                    dq2_lock.acquire()
+                    dsetlist = dq2.listDatasets('%s' % containername)
+                finally:
+                    dq2_lock.release()
+                logger.debug("found %s" % str(dsetlist))
+                if len(dsetlist)==0:
+                    logger.debug("creating container: %s", containername)
+                    try:
+                        dq2_lock.acquire()
+                        containerClient.create(containername)
+                    finally:
+                        dq2_lock.release()
+                containerClient.register(containername,[dset])
 #       Output files in the sandbox 
         outputsandboxfiles = job.outputsandbox
         output=[]

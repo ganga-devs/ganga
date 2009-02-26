@@ -382,7 +382,15 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 requirements.software=['VO-atlas-production-%s' % self.prod_release]
             elif self.atlas_rel>= "14.0.0" :
                 requirements.software=['VO-atlas-production-%s-i686-slc4-gcc34-opt' % self.prod_release]
-                
+        dq2client_version = requirements.dq2client_version
+        try:
+            # override the default one if the dq2client_version is presented 
+            # in the job backend's requirements object
+            dq2client_version = job.backend.requirements.dq2client_version
+        except AttributeError:
+            pass
+        requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
+
         # job to data, strict: target outsite and nothing else.
         requirements.sites=outsite
 
@@ -573,6 +581,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                  self.outputfiles["LOG"],
                  app.transform_script
                  ]
+        if "EVNT" in self.outputfiles and self.outputfiles["EVNT"].upper() != "NONE":
+            args.append("outputEvgenFile=%s" % self.outputfiles["EVNT"]) 
         if "HIST" in self.outputfiles and self.outputfiles["HIST"].upper() != "NONE":
             args.append("histogramFile=%s" % self.outputfiles["HIST"]) 
         if "HITS" in self.outputfiles and self.outputfiles["HITS"].upper() != "NONE":
