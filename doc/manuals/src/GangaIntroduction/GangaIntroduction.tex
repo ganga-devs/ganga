@@ -547,7 +547,7 @@ get the output from a running LSf job with the \texttt{bpeek} command like:
 \begin{verbatim}
 In [67]:!/usr/local/lsf/bin/bpeek $j.backend.id
 << output from stdout >>
-@(#)CERN job starter $Date: 2008-07-17 16:40:41 $
+@(#)CERN job starter $Date: 2009-02-26 21:38:52 $
 Working directory is </pool/lsf/uegede/767136> on <lxb6084.cern.ch>
 
 lxb6084.cern.ch
@@ -1667,6 +1667,15 @@ options:
                         processto setup runtime plugin modules (affects
                         LD_LIBRARY_PATH)
 \end{verbatim}
+
+\subsection{Startup file}
+
+If you have a file \texttt{~/.ganga.py} when \ganga starts, it will execute all the commands in there exactly as if you had typed them on the screen after the appearance of the prompt. As an exmaple we might list all the running jobs in the repository. For that you would just place
+\begin{verbatim}
+slice = jobs.select(status='running')
+slice
+\end{verbatim}
+into the file.
 
 \subsection{Configuration file}
 
