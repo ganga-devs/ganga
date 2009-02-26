@@ -1,0 +1,26 @@
+**************************************************************************************************************
+5.1.8 (2009/2/26)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Fixes made while attempting to understand failures with XML repository.
+
+Base: set parent correctly for GangaList items (in __setstate__) - THIS FIX HAS A POTENTIAL OF
+BREAKING EVERYTHING ELSE
+
+RepositoryXML:
+ - metadata selection not implemented warning
+ - adjust the name of masterJob argument to match AMGA implementation
+ - fixed evaluation of File objects (by value), the implementation uses Utility.Config.config_scope
+This bug prevented a cleanup of repository in between the test cases which triggered other bugs (*)
+ - to ease debugging repository problems, make a dump into a tarfile if there are unhandled
+exception when scanning the repository, the name of the tarfile is printed by the logger
+
+Job: when removing jobs which are in the "incomplete" or "unknown" status, do not trigger callbacks
+on application and backend -> they may be missing! Bug triggered by (*)
+
+Updated several outdated testcases.
+
+**************************************************************************************************************
