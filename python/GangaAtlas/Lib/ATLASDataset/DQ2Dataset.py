@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.22 2009-02-22 15:31:27 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.23 2009-02-26 14:26:05 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -24,6 +24,10 @@ from dq2.common.dao.DQDaoException import DQDaoException
 from dq2.info.TiersOfATLASValidator import is_site
 
 _refreshToACache()
+
+def cmpfun(a,b):
+    """helper function for sorting tuples"""
+    return cmp(a[1],b[1])
 
 def listDatasets(name,filter=True):
     '''helper function to filter out temporary datasets'''
@@ -379,6 +383,8 @@ class DQ2Dataset(Dataset):
                 contents_new.append( (guid, info['lfn']) )
                 contents_size[guid] = info['filesize'] 
             contents = contents_new
+            # Sort contents
+            contents.sort(cmp=cmpfun)
 
             if backnav:
                 return contents
@@ -1222,6 +1228,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.22  2009/02/22 15:31:27  elmsheus
+#Correct md5sum length
+#
 #Revision 1.21  2009/02/20 09:28:58  elmsheus
 #Fix for no replica datasets
 #
