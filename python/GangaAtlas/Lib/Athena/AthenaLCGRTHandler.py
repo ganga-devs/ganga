@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.35 2009-02-19 11:29:10 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.36 2009-02-27 13:05:17 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -407,6 +407,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         #       add libDCache.so and libRFIO.so to fix broken access in athena 12.0.x
         if not 'ganga-stage-in-out-dq2.py' in [ os.path.basename(file.name) for file in inputbox ]:
             _append_files(inputbox, 'ganga-stage-in-out-dq2.py')
+        if not 'dq2tracerreport.py' in [ os.path.basename(file.name) for file in inputbox ]:
+            _append_files(inputbox, 'dq2tracerreport.py')
         if not 'db_dq2localid.py' in [ os.path.basename(file.name) for file in inputbox ]:
             _append_files(inputbox, 'db_dq2localid.py')
 
@@ -429,8 +431,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             'ATHENA_OPTIONS' : athena_options,
             'ATHENA_USERSETUPFILE' : athena_usersetupfile,
             'ATLAS_PROJECT' : app.atlas_project,
-            'ATLAS_EXETYPE' : app.atlas_exetype
-
+            'ATLAS_EXETYPE' : app.atlas_exetype,
+            'GANGA_VERSION' : configSystem['GANGA_VERSION']
         }
 
         environment['DCACHE_RA_BUFFER'] = config['DCACHE_RA_BUFFER']
@@ -590,4 +592,5 @@ allHandlers.add('Athena','Cronus',AthenaLCGRTHandler)
 
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
+configSystem = getConfig('System')
 logger = getLogger()

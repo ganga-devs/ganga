@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: make_filestager_joption.py,v 1.3 2009-01-29 11:26:33 hclee Exp $
+# $Id: make_filestager_joption.py,v 1.4 2009-02-27 13:05:17 elmsheus Exp $
 ###############################################################################
 # making input job option file for FileStager
 
@@ -12,8 +12,12 @@ import sys
 import re
 import pickle
 import dm_util
+import time
 
 io_type = os.environ['DATASETTYPE']
+
+dq2tracertime = []
+dq2tracertime.append(time.time())
 
 ## get GUID list from input_guids
 guids = []
@@ -67,8 +71,10 @@ if (io_type in ['FILE_STAGER']):
     lfc_host = dm_util.get_lfc_host(dq2_site_id)
     print >> sys.stdout, 'LFC_HOST: %s' % lfc_host
 
+    dq2tracertime.append(time.time())
     # resolve PFNs given the LFC_HOST and a list of GUIDs
     pfns,csum = dm_util.get_pfns(lfc_host, guids)
+    dq2tracertime.append(time.time())
 
     #for guid in csum.keys():
     #    print >> sys.stdout, '%s %s:%s' % (guid, csum[guid]['csumtype'], csum[guid]['csumvalue'])
@@ -105,6 +111,13 @@ if (io_type in ['FILE_STAGER']):
 
     # produce the job option file for Athena/FileStager module
     dm_util.make_FileStager_jobOption(pfn_list, gridcopy=True, maxEvent=evtmax, optionFileName='input.py')
+
+    dq2tracertime.append(time.time())
+    outFile = open('dq2tracertimes.txt','w')
+    for itime in dq2tracertime:
+        outFile.write('%s\n' % itime)
+    outFile.close()
+
 
 else:
     print >> sys.stderr, "make_filestager_joption.py supports only FILE_STAGER datasettype"

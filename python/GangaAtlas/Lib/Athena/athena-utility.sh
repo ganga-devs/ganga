@@ -658,7 +658,15 @@ EOF
 	    NET_ETH_RX_AFTERATHENA=`/usr/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
 	fi
 	echo NET_ETH_RX_AFTERATHENA=$NET_ETH_RX_AFTERATHENA
-	
+
+	# DQ2 tracer report
+	if [ -e dq2tracerreport.py ]
+	    then
+	    chmod +x dq2tracerreport.py
+	    $pybin ./dq2tracerreport.py
+	fi
+
+
     fi
 }
 

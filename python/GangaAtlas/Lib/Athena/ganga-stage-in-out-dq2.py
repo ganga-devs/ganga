@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.33 2009-02-26 14:48:58 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.34 2009-02-27 13:05:17 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -810,6 +810,9 @@ if __name__ == '__main__':
     returnvalue = 0
     detsetype = False 
     detsename = ''
+
+    dq2tracertime = []
+    dq2tracertime.append(time.time())
     
     try:
         opts, args = getopt(sys.argv[1:],'hvt:d:r:i:g:o',['help','verbose','directory=','input=','output=','guid=','timeout=','retry=','setype','se='])
@@ -1505,6 +1508,7 @@ if __name__ == '__main__':
             print ddmFileMap
             print defaultSE
 
+        dq2tracertime.append(time.time())
         # get list of files from LFC
         sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
 
@@ -1522,6 +1526,8 @@ if __name__ == '__main__':
             defaultSE = _getDefaultStorage(localsitesrm)
             sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
 
+        dq2tracertime.append(time.time())
+        
         # Check md5sum
         if len(tUrlMap)>0 and os.environ.has_key('GANGA_CHECKMD5SUM') and os.environ['GANGA_CHECKMD5SUM']=='1':
             tUrlMapTemp = tUrlMap
@@ -1615,7 +1621,11 @@ if __name__ == '__main__':
             print 'ERROR: Dataset(s) %s is/are empty at %s' %(datasetnames, localsiteid)
             returnvalue=EC_QueryFiles
 
-
+        dq2tracertime.append(time.time())
+        outFile = open('dq2tracertimes.txt','w')
+        for itime in dq2tracertime:
+            outFile.write('%s\n' % itime)
+        outFile.close()
 
     # TAG DATASET ###########################################################
     if datasettype in [ 'TAG', 'TAG_REC', 'TNT_DOWNLOAD', 'TNT_LOCAL']:
@@ -1893,6 +1903,7 @@ if __name__ == '__main__':
         if 'CERN' in temp_locations:
             temp_locations.remove('CERN')
 
+        print temp_locations
         new_locations = []
 
         # Get space token names:
@@ -1938,6 +1949,7 @@ if __name__ == '__main__':
                 new_locations.append(temp_location)
 
         temp_locations = new_locations
+        print temp_locations
 
         # Get output lfn
         try:
