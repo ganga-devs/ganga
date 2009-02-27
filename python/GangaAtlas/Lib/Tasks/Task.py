@@ -35,6 +35,13 @@ class Task(GangaObject):
       """Startup function on Ganga startup"""
       for t in self.transforms:
          t.startup()
+      # Black Magic from Hell
+      from Ganga.GPIDev.Base.Proxy import ProxyMethodDescriptor
+      for t in Task.__dict__:
+         if (not t in self._proxyClass.__dict__) and (t in self._exportmethods):
+            f = ProxyMethodDescriptor(t,t)
+            f.__doc__ = Transform.__dict__[t].__doc__
+            setattr(self._proxyClass, t, f)
 
 #   def _readonly(self):
 #      """A task is read-only if the status is not new."""

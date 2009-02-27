@@ -53,6 +53,15 @@ class Transform(GangaObject):
 
    def startup(self):
       """This function is used to set the status after restarting Ganga"""
+
+      # Black Magic from Hell
+      from Ganga.GPIDev.Base.Proxy import ProxyMethodDescriptor
+      for t in Transform.__dict__:
+         if (not t in self._proxyClass.__dict__) and (t in self._exportmethods):
+            f = ProxyMethodDescriptor(t,t)
+            f.__doc__ = Transform.__dict__[t].__doc__
+            setattr(self._proxyClass, t, f)
+
       ## Create the reverse map _partition_apps from _app_partition 
       self._partition_apps = {}
       for (app, partition) in self._app_partition.iteritems():
