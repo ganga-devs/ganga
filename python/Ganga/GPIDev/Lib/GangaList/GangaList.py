@@ -4,6 +4,7 @@ from Ganga.GPIDev.Base.Proxy import addProxy,isType,getProxyAttr,stripProxy, Typ
 from Ganga.GPIDev.Base.VPrinter import full_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem,Schema,SimpleItem,Version
 from Ganga.Utility.Plugin.GangaPlugin import allPlugins
+from Ganga.Utility.util import containsGangaObjects,isNestedList
 from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError
 import sys
 
@@ -104,6 +105,7 @@ class GangaList(GangaObject):
                 if isType(obj, GangaObject):
                     if obj._category != category:
                         obj = applyFilter(obj, item)
+                    obj._setParent(parent)
                 else:
                     obj = applyFilter(obj, item)
         return obj 
@@ -136,6 +138,12 @@ class GangaList(GangaObject):
         else:
             root = GangaObject.__getattribute__(self,'_getRoot')()
             root._setDirty(True)
+            
+    def checkNestedLists(self,value):
+        """The rule is that if there are nested lists then they 
+        must not contain GangaObjects, as this corrupts the repository"""
+        if isNestedList(value) and containsGangaObjects(value):
+            raise TypeMismatchError('Assigning nested lists which contain Ganga GPI Objects is not supported.')
     
     # list methods
     # All list methods should be overridden in a way that makes
@@ -150,6 +158,7 @@ class GangaList(GangaObject):
         return makeGangaList(self._list.__add__(self.strip_proxy_list(obj_list, True)))   
     def _export___add__(self, obj_list):
         self.checkReadOnly()
+        self.checkNestedLists(obj_list)
         return addProxy(self.__add__(obj_list))
     
     def __contains__(self, obj):
@@ -200,6 +209,7 @@ class GangaList(GangaObject):
         return self
     def _export___iadd__(self, obj_list):
         self.checkReadOnly()
+        self.checkNestedLists(obj_list)
         return addProxy(self.__iadd__(obj_list))
     
     def __imul__(self, number):
@@ -282,12 +292,14 @@ class GangaList(GangaObject):
         self._list.__setitem__(index, self.strip_proxy(obj, True))
     def _export___setitem__(self, index, obj):
         self.checkReadOnly()
+        self.checkNestedLists(obj)
         self.__setitem__(index, obj)
        
     def __setslice__(self, start, end, obj_list):
         self._list.__setslice__(start, end, self.strip_proxy_list(obj_list, True))
     def _export___setslice__(self, start, end, obj_list):
         self.checkReadOnly()
+        self.checkNestedLists(obj_list)
         self.__setslice__(start,end,obj_list)
         
     def __repr__(self):
@@ -299,6 +311,7 @@ class GangaList(GangaObject):
         self._list.append(self.strip_proxy(obj, True))
     def _export_append(self, obj):
         self.checkReadOnly()
+        self.checkNestedLists(obj)
         self.append(obj)
         
     def count(self, obj):
@@ -309,6 +322,7 @@ class GangaList(GangaObject):
             self.append(i)
     def _export_extend(self, ittr):
         self.checkReadOnly()
+        self.checkNestedLists(ittr)
         self.extend(ittr)
        
     def index(self, obj):
@@ -318,6 +332,7 @@ class GangaList(GangaObject):
         self._list.insert(index, self.strip_proxy(obj, True))
     def _export_insert(self, index, obj):
         self.checkReadOnly()
+        self.checkNestedLists(obj)
         self.insert(index, obj)
        
     def pop(self, index = -1):
