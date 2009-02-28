@@ -4,12 +4,16 @@ import os, re, time, md5, commands
 from dq2.tracer.client.TracerClient import TracerClient
 from dq2.common import generate_uuid
 
-GANGA_VERSION = '5.1.7'
 
-
-def fill_report(eventVersion = None, remoteSite=None, localSite=None, timeStart=None, catStart=None, relativeStart=None, transferStart=None, validateStart=None, timeEnd=None,  duid=None,version=None, dataset=None, protocol=None, filename=None, filesize=None, guid=None, usr=None ):
+########################################################################
+def fill_report(uuid = None, eventVersion = None, remoteSite=None,
+                localSite=None, timeStart=None, catStart=None,
+                relativeStart=None, transferStart=None, validateStart=None,
+                timeEnd=None, duid=None,version=None, dataset=None,
+                protocol=None, filename=None, filesize=None,
+                guid=None, usr=None ):
     report = {
-        'uuid': generate_uuid().replace('-',''),
+        'uuid': uuid,
         'eventType': 'drct_ganga',
         'eventVersion': eventVersion,
         'remoteSite': remoteSite,
@@ -33,7 +37,6 @@ def fill_report(eventVersion = None, remoteSite=None, localSite=None, timeStart=
     
     return report
 
-
 ########################################################################
 if __name__ == '__main__':
 
@@ -41,8 +44,11 @@ if __name__ == '__main__':
     print '--------------'
     print 'DQ2 tracer preparation ...'
 
+    # Event uuid
+    uuid = generate_uuid().replace('-','')
+    # Read LFC and transfer time produced in ganga-stage-in-out-dq2.py
+    # or make-filestager-joboption.py
     tracertimes = [ line.strip() for line in file('dq2tracertimes.txt') ]
-
     # User hash
     m=md5.new()
     m.update(commands.getstatusoutput('voms-proxy-info -identity')[1])
@@ -97,7 +103,7 @@ if __name__ == '__main__':
     if os.environ.has_key('GANGA_VERSION'):
         ganga_version = os.environ['GANGA_VERSION']
     else:
-        ganga_version = 'GANGA'
+        ganga_version = 'GANGA-5'
 
     try:
         lfns = [ line.strip() for line in file('input_files') ]
@@ -123,7 +129,8 @@ if __name__ == '__main__':
     # Fail over for empty input_files
     if not input_files:
         input_files = input_files_txt
-        
+
+    nreport = 0
     for longfilename in input_files:
         prot = re.findall(protpat, longfilename)
         if prot:
@@ -137,7 +144,8 @@ if __name__ == '__main__':
             lfn = re.sub('^tcf_','',lfn)
             lfn = re.sub('(__DQ2.*)$','',lfn)
         
-        report = fill_report(eventVersion  = ganga_version,
+        report = fill_report(uuid = uuid,
+                             eventVersion  = ganga_version,
                              remoteSite    = siteid,
                              localSite     = siteid,
                              timeStart     = tracertimes[0],
@@ -157,11 +165,12 @@ if __name__ == '__main__':
         #print report
         try:
             TracerClient().addReport(report)
+            nreport+=1
         except:
             print 'An Error during TracerClient().addReport(report) occured'
             print report
             pass
 
-    print '%s DQ2 tracer file reports have been sent.' %(len(input_files))
+    print '%s DQ2 tracer file reports have been sent.' %nreport
     print '--------------'
 
