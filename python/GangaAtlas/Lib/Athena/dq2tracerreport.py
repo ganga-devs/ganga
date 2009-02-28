@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, re, time
+import os, re, time, md5, commands
 from dq2.tracer.client.TracerClient import TracerClient
 from dq2.common import generate_uuid
 
@@ -20,7 +20,7 @@ def fill_report(eventVersion = None, remoteSite=None, localSite=None, timeStart=
         'transferStart': transferStart,
         'validateStart': validateStart,
         'timeEnd': timeEnd,
-        'duid': duid,
+        'duid': duid.replace('-',''),
         'version': version,
         'dataset': dataset,
         'clientState': 'INIT_REPORT',
@@ -28,7 +28,7 @@ def fill_report(eventVersion = None, remoteSite=None, localSite=None, timeStart=
         'filename': filename,
         'filesize': filesize,
         'guid': guid.replace('-',''),
-        'usr': usr
+        'usr': usr.replace('-','')
     }
     
     return report
@@ -42,6 +42,11 @@ if __name__ == '__main__':
     print 'DQ2 tracer preparation ...'
 
     tracertimes = [ line.strip() for line in file('dq2tracertimes.txt') ]
+
+    # User hash
+    m=md5.new()
+    m.update(commands.getstatusoutput('voms-proxy-info -identity')[1])
+    usrhex = m.hexdigest()
 
     numfiles3 = 0
     filepat = '"PFN:(.+)"'
@@ -107,6 +112,11 @@ if __name__ == '__main__':
     for i in xrange(0,len(lfns)):
         ddmFileMap[lfns[i]] = guids[i]
 
+    from dq2.clientapi.DQ2 import DQ2
+    dq2=DQ2()
+    duid = dq2.listDatasets(datasetname)[datasetname]['duid']
+    contents = dq2.listFilesInDataset(datasetname)[0]
+
     protpat = re.compile(r'^(\w+):/')
     filenamepat = re.compile(r'.*/(.+)$')    
 
@@ -138,13 +148,18 @@ if __name__ == '__main__':
                              dataset       = datasetname,
                              protocol      = prot,
                              filename      = lfn,
-                             guid = ddmFileMap[lfn]
+                             guid = ddmFileMap[lfn],
+                             duid = duid,
+                             filesize = contents[ddmFileMap[lfn]]['filesize'],
+                             version = 0,
+                             usr = usrhex
                              )
         #print report
         try:
             TracerClient().addReport(report)
         except:
             print 'An Error during TracerClient().addReport(report) occured'
+            print report
             pass
 
     print '%s DQ2 tracer file reports have been sent.' %(len(input_files))
