@@ -1,4 +1,5 @@
 
+from Ganga.Runtime.GPIexport import exportToGPI
 
 def browseBK(gui=True):
     """
@@ -31,5 +32,6 @@ j.inputdata=browseBK()
     bkk=Bookkeeping()
     return  addProxy(bkk.browse(gui))
 
-        
+
+exportToGPI('browseBK',browseBK,'Functions')        
     
