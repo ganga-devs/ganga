@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.23 2009-02-26 14:26:05 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.24 2009-03-02 08:17:33 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -384,7 +384,10 @@ class DQ2Dataset(Dataset):
                 contents_size[guid] = info['filesize'] 
             contents = contents_new
             # Sort contents
-            contents.sort(cmp=cmpfun)
+            try:
+                contents.sort(cmp=cmpfun)
+            except:
+                pass
 
             if backnav:
                 return contents
@@ -426,14 +429,20 @@ class DQ2Dataset(Dataset):
             sumfilesize = 0 
             for guid, lfn in allcontents:
                 if contents_size.has_key(guid):
-                    sumfilesize += contents_size[guid]
+                    try:
+                        sumfilesize += contents_size[guid]
+                    except:
+                        pass
             # Sum up dataset filesize per dataset:
             sumfilesizeDatasets = {}
             for dataset, contents in diffcontents.iteritems():
                 sumfilesizeDataset = 0
                 for guid, lfn in contents:
                     if contents_size.has_key(guid):
-                        sumfilesizeDataset += contents_size[guid]
+                        try:
+                            sumfilesizeDataset += contents_size[guid]
+                        except:
+                            pass
                 diffcontentsNew[dataset] = (contents, sumfilesizeDataset)        
         
         if overlap:
@@ -1228,6 +1237,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.23  2009/02/26 14:26:05  elmsheus
+#Sort DQ2Dataset by lfn/names
+#
 #Revision 1.22  2009/02/22 15:31:27  elmsheus
 #Correct md5sum length
 #
