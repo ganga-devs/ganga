@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridSandboxCache.py,v 1.7 2009-02-16 14:11:48 hclee Exp $
+# $Id: GridSandboxCache.py,v 1.8 2009-03-02 13:31:29 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -111,8 +111,12 @@ class GridSandboxCache(GangaObject):
                 logger.warning('unknown file expression: %s' % repr(f))
 
         uploaded_files = self.impl_upload(files=paths, opts=opts)
-        status = self.impl_bookkeepUploadedFiles(uploaded_files, append=True, opts=opts)
 
+        if len(uploaded_files) == len(files):
+            status = self.impl_bookkeepUploadedFiles(uploaded_files, append=True, opts=opts)
+        else:
+            status = False
+            
         return status
 
     def download(self, files=[], dest_dir=None, opts=''):

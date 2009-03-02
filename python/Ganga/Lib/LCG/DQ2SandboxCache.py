@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2SandboxCache.py,v 1.6 2009-02-25 08:39:20 hclee Exp $
+# $Id: DQ2SandboxCache.py,v 1.7 2009-03-02 13:31:29 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -119,73 +119,75 @@ class DQ2SandboxCache(GridSandboxCache):
         src_dir = tempfile.mkdtemp(prefix='_ganga_tmp_')
         finfo   = {}
         myuuid  = get_uuid()
-        for f in files:
-            path  = os.path.dirname( urlparse(f)[2] )
-            name  = os.path.basename( urlparse(f)[2] )
 
-            tmp_fname = name + '_' + myuuid
-            tmp_fpath = os.path.join(src_dir, tmp_fname )
+        try:
+            for f in files:
+                path  = os.path.dirname( urlparse(f)[2] )
+                name  = os.path.basename( urlparse(f)[2] )
 
-            shutil.copy(os.path.join(path, name), tmp_fpath)
-            md5sum = get_md5sum(os.path.join(path, name), ignoreGzipTimestamp=True)
-            fsize  = os.path.getsize( tmp_fpath )
-            finfo[tmp_fname] = {}
-            finfo[tmp_fname]['md5sum'] = md5sum
-            finfo[tmp_fname]['fsize']  = fsize
-            finfo[tmp_fname]['local_fpath']  = urlparse(f)[2]
+                tmp_fname = name + '_' + myuuid
+                tmp_fpath = os.path.join(src_dir, tmp_fname )
 
-        # compose dq2-put command 
-        cmd = 'source %s; dq2-put -a -d -C ' % (self.setup)
+                shutil.copy(os.path.join(path, name), tmp_fpath)
+                md5sum = get_md5sum(os.path.join(path, name), ignoreGzipTimestamp=True)
+                fsize  = os.path.getsize( tmp_fpath )
+                finfo[tmp_fname] = {}
+                finfo[tmp_fname]['md5sum'] = md5sum
+                finfo[tmp_fname]['fsize']  = fsize
+                finfo[tmp_fname]['local_fpath']  = urlparse(f)[2]
 
-        if self.local_site_id:
-            cmd += '-L %s ' % self.local_site_id
+            # compose dq2-put command
+            cmd = 'source %s; dq2-put -a -d -C ' % (self.setup)
 
-        cmd += '-s %s ' % src_dir
-        cmd += '-f %s ' % ','.join(finfo.keys())
-        cmd += '%s ' % self.dataset_name
+            if self.local_site_id:
+                cmd += '-L %s ' % self.local_site_id
 
-        # run dq2-put
-        rc,output,m = self.__cmd_retry_loop__(shell, cmd, self.max_try)
+            cmd += '-s %s ' % src_dir
+            cmd += '-f %s ' % ','.join(finfo.keys())
+            cmd += '%s ' % self.dataset_name
 
-        self.logger.debug('%d %s' % (rc, output))
-
-        # run dq2-ls to query the uploaded files
-        # together with local file information, creates GridFileIndex objects
-        file_idx = []
-        if rc == 0:
-            # compose dq2-ls command 
-            cmd = 'source %s; dq2-ls -L %s -f -p %s' % (self.setup, self.local_site_id, self.dataset_name)
+            # run dq2-put
             rc,output,m = self.__cmd_retry_loop__(shell, cmd, self.max_try)
 
+            self.logger.debug('%d %s' % (rc, output))
+
+            # run dq2-ls to query the uploaded files
+            # together with local file information, creates GridFileIndex objects
+            file_idx = []
             if rc == 0:
+                # compose dq2-ls command
+                cmd = 'source %s; dq2-ls -L %s -f -p %s' % (self.setup, self.local_site_id, self.dataset_name)
+                rc,output,m = self.__cmd_retry_loop__(shell, cmd, self.max_try)
 
-                lines = map( lambda x:x.strip(), output.split() )
-             
-                for l in lines:
+                if rc == 0:
+
+                    lines = map( lambda x:x.strip(), output.split() )
+
+                    for l in lines:
+                        for f in finfo.keys():
+                            if l.find('srm://') == 0 and l.find(f) > 0:
+                                finfo[f]['surl'] = l
+                                break
+
                     for f in finfo.keys():
-                        if l.find('srm://') == 0 and l.find(f) > 0:
-                            finfo[f]['surl'] = l
-                            break
-             
-                for f in finfo.keys():
-                    name   = os.path.basename( finfo[f]['local_fpath'] )
-                    surl   = finfo[f]['surl']
-                    md5sum = finfo[f]['md5sum']
+                        name   = os.path.basename( finfo[f]['local_fpath'] )
+                        surl   = finfo[f]['surl']
+                        md5sum = finfo[f]['md5sum']
 
-                    ## create DQ2FileIndex of the uploaded file 
-                    fidx = DQ2FileIndex()
-                    fidx.id = surl
-                    fidx.name = name
-                    fidx.dataset = self.dataset_name
-                    fidx.site = self.local_site_id
-                    fidx.md5sum = md5sum
+                        ## create DQ2FileIndex of the uploaded file
+                        fidx = DQ2FileIndex()
+                        fidx.id = surl
+                        fidx.name = name
+                        fidx.dataset = self.dataset_name
+                        fidx.site = self.local_site_id
+                        fidx.md5sum = md5sum
 
-                    file_idx.append( fidx )
+                        file_idx.append( fidx )
+        finally:
+            ## removing the temporary directory in any case
+            shutil.rmtree(src_dir)
 
-        ## removing the temporary directory in any case
-        shutil.rmtree(src_dir)
-
-        return file_idx
+        return file_idx     
 
 #    def impl_download(self, files={}, dest_dir=None, opts=''):
 #        """
