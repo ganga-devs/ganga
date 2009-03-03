@@ -280,6 +280,12 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
        
         environment={'T_LCG_GFAL_INFOSYS' :'atlas-bdii.cern.ch:2170'}
 
+        environment["T_JTFLAGS"]=" -t"
+        if app.verbosity:
+            environment["T_JTFLAGS"]+=" -l %s" % % app.verbosity
+        if app.mode=="template":
+            environment["T_JTFLAGS"]=""
+            
         environment["OUTLFC"]=outlfc
         environment["OUTSITE"]=outsite
         environment["OUTPUT_LOCATION"]=outputlocation
@@ -309,7 +315,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
 #       finalise environment
 
-        environment["VERBOSITY"]= "%s" % app.verbosity
+
         # preparing input sandbox, output sandbox , environment vars and job requirements
         
         inputbox = [ 

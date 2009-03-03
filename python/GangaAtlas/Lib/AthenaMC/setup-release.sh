@@ -137,13 +137,5 @@ fi
 
 cd $T_HOMEDIR
 
-
-echo $ATLRMAIN
-if [ $ATLRMAIN -lt 12 -o $T_RELEASE \< '12.0.2' ]; then
-    export T_JTFLAGS=""
-else
-    export T_JTFLAGS=" -t -l $VERBOSITY" # disable run number and min # event in evgen in 12.0.2 and beyond  
-fi
-
 echo $T_JTFLAGS
 

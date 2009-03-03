@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.26 2009-03-03 09:07:22 ebke Exp $
+# $Id: AthenaMCDatasets.py,v 1.27 2009-03-03 10:22:24 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -798,6 +798,15 @@ class AthenaMCOutputDatasets(Dataset):
             protodataset="%s.%s.ganga.%s" % (_usertag,username,fileprefixes[type])
             suffix=self.get_dataset_suffix(protodataset,jid)
             outputpaths[type]="/%s/%s/ganga/%s.%s"% (_usertag,username,fileprefixes[type],suffix)
+            try:
+                assert len(outputpaths[type])<=133
+            except:
+                overflow=len(outputpaths[type])-133
+                dsetstr=outputpaths[type][1:]
+                dsetstr=string.replace("/",".")
+                print dsetstr
+                logger.error("dataset name: %s too long by %d characters. Please reduce the size of any of the following fields (if set): job.outputdata.output_dataset, job.application.production_name, job.application.process_name,job.application.version " % (dsetstr,overflow))
+                raise Exception()
             
         return fileprefixes,outputpaths
         
