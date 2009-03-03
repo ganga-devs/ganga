@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.30.2.1 2009-03-03 12:42:54 hclee Exp $
+# $Id: LCG.py,v 1.30.2.2 2009-03-03 13:23:43 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -11,7 +11,6 @@
 # Date:   August 2005
 
 import os
-from twisted.python.failure import stack
 import sys
 import md5
 import re
@@ -73,6 +72,29 @@ def stop_lcg_output_downloader():
 
 start_lcg_output_downloader()
 atexit.register( (-999, stop_lcg_output_downloader) )
+
+
+## helper routines
+def __fail_missing_jobs__(missing_glite_jids, jobdict):
+    '''failing the Ganga jobs if the associated glite job id is appearing in missing_glite_jids'''
+
+    for glite_jid in missing_glite_jids:
+        if jobdict.has_key( glite_jid ):
+            j = jobdict[glite_jid]
+
+            if j.master:
+                ## this is a subjob
+                j.backend.status = 'Removed'
+                j.backend.reason = 'job removed from WMS'
+                j.updateStatus('failed')
+
+            else:
+                ## this is a master job
+                for sj in j.subjobs:
+                    if sj.backend.parent_id == glite_jid:
+                        sj.backend.status = 'Removed'
+                        sj.backend.reason = 'job removed from WMS'
+                        sj.updateStatus('failed')
     
 class LCG(IBackend):
     '''LCG backend - submit jobs to the EGEE/LCG Grid using gLite/EDG middleware.
@@ -117,7 +139,7 @@ class LCG(IBackend):
 
     _category = 'backends'
     _name =  'LCG'
-    _exportmethods = ['check_proxy', 'loginfo', 'inspect']
+    _exportmethods = ['check_proxy', 'loginfo', 'inspect', 'set_id']
 
     _GUIPrefs = [ { 'attribute' : 'CE', 'widget' : 'String' },
                   { 'attribute' : 'jobtype', 'widget' : 'String_Choice', 'choices' : ['Normal', 'MPICH'] },
@@ -294,26 +316,8 @@ class LCG(IBackend):
         job.backend.exitcode_lcg = '' 
         job.backend.flag     = 0
 
-    def __fail_missing_jobs__(self, missing_glite_jids, jobdict):
-        '''failing the Ganga jobs if the associated glite job id is appearing in missing_glite_jids'''
-
-        for glite_jid in missing_glite_jids:
-            if jobdict.has_key( glite_jid ):
-                j = jobdict[glite_jid]
-
-                if j.master:
-                    ## this is a subjob
-                    j.status = 'failed'
-                    j.backend.status = 'Removed'
-                    j.backend.reason = 'job removed from WMS'
-
-                else:
-                    ## this is a master job
-                    for sj in j.subjobs:
-                        if sj.backend.__dict__['_impl'].parent_id == glite_jid:
-                            sj.status = 'failed'
-                            sj.backend.status = 'Removed'
-                            sj.backend.reason = 'job removed from WMS'
+    def set_id(self, id):
+        self.id = id
 
     def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
         '''Submit the master job to the grid'''
@@ -1544,7 +1548,7 @@ sys.exit(0)
             ## loop over the jobs in each class
             status_info, missing_glite_jids = grids[mt].status(jobclass[mt])
 
-            self.__fail_missing_jobs__(missing_glite_jids, jobdict)
+            __fail_missing_jobs__(missing_glite_jids, jobdict)
             
             for info in status_info:
 
@@ -1628,7 +1632,7 @@ sys.exit(0)
 
         (status_info, missing_glite_jids) = grid.status(jobdict.keys(),is_collection=True)
 
-        self.__fail_missing_jobs__(missing_glite_jids, jobdict)
+        __fail_missing_jobs__(missing_glite_jids, jobdict)
 
         ## update GANGA job repository according to the available job information 
         for info in status_info:
@@ -1933,6 +1937,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.30.2.1  2009/03/03 12:42:54  hclee
+# set Ganga job to fail if the corresponding glite jobs have been removed from WMS
+#
 # Revision 1.30  2009/02/16 14:10:05  hclee
 # change basedir of DQ2SandboxCache from users to userxx where xx represents the last two digits of year
 #

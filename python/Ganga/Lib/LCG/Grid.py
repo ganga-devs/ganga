@@ -412,7 +412,7 @@ class Grid(object):
                 info[-1]['destination'] = match.group(1)
                 continue
 
-        return (info, missing_glite_ids)
+        return (info, missing_glite_jids)
 
     def get_loginfo(self,jobids,directory,verbosity=1):
         '''Fetch the logging info of the given job and save the output in the job's outputdir'''
