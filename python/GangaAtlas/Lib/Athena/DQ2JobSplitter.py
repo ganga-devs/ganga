@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.33 2009-03-03 10:48:06 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.34 2009-03-03 15:43:26 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -246,6 +246,8 @@ class DQ2JobSplitter(ISplitter):
                     elif job.backend._name == 'LCG':
                         nrjob = 1
                         self.numfiles = len(guids)
+
+                    logger.warning('You are using DQ2JobSplitter.filesize or the backend used supports only a maximum dataset size of %s MB per subjob - job splitting has been adjusted accordingly.', maxsize)
 
                     subjobsize = totalsize / nrjob / (1024*1024)
                     while subjobsize > maxsize and self.numfiles > 1:
