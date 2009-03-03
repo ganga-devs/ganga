@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.32 2009-02-20 09:28:59 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.33 2009-03-03 10:48:06 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -140,6 +140,14 @@ class DQ2JobSplitter(ISplitter):
                                     if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and not sitename in db_allowed_sites:
                                         db_allowed_sites.append(sitename)
                     allowed_sites = db_allowed_sites
+                # Check if site is online:
+                newsites = []
+                for asite in allowed_sites:
+                    if not job.backend.requirements.list_ce(asite):
+                        logger.warning('Site %s is currently down or does not allow user analysis - please check carefully if all inputfiles are available for your jobs. Maybe switch to a different cloud.',asite)
+                    else:
+                        newsites.append(asite)
+                allowed_sites = newsites
                     
         elif job.backend._name == 'Panda':
             from GangaPanda.Lib.Panda.Panda import runPandaBrokerage,queueToAllowedSites
@@ -150,6 +158,8 @@ class DQ2JobSplitter(ISplitter):
 
         if not allowed_sites:
             raise ApplicationConfigurationError(None,'DQ2JobSplitter found no allowed_sites for dataset')
+        
+        logger.debug('allowed_sites = %s ', allowed_sites)
 
         contents_temp = job.inputdata.get_contents(overlap=False, filesize=True)
         contents = {}
@@ -182,7 +192,15 @@ class DQ2JobSplitter(ISplitter):
             siteinfos[dataset]=siteinfo
             allcontents[dataset]=content
 
+        logger.debug('siteinfos = %s', siteinfos)
+
         subjobs = []
+        totalfiles = 0
+        allfiles = 0
+        # Count total number of files
+        for dataset, info in allcontents.iteritems():
+            allfiles = allfiles + len(info)
+        
         for dataset, siteinfo in siteinfos.iteritems():
             for sites, guids in siteinfo.iteritems():
 
@@ -266,8 +284,14 @@ class DQ2JobSplitter(ISplitter):
 
                     subjobs.append(j)
 
+                    totalfiles = totalfiles + len(j.inputdata.guids) 
+                    
+
         if not subjobs:
             logger.error('DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')
+
+        if not totalfiles == allfiles:
+            logger.error('DQ2JobSplitter was only able to assign %s out of %s files to the subjobs ! Please check your job configuration if this is intended and possibly change to a different cloud or choose different sites!', totalfiles, allfiles)
 
         return subjobs
     
