@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.25 2009-02-26 17:00:14 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.26 2009-03-03 09:07:22 ebke Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -501,6 +501,9 @@ class AthenaMCInputDatasets(Dataset):
 
         # get list of files from dataset list
         contents_new = {}
+
+        if len(inputdsets) == 0:
+            inputdsets = containers
 
         for dset in inputdsets:
             try:
