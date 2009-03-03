@@ -602,4 +602,26 @@ echo "GANGATIME3=$GANGATIME3"
 echo "GANGATIME4=$GANGATIME4"
 echo "GANGATIME5=$GANGATIME5"
 
+#################################################
+# Store log files in DQ2 if required
+if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
+    then
+    
+    LOGNAME=${OUTPUT_DATASETNAME}_${OUTPUT_JOBID}.log.tgz
+    echo "Storing logfiles as "$LOGNAME" in dq2 dataset..."
+    tar czf $LOGNAME stdout stderr
+    echo $LOGNAME > logfile
+    DATASETTYPE=DQ2_OUT
+    if [ ! -z $python32bin ]; then
+	$python32bin ./ganga-stage-in-out-dq2.py --output=logfile
+    else
+	if [ -e /usr/bin32/python ]
+	    then
+	    /usr/bin32/python ./ganga-stage-in-out-dq2.py --output=logfile
+	else
+	    ./ganga-stage-in-out-dq2.py --output=logfile
+	fi
+    fi
+fi
+
 exit $retcode

@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.36 2009-02-27 13:05:17 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.37 2009-03-03 12:55:35 mslater Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -248,6 +248,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                             
                     logger.debug('Output4: %s,%s',output_location, job.outputdata.location)
 
+        if getConfig('LCG')['JobLogHandler'] == 'DQ2' and job.outputdata._name != 'DQ2OutputDataset':
+            raise ApplicationConfigurationError(None,'Staging of log files in DQ2 requested, but DQ2 output dataset not specified.')
+        
 #       prepare inputsandbox
 
         inputbox = [File(os.path.join(__directory__,'athena-utility.sh')) ]
