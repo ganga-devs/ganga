@@ -282,7 +282,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
         environment["T_JTFLAGS"]=" -t"
         if app.verbosity:
-            environment["T_JTFLAGS"]+=" -l %s" % % app.verbosity
+            environment["T_JTFLAGS"]+=" -l %s" % app.verbosity
         if app.mode=="template":
             environment["T_JTFLAGS"]=""
             
