@@ -238,7 +238,7 @@ get_pybin () {
     if [ $retcode -eq 0 ]; then
 	export python32bin=`which python32`
     fi
-
+    retcode=0
 }
 
 # detecting the se type
