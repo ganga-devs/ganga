@@ -46,7 +46,7 @@ stageInLCG(){
     dq2get=`which dq2-get`
     py32=`which python32`
 
-    cmd="$dq2get --client-id=ganga -a -d -s $SITE -f $LFNS $INPUTDSET" # -a flag overrides -D, so we will have to deal with the files being stored in an unwanted directory...
+    cmd="$dq2get --client-id=ganga -a -d -s $SITE -D -f $LFNS $INPUTDSET" 
     if [ ! -z "$py32" ]; then
         cmd="python32 "$cmd
     fi
@@ -55,7 +55,7 @@ stageInLCG(){
     status=$?
     if [ $status -eq 0 ]; then
 	echo "$LFNS downloaded succesfully"
-	mv $INPUTDSET/* .
+	mv $INPUTDSET*/* .  # -D flag should make this block irrelevant and trigger an harmless error message
     fi
     ls -l 
     for lfn in $LFNS; do
