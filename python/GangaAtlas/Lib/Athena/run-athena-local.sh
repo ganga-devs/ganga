@@ -59,7 +59,13 @@ get_remote_proxy
 
 ################################################
 # setup Athena
-athena_setup
+
+retcode=0
+
+athena_setup; echo $? > retcode.tmp
+retcode=`cat retcode.tmp`
+rm -f retcode.tmp
+
 
 # check the dir list
 ls -la
@@ -86,7 +92,6 @@ fi
 
 export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 
-retcode=0
 
 ################################################
 # state the inputs

@@ -97,7 +97,12 @@ fi
 
 ################################################
 # setup ATLAS software
-athena_setup
+
+retcode=0
+
+athena_setup; echo $? > retcode.tmp
+retcode=`cat retcode.tmp`
+rm -f retcode.tmp
 
 ################################################
 # Special setup for CNAF
@@ -182,12 +187,12 @@ fi
 
 export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 
-retcode=0
+
 
 GANGATIME2=`date +'%s'`
 ################################################
 # prepare/staging input data
-if [ -e input_files ]
+if [ $retcode -eq 0 ] && [ -e input_files ]
 then
     if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
         make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
