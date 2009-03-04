@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.23 2009-02-26 14:38:20 bsamset Exp $
+# $Id: NG.py,v 1.24 2009-03-04 07:57:51 pajchel Exp $
 ###############################################################################
 #
 # NG backend
@@ -322,7 +322,7 @@ class Grid:
 
         return True
 
-    def upload(self, upfile ):
+    def upload(self, upfile = None, name = None ):
         '''Upload file to temporary grid storage.'''
 
         cmd = 'ngcp '
@@ -336,29 +336,49 @@ class Grid:
             return
         
         file_name = upfile.split('/')[-1]
-        temptime = time.gmtime()
-        time_pattern = "%04d%02d%02d%02d%02d%02d" % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5])
-        new_file_name = time_pattern + file_name
-        new_upfile = SRMurl +'/'+new_file_name
+        
+        if name == None:
+          temptime = time.gmtime()
+          time_pattern = "%04d%02d%02d%02d%02d%02d" % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5])
+          new_file_name = time_pattern + file_name
+          new_upfile = SRMurl + new_file_name
+        else:
+          new_upfile = name
+
         command = cmd + upfile +' '+ new_upfile
         rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,500])
         if rc != 0:
             logger.warning(output)
 
-        return new_upfile
+        return new_upfile, rc 
 
     def clean_gridfile(self,gridfile):
         ''' Clean prestaged files in srm'''
         
-        cmd = 'ngrm '
-        command = cmd + gridfile
+        command = self.__get_cmd_prefix_hack__()+'ngls ' + gridfile
+        query = commands.getstatusoutput(command)
         
-        rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,500])
-        
-        if rc != 0:
+        if query[0] == 0:
+          cmd = 'ngrm '
+          command = cmd + gridfile
+
+          rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,500])
+               
+          if rc != 0:
             logger.warning(output)
 
         return
+
+    def ls_gridfile(self,gridfile):
+        ''' Check if grid file exists'''
+
+        command = self.__get_cmd_prefix_hack__()+'ngls ' + gridfile 
+        query = commands.getstatusoutput(command)
+
+        if query[0] == 0:
+          return True
+        else:
+          return False
             
     def submit(self,xrslpath,ce=None,rejectedcl=None,timeout=20):
         '''Submit a XRSL file to NG'''
@@ -583,13 +603,48 @@ class Grid:
             f.write( output )
             f.close()
             return outfile
+
+    def ngresume(self,jobid):
+        '''Fetch the logging info of the given job and save the output in the jobs outputdir'''
         
-    def get_output(self,jobid,directory,out,location,wms_proxy=False):
+        cmd = 'ngresume '
+        retry = True
+        
+        if not self.active:
+            logger.warning('ARC plugin not active.')
+            return False 
+
+        if not self.credential.isValid():
+            logger.warning('GRID proxy not valid. Use gridProxy.renew() to renew it.')
+            return False
+
+        rc, output, m = self.shell.cmd1('%s%s %s ' % (self.__get_cmd_prefix_hack__(),cmd,jobid),allowed_exit=[0,255])
+
+        out = output.split('\n')
+
+        for r in out:
+          if r.startswith('Server responded:'):
+            retry = False
+          elif r.startswith('Jobs processed:'):  
+            res = r.split('successfuly resumed:')[1].strip()
+            
+        if rc == 0 and res == '1':
+          return True,retry
+        elif rc != 0:
+          self.__print_gridcmd_log__('(.*-logging-info.*\.log)',output)
+          return False,retry
+        else:
+          return False,retry
+        
+    def get_output(self,jobid,directory,out,location,resume,wms_proxy=False):
         '''Retrieve the output of a job on the grid'''
 
         binary = False
         
-        cmd = 'ngget'
+        if resume:
+          cmd = 'ngget --keep '
+        else:
+          cmd = 'ngget '
 
         if not self.active:
             logger.warning('NG plugin is not active.')
@@ -612,6 +667,14 @@ class Grid:
         outdir = directory + '/' + jobid.split('/')[-1]
 
         if outdir:
+            cmd = 'ls '+ directory + 'gmlog'
+            query = commands.getstatusoutput(cmd)
+            
+            
+            if query[0] == 0:
+              cmd = 'rm -rf '+ directory + 'gmlog'
+              query = commands.getstatusoutput(cmd)
+          
             if self.shell.system('mv %s/* %s' % (outdir,directory)) == 0:
                 try:
                     os.rmdir(outdir)
@@ -776,6 +839,28 @@ class Grid:
             self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return False
 
+    def clean(self,jobid):
+        '''Clean a job from site a job'''
+        # remove -k, info sustem is not updated before cleanup
+        cmd = 'ngclean '
+        
+        if not self.active:
+            logger.warning('NG plugin is not active.')
+            return False
+
+        if not self.credential.isValid():
+            logger.warning('GRID proxy not valid. Use gridProxy.renew() to renew it.')
+            return False
+
+        rc, output, m = self.shell.cmd1('%s%s %s' % (self.__get_cmd_prefix_hack__(),cmd,jobid),allowed_exit=[0,255])
+
+        if rc == 0:
+            return True
+        else:
+            logger.warning( "Failed to clean job %s.\n%s" % ( jobid, output ) )
+            self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
+            return False  
+
     def check_dq2_file_avaiability(self,lfcu,jobid):
         # Check if a file is available on NorduGrid
 
@@ -841,15 +926,18 @@ class NG(IBackend):
       "queue" : SimpleItem( defvalue = "", typelist=['str'], protected = 1, copyable = 0,
          doc = "Queue where job has been submitted" ),
       'middleware' : SimpleItem(defvalue="",typelist=['str'], protected=0,copyable=1,doc='Middleware type'),
-      'check_availability'   : SimpleItem(defvalue = False, typelist=['bool'], 
+      'check_availability' : SimpleItem(defvalue = False, typelist=['bool'], 
                                           doc = 'Check availability of DQ2 data on NG before submission'),
-      'clean' : SimpleItem( defvalue=[],typelist=['str'],sequence=1, doc= "Files to be cleaned after job")
+      'enable_resume' : SimpleItem(defvalue = False, typelist=['bool'], 
+                                          doc = 'Do not remove work dir at the noe in case you want to resume the job.'),
+      'clean' : SimpleItem( defvalue=[],typelist=['str'],sequence=1, doc= "Files to be cleaned after job"),
+      'flag'  : SimpleItem(defvalue=0,protected=1,copyable=0,hidden=1,doc='Hidden flag for skippink status update after resume.')
       } )
 
 
     _category = 'backends'
     _name =  'NG'
-    _exportmethods = ['check_proxy','peek','update_crls','setup','printstats']
+    _exportmethods = ['check_proxy','peek','update_crls','setup','printstats','resume','ngclean']
     
     def __init__(self):
         super(NG,self).__init__()
@@ -868,7 +956,14 @@ class NG(IBackend):
         except:
             logger.debug('load default NGRequirements')
             pass
-
+          
+    def __refresh_jobinfo__(self,job):
+      '''Refresh the lcg jobinfo. It will be called after resubmission.'''
+      job.backend.status   = '' 
+      job.backend.reason   = '' 
+      job.backend.actualCE = ''
+      job.backend.cputime = ''
+      job.backend.queue = ''
 
     def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
         '''Submit the master job to the grid'''
@@ -893,15 +988,17 @@ class NG(IBackend):
         mt = self.middleware.upper()
 
         job = self.getJobObject()
-
+               
         if not config['%s_ENABLE' % mt]:
             logger.warning('Operations of %s middleware are disabled.' % mt)
             return False
 
-        if len(job.subjobs) == 0:
-            return IBackend.master_resubmit(self,rjobs)
+        if not job.master and len(job.subjobs) == 0:
+          return IBackend.master_resubmit(self,rjobs)
+        elif job.master:
+          return self.master_bulk_resubmit(rjobs)
         else:
-            return self.master_bulk_resubmit(rjobs)
+          return self.master_bulk_resubmit(rjobs)
 
     def master_bulk_submit(self,rjobs,subjobconfigs,masterjobconfig):
         '''NG bulk submission'''
@@ -924,7 +1021,10 @@ class NG(IBackend):
         
         master_input_sandbox_tmp= []
         if sandbox_s > config['BoundSandboxLimit']:
-          master_input_sandbox_tmp += [grids[mt].upload(master_input_sandbox[0])]
+          inbox_srm, rc = grids[mt].upload(upfile=master_input_sandbox[0])
+          if rc != 0:
+            return False
+          master_input_sandbox_tmp += [ inbox_srm ]
         else:
           master_input_sandbox_tmp += [abspath]
           
@@ -960,19 +1060,14 @@ class NG(IBackend):
                 groupArea_s = os.path.getsize(abspath)
               
                 if groupArea_s > config['BoundSandboxLimit'] and i == 0: 
-                  group_area_srm = grids[mt].upload(sj.application.group_area.name)
-                  sj.application.group_area.name = group_area_srm
-                  sj.backend.clean += [group_area_srm]
-
-              elif group_area_srm:
-                # no uploading, sut add the groupArea
-                sj.application.group_area.name = group_area_srm
-                sj.backend.clean += [group_area_srm]
+                  group_area_srm, rc = grids[mt].upload(sj.application.group_area.name)
+                  if rc != 0:
+                    return False
 
             sj.name=job.name+'_'+str(i)
             i = i+1
             logger.info("preparing subjob %s" % sj.getFQID('.'))
-            xrslStrings += [sj.backend.preparejob(sc,master_input_sandbox,True)]
+            xrslStrings += [sj.backend.preparejob(sc,master_input_sandbox,True,group_area_srm)]
                 
           except Exception,x:
             log_user_exception()
@@ -1014,6 +1109,202 @@ class NG(IBackend):
                 sj.updateStatus('submitted')
                 
         return True
+
+    def master_bulk_resubmit(self,rjobs):
+      ''' bulk resubmission'''
+
+      from Ganga.Core import IncompleteJobSubmissionError
+      from Ganga.Utility.logging import log_user_exception
+      mt  = self.middleware.upper()
+
+      job = self.getJobObject()
+
+      if job.master != None:
+        mjobid = job.master.id
+        mworkspace = job.master.getInputWorkspace().getPath()
+        
+        orig_xrsl = job.master.getInputWorkspace().getPath("ganga.xrsl")
+        oxrsl = open(orig_xrsl,"r")
+        ox  = oxrsl.read().split('(&(* XRSL File created by Ganga *)')
+        oxrsl.close()
+
+        # remove the last patanthesis
+        x = ox[job.id + 1][:-1]
+
+        xl = '&(* XRSL File created by Ganga *)' + x
+      
+        xrslpath = job.getInputWorkspace().getPath() + 'ganga_'+ str(job.id)+'.xrsl'
+        out_file = open(xrslpath,'w')
+        out_file.write(xl)
+        out_file.close()
+
+        print 'singje sub job output ', job.outputdata.outputdata
+        output = job.outputdata.outputdata
+        
+      else:
+        mjobid = job.id
+        xrslpath = job.getInputWorkspace().getPath('ganga.xrsl')
+        mworkspace = job.getInputWorkspace().getPath()
+        output = job.outputdata.outputdata
+
+      # Clean output from previous runs    
+      # Chenck if still there, upload if not must be done for bith kind of jobs
+      inp_file = open(xrslpath,"r")
+      inp = inp_file.read()
+      inp_file.close()
+      sinp = inp.split('(')
+      for l in sinp:
+        for o in output:
+          if l.find(o) != -1 and l.find('srm') != -1:
+            sl = l.strip(')').split(' ')
+            for so in sl:
+              if so.find('srm') != -1:
+                srm_out = so.strip('"')
+                print 'removing ', srm_out
+                grids[mt].clean_gridfile(srm_out)
+
+
+      jobs = []
+      if job.master:
+        jobs += [job]
+      elif len(job.subjobs) > 0:
+        jobs = rjobs
+
+      # Test group area with job 1 (the subjob or first in a list) - has a clean 
+      sj = jobs[0]
+      
+      input_sandbox = None
+      on_grid = False
+      if len(sj.backend.clean) > 0:
+        for l in sj.backend.clean:
+          if l.find('input_sandbox') != -1:
+            input_sandbox = l
+            on_grid = grids[mt].ls_gridfile(input_sandbox)
+
+      print 'snadbox on grid ', on_grid
+      # check if sandbox still there
+        
+      if not on_grid:
+        master_input_sandbox = [mworkspace + '_input_sandbox_'+str(mjobid)+'_master.tgz']
+        abspath = os.path.abspath(master_input_sandbox[0])
+        sandbox_s = os.path.getsize(abspath)
+
+        master_input_sandbox_tmp = []
+        if sandbox_s > config['BoundSandboxLimit']:
+          print 'uploading master sandbox ',master_input_sandbox[0], ' to ', input_sandbox
+          inbox_srm, rc = grids[mt].upload(master_input_sandbox[0],input_sandbox)
+          if rc != 0:
+            return False
+          master_input_sandbox_tmp += [ inbox_srm ]
+        else:
+          master_input_sandbox_tmp += [abspath]
+          
+        master_input_sandbox = master_input_sandbox_tmp
+        print 'grid master sandbox ', master_input_sandbox
+
+      group_area_srm = None
+      i = 0
+      if sj.application.group_area.name:
+        if i == 0 and not sj.application.group_area.name.startswith('http'):
+          gr_name = sj.application.group_area.name.split('/')[-1]
+          if len(sj.backend.clean) > 0:
+            on_grid = False
+            for l in sj.backend.clean:
+              if l.find(gr_name) != -1:
+                group_area_srm = l
+                on_grid =  grids[mt].ls_gridfile(group_area_srm)
+                
+            if not on_grid :
+              abspath = os.path.abspath(sj.application.group_area.name)
+              groupArea_s = os.path.getsize(abspath)
+            
+              if groupArea_s > config['BoundSandboxLimit'] and i == 0:
+                group_area_srm,rc = grids[mt].upload(sj.application.group_area.name,group_area_srm)
+                if rc != 0:
+                  return False
+
+      for sj in jobs:
+        sj.updateStatus('submitting')
+
+      if os.path.getsize(xrslpath) >= 3:
+        master_jid = grids[mt].native_master_submit(xrslpath,self.CE,self.RejectCE)
+      else:
+        logger.error('No valid xrsl. Try to run j.backend.update_crls()')
+          
+      if not master_jid:
+        logger.error('Job submission failed not master_jid')
+        return False
+        #raise IncompleteJobSubmissionError(job.id,'native master job submission failed.')
+      else:
+        i = 0
+        for sj in jobs:
+          i = i + 1
+          if i>len(master_jid):
+            logger.warning("Not enough job IDs for subjobs - job submission most likely incomplete.")
+            continue  # Shoul have been return False ???
+
+          self.__refresh_jobinfo__(sj)
+          sj.backend.id=master_jid[i-1]
+          # job submitted update monitorint
+          #print 'sending moinitoring info'
+          #sj.getMonitoringService().submit()
+          #print 'update status submitted '
+          sj.updateStatus('submitted')
+
+      if job.master != None:
+        job.master.updateMasterJobStatus()
+      else:
+        job.updateMasterJobStatus()
+      
+      return True
+
+    def resume(self):
+      '''Resume job if posible '''
+
+      mt = self.middleware.upper()
+      job = self.getJobObject()
+      jobid = self.id
+
+      mjob = job.master
+
+      if len(job.subjobs) == 0:
+
+        if job.status != 'failed':
+          print logger.warning('Job not i staus failed. Can not be resumed.')
+          return False
+          
+        rc,retry = grids[mt].ngresume(jobid)
+        
+        if rc == True:
+          job.updateStatus('submitted')
+          if mjob != None:
+            mjob.updateMasterJobStatus()
+          job.backend.flag = 1
+        elif retry == False:
+          check = grids[mt].clean(job.backend.id)
+      else:
+        nsj = len(job.subjobs)
+        for i in range(nsj):
+          if job.subjobs[i].status == 'failed':
+            job.subjobs[i].backend.resume()
+
+      return True
+
+    def ngclean(self):
+      
+      mt = self.middleware.upper()
+      job = self.getJobObject()
+
+      mjob = job.master
+
+      if mjob != None:
+        rc = grids[mt].clean(job.backend.id)
+      else:
+        for sj in job.subjobs:
+          print 'cleaning job ', sj.getFQID()
+          rc = grids[mt].clean(sj.backend.id)
+
+      return True
 
     def peek(self, filename = None ):
         '''Get the jobs logging info'''
@@ -1083,6 +1374,40 @@ class NG(IBackend):
         self.id = grids[mt].submit(xrslpath,self.CE,self.RejectCE,self.requirements.timeout)
         return not self.id is None
 
+    def resubmit(self):
+        '''Resubmit the job'''
+        job = self.getJobObject()
+        
+        mt = self.middleware.upper()
+        xrslpath = job.getInputWorkspace().getPath("ganga.xrsl")
+        # Chenck if still there, upload if not must be done for bith kind of jobs
+        output = job.outputdata.outputdata
+        inp_file = open(xrslpath,"r")
+        inp = inp_file.read()
+        inp_file.close()
+        sinp = inp.split('(')
+        for l in sinp:
+          for o in output:
+            if l.find(o) != -1 and l.find('srm') != -1:
+              sl = l.strip(')').split(' ')
+              for so in sl:
+                if so.find('srm') != -1:
+                  srm_out = so.strip('"')
+                  print 'removing ', srm_out
+                  grids[mt].clean_gridfile(srm_out)
+        
+        if len(job.subjobs) == 0:
+          self.id = grids[mt].submit(xrslpath,self.CE,self.RejectCE)
+        else:
+          print 'job with subjobs'
+          return False
+        
+        if self.id:
+          # refresh the job information
+          self.__refresh_jobinfo__(job)
+
+        return not self.id is None
+
     def kill(self):
         '''Kill the job'''
 
@@ -1103,7 +1428,7 @@ class NG(IBackend):
         return grids[self.middleware.upper()].cancel(self.id)
 
 
-    def preparejob(self,jobconfig,master_input_sandbox,subjob):
+    def preparejob(self,jobconfig=None,master_input_sandbox=[],subjob=False,group_area=None):
       """Prepare NG job description file xrsl"""
 
       mt = self.middleware.upper()
@@ -1375,9 +1700,15 @@ class NG(IBackend):
         ga = jobconfig.env['GROUP_AREA_REMOTE'].split('/')[-1]
         infileString += "(" + ga + " " + jobconfig.env['GROUP_AREA_REMOTE'] + ")"
 
-      if jobconfig.env.has_key('GROUP_AREA'):       
-        infileString += "(" + jobconfig.env['GROUP_AREA'] + " " + job.application.group_area.name + ")"
-          
+      if jobconfig.env.has_key('GROUP_AREA'):
+        if group_area:
+          infileString += "(" + jobconfig.env['GROUP_AREA'] + " " + group_area + ")"
+
+          if group_area.startswith('srm'):
+               self.clean += [group_area]
+        else:
+          infileString += "(" + jobconfig.env['GROUP_AREA'] + " " + job.application.group_area.name + ")"
+         
       if infileString:
          xrslDict[ 'inputfiles' ] = infileString
 
@@ -1466,8 +1797,7 @@ class NG(IBackend):
             job.updateStatus('completed')
         elif status == "FAILED" or \
              status == "KILLED" or \
-             status == "DELETED" or \
-             status == "FINISHED":
+             status == "DELETED":
             job.updateStatus('failed')
 
         elif status == 'Cleared':
@@ -1541,8 +1871,12 @@ class NG(IBackend):
                 if job.backend.cputime != info['cputime']:
                     job.backend.cputime = info['cputime']    
         
-                if job.backend.status != info['status']:
+                if job.backend.status != info['status'] or job.backend.flag > 10:
                     logger.info('job %s has changed status to %s',job.getFQID('.'),info['status'])
+
+                    # reset the clock in case one would like to resubmit the job, get it out of the loop  
+                    job.backend.flag = 0
+                    
                     job.backend.status = info['status']
                     job.backend.reason = info['reason']
                     job.backend.exitcode = info['exit']
@@ -1571,13 +1905,19 @@ class NG(IBackend):
                         lfc_location = ""
                         if job.outputdata!=None:
                           lfc_location=job.outputdata.location
-                        pps_check = grids[mt].get_output(job.backend.id,outw.getPath(),output,lfc_location,wms_proxy=False)
+                        if info['status'] == 'FAILED' and job.backend.enable_resume:
+                          pps_check = grids[mt].get_output(job.backend.id,outw.getPath(),output,lfc_location,True,wms_proxy=False)
+                        else:
+                          pps_check = grids[mt].get_output(job.backend.id,outw.getPath(),output,lfc_location,False,wms_proxy=False)
                 
                     if pps_check:
                         #print 'updateMonitoring info staus ', info['status']
                         NG.updateGangaJobStatus(job,info['status'])
                     else:
                         job.updateStatus("failed")
+                        
+                elif job.backend.flag > 0:
+                  job.backend.flag += 1 
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
@@ -1627,7 +1967,9 @@ class NG(IBackend):
                 if sjob.backend.cputime != info['cputime']:
                     sjob.backend.cputime = info['cputime']    
 
-                if sjob.backend.status != info['status']:
+                if sjob.backend.status != info['status'] or sjob.backend.flag > 10:
+                    
+                    sjob.backend.flag =0  # reset the clock
                     logger.info('job %s has changed status to %s',sjob.getFQID('.'),info['status'])
                     sjob.backend.status = info['status']
                     sjob.backend.reason = info['reason']
@@ -1639,7 +1981,6 @@ class NG(IBackend):
                        info['status'] == 'KILLED' or \
                        info['status'] == 'DELETED' ) and sjob.status != 'completed':
 
-                        
                         output = True
                         if info['status'] == 'FAILED' or info['status'] == 'KILLED':
                             output = False
@@ -1647,6 +1988,8 @@ class NG(IBackend):
                             output = False
                                                       
                         # update to 'running' before changing to 'completing'
+                        if sjob.status == 'failed':
+                          sjob.updateStatus('submitted')
                         if sjob.status == 'submitted':
                             sjob.updateStatus('running')
     
@@ -1655,13 +1998,19 @@ class NG(IBackend):
                         # Post processing of a job
                         lfc_location = ""
                         if sjob.outputdata!=None:
-                            lfc_location=sjob.outputdata.location                                                
-                        pps_check = grids[mt].get_output(sjob.backend.id,outw.getPath(),output,lfc_location,wms_proxy=False)
+                            lfc_location=sjob.outputdata.location
+                        if info['status'] == 'FAILED' and sjob.backend.enable_resume:
+                          pps_check = grids[mt].get_output(sjob.backend.id,outw.getPath(),output,lfc_location,True,wms_proxy=False)
+                        else:
+                          pps_check = grids[mt].get_output(sjob.backend.id,outw.getPath(),output,lfc_location,False,wms_proxy=False)
 
                     if pps_check:
                         NG.updateGangaJobStatus(sjob,info['status'])
                     else:
                         sjob.updateStatus("failed")
+
+                elif sjob.backend.flag > 0:
+                  sjob.backend.flag += 1
 
                 if sjob:
                     if sjob.status not in final:
@@ -1838,6 +2187,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.23  2009/02/26 14:38:20  bsamset
+# Set empty string for job ID for jobs that failed to submit
+#
 # Revision 1.22  2009/02/19 13:37:33  bsamset
 # Added capability to move files to local disk from symlinks, also added banned reprod queues to xrsl
 #
