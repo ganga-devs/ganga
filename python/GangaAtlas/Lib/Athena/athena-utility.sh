@@ -232,13 +232,13 @@ get_pybin () {
     # Determine python32 executable location 
 
     which python32; echo $? > retcode.tmp
-    retcode=`cat retcode.tmp`
+    retcodepy=`cat retcode.tmp`
     rm -f retcode.tmp
     #if [ $retcode -eq 0 ] && [ -z `echo $ATLAS_RELEASE | grep 14.` ] ; then
-    if [ $retcode -eq 0 ]; then
+    if [ $retcodepy -eq 0 ]; then
 	export python32bin=`which python32`
     fi
-    retcode=0
+
 }
 
 # detecting the se type
