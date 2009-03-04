@@ -1,10 +1,10 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.24 2009-03-04 07:57:51 pajchel Exp $
+# $Id: NG.py,v 1.25 2009-03-04 10:46:13 gjelsten Exp $
 ###############################################################################
 #
-# NG backend
+# NG backend 
 #
 # Maintained by the Oslo group (B. Samset, K. Pajchel)
 #
@@ -2187,6 +2187,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.24  2009/03/04 07:57:51  pajchel
+# Resume, resubmit, ngclean
+#
 # Revision 1.23  2009/02/26 14:38:20  bsamset
 # Set empty string for job ID for jobs that failed to submit
 #
