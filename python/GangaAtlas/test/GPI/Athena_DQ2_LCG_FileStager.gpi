@@ -7,7 +7,7 @@ import getpass
 joboption = '/tmp/ganga_athena_dq2_lcg_filestager_testing_data-%s/AnalysisSkeleton_topOptions_v14220.py' % getpass.getuser()
 archivefile = '/tmp/ganga_athena_dq2_lcg_filestager_testing_data-%s/UserAnalysis-00003.tar.gz' % getpass.getuser()
 
-config['TestingFramework']['timeout']=1200
+config['TestingFramework']['timeout']=1800
 
 j = Job()
 j.application=Athena()
@@ -28,7 +28,7 @@ j.backend=LCG()
 j.backend.requirements.cloud='DE'
 assert(j.submit()==True)
 
-assert sleep_until_completed(j,1200)
+assert sleep_until_completed(j,1800)
 
 # removing all jobs
 j.remove()
