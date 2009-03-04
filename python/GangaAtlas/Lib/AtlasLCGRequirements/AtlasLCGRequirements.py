@@ -346,7 +346,7 @@ class AtlasLCGRequirements(LCGRequirements):
         'cputime'         : SimpleItem(defvalue=None, typelist=['type(None)','int'], doc='Minimum available CPU time (min)'),
         'walltime'        : SimpleItem(defvalue=None, typelist=['type(None)','int'], doc='Mimimum available total time (min)'),
         'ipconnectivity'  : SimpleItem(defvalue=False,doc='External connectivity'),
-        'dq2client_version'  : SimpleItem(defvalue='0.1.22',doc='DQ2 client version on the computing element'),
+        'dq2client_version'  : SimpleItem(defvalue='',doc='DQ2 client version on the computing element'),
         'other'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Other Requirements'),
         'sites'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names'),
         'excluded_sites'  : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names to be excluded'),
