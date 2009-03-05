@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.17 2009-03-05 15:03:28 dvanders Exp $
+# $Id: Panda.py,v 1.18 2009-03-05 15:58:15 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -156,7 +156,7 @@ class Panda(IBackend):
 #        'araOutFile'    : SimpleItem(defvalue=[],protected=0,copyable=1,doc='define output files for ARA, e.g., [\'output1.root\',\'output2.root\']'),
 #        'trf'           : SimpleItem(defvalue='',protected=0,copyable=1,doc='run transformation, e.g. .trf = "csc_atlfast_trf.py %IN %OUT.AOD.root %OUT.ntuple.root -1 0"'),
         'supStream'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='suppress some output streams. e.g., [\'ESD\',\'TAG\']'),
-        'dbRelease'     : SimpleItem(defvalue='',protected=0,copyable=1,doc='DBRelease or CDRelease (DatasetName:FileName). e.g., ddo.000001.Atlas.Ideal.DBRelease.v050101:DBRelease-5.1.1.tar.gz'),
+        'dbRelease'     : SimpleItem(defvalue='',protected=0,copyable=1,doc='DEPRECATED. USE Athena.atlas_dbrelease. DBRelease or CDRelease (DatasetName:FileName). e.g., ddo.000001.Atlas.Ideal.DBRelease.v050101:DBRelease-5.1.1.tar.gz'),
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='Panda job id'),
         'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Panda job status'),
         'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
@@ -386,6 +386,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.17  2009/03/05 15:03:28  dvanders
+# https://savannah.cern.ch/bugs/?46836
+#
 # Revision 1.16  2009/01/29 17:22:27  dvanders
 # extFile option for additional files to ship to worker node
 #

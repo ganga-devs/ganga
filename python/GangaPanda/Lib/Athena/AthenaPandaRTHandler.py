@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.17 2009-01-29 17:22:27 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.18 2009-03-05 15:58:14 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -25,17 +25,17 @@ from taskbuffer.FileSpec import FileSpec
 import AthenaUtils
 
 
-def getDBDatasets(jobO,trf,dbRelease):
+def getDBDatasets(jobO,trf,dbrelease):
     # get DB datasets
     dbrFiles  = {}
     dbrDsList = []
-    if trf or dbRelease != '':
+    if trf or dbrelease != '':
         if trf:
             # parse jobO for TRF
             tmpItems = jobO.split()
         else:
             # mimic a trf parameter to reuse following algorithm
-            tmpItems = ['%DB='+dbRelease]
+            tmpItems = ['%DB='+dbrelease]
         # look for DBRelease
         for tmpItem in tmpItems:
             match = re.search('%DB=([^:]+):(.+)$',tmpItem)
@@ -76,8 +76,17 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         # validate parameters
         # check DBRelease
-        if job.backend.dbRelease != '' and job.backend.dbRelease.find(':') == -1:
-            raise ApplicationConfigurationError(None,"ERROR : invalid argument for backend.dbRelease. Must be 'DatasetName:FileName'")
+        if job.backend.dbRelease:
+            logger.warning('Panda.dbRelease is deprecated. Use Athena.atlas_dbrelease instead.')
+
+        self.dbrelease = ''
+        if job.backend.dbRelease:
+            self.dbrelease = job.backend.dbRelease
+        if app.atlas_dbrelease:
+            self.dbrelease = app.atlas_dbrelease
+
+        if self.dbrelease != '' and self.dbrelease.find(':') == -1:
+            raise ApplicationConfigurationError(None,"ERROR : invalid argument for DB Release. Must be 'DatasetName:FileName'")
          
 #       parse job options file
         if job.backend.ares:
@@ -294,7 +303,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         flog.destinationDBlock = self.libDataset
         jspec.addFile(flog)
 
-        self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',job.backend.dbRelease)
+        self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
 
 #       prepare output files
 
@@ -604,8 +613,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # set jobO parameter
         param += '-j "%s" ' % urllib.quote(self.job_options)
         # DBRelease
-        if job.backend.dbRelease != '':
-            tmpItems = job.backend.dbRelease.split(':')
+        if self.dbrelease != '':
+            tmpItems = self.dbrelease.split(':')
             tmpDbrDS  = tmpItems[0]
             tmpDbrLFN = tmpItems[1]
             # instantiate  FileSpec
