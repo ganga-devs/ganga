@@ -374,9 +374,6 @@ class Dirac(IBackend):
         if not job.status == 'completed':
             logger.warning('LFN query will only work for completed jobs')
             return []
-        if not job.outputdata:
-            logger.warning('The job has no outputdata, and so no LFNs')
-            return []
         
         command = DiracUtils.getOutputDataLFNs_command(self.id)
         dw = diracwrapper(command)
