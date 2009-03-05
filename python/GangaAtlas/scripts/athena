@@ -103,6 +103,7 @@ p.add_option('--excludefiles', action='store', type='string', dest='excludefiles
 p.add_option('--athena_release', action='store', type='string', dest='athena_release', help='Athena release version to be used' )
 p.add_option('--athena_production', action='store', type='string', dest='athena_production', help='AtlasProduction transformation cache release version to be used' )
 p.add_option('--athena_exe', action='store', type='choice', dest='athena_exe', choices = ['ATHENA', 'PYARA', 'ROOT' ], default='ATHENA', help='Executable type: ATHENA, PYARA, ROOT [default: ATHENA]')
+p.add_option('--athena_dbrelease', action='store', type='string', dest='athena_dbrelease', help='ATLAS DBRelease DQ2 dataset and DQ2Release tar file (DatasetName:FileName). e.g., ddo.000001.Atlas.Ideal.DBRelease.v050101:DBRelease-5.1.1.tar.gz')
 p.add_option('--user_area', action='store', type='string', dest='user_area', help='Tar file of user athena code area produced e.g. by a previous Ganga job' )
 p.add_option('--group_area', action='store', type='string', dest='group_area', help='Tar file of GroupArea produced e.g. by a previous Ganga job' )
 p.add_option('--user_setupfile', action='store', type='string', dest='user_setupfile', help='User setup script for special setup on the grid worker node' )
@@ -183,6 +184,8 @@ if opt.athena_production:
     j.application.atlas_production=opt.athena_production
 if opt.athena_exe:
     j.application.atlas_exetype=opt.athena_exe
+if opt.athena_dbrelease:
+    j.application.atlas_dbrelease=opt.athena_dbrelease
 
 if opt.user_area:
     j.application.user_area=opt.user_area
