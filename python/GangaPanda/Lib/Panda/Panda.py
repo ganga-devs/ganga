@@ -1,11 +1,11 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.16 2009-01-29 17:22:27 dvanders Exp $
+# $Id: Panda.py,v 1.17 2009-03-05 15:03:28 dvanders Exp $
 ################################################################################
                                                                                                               
 
-import os, sys, time, commands, re, tempfile
+import os, sys, time, commands, re, tempfile, exceptions
 import cPickle as pickle
 
 from Ganga.GPIDev.Base import GangaObject
@@ -386,6 +386,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.16  2009/01/29 17:22:27  dvanders
+# extFile option for additional files to ship to worker node
+#
 # Revision 1.15  2009/01/29 14:14:05  dvanders
 # use panda-client 0.1.6
 # use AthenaUtils to extract run config and detect athena env
