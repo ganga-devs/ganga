@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: TestDiracSplitter.py,v 1.4 2008-11-13 10:08:37 jwilliam Exp $
+# $Id: TestDiracSplitter.py,v 1.5 2009-03-05 16:04:02 wreece Exp $
 ################################################################################
 from __future__ import division
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
@@ -3240,8 +3240,32 @@ class TestDiracSplitter(GangaGPITestCase):
             j.kill()
             j2.kill()
             
-            
-            
-            
-            
+    def testSplittingPerformance(self):
+        """Test for benchmarking the DiracSplitter algorithm."""
+        
+        import random
+        import time
+        
+        numberOfLFNs = 1e2
+        
+        data = MockDataset()
+        sites = ['A','B','C','D','E','F']
+        for i in range(numberOfLFNs):
+            replicas = []
+            for j in range(4):
+                c = random.choice(sites)
+                if not c in replicas:
+                    replicas.append(c)
+            data.files.append(MockDataFile(name = 'foo',replicas = replicas))
+        assert len(data.files) == numberOfLFNs, 'DataSet should be build'
+        
 
+        ds = _diracSplitter(10,numberOfLFNs,False)
+        numberOfTimes = 3.0
+        times = 0
+        for i in range(numberOfTimes):
+            before = time.clock()
+            ds.split(data, data)
+            after = time.clock()
+            times += after - before
+        print 'Average Time:', times/numberOfTimes
