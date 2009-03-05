@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.24 2009-03-02 08:17:33 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.25 2009-03-05 12:33:32 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -346,7 +346,7 @@ class DQ2Dataset(Dataset):
 
         return not state is None
     
-    def get_contents(self,backnav=False, overlap=True, filesize=False):
+    def get_contents(self,backnav=False, overlap=True, filesize=False, size=False):
         '''Helper function to access dataset content'''
 
         allcontents = []
@@ -424,35 +424,45 @@ class DQ2Dataset(Dataset):
             
         self.number_of_files = len(allcontents)
         diffcontentsNew = {}
-        if filesize:
+        allcontentsSize = []
+        diffcontentsSize = {}
+        if filesize or size:
             # Sum up all dataset filesizes:
             sumfilesize = 0 
             for guid, lfn in allcontents:
                 if contents_size.has_key(guid):
                     try:
                         sumfilesize += contents_size[guid]
+                        allcontentsSize.append(guid, lfn, contents_size[guid])
                     except:
                         pass
             # Sum up dataset filesize per dataset:
             sumfilesizeDatasets = {}
             for dataset, contents in diffcontents.iteritems():
+                contentsSize = []
                 sumfilesizeDataset = 0
                 for guid, lfn in contents:
                     if contents_size.has_key(guid):
                         try:
                             sumfilesizeDataset += contents_size[guid]
+                            contentsSize.append(guid, lfn, contents_size[guid])
                         except:
                             pass
-                diffcontentsNew[dataset] = (contents, sumfilesizeDataset)        
+                diffcontentsNew[dataset] = (contents, sumfilesizeDataset)
+                diffcontentsSize[dataset] = contentsSize
         
         if overlap:
             if filesize:
                 return allcontents, sumfilesize
+            elif size:
+                return allcontentsSize
             else:
                 return allcontents
         else:
             if filesize:
                 return diffcontentsNew
+            elif size:
+                return diffcontentsSize
             else:
                 return diffcontents
 
@@ -1237,6 +1247,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.24  2009/03/02 08:17:33  elmsheus
+#Fix #47520: TypeError when no file size information available in DDM
+#
 #Revision 1.23  2009/02/26 14:26:05  elmsheus
 #Sort DQ2Dataset by lfn/names
 #
