@@ -37,6 +37,7 @@ app.script.append('%s/DVTutorial_1.py' % sol_dir)
 app.script.append('%s/options/Bs2JpsiPhi2008.py' % top_dir)
 
 j.submit()
+os.system('rm -rf %s' % j.application.user_release_area)
 assert sleep_until_completed(j,1200)
 fname = join(j.outputdir,'stdout')
 file = open(fname)
@@ -50,4 +51,4 @@ for line in file.readlines():
 file.close()
 assert found_line, 'special string not found'
 
-os.system('rm -rf %s' % j.application.user_release_area)
+
