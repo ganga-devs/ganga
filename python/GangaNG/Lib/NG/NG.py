@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.25 2009-03-04 10:46:13 gjelsten Exp $
+# $Id: NG.py,v 1.26 2009-03-06 00:03:05 pajchel Exp $
 ###############################################################################
 #
 # NG backend 
@@ -743,7 +743,7 @@ class Grid:
                   adler32a  += ['ad:' + adler32]
                 except:
                   adler32 = None
-                  print ":-( adler32 missing?",outp
+                  #print ":-( adler32 missing?",outp
                 
                 try:
                     tdate = file.getElementsByTagName ("date")[0].firstChild.data
@@ -1138,7 +1138,6 @@ class NG(IBackend):
         out_file.write(xl)
         out_file.close()
 
-        print 'singje sub job output ', job.outputdata.outputdata
         output = job.outputdata.outputdata
         
       else:
@@ -1160,7 +1159,6 @@ class NG(IBackend):
             for so in sl:
               if so.find('srm') != -1:
                 srm_out = so.strip('"')
-                print 'removing ', srm_out
                 grids[mt].clean_gridfile(srm_out)
 
 
@@ -1181,7 +1179,6 @@ class NG(IBackend):
             input_sandbox = l
             on_grid = grids[mt].ls_gridfile(input_sandbox)
 
-      print 'snadbox on grid ', on_grid
       # check if sandbox still there
         
       if not on_grid:
@@ -1191,7 +1188,6 @@ class NG(IBackend):
 
         master_input_sandbox_tmp = []
         if sandbox_s > config['BoundSandboxLimit']:
-          print 'uploading master sandbox ',master_input_sandbox[0], ' to ', input_sandbox
           inbox_srm, rc = grids[mt].upload(master_input_sandbox[0],input_sandbox)
           if rc != 0:
             return False
@@ -1200,7 +1196,6 @@ class NG(IBackend):
           master_input_sandbox_tmp += [abspath]
           
         master_input_sandbox = master_input_sandbox_tmp
-        print 'grid master sandbox ', master_input_sandbox
 
       group_area_srm = None
       i = 0
@@ -1301,7 +1296,6 @@ class NG(IBackend):
         rc = grids[mt].clean(job.backend.id)
       else:
         for sj in job.subjobs:
-          print 'cleaning job ', sj.getFQID()
           rc = grids[mt].clean(sj.backend.id)
 
       return True
@@ -1393,14 +1387,10 @@ class NG(IBackend):
               for so in sl:
                 if so.find('srm') != -1:
                   srm_out = so.strip('"')
-                  print 'removing ', srm_out
                   grids[mt].clean_gridfile(srm_out)
         
         if len(job.subjobs) == 0:
           self.id = grids[mt].submit(xrslpath,self.CE,self.RejectCE)
-        else:
-          print 'job with subjobs'
-          return False
         
         if self.id:
           # refresh the job information
@@ -2187,6 +2177,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.25  2009/03/04 10:46:13  gjelsten
+# Testing; no changes
+#
 # Revision 1.24  2009/03/04 07:57:51  pajchel
 # Resume, resubmit, ngclean
 #
