@@ -2,7 +2,6 @@ import os
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaLHCb.Lib.Gaudi.Gaudi import Gaudi
 from GangaLHCb.Lib.Gaudi.PythonOptionsParser import PythonOptionsParser
-from GangaLHCb.Lib.Gaudi.GaudiUtils import gaudishell_setenv
 import Ganga.Utility.Config 
 
 class TestPythonOptionsParser(GangaGPITestCase):
@@ -10,10 +9,10 @@ class TestPythonOptionsParser(GangaGPITestCase):
     def setUp(self):
         job = Job(application=Gauss())
         gauss = job.application._impl
-        shell = gaudishell_setenv(gauss)
+        gauss._getshell()
         optsfiles = ['./TestGaudi/Gauss.opts']
         self.extraopts = 'EventSelector(Input=[\"DATAFILE=\'LFN:dummy.dst\' TYP=\'POOL_ROOTTREE\' OPT=\'READ\'\"])'
-        self.parser = PythonOptionsParser(optsfiles,self.extraopts,shell)
+        self.parser = PythonOptionsParser(optsfiles,self.extraopts,gauss.shell)
         self.job = job
         
     def test_PythonOptionsParser__get_opts_dict_and_pkl_string(self):

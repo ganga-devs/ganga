@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: TestDiracSplitter.py,v 1.5 2009-03-05 16:04:02 wreece Exp $
+# $Id: TestDiracSplitter.py,v 1.6 2009-03-06 11:00:41 jwilliam Exp $
 ################################################################################
 from __future__ import division
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
@@ -3215,6 +3215,8 @@ class TestDiracSplitter(GangaGPITestCase):
                 assert f.replicas, 'Test needs files correctly resolved in LFC'
             
             j = Job(backend = Dirac(), application = DaVinci())
+            j.application.platform = config.DIRAC.AllowedPlatforms[0]
+            print 'platform =', j.application.platform
             j.backend.CPUTime = 600
             j.inputdata = data
             j.splitter = DiracSplitter(filesPerJob = 20)

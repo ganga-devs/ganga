@@ -1,8 +1,7 @@
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from GangaLHCb.Lib.Gaudi.GaudiLSFRunTimeHandler import GaudiLSFRunTimeHandler
+from GangaLHCb.Lib.Gaudi.GaudiRunTimeHandler import GaudiRunTimeHandler
 try:
     from GangaLHCb.Lib.Dirac.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
-    from GangaLHCb.Lib.Dirac.GaudiPythonDiracRunTimeHandler import GaudiPythonDiracRunTimeHandler
     from GangaLHCb.Lib.Dirac.RootDiracRunTimeHandler import RootDiracRunTimeHandler
     loadRootHandler=True
 except ImportError:
@@ -14,12 +13,12 @@ import os.path
 DAVINCI_VERSION=None
 # Add Local runtimehandler for Testsubmitter
 def addLocalTestSubmitter():
-    allHandlers.add('DaVinci', 'TestSubmitter', GaudiLSFRunTimeHandler)
+    allHandlers.add('DaVinci', 'TestSubmitter', GaudiRunTimeHandler)
 
 # Add Dirac runtimehandler for Testsubmitter
 def addDiracTestSubmitter():
     allHandlers.add('DaVinci', 'TestSubmitter', GaudiDiracRunTimeHandler)
-    allHandlers.add('GaudiPython', 'TestSubmitter', GaudiPythonDiracRunTimeHandler)
+    allHandlers.add('GaudiPython', 'TestSubmitter', GaudiDiracRunTimeHandler)
     if loadRootHandler:
         allHandlers.add('Root', 'TestSubmitter', RootDiracRunTimeHandler)
 
