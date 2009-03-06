@@ -81,6 +81,9 @@ class SplitByFiles(ISplitter):
                                    doc='Number of files per subjob'),        
         'maxFiles' : SimpleItem(defvalue=-1, doc=docstr)})
 
+    def _splitFiles(self,inputs):
+        return simple_split(self.filesPerJob,inputs)
+
     def split(self,job):
         if self.filesPerJob < 1:
             logger.error('filesPerJob must be greater than 0.')
@@ -104,7 +107,7 @@ class SplitByFiles(ISplitter):
         for i in self._extra.inputdata.files:
             dataset_files[i.name] = i
 
-        datasetlist = simple_split(self.filesPerJob, inputs)
+        datasetlist = self._splitFiles(inputs)
         cache_date = self._extra.inputdata.cache_date
         if cache_date:
             _time = time.mktime(time.strptime(cache_date))
