@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.26 2009-03-06 00:03:05 pajchel Exp $
+# $Id: NG.py,v 1.27 2009-03-06 14:31:20 bsamset Exp $
 ###############################################################################
 #
 # NG backend 
@@ -487,8 +487,22 @@ class Grid:
             logger.warning('No jobs in status')
             return []
 
+
+        jobidlist = []
+        for j in jobids:
+          if not j.strip() == "":
+            jobidlist.append(j)
+
+        if len(jobidlist)==0:
+            #logger.warning('No jobs in list with acceptable ID')
+            return []
+
         idsfile = tempfile.mktemp('.jids')
-        file(idsfile,'w').write('\n'.join(jobids)+'\n')
+        file(idsfile,'w').write('\n'.join(jobidlist)+'\n')
+        #for l in file(idsfile).readlines():
+        #  print "IDSFILE: %s" % l
+
+
         # ngstat -i <file> file containing list of job ids  
         rc, output, m = self.shell.cmd1('%s%s -i %s' % (self.__get_cmd_prefix_hack__(),cmd,idsfile), allowed_exit=[0,255])
         os.unlink(idsfile)
@@ -507,7 +521,7 @@ class Grid:
         re_usedcpu = re.compile('^\s*Used CPU Time:\s+(.*\S)\s*$')
         re_reqcpu = re.compile('^\s*Required CPU Time:\s+(.*\S)\s*$')
         info = []
-          
+
         for line in output.split('\n'):
             match = re_id.match(line)
             if match:
@@ -576,7 +590,7 @@ class Grid:
             if match:
                 info[-1]['requestedcputime'] = match.group(1)
                 continue    
- 
+
         return info
 
     def get_loginfo(self,jobid,outfile,verbosity=' '):
@@ -2177,6 +2191,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.26  2009/03/06 00:03:05  pajchel
+# print statements removed
+#
 # Revision 1.25  2009/03/04 10:46:13  gjelsten
 # Testing; no changes
 #
