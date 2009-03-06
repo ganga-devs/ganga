@@ -444,43 +444,6 @@ if __name__ == '__main__':
     sys.exit(system(commandline)/256)
   """ % cmdline
 
-def gaudipython_dirac_wrapper(cmdline):
-    return """#!/usr/bin/env python
-'''Script to run Gaudi application'''
-def setEnvironment(key, value, update=False):
-    '''Sets an environment variable. If update=True, it preends it to
-    the current value with os.pathsep as the seperator.'''
-    from os import environ,pathsep
-    if update and environ.has_key(key):
-        value += (pathsep + environ[key])#prepend
-    environ[key] = value
-
-# Main
-if __name__ == '__main__':
-
-    from os import curdir, system, environ, pathsep, sep
-    from os.path import join
-    import sys    
-
-    commandline = %s
-
-    sys.stdout.flush()
-    sys.stderr.flush()
-
-    #exec the script
-    print 'Executing ',commandline
-    sys.stdout.flush()
-    sys.stderr.flush()
-    sys.exit(system(commandline)/256)
-  """ % cmdline
-
-def create_gaudipython_wrapper_script(name):
-    return """
-from Gaudi.Configuration import *
-importOptions('data.opts')
-execfile('%s')
-""" % name
-
 def root_dirac_wrapper(cmdline,path,use_python):
     script = """#!/usr/bin/env python
 '''Script to run root with cint or python.'''

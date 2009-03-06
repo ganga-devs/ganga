@@ -14,8 +14,10 @@ from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
 import DiracShared
 import Ganga.Utility.Config
 import Ganga.Utility.logging
-from GangaLHCb.Lib.LHCbDataset import LHCbDataset,LHCbDataFile,\
-     string_dataset_shortcut,string_datafile_shortcut
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset, \
+     string_dataset_shortcut
+from GangaLHCb.Lib.LHCbDataset.LHCbDataFile import LHCbDataFile, \
+     string_datafile_shortcut
 import DiracUtils
 
 try:
@@ -97,7 +99,8 @@ class Dirac(IBackend):
     
     _schema = Schema(Version(2, 0),schema)
 
-    _exportmethods = ['getOutput','getOutputData','getOutputSandbox','getOutputDataLFNs','peek']
+    _exportmethods = ['getOutput','getOutputData','getOutputSandbox',
+                      'getOutputDataLFNs','peek']
     _packed_input_sandbox = True
     _category="backends"
     _name = 'Dirac'
@@ -368,7 +371,8 @@ class Dirac(IBackend):
         return downloadedFiles
 
     def getOutputDataLFNs(self):
-        """Get a list of outputdata that has been uploaded by Dirac. Excludes the outputsandbox if it is there."""
+        """Get a list of outputdata that has been uploaded by Dirac. Excludes
+        the outputsandbox if it is there."""
         
         job = self.getJobObject()
         if not job.status == 'completed':
@@ -381,7 +385,8 @@ class Dirac(IBackend):
         lfns = []
         if result is not None:
             if not result.get('OK',False):
-                logger.warning("LFNs not found - Message was '%s'.",result.get('Message',''))
+                logger.warning("LFNs not found - Message was '%s'.",
+                               result.get('Message',''))
             else:
                 lfns = result.get('Value',[])
         else:
