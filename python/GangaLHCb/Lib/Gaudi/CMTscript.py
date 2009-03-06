@@ -1,10 +1,5 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """Write a script containing CMT command which can subsequence be executed."""
-
-__author__ = 'U. Egede'
-__date__ = "$Date: 2008-11-21 11:28:41 $"
-__revision__ = "$Revision: 1.5 $"
-
 from Ganga.GPI import *
 import Ganga.Utility.logging
 import os
@@ -69,7 +64,7 @@ def CMTscript(app,command=''):
    tmpcmtdir = os.path.join(tmppath,'cmttemp','v1','cmt')
    reqfname  = os.path.join(tmpcmtdir,'requirements')
 
-   appname = app.appname
+   appname = app.get_gaudi_appname()
    if not os.path.exists(tmpcmtdir):
       os.makedirs(tmpcmtdir) 
    reqfile = open(reqfname,'w')
@@ -88,7 +83,7 @@ def CMTscript(app,command=''):
    script+='export CMTCONFIG='+str(app.platform)+'\n' 
    script+='export User_release_area='+str(app.user_release_area)+'\n'
    script+='. $LHCBHOME/scripts/setenvProject.sh '
-   script+= '%s %s %s\n' % (app.setupProjectOptions,app.appname,app.version)
+   script+= '%s %s %s\n' % (app.setupProjectOptions,appname,app.version)
    script+='[ x$CMTPATH == x ] || cd ' + str(app.user_release_area) + '\n'
    script+='pwd\n'
    command=command.replace('###CMT###',cmtcmd + ' ' + cmtoption)

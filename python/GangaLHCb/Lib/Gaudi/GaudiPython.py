@@ -1,30 +1,19 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
 '''Application handler for GaudiPython applications in LHCb.'''
-
-__author__ = 'Ulrik Egede'
-__date__ = "$Date: 2009-02-19 11:07:03 $"
-__revision__ = "$Revision: 1.12 $"
-
 import os
-import re
-import sys
+from os.path import split,join
 import inspect
-from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Schema import *
-from Ganga.Core import ApplicationConfigurationError
-import Ganga.Utility.Config
-from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.File import  File
-from GangaLHCb.Lib.Gaudi import GaudiExtras
-from GaudiUtils import *
+from Francesc import *
+from Ganga.Utility.util import unique
 
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-class GaudiPython(IApplication):
+class GaudiPython(Francesc):
     """The GaudiPython Application handler
     
     The GaudiPython application handler is for running LHCb GaudiPython
@@ -47,7 +36,7 @@ class GaudiPython(IApplication):
     app.script = ['/afs/...../myscript.py']
 
     # Define dataset
-    ds = LHCbDataset(['LFN:foo','LFN:bar'])
+    ds = LHCbDataset(['LFN:spam','LFN:eggs'])
 
     # Construct and submit job object
     j=Job(application=app,backend=Dirac(),inputdata=ds)
@@ -56,71 +45,44 @@ class GaudiPython(IApplication):
 """
     _name = 'GaudiPython'
     _category = 'applications'
-    
-    schema = {}
+
+    schema = get_common_gaudi_schema()
     docstr = 'The name of the script to execute. A copy will be made ' + \
              'at submission time'
     schema['script'] = FileItem(sequence=1,strict_sequence=0,defvalue=[],
                                 doc=docstr)
-    docstr = 'The version of the application (like "v19r2")'
-    schema['version'] = SimpleItem(defvalue=None,
-                                   typelist=['str','type(None)'],doc=docstr)
-    docstr = 'The platform the application is configured for (e.g. ' + \
-             '"slc4_ia32_gcc34")'
-    schema['platform'] = SimpleItem(defvalue=None,
-                                    typelist=['str','type(None)'],doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
     schema['project'] = SimpleItem(defvalue=None,
                                    typelist=['str','type(None)'],
                                    doc=docstr)
-    docstr = 'Extra options to be passed onto the SetupProject command ' + \
-             'used for configuring the environment. As an example ' + \
-             'setting it to \'--dev\' will give access to the DEV area. ' + \
-             'For full documentation of the available options see ' + \
-             'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
-    schema['setupProjectOptions'] = SimpleItem(defvalue='',
-                                               typelist=['str','type(None)'],
-                                               doc=docstr)  
     _schema = Schema(Version(1, 1), schema)                                    
 
-
     def _auto__init__(self):
-        if (not self.project):
-            self.project = 'DaVinci'            
-        if (not self.version):
-            self.version = guess_version(self.project)
-        if (not self.platform):
-            self.platform = get_user_platform()
+        if (not self.project): self.project = 'DaVinci'
+        self._init(self.project,False)
         
     def master_configure(self):
-        '''Configures the application'''
-
-        self.appname = self.project
-        self.shell = gaudishell_setenv(self)
-
+        self._master_configure()
         self._check_inputs()
-        job=self.getJobObject()
-        self.extra = GaudiExtras()
-        if job.inputdata:
-            self.extra.inputdata = job.inputdata
-            self.extra.inputdata.datatype_string=job.inputdata.datatype_string
-        
-        self.package = available_packs(self.project)
-
-        return (None,None)
+        self.extra.master_input_files += self.script[:]
+        return (None,self.extra)
 
     def configure(self,master_appconfig):
-        job=self.getJobObject()
-        self.dataopts = dataset_to_options_string(job.inputdata)
-        return (None,None)
+        self._configure()
+        name = join('.',self.script[0].subdir,split(self.script[0].name)[-1])
+        script =  "from Gaudi.Configuration import *\n"
+        script += "importOptions('data.opts')\n"
+        script += "execfile(\'%s\')\n" % name
+        self.extra.input_buffers['gaudiPythonwrapper.py'] = script
+        outsb = collect_lhcb_filelist(self.getJobObject().outputsandbox)
+        self.extra.outputsandbox = unique(outsb)
+        return (None,self.extra)
             
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""
-        
-        check_gaudi_inputs(self.script,self.project)
-
+        self._check_gaudi_inputs(self.script,self.project)
         if len(self.script)==0:
-            logger.warning("No script defined. Will use a default " + \
+            logger.warning("No script defined. Will use a default " \
                            'script which is probably not what you want.')
             self.script = [File(os.path.join(
                 os.path.dirname(inspect.getsourcefile(GaudiPython)),
@@ -138,44 +100,48 @@ class Bender(GaudiPython):
     """Bender application.
 
     Hack to convert Bender into a Ganga application.
-
 """
     _name = 'Bender'
     _category = 'applications'
     _schema = bschema.inherit_copy()
+    _exportmethods = ['getpack', 'make', 'cmt']
     
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""
-        
-        check_gaudi_inputs(self.script,self.project)
-
+        self._check_gaudi_inputs(self.script,self.project)        
         if len(self.script)==0:
-            logger.warning("No script defined. Will use a default " + \
+            logger.warning("No script defined. Will use a default " \
                            'script which is probably not what you want.')
             self.script = [File(os.path.join(
                 os.path.dirname(inspect.getsourcefile(GaudiPython)),
                 'options/BenderExample.py'))]
         return
 
+    # add the next 3 b/c of bug in exportmethods dealing w/ grandchildren
+    def getpack(self,options=''):
+        return super(Bender,self).getpack(options)
+
+    def make(self,argument=''):
+        return super(Bender,self).make(argument)
+
+    def cmt(self,command):
+        return super(Bender,self).cmt(command)
+
+    for method in ['getpack','make','cmt']:
+        setattr(eval(method),"__doc__", getattr(GaudiPython, method).__doc__)
+
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-#
 # Associate the correct run-time handlers to GaudiPython for various backends.
-#
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from GangaLHCb.Lib.Gaudi.GaudiPythonLSFRunTimeHandler \
-     import GaudiPythonLSFRunTimeHandler
-from GangaLHCb.Lib.Dirac.GaudiPythonDiracRunTimeHandler \
-     import GaudiPythonDiracRunTimeHandler
+from GangaLHCb.Lib.Gaudi.GaudiRunTimeHandler import GaudiRunTimeHandler
+from GangaLHCb.Lib.Dirac.GaudiDiracRunTimeHandler \
+     import GaudiDiracRunTimeHandler
 
 for app in ['GaudiPython','Bender']:
-    allHandlers.add(app, 'LSF', GaudiPythonLSFRunTimeHandler)
-    allHandlers.add(app, 'Interactive', GaudiPythonLSFRunTimeHandler)
-    allHandlers.add(app, 'PBS', GaudiPythonLSFRunTimeHandler)
-    allHandlers.add(app, 'SGE', GaudiPythonLSFRunTimeHandler)
-    allHandlers.add(app, 'Local', GaudiPythonLSFRunTimeHandler)
-    allHandlers.add(app, 'Dirac', GaudiPythonDiracRunTimeHandler)
-    allHandlers.add(app, 'Condor', GaudiPythonLSFRunTimeHandler)
+    for backend in ['LSF','Interactive','PBS','SGE','Local','Condor']:
+        allHandlers.add(app, backend, GaudiRunTimeHandler)
+    allHandlers.add(app, 'Dirac', GaudiDiracRunTimeHandler)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

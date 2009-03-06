@@ -1,11 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
 '''Uses gaudirun.py to parse the job options file to allow for easy extraction
 of inputdata, outputdata and output files.'''
-
-__author__ = 'Greig A Cowan'
-__date__ = "$Date: 2009-02-02 14:16:53 $"
-__revision__ = "$Revision: 1.18 $"
 
 import tempfile, fnmatch
 from Ganga.GPIDev.Lib.File import FileBuffer
@@ -13,7 +8,7 @@ import Ganga.Utility.logging
 from Ganga.Utility.util import unique
 import Ganga.Utility.Config 
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset, LHCbDataFile
-from GaudiUtils import collect_lhcb_filelist
+from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import collect_lhcb_filelist
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 
@@ -80,14 +75,11 @@ class PythonOptionsParser:
             except IOError, e:
                 logger.error('Cannot read() the temporary pickle file: %s',
                              tmp_pkl.name)
-
         
         if not rc ==0:
             logger.debug('Failed to run: %s', gaudirun) 
             raise ApplicationConfigurationError(None,stdout)
-            
-            
-        
+                                
         tmp_pkl.close()
         py_opts.close()
         return (options, opts_pkl_string)
@@ -125,7 +117,6 @@ class PythonOptionsParser:
         except KeyError, e:
             logger.debug('No inputdata has been defined in the options file.')
         
-        lb = LHCbDataset()
         splitFiles = [x.split('\'')[1] for x in data]
         lb = LHCbDataset()
         for f in splitFiles:
@@ -218,6 +209,5 @@ class PythonOptionsParser:
         outputdata += gaudi_outputdata
 
         return unique(outsandbox), unique(outputdata)
-
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

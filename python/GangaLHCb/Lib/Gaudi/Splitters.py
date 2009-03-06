@@ -1,9 +1,5 @@
 from __future__ import division
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-'''Splitters for Gaudi applications in LHCb.'''
-
-__date__ = "$Date: 2009-02-05 09:28:05 $"
-__revision__ = "$Revision: 1.11 $"
 
 import time
 import string
@@ -15,9 +11,60 @@ from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
 from Ganga.Utility.util import unique 
 import Ganga.Utility.logging
-from GaudiUtils import dataset_to_options_string
+from GangaLHCb.Lib.LHCbDataset import dataset_to_options_string
 
 logger = Ganga.Utility.logging.getLogger()
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
+def create_gaudi_subjob(splitter, job, inputdata):
+    j = splitter.createSubjob(job)
+    j.application = job.application
+    j.backend = job.backend
+    if inputdata:
+        j.inputdata = inputdata
+        j.application.extra.inputdata = j.inputdata
+    else:
+        j.inputdata = None
+        j.application.extra.inputdata = LHCbDataset()
+    j.outputsandbox = job.outputsandbox[:]
+    extra = job.application.extra
+    j.application.extra.input_buffers = extra.input_buffers.copy()
+    j.application.extra.input_files = extra.input_files[:]
+    
+    return j
+
+def simple_split(files_per_job, inputs):
+    """Just splits the files in the order they came"""
+    
+    def create_subdataset(data_inputs,iter_begin,iter_end):
+        dataset = LHCbDataset()
+        dataset.datatype_string = data_inputs.datatype_string
+        dataset.depth = data_inputs.depth
+        dataset.files = data_inputs.files[iter_begin:iter_end]
+        dataset.cache_date = data_inputs.cache_date
+        return dataset
+
+    result = []
+    end = 0
+    inputs_length = len(inputs.files)
+        
+    for i in range(inputs_length // files_per_job):
+        start = i * files_per_job
+        end = start + files_per_job
+        result.append(create_subdataset(inputs,start,end))
+            
+    if end < (inputs_length):
+        result.append(create_subdataset(inputs,end,None))
+            
+    #catch file loss
+    result_length = 0
+    for r in result: result_length += len(r.files)
+    if result_length != inputs_length:
+        raise SplittingError('Data files lost during splitting, please send '\
+                             'a bug report to the Ganga team.')
+        
+    return result    
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -28,17 +75,11 @@ class SplitByFiles(ISplitter):
     each subjob gets an unique subset of the inputdata files.
     """
     _name = 'SplitByFiles'
+    docstr = 'Maximum number of files to use in a masterjob (-1 = all files)'
     _schema = Schema(Version(1,0),{
         'filesPerJob' : SimpleItem(defvalue=10,
-                                   doc='Number of files per subjob'),
-        'maxFiles':SimpleItem(defvalue=-1,
-                              doc='Maximum number of files to use in ' + \
-                              'a masterjob. A value of "-1" means all files')
-        })
-
-    def _splitFiles(self, inputs):
-        splitter = _simpleSplitter(self.filesPerJob,self.maxFiles)
-        return splitter.split(inputs)    
+                                   doc='Number of files per subjob'),        
+        'maxFiles' : SimpleItem(defvalue=-1, doc=docstr)})
 
     def split(self,job):
         if self.filesPerJob < 1:
@@ -63,7 +104,7 @@ class SplitByFiles(ISplitter):
         for i in self._extra.inputdata.files:
             dataset_files[i.name] = i
 
-        datasetlist = self._splitFiles(inputs)
+        datasetlist = simple_split(self.filesPerJob, inputs)
         cache_date = self._extra.inputdata.cache_date
         if cache_date:
             _time = time.mktime(time.strptime(cache_date))
@@ -72,20 +113,7 @@ class SplitByFiles(ISplitter):
         _timeUpdate = False
 
         for dataset in datasetlist:
-
-            j = self.createSubjob(job)
-            j.application = job.application
-            j.backend = job.backend
-
-            #copy the dataset to the right place and configure
-            j.inputdata = dataset
-            j.application.extra.inputdata = dataset
-            j.application.extra.dataopts = self.subjobsDiffOpts(dataset,
-                                                                len(subjobs)+1)
-            j.application.extra._userdlls = job.application.extra._userdlls[:]
-            j.outputsandbox = job.outputsandbox[:]
-            subjobs.append( j)
-            
+            subjobs.append(create_gaudi_subjob(self,job,dataset))
             #copy the replicas back up the tree
             for f in dataset.files:
                 dataset_files[f.name].replicas = f.replicas
@@ -99,57 +127,6 @@ class SplitByFiles(ISplitter):
             self._extra.inputdata.cache_date = time.asctime(t)
         return subjobs
     
-    def subjobsDiffOpts(self,dataset,i):
-        s='\n////Data created for subjob %d\n' % (i-1)
-        s += dataset_to_options_string(dataset)
-        return s
-
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-class _simpleSplitter(object):
-
-    def __init__(self,filesPerJob,maxFiles):
-        self.filesPerJob = filesPerJob
-        self.maxFiles = maxFiles
-
-    def split(self,inputs):
-        """Just splits the files in the order they came"""
-        
-        result = []
-        end = 0
-        inputs_length = len(inputs.files)
-        
-        for i in range(inputs_length // self.filesPerJob):
-            start = i * self.filesPerJob
-            end = start + self.filesPerJob
-            #add a sublist of files
-            dataset = LHCbDataset()
-            dataset.datatype_string=inputs.datatype_string
-            dataset.depth=inputs.depth
-            dataset.files = inputs.files[start:end]
-            dataset.cache_date = inputs.cache_date
-            result.append(dataset)
-            
-        if end < (inputs_length):
-            dataset = LHCbDataset()
-            dataset.datatype_string=inputs.datatype_string
-            dataset.depth=inputs.depth
-            dataset.files = inputs.files[end:]
-            dataset.cache_date = inputs.cache_date
-            result.append(dataset)
-            
-        #catch file loss
-        result_length = 0
-        for r in result:
-            result_length += len(r.files)
-        if result_length != inputs_length:
-            msg = 'Data files have been lost during splitting. Please ' + \
-                  'submit a bug report to the Ganga team.'
-            raise SplittingError(msg)
-        
-        return result    
-
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class OptionsFileSplitter(ISplitter):
@@ -162,36 +139,17 @@ class OptionsFileSplitter(ISplitter):
     recreate a set of jobs with different cuts
     '''
     _name = "OptionsFileSplitter"
-    _schema =Schema(Version(1,0),{
-            'optsArray': SimpleItem(defvalue=[],
-                                    doc="The list of option file strings. " + \
-                                    "Each list item creates a new subjob")
-            })
+    docstr = "List of option-file strings, each list item creates a new subjob"
+    _schema =Schema(Version(1,0),
+                    {'optsArray': SimpleItem(defvalue=[],doc=docstr)})
 
-    def split(self,job):
-        
+    def split(self,job):        
         subjobs=[]
-        self._extra=job.application.extra
-        job.application.extra.dataopts += "## Adding includes for subjobs\n"
-
         for i in self.optsArray:
-            j=self.createSubjob(job)
-            j.application=job.application
-            j.backend=job.backend
-            if job.inputdata:
-                j.inputdata=job.inputdata[:]
-            else:
-                j.inputdata=None
-            j.outputsandbox=job.outputsandbox[:]
-            if job.inputdata:
-                j.application.extra.inputdata = [x.name for \
-                                                 x in job.inputdata.files]
-            j.application.extra._userdlls=job.application.extra._userdlls[:]
-            # GC: need to deal with this dataopts
-            j.application.extra.dataopts+=i
+            j = create_gaudi_subjob(self, job, job.inputdata)
+            j.application.extra.input_buffers['data.opts'] += i
             subjobs.append(j)
         return subjobs
-
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -207,43 +165,24 @@ class GaussSplitter(ISplitter):
     """
     _name = "GaussSplitter"
     _schema =Schema(Version(1,0),{
-            'eventsPerJob': SimpleItem(defvalue=5,doc='Number of ' + \
+            'eventsPerJob': SimpleItem(defvalue=5,doc='Number of '  \
                                        'generated events per job'),
-            'numberOfJobs': SimpleItem(defvalue=2,
-                                       doc="Number of jobs to create")
+            'numberOfJobs': SimpleItem(defvalue=2,doc="No. of jobs to create")
             })
 
     def split(self,job):
-
         subjobs=[]
-        self._extra=job.application.extra
-        job.application.extra.dataopts += '## Adding includes for subjobs\n'
-
         for i in range(self.numberOfJobs):
-            j=self.createSubjob(job)
-            j.application=job.application
-            j.backend=job.backend
-            if job.inputdata:
-                j.inputdata=job.inputdata[:]
-            else:
-                j.inputdata=None
-            j.outputsandbox=job.outputsandbox[:]
-            if job.inputdata:
-                j.application.extra.inputdata=[x.name for \
-                                               x in job.inputdata.files]
-            j.application.extra._userdlls=job.application.extra._userdlls[:]
-            firstEvent=i*self.eventsPerJob+1
-            dataopts = 'ApplicationMgr.EvtMax = %d;\n' % self.eventsPerJob
-            dataopts += 'GaussGen.FirstEventNumber = %d;\n' % firstEvent
+            j = create_gaudi_subjob(self, job, job.inputdata)
+            first = i*self.eventsPerJob + 1
+            opts = 'ApplicationMgr.EvtMax = %d;\n' % self.eventsPerJob
+            opts += 'GaussGen.FirstEventNumber = %d;\n' % first
             # for when we move to .py only option files
-            #dataopts = 'ApplicationMgr(EvtMax=%d)\n' % self.eventsPerJob
-            #dataopts += 'GenInit(\"GaussGen\").FirstEventNumber = %d\n' \
-            #            % firstEvent
-            j.application.extra.dataopts  = dataopts
-            logger.debug("Creating job "+ str(i) + \
-                         " with FirstEventNumber = " + str(firstEvent))
+            #opts = 'ApplicationMgr(EvtMax=%d)\n' % self.eventsPerJob
+            #opts += 'GenInit(\"GaussGen\").FirstEventNumber = %d\n' % first
+            j.application.extra.input_buffers['data.opts'] += opts
+            logger.debug("Creating job %d w/ FirstEventNumber = %d"%(i,first))
             subjobs.append(j)
         return subjobs
-
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
