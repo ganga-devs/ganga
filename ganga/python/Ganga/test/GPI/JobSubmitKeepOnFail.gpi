@@ -1,0 +1,8 @@
+j = Job()
+j.backend = Local()
+j.application = Executable()
+j.application.exe = File('/some/not/existing/file')
+
+j.submit(keep_on_fail=True)
+
+# TODO: add a check that files are not removed from the inputdir

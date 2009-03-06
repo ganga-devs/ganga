@@ -1,0 +1,282 @@
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: RepositoryTest.py.TODO,v 1.1 2008-07-17 16:41:09 moscicki Exp $
+################################################################################
+
+import sys, os
+import unittest
+sys.path.insert(0,'.')
+from repositoryTest import __file__
+_gangaPath = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(_gangaPath)
+del _gangaPath
+if sys.hexversion < 0x20300f0:
+    sys.path.insert(0,'/afs/cern.ch/sw/ganga/external/Optik-1.4.1/lib/python2.2/site-packages')
+
+from multipass import MultipassTest
+import Ganga.Runtime
+import Ganga.Utility.Config
+
+python_path = sys.executable
+
+def setUpPrg(runtime_path = "", ini_file = "local.ini"):
+    prg = Ganga.Runtime.GangaProgram(argv = [sys.argv[0], "--config", ini_file, "--no-rexec"])
+    prg.parseOptions()
+    prg.configure()
+    if runtime_path:
+        config = Ganga.Utility.Config.getConfig("Configuration")
+        config.setSessionOption('RUNTIME_PATH', runtime_path)
+    prg.initEnvironment()
+    prg.bootstrap()
+
+
+################################################################################    
+class RepositoryTest(unittest.TestCase):
+
+    def __init__(self, methodName = 'runTest'):
+        unittest.TestCase.__init__(self, methodName)
+        self.jj = []
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        try:
+            self.repository.deleteJobs(map(lambda j: j.id, self.jj))
+        except:
+            pass
+
+    def general_case(self, repository):
+        self.repository = repository
+        from Ganga.GPIDev.Lib.Job.Job  import Job
+        from GangaLHCb.Lib.Gaudi.Gaudi import Gaudi        
+        from Ganga.Lib.Executable.Executable import Executable
+        import Ganga.Runtime.plugins
+
+        NTEST = 10
+
+        jj = self.jj
+        for i in range(NTEST):
+            j = Job()
+            j.application = Gaudi()
+            j.name = "My Job" + str(i)
+            jj.append(j)
+
+        print "registering jobs"
+        repository.registerJobs(jj)
+
+        print 'retrieving registered jobs...'
+        rjj = repository.checkoutJobs(map(lambda j: j.id, jj))
+        self.failUnless(len(rjj) == len(jj))
+        for j in rjj:
+            self.failUnless(j.name.startswith("My Job"))
+  
+        print 'retrieving info about ALL jobs...'
+        rjj2 = repository.checkoutJobs({})
+        self.failUnless(len(rjj2)>=len(rjj))
+
+        for j in jj:
+            j.application = Executable()
+            
+        print 'commiting jobs...'
+        repository.commitJobs(jj)
+
+        print 'checking commited jobs...'
+        rjj = repository.checkoutJobs(map(lambda j: j.id, jj))
+        self.failUnless(len(rjj) == len(jj))
+        for j in rjj:
+            self.failUnless(j.name.startswith("My Job"))
+            self.failUnless(not str(j.application).startswith("Executable"))
+        
+        print 'setting status of the jobs...'
+        repository.setJobsStatus(map(lambda j: (j.id, 'configured'), jj))
+        
+        print 'getting status of the jobs...'
+        rjj = repository.getJobsStatus(map(lambda j: j.id, jj))
+        for j in rjj:
+            self.failUnless(j[1] == 'configured')        
+
+        print 'deleting jobs...'
+        repository.deleteJobs(map(lambda j: j.id, jj))
+
+        print 'checking deleting jobs...'
+        rjj = repository.checkoutJobs(map(lambda j: j.id, jj))
+        print rjj
+        self.failUnless(len(rjj) == 0)
+        self.jj = []
+        
+#---------------------------------------------------------------------------
+    def test1(self):
+        print "test basic functionality of the repository"
+        from Ganga.GPI import jobs
+        repository = jobs._impl.repository
+        self.general_case(repository)
+        
+       
+############################################################################## 
+class MultipassTest1(MultipassTest):
+    def __init__(self, ini_file = "local.ini"):
+        MultipassTest.__init__(self, 3)
+        self.ini_file = ini_file
+
+    def pass1(self):
+        setUpPrg(runtime_path = "GangaTest:GangaLHCb", ini_file = self.ini_file)
+        from Ganga.GPI import Job, Executable, Dirac, jobs
+        j = Job()
+        j.application = Executable(exe='/bin/date')
+        j.backend = Dirac()
+        print "new job created..."
+        print j
+        return j.id
+
+    def pass2(self):
+        setUpPrg(runtime_path = "GangaTest", ini_file = self.ini_file)
+        from Ganga.GPI import jobs
+        id = self.data[1]
+        j = jobs[id]
+        if not j:
+            sys.exit(1)
+        print "job retrieved..."
+        print j        
+        if not j.status == 'incomplete':
+            sys.exit(2)
+    
+    def pass3(self):
+        setUpPrg(runtime_path = "GangaTest:GangaLHCb", ini_file = self.ini_file)
+        from Ganga.GPI import jobs
+        id = self.data[1]
+        j = jobs[id]
+        if not j:
+            sys.exit(1)
+        print "job retrieved..."
+        print j        
+        if not j.status == 'new':
+            sys.exit(2)
+
+#---------------------------------------------------------------------------
+class MultipassTest2(MultipassTest):
+    def __init__(self, ini_file = "local.ini"):
+        MultipassTest.__init__(self, 2)
+        self.ini_file = ini_file
+        
+
+    def pass1(self):
+        setUpPrg(ini_file = self.ini_file)
+        from Ganga.GPI import Job, Executable, Dirac, jobs
+        Dirac._impl._schema.version.major = 2
+        Dirac._impl._schema.version.minor = 2
+        j = Job()
+        j.application = Executable(exe='/bin/date')
+        j.backend = Dirac()
+        print "new job created..."
+        print j
+        return j.id
+
+    def pass2(self):
+        setUpPrg(ini_file = self.ini_file)
+        from Ganga.GPI import jobs
+        id = self.data[1]
+        j = jobs[id]
+        if not j:
+            sys.exit(1)
+        print "job retrieved..."
+        print j        
+        if not j.status == 'incomplete':
+            sys.exit(2)
+
+#--------------------------------------------------------------------------- 
+def run_external_test(argv = []):
+    import os,sys
+    try:
+        from Ganga.Runtime import _prog
+        ind = _prog.argv.index("--config")
+        argv = argv + _prog.argv[ind: ind + 2]
+    except:
+        pass
+    print "*"*80    
+    print "Running test with argv '%s'" % str(argv)
+    print "*"*80 
+    rc = os.spawnl(os.P_WAIT, python_path, python_path, __file__, *argv)
+    print "*"*80
+    print "END OF RUN"
+    print "*"*80
+    print
+    return rc
+
+
+##############################################################################  
+class InconsistencyRepositoryTest(unittest.TestCase):
+    
+#---------------------------------------------------------------------------
+    def setUp(self):
+        pass
+
+#---------------------------------------------------------------------------            
+    def tearDown(self):
+        if 'TEST_CASE' in os.environ:
+            del os.environ['TEST_CASE']
+    
+    
+#---------------------------------------------------------------------------        
+    def test1(self):
+        print "Test of handling inconsistencies by the registry (missing plug-ins)"
+        os.environ['TEST_CASE'] = '1'
+        self.failUnless(run_external_test(['--multipass-restart'])==0)
+        self.failUnless(run_external_test()==0)
+        self.failUnless(run_external_test()==0)
+        
+#---------------------------------------------------------------------------
+    def test2(self):
+        print "Test of handling inconsistencies by the registry (wrong schema versions)"
+        os.environ['TEST_CASE'] = '2'
+        self.failUnless(run_external_test(['--multipass-restart'])==0)
+        self.failUnless(run_external_test()==0)
+
+
+##############################################################################
+class TimeoutRepositoryTest(unittest.TestCase):
+
+#---------------------------------------------------------------------------
+    def test1(self):
+        print "test of repository timeout"
+        print "this test runs 45 minutes"
+        import time
+        setUpPrg(ini_file = "remote.ini")  
+        from Ganga.GPI import Job, jobs
+        j = Job()
+        print "new job created..."
+        print j
+        self.failIf(j.id == 0)
+        
+        time.sleep(2700)
+        
+        j = Job()
+        print "new job created..."
+        print j
+        self.failIf(j.id == 0)
+        
+
+##############################################################################
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(RepositoryTest))
+    suite.addTest(unittest.makeSuite(InconsistencyRepositoryTest))
+    #suite.addTest(unittest.makeSuite(TimeoutRepositoryTest))
+    return suite
+
+##############################################################################
+if __name__ == '__main__':
+    try:
+        ini_file = sys.argv[sys.argv.index("--config") + 1]
+    except:
+        ini_file = "local.ini"
+    if os.environ.get('TEST_CASE') == '1':
+        m = MultipassTest1(ini_file)
+        m.run() 
+    elif os.environ.get('TEST_CASE') == '2':
+        m = MultipassTest2()
+        m.run()
+    else:
+        unittest.TextTestRunner(verbosity=2).run(suite())
+
