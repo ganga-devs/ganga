@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Condor.py,v 1.5 2009-01-28 18:42:29 karl Exp $
+# $Id: Condor.py,v 1.6 2009-03-07 19:12:57 karl Exp $
 ###############################################################################
 # File: Condor.py
 # Author: K. Harrison
@@ -38,12 +38,15 @@
 #               setup by defining BASH_ENV to point to setup script
 #
 #               Set status to failed for job with non-zero exit code
+#
+# KH - 090307 : Modified kill() method to assume success even in case of
+#               non-zero return code from condor_rm 
 
 """Module containing class for handling job submission to Condor backend"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "28 January 2009"
-__version__ = "2.1"
+__date__    = "07 March 2009"
+__version__ = "2.2"
 
 from CondorRequirements import CondorRequirements
 
@@ -223,16 +226,16 @@ class Condor( IBackend ):
 
       status, output = commands.getstatusoutput( killCommand )
 
-      if 0 == status:
-         job.backend.status = "Removed"
-#        job.updateStatus( "killed" )
-         killStatus = True
-      else:
-         logger.error( "Error killing job '%s' - Condor id '%s'" % \
-            ( job.id, job.backend.id ) )
-         logger.error( "Tried command: '%s'" % killCommand )
-         logger.error( "Command output: '%s'" % output )
-         killStatus = False
+      if ( status != 0 ):
+         logger.warning\
+            ( "Return code '%s' killing job '%s' - Condor id '%s'" % \
+            ( str( status ), job.id, job.backend.id ) )
+         logger.warning( "Tried command: '%s'" % killCommand )
+         logger.warning( "Command output: '%s'" % output )
+         logger.warning( "Anyway continuing with job removal" )
+
+      job.backend.status = "Removed"
+      killStatus = True
 
       return killStatus
 
