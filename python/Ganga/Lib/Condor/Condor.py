@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Condor.py,v 1.6 2009-03-07 19:12:57 karl Exp $
+# $Id: Condor.py,v 1.7 2009-03-08 17:42:49 karl Exp $
 ###############################################################################
 # File: Condor.py
 # Author: K. Harrison
@@ -41,12 +41,15 @@
 #
 # KH - 090307 : Modified kill() method to assume success even in case of
 #               non-zero return code from condor_rm 
+#
+# KH - 090308 : Modified updateMonitoringInformation() method
+#               to deal with case where all queues are empty
 
 """Module containing class for handling job submission to Condor backend"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "07 March 2009"
-__version__ = "2.2"
+__date__    = "08 March 2009"
+__version__ = "2.3"
 
 from CondorRequirements import CondorRequirements
 
@@ -409,7 +412,10 @@ class Condor( IBackend ):
          logger.error( "Problem retrieving status for Condor jobs" )
          return
 
-      infoList = output.split( "\n" )
+      if ( "All queues are empty" == output ):
+        infoList = []
+      else:
+        infoList = output.split( "\n" )
 
       allDict = {}
       for infoString in infoList:
