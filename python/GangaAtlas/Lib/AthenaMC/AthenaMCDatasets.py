@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.27 2009-03-03 10:22:24 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.28 2009-03-09 15:22:45 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -264,7 +264,7 @@ class AthenaMCInputDatasets(Dataset):
               self.redefined_partitions = expandList(self.redefine_partitions)
         else:
            self.redefined_partitions = []
-          
+
         if not self.redefined_partitions:
             return ["_"+string.zfill(f, 5) for f in partitions]
         else:
@@ -279,7 +279,7 @@ class AthenaMCInputDatasets(Dataset):
                     files.append("_"+string.zfill(p - len(self.redefined_partitions[0]) + self.redefined_partitions[0][-1], 5))
                 else:
                     logger.error("Only %i input partitions defined in inputdata.redefine_partitions, but partition %i was requested!", len(self.redefined_partitions[0]), p)
-                    raise
+                    raise Exception()
             return files
 
     def filesToNumbers(self,files):
@@ -543,11 +543,16 @@ class AthenaMCInputDatasets(Dataset):
         all_files.sort()
         logger.debug("All lfns: %s " % str(all_files))
         numbers = []
+        inputdata=self.redefine_partitions
+        if len(inputdata)==0 :
+            inputdata=[]
+        (inputlist,isPartRange)=expandList(inputdata)
+        #print inputlist,isPartRange
         for guid, lfn in contents.iteritems():
             if matchrange and matchrange[0] and not matchFile(matchrange, lfn):
                 continue
             num = extractFileNumber(lfn)
-            if num and num in numbers: # extra protection to cover the case where extractFileNumber returns "".
+            if num and num in numbers and isPartRange: # extra protection to cover the case where extractFileNumber returns "". Must not be used if inputdata.redefine_partitions is a list of lfns instead of a list of numbers.
                 logger.warning("In dataset %s there is more than one file with the number %i!" % (dsetname, int(num)))
                 logger.warning("File '%s' ignored!" % (lfn))
                 continue
@@ -804,7 +809,7 @@ class AthenaMCOutputDatasets(Dataset):
                 overflow=len(outputpaths[type])-133
                 dsetstr=outputpaths[type][1:]
                 dsetstr=string.replace("/",".")
-                print dsetstr
+                #print dsetstr
                 logger.error("dataset name: %s too long by %d characters. Please reduce the size of any of the following fields (if set): job.outputdata.output_dataset, job.application.production_name, job.application.process_name,job.application.version " % (dsetstr,overflow))
                 raise Exception()
             
@@ -843,13 +848,13 @@ class AthenaMCOutputDatasets(Dataset):
                 
         else:
             selsite=se_name
-            if string.find(se_name,"LOCALGROUPDISK")<-1 and string.find(se_name,"USERDISK")<-1: # need to check if one can use LOCALGROUPDISK
+            if string.find(se_name,"LOCALGROUPDISK")<-1 and string.find(se_name,"USERDISK")<-1  and string.find(se_name,"SCRATCHDISK")<-1 : # need to check if one can use LOCALGROUPDISK
             #if  string.find(se_name,"USERDISK")<-1: # no support for LOCALUSERDISK yet as space token requires explicit voms role.
                 logger.warning("Site name proposed for output: %s is forbidden for writing. Using alternative site in the same cloud."% se_name)
                 lfccloud=lfcstrings[se_name]
                 random.shuffle(sites)
                 for site in sites:
-                    if site.find("USERDISK")>0 and lfcstring[site]==lfccloud:
+                    if ( site.find("USERDISK")>0 or site.find("SCRATCHDISK")>0) and lfcstring[site]==lfccloud:
                         selsite=site
                         break
             

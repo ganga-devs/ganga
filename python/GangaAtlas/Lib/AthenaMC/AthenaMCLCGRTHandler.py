@@ -195,7 +195,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             if dataset[0]==".": dataset=dataset[1:]
             if dataset[-1]==".": dataset=dataset[:-1]
             expected_datasets+=dataset+","
-        if not job.outputdata.output_dataset:
+            #       if not job.outputdata.output_dataset:
+        if not job.outputdata.output_dataset or string.find(job.outputdata.output_dataset,",") > 0 : #update only if output_dataset is not used to force the output dataset names.
             job.outputdata.output_dataset=expected_datasets[:-1] # removing final coma.
 
         # All the following must move to master_prepare, as well as the translation of outlfc -> potential submission SEs...(dedicated method of outputdata?)
@@ -226,7 +227,12 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 assert selsite!=""
             except:
                 raise ApplicationConfigurationError(None,"Input data not in destination site %s. Please subscribe the input dataset to the destination site or choose another site.Aborting " % outsite)
-            self.sites=[selsite]
+            #    self.sites=[selsite]
+            #    must put selsite as first choice in self.sites
+            #print "SELSITE",len(self.sites)
+            if len(self.sites)>1:
+                self.sites.insert(0,selsite)
+             
         if len(self.cavern_sites)>0:
             selsite=""
             for site in self.cavern_sites:
@@ -631,7 +637,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         inputfiles.sort()
         
         # Strict matching must be discarded if neither splitter.input_partitions nor inputdata.redefine_partitions are used.
-        
+        # same if 
         if job._getRoot().inputdata and job._getRoot().inputdata.redefine_partitions == "" and job._getRoot().splitter and job._getRoot().splitter.input_partitions == "":
             inputfiles=[]
             inlfns=self.turls.keys()
@@ -673,8 +679,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         
         for infile in inputfiles:
             dsetmap[infile]=self.lfcs.keys()[0]
-            #            sitemap[infile]=string.join(self.sites," ")
-            sitemap[infile]=self.sites[0]
+            sitemap[infile]=string.join(self.sites," ") # only for signal input datasets
+            #sitemap[infile]=self.sites[0]
         self.inputfile=",".join(inputfiles)
         # adding cavern/minbias/dbrelease to the mapping
         cavernfiles= self.cavern_turls.keys()
@@ -759,7 +765,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             if dataset[0]==".": dataset=dataset[1:]
             if dataset[-1]==".": dataset=dataset[:-1]
             expected_datasets+=dataset+","
-        if not job.outputdata.output_dataset:
+        if not job.outputdata.output_dataset or string.find(job.outputdata.output_dataset,",") > 0 :
+            # if not job.outputdata.output_dataset:
             job.outputdata.output_dataset=expected_datasets[:-1] # removing final coma.
         args=[]
         # Fill arg list and output data vars depending on the prod mode 

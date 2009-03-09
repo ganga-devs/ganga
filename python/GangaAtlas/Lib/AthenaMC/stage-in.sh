@@ -42,7 +42,8 @@ stageInLCG(){
     # loop over lfc list, resolve guid into list of replicas, then try each replica until a download is successful, using timeout.
     LFNS=$1   
     INPUTDSET=$2
-    SITE=$3
+    shift 2;
+    SITES=$@
     dq2get=`which dq2-get`
     py32=`which python32`
 
@@ -51,12 +52,18 @@ stageInLCG(){
         cmd="python32 "$cmd
     fi
     echo $cmd
-    $cmd
-    status=$?
-    if [ $status -eq 0 ]; then
-	echo "$LFNS downloaded succesfully"
-	mv $INPUTDSET*/* .  # -D flag should make this block irrelevant and trigger an harmless error message
-    fi
+    
+    for site in SITES:
+        echo "Attempting getting data from $site"
+	$cmd
+	status=$?
+	if [ $status -eq 0 ]; then
+	    echo "$LFNS downloaded succesfully"
+	    mv $INPUTDSET*/* .  # -D flag should make this block irrelevant and trigger an harmless error message
+	    break
+	fi
+	echo "attempt failed."
+
     ls -l 
     for lfn in $LFNS; do
 	if [ -z "$lfn" ]; then
