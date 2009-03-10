@@ -1,4 +1,7 @@
 import Queue, threading, time
+
+from Ganga.Core.GangaThread import GangaThread
+
 try:
    import sets
 except ImportError:
@@ -41,7 +44,8 @@ config.addOption( 'diskspace_poll_rate', 30, "The frequency in seconds for free 
 config.addOption( 'DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 
 
-config.addOption( 'max_shutdown_retries',5,'number of retries that should be made for a clean shutdown') #FIXME: the retry periodicity is hardcoded now
+config.addOption( 'max_shutdown_retries',5,'OBSOLETE: this option has no effect anymore')
+
 
 THREAD_POOL_SIZE = config[ 'update_thread_pool_size' ]
 Qin = Queue.Queue()
@@ -66,43 +70,58 @@ class JobAction( object ):
       self.thread = None
       self.description = ''
 
-# This function takes a JobAction object from the Qin queue, 
-# executes the embedded function and runs post result actions.
-def _execUpdateAction():
-   global tpFreeThreads
-   ##DEBUGGING THREADS
-   ##import sys
-   ##sys.settrace(_trace)
-   while True:
-      log.debug( "%s waiting..." % threading.currentThread() )
-      #setattr(threading.currentThread(), 'action', None)
-      tpFreeThreads+=1
-      action = Qin.get()
-      tpFreeThreads-=1      
-      #setattr(threading.currentThread(), 'action', action)	
-      log.debug( "Qin's size is currently: %d" % Qin.qsize() )
-      log.debug( "%s running..." % threading.currentThread() )
-      
-      if not isinstance( action, JobAction ):
-         continue
-      if action.function == 'stop':
-         break
-      try:
-         result = action.function( *action.args, **action.kwargs )
-      except:
-         action.callback_Failure()
-      else:
-         if result in action.success:
-            action.callback_Success()
-         else:
+class MonitoringWorkerThread(GangaThread):
+   def __init__(self,name):
+      GangaThread.__init__(self,name)
+
+   def run(self):
+      self._execUpdateAction()
+
+   # This function takes a JobAction object from the Qin queue, 
+   # executes the embedded function and runs post result actions.
+   def _execUpdateAction(self):
+      global tpFreeThreads
+      ##DEBUGGING THREADS
+      ##import sys
+      ##sys.settrace(_trace)
+      while not self.should_stop():
+         log.debug( "%s waiting..." % threading.currentThread() )
+         #setattr(threading.currentThread(), 'action', None)
+         tpFreeThreads+=1
+
+         while not self.should_stop():
+            try:
+               action = Qin.get(block=True,timeout=0.5)
+               break
+            except Queue.Empty:
+               continue
+
+         if self.should_stop():
+            break
+
+         tpFreeThreads-=1      
+         #setattr(threading.currentThread(), 'action', action)  
+         log.debug( "Qin's size is currently: %d" % Qin.qsize() )
+         log.debug( "%s running..." % threading.currentThread() )
+
+         if not isinstance( action, JobAction ):
+            continue
+         if action.function == 'stop':
+            break
+         try:
+            result = action.function( *action.args, **action.kwargs )
+         except:
             action.callback_Failure()
+         else:
+            if result in action.success:
+               action.callback_Success()
+            else:
+               action.callback_Failure()
 
 # Create the thread pool
 def _makeThreadPool( threadPoolSize = THREAD_POOL_SIZE, daemonic = True ):
    for i in range( THREAD_POOL_SIZE ):
-      t = threading.Thread( name = "GANGA_Update_Thread_%s" % i, 
-                            target = _execUpdateAction )
-      t.setDaemon( daemonic )
+      t = MonitoringWorkerThread( name = "MonitoringWorker_%s" % i)
       ThreadPool.append( t )
       t.start()
 
@@ -282,12 +301,12 @@ class CallbackHookEntry( object ):
         #record the time when this hook has been run        
         self._lastRun = 0
 
-class JobRegistry_Monitor( threading.Thread ):
+class JobRegistry_Monitor( GangaThread ):
     """Job monitoring service thread."""
     uPollRate = 0.5
     minPollRate = 1.0
     def __init__(self, registry ):
-        threading.Thread.__init__( self )
+        GangaThread.__init__( self, name = "JobRegistry_Monitor" )
         self.setDaemon( True )
         self.registry = registry
         self.__sleepCounter = 0.0 
@@ -544,11 +563,13 @@ class JobRegistry_Monitor( threading.Thread ):
         #wait for cleanup        
         self.__cleanUpEvent.wait()
         self.__cleanUpEvent.clear()
-        #wait for all worker threads to finish
-        self.__awaitTermination()
-        #join the worker threads
-        stop_and_free_thread_pool(fail_cb,max_retries)
-        log.info( 'Monitoring component stopped successfully!' )
+
+        ### ---->
+        ###wait for all worker threads to finish
+        ###self.__awaitTermination()
+        ###join the worker threads
+        ###stop_and_free_thread_pool(fail_cb,max_retries)
+        ###log.info( 'Monitoring component stopped successfully!' )
         return True
     
     def __cleanUp(self):
