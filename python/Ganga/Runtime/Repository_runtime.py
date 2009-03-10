@@ -21,7 +21,7 @@ def requiresGridProxy():
     return repository_runtime.requiresGridProxy()
 
 def getLocalRoot():
-    if "Local" in config['repositorytype']:
+    if "Local" == config['repositorytype']:
         return os.path.join(expandfilename(config['gangadir']),'repository',config['user'],config['repositorytype'])
     else:
         return ''

@@ -14,7 +14,7 @@ import Ganga.Lib.Executable
 import Ganga.Lib.Root
 
 import Ganga.Lib.Localhost
-import Ganga.Lib.LCG
+#import Ganga.Lib.LCG
 import Ganga.Lib.Condor
 import Ganga.Lib.Interactive
 import Ganga.Lib.Batch
