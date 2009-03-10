@@ -68,9 +68,37 @@ class Batch(IBackend):
     due  to a  different  Batch setup.  Tested  with CERN  and CNAF  Batch
     installations.
     
+    Each batch system supports an 'extraopts' field, which allows customisation
+    of way the job is submitted.
+
+    PBS:
+    Take environment settings on submitting machine and export to batch job:
+    backend.extraopts = "-V"
+
+    Request minimum walltime of 24 hours and minimum memory of 2GByte:
+    backend.extraopts = "-l walltime=24:00:00 mem=2gb"
+
+    The above can be combined as:
+    backend.extraopts = "-V -l walltime=24:00:00 mem=2gb" 
+
+    LSF:
+    Sends mail to you when the job is dispatched and begins execution.
+    backend.extraopts = "-B"
+
+    Assigns the Ganga job name to the batch job. The job name does not need to 
+    be unique.
+    backend.extraopts = "-J "+ j.name
+
+    Run the job on a host that meets the specified resource requirements.
+    A resource requirement string describes the resources a job needs.
+    E.g request 2Gb of memory ans 1Gb of swap space
+    backend.extraopts = '-R "mem=2048" -R "swp=1024"'
+
+    Kill job if it has exceeded the deadline (i.e. for your presentation)
+    backend.extraopts = '-t 07:14:12:59' #Killed if not finished by 14 July before 1 pm
     """
     _schema = Schema(Version(1,0), {'queue' : SimpleItem(defvalue='',doc='queue name as defomed in your local Batch installation'),
-                                    'extraopts' : SimpleItem(defvalue='',doc='extra options for Batch'),
+                                    'extraopts' : SimpleItem(defvalue='',doc='extra options for Batch. See help(Batch) for more details'),
                                     'id' : SimpleItem(defvalue='',protected=1,copyable=0,doc='Batch id of the job'),
                                     'exitcode' : SimpleItem(defvalue=None,typelist=['int','type(None)'],protected=1,copyable=0,doc='Process exit code'),
                                     'status' : SimpleItem(defvalue='',protected=1,hidden=1,copyable=0,doc='Batch status of the job'),
