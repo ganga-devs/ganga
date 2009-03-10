@@ -97,7 +97,7 @@ def getSearchPath( configPar = "SCRIPTS_PATH" ):
 class RuntimePackage:
     def __init__(self,path):
         import os.path,sys
-	import Ganga.Utility.Config    
+        import Ganga.Utility.Config    
 
         self.path = os.path.normpath(path.rstrip('/'))
         self.name = os.path.basename(self.path)
@@ -111,16 +111,16 @@ class RuntimePackage:
         logger.info("initializing runtime: '%s' '%s'",self.name,showpath)
         
         if allRuntimes.has_key(self.name):
-	    if allRuntimes[self.name].path != self.path:
-		logger.warning('possible clash: runtime "%s" already exists at path "%s"',self.name,allRuntimes[self.name].path)
+            if allRuntimes[self.name].path != self.path:
+                logger.warning('possible clash: runtime "%s" already exists at path "%s"',self.name,allRuntimes[self.name].path)
 
         allRuntimes[self.name] = self
 
         if self.syspath:
             # FIXME: not sure if I really want to modify sys.path (side effects!!)
-	    #allow relative paths to GANGA_PYTHONPATH
-	    if not os.path.isabs(self.syspath):
-		self.syspath = os.path.join(Ganga.Utility.Config.getConfig('System')['GANGA_PYTHONPATH'], self.syspath)
+            #allow relative paths to GANGA_PYTHONPATH
+            if not os.path.isabs(self.syspath):
+                self.syspath = os.path.join(Ganga.Utility.Config.getConfig('System')['GANGA_PYTHONPATH'], self.syspath)
             sys.path.insert(0,self.syspath)
 
         self.config = {} #Ganga.Utility.Config.getConfig('Runtime_'+self.name)
@@ -164,7 +164,10 @@ class RuntimePackage:
             # import fixes logging problem: the logger belongs to the original
             # packages rather than to the package defined by the "globals"
             # namespace (Ganga.GPI)
-            exec("from %s.BOOT import *"%self.name,globals)
+            ##exec("from %s.BOOT import *"%self.name,globals)
+
+            # do not import names from BOOT file automatically, use exportToGPI() function explicitly
+            exec("import %s.BOOT"%self.name)
         except ImportError, x:
             logger.debug("problems with bootstrap of runtime package %s",self.name)
             logger.debug(x)           
