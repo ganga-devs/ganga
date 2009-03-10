@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.28 2009-03-09 15:22:45 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.29 2009-03-10 16:02:49 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -591,15 +591,29 @@ class AthenaMCInputDatasets(Dataset):
                 if site not in allSites:
                     allSites.append(site)
             datasetType="incomplete"
-
-        
-
+            # promote site with most complete set
+            selSites=[]
+            max=0
+            for sources in allSites:
+                data=dq2.listFileReplicas(sources,dset)
+                if "found" not in data[0]:
+                    continue
+                if data[0]["found"]>max:
+                    print "site, nfiles:",sources,data[0]["found"]
+                    selSites.insert(0,sources)
+                    max=data[0]["found"]
+                else:
+                    selSites.append(sources)
+            allSites=selSites
+            
         try:
             assert len(allSites)>0
         except:
             logger.error("dataset %s has no registered locations. Aborting" % dsetname)
             raise Exception()
-            
+
+
+                
         # using the site list allSites, map to clouds and reject forbidden sites depending on backend.
         USsites=getSites('USASITES')
         NGsites=getSites('NDGF')
@@ -1143,6 +1157,28 @@ class AthenaMCOutputDatasets(Dataset):
                     finally:
                         dq2_lock.release()
                 containerClient.register(containername,[dset])
+                # if app.se_name is set and dset has more than one locations, then subscribe dset to app.se_name to aggregate the dataset to the intended location
+                if job.application.se_name!="none":
+                    locations={}
+                    try:
+                        dq2_lock.acquire()
+                        locations=dq2.listDatasetReplicas(dset)
+                        datasetinfo = dq2.listDatasets(dset)
+                    finally:
+                        dq2_lock.release()
+                    if not datasetinfo or not locations:
+                        break
+                    datasetvuid = datasetinfo[dset]['vuids'][0]
+                    sitelist=locations[datasetvuid][1] + locations[datasetvuid][0]
+                    if len(sitelist)>1:
+                        logger.warning("Found more than one location for output dataset, will start subscription to aggregate data to %s. Locations are: %s" % (job.application.se_name,str(sitelist)))
+                        try:
+                            dq2_lock.acquire()
+                            dq2.registerDatasetSubscription(dset,job.application.se_name)
+                        finally:
+                            dq2_lock.release()
+                        
+            
 #       Output files in the sandbox 
         outputsandboxfiles = job.outputsandbox
         output=[]

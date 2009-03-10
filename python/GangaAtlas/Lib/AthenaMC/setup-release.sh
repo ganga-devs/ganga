@@ -133,8 +133,24 @@ elif [ -e "AtlasProduction" ]; then
     source AtlasProduction/$reldir/AtlasProductionRunTime/cmt/setup.sh
     echo "CMTPATH is now $CMTPATH"
     echo "********"
-fi
 
+elif [ -e "AtlasTier0" ]; then
+    echo "Using user Python transforms on core release"
+    # specific to AtlasTier0 archive setup
+    which cmt
+    reldir=`ls AtlasTier0`
+    echo "local release directory is $reldir"
+    if [ ! -e "AtlasTier0/$reldir/AtlasTier0RunTime/cmt/requirements" ]; then
+	echo "requirements file missing in archive. Please check that AtlasTier0RunTime/cmt/requirements is in your archive or get it from the relevant AtlasTier0*noarch.tar.gz tarball"
+	exit 25
+    fi
+    cd AtlasTier0/$reldir/AtlasTier0RunTime/cmt
+    cmt config
+    cd $T_HOMEDIR
+    source AtlasTier0/$reldir/AtlasTier0RunTime/cmt/setup.sh
+    echo "CMTPATH is now $CMTPATH"
+    echo "********"
+fi
 cd $T_HOMEDIR
 
 echo $T_JTFLAGS

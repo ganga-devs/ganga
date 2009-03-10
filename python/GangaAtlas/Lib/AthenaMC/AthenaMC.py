@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.14 2009-02-11 17:26:10 ebke Exp $
+# $Id: AthenaMC.py,v 1.15 2009-03-10 16:02:49 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -211,7 +211,7 @@ class AthenaMC(IApplication):
 
           
        isJT=string.find(self.transform_archive,"JobTransform")
-       isAP=string.find(self.transform_archive,"AtlasProduction")
+##       isAP=string.find(self.transform_archive,"AtlasProduction")
        ##       try:
 ##          assert (isJT>-1 or isAP>-1)
 ##       except:
@@ -331,6 +331,10 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.14  2009/02/11 17:26:10  ebke
+# Replaced many Exceptions with ApplicationConfigurationErrors
+# Suggested at the Developer Days
+#
 # Revision 1.13  2009/02/09 15:00:42  fbrochu
 # *** empty log message ***
 #

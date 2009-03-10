@@ -231,8 +231,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             #    must put selsite as first choice in self.sites
             #print "SELSITE",len(self.sites)
             if len(self.sites)>1:
+                if selsite in self.sites:
+                    self.sites.remove(selsite)
                 self.sites.insert(0,selsite)
-             
+            # trimming down self.sites: 
         if len(self.cavern_sites)>0:
             selsite=""
             for site in self.cavern_sites:
@@ -334,7 +336,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         if os.path.exists(app.transform_archive):
             # must add a condition on size.
             inputbox += [ File(app.transform_archive) ]
-        else:
+        elif app.transform_archive:
             # tarball in local or remote web area.
             if string.find(app.transform_archive,"http")>=0:
                 environment['TRANSFORM_ARCHIVE'] = "%s" % (app.transform_archive)
@@ -394,6 +396,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 requirements.software=['VO-atlas-production-%s' % self.prod_release]
             elif self.atlas_rel>= "14.0.0" :
                 requirements.software=['VO-atlas-production-%s-i686-slc4-gcc34-opt' % self.prod_release]
+
+        if app.transform_archive and string.find(app.transform_archive,"AtlasTier0")>-1:
+            requirements.software=['VO-atlas-tier0-%s' % self.prod_release]
         dq2client_version = requirements.dq2client_version
         try:
             # override the default one if the dq2client_version is presented 
