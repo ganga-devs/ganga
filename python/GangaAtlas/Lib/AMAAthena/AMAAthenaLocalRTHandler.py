@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLocalRTHandler.py,v 1.7 2009-02-23 20:35:27 hclee Exp $
+# $Id: AMAAthenaLocalRTHandler.py,v 1.8 2009-03-11 19:56:45 hclee Exp $
 ###############################################################################
 # AMAAthena Local Runtime Handler
 #
@@ -55,7 +55,9 @@ class AMAAthenaLocalRTHandler(AthenaLocalRTHandler):
         if job.name:
             sample_name = job.name
 
-        environment['AMA_FLAG_LIST'] = app.driver_flags 
+        if app.driver_flags:
+            environment['AMA_FLAG_LIST'] = ':'.join( app.driver_flags.split() ) 
+
         environment['AMA_LOG_LEVEL'] = app.log_level 
 
         environment['AMA_SAMPLE_NAME']=sample_name

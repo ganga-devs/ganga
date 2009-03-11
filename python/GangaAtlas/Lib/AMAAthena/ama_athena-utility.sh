@@ -94,7 +94,7 @@ theApp.EvtMax = EvtMax
 ## get AMA driver flag from environment
 FlagList = ""
 if os.environ.has_key('AMA_FLAG_LIST'):
-    FlagList = os.environ['AMA_FLAG_LIST']
+    FlagList = ' '.join( os.environ['AMA_FLAG_LIST'].split(':') )
 
 ## get AMA driver config/sample file from environment
 ConfigFile = os.environ['AMA_DRIVER_CONF']
