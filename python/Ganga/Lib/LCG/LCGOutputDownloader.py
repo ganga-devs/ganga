@@ -1,5 +1,5 @@
 from Ganga.Utility.logging import getLogger
-from Ganga.Lib.LCG.GangaThread.MTRunner import MTRunner, Data, Algorithm, DuplicateDataItemError
+from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Lib.LCG.Utility import * 
 
 logger = getLogger()

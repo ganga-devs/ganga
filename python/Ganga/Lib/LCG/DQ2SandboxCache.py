@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2SandboxCache.py,v 1.7 2009-03-02 13:31:29 hclee Exp $
+# $Id: DQ2SandboxCache.py,v 1.8 2009-03-12 12:17:30 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -135,6 +135,7 @@ class DQ2SandboxCache(GridSandboxCache):
                 finfo[tmp_fname]['md5sum'] = md5sum
                 finfo[tmp_fname]['fsize']  = fsize
                 finfo[tmp_fname]['local_fpath']  = urlparse(f)[2]
+                finfo[tmp_fname]['surl'] = ''
 
             # compose dq2-put command
             cmd = 'source %s; dq2-put -a -d -C ' % (self.setup)

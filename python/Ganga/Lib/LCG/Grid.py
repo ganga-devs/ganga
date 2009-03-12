@@ -1,22 +1,16 @@
-import os, sys, md5, re, tempfile, time, errno, socket
+import os
+import re
+import tempfile
 from types import *
-from urlparse import urlparse
 
-from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Credentials import getCredential 
-from Ganga.GPIDev.Adapters.IBackend import IBackend 
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Core import BackendError
-from Ganga.Utility.Shell import Shell
 
 from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import isStringLike
 
 from Ganga.Utility.GridShell import getShell
-from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
 # global variables
 logger = getLogger()
@@ -89,7 +83,8 @@ class Grid(object):
             if self.middleware == 'EDG':
                 submit_option = '--config-vo %s' % self.config['ConfigVO']
                 if not os.path.exists(self.config['ConfigVO']):
-                    raise Ganga.Utility.Config.ConfigError('')
+                    #raise Ganga.Utility.Config.ConfigError('')
+                    raise ConfigError('')
                 else:
                     msg += 'in %s.' % self.config['ConfigVO']
             else:
@@ -172,9 +167,68 @@ class Grid(object):
 
         return True
 
-    def submit(self,jdlpath,ce=None):
+    def list_match(self, jdlpath):
+        '''Returns a list of computing elements can run the job'''
+
+        re_ce = re.compile('^\s*\-\s*(\S+\:2119\/\S+)\s*$')
+
+        matched_ces = []
+
+        if self.middleware == 'EDG':
+            cmd = 'edg-job-list-match --rank'
+        else:
+            cmd = 'glite-wms-job-list-match -a'
+            
+        if not self.active:
+            logger.warning('LCG plugin not active.')
+            return
+
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
+            return
+
+        submit_opt = self.__set_submit_option__()
+
+        if not submit_opt:
+            return matched_ces
+        else:
+            cmd += submit_opt
+
+        cmd = '%s --noint %s' % (cmd, jdlpath)
+
+        logger.debug('job list match command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd), allowed_exit=[0,255])
+
+        if output: output = '%s' % output.strip()
+
+        for l in output.split('\n'):
+            matches = re_ce.match(l)
+            if matches:
+                matched_ces.append(matches.group(1))
+
+        return matched_ces
+
+    def submit(self, jdlpath, ce=None, isCollection=False, drySubmit=False):
         '''Submit a JDL file to LCG'''
 
+        ## doing job list match if in "DrySubmit" mode
+        if drySubmit:
+            matches = []
+            if not ce:
+                if not isCollection:
+                    matches = self.list_match(jdlpath)
+                else:
+                    logger.warning('resource matching not possible for collection job')
+            else:
+                matches.append(ce)
+
+            if not matches:
+                return
+            else:
+                return 'dry submit done'
+
+        ## doing job submission
         if self.middleware == 'EDG':
             cmd = 'edg-job-submit'
         else:

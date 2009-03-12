@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.31 2009-02-25 08:39:20 hclee Exp $
+# $Id: LCG.py,v 1.32 2009-03-12 12:17:31 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -11,32 +11,25 @@
 # Date:   August 2005
 
 import os
-import sys
-import md5
 import re
-import tempfile
 import time
 import errno
 import socket
 import math
 from types import *
-from urlparse import urlparse
 
-from Ganga.GPIDev.Base import GangaObject
+from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
+from Ganga.Core import GangaException
+
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Credentials import getCredential 
 from Ganga.GPIDev.Adapters.IBackend import IBackend 
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Core import BackendError, GangaException
-from Ganga.Utility.Shell import Shell
-from Ganga.Utility.Config import makeConfig,getConfig, ConfigError
+from Ganga.Utility.Config import makeConfig, getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.Utility.util import isStringLike
-from Ganga.Utility.GridShell import getShell
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
-from Ganga.Lib.LCG.GangaThread.MTRunner import MTRunner, Data, Algorithm
-from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader, LCGOutputDownloadTask
+from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
 from Ganga.Lib.LCG.Utility import *
 
 # for runtime stdout/stderr inspection
@@ -51,9 +44,6 @@ if simulator_enabled:
     from GridSimulator import GridSimulator as Grid
 else:
     from Grid import Grid
-
-## load the lcg_output_downloader (a background thread)
-import atexit
 
 def start_lcg_output_downloader():
     global lcg_output_downloader
@@ -74,7 +64,6 @@ def stop_ganga_thread_pool():
     tpool.shutdown()
 
 start_lcg_output_downloader()
-atexit.register( (-998, stop_ganga_thread_pool) )
     
 class LCG(IBackend):
     '''LCG backend - submit jobs to the EGEE/LCG Grid using gLite/EDG middleware.
@@ -302,6 +291,9 @@ class LCG(IBackend):
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
         profiler.start()
 
+#        if config['DrySubmit']:
+#            logger.warning('No job will be submitted in DrySubmit mode')
+
         mt = self.middleware.upper()
 
         job = self.getJobObject()
@@ -320,6 +312,10 @@ class LCG(IBackend):
                     raise GangaException('GLITE bulk submission failure')
 
         profiler.check('==> master_submit() elapsed time')
+
+#        if config['DrySubmit']:
+#            ick = False
+            
         return ick
 
     def master_resubmit(self,rjobs):
@@ -327,6 +323,9 @@ class LCG(IBackend):
 
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
         profiler.start()
+
+#        if config['DrySubmit']:
+#            logger.warning('No job will be submitted in DrySubmit mode')
 
         mt = self.middleware.upper()
 
@@ -366,6 +365,9 @@ class LCG(IBackend):
                         raise GangaException('GLITE bulk submission failure')
 
         profiler.check('job re-submission elapsed time')
+
+#        if config['DrySubmit']:
+#            ick = False
 
         return ick
 
@@ -410,8 +412,8 @@ class LCG(IBackend):
                 # compose master JDL for collection job
                 jdl_cnt  = self.__make_collection_jdl__(my_node_jdls, offset=my_node_offset)
                 jdl_path = self.inpw.writefile( FileBuffer(coll_jdl_name, jdl_cnt) )
-                master_jid = self.gridObj.submit(jdl_path, ce=None)
 
+                master_jid = self.gridObj.submit(jdl_path,ce=None,isCollection=True,drySubmit=config['DrySubmit'])
                 if not master_jid:
                     return False 
                 else:
@@ -750,7 +752,7 @@ class LCG(IBackend):
         if mt=="GLITE":
             grids[mt].perusable=self.perusable
         
-        self.id = grids[mt].submit(jdlpath,self.CE)
+        self.id = grids[mt].submit(jdlpath, ce=self.CE, drySubmit=config['DrySubmit'])
 
         self.parent_id = self.id
 
@@ -761,7 +763,7 @@ class LCG(IBackend):
         job = self.getJobObject()
       
         mt = self.middleware.upper()
-        self.id = grids[mt].submit(job.getInputWorkspace().getPath("__jdlfile__"),self.CE)
+        self.id = grids[mt].submit(job.getInputWorkspace().getPath("__jdlfile__"), ce=self.CE, drySubmit=config['DrySubmit'])
         self.parent_id = self.id
 
         if self.id:
@@ -1885,6 +1887,9 @@ config.addOption('OutputDownloaderThread', 10, 'sets the number of concurrent th
 config.addOption('SandboxTransferTimeout', 60, 'sets the transfer timeout of the oversized input sandbox')
 
 config.addOption('JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
+
+config.addOption('DrySubmit', False, 'sets to True will only list the CEs matching the job\'s requirement instead of doing job submission')
+
 #config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
 
 # apply preconfig and postconfig handlers
@@ -1906,6 +1911,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.31  2009/02/25 08:39:20  hclee
+# introduce and adopt the basic class for Ganga multi-thread handler
+#
 # Revision 1.30  2009/02/16 14:10:05  hclee
 # change basedir of DQ2SandboxCache from users to userxx where xx represents the last two digits of year
 #

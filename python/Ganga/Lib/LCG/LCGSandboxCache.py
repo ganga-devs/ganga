@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCGSandboxCache.py,v 1.7 2009-02-25 08:39:20 hclee Exp $
+# $Id: LCGSandboxCache.py,v 1.8 2009-03-12 12:17:31 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -20,6 +20,8 @@ import md5
 from types import *
 from urlparse import urlparse
 
+from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm  
+
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
@@ -30,7 +32,6 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.GridShell import getShell 
 
 from Ganga.Lib.LCG.GridSandboxCache import GridSandboxCache, GridFileIndex
-from Ganga.Lib.LCG.GangaThread.MTRunner import MTRunner, Data, Algorithm  
 from Ganga.Lib.LCG.Utility import * 
 
 lcg_sandbox_cache_schema_datadict = GridSandboxCache._schema.inherit_copy().datadict
