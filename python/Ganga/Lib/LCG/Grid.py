@@ -149,6 +149,40 @@ class Grid(object):
             lfc_list = output.strip().split('\n')
             return lfc_list[0]
 
+    def __resolve_no_matching_jobs__(self, cmd_output):
+        '''Parsing the glite-wms-job-status log to get the glite jobs which have been removed from the WMS'''
+
+        match_log = re.search('(.*-job-status.*\.log)', cmd_output)
+
+        if match_log:
+            
+            logfile = match_log.group(1)
+            f = open(logfile,'r')
+            output = f.readlines()
+            f.close()
+            
+            re_jid = re.compile('^Unable to retrieve the status for: (https:\/\/\S+:9000\/[0-9A-Za-z_\.\-]+)\s*$')
+            re_key = re.compile('^.*(no matching jobs found)\s*$')
+
+            glite_ids = []
+
+            m_jid = None
+            m_key = None
+            myjid = ''
+            for line in output:
+                m_jid = re_jid.match(line)
+                if m_jid:
+                    myjid = m_jid.group(1)
+                    m_jid = None
+
+                if myjid:
+                    m_key = re_key.match(line)
+                    if m_key:
+                        glite_ids.append(myjid)
+                        myjid = ''
+
+        return glite_ids
+
     def check_proxy(self):
         '''Check the proxy and prompt the user to refresh it'''
 
@@ -314,7 +348,7 @@ class Grid(object):
     def status(self,jobids,is_collection=False):
         '''Query the status of jobs on the grid'''
 
-        if not jobids: return []
+        if not jobids: return ([],[])
 
         #do_node_mapping = False
 
@@ -333,10 +367,10 @@ class Grid(object):
 
         if not self.active:
             logger.warning('LCG plugin not active.')
-            return []
+            return ([],[])
         if not self.credential.isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
-            return []
+            return ([],[])
 
         cmd = '%s --noint -i %s' % (cmd,idsfile)
         logger.debug('job status command: %s' % cmd)
@@ -344,13 +378,15 @@ class Grid(object):
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd), allowed_exit=[0,255])
         os.unlink(idsfile)
 
+        missing_glite_jids = []
         if rc != 0:
-            self.__print_gridcmd_log__('(.*-job-status.*\.log)',output)
+            missing_glite_jids = self.__resolve_no_matching_jobs__(output)
 
-            # note about how to fix bug #45820
-            # 1. parse the log file and extract the ids of the missing jobs in WMS
-            # 2. create info dictionary with id, is_node (dep. on is_collection option to this function),
-            #    status = ??, reason = 'job removed from WMS'
+            if missing_glite_jids:
+                logger.info('some jobs removed from WMS, will set corresponding Ganga job to \'failed\' status')
+                logger.debug('jobs removed from WMS: %s' % repr(missing_glite_jids))
+            else:
+                self.__print_gridcmd_log__('(.*-job-status.*\.log)',output)
 
         re_id = re.compile('^\s*Status info for the Job : (https://.*\S)\s*$')
         re_status = re.compile('^\s*Current Status:\s+(.*\S)\s*$')
@@ -430,7 +466,7 @@ class Grid(object):
                 info[-1]['destination'] = match.group(1)
                 continue
 
-        return info
+        return (info, missing_glite_jids)
 
     def get_loginfo(self,jobids,directory,verbosity=1):
         '''Fetch the logging info of the given job and save the output in the job's outputdir'''

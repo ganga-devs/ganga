@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.32 2009-03-12 12:17:31 hclee Exp $
+# $Id: LCG.py,v 1.33 2009-03-12 12:26:16 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -64,6 +64,28 @@ def stop_ganga_thread_pool():
     tpool.shutdown()
 
 start_lcg_output_downloader()
+
+## helper routines
+def __fail_missing_jobs__(missing_glite_jids, jobdict):
+    '''failing the Ganga jobs if the associated glite job id is appearing in missing_glite_jids'''
+
+    for glite_jid in missing_glite_jids:
+        if jobdict.has_key( glite_jid ):
+            j = jobdict[glite_jid]
+
+            if j.master:
+                ## this is a subjob
+                j.backend.status = 'Removed'
+                j.backend.reason = 'job removed from WMS'
+                j.updateStatus('failed')
+
+            else:
+                ## this is a master job
+                for sj in j.subjobs:
+                    if sj.backend.parent_id == glite_jid:
+                        sj.backend.status = 'Removed'
+                        sj.backend.reason = 'job removed from WMS'
+                        sj.updateStatus('failed')
     
 class LCG(IBackend):
     '''LCG backend - submit jobs to the EGEE/LCG Grid using gLite/EDG middleware.
@@ -1523,7 +1545,11 @@ sys.exit(0)
                 continue 
 
             ## loop over the jobs in each class
-            for info in grids[mt].status(jobclass[mt]):
+            status_info, missing_glite_jids = grids[mt].status(jobclass[mt])
+
+            __fail_missing_jobs__(missing_glite_jids, jobdict)
+            
+            for info in status_info:
 
                 create_download_task = False
 
@@ -1603,7 +1629,9 @@ sys.exit(0)
                     return False
             return True
 
-        status_info = grid.status(jobdict.keys(),is_collection=True)
+        (status_info, missing_glite_jids) = grid.status(jobdict.keys(),is_collection=True)
+
+        __fail_missing_jobs__(missing_glite_jids, jobdict)
 
         ## update GANGA job repository according to the available job information 
         for info in status_info:
@@ -1911,8 +1939,17 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.32  2009/03/12 12:17:31  hclee
+# adopting GangaThread in Ganga.Core
+#
 # Revision 1.31  2009/02/25 08:39:20  hclee
 # introduce and adopt the basic class for Ganga multi-thread handler
+#
+# Revision 1.30.2.2  2009/03/03 13:23:43  hclee
+# failing Ganga jobs if the corresponding glite jobs have been removed from WMS
+#
+# Revision 1.30.2.1  2009/03/03 12:42:54  hclee
+# set Ganga job to fail if the corresponding glite jobs have been removed from WMS
 #
 # Revision 1.30  2009/02/16 14:10:05  hclee
 # change basedir of DQ2SandboxCache from users to userxx where xx represents the last two digits of year
