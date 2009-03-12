@@ -5,7 +5,7 @@ from GangaLHCb.test import *
 addLocalTestSubmitter()
 
 ap = DaVinci()
-j = Job(application=ap, backend=TestSubmitter())
+j = Job(application=ap, backend=TestSubmitter(time=1))
 
 j.splitter=SplitByFiles(filesPerJob=10)
 j.inputdata=LHCbDataset([
