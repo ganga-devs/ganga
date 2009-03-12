@@ -3,6 +3,7 @@ from __future__ import division
 
 import time
 import string
+import copy
 from Ganga.Core import ApplicationConfigurationError
 from GangaLHCb.Lib.LHCbDataset import *
 from Ganga.GPIDev.Schema import *
@@ -12,26 +13,37 @@ from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
 from Ganga.Utility.util import unique 
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset import dataset_to_options_string
+from Francesc import GaudiExtras
 
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-def create_gaudi_subjob(splitter, job, inputdata):
-    j = splitter.createSubjob(job)
-    j.application = job.application
-    j.backend = job.backend
+def copy_app(app):
+    cp_app = app.__new__(type(app))
+    cp_app.__init__()
+    for name,item in cp_app._schema.allItems():
+        if not item['copyable']:
+            setattr(cp_app,name,cp_app._schema.getDefaultValue(name))
+        else:
+            c = copy.copy(getattr(app,name))
+            setattr(cp_app,name,c)
+    cp_app.extra = GaudiExtras() 
+    cp_app.extra.input_buffers = app.extra.input_buffers.copy()
+    cp_app.extra.input_files = app.extra.input_files[:]
+    return cp_app 
+
+def create_gaudi_subjob(job, inputdata):
+    j = Job()
+    j.application = copy_app(job.application)
+    j.backend = job.backend # no need to deepcopy 
     if inputdata:
         j.inputdata = inputdata
         j.application.extra.inputdata = j.inputdata
     else:
         j.inputdata = None
         j.application.extra.inputdata = LHCbDataset()
-    j.outputsandbox = job.outputsandbox[:]
-    extra = job.application.extra
-    j.application.extra.input_buffers = extra.input_buffers.copy()
-    j.application.extra.input_files = extra.input_files[:]
-    
+    j.outputsandbox = job.outputsandbox[:]    
     return j
 
 def simple_split(files_per_job, inputs):
@@ -116,7 +128,7 @@ class SplitByFiles(ISplitter):
         _timeUpdate = False
 
         for dataset in datasetlist:
-            subjobs.append(create_gaudi_subjob(self,job,dataset))
+            subjobs.append(create_gaudi_subjob(job,dataset))
             #copy the replicas back up the tree
             for f in dataset.files:
                 dataset_files[f.name].replicas = f.replicas
@@ -149,7 +161,7 @@ class OptionsFileSplitter(ISplitter):
     def split(self,job):        
         subjobs=[]
         for i in self.optsArray:
-            j = create_gaudi_subjob(self, job, job.inputdata)
+            j = create_gaudi_subjob(job, job.inputdata)
             j.application.extra.input_buffers['data.opts'] += i
             subjobs.append(j)
         return subjobs
@@ -176,7 +188,7 @@ class GaussSplitter(ISplitter):
     def split(self,job):
         subjobs=[]
         for i in range(self.numberOfJobs):
-            j = create_gaudi_subjob(self, job, job.inputdata)
+            j = create_gaudi_subjob(job, job.inputdata)
             first = i*self.eventsPerJob + 1
             opts = 'ApplicationMgr.EvtMax = %d;\n' % self.eventsPerJob
             opts += 'GaussGen.FirstEventNumber = %d;\n' % first
