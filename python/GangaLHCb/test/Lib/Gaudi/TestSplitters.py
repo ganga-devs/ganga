@@ -1,8 +1,23 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaLHCb.Lib.Gaudi.Gaudi import GaudiExtras
-#rom GangaLHCb.Lib.Gaudi.Splitters import *
+from GangaLHCb.Lib.Gaudi.Splitters import copy_app
 
 class TestSplitters(GangaGPITestCase):
+
+    def test_copy_app(self):
+        app_orig = DaVinci()._impl
+        app_orig.user_release_area = 'Geno71'
+        app_orig.extra = GaudiExtras()
+        app_orig.extra.input_buffers['test.buf'] = 'Go Pens!'
+        app_orig.extra.input_files.append('test.file')
+        app_copy = copy_app(app_orig)
+        assert app_copy.user_release_area is 'Geno71'
+        assert app_copy.extra.input_buffers['test.buf'] is 'Go Pens!'
+        assert app_copy.extra.input_files[0] is 'test.file'
+        app_copy.extra.input_buffers['Sid87'] = 'The Kid'
+        assert not 'Sid87' in app_orig.extra.input_buffers
+        app_copy.extra.input_files[0] = 'Go Steelers!'
+        assert app_orig.extra.input_files[0] is not 'Go Steelers!'
 
     # this doesn't really do much
     #def test_create_gaudi_subjob(self):
