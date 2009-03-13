@@ -1,3 +1,0 @@
-# makes sure the DIRACsite value is None
-assert config.DIRAC.DIRACsite is None, 'The default value of DIRACsite was %s' % \
-    str(config.DIRAC.DIRACsite)
