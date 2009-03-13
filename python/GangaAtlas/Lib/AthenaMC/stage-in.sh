@@ -46,14 +46,19 @@ stageInLCG(){
     SITES=$@
     dq2get=`which dq2-get`
     py32=`which python32`
-
+    matchDB=`echo $LFNS | grep DBRelease`
+    echo "test matching",$LFNS,$matchDB,$newDB_location
+    if [ ! -z "$newDB_location" -a ! -z "$matchDB" ]; then
+	echo "DBRelease already set, NOT downloading the archive: $LFNS"
+	return 0
+    fi
     cmd="$dq2get --client-id=ganga -a -d -s $SITE -D -f $LFNS $INPUTDSET" 
     if [ ! -z "$py32" ]; then
         cmd="python32 "$cmd
     fi
     echo $cmd
     
-    for site in SITES:
+    for site in $SITES; do
         echo "Attempting getting data from $site"
 	$cmd
 	status=$?
@@ -63,14 +68,14 @@ stageInLCG(){
 	    break
 	fi
 	echo "attempt failed."
-
-    ls -l 
-    for lfn in $LFNS; do
-	if [ -z "$lfn" ]; then
-	    echo "Missing LFN: $lfn"
-	    return 410302; # failed to get any replica...
-        fi
     done
+    ls -l 
+
+    if [ ! -s "$LFNS" ]; then
+	echo "Missing LFN: $LFNS"
+	return 410302; # failed to get any replica...
+    fi
+
     return 0
 #    GUID=$2
 #    shift 2;
@@ -197,10 +202,7 @@ for ((i=0;i<${#lfn[@]};i++)); do
     ;;
     
  esac
- if [ ! -s $INPUTFILE ] ; then
-    echo "Unable to stage-in input file $file"
-    exit 410302
- fi
+
 # echo "doing pool insert"
 #    pool_insertFileToCatalog $INPUTFILE
 #    cat PoolFileCatalog.xml 2> /dev/null

@@ -151,7 +151,29 @@ elif [ -e "AtlasTier0" ]; then
     echo "CMTPATH is now $CMTPATH"
     echo "********"
 fi
-cd $T_HOMEDIR
 
-echo $T_JTFLAGS
+if [ ! -z "$ATLASDBREL" ]; then
+    echo "Setting requested DB release. First looking for local instances"
+    DBpath=`dirname $DB_location`
+    echo "DB path is $DBpath"
+    if [ -e "$DBpath/$ATLASDBREL" ]; then
+	echo "found local instance: $DBpath/$ATLASDBREL"
+	echo "Starting local setup"
+	export newDB_location="$DBpath/$ATLASDBREL"
+	export newDATAPATH=`echo $DATAPATH | sed -e "s:$DB_location\:::"`
+	export newDATAPATH=$newDB_location:$newDATAPATH
+	export DATAPATH=$newDATAPATH
+	export DBRELEASE=$ATLASDBREL
+	export DBRELEASE_REQUESTED=$ATLASDBREL
+	export DBRELEASE_REQUIRED=$ATLASDBREL
+	export CORAL_AUTH_PATH=$newDB_location/XMLConfig
+	export CORAL_DBLOOKUP_PATH=$newDB_location/XMLConfig
+	export TNS_ADMIN=$newDB_location/oracle-admin
+	export newArgs=`echo $T_ARGS | sed -e "s:DBRelease=DBRelease-${ATLASDBREL}.tar.gz::"`
+	export T_ARGS=$newArgs
+    else
+	echo "No local instance found, will have to download archive"
+    fi
+fi
+cd $T_HOMEDIR
 

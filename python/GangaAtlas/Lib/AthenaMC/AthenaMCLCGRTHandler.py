@@ -287,12 +287,14 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             backuplocation=backuplocation[imax:]
        
         environment={'T_LCG_GFAL_INFOSYS' :'atlas-bdii.cern.ch:2170'}
+        if app.mode !="template":
+            trflags="/Ft"
+            if app.verbosity:
+                trflags+="/W/Fl/W%s" % app.verbosity
+            environment["TRFLAGS"]=trflags
 
-        environment["T_JTFLAGS"]=" -t"
-        if app.verbosity:
-            environment["T_JTFLAGS"]+=" -l %s" % app.verbosity
-        if app.mode=="template":
-            environment["T_JTFLAGS"]=""
+#        if app.mode=="template":
+
             
         environment["OUTLFC"]=outlfc
         environment["OUTSITE"]=outsite
@@ -641,9 +643,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         inputfiles = [fn for fn in self.turls.keys() if matchFile(matchrange, fn)]
         inputfiles.sort()
         
-        # Strict matching must be discarded if neither splitter.input_partitions nor inputdata.redefine_partitions are used.
-        # same if 
-        if job._getRoot().inputdata and job._getRoot().inputdata.redefine_partitions == "" and job._getRoot().splitter and job._getRoot().splitter.input_partitions == "":
+        # Strict matching must be discarded if inputdata.redefine_partitions is not used.
+
+        if (job._getRoot().inputdata and job._getRoot().inputdata.redefine_partitions == ""):
             inputfiles=[]
             inlfns=self.turls.keys()
             inlfns.sort()
@@ -656,7 +658,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
                 inputfiles.append(inlfns[i-1])
 
-        
         if not app.dryrun and len(inputfiles) < len(inputnumbers):
             if len(inputfiles) > 0:
                missing = []
@@ -794,6 +795,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 digval=string.replace(val,".","0")
                 if key=="DBRelease" and digval.isdigit():
                     dbfile="DBRelease-%s.tar.gz" % val
+                    environment["ATLASDBREL"]=val
                     NewArgstring=NewArgstring+"DBRelease=%s " % dbfile
                     continue
                 imin=string.find(val,"$")

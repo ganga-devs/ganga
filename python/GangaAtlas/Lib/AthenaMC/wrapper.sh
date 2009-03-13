@@ -1,5 +1,6 @@
 #!/bin/sh
 
+
 export T_RELEASE="${1}"
 export T_SE="${2}"
 export T_LOGFILE="${3}"
@@ -7,6 +8,9 @@ export T_TRF="$4"
 shift 4
 export T_ARGS="$*"
 shift $#
+
+
+
 
 if [ -z "$BACKEND" ]; then
     echo "Error, backend was not transmitted properly, aborting"
@@ -108,6 +112,9 @@ if [ ! -z "$CUSTOM_JOB_OPTION" -a -e $T_HOMEDIR/$CUSTOM_JOB_OPTION ]; then
      cp $T_HOMEDIR/$CUSTOM_JOB_OPTION AtlasProduction/*/InstallArea/jobOptions/*[Jj]ob[Oo]ptions
 fi
 
+T_JTFLAGS=`echo $TRFLAGS | sed -e "s:/F:\-:g" -e "s:/W: :g"`
+echo "TRF FLAGS: $T_JTFLAGS"
+
 # Insert dry-run possibility
 if [ ! -z "$DRYRUN" ]; then
    if ((0==$(($RANDOM % 5)))); then exit 128; fi
@@ -119,15 +126,19 @@ fi
 export LD_LIBRARY_PATH_SAVE=$LD_LIBRARY_PATH
 export PATH_SAVE=$PATH
 export PYTHONPATH_SAVE=$PYTHONPATH
-# 13.0.30: have to move stage-in before athena setup for the reasons mentionned above :-(
-source $T_HOMEDIR/stage-in.sh
+
+
 
 # set up the release
 echo "## source $T_HOMEDIR/setup-release.sh"
 source $T_HOMEDIR/setup-release.sh
-
 printenv
 pwd
+# stage-in input data (use dq2-get, not dependant upon athena setup)
+echo "## source $T_HOMEDIR/stage-in.sh"
+
+source $T_HOMEDIR/stage-in.sh
+ls -l
 
 echo "output SE is $T_SE"
 
