@@ -104,7 +104,7 @@ class Bender(GaudiPython):
     _name = 'Bender'
     _category = 'applications'
     _schema = bschema.inherit_copy()
-    _exportmethods = ['getpack', 'make', 'cmt']
+    _exportmethods = ['getenv','getpack', 'make', 'cmt']
     
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""
@@ -117,7 +117,10 @@ class Bender(GaudiPython):
                 'options/BenderExample.py'))]
         return
 
-    # add the next 3 b/c of bug in exportmethods dealing w/ grandchildren
+    # add the next 4 b/c of bug in exportmethods dealing w/ grandchildren
+    def getenv(self,options=''):
+        return super(Bender,self).getenv()
+
     def getpack(self,options=''):
         return super(Bender,self).getpack(options)
 

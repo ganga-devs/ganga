@@ -59,7 +59,7 @@ class Francesc(IApplication):
     '''Parent for all Gaudi and GaudiPython applications, should not be used
     directly.'''    
     _name = 'Francesc'
-    _exportmethods = ['getpack', 'make', 'cmt']
+    _exportmethods = ['getenv','getpack', 'make', 'cmt']
     _schema = Schema(Version(1, 1), {})
 
     def get_gaudi_appname(self):
@@ -121,6 +121,17 @@ class Francesc(IApplication):
 
         self.shell = Shell(setup=fd.name)
         logger.debug(pprint.pformat(self.shell.env))    
+
+
+    def getenv(self):
+        '''Returns a copy of the environment used to flatten the options, e.g.
+        env = DaVinci().getenv(), then calls like env[\'DAVINCIROOT\'] return
+        the values.
+        
+        Note: Editing this does not affect the options processing.
+        '''
+        self._getshell()
+        return self.shell.env.copy()
     
     def getpack(self, options=''):
         """Execute a getpack command. If as an example dv is an object of
