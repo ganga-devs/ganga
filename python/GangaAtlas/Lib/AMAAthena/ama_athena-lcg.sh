@@ -54,9 +54,10 @@ print_ext_wn_info
 
 ################################################
 # cache the essential library path for later usage
-LD_LIBRARY_PATH_ORIG=$LD_LIBRARY_PATH
-PATH_ORIG=$PATH
-PYTHONPATH_ORIG=$PYTHONPATH
+# and make them globally available in child processes
+export LD_LIBRARY_PATH_ORIG=$LD_LIBRARY_PATH
+export PATH_ORIG=$PATH
+export PYTHONPATH_ORIG=$PYTHONPATH
 
 ################################################
 # set up LFC_HOST for staging-out the job's outputs
