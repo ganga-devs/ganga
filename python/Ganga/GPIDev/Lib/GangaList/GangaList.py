@@ -6,7 +6,7 @@ from Ganga.GPIDev.Schema.Schema import ComponentItem,Schema,SimpleItem,Version
 from Ganga.Utility.Plugin.GangaPlugin import allPlugins
 from Ganga.Utility.util import containsGangaObjects,isNestedList
 from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError
-import sys
+import copy,sys
 
 def makeGangaList(_list, mapfunction = None, parent = None):
     """Should be used for makeing full gangalists"""
@@ -163,6 +163,10 @@ class GangaList(GangaObject):
     
     def __contains__(self, obj):
         return self._list.__contains__(self.strip_proxy(obj))
+    
+    def __copy__(self):
+        """Bypass any checking when making the copy"""
+        return makeGangaList(_list = copy.copy(self._list))
        
     def __delitem__(self, obj):
         self._list.__delitem__(self.strip_proxy(obj))
@@ -175,6 +179,10 @@ class GangaList(GangaObject):
     def _export___delslice__(self, start, end):
         self.checkReadOnly()
         self.__delslice__(start,end)
+        
+    def __deepcopy__(self, memo):
+        """Bypass any checking when making the copy"""
+        return makeGangaList(_list = copy.deepcopy(self._list, memo))
        
     def __eq__(self, obj_list):
         if obj_list is self:#identity check
@@ -401,4 +409,3 @@ class GangaList(GangaObject):
         """Returns a simple str of the _list."""
         return str(self._list)
 
-    
