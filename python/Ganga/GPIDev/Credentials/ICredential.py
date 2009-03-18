@@ -1,12 +1,15 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ICredential.py,v 1.4 2009-01-30 18:42:17 karl Exp $
+# $Id: ICredential.py,v 1.5 2009-03-18 18:28:15 karl Exp $
 ################################################################################
 #
 # File: ICredential.py
 # Author: K. Harrison
 # Created: 060607
+#
+# 18/03/2009 MWS: Added the 'log' option to isValid and shifted the expire
+#                 message here
 #
 # 06/07/2006 KH:  Changed to Ganga.Utility.Shell for shell commands
 #                 Redefined create and renew methods
@@ -285,34 +288,17 @@ class ICredential( GangaObject ):
                currTime = time.time()
                if currTime - logTimeStamp >= logRepeatDuration:
                   logTimeStamp = currTime
-                  _tl = self.timeleft()
-                  if _tl == "-1" or _tl == "0:00:00":
-                     _expiryStatement = "has expired!"
-                  else:
-                     _expiryStatement = "will expire in %s!" % _tl
 
-                  itemList = []
-                  text = self._name[ 0 ]
-                  for i in range( len( self._name ) - 1 ):
-                     character = self._name[ i + 1 ]
-                     if character.isupper():
-                        itemList.append( text )
-                        text = character.lower()
-                     else:
-                        text = "".join( [ text, character ] )
-                  itemList.append( text )
-                  _credentialName = " ".join( itemList )
-                  
-                  logger.warning( "%s %s" % \
-                     ( _credentialName, _expiryStatement ) )
-
+                  # Check validity but print logging messages this time
+                  self.isValid( "", True )
                   _credentialObject = self._name[ 0 ].lower() + self._name[ 1: ]
                   logger.warning( \
                      "Renew by typing '%s.renew()' at the prompt." % \
                      ( _credentialObject ) )
 
+
                   #notify the Core that the credential is not valid                  
-                  _validity = self.timeInSeconds(_tl)
+                  _validity = self.timeInSeconds(self.timeleft())
                   _minValidity = self.timeInSeconds(minValidity)/2
                   if _validity <= max(120,_minValidity):
                      Coordinator.notifyInvalidCredential(self)
@@ -366,7 +352,7 @@ class ICredential( GangaObject ):
       return True
 
 
-   def isValid( self, validity = "" ):
+   def isValid( self, validity = "", log = False ):
 
       """
       Check validity
@@ -375,6 +361,8 @@ class ICredential( GangaObject ):
          validity - Minimum time for which credential should be valid,
                     specified as string of format "hh:mm"
                     [ Defaults to valud of self.minValidity ]
+
+         log      - Print loggin messages if invalid
 
       Return value: True if credential is valid for required time, False
       otherwise.
@@ -394,6 +382,28 @@ class ICredential( GangaObject ):
          if timeleftInSeconds <= validityInSeconds:
             valid = False
 
+      if not valid and log:
+         _tl = self.timeleft()
+         if _tl == "-1" or _tl == "0:00:00":
+            _expiryStatement = "has expired!"
+         else:
+            _expiryStatement = "will expire in %s!" % _tl
+
+         itemList = []
+         text = self._name[ 0 ]
+         for i in range( len( self._name ) - 1 ):
+            character = self._name[ i + 1 ]
+            if character.isupper():
+               itemList.append( text )
+               text = character.lower()
+            else:
+               text = "".join( [ text, character ] )
+         itemList.append( text )
+         _credentialName = " ".join( itemList )
+                  
+         logger.warning( "%s %s" % \
+                         ( _credentialName, _expiryStatement ) )
+         
       return valid
 
    def location( self ):

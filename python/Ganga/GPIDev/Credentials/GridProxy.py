@@ -1,12 +1,16 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridProxy.py,v 1.3 2009-01-30 18:37:09 karl Exp $
+# $Id: GridProxy.py,v 1.4 2009-03-18 18:28:15 karl Exp $
 ################################################################################
 #
 # File: GridProxy.py
 # Author: K. Harrison
 # Created: 060519
+#
+# 18/03/2009 MWS: Added the 'log' option to isValid and method to retrieve
+#                 the full identity as a dictionary. Also, different VO in
+#                 proxy to config invlidates credentials
 #
 # 06/07/2006 KH:  Changed to Ganga.Utility.Shell for shell commands
 #                 Added voms support
@@ -157,7 +161,7 @@ class GridProxy ( ICredential ):
    _hidden = 1
    _enable_config = 1
    _exportmethods = [ "create", "destroy", "identity", "info", "isAvailable", \
-      "isValid", "location", "renew", "timeleft", "voname" ]
+      "isValid", "location", "renew", "timeleft", "voname", "fullIdentity" ]
 
    def __init__( self, middleware = "EDG" ):
       super( GridProxy, self ).__init__()
@@ -229,8 +233,20 @@ class GridProxy ( ICredential ):
       else:
          return False
 
-   def isValid( self, validity = "" ):
-      return ICredential.isValid( self, validity )
+   def isValid( self, validity = "", log = False ):
+
+      # Do parent check
+      if not ICredential.isValid( self, validity, log ):
+         return False
+      
+      # check vo names
+      if self.voname() != self.voms:
+         if log:
+            logger.warning("Grid Proxy not valid. Certificate VO '%s' does not match requested '%s'"
+                           % (self.voname(), self.voms))
+         return False
+         
+      return True
 
    def location( self ):
 
@@ -241,6 +257,36 @@ class GridProxy ( ICredential ):
 
       return proxyPath
 
+   def fullIdentity( self, safe = False ):
+      """
+      Return the users full identity as a dictionary
+
+      Argument:
+         safe - logical flag
+                =>  False : return identity exactly as obtained from proxy
+                =>  True  : return identity after stripping out
+                            non-alphanumeric characters
+
+      Return value: Dictionary of the various labels in the users DN
+      """
+
+      ele_dict = {}
+      
+      subjectList = self.info( opt = "-identity" ).split( "/" )
+
+      for subjectElement in subjectList:
+         element = subjectElement.strip()
+         if element.find("=") == -1:
+            continue
+
+         field, val = element.split("=")
+         if safe:
+            val = re.sub( "[^a-zA-Z0-9]", "" ,val )
+         ele_dict[field] = val
+
+      return ele_dict
+      
+      
    def identity( self, safe = False ):
       """
       Return user's identify

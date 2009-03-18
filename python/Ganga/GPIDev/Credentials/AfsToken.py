@@ -1,12 +1,14 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AfsToken.py,v 1.3 2009-01-30 18:42:17 karl Exp $
+# $Id: AfsToken.py,v 1.4 2009-03-18 18:28:15 karl Exp $
 ################################################################################
 #
 # File: AfsToken.py
 # Author: K. Harrison
 # Created: 060608
+#
+# 18/03/2009 MWS: Added the 'log' option to isValid
 #
 # 06/07/2006 KH:  Changed to Ganga.Utility.Shell for shell commands
 #
@@ -218,8 +220,8 @@ class AfsToken ( ICredential ):
 
       return available
 
-   def isValid( self, validity = "" ):
-      return ICredential.isValid( self, validity )
+   def isValid( self, validity = "", log = False ):
+      return ICredential.isValid( self, validity, log )
 
    def location( self ):
       """
