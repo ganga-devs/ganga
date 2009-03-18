@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.27 2009-03-06 14:31:20 bsamset Exp $
+# $Id: NG.py,v 1.28 2009-03-18 14:12:56 gjelsten Exp $
 ###############################################################################
 #
 # NG backend 
@@ -263,7 +263,12 @@ class Grid:
         s = ""
         if sbin:
             s="s"
-        prefix_hack = "${%s_LOCATION}/%sbin/" % (self.middleware,s)
+
+        middleware = os.environ["%s_LOCATION" % self.middleware]
+        mws = middleware.split(":")
+        prefix_hack = "%s/%sbin/" % (mws[0],s)
+        ###prefix_hack = "${%s_LOCATION}/%sbin/" % (self.middleware,s)
+
         #print 'get_cmd_prefix_hack rerurn prefix_hack ', prefix_hack
         #prefix_hack = "${NORDUGRID_LOCATION}/bin/"
 
@@ -2191,6 +2196,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.27  2009/03/06 14:31:20  bsamset
+# Fixed logging problem with missing job IDs. Again.
+#
 # Revision 1.26  2009/03/06 00:03:05  pajchel
 # print statements removed
 #
