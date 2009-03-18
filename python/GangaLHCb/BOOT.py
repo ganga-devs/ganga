@@ -2,7 +2,8 @@
 from Ganga.Runtime.GPIexport import exportToGPI
 
 def browseBK(gui=True):
-    """
+    """Return an LHCbDataset from the GUI LHCb Bookkeeping
+
 Utility function to launch the new LHCb bookkeeping from inside Ganga.
 The function returns an LHCbDataset object. 
 
