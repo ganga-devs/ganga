@@ -83,35 +83,84 @@ def printError(s, outfile):
     outfile.flush()
 
 ## system command executor with subprocess
-def execSyscmdSubprocess(cmd, outfile, errfile, wdir=os.getcwd()):
+def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
 
-    import os, subprocess
+    import os
+    import subprocess
 
-    exitcode = None
+    exitcode = -999
+
+    mystdout = ''
+    mystderr = ''
 
     try:
-        child = subprocess.Popen(cmd, cwd=wdir, shell=True, stdout=outfile, stderr=errfile)
 
-        while 1:
-            exitcode = child.poll()
-            if exitcode is not None:
-                break
-            else:
-                outfile.flush()
-                errfile.flush()
-                time.sleep(0.3)
+        ## resetting essential env. variables
+        my_env = os.environ
+
+        my_env['LD_LIBRARY_PATH'] = ''
+        my_env['PATH'] = ''
+        my_env['PYTHONPATH'] = ''
+
+        if my_env.has_key('LD_LIBRARY_PATH_ORIG'):
+            my_env['LD_LIBRARY_PATH'] = my_env['LD_LIBRARY_PATH_ORIG']
+
+        if my_env.has_key('PATH_ORIG'):
+            my_env['PATH'] = my_env['PATH_ORIG']
+
+        if my_env.has_key('PYTHONPATH_ORIG'):
+            my_env['PYTHONPATH'] = my_env['PYTHONPATH_ORIG']
+        
+        child = subprocess.Popen(cmd, cwd=wdir, env=my_env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        (mystdout, mystderr) = child.communicate()
+
+        exitcode = child.returncode
+
     finally:
         pass
 
-    outfile.flush()
-    errfile.flush()
+    return (exitcode, mystdout, mystderr)
 
-    printInfo('subprocess exit code: %d' % status, outfile)
+## resolving TURL from a given SURL
+def resolveTURL(surl, protocol, outfile, errfile, timeout=300):
 
-    if exitcode != 0:
-        return False
-    else:
-        return True
+    ## default lcg-gt timeout: 5 minutes
+    cmd = 'lcg-gt -v -t %d %s %s' % (timeout, surl, protocol)
+
+    exitcode = -999
+
+    mystdout = ''
+    mystderr = ''
+
+    turl = ''
+
+    try:
+        # use subprocess to run the user's application if the module is available on the worker node
+        import subprocess
+        printInfo('Run lcg-gt cmd: "%s"' % cmd, outfile)
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
+
+        # print out command outputs if the return code is not 0
+        if exitcode != 0:
+            printInfo(mystdout, outfile)
+            printError(mystderr, errfile)
+
+    except ImportError,err:
+        # otherwise, use separate threads to control process IO pipes
+        printError('Not able to load subprocess module', errfile)
+
+    if exitcode == 0:
+        data = mystdout.strip().split('\n')
+
+        try:
+            if re.match(protocol, data[0]):
+                turl = data[0]
+        except IndexError:
+            pass
+
+    return turl
+
 
 # Main program
 if __name__ == '__main__':
@@ -121,7 +170,7 @@ if __name__ == '__main__':
     errfile = open('FileStager.err','a')
 
     ## default value specification
-    supported_protocols = ['lcgcp']
+    supported_protocols = ['lcgcp','rfio','gsidcap','dcap','gsiftp']
 
     protocol  = 'lcgcp'
     timeout   = 1200
@@ -130,6 +179,12 @@ if __name__ == '__main__':
 
     src_surl  = None
     dest_surl = None
+
+    ## a workaround to avoid passing protocol as a argument to this script
+    ## this should be disabled when the bug in Athena/FileStager is fixed
+    if os.environ.has_key('FILE_STAGER_PROTOCOL'):
+        if os.environ['FILE_STAGER_PROTOCOL'] in supported_protocols:
+            protocol = os.environ['FILE_STAGER_PROTOCOL']
 
     ## internal subroutine definition
     def make_copycmd(protocol, vo, timeout, src_surl, dest_surl):
@@ -141,8 +196,29 @@ if __name__ == '__main__':
 
         if protocol in [ 'lcgcp' ]:
             cmd = 'lcg-cp -v --vo %s -t %d %s %s' % (vo, timeout, src_surl, dest_surl)
+
         else:
-            pass
+
+            ## resolve TURL
+            src_turl = resolveTURL(src_surl, protocol, outfile, errfile)
+
+            if src_turl:
+
+                dest_fpath = '/' + re.sub(r'^(file:)?\/*','',dest_surl)
+
+                if protocol in [ 'gsidcap', 'dcap' ]:
+                    cmd = 'dccp -A -d 2 -o %d %s %s' % (timeout, src_turl, dest_fpath)
+
+                elif protocol in [ 'rfio' ]:
+                    cmd = 'rfcp %s %s' % (src_turl, dest_fpath)
+
+                elif protocol in [ 'gsiftp' ]:
+                    ## keep retrying the failed transfer operation within the given timeout
+                    ## wait for 30 seconds to the next retry
+                    cmd = 'globus-url-copy -rst-interval 30 -rst-timeout %d %s %s' % (timeout, src_turl, dest_surl)
+
+                else:
+                    pass
 
         return cmd
 
@@ -158,6 +234,7 @@ if __name__ == '__main__':
             elif o in [ '-p' ]:
                 if a in supported_protocols:
                     protocol = a
+                    printInfo('file copy protocol: %s' % a)
                 else:
                     printInfo('protocal not supported: %s, trying %s' % (a, protocol), outfile)
             elif o in [ '-t' ]:
@@ -194,7 +271,7 @@ if __name__ == '__main__':
     ## main copy loop 
     while not isDone and ( cnt_trial < max_trial ):
 
-        status = False
+        exitcode = -999
 
         cnt_trial += 1
 
@@ -202,19 +279,30 @@ if __name__ == '__main__':
         ##  - timeout is increasd for each trial
         copy_cmd = make_copycmd(protocol, vo, timeout*cnt_trial, src_surl, dest_surl)
 
+        ## faile to compose the full copy command, give another try for the whole loop
+        if not copy_cmd:
+            printError('fail to compose copy command', errfile)
+            continue
+
         try:
             # use subprocess to run the user's application if the module is available on the worker node
             import subprocess
             printInfo('Run copy cmd: "%s"' % copy_cmd, outfile)
-            status = execSyscmdSubprocess(copy_cmd, outfile, errfile)
+            (exitcode, mystdout, mystderr) = execSyscmdSubprocess(copy_cmd)
+
+            # print command detail if return code is not 0
+            if exitcode != 0:
+                printInfo(mystdout, outfile)
+                printError(mystderr, errfile)
+
         except ImportError,err:
             # otherwise, use separate threads to control process IO pipes
             printError('Not able to load subprocess module', errfile)
             break
 
-        printInfo( 'copy command status: %s' % repr(status), outfile )
+        printInfo( 'copy command exitcode: %s' % repr(exitcode), outfile )
 
-        if status:
+        if exitcode == 0:
             ## try to get the checksum type/value stored in LFC
             ## - the checksum dictionary is produced by 'make_filestager_joption.py'
             ##   and stored in a pickle file.
@@ -222,8 +310,6 @@ if __name__ == '__main__':
 
                 csum_type  = csum[src_surl]['csumtype']
                 csum_value = csum[src_surl]['csumvalue']
-
-                printInfo( 'csum_type:%s csum_value:%s' % (csum_type, csum_value), outfile )
 
                 if csum_type and csum_value:
 
@@ -241,10 +327,10 @@ if __name__ == '__main__':
                         pass
 
                     if csum_local.lower() == csum_value.lower():
-                        printInfo( '%s checksum matched: %s ( local:%s == lfc:%s )' % (csum_type, src_surl, csum_local, csum_value), outfile )
+                        printInfo( '%s checksum matched: %s' % (csum_type, csum_value), outfile )
                         isDone = True
                     else:
-                        printInfo( '%s checksum not match: %s ( local:%s != lfc:%s )' % (csum_type, src_surl, csum_local, csum_value), outfile )
+                        printInfo( '%s checksum mismatch: %s ( local:%s != lfc:%s )' % (csum_type, src_surl, csum_local, csum_value), outfile )
                         isDone = False
             else:
                 printInfo( 'Ignore checksum comparison: %s' % src_surl, outfile)

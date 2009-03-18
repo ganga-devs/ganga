@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: make_filestager_joption.py,v 1.4 2009-02-27 13:05:17 elmsheus Exp $
+# $Id: make_filestager_joption.py,v 1.5 2009-03-18 12:46:23 hclee Exp $
 ###############################################################################
 # making input job option file for FileStager
 
@@ -37,10 +37,31 @@ if (io_type in ['FILE_STAGER']):
     site_domain = dm_util.get_site_domain(domain_replacements)
     print >> sys.stdout, 'detected site domain: %s' % site_domain
 
-    # determin close se
+    # determin close se and its supported transfer protocols
     se_replacements = {'srm.cern.ch': 'srm-atlas.cern.ch'}
     close_se = dm_util.get_se_hostname(se_replacements)
     print >> sys.stdout, 'detected closed SE: %s' % close_se
+
+    # define the default gridcopy protocol
+    my_protocol = 'lcgcp'
+
+    # determin the supported transfer protocols of the given SE
+    protocols = dm_util.get_transfer_protocols(close_se)
+    print >> sys.stdout, 'detected transfer protocols: %s' % repr(protocols)
+
+    # chose a suitable protocol
+    # 1. firstly remove gsiftp protocol (do we support it as an alternative of lcgcp?)
+    # 2. pick up the first available protocol
+    # 3. if no first protocol, use lcgcp instead
+    try:
+        protocols.remove('gsiftp')
+    except ValueError:
+        pass
+
+    if protocols:
+        my_protocol = protocols[0]
+
+    print >> sys.stdout, 'picked transfer protocol: %s' % my_protocol
 
     # resolve the dq2_local_site_id taking into account
     #  - file locations
@@ -110,7 +131,7 @@ if (io_type in ['FILE_STAGER']):
         evtmax = -1
 
     # produce the job option file for Athena/FileStager module
-    dm_util.make_FileStager_jobOption(pfn_list, gridcopy=True, maxEvent=evtmax, optionFileName='input.py')
+    dm_util.make_FileStager_jobOption(pfn_list, gridcopy=True, protocol=my_protocol, maxEvent=evtmax, optionFileName='input.py')
 
     dq2tracertime.append(time.time())
     outFile = open('dq2tracertimes.txt','w')

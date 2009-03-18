@@ -100,28 +100,58 @@ def get_transfer_protocols(sename=None):
     Tries to detect the data transfer protocols supported by the specified storage element.
     '''
 
-    protocols = []
+    backup_bdii = 'lcg-bdii.cern.ch:2170'
 
     if not sename:
         sename = get_se_hostname()
 
-    cmd = 'lcg-info --list-se --query SE=\'%s\' --attr Protocol --sed'
+    outputs = []
+    protocols = []
 
-    f = os.popen(cmd)
-    output = f.readlines()
-    rc = f.close()
+    ## query to default BDII (LCG_GFAL_INFOSYS)
+    if os.environ.has_key('LCG_GFAL_INFOSYS'):
+        cmd = 'lcg-info --list-se --vo atlas --query SE=\'%s\' --attr Protocol --sed' % sename
 
-    if (not rc) and (len(output) == 1):
+        f = os.popen(cmd)
+        outputs = map(lambda x:x.strip(), f.readlines())
+        rc = f.close()
 
+        print >> sys.stdout, 'resolving SE protocols with default BDII: %s | %s | %s' % (os.environ['LCG_GFAL_INFOSYS'], cmd, outputs)
+    else:
+        print >> sys.stdout, 'no default BDII defined by LCG_GFAL_INFOSYS'
+
+    ## query to the backup BDII at CERN
+    if not outputs:
+        cmd = 'lcg-info --list-se --vo atlas --bdii \'%s\' --query SE=\'%s\' --attr Protocol --sed' % (backup_bdii, sename)
+        f = os.popen(cmd)
+        outputs = map(lambda x:x.strip(), f.readlines())
+        rc = f.close()
+
+
+        print >> sys.stdout, 'resolving SE protocols with backup BDII: %s | %s | %s' % (os.environ['LCG_GFAL_INFOSYS'], cmd, outputs)
+
+    ## parsing the query results
+    if not rc:
         re_se = re.compile('^%s' % sename.lower())
 
-        if re_se.match(output[0].lower()):
-            se, protocol_str = output[0].strip().split('%')
-            if protocol_str:
-                protocols = protocol_str.split('&')
+        for line in outputs:
+            if re_se.match(line.lower()):
+                se, protocol_str = line.split('%')
+                if protocol_str:
+                    protocols = protocol_str.split('&')
+                break
+
+    if protocols:
+        ## keep unique protocol names and remove '_UNDEF_' in the list
+        protocols = list( Set( protocols ) )
+        try:
+            protocols.remove('_UNDEF_')
+            print >> sys.stdout, 'protocol undefined for SE: %s' % sename
+        except ValueError:
+            pass
 
     return protocols
-    
+
 def get_site_domain(domain_replacements={}):
     '''
     Tries to determine the site domain from varies approaches:
@@ -296,12 +326,14 @@ def resolve_dq2_local_site_id(ds_locations, site_domain, se_hostname, force_site
 
     return dq2_local_site_id
 
-def make_FileStager_jobOption(pfns, gridcopy=True, maxEvent=-1, optionFileName='input_stager.py'):
+def make_FileStager_jobOption(pfns, gridcopy=True, protocol='lcgcp', maxEvent=-1, optionFileName='input_stager.py'):
     '''
     creates the Athena job option file for FileStager.
 
     @param pfns specifies a list of files in physical paths
     @param gridcopy indicates if doing grid copy
+    @param protocol indicates the preferred copy protocol
+    @param maxEvent specifies the max. number of events
     @param optionFileName specifies the name of the jobOption file
     '''
 
@@ -312,6 +344,10 @@ def make_FileStager_jobOption(pfns, gridcopy=True, maxEvent=-1, optionFileName='
 mySampleList = ###SAMPLELIST###
 
 mySampleFile = 'sample.list'
+
+myProtocol = ###GRIDCOPYPROTOCOL###
+
+os.environ['FILE_STAGER_PROTOCOL'] = myProtocol
 
 f = open(mySampleFile,'w')
 for l in mySampleList:
@@ -331,7 +367,7 @@ lcgcp_wrapper = os.path.join( os.getcwd(), 'fs-copy.py' )
 if os.path.exists( lcgcp_wrapper ):
     stagetool.CpCommand = lcgcp_wrapper
     stagetool.CpArguments = []
-    #stagetool.CpArguments = ['-p', 'lcgcp', '--vo', 'atlas', '-t', '1200', '--mt', '3']
+    #stagetool.CpArguments = ['-p', myProtocol, '--vo', 'atlas', '-t', '1200', '--mt', '3']
 
 print '*******'
 print stagetool.CpCommand
@@ -405,6 +441,7 @@ theApp.EvtMax = ###MAXEVENT###
 
     jOption = jOption.replace('###SAMPLELIST###', repr(pfns))
     jOption = jOption.replace('###MAXEVENT###', repr(maxEvent))
+    jOption = jOption.replace('###GRIDCOPYPROTOCOL###', repr(protocol))
     f = open(optionFileName, 'w')
     f.write(jOption)
     f.close()
@@ -454,8 +491,10 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
 
     try:
         import lfcthr
-    except ImportError:
+    except ImportError, exp:
+        print >> sys.stderr, '%s' % str(exp)
         print >> sys.stderr, 'unable to load LFC python module. Please check LCG UI environment.'
+        print >> sys.stderr, 'python path: %s' % repr(sys.path)
         return {}
 
     pfns = {}
