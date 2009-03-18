@@ -693,9 +693,9 @@ make_filestager_joption() {
         export PATH=$MY_PATH_ORG:$PATH_BACKUP
         export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
 
-            # Remove lib64/python from PYTHONPATH
-        dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
-        export PYTHONPATH=$dum
+        # Remove lib64/python from PYTHONPATH
+        #dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
+        #export PYTHONPATH=$dum
 
         if [ ! -z $python32bin ]; then
             $python32bin ./make_filestager_joption.py; echo $? > retcode.tmp
