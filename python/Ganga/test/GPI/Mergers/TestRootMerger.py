@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: TestRootMerger.py,v 1.1 2008-07-17 16:41:12 moscicki Exp $
+# $Id: TestRootMerger.py,v 1.2 2009-03-18 10:46:01 wreece Exp $
 ################################################################################
 from __future__ import division
 from GangaTest.Framework.tests import GangaGPITestCase
@@ -208,7 +208,7 @@ if __name__ == '__main__':
 
         self.runJobSlice()
 
-        rm = RootMerger()
+        rm = RootMerger(args = '-f2')
         rm.files = ['fillrandom.root']
 
         tmpdir = tempfile.mktemp()

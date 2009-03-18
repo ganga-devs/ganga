@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Merger.py,v 1.4 2009-02-03 09:31:12 wreece Exp $
+# $Id: Merger.py,v 1.5 2009-03-18 10:46:01 wreece Exp $
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IMerger import MergerError
@@ -317,6 +317,8 @@ class _RootMergeTool(IMergeTool):
     _hidden = 1
     _name = '_RootMergeTool'
     _schema = IMergeTool._schema.inherit_copy()
+    _schema.datadict['args'] = SimpleItem(defvalue = None, doc='Arguments to be passed to hadd.',\
+                                          typelist=['str','type(None)'])
 
     def mergefiles(self, file_list, output_file):
 
@@ -330,7 +332,15 @@ class _RootMergeTool(IMergeTool):
             raise MergerError('Can not run ROOT correctly. Check your .gangarc file.')
 
         #we always force as the overwrite is handled by our parent
-        merge_cmd = rootprefix + 'hadd -f '
+        default_arguments = '-f'
+        merge_cmd = rootprefix + 'hadd '
+        if self.args: #pass any args on
+            merge_cmd += ' %s ' % self.args
+      
+        #don't add a -f unless needed  
+        if not default_arguments in merge_cmd:
+            merge_cmd += ' %s ' % default_arguments
+        
 
         #add the list of files, output file first
         arg_list = [output_file]
@@ -424,6 +434,7 @@ class RootMerger(AbstractMerger):
     rm.files = ['hist.root','trees.root']
     rm.overwrite = True #False by default
     rm.ignorefailed = True #False by default
+    rm.args = '-f2' #pass arguments to hadd
 
     # will produce the specified files
     j = Job() 
@@ -463,11 +474,14 @@ class RootMerger(AbstractMerger):
     _exportmethods = ['merge']
     _name = 'RootMerger'
     _schema = AbstractMerger._schema.inherit_copy()
+    _schema.datadict['args'] = SimpleItem(defvalue = None, doc='Arguments to be passed to hadd.',\
+                                          typelist=['str','type(None)'])
 
     def __init__(self):
         super(RootMerger,self).__init__(_RootMergeTool())
 
     def merge(self, jobs, outputdir = None, ignorefailed = None, overwrite = None):
+        self.merge_tool.args = self.args
         #needed as exportmethods doesn't seem to cope with inheritance
         return super(RootMerger,self).merge(jobs, outputdir, ignorefailed, overwrite)
 
