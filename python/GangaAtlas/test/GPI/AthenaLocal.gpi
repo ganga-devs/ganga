@@ -14,7 +14,7 @@ j.application.atlas_release='14.2.20'
 j.backend=Local()
 assert (j.submit()==True)
 
-assert sleep_until_completed(j,60)
+assert sleep_until_completed(j,300)
 
 # removing all jobs
 j.remove()
