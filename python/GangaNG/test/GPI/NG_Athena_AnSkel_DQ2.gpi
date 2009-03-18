@@ -30,7 +30,7 @@ j.splitter=DQ2JobSplitter()
 j.splitter.numsubjobs=2
 j.backend=NG()
 
-j.backend.CE='jeannedarc.hpc2n.umu.se'
+#j.backend.CE='jeannedarc.hpc2n.umu.se'
 #j.backend.CE='grad.uppmax.uu.se'
 #j.backend.CE='grid.uio.no'
 #j.backend.CE='ce01.titan.uio.no'
