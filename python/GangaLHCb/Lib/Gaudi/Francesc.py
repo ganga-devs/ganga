@@ -9,6 +9,7 @@ from GangaLHCb.Lib.Gaudi.CMTscript import parse_master_package
 import Ganga.Utility.logging
 from Ganga.Utility.files import expandfilename, fullpath
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
+from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 from GaudiUtils import *
 from Ganga.GPIDev.Lib.File import File
 
@@ -181,6 +182,9 @@ class Francesc(IApplication):
         if job.inputdata:
             self.extra.inputdata = job.inputdata
             self.extra.inputdata.datatype_string=job.inputdata.datatype_string
+
+        if job.outputdata:
+            self.extra.outputdata = collect_lhcb_filelist(job.outputdata)
                         
         if not self.user_release_area: return debug_dir
 

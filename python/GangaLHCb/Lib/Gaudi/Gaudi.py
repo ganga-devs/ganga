@@ -10,6 +10,7 @@ from GaudiRunTimeHandler import *
 from GangaLHCb.Lib.Dirac.GaudiDiracRunTimeHandler import *
 from PythonOptionsParser import PythonOptionsParser
 from Francesc import *
+from Ganga.Utility.util import unique
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -118,7 +119,9 @@ class Gaudi(Francesc):
                 logger.info('Using the inputdata defined in the options file.')
                 self.extra.inputdata = inputdata
         
-        self.extra.outputsandbox,self.extra.outputdata = parser.get_output(job)
+        self.extra.outputsandbox,outputdata = parser.get_output(job)
+        outputdata = self.extra.outputdata + outputdata
+        self.extra.outputdata = unique(outputdata)
         
         return (inputs, self.extra) # return (changed, extra)
 

@@ -7,6 +7,7 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import Ganga.Utility.Config 
 from RTHUtils import *
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
+from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
