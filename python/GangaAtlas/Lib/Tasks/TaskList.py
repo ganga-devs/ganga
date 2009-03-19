@@ -65,7 +65,7 @@ class TaskList(GangaObject):
       time.sleep(0.5)
       ## .. hopefully ganga is now initialized. TODO: better way to find this out.
       ## Main loop
-      while self._run_thread: 
+      while self._run_thread and not self._thread.should_stop():
          logger.debug("Background task thread waking up...")
          ## Try to save the task to file
          try:
@@ -97,7 +97,8 @@ class TaskList(GangaObject):
          logger.warning("It seems that the task thread is already running.")
          return
       self._run_thread = True
-      self._thread = threading.Thread(name="GangaTasks", target=self._thread_main)
+      from Ganga.Core.GangaThread import GangaThread
+      self._thread = GangaThread(name="GangaTasks", target=self._thread_main)
       self._thread.start()
 
 
