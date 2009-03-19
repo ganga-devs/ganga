@@ -167,7 +167,7 @@ if __name__ == '__main__':
                              #duid = duid,
                              #filesize = contents[ddmFileMap[lfn]]['filesize'],
                              duid = None,
-                             filesize = -1
+                             filesize = -1,
                              version = 0,
                              usr = usrhex
                              )
