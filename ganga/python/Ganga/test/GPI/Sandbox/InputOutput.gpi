@@ -1,0 +1,14 @@
+j = Job()
+j.application.exe='cp'
+j.application.args=[File('input.dat'),'output.out']
+j.outputsandbox = ['*.out']
+j.submit()
+
+from GangaTest.Framework.utils import sleep_until_state
+
+sleep_until_state(j,60,'completed')
+
+import filecmp
+
+assert(filecmp.cmp(j.outputdir+'/output.out','input.dat'))
+
