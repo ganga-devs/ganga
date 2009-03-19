@@ -115,6 +115,7 @@ def bootstrap(reg, interactive_session):
         monitoring_component.enableMonitoring()
 
 
+    # THIS IS FOR DEBUGGING ONLY
     import time
     class Stuck(GangaThread.GangaThread):
         def __init__(self):
@@ -127,6 +128,6 @@ def bootstrap(reg, interactive_session):
                 i += 1
         def stop(self):
             print "I was asked to stop..."
-
-    s = Stuck()
-    s.start()
+    #DISABLED
+    #s = Stuck()
+    #s.start()
