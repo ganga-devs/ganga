@@ -12,6 +12,14 @@ def fill_report(uuid = None, eventVersion = None, remoteSite=None,
                 timeEnd=None, duid=None,version=None, dataset=None,
                 protocol=None, filename=None, filesize=None,
                 guid=None, usr=None ):
+    if uuid:
+        uuid = uuid.replace('-','')
+    if duid:
+        duid = duid.replace('-','')
+    if guid:
+        guid = guid.replace('-','')
+    if usr:
+        usr = usr.replace('-','')
     report = {
         'uuid': uuid,
         'eventType': 'drct_ganga',
@@ -24,15 +32,15 @@ def fill_report(uuid = None, eventVersion = None, remoteSite=None,
         'transferStart': transferStart,
         'validateStart': validateStart,
         'timeEnd': timeEnd,
-        'duid': duid.replace('-',''),
+        'duid': duid,
         'version': version,
         'dataset': dataset,
         'clientState': 'INIT_REPORT',
         'protocol': protocol,
         'filename': filename,
         'filesize': filesize,
-        'guid': guid.replace('-',''),
-        'usr': usr.replace('-','')
+        'guid': guid,
+        'usr': usr
     }
     
     return report
@@ -45,7 +53,7 @@ if __name__ == '__main__':
     print 'DQ2 tracer preparation ...'
 
     # Event uuid
-    uuid = generate_uuid().replace('-','')
+    uuid = generate_uuid()
     # Read LFC and transfer time produced in ganga-stage-in-out-dq2.py
     # or make-filestager-joboption.py
     tracertimes = [ line.strip() for line in file('dq2tracertimes.txt') ]
@@ -118,10 +126,9 @@ if __name__ == '__main__':
     for i in xrange(0,len(lfns)):
         ddmFileMap[lfns[i]] = guids[i]
 
-    from dq2.clientapi.DQ2 import DQ2
-    dq2=DQ2()
-    duid = dq2.listDatasets(datasetname)[datasetname]['duid']
-    contents = dq2.listFilesInDataset(datasetname)[0]
+    #from dq2.clientapi.DQ2 import DQ2
+    #dq2=DQ2()
+    #duid = dq2.listDatasets(datasetname)[datasetname]['duid']
 
     protpat = re.compile(r'^(\w+):/')
     filenamepat = re.compile(r'.*/(.+)$')    
@@ -157,8 +164,10 @@ if __name__ == '__main__':
                              protocol      = prot,
                              filename      = lfn,
                              guid = ddmFileMap[lfn],
-                             duid = duid,
-                             filesize = contents[ddmFileMap[lfn]]['filesize'],
+                             #duid = duid,
+                             #filesize = contents[ddmFileMap[lfn]]['filesize'],
+                             duid = None,
+                             filesize = -1
                              version = 0,
                              usr = usrhex
                              )
