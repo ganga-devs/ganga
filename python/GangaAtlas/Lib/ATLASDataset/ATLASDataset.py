@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ATLASDataset.py,v 1.5 2009-01-29 15:46:50 mslater Exp $
+# $Id: ATLASDataset.py,v 1.6 2009-03-19 15:46:17 dvanders Exp $
 ###############################################################################
 # A simple ATLAS dataset
 #
@@ -87,6 +87,7 @@ def expand(name):
 
 from commands import getstatusoutput    
 import threading
+from Ganga.Core import GangaThread
 
 class Download:
     """Helper class for background download of files stored on remote SEs"""
@@ -98,10 +99,10 @@ class Download:
     #rootfile = []
     lock = threading.RLock()
 
-    class download_lcglr(threading.Thread):
+    class download_lcglr(GangaThread.GangaThread):
         def __init__(self, cmd):
             self.cmd = cmd
-            threading.Thread.__init__(self)
+            GangaThread.GangaThread.__init__(self)
 
         def run(self):
             gridshell = getShell(middleware=Download.prefix_hack)
@@ -119,12 +120,12 @@ class Download:
             else:
                 logger.error("Error occured during %s %s", self.cmd, out)
 
-    class download_lcgcp(threading.Thread):
+    class download_lcgcp(GangaThread.GangaThread):
         def __init__(self, cmd, ifile, pfn):
             self.cmd = cmd
             self.ifile = ifile
             self.pfn = pfn
-            threading.Thread.__init__(self)
+            GangaThread.GangaThread.__init__(self)
             
         def run(self):
             gridshell = getShell(middleware=Download.prefix_hack)
@@ -141,10 +142,10 @@ class Download:
             else:
                 logger.error("Error occured during %s %s", self.cmd, out)
     
-    class download_dq2(threading.Thread):
+    class download_dq2(GangaThread.GangaThread):
         def __init__(self, cmd):
             self.cmd = cmd
-            threading.Thread.__init__(self)
+            GangaThread.GangaThread.__init__(self)
             
         def run(self):
             gridshell = getShell(middleware=Download.prefix_hack)
@@ -548,6 +549,9 @@ class ATLASOutputDataset(Dataset):
 config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
 
 #$Log: not supported by cvs2svn $
+#Revision 1.5  2009/01/29 15:46:50  mslater
+#Removed unnecessary print statement in Download class
+#
 #Revision 1.4  2008/08/19 13:15:32  elmsheus
 #Fix bug #39010, Add ATLASLocalDataset support for list of datasets
 #

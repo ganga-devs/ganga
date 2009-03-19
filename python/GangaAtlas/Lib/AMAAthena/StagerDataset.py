@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: StagerDataset.py,v 1.4 2008-11-27 15:42:38 hclee Exp $
+# $Id: StagerDataset.py,v 1.5 2009-03-19 15:42:27 dvanders Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -25,6 +25,7 @@ from dq2.clientapi.DQ2 import DQ2
 from dq2.common.DQException import * 
 
 from threading import Thread, Lock
+from Ganga.Core.GangaThread import GangaThread
 from Queue import Queue, Empty
 
 def find(dirs, pattern):
@@ -211,8 +212,8 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
     profiler.start()
     threads = []
     for i in range(nthread):
-        t = Thread(target=worker, kwargs={'id': i})
-        t.setDaemon(False)
+        t = GangaThread(target=worker, kwargs={'id': i})
+#        t.setDaemon(False)
         threads.append(t)
 
     for t in threads:
@@ -323,8 +324,8 @@ def resolve_file_locations(dataset, sites=None, cloud=None, token='ATLASDATADISK
     if nthread > 10: nthread = 10
 
     for i in range(nthread):
-        t = Thread(target=worker, kwargs={'id': i})
-        t.setDaemon(False)
+        t = GangaThread(target=worker, kwargs={'id': i})
+#        t.setDaemon(False)
         threads.append(t)
 
     for t in threads:
@@ -405,8 +406,8 @@ class StagerDataset(DQ2Dataset):
         profiler.start()
         threads = []
         for i in range(nthreads):
-            t = Thread(target=worker, kwargs={'id': i})
-            t.setDaemon(False)
+            t = GangaThread(target=worker, kwargs={'id': i})
+#            t.setDaemon(False)
             threads.append(t)
         
         for t in threads:
@@ -586,8 +587,8 @@ class StagerDataset(DQ2Dataset):
             profiler.start()
             threads = []
             for i in range(nthread):
-                t = Thread(target=worker, kwargs={'id': i})
-                t.setDaemon(False)
+                t = GangaThread(target=worker, kwargs={'id': i})
+#                t.setDaemon(False)
                 threads.append(t)
          
             for t in threads:
