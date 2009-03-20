@@ -109,24 +109,29 @@ def starttasks():
     from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
     from Ganga.Runtime.GPIexport import exportToGPI
     from Ganga.Utility.Config import getConfig
-    import os, os.path
+    import os, os.path, fcntl, time
     from sets import Set
+    from Ganga.Core.JobRepositoryXML.VStreamer import from_file 
+
     fn = os.path.join(getConfig("Configuration")["gangadir"],"tasks.xml")
     try:
-       os.stat(fn)
-       from Ganga.Core.JobRepositoryXML.VStreamer import from_file 
-       plists = from_file(file(fn,"r"))
+       last_access = time.time()-os.stat(fn).st_mtime
+       if last_access < 5:
+          logger.error("The Tasks package is already in use from another Ganga session. Tasks will not be available in this session.")
+          return
+       os.utime(fn, None)
+       f = file(fn, "r")
+       plists = from_file(f)
        if len(plists) > 0:
           tl = plists[0]
-          logger.info("Tasks read from file")
+          logger.info("Found %i tasks" % len(tl.tasks))
        else:
-          logger.warning("No Tasks in Persistency! Creating new Task list.")
+          logger.warning("Empty tasks repository! Creating new Task list.")
           tl = TaskList()
-    except OSError:
+    except OSError, e:
        logger.info("Starting for first launch - Creating new Task list.")
        tl = TaskList()
-    import atexit
-    atexit.register(tl.atexit)
+    # Set parents - should be fixed soon
     for t in tl.tasks:
        t._setParent(tl)
        for tf in t.transforms:

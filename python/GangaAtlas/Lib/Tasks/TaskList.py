@@ -1,6 +1,9 @@
 from common import *
 import os, time, threading
 
+from Ganga.Core.JobRepositoryXML.VStreamer import to_file
+from StringIO import StringIO
+
 class TaskList(GangaObject):
    """This command is the main interface to Ganga Tasks. For a short introduction and 'cheat sheet', try tasks.help()"""
    _schema = Schema(Version(2,0), {
@@ -11,28 +14,38 @@ class TaskList(GangaObject):
    _category = 'tasklists'
    _name = 'TaskList'
    _exportmethods = ['help', 'table', '__str__', '__call__']
-
    _help_printed = False
-   _run_thread = False
-   _thread = None
-
-   def atexit(self):
-      self.save()
-      self._run_thread = False
-      time.sleep(1)
+   _save_thread = None
+   _main_thread = None
 
    def save(self):
       """Writes all tasks to a file 'tasks.xml' in the job repository. This function is usually called automatically. """
       # TODO: Add check if this object is correctly initialized, and the tasks are actually tasks
       # First write to tasks.dat.tmp to avoid losing the content in case of crash
-      fna = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml.tmp")
+      fna = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml.new")
       fnb = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml")
-      from Ganga.Core.JobRepositoryXML.VStreamer import to_file 
-      to_file(self, file(fna,"w"))
+      fnc = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml~")
+      try:
+         tmpfile = open(fna, "w")
+         to_file(self, tmpfile)
+         # Important: Flush, then sync file before renaming!
+         tmpfile.flush()
+         os.fsync(tmpfile.fileno())
+         tmpfile.close()
+      except IOError, e:
+         logger.error("Could not write tasks to file %s (%s). Disk full or over quota?" % (e, fna))
+         return False
+      # Try to make backup copy...
+      try:
+         os.rename(fnb,fnc)
+      except OSError, e:
+         logger.debug("Error making backup copy: %s " % e)
       try:
          os.rename(fna,fnb)
-      except OSError:
-         logger.debug("Saving resulted in no file being created. This is normal during startup.")
+      except OSError, e:
+         logger.error("Error renaming temporary file: ", e)
+         return False
+      return True
 
    def startup(self):
       """Called on ganga startup after the complete tasks tree has been loaded """
@@ -55,6 +68,35 @@ class TaskList(GangaObject):
       logger.error("No Task with ID #%i" % id)
 
 ## Thread methods
+   def refresh_lock(self):
+      repo = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml")
+      try:
+         os.utime(repo, None) # keep lock
+      except OSError:
+         return False
+      return True
+
+   def _thread_save(self):
+      """ This is an internal function; the loop that is responsible for saving """
+      ## Wait until Ganga is fully initialized 
+      while not ("jobs" in reload(GPI).__dict__):
+         time.sleep(0.5)
+         self.refresh_lock()
+      while not ("config" in reload(GPI).__dict__):
+         time.sleep(0.5)
+         self.refresh_lock()
+      time.sleep(0.5)
+      ## .. hopefully ganga is now initialized. TODO: better way to find this out.
+      while not self._save_thread.should_stop():
+         # Sleep and refresh lock interruptible for 30 seconds
+         for i in range(0,60):
+            self.refresh_lock()
+            time.sleep(0.5)
+            if self._save_thread.should_stop():
+               break
+         # Save
+         self.save()
+
    def _thread_main(self):
       """ This is an internal function; the main loop of the background thread """
       ## Wait until Ganga is fully initialized      
@@ -65,17 +107,11 @@ class TaskList(GangaObject):
       time.sleep(0.5)
       ## .. hopefully ganga is now initialized. TODO: better way to find this out.
       ## Main loop
-      while self._run_thread and not self._thread.should_stop():
-         logger.debug("Background task thread waking up...")
-         ## Try to save the task to file
-         try:
-            self.save()
-         except Exception,x:
-            logger.error("Could not save tasks to file: %s" % x)
-            logger.error("Disk full? Quota exceeded?")
-
+      while not self._main_thread.should_stop():
          ## For each task try to run it
          for p in [p for p in self.tasks if p.status in ["running"]]:
+            if self._main_thread.should_stop():
+               break
             try:
                # TODO: Make this user-configurable and add better error message 
                if (p.n_status("failed")*100.0/(20+p.n_status("completed")) > 20):
@@ -89,17 +125,20 @@ class TaskList(GangaObject):
                   logger.error("Exception occurred in task monitoring loop: %s\nThe offending task was paused." % x)
                   p.pause()
                   self.save()
-         time.sleep(2)
+         # Sleep interruptible for 10 seconds
+         for i in range(0,100):
+            time.sleep(0.1)
+            if self._main_thread.should_stop():
+               break
+
 
    def start(self):
       """ Start a background thread that periodically run()s"""
-      if self._run_thread or self._thread:
-         logger.warning("It seems that the task thread is already running.")
-         return
-      self._run_thread = True
       from Ganga.Core.GangaThread import GangaThread
-      self._thread = GangaThread(name="GangaTasks", target=self._thread_main)
-      self._thread.start()
+      self._save_thread = GangaThread(name="GangaTasksRepository", target=self._thread_save)
+      self._main_thread = GangaThread(name="GangaTasks", target=self._thread_main)
+      self._save_thread.start()
+      self._main_thread.start()
 
 
 ## Information methods
