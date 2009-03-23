@@ -4,6 +4,7 @@ from threading import Lock
 from Queue import Empty
 from Algorithm import AlgorithmError
 from Ganga.Core.GangaThread.GangaThread import GangaThread
+from Ganga.Core.GangaThread.MTRunner.Data import DuplicateDataItemError 
 from Ganga.Utility.logging import getLogger
 
 class MTRunnerError(Exception):
