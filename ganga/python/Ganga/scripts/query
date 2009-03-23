@@ -1,0 +1,18 @@
+# File: ganga_query
+# Author: K. Harrison
+# Created: 050721
+# Last modified: 050805
+
+"""GPI script for querying status of Ganga jobs"""
+
+__author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
+__date__    = "5 August 2005"""
+__version__ = "1.0"
+
+import time
+
+# Give the monitoring service a chance to update
+time.sleep( 5 )
+
+print ""
+print jobs._impl._display( interactive = 1 )
