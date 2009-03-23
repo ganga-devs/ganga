@@ -1,0 +1,62 @@
+# for the definition of testing options see TestConfig2.py file in GangaTest package
+
+## testConfig.ini file should be used to load the configuration into Ganga session!
+
+## GPI - as the user sees the config
+
+c = config['TestConfig2']
+print c
+
+assert(c['str1'] == '1')
+assert(c['str2'] == "3*3")
+assert(c['str3'] == '2.5')
+assert(c['str4'] == 'str')
+assert(c['str5'] == "'str'")
+assert(c['str6'] == "[1,2]")
+assert(c['str7'] == "'[1,2]'")
+assert(c['str8'] == "None")
+
+assert(c['int1'] == 1)
+assert(c['int2'] == 9)
+assert(c['int3'] == 0) # FAIL!
+assert(c['int4'] == 0) # FAIL!
+assert(c['int5'] == 0) # FAIL!
+assert(c['int6'] == 0) # FAIL!
+assert(c['int7'] == 0) # FAIL!
+assert(c['int8'] == 0) # FAIL!
+
+assert(c['list1'] == []) # FAIL!
+assert(c['list2'] == []) # FAIL!
+assert(c['list3'] == []) # FAIL!
+assert(c['list4'] == []) # FAIL!
+assert(c['list5'] == []) # FAIL!
+assert(c['list6'] == [1,2])
+assert(c['list7'] == []) # FAIL!
+assert(c['list8'] == []) # FAIL!
+
+assert(c['none1'] == 1)
+assert(c['none2'] == 9)
+assert(c['none3'] == 2.5)
+assert(c['none4'] is str)
+assert(c['none5'] == "str")
+assert(c['none6'] == [1,2])
+assert(c['none7'] == '[1,2]')
+assert(c['none8'] == None)
+
+# nonexisting options raise ConfigError
+try:
+    assert(c['notexisting1'] == '1')
+    assert False,"should raise ConfigError but hasn't"
+except ConfigError:
+    pass
+
+# idem for the rest...
+
+#assert(c['notexisting2'] == "3*3")
+#assert(c['notexisting3'] == '2.5')
+#assert(c['notexisting4'] == 'str')
+#assert(c['notexisting5'] == "'str'")
+#assert(c['notexisting6'] == "[1,2]")
+#assert(c['notexisting7'] == "'[1,2]'")
+#assert(c['notexisting8'] == "None")
+
