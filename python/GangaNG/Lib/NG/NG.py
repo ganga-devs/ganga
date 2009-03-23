@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.28 2009-03-18 14:12:56 gjelsten Exp $
+# $Id: NG.py,v 1.29 2009-03-23 22:04:19 pajchel Exp $
 ###############################################################################
 #
 # NG backend 
@@ -69,9 +69,7 @@ def getTidDatasetnames(ds):
   for dsn in ds:
     
     if dsn.find('_tid') < 0:
-      ds_names = dq2.listDatasets(dsn+'*')
-      ds_names = ds_names.keys()
-
+      ds_names = dq2.listDatasetsInContainer(dsn)
       lds = len(ds_tid)
       
       for d in ds_names:
@@ -1377,7 +1375,7 @@ class NG(IBackend):
         if not config['%s_ENABLE' % mt]:
             logger.warning('Operations of %s middleware are disabled.' % mt)
             return None
-        
+          
         xrslpath = self.preparejob(subjobconfig,master_input_sandbox,False)
 
         if xrslpath is None:
@@ -1501,10 +1499,8 @@ class NG(IBackend):
 
 
       elif job.inputdata and job.inputdata._name == 'DQ2Dataset':
-
           # prepare the dataset namelist with tids - needed for check availability and paths
           ds_tid = getTidDatasetnames(job.inputdata.dataset)
-      
           # Check for availability on DQ2? Avoids submitting jobs where dataset is empty
           lfnlist=[]
           if self.check_availability:
@@ -1555,7 +1551,7 @@ class NG(IBackend):
 
           for f in lfnlist:
             infileList.append(f)
-
+          
       #print 'job info of monitoring service: %s' % str(self.monInfo)
       #print 'mon.getWrapperScriptConstructorText() ',mon.getWrapperScriptConstructorText()
             
@@ -2196,6 +2192,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.28  2009/03/18 14:12:56  gjelsten
+# hacked get_cmd_prefix_hack
+#
 # Revision 1.27  2009/03/06 14:31:20  bsamset
 # Fixed logging problem with missing job IDs. Again.
 #
