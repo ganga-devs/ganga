@@ -32,7 +32,8 @@ def bootstrap(reg, interactive_session):
     config.addOption('forced_shutdown_policy','session_type','If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')
 
     config.addOption('forced_shutdown_timeout',60,"Timeout in seconds for forced Ganga shutdown.")
-    config.addOption('forced_shutdown_prompt_time',10,"User will get the prompt every couple of seconds, as specified by this parameter.")
+    config.addOption('forced_shutdown_prompt_time',10,"User will get the prompt every N seconds, as specified by this parameter.")
+    config.addOption('forced_shutdown_first_prompt_time',5,"User will get the FIRST prompt after N seconds, as specified by this parameter.")
 
     from Ganga.Utility.logging import getLogger
 
@@ -64,7 +65,10 @@ def bootstrap(reg, interactive_session):
 
     def should_wait_interactive_cb(t_total):
         global t_last
-        if t_last is None or time.time()-t_last > config['forced_shutdown_prompt_time']:
+        if t_last is None:
+            t_last = -time.time()
+        if (t_last<0 and time.time()+t_last > config['forced_shutdown_first_prompt_time']) or \
+           (t_last>0 and time.time()-t_last > config['forced_shutdown_prompt_time']):
             resp = raw_input("Job status update or output download still in progress (shutdown not completed after %d seconds). \n Do you want to force the exit (y/[n])"%t_total) 
 
             t_last = time.time()
