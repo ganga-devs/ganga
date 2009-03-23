@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.34 2009-02-27 13:05:17 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.35 2009-03-23 16:47:37 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -449,11 +449,11 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             if turl and turl[0]:
                 pfn = turl[0]
             elif 'storm-fe.cr.cnaf.infn.it' in defaultSE:
-                pfn = re.sub('srm://storm-fe.cr.cnaf.infn.it/','file:///storage/gpfs_storm/',surl)
+                pfn = re.sub('srm://storm-fe.cr.cnaf.infn.it/','file:///storage/gpfs_atlas1/',surl)
             else:
                 # If CNAF TURL fails
                 if 'storm-fe.cr.cnaf.infn.it' in defaultSE:
-                    pfn = re.sub('srm://storm-fe.cr.cnaf.infn.it/','file:///storage/gpfs_storm/',surl)
+                    pfn = re.sub('srm://storm-fe.cr.cnaf.infn.it/','file:///storage/gpfs_atlas1/',surl)
                 else:    
                     # remove protocol and host
                     pfn = re.sub('^[^:]+://[^/]+','',surl)
