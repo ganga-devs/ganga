@@ -4,6 +4,7 @@
 
 import optparse
 import sys
+import os
 from Ganga.Core.exceptions import GangaException
 
 usage = """

@@ -4,6 +4,7 @@
 
 import optparse
 import sys
+import os
 import string
 
 usage = """
