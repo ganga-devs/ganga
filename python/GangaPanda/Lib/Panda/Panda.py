@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.18 2009-03-05 15:58:15 dvanders Exp $
+# $Id: Panda.py,v 1.19 2009-03-24 10:50:22 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -296,7 +296,7 @@ class Panda(IBackend):
             job.backend.status = None
             job.updateStatus('submitted')
 
-        logger.info('Resubmission successful',status)
+        logger.info('Resubmission successful')
         return True
 
     def master_updateMonitoringInformation(jobs):
@@ -386,6 +386,10 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.18  2009/03/05 15:58:15  dvanders
+# https://savannah.cern.ch/bugs/index.php?47473
+# dbRelease option is now deprecated in Panda backend.
+#
 # Revision 1.17  2009/03/05 15:03:28  dvanders
 # https://savannah.cern.ch/bugs/?46836
 #
