@@ -21,10 +21,10 @@ class TaskList(GangaObject):
    def save(self):
       """Writes all tasks to a file 'tasks.xml' in the job repository. This function is usually called automatically. """
       # TODO: Add check if this object is correctly initialized, and the tasks are actually tasks
-      # First write to tasks.dat.tmp to avoid losing the content in case of crash
-      fna = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml.new")
-      fnb = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml")
-      fnc = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml~")
+      # First write to tasks.dat.tmp to avoid losing the content in case of crash (tasksfile is set in BOOT.py)
+      fna = self.tasksfile + ".new"
+      fnb = self.tasksfile
+      fnc = self.tasksfile + "~"
       try:
          tmpfile = open(fna, "w")
          to_file(self, tmpfile)
@@ -69,9 +69,8 @@ class TaskList(GangaObject):
 
 ## Thread methods
    def refresh_lock(self):
-      repo = os.path.join(GPI.config.Configuration["gangadir"], "tasks.xml")
       try:
-         os.utime(repo, None) # keep lock
+         os.utime(self.tasksfile, None) # keep lock
       except OSError:
          return False
       return True

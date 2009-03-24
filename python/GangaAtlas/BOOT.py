@@ -136,6 +136,9 @@ def starttasks():
        t._setParent(tl)
        for tf in t.transforms:
           tf._setParent(t)
+
+    # set tasksfile name
+    tl.tasksfile = fn
     
     tasks = GPIProxyObjectFactory(tl)
     del tasks.__class__.copy
