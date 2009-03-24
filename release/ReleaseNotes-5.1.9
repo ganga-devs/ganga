@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.1.9 (2009/3/19)
+5.1.9 (2009/3/24)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -7,6 +7,18 @@ ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 added GangaThread base class for uniform handling of exit from backgorund threads (the same
 mechanism is used now for LCG download threads and monitoring worker threads)
+
+the following configuration parameters are used to control the exit behaviour:
+
+[PollThread]
+* forced_shutdown_policy=session_type - if there are remaining background activities at exit such as
+monitoring, output download Ganga will attempt to wait for the activities to complete. You may
+select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the
+system waits on a timeout without questions ("timeout"). The default is "session_type" which will do
+interactive shutdown for CLI and timeout for scripts.
+* forced_shutdown_timeout = 60 - Timeout in seconds for forced Ganga shutdown.
+* forced_shutdown_prompt_time = 10 - User will get the prompt every N seconds
+* forced_shutdown_first_prompt_time = 5 - User will get the FIRST prompt after N seconds
 
 changed semantics of BOOT.py -> don't import the names into GPI namespace automatically...
 
@@ -98,6 +110,21 @@ AMAAthena:
 * fix the broken AMA_FLAG_LIST while setting multiple flag/value pairs
 * make the backup of the essential env. variables (PATH, LD_LIBRARY_PATH,
   PYTHONPATH) globally available
+* use GangaThread
+
+Tasks:
+------
+* use GangaThread
+* Tasks now uses mtime-based locking and has a thread that ensures mtime
+  will stay close to the current time
+* If a ganga session is opened and tasks.xml is younger than 5 seconds, 
+  it switches off tasks, giving a short Error.
+* Tasks also use fsync on tasks.xml every 30 seconds, or on save
+* It also makes a backup copy tasks.xml~
+
+ATLASDataset:
+-------------
+* use GangaThread
 
 externals:
 ----------
@@ -129,6 +156,12 @@ with 'lfn:/'  A number of other minor bug fixes also appear in this release.
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaNG
 --------------------------------------------------------------------------------------------------------------
-Minor fix: Handling of multiply defined ARC_LOCATIONs.
+Minor fix/update: dq2 wild card query changed to listDatasetInContained
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+one line fix for resubmit log error
 
 **************************************************************************************************************
