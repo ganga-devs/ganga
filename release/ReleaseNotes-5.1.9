@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.1.9 (2009/3/24)
+5.1.9 (2009/3/25)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -40,6 +40,11 @@ Additions by MWS:
 
 *  VO name mismatch between certificate and config now invalidates proxy
 *  Full identity info can now be accessed using gridProxy.fullIdentity()
+
+Other modifications:
+
+* Added check in GridProxy.voname() that VO name extracted from proxy is a single word.  If this isn't the case, for example when 
+the underlying command is "lhcb-proxy-info -vo", then the value of GridProxy.voms is returned rather than the extracted VO name
 
 
 --------------------------------------------------------------------------------------------------------------
