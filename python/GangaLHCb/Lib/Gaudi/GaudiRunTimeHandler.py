@@ -20,18 +20,20 @@ class GaudiRunTimeHandler(IRuntimeHandler):
         pass
   
     def master_prepare(self,app,extra):
-        
+
         if extra.inputdata and extra.inputdata.hasLFNs():
             site = Ganga.Utility.Config.getConfig('LHCb')['LocalSite']
             xml_catalog_str = gen_catalog(extra.inputdata, site)
-            extra.input_buffers['catalog.xml'] = xml_catalog_str
-            s='\nFileCatalog.Catalogs += { "xmlcatalog_file:catalog.xml" };\n'
-            extra.input_buffers['data.opts'] += s
+            extra.master_input_buffers['catalog.xml'] = xml_catalog_str
             
         sandbox = get_master_input_sandbox(app.getJobObject(),extra)
         return StandardJobConfig( '', inputbox=sandbox, args=[])
 
     def prepare(self,app,extra,appmasterconfig,jobmasterconfig):
+
+        if extra.inputdata and extra.inputdata.hasLFNs():
+            s='\nFileCatalog.Catalogs += { "xmlcatalog_file:catalog.xml" };\n'
+            extra.input_buffers['data.opts'] += s
 
         sandbox = get_input_sandbox(extra)
         outdata = extra.outputdata

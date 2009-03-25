@@ -43,7 +43,7 @@ def create_gaudi_subjob(job, inputdata):
     else:
         j.inputdata = None
         j.application.extra.inputdata = LHCbDataset()
-    j.outputsandbox = job.outputsandbox[:]    
+    j.outputsandbox = job.outputsandbox[:]
     return j
 
 def simple_split(files_per_job, inputs):

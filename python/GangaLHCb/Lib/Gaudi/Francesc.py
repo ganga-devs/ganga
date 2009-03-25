@@ -202,7 +202,6 @@ class Francesc(IApplication):
         return debug_dir
 
     def _configure(self):
-        job = self.getJobObject()
         data_str = dataset_to_options_string(self.extra.inputdata)
         self.extra.input_buffers['data.opts'] += data_str
         
