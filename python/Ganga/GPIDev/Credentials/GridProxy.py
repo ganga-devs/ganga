@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridProxy.py,v 1.4 2009-03-18 18:28:15 karl Exp $
+# $Id: GridProxy.py,v 1.5 2009-03-25 15:43:35 karl Exp $
 ################################################################################
 #
 # File: GridProxy.py
@@ -74,12 +74,15 @@
 #
 # 30/01/2009 KH : Added possibility to request that GridProxy.identity()
 #                 returns string with non-alphanumeric characters stripped out
+#
+# 25/03/2009 KH : Correction to GridProxy.voname() to check that one-word
+#                 VO name is returned 
 
 """Module defining class for creating, querying and renewing Grid proxy"""
                                                                                 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "30 January 2009"
-__version__ = "1.17"
+__date__    = "25 March 2009"
+__version__ = "1.18"
 
 import os
 import re
@@ -423,6 +426,10 @@ class GridProxy ( ICredential ):
          if output.find( error ) != -1:
             output = ""
             break
+
+    # Check for reasonable output (single-word VO)
+      if len( output.split() ) != 1:
+         output = self.voms
 
       return output
 
