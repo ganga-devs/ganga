@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthenaLCGRTHandler.py,v 1.8 2009-03-11 19:56:45 hclee Exp $
+# $Id: AMAAthenaLCGRTHandler.py,v 1.9 2009-03-26 20:32:38 hclee Exp $
 ###############################################################################
 # AMAAthena LCG Runtime Handler
 #
@@ -22,8 +22,8 @@ from GangaAtlas.Lib.Athena.AthenaLCGRTHandler import *
 
 mc = getConfig('MonitoringServices')
 
-# None by default
-mc.addOption('AMAAthena/LCG', None, 'FIXME')
+# monitoring the job with the ATLAS dashboard by default
+mc.addOption('AMAAthena/LCG', 'Ganga.Lib.MonitoringServices.ARDADashboard.LCG.ARDADashboardLCGAthena.ARDADashboardLCGAthena', 'sets job monitoring service for AMAAthena/LCG jobs')
   
 class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
     """AMAAthena LCG Runtime Handler"""
