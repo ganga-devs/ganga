@@ -31,6 +31,8 @@ def copy_app(app):
     cp_app.extra = GaudiExtras() 
     cp_app.extra.input_buffers = app.extra.input_buffers.copy()
     cp_app.extra.input_files = app.extra.input_files[:]
+    cp_app.extra.outputsandbox = app.extra.outputsandbox[:]
+    cp_app.extra.outputdata = app.extra.outputdata
     return cp_app 
 
 def create_gaudi_subjob(job, inputdata):
@@ -44,6 +46,7 @@ def create_gaudi_subjob(job, inputdata):
         j.inputdata = None
         j.application.extra.inputdata = LHCbDataset()
     j.outputsandbox = job.outputsandbox[:]
+    j.outputdata = job.outputdata
     return j
 
 def simple_split(files_per_job, inputs):
