@@ -1,0 +1,34 @@
+j = Job()
+j.application = DaVinci() ## CHANGE!
+# create convinient shortcut to access application component
+a = j.application
+a.optsfile = ['my.opts'] ## CHANGE!
+#a.inputfiles = ['myfile1','myfile2']
+#a.outputfiles = []
+j2 = Job(application=DaVinci(optsfile=a.optsfile))#, inputfiles=a.inputfiles, outputfiles = a.outputfiles)) ## CHANGE!
+
+j3 = Job(application=j2.application)
+
+j4 = Job()
+j4.application = j2.application
+j4.application.optsfile = ['my.opts2'] ## CHANGE!
+
+## print j.application, a
+## print '***'*30
+## print j._display()
+## print '***'*30
+## print j2._display()
+print '***'*30
+print j
+print '***'*30
+print j2
+assert(j==j2)
+assert(j2==j3)
+
+j5 = j4.copy()
+
+j4.application.optsfile = ['my.opts'] ## CHANGE!
+assert(j3==j4)
+
+j5.application = j.application
+assert(j==j5)

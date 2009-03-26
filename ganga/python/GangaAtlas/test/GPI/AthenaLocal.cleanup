@@ -1,0 +1,5 @@
+
+import os
+tmpdir = '/tmp/ganga_athenalocal_testing_data-$USER'
+print 'removing AthenaLocal testing data',tmpdir
+os.system('rm -rf %s'%tmpdir)

@@ -1,0 +1,5 @@
+import os
+
+# make sure we start with completely clean directory
+os.system('rm -rf ~/gangadir_testing/repository')
+os.system('rm -rf ~/gangadir_testing/workspace')

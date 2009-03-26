@@ -1,0 +1,172 @@
+**************************************************************************************************************
+5.1.9 (2009/3/25)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+added GangaThread base class for uniform handling of exit from backgorund threads (the same
+mechanism is used now for LCG download threads and monitoring worker threads)
+
+the following configuration parameters are used to control the exit behaviour:
+
+[PollThread]
+* forced_shutdown_policy=session_type - if there are remaining background activities at exit such as
+monitoring, output download Ganga will attempt to wait for the activities to complete. You may
+select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the
+system waits on a timeout without questions ("timeout"). The default is "session_type" which will do
+interactive shutdown for CLI and timeout for scripts.
+* forced_shutdown_timeout = 60 - Timeout in seconds for forced Ganga shutdown.
+* forced_shutdown_prompt_time = 10 - User will get the prompt every N seconds
+* forced_shutdown_first_prompt_time = 5 - User will get the FIRST prompt after N seconds
+
+changed semantics of BOOT.py -> don't import the names into GPI namespace automatically...
+
+bug #47065: Syntax error in Ganga/Runtime/Repository_runtime.py
+bug #40333: Enhance peek functionality to look inside tar files
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Core/MonitoringComponent
+--------------------------------------------------------------------------------------------------------------
+added GangaThread base class for uniform handling of exit from backgorund threads (the same
+mechanism is used now for LCG download threads and monitoring worker threads)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/GPIDev/Credentials
+--------------------------------------------------------------------------------------------------------------
+Additions by MWS:
+
+*  VO name mismatch between certificate and config now invalidates proxy
+*  Full identity info can now be accessed using gridProxy.fullIdentity()
+
+Other modifications:
+
+* Added check in GridProxy.voname() that VO name extracted from proxy is a single word.  If this isn't the case, for example when 
+the underlying command is "lhcb-proxy-info -vo", then the value of GridProxy.voms is returned rather than the extracted VO name
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/GPIDev/Lib/GangaList
+--------------------------------------------------------------------------------------------------------------
+Adds copy and deepcopy methods at the object level, to make sure we don't do any unneeded checking.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Batch
+--------------------------------------------------------------------------------------------------------------
+fixed bug #40460: Little documentation for setting resource requirements for batch jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Condor
+--------------------------------------------------------------------------------------------------------------
+Updates made as follows:
+
+* Condor.kill() modified so that if "condor_rm" for a given job has a non-zero return code, the job is assumed to be no longer 
+known to Condor.  A warning is issued, but the job is anyway removed from the Ganga repository.  This deals with the case where a
+job completes in the short interval between removal being requested and the remove command being executed (problem seen by
+Chris Jones).
+
+* Condor.updateMonitoringInformation() modified to behave correctly in case where "condor_q -global" returns message "All queues
+are empty".
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* adopting the new basic class introduced in Ganga.Core.GangaThread for multi-threads handling
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Mergers
+--------------------------------------------------------------------------------------------------------------
+Adds an args option to the RootMerger. This passes the specified arguments on to hadd
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* enhancement for file stager wrapper
+  - slim the wrapper log
+  - introduce the detection and the usage of a local protocol
+* Remove DQ2 calls in dq2tracerreport.py
+
+AthenaMC:
+---------
+* Adding support for AtlasTier0 production caches (to be tested),
+  sort input sites by decreasing dataset shares and allow
+  aggregation of output data files to the site specified in
+  app.se_name by subscribing the frozen datasets at the
+  completion of the master job
+* Fixing critical bug implemented in revision 1.28 of
+  AthenaMCLCGRTHandler.py that caused all jobs to fail with
+  lcg error code=2. Also improved support of DBRelease,
+  forcing the job to look for preinstalled, local version of
+  the requested DBRelease in the local software area.
+  Local installation is used if available, otherwise the tarball
+  is downloaded from local SE.
+
+AMAAthena:
+----------
+* fix the broken AMA_FLAG_LIST while setting multiple flag/value pairs
+* make the backup of the essential env. variables (PATH, LD_LIBRARY_PATH,
+  PYTHONPATH) globally available
+* use GangaThread
+
+Tasks:
+------
+* use GangaThread
+* Tasks now uses mtime-based locking and has a thread that ensures mtime
+  will stay close to the current time
+* If a ganga session is opened and tasks.xml is younger than 5 seconds, 
+  it switches off tasks, giving a short Error.
+* Tasks also use fsync on tasks.xml every 30 seconds, or on save
+* It also makes a backup copy tasks.xml~
+
+ATLASDataset:
+-------------
+* use GangaThread
+
+externals:
+----------
+* Update to DQ2Clients 0.1.27
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+The Gaudi & GaudiPython architecture has been redesigned to allow both to share common functionality
+but with different default behaviors.  For Gaudi-type apps, the user will notice no difference;
+however, the GaudiPython apps now have extra functionality.  The default setting for the GaudiPython
+user_release_area is None and with this setting the application behaves as it has in the past.  If
+this attribute is set, then user supplied DLL's, merged .py's, etc. are collected and shipped with
+the job in exactly the same manner as for Gaudi jobs.
+
+The long-standing issue of poor performance of the Gaudi & Dirac splitters has been fixed.  A
+benchmarking test w/ 20,000 files split into 100 files/job now takes only about 2 minutes to
+complete the submission process.
+
+To aid in debugging, the user can now obtain a dictionary w/ the environment used by Ganga to
+flatten the options of Gaudi jobs.  See help(DaVinci.getenv) for details.
+
+A bug which caused datasets created with browseBK() to be interpreted as PFNs not LFNs has been
+fixed in this release. Files returned from the bookkeeping interface are now explicitly prefixed
+with 'lfn:/'  A number of other minor bug fixes also appear in this release.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+Minor fix/update: dq2 wild card query changed to listDatasetInContained
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+one line fix for resubmit log error
+
+**************************************************************************************************************
