@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: StagerDataset.py,v 1.5 2009-03-19 15:42:27 dvanders Exp $
+# $Id: StagerDataset.py,v 1.6 2009-03-26 20:33:11 hclee Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -212,7 +212,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
     profiler.start()
     threads = []
     for i in range(nthread):
-        t = GangaThread(target=worker, kwargs={'id': i})
+        t = GangaThread(name='stager_ds_w_%d' % i, target=worker, kwargs={'id': i})
 #        t.setDaemon(False)
         threads.append(t)
 
@@ -324,7 +324,7 @@ def resolve_file_locations(dataset, sites=None, cloud=None, token='ATLASDATADISK
     if nthread > 10: nthread = 10
 
     for i in range(nthread):
-        t = GangaThread(target=worker, kwargs={'id': i})
+        t = GangaThread(name='stager_ds_w_%d' % i, target=worker, kwargs={'id': i})
 #        t.setDaemon(False)
         threads.append(t)
 
@@ -406,7 +406,7 @@ class StagerDataset(DQ2Dataset):
         profiler.start()
         threads = []
         for i in range(nthreads):
-            t = GangaThread(target=worker, kwargs={'id': i})
+            t = GangaThread(name='stager_ds_w_%d' % i, target=worker, kwargs={'id': i})
 #            t.setDaemon(False)
             threads.append(t)
         
@@ -587,7 +587,7 @@ class StagerDataset(DQ2Dataset):
             profiler.start()
             threads = []
             for i in range(nthread):
-                t = GangaThread(target=worker, kwargs={'id': i})
+                t = GangaThread(name='stager_ds_w_%d' % i, target=worker, kwargs={'id': i})
 #                t.setDaemon(False)
                 threads.append(t)
          
