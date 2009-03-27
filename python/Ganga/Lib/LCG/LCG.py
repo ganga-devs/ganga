@@ -1,7 +1,8 @@
+import LCG
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.33 2009-03-12 12:26:16 hclee Exp $
+# $Id: LCG.py,v 1.34 2009-03-27 10:14:33 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -56,12 +57,12 @@ def get_lcg_output_downloader():
     global lcg_output_downloader
     return lcg_output_downloader
 
-def stop_ganga_thread_pool():
-    from Ganga.Lib.LCG.GangaThread.GangaThreadPool import GangaThreadPool
-
-    tpool = GangaThreadPool.getInstance()
-    tpool.SHUTDOWN_TIMEOUT = 5
-    tpool.shutdown()
+#def stop_ganga_thread_pool():
+#    from Ganga.Lib.LCG.GangaThread.GangaThreadPool import GangaThreadPool
+#
+#    tpool = GangaThreadPool.getInstance()
+#    tpool.SHUTDOWN_TIMEOUT = 5
+#    tpool.shutdown()
 
 start_lcg_output_downloader()
 
@@ -135,6 +136,8 @@ class LCG(IBackend):
     _GUIPrefs = [ { 'attribute' : 'CE', 'widget' : 'String' },
                   { 'attribute' : 'jobtype', 'widget' : 'String_Choice', 'choices' : ['Normal', 'MPICH'] },
                   { 'attribute' : 'middleware', 'widget' : 'String_Choice', 'choices' : [ 'EDG', 'GLITE' ] } ]
+
+    _final_ganga_states = ['completing','completed','failed']
 
     def __init__(self):
         super(LCG,self).__init__()
@@ -1466,8 +1469,8 @@ sys.exit(0)
             job.updateStatus('failed') 
      
         elif status == 'Cleared':
-            if job.status in ['completed','failed']:
-                #logger.warning('Monitoring loop should not have been called for job %d as status is already %s',job.id,job.status)
+            if job.status in LCG._final_ganga_states:
+                # do nothing in this case as it's in the middle of the corresponding job downloading task
                 return 
             logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',job.id)
             job.updateStatus('failed')
@@ -1568,7 +1571,7 @@ sys.exit(0)
                         create_download_task = True
                     else:
                         LCG.updateGangaJobStatus(job, info['status'])
-                elif ( info['status'] == 'Done (Success)' ) and ( job.status not in ['completed', 'failed'] ):
+                elif ( info['status'] == 'Done (Success)' ) and ( job.status not in LCG._final_ganga_states ):
                     create_download_task = True
 
                 if create_download_task:
@@ -1605,7 +1608,7 @@ sys.exit(0)
                     #if (sj.status in ['completed','failed']):
                     #    cnt_sj_final += 1
                         
-                    if (sj.status not in ['completing','completed','failed']) and \
+                    if (sj.status not in LCG._final_ganga_states) and \
                             (sj.backend.parent_id in j.backend.id) and \
                             (not jobdict.has_key(sj.backend.parent_id)):
                         jobdict[sj.backend.parent_id] = j
@@ -1668,7 +1671,7 @@ sys.exit(0)
                     continue
 
                 # skip updating the cleared jobs
-                if info['status'] == 'Cleared' and subjob.status in ['completed','failed']: continue
+                if info['status'] == 'Cleared' and subjob.status in LCG._final_ganga_states: continue
 
                 # skip updating the jobs that are individually resubmitted after the original bulk submission
                 if subjob.backend.flag == 1:
@@ -1707,7 +1710,7 @@ sys.exit(0)
                             create_download_task = True
                         else:
                             LCG.updateGangaJobStatus(subjob, info['status'])
-                    elif ( info['status'] == 'Done (Success)' ) and ( subjob.status not in ['completed', 'failed'] ):
+                    elif ( info['status'] == 'Done (Success)' ) and ( subjob.status not in LCG._final_ganga_states ):
                         create_download_task = True
 
                     if create_download_task:
@@ -1939,6 +1942,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.33  2009/03/12 12:26:16  hclee
+# merging bug fixes from branch Ganga-LCG-old-MTRunner to trunk
+#
 # Revision 1.32  2009/03/12 12:17:31  hclee
 # adopting GangaThread in Ganga.Core
 #

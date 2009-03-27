@@ -63,11 +63,11 @@ class LCGOutputDownloadAlgorithm(Algorithm):
             job.backend.exitcode = 0
         else:
             job.updateStatus('failed')
-            # update the backend's reason if the failure detected in the Ganga's pps 
+            # update the backend's reason if the failure detected in the Ganga's pps
             if pps_check[1] != 0:
                 job.backend.reason = 'non-zero app. exit code: %s' % pps_check[1]
                 job.backend.exitcode = pps_check[1]
-        
+
         # needs to update the master job's status to give an up-to-date status of the whole job
         if job.master:
             job.master.updateMasterJobStatus()
