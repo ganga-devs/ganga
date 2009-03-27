@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from Queue import Queue
+import threading
 
 class DuplicateDataItemError(Exception):
     """
@@ -18,8 +19,11 @@ class Data:
     _attributes = ('collection','queue')
 
     def __init__(self, collection=[]):
+     
         self.collection = collection
         self.queue = Queue(maxsize=-1)
+        self.lock  = threading.Lock()
+
         for item in collection:
             self.queue.put(item)
 
@@ -38,11 +42,20 @@ class Data:
         of slots, it should never throw "Queue.Full" exception.
         '''
 
-        if item not in self.collection:
-            self.collection.append(item)
-            self.queue.put(item)
-        else:
-            raise DuplicateDataItemError('data item \'%s\' already in the task queue' % str(item))
+        self.lock.acquire()
+        try:
+            if item not in self.collection:
+                self.collection.append(item)
+
+                #f = open('/tmp/hclee/mt_tasks.log', 'a')
+                #f.write( '%s \n' % str(item) )
+                #f.close()
+
+                self.queue.put(item)
+            else:
+                raise DuplicateDataItemError('data item \'%s\' already in the task queue' % str(item))
+        finally:
+            self.lock.release()
 
     def getNextItem(self):
         '''
@@ -50,4 +63,13 @@ class Data:
 
         if nothing available, the exception "Queue.Empty" will be thrown. 
         '''
-        return self.queue.get(block=True, timeout=1)
+
+        theItem = None
+
+        self.lock.acquire()
+        try:
+            theItem = self.queue.get(block=True, timeout=1)
+        finally:
+            self.lock.release()
+
+        return theItem
