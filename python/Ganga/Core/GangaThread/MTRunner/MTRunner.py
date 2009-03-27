@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import time
+import traceback
 from threading import Lock
 from Queue import Empty
 from Algorithm import AlgorithmError
@@ -23,7 +24,7 @@ class GangaWorkAgent(GangaThread):
 
     def run(self):
 
-        logger = getLogger('GangaThread')
+        logger = getLogger('Ganga.Core.GangaThread.MTRunner')
 
         while not self.should_stop():
 
@@ -40,6 +41,14 @@ class GangaWorkAgent(GangaThread):
             else:
                 try:
                     item = self._runner.data.getNextItem()
+
+                    ## write out the debug log
+                    #self._runner.lock.acquire()
+                    #f = open('/tmp/hclee/mt_debug.log','a')
+                    #f.write( 'worker %s get item %s \n' % (self.getName(), item) )
+                    #f.close()
+                    #self._runner.lock.release()
+
                     logger.debug( 'worker %s get item %s' % (self.getName(), item) )
                     rslt = self._runner.algorithm.process(item)
                     if rslt:
@@ -51,6 +60,9 @@ class GangaWorkAgent(GangaThread):
                 except AlgorithmError:
                     break
                 except Empty:
+                    pass
+                except:
+                    traceback.print_exc()
                     pass
 
         self.unregister()
