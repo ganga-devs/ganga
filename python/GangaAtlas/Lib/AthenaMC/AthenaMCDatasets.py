@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.29 2009-03-10 16:02:49 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.30 2009-03-30 15:43:14 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -742,7 +742,7 @@ class AthenaMCOutputDatasets(Dataset):
     _category = 'datasets'
     _name = 'AthenaMCOutputDatasets'
 
-    _exportmethods = [ 'prep_data', 'getDQ2Locations', 'getSEs', 'create_dataset','fill','retrieve' ]
+    _exportmethods = [ 'prep_data', 'getDQ2Locations', 'getSEs', 'create_dataset','fill','retrieve','recover' ]
 
     def __init__(self):
         super(AthenaMCOutputDatasets, self).__init__()
@@ -1078,12 +1078,69 @@ class AthenaMCOutputDatasets(Dataset):
                         dq2.registerNewDataset(dataset)
                     finally:
                         dq2_lock.release()
+                try:
+                    dq2_lock.acquire()
+                    frozen=dq2.getMetaDataAttribute(dataset,["frozendate"])
+                finally:
+                    dq2_lock.release()
+                if frozen.values()[0]!="None":
+                    logger.error("Dataset is already frozen, cannot add extra files to this dataset")
+                    return []
+                
                 self.register_dataset_location(dataset,siteID)
-
+                    
 
             self.register_file_in_dataset(dataset,[lfn],[guid], [size],[adler32])
         return datasets
-    
+    def recover(self,freeze="yes"):
+        from Ganga.GPIDev.Lib.Job import Job
+        from GangaAtlas.Lib.ATLASDataset import filecheck
+        job = self._getParent()
+        if job.master:
+            logger.error("recover() can only be called from the master job")
+            return
+        try:
+            assert job.backend._name=="LCG"
+        except:
+            logger.error("recover() only works for LCG() jobs")
+            return
+            
+        ntot=len(job.subjobs)
+        for sj in job.subjobs:
+            if sj.status=='failed' or sj.status=='completing':
+                logger.warning("Recovering output data from subjob %i" % sj.id)
+                sj.outputdata.fill()
+                continue
+            if sj.status!='completed' :
+                logger.warning("subjob %i is not finished yet" % sj.id)
+                freeze="no"
+                continue
+                
+        if freeze=="yes" or not job.subjobs:
+            if job.subjobs:
+                logger.warning("Now freezing output datasets")
+            else:
+                logger.warning("Recovering output data ")
+            self.fill()
+
+        # now time for a summary
+        dsets=self.store_datasets
+        print dsets
+        contents_new = {}
+
+        for dset in dsets:
+            try:
+                dq2_lock.acquire()
+                nfiles=dq2.getNumberOfFiles(dset)
+            finally:
+                dq2_lock.release()
+            print "got %d out of %d files for dataset %s" % (nfiles,ntot,dset)
+            if freeze=="yes":
+                logger.warning("Dataset %s is now frozen and cannot be updated further. Next attempt to run recover() will fail." % dset)
+            else:
+                logger.info("Dataset %s is still open as some subjobs have not completed." % dset)
+        return
+        
     def fill(self, type=None, name=None, **options ):
         """Determine outputdata and outputsandbox locations of finished jobs
         and fill output variable"""
@@ -1138,6 +1195,14 @@ class AthenaMCOutputDatasets(Dataset):
                         self.store_datasets.append(dset)
             logger.debug("list of datasets: %s" % str(self.store_datasets))
             for dset in self.store_datasets:
+                try:
+                    dq2_lock.acquire()
+                    frozen=dq2.getMetaDataAttribute(dset,["frozendate"])
+                finally:
+                    dq2_lock.release()
+                if frozen.values()[0]!="None":
+                    logger.error("Dataset is already frozen, cannot add extra files to this dataset")
+                    continue
                 # freeze each dataset, create container if needed then register dataset on container.
                 dq2.freezeDataset(dset)
                 imax=string.find(dset,".jid")
