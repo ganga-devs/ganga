@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.35 2009-03-23 16:47:37 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.36 2009-03-30 14:48:55 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1883,18 +1883,18 @@ if __name__ == '__main__':
             temp_locations = [ ]
 
 
-        # Set siteID to site_USERDISK
+        # Set siteID to site_SCRATCHDISK
         dq2alternatename = TiersOfATLAS.getSiteProperty(siteID,'alternateName')
         for sitename in TiersOfATLAS.getAllSources():
             if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
-                if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASUSERDISK'):
+                if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASSCRATCHDISK'):
                     siteID = sitename
                     break
 
         # Find close backup locations
         close_backup_locations = []
         for sitename in TiersOfATLAS.getCloseSites(siteID):
-            if TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasuserdisk')>0:
+            if TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasscratchdisk')>0:
                 close_backup_locations.append( sitename )
 
         # Compile stage out SE sequence 
@@ -1911,7 +1911,7 @@ if __name__ == '__main__':
             space_token_names = os.environ['DQ2_OUTPUT_SPACE_TOKENS'].split(":")
         except:
             print "ERROR : DQ2_OUTPUT_SPACE_TOKENS not defined"
-            space_token_names = [ 'ATLASUSERDISK', 'ATLASUSERTAPE', 'ATLASLOCALGROUPDISK' ]
+            space_token_names = [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK' ]
             pass
         
 

@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.25 2009-03-05 12:33:32 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.26 2009-03-30 14:48:54 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -923,7 +923,7 @@ class DQ2OutputDataset(Dataset):
         """Create a subscription for a dataset"""
         if datasetname and location:
             if isDQ2SRMSite(location) and \
-                   (location.find('LOCALGROUPDISK')>0 or location.find('USERDISK')>0):
+                   (location.find('LOCALGROUPDISK')>0 or location.find('SCRATCHDISK')>0):
                 try:
                     dq2_lock.acquire()
                     dq2.registerDatasetSubscription(datasetname, location)
@@ -1233,9 +1233,9 @@ except KeyError:
     config.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
 
 
-config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASUSERDISK' , 'ATLASUSERTAPE', 'ATLASLOCALGROUPDISK'] , 'Allowed space tokens names of DQ2OutputDataset output' )
+config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK'] , 'Allowed space tokens names of DQ2OutputDataset output' )
 
-config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_USERDISK', 'CERN-PROD_USERTAPE', 'FZK-LCG2_USERDISK', 'IN2P3-CC_USERDISK', 'TRIUMF-LCG2_USERDISK', 'IFAE_USERDISK', 'NIKHEF-ELPROD_USERDISK' ], 'Default backup locations of DQ2OutputDataset output' )
+config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_SCRATCHDISK', 'CERN-PROD_USERTAPE', 'FZK-LCG2_SCRATCHDISK', 'IN2P3-CC_SCRATCHDISK', 'TRIUMF-LCG2_SCRATCHDISK', 'IFAE_SCRATCHDISK', 'NIKHEF-ELPROD_SCRATCHDISK' ], 'Default backup locations of DQ2OutputDataset output' )
 
 config.addOption('USE_STAGEOUT_SUBSCRIPTION', False, 'Allow DQ2 subscription to aggregate DQ2OutputDataset output on a storage element instead of using remote lcg-cr' )
 
@@ -1247,6 +1247,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.25  2009/03/05 12:33:32  elmsheus
+#Add size parameter to get_contents
+#
 #Revision 1.24  2009/03/02 08:17:33  elmsheus
 #Fix #47520: TypeError when no file size information available in DDM
 #
