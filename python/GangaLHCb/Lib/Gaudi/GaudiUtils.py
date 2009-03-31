@@ -12,7 +12,7 @@ logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 def available_apps():
-  return ["Gauss", "Boole", "Brunel", "DaVinci","Euler", "Moore", "Vetra",
+  return ["Gauss", "Boole", "Brunel", "DaVinci", "Moore", "Vetra",
           "Panoramix","Panoptes", "Gaudi"]
 
 def available_packs(appname):
@@ -20,7 +20,6 @@ def available_packs(appname):
          'Boole'   : 'Digi',
          'Brunel'  : 'Rec',
          'DaVinci' : 'Phys',
-         'Euler'   : 'Trg',
          'Moore'   : 'Hlt',
          'Vetra'   : 'Velo',
          'Panoptes': 'Rich',
