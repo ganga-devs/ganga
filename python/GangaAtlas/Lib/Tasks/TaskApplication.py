@@ -73,7 +73,7 @@ class TaskSplitter(object):
     def split(self,job):
         subjobs = self.__class__.mro()[2].split(self,job)
         ## Get information about the transform
-        transform = job.application.getTransform()._impl
+        transform = stripProxy(job.application.getTransform())
         id = job.application.id
         partition = transform._app_partition[id]
         ## Tell the transform this job will never be executed ...

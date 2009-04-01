@@ -1,6 +1,7 @@
 from common import *
 from Task import Task
 from MCTransforms import EvgenTransform, SimulTransform, ReconTransform
+from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import AthenaMCInputDatasets
 
 from Ganga.GPIDev.Base.Objects import Node
 
@@ -94,6 +95,7 @@ class MCTask(Task):
 ## Public methods
    def initializeFromGenerator(self,dataset,events_per_file):
       self.initialize()
+      self.transforms[0].inputdata = AthenaMCInputDatasets()
       self.transforms[0].inputdata.DQ2dataset = dataset
       self.transforms[0].inputdata.number_events_file = events_per_file
       self.check()
