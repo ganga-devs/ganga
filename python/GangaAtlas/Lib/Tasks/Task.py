@@ -73,7 +73,7 @@ class Task(GangaObject):
    def clone(self):
       c = super(Task,self).clone()
       for tf in c.transforms:
-         tf.status = "pause"
+         tf.status = "new"
          tf._partition_status = {}
          tf._app_partition = {}
          tf._next_app_id = 0
