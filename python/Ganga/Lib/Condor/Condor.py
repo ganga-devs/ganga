@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Condor.py,v 1.7 2009-03-08 17:42:49 karl Exp $
+# $Id: Condor.py,v 1.8 2009-04-02 17:52:24 karl Exp $
 ###############################################################################
 # File: Condor.py
 # Author: K. Harrison
@@ -44,12 +44,17 @@
 #
 # KH - 090308 : Modified updateMonitoringInformation() method
 #               to deal with case where all queues are empty
+#
+# KH - 090402 : Corrected bug that meant application arguments were ignored
+#
+#               In script to be run on worker node, print warning if unable
+#               to find startup script pointed to by BASH_ENV
 
 """Module containing class for handling job submission to Condor backend"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "08 March 2009"
-__version__ = "2.3"
+__date__    = "02 April 2009"
+__version__ = "2.4"
 
 from CondorRequirements import CondorRequirements
 
@@ -296,11 +301,20 @@ class Condor( IBackend ):
          "exePath = '%s'" % exeString,
          "if os.path.isfile( '%s' ):" % os.path.basename( exeString ),
          "   os.chmod( '%s', 0755 )" % os.path.basename( exeString ),
-         "   exePath = os.path.abspath( '%s' )" % os.path.basename( exeString ),
          "wrapperName = '%s_bash_wrapper.sh'" % wrapperName,
          "wrapperFile = open( wrapperName, 'w' )",
          "wrapperFile.write( '#!/bin/bash\\n' )",
-         "wrapperFile.write( '%s\\n' % exePath )",
+         "wrapperFile.write( 'echo \"\"\\n' )",
+         "wrapperFile.write( 'echo \"Hostname: $(hostname -f)\"\\n' )",
+         "wrapperFile.write( 'echo \"\\${BASH_ENV}: ${BASH_ENV}\"\\n' )",
+         "wrapperFile.write( 'if ! [ -z \"${BASH_ENV}\" ]; then\\n' )",
+         "wrapperFile.write( '  if ! [ -f \"${BASH_ENV}\" ]; then\\n' )",
+         "wrapperFile.write( '    echo \"*** Warning: "\
+           + "\\${BASH_ENV} file not found ***\"\\n' )",
+         "wrapperFile.write( '  fi\\n' )",
+         "wrapperFile.write( 'fi\\n' )",
+         "wrapperFile.write( 'echo \"\"\\n' )",
+         "wrapperFile.write( '%s\\n' )" % exeCmdString,
          "wrapperFile.write( 'exit ${?}\\n' )",
          "wrapperFile.close()",
          "os.chmod( wrapperName, 0755 )",
