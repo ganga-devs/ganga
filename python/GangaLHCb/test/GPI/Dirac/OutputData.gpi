@@ -26,15 +26,20 @@ jscript.submit()
 sleep_until_completed(jscript)
 assert jscript.status == 'completed', 'job must complete'
 
-downloadedFiles = jscript.backend.getOutputData()
-# TODO: This seems to be broken
-#assert 'output.txt' in downloadedFiles, 'output.txt must be downloaded - %s' \
-#    % str(downloadedFiles)
-
 output_file = join(jscript.outputdir,'output.txt')
+if os.path.exists(output_file):
+    os.unlink(output_file)
+
+downloadedFiles = jscript.backend.getOutputData()
+print 'downloadedFiles',downloadedFiles
+
+assert 'output.txt' in downloadedFiles, 'output.txt must be downloaded - %s' \
+    % str(downloadedFiles)
+
 assert exists(output_file), 'File must exist'
 
 assert(file_contains(output_file,'This is a test'))
 lfns = jscript.backend.getOutputDataLFNs()
 assert len(lfns) == 1, 'We only expect one LFN'
+print 'lfns',lfns
 assert basename(lfns[0]) == 'output.txt', 'Check the LFN is as expected'

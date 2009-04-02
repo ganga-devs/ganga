@@ -211,7 +211,6 @@ for i in range(3): #retry
             break
         result = getFiles()
         if not lfns and result and result.get('OK',False):
-            result = lfn_result
             rc = 0
             break
         
