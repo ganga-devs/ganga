@@ -9,6 +9,8 @@ class Transform(GangaObject):
         'status'         : SimpleItem(defvalue='new', protected=1, doc='Status - running, pause or completed', typelist=["str"]),
         'name'           : SimpleItem(defvalue='Simple Transform', doc='Name of the transform (cosmetic)', typelist=["str"]),
         'application'    : ComponentItem('applications', defvalue=None, optional=1, load_default=False, checkset="checkTaskApplication",doc='Application of the Transform. Must be a Task-Supporting application.'),
+        'inputsandbox'   : FileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,doc="list of File objects shipped to the worker node "),
+        'outputsandbox'  : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of filenames or patterns shipped from the worker node"),
         'inputdata'      : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Input dataset'),
         'outputdata'     : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Output dataset'),
         'backend'        : ComponentItem('backends', defvalue=None, optional=1,load_default=False, doc='Backend of the Transform.'),
@@ -302,6 +304,8 @@ class Transform(GangaObject):
       j.application._impl.id = self.getNewAppID(partition)
       j.inputdata = self.inputdata
       j.outputdata = self.outputdata
+      j.inputsandbox = self.inputsandbox
+      j.outputsandbox = self.outputsandbox
       j.name = "T%i:%i C%i" % (task.id, id, partition)
       return j
 
