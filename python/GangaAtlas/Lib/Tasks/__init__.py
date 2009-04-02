@@ -16,5 +16,6 @@ from AnaTransform import AnaTransform
 from TaskApplication import ExecutableTask, AthenaMCTask, AthenaMCTaskSplitterJob, AthenaTask, AnaTaskSplitterJob
 
 # Start Logger
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+#import Ganga.Utility.logging
+#logger = Ganga.Utility.logging.getLogger()
+from common import logger
