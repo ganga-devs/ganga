@@ -1,0 +1,11 @@
+# this is a test in which the second subjob fails to submit because of the application config exception
+from GangaTest.Framework.utils import assert_cannot_submit
+j = Job()
+j.backend = TestSubmitter()
+j.application = TestApplication()
+j.splitter = GenericSplitter()
+j.splitter.attribute = 'application.fail'
+j.splitter.values = ['','config','']
+assert_cannot_submit(j)
+print len(j.subjobs)
+assert(len(j.subjobs)==0)

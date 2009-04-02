@@ -1,0 +1,32 @@
+
+jobs.remove()
+
+m1=Job(name='mine')
+m2=Job(name='mine')
+y1=Job(name='yours')
+
+for j in jobs:
+    assert(jobs(j.id))
+
+# many items in slice
+mine_jobs = jobs.select(name='mine')
+
+print mine_jobs, repr(mine_jobs), dir(mine_jobs)
+assert(m1 in mine_jobs)
+assert(m2 in mine_jobs)
+
+# one item in slice
+assert(y1 in jobs.select(name='yours'))
+assert(y1 is jobs['yours'])
+
+mine_jobs.remove() # delete all my jobs...
+
+print jobs
+assert len(jobs) == 1
+assert jobs[-1].name == 'yours'
+
+jobs.select(name='yours').remove()
+
+assert(len(jobs) == 0)
+
+

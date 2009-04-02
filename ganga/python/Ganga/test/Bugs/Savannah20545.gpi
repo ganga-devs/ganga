@@ -1,0 +1,57 @@
+
+#no absolute path prepended
+
+#1) absolute unix paths
+path='/home/ddd/dsgg'
+f=File(path)
+if not f.name==path:
+    raise Exception('Invalid file path expanding: %s->%s' % (path,f.name))
+
+#2. URL:/path
+path='LFN:/lhcb/'
+f=File(path)
+if not f.name==path:
+    raise Exception('Invalid file path expanding: %s->%s' % (path,f.name))
+
+#3. [PROTOCOL:][SETYPE:]/path/to/file
+path='PFN:castor:/castor/cern.ch/grid/lhcb/production/DC06/v1-lumi2/00001394/DST'
+f=File(path)
+if not f.name==path:
+    raise Exception('Invalid file path expanding: %s->%s' % (path,f.name))
+
+#4. http://www.cern.ch/index.html
+path='LFN:/lhcb/'
+f=File(path)
+if not f.name==path:
+    raise Exception('Invalid file path expanding: %s->%s' % (path,f.name))
+
+
+
+#-------------
+
+#The following should be expanded
+
+path='file.txt'
+f=File(path)
+if f.name==path:
+    raise Exception('Invalid file path expanding: %s->%s' % (path,f.name))
+
+
+path='dir/file.txt'
+f=File(path)
+if f.name==path:
+    raise Exception('Invalid file path expanding: %s->%s' % (path,f.name))
+
+
+path='L/F:foobar' 
+f=File(path)
+if f.name==path:
+    raise Exception('Invalid file path expanding: %s->%s' % (path,f.name))
+
+#URL should start with either an underscore or character
+path='123:/foobar'
+f=File(path)
+if f.name==path:
+    raise Exception('Invalid file path expanding: %s->%s' % (path,f.name))
+
+
