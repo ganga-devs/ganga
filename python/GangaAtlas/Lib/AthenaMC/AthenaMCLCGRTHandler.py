@@ -712,7 +712,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             except:
                 raise ApplicationConfigurationError(None,"Not enough cavern input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(cavernfiles)))
             self.cavernfile=",".join([cavernfiles[i] for i in range(imax)])
-            cavernfiles=cavernfiles[:imax-1]
+            cavernfiles=cavernfiles[:imax]
 
         random.shuffle(mbfiles)
         if job.inputdata and len(mbfiles) >0 and job.inputdata.n_minbias_files_job:
@@ -722,7 +722,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             except:
                 raise ApplicationConfigurationError(None,"Not enough minbias input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(mbfiles)))
             self.minbiasfile=",".join([mbfiles[i] for i in range(imax)])
-            mbfiles=mbfiles[:imax-1]
+            mbfiles=mbfiles[:imax]
 
         alllfns=inputfiles+cavernfiles+mbfiles+dbfiles
         infilenr=0
