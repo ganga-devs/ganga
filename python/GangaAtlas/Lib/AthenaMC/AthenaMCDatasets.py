@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.30 2009-03-30 15:43:14 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.31 2009-04-03 12:48:30 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -336,19 +336,48 @@ class AthenaMCInputDatasets(Dataset):
             raise
 
         if not dataset and not path:
+            try:
+                assert app.production_name
+            except:
+                logger.error("Input dataset must be set if production_name is not") 
+                raise
             # set up default values: DQ2 dataset with automatic naming conventions
             if app.mode=='simul':
-                dataset = "%s.%s.ganga.%s.%6.6d.%s.evgen.EVNT" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
+                dataset = "%s.%s.ganga.%s.evgen.EVNT" % (_usertag,username,app.production_name)
+                if app.run_number and app.process_name and app.production_name:
+                    dataset = "%s.%s.ganga.%s.%6.6d.%s.evgen.EVNT" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
+                    
             elif app.mode=="recon":
                 if app.transform_script=="csc_recoAOD_trf.py":
-                    dataset = "%s.%s.ganga.%s.%6.6d.%s.recon.ESD" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
+                   dataset = "%s.%s.ganga.%s.recon.ESD" % (_usertag,username,app.production_name)
+                   if app.run_number and app.process_name and app.production_name:
+                       dataset = "%s.%s.ganga.%s.%6.6d.%s.recon.ESD" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)    
                 else:
-                    dataset = "%s.%s.ganga.%s.%6.6d.%s.simul.RDO" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)
+                    dataset = "%s.%s.ganga.%s.simul.RDO" % (_usertag,username,app.production_name)
+                    if app.run_number and app.process_name and app.production_name:
+                        dataset = "%s.%s.ganga.%s.%6.6d.%s.simul.RDO" % (_usertag,username,app.production_name,int(app.run_number),app.process_name)   
             if app.version:
                 dataset+="."+str(app.version)
             datasetType="DQ2" # force datasetType to be DQ2 as this is the default mode.
-      
-
+        # extract app.production_name from input dataset if needed. Needed for output data processing
+        if not app.production_name:
+            print dataset
+            imin=string.find(dataset,"ganga.")
+            print imin, dataset[imin+6:imin+12]
+            if imin>-1 and dataset[imin+6:imin+12].isdigit():
+                imin=imin+6
+            else:
+                imin=string.find(dataset,".")
+            match='.evgen.EVNT'
+            if app.mode=='recon':
+                if app.transform_script=="csc_recoAOD_trf.py":
+                    match='.recon.ESD'
+                else:
+                    match='.simul.RDO'
+            imax=string.find(dataset,match)
+            if imin>-1 and imax>-1:
+                app.production_name=dataset[imin+1:imax]
+            print "production name:",app.production_name
         # get tuple (list, openrange) of partitions to process 
         partitions = app.getPartitionList()
         inputfiles = app.getInputsForPartitions(partitions[0], self)
@@ -512,7 +541,8 @@ class AthenaMCInputDatasets(Dataset):
             finally:
                 dq2_lock.release()
             if not contents:
-                logger.error("Empty DQ2 dataset %s." % dsetname)
+                if dset.find("_sub")<0:
+                    logger.warning("Empty DQ2 dataset %s" % dset)
                 continue
             data = contents[0]
             for guid, info in data.iteritems():
@@ -619,7 +649,8 @@ class AthenaMCInputDatasets(Dataset):
         NGsites=getSites('NDGF')
         selectedSites=[]
         for site in allSites:
-            if backend=="Panda" and site in USsites:
+            if backend=="Panda":
+            #and site in USsites: // not necessary true.
                 selectedSites.append(site)
                 continue
             if backend=="LCG" and site not in USsites and site not in NGsites:
@@ -778,9 +809,14 @@ class AthenaMCOutputDatasets(Dataset):
         fileprefixes,outputpaths=self.outrootfiles.copy(),{}
 
         # The common prefix production.00042.physics.
-        app_prefix = "%s.%6.6d.%s" % (app.production_name,int(app.run_number),app.process_name)
+        app_prefix = "%s" % app.production_name
+        # backward compatibility
+        if app.production_name and app.run_number and app.process_name:
+            app_prefix = "%s.%6.6d.%s" % (app.production_name,int(app.run_number),app.process_name)
+
         if self.output_dataset and string.find(self.output_dataset,",")<0:
             app_prefix=self.output_dataset
+
 
         job=app._getParent()# prep_data called from master_prepare(), so it should be the master job
         jid=job.id

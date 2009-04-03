@@ -55,6 +55,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
     prod_release=""
     atlas_rel=""
     
+    
     def master_prepare(self,app,appmasterconfig):
         if app.siteroot:
             os.environ["SITEROOT"]=app.siteroot
@@ -70,8 +71,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         try:
             assert self.prod_release or app.transform_archive
         except:
-            logger.error("A reference to the Production archive to be used must be set, either through the declaration of the archive itself in application.transform_archive or by putting the 4-digit production cache release number in application.atlas_release. Neither are set. Aborting.")
-            raise
+            raise ApplicationConfigurationError(None,"A reference to the Production archive to be used must be set, either through the declaration of the archive itself in application.transform_archive or by putting the 4-digit production cache release number in application.atlas_release. Neither are set. Aborting.")
         job = app._getParent()
         if job.backend._name in ["Local","PBS"]:
             if app.dryrun:
@@ -80,13 +80,13 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert "SITEROOT" in os.environ
             except:
-                logger.error("Error, ATLAS environment not defined")
-                raise
+                raise ApplicationConfigurationError(None," ATLAS environment not defined")
+                
             try:
                 assert "CMTSITE" in os.environ
             except:
-                logger.error("cmt not setup properly. Please check your ATLAS setup or run on the grid")
-                raise
+                raise ApplicationConfigurationError(None,"cmt not setup properly. Please check your ATLAS setup or run on the grid")
+            
             if os.environ["CMTSITE"]=="CERN" and "AtlasVersion" in os.environ:
                 logger.debug("Checking AtlasVersion: %s and selected atlas release %s" % (os.environ["AtlasVersion"],self.atlas_rel))
                 try:
@@ -110,35 +110,37 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert "CMTSITE" in os.environ and os.environ["CMTSITE"]=="CERN"
             except:
-                logger.error("Error, CERN ATLAS AFS environment not defined. Needed by LSF backend")
-                raise
+                raise ApplicationConfigurationError(None,"Error, CERN ATLAS AFS environment not defined. Needed by LSF backend")
+                
             
         if app.mode !="evgen" and app.mode !="template":
             try:
                 assert job.inputdata and job.inputdata._name == 'AthenaMCInputDatasets'
             except :
-                logger.error("job.inputdata must be used and set to 'AthenaMCInputDatasets'")
-                raise
-        if job.inputdata and app.mode =="template":
+                raise ApplicationConfigurationError(None,"job.inputdata must be used and set to 'AthenaMCInputDatasets'")
+            
+        if job.inputdata:
             try:
                 assert job.inputdata._name == 'AthenaMCInputDatasets'
             except :
-                logger.error("job.inputdata must be set to 'AthenaMCInputDatasets'")
-                raise
+                raise ApplicationConfigurationError(None,"job.inputdata must be set to 'AthenaMCInputDatasets'")
+                
         # checking se-name: must not write to MC/DATA/PRODDISK space tokens.
         if not app.se_name:
             app.se_name='none'
             # important to avoid having null string in app.se_name as it would ruin the argument list of the wrapper script!
-            
-        if app.se_name:
+
+        outSE=app.se_name
+        if hasattr(job.backend,'requirements') and hasattr(job.backend.requirements,'sites') and len(job.backend.requirements.sites)!=0:
+            outSE=str(job.backend.requirements.sites[0])
+        
+        if outSE:
             forbidden_spacetokens=["MCDISK","DATADISK","MCTAPE","DATATAPE","PRODDISK","PRODTAPE"]
             for token in forbidden_spacetokens:
                 try:
-                    assert token not in app.se_name
+                    assert token not in outSE
                 except:
-                    logger.error("You are not allowed to write output data in any production space token: %s. Please select a site with ATLASUSERDISK or ATLASLOCALGROUPDISK space token" % app.se_name)
-                    raise
-            
+                    raise ApplicationConfigurationError(None,"You are not allowed to write output data in any production space token: %s. Please select a site with ATLASUSERDISK or ATLASLOCALGROUPDISK space token" % outSE)                   
         if not app.dryrun and job.inputdata and job.inputdata._name == 'AthenaMCInputDatasets':
             # The input dataset was already read in in AthenaMC.master_configure
             self.turls=app.turls
@@ -204,14 +206,20 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
         logger.debug("self.sites: %s %d" % (str(self.sites),len(self.sites)))
 
-        if  app.se_name == "none" and len(self.sites)>0:
+        #        if  app.se_name == "none" and len(self.sites)>0:
+        if len(self.sites)>0:
             [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(self.sites[0])
             if len(self.sites)>1:
                 [outlfc2,backup,backuplocation]=job.outputdata.getDQ2Locations(self.sites[1])
             
         outloc="CERN-PROD_USERDISK"
+        
         if app.se_name != "none":
+            # outloc=app.se_name
             outloc=app.se_name
+        if hasattr(job.backend,'requirements') and hasattr(job.backend.requirements,'sites') and len(job.backend.requirements.sites)!=0: 
+            outloc=str(job.backend.requirements.sites[0])        
+        print outloc
         if outsite=="" :
             [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(outloc)
         # outlfc is now set. Clearing up all input sites lists accordingly:
@@ -378,9 +386,14 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             environment['T_CONTEXT'] = str(self.number_events_job) # needed to avoid prodsys failure mechanism based on a hardcoded minimum number of event of 5000 per job
 
             
-#       prepare job requirements
-        requirements = AtlasLCGRequirements()
-        requirements.other.append('other.GlueCEStateStatus=="Production"') # missing production
+        #       prepare job requirements
+            
+        if hasattr(job.backend,'requirements') and hasattr(job.backend.requirements,'sites') and hasattr(job.backend.requirements,'software') and hasattr(job.backend.requirements,'other') and hasattr(job.backend.requirements,'dq2client_version'):
+            requirements=job.backend.requirements
+        else:
+            requirements = AtlasLCGRequirements()
+        
+#        requirements.other.append('other.GlueCEStateStatus=="Production"') # missing production
         imax=string.rfind(self.atlas_rel,".")
         rel=string.atof(self.atlas_rel[:imax]) # to deal with string comparisons: [2-9].0.0 > 11.0.0. 
         if self.atlas_rel <= "11.4.0" or rel <=11.4:
@@ -401,13 +414,15 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
         if app.transform_archive and string.find(app.transform_archive,"AtlasTier0")>-1:
             requirements.software=['VO-atlas-tier0-%s' % self.prod_release]
-        dq2client_version = requirements.dq2client_version
-        try:
-            # override the default one if the dq2client_version is presented 
-            # in the job backend's requirements object
+        extraConfig=getConfig('defaults_AtlasLCGRequirements')
+        dq2client_version = extraConfig['dq2client_version']
+
+        if job.backend.requirements.dq2client_version:
             dq2client_version = job.backend.requirements.dq2client_version
-        except AttributeError:
-            pass
+        try:
+            assert dq2client_version!=""
+        except:
+            raise 
         requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
 
         # job to data, strict: target outsite and nothing else.
@@ -573,28 +588,15 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         try:
             assert app.transform_script
         except AssertionError:
-            logger.error("template mode requires the name of the transformation you want to use")
-            raise
+            raise ApplicationConfigurationError(None,"template mode requires the name of the transformation you want to use")
         
-        logger.warning("Using the new template mode. Please use application.extraArgs and application.extraIncArgs for the transformation parameters")
+        logger.warning("Using the new template mode. Please use application.extraArgs for the transformation parameters")
 
         try:
             assert "LOG" in self.outputfiles
         except AssertionError:
-            logger.error("template mode requires a logfile, set by job.application.outputdata.logfile")
-            raise
-## Not a minimal set. runNumber only exists in evgen type transforms, therefore the commented stuff breaks all other transforms. Just leave it to extraArgs for Pete's sake.
-        
-##        args =  [ self.atlas_rel,
-##                  app.se_name,
-##                  self.outputfiles["LOG"],
-##                  app.transform_script,
-##                  "runNumber=%s" % str(app.run_number),
-##                  "firstEvent=%s" % str(self.firstevent),
-##                  "maxEvents=%s" % str(self.number_events_job),
-##                  "randomSeed=%s" % str(self.randomseed),]
-        
-## Back to minimal set. The rest will be set in extraArgs.
+            raise ApplicationConfigurationError(None,"template mode requires a logfile, set by job.application.outputdata.logfile")
+
         args =  [ self.atlas_rel,
                  app.se_name,
                  self.outputfiles["LOG"],
@@ -653,8 +655,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 try:
                     assert len(inlfns)>= i
                 except:
-                    logger.error("Not enough input files, got %i expected %i" % (len(inlfns),i))
-                    raise Exception()
+                    raise ApplicationConfigurationError(None,"Not enough input files, got %i expected %i" % (len(inlfns),i))
 
                 inputfiles.append(inlfns[i-1])
 
@@ -802,6 +803,14 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 imin2=string.find(val,"$out")
                 newval=""
                 if imin>-1:
+                    if string.find(val[imin+1:],"J")>-1:
+                        nval=val.replace("$J",str(partition))
+                        try:
+                            newval=eval(nval)
+                            assert newval
+                        except AssertionError:
+                            raise ApplicationConfigurationError(None,"error while parsing arguments: %s %d %d" % (val, imin, imin2))
+                    
                     if string.find(val[imin+1:],"inputfile")>-1:
                         newval=self.inputfile
                     if string.find(val[imin+1:],"cavern")>-1:
@@ -820,8 +829,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                     try:
                         assert newval
                     except AssertionError:
-                        logger.error("Error while parsing arguments: %s %d %d" % (val, imin, imin2))
-                        raise
+                        raise ApplicationConfigurationError(None,"Error while parsing arguments: %s %d %d" % (val, imin, imin2))
+                        
                     newarg="%s=%s" % (key,newval)
                 else:
                     newarg=arg
@@ -846,8 +855,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         try:
             assert len(args)>0
         except AssertionError:
-            logger.error("Transformation with no arguments. Please check your inputs!")
-            raise
+            raise ApplicationConfigurationError(None,"Transformation with no arguments. Please check your inputs!")
 
 # now filling up environment variables for output data in jdl file...
         outfilelist=""
@@ -910,6 +918,7 @@ allHandlers.add('AthenaMC','Condor',AthenaMCLCGRTHandler)
 allHandlers.add('AthenaMC','Cronus',AthenaMCLCGRTHandler)
 allHandlers.add('AthenaMC','NG',AthenaMCLCGRTHandler)
 allHandlers.add('AthenaMC','PBS',AthenaMCLCGRTHandler)
+
 
 config = getConfig('AthenaMC')
 logger = getLogger('AthenaMC')

@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.15 2009-03-10 16:02:49 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.16 2009-04-03 12:48:30 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -194,30 +194,24 @@ class AthenaMC(IApplication):
        except AssertionError:
            logger.error('Please provide a start value for parameter atlas_release, number_events_job')
            raise
-       if (self.mode != 'template'):
-           try:
-               assert self.production_name
-               assert self.process_name
-               assert self.run_number
-           except AssertionError:
-               logger.error('Please provide a start value for parameters production_name, process_name, run_number')
-               raise
        
        if self.mode == "evgen":
           try:
              assert self.evgen_job_option
           except AssertionError:
              logger.error('Please provide a start value for parameter evgen_job_option needed for any evgen transformation')
-
-          
-       isJT=string.find(self.transform_archive,"JobTransform")
-##       isAP=string.find(self.transform_archive,"AtlasProduction")
-       ##       try:
-##          assert (isJT>-1 or isAP>-1)
-##       except:
-##           logger.error('Transformation archive name must contain either AtlasProduction or JobTransform')
-##           raise
-       if isJT==-1 and self.mode in [ 'simul' , 'recon' ]:
+             
+          jobfields=self.evgen_job_option.split(".")
+          try:
+              assert len(jobfields)==4 and jobfields[1].isdigit() and len(jobfields[1])==6
+              
+          except:
+              raise ApplicationConfigurationError(None,"Badly formatted job option name %s. Transformation expects to find something named $project.$runNumber.$body.py, where $runNumber is a 6-digit number and $body does not contain any dot (.)" % self.evgen_job_option )
+          self.run_number=str(jobfields[1])
+          if not self.production_name:
+              self.production_name=str(jobfields[1])+"."+str(jobfields[2])
+              
+       if self.mode in [ 'simul' , 'recon' ]:
            try:
                assert self.geometryTag
            except AssertionError:
@@ -229,32 +223,36 @@ class AthenaMC(IApplication):
                assert self._getRoot().splitter._name=="AthenaMCSplitterJob"
            except AssertionError:
                raise ApplicationConfigurationError(None,'If you want to use a job splitter with the AthenaMC application, you have to use AthenaMCSplitterJob')
-##           try:
-##               assert self._getRoot().splitter.numsubjobs < 200
-##           except AssertionError:
-##               raise ApplicationConfigurationError(None,"You are requesting too many subjobs. The AthenaMC module is only for small scale production. Aborting.")
+           
 
        # enforce the use of AthenaMCOutputDataset
        try:
-          assert (self._getRoot().outputdata and self._getRoot().outputdata._name=="AthenaMCOutputDatasets")
+           assert (self._getRoot().outputdata and self._getRoot().outputdata._name=="AthenaMCOutputDatasets")
        except AssertionError:
-          logger.error('AthenaMC now requires to set outputdata to AthenaMCOutputDatasets')
-          raise
+           logger.error('AthenaMC now requires to set outputdata to AthenaMCOutputDatasets')
+           raise
 
        # doing the cross-check of splitter variables.
        if self._getRoot().inputdata and not self.dryrun:
-          try:
-             assert self._getRoot().inputdata._name=="AthenaMCInputDatasets"
-          except AssertionError:
-             logger.error('AthenaMC requires to use AthenaMCInputDatasets for inputdata')
-             raise
-          inputdata = self._getRoot().inputdata.get_dataset(self, self._getRoot().backend._name)
-          if len(inputdata)!= 3:
-             raise ApplicationConfigurationError(None,"Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-          self.turls=inputdata[0]
-          self.lfcs=inputdata[1]
-          self.sites=inputdata[2]
-
+           try:
+               assert self._getRoot().inputdata._name=="AthenaMCInputDatasets"
+           except AssertionError:
+               logger.error('AthenaMC requires to use AthenaMCInputDatasets for inputdata')
+               raise
+           
+           inputdata = self._getRoot().inputdata.get_dataset(self, self._getRoot().backend._name)
+           if len(inputdata)!= 3:
+               raise ApplicationConfigurationError(None,"Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
+           self.turls=inputdata[0]
+           self.lfcs=inputdata[1]
+           self.sites=inputdata[2]
+       # This try block must be at the very end.
+       try:
+           assert self.production_name
+       except:
+           raise ApplicationConfigurationError("application.production_name was not set and could not be deduced from other input fields. Aborting")
+       
+       
 
         
        return (0,None)
@@ -331,6 +329,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.15  2009/03/10 16:02:49  fbrochu
+# Adding support for AtlasTier0 production caches (to be tested), sort input sites by decreasing dataset shares and allow aggregation of output data files to the site specified in app.se_name by subscribing the frozen datasets at the completion of the master job
+#
 # Revision 1.14  2009/02/11 17:26:10  ebke
 # Replaced many Exceptions with ApplicationConfigurationErrors
 # Suggested at the Developer Days
