@@ -349,7 +349,7 @@ EOF
 	sed 's/EventSelector.InputCollections/svcMgr.MuonCalibStreamFileInputSvc.InputFiles/' input.py > input.py.new
 	mv input.py.new input.py
     fi
-    if [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] 
+    if [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] 
 	then
 	sed 's/EventSelector/ServiceMgr.EventSelector/' input.py > input.py.new
 	mv input.py.new input.py

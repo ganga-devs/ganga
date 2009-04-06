@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.44 2009-02-22 15:32:21 elmsheus Exp $
+# $Id: Athena.py,v 1.45 2009-04-06 07:17:41 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -505,7 +505,7 @@ then
   if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
   then
       source $SITEROOT/dist/$ATLAS_RELEASE/AtlasRelease/*/cmt/setup.sh
-  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] ) && ( [ -z $ATLAS_PRODUCTION_ARCHIVE ] )
+  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] ) && ( [ -z $ATLAS_PRODUCTION_ARCHIVE ] )
   then
       if [ -z $ATLAS_PROJECT ]
       then
@@ -530,7 +530,7 @@ else
         export PATH=/afs/cern.ch/atlas/offline/external/slc3compat/1.0.0/bin/i686-slc3-gcc323/:$PATH
         export LD_LIBRARY_PATH=/afs/cern.ch/atlas/offline/external/slc3compat/1.0.0/bin/i686-slc3-gcc323/:$LD_LIBRARY_PATH
       fi
-  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] ) && [ -z $ATLAS_PRODUCTION_ARCHIVE ]
+  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] ) && [ -z $ATLAS_PRODUCTION_ARCHIVE ]
   then
       source $ATLAS_SOFTWARE/$ATLAS_RELEASE/cmtsite/setup.sh -tag=$ATLAS_RELEASE,32
       source $ATLAS_SOFTWARE/$ATLAS_RELEASE/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
@@ -1001,6 +1001,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.44  2009/02/22 15:32:21  elmsheus
+# New numfiles3 stats number
+#
 # Revision 1.43  2009/02/22 14:20:12  elmsheus
 # Corrections for Network stats
 #
