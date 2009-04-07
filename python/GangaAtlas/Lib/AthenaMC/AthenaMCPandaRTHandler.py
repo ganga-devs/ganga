@@ -32,7 +32,7 @@ from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import extractFileNumber, matchFil
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 # PandaTools
-import Client
+from pandatools import Client
 from taskbuffer.JobSpec import JobSpec
 from taskbuffer.FileSpec import FileSpec
 #import AthenaUtils
