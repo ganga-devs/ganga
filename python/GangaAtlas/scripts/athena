@@ -193,14 +193,6 @@ if opt.user_area:
 if opt.group_area:
     j.application.group_area=opt.group_area
 
-if opt.compile:
-   j.application.prepare(athena_compile=True)
-elif opt.nocompile:
-   j.application.prepare(athena_compile=False)
-else:
-   if not (opt.athena_release or opt.user_area):
-       j.application.prepare()
-
 j.application.option_file = option_files
 if opt.options:
    aoptions = opt.options.replace('"',"'''")        
@@ -212,6 +204,14 @@ if opt.user_setupfile:
 # max_events
 if opt.maxevt:
    j.application.max_events = int(opt.maxevt)
+
+if opt.compile:
+   j.application.prepare(athena_compile=True)
+elif opt.nocompile:
+   j.application.prepare(athena_compile=False)
+else:
+   if not (opt.athena_release or opt.user_area):
+       j.application.panda_prepare()
 
 # inputdata
 

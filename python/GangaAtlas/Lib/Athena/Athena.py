@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.45 2009-04-06 07:17:41 elmsheus Exp $
+# $Id: Athena.py,v 1.46 2009-04-07 08:35:55 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -24,6 +24,8 @@ from GangaAtlas.Lib.ATLASDataset import filecheck
 
 from Ganga.Lib.Mergers.Merger import *
 
+from pandatools import AthenaUtils
+
 def mktemp(extension,name,path):
     """Create a unique file"""
          
@@ -36,6 +38,70 @@ def mktemp(extension,name,path):
         i+=1
 
     return None
+
+def file_install(athena_compile_flag='True'):
+
+    return """# genereated by GANGA4
+# Install a user area
+#
+# ATLAS/ARDA
+
+if [ $SITEROOT != '/afs/cern.ch' ] && [ $CMTSITE != 'CERN' ]
+then
+  if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
+  then
+      source $SITEROOT/dist/$ATLAS_RELEASE/AtlasRelease/*/cmt/setup.sh
+  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] ) && ( [ -z $ATLAS_PRODUCTION_ARCHIVE ] )
+  then
+      if [ -z $ATLAS_PROJECT ]
+      then
+          source $SITEROOT/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
+      elif [ ! -z $ATLAS_PROJECT ]
+      then
+          source $SITEROOT/${ATLAS_PROJECT}/$ATLAS_PRODUCTION/${ATLAS_PROJECT}RunTime/cmt/setup.sh
+      fi
+  fi
+else
+  if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
+  then
+      source $SITEROOT/software/dist/$ATLAS_RELEASE/Control/AthenaRunTime/*/cmt/setup.sh
+  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] ) && [ -z $ATLAS_PRODUCTION_ARCHIVE ]
+  then
+      source $ATLAS_SOFTWARE/$ATLAS_RELEASE/cmtsite/setup.sh 
+      export ATLASOFFLINE=`cmt show path | grep AtlasOffline | sed -e ""s:.*path\ ::"" | sed -e ""s:\ from.*::""`
+      source $ATLASOFFLINE/AtlasOfflineRunTime/cmt/setup.sh
+      RHREL=`cat /etc/redhat-release`
+      SC4=`echo $RHREL | grep -c 'Scientific Linux CERN SLC release 4'`
+      if [ $SC4 -gt 0 ]; then
+        export PATH=/afs/cern.ch/atlas/offline/external/slc3compat/1.0.0/bin/i686-slc3-gcc323/:$PATH
+        export LD_LIBRARY_PATH=/afs/cern.ch/atlas/offline/external/slc3compat/1.0.0/bin/i686-slc3-gcc323/:$LD_LIBRARY_PATH
+      fi
+  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] ) && [ -z $ATLAS_PRODUCTION_ARCHIVE ]
+  then
+      source $ATLAS_SOFTWARE/$ATLAS_RELEASE/cmtsite/setup.sh -tag=$ATLAS_RELEASE,32
+      source $ATLAS_SOFTWARE/$ATLAS_RELEASE/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
+  fi
+fi
+
+export CMTPATH=$PWD:$CMTPATH
+dum=`echo $LD_LIBRARY_PATH | tr ':' '\n' | egrep -v '^/lib' | egrep -v '^/usr/lib' | tr '\n' ':' `
+export LD_LIBRARY_PATH=$dum
+cmt config
+cmt broadcast source setup.sh
+cmt broadcast cmt config
+source setup.sh
+if [ '%(athena_compile_flag)s' = 'True' ]
+then
+    echo '==========================='
+    echo 'GCC =' `which gcc`
+    echo `gcc --version`
+    echo 'PATH =' $PATH
+    echo 'LD_LIBRARY_PATH =' $LD_LIBRARY_PATH
+    echo '==========================='
+    cmt broadcast gmake -s
+fi
+""" % { 'athena_compile_flag' : athena_compile_flag } 
+
 
 class AthenaOutputDataset(GangaObject):
     """Specify the output datasets"""
@@ -62,9 +128,14 @@ class Athena(IApplication):
                  'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT, TRF '),
                  'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
                  'atlas_dbrelease'        : SimpleItem(defvalue='',doc='ATLAS DBRelease DQ2 dataset and DQ2Release tar file'),
+                 'atlas_run_dir'          : SimpleItem(defvalue='', doc='ATLAS run directory'),
+                 'atlas_run_config'       : SimpleItem(defvalue={}, doc='ATLAS run configuration'),
+                 'atlas_supp_stream'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='suppress some output streams. e.g., [\'ESD\',\'TAG\']'),
+                 'atlas_use_AIDA'         : SimpleItem(defvalue=False, doc='use AIDA'),
                  'trf_parameter'          : SimpleItem(defvalue={},typelist=["dict","str"], doc='Parameters for transformations'),
                  'user_area'              : FileItem(doc='A tar file of the user area'),
                  'user_area_path'         : SimpleItem(defvalue='', doc='Path where user_area tarfile is created'),
+                 'athena_compile'         : SimpleItem(defvalue=False, doc='Switch if user code should be compiled remotely'),
                  'group_area'             : FileItem(doc='A tar file of the group area'),
                  'max_events'             : SimpleItem(defvalue=-999, typelist=['int'], doc='Maximum number of events'),
                  'option_file'            : FileItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
@@ -78,16 +149,18 @@ class Athena(IApplication):
                      
     _category = 'applications'
     _name = 'Athena'
-    _exportmethods = ['prepare', 'setup', 'postprocess']
+    _exportmethods = ['prepare', 'setup', 'postprocess', 'panda_prepare']
     
     _GUIPrefs = [ { 'attribute' : 'atlas_release',     'widget' : 'String' },
                   { 'attribute' : 'atlas_production',  'widget' : 'String' },
                   { 'attribute' : 'atlas_project',     'widget' : 'String' },
                   { 'attribute' : 'atlas_cmtconfig',   'widget' : 'String' },
-                  { 'attribute'  : 'atlas_exetype',    'widget' : 'String_Choice', 'choices':['ATHENA', 'PYARA', 'ROOT', 'TRF' ]},
+                  { 'attribute' : 'atlas_exetype',    'widget' : 'String_Choice', 'choices':['ATHENA', 'PYARA', 'ROOT', 'TRF' ]},
                   { 'attribute' : 'atlas_environment', 'widget' : 'String_List' },
                   { 'attribute' : 'user_area',         'widget' : 'FileOrString' },
                   { 'attribute' : 'user_area_path',    'widget' : 'String' },
+                  { 'attribute' : 'athena_run_dir',    'widget' : 'String' },
+                  { 'attribute' : 'athena_compile',    'widget' : 'Bool' },
                   { 'attribute' : 'group_area',        'widget' : 'FileOrString' },
                   { 'attribute' : 'max_events',        'widget' : 'Int' },
                   { 'attribute' : 'option_file',       'widget' : 'FileOrString_List' },
@@ -425,6 +498,183 @@ class Athena(IApplication):
             self.stats['numfiles2']=numfiles2
             self.stats['totalevents']=totalevents        
 
+    def panda_prepare(self, **options):
+        """Extract Athena job configuration and prepare job for submission"""
+        if self.exclude_from_user_area:
+            logger.warning('Athena.exclude_from_user_area does not work with panda_prepare() ! Some files are removed by default from the user_area.')
+
+        # get Athena versions
+        rc, out = AthenaUtils.getAthenaVer()
+        # failed
+        if not rc:
+            raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+        self.userarea = out['workArea'] 
+        self.atlas_release = out['athenaVer'] 
+        self.grouparea = out['groupArea'] 
+        if out['cacheVer']:
+            pat = re.compile('-(.*)_(.*)')
+            match_pat = pat.match(out['cacheVer'])
+            if match:
+                self.atlas_project = pat_match.group(1)
+                self.atlas_production = pat_match.group(2)
+        else:
+            self.atlas_production = ''
+            self.atlas_project = ''
+
+        # Set CMTCONFIG
+        if os.environ.has_key('CMTCONFIG'):
+            self.atlas_cmtconfig = os.environ['CMTCONFIG']
+            if self.atlas_cmtconfig.startswith('x86_64'):
+                raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
+        else:
+            self.atlas_cmtconfig = ''
+
+
+        logger.info('Found Working Directory %s',self.userarea)
+        logger.info('Found ATLAS Release %s',self.atlas_release)
+        if self.atlas_production:
+            logger.info('Found ATLAS Production Release %s',self.atlas_production)
+        if self.atlas_project:
+            logger.info('Found ATLAS Project %s',self.atlas_project)
+        logger.info('Found ATLAS CMTCONFIG %s',self.atlas_cmtconfig)
+        if self.grouparea:
+            logger.info('Found GroupArea at %s',self.grouparea)
+
+        # save current dir
+        currentDir = os.path.realpath(os.getcwd())
+        # get run directory
+        # remove special characters                    
+        sString=re.sub('[\+]','.', self.userarea)
+        runDir = re.sub('^%s' % sString, '', currentDir)
+        if runDir == currentDir:
+            raise ApplicationConfigurationError(None, 'You need to run panda_prepare in a directory under %s' % self.userarea)
+        elif runDir == '':
+            runDir = '.'
+        elif runDir.startswith('/'):
+            runDir = runDir[1:]
+        runDir = runDir+'/'
+        self.atlas_run_dir = runDir
+        logger.info('Using run directory: %s',self.atlas_run_dir)
+
+        # extract run configuration
+        # run ConfigExtractor for normal jobO
+        logger.info('Extracting athena run configuration ...')
+        jobO = ''
+        if not self.option_file:
+            raise ApplicationConfigurationError(None,'Set option_file before calling prepare()')
+        for opt_file in self.option_file:
+            if not opt_file.exists():
+                raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % opt_file.name)
+            else:
+                jobO = jobO + opt_file.name + " "
+        supStream = [s.upper() for s in self.atlas_supp_stream]
+        shipInput = False
+        trf = False
+        if self.atlas_exetype in ['PYARA','ROOT','TRF']:
+            trf = True
+        rc, runConfig = AthenaUtils.extractRunConfig(jobO, supStream, self.atlas_use_AIDA, shipInput, trf)
+        self.atlas_run_config = runConfig
+        logger.info('Detected Athena run configuration: %s',self.atlas_run_config)
+        if not rc:
+            raise ApplicationConfigurationError(None, 'Error in AthenaUtils.extractRunConfig - could not extract Athena configuration!')
+
+        # tmpDir
+        if os.environ.has_key('TMPDIR'):
+            tmpDir = os.environ['TMPDIR']
+        else:
+            cn = os.path.basename( os.path.expanduser( "~" ) )
+            tmpDir = os.path.realpath('/tmp/' + cn )
+
+        if not os.access(tmpDir,os.W_OK):    
+            os.makedirs(tmpDir)
+            
+        self.user_area_path = tmpDir
+        savedir=os.getcwd()
+
+        # LCG backend specific
+        # create install.sh and requirements
+        lcg = options.get('LCG')
+        ng = options.get('NG')
+        if lcg or ng:
+            savedir=os.getcwd()
+            os.chdir(self.userarea)
+
+            if self.athena_compile==1 or self.athena_compile==True:
+                athena_compile_flag='True'
+            if self.athena_compile==0 or self.athena_compile==False:
+                athena_compile_flag='False'
+
+            file('install.sh','w').write( file_install( athena_compile_flag))
+
+            req = file('requirements','w')
+            req.write('# generated by GANGA4\nuse AtlasPolicy AtlasPolicy-*\n')
+
+            user_excludes = ['']
+            out = commands.getoutput('find . -name cmt')
+            re_package1 = None
+            re_package2 = None
+            if self.atlas_release.find('11.')>=0 or self.atlas_release.find('10.')>=0:
+                re_package1 = re.compile('^\./(.+)/([^/]+)/([^/]+)/cmt$')
+            else:
+                re_package1 = re.compile('^\./(.+)/([^/]+)/cmt$')
+                re_package2 = re.compile('^\./(.+)/cmt$')
+
+            for line in out.split():
+                match1=re_package1.match(line)
+                if match1 and not match1.group(2) in self.exclude_package:
+                    if self.atlas_release.find('11.')>=0 or self.atlas_release.find('10.')>=0:
+                        req.write('use %s %s %s\n' % (match1.group(2),match1.group(3),match1.group(1)))
+                    else:
+                        req.write('use %s %s-* %s\n' %  (match1.group(2), match1.group(2), match1.group(1)))
+
+                    user_excludes += ["%s/%s" % (match1.group(1),match1.group(2))]
+                    user_excludes += ["InstallArea/*/%s" % match1.group(2)]
+
+                if re_package2:
+                    match2=re_package2.match(line)
+                    if match2 and not match1 and not match2.group(1) in self.exclude_package:
+                        #req.write('use %s %s-* %s\n' %  (match2.group(1), match2.group(1), match2.group(1)))
+                        req.write('use %s %s-*\n' %  (match2.group(1), match2.group(1) ))
+                        user_excludes += ["%s" % match2.group(1)]
+                        user_excludes += ["InstallArea/*/%s" % match2.group(1)]
+
+            req.close()
+            os.chdir(savedir)       
+
+        # archive sources
+        verbose = False
+        archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, tmpDir, verbose)
+        logger.info('Creating %s ...', archiveFullName )
+
+        # Add InstallArea
+        if not self.athena_compile:
+            nobuild = True
+            AthenaUtils.archiveInstallArea(self.userarea, self.grouparea, archiveName, archiveFullName, tmpDir, nobuild, verbose)
+            logger.info('Option athena_compile=%s. Adding InstallArea to %s ...', self.athena_compile, archiveFullName )
+
+
+        # Add extra files for LCG backend
+        if lcg or ng:
+            extraFiles = [ 'requirements', 'install.sh' ]
+            os.chdir(self.userarea)
+            for ifile in extraFiles:
+                out = commands.getoutput('tar -rh %s -f %s' % (ifile, archiveFullName))
+                os.unlink(ifile)
+
+            os.chdir(savedir)       
+
+        # compress
+        rc, out = commands.getstatusoutput('gzip %s' % archiveFullName)
+        archiveName += '.gz'
+        archiveFullName += '.gz'
+        if rc != 0:
+            logger.error(out)
+            
+        self.user_area.name = archiveFullName
+        os.chdir(savedir)
+        
+        return
+
     def prepare(self, athena_compile=True, NG=False, **options):
         """Prepare the job from the user area"""
 
@@ -495,69 +745,7 @@ class Athena(IApplication):
         if NG==1 or NG==True:
             athena_compile_flag='False'
 
-        file('install.sh','w').write("""# genereated by GANGA4
-# Install a user area
-#
-# ATLAS/ARDA
-
-if [ $SITEROOT != '/afs/cern.ch' ] && [ $CMTSITE != 'CERN' ]
-then
-  if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
-  then
-      source $SITEROOT/dist/$ATLAS_RELEASE/AtlasRelease/*/cmt/setup.sh
-  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] ) && ( [ -z $ATLAS_PRODUCTION_ARCHIVE ] )
-  then
-      if [ -z $ATLAS_PROJECT ]
-      then
-          source $SITEROOT/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
-      elif [ ! -z $ATLAS_PROJECT ]
-      then
-          source $SITEROOT/${ATLAS_PROJECT}/$ATLAS_PRODUCTION/${ATLAS_PROJECT}RunTime/cmt/setup.sh
-      fi
-  fi
-else
-  if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
-  then
-      source $SITEROOT/software/dist/$ATLAS_RELEASE/Control/AthenaRunTime/*/cmt/setup.sh
-  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] ) && [ -z $ATLAS_PRODUCTION_ARCHIVE ]
-  then
-      source $ATLAS_SOFTWARE/$ATLAS_RELEASE/cmtsite/setup.sh 
-      export ATLASOFFLINE=`cmt show path | grep AtlasOffline | sed -e ""s:.*path\ ::"" | sed -e ""s:\ from.*::""`
-      source $ATLASOFFLINE/AtlasOfflineRunTime/cmt/setup.sh
-      RHREL=`cat /etc/redhat-release`
-      SC4=`echo $RHREL | grep -c 'Scientific Linux CERN SLC release 4'`
-      if [ $SC4 -gt 0 ]; then
-        export PATH=/afs/cern.ch/atlas/offline/external/slc3compat/1.0.0/bin/i686-slc3-gcc323/:$PATH
-        export LD_LIBRARY_PATH=/afs/cern.ch/atlas/offline/external/slc3compat/1.0.0/bin/i686-slc3-gcc323/:$LD_LIBRARY_PATH
-      fi
-  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] ) && [ -z $ATLAS_PRODUCTION_ARCHIVE ]
-  then
-      source $ATLAS_SOFTWARE/$ATLAS_RELEASE/cmtsite/setup.sh -tag=$ATLAS_RELEASE,32
-      source $ATLAS_SOFTWARE/$ATLAS_RELEASE/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
-  fi
-fi
-
-export CMTPATH=$PWD:$CMTPATH
-dum=`echo $LD_LIBRARY_PATH | tr ':' '\n' | egrep -v '^/lib' | egrep -v '^/usr/lib' | tr '\n' ':' `
-export LD_LIBRARY_PATH=$dum
-cmt config
-cmt broadcast source setup.sh
-cmt broadcast cmt config
-source setup.sh
-if [ '%(athena_compile_flag)s' = 'True' ]
-then
-    echo '==========================='
-    echo 'GCC =' `which gcc`
-    echo `gcc --version`
-    echo 'PATH =' $PATH
-    echo 'LD_LIBRARY_PATH =' $LD_LIBRARY_PATH
-    echo '==========================='
-    cmt broadcast gmake -s
-fi
-""" % { 'athena_compile_flag' : athena_compile_flag
-        } )
-
-
+        file('install.sh','w').write( file_install( athena_compile_flag))
         if self.user_area_path != '':
             if not os.path.exists(self.user_area_path):
                 from Ganga.Core import FileWorkspace
@@ -590,7 +778,7 @@ fi
                     self.exclude_from_user_area.append( 'InstallArea' )
                 if not self.atlas_cmtconfig in self.exclude_from_user_area:
                     self.exclude_from_user_area.append( self.atlas_cmtconfig )                    
-                    logger.debug("Remvoing cmt created directories %s from tarfile" %  self.atlas_cmtconfig)
+                    logger.debug("Removing cmt created directories %s from tarfile" %  self.atlas_cmtconfig)
         
         tarcmd = 'tar '
         if self.exclude_from_user_area:
@@ -1001,6 +1189,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.45  2009/04/06 07:17:41  elmsheus
+# Fix for #48964, athena v15 setup
+#
 # Revision 1.44  2009/02/22 15:32:21  elmsheus
 # New numfiles3 stats number
 #

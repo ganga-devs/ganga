@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.8 2009-03-18 15:35:16 elmsheus Exp $
+# $Id: PACKAGE.py,v 1.9 2009-04-07 08:35:55 elmsheus Exp $
 ###############################################################################
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 """
@@ -20,7 +20,14 @@ _external_packages = {
                      'LD_LIBRARY_PATH' : ['external/mysql32/','external/mysqldb32/','external/nordugrid/lib/'],
                      'DQ2_ENDUSER_SETUP' : 'True',
                      'noarch':True 
-                     }
+                     },
+    'panda-client' : { 'version' : '0.1.32', 
+                       'PYTHONPATH':['lib/python2.3/site-packages/pandatools','lib/python2.3/site-packages'],
+                       'CONFIGEXTRACTOR_PATH':'etc/panda/share',
+                       'PANDA_SYS':'.',
+                       'noarch':True
+                       }
+
     }
 
 
