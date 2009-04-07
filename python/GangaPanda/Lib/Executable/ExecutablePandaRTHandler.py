@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ExecutablePandaRTHandler.py,v 1.1 2009-04-07 08:18:45 dvanders Exp $
+# $Id: ExecutablePandaRTHandler.py,v 1.2 2009-04-07 09:28:01 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -42,27 +42,32 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
                 logger.error('Packing inputsandbox failed with status %d',rc)
                 logger.error(output)
                 raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
-
-        rc, output = commands.getstatusoutput('gzip %s' % (inpw.getPath(inputsandbox)))
-        if rc:
-            logger.error('Packing inputsandbox failed with status %d',rc)
-            logger.error(output)
-            raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
-        inputsandbox += ".gz"
+        if len(job.inputsandbox) > 0:
+            rc, output = commands.getstatusoutput('gzip %s' % (inpw.getPath(inputsandbox)))
+            if rc:
+                logger.error('Packing inputsandbox failed with status %d',rc)
+                logger.error(output)
+                raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+            inputsandbox += ".gz"
+        else:
+            inputsandbox = None
 
 #       Upload Inputsandbox
-        logger.debug('Uploading source tarball ...')
-        try:
-            cwd = os.getcwd()
-            os.chdir(inpw.getPath())
-            rc, output = Client.putFile(inputsandbox)
-            if output != 'True':
-                logger.error('Uploading inputsandbox %s failed. Status = %d', inputsandbox, rc)
-                logger.error(output)
-                raise ApplicationConfigurationError(None,'Uploading inputsandbox failed')
-            self.inputsandbox = inputsandbox
-        finally:
-            os.chdir(cwd)
+        if inputsandbox:
+            logger.debug('Uploading source tarball ...')
+            try:
+                cwd = os.getcwd()
+                os.chdir(inpw.getPath())
+                rc, output = Client.putFile(inputsandbox)
+                if output != 'True':
+                    logger.error('Uploading inputsandbox %s failed. Status = %d', inputsandbox, rc)
+                    logger.error(output)
+                    raise ApplicationConfigurationError(None,'Uploading inputsandbox failed')
+                self.inputsandbox = inputsandbox
+            finally:
+                os.chdir(cwd)
+        else:
+            self.inputsandbox = None
 
 #       input dataset
         if job.inputdata:
@@ -211,7 +216,10 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         #param += '-j "%s" ' % urllib.quote(self.job_options)
         param += '-r "%s" ' % self.rundirectory
         #param += '-j "%s" ' % job.application.exe
-        param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && { if [ -e %s ]; then chmod +x %s; fi; echo === executing user script ===; PATH=$PATH:. %s %s; }" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, job.application.exe, job.application.exe, job.application.exe, " ".join(job.application.args))
+        if self.inputsandbox:
+            param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && { if [ -e %s ]; then chmod +x %s; fi; echo === executing user script ===; PATH=$PATH:. %s %s; }" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, job.application.exe, job.application.exe, job.application.exe, " ".join(job.application.args))
+        else:
+            param += '-j "{ if [ -e %s ]; then chmod +x %s; fi; echo === executing user script ===; PATH=$PATH:. %s %s; }" ' % (job.application.exe, job.application.exe, job.application.exe, " ".join(job.application.args))
         param += '-p "" '
         #param += '-p "%s" ' % (" ".join(job.application.args))
 
