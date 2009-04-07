@@ -131,13 +131,6 @@ class EvgenTransform(MCTransform):
       self.application.number_events_job = 10000
       self.file_type = "evgen.EVNT"
 
-   def getJobsForPartitions(self, partitions):
-      jl = super(EvgenTransform, self).getJobsForPartitions(partitions)
-      for j in jl:
-         if j.inputdata:
-            j.application.extraArgs += ' inputGeneratorFile=`pwd`/atlas.tmp$$/*._%05i.tar.gz' % (partitions[0])
-      return jl
-
 class SimulTransform(MCTransform):
    _schema = Schema(Version(1,0), dict(MCTransform._schema.datadict.items() + {}.items()))
    _category = 'transforms'
