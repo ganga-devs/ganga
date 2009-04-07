@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.19 2009-03-24 10:50:22 dvanders Exp $
+# $Id: Panda.py,v 1.20 2009-04-07 08:18:45 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -21,8 +21,7 @@ from Ganga.Utility.Config import makeConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
 # Panda Client
-
-import Client
+from pandatools import Client
 from taskbuffer.JobSpec import JobSpec
 from taskbuffer.FileSpec import FileSpec
 
@@ -32,7 +31,7 @@ def queueToAllowedSites(queue):
     try:
         ddm = Client.PandaSites[queue]['ddm']
     except KeyError:
-        raise ApplicationConfigurationError(None,'Queue %s has no ddm field in SchedConfig'%queue)
+        raise BackendError('Panda','Queue %s has no ddm field in SchedConfig'%queue)
     allowed_sites = []
     alternate_names = []
     for site in ToACache.sites:
@@ -78,18 +77,29 @@ def queueToAllowedSites(queue):
 def runPandaBrokerage(job):
     # get locations when site==AUTO
     if job.backend.site == "AUTO":
+        dataset = ''
+        try:
+            dataset = job.inputdata.dataset[0]
+        except:
+            try:
+                dataset = job.inputdata.DQ2Dataset
+            except:
+                raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
+        if not dataset:
+            raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
+
         fileList = []
         try:
-            fileList  = Client.queryFilesInDataset(job.inputdata.dataset[0],False)
+            fileList  = Client.queryFilesInDataset(dataset,False)
         except exceptions.SystemExit:
-            raise ApplicationConfigurationError(None,'Error in Client.queryFilesInDataset')
+            raise BackendError('Panda','Error in Client.queryFilesInDataset')
         try:
-            dsLocationMap = Client.getLocations(job.inputdata.dataset[0],fileList,job.backend.cloud,False,False,expCloud=True)
+            dsLocationMap = Client.getLocations(dataset,fileList,job.backend.cloud,False,False,expCloud=True)
         except exceptions.SystemExit:
-            raise ApplicationConfigurationError(None,'Error in Client.getLocations')
+            raise BackendError('Panda','Error in Client.getLocations')
         # no location
         if dsLocationMap == {}:
-            raise ApplicationConfigurationError(None,"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.cloud,job.inputdata.dataset[0]))
+            raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.cloud,job.inputdata.dataset[0]))
         # run brorage
         tmpSites = []
         for tmpItem in dsLocationMap.values():
@@ -97,11 +107,11 @@ def runPandaBrokerage(job):
         try:
             status,out = Client.runBrokerage(tmpSites,'Atlas-%s' % job.application.atlas_release,verbose=False)
         except exceptions.SystemExit:
-            raise ApplicationConfigurationError(None,'Error in Client.runBrokerage')
+            raise BackendError('Panda','Error in Client.runBrokerage')
         if status != 0:
-            raise ApplicationConfigurationError(None,'failed to run brokerage for automatic assignment: %s' % out)
+            raise BackendError('Panda','failed to run brokerage for automatic assignment: %s' % out)
         if not Client.PandaSites.has_key(out):
-            raise ApplicationConfigurationError(None,'brokerage gave wrong PandaSiteID:%s' % out)
+            raise BackendError('Panda','brokerage gave wrong PandaSiteID:%s' % out)
         # set site
         job.backend.site = out
     
@@ -116,6 +126,21 @@ def runPandaBrokerage(job):
     # correct the cloud in case site was not AUTO
     job.backend.cloud = Client.PandaSites[job.backend.site]['cloud']
     logger.info('Panda brokerage results: cloud %s, site %s'%(job.backend.cloud,job.backend.site))
+
+
+def uploadSources(path,sources):
+    logger.info('Uploading source tarball %s in %s to Panda...'%(sources,path))
+    try:
+        cwd = os.getcwd()
+        os.chdir(path)
+        rc, output = Client.putFile(sources)
+        os.chdir(cwd)
+        if output != 'True':
+            logger.error('Uploading sources %s/%s from failed. Status = %d', path, sources, rc)
+            logger.error(output)
+            raise BackendError('Panda','Uploading sources to Panda failed')
+    except:
+        raise BackendError('Panda','Exception while uploading archive: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
 
 class PandaBuildJob(GangaObject):
     _schema = Schema(Version(1,0), {
@@ -132,31 +157,17 @@ class PandaBuildJob(GangaObject):
 class Panda(IBackend):
     '''Panda backend'''
 
-    _schema = Schema(Version(1,4), {
+    _schema = Schema(Version(1,5), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'long'          : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send job to a long queue'),
-#        'blong'         : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send build job to a long queue'),
-#        'nFiles'        : SimpleItem(defvalue=0,protected=0,copyable=1,doc='Use an limited number of files in the input dataset'),
-#        'SkipFiles'    : SimpleItem(defvalue=0,protected=0,copyable=1,doc='Skip N files in the input dataset'),
         'cloud'         : SimpleItem(defvalue='US',protected=0,copyable=1,doc='cloud where jobs are submitted (default:US)'),
 #        'noBuild'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Skip buildJob'),
         'memory'        : SimpleItem(defvalue=-1,protected=0,copyable=1,doc='Required memory size'),
-#        'fileList'      : SimpleItem(defvalue='',protected=0,copyable=1,doc='List of files in the input dataset to be run'),        
-#        'shipinput'     : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Ship input files to remote WNs'),        
+        'maxCpuCount'   : SimpleItem(defvalue=-1,protected=0,copyable=1,doc='Required CPU count in seconds. Mainly to extend time limit for looping detection'),
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
         'extFile'       : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='Extra files to ship to the worker node'),
-#        'addPoolFC'     : SimpleItem(defvalue='',protected=0,copyable=1,doc='file names to be inserted into PoolFileCatalog.xml except input files. e.g., MyCalib1.root,MyGeom2.root'),        
         'corCheck'      : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Enable a checker to skip corrupted files'),        
         'notSkipMissing': SimpleItem(defvalue=False,protected=0,copyable=1,doc='If input files are not read from SE, they will be skipped by default. This option disables the functionality'),
-        'useAIDA'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='use AIDA'),
-#        'pfnList'       : SimpleItem(defvalue='',protected=0,copyable=1,doc='Name of file which contains a list of input PFNs. Those files can be un-registered in DDM'),        
-#        'mcData'        : SimpleItem(defvalue='',protected=0,copyable=1,doc='Create a symlink with linkName to .dat which is contained in input file'),
-        'ara'           : SimpleItem(defvalue=False,protected=0,copyable=1,doc='use Athena ROOT Access'),
-        'ares'          : SimpleItem(defvalue=False,protected=0,copyable=1,doc='use Athena ROOT Access + PyAthena, i.e., use athena.py instead of python on WNs'),
-#        'araOutFile'    : SimpleItem(defvalue=[],protected=0,copyable=1,doc='define output files for ARA, e.g., [\'output1.root\',\'output2.root\']'),
-#        'trf'           : SimpleItem(defvalue='',protected=0,copyable=1,doc='run transformation, e.g. .trf = "csc_atlfast_trf.py %IN %OUT.AOD.root %OUT.ntuple.root -1 0"'),
-        'supStream'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='suppress some output streams. e.g., [\'ESD\',\'TAG\']'),
-        'dbRelease'     : SimpleItem(defvalue='',protected=0,copyable=1,doc='DEPRECATED. USE Athena.atlas_dbrelease. DBRelease or CDRelease (DatasetName:FileName). e.g., ddo.000001.Atlas.Ideal.DBRelease.v050101:DBRelease-5.1.1.tar.gz'),
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='Panda job id'),
         'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Panda job status'),
         'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
@@ -386,6 +397,9 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.19  2009/03/24 10:50:22  dvanders
+# small fix
+#
 # Revision 1.18  2009/03/05 15:58:15  dvanders
 # https://savannah.cern.ch/bugs/index.php?47473
 # dbRelease option is now deprecated in Panda backend.

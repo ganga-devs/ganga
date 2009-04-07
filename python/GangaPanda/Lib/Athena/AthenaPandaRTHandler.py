@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.18 2009-03-05 15:58:14 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.19 2009-04-07 08:18:45 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -13,17 +13,16 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
-
-from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
-
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
+from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
+from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources
+
 # PandaTools
-import Client
+from pandatools import Client
+from pandatools import AthenaUtils
 from taskbuffer.JobSpec import JobSpec
 from taskbuffer.FileSpec import FileSpec
-import AthenaUtils
-
 
 def getDBDatasets(jobO,trf,dbrelease):
     # get DB datasets
@@ -62,7 +61,6 @@ def getDBDatasets(jobO,trf,dbrelease):
 class AthenaPandaRTHandler(IRuntimeHandler):
     '''Athena Panda Runtime Handler'''
 
-
     def master_prepare(self,app,appconfig):
         '''Prepare the master job'''
 
@@ -71,212 +69,106 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         usertag = configDQ2['usertag'] 
         self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,gridProxy.identity(),commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
-        sources = 'sources.%s.tar.gz' % commands.getoutput('uuidgen') 
         self.library = '%s.lib.tgz' % self.libDataset
 
-        # validate parameters
-        # check DBRelease
-        if job.backend.dbRelease:
-            logger.warning('Panda.dbRelease is deprecated. Use Athena.atlas_dbrelease instead.')
-
-        self.dbrelease = ''
-        if job.backend.dbRelease:
-            self.dbrelease = job.backend.dbRelease
-        if app.atlas_dbrelease:
-            self.dbrelease = app.atlas_dbrelease
-
+        # validate application
+        if not app.atlas_release:
+            raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
+        self.dbrelease = app.atlas_dbrelease
         if self.dbrelease != '' and self.dbrelease.find(':') == -1:
             raise ApplicationConfigurationError(None,"ERROR : invalid argument for DB Release. Must be 'DatasetName:FileName'")
-         
-#       parse job options file
-        if job.backend.ares:
-            job.backend.ara = True
-        if not job.backend.ara:
-            logger.info('Parsing job options file ...')
-        job_option_files = ' '.join([ opt_file.name for opt_file in app.option_file ])
-        upperSupStream = [s.upper() for s in job.backend.supStream]
-        shipInput = False
-        trf = job.backend.ara
-        ret, self.runConfig = AthenaUtils.extractRunConfig(job_option_files,upperSupStream,job.backend.useAIDA,shipInput,trf)
-        if not ret:
-            raise ApplicationConfigurationError(None,"ERROR: Unable to extract run configuration")
-        if not job.backend.ara:
-            logger.info('Detected runConfig: %s'%self.runConfig)
+        self.runConfig = AthenaUtils.ConfigAttr(app.atlas_run_config)
+        for k in self.runConfig.keys():
+            self.runConfig[k]=AthenaUtils.ConfigAttr(self.runConfig[k])
+        self.rundirectory = app.atlas_run_dir
+        self.cacheVer = ''
+        if app.atlas_project and app.atlas_production:
+            self.cacheVer = "-" + app.atlas_project + "_" + app.atlas_production
+        if not app.atlas_exetype in ['ATHENA','PYARA','ARES','TRF','ROOT']:
+            raise ApplicationConfigurationError(None,"Panda backend supports only application.atlas_exetype in ['ATHENA','PYARA','ARES','TRF','ROOT']")
+        if app.atlas_exetype == 'ATHENA' and not app.user_area.name:
+            raise ApplicationConfigurationError(None,'app.user_area.name is null')
 
-#       unpack library
-        logger.debug('Creating source tarball ...')        
-        tmpdir = '/tmp/%s' % commands.getoutput('uuidgen')
-        os.mkdir(tmpdir)
-
-        if not job.backend.ara:
-            if not app.user_area.name:
-                raise ApplicationConfigurationError(None,'app.user_area.name is null')
-
-            rc, output = commands.getstatusoutput('tar xzf %s -C %s' % (app.user_area.name,tmpdir))
-            if rc:
-                logger.error('Unpacking user area failed with status %d.',rc)
-                logger.error(output)
-                raise ApplicationConfigurationError(None,'Unpacking user area failed.')
-
-            rc, output = commands.getstatusoutput('find %s -name run -printf "%%P\n"' % tmpdir)
-            if rc:
-                logger.error('Finding run directory failed with status %d',rc)
-                logger.error(output)
-                raise ApplicationConfigurationError(None,'Finding run directory failed.')
-
-            lines = output.splitlines()
-            if not lines:
-                logger.error('No run directory found.')
-                raise ApplicationConfigurationError(None,'No run directory found.')
-            if len(lines)>1:
-                logger.error('More then one run directory found.')
-                raise ApplicationConfigurationError(None,'More then one run directory found.')
-            self.rundirectory = lines[0]
-        else:
-            ret,retval=AthenaUtils.getAthenaVer()
-            currentDir = os.path.realpath(os.getcwd())
-            workArea = retval['workArea']
-            
-            sString=re.sub('[\+]','.',workArea)
-            runDir = re.sub('^%s' % sString, '', currentDir)
-            if runDir == currentDir:
-                print "ERROR : you need to run pathena in a directory under %s" % workArea
-                sys.exit(EC_Config)
-            elif runDir == '':
-                runDir = '.'
-            elif runDir.startswith('/'):
-                runDir = runDir[1:]
-            runDir = runDir+'/'
-
-            self.rundirectory = runDir
-
-#       add option files
-
-        dir = os.path.join(tmpdir,self.rundirectory)
-        for opt_file in app.option_file:
-            try:
-                shutil.copy(opt_file.name,dir)
-            except IOError:
-                os.makedirs(dir)
-                shutil.copy(opt_file.name,dir)
-
-        for extFile in job.backend.extFile:
-            try:
-                shutil.copy(extFile,dir)
-            except IOError:
-                os.makedirs(dir)
-                shutil.copy(extFile,dir)
-
-#       now tar it up again
-
-        inpw = job.getInputWorkspace()
-        rc, output = commands.getstatusoutput('tar czf %s -C %s .' % (inpw.getPath(sources),tmpdir))
-        if rc:
-            logger.error('Packing sources failed with status %d',rc)
-            logger.error(output)
-            raise ApplicationConfigurationError(None,'Packing sources failed.')
-
-        shutil.rmtree(tmpdir)
-
-#       upload sources
-
-        logger.debug('Uploading source tarball ...')
-        try:
-            cwd = os.getcwd()
-            os.chdir(inpw.getPath())
-            rc, output = Client.putFile(sources)
-            if output != 'True':
-                logger.error('Uploading sources %s failed. Status = %d', sources, rc)
-                logger.error(output)
-                raise ApplicationConfigurationError(None,'Uploading archive failed')
-        finally:
-            os.chdir(cwd)     
-
-#       input dataset
-
+        # validate inputdata
         if job.inputdata:
             if job.inputdata._name <> 'DQ2Dataset':
-                raise ApplicationConfigurationError(None,'PANDA application supports only DQ2Datasets')
-
+                raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
+        else:
+            raise ApplicationConfigurationError(None,'Panda backend requires inputdata=DQ2Dataset()')
         if not job.inputdata.dataset:
-           raise ApplicationConfigurationError(None,'You did not set job.inputdata.dataset')
-
+            raise ApplicationConfigurationError(None,'You did not set DQ2Dataset().dataset')
         if len(job.inputdata.dataset) > 1:
-           raise ApplicationConfigurationError(None,'GangaPanda does not currently support input containers')
-
+            raise ApplicationConfigurationError(None,'Multiple input datasets not supported. Use a container dataset.')
         logger.info('Input dataset %s',job.inputdata.dataset[0])
 
-#       output dataset
-
+        # validate outputdata
         if job.outputdata:
             if job.outputdata._name <> 'DQ2OutputDataset':
-                raise ApplicationConfigurationError(None,'PANDA application supports only DQ2OutputDataset')
+                raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
             if not job.outputdata.datasetname:
                 job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
-
         else:
+            logger.info('Adding missing DQ2OutputDataset')
             job.outputdata = DQ2OutputDataset()
             job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
-
         if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,gridProxy.identity())):
             raise ApplicationConfigurationError(None,'outputdata.datasetname must start with %s.%s.ganga.'%(usertag,gridProxy.identity()))
-
         logger.info('Output dataset %s',job.outputdata.datasetname)
 
-        if job.outputdata.outputdata and not job.backend.ara:
-            raise ApplicationConfigurationError(None,'job.outputdata.outputdata is not required for normal athena user analyses (i.e. job.backend.ara = False)"')
+        # handle different atlas_exetypes
+        self.job_options = ''
+        if app.atlas_exetype == 'TRF':
+            #self.job_options = app.option_file.name + app.trf_parameters
+            raise ApplicationConfigurationError(None,"Sorry TRF on Panda backend not yet supported")
+        elif app.atlas_exetype == 'ATHENA':
+            if job.outputdata.outputdata:
+                raise ApplicationConfigurationError(None,"job.outputdata.outputdata must be empty if atlas_exetype='ATHENA' (outputs are auto-detected)")
+            if app.options:
+                self.job_options += '-c %s ' % app.options
+            self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
+        elif app.atlas_exetype in ['PYARA','ARES','ROOT']:
+            if not job.outputdata.outputdata:
+                raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT']")
+            self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
+            if app.app.atlas_exetype == 'PYARA':
+                self.job_options = "python " + self.job_options
+            elif app.app.atlas_exetype == 'ARES':
+                self.job_options = "athena.py " + self.job_options
+            elif app.app.atlas_exetype == 'ROOT':
+                self.job_options = "root -l " + self.job_options
+        if self.job_options == '':
+            raise ApplicationConfigurationError(None,"No Job Options found!")
+        logger.info('Running job options: %s'%self.job_options)
 
-        # ARA
-        # output files for ARA
-        if job.backend.ara and not job.outputdata.outputdata:
-            raise ApplicationConfigurationError(None,'job.outputdata.outputdata is required for ARA jobs (i.e. job.backend.ara = True)"')
+        # add extOutFiles
         self.extOutFile = []
         for tmpName in job.outputdata.outputdata:
             if tmpName != '':
                 self.extOutFile.append(tmpName)
-
-        # add extOutFiles
         for tmpName in job.backend.extOutFile:
             if tmpName != '':
                 self.extOutFile.append(tmpName)
 
-#       job options
-
-        self.job_options = ''
-        if app.options and not job.backend.ara:
-            self.job_options += '-c %s ' % app.options
-    
-        self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
-
-        # ARA uses trf I/F
-        if job.backend.ara:
-            if job.backend.ares:
-                self.job_options = "athena.py " + self.job_options
-            elif self.job_options.endswith(".C"):
-                self.job_options = "root -l " + self.job_options
-            else:
-                self.job_options = "python " + self.job_options
-
-        cacheVer = ''
-        if app.atlas_project and app.atlas_production:
-            cacheVer = "-" + app.atlas_project + "_" + app.atlas_production
-
         # run brokerage here if not splitting
         if not job.splitter:
-            from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
             runPandaBrokerage(job)
         elif job.splitter._name <> 'DQ2JobSplitter':
             raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter')
-        
         if job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
 
-#       create build job
+        # validate dbrelease
+        self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
+
+        # upload sources
+        uploadSources(app.user_area_path,app.user_area.name.split('/')[-1])
+
+        # create build job
         jspec = JobSpec()
         jspec.jobDefinitionID   = job.id
         jspec.jobName           = commands.getoutput('uuidgen')
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
-        jspec.homepackage       = 'AnalysisTransforms'+cacheVer#+nightVer
+        jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
         jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
         jspec.destinationDBlock = self.libDataset
         jspec.destinationSE     = job.backend.site
@@ -284,7 +176,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.assignedPriority  = 2000
         jspec.computingSite     = job.backend.site
         jspec.cloud             = job.backend.cloud
-        jspec.jobParameters     = '-i %s -o %s' % (sources,self.library)
+        jspec.jobParameters     = '-i %s -o %s' % (app.user_area.name.split('/')[-1],self.library)
         matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
         if matchURL:
             jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
@@ -303,10 +195,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         flog.destinationDBlock = self.libDataset
         jspec.addFile(flog)
 
-        self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
-
-#       prepare output files
-
+        # prepare output files
         self.indexFiles   = 0
         self.indexCavern  = 0
         self.indexMin     = 0
@@ -363,15 +252,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if not job.outputdata.datasetname:
             raise ApplicationConfigurationError(None,'DQ2OutputDataset has no datasetname')
 
-        cacheVer = ''
-        if app.atlas_project and app.atlas_production:
-            cacheVer = "-" + app.atlas_project + "_" + app.atlas_production
-        
         jspec = JobSpec()
         jspec.jobDefinitionID   = job._getRoot().id
         jspec.jobName           = commands.getoutput('uuidgen')  
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
-        jspec.homepackage       = 'AnalysisTransforms'+cacheVer#+nightVer
+        jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
         jspec.transformation    = '%s/runAthena-00-00-11' % Client.baseURLSUB
         if job.inputdata:
             jspec.prodDBlock    = job.inputdata.dataset[0]
@@ -387,10 +272,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.prodSourceLabel   = 'user'
         jspec.assignedPriority  = 1000
         jspec.cloud             = cloud
-        # memory
+        jspec.computingSite     = site
         if job.backend.memory != -1:
             jspec.minRamCount = job.backend.memory
-        jspec.computingSite     = site
+        if job.backend.maxCpuCount != -1:
+            jspec.maxCpuCount = job.backend.maxCpuCount
 
 #       library (source files)
         flib = FileSpec()
@@ -674,9 +560,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if matchURL != None:
             param += " --sourceURL %s " % matchURL.group(1)
         # use ARA 
-        if job.backend.ares:
-            job.backend.ara = True
-        if job.backend.ara:
+        if app.atlas_exetype in ['PYARA','ARES','ROOT']:
             param += '--trf '
             param += '--ara '
  

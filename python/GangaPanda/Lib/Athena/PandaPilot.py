@@ -30,7 +30,8 @@ class PandaPilot(IApplication):
 config = getConfig('defaults_PandaPilot') #_Properties
 config.options['exe'].type = type(None)
 
-import Client
+from pandatools import Client
+
 def queueToCE(queue):
     return Client.PandaSites[queue]['queue']+'-'+Client.PandaSites[queue]['localqueue']
 
