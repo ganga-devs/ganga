@@ -50,12 +50,16 @@ class TaskApplication(object):
            task = GPI.tasks(int(tid[0]))
            if task:
               return task.transforms[int(tid[1])]
+        if len(tid) == 3 and tid[1].isdigit() and tid[2].isdigit():
+           task = GPI.tasks(int(tid[1]))
+           if task:
+              return task.transforms[int(tid[2])]
         return None 
 
     def transition_update(self,new_status):
         #print "Transition Update of app ", self.id, " to ",new_status
         try:
-            if self.tasks_id == "00": ## Master job
+            if self.tasks_id.startswith("00"): ## Master job
                if new_status == "new": ## something went wrong with submission
                   for sj in self._getParent().subjobs:
                      sj.application.transition_update(new_status)
@@ -84,7 +88,7 @@ class TaskSplitter(object):
             subjobs[i].application.id = transform.getNewAppID(subjobs[i].application.partition_number)
             # Do not set to submitting - failed submission will make the applications stuck...
             # transform.setAppStatus(subjobs[i].application, "submitting")
-        job.application.tasks_id = "00"
+        job.application.tasks_id = "00:%s" % job.application.tasks_id
         return subjobs
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -119,7 +123,7 @@ class AnaTaskSplitterJob(ISplitter):
             j.application.tasks_id = job.application.tasks_id
             j.application.id = transform.getNewAppID(sj)
             #transform.setAppStatus(j.application, "submitting")
-        job.application.tasks_id = "00"
+        job.application.tasks_id = "00:%s" % job.application.tasks_id
         return sjl
 
 from Ganga.Lib.Executable.Executable import Executable
