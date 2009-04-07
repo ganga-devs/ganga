@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ExecutablePandaRTHandler.py,v 1.2 2009-04-07 09:28:01 dvanders Exp $
+# $Id: ExecutablePandaRTHandler.py,v 1.3 2009-04-07 15:20:35 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -105,11 +105,11 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
                 self.extOutFile.append(tmpName)
 
         # run brokerage here if not splitting
-#        if not job.splitter:
-#            from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
-#            runPandaBrokerage(job)
-#        elif job.splitter._name <> 'DQ2JobSplitter':
-#            raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter')
+        if not job.splitter:
+            from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
+            runPandaBrokerage(job)
+        elif job.splitter._name <> 'DQ2JobSplitter':
+            raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter')
         
         if job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')

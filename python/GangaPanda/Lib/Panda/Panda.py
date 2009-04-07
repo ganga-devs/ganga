@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.20 2009-04-07 08:18:45 dvanders Exp $
+# $Id: Panda.py,v 1.21 2009-04-07 15:20:35 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -54,7 +54,6 @@ def queueToAllowedSites(queue):
             try:
                 if ddm == site:
                     alternate_names = ToACache.sites[site]['alternateName']
-                    #print '%s has alternateName %s'%(ddm,alternate_names)
                     allowed_sites.append(site)
                     [allowed_sites.append(x) for x in alternate_names]
                 elif ddm in ToACache.sites[site]['alternateName']:
@@ -65,7 +64,6 @@ def queueToAllowedSites(queue):
                             allowed_sites.append(site)
             except (TypeError,KeyError):
                 continue
-    #print 'allowed_sites: %s'%allowed_sites
 
     disallowed_sites = ['CERN-PROD_TZERO']
     allowed_allowed_sites = []
@@ -77,35 +75,45 @@ def queueToAllowedSites(queue):
 def runPandaBrokerage(job):
     # get locations when site==AUTO
     if job.backend.site == "AUTO":
-        dataset = ''
-        try:
-            dataset = job.inputdata.dataset[0]
-        except:
-            try:
-                dataset = job.inputdata.DQ2Dataset
-            except:
-                raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
-        if not dataset:
-            raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
-
-        fileList = []
-        try:
-            fileList  = Client.queryFilesInDataset(dataset,False)
-        except exceptions.SystemExit:
-            raise BackendError('Panda','Error in Client.queryFilesInDataset')
-        try:
-            dsLocationMap = Client.getLocations(dataset,fileList,job.backend.cloud,False,False,expCloud=True)
-        except exceptions.SystemExit:
-            raise BackendError('Panda','Error in Client.getLocations')
-        # no location
-        if dsLocationMap == {}:
-            raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.cloud,job.inputdata.dataset[0]))
-        # run brorage
         tmpSites = []
-        for tmpItem in dsLocationMap.values():
-            tmpSites += tmpItem
+        if job.inputdata:
+            dataset = ''
+            try:
+                dataset = job.inputdata.dataset[0]
+            except:
+                try:
+                    dataset = job.inputdata.DQ2Dataset
+                except:
+                    raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
+            if not dataset:
+                raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
+
+            fileList = []
+            try:
+                fileList  = Client.queryFilesInDataset(dataset,False)
+            except exceptions.SystemExit:
+                raise BackendError('Panda','Error in Client.queryFilesInDataset')
+            try:
+                dsLocationMap = Client.getLocations(dataset,fileList,job.backend.cloud,False,False,expCloud=True)
+            except exceptions.SystemExit:
+                raise BackendError('Panda','Error in Client.getLocations')
+            # no location
+            if dsLocationMap == {}:
+                raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.cloud,job.inputdata.dataset[0]))
+            # run brorage
+            for tmpItem in dsLocationMap.values():
+                tmpSites.append(tmpItem)
+        else:
+            for site,spec in Client.PandaSites.iteritems():
+                if spec['cloud']==job.backend.cloud and spec['status']=='online' and not Client.isExcudedSite(site):
+                    tmpSites.append(site)
+        tag = ''
         try:
-            status,out = Client.runBrokerage(tmpSites,'Atlas-%s' % job.application.atlas_release,verbose=False)
+            tag = 'Atlas-%s' % job.application.atlas_release
+        except:
+            pass
+        try:
+            status,out = Client.runBrokerage(tmpSites,tag,verbose=False)
         except exceptions.SystemExit:
             raise BackendError('Panda','Error in Client.runBrokerage')
         if status != 0:
@@ -397,6 +405,13 @@ config.addOption( 'assignedPriority', 1000, 'FIXME' )
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.20  2009/04/07 08:18:45  dvanders
+# massive Panda changes:
+#   Many Panda options moved to Athena.py.
+#   Athena RT handler now uses prepare from Athena.py
+#   Added Executable RT handler. Not working for me yet.
+#   Added test cases for Athena and Executable
+#
 # Revision 1.19  2009/03/24 10:50:22  dvanders
 # small fix
 #
