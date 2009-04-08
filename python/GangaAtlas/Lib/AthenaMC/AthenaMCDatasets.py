@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.31 2009-04-03 12:48:30 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.32 2009-04-08 09:05:18 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -361,9 +361,9 @@ class AthenaMCInputDatasets(Dataset):
             datasetType="DQ2" # force datasetType to be DQ2 as this is the default mode.
         # extract app.production_name from input dataset if needed. Needed for output data processing
         if not app.production_name:
-            print dataset
+            #print dataset
             imin=string.find(dataset,"ganga.")
-            print imin, dataset[imin+6:imin+12]
+            #print imin, dataset[imin+6:imin+12]
             if imin>-1 and dataset[imin+6:imin+12].isdigit():
                 imin=imin+6
             else:
@@ -377,7 +377,7 @@ class AthenaMCInputDatasets(Dataset):
             imax=string.find(dataset,match)
             if imin>-1 and imax>-1:
                 app.production_name=dataset[imin+1:imax]
-            print "production name:",app.production_name
+            #print "production name:",app.production_name
         # get tuple (list, openrange) of partitions to process 
         partitions = app.getPartitionList()
         inputfiles = app.getInputsForPartitions(partitions[0], self)
@@ -629,7 +629,7 @@ class AthenaMCInputDatasets(Dataset):
                 if "found" not in data[0]:
                     continue
                 if data[0]["found"]>max:
-                    print "site, nfiles:",sources,data[0]["found"]
+                    logger.info("Found %d files in %s" % (data[0]["found"],sources))
                     selSites.insert(0,sources)
                     max=data[0]["found"]
                 else:
@@ -858,7 +858,7 @@ class AthenaMCOutputDatasets(Dataset):
             except:
                 overflow=len(outputpaths[type])-133
                 dsetstr=outputpaths[type][1:]
-                dsetstr=string.replace("/",".")
+                dsetstr=string.replace(dsetstr,"/",".")
                 #print dsetstr
                 logger.error("dataset name: %s too long by %d characters. Please reduce the size of any of the following fields (if set): job.outputdata.output_dataset, job.application.production_name, job.application.process_name,job.application.version " % (dsetstr,overflow))
                 raise Exception()
@@ -887,8 +887,6 @@ class AthenaMCOutputDatasets(Dataset):
                 continue
             
         sites=lfcstrings.keys()
-
-            
         if se_name not in sites:
             logger.debug("%s not found in DQ2 site list. Must be a private production" % se_name)
             if se_name != "none":
@@ -898,16 +896,24 @@ class AthenaMCOutputDatasets(Dataset):
                 
         else:
             selsite=se_name
-            if string.find(se_name,"LOCALGROUPDISK")<-1 and string.find(se_name,"USERDISK")<-1  and string.find(se_name,"SCRATCHDISK")<-1 : # need to check if one can use LOCALGROUPDISK
+            if string.find(se_name,"LOCALGROUPDISK")<0 and string.find(se_name,"USERDISK")<0  and string.find(se_name,"SCRATCHDISK")<0 : # need to check if one can use LOCALGROUPDISK
             #if  string.find(se_name,"USERDISK")<-1: # no support for LOCALUSERDISK yet as space token requires explicit voms role.
-                logger.warning("Site name proposed for output: %s is forbidden for writing. Using alternative site in the same cloud."% se_name)
-                lfccloud=lfcstrings[se_name]
-                random.shuffle(sites)
-                for site in sites:
-                    if ( site.find("USERDISK")>0 or site.find("SCRATCHDISK")>0) and lfcstring[site]==lfccloud:
+                selsite=""
+                logger.info("Space token proposed for output: %s is forbidden for writing. Attempting to find alternative space token in the same site."% se_name)
+                imax=se_name.find("_")
+                sitename=se_name[:imax]
+                # build all possible alternative, check that they are in DQ2 site list.
+                makeSites=[]
+                makeSites.append(sitename+"_LOCALGROUPDISK")
+                makeSites.append(sitename+"_SCRATCHDISK")
+                makeSites.append(sitename+"_USERDISK")
+                
+                for site in makeSites:
+                    if site in sites:
                         selsite=site
                         break
-            
+            if not selsite:
+                return ["","",""]
             imin=string.find(lfcstrings[selsite],"lfc://") # lfc:// notation from ToA
             if imin>-1:
                 imax=string.rfind(lfcstrings[selsite],":/")

@@ -219,9 +219,13 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             outloc=app.se_name
         if hasattr(job.backend,'requirements') and hasattr(job.backend.requirements,'sites') and len(job.backend.requirements.sites)!=0: 
             outloc=str(job.backend.requirements.sites[0])        
-        print outloc
+        #print outloc
         if outsite=="" :
             [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(outloc)
+        try:
+            assert outsite
+        except:
+            raise ApplicationConfigurationError(None,"Could not find suitable location for your output. Please subscribe your input dataset (if any) to a suitable location or change application.se_name to a suitable space token")
         # outlfc is now set. Clearing up all input sites lists accordingly:
         imax=string.find(outsite,"_")
         outsite_short=outsite[:imax] # remove space token for easier match
@@ -824,6 +828,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                         newval=str(skip)
                     if string.find(val[imin+1:],"number_events_job")>-1:
                         newval=str(self.number_events_job)
+                    #if imin2 > -1:
+                     #   print self.outputfiles.keys()
                     if imin2 > -1 and val[imin2+4:] in self.outputfiles:
                         newval=self.outputfiles[ val[imin2+4:]]
                     try:
