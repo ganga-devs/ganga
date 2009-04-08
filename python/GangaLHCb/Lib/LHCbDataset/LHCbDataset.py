@@ -30,8 +30,10 @@ class LHCbDataset(Dataset):
     schema['datatype_string'] = SimpleItem(defvalue=defvaluestr, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping system.'
     schema['depth'] = SimpleItem(defvalue = 1 , doc=docstr)
+    docstr = 'Select an optional XMLCatalogueSlice to the dataset'
+    schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
 
-    _schema = Schema(Version(2,3), schema)
+    _schema = Schema(Version(2,4), schema)
     _category = 'datasets'
     _name = "LHCbDataset"
     _exportmethods = ['updateReplicaCache','__len__','cacheOutOfDate',

@@ -114,7 +114,7 @@ class Francesc(IApplication):
         if self.masterpackage:
             (mpack, malg, mver) = parse_master_package(self.masterpackage)
             useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
-        script +='. ${LHCBSCRIPTS}/SetupProject.sh %s %s %s %s\n'\
+        script +='. SetupProject.sh %s %s %s %s\n'\
                   % (useflag, opts, appname, ver)
         fd.write(script)
         fd.flush()

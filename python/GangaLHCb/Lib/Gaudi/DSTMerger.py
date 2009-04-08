@@ -79,8 +79,9 @@ EventSelector.Input = {""" % output_file
         #now run gaudirun via a script
         shell_script = """#!/bin/sh
         
-if [ -f ${LHCBSCRIPTS}/SetupProject.sh ]; then
-  . ${LHCBSCRIPTS}/SetupProject.sh  --ignore-missing DaVinci %s
+SP=`which SetupProject.sh`
+if [ -n $SP ]; then 
+  . SetupProject.sh  --ignore-missing DaVinci %s
 else
   echo "Could not find the SetupProject.sh script. Your job will probably fail"
 fi

@@ -30,7 +30,7 @@ def available_versions(appname):
   """Provide a list of the available Gaudi application versions"""
   
   s = Shell()
-  command = '${LHCBSCRIPTS}/SetupProject.sh --ask %s' % appname
+  command = 'SetupProject.sh --ask %s' % appname
   rc,output,m=s.cmd1("echo 'q\n' | %s" % command)
   versions = output[output.rfind('(')+1:output.rfind('q[uit]')].split()
   return versions
@@ -39,7 +39,7 @@ def guess_version(appname):
   """Guess the default Gaudi application version"""
   
   s = Shell()
-  command = '${LHCBSCRIPTS}/SetupProject.sh --ask %s' % appname
+  command = 'SetupProject.sh --ask %s' % appname
   rc,output,m=s.cmd1("echo 'q\n' | %s" % command)
   version = output[output.rfind('[')+1:output.rfind(']')]
   return version

@@ -105,7 +105,10 @@ else:
 """
 
   script+="""# check that SetupProject.sh script exists, then execute it    
-setup_script = os.environ['LHCBSCRIPTS'] + '/SetupProject.sh'
+import os
+f=os.popen('which SetupProject.sh')
+setup_script=f.read()[:-1]
+f.close()
 if os.path.exists(setup_script):
     os.system('/usr/bin/env bash -c \"source %s %s %s %s && printenv > \
 env.tmp\"' % (setup_script,project_opts,app,version))
