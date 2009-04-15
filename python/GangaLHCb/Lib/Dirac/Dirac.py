@@ -107,7 +107,7 @@ class Dirac(IBackend):
     _schema = Schema(Version(2, 0),schema)
 
     _exportmethods = ['getOutput','getOutputData','getOutputSandbox',
-                      'getOutputDataLFNs','peek']
+                      'getOutputDataLFNs','peek','reset']
     _packed_input_sandbox = True
     _category="backends"
     _name = 'Dirac'
@@ -199,6 +199,32 @@ class Dirac(IBackend):
         """Resubmit a DIRAC job"""
         self._handleGridProxy()
         return self._diracsubmit()
+    
+    def reset(self):
+        """Resets the state of a job back to 'submitted' so that the monitoring will run on it again."""
+        
+        job = self.getJobObject()
+        if job.status == 'submitting':
+            logger.warning("Can not reset a job in status '%s'." % job.status)
+            return
+        
+        if job.status == 'killed':
+            logger.warning("Can not reset a job in status '%s'. The job is no longer in the Dirac system." % job.status)
+            return
+        
+
+        #we can't return to monitoring without a proxy...
+        self._handleGridProxy()
+        
+        #clear out any output
+        job.getOutputWorkspace().remove(preserve_top=True)
+
+        #reset the job
+        job.updateStatus('submitted')
+        
+        if job.master:
+            job.master.updateMasterJobStatus()
+
 
     def _diracsubmit(self):
         """Perform the actual submission to DIRAC"""
