@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.1.10 (2009/4/3)
+5.1.10 (2009/4/15)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -28,6 +28,7 @@ ganga/python/GangaAtlas
 Athena:
 -------
 * Replace USERDISK with SCRATCHDISK token 
+* Fix bug #48964, fix for athena v15 setup
 
 AthenaMC:
 ---------
@@ -55,5 +56,7 @@ ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 Adds a fix for the LFN problem with the bookkeeping
 Fixes a problem in Dirac.getOutputData() so that the download was incorrectly reported to have failed.
+
+Updated to support the new LHCb environment.
 
 **************************************************************************************************************
