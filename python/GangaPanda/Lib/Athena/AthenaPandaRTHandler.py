@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.23 2009-04-15 12:55:19 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.24 2009-04-15 13:16:11 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -98,9 +98,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             raise ApplicationConfigurationError(None,'Panda backend requires inputdata=DQ2Dataset()')
         if not job.inputdata.dataset:
             raise ApplicationConfigurationError(None,'You did not set DQ2Dataset().dataset')
-        if len(job.inputdata.dataset) > 1:
-            raise ApplicationConfigurationError(None,'Multiple input datasets not supported. Use a container dataset.')
-        logger.info('Input dataset %s',job.inputdata.dataset[0])
+#        if len(job.inputdata.dataset) > 1:
+#            raise ApplicationConfigurationError(None,'Multiple input datasets not supported. Use a container dataset.')
+        logger.info('Input dataset(s) %s',job.inputdata.dataset)
 
         # validate outputdata
         today = time.strftime("%Y%m%d",time.localtime())
@@ -259,6 +259,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         username = gridProxy.identity(safe=True)
         if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,username)):
             job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
+        
+        if job.inputdata:
+            if len(job.inputdata.dataset) > 1:
+                raise ApplicationConfigurationError(None,'Multiple input datasets per subjob not supported. Use a container dataset?')
 
         jspec = JobSpec()
         jspec.jobDefinitionID   = job._getRoot().id
