@@ -1,0 +1,25 @@
+#-*-python-*-
+
+j1 = Job()
+j1.application = Executable(exe='/usr/bin/env',args=['sleep','5'])
+j2 = j1.copy()
+j3 = j1.copy()
+
+j1.submit()
+j2.submit()
+j3.submit()
+
+jobs[:-1].kill()
+
+assert(j1.status == "killed")
+assert(j2.status == "killed")
+assert(j3.status != "killed")
+
+jobs[:-1].resubmit()
+
+for j in jobs[:-1]:
+    assert(j.status != "killed")
+    
+jobs.remove()
+
+assert(len(jobs) == 0)

@@ -1,0 +1,3 @@
+j = Job(outputsandbox = [ 'stdin', 'stdout' ])
+j.backend = LCG()
+assert(j.submit())
