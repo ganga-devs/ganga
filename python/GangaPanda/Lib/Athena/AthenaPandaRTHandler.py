@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.21 2009-04-15 12:09:09 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.22 2009-04-15 12:22:41 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -164,7 +164,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
 
         # upload sources
-        uploadSources('/'.join(user_area.name.split('/')[:-1]),app.user_area.name.split('/')[-1])
+        uploadSources('/'.join(app.user_area.name.split('/')[:-1]),app.user_area.name.split('/')[-1])
 
         # create build job
         jspec = JobSpec()
