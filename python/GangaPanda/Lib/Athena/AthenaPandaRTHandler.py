@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.20 2009-04-15 09:50:09 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.21 2009-04-15 12:09:09 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -68,7 +68,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
         usertag = configDQ2['usertag'] 
-        self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,gridProxy.identity(),commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
+        username = gridProxy.identity(safe=True)
+        self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,username,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
         self.library = '%s.lib.tgz' % self.libDataset
 
         # validate application
@@ -102,17 +103,19 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         logger.info('Input dataset %s',job.inputdata.dataset[0])
 
         # validate outputdata
+        today = time.strftime("%Y%m%d",time.localtime())
         if job.outputdata:
             if job.outputdata._name <> 'DQ2OutputDataset':
                 raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
             if not job.outputdata.datasetname:
-                job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
+                job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,username,job.id,today)
         else:
             logger.info('Adding missing DQ2OutputDataset')
             job.outputdata = DQ2OutputDataset()
-            job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
-        if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,gridProxy.identity())):
-            raise ApplicationConfigurationError(None,'outputdata.datasetname must start with %s.%s.ganga.'%(usertag,gridProxy.identity()))
+            job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,username,job.id,today)
+        if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,username)):
+            logger.info('outputdata.datasetname must start with %s.%s.ganga. Prepending it for you.'%(usertag,username))
+            job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
         logger.info('Output dataset %s',job.outputdata.datasetname)
 
         # handle different atlas_exetypes
