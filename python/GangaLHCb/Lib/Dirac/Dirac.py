@@ -97,6 +97,13 @@ class Dirac(IBackend):
     schema['statusInfo'] = SimpleItem(defvalue='', protected=1, copyable=0,
                                       typelist=['str','type(None)'],doc=docstr)
     
+    schema['proxy_timeleft'] = SimpleItem(defvalue=None, protected=1, copyable=1,hidden=1,\
+                                           typelist=['float','type(None)'],\
+                                           doc='The time in seconds left for the proxy')
+    schema['proxy_timestamp'] = SimpleItem(defvalue=None, protected=1, copyable=1,hidden=1,\
+                                           typelist=['float','type(None)'],\
+                                           doc='The epoch time when the proxy was last checked properly')
+    
     _schema = Schema(Version(2, 0),schema)
 
     _exportmethods = ['getOutput','getOutputData','getOutputSandbox',
@@ -127,21 +134,37 @@ class Dirac(IBackend):
     
     def _handleGridProxy(self):
         """Check the Grid Proxy validity"""
-        proxy = GridProxy()
+        
+        import time
+        
         # Time on top of CPU time should be adjustable
         mintime = float(configDirac['extraProxytime'])
-        try:
-            timeleft = float(proxy.timeleft("hours"))*3600
-        except ValueError:
-            timeleft = 0.0
+        
+        def setTimeLeft():
+            self.proxy_timestamp = time.time()
+            proxy = GridProxy()
+            try:
+                self.proxy_timeleft = float(proxy.timeleft("hours"))*3600
+            except ValueError:
+                self.proxy_timeleft = 0.0
+        
+        if self.proxy_timestamp is None or self.proxy_timeleft is None:
+            setTimeLeft()
+        else:
+            now = time.time()
+            diff = now - self.proxy_timestamp
+            if diff > 4*mintime: #
+                setTimeLeft()
+            else:
+                self.proxy_timeleft = self.proxy_timeleft - diff
 
-        if timeleft < mintime:
+        if self.proxy_timeleft < mintime:
             logger.warning("Failed to submit job. Grid proxy validity %s s, " \
                            "while %s s required" \
-                           % (str(timeleft),str(mintime)))
+                           % (str(self.proxy_timeleft),str(mintime)))
             raise BackendError("Dirac", "Failed to submit job. Grid proxy " \
                                "validity %s s, while %s s required" % \
-                               (str(timeleft),str(mintime)))
+                               (str(self.proxy_timeleft),str(mintime)))
         
     def _diracverbosity(self):
         if configDirac['DiracLoggerLevel']=='DEBUG':
