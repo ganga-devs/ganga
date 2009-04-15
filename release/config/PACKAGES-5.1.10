@@ -62,7 +62,7 @@ ganga/python/Ganga/Utility/external/ARDAMDClient                       Ganga-ARD
 ganga/python/Ganga/scripts                                             Ganga-scripts-20-00
 
 #johannes/dan/mark
-ganga/python/GangaAtlas                                                GangaAtlas-20-31
+ganga/python/GangaAtlas                                                GangaAtlas-20-32
 
 #rod
 ganga/python/GangaCronus                                               GangaCronus-20-0
@@ -74,7 +74,7 @@ ganga/python/GangaGUI                                                  GangaGUI-
 ganga/python/GangaGUI/LHCB_BKDB_browser                                GangaGUI-LHCB_BKDB_browser-20-0
 
 #will/ulrik
-ganga/python/GangaLHCb                                                 GangaLHCb-20-30
+ganga/python/GangaLHCb                                                 GangaLHCb-20-31
 
 #pajchel/bsamset
 ganga/python/GangaNG                                                   GangaNG-20-20
