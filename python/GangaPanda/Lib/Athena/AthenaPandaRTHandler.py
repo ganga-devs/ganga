@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.22 2009-04-15 12:22:41 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.23 2009-04-15 12:55:19 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -254,6 +254,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         if not job.outputdata.datasetname:
             raise ApplicationConfigurationError(None,'DQ2OutputDataset has no datasetname')
+        
+        usertag = configDQ2['usertag'] 
+        username = gridProxy.identity(safe=True)
+        if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,username)):
+            job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
 
         jspec = JobSpec()
         jspec.jobDefinitionID   = job._getRoot().id
