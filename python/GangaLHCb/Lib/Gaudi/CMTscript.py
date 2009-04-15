@@ -82,7 +82,7 @@ def CMTscript(app,command=''):
    script+='unset CMTPROJECTPATH\n'
    script+='export CMTCONFIG='+str(app.platform)+'\n' 
    script+='export User_release_area='+str(app.user_release_area)+'\n'
-   script+='. $LHCBHOME/scripts/setenvProject.sh '
+   script+='. setenvProject.sh '
    script+= '%s %s %s\n' % (app.setupProjectOptions,appname,app.version)
    script+='[ x$CMTPATH == x ] || cd ' + str(app.user_release_area) + '\n'
    script+='pwd\n'
