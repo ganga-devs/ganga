@@ -13,7 +13,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 def available_apps():
   return ["Gauss", "Boole", "Brunel", "DaVinci", "Moore", "Vetra",
-          "Panoramix","Panoptes", "Gaudi"]
+          "Panoptes", "Gaudi"]
 
 def available_packs(appname):
   packs={'Gauss'   : 'Sim',
@@ -66,13 +66,14 @@ def get_user_dlls(appname,version,user_release_area,platform,shell):
   user_ra = user_release_area
   update_cmtproject_path(user_release_area)
   full_user_ra = fullpath(user_ra) # expand any symbolic links
-        
+
   # Work our way through the CMTPROJECTPATH until we find a cmt directory
   if not shell.env.has_key('CMTPROJECTPATH'): return [], [], []
   projectdirs = shell.env['CMTPROJECTPATH'].split(os.pathsep)
   appveruser = os.path.join(appname + '_' + version,'cmt')
   appverrelease = os.path.join(appname.upper(),appname.upper() + '_' + version,
                                'cmt')
+
   for projectdir in projectdirs:
     dir = fullpath(os.path.join(projectdir,appveruser))
     logger.debug('Looking for projectdir %s' % dir)
