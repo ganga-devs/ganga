@@ -20,6 +20,7 @@ def file_find_replace(fname,find,replace,new_name=None):
 
 j = Job(application=GaudiPython())
 ura = tempfile.mkdtemp()
+j.application.version = 'v22r1'
 j.application.user_release_area = ura
 j.application.getpack( "Tutorial/Analysis v8r0" )
 j.application.masterpackage = "Phys/DaVinci"
@@ -42,7 +43,9 @@ assert sleep_until_completed(j,1200)
 fname = join(j.outputdir,'stdout')
 file = open(fname)
 found_line = False
+print 'stdout = '
 for line in file.readlines():
+    print line
     if line.find('# muons n@, Go Steelers!') >= 0:
         found_line = True
         assert int(line.split('|')[3]) > 0, 'problem reading data'
