@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.24 2009-04-15 13:16:11 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.25 2009-04-17 07:24:17 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -175,8 +175,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
         jspec.destinationDBlock = self.libDataset
         jspec.destinationSE     = job.backend.site
-        jspec.prodSourceLabel   = 'panda'
-        jspec.assignedPriority  = 2000
+        jspec.prodSourceLabel   = configPanda['prodSourceLabelBuild']
+        jspec.processingType    = configPanda['processingType']
+        jspec.assignedPriority  = configPanda['assignedPriorityBuild']
         jspec.computingSite     = job.backend.site
         jspec.cloud             = job.backend.cloud
         jspec.jobParameters     = '-i %s -o %s' % (app.user_area.name.split('/')[-1],self.library)
@@ -281,8 +282,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.destinationSE = job.outputdata.location
         else:
             jspec.destinationSE = site
-        jspec.prodSourceLabel   = 'user'
-        jspec.assignedPriority  = 1000
+        jspec.prodSourceLabel   = configPanda['prodSourceLabelRun']
+        jspec.processingType    = configPanda['processingType']
+        jspec.assignedPriority  = configPanda['assignedPriorityRun']
         jspec.cloud             = cloud
         jspec.computingSite     = site
         if job.backend.memory != -1:
@@ -590,6 +592,7 @@ allHandlers.add('Athena','Panda',AthenaPandaRTHandler)
 from Ganga.Utility.Config import getConfig, ConfigError
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
+configPanda = getConfig('Panda')
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()

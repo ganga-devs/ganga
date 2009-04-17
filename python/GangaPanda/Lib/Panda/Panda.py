@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.21 2009-04-07 15:20:35 dvanders Exp $
+# $Id: Panda.py,v 1.22 2009-04-17 07:24:17 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -398,13 +398,19 @@ class Panda(IBackend):
 
 logger = getLogger()
 config = makeConfig('Panda','Panda backend configuration parameters')
-config.addOption( 'prodSourceLabel', 'user', 'FIXME')
-config.addOption( 'assignedPriority', 1000, 'FIXME' )
+config.addOption( 'prodSourceLabelBuild', 'panda', 'prodSourceLabelBuild')
+config.addOption( 'prodSourceLabelRun', 'user', 'prodSourceLabelRun')
+config.addOption( 'assignedPriorityBuild', 2000, 'assignedPriorityBuild' )
+config.addOption( 'assignedPriorityRun', 1000, 'assignedPriorityRun' )
+config.addOption( 'processingType', '', 'processingType' )
 
 
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.21  2009/04/07 15:20:35  dvanders
+# runPandaBrokerage works for no inputdata
+#
 # Revision 1.20  2009/04/07 08:18:45  dvanders
 # massive Panda changes:
 #   Many Panda options moved to Athena.py.
