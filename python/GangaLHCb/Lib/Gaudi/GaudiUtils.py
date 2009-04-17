@@ -13,7 +13,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 def available_apps():
   return ["Gauss", "Boole", "Brunel", "DaVinci", "Moore", "Vetra",
-          "Panoptes", "Gaudi", 'test']
+          "Panoptes", "Gaudi"]
 
 def available_packs(appname):
   packs={'Gauss'   : 'Sim',
