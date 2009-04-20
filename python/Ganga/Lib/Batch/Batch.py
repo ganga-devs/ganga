@@ -114,6 +114,8 @@ class Batch(IBackend):
     def command(klass,cmd,soutfile=None,allowed_exit=[0]):
         rc,soutfile,ef = shell_cmd(cmd,soutfile,allowed_exit)
         if not ef:
+            logger.warning('Problem submitting batch job. Maybe your chosen batch system is not available or you have configured it wrongly')
+            logger.warning(file(soutfile).read())
             raise BackendError(klass._name,'It seems that %s commands are not installed properly:%s'%(klass._name,file(soutfile).readline()))
         return rc,soutfile
 
@@ -169,29 +171,25 @@ class Batch(IBackend):
         command_str=self.config['submit_str'] % (inw.getPath(),queue_option,stderr_option,stdout_option,script_cmd)
         self.command_string = command_str
         rc,soutfile = self.command(command_str)
-        logger.debug('from command get rc: "%d"',rc)
-        if rc == 0:
-            sout = file(soutfile).read()
-            import re
-            m = re.compile(self.config['submit_res_pattern'], re.M).search(sout)
-            if m is None:
-                logger.warning('could not match the output and extract the Batch job identifier!')
-                logger.warning('command output \n %s ',sout)
-            else:
-                self.id = m.group('id')
-                try:
-                    queue = m.group('queue')
-                    if self.queue != queue:
-                        if self.queue:
-                            logger.warning('you requested queue "%s" but the job was submitted to queue "%s"',self.queue,queue)
-                            logger.warning('command output \n %s ',sout)
-                        else:
-                            logger.info('using default queue "%s"',queue)
-                        self.actualqueue = queue
-                except IndexError:
-                    logger.info('could not match the output and extract the Batch queue name')
+        sout = file(soutfile).read()
+        import re
+        m = re.compile(self.config['submit_res_pattern'], re.M).search(sout)
+        if m is None:
+            logger.warning('could not match the output and extract the Batch job identifier!')
+            logger.warning('command output \n %s ',sout)
         else:
-            logger.warning(file(soutfile).read())
+            self.id = m.group('id')
+            try:
+                queue = m.group('queue')
+                if self.queue != queue:
+                    if self.queue:
+                        logger.warning('you requested queue "%s" but the job was submitted to queue "%s"',self.queue,queue)
+                        logger.warning('command output \n %s ',sout)
+                    else:
+                        logger.info('using default queue "%s"',queue)
+                    self.actualqueue = queue
+            except IndexError:
+                    logger.info('could not match the output and extract the Batch queue name')
                         
         return rc == 0
 
@@ -333,8 +331,11 @@ except IOError,x:
   raise
 
 line='START: '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
-line+='PID: ' + os.getenv('###JOBIDNAME###') + os.linesep
-line+='QUEUE: ' + os.getenv('###QUEUENAME###') + os.linesep
+try:
+  line+='PID: ' + os.getenv('###JOBIDNAME###') + os.linesep
+  line+='QUEUE: ' + os.getenv('###QUEUENAME###') + os.linesep
+except:
+  pass
 statusfile.writelines(line)
 statusfile.flush()
 
@@ -373,27 +374,32 @@ sys.stderr=sys.stdout
 monitor = createMonitoringObject()
 monitor.start()
 
-child = subprocess.Popen(appscriptpath, shell=False, stdout=sysout2, stderr=syserr2)
+result = 255
 
-result = -1
+
 
 try:
+  child = subprocess.Popen(appscriptpath, shell=False, stdout=sysout2, stderr=syserr2)
+
   while 1:
     result = child.poll()
     if result is not None:
         break
     monitor.progress()
-    time.sleep(0.3)
-finally:
-    monitor.progress()
-    sys.stdout=sys.__stdout__
-    sys.stderr=sys.__stderr__
-    print >>sys.stdout,"--- GANGA APPLICATION OUTPUT END ---"
-    print >>sys.stderr,"--- GANGA APPLICATION ERROR END ---"
+    time.sleep(30)
+    os.utime(statusfilename,None)
+except Exception,x:
+  print 'ERROR: %s'%str(x)
+
+monitor.progress()
+sys.stdout.flush()
+sys.stderr.flush()
+sys.stdout=sys.__stdout__
+sys.stderr=sys.__stderr__
+print >>sys.stdout,"--- GANGA APPLICATION OUTPUT END ---"
+print >>sys.stderr,"--- GANGA APPLICATION ERROR END ---"
 
 monitor.stop(result)
-
-###POSTEXECUTE###
 
 try:
     filefilter
@@ -409,6 +415,8 @@ for fn in ['__syslog__']:
         recursive_copy(fn,sharedoutputpath)
     except Exception,x:
         print 'ERROR: (job %s) %s'%(jobid,str(x))
+
+###POSTEXECUTE###
 
 line='EXITCODE: ' + repr(result) + os.linesep
 line+='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
@@ -451,75 +459,82 @@ sys.exit(result)
 
     def updateMonitoringInformation(jobs):
 
-        def get_exit_code(f):
+        import re
+        repid = re.compile(r'^PID: (?P<pid>\d+)',re.M)
+        requeue = re.compile(r'^QUEUE: (?P<queue>\S+)',re.M)
+        reexit = re.compile(r'^EXITCODE: (?P<exitcode>\d+)',re.M)
+
+        def get_last_alive(f):
+            """Time since the statusfile was last touched in seconds"""
+            import os.path,time
+            talive = 0
+            try:
+                talive = time.time()-os.path.getmtime(f)
+            except IOError,x:
+                logger.debug('Problem reading status file: %s (%s)',f,str(x))
+                
+            return talive
+
+        def get_status(f):
+            """Give (pid,queue,exit code) for job"""
+
+            pid,queue,exitcode=None,None,None
+
             import re
-            statusfile=file(f)
-            stat = statusfile.read()
-            m = re.compile(r'^EXITCODE: (?P<exitcode>\d+)',re.M).search(stat)
+            try:
+                statusfile=file(f)
+                stat = statusfile.read()
+            except IOError,x:
+                logger.debug('Problem reading status file: %s (%s)',f,str(x))
+                return pid,queue,exitcode
 
-            if m is None:
-                return None
-            else:
-                return int(m.group('exitcode'))
+            mpid = repid.search(stat)
+            if mpid:
+                pid = int(mpid.group('pid'))          
+            
+            mqueue = requeue.search(stat)
+            if mqueue:
+                queue = str(mqueue.group('queue'))          
+                
+            mexit = reexit.search(stat)
+            if mexit:
+                exitcode = int(mexit.group('exitcode'))
+            
+            return pid,queue,exitcode
 
-        def get_pid(f):
-            import re
-            statusfile=file(f)
-            stat = statusfile.read()
-            m = re.compile(r'^PID: (?P<pid>\d+)',re.M).search(stat)
-
-            if m is None:
-                return None
-            else:
-                return int(m.group('pid'))          
-
-        def get_queue(f):
-            import re
-            statusfile=file(f)
-            stat = statusfile.read()
-            m = re.compile(r'^QUEUE: (?P<queue>\S+)',re.M).search(stat)
-
-            if m is None:
-                return None
-            else:
-                return str(m.group('queue'))          
-
-
+        from Ganga.Utility.Config import getConfig
         for j in jobs:
             outw=j.getOutputWorkspace()
 
-            # try to get the application exit code from the status file
-            try:
-                statusfile = os.path.join(outw.getPath(),'__jobstatus__')
-                if j.status == 'submitted':
-                    pid = get_pid(statusfile)
-                    queue = get_queue(statusfile)
-                    if pid or queue:
-                        j.updateStatus('running')
+            statusfile = os.path.join(outw.getPath(),'__jobstatus__')
+            pid,queue,exitcode = get_status(statusfile)
 
-                        if pid:
-                            j.backend.id = pid
-                        if queue and queue != j.backend.actualqueue:
+            if j.status == 'submitted':
+                if pid or queue:
+                    j.updateStatus('running')
+
+                    if pid:
+                        j.backend.id = pid
+                    if queue and queue != j.backend.actualqueue:
                             j.backend.actualqueue = queue
-                exitcode = get_exit_code(statusfile)
-                logger.debug('status file: %s \n%s',statusfile,file(statusfile).read())
-            except IOError,x:
-                logger.debug('problem reading status file: %s (%s)',statusfile,str(x))
-                exitcode=None
-            except Exception,x:
-                logger.critical('problem during monitoring: %s',str(x))
-                raise x
 
-          
-            if not exitcode is None:
-                # status file indicates that the application finished
-                j.backend.exitcode = exitcode
 
-                if exitcode == 0:
-                    j.updateStatus('completed')
+            if j.status == 'running':
+                if exitcode != None:
+                    # Job has finished
+                    j.backend.exitcode = exitcode
+                    if exitcode == 0:
+                        j.updateStatus('completed')
+                    else:
+                        j.updateStatus('failed')
                 else:
-                    j.updateStatus('failed')
-                        
+                    # Job is still running. Check if alive
+                    time = get_last_alive(statusfile)
+                    config = getConfig(j.backend._name)
+                    if time>config['timeout']:
+                        logger.warning('Job %s has disappeared from the batch system.', str(j.id))
+                        j.updateStatus('failed')
+
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
 #____________________________________________________________________________________
@@ -555,7 +570,7 @@ def filefilter(fn):
 '''
 config.addOption('postexecute', tempstr,"String contains commands executing before submiting job to queue")
 config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
-
+config.addOption('timeout',300,'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 class LSF(Batch):
     ''' LSF backend - submit jobs to Load Sharing Facility.'''
@@ -595,9 +610,14 @@ os.environ["PATH"]+=":."
 config.addOption('preexecute', tempstr, "String contains commands executing before submiting job to queue")
 
 tempstr='''
+env = os.environ
+jobnumid = env["PBS_JOBID"]
+os.chdir("/tmp/")
+os.system("rm -rf /tmp/%s/" %jobnumid) 
 '''
 config.addOption('postexecute', tempstr, "String contains commands executing before submiting job to queue")
 config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
+config.addOption('timeout',300,'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 
 class PBS(Batch):
@@ -644,6 +664,7 @@ config.addOption('preexecute', 'os.chdir(os.environ["TMPDIR"])\nos.environ["PATH
                  "String contains commands executing before submiting job to queue")
 config.addOption('postexecute', '', "String contains commands executing before submiting job to queue")
 config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
+config.addOption('timeout',300,'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 
 class SGE(Batch):
