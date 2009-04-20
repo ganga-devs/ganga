@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.32 2009-04-08 09:05:18 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.33 2009-04-20 15:33:57 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -134,6 +134,8 @@ def extractFileNumber(filename):
         Returns None and prints a WARNING if unsuccessful"""
     if isinstance(filename,int):
         return filename
+    if filename.find("DBRelease")>-1:
+        return 
     if filename.find("._") != -1:
         num = filename.split("._")[-1].split(".")[0]
     else:
@@ -214,7 +216,7 @@ class AthenaMCInputDatasets(Dataset):
 
     _category = 'datasets'
     _name = 'AthenaMCInputDatasets'
-    _exportmethods = [ 'get_dataset', 'get_cavern_dataset', 'get_minbias_dataset','get_DBRelease' ]
+    _exportmethods = [ 'get_dataset', 'get_cavern_dataset', 'get_minbias_dataset','get_DBRelease','matchSite' ]
     _GUIPrefs= [ { 'attribute' : 'datasetType', 'widget' : 'String_Choice', 'choices' : ['DQ2','private','unknown','local']}]
 
     # content = [ ]
@@ -386,10 +388,7 @@ class AthenaMCInputDatasets(Dataset):
         if matchrange[1] or self.redefine_partitions=="": # We must not limit dataset collection if we have an open range...
             matchrange = ([],True)
 
-        self.turls={}
-        self.lfcs={}
-        self.sites=[]
-
+        
         new_backend = backend
         
         if (datasetType=="DQ2" or datasetType=="unknown") and dataset:
@@ -409,18 +408,58 @@ class AthenaMCInputDatasets(Dataset):
         except:
             logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset, backend, new_backend))
             raise
+        app.turls=self.turls
+        app.lfcs=self.lfcs
+        app.sites=self.sites
+        # now getting the rest of the dataset block
+        # cavern datasets
+        if self.cavern:
+            self.get_cavern_dataset(app)
+        # minbias datasets
+        if self.minbias:
+            self.get_minbias_dataset(app)
+        # DB release if any
+        if app.dbrelease:
+            self.get_DBRelease(app)
 
-            
-        return [self.turls,self.lfcs,self.sites]
+        # got everything. now need to trim down app.(minbias,cavern,db)sites to
+        # match app.sites (at least sharing the same cloud?)
+        
+        return
+
+    def matchSite(self,site,siteShortList):
+        result=""
+        imax=site.find("_")
+        matchSite=site[:imax]
+        # first, look for exact site match
+        siteShorts=[]
+        for spaceToken in siteShortList:
+            imax=spaceToken.find("_")
+            if imax>-1:
+                siteShorts.append(spaceToken[:imax])
+        #print matchSite, siteShorts
+        if matchSite in siteShorts:
+            return site
+        # next try to see if they belong to the same cloud...
+        # later perhaps?
+        return result
+
+        
+    def trimSites(self,siteList,siteShortList):
+        '''Reduce input siteList to loosely match the contents of siteShortList'''
+        result=[]
+        for site in siteList:
+            selsite=self.matchSite(site,siteShortList)
+            if selsite:
+                result.append(selsite)
+        return result
+    
 
     def get_cavern_dataset(self, app):
         '''seek dataset informations based on job.inputdata information and returns (hopefully) a formatted set of information for all processing jobs (turls, catalog servers, dataset location for each lfn). Called by master_submit'''
 
-        self.turls={}
-        self.lfcs={}
-        self.sites=[]
         job = app.getJobObject()
-        dataset=job.inputdata.cavern
+        dataset=self.cavern
         backend=job.backend._name
         
         backend = self.getdq2data(dataset,None,backend,update=False)
@@ -428,17 +467,22 @@ class AthenaMCInputDatasets(Dataset):
             assert backend == job.backend._name
         except:
             logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
-            raise        
-        return [self.turls,self.lfcs,self.sites]
+            raise
+        app.cavern_turls=self.turls
+        app.cavern_lfcs=self.lfcs
+        app.cavern_sites=self.trimSites(self.sites,app.sites)
+        try:
+            assert len(app.cavern_sites)>0
+        except:
+            logger.error("Could not find a site match between input dataset locations: %s and existing cavern dataset locations: %s. Aborting the job" % (app.sites,self.sites))
+            raise       
+        return 
     
     def get_minbias_dataset(self, app):
         '''seek dataset informations based on job.inputdata information and returns (hopefully) a formatted set of information for all processing jobs (turls, catalog servers, dataset location for each lfn). Called by master_submit'''
 
-        self.turls={}
-        self.lfcs={}
-        self.sites=[]
         job = app.getJobObject()
-        dataset=job.inputdata.minbias
+        dataset=self.minbias
         backend=job.backend._name
         
         backend = self.getdq2data(dataset,None,backend,update=False)
@@ -447,16 +491,21 @@ class AthenaMCInputDatasets(Dataset):
         except:
             logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
             raise        
-        return [self.turls,self.lfcs,self.sites]
+        app.minbias_turls=self.turls
+        app.minbias_lfcs=self.lfcs
+        app.minbias_sites=self.trimSites(self.sites,app.sites)
+        try:
+            assert len(app.minbias_sites)>0
+        except:
+            logger.error("Could not find a site match between input dataset locations: %s and existing minbias dataset locations: %s. Aborting the job" % (app.sites,self.sites))
+            raise
+        return 
 
 
-    def get_DBRelease(self, app, release):
+    def get_DBRelease(self, app):
         '''Get macthing DBrelease dataset from DQ2 database and useful information like guid for downloads'''
 
-        self.turls={}
-        self.lfcs={}
-        self.sites=[]
-        relary=string.split(release,".")
+        relary=string.split(app.dbrelease,".")
         release_string=""
         for bits in relary:
             release_string+=string.zfill(bits,2)
@@ -472,6 +521,7 @@ class AthenaMCInputDatasets(Dataset):
             logger.error('Dataset %s is not defined in DQ2 database!',dataset)
             raise Exception()
         dsetlist=datasets.keys()
+
         dsetname=dsetlist[0]
         # got exact dataset name from DQ2 catalog, now getting the files:
         job = app.getJobObject()
@@ -481,18 +531,29 @@ class AthenaMCInputDatasets(Dataset):
             assert backend == job.backend._name
         except:
             logger.error("Dataset %s not found on backend %s. Please change the backend  to %s or subscribe the DB release dataset to the desired site" % ( dataset,job.backend._name,backend))
-            raise        
-        return [self.turls,self.lfcs,self.sites]
+            raise
+        app.dbturls=self.turls
+        app.dblfcs=self.lfcs
+        app.dbsites=self.trimSites(self.sites,app.sites)
+        try:
+            assert len(app.dbsites)>0
+        except:
+            logger.error("Could not find a site match between input dataset locations: %s and DB release locations: %s. Aborting the job" % (app.sites,self.sites))
+            raise
+        return 
 
     def getdq2data(self,dataset,matchrange,backend,update):
         allturls={}
+        self.turls={}
+        self.lfcs={}
+        self.sites=[]
+
         dsetname=""
         dsetmatch=dataset
         if dataset[-1]=="/":
             dsetmatch=dataset[:-1] # turning container name into dataset root for matching
         if string.find(dataset,"DBRelease")<0:
             dsetmatch='*%s*' % dataset # loose matching for all input datasets except DBRelease ones.
-        #print "DSETMATCH",dsetmatch
             
         try:
             dq2_lock.acquire()
@@ -533,7 +594,6 @@ class AthenaMCInputDatasets(Dataset):
 
         if len(inputdsets) == 0:
             inputdsets = containers
-
         for dset in inputdsets:
             try:
                 dq2_lock.acquire()

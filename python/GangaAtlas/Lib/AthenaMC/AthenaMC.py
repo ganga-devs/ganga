@@ -1,13 +1,14 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.16 2009-04-03 12:48:30 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.17 2009-04-20 15:33:57 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
 
 
 import os, re, string, commands
+import random
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
@@ -34,8 +35,8 @@ class AthenaMC(IApplication):
         'random_seed'        : SimpleItem(defvalue='1',doc='Random Seed for MC Generator',typelist=["str"]),
         'evgen_job_option'         : SimpleItem(defvalue='',doc='JobOption filename, or path is modified locally',typelist=["str"]),
         'production_name'    : SimpleItem(defvalue='',doc='Name of the MC production',typelist=["str"]),
-        'process_name'       : SimpleItem(defvalue='',doc='Name of the generated physics process',typelist=["str"]),
-        'run_number'         : SimpleItem(defvalue='',doc='Run number',typelist=["str"]),
+        'process_name'       : SimpleItem(defvalue='',doc='Name of the generated physics process. Now replaced by production_name',typelist=["str"]),
+        'run_number'         : SimpleItem(defvalue='',doc='Run number. Now replaced by production_name',typelist=["str"]),
         'number_events_job'  : SimpleItem(defvalue=1,doc='Number of events per job',typelist=["int"]),
         'atlas_release'      : SimpleItem(defvalue='',doc='ATLAS Software Release',typelist=["str"]),
         'transform_archive'  : SimpleItem(defvalue='',doc='Name or Web location of a modified ATLAS transform archive.',typelist=["str"]),
@@ -63,8 +64,18 @@ class AthenaMC(IApplication):
     _name = 'AthenaMC'
     _exportmethods = ['prepare', 'postprocess']
     _GUIPrefs= [ { 'attribute' : 'mode', 'widget' : 'String_Choice', 'choices' : ['evgen','simul','recon','template']}, { 'attribute' : 'verbosity', 'widget' : 'String_Choice', 'choices' : ['ALL','VERBOSE','DEBUG','INFO','WARNING','ERROR','FATAL']}]
-    
-     
+    prod_release,atlas_rel="",""
+    turls,cavern_turls,minbias_turls,dbturls={},{},{},{}
+    lfcs,cavern_lfcs,minbias_lfcs,dblfcs={},{},{},{}
+    sites,cavern_sites,minbias_sites,dbsites=[],[],[],[]
+    outputpaths,fileprefixes,outputfiles={},{},{}
+    dsetmap,sitemap={},{}
+    inputfiles,cavernfiles,mbfiles,dbfiles=[],[],[],[]
+    infileString=""
+    args=[]
+    dbrelease=""
+    runNumber=""
+    subjobsOutfiles={}
     def postprocess(self):
        """Determine outputdata and outputsandbox locations of finished jobs
        and fill output variable"""
@@ -75,7 +86,9 @@ class AthenaMC(IApplication):
               
     def prepare(self):
        """Prepare each job/subjob from the user area"""
-
+       # will call backend related method in RTHandler.py
+       # can call configure(), then master_configure()
+       
     def getPartitionList(self):
         """ Calculates the list of partitions that should be processed by this application. 
             If no splitter is present, the list has always length one.
@@ -176,12 +189,343 @@ class AthenaMC(IApplication):
         else:
             skip = 0
         return (1 + ((partition - 1 + skip_jobs) % jobs_per_input) * self.number_events_job + skip, self.number_events_job - skip)
+
+
+
+    def getEvgenArgs(self):
+        """prepare args vector for evgen mode"""
+        args=[]
+        if not self.transform_script:
+            self.transform_script="csc_evgen_trf.py"
+
+        args =  [ self.atlas_rel,
+                  self.se_name,
+                  self.outputfiles["LOG"],
+                  self.transform_script,
+                  "runNumber=%s" % str(self.runNumber),
+                  "firstEvent=%s" % str(self.firstevt),
+                  "maxEvents=%s" % str(self.Nevents_job),
+                  "randomSeed=%s" % str(self.random_seed),
+                  "jobConfig=%s" % self.evgen_job_option,
+                  "outputEvgenFile=%s" % self.outputfiles["EVNT"]
+                  ]
+
+        if "HIST" in self.outputfiles:
+            args.append("histogramFile=%s" % self.outputfiles["HIST"]) # validation histos on request only for csc_evgen_trf.py
+        if "NTUP" in self.outputfiles:
+            args.append("ntupleFile=%s" % self.outputfiles["NTUP"])
+        if self.infileString:
+            args.append("inputGeneratorFile=%s" % self.infileString)
+
+
+        return args
+    
+    def getSimulArgs(self):
+        """prepare args vector for simul-digit mode"""
+        args=[]
+        skip=str(self.firstevt-1)
+        
+        if not self.transform_script:
+            self.transform_script="csc_simul_trf.py"
+            
+        args = [ self.atlas_rel,
+                 self.se_name,
+                 self.outputfiles["LOG"],
+                 self.transform_script,
+                 "inputEvgenFile=%s" % self.infileString, # already quoted by construction
+                 "outputHitsFile=%s" % self.outputfiles["HITS"],
+                 "outputRDOFile=%s" % self.outputfiles["RDO"],
+                 "maxEvents=%s" % str(self.Nevents_job),
+                 "skipEvents=%s" % str(skip),
+                 "randomSeed=%s" % str(self.random_seed),
+                 "geometryVersion=%s" % self.geometryTag
+                 ]
+        if self.atlas_rel >="12.0.5" :
+            args.append("triggerConfig=%s" % self.triggerConfig)
+        if self.atlas_rel >="13" and self.extraArgs.find("digiSeedOffset")<0:
+            random.seed(int(self.random_seed))
+            self.extraArgs += ' digiSeedOffset1=%s digiSeedOffset2=%s ' % (random.randint(1,2**15),random.randint(1,2**15))
+        
+        return args
+
+        
+    def getReconArgs(self):
+        """prepare args vector for recon mode"""
+        args=[]
+        skip=str(self.firstevt-1)
+            
+        if not self.transform_script:
+            self.transform_script="csc_reco_trf.py"
+
+        args = [ self.atlas_rel,
+                 self.se_name,
+                 self.outputfiles["LOG"],
+                 self.transform_script,
+                 "inputRDOFile=%s" % self.infileString,
+                 "maxEvents=%s" % str(self.Nevents_job),
+                 "skipEvents=%s" % str(skip),
+                 "geometryVersion=%s" % self.geometryTag
+                 ]
+        if "ESD" in self.outputfiles and self.outputfiles["ESD"].upper() != "NONE":
+            args.append("outputESDFile=%s" % self.outputfiles["ESD"])
+        if "AOD" in self.outputfiles and self.outputfiles["AOD"].upper() != "NONE":
+            args.append("outputAODFile=%s" % self.outputfiles["AOD"])
+
+        if self.atlas_rel >="12.0.5" :
+            if "NTUP" in self.outputfiles and self.outputfiles["NTUP"].upper() != "NONE":
+                args.append("ntupleFile=%s" %  self.outputfiles["NTUP"])
+            args.append("triggerConfig=%s" % self.triggerConfig)
+
+        return args
+
+    def getTemplateArgs(self):
+        """prepare args vector for template mode"""
+        try:
+            assert self.transform_script
+        except AssertionError:
+            raise ApplicationConfigurationError(None,"template mode requires the name of the transformation you want to use")
+        
+        logger.debug("Using the new template mode. Please use application.extraArgs for the transformation parameters")
+
+        try:
+            assert "LOG" in self.outputfiles
+        except AssertionError:
+            raise ApplicationConfigurationError(None,"template mode requires a logfile, set by job.application.outputdata.logfile")
+
+        args =  [ self.atlas_rel,
+                 self.se_name,
+                 self.outputfiles["LOG"],
+                 self.transform_script
+                 ]
+        if "EVNT" in self.outputfiles and self.outputfiles["EVNT"].upper() != "NONE":
+            args.append("outputEvgenFile=%s" % self.outputfiles["EVNT"]) 
+        if "HIST" in self.outputfiles and self.outputfiles["HIST"].upper() != "NONE":
+            args.append("histogramFile=%s" % self.outputfiles["HIST"]) 
+        if "HITS" in self.outputfiles and self.outputfiles["HITS"].upper() != "NONE":
+            args.append("outputHitsFile=%s" % self.outputfiles["HITS"]) 
+        if "RDO" in self.outputfiles and self.outputfiles["RDO"].upper() != "NONE":
+            args.append("outputRDOFile=%s" % self.outputfiles["RDO"]) 
+        if "ESD" in self.outputfiles and self.outputfiles["ESD"].upper() != "NONE":
+            args.append("outputESDFile=%s" % self.outputfiles["ESD"])
+        if "AOD" in self.outputfiles and self.outputfiles["AOD"].upper() != "NONE":
+            args.append("outputAODFile=%s" % self.outputfiles["AOD"])
+        if "NTUP" in self.outputfiles and self.outputfiles["NTUP"].upper() != "NONE":
+            args.append("ntupleFile=%s" % self.outputfiles["NTUP"])
+        return args
  
     def configure(self,masterappconfig):
-       return (None,None)
+        
+        # getting configuration for individual subjobs
+        self.inputfiles=self.turls.keys()
+        partition = self.getPartitionList()[0][0] # This function either throws an exception or returns at least one element
+        job = self._getParent() # Returns job or subjob object
+        (self.firstevt, self.Nevents_job) = self.getFirstEvent(partition, job.inputdata)
+        logger.warning("partition %i, first event is %i, processing %i events" % (partition,self.firstevt, self.Nevents_job))
+        
+        inputnumbers = self.getInputsForPartitions([partition], job._getRoot().inputdata) # getInputsForPartitions get the subset of inputfiles needed by partition i. So far so good. 
+        if inputnumbers:
+            matchrange = (job._getRoot().inputdata.numbersToMatcharray(inputnumbers), False)
+        else:
+            matchrange = ([],False)
+        logger.warning("partition %i using input partitions: %s as files: %s" % (partition, inputnumbers, matchrange[0]))
+
+        self.inputfiles = [fn for fn in self.turls.keys() if matchFile(matchrange, fn)]
+        self.inputfiles.sort()
+        
+        # Strict matching must be discarded if inputdata.redefine_partitions is not used.
+
+        if (job._getRoot().inputdata and job._getRoot().inputdata.redefine_partitions == ""):
+            self.inputfiles=[]
+            inlfns=self.turls.keys()
+            inlfns.sort()
+            for i in inputnumbers:
+                try:
+                    assert len(inlfns)>= i
+                except:
+                    raise ApplicationConfigurationError(None,"Not enough input files, got %i expected %i" % (len(inlfns),i))
+
+                self.inputfiles.append(inlfns[i-1])
+
+        if not self.dryrun and len(self.inputfiles) < len(inputnumbers):
+            if len(self.inputfiles) > 0:
+               missing = []
+               for fn in matchrange[0]:
+                   found = False
+                   for infile in self.inputfiles:
+                       if fn in infile: 
+                           found = True
+                           break
+                   if not found:
+                       missing.append(fn)
+               logger.warning("Not all input files for partition %i found! Missing files: %s" % (partition, missing))
+            else:
+               raise ApplicationConfigurationError(None,"No input files for partition %i found ! Files expected: %s" % (partition, matchrange[0]))
+           
+        for infile in self.inputfiles:
+            self.dsetmap[infile]=self.lfcs.keys()[0]
+            self.sitemap[infile]=string.join(self.sites," ") # only for signal input datasets
+        self.infileString=",".join(self.inputfiles)
+        # adding cavern/minbias/dbrelease to the mapping
+        self.cavernfiles=self.cavern_turls.keys()
+        for infile in  self.cavernfiles:
+            self.dsetmap[infile]=self.cavern_lfcs.keys()[0]
+            #            sitemap[infile]=string.join(self.cavern_sites," ")
+            self.sitemap[infile]=self.cavern_sites[0]
+        self.mbfiles=self.minbias_turls.keys()
+        for infile in self.mbfiles:
+            self.dsetmap[infile]=self.minbias_lfcs.keys()[0]
+            #           sitemap[infile]=string.join(self.minbias_sites," ")
+            self.sitemap[infile]=self.minbias_sites[0]
+        self.dbfiles=self.dbturls.keys()
+
+        for infile in self.dbfiles:
+            self.dsetmap[infile]=self.dblfcs.keys()[0]
+            #            sitemap[infile]=string.join(self.dbsites," ")
+            self.sitemap[infile]=self.dbsites[0]
+        random.shuffle(self.cavernfiles)
+        if job.inputdata and len(self.cavernfiles) >0 and job.inputdata.n_cavern_files_job:
+            imax=job.inputdata.n_cavern_files_job
+            try:
+                assert len(self.cavernfiles)>= imax
+            except:
+                raise ApplicationConfigurationError(None,"Not enough cavern input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(self.cavernfiles)))
+            self.cavernfiles=self.cavernfiles[:imax]
+
+        random.shuffle(self.mbfiles)
+        if job.inputdata and len(self.mbfiles) >0 and job.inputdata.n_minbias_files_job:
+            imax=job.inputdata.n_minbias_files_job
+            try:
+                assert len(self.mbfiles)>= imax
+            except:
+                raise ApplicationConfigurationError(None,"Not enough minbias input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(self.mbfiles)))
+            self.mbfiles=self.mbfiles[:imax]
+
+# now doing output files....
+        outpartition = partition + job._getRoot().outputdata.output_firstfile - 1
+        for filetype in self.fileprefixes.keys():
+            if filetype=="LOG":
+                self.outputfiles["LOG"]=self.fileprefixes["LOG"]+"._%5.5d.job.log" % outpartition 
+            elif  filetype=="HIST":
+                self.outputfiles["HIST"]=self.fileprefixes["HIST"]+"._%5.5d.hist.root" % outpartition
+            elif  filetype=="NTUP":
+                self.outputfiles["NTUP"]=self.fileprefixes["NTUP"]+"._%5.5d.root" % outpartition
+            else:
+                self.outputfiles[filetype]=self.fileprefixes[filetype]+"._%5.5d.pool.root" % outpartition
+            # add the final lfn to the expected output list
+            if self.outputfiles[filetype].upper() != "NONE":
+                logger.debug("adding %s to list of expected output" % self.outputfiles[filetype])
+                job.outputdata.expected_output.append(self.outputfiles[filetype])
+
+        # map to subjobs.
+        self.subjobsOutfiles[job.id]={}
+        for type in self.outputfiles.keys():
+            self.subjobsOutfiles[job.id][type]=self.outputfiles[type]
+
+        for type in self.outputfiles.keys():
+            if self.outputpaths[type][-1]!="/":
+                self.outputpaths[type]=self.outputpaths[type]+"/"
+        expected_datasets=""
+        for filetype in self.outputpaths.keys():
+            dataset=string.replace(self.outputpaths[filetype],"/",".")
+            if dataset[0]==".": dataset=dataset[1:]
+            if dataset[-1]==".": dataset=dataset[:-1]
+            expected_datasets+=dataset+","
+        if not job.outputdata.output_dataset or string.find(job.outputdata.output_dataset,",") > 0 :
+            # if not job.outputdata.output_dataset:
+            job.outputdata.output_dataset=expected_datasets[:-1] # removing final coma.
+        # Fill arg list and output data vars depending on the prod mode
+        if not self.se_name:
+            self.se_name='none'
+        if self.mode=='evgen':
+            self.args=self.getEvgenArgs()
+        elif self.mode=='simul':
+            self.args=self.getSimulArgs()
+        elif self.mode=='recon':
+            self.args=self.getReconArgs()
+        elif self.mode=='template':
+            self.args=self.getTemplateArgs()
+
+        if self.extraArgs:    
+            #            args.append(self.extraArgs)
+            #        need to scan for $entries...
+            arglist=string.split(self.extraArgs)
+            NewArgstring=""
+            for arg in arglist:
+                key,val=string.split(arg,"=")
+                if key=="DBRelease" and self.dbrelease:
+                    continue # this key must be deleted as a new value must be formed (see next block)
+                imin=string.find(val,"$")
+                imin2=string.find(val,"$out")
+                newval=""
+                if imin>-1:
+                    if string.find(val[imin+1:],"J")>-1:
+                        nval=val.replace("$J",str(partition))
+                        try:
+                            newval=eval(nval)
+                            assert newval
+                        except AssertionError:
+                            raise ApplicationConfigurationError(None,"error while parsing arguments: %s %d %d" % (val, imin, imin2))
+                    
+                    if string.find(val[imin+1:],"inputfile")>-1:
+                        newval=self.infileString
+                    if string.find(val[imin+1:],"cavern")>-1:
+                        newval=self.cavernfile
+                    if string.find(val[imin+1:],"minbias")>-1:
+                        newval=self.minbiasfile
+                    if string.find(val[imin+1:],"first")>-1:
+                        newval=str(self.firstevt)
+                    if string.find(val[imin+1:],"skip")>-1:
+                        skip=str(self.firstevt-1)
+                        newval=str(skip)
+                    if string.find(val[imin+1:],"number_events_job")>-1:
+                        newval=str(self.number_events_job)
+                    #if imin2 > -1:
+                     #   print self.outputfiles.keys()
+                    if imin2 > -1 and val[imin2+4:] in self.outputfiles:
+                        newval=self.outputfiles[ val[imin2+4:]]
+                    try:
+                        assert newval
+                    except AssertionError:
+                        raise ApplicationConfigurationError(None,"Error while parsing arguments: %s %d %d" % (val, imin, imin2))
+                        
+                    newarg="%s=%s" % (key,newval)
+                else:
+                    newarg=arg
+                NewArgstring=NewArgstring+newarg+" "
+            if self.dbrelease:
+                dbfile="DBRelease-%s.tar.gz" % self.dbrelease
+                NewArgstring=NewArgstring+"DBRelease=%s " % dbfile
+
+            self.args.append(NewArgstring)
+               
+        if self.extraIncArgs:
+            # incremental arguments: need to add the subjob number.
+            arglist=string.split(self.extraIncArgs)
+            NewArgstring=""
+            for arg in arglist:
+                key,val=string.split(arg,"=")
+                ival=partition
+                if not val.isdigit():
+                    logger.warning("Non digit value entered for extraIncArgs: %s. Using %i as default value" % (str(val),ival))
+                else:
+                    ival+=string.atoi(val)
+                newarg="%s=%i" %(key,ival)
+                NewArgstring=NewArgstring+newarg+" "
+            self.args.append(NewArgstring)
+
+        try:
+            assert len(self.args)>0
+        except AssertionError:
+            raise ApplicationConfigurationError(None,"Transformation with no arguments. Please check your inputs!")
+
+
+        return (None,None)
+
     
     def master_configure(self):
-       """Prepare the job from the user area"""
+       """Prepare the master job """
+       # basic checks
+       job = self._getRoot()
        try:
           assert self.mode in [ 'evgen', 'simul' , 'recon' , 'template']
        except AssertionError:
@@ -207,7 +551,9 @@ class AthenaMC(IApplication):
               
           except:
               raise ApplicationConfigurationError(None,"Badly formatted job option name %s. Transformation expects to find something named $project.$runNumber.$body.py, where $runNumber is a 6-digit number and $body does not contain any dot (.)" % self.evgen_job_option )
-          self.run_number=str(jobfields[1])
+          self.runNumber=self.run_number
+          if not self.run_number:
+              self.runNumber=str(jobfields[1])
           if not self.production_name:
               self.production_name=str(jobfields[1])+"."+str(jobfields[2])
               
@@ -217,44 +563,79 @@ class AthenaMC(IApplication):
            except AssertionError:
                logger.error('Variable application.geometryTag: In step simul or recon with AtlasProduction python transforms, please provide detector geometry version tag')
                raise
-           
-       if self._getRoot().splitter:
+
+       if string.count(self.atlas_release,".")==3:
+           self.prod_release=self.atlas_release
+           imax=string.rfind(self.atlas_release,".")
+           self.atlas_rel=self.atlas_release[:imax]
+       else:
+           self.atlas_rel=self.atlas_release
+       try:
+           assert self.prod_release or self.transform_archive
+       except:
+           raise ApplicationConfigurationError(None,"A reference to the Production archive to be used must be set, either through the declaration of the archive itself in application.transform_archive or by putting the 4-digit production cache release number in application.atlas_release. Neither are set. Aborting.")
+       
+       if job.splitter:
            try:
-               assert self._getRoot().splitter._name=="AthenaMCSplitterJob"
+               assert job.splitter._name=="AthenaMCSplitterJob"
            except AssertionError:
                raise ApplicationConfigurationError(None,'If you want to use a job splitter with the AthenaMC application, you have to use AthenaMCSplitterJob')
            
+       # checking inputdata
+       # handling of dbrelease
 
-       # enforce the use of AthenaMCOutputDataset
+       if self.extraArgs:    
+           arglist=string.split(self.extraArgs)
+           for arg in arglist:
+               key,val=string.split(arg,"=")
+               digval=string.replace(val,".","0")
+               if key=="DBRelease" and digval.isdigit():
+                   self.dbrelease=val
+                   if not job.inputdata:
+                       job.inputdata=AthenaMCInputDatasets()
+                   break
+               
+       if self.mode !="evgen" and self.mode !="template" and not self.dryrun:
+           try:
+               assert job.inputdata
+           except :
+               raise ApplicationConfigurationError(None,"job.inputdata must be used and set to 'AthenaMCInputDatasets'")
+       if job.inputdata:
+           try:
+               assert job.inputdata._name == 'AthenaMCInputDatasets'
+           except :
+               raise ApplicationConfigurationError(None,"job.inputdata must be set to 'AthenaMCInputDatasets'")
+           job.inputdata.get_dataset(self, job.backend._name)
+##           print self.turls,self.lfcs,self.sites
+##           print self.cavern_turls,self.cavern_lfcs,self.cavern_sites
+##           print self.minbias_turls,self.minbias_lfcs,self.minbias_sites
+##           print self.dbrelease,self.dbturls,self.dblfcs,self.dbsites
+##           raise ApplicationConfigurationError(None,"debug")
+       # checking output data
        try:
-           assert (self._getRoot().outputdata and self._getRoot().outputdata._name=="AthenaMCOutputDatasets")
+           assert (job.outputdata and job.outputdata._name=="AthenaMCOutputDatasets")
        except AssertionError:
            logger.error('AthenaMC now requires to set outputdata to AthenaMCOutputDatasets')
            raise
+       # doing output data now
+       self.fileprefixes,self.outputpaths=job.outputdata.prep_data(self)
+       expected_datasets=""
+       for filetype in self.outputpaths.keys():
+           dataset=string.replace(self.outputpaths[filetype],"/",".")
+           if dataset[0]==".": dataset=dataset[1:]
+           if dataset[-1]==".": dataset=dataset[:-1]
+           expected_datasets+=dataset+","
 
-       # doing the cross-check of splitter variables.
-       if self._getRoot().inputdata and not self.dryrun:
-           try:
-               assert self._getRoot().inputdata._name=="AthenaMCInputDatasets"
-           except AssertionError:
-               logger.error('AthenaMC requires to use AthenaMCInputDatasets for inputdata')
-               raise
+       if not job.outputdata.output_dataset or string.find(job.outputdata.output_dataset,",") > 0 : #update only if output_dataset is not used to force the output dataset names.
+           job.outputdata.output_dataset=expected_datasets[:-1] # removing final coma.
+
            
-           inputdata = self._getRoot().inputdata.get_dataset(self, self._getRoot().backend._name)
-           if len(inputdata)!= 3:
-               raise ApplicationConfigurationError(None,"Error, wrong format for inputdata %d, %s" % (len(inputdata),inputdata))
-           self.turls=inputdata[0]
-           self.lfcs=inputdata[1]
-           self.sites=inputdata[2]
        # This try block must be at the very end.
        try:
            assert self.production_name
        except:
            raise ApplicationConfigurationError("application.production_name was not set and could not be deduced from other input fields. Aborting")
-       
-       
-
-        
+         
        return (0,None)
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -329,6 +710,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.16  2009/04/03 12:48:30  fbrochu
+# Adding new Run Time Handler for the Panda backend. Simplified AthenaMC interface: process_name is now inactive, and production_name can be used to fill in for run_number as well. Finally, an attempt to extract process_name for input job options and/or dataset has been implemented, reducing the total number of mandatory fields. Native backend member to select a given storage can be used to replace se_name as well. Arguments in extraIncArgs can be put in extraArgs as well, using the dedicated key word . Added length check on output dataset names.
+#
 # Revision 1.15  2009/03/10 16:02:49  fbrochu
 # Adding support for AtlasTier0 production caches (to be tested), sort input sites by decreasing dataset shares and allow aggregation of output data files to the site specified in app.se_name by subscribing the frozen datasets at the completion of the master job
 #
