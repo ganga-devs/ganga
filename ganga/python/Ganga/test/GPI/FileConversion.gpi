@@ -1,0 +1,16 @@
+from os.path import abspath
+
+f = File('a')
+assert(f.name == abspath('a'))
+
+f = File(name='a')
+assert(f.name == 'a')
+
+f = File()
+f.name = 'a'
+assert(f.name == 'a')
+
+j = Job()
+j.inputsandbox = ['a','b']
+assert(j.inputsandbox[0] == File('a'))
+assert(j.inputsandbox[1] == File('b'))
