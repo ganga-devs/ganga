@@ -1,4 +1,4 @@
-j = Job(backend=LSF())
+j = Job(backend=Batch())
 j.application = Executable(exe='sleep',args='100')
 j.submit()
 
@@ -10,14 +10,15 @@ j.kill()
 assert sleep_until_state(j,10,'killed'), "Job is not killed"
 
 
-j = Job(backend=LSF())
+j = Job(backend=Batch())
 j.application = Executable(exe='sleep',args='100')
 j.submit()
 
 assert sleep_until_state(j,10,'submitted'), "Can't submit job :( "
 
-import os
-assert os.system("bkill %s"%j.backend.id)==0, "Error while bkill"
+if config.Configuration.Batch == 'LSF':
+    import os
+    assert os.system("bkill %s"%j.backend.id)==0, "Error while bkill"
 
 j.kill()
 assert sleep_until_state(j,10,'killed'), "Job is not killed"

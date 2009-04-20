@@ -32,7 +32,7 @@ class Savannah9779(MultipassTest):
         print 'PASS 2: modify the job'
         j = jobs(-jobid)
         file(self.name,'w').write(str(j.id))
-        j.backend = LSF()
+        j.backend = Batch()
         j.application.exe = 'myexecutable'
         print j
         self.check_job(j)
@@ -55,5 +55,5 @@ class Savannah9779(MultipassTest):
     def check_job(self,j):
         assert(typename(j.application) == 'Executable')
         assert(j.application.exe == 'myexecutable')
-        assert(typename(j.backend) == 'LSF')
+        assert(typename(j.backend) == config.Configuration.Batch)
 

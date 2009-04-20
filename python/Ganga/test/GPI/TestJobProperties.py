@@ -50,7 +50,7 @@ class TestJobProperties(GangaGPITestCase):
         """ Test interactions with copy module.
         """
         ## CHANGE: "myattr" replaced by "name" because it is not possible to assign random attributes anymore
-        j = Job(backend="LSF",application='Executable')
+        j = Job(backend="Batch",application='Executable')
         j.name = 'hello'
         j.application.exe = 'my.exe'
         j.application.args = ['opt', File('x')]
@@ -111,7 +111,7 @@ class TestJobProperties(GangaGPITestCase):
         # component objects are of different class
 
         j = Job(backend = "Local")
-        j2 = Job(backend = "LSF")
+        j2 = Job(backend = "Batch")
         j2.backend.queue = 'b'
 
         ## CHANGE: comparing types is more "pythonic"
@@ -130,12 +130,12 @@ class TestJobProperties(GangaGPITestCase):
         j = Job(backend = "Local")
         assert(type(j.backend) == Local)
 
-        b = LSF(queue='b')
+        b = Batch(queue='b')
         assert(b.queue == 'b')
 
         j.backend = b
 
-        assert(type(j.backend) == LSF)
+        assert(type(j.backend) == Batch)
         assert(j.backend.queue == 'b')
 
         b.queue = 'c'
