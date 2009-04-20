@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.46 2009-04-07 08:35:55 elmsheus Exp $
+# $Id: Athena.py,v 1.47 2009-04-20 16:07:16 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -149,7 +149,7 @@ class Athena(IApplication):
                      
     _category = 'applications'
     _name = 'Athena'
-    _exportmethods = ['prepare', 'setup', 'postprocess', 'panda_prepare']
+    _exportmethods = ['old_prepare', 'setup', 'postprocess', 'prepare']
     
     _GUIPrefs = [ { 'attribute' : 'atlas_release',     'widget' : 'String' },
                   { 'attribute' : 'atlas_production',  'widget' : 'String' },
@@ -498,10 +498,19 @@ class Athena(IApplication):
             self.stats['numfiles2']=numfiles2
             self.stats['totalevents']=totalevents        
 
-    def panda_prepare(self, **options):
+    def prepare(self, **options):
         """Extract Athena job configuration and prepare job for submission"""
+
+        logger.warning('New prepare() method called. Please make sure to LCG=True or NG=True, if submitting to LCG or NG backend')
+
         if self.exclude_from_user_area:
             logger.warning('Athena.exclude_from_user_area does not work with panda_prepare() ! Some files are removed by default from the user_area.')
+
+
+        opt_athena_compile = options.get('athena_compile')
+        if opt_athena_compile:
+            self.athena_compile = opt_athena_compile  
+            logger.warning('prepare(athena_compile) has been used - please change to the new option Athena.athena_compile=True/False.')
 
         # get Athena versions
         rc, out = AthenaUtils.getAthenaVer()
@@ -675,7 +684,7 @@ class Athena(IApplication):
         
         return
 
-    def prepare(self, athena_compile=True, NG=False, **options):
+    def prepare_old(self, athena_compile=True, NG=False, **options):
         """Prepare the job from the user area"""
 
         self.read_cmt()
@@ -1189,6 +1198,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.46  2009/04/07 08:35:55  elmsheus
+# Introduce panda_prepare, dependent now on panda-client external
+#
 # Revision 1.45  2009/04/06 07:17:41  elmsheus
 # Fix for #48964, athena v15 setup
 #
