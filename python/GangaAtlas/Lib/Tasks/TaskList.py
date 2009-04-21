@@ -86,6 +86,7 @@ class TaskList(GangaObject):
          self.refresh_lock()
       time.sleep(0.5)
       ## .. hopefully ganga is now initialized. TODO: better way to find this out.
+      self.logger = getLogger()
       while not self._save_thread.should_stop():
          # Sleep and refresh lock interruptible for 30 seconds
          for i in range(0,60):
@@ -104,6 +105,7 @@ class TaskList(GangaObject):
       while not ("config" in reload(GPI).__dict__):
          time.sleep(0.4)
       time.sleep(0.5)
+      self.logger = getLogger()
       ## .. hopefully ganga is now initialized. TODO: better way to find this out.
       ## Main loop
       while not self._main_thread.should_stop():
