@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.29 2009-03-23 22:04:19 pajchel Exp $
+# $Id: NG.py,v 1.30 2009-04-21 13:46:18 bsamset Exp $
 ###############################################################################
 #
 # NG backend 
@@ -1067,15 +1067,17 @@ class NG(IBackend):
 
         # prepare the subjobs, xrsl repository before bulk submission
         xrslStrings=[]
+        
+        # Are we using a group area?
         i = 0
         group_area_srm = None
         for sc,sj in zip(subjobconfigs,rjobs):
           try:
-            if sj.application.group_area.name:
+            if sj.application._name=='Athena' and sj.application.group_area.name:
               if i == 0 and not sj.application.group_area.name.startswith('http'):
                 abspath = os.path.abspath(sj.application.group_area.name)
                 groupArea_s = os.path.getsize(abspath)
-              
+                
                 if groupArea_s > config['BoundSandboxLimit'] and i == 0: 
                   group_area_srm, rc = grids[mt].upload(sj.application.group_area.name)
                   if rc != 0:
@@ -2192,6 +2194,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.29  2009/03/23 22:04:19  pajchel
+# in getTidDatasetnames use listDatasetsInContainer
+#
 # Revision 1.28  2009/03/18 14:12:56  gjelsten
 # hacked get_cmd_prefix_hack
 #
