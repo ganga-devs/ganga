@@ -1,0 +1,85 @@
+**************************************************************************************************************
+5.2.0 (2009/4/21)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Updated tests for Batch backend.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Batch
+--------------------------------------------------------------------------------------------------------------
+Several updates to the Batch backends. The bugs and features requests
+numbered 35994, 36651, 45219, 47814 and 49078 have been addressed. The
+most important change is that batch jobs killed by the batch system
+itself (like if they overrun their CPU limit) are now correctly
+registered in Ganga as failed.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+------
+* New: Rewrite of Athena.prepare() 
+  - New CMT detection and tarfile creation for Panda
+  - use panda_prepare(LCG=True) or panda_prepare(NG=True)
+    to use this routine with LCG or NG or Batch backends
+  Old prepare() has been renamed to prepare_old()
+* dependent now on panda-client external 
+
+AthenaMC:
+---------
+* New: AthenaMCPandaRTHandler.py
+  Adding new Run Time Handler for the Panda backend. Simplified 
+  AthenaMC interface: production_name is now inactive, and 
+  process_name can be used to fill in for run_number as well. 
+  Finally, an attempt to extract process_name for input job 
+  options and/or dataset has been implemented, reducing the 
+  total number of mandatory fields. Native backend member to 
+  select a given storage can be used to replace se_name as well. 
+  Arguments in extraIncArgs can be put in extraArgs as well, 
+  using the dedicated key word . Added length check on output 
+  dataset names.
+
+Tasks:
+-----
+* Removed setting the inputGenerator file from tasks, 
+  this is set in AthenaMC automatically
+* Added safeguard so that manually resubmitting split jobs 
+  that failed on submission works
+
+scripts:
+-------
+* Use new prepare() method
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor bug fixes, along w/ some improvement on proxy checking.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Panda backend:
+    make runPandaBrokerage work for AthenaMC and Executable
+    add uploadSources function
+    updated schema:
+        added maxCpuCount
+        removed ara, ares, supStream and dbRelease (they are in Athena now)
+    added config options for hammercloud
+
+AthenaPandaRTHandler:
+    Athena parameters now come from Athena.panda_prepare()
+    Handle list of input datasets
+
+ExecutablePandaRTHandler:
+    Experimental support of generic Executables
+
+Test cases added for Athena+Panda
+
+**************************************************************************************************************
