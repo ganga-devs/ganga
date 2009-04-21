@@ -2,7 +2,7 @@
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
-# $Id: htmlizer.py,v 1.2 2008-11-26 08:31:33 moscicki Exp $
+# $Id: htmlizer.py,v 1.3 2009-04-21 13:09:23 moscicki Exp $
 # htmlizer.py is a Python module used to generate html reports based on output of 
 # Ganga Testing Framework
 #
@@ -163,7 +163,15 @@ def appendLinesToDetailedReport(out,group,tests):
             matcher1 = re.match(BUGID_PATTERN,t1_name)
             matcher2 = re.match(BUGID_PATTERN,t2_name)
             if matcher1 is not None and matcher2 is not None:
-                return int(matcher1.group(1))-int(matcher2.group(1))
+                try:
+                    mat1 = int(matcher1.group(1))
+                except:
+                    mat1 = 0
+                try:    
+                    mat2 = int(matcher2.group(1))
+                except:
+                    mat2 = 0
+                return mat1-mat2
             # else, natural order of name attributes    
             return cmp(t1_name,t2_name)
             
@@ -600,6 +608,10 @@ def main(config):
     return 1
         
 #$Log: not supported by cvs2svn $
+#Revision 1.2  2008/11/26 08:31:33  moscicki
+#GPIP (parallel) tests from Mason
+#untabified test.py
+#
 #Revision 1.1  2008/07/17 16:41:36  moscicki
 #migration of 5.0.2 to HEAD
 #
