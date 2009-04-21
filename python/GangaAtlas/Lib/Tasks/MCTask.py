@@ -73,8 +73,8 @@ class MCTask(Task):
       # if the first transformation has an input dataset, check which partitions are ready
       if len(self.transforms) > 0 and self.transforms[0].inputdata:
          tf = self.transforms[0]
-         dataset = tf.inputdata.get_dataset(tf.application, tf.backend._name)
-         inputnumbers = tf.inputdata.filesToNumbers(dataset[0].keys())
+         tf.inputdata.get_dataset(tf.application, tf.backend._name)
+         inputnumbers = tf.inputdata.filesToNumbers(tf.inputdata.turls.keys())
          partitions = tf.application.getPartitionsForInputs(inputnumbers, tf.inputdata)
          tf.setPartitionsStatus([c for c in range(1,lastpartition+1) if c in partitions], "ready")
          tf.setPartitionsStatus([c for c in range(1,lastpartition+1) if not c in partitions], "hold")

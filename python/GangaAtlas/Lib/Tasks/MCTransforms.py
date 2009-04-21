@@ -104,9 +104,10 @@ class MCTransform(Transform):
 
    def overview(self):
       if self.inputdata and self._getParent() and self._getParent().transforms.index(self) == 0:
+         if not "turls" in self.inputdata.__dict__:
+            self.inputdata.get_dataset(self.application, self.backend._name)
          # compare MCTask.py check() function
-         dataset = self.inputdata.get_dataset(self.application, self.backend._name)
-         partitions = self.inputdata.filesToNumbers(dataset[0].keys())
+         partitions = self.inputdata.filesToNumbers(self.inputdata.turls.keys())
          partitions.sort()
          o = markup("Inputdataset '%s' of %s '%s':\n" % (self.inputdata.DQ2dataset, self.__class__.__name__, self.name), status_colours["running"])
          for p in range(partitions[0], partitions[-1]+1):
