@@ -159,7 +159,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         jspec.prodSourceLabel   = 'panda'
         jspec.assignedPriority  = 2000
         jspec.computingSite     = job.backend.site
-        jspec.cloud             = job.backend.cloud
+        jspec.cloud             = job.backend.requirements.cloud
 #        jspec.jobParameters     = self.args not known yet
         jspec.jobParameters     = '-i %s -o %s' % (sources,self.library)
         
@@ -198,8 +198,8 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         
         job.backend.site = self.outsite
         job.backend.actualCE = self.outsite
-        cloud = job._getRoot().backend.cloud
-        job.backend.cloud = cloud
+        cloud = job._getRoot().backend.requirements.cloud
+        job.backend.requirements.cloud = cloud
      
 
         # now just filling the job from AthenaMC data
@@ -235,8 +235,8 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         jspec.assignedPriority  = 1000
         jspec.cloud             = cloud
         # memory
-        if job.backend.memory != -1:
-            jspec.minRamCount = job.backend.memory
+        if job.backend.requirements.memory != -1:
+            jspec.minRamCount = job.backend.requirements.memory
         jspec.computingSite     = self.outsite
 
 #       library (source files)
@@ -309,10 +309,10 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         #       job parameters
         param =  '-l %s ' % self.library # user tarball.
         # use corruption checker
-        if job.backend.corCheck:
+        if job.backend.requirements.corCheck:
             param += '--corCheck '
         # disable to skip missing files
-        if job.backend.notSkipMissing:
+        if job.backend.requirements.notSkipMissing:
             param += '--notSkipMissing '
         
         # transform parameters
