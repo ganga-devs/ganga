@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.47 2009-04-20 16:07:16 elmsheus Exp $
+# $Id: Athena.py,v 1.48 2009-04-22 07:51:12 dvanders Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -277,6 +277,10 @@ class Athena(IApplication):
         from Ganga.GPIDev.Lib.Job import Job
         job = self.getJobObject()
 
+        if job.backend.__class__.__name__ in [ 'Panda' ]:
+            self.stats = job.backend.get_stats()
+            return
+
         # Compress NG stdout.txt
         if 'stdout.txt' in os.listdir(job.outputdir):
             fileNameIn = os.path.join(job.outputdir,'stdout.txt')
@@ -480,7 +484,7 @@ class Athena(IApplication):
                 if not job.outputdata.output:
                     job.updateStatus('failed')
         # collect athena job statistics
-        if self.collect_stats and job.backend.__class__.__name__ in [ 'LCG', 'NG' ]:
+        if self.collect_stats and job.backend.__class__.__name__ in [ 'LCG', 'NG', 'Panda' ]:
             self.collectStats()
         # collect statistics for master job   
         if not job.master and job.subjobs:
@@ -1198,6 +1202,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.47  2009/04/20 16:07:16  elmsheus
+# Rename prepare->prepare_old and panda_prepare->prepare
+#
 # Revision 1.46  2009/04/07 08:35:55  elmsheus
 # Introduce panda_prepare, dependent now on panda-client external
 #
