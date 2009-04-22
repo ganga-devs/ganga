@@ -65,6 +65,7 @@ class TestSplitters(GangaGPITestCase):
 
     def test_GaussSplitter_split(self):
         job = Job(application=Gauss())
+        job.application.optsfile = 'this-is-not-a-file' # hack for Gauss
         job.application._impl.master_configure()
         gsplit = GaussSplitter(eventsPerJob=1,numberOfJobs=3)
         subjobs = gsplit._impl.split(job._impl)
