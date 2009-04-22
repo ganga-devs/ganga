@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.23 2009-04-22 07:43:44 dvanders Exp $
+# $Id: Panda.py,v 1.24 2009-04-22 07:59:50 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -425,7 +425,7 @@ class Panda(IBackend):
             'stoptime':"int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))",
             'totalevents':"self.jobSpec['nEvents']", 
             'wallclock':"(int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))-int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S'))))",
-            'percentcpu':"self.jobSpec['cpuConsumptionTime']/float(self.jobSpec['cpuConversion'])/(int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))-int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S'))))", # Calculated from submit_time and stop_time in seconds
+            'percentcpu':"int(100*self.jobSpec['cpuConsumptionTime']/float(self.jobSpec['cpuConversion'])/(int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))-int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S')))))",
             'numfiles':'',
             'pilot_timing_1':"int(self.jobSpec['pilotTiming'].split('|')[0])",
             'pilot_timing_2':"int(self.jobSpec['pilotTiming'].split('|')[1])",
@@ -444,6 +444,11 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.23  2009/04/22 07:43:44  dvanders
+# - Move requirements to PandaRequirements
+# - Store the Panda JobSpec in a backend.jobSpec dictionary
+# - Added backend.get_stats()
+#
 # Revision 1.22  2009/04/17 07:24:17  dvanders
 # add processingType
 #
