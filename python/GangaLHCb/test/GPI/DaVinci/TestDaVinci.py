@@ -30,12 +30,17 @@ class TestDaVinci(GangaGPITestCase):
 
     def test_old_opts(self):
         dv = DaVinci()
-        dv.version = 'v20r0' # force to use old gaudirun.py call
-        dv.optsfile = [self.path + 'opts.old.py']
+        dv.version = 'v19r7' # force to use old gaudirun.py call
+        #dv.optsfile = [self.path + 'opts.old.py']
         j = Job(application=dv)
-        j.outputsandbox = ['DVHistos.root']        
+        #j.outputsandbox = ['DVHistos.root']        
         j.inputdata = self.input_data
-        j.submit()
-        assert sleep_until_completed(j,1800)
-        j.peek()
-        assert(os.path.exists(os.path.join(j.outputdir,'DVHistos.root')))
+        got_err = False
+        try:
+            j.submit()
+        except JobError:
+            got_err = True
+        assert got_err, 'an error should have been raise'
+        #assert sleep_until_completed(j,1800)
+        #j.peek()
+        #assert(os.path.exists(os.path.join(j.outputdir,'DVHistos.root')))
