@@ -1,7 +1,7 @@
-###############################################################################
+&###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.17 2009-04-20 15:33:57 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.18 2009-04-22 14:38:08 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -76,6 +76,8 @@ class AthenaMC(IApplication):
     dbrelease=""
     runNumber=""
     subjobsOutfiles={}
+    evgen_job_option_filename=""
+
     def postprocess(self):
        """Determine outputdata and outputsandbox locations of finished jobs
        and fill output variable"""
@@ -206,7 +208,7 @@ class AthenaMC(IApplication):
                   "firstEvent=%s" % str(self.firstevt),
                   "maxEvents=%s" % str(self.Nevents_job),
                   "randomSeed=%s" % str(self.random_seed),
-                  "jobConfig=%s" % self.evgen_job_option,
+                  "jobConfig=%s" % self.evgen_job_option_filename,
                   "outputEvgenFile=%s" % self.outputfiles["EVNT"]
                   ]
 
@@ -544,13 +546,19 @@ class AthenaMC(IApplication):
              assert self.evgen_job_option
           except AssertionError:
              logger.error('Please provide a start value for parameter evgen_job_option needed for any evgen transformation')
-             
-          jobfields=self.evgen_job_option.split(".")
+          if os.path.exists(self.evgen_job_option):
+              # need to strip the path away.
+              self.evgen_job_option_filename = self.evgen_job_option.split("/")[-1]
+          else:
+              self.evgen_job_option_filename = self.evgen_job_option
+
+       
+          jobfields=self.evgen_job_option_filename.split(".")
           try:
               assert len(jobfields)==4 and jobfields[1].isdigit() and len(jobfields[1])==6
               
           except:
-              raise ApplicationConfigurationError(None,"Badly formatted job option name %s. Transformation expects to find something named $project.$runNumber.$body.py, where $runNumber is a 6-digit number and $body does not contain any dot (.)" % self.evgen_job_option )
+              raise ApplicationConfigurationError(None,"Badly formatted job option name %s. Transformation expects to find something named $project.$runNumber.$body.py, where $runNumber is a 6-digit number and $body does not contain any dot (.)" % self.evgen_job_option_filename )
           self.runNumber=self.run_number
           if not self.run_number:
               self.runNumber=str(jobfields[1])
@@ -710,6 +718,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.17  2009/04/20 15:33:57  fbrochu
+# Redistribution of code between AthenaMC.py and the RTHandlers. The application handles the preparation of input/output data through AthenaMCDatasets functions, while the RTHandlers just deal with backend specific issues and formatting, reading all the data they need from AthenaMC members.
+#
 # Revision 1.16  2009/04/03 12:48:30  fbrochu
 # Adding new Run Time Handler for the Panda backend. Simplified AthenaMC interface: process_name is now inactive, and production_name can be used to fill in for run_number as well. Finally, an attempt to extract process_name for input job options and/or dataset has been implemented, reducing the total number of mandatory fields. Native backend member to select a given storage can be used to replace se_name as well. Arguments in extraIncArgs can be put in extraArgs as well, using the dedicated key word . Added length check on output dataset names.
 #

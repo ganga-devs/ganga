@@ -318,6 +318,11 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         # transform parameters
         # need to update arglist with final output file name...
         newArgs=[]
+        if app.mode != "template":
+            app.args[3]=app.args[3]+" -t "
+            if app.verbosity:
+                app.args[3]=app.args[3]+" -l %s " % app.verbosity
+
         for arg in app.args[3:]:
             for type in outfiles.keys():
                 if arg.find(outfiles[type])>-1:
