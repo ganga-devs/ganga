@@ -42,17 +42,32 @@ class PythonOptionsParser:
         options = {}
         
         rc, stdout, m = self.shell.cmd1( gaudirun)
-        
-        if stdout.find('no such option: -o') >= 0:
+
+        if stdout.find('Gaudi.py') >= 0:
+            msg = 'The version of gaudirun.py required for your application is\
+            not supported.'
+            raise ValueError(None,msg)
+            # really old version of gaudirun.py
+            #gaudirun = 'gaudirun.py -c -v -p %s %s' \
+            #           % (tmp_pkl.name, opyd_opts.name)
+            #rc, stdout, m = self.shell.cmd1(gaudirun)
+            #if stdout and rc == 0:
+            #    opts_str = stdout
+            #    err_msg = 'Please check gaudirun.py -c -v %s' % py_opts.name
+            #    err_msg += ' returns valid python syntax' 
+                    
+        elif stdout.find('no such option: -o') >= 0: 
             # old version of gaudirun.py
             gaudirun = 'gaudirun.py -n -v -p %s %s' \
-                       % ( tmp_pkl.name, py_opts.name)
+                       % (tmp_pkl.name, py_opts.name)
             rc, stdout, m = self.shell.cmd1( gaudirun)
-
+            rc = 0
+                      
             if stdout and rc == 0:
                 opts_str = stdout
-                err_msg = 'Please check gaudirun.py -n -v %s' % py_opts.name
-                err_msg += ' returns valid python syntax' 
+                err_msg = 'Please check %s -v %s' % (cmdbase,py_opts.name)
+                err_msg += ' returns valid python syntax'
+                
         else:
             # new version of gaudirun.py
             cmd = 'gaudirun.py -n -p %s %s' % (tmp_pkl.name, py_opts.name)

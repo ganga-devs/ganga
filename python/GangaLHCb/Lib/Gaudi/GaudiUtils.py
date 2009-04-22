@@ -95,7 +95,7 @@ def get_user_dlls(appname,version,user_release_area,platform,shell):
   subdir_pys = {}
   project_areas = []
   py_project_areas = []
-  
+
   for line in showProj.split('\n'):
     for entry in line.split():
       if entry.startswith(user_ra) or entry.startswith(full_user_ra):
