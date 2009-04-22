@@ -265,14 +265,16 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         if app.transform_archive and string.find(app.transform_archive,"AtlasTier0")>-1:
             requirements.software=['VO-atlas-tier0-%s' % app.prod_release]
         extraConfig=getConfig('defaults_AtlasLCGRequirements')
-        dq2client_version = extraConfig['dq2client_version']
+        if  'dq2client_version' in extraConfig:
+            dq2client_version = extraConfig['dq2client_version']
 
         if job.backend.requirements.dq2client_version:
             dq2client_version = job.backend.requirements.dq2client_version
         try:
             assert dq2client_version!=""
         except:
-            raise 
+            raise  ApplicationConfigurationError(None,"Please give a value to dq2client_version in job.backend.requirements.")
+        
         requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
 
         # job to data, strict: target outsite and nothing else.
