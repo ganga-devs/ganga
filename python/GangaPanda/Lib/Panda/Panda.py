@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.25 2009-04-22 08:35:13 dvanders Exp $
+# $Id: Panda.py,v 1.26 2009-04-22 11:42:52 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -159,7 +159,7 @@ def uploadSources(path,sources):
         raise BackendError('Panda','Exception while uploading archive: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
 
 class PandaBuildJob(GangaObject):
-    _schema = Schema(Version(1,1), {
+    _schema = Schema(Version(2,0), {
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=0,copyable=0,doc='Panda Job id'),
         'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=0,doc='Panda Job status'),
         'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec')
@@ -174,7 +174,7 @@ class PandaBuildJob(GangaObject):
 class Panda(IBackend):
     '''Panda backend'''
 
-    _schema = Schema(Version(1,5), {
+    _schema = Schema(Version(2,0), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'requirements'  : ComponentItem('PandaRequirements',doc='Requirements for the resource selection'),
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
@@ -425,20 +425,25 @@ class Panda(IBackend):
             'site':"self.jobSpec['computingSite']",
             'exitstatus':"self.jobSpec['transExitCode']",
             'outse':"self.jobSpec['destinationSE']",
-            'jdltime':"int(time.mktime(time.strptime(self.jobSpec['creationTime'],'%Y-%m-%d %H:%M:%S')))",
+            'jdltime':"''",
+            'submittime':"int(time.mktime(time.strptime(self.jobSpec['creationTime'],'%Y-%m-%d %H:%M:%S')))",
             'startime':"int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S')))",
             'stoptime':"int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))",
-            'totalevents':"self.jobSpec['nEvents']", 
+            'totalevents':"int(self.jobSpec['nEvents'])", 
             'wallclock':"(int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))-int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S'))))",
             'percentcpu':"int(100*self.jobSpec['cpuConsumptionTime']/float(self.jobSpec['cpuConversion'])/(int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))-int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S')))))",
             'numfiles':'""',
             'gangatime1':'""',
-            'gangatime2':"int(self.jobSpec['pilotTiming'].split('|')[0])",
-            'gangatime3':"int(self.jobSpec['pilotTiming'].split('|')[1])",
-            'gangatime4':"int(self.jobSpec['pilotTiming'].split('|')[2])",
-            'gangatime5':"int(self.jobSpec['pilotTiming'].split('|')[3])",
+            'gangatime2':'""',
+            'gangatime3':'""',
+            'gangatime4':'""',
+            'gangatime5':'""',
+            'pandatime1':"int(self.jobSpec['pilotTiming'].split('|')[0])",
+            'pandatime2':"int(self.jobSpec['pilotTiming'].split('|')[1])",
+            'pandatime3':"int(self.jobSpec['pilotTiming'].split('|')[2])",
+            'pandatime4':"int(self.jobSpec['pilotTiming'].split('|')[3])",
             'NET_ETH_RX_PREATHENA':'""',
-            'NET_ETH_RX_AFTERATHENA':'""',
+            'NET_ETH_RX_AFTERATHENA':'""'
             }
         stats = {}
         for k in fields.keys():
@@ -450,6 +455,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.25  2009/04/22 08:35:13  dvanders
+# Error codes in the Panda object
+#
 # Revision 1.24  2009/04/22 07:59:50  dvanders
 # percentcpu is an int
 #
