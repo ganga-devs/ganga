@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.24 2009-04-22 07:59:50 dvanders Exp $
+# $Id: Panda.py,v 1.25 2009-04-22 08:35:13 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -185,8 +185,9 @@ class Panda(IBackend):
         'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
         'buildjob'      : ComponentItem('PandaBuildJob',load_default=0,optional=1,protected=1,copyable=0,doc='Panda Build Job'),
         'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
-        'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
-        'reason'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status')
+        'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code (transExitCode)'),
+        'piloterrorcode': SimpleItem(defvalue='',protected=1,copyable=0,doc='Pilot Error Code'),
+        'reason'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Pilot Error Code Diagnostics')
     })
 
     _category = 'backends'
@@ -359,6 +360,7 @@ class Panda(IBackend):
 
                 if job.backend.status != status.jobStatus:
                     job.backend.jobSpec = dict(zip(status._attributes,status.values()))
+
                     for k in job.backend.jobSpec.keys():
                         if type(job.backend.jobSpec[k]) not in [type(''),type(1)]:
                             job.backend.jobSpec[k]=str(job.backend.jobSpec[k])
@@ -370,7 +372,11 @@ class Panda(IBackend):
                         job.backend.CE = status.computingElement
                     else:
                         job.backend.CE = None
-               
+
+                    job.backend.exitcode = str(status.transExitCode)
+                    job.backend.pilotErrorCode = str(status.transExitCode)
+                    job.backend.reason = str(status.pilotErrorDiag)
+
                     if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
                         pass
                     elif status.jobStatus in ['starting','running','holding','transferring']:
@@ -417,22 +423,22 @@ class Panda(IBackend):
     def get_stats(self):
         fields = {
             'site':"self.jobSpec['computingSite']",
-            'exit_status_1':"self.jobSpec['transExitCode']",
-            'exit_status_2':"self.jobSpec['exeErrorCode']",
+            'exitstatus':"self.jobSpec['transExitCode']",
             'outse':"self.jobSpec['destinationSE']",
-            'submittime':"int(time.mktime(time.strptime(self.jobSpec['creationTime'],'%Y-%m-%d %H:%M:%S')))",
+            'jdltime':"int(time.mktime(time.strptime(self.jobSpec['creationTime'],'%Y-%m-%d %H:%M:%S')))",
             'startime':"int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S')))",
             'stoptime':"int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))",
             'totalevents':"self.jobSpec['nEvents']", 
             'wallclock':"(int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))-int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S'))))",
             'percentcpu':"int(100*self.jobSpec['cpuConsumptionTime']/float(self.jobSpec['cpuConversion'])/(int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))-int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S')))))",
-            'numfiles':'',
-            'pilot_timing_1':"int(self.jobSpec['pilotTiming'].split('|')[0])",
-            'pilot_timing_2':"int(self.jobSpec['pilotTiming'].split('|')[1])",
-            'pilot_timing_3':"int(self.jobSpec['pilotTiming'].split('|')[2])",
-            'pilot_timing_4':"int(self.jobSpec['pilotTiming'].split('|')[3])"
-#            'net_eth_rx_preathena':'',
-#            'net_eth_rx_postathena':'',
+            'numfiles':'""',
+            'gangatime1':'""',
+            'gangatime2':"int(self.jobSpec['pilotTiming'].split('|')[0])",
+            'gangatime3':"int(self.jobSpec['pilotTiming'].split('|')[1])",
+            'gangatime4':"int(self.jobSpec['pilotTiming'].split('|')[2])",
+            'gangatime5':"int(self.jobSpec['pilotTiming'].split('|')[3])",
+            'NET_ETH_RX_PREATHENA':'""',
+            'NET_ETH_RX_AFTERATHENA':'""',
             }
         stats = {}
         for k in fields.keys():
@@ -444,6 +450,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.24  2009/04/22 07:59:50  dvanders
+# percentcpu is an int
+#
 # Revision 1.23  2009/04/22 07:43:44  dvanders
 # - Move requirements to PandaRequirements
 # - Store the Panda JobSpec in a backend.jobSpec dictionary
