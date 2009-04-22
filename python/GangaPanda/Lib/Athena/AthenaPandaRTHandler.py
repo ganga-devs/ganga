@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.25 2009-04-17 07:24:17 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.26 2009-04-22 07:43:44 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -179,7 +179,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.processingType    = configPanda['processingType']
         jspec.assignedPriority  = configPanda['assignedPriorityBuild']
         jspec.computingSite     = job.backend.site
-        jspec.cloud             = job.backend.cloud
+        jspec.cloud             = job.backend.requirements.cloud
         jspec.jobParameters     = '-i %s -o %s' % (app.user_area.name.split('/')[-1],self.library)
         matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
         if matchURL:
@@ -242,8 +242,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         site = job._getRoot().backend.site
         job.backend.site = site
         job.backend.actualCE = site
-        cloud = job._getRoot().backend.cloud
-        job.backend.cloud = cloud
+        cloud = job._getRoot().backend.requirements.cloud
+        job.backend.requirements.cloud = cloud
 
 #       if no outputdata are given
         if not job.outputdata:
@@ -287,10 +287,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.assignedPriority  = configPanda['assignedPriorityRun']
         jspec.cloud             = cloud
         jspec.computingSite     = site
-        if job.backend.memory != -1:
-            jspec.minRamCount = job.backend.memory
-        if job.backend.maxCpuCount != -1:
-            jspec.maxCpuCount = job.backend.maxCpuCount
+        if job.backend.requirements.memory != -1:
+            jspec.minRamCount = job.backend.requirements.memory
+        if job.backend.requirements.cputime != -1:
+            jspec.maxCpuCount = job.backend.requirements.cputime
 
 #       library (source files)
         flib = FileSpec()
@@ -558,10 +558,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         #if self.config['addPoolFC'] != "":
         #    param += '--addPoolFC %s ' % self.config['addPoolFC']
         # use corruption checker
-        if job.backend.corCheck:
+        if job.backend.requirements.corCheck:
             param += '--corCheck '
         # disable to skip missing files
-        if job.backend.notSkipMissing:
+        if job.backend.requirements.notSkipMissing:
             param += '--notSkipMissing '
         # given PFN 
         #if self.config['pfnList'] != '':

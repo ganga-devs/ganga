@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ExecutablePandaRTHandler.py,v 1.3 2009-04-07 15:20:35 dvanders Exp $
+# $Id: ExecutablePandaRTHandler.py,v 1.4 2009-04-22 07:43:44 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -132,8 +132,8 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         site = job._getRoot().backend.site
         job.backend.site = site
         job.backend.actualCE = site
-        cloud = job._getRoot().backend.cloud
-        job.backend.cloud = cloud
+        cloud = job._getRoot().backend.requirements.cloud
+        job.backend.requirements.cloud = cloud
 
 #       if no outputdata are given
         if not job.outputdata:
@@ -165,8 +165,8 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         jspec.assignedPriority  = 1000
         jspec.cloud             = cloud
         # memory
-        if job.backend.memory != -1:
-            jspec.minRamCount = job.backend.memory
+        if job.backend.requirements.memory != -1:
+            jspec.minRamCount = job.backend.requirements.memory
         jspec.computingSite     = site
 
 #       input files FIXME: many more input types

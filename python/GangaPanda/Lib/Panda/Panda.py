@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.22 2009-04-17 07:24:17 dvanders Exp $
+# $Id: Panda.py,v 1.23 2009-04-22 07:43:44 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -26,6 +26,14 @@ from taskbuffer.JobSpec import JobSpec
 from taskbuffer.FileSpec import FileSpec
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
+
+logger = getLogger()
+config = makeConfig('Panda','Panda backend configuration parameters')
+config.addOption( 'prodSourceLabelBuild', 'panda', 'prodSourceLabelBuild')
+config.addOption( 'prodSourceLabelRun', 'user', 'prodSourceLabelRun')
+config.addOption( 'assignedPriorityBuild', 2000, 'assignedPriorityBuild' )
+config.addOption( 'assignedPriorityRun', 1000, 'assignedPriorityRun' )
+config.addOption( 'processingType', '', 'processingType' )
 
 def queueToAllowedSites(queue):
     try:
@@ -94,18 +102,18 @@ def runPandaBrokerage(job):
             except exceptions.SystemExit:
                 raise BackendError('Panda','Error in Client.queryFilesInDataset')
             try:
-                dsLocationMap = Client.getLocations(dataset,fileList,job.backend.cloud,False,False,expCloud=True)
+                dsLocationMap = Client.getLocations(dataset,fileList,job.backend.requirements.cloud,False,False,expCloud=True)
             except exceptions.SystemExit:
                 raise BackendError('Panda','Error in Client.getLocations')
             # no location
             if dsLocationMap == {}:
-                raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.cloud,job.inputdata.dataset[0]))
+                raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.requirements.cloud,job.inputdata.dataset[0]))
             # run brorage
             for tmpItem in dsLocationMap.values():
                 tmpSites.append(tmpItem)
         else:
             for site,spec in Client.PandaSites.iteritems():
-                if spec['cloud']==job.backend.cloud and spec['status']=='online' and not Client.isExcudedSite(site):
+                if spec['cloud']==job.backend.requirements.cloud and spec['status']=='online' and not Client.isExcudedSite(site):
                     tmpSites.append(site)
         tag = ''
         try:
@@ -128,12 +136,12 @@ def runPandaBrokerage(job):
         job.backend.site = "ANALY_BNL_ATLAS_1"
 
     # long queue
-    if job.backend.long:
+    if job.backend.requirements.long:
         job.backend.site = re.sub('ANALY_','ANALY_LONG_',job.backend.site)
     job.backend.actualCE = job.backend.site
     # correct the cloud in case site was not AUTO
-    job.backend.cloud = Client.PandaSites[job.backend.site]['cloud']
-    logger.info('Panda brokerage results: cloud %s, site %s'%(job.backend.cloud,job.backend.site))
+    job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
+    logger.info('Panda brokerage results: cloud %s, site %s'%(job.backend.requirements.cloud,job.backend.site))
 
 
 def uploadSources(path,sources):
@@ -151,9 +159,10 @@ def uploadSources(path,sources):
         raise BackendError('Panda','Exception while uploading archive: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
 
 class PandaBuildJob(GangaObject):
-    _schema = Schema(Version(1,0), {
+    _schema = Schema(Version(1,1), {
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=0,copyable=0,doc='Panda Job id'),
-        'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=0,doc='Panda Job status')
+        'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=0,doc='Panda Job status'),
+        'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec')
     })
 
     _category = 'PandaBuildJob'
@@ -167,24 +176,22 @@ class Panda(IBackend):
 
     _schema = Schema(Version(1,5), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
-        'long'          : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send job to a long queue'),
-        'cloud'         : SimpleItem(defvalue='US',protected=0,copyable=1,doc='cloud where jobs are submitted (default:US)'),
-#        'noBuild'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Skip buildJob'),
-        'memory'        : SimpleItem(defvalue=-1,protected=0,copyable=1,doc='Required memory size'),
-        'maxCpuCount'   : SimpleItem(defvalue=-1,protected=0,copyable=1,doc='Required CPU count in seconds. Mainly to extend time limit for looping detection'),
+        'requirements'  : ComponentItem('PandaRequirements',doc='Requirements for the resource selection'),
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
         'extFile'       : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='Extra files to ship to the worker node'),
-        'corCheck'      : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Enable a checker to skip corrupted files'),        
-        'notSkipMissing': SimpleItem(defvalue=False,protected=0,copyable=1,doc='If input files are not read from SE, they will be skipped by default. This option disables the functionality'),
-        'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='Panda job id'),
+        'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='PandaID of the job'),
+        'parent_id'     : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='JobID of the job'),
         'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Panda job status'),
         'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
-        'buildjob'      : ComponentItem('PandaBuildJob',load_default=0,optional=1,protected=1,copyable=0,doc='Panda Build Job')
+        'buildjob'      : ComponentItem('PandaBuildJob',load_default=0,optional=1,protected=1,copyable=0,doc='Panda Build Job'),
+        'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
+        'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
+        'reason'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status')
     })
 
     _category = 'backends'
     _name = 'Panda'
-    _exportmethods = ['list_sites']
+    _exportmethods = ['list_sites','get_stats']
   
     def __init__(self):
         super(Panda,self).__init__()
@@ -342,7 +349,7 @@ class Panda(IBackend):
         if rc:
             logger.error('Return code %d retrieving job status information.',rc)
             raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
-      
+     
         for status in jobsStatus:
 
             if not status: continue
@@ -351,6 +358,11 @@ class Panda(IBackend):
             if job.backend.id == status.PandaID:
 
                 if job.backend.status != status.jobStatus:
+                    job.backend.jobSpec = dict(zip(status._attributes,status.values()))
+                    for k in job.backend.jobSpec.keys():
+                        if type(job.backend.jobSpec[k]) not in [type(''),type(1)]:
+                            job.backend.jobSpec[k]=str(job.backend.jobSpec[k])
+
                     logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
                     job.backend.status = status.jobStatus
 
@@ -372,6 +384,11 @@ class Panda(IBackend):
 
             elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
                 if job.backend.buildjob.status != status.jobStatus:
+                    job.backend.buildjob.jobSpec = dict(zip(status._attributes,status.values()))
+                    for k in job.backend.buildjob.jobSpec.keys():
+                        if type(job.backend.buildjob.jobSpec[k]) not in [type(''),type(1)]:
+                            job.backend.buildjob.jobSpec[k]=str(job.backend.buildjob.jobSpec[k])
+
                     logger.debug('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
                     job.backend.buildjob.status = status.jobStatus
 
@@ -388,6 +405,7 @@ class Panda(IBackend):
 
         for job in jobs:
             if job.subjobs and job.status <> 'failed': job.updateMasterJobStatus()
+        
 
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
@@ -396,18 +414,39 @@ class Panda(IBackend):
         sites.sort()
         return sites
 
-logger = getLogger()
-config = makeConfig('Panda','Panda backend configuration parameters')
-config.addOption( 'prodSourceLabelBuild', 'panda', 'prodSourceLabelBuild')
-config.addOption( 'prodSourceLabelRun', 'user', 'prodSourceLabelRun')
-config.addOption( 'assignedPriorityBuild', 2000, 'assignedPriorityBuild' )
-config.addOption( 'assignedPriorityRun', 1000, 'assignedPriorityRun' )
-config.addOption( 'processingType', '', 'processingType' )
-
-
+    def get_stats(self):
+        fields = {
+            'site':"self.jobSpec['computingSite']",
+            'exit_status_1':"self.jobSpec['transExitCode']",
+            'exit_status_2':"self.jobSpec['exeErrorCode']",
+            'outse':"self.jobSpec['destinationSE']",
+            'submittime':"int(time.mktime(time.strptime(self.jobSpec['creationTime'],'%Y-%m-%d %H:%M:%S')))",
+            'startime':"int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S')))",
+            'stoptime':"int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))",
+            'totalevents':"self.jobSpec['nEvents']", 
+            'wallclock':"(int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))-int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S'))))",
+            'percentcpu':"self.jobSpec['cpuConsumptionTime']/float(self.jobSpec['cpuConversion'])/(int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))-int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S'))))", # Calculated from submit_time and stop_time in seconds
+            'numfiles':'',
+            'pilot_timing_1':"int(self.jobSpec['pilotTiming'].split('|')[0])",
+            'pilot_timing_2':"int(self.jobSpec['pilotTiming'].split('|')[1])",
+            'pilot_timing_3':"int(self.jobSpec['pilotTiming'].split('|')[2])",
+            'pilot_timing_4':"int(self.jobSpec['pilotTiming'].split('|')[3])"
+#            'net_eth_rx_preathena':'',
+#            'net_eth_rx_postathena':'',
+            }
+        stats = {}
+        for k in fields.keys():
+            try:
+                stats[k] = eval(fields[k])
+            except:
+                pass
+        return stats
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.22  2009/04/17 07:24:17  dvanders
+# add processingType
+#
 # Revision 1.21  2009/04/07 15:20:35  dvanders
 # runPandaBrokerage works for no inputdata
 #
