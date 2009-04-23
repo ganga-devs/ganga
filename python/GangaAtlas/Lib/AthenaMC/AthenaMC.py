@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.19 2009-04-23 09:54:12 ebke Exp $
+# $Id: AthenaMC.py,v 1.20 2009-04-23 15:25:11 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -65,21 +65,6 @@ class AthenaMC(IApplication):
     _exportmethods = ['prepare', 'postprocess']
     _GUIPrefs= [ { 'attribute' : 'mode', 'widget' : 'String_Choice', 'choices' : ['evgen','simul','recon','template']}, { 'attribute' : 'verbosity', 'widget' : 'String_Choice', 'choices' : ['ALL','VERBOSE','DEBUG','INFO','WARNING','ERROR','FATAL']}]
 
-    def __init__(self):
-       super(AthenaMC,self).__init__()     
-       self.prod_release,self.atlas_rel="",""
-       self.turls,self.cavern_turls,self.minbias_turls,self.dbturls={},{},{},{}
-       self.lfcs,self.cavern_lfcs,self.minbias_lfcs,self.dblfcs={},{},{},{}
-       self.sites,self.cavern_sites,self.minbias_sites,self.dbsites=[],[],[],[]
-       self.outputpaths,self.fileprefixes,self.outputfiles={},{},{}
-       self.dsetmap,self.sitemap={},{}
-       self.inputfiles,self.cavernfiles,self.mbfiles,self.dbfiles=[],[],[],[]
-       self.infileString=""
-       self.args=[]
-       self.dbrelease=""
-       self.runNumber=""
-       self.subjobsOutfiles={}
-       self.evgen_job_option_filename=""
 
     def postprocess(self):
        """Determine outputdata and outputsandbox locations of finished jobs
@@ -529,8 +514,22 @@ class AthenaMC(IApplication):
     
     def master_configure(self):
        """Prepare the master job """
-       # basic checks
+       self.prod_release,self.atlas_rel="",""
+       self.turls,self.cavern_turls,self.minbias_turls,self.dbturls={},{},{},{}
+       self.lfcs,self.cavern_lfcs,self.minbias_lfcs,self.dblfcs={},{},{},{}
+       self.sites,self.cavern_sites,self.minbias_sites,self.dbsites=[],[],[],[]
+       self.outputpaths,self.fileprefixes,self.outputfiles={},{},{}
+       self.dsetmap,self.sitemap={},{}
+       self.inputfiles,self.cavernfiles,self.mbfiles,self.dbfiles=[],[],[],[]
+       self.infileString=""
+       self.args=[]
+       self.dbrelease=""
+       self.runNumber=""
+       self.subjobsOutfiles={}
+       self.evgen_job_option_filename=""
+       
        job = self._getRoot()
+       # basic checks
        try:
           assert self.mode in [ 'evgen', 'simul' , 'recon' , 'template']
        except AssertionError:
@@ -720,6 +719,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.19  2009/04/23 09:54:12  ebke
+# Added __init__ function to avoid global scope of lists
+#
 # Revision 1.18  2009/04/22 14:38:08  fbrochu
 # bug fix for evgen job option file handling and missing transforms flags in panda
 #
