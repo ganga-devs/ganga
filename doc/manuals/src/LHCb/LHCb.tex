@@ -343,6 +343,16 @@ You can specify the requested CPU time for a job in seconds on the \grid by
 setting the \texttt{CPUTime} attribute of the \dirac backend. If you set a low
 number your job should start running quicker.
 
+\begin{notice}
+A job marked as stalled in the \dirac system can occasionally be manually
+restarted by the \dirac operator (who will usually notify you by email).
+If this is the case the job will revert to one of the
+(`Checking',`Matched',`Received',`Staging',`Waiting') states in the
+\dirac online monitoring. To make \ganga aware that the job has been
+restarted you can use the \texttt{reset} method on the \texttt{Dirac} backend.
+\ganga will then monitor the job again as if it had never been in a `failed' state.
+\end{notice}
+
 \section{Input and Output}
 \label{sec:InOut}
 
