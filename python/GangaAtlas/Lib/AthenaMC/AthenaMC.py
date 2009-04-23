@@ -1,7 +1,7 @@
-&###############################################################################
+###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.18 2009-04-22 14:38:08 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.19 2009-04-23 09:54:12 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -64,19 +64,22 @@ class AthenaMC(IApplication):
     _name = 'AthenaMC'
     _exportmethods = ['prepare', 'postprocess']
     _GUIPrefs= [ { 'attribute' : 'mode', 'widget' : 'String_Choice', 'choices' : ['evgen','simul','recon','template']}, { 'attribute' : 'verbosity', 'widget' : 'String_Choice', 'choices' : ['ALL','VERBOSE','DEBUG','INFO','WARNING','ERROR','FATAL']}]
-    prod_release,atlas_rel="",""
-    turls,cavern_turls,minbias_turls,dbturls={},{},{},{}
-    lfcs,cavern_lfcs,minbias_lfcs,dblfcs={},{},{},{}
-    sites,cavern_sites,minbias_sites,dbsites=[],[],[],[]
-    outputpaths,fileprefixes,outputfiles={},{},{}
-    dsetmap,sitemap={},{}
-    inputfiles,cavernfiles,mbfiles,dbfiles=[],[],[],[]
-    infileString=""
-    args=[]
-    dbrelease=""
-    runNumber=""
-    subjobsOutfiles={}
-    evgen_job_option_filename=""
+
+    def __init__(self):
+       super(AthenaMC,self).__init__()     
+       self.prod_release,self.atlas_rel="",""
+       self.turls,self.cavern_turls,self.minbias_turls,self.dbturls={},{},{},{}
+       self.lfcs,self.cavern_lfcs,self.minbias_lfcs,self.dblfcs={},{},{},{}
+       self.sites,self.cavern_sites,self.minbias_sites,self.dbsites=[],[],[],[]
+       self.outputpaths,self.fileprefixes,self.outputfiles={},{},{}
+       self.dsetmap,self.sitemap={},{}
+       self.inputfiles,self.cavernfiles,self.mbfiles,self.dbfiles=[],[],[],[]
+       self.infileString=""
+       self.args=[]
+       self.dbrelease=""
+       self.runNumber=""
+       self.subjobsOutfiles={}
+       self.evgen_job_option_filename=""
 
     def postprocess(self):
        """Determine outputdata and outputsandbox locations of finished jobs
@@ -552,11 +555,10 @@ class AthenaMC(IApplication):
           else:
               self.evgen_job_option_filename = self.evgen_job_option
 
-       
           jobfields=self.evgen_job_option_filename.split(".")
           try:
               assert len(jobfields)==4 and jobfields[1].isdigit() and len(jobfields[1])==6
-              
+
           except:
               raise ApplicationConfigurationError(None,"Badly formatted job option name %s. Transformation expects to find something named $project.$runNumber.$body.py, where $runNumber is a 6-digit number and $body does not contain any dot (.)" % self.evgen_job_option_filename )
           self.runNumber=self.run_number
@@ -718,6 +720,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.18  2009/04/22 14:38:08  fbrochu
+# bug fix for evgen job option file handling and missing transforms flags in panda
+#
 # Revision 1.17  2009/04/20 15:33:57  fbrochu
 # Redistribution of code between AthenaMC.py and the RTHandlers. The application handles the preparation of input/output data through AthenaMCDatasets functions, while the RTHandlers just deal with backend specific issues and formatting, reading all the data they need from AthenaMC members.
 #
