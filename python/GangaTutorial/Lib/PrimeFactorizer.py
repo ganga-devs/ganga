@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PrimeFactorizer.py,v 1.1 2008-07-17 16:41:37 moscicki Exp $
+# $Id: PrimeFactorizer.py,v 1.2 2009-04-23 13:47:59 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
@@ -84,3 +84,24 @@ allHandlers.add('PrimeFactorizer','LCG', LCGRTHandler)
 allHandlers.add('PrimeFactorizer','TestSubmitter', RTHandler)
 allHandlers.add('PrimeFactorizer','Interactive', RTHandler)
 allHandlers.add('PrimeFactorizer','Batch', RTHandler)
+
+
+##############################################################
+## handler for NG
+
+from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+
+class NGRTHandler(IRuntimeHandler):
+
+    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
+        from GangaNG.Lib.NG import NGJobConfig
+        #print 'NGRT Factorizer prepare',(app.exe,app.inputs,app.args,app.outputs,app.envs)
+        return NGJobConfig(app.exe,app.inputs,app.args,app.outputs,app.envs)
+                            
+#from GangaNG.Lib.NG.NGRTHandler import NGRTHandler
+
+#allHandlers.add('PrimeFactorizer', 'NG', NGRTHandler)
+
+print "*** PrimeFactorizer application is not enabled on NG (yet) ***"
+
