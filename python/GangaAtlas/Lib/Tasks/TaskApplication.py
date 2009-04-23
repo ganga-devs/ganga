@@ -88,7 +88,8 @@ class TaskSplitter(object):
             subjobs[i].application.id = transform.getNewAppID(subjobs[i].application.partition_number)
             # Do not set to submitting - failed submission will make the applications stuck...
             # transform.setAppStatus(subjobs[i].application, "submitting")
-        job.application.tasks_id = "00:%s" % job.application.tasks_id
+        if not job.application.tasks_id.startswith("00"):
+            job.application.tasks_id = "00:%s" % job.application.tasks_id
         return subjobs
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -122,8 +123,9 @@ class AnaTaskSplitterJob(ISplitter):
             # Task handling
             j.application.tasks_id = job.application.tasks_id
             j.application.id = transform.getNewAppID(sj)
-            #transform.setAppStatus(j.application, "submitting")
-        job.application.tasks_id = "00:%s" % job.application.tasks_id
+             #transform.setAppStatus(j.application, "submitting")
+        if not job.application.tasks_id.startswith("00"):
+            job.application.tasks_id = "00:%s" % job.application.tasks_id
         return sjl
 
 from Ganga.Lib.Executable.Executable import Executable
