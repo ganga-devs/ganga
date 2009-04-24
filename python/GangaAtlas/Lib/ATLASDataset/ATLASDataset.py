@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ATLASDataset.py,v 1.6 2009-03-19 15:46:17 dvanders Exp $
+# $Id: ATLASDataset.py,v 1.7 2009-04-24 08:36:21 dvanders Exp $
 ###############################################################################
 # A simple ATLAS dataset
 #
@@ -102,7 +102,7 @@ class Download:
     class download_lcglr(GangaThread.GangaThread):
         def __init__(self, cmd):
             self.cmd = cmd
-            GangaThread.GangaThread.__init__(self)
+            GangaThread.GangaThread.__init__(self,'download_lcglr')
 
         def run(self):
             gridshell = getShell(middleware=Download.prefix_hack)
@@ -125,7 +125,7 @@ class Download:
             self.cmd = cmd
             self.ifile = ifile
             self.pfn = pfn
-            GangaThread.GangaThread.__init__(self)
+            GangaThread.GangaThread.__init__(self,'download_lcgcp')
             
         def run(self):
             gridshell = getShell(middleware=Download.prefix_hack)
@@ -145,7 +145,7 @@ class Download:
     class download_dq2(GangaThread.GangaThread):
         def __init__(self, cmd):
             self.cmd = cmd
-            GangaThread.GangaThread.__init__(self)
+            GangaThread.GangaThread.__init__(self,'download_dq2')
             
         def run(self):
             gridshell = getShell(middleware=Download.prefix_hack)
@@ -161,8 +161,9 @@ class Download:
 
             rc, out, m = gridshell.cmd1(self.cmd,allowed_exit=[0,255])
             if (rc==0):
-                logger.debug("dq2_get finished: %s", self.cmd)
-                logger.warning("dq2_get finished")
+                logger.debug("dq2-get finished: %s", self.cmd)
+                logger.debug("dq2-get output: %s %s %s"%(rc,out,m) )
+                logger.warning("dq2-get finished")
             else:
                 logger.error("Error occured during %s %s", self.cmd, out)
 
@@ -549,6 +550,9 @@ class ATLASOutputDataset(Dataset):
 config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
 
 #$Log: not supported by cvs2svn $
+#Revision 1.6  2009/03/19 15:46:17  dvanders
+#Thread->GangaThread
+#
 #Revision 1.5  2009/01/29 15:46:50  mslater
 #Removed unnecessary print statement in Download class
 #
