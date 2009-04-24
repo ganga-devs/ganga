@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ATLASDataset.py,v 1.7 2009-04-24 08:36:21 dvanders Exp $
+# $Id: ATLASDataset.py,v 1.8 2009-04-24 08:54:23 dvanders Exp $
 ###############################################################################
 # A simple ATLAS dataset
 #
@@ -158,6 +158,12 @@ class Download:
             except:
                 pythonpath = ''
             gridshell.env['PYTHONPATH'] = gridshell.env['PYTHONPATH']+':'+pythonpath
+            ## exclude the Ganga-owned external package for LFC python binding
+            pythonpaths = []
+            for path in gridshell.env['PYTHONPATH'].split(':'):
+                if not re.match('.*\/external\/lfc\/.*', path):
+                    pythonpaths.append(path)
+            gridshell.env['PYTHONPATH'] = ':'.join(pythonpaths)
 
             rc, out, m = gridshell.cmd1(self.cmd,allowed_exit=[0,255])
             if (rc==0):
@@ -550,6 +556,9 @@ class ATLASOutputDataset(Dataset):
 config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
 
 #$Log: not supported by cvs2svn $
+#Revision 1.7  2009/04/24 08:36:21  dvanders
+##49529: provide name for GangaThread
+#
 #Revision 1.6  2009/03/19 15:46:17  dvanders
 #Thread->GangaThread
 #
