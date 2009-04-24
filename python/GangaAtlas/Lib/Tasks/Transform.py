@@ -6,7 +6,7 @@ from Ganga.GPIDev.Lib.Job.Job import JobError
 
 class Transform(GangaObject):
    _schema = Schema(Version(1,0), {
-        'status'         : SimpleItem(defvalue='new', protected=1, doc='Status - running, pause or completed', typelist=["str"]),
+        'status'         : SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=["str"]),
         'name'           : SimpleItem(defvalue='Simple Transform', doc='Name of the transform (cosmetic)', typelist=["str"]),
         'application'    : ComponentItem('applications', defvalue=None, optional=1, load_default=False, checkset="checkTaskApplication",doc='Application of the Transform. Must be a Task-Supporting application.'),
         'inputsandbox'   : FileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,doc="list of File objects shipped to the worker node "),
@@ -15,10 +15,10 @@ class Transform(GangaObject):
         'outputdata'     : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Output dataset'),
         'backend'        : ComponentItem('backends', defvalue=None, optional=1,load_default=False, doc='Backend of the Transform.'),
         'run_limit'      : SimpleItem(defvalue=4, doc='Number of times a partition is tried to be processed.', protected=1, typelist=["int"]),
-        '_partition_status': SimpleItem(defvalue={}, hidden=1, doc='Map (only necessary) partitions to their status'),
-        '_app_partition' : SimpleItem(defvalue={}, hidden=1, doc='Map of applications to partitions'),
-        '_app_status'    : SimpleItem(defvalue={}, hidden=1, doc='Map of applications to status'),
-        '_next_app_id'   : SimpleItem(defvalue=0, hidden=1, doc='Next ID used for the application', typelist=["int"]),
+        '_partition_status': SimpleItem(defvalue={}, hidden=1, copyable=0, doc='Map (only necessary) partitions to their status'),
+        '_app_partition' : SimpleItem(defvalue={}, hidden=1, copyable=0,doc='Map of applications to partitions'),
+        '_app_status'    : SimpleItem(defvalue={}, hidden=1, copyable=0, doc='Map of applications to status'),
+        '_next_app_id'   : SimpleItem(defvalue=0, hidden=1, copyable=0, doc='Next ID used for the application', typelist=["int"]),
     })
 
    _category = 'transforms'

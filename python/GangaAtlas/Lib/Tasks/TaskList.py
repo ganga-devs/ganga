@@ -123,6 +123,7 @@ class TaskList(GangaObject):
                   continue
                p.submitJobs()
             except Exception, x:
+                  print "Exception occurred in task monitoring loop: %s\nThe offending task was paused." % x
                   logger.error("Exception occurred in task monitoring loop: %s\nThe offending task was paused." % x)
                   p.pause()
                   self.save()

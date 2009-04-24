@@ -74,12 +74,13 @@ class Task(GangaObject):
       c = super(Task,self).clone()
       for tf in c.transforms:
          tf.status = "new"
-         tf._partition_status = {}
-         tf._app_partition = {}
-         tf._app_status = {}
-         tf._next_app_id = 0
+         #tf._partition_status = {}
+         #tf._app_partition = {}
+         #tf._app_status = {}
+         #tf._next_app_id = 0
          tf._partition_apps = {}
       self._getParent().register(c)
+      c.check()
       return c
 
    def check(self):
