@@ -49,9 +49,10 @@ class Bookkeeping(GangaObject):
             return ds
     
     def fileToList(self,file):
+        import os.path
         f=open(file)
         l=f.read().splitlines()
-        for i in range(len(l)):  # prefix files with 'lfn:' to make ganga think they are lfns
-            if not l[i].lower().startswith('lfn'): l[i]='LFN:'+l[i]
+        for i in range(len(l)):  # prefix files with 'LFN:' to make ganga think they are lfns
+            if not l[i].upper().startswith('LFN'): l[i]='LFN:'+os.path.normpath(l[i])
         f.close()
         return l
