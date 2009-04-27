@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.28 2009-04-27 11:14:11 ebke Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.29 2009-04-27 15:14:49 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -16,7 +16,7 @@ from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
-from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources
+from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibFileSpecFromLibDS
 
 # PandaTools
 from pandatools import Client
@@ -70,10 +70,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         usertag = configDQ2['usertag'] 
         username = gridProxy.identity(safe=True)
         if job.backend.libds:
-           self.libDataset = job.backend.libds
+            self.libDataset = job.backend.libds
+            self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
+            self.library = self.fileBO.lfn
         else:
-           self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,username,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
-        self.library = '%s.lib.tgz' % self.libDataset
+            self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,username,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
+            self.library = '%s.lib.tgz' % self.libDataset
 
         # validate application
         if not app.atlas_release:
@@ -88,9 +90,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.cacheVer = ''
         if app.atlas_project and app.atlas_production:
             self.cacheVer = "-" + app.atlas_project + "_" + app.atlas_production
-        if not app.atlas_exetype in ['ATHENA','PYARA','ARES','TRF','ROOT']:
-            raise ApplicationConfigurationError(None,"Panda backend supports only application.atlas_exetype in ['ATHENA','PYARA','ARES','TRF','ROOT']")
-        if app.atlas_exetype == 'ATHENA' and not app.user_area.name:
+        if not app.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT']:
+            raise ApplicationConfigurationError(None,"Panda backend supports only application.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT']")
+        if app.atlas_exetype == 'ATHENA' and not app.user_area.name and not job.backend.libds:
             raise ApplicationConfigurationError(None,'app.user_area.name is null')
 
         # validate inputdata
@@ -167,7 +169,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
 
         # upload sources
-        if app.user_area.name or job.backend.libds:
+        if app.user_area.name and not job.backend.libds:
             uploadSources(os.path.dirname(app.user_area.name),os.path.basename(app.user_area.name))
 
         # create build job
@@ -299,13 +301,20 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.maxCpuCount = job.backend.requirements.cputime
 
 #       library (source files)
-        flib = FileSpec()
-        flib.lfn            = self.library
-#        flib.GUID           = 
-        flib.type           = 'input'
-#        flib.status         = 
-        flib.dataset        = self.libDataset
-        flib.dispatchDBlock = self.libDataset
+        if not job.backend.libds:
+            flib = FileSpec()
+            flib.lfn            = self.library
+            flib.type           = 'input'
+            flib.dataset        = self.libDataset
+            flib.dispatchDBlock = self.libDataset
+        else:
+            flib = FileSpec()
+            flib.lfn            = self.fileBO.lfn
+            flib.GUID           = self.fileBO.GUID
+            flib.type           = 'input'
+            flib.status         = self.fileBO.status
+            flib.dataset        = self.fileBO.destinationDBlock
+            flib.dispatchDBlock = self.fileBO.destinationDBlock
         jspec.addFile(flib)
 
 #       input files FIXME: many more input types

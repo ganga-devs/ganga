@@ -21,6 +21,7 @@ j.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run/'
 j.application.user_area_path = userareapath
 j.inputdata=DQ2Dataset()
 j.inputdata.dataset='fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10'
+j.inputdata.number_of_files=2
 j.outputdata=DQ2OutputDataset()
 j.splitter=DQ2JobSplitter()
 j.splitter.numsubjobs=2

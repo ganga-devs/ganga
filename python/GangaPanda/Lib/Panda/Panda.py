@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.27 2009-04-27 11:13:08 ebke Exp $
+# $Id: Panda.py,v 1.28 2009-04-27 15:14:50 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -82,7 +82,19 @@ def queueToAllowedSites(queue):
 
 def runPandaBrokerage(job):
     # get locations when site==AUTO
+        
     if job.backend.site == "AUTO":
+        libdslocation = []
+        if job.backend.libds:
+            try:
+                libdslocation = Client.getLocations(job.backend.libds,[],job.backend.requirements.cloud,False,False)
+            except exceptions.SystemExit:
+                raise BackendError('Panda','Error in Client.getLocations for libDS')
+            if not libdslocation:
+                raise ApplicationConfigurationError(None,'Could not locate libDS %s'%job.backend.libds)
+            else:
+                libdslocation = libdslocation.values()[0]
+
         tmpSites = []
         if job.inputdata:
             dataset = ''
@@ -108,13 +120,19 @@ def runPandaBrokerage(job):
             # no location
             if dsLocationMap == {}:
                 raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.requirements.cloud,job.inputdata.dataset[0]))
-            # run brorage
+            # run brokerage
             for tmpItem in dsLocationMap.values():
-                tmpSites.append(tmpItem)
+                if not libdslocation or tmpItem == libdslocation:
+                    tmpSites.append(tmpItem[0])
         else:
             for site,spec in Client.PandaSites.iteritems():
                 if spec['cloud']==job.backend.requirements.cloud and spec['status']=='online' and not Client.isExcudedSite(site):
-                    tmpSites.append(site)
+                    if not libdslocation or site == libdslocation:
+                        tmpSites.append(site)
+       
+        if not tmpSites: 
+            raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" % (job.backend.requirements.cloud,job.inputdata.dataset,job.backend.libds))
+        
         tag = ''
         try:
             tag = 'Atlas-%s' % job.application.atlas_release
@@ -158,6 +176,47 @@ def uploadSources(path,sources):
     except:
         raise BackendError('Panda','Exception while uploading archive: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
 
+def getLibFileSpecFromLibDS(libDS):
+    # query files in lib dataset to reuse libraries
+    logger.info("query files in %s" % libDS)
+    tmpList = Client.queryFilesInDataset(libDS,False)
+    tmpFileList = []
+    tmpGUIDmap = {}
+    for fileName in tmpList.keys():
+        # ignore log file
+        if len(re.findall('.log.tgz.\d+$',fileName)) or len(re.findall('.log.tgz$',fileName)):
+            continue
+        tmpFileList.append(fileName)
+        tmpGUIDmap[fileName] = tmpList[fileName]['guid'] 
+    # incomplete libDS
+    if tmpFileList == []:
+        # query files in dataset from Panda
+        status,tmpMap = Client.queryLastFilesInDataset([libDS],False)
+        # look for lib.tgz
+        for fileName in tmpMap[libDS]:
+            # ignore log file
+            if len(re.findall('.log.tgz.\d+$',fileName)) or len(re.findall('.log.tgz$',fileName)):
+                continue
+            tmpFileList.append(fileName)
+            tmpGUIDmap[fileName] = None
+    # incomplete libDS
+    if tmpFileList == []:
+        raise BackendError('Panda',"lib dataset %s is empty" % libDS)
+    # check file list                
+    if len(tmpFileList) != 1:
+        raise BackendError('Panda',"dataset %s contains multiple lib.tgz files : %s" % (libDS,tmpFileList))
+    # instantiate FileSpec
+    fileBO = FileSpec()
+    fileBO.lfn = tmpFileList[0]
+    fileBO.GUID = tmpGUIDmap[fileBO.lfn]
+    fileBO.dataset = libDS
+    fileBO.destinationDBlock = libDS
+    if fileBO.GUID != 'NULL':
+        fileBO.status = 'ready'
+    return fileBO
+
+
+
 class PandaBuildJob(GangaObject):
     _schema = Schema(Version(2,0), {
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=0,copyable=0,doc='Panda Job id'),
@@ -172,14 +231,15 @@ class PandaBuildJob(GangaObject):
         super(PandaBuildJob,self).__init__()
 
 class Panda(IBackend):
-    '''Panda backend'''
+    '''Panda backend: submission to the PanDA workload management system
+    '''
 
     _schema = Schema(Version(2,0), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'requirements'  : ComponentItem('PandaRequirements',doc='Requirements for the resource selection'),
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
-        'extFile'       : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='Extra files to ship to the worker node'),
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='PandaID of the job'),
+        'url'           : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Web URL for monitoring the job.'),
         'parent_id'     : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='JobID of the job'),
         'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Panda job status'),
         'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
@@ -232,6 +292,7 @@ class Panda(IBackend):
 
         for subjob, jobid in zip(rjobs,jobids):
             subjob.backend.id = jobid[0]
+            subjob.backend.url = 'http://panda.atlascomp.org?job=%d&reload=yes'%jobid[0]
             subjob.updateStatus('submitted')
 
         return True
@@ -459,6 +520,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.27  2009/04/27 11:13:08  ebke
+# Added user-settable libds support, and fixed submission without local athena setup
+#
 # Revision 1.26  2009/04/22 11:42:52  dvanders
 # change stats. schema 2.0
 #

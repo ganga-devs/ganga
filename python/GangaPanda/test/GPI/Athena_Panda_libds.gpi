@@ -1,0 +1,31 @@
+# testing structure for Athena application
+# this test-case is CERN AFS dependent since it use setup files located in /afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS 
+
+from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_file,sleep_until_state
+
+config['TestingFramework']['timeout']=3600
+
+import getpass
+
+joboption = '/tmp/ganga_athena_panda_libds_testing_data-%s/AnalysisSkeleton_topOptions.py' % getpass.getuser()
+
+j=Job()
+j.application=Athena()
+j.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
+j.application.atlas_run_config = {'input': {}, 'other': {}, 'output': {'outAANT': [('AANTupleStream', 'AANT')]}}
+j.application.atlas_release = '15.0.0'
+j.application.option_file = [joboption]
+j.inputdata = DQ2Dataset()
+j.inputdata.dataset = ['fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10']
+j.inputdata.number_of_files = 1
+j.outputdata = DQ2OutputDataset()
+j.splitter = DQ2JobSplitter()
+j.splitter.filesize = 4000
+j.backend = Panda()
+j.backend.libds = 'user09.DanielColinVanDerSter.ganga.lxplus226_1240577666.lib._000038'
+assert(j.submit()==True)
+
+assert sleep_until_completed(j,3600)
+
+# removing all jobs
+j.remove()

@@ -4,8 +4,9 @@
 from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_file,sleep_until_state
 import getpass
 
-#joboption = '/afs/cern.ch/user/d/dvanders/public/gangaPandaARAExample_502.py'
-joboption = '/afs/cern.ch/user/e/elmsheus/public/gangaARAExample_502.py'
+joboption = '/tmp/ganga_ara_panda_testing_data-%s/gangaPandaARAExample_502.py' % getpass.getuser()
+archivefile = '/tmp/ganga_ara_panda_testing_data-%s/sources.349b1195-3674-4a19-8770-70eb2d0b86bd.tar.gz' % getpass.getuser()
+userareapath = '/tmp/ganga_ara_panda_testing_data-%s' % getpass.getuser()
 
 config['TestingFramework']['timeout']=3600
 
@@ -14,15 +15,18 @@ j.application=Athena()
 j.application.option_file=[ joboption ]
 j.application.atlas_release='15.0.0'
 j.application.atlas_exetype='PYARA'
+j.application.user_area=archivefile
+j.application.user_area_path = userareapath
+j.application.atlas_run_config = {'input': {}, 'other': {}, 'output': {}}
+j.application.atlas_run_dir = './'
 j.inputdata=DQ2Dataset()
 j.inputdata.dataset="fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10"
+j.inputdata.number_of_files=1
 j.outputdata=DQ2OutputDataset()
-j.outputdata.outputdata=['histos.root' ]
+j.outputdata.outputdata=['out1.root' ]
 j.splitter=DQ2JobSplitter()
-j.splitter.numsubjobs=6
-j.merger=AthenaOutputMerger()
+j.splitter.filesize=2
 j.backend=Panda()
-j.backend.site = 'ANALY_BNL_ATLAS_1'
 assert(j.submit()==True)
 
 assert sleep_until_completed(j,3600)
