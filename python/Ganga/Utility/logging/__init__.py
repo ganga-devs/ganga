@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: __init__.py,v 1.2 2008-11-07 12:37:51 moscicki Exp $
+# $Id: __init__.py,v 1.3 2009-04-27 14:00:03 moscicki Exp $
 ################################################################################
 
 #
@@ -174,6 +174,7 @@ def _set_log_level(logger,value):
 
 
 def _guess_module_logger_name(modulename,frame=None):
+    #print " _guess_module_logger_name",modulename
     # find the filename of the calling module
     import sys,os.path
     if frame is None:
@@ -188,6 +189,7 @@ def _guess_module_logger_name(modulename,frame=None):
         # no file associated with the frame (e.g. interactive prompt, exec statement)
         name = '_program_'
 
+    #print " _guess_module_logger_name",name
     del frame
 
     #if private_logger:
@@ -218,6 +220,9 @@ def _guess_module_logger_name(modulename,frame=None):
 
     # remove module name
     name = remove_tail(name,'.')
+
+    if name == 'ganga': #interactive IPython session
+        name = "Ganga.GPI"
 
     # return package name 
     if not modulename:
@@ -327,6 +332,8 @@ def _getLogger(name=None,modulename=None,_roothandler=0, handler=None,frame=None
             handler.setFormatter(formatter)
             logger.propagate = 0 # do not propagate messages upwards...
             logger.addHandler(handler)
+            if file_handler:
+                logger.addHandler(file_handler)
             if buffered_handler:
                 buffered_handler.setFormatter(formatter)            
                 logger.addHandler(buffered_handler)            
