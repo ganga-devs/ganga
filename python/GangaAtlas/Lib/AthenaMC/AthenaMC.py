@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.20 2009-04-23 15:25:11 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.21 2009-04-27 08:36:35 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -65,6 +65,7 @@ class AthenaMC(IApplication):
     _exportmethods = ['prepare', 'postprocess']
     _GUIPrefs= [ { 'attribute' : 'mode', 'widget' : 'String_Choice', 'choices' : ['evgen','simul','recon','template']}, { 'attribute' : 'verbosity', 'widget' : 'String_Choice', 'choices' : ['ALL','VERBOSE','DEBUG','INFO','WARNING','ERROR','FATAL']}]
 
+    dbrelease=""
 
     def postprocess(self):
        """Determine outputdata and outputsandbox locations of finished jobs
@@ -523,7 +524,6 @@ class AthenaMC(IApplication):
        self.inputfiles,self.cavernfiles,self.mbfiles,self.dbfiles=[],[],[],[]
        self.infileString=""
        self.args=[]
-       self.dbrelease=""
        self.runNumber=""
        self.subjobsOutfiles={}
        self.evgen_job_option_filename=""
@@ -719,6 +719,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.20  2009/04/23 15:25:11  fbrochu
+# removed __init__ function , moved initialization of private members to master_configure()
+#
 # Revision 1.19  2009/04/23 09:54:12  ebke
 # Added __init__ function to avoid global scope of lists
 #
