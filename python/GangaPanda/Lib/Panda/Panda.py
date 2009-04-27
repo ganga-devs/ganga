@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.26 2009-04-22 11:42:52 dvanders Exp $
+# $Id: Panda.py,v 1.27 2009-04-27 11:13:08 ebke Exp $
 ################################################################################
                                                                                                               
 
@@ -183,6 +183,7 @@ class Panda(IBackend):
         'parent_id'     : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='JobID of the job'),
         'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Panda job status'),
         'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
+        'libds'         : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=1,doc='Existing Library dataset to use (disables buildjob)'),
         'buildjob'      : ComponentItem('PandaBuildJob',load_default=0,optional=1,protected=1,copyable=0,doc='Panda Build Job'),
         'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
         'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code (transExitCode)'),
@@ -204,6 +205,9 @@ class Panda(IBackend):
         from Ganga.Utility.logging import log_user_exception
 
         assert(implies(rjobs,len(subjobspecs)==len(rjobs))) 
+        
+        if self.libds:
+            buildjobspec = None
 
         for subjob in rjobs:
             subjob.updateStatus('submitting')
@@ -455,6 +459,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.26  2009/04/22 11:42:52  dvanders
+# change stats. schema 2.0
+#
 # Revision 1.25  2009/04/22 08:35:13  dvanders
 # Error codes in the Panda object
 #

@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.26 2009-04-22 07:43:44 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.27 2009-04-27 11:13:08 ebke Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -69,7 +69,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         usertag = configDQ2['usertag'] 
         username = gridProxy.identity(safe=True)
-        self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,username,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
+        if job.backend.libds:
+           self.libDataset = job.backend.libds
+        else:
+           self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,username,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
         self.library = '%s.lib.tgz' % self.libDataset
 
         # validate application
@@ -133,11 +136,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if not job.outputdata.outputdata:
                 raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT']")
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
-            if app.app.atlas_exetype == 'PYARA':
+            if app.atlas_exetype == 'PYARA':
                 self.job_options = "python " + self.job_options
-            elif app.app.atlas_exetype == 'ARES':
+            elif app.atlas_exetype == 'ARES':
                 self.job_options = "athena.py " + self.job_options
-            elif app.app.atlas_exetype == 'ROOT':
+            elif app.atlas_exetype == 'ROOT':
                 self.job_options = "root -l " + self.job_options
         if self.job_options == '':
             raise ApplicationConfigurationError(None,"No Job Options found!")
@@ -164,7 +167,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
 
         # upload sources
-        uploadSources('/'.join(app.user_area.name.split('/')[:-1]),app.user_area.name.split('/')[-1])
+        if app.user_area.name:
+            uploadSources(os.path.dirname(app.user_area.name),os.path.basename(app.user_area.name))
 
         # create build job
         jspec = JobSpec()
@@ -180,7 +184,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.assignedPriority  = configPanda['assignedPriorityBuild']
         jspec.computingSite     = job.backend.site
         jspec.cloud             = job.backend.requirements.cloud
-        jspec.jobParameters     = '-i %s -o %s' % (app.user_area.name.split('/')[-1],self.library)
+        jspec.jobParameters     = '-o %s' % (self.library)
+        if app.user_area.name:
+            jspec.jobParameters     += ' -i %s' % (os.path.basename(app.user_area.name))
         matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
         if matchURL:
             jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
@@ -318,7 +324,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
 #       output files
         outMap = {}
-        if self.runConfig.output.outNtuple:
+        if self.runConfig.output and self.runConfig.output.outNtuple:
             self.indexNT += 1
             for name in self.runConfig.output.outNtuple:
                 fout = FileSpec()
@@ -332,7 +338,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['ntuple'] = []
                 outMap['ntuple'].append((name,fout.lfn))
 
-        if self.runConfig.output.outHist:
+        if self.runConfig.output and self.runConfig.output.outHist:
             self.indexHIST += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -343,7 +349,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['hist'] = fout.lfn
 
-        if self.runConfig.output.outRDO:
+        if self.runConfig.output and self.runConfig.output.outRDO:
             self.indexRDO += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -354,7 +360,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['RDO'] = fout.lfn
 
-        if self.runConfig.output.outESD:
+        if self.runConfig.output and self.runConfig.output.outESD:
             self.indexESD += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -365,7 +371,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['ESD'] = fout.lfn
 
-        if self.runConfig.output.outAOD:
+        if self.runConfig.output and self.runConfig.output.outAOD:
             self.indexAOD += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -376,7 +382,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['AOD'] = fout.lfn
 
-        if self.runConfig.output.outTAG:
+        if self.runConfig.output and self.runConfig.output.outTAG:
             self.indexTAG += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -387,7 +393,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['TAG'] = fout.lfn
 
-        if self.runConfig.output.outAANT:
+        if self.runConfig.output and self.runConfig.output.outAANT:
             self.indexAANT += 1
             sNameList = []
             for aName,sName in self.runConfig.output.outAANT:
@@ -404,7 +410,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['AANT'] = []
                 outMap['AANT'].append((aName,sName,fout.lfn))
 
-        if self.runConfig.output.outTHIST:
+        if self.runConfig.output and self.runConfig.output.outTHIST:
             self.indexTHIST += 1
             for name in self.runConfig.output.outTHIST:
                 fout = FileSpec()
@@ -418,7 +424,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['THIST'] = []
                 outMap['THIST'].append((name,fout.lfn))   
 
-        if self.runConfig.output.outIROOT:
+        if self.runConfig.output and self.runConfig.output.outIROOT:
             self.indexIROOT += 1
             for idx, name in enumerate(self.runConfig.output.outIROOT):
                 fout = FileSpec()
@@ -446,7 +452,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['IROOT'] = []
                 outMap['IROOT'].append((name,fout.lfn))   
 
-        if self.runConfig.output.outStream1:
+        if self.runConfig.output and self.runConfig.output.outStream1:
             self.indexStream1 += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -457,7 +463,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['Stream1'] = fout.lfn
 
-        if self.runConfig.output.outStream2:
+        if self.runConfig.output and self.runConfig.output.outStream2:
             self.indexStream2 += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -468,7 +474,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['Stream2'] = fout.lfn
 
-        if self.runConfig.output.outBS:
+        if self.runConfig.output and self.runConfig.output.outBS:
             self.indexBS += 1
             fout = FileSpec()
             fout.dataset           = job.outputdata.datasetname
@@ -479,7 +485,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['BS'] = fout.lfn
 
-        if self.runConfig.output.outStreamG:
+        if self.runConfig.output and self.runConfig.output.outStreamG:
             self.indexStreamG += 1
             for name in self.runConfig.output.outStreamG:
                 fout = FileSpec()
@@ -542,11 +548,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         #if bgasList != []:
         #    param += '--beamGas "%s" ' % bgasList
         param += '-o "%s" ' % outMap
-        if self.runConfig.input.inColl: 
+        if self.runConfig.input and self.runConfig.input.inColl: 
             param += '-c '
-        if self.runConfig.input.inBS: 
+        if self.runConfig.input and self.runConfig.input.inBS: 
             param += '-b '
-        if self.runConfig.input.backNavi: 
+        if self.runConfig.input and self.runConfig.input.backNavi: 
             param += '-e '
         #if self.config['shipinput']: 
         #    param += '--shipInput '
