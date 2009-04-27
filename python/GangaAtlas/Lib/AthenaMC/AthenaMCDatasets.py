@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.33 2009-04-20 15:33:57 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.34 2009-04-27 10:53:16 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1306,7 +1306,12 @@ class AthenaMCOutputDatasets(Dataset):
                     logger.error("Dataset is already frozen, cannot add extra files to this dataset")
                     continue
                 # freeze each dataset, create container if needed then register dataset on container.
-                dq2.freezeDataset(dset)
+                try:
+                    dq2_lock.acquire()
+                    dq2.freezeDataset(dset)
+                finally:
+                    dq2_lock.release()
+                    
                 imax=string.find(dset,".jid")
                 containername=dset[:imax]+"/"
                 logger.debug("attempting to create container %s from %s" % (containername,dset))
