@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.3 2009-02-24 14:57:56 moscicki Exp $
+# $Id: Objects.py,v 1.4 2009-04-27 09:22:56 moscicki Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -270,7 +270,9 @@ class ObjectMetaclass(type):
         
         # export public methods of this class and also of all the bases
         # this class is scanned last to extract the most up-to-date docstring
-        for d in [b.__dict__ for b in bases]+[dict]:
+        dictlist = [b.__dict__ for b in cls.__mro__]
+        for di in range(0, len(dictlist)):
+            d = dictlist[len(dictlist)-1-di]
             for k in d:
                 if k in cls._exportmethods:
                     try:
@@ -279,7 +281,8 @@ class ObjectMetaclass(type):
                     except KeyError:
                          internal_name = k
                          method = d[k]
-                    assert(type(method) == types.FunctionType)
+                    if not (type(method) == types.FunctionType):
+                       continue
                     f = ProxyMethodDescriptor(k,internal_name)
                     f.__doc__ = method.__doc__
                     setattr(proxyClass, k, f)
@@ -475,6 +478,9 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2009/02/24 14:57:56  moscicki
+# set parent correctly for GangaList items (in __setstate__)
+#
 # Revision 1.2  2008/09/09 14:37:16  moscicki
 # bugfix #40220: Ensure that default values satisfy the declared types in the schema
 #
