@@ -298,10 +298,6 @@ if opt.outputdata:
     if opt.use_shortfilename:
         j.outputdata.use_shortfilename = True
 
-if opt.backend=='panda':
-    j.outputdata = DQ2OutputDataset()
-    if opt.output_dataset: j.outputdata.datasetname = opt.output_dataset
-
 # splitter
 
 if opt.numsubjobs > 1:
