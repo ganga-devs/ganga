@@ -303,7 +303,10 @@ def getAllSites(only_lcg=True,resolve=False):
 def listT2s(name,t1=None):
 
     t2s = ToACache.topology[name]
-    if t1: t2s.remove(t1)
+    try:
+        if t1: t2s.remove(t1)
+    except:
+        pass
 
     return t2s
 
