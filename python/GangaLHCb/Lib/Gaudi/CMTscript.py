@@ -19,30 +19,24 @@ logger = Ganga.Utility.logging.getLogger()
 def parse_master_package(mstrpckg):
    # first check if we have slashes
    if mstrpckg.find('/')>=0:
-      try:
-         list=mstrpckg.split('/')
-         if len(list)==3:
-            return list
-         elif len(list)==2:
-            list.insert(0,'')
-            return list
-         else:
-            raise ValueError,"wrongly formatted masterpackage"
-      except:
-         pass
+      list=mstrpckg.split('/')
+      if len(list)==3:
+         return list
+      elif len(list)==2:
+         list.insert(0,'')
+         return list
+      else:
+         raise ValueError,"wrongly formatted masterpackage"
    elif mstrpckg.find(' ')>=0:
-      try:
-         list=mstrpckg.split()
-         if len(list)==3:
-            list = (list[2],list[0],list[1])
-            return list
-         elif len(list)==2:
-            list=('',list[0],list[1])
-            return list
-         else:
-            raise ValueError,"wrongly formatted masterpackage"
-      except:
-         pass
+      list=mstrpckg.split()
+      if len(list)==3:
+         list = (list[2],list[0],list[1])
+         return list
+      elif len(list)==2:
+         list=('',list[0],list[1])
+         return list
+      else:
+         raise ValueError,"wrongly formatted masterpackage"
    else:
       raise ValueError,"wrongly formatted masterpackage"
 
