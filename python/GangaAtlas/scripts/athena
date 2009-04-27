@@ -206,11 +206,11 @@ if opt.maxevt:
    j.application.max_events = int(opt.maxevt)
 
 if opt.compile:
-   if opt.backend in [ 'lcg', 'ng']:  
-       j.application.prepare(LCG=True, athena_compile=True)
+   j.application.athena_compile=True
+   j.application.prepare()
 elif opt.nocompile:
-   if opt.backend in [ 'lcg', 'ng']:		
-       j.application.prepare(LCG=True, athena_compile=False)
+   j.application.athena_compile=False
+   j.application.prepare()
 else:
    if not (opt.athena_release or opt.user_area):
        j.application.prepare()
