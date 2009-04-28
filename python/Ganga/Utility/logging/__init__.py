@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: __init__.py,v 1.3 2009-04-27 14:00:03 moscicki Exp $
+# $Id: __init__.py,v 1.4 2009-04-28 13:36:45 kubam Exp $
 ################################################################################
 
 #
@@ -14,7 +14,6 @@
 # Design principles:
 #  - getLogger() returns the standard logger object for the current execution context
 #     i.e. with the name which indicates the current package or module name
-#  - all loggers are in the logical tree with root in 'Ganga.*'
 #  - all loggers are automatically configured according to this modules config dictionary (see below)
 #  - special functions:
 #       - log_user_exception() allows to format nicely exception messages
@@ -38,8 +37,23 @@ _formats = {
     'TERSE' : 'Ganga: %(levelname)-8s %(message)s'
     }
 
-private_logger = None
-main_logger = None
+private_logger = None # private logger of this module
+
+main_logger = logging.Logger.root # main logger corresponds to the root of the hierarchy
+
+# this is the handler used to print on screen directly
+direct_screen_handler = main_logger.handlers[0] # get default StreamHandler
+
+# if defined this is the handler used for caching background messages at interactive prompt
+cached_screen_handler = None
+
+# this is the handler currenty in use by main_logger (either direct_screen_handler or cached_screen_handler)
+# or it may be overriden by bootstrap() to be arbitrary handler
+default_handler = direct_screen_handler
+
+# if defined this is ADDITIONAL handler that is used for the logfile
+file_handler = None
+
 
 # FIXME: this should be probably an option in the config
 _global_level = None # if defined, global level (string) overrides anything which is in config
@@ -98,23 +112,28 @@ class ColourFormatter(logging.Formatter):
         else:
             self.markup = ColourText.NoMarkup()
             
-file_handler = None
+
+def _set_formatter(handler):
+    formatter = ColourFormatter(_formats[config['_format']]) ##
+    formatter.setColour(config['_colour'])
+    handler.setFormatter(formatter)
+
 
 def _make_file_handler(logfile,logfile_size):
     import os.path
     logfile = os.path.expanduser(logfile)
     global file_handler
     if logfile:
-        #import os
-        #if not os.path.exists(logfile):
-        #    file(logfile,'w').close()
         try:
-            file_handler = handlers.RotatingFileHandler(logfile,maxBytes=logfile_size)
+            new_file_handler = handlers.RotatingFileHandler(logfile,maxBytes=logfile_size)
         except IOError,x:
             private_logger.error('Cannot open the log file: %s',str(x))
             return
-        file_handler.setFormatter(logging.Formatter(_formats['VERBOSE']))
-        main_logger.addHandler(file_handler)    
+        # remove old handler if exists
+        main_logger.removeHandler(file_handler)
+
+        new_file_handler.setFormatter(logging.Formatter(_formats['VERBOSE']))
+        main_logger.addHandler(new_file_handler)    
 
 # reflect all user changes immediately
 def post_config_handler(opt,value):
@@ -133,14 +152,13 @@ def post_config_handler(opt,value):
     if opt in ['_format','_colour']:
         fmt = ColourFormatter(format)
         fmt.setColour(colour)
-        main_logger.handlers[0].setFormatter(fmt)
+        direct_screen_handler.setFormatter(fmt)
         return
 
     logfile,logfile_size = config['_logfile'], config['_logfile_size']
     
     if opt in ['_logfile','_logfile_size']:
         global file_handler
-        main_logger.removeHandler(file_handler)
         _make_file_handler(logfile,logfile_size)
         return
 
@@ -241,63 +259,28 @@ def _guess_module_logger_name(modulename,frame=None):
 def getLogger(name=None,modulename=None,frame=None):
     return _getLogger(name,modulename,frame=frame)
 
-class Not_Filter(logging.Filter):
-    def __init__(self,source_filter):
-        self.source = source_filter
-        logging.Filter()
 
-    def filter(self,record):
-        return not self.source.filter(record)
-
-class FilterOutEverything(logging.Filter):
-    def __init__(self):
-        logging.Filter()
-
-    def filter(self,record):
-        return 0
-
-direct_filter = logging.Filter()
-cached_filter = FilterOutEverything()
-
-# this is the default handler used to print on screen directly
-default_handler = logging.StreamHandler()
-
-# this is the default handler used to cache the messages for IPython prompt
-default_handler2 = logging.handlers.MemoryHandler(1000,target=default_handler)
-
-default_handler.addFilter(direct_filter)    
-default_handler2.addFilter(cached_filter)
-
-def setCacheFilter(filter):
+def enableCaching():
     """
-    Set a filter for cached messages. In the interactive IPython session, the messages from monitoring
+    Enable caching of log messages at interactive prompt. In the interactive IPython session, the messages from monitoring
     loop will be cached until the next prompt. In non-interactive sessions no caching is required.
     """
 
     if not config['_interactive_cache']:
         return
+
+    private_logger.debug('CACHING ENABLED')
+    global default_handler, cached_screen_handler
+    main_logger.removeHandler(default_handler)
+    cached_screen_handler = logging.handlers.MemoryHandler(1000,target=direct_screen_handler)
+    default_handler = cached_screen_handler
+    main_logger.addHandler(default_handler)
     
-    global default_handler,default_handler2
-    global direct_filter, cached_filter
-
-    default_handler.removeFilter(direct_filter)
-    default_handler2.removeFilter(cached_filter)
-
-    direct_filter = Not_Filter(filter)
-    cached_filter = filter
-    
-    default_handler.addFilter(direct_filter)    
-    default_handler2.addFilter(cached_filter)
-
-
 
 def _getLogger(name=None,modulename=None,_roothandler=0, handler=None,frame=None):
 
-    buffered_handler = None
-    
     if handler is None:
         handler = default_handler
-        buffered_handler = default_handler2
         
     requested_name = name
 
@@ -317,35 +300,10 @@ def _getLogger(name=None,modulename=None,_roothandler=0, handler=None,frame=None
         logger = logging.getLogger(name)
         _allLoggers[name] = logger
 
-        # if the name of the logger does not start with "Ganga." then make sure its root is properly initialized as well
-        if name.find('Ganga.') == -1:
-            if name.find('.') == -1:
-                _roothandler = 1
-            else:
-                rootname = name.split('.')[0]
-                _getLogger(rootname,None,_roothandler=1)
-
-        # initialize the root of the hierarchy of loggers
-        if _roothandler:
-            formatter = ColourFormatter(_formats[config['_format']]) ##
-            formatter.setColour(config['_colour'])
-            handler.setFormatter(formatter)
-            logger.propagate = 0 # do not propagate messages upwards...
-            logger.addHandler(handler)
-            if file_handler:
-                logger.addHandler(file_handler)
-            if buffered_handler:
-                buffered_handler.setFormatter(formatter)            
-                logger.addHandler(buffered_handler)            
-            
-
-        # FIXME: must be added to the config event handler as well...
         try:
             _set_log_level(logger,config[name])
-        except Ganga.Utility.Config.ConfigError: 
-            # if setting the root logger which does not start with "Ganga." then use the default for Ganga root
-            if _roothandler:
-                _set_log_level(logger,config['Ganga'])
+        except Ganga.Utility.Config.ConfigError:
+            pass 
 
         if private_logger:
             private_logger.debug('created logger %s in %s mode',name,logging.getLevelName(logger.getEffectiveLevel()))
@@ -368,7 +326,7 @@ def bootstrap(internal=0,handler=None):
 
     global private_logger,main_logger
     private_logger = getLogger('Ganga.Utility.logging')
-    main_logger = _getLogger('Ganga',_roothandler=1,handler=handler)
+    #main_logger = _getLogger('Ganga',_roothandler=1,handler=handler)
     
     private_logger.debug('bootstrap')
 
@@ -382,6 +340,12 @@ def bootstrap(internal=0,handler=None):
             main_logger.addHandler(handler)
             default_handler = handler
 
+    _set_formatter(default_handler)
+    #main_logger.propagate = 0 # do not propagate messages upwards...
+    #main_logger.addHandler(default_handler)
+    if file_handler:
+        main_logger.addHandler(file_handler)
+   
     opts = filter(lambda o: o.find('Ganga') == 0,config)
     for opt in opts:
         
