@@ -1,0 +1,40 @@
+#-*-python-*-
+import os
+from GangaTest.Framework.tests import MultipassTest
+
+import Ganga.GPI
+
+if Ganga.GPI.config.Configuration.repositorytype == 'LocalXML':
+    assert 0, "LocalXML repository does not support automatic schema migration (intentionally)"
+    
+class MigrationFramework(MultipassTest):
+    def __init__(self):
+        MultipassTest.__init__(self, 2)
+
+    def pass1(self):
+        j = Job(application=TestApplicationMigration())
+        print j
+        version = j.application._impl._schema.version
+        assert((version.major, version.minor) == (1,0))
+        version = j.application.testAttribute._impl._schema.version
+        assert((version.major, version.minor) == (1,0))
+        j2 = Job()
+        return j.id
+
+    def pass2(self):
+        j = jobs(self.data[1])
+        print j
+        assert(j.status == 'new')
+        version = j.application._impl._schema.version
+        assert((version.major, version.minor) == (2,0))
+        version = j.application.testAttribute._impl._schema.version
+        assert((version.major, version.minor) == (2,0))
+        j2 = Job(application=TestApplicationMigration())
+        version = j2.application._impl._schema.version
+        assert((version.major, version.minor) == (2,0))
+        version = j2.application.testAttribute._impl._schema.version
+        assert((version.major, version.minor) == (2,0))
+        print j2
+        #from Ganga.GPIDev.Streamers.MigrationControl import migrated_jobs
+        #assert(len(migrated_jobs)==1)
+        #assert(j.id in map(lambda j:j.id, migrated_jobs))
