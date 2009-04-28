@@ -356,12 +356,18 @@ stage_inputs () {
 	    if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
 		retcode=410100
 	    else
-		cat input_files | while read file
-		  do
-		  pool_insertFileToCatalog $file 2>/dev/null; echo $? > retcode.tmp
-		  retcode=`cat retcode.tmp`
-		  rm -f retcode.tmp
-		done
+		if [ ! -e PoolFileCatalog.xml ]; then
+		    echo "Adding files to PoolFileCatalog.xml"
+		    cat input_files | while read file
+		      do
+		      pool_insertFileToCatalog $file 2>/dev/null; echo $? > retcode.tmp
+		      retcode=`cat retcode.tmp`
+		      rm -f retcode.tmp
+		    done
+		else
+		    echo "PoolFileCatalog provided. Skipping..."
+		    retcode=0
+		fi
 	    fi
 	fi
     fi
