@@ -35,13 +35,6 @@ class Task(GangaObject):
       """Startup function on Ganga startup"""
       for t in self.transforms:
          t.startup()
-      # Black Magic from Hell
-      from Ganga.GPIDev.Base.Proxy import ProxyMethodDescriptor
-      for t in Task.__dict__:
-         if (not t in self._proxyClass.__dict__) and (t in self._exportmethods):
-            f = ProxyMethodDescriptor(t,t)
-            f.__doc__ = Transform.__dict__[t].__doc__
-            setattr(self._proxyClass, t, f)
 
 #   def _readonly(self):
 #      """A task is read-only if the status is not new."""
@@ -100,7 +93,7 @@ class Task(GangaObject):
       if self.status != "completed":
          self.status = "running"
          if self.float == 0:
-            logger.warning("The 'float', the number of jobs this task may run, is still zero. Type 'tasks(%i).float = 5' to allow this task to submit 5 jobs at a time")
+            logger.warning("The 'float', the number of jobs this task may run, is still zero. Type 'tasks(%i).float = 5' to allow this task to submit 5 jobs at a time" % self.id)
          for tf in self.transforms:
             if tf.status != "completed":
                tf.run(check=False)
