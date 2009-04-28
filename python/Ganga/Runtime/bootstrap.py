@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.10 2009-02-02 13:43:26 moscicki Exp $
+# $Id: bootstrap.py,v 1.11 2009-04-28 13:37:12 kubam Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -873,24 +873,14 @@ default_backends = LCG
             # buffering of log messages from all threads called "GANGA_Update_Thread"
             # the logs are displayed at the next IPython prompt
             
-            from Ganga.Utility.logging import setCacheFilter, logging, default_handler2
-            
-            class CacheFilter(logging.Filter):
-               def __init__(self):
-                  logging.Filter()
+            from Ganga.Utility.logging import enableCaching, default_handler
 
-               def get_ident(self):
-                  import threading
-                  return threading.currentThread().getName()
+            import Ganga.Utility.logging
+            Ganga.Utility.logging.enableCaching()
 
-               def filter(self,record):
-                  import Ganga.Core.MonitoringComponent
-                  return self.get_ident().find("GANGA_Update_Thread") != -1
-
-            setCacheFilter(CacheFilter())
-
-            def ganga_prompt():        
-               default_handler2.flush()
+            def ganga_prompt():
+               if Ganga.Utility.logging.cached_screen_handler:
+                  Ganga.Utility.logging.cached_screen_handler.flush()
 
                credentialsWarningPrompt = ''
                #alter the prompt only when the internal services are disabled
@@ -951,6 +941,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.10  2009/02/02 13:43:26  moscicki
+# fixed: bug #44934: Didn't create .gangarc on first usage
+#
 # Revision 1.9  2008/11/27 15:49:03  moscicki
 # extra exception output if cannot load the plugins...
 #
