@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.49 2009-04-27 15:02:00 elmsheus Exp $
+# $Id: Athena.py,v 1.50 2009-04-28 10:21:25 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -516,11 +516,14 @@ class Athena(IApplication):
             totalevents = 0
             for subjob in job.subjobs:
                 if subjob.application.stats.has_key('numfiles'):
-                    numfiles = numfiles + subjob.application.stats['numfiles']
+                    if subjob.application.stats['numfiles']:
+                        numfiles = numfiles + subjob.application.stats['numfiles']
                 if subjob.application.stats.has_key('numfiles2'):
-                    numfiles2 = numfiles2 + subjob.application.stats['numfiles2']
+                    if subjob.application.stats['numfiles2']:
+                        numfiles2 = numfiles2 + subjob.application.stats['numfiles2']
                 if subjob.application.stats.has_key('totalevents'):
-                    totalevents = totalevents + subjob.application.stats['totalevents']
+                    if subjob.application.stats['totalevents']:
+                        totalevents = totalevents + subjob.application.stats['totalevents']
             self.stats['numfiles']=numfiles
             self.stats['numfiles2']=numfiles2
             self.stats['totalevents']=totalevents        
@@ -1240,6 +1243,16 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.49  2009/04/27 15:02:00  elmsheus
+# * Fix for bug #49337: PYTHONPATH cmt setup problem in 15.0.0
+#   should be solved now.
+# * New: prepare() has been rewritten
+#   - The functionality should be the same
+#   - New CMT detection and tarfile creation for Panda
+#   - New Athena.athena_compile variable
+#   - prepare(athena_compile=True/False) is obsolete
+# * renamed original method prepare() to prepare_old()
+#
 # Revision 1.48  2009/04/22 07:51:12  dvanders
 # collect stats for Panda backend
 #
