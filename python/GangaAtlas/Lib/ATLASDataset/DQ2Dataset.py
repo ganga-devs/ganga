@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.26 2009-03-30 14:48:54 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.27 2009-04-28 12:58:34 mslater Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1099,7 +1099,8 @@ class DQ2OutputDataset(Dataset):
             fsize = filecheck(pfn)
             if fsize>0:
                 f=open(pfn)
-                self.output+=f.readlines()
+                for line in f.readlines():
+                    self.output.append( line.strip() )
                 f.close()
                     
 #       Local host execution
@@ -1247,6 +1248,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.26  2009/03/30 14:48:54  elmsheus
+#Replace USERDISK with SCRATCHDISK token
+#
 #Revision 1.25  2009/03/05 12:33:32  elmsheus
 #Add size parameter to get_contents
 #
