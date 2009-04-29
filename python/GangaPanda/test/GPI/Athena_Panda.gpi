@@ -2,7 +2,7 @@
 # this test-case is CERN AFS dependent since it use setup files located in /afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS 
 
 from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_file,sleep_until_state
-import getpass
+import getpass,commands
 
 joboption = '/tmp/ganga_athena_panda_testing_data-%s/AnalysisSkeleton_topOptions.py' % getpass.getuser()
 archivefile = '/tmp/ganga_athena_panda_testing_data-%s/sources.817f2846-2111-4444-af06-9a8393ed5369.tar.gz' % getpass.getuser()
@@ -23,6 +23,7 @@ j.inputdata=DQ2Dataset()
 j.inputdata.dataset='fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10'
 j.inputdata.number_of_files=2
 j.outputdata=DQ2OutputDataset()
+j.outputdata.datasetname='testing.%s'%commands.getoutput('uuidgen')
 j.splitter=DQ2JobSplitter()
 j.splitter.numsubjobs=2
 j.backend=Panda()

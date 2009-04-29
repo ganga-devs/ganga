@@ -5,7 +5,7 @@ from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_
 
 config['TestingFramework']['timeout']=3600
 
-import getpass
+import getpass,commands
 
 joboption = '/tmp/ganga_athena_panda_libds_testing_data-%s/AnalysisSkeleton_topOptions.py' % getpass.getuser()
 
@@ -19,6 +19,7 @@ j.inputdata = DQ2Dataset()
 j.inputdata.dataset = ['fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10']
 j.inputdata.number_of_files = 1
 j.outputdata = DQ2OutputDataset()
+j.outputdata.datasetname='testing.%s'%commands.getoutput('uuidgen')
 j.splitter = DQ2JobSplitter()
 j.splitter.filesize = 4000
 j.backend = Panda()
