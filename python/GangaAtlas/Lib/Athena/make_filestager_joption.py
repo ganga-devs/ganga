@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: make_filestager_joption.py,v 1.5 2009-03-18 12:46:23 hclee Exp $
+# $Id: make_filestager_joption.py,v 1.6 2009-04-29 06:26:35 hclee Exp $
 ###############################################################################
 # making input job option file for FileStager
 
@@ -41,27 +41,6 @@ if (io_type in ['FILE_STAGER']):
     se_replacements = {'srm.cern.ch': 'srm-atlas.cern.ch'}
     close_se = dm_util.get_se_hostname(se_replacements)
     print >> sys.stdout, 'detected closed SE: %s' % close_se
-
-    # define the default gridcopy protocol
-    my_protocol = 'lcgcp'
-
-    # determin the supported transfer protocols of the given SE
-    protocols = dm_util.get_transfer_protocols(close_se)
-    print >> sys.stdout, 'detected transfer protocols: %s' % repr(protocols)
-
-    # chose a suitable protocol
-    # 1. firstly remove gsiftp protocol (do we support it as an alternative of lcgcp?)
-    # 2. pick up the first available protocol
-    # 3. if no first protocol, use lcgcp instead
-    try:
-        protocols.remove('gsiftp')
-    except ValueError:
-        pass
-
-    if protocols:
-        my_protocol = protocols[0]
-
-    print >> sys.stdout, 'picked transfer protocol: %s' % my_protocol
 
     # resolve the dq2_local_site_id taking into account
     #  - file locations
@@ -103,6 +82,28 @@ if (io_type in ['FILE_STAGER']):
     # count only the PFNs on local site by match srm_endpoint of the dq2 site
     srm_endpt_info  = dm_util.get_srm_endpoint(dq2_site_id)
     print >> sys.stdout, str(srm_endpt_info)
+
+    # define the default gridcopy protocol
+    my_protocol = 'lcgcp'
+
+    # determin the supported transfer protocols of the given SE
+    protocols = dm_util.get_transfer_protocols(srm_endpt_info['se_host'])
+    print >> sys.stdout, 'detected transfer protocols: %s' % repr(protocols)
+
+    # chose a suitable protocol
+    # 1. firstly remove gsiftp protocol (do we support it as an alternative of lcgcp?)
+    # 2. pick up the first available protocol
+    # 3. if no first protocol, use lcgcp instead
+    try:
+        protocols.remove('gsiftp')
+    except ValueError:
+        pass
+
+    if protocols:
+        my_protocol = protocols[0]
+
+    print >> sys.stdout, 'picked transfer protocol: %s' % my_protocol
+
     re_endpt = re.compile('^.*%s.*%s.*\s*$' % (srm_endpt_info['se_host'], srm_endpt_info['se_path']) )
     pfn_list = []
     pfn_csum = {}
