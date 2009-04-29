@@ -122,7 +122,7 @@ class Francesc(IApplication):
 
         self.shell = Shell(setup=fd.name)
         logger.debug(pprint.pformat(self.shell.env))    
-
+        fd.close()
 
     def getenv(self):
         '''Returns a copy of the environment used to flatten the options, e.g.

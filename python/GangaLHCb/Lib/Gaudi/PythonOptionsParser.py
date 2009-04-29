@@ -97,6 +97,7 @@ class PythonOptionsParser:
                                 
         tmp_pkl.close()
         py_opts.close()
+        tmp_py.close()
         return (options, opts_pkl_string)
         
     def _join_opts_files( self):

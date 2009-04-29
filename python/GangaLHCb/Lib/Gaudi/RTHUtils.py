@@ -42,6 +42,7 @@ dirac.getInputDataCatalog(lfns,\'%s\',\'%s\')
     logger.error(msg)
     raise ApplicationConfigurationError(None,msg)
 
+  tmp_xml.close()
   return xml_catalog
 
 def get_master_input_sandbox(job,extra):
