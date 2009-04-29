@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.50 2009-04-28 10:21:25 elmsheus Exp $
+# $Id: Athena.py,v 1.51 2009-04-29 12:52:07 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -143,7 +143,7 @@ class AthenaOutputDataset(GangaObject):
 class Athena(IApplication):
     """The main Athena Job Handler"""
 
-    _schema = Schema(Version(2,0), {
+    _schema = Schema(Version(2,1), {
                  'atlas_release'          : SimpleItem(defvalue='',doc='ATLAS Software Release'),
                  'atlas_production'       : SimpleItem(defvalue='',doc='ATLAS Production Software Release'),
                  'atlas_project'          : SimpleItem(defvalue='',doc='ATLAS Project Name'),
@@ -1243,6 +1243,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.50  2009/04/28 10:21:25  elmsheus
+# Fix if numfiles is empty string
+#
 # Revision 1.49  2009/04/27 15:02:00  elmsheus
 # * Fix for bug #49337: PYTHONPATH cmt setup problem in 15.0.0
 #   should be solved now.
