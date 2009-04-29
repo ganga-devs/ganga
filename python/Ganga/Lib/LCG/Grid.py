@@ -154,6 +154,8 @@ class Grid(object):
 
         match_log = re.search('(.*-job-status.*\.log)', cmd_output)
 
+        glite_ids = []
+
         if match_log:
             
             logfile = match_log.group(1)
@@ -163,8 +165,6 @@ class Grid(object):
             
             re_jid = re.compile('^Unable to retrieve the status for: (https:\/\/\S+:9000\/[0-9A-Za-z_\.\-]+)\s*$')
             re_key = re.compile('^.*(no matching jobs found)\s*$')
-
-            glite_ids = []
 
             m_jid = None
             m_key = None
