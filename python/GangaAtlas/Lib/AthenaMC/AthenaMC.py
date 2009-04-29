@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.21 2009-04-27 08:36:35 ebke Exp $
+# $Id: AthenaMC.py,v 1.22 2009-04-29 13:03:53 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -311,14 +311,14 @@ class AthenaMC(IApplication):
         partition = self.getPartitionList()[0][0] # This function either throws an exception or returns at least one element
         job = self._getParent() # Returns job or subjob object
         (self.firstevt, self.Nevents_job) = self.getFirstEvent(partition, job.inputdata)
-        logger.warning("partition %i, first event is %i, processing %i events" % (partition,self.firstevt, self.Nevents_job))
+        logger.debug("partition %i, first event is %i, processing %i events" % (partition,self.firstevt, self.Nevents_job))
         
         inputnumbers = self.getInputsForPartitions([partition], job._getRoot().inputdata) # getInputsForPartitions get the subset of inputfiles needed by partition i. So far so good. 
         if inputnumbers:
             matchrange = (job._getRoot().inputdata.numbersToMatcharray(inputnumbers), False)
         else:
             matchrange = ([],False)
-        logger.warning("partition %i using input partitions: %s as files: %s" % (partition, inputnumbers, matchrange[0]))
+        logger.debug("partition %i using input partitions: %s as files: %s" % (partition, inputnumbers, matchrange[0]))
 
         self.inputfiles = [fn for fn in self.turls.keys() if matchFile(matchrange, fn)]
         self.inputfiles.sort()
@@ -719,6 +719,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.21  2009/04/27 08:36:35  ebke
+# Fixed dbrelease not available (necessary for tasks.overview())
+#
 # Revision 1.20  2009/04/23 15:25:11  fbrochu
 # removed __init__ function , moved initialization of private members to master_configure()
 #
