@@ -34,7 +34,6 @@ class TestFrancesc(GangaGPITestCase):
         # just check coverage...hard to check if the env is set properly
         apps = available_apps()
         apps.remove('Gaudi')
-        apps.remove('Panoramix')
         for app in apps:
             instance = eval('%s()' % app)
             instance._impl._getshell()
