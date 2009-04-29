@@ -269,10 +269,18 @@ if __name__ == '__main__':
     rc = 0
 
     ## main copy loop 
-    while not isDone and ( cnt_trial < max_trial ):
+    while not isDone and ( cnt_trial < 2*max_trial ):
+
+        ## fall back to lcgcp if all trials with local protocol were failed
+        if ( cnt_trial == max_trial+1 ):
+            if protocol == 'lcgcp':
+                break
+            else:
+                printInfo('trying with lcg-cp')
+                protocol = 'lcgcp' 
+                pass
 
         exitcode = -999
-
         cnt_trial += 1
 
         ## compose copy command
