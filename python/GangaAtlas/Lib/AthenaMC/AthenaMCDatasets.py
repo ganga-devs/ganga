@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.34 2009-04-27 10:53:16 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.35 2009-04-29 14:45:03 ebke Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -143,7 +143,7 @@ def extractFileNumber(filename):
     try:
        return int(num)
     except ValueError:
-       logger.warning("could not find partition number on %s. Giving up" % filename)
+       logger.warning("could not find partition number on %s" % filename)
        return
 
 def matchFile(matchrange, filename):
