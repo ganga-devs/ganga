@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.22 2009-04-29 13:03:53 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.23 2009-04-30 08:42:59 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -333,7 +333,7 @@ class AthenaMC(IApplication):
                 try:
                     assert len(inlfns)>= i
                 except:
-                    raise ApplicationConfigurationError(None,"Not enough input files, got %i expected %i" % (len(inlfns),i))
+                    raise ApplicationConfigurationError(None,"Not enough input files, got %i expected %i" % (len(inlfns),inputnumbers))
 
                 self.inputfiles.append(inlfns[i-1])
 
@@ -719,6 +719,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.22  2009/04/29 13:03:53  fbrochu
+# Removed spurrious warnings
+#
 # Revision 1.21  2009/04/27 08:36:35  ebke
 # Fixed dbrelease not available (necessary for tasks.overview())
 #
