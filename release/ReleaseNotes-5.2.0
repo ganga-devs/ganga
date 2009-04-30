@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.2.0 (2009/4/28)
+5.2.0 (2009/4/30)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -49,6 +49,13 @@ Athena:
   now skips the generation of it during the job
 * Fix bug #48446: Removed the additional newline for completed 
   DQ2OutputDatasets to allow the XML repository to work
+* FileStager:
+  - fall back to lcgcp if trials with local protocol were all failed 
+  - resolve the transfer protocol based on the SE name associated 
+    with the DQ2 site id instead of using close SE
+* Fix bug #46825: Improve error message in case of existing output
+  dataset (DQ2OutputDataset)
+* Fix bug #49823: proper setup for local DB
 
 AthenaMC:
 ---------

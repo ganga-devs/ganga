@@ -346,7 +346,7 @@ class InputLine_Widget( InputLine_Widget_BASE ):
       try:
          float( _str ) 
       except:
-         if 'str' not in self.typeValidator.typeList and _str.lower() in [ 'true', 'false', 'none' ]:
+         if _str.lower() in [ 'true', 'false', 'none' ]:
             _str =  _str.capitalize()
          elif not _str or _str[0] not in ['"',"'"]:
             _str = '"%s"' % _str
@@ -588,7 +588,7 @@ class InputList_Widget( InputList_Widget_BASE ):
          try:
             float( _str ) 
          except:
-            if 'str' not in self.typeValidator.typeList and _str.lower() in [ 'true', 'false', 'none' ]:
+            if _str.lower() in [ 'true', 'false', 'none' ]:
                _str =  _str.capitalize()
             elif not _str or _str[0] not in ["'",'"']:
                _str = '"%s"' % _str
@@ -933,7 +933,7 @@ class InputDict_Widget( InputList_Widget ):
          try:
             float( _dVal ) 
          except:
-            if 'str' not in self.typeValidator.typeList and _dVal.lower() in [ 'true', 'false', 'none' ]:
+            if _dVal.lower() in [ 'true', 'false', 'none' ]:
                _dVal =  _dVal.capitalize()
             elif not _dVal or _dVal[0] not in ["'",'"']:
                _dVal = '"%s"' % _dVal
@@ -1083,7 +1083,7 @@ class InputChoice_Widget( InputChoice_Widget_BASE ):
       try:
          float( _str ) 
       except:
-         if 'str' not in self.typeValidator.typeList and _str.lower() in [ 'true', 'false', 'none' ]:
+         if _str.lower() in [ 'true', 'false', 'none' ]:
             _str =  _str.capitalize()
          elif not _str or _str[0] not in ["'",'"']:
             _str = '"%s"' % _str
