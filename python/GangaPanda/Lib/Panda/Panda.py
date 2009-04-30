@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.28 2009-04-27 15:14:50 dvanders Exp $
+# $Id: Panda.py,v 1.29 2009-04-30 12:21:17 ebke Exp $
 ################################################################################
                                                                                                               
 
@@ -26,6 +26,8 @@ from taskbuffer.JobSpec import JobSpec
 from taskbuffer.FileSpec import FileSpec
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
+
+from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
 
 logger = getLogger()
 config = makeConfig('Panda','Panda backend configuration parameters')
@@ -447,6 +449,9 @@ class Panda(IBackend):
                     elif status.jobStatus in ['starting','running','holding','transferring']:
                         job.updateStatus('running')
                     elif status.jobStatus == 'finished':
+                        if job.status != "completed":
+                            job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
+                            job.backend.fillOutputData(job, status)
                         job.updateStatus('completed')
                     elif status.jobStatus == 'failed':
                         job.updateStatus('failed')
@@ -461,6 +466,9 @@ class Panda(IBackend):
                             job.backend.buildjob.jobSpec[k]=str(job.backend.buildjob.jobSpec[k])
 
                     logger.debug('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
+                    if status.jobStatus == "finished" and job.backend.buildjob.status != "finished":
+                        job.backend.getLogFiles(job.getOutputWorkspace().getPath("buildJob"), status)
+
                     job.backend.buildjob.status = status.jobStatus
 
                     if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
@@ -517,9 +525,39 @@ class Panda(IBackend):
             except:
                 pass
         return stats
+
+
+    def getLogFiles(self, workspace, status):
+        for lf in [f for f in status.Files if f.type == "log"]:
+            untar = ""
+            if "tgz" in lf.lfn:
+                untar = "tar xzf %s; mv tarball_PandaJob*/* .; rm tarball_PandaJob* -rf; rm %s;" % (lf.lfn, lf.lfn)
+            cmd = "pushd .; mkdir -p %s; cd %s; dq2-get -D -f %s %s; %s popd;" % (workspace, workspace, lf.lfn, lf.dataset, untar)
+            Download.download_dq2(cmd).run()
+            
+        
+    def fillOutputData(self, job, status):
+        # format for outputdata is: dataset,lfn,guid,size,md5sum,siteID\ndataset...
+        outputdata = []
+        locations = {}
+        for of in [f for f in status.Files if f.type == "output"]:
+            outputdata.append("%s,%s,%s,%s,%s,%s" % (of.dataset,of.lfn,of.GUID,of.fsize,of.checksum,of.destinationSE))
+            locations[of.destinationSE] = 1
+        if len(locations.keys()) > 1:
+            logger.warning("Outputfiles of job %s saved at different locations! (%s)" % (job.fqid, locations.keys()))
+        if len(locations.keys()) > 0:
+            job.outputdata.location = locations.keys()[0]
+        job.outputdata.output = outputdata
+
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.28  2009/04/27 15:14:50  dvanders
+# Fixed ARA again
+# Fixed libds support
+# changes to ARA test case
+# new libds testcase
+#
 # Revision 1.27  2009/04/27 11:13:08  ebke
 # Added user-settable libds support, and fixed submission without local athena setup
 #
