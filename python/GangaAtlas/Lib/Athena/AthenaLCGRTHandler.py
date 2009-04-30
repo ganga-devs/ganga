@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.40 2009-04-06 07:23:48 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.41 2009-04-30 08:19:28 ebke Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -132,7 +132,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if job.outputdata._name=='DQ2OutputDataset':
 
                 if job.outputdata.location:
-                    if isDQ2SRMSite(job.outputdata.location):
+                    if type(job.outputdata.location) == str and isDQ2SRMSite(job.outputdata.location):
                         output_location = job.outputdata.location
                     else:
                         logger.warning('Unknown output location %s.',job.outputdata.location)
