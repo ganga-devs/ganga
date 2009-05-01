@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.35 2009-04-29 14:45:03 ebke Exp $
+# $Id: AthenaMCDatasets.py,v 1.36 2009-05-01 13:53:32 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -22,7 +22,6 @@ from dq2.content.DQContentException import DQFileExistsInDatasetException
 from Ganga.GPIDev.Credentials import GridProxy
 
 from Ganga.Utility.GridShell import getShell
-
 
 
 _refreshToACache()
@@ -1289,28 +1288,29 @@ class AthenaMCOutputDatasets(Dataset):
         # closing a job: freeze the jid dataset, create container if needed and add to container.
         if not job.master:
             # loop over list of datasets from self.register_datasets_details
-            logger.debug("finalizing master job")
+            logger.info("finalizing master job: %s" % str(job.id))
             for subjob in job.subjobs:
                 dsets=subjob.outputdata.store_datasets
                 for dset in dsets:
                     if dset not in self.store_datasets:
                         self.store_datasets.append(dset)
-            logger.debug("list of datasets: %s" % str(self.store_datasets))
+            logger.info("list of datasets: %s" % str(self.store_datasets))
             for dset in self.store_datasets:
                 try:
                     dq2_lock.acquire()
                     frozen=dq2.getMetaDataAttribute(dset,["frozendate"])
+                    if frozen.values()[0]!="None":
+                        logger.error("Dataset is already frozen, cannot add extra files to this dataset")
+                    else:
+                        logger.info("proceeding with freezing the dataset %s" % dset)
+                        try:
+                            dq2.freezeDataset(dset)
+                        except:
+                            logger.error("Error in freezing the dataset %s. Please use job.outputdata.recover(). " % dset)
+                            pass
                 finally:
                     dq2_lock.release()
-                if frozen.values()[0]!="None":
-                    logger.error("Dataset is already frozen, cannot add extra files to this dataset")
-                    continue
-                # freeze each dataset, create container if needed then register dataset on container.
-                try:
-                    dq2_lock.acquire()
-                    dq2.freezeDataset(dset)
-                finally:
-                    dq2_lock.release()
+
                     
                 imax=string.find(dset,".jid")
                 containername=dset[:imax]+"/"
@@ -1328,7 +1328,11 @@ class AthenaMCOutputDatasets(Dataset):
                         containerClient.create(containername)
                     finally:
                         dq2_lock.release()
-                containerClient.register(containername,[dset])
+                try:
+                    containerClient.register(containername,[dset])
+                except:
+                    logger.error("Error registering the dataset %s in its container %s" % (dset,containername))
+                    pass
                 # if app.se_name is set and dset has more than one locations, then subscribe dset to app.se_name to aggregate the dataset to the intended location
                 if job.application.se_name!="none":
                     locations={}

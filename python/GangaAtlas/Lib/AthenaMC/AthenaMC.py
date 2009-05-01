@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.23 2009-04-30 08:42:59 ebke Exp $
+# $Id: AthenaMC.py,v 1.24 2009-05-01 13:53:32 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -71,9 +71,20 @@ class AthenaMC(IApplication):
        """Determine outputdata and outputsandbox locations of finished jobs
        and fill output variable"""
        from Ganga.GPIDev.Lib.Job import Job
+       import time
+
        job = self._getParent()
        if job.outputdata:
-          job.outputdata.fill()
+           if job.subjobs: # master job is the only one to have subjobs...
+               logger.info("entering Master job completion thread")
+               stats = [s.status for s in job.subjobs]
+               logger.info("subjob status: %s" % str(stats))
+               while "completing" in stats:
+                   logger.info("Master job completing while at least one subjob is still completing. Delaying master job completion until all subjobs have left the 'completing' state")
+                   time.sleep(20)
+                   stats = [s.status for s in job.subjobs]
+               logger.info("All subjobs are done, now running fill() for master job")
+           job.outputdata.fill()
               
     def prepare(self):
        """Prepare each job/subjob from the user area"""
@@ -719,6 +730,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.23  2009/04/30 08:42:59  ebke
+# Expected number of files fixed in error message
+#
 # Revision 1.22  2009/04/29 13:03:53  fbrochu
 # Removed spurrious warnings
 #
