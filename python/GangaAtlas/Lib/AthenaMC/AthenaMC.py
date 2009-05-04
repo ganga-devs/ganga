@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.24 2009-05-01 13:53:32 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.25 2009-05-04 12:01:49 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -344,7 +344,7 @@ class AthenaMC(IApplication):
                 try:
                     assert len(inlfns)>= i
                 except:
-                    raise ApplicationConfigurationError(None,"Not enough input files, got %i expected %i" % (len(inlfns),inputnumbers))
+                    raise ApplicationConfigurationError(None,"Not enough input files, got %i expected %i" % (len(inlfns),len(inputnumbers)))
 
                 self.inputfiles.append(inlfns[i-1])
 
@@ -730,6 +730,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.24  2009/05/01 13:53:32  fbrochu
+# Adding protection to master job completion in AthenaMC.postprocess(), forcing the thread to wait for subjobs in completing state to finish before running outputdata.fill()
+#
 # Revision 1.23  2009/04/30 08:42:59  ebke
 # Expected number of files fixed in error message
 #
