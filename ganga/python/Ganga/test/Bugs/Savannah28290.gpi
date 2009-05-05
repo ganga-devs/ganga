@@ -1,0 +1,27 @@
+j = Job(backend=Batch())
+j.application = Executable(exe='sleep',args='100')
+j.submit()
+
+from GangaTest.Framework.utils import sleep_until_state
+
+assert sleep_until_state(j,10,'submitted'), "Can't submit job :( "
+
+j.kill()
+assert sleep_until_state(j,10,'killed'), "Job is not killed"
+
+
+j = Job(backend=Batch())
+j.application = Executable(exe='sleep',args='100')
+j.submit()
+
+assert sleep_until_state(j,10,'submitted'), "Can't submit job :( "
+
+if config.Configuration.Batch == 'LSF':
+    import os
+    assert os.system("bkill %s"%j.backend.id)==0, "Error while bkill"
+
+j.kill()
+assert sleep_until_state(j,10,'killed'), "Job is not killed"
+
+
+
