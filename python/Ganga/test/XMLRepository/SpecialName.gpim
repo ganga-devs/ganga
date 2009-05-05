@@ -2,11 +2,11 @@
 
 from GangaTest.Framework.tests import MultipassTest
 
-SPECIAL_NAME =  "<>!@#$%^&*()_+-='\".,;:?"
+SPECIAL_NAME =  "<>!@#$%^&*()_+-='\".,;:?\n\t\f\0xxx"
 
 class SpecialName(MultipassTest):
     def __init__(self): 
-	MultipassTest.__init__(self,2)
+        MultipassTest.__init__(self,2)
 
     def pass1(self):
         j = Job()

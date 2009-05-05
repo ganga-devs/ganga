@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: VStreamer.py,v 1.2 2009-02-24 14:56:28 moscicki Exp $
+# $Id: VStreamer.py,v 1.3 2009-05-05 14:56:40 moscicki Exp $
 ################################################################################
 
 # dump object (job) to file f (or stdout)
@@ -25,7 +25,7 @@ import xml.sax.saxutils
 #import escape, unescape
 
 def escape(s):
-    return xml.sax.saxutils.escape(s.replace('"', '\\"').replace("'", "\\'"))
+    return xml.sax.saxutils.escape(s) #s.replace('"', '\\"').replace("'", "\\'"))
 
 def unescape(s):
     return xml.sax.saxutils.unescape(s)
@@ -139,7 +139,7 @@ class VStreamer(object):
     def quote(self,x):
         #FIXME: also quote % characters (to allow % operator later)
         if type(x) == type(''):
-            return "'"+escape(x)+"'"
+            return repr(escape(x))
         return x    
 
 
