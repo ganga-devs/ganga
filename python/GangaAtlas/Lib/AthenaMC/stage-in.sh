@@ -52,19 +52,19 @@ stageInLCG(){
 	echo "DBRelease already set, NOT downloading the archive: $LFNS"
 	return 0
     fi
-    cmd="$dq2get --client-id=ganga -a -d -s $SITE -D -f $LFNS $INPUTDSET" 
-    if [ ! -z "$py32" ]; then
-        cmd="python32 "$cmd
-    fi
-    echo $cmd
-    
+
     for site in $SITES; do
         echo "Attempting getting data from $site"
+	cmd="$dq2get --client-id=ganga -a -d -s $site -D -f $LFNS $INPUTDSET" 
+	if [ ! -z "$py32" ]; then
+	    cmd="python32 "$cmd
+	fi
+	echo $cmd
 	$cmd
 	status=$?
-	if [ $status -eq 0 ]; then
+	if [ $status -eq 0 -a -s "$LFNS" ]; then
 	    echo "$LFNS downloaded succesfully"
-	    mv $INPUTDSET*/* .  # -D flag should make this block irrelevant and trigger an harmless error message
+	    #mv $INPUTDSET*/* .  # -D flag should make this block irrelevant and trigger an harmless error message
 	    break
 	fi
 	echo "attempt failed."

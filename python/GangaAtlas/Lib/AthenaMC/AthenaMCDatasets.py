@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.36 2009-05-01 13:53:32 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.37 2009-05-06 13:25:54 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -553,13 +553,13 @@ class AthenaMCInputDatasets(Dataset):
             dsetmatch=dataset[:-1] # turning container name into dataset root for matching
         if string.find(dataset,"DBRelease")<0:
             dsetmatch='*%s*' % dataset # loose matching for all input datasets except DBRelease ones.
-            
+        logger.debug( "matching input dataset: %s" % str(dsetmatch))
         try:
             dq2_lock.acquire()
             datasets = dq2.listDatasets(dsetmatch)
         finally:
             dq2_lock.release()
-
+        logger.debug( "results of the match: %s" % str(datasets))
         if len(datasets.values())==0:
             logger.error('no Dataset matching %s is registered in DQ2 database! Aborting',dataset)
             raise Exception()
@@ -582,8 +582,8 @@ class AthenaMCInputDatasets(Dataset):
             raise Exception()
         if len(containers)==1:
             container=containers[0]
-            
-        logger.debug("Selected dataset %s" % dsetname)
+
+        logger.debug("Selected dataset %s" % dsetname)    
         if update:
             self.DQ2dataset=dsetname # update job with result of dataset search
             self.datasetType="DQ2"
@@ -607,7 +607,6 @@ class AthenaMCInputDatasets(Dataset):
             for guid, info in data.iteritems():
                 contents_new[guid]=info['lfn']
         contents=contents_new
-        
 #                contents = contents_new            
 ##        # get list of files in selected dataset.
 ##        try:
@@ -1226,7 +1225,6 @@ class AthenaMCOutputDatasets(Dataset):
 
         # now time for a summary
         dsets=self.store_datasets
-        print dsets
         contents_new = {}
 
         for dset in dsets:
