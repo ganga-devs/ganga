@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-release,v 1.14 2009-03-07 14:02:25 wreece Exp $
+# $Id: ganga-release,v 1.15 2009-05-06 13:52:25 gangage Exp $
 ################################################################################
 
 import os,sys,time,re,shutil
@@ -58,7 +58,18 @@ CONFIG['RemoteSites'] = {'Imperial':
                           "Tests" : ['Ganga.test_local']}}
 
 # accounts used for CERN deployment of Ganga
-GANGA_ACCOUNTS = [('Ganga','gangage'),('GangaRobot','gangage'),('GangaLHCb','gangalb'),('GangaAtlas','gangaat'),('GangaNG','gangaat')]
+GANGA_ACCOUNTS = [('Ganga','gangage'),('GangaRobot','gangage'),('GangaLHCb','gangalb'),('GangaAtlas','gangaat'),('GangaNG','gangaat'),('GangaPanda','gangaat')]
+
+GANGA_RUNTIME_PACKAGES = {}
+
+for pkg,account in GANGA_ACCOUNTS:
+    GANGA_RUNTIME_PACKAGES.setdefault(account,[])
+    if not pkg in GANGA_RUNTIME_PACKAGES[account]:
+        GANGA_RUNTIME_PACKAGES[account].append(pkg)
+
+#print '-----'
+#print GANGA_RUNTIME_PACKAGES
+#print '-----'
 
 def askYesNo(msg):
     answer = raw_input(msg+' [yes/NO] ')
@@ -175,7 +186,7 @@ class GenerateConfigFilesCommand:
             if x[0] == 'Ganga':
                 cfg = ''
             else:
-                cfg = '-o\'[Configuration]RUNTIME_PATH=%s\''%x[0]
+                cfg = '-o\'[Configuration]RUNTIME_PATH=%s\''%(":".join(GANGA_RUNTIME_PACKAGES[x[1]]))
 
             print 'login to %s@lxplus and run this command:'%x[1]
             print gencmd%cfg
