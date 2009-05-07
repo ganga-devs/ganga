@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.51 2009-04-29 12:52:07 elmsheus Exp $
+# $Id: Athena.py,v 1.52 2009-05-07 06:32:56 dvanders Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -622,9 +622,9 @@ class Athena(IApplication):
         if out['cacheVer']:
             pat = re.compile('-(.*)_(.*)')
             match_pat = pat.match(out['cacheVer'])
-            if match:
-                self.atlas_project = pat_match.group(1)
-                self.atlas_production = pat_match.group(2)
+            if match_pat:
+                self.atlas_project = match_pat.group(1)
+                self.atlas_production = match_pat.group(2)
         else:
             self.atlas_production = ''
             self.atlas_project = ''
@@ -1243,6 +1243,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.51  2009/04/29 12:52:07  elmsheus
+# Change schema version of Athena class
+#
 # Revision 1.50  2009/04/28 10:21:25  elmsheus
 # Fix if numfiles is empty string
 #
