@@ -234,7 +234,7 @@ if __name__ == '__main__':
             elif o in [ '-p' ]:
                 if a in supported_protocols:
                     protocol = a
-                    printInfo('file copy protocol: %s' % a)
+                    printInfo('file copy protocol: %s' % a, outfile)
                 else:
                     printInfo('protocal not supported: %s, trying %s' % (a, protocol), outfile)
             elif o in [ '-t' ]:
@@ -276,7 +276,7 @@ if __name__ == '__main__':
             if protocol == 'lcgcp':
                 break
             else:
-                printInfo('trying with lcg-cp')
+                printInfo('trying with lcg-cp', outfile)
                 protocol = 'lcgcp' 
                 pass
 
