@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: CamontDataset.py,v 1.4 2008-11-15 15:06:39 karl Exp $
+# $Id: CamontDataset.py,v 1.5 2009-05-10 16:42:03 karl Exp $
 ###############################################################################
 # File: CamontData.py
 # Author: K. Harrison
@@ -10,8 +10,8 @@
 """Module containing class for Camont output data"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "15 November 2008"
-__version__ = "1.3"
+__date__    = "10 May 2009"
+__version__ = "1.4"
 
 import commands
 import os
@@ -34,7 +34,9 @@ class CamontDataset( Dataset ):
       "gridhome" : SimpleItem( defvalue = \
       "gsiftp://serv02.hep.phy.cam.ac.uk/dpm/hep.phy.cam.ac.uk/home/camont", \
 #     "gsiftp://t2se01.physics.ox.ac.uk/dpm/physics.ox.ac.uk/home/camont"
-      doc = "Path to default top-level directory for Grid storage" ) \
+      doc = "Path to default top-level directory for Grid storage" ), \
+      "tarfile" : SimpleItem( defvalue = "images", \
+      doc = "Name (without suffix) of gzipped tarfile for unloading" ) \
       } )
    _category = 'datasets'
    _name = 'CamontDataset'
@@ -73,11 +75,13 @@ class CamontDataset( Dataset ):
          job = self._getParent()
 
       if not tarFile:
-         tarFile = fullpath( os.path.join( job.outputdir, "images.tar.gz" ) )
+         tarFile = fullpath( os.path.join( job.outputdir, "%s.tar.gz" \
+           % self.tarfile ) )
 
       if ( "LCG" == job.backend._name ): 
          gridUrl = \
-            os.path.join( job.outputdata.getGridStorage(), "images.tar.gz" )
+            os.path.join( job.outputdata.getGridStorage(), "%s.tar.gz" \
+            % self.tarfile )
          cp = "globus-url-copy %s file:%s" % ( gridUrl, tarFile )
          status = shell.cmd1( cmd = cp, allowed_exit = range( 1000 ) )[ 0 ]
          if ( 0 != status ):
@@ -97,7 +101,8 @@ class CamontDataset( Dataset ):
       hostname = commands.getoutput( "hostname -f" )
       job = self._getParent()
 
-      tarFile = fullpath( os.path.join( job.outputdir, "images.tar.gz" ) )
+      tarFile = fullpath( os.path.join( job.outputdir, "%s.tar.gz" \
+        % self.tarfile ) )
 
       downloadStartTime = "%.6f" % time.time()
       statusOK = self.download( job = job, tarFile = tarFile )
@@ -149,7 +154,8 @@ class CamontDataset( Dataset ):
          job = self._getParent()
 
       if not tarFile:
-         tarFile = fullpath( os.path.join( job.outputdir, "images.tar.gz" ) )
+         tarFile = fullpath( os.path.join( job.outputdir, "%s.tar.gz" \
+           % self.tarfile ) )
 
       if not os.path.exists( tarFile ):
          logger.warning( "Output not found for job %s" % job.id )
