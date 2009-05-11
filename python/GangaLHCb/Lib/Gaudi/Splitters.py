@@ -37,6 +37,7 @@ def copy_app(app):
 
 def create_gaudi_subjob(job, inputdata):
     j = Job()
+    j.name = job.name
     j.application = copy_app(job.application)
     j.backend = job.backend # no need to deepcopy 
     if inputdata:
