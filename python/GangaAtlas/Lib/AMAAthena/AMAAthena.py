@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AMAAthena.py,v 1.4 2009-02-23 20:35:26 hclee Exp $
+# $Id: AMAAthena.py,v 1.5 2009-05-11 16:33:56 hclee Exp $
 ###############################################################################
 # AMAAthena Job Handler
 #
@@ -29,7 +29,7 @@ class AMAAthena(Athena):
     _schema   = Schema(Version(1,0), amaathena_schema_datadict)
     _category = 'applications'
     _name = 'AMAAthena'
-    _exportmethods = ['prepare', 'setup', 'postprocess']
+    _exportmethods = ['prepare', 'prepare_old', 'setup', 'postprocess']
     
     _GUIPrefs = [ { 'attribute' : 'atlas_release', 'widget' : 'String' },
                   { 'attribute' : 'atlas_production', 'widget' : 'String' },
@@ -87,5 +87,5 @@ class AMAAthena(Athena):
         return Athena.master_configure(self)
 
 #config = makeConfig('Athena','Athena configuration parameters')
-config = getConfig('Athena')
+config  = getConfig('Athena')
 logger = getLogger()
