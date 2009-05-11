@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.25 2009-05-04 12:01:49 ebke Exp $
+# $Id: AthenaMC.py,v 1.26 2009-05-11 15:45:50 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -609,6 +609,11 @@ class AthenaMC(IApplication):
            for arg in arglist:
                key,val=string.split(arg,"=")
                digval=string.replace(val,".","0")
+               imin=val.find("DBRelease-")
+               imax=val.find(".tar.gz")
+               if imin>=0 and imax>=0:
+                   digval=string.replace(val[imin+10:imax],".","0")
+                   val=val[imin+10:imax]
                if key=="DBRelease" and digval.isdigit():
                    self.dbrelease=val
                    if not job.inputdata:
@@ -730,6 +735,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.25  2009/05/04 12:01:49  ebke
+# Fixed fix...
+#
 # Revision 1.24  2009/05/01 13:53:32  fbrochu
 # Adding protection to master job completion in AthenaMC.postprocess(), forcing the thread to wait for subjobs in completing state to finish before running outputdata.fill()
 #
