@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.28 2009-04-30 12:21:17 ebke Exp $
+# $Id: DQ2Dataset.py,v 1.29 2009-05-12 12:47:25 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1163,7 +1163,7 @@ class DQ2OutputDataset(Dataset):
         if not os.environ.has_key('DQ2_COPY_COMMAND'):
             os.environ['DQ2_COPY_COMMAND']="lcg-cp --vo atlas"
 
-        if job.outputdata.outputdata and (job.backend._name == 'LCG' or job.backend._name == 'Panda') and job.outputdata.output:
+        if (job.outputdata.outputdata and job.backend._name == 'LCG' and job.outputdata.output) or (job.backend._name == 'Panda' and job.outputdata.output):
             # Determine local output path to store files
             local_location = options.get('local_location')
 
@@ -1248,6 +1248,10 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.28  2009/04/30 12:21:17  ebke
+#Added log file downloading and outputdata filling (DQ2Dataset) to Panda backend
+#Not tested AthenaMCDataset yet!
+#
 #Revision 1.27  2009/04/28 12:58:34  mslater
 #Removed trailing newline from DQ2OutputDataset.output
 #
