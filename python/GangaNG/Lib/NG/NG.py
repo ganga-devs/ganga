@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.30 2009-04-21 13:46:18 bsamset Exp $
+# $Id: NG.py,v 1.31 2009-05-12 12:19:18 pajchel Exp $
 ###############################################################################
 #
 # NG backend 
@@ -176,18 +176,17 @@ def getSRMendpoint(sitename):
   # Get the correctly formatted SRM endpoint from ToA
 
   srm_endpoint = TiersOfATLAS.getSiteProperty(sitename, 'srm')
+
   srm_endpoint_l = srm_endpoint.split(":")
+  srm_u = 'srm://srm.ndgf.org;spacetoken='
+
   if srm_endpoint_l[0]=='token':
-    srm_endpoint_s = ''
-    for i in range(len(srm_endpoint_l)):
-      if i<2:
-        continue
-      srm_endpoint_s=srm_endpoint_s+srm_endpoint_l[i]+":"
-    # Strip tailing ':'
-    srm_endpoint_s = srm_endpoint_s[:-1]
-    srm_endpoint = srm_endpoint_s
-  # print "SRM ENDPOINT: "+srm_endpoint
-  return srm_endpoint
+    srm_ep = srm_u + srm_endpoint_l[1]
+    srm_p = srm_endpoint.split("=")[1]
+    srm_ep += srm_p
+    
+  #print "SRM ENDPOINT: "+srm_ep
+  return srm_ep
 
 def getTurl(lfn,datasetname):
 
@@ -1657,17 +1656,21 @@ class NG(IBackend):
           # Set a default site name
           #sitename = 'NDGFT1DISK'
           #spacetoken = 'ATLASUSERDISK'
-          sitename = 'NDGF-T1_USERDISK'
-          spacetoken = 'USERDISK'
-
+          #sitename = 'NDGF-T1_USERDISK'
+          sitename = 'NDGF-T1_SCRATCHDISK'
+          #spacetoken = 'USERDISK'
+          spacetoken = 'ATLASSCRATCHDISK'
+          
           if job.outputdata.location!='':
             sitename = job.outputdata.location
 
           srm_endpoint =  getSRMendpoint(sitename)
           
           if srm_endpoint=='':
+            print 'did not find srm_endpoint '
             logger.warning("Couldn't find SRM information for sitename %s in TiersOfAtlasCache, setting NDGF default" % sn)
-            srm_endpoint = 'srm://srm.ndgf.org;spacetoken=ATLASUSERDISK/atlas/disk/'       
+            #srm_endpoint = 'srm://srm.ndgf.org;spacetoken=ATLASUSERDISK/atlas/disk/'
+            srm_endpoint = 'srm://srm.ndgf.org;spacetoken=ATLASSCRATCHDISK/atlas/disk/' 
 
           if jobconfig.env.has_key('OUTPUT_LFN'):
               output_lfn = jobconfig.env['OUTPUT_LFN']
@@ -2168,7 +2171,7 @@ config.addOption('ARC_SETUP', arcloc + '/setup.sh','FIXME Environment setup scri
 
 config.addOption('Requirements','GangaNG.Lib.NG.NGRequirements','FIXME under testing sets the full qualified class name forother specific NG job requirements')
 
-config.addOption('BoundSandboxLimit', 5 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to rls')
+config.addOption('BoundSandboxLimit', 3 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to rls')
 
 # set default values for the configuration parameters
 #config['ARC_ENABLE'] = True
@@ -2194,6 +2197,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.30  2009/04/21 13:46:18  bsamset
+# Fixed bug to allow ArgSplitter to work (added check of wether application was really athena in one crucial location
+#
 # Revision 1.29  2009/03/23 22:04:19  pajchel
 # in getTidDatasetnames use listDatasetsInContainer
 #
