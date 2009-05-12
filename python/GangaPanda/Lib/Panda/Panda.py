@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.31 2009-05-12 13:06:09 elmsheus Exp $
+# $Id: Panda.py,v 1.32 2009-05-12 13:52:37 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -237,13 +237,12 @@ class Panda(IBackend):
     '''Panda backend: submission to the PanDA workload management system
     '''
 
-    _schema = Schema(Version(2,0), {
+    _schema = Schema(Version(2,1), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'requirements'  : ComponentItem('PandaRequirements',doc='Requirements for the resource selection'),
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='PandaID of the job'),
         'url'           : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Web URL for monitoring the job.'),
-        'parent_id'     : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=1,copyable=0,doc='JobID of the job'),
         'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Panda job status'),
         'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
         'libds'         : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=1,doc='Existing Library dataset to use (disables buildjob)'),
@@ -251,7 +250,7 @@ class Panda(IBackend):
         'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
         'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code (transExitCode)'),
         'piloterrorcode': SimpleItem(defvalue='',protected=1,copyable=0,doc='Pilot Error Code'),
-        'reason'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Pilot Error Code Diagnostics')
+        'reason'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Error Code Diagnostics')
     })
 
     _category = 'backends'
@@ -442,8 +441,12 @@ class Panda(IBackend):
                         job.backend.CE = None
 
                     job.backend.exitcode = str(status.transExitCode)
-                    job.backend.pilotErrorCode = str(status.transExitCode)
-                    job.backend.reason = str(status.pilotErrorDiag)
+                    job.backend.piloterrorcode = str(status.pilotErrorCode)
+
+                    job.backend.reason = ''
+                    for k in job.backend.jobSpec.keys():
+                        if k.endswith('ErrorDiag') and job.backend.jobSpec[k]!='NULL':
+                            job.backend.reason = job.backend.reason + str(job.backend.jobSpec[k])
 
                     if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
                         pass
@@ -556,6 +559,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.31  2009/05/12 13:06:09  elmsheus
+# Correct logic for enableDownloadLogs
+#
 # Revision 1.30  2009/05/12 12:49:33  elmsheus
 # Add config[enableDownloadLogs] and remove build job output download
 #
