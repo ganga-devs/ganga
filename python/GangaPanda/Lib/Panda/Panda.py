@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.29 2009-04-30 12:21:17 ebke Exp $
+# $Id: Panda.py,v 1.30 2009-05-12 12:49:33 elmsheus Exp $
 ################################################################################
                                                                                                               
 
@@ -36,6 +36,7 @@ config.addOption( 'prodSourceLabelRun', 'user', 'prodSourceLabelRun')
 config.addOption( 'assignedPriorityBuild', 2000, 'assignedPriorityBuild' )
 config.addOption( 'assignedPriorityRun', 1000, 'assignedPriorityRun' )
 config.addOption( 'processingType', '', 'processingType' )
+config.addOption( 'enableDownloadLogs', False , 'enableDownloadLogs' )  
 
 def queueToAllowedSites(queue):
     try:
@@ -449,7 +450,7 @@ class Panda(IBackend):
                     elif status.jobStatus in ['starting','running','holding','transferring']:
                         job.updateStatus('running')
                     elif status.jobStatus == 'finished':
-                        if job.status != "completed":
+                        if not job.backend._name=='PandaBuildJob' and not config['enableDownloadLogs'] and job.status != "completed":
                             job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
                             job.backend.fillOutputData(job, status)
                         job.updateStatus('completed')
@@ -466,7 +467,7 @@ class Panda(IBackend):
                             job.backend.buildjob.jobSpec[k]=str(job.backend.buildjob.jobSpec[k])
 
                     logger.debug('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
-                    if status.jobStatus == "finished" and job.backend.buildjob.status != "finished":
+                    if not config['enableDownloadLogs'] and not job.backend._name=='PandaBuildJob' and status.jobStatus == "finished" and job.backend.buildjob.status != "finished":
                         job.backend.getLogFiles(job.getOutputWorkspace().getPath("buildJob"), status)
 
                     job.backend.buildjob.status = status.jobStatus
@@ -549,9 +550,16 @@ class Panda(IBackend):
             job.outputdata.location = locations.keys()[0]
         job.outputdata.output = outputdata
 
+
+
+
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.29  2009/04/30 12:21:17  ebke
+# Added log file downloading and outputdata filling (DQ2Dataset) to Panda backend
+# Not tested AthenaMCDataset yet!
+#
 # Revision 1.28  2009/04/27 15:14:50  dvanders
 # Fixed ARA again
 # Fixed libds support
