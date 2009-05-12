@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.29 2009-05-12 12:47:25 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.30 2009-05-12 13:06:36 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1196,7 +1196,11 @@ class DQ2OutputDataset(Dataset):
                 filename = fileinfo.split(',')[1]
 
                 exe = 'dq2-get --client-id=ganga -L ROAMING -a -d -D '
-                cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, outputlocation, filename, job.outputdata.datasetname)
+
+                if job.backend._name == 'Panda':
+                    cmd = '%s -H %s -f %s %s' %(exe, outputlocation, filename, job.outputdata.datasetname)
+                else:
+                    cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, outputlocation, filename, job.outputdata.datasetname)
                 
                 logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
 
@@ -1248,6 +1252,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.29  2009/05/12 12:47:25  elmsheus
+#Change Panda retrieve logic
+#
 #Revision 1.28  2009/04/30 12:21:17  ebke
 #Added log file downloading and outputdata filling (DQ2Dataset) to Panda backend
 #Not tested AthenaMCDataset yet!
