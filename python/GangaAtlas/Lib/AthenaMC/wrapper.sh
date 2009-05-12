@@ -122,11 +122,18 @@ if [ ! -z "$DRYRUN" ]; then
    exit 0
 fi
 
+# stage-in input data (use dq2-get, not dependant upon athena setup, but potentially screwed up by it. So we moved it before the athena set up.)
+echo "## source $T_HOMEDIR/stage-in.sh"
+
+source $T_HOMEDIR/stage-in.sh
+
+echo "Listing input data"
+ls -l
+
 # 13.0.30 turnaround: saving local LCG setup as 13.0.30 breaks LCg tools with useless, obsolete stuff shipped in.
 export LD_LIBRARY_PATH_SAVE=$LD_LIBRARY_PATH
 export PATH_SAVE=$PATH
 export PYTHONPATH_SAVE=$PYTHONPATH
-
 
 
 # set up the release
@@ -134,20 +141,11 @@ echo "## source $T_HOMEDIR/setup-release.sh"
 source $T_HOMEDIR/setup-release.sh
 printenv
 pwd
-# stage-in input data (use dq2-get, not dependant upon athena setup)
-echo "## source $T_HOMEDIR/stage-in.sh"
-
-source $T_HOMEDIR/stage-in.sh
-ls -l
-
-echo "output SE is $T_SE"
-
-
 
 echo
 /usr/bin/env date
 echo
-
+echo "output SE is $T_SE"
 
 #--------------------------------------------------------------------------
 #          transformation script call
