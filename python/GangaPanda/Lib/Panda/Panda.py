@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.30 2009-05-12 12:49:33 elmsheus Exp $
+# $Id: Panda.py,v 1.31 2009-05-12 13:06:09 elmsheus Exp $
 ################################################################################
                                                                                                               
 
@@ -450,7 +450,7 @@ class Panda(IBackend):
                     elif status.jobStatus in ['starting','running','holding','transferring']:
                         job.updateStatus('running')
                     elif status.jobStatus == 'finished':
-                        if not job.backend._name=='PandaBuildJob' and not config['enableDownloadLogs'] and job.status != "completed":
+                        if not job.backend._name=='PandaBuildJob' and config['enableDownloadLogs'] and job.status != "completed":
                             job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
                             job.backend.fillOutputData(job, status)
                         job.updateStatus('completed')
@@ -467,7 +467,7 @@ class Panda(IBackend):
                             job.backend.buildjob.jobSpec[k]=str(job.backend.buildjob.jobSpec[k])
 
                     logger.debug('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
-                    if not config['enableDownloadLogs'] and not job.backend._name=='PandaBuildJob' and status.jobStatus == "finished" and job.backend.buildjob.status != "finished":
+                    if config['enableDownloadLogs'] and not job.backend._name=='PandaBuildJob' and status.jobStatus == "finished" and job.backend.buildjob.status != "finished":
                         job.backend.getLogFiles(job.getOutputWorkspace().getPath("buildJob"), status)
 
                     job.backend.buildjob.status = status.jobStatus
@@ -556,6 +556,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.30  2009/05/12 12:49:33  elmsheus
+# Add config[enableDownloadLogs] and remove build job output download
+#
 # Revision 1.29  2009/04/30 12:21:17  ebke
 # Added log file downloading and outputdata filling (DQ2Dataset) to Panda backend
 # Not tested AthenaMCDataset yet!
