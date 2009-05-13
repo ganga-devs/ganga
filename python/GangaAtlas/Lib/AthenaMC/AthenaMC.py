@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.26 2009-05-11 15:45:50 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.27 2009-05-13 10:47:22 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -374,6 +374,7 @@ class AthenaMC(IApplication):
             #            sitemap[infile]=string.join(self.cavern_sites," ")
             self.sitemap[infile]=self.cavern_sites[0]
         self.mbfiles=self.minbias_turls.keys()
+
         for infile in self.mbfiles:
             self.dsetmap[infile]=self.minbias_lfcs.keys()[0]
             #           sitemap[infile]=string.join(self.minbias_sites," ")
@@ -392,7 +393,8 @@ class AthenaMC(IApplication):
             except:
                 raise ApplicationConfigurationError(None,"Not enough cavern input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(self.cavernfiles)))
             self.cavernfiles=self.cavernfiles[:imax]
-
+            self.cavernfile=",".join(self.cavernfiles)
+            
         random.shuffle(self.mbfiles)
         if job.inputdata and len(self.mbfiles) >0 and job.inputdata.n_minbias_files_job:
             imax=job.inputdata.n_minbias_files_job
@@ -401,7 +403,8 @@ class AthenaMC(IApplication):
             except:
                 raise ApplicationConfigurationError(None,"Not enough minbias input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(self.mbfiles)))
             self.mbfiles=self.mbfiles[:imax]
-
+            self.minbiasfile=",".join(self.mbfiles)
+ 
 # now doing output files....
         outpartition = partition + job._getRoot().outputdata.output_firstfile - 1
         for filetype in self.fileprefixes.keys():
@@ -533,7 +536,7 @@ class AthenaMC(IApplication):
        self.outputpaths,self.fileprefixes,self.outputfiles={},{},{}
        self.dsetmap,self.sitemap={},{}
        self.inputfiles,self.cavernfiles,self.mbfiles,self.dbfiles=[],[],[],[]
-       self.infileString=""
+       self.infileString,self.cavernfile,self.minbiasfile="","",""
        self.args=[]
        self.runNumber=""
        self.subjobsOutfiles={}
@@ -735,6 +738,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.26  2009/05/11 15:45:50  fbrochu
+# DB Release treatment: now parsing properly DBRelease=DBRelease-x.y.z.tar.gz in extraArgs
+#
 # Revision 1.25  2009/05/04 12:01:49  ebke
 # Fixed fix...
 #
