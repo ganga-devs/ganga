@@ -7,7 +7,7 @@ import getpass
 joboption = '/tmp/ganga_athena_dq2_lcg_testing_data-%s/AnalysisSkeleton_topOptions_v14220.py' % getpass.getuser()
 archivefile = '/tmp/ganga_athena_dq2_lcg_testing_data-%s/UserAnalysis-00003.tar.gz' % getpass.getuser()
 
-config['TestingFramework']['timeout']=1800
+config['TestingFramework']['timeout']=2700
 
 j = Job()
 j.application=Athena()
