@@ -92,60 +92,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             except:
                 raise ApplicationConfigurationError(None,"Error, CERN ATLAS AFS environment not defined. Needed by LSF backend")
 
-##      master_prepare() don't do much, just comparing user's wish for output site and potential sites from configure() and master_configure()
-                            
-        outsite,backup,outputlocation,backuplocation="","","",""
-        sites=[]
-        if len(app.inputfiles)>0:
-            sites=app.sitemap[app.inputfiles[0]].split()
-        logger.debug("potential sites from inputdata: %s %d" % (str(sites),len(sites)))
-
-        if len(sites)>0:
-            [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(sites[0])
-            if len(sites)>1:
-                [outlfc2,backup,backuplocation]=job.outputdata.getDQ2Locations(sites[1])
-            
-
-        outloc="CERN-PROD_USERDISK"        
-        if len(job.backend.requirements.sites)!=0 and job.backend.requirements.sites[0]:
-            app.se_name=str(job.backend.requirements.sites[0])# requirements takes precedence over se_name.
-        
-        if app.se_name != "none":
-            outloc=app.se_name
-            if outloc:
-                forbidden_spacetokens=["MCDISK","DATADISK","MCTAPE","DATATAPE","PRODDISK","PRODTAPE"]
-                for token in forbidden_spacetokens:
-                    try:
-                        assert token not in outloc
-                    except:
-                        raise ApplicationConfigurationError(None,"You are not allowed to write output data in any production space token: %s. Please select a site with SCRATCHDISK or LOCALGROUPDISK space token" % outloc)                  
-        # check that outloc is compatible with sites. If yes, use it if it is equal to app.se_name
-        
-        if len(sites)>0 and app.se_name!="none":
-            outloc=job.inputdata.matchSite(outloc,sites)
-        
-        if outloc:
-            [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(outloc)
-        
-        try:
-            assert outsite
-        except:
-            raise ApplicationConfigurationError(None,"Could not find suitable location for your output. Please subscribe your input dataset (if any) to a suitable location or change application.se_name to a suitable space token")
-
-        # srmv2 sites special treatment: the space token has been prefixed to the outputlocation and must be removed now:
-        imin=string.find(outputlocation,"token:")
-        imax=string.find(outputlocation,"srm:")
-        spacetoken=""
-        if imin>-1 and imax>-1:
-            spacetoken=outputlocation[imin+6:imax-1]
-            outputlocation=outputlocation[imax:]
-        # same treatment for backup location if any
-        imin=string.find(backuplocation,"token:")
-        imax=string.find(backuplocation,"srm:")
-        bst=""
-        if imin>-1 and imax>-1:
-            bst=backuplocation[imin+6:imax-1]
-            backuplocation=backuplocation[imax:]
        
         environment={'T_LCG_GFAL_INFOSYS' :'atlas-bdii.cern.ch:2170'}
         if app.mode !="template":
@@ -154,15 +100,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 trflags+="/W/Fl/W%s" % app.verbosity
             environment["TRFLAGS"]=trflags
 
-        environment["OUTLFC"]=outlfc
-        environment["OUTSITE"]=outsite
-        environment["OUTPUT_LOCATION"]=outputlocation
-        if spacetoken:
-            environment["SPACETOKEN"]=spacetoken
-        if backup:
-            environment["OUTLFC2"]=outlfc2
-            environment["OUTSITE2"]=backup
-            environment["OUTPUT_LOCATION2"]=backuplocation
 
 
         environment["PROD_RELEASE"]=app.prod_release
@@ -276,9 +213,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             raise  ApplicationConfigurationError(None,"Please give a value to dq2client_version in job.backend.requirements.")
         
         requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
-
-        # job to data, strict: target outsite and nothing else.
-        requirements.sites=outsite
             
         logger.debug("master job submit?")
         if job.backend._name=="LCG" or job.backend._name=="Cronus" or job.backend._name=="Condor" or job.backend._name=="NG":
@@ -333,7 +267,73 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         environment["OUTPUTFILES"]=outfilelist
         # Work around for glite WMS spaced environement variable problem
         inputbox += [ FileBuffer('outputfiles.conf',environment['OUTPUTFILES']+'\n') ]        
- 
+
+        # setting output site from input data if any.
+        outsite,backup,outputlocation,backuplocation="","","",""
+        sites=[]
+        if len(app.inputfiles)>0:
+            sites=app.sitemap[app.inputfiles[0]].split()
+        logger.info("potential sites from inputdata: %s %d" % (str(sites),len(sites)))
+
+        if len(sites)>0:
+            [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(sites[0])
+            if len(sites)>1:
+                [outlfc2,backup,backuplocation]=job.outputdata.getDQ2Locations(sites[1])
+        logger.debug("outsite is %s" % outsite) 
+        outloc=outsite
+        
+        if not outsite:
+            outloc="CERN-PROD_USERDISK"        
+#        if len(job.backend.requirements.sites)!=0 and job.backend.requirements.sites[0]:
+#            app.se_name=str(job.backend.requirements.sites[0])# requirements takes precedence over se_name.
+        
+        if app.se_name != "none":
+            outloc=app.se_name
+            if outloc:
+                forbidden_spacetokens=["MCDISK","DATADISK","MCTAPE","DATATAPE","PRODDISK","PRODTAPE"]
+                for token in forbidden_spacetokens:
+                    try:
+                        assert token not in outloc
+                    except:
+                        raise ApplicationConfigurationError(None,"You are not allowed to write output data in any production space token: %s. Please select a site with SCRATCHDISK or LOCALGROUPDISK space token" % outloc)                  
+        # check that outloc is compatible with sites. If yes, use it if it is equal to app.se_name
+        
+        if len(sites)>0 and app.se_name!="none":
+            outloc=job.inputdata.matchSite(outloc,sites)
+        
+        if outloc:
+            [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(outloc)
+        logger.info("output location site is %s" % outsite)
+        try:
+            assert outsite
+        except:
+            raise ApplicationConfigurationError(None,"Could not find suitable location for your output. Please subscribe your input dataset (if any) to a suitable location or change application.se_name to a suitable space token")
+
+        # srmv2 sites special treatment: the space token has been prefixed to the outputlocation and must be removed now:
+        imin=string.find(outputlocation,"token:")
+        imax=string.find(outputlocation,"srm:")
+        spacetoken=""
+        if imin>-1 and imax>-1:
+            spacetoken=outputlocation[imin+6:imax-1]
+            outputlocation=outputlocation[imax:]
+        # same treatment for backup location if any
+        imin=string.find(backuplocation,"token:")
+        imax=string.find(backuplocation,"srm:")
+        bst=""
+        if imin>-1 and imax>-1:
+            bst=backuplocation[imin+6:imax-1]
+            backuplocation=backuplocation[imax:]
+
+        environment["OUTLFC"]=outlfc
+        environment["OUTSITE"]=outsite
+        environment["OUTPUT_LOCATION"]=outputlocation
+        if spacetoken:
+            environment["SPACETOKEN"]=spacetoken
+        if backup:
+            environment["OUTLFC2"]=outlfc2
+            environment["OUTSITE2"]=backup
+            environment["OUTPUT_LOCATION2"]=backuplocation
+
  # setting up job wrapper arguments.       
         args=app.args
         
@@ -359,6 +359,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             logger.debug("submission to %s" % job.backend._name)
             #       prepare job requirements
             requirements = jobmasterconfig.requirements
+            # job to data, strict: target outsite and nothing else.
+            requirements.sites=outsite
+
             if "INPUTTURLS" in environment:
                 logger.debug(environment["INPUTTURLS"])
                 if string.find(environment["INPUTTURLS"],"file:")>=0:

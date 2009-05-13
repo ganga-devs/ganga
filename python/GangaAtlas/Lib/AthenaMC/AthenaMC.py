@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.27 2009-05-13 10:47:22 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.28 2009-05-13 14:51:45 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -90,7 +90,8 @@ class AthenaMC(IApplication):
        """Prepare each job/subjob from the user area"""
        # will call backend related method in RTHandler.py
        # can call configure(), then master_configure()
-       
+       pass
+   
     def getPartitionList(self):
         """ Calculates the list of partitions that should be processed by this application. 
             If no splitter is present, the list has always length one.
@@ -738,6 +739,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.27  2009/05/13 10:47:22  fbrochu
+# Bug fix for cavern/minbias file handling
+#
 # Revision 1.26  2009/05/11 15:45:50  fbrochu
 # DB Release treatment: now parsing properly DBRelease=DBRelease-x.y.z.tar.gz in extraArgs
 #
