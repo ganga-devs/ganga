@@ -77,7 +77,9 @@ def CMTscript(app,command=''):
    script+='export CMTCONFIG='+str(app.platform)+'\n' 
    script+='export User_release_area='+str(app.user_release_area)+'\n'
    script+='. setenvProject.sh '
-   script+= '%s %s %s\n' % (app.setupProjectOptions,appname,app.version)
+   setupProjectOptions = ''
+   if app.setupProjectOptions: setupProjectOptions = app.setupProjectOptions
+   script+= '%s %s %s\n' % (setupProjectOptions,appname,app.version)
    script+='[ x$CMTPATH == x ] || cd ' + str(app.user_release_area) + '\n'
    script+='pwd\n'
    command=command.replace('###CMT###',cmtcmd + ' ' + cmtoption)

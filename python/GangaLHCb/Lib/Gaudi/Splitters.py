@@ -28,6 +28,7 @@ def copy_app(app):
         else:
             c = copy.copy(getattr(app,name))
             setattr(cp_app,name,c)
+    if not hasattr(app,'extra'): return cp_app
     cp_app.extra = GaudiExtras() 
     cp_app.extra.input_buffers = app.extra.input_buffers.copy()
     cp_app.extra.input_files = app.extra.input_files[:]
@@ -42,10 +43,12 @@ def create_gaudi_subjob(job, inputdata):
     j.backend = job.backend # no need to deepcopy 
     if inputdata:
         j.inputdata = inputdata
-        j.application.extra.inputdata = j.inputdata
+        if hasattr(j.application,'extra'):
+            j.application.extra.inputdata = j.inputdata
     else:
         j.inputdata = None
-        j.application.extra.inputdata = LHCbDataset()
+        if hasattr(j.application,'extra'):
+            j.application.extra.inputdata = LHCbDataset()
     j.outputsandbox = job.outputsandbox[:]
     j.outputdata = job.outputdata
     return j
@@ -106,25 +109,25 @@ class SplitByFiles(ISplitter):
             raise SplittingError('filesPerJob < 1 : %d' % self.filesPerJob)
 
         subjobs=[]
-        self._extra = job.application.extra
+        inputdata = job.inputdata
+        if hasattr(job.application,'extra'):
+            inputdata = job.application.extra.inputdata
         inputs = LHCbDataset()
-        inputs.datatype_string=self._extra.inputdata.datatype_string
-        inputs.depth = self._extra.inputdata.depth
+        inputs.datatype_string = inputdata.datatype_string
+        inputs.depth = inputdata.depth
         if int(self.maxFiles) == -1:
-            inputs.files=self._extra.inputdata.files[:]
+            inputs.files = inputdata.files[:]
             logger.info("Using all %d input files for splitting" % len(inputs))
         else:
-            inputs.files=self._extra.inputdata.files[:self.maxFiles]
+            inputs.files = inputdata.files[:self.maxFiles]
             logger.info("Only using a maximum of %d inputfiles"
                         % int(self.maxFiles))
         
         #store names to add cache info later
         dataset_files = {}
-        for i in self._extra.inputdata.files:
-            dataset_files[i.name] = i
-
+        for i in inputdata.files: dataset_files[i.name] = i
         datasetlist = self._splitFiles(inputs)
-        cache_date = self._extra.inputdata.cache_date
+        cache_date = inputdata.cache_date
         if cache_date:
             _time = time.mktime(time.strptime(cache_date))
         else:
@@ -143,7 +146,7 @@ class SplitByFiles(ISplitter):
                     _timeUpdate = True
         if _timeUpdate:
             t = time.localtime(_time)
-            self._extra.inputdata.cache_date = time.asctime(t)
+            inputdata.cache_date = time.asctime(t)
         return subjobs
     
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

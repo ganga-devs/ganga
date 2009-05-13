@@ -103,7 +103,8 @@ class Francesc(IApplication):
     def _getshell(self):
         appname = self.get_gaudi_appname()
         ver  = self.version
-        opts = self.setupProjectOptions
+        opts = ''
+        if self.setupProjectOptions: opts = self.setupProjectOptions
 
         fd = tempfile.NamedTemporaryFile()
         script = '#!/bin/sh\n'
