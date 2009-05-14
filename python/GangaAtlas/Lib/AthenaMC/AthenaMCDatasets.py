@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.37 2009-05-06 13:25:54 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.38 2009-05-14 13:54:14 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -215,7 +215,7 @@ class AthenaMCInputDatasets(Dataset):
 
     _category = 'datasets'
     _name = 'AthenaMCInputDatasets'
-    _exportmethods = [ 'get_dataset', 'get_cavern_dataset', 'get_minbias_dataset','get_DBRelease','matchSite' ]
+    _exportmethods = [ 'get_dataset', 'get_cavern_dataset', 'get_minbias_dataset','get_DBRelease','matchSite','trimSites' ]
     _GUIPrefs= [ { 'attribute' : 'datasetType', 'widget' : 'String_Choice', 'choices' : ['DQ2','private','unknown','local']}]
 
     # content = [ ]
@@ -412,15 +412,18 @@ class AthenaMCInputDatasets(Dataset):
         app.sites=self.sites
         # now getting the rest of the dataset block
         # cavern datasets
+        logger.info("Signal dataset: %s done." % dataset)
         if self.cavern:
             self.get_cavern_dataset(app)
+            logger.info("Cavern dataset: %s done" % self.cavern)
         # minbias datasets
         if self.minbias:
             self.get_minbias_dataset(app)
+            logger.info("MinBias dataset: %s done" % self.minbias)
         # DB release if any
         if app.dbrelease:
             self.get_DBRelease(app)
-
+            logger.info("DB Release done")
         # got everything. now need to trim down app.(minbias,cavern,db)sites to
         # match app.sites (at least sharing the same cloud?)
         
@@ -865,7 +868,6 @@ class AthenaMCOutputDatasets(Dataset):
     def prep_data(self,app):
         ''' generate output paths and file prefixes based on app and outputdata information. Generate corresponding entries in DQ2. '''
         fileprefixes,outputpaths=self.outrootfiles.copy(),{}
-
         # The common prefix production.00042.physics.
         app_prefix = "%s" % app.production_name
         # backward compatibility

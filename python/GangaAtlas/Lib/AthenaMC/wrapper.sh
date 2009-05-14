@@ -55,10 +55,10 @@ then
 fi
 if [ -e inputlfcs.conf ] 
 then
-    INPUTLFCS_NEW=`cat inputlfcs.conf`
-    if [ ! "$INPUTLFCS_NEW" = "$INPUTLFCS" ]
+    INPUTSITES_NEW=`cat inputlfcs.conf`
+    if [ ! "$INPUTSITES_NEW" = "$INPUTSITES" ]
     then
-	export INPUTLFCS=$INPUTLFCS_NEW	
+	export INPUTSITES=$INPUTSITES_NEW	
     fi
 fi
 # output data

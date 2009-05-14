@@ -47,7 +47,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
     
     def master_prepare(self,app,appmasterconfig):
-        
         if app.siteroot: 
             os.environ["SITEROOT"]=app.siteroot
         os.environ["CMTSITE"]=app.cmtsite
@@ -215,6 +214,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
             
         logger.debug("master job submit?")
+        
         if job.backend._name=="LCG" or job.backend._name=="Cronus" or job.backend._name=="Condor" or job.backend._name=="NG":
             return LCGJobConfig("",inputbox,[],outputbox,environment,[],requirements)
         else :

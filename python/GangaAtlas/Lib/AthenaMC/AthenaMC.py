@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.28 2009-05-13 14:51:45 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.29 2009-05-14 13:54:14 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -317,7 +317,6 @@ class AthenaMC(IApplication):
         return args
  
     def configure(self,masterappconfig):
-        
         # getting configuration for individual subjobs
         self.inputfiles=self.turls.keys()
         partition = self.getPartitionList()[0][0] # This function either throws an exception or returns at least one element
@@ -524,7 +523,6 @@ class AthenaMC(IApplication):
         except AssertionError:
             raise ApplicationConfigurationError(None,"Transformation with no arguments. Please check your inputs!")
 
-
         return (None,None)
 
     
@@ -630,11 +628,13 @@ class AthenaMC(IApplication):
            except :
                raise ApplicationConfigurationError(None,"job.inputdata must be used and set to 'AthenaMCInputDatasets'")
        if job.inputdata:
+           logger.info("Checking input data. This can take a while")
            try:
                assert job.inputdata._name == 'AthenaMCInputDatasets'
            except :
                raise ApplicationConfigurationError(None,"job.inputdata must be set to 'AthenaMCInputDatasets'")
            job.inputdata.get_dataset(self, job.backend._name)
+           
 ##           print self.turls,self.lfcs,self.sites
 ##           print self.cavern_turls,self.cavern_lfcs,self.cavern_sites
 ##           print self.minbias_turls,self.minbias_lfcs,self.minbias_sites
@@ -664,7 +664,6 @@ class AthenaMC(IApplication):
            assert self.production_name
        except:
            raise ApplicationConfigurationError("application.production_name was not set and could not be deduced from other input fields. Aborting")
-         
        return (0,None)
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -739,6 +738,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.28  2009/05/13 14:51:45  fbrochu
+# AthenaMCLCGRTHandler.py: fixing bug preventing job submission to sites where the input data is located
+#
 # Revision 1.27  2009/05/13 10:47:22  fbrochu
 # Bug fix for cavern/minbias file handling
 #

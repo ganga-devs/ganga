@@ -138,7 +138,6 @@ stageInCastor(){
 
 eval $INPUTTURLS
 eval $INPUTFILES
-eval $INPUTLFCS
 eval $INPUTDATASETS
 eval $INPUTSITES
 echo ${lfn[@]}
