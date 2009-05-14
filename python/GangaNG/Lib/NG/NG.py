@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.31 2009-05-12 12:19:18 pajchel Exp $
+# $Id: NG.py,v 1.32 2009-05-14 11:53:37 pajchel Exp $
 ###############################################################################
 #
 # NG backend 
@@ -172,18 +172,31 @@ def register_file_in_dataset(datasetname,lfn,guid, size, checksum):
         
     return 
 
-def getSRMendpoint(sitename):
+def getSRMendpoint(sitename,turl):
   # Get the correctly formatted SRM endpoint from ToA
+  # turl == True when getSRMendoint is calld during dq2 registration
 
   srm_endpoint = TiersOfATLAS.getSiteProperty(sitename, 'srm')
 
-  srm_endpoint_l = srm_endpoint.split(":")
-  srm_u = 'srm://srm.ndgf.org;spacetoken='
+  if turl == True:
+    srm_endpoint_l = srm_endpoint.split(":")
+    if srm_endpoint_l[0]=='token':
+      srm_endpoint_s = ''
+      for i in range(len(srm_endpoint_l)):
+        if i<2:
+          continue
+        srm_endpoint_s=srm_endpoint_s+srm_endpoint_l[i]+":"
+      # Strip tailing ':'
+      srm_endpoint_s = srm_endpoint_s[:-1]
+      srm_ep = srm_endpoint_s
+  else:
+    srm_endpoint_l = srm_endpoint.split(":")
+    srm_u = 'srm://srm.ndgf.org;spacetoken='
 
-  if srm_endpoint_l[0]=='token':
-    srm_ep = srm_u + srm_endpoint_l[1]
-    srm_p = srm_endpoint.split("=")[1]
-    srm_ep += srm_p
+    if srm_endpoint_l[0]=='token':
+      srm_ep = srm_u + srm_endpoint_l[1]
+      srm_p = srm_endpoint.split("=")[1]
+      srm_ep += srm_p
     
   #print "SRM ENDPOINT: "+srm_ep
   return srm_ep
@@ -800,7 +813,7 @@ class Grid:
             else:
               logger.warning('ERROR could not register file in dq2')
 
-            srm_endpoint =  getSRMendpoint(location)
+            srm_endpoint =  getSRMendpoint(location,True)
             usertag = configDQ2['usertag']
 
             lfcinput = {}
@@ -1664,8 +1677,8 @@ class NG(IBackend):
           if job.outputdata.location!='':
             sitename = job.outputdata.location
 
-          srm_endpoint =  getSRMendpoint(sitename)
-          
+          srm_endpoint =  getSRMendpoint(sitename,False)
+
           if srm_endpoint=='':
             print 'did not find srm_endpoint '
             logger.warning("Couldn't find SRM information for sitename %s in TiersOfAtlasCache, setting NDGF default" % sn)
@@ -2197,6 +2210,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.31  2009/05/12 12:19:18  pajchel
+# use spacetoken in srm url
+#
 # Revision 1.30  2009/04/21 13:46:18  bsamset
 # Fixed bug to allow ArgSplitter to work (added check of wether application was really athena in one crucial location
 #
