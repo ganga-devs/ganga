@@ -15,7 +15,7 @@ j.application.atlas_release='14.2.20'
 j.backend=LCG()
 assert (j.submit()==True)
 
-assert sleep_until_completed(j,1800)
+assert sleep_until_completed(j,2700)
 
 # removing all jobs
 j.remove()
