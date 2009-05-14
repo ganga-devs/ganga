@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.52 2009-05-07 06:32:56 dvanders Exp $
+# $Id: Athena.py,v 1.53 2009-05-14 16:25:28 dvanders Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -143,7 +143,7 @@ class AthenaOutputDataset(GangaObject):
 class Athena(IApplication):
     """The main Athena Job Handler"""
 
-    _schema = Schema(Version(2,1), {
+    _schema = Schema(Version(2,2), {
                  'atlas_release'          : SimpleItem(defvalue='',doc='ATLAS Software Release'),
                  'atlas_production'       : SimpleItem(defvalue='',doc='ATLAS Production Software Release'),
                  'atlas_project'          : SimpleItem(defvalue='',doc='ATLAS Project Name'),
@@ -165,6 +165,7 @@ class Athena(IApplication):
                  'options'                : SimpleItem(defvalue='',doc='Additional Athena options'),
                  'user_setupfile'         : FileItem(doc='User setup script for special setup'),
                  'exclude_from_user_area' : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Pattern of files to exclude from user area'),
+                 'append_to_user_area'    : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Extra files to include in the user area'),
                  'exclude_package'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Packages to exclude from user area requirements file'),
                  'stats'                  : SimpleItem(defvalue = {}, doc='Dictionary of stats info'),
                  'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field')
@@ -698,6 +699,9 @@ class Athena(IApplication):
             
         self.user_area_path = tmpDir
         savedir=os.getcwd()
+
+        # set extFile
+        AthenaUtils.setExtFile(self.append_to_user_area)
 
         # archive sources
         verbose = False
@@ -1243,6 +1247,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.52  2009/05/07 06:32:56  dvanders
+# Fix for https://savannah.cern.ch/bugs/index.php?50086
+#
 # Revision 1.51  2009/04/29 12:52:07  elmsheus
 # Change schema version of Athena class
 #
