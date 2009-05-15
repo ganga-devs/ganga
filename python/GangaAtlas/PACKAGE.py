@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.11 2009-05-08 17:01:15 dvanders Exp $
+# $Id: PACKAGE.py,v 1.12 2009-05-15 12:00:59 dvanders Exp $
 ###############################################################################
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 """
@@ -41,3 +41,4 @@ def standardSetup(setup=setup):
         setup.setPath(p,'DQ2_HOME')
         if setup.packages[p].has_key('DQ2_ENDUSER_SETUP'):
             os.environ['DQ2_ENDUSER_SETUP'] = setup.packages[p]['DQ2_ENDUSER_SETUP']
+        setup.prependPath(p,'PANDA_SYS')
