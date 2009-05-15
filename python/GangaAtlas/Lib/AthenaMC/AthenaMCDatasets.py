@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.38 2009-05-14 13:54:14 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.39 2009-05-15 15:50:11 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -555,7 +555,7 @@ class AthenaMCInputDatasets(Dataset):
         if dataset[-1]=="/":
             dsetmatch=dataset[:-1] # turning container name into dataset root for matching
         if string.find(dataset,"DBRelease")<0:
-            dsetmatch='*%s*' % dataset # loose matching for all input datasets except DBRelease ones.
+            dsetmatch='%s*' % dataset # loose matching for all input datasets except DBRelease ones.
         logger.debug( "matching input dataset: %s" % str(dsetmatch))
         try:
             dq2_lock.acquire()
@@ -664,18 +664,18 @@ class AthenaMCInputDatasets(Dataset):
                 locs=data.values()
                 # Avoid crashes if empty datasets are in containers
                 if (len(locs) == 0) or (len(locs[0]) < 2):
-                   continue
+                    continue
                 locations[0]+=locs[0][0]
                 locations[1]+=locs[0][1]
             finally:
                 dq2_lock.release()
-
+        
         datasetType="complete"
         allSites=[]
         for site in locations[1]:
             if site not in allSites:
                 allSites.append(site)
-                
+
         if len(allSites)==0:
             # add "incomplete" sites only if there is no "complete" one
             for site in locations[0]:
@@ -696,7 +696,6 @@ class AthenaMCInputDatasets(Dataset):
                 else:
                     selSites.append(sources)
             allSites=selSites
-            
         try:
             assert len(allSites)>0
         except:
@@ -948,7 +947,7 @@ class AthenaMCOutputDatasets(Dataset):
             
         sites=lfcstrings.keys()
         if se_name not in sites:
-            logger.debug("%s not found in DQ2 site list. Must be a private production" % se_name)
+            logger.warning("%s not found in DQ2 site list. This must be a Storage Element server name. If not, please kill the job as the output will not be saved anywhere." % se_name)
             if se_name != "none":
                 return ["",se_name,""]
             else:
@@ -964,13 +963,14 @@ class AthenaMCOutputDatasets(Dataset):
                 sitename=se_name[:imax]
                 # build all possible alternative, check that they are in DQ2 site list.
                 makeSites=[]
-                makeSites.append(sitename+"_LOCALGROUPDISK")
                 makeSites.append(sitename+"_SCRATCHDISK")
+                makeSites.append(sitename+"_LOCALGROUPDISK")
                 makeSites.append(sitename+"_USERDISK")
                 
                 for site in makeSites:
                     if site in sites:
                         selsite=site
+                        logger.info("Found alternative: %s" % selsite)
                         break
             if not selsite:
                 return ["","",""]
@@ -1056,7 +1056,7 @@ class AthenaMCOutputDatasets(Dataset):
 
         suffix="jid"+string.zfill(jobid,6)
         #print "job id retrieved is %s",suffix
-        datasetname=dataset+suffix
+        datasetname=dataset+"."+suffix
         
         # then the timestamp: timestamp will be vX, where X is the  number of already existing subdatasets with the same jid
         dsetlist=[]
