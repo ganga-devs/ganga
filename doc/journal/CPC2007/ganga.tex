@@ -52,6 +52,8 @@
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\val}[1]{\emph{#1}}
 
+\newcommand{\qq}[1]{{\color{red}\textbf{#1}}}
+%\newcommand{\qq}[1]{{\color{red}\textbf{}}}
 
 \begin{document}
 
@@ -60,8 +62,12 @@
 % Title, authors and addresses
 
 \title{Ganga: a tool for computational-task management and easy access to \grid resources}
-
+\author[a:CERN]{J.T.~Mo{\'s}cicki\corauthref{cor1}},
+\corauth[cor1]{Corresponding author}
+\ead{jakub.moscicki@cern.ch}
+%\ead[url]{http://moscicki.org}
 \author[a:Cambridge]{F.~Brochu},
+\author[a:Munich]{J.~Ebke}
 \author[a:Imperial]{U.~Egede},
 \author[a:Munich]{J.~Elmsheuser},
 \author[a:Cambridge]{K.~Harrison},
@@ -69,10 +75,6 @@
 \author[a:NIKHEF]{H.C.~Lee,\thanksref{HurngChun}},
 \author[a:CERN]{D.~Liko},
 \author[a:CERN]{A.~Maier},
-\author[a:CERN]{J.T.~Mo{\'s}cicki\corauthref{cor1}},
-\corauth[cor1]{Corresponding author}
-\ead{jakub.moscicki@cern.ch}
-%\ead[url]{http://moscicki.org}
 \author[a:CERN]{A.~Muraru},
 \author[a:STFC]{G.N.~Patrick},
 \author[a:Oslo]{K.~Pajchel},
@@ -82,6 +84,7 @@
 \author[a:Oxford]{A.~Soroko},
 \author[a:Birmingham]{C.L.~Tan},
 \author[a:CERN]{D.C.~Vanderster}
+\author[a:Imperial]{M.~Williams}
 
 \address[a:Cambridge]{University of Cambridge, Cambridge, United Kingdom}
 \address[a:Imperial]{Imperial College London, London, United Kingdom}
@@ -97,19 +100,26 @@
 \thanks[HurngChun]{On leave from University of Insbruck, Austria.}
 
 \begin{abstract}
-  We present the computational task-management tool \ganga, which allows for
-  the specification, submission, bookkeeping and post processing of
-  computational tasks on a wide set of distributed resources.  \ganga
-  effectively provides a homogeneous environment for processing data on
-  heterogeneous resources. We give examples from High Energy Physics,
-  demonstrating how an analysis can be developed on a local system and then
-  transparently moved to a \grid system for processing of all available data.
-  \ganga has an API that can be used via an interactive interface, in
-  scripts, or through a GUI. Specific knowledge about types of tasks or
-  computational resources is provided at run-time through a plugin system, 
-  making new developments easy to integrate. We give an overview of the
-  \ganga architecture, give examples of current use, and demonstrate how
-  \ganga can be used in many different areas of science.
+
+  \qq{Scientific user communities often face a problem of usability of
+the end-user interfaces for \grid access. In addition, to fully
+exploit all available distributed computing resources users are
+confronted with the problems of transition between different
+distributed systems in the everyday work.  In this paper,} we present
+the computational task-management tool \ganga, which allows for the
+specification, submission, bookkeeping and post processing of
+computational tasks on a wide set of distributed resources.  \ganga
+effectively provides a homogeneous environment for processing data on
+heterogeneous resources. We give examples from High Energy Physics,
+demonstrating how an analysis can be developed on a local system and
+then transparently moved to a \grid system for processing of all
+available data.  \ganga has an API that can be used via an interactive
+interface, in scripts, or through a GUI. Specific knowledge about
+types of tasks or computational resources is provided at run-time
+through a plugin system, making new developments easy to integrate. We
+give an overview of the \ganga architecture, give examples of current
+use, and demonstrate how \ganga can be used in many different areas of
+science.
 \end{abstract}
 
 \begin{keyword}
@@ -142,10 +152,27 @@ Grid computing \sep Data mining \sep Task management \sep User interface \sep In
 
 % main text
 
-%%\begin{linenumbers}
+\begin{linenumbers}
 
 \section{Introduction}
 \label{sec:intro}
+
+\qq{
+Scientific communities are using a growing number of distributed systems,
+from local batch systems and community-specific services to generic,
+global Grid infrastructures.  Users often debug applications using a
+desktop computer, then perform small-scale application testing using
+local resources and finally run at full-scale using globally
+distributed Grids. Sometimes new resources are made available to the
+users through systems previously unknown to them. Manual handling of
+the diversity of the interfaces and intrinsically different system
+architectures requires a lot of effort from the end-users and is
+counter-productive. The cost of mastering application configuration,
+tracking of computational tasks, archival and access to the results is
+prohibitive for the end-users if they are not supported by appropriate
+tools.  
+}
+
 \ganga is an easy-to-use frontend for the configuration, execution, and
 management of computational tasks. The implementation uses an object oriented
 design in \python~\cite{python}. It started as a project
@@ -153,9 +180,11 @@ design in \python~\cite{python}. It started as a project
 to serve as a \grid user interface for data
 analysis within the \atlas~\cite{ATLAS} and
 \lhcb~\cite{LHCb} experiments in High Energy Physics where large
-communities of physicists need access to \grid resources for data mining
-and simulation tasks. A list of projects which supported the development of \ganga
-may be found in section \ref{sec:acknowledgements}.
+communities of physicists need access to \grid resources for data
+mining and simulation tasks. A list of projects which supported the
+development of \ganga may be found in
+section \ref{sec:acknowledgements}. 
+
 
 \ganga provides a simple but flexible programming interface that can
 be used either interactively at the \python prompt, through a
@@ -174,9 +203,16 @@ This simplifies the progression from rapid prototyping on a local
 computer, to small-scale tests on a local batch system, to the analysis of a
 large dataset using \grid resources.
 
-In \ganga, the user has programmatic access through an API (Application
-Programming Interface), and has access to applications locally for
+In \ganga, the user has programmatic access through an Application
+Programming Interface (API), and has access to applications locally for
 quick turnaround during development. 
+
+\qq{ \ganga is a user- and application-oriented layer above 
+existing job submission and management technologies, such as
+Globus \cite{globus}, Condor \cite{Condor}, Unicore \cite{Unicore} or
+gLite \cite{gLite}. Rather than being a replacement, \ganga provides an
+interoperability layer for existing technologies . }
+
 
 It is possible to make \ganga available to a user community with a high level
 of customisation. For example, an expert within a field can implement a custom
@@ -199,12 +235,22 @@ their web browsers in a simplified way. These portals are normally
 domain specific and allow users of a distributed application to run it
 on the \grid without needing to know much about \grid tools. 
 
+
 \ganga is licensed under the GNU General Public
 License\footnote{\ganga is licensed under GPL version 2 or, if preferred by
 the user, any later version.  Details of the GPL are available at
 \url{http://www.gnu.org/licenses/gpl.html}.} and is available for download from
-the project website: \url{http://www.cern.ch/ganga}. The installation of \ganga is trivial and
-does not require privileged access or any server configuration. 
+the project website: \url{http://www.cern.ch/ganga}. The installation
+of \ganga is trivial and does not require privileged access or any
+server configuration. \qq{The \ganga installer script provides a
+self-contained package and most of the external dependencies are resolved
+automatically. However, \ganga generally does not attempt to
+install \grid or batch submission tools nor the application
+software\footnote{Some external dependencies, such as NorduGrid submission tools, are automatically installed.}. Typically such software is installed and managed separately
+by system administrators.  Simple configuration files allow 
+customisation and configuration of \ganga at a site, workgroup and user level.
+}
+
 Between January 2007 and December 2008 \ganga was
 used at 150 sites around the world, with 2000 unique users running about 250k %FIXME: STATS!
 \ganga sessions\footnote{The usage information was collected from a voluntary
@@ -285,11 +331,16 @@ server.
 A large computational task may be split into a number of subjobs
 automatically according to user-defined criteria and the output merged
 at a later stage. Each subjob will execute on its own and the merging
-of the output will take place when all have finalised. The
-submission of subjobs is automatically optimised if the backend
-component supports bulk job submission. For example, when submitting to
-the gLite workload management system~\cite{andreetto_2008} the job collection
-mechanism is used transparently to the user.
+of the output will take place when all have finalised. The submission
+of subjobs is automatically optimised if the backend component
+supports bulk job submission. For example, when submitting to the
+gLite workload management system~\cite{andreetto_2008} the job
+collection mechanism is used transparently to the user. \qq{ Job
+splitting functionality provides a flat list of subjobs suitable for
+embarrassingly parallel style workloads. However, certain backends
+allow users to specify special job types, e.g.  Message Passing Interface
+(MPI)~\cite{MPI} jobs. In this case \ganga may be used to manage
+collections of subjobs which correspond to MPI processes.}
 
 The \GPI allows frequently used job configurations to be
 stored as \code{templates}, so that they may easily be reused, and allows
@@ -303,6 +354,18 @@ credentials directly using the GPI. \ganga gives an early warning to a
 user if the credentials are about to expire. The minimum credential
 validity and other aspects of the credential management are fully
 configurable.
+
+\qq{
+\ganga supports multiple security models which are defined by each backend implementation separately.
+For local and batch backends the authentication and authorisation of
+the users is based on the local security infrastructure including user
+name and network authentication protocols such as Kerberos. \grid
+security infrastructure (GSI) \cite{GSI} provides security across
+organizational boundaries for the \grid backends. The \ganga framework
+allows for encapsulating different security models in pluggable components
+which may be simultaneously used in the same \ganga session.
+}
+
 
 A \code{Robot} has been implemented for repetitive use-cases. It is a \GPI
 script that periodically executes a series of
@@ -372,7 +435,7 @@ using ssh.
 As an example, the batch backend component defines a
 single property that may be set by the user:
 \begin{description}
-\item[\code{queue~~~~~~:}] name of queue to which job should be submitted,
+\item[\code{queue~~~~~~:}] name of queue to which job should be submitted\footnote{\qq{If the queue is not specified a default queue which is configured by the batch system is used.}},
 \end{description}
 and defines three properties for storing system information:
 \begin{description}
@@ -436,7 +499,13 @@ most important parts of \ganga.
 Job components are implemented as plugin classes, imported by \ganga
 at start-up if enabled in a user configuration file. This means that
 users only see the components relevant to their specific area of
-work.
+work. \qq{Plugins which are developed and maintained by the \ganga
+team are included in the main \ganga distribution and upgraded
+automatically when a user installs a newer \ganga version. Currently,
+the list includes around 15 generic plugins and around 20 plugins
+specific to \atlas and \lhcb. Plugins specific to a other user
+communities should be installed separately but could also be easily
+integrated in the main \ganga distribution if needed.  }
 
 \begin{figure}
   \centering
@@ -471,6 +540,16 @@ into a representation accepted by a specific backend. This strategy allows
 integration of inherently different backends and applications without forcing
 a lowest-common-denominator interface.
 
+\qq{
+Most of the plugins interact to with the underlying backends using
+shell commands.  This {\em down-to-earth} approach is particularly
+useful for the encapsulation of environments of different subsystems
+and resolution of environment clashes. In the verbose mode \ganga
+prints the executed commands so a user may reproduce the commands
+externally if needed. Higher-level abstractions such as
+JSDL \cite{JSDL}, OGSA-BES \cite{OGSA-BES} or SAGA API \cite{SAGA} are
+not currently used for the implementation but specific backends which
+support these standards could readily be added if needed.  }
 
 \subsection{Job persistence}
 \label{sec:persistence}
@@ -695,19 +774,21 @@ input data and produce only small amounts of output. This makes them
 very easy to deploy on the \grid, with support in \ganga provided by a
 generic \root~\cite{ROOT} application component.
 
+\qq{
 In the \lhcb computing model~\cite{lhcb:2005jj}, \grid jobs are routed
 through the
 \dirac~\cite{DIRAC} workload management system~(WMS). \dirac is a pilot-based
-system, where a generic script is submitted to the \grid and queries the
-WMS for a job with resource requirements satisfied by the machine where the
-pilot script is running.  If a compatible job is available, it is
-pulled from the WMS
-and started.  Otherwise, the pilot 
-terminates and the WMS sends a new pilot to the \grid. This system 
-improves the reliability of the \grid system as seen by the user. \ganga
-provides a \dirac backend
-component that supports submission of jobs to the \dirac
-WMS, making use internally of \dirac's \python API~\cite{DIRACAPI}.
+system where user jobs are queued in the WMS server. Generic pilot
+scripts are submitted to the \grid by WMS in the background.  A pilot
+queries the WMS for a job with resource requirements satisfied by the
+machine where the pilot script is running.  If a compatible job is
+available, it is pulled from the WMS and started.  Otherwise, the
+pilot terminates and the WMS sends a new pilot to the \grid.  This
+system improves the reliability of the \grid system as seen by the
+user. \ganga provides a \dirac backend component that supports
+submission of jobs to the \dirac WMS, making use internally
+of \dirac's \python API~\cite{DIRACAPI}.
+}
 
 A \emph{splitter} component implemented specifically for \lhcb is able to divide
 the
@@ -722,7 +803,7 @@ before an analysis can start.
 In total, above 300k user jobs finished successfully in 2008 with a total
 CPU consumption of 87 CPU years. The jobs ran at a total of 140 Grid
 sites across the globe. The system was responsive to a highly irregular
-usage pattern and spikes of several thousand simulataneous jobs were
+usage pattern and spikes of several thousand simultaneous jobs were
 observed during the year. This usage is expected to rise dramatically after the start of the
 \lhcb data taking.
 
@@ -908,8 +989,8 @@ output sandbox. This simple approach allowed integration of
 
 \subsection{\ganga integrated with lightweight \grid middleware}
 
-Open plugin architecture of \ganga allows to easily integrate other
-\grid middleware. An example of the \ARC (Advanced Resource Connector)
+\qq{The open plugin architecture of \ganga allows to integrate other
+\grid middleware easily.} An example of the \ARC (Advanced Resource Connector)
 \grid middleware~\cite{ellert_2007} is given in this section.
 
 The \ARC \grid middleware, a product of the NorduGrid project~\cite{ellert_2003}, is used by many academic
@@ -986,6 +1067,31 @@ extended and customised to meet the requirements of new user communities.
 Examples of \ganga usage have been provided in particle physics,
 medical physics and image processing.
 
+\qq{ Existing command line submission interfaces such as gLite do not have enough usability designed 
+into them. Some higher level tools such as GridWay\cite{GridWay}
+present jobs as if they were Unix processes and corresponding command
+line utilities. Interfaces based on Condor job-submission scripts have
+also been developed \cite{MCS}. A distinctive feature of \ganga is
+that it may be easily adapted to different working styles of the users
+who may simultaneously use three different interfaces. \ganga also
+provides a higher abstraction level than most of the other tools and
+allows a user to focus on solving the domain-specific problems rather
+than changing their way of working each time they switch to a new interface.
+}
+
+%MCS
+%
+%CONCURRENCY AND COMPUTATION: PRACTICE AND EXPERIENCE
+%Concurrency Computat.: Pract. Exper. 2008; 20:1329–1340
+%Published online 8 February 2008 in Wiley InterScience (www.interscience.wiley.com). DOI: 10.1002/cpe.1290
+%Job submission to grid
+%computing environments
+%R. P. Bruin1, ∗, † , T. O. H. White1 , A. M. Walker1 , K. F. Austen1 ,
+%M. T. Dove1 , R. P. Tyer2 , P. A. Couch2 , I. T. Todorov2
+%and M. O. Blanchard3
+
+
+
 \ganga has a large user base and is in active development. \ganga is a tool which may easily
 be used to support new scientific or commercial projects on a wide range of distributed
 infrastructures.
@@ -1002,11 +1108,10 @@ co-funded by the European Commission (contract number INFSO-RI-031688) through t
 Framework Programme.
 
 \ganga has received contributions over the years from a number of
-individuals.  Particular thanks are due to 
-David Adams, Marcello Barisonzi, Johannes Ebke, 
-Mike Kenyon, Wim Lavrijsen, Janusz Martyniak, Pere Mato, Caitriana Nicholson, 
-Rebecca Ronke, Vladimir Romanovski, David Tuckett, Ruth Dixon del Tufo, 
-Craig Tull and Mike Williams.
+individuals.  Particular thanks are due to David Adams, Marcello
+Barisonzi, Mike Kenyon, Wim Lavrijsen, Janusz Martyniak, Pere Mato,
+Caitriana Nicholson, Rebecca Ronke, Vladimir Romanovski, David
+Tuckett, Ruth Dixon del Tufo, Craig Tull.
 
 The developers would also like to thank the large number of users, from both
 within and outside particle physics, for their valuable suggestions for
@@ -1162,6 +1267,19 @@ A.A.~Alves Jr.\ \etal\ [LHCb Collaboration],
 \textit{The gLite workload management system},
 \href{http://dx.doi.org/10.1088/1742-6596/119/6/062007}
 {J.~Phys.: Conf.\ Ser.\ \textbf{119} (2008) 062007}.
+
+\bibitem{MPI} M.~Snir and S.~Otto, \textit{MPI-The Complete Reference: The MPI Core}, 
+{MIT Press (1998) ISBN: 0262692155}
+\href{http://www.mpi-forum.org}.
+
+%@book{552013,
+% author = {Snir,, Marc and Otto,, Steve},
+% title = {MPI-The Complete Reference: The MPI Core},
+% year = {1998},
+% isbn = {0262692155},
+% publisher = {MIT Press},
+% address = {Cambridge, MA, USA},
+% }
 
 \bibitem{VOMS} R.~Alfieri \etal,
 \textit{From gridmap-file to VOMS: managing authorization in a Grid
@@ -1385,6 +1503,6 @@ neuraminidase},
 % \end{subbibitems}
 
 \end{thebibliography}
-%%\end{linenumbers}
+\end{linenumbers}
 \end{document}
 
