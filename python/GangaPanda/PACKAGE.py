@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.6 2009-05-08 17:01:15 dvanders Exp $
+# $Id: PACKAGE.py,v 1.7 2009-05-15 19:50:18 dvanders Exp $
 ################################################################################
 
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
@@ -25,6 +25,5 @@ def standardSetup(setup=setup):
         setup.prependPath(p,'PYTHONPATH')
         setup.prependPath(p,'LD_LIBRARY_PATH')
         setup.prependPath(p,'PATH')
-        setup.prependPath(p,'CONFIGEXTRACTOR_PATH')
-        setup.prependPath(p,'PANDA_SYS')
+        setup.setPath(p,'PANDA_SYS')
 
