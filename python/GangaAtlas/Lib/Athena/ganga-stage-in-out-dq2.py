@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.36 2009-03-30 14:48:55 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.37 2009-05-15 13:59:47 mslater Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1335,7 +1335,238 @@ if __name__ == '__main__':
 
     ######################################################################
     # Start input configuration
+    # Do TAG first as it needs to get the AOD info and change the input_files
+
+    # TAG DATASET ###########################################################
+    if datasettype in [ 'TAG', 'TAG_REC', 'TNT_DOWNLOAD', 'TNT_LOCAL']:
+
+        # a bit of protection - don't run this code if a tag file is already there
+        if os.access('./tag.tar.gz',os.R_OK):
+            print "WARNING: tag.tar.gz detected. ignoring datasettype of " + datasettype
+            
+        else:
+                    
+            print "Preparing TAG Datasets..."
+
+            # get dataset list
+            try:
+                tagdatasetnames = os.environ['DATASETNAME'].split(":")
+
+            except:
+                raise NameError, "ERROR: DATASETNAME not defined"
+                sys.exit(EC_Configuration)
+
+            # compose dq2 command
+            dq2setuppath = '$VO_ATLAS_SW_DIR/ddm/latest/setup.sh'
+            inputtxt = 'dq2localid.txt'
+            try:
+                temp_dq2localsiteid = [ line.strip() for line in file(inputtxt) ]
+                dq2localsiteid = temp_dq2localsiteid[0]
+            except:
+                dq2localsiteid = os.environ[ 'DQ2_LOCAL_SITE_ID' ]
+                pass
+
+            taglfns = [ line.strip() for line in file('input_files') ]
+            tagguids = [ line.strip() for line in file('input_guids') ]
+
+            flist = ','.join(taglfns)
+
+            print "Downloading files: " + flist + " from datasets: " + os.environ['DATASETNAME']
+
+            for tagdatasetname in tagdatasetnames:
+
+                cmd = 'source %s; dq2-get --client-id=ganga --automatic --local-site=%s --no-directories --timeout %s -p lcg -f %s %s' % (dq2setuppath, dq2localsiteid, timeout, flist, tagdatasetname)
+                cmdretry = 'source %s; dq2-get --client-id=ganga --automatic --local-site=CERN-PROD_DATADISK --no-directories --timeout %s -p lcg -f %s %s' % (dq2setuppath, timeout, flist, tagdatasetname)
+
+                # execute dq2 command
+                rc, out = getstatusoutput(cmd)
+                print out
+                if (rc!=0):
+                    print "ERROR: error during dq2-get occured"
+                    rc, out = getstatusoutput(cmdretry)
+                    print out
+                    if (rc!=0):
+                        print "ERROR: error during retry of dq2-get occured"
+                        sys.exit(EC_DQ2GET)
+
+
+            tagddmFileMap = {}
+            for i in xrange(0,len(taglfns)):
+                tagddmFileMap[taglfns[i]] = tagguids[i]
+
+            files = {}
+            # check if all files have been transfered
+            pfnsnew = []
+            for lfn, guid in tagddmFileMap.iteritems():
+                name = os.path.basename(lfn)
+                pfn = os.path.join(directory,name)
+                # check if all files exists and if file size greater 0
+                try:
+                    open(pfn)
+                    fsize = os.stat(pfn).st_size
+                except IOError:
+                    print "ERROR %s not found" % name
+                    continue
+                if (fsize>0):
+                    # append
+                    item = {'pfn':pfn,'guid':guid}
+                    files[lfn] = item
+
+            _makeJobO(files, tag=True, type=datasettype, version=atlas_release_major, dtype=datatype)
+
+            # using the given tag files, find the AOD info   
+            out_aod_files = []
+            out_aod_guids= []
+            out_aod_datasets = []
+
+            from dq2.clientapi.DQ2 import DQ2
+            from dq2.common.Config import Config
+            from dq2.common.DQException import *
+            from dq2.location.client.LocationClient import LocationClient
+
+            dq = DQ2 (
+                con_url = Config().getConfig('dq2-content-client').get('dq2-content-client', 'insecure'),
+                con_urlsec = Config().getConfig('dq2-content-client').get('dq2-content-client', 'secure'),
+                loc_url = Config().getConfig('dq2-location-client').get('dq2-location-client', 'insecure'),
+                loc_urlsec = Config().getConfig('dq2-location-client').get('dq2-location-client', 'secure'),
+                rep_url = Config().getConfig('dq2-repository-client').get('dq2-repository-client', 'insecure'),
+                rep_urlsec = Config().getConfig('dq2-repository-client').get('dq2-repository-client', 'secure'),
+                sub_url = Config().getConfig('dq2-subscription-client').get('dq2-subscription-client', 'insecure'),
+                sub_urlsec = Config().getConfig('dq2-subscription-client').get('dq2-subscription-client', 'secure'),
+                )
+
+            # for each file, grab the AOD info
+            for tagfile in taglfns:
+
+                # create symlinks as Coll utilties add .root on the end
+                filenew = tagfile + ".root" 
+                try:
+                    os.symlink(tagfile,filenew)
+                except OSError:
+                    pass
+
+                # run CollListFileGUID
+                print "------------------------------------------_"
+                cmd = "CollListFileGUID -src " + tagfile + " RootCollection |\
+                grep -E [[:alnum:]]{8}'-'[[:alnum:]]{4}'-'[[:alnum:]]{4}'-'[[:alnum:]]{4}'-'[[:alnum:]]{12} "
+                print "Calling " + cmd
+
+                rc, out = getstatusoutput(cmd)
+
+                if (rc!=0):
+                    print "ERROR: error during CollListFileGUID"
+                    print out
+                    continue
+
+                aod_guids = out.split()
+                print repr(aod_guids)
+                if len(aod_guids) == 0:
+                    continue
+
+                # run over the aod guids
+                for aod_guid in aod_guids:
+
+                    vuid = dq.contentClient.queryDatasetsWithFileByGUID(aod_guid)
+                    if len(vuid) == 0:
+                        continue
+                    else: 
+                        dataset = dq.repositoryClient.resolveVUID(vuid[0])
+                        name = dataset.get('dsn')
+
+                    if name.find("AOD") == -1:
+                        continue
+
+                    # store useful stuff
+                    files = dq.listFilesInDataset(name)
+                    out_aod_files.append( files[0][aod_guid]['lfn'] )
+                    out_aod_guids.append( aod_guid )
+                    if not name in out_aod_datasets:
+                        out_aod_datasets.append(name)
+
+            print "---------------------------------------------"
+            print "Setting DATASETNAME to " + ':'.join( out_aod_datasets )
+            os.environ['DATASETNAME'] = ':'.join( out_aod_datasets )
+            print "Saving " + repr(out_aod_files) + " to input_files"
+            open("input_files", "w").write( '\n'.join( out_aod_files ) )
+            print open("input_files", "r").read()
+            print "Saving " + repr(out_aod_guids) + " to input_guids"
+            open("input_guids", "w").write( '\n'.join( out_aod_guids ) )
+            print open("input_guids", "r").read()
+            print "---------------------------------------------"
+        
+##         if datasettype == 'TAG_REC':
+##             # Parse jobOptions file to include input.py
+##             if os.environ.has_key('ATHENA_OPTIONS'):
+##                 joboptions = os.environ['ATHENA_OPTIONS'].split(' ')
+                
+##                 if atlas_release_major >= 13:
+##                     linepat = "^PoolInputQuery="
+##                 else:
+##                     linepat = "^CollInputQuery="
+##                 pat = re.compile(linepat)
+
+##                 for jfile in joboptions:
+##                     try:
+##                         jolines = [ rline.strip() for rline in open(jfile,'r') ]
+##                     except IOError:
+##                         jolines = []
+##                     newlines = []
+##                     for l in jolines:
+##                         found = re.findall(pat, l)
+##                         if found:
+##                             newlines.append("include ( \"input.py\" )")
+##                         newlines.append(l)
+##                     outFile = open(jfile,'w')
+##                     for l in newlines:
+##                         outFile.write(l+'\n')
+##                     outFile.close()
+
     if datasettype!='DQ2_OUT':
+
+        # TAG file in sandbox (TNT) ###########################################################
+        if os.access('./tag.tar.gz',os.R_OK):
+
+            print "TAG file found in input sandbox. Using this as input..."
+            cmd = 'tar xvzf tag.tar.gz'
+            rc, out = getstatusoutput(cmd)
+            if (rc!=0):
+                print "ERROR: error during extraction of tag.tar.gz"
+                print out
+                sys.exit(EC_UNSPEC)
+
+            # make job option file
+            dir = "."
+            filepat = "\.root"
+            pat = re.compile(filepat)
+            filelist = os.listdir(dir)
+            joName = 'input.py'
+            outFile = open(joName,'w')
+            if datasettype in [ 'TAG_REC', 'TNT_DOWNLOAD', 'TNT_LOCAL' ]:
+                if atlas_release_major >= 13:
+                    outFile.write('PoolTAGInput = [')
+                else:
+                    outFile.write('CollInput = [')
+            else:
+                if atlas_release_major >= 13:
+                    versionString='ServiceMgr.'
+                else:
+                    versionString = ''
+                outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
+                outFile.write('%sEventSelector.RefName = "StreamAOD"\n'%versionString)
+                outFile.write('%sEventSelector.InputCollections = ['%versionString)
+
+            for tagfile in filelist:
+                found = re.findall(pat, tagfile)
+                if found:
+                    filename = re.sub('\.root\.\d+$','',tagfile)
+                    if atlas_release_major <= 12:
+                        filename = re.sub('\.root$','',tagfile)
+                    outFile.write('"%s",' % filename)
+            outFile.write(']\n')
+            # close
+            outFile.close()
+
+        # Sort out datasets, create PFC and input.py #####################################
         # Get datasetnames
         try:
             datasetnames = os.environ['DATASETNAME'].split(":")
@@ -1348,6 +1579,8 @@ if __name__ == '__main__':
         if input:
             lfns = [ line.strip() for line in file(input) ]
         else:
+            for line in file('input_files'):
+                print "****   " + line
             lfns = [ line.strip() for line in file('input_files') ]
 
         # Get rid of trailing numbers in filenames in LFC datasets
@@ -1500,6 +1733,7 @@ if __name__ == '__main__':
             print 'ERROR: Datasets %s are empty at %s' %(datasetnames, localsiteid)
             returnvalue=EC_QueryFiles
 
+
     # DQ2_LOCAL or TAG ######################################################
 
     if datasettype in [ 'DQ2_LOCAL', 'TAG', 'TAG_REC', 'TNT_LOCAL']:
@@ -1605,14 +1839,14 @@ if __name__ == '__main__':
         _makePoolFileCatalog(files)
 
         # make jobO
-        if (datasettype == 'DQ2_LOCAL'):
+        if not os.access('./tag.tar.gz',os.R_OK) and (datasettype == 'DQ2_LOCAL'):
             tag = False
             # Remove ESD files
             if lfns_esd:
                 for lfn in lfns_esd:
                     if lfn in files.keys():
                         files.pop(lfn)
-                
+
             _makeJobO(files, version=atlas_release_major, dtype=datatype)
 
         if len(files)>0:
@@ -1627,170 +1861,7 @@ if __name__ == '__main__':
             outFile.write('%s\n' % itime)
         outFile.close()
 
-    # TAG DATASET ###########################################################
-    if datasettype in [ 'TAG', 'TAG_REC', 'TNT_DOWNLOAD', 'TNT_LOCAL']:
 
-        # Choice 1: USE tag.tar.gz as CollInput
-        if os.access('./tag.tar.gz',os.R_OK):
-            cmd = 'tar xvzf tag.tar.gz'
-            rc, out = getstatusoutput(cmd)
-            if (rc!=0):
-                print "ERROR: error during extraction of tar.tar.gz"
-                print out
-                sys.exit(EC_UNSPEC)
-            # make job option file
-            dir = "."
-            filepat = "\.root"
-            pat = re.compile(filepat)
-            filelist = os.listdir(dir)
-            joName = 'input.py'
-            outFile = open(joName,'w')
-            if datasettype in [ 'TAG_REC', 'TNT_DOWNLOAD', 'TNT_LOCAL' ]:
-                if atlas_release_major >= 13:
-                    outFile.write('PoolTAGInput = [')
-                else:
-                    outFile.write('CollInput = [')
-            else:
-                if atlas_release_major >= 13:
-                    versionString='ServiceMgr.'
-                else:
-                    versionString = ''
-                outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
-                outFile.write('%sEventSelector.RefName = "StreamAOD"\n'%versionString)
-                outFile.write('%sEventSelector.InputCollections = ['%versionString)
-
-            for file in filelist:
-                found = re.findall(pat, file)
-                if found:
-                    filename = re.sub('\.root\.\d+$','',file)
-                    if atlas_release_major <= 12:
-                        filename = re.sub('\.root$','',file)
-                    outFile.write('"%s",' % filename)
-            outFile.write(']\n')
-            # close
-            outFile.close()
-
-        # Choice 2: USE TAGDATASETNAME
-        else:
-            # Get tagdatasetname
-            try:
-                tagdatasetnames = os.environ['TAGDATASETNAME'].split(":")
-            except:
-                raise NameError, "ERROR: TAGDATASETNAME not defined"
-                sys.exit(EC_Configuration)
-
-            # Is python32 available
-            cmd = 'which python32'
-            pythoncmd = ''
-            rc, out = commands.getstatusoutput(cmd)
-            if (rc!=0):
-                print 'No python32 found'
-                pythoncmd = ''
-            else:
-                pythoncmd = out.strip()
-            if os.environ.has_key('pybin'):
-                pythoncmd = os.environ['pybin']
-
-            # Download tag dataset
-            # compose dq2 command
-            dq2setuppath = '$VO_ATLAS_SW_DIR/ddm/latest/setup.sh'
-            inputtxt = 'dq2localid.txt'
-            try:
-                temp_dq2localsiteid = [ line.strip() for line in file(inputtxt) ]
-                dq2localsiteid = temp_dq2localsiteid[0]
-            except:
-                dq2localsiteid = os.environ[ 'DQ2_LOCAL_SITE_ID' ]
-                pass
-            
-            for tagdatasetname in tagdatasetnames:
-                #cmd = 'DQ2_LOCAL_ID= ; %s ./dq2_get -rcv -t %s %s ' % (pythoncmd,timeout,tagdatasetname)
-                #cmdretry = ' DQ2_LOCAL_ID= ; %s ./dq2_get -rcv -s BNL -t %s %s ' % (pythoncmd,timeout,tagdatasetname)
-                cmd = 'source %s; dq2-get --client-id=ganga --automatic --local-site=%s --no-directories --timeout %s -p lcg %s' % (dq2setuppath, dq2localsiteid ,timeout, tagdatasetname)
-                cmdretry = 'source %s; dq2-get --client-id=ganga --automatic --local-site=CERN-PROD_DATADISK --no-directories --timeout %s -p lcg %s' % (dq2setuppath, dq2localsiteid ,timeout, tagdatasetname)
-                # execute dq2 command
-                rc, out = getstatusoutput(cmd)
-                print out
-                if (rc!=0):
-                    print "ERROR: error during dq2-get occured"
-                    rc, out = getstatusoutput(cmdretry)
-                    print out
-                    if (rc!=0):
-                        print "ERROR: error during retry of dq2-get occured"
-                        sys.exit(EC_DQ2GET)
-            
-            # Create input file list of TAG dataset
-            # make jobO
-
-            # Read input_tag_files 
-            taglfns = [ line.strip() for line in file('input_tag_files') ]
-            # Get guids from input_tag_guids
-            tagguids = [ line.strip() for line in file('input_tag_guids') ]
-
-            tagddmFileMap = {}
-            for i in xrange(0,len(taglfns)):
-                tagddmFileMap[taglfns[i]] = tagguids[i]
-
-            files = {}
-            # check if all files have been transfered
-            pfnsnew = []
-            for lfn, guid in tagddmFileMap.iteritems():
-                name = os.path.basename(lfn)
-                pfn = os.path.join(directory,name)
-                # check if all files exists and if file size greater 0
-                try:
-                    open(pfn)
-                    fsize = os.stat(pfn).st_size
-                except IOError:
-                    print "ERROR %s not found" % name
-                    continue
-                if (fsize>0):
-                    # append
-                    item = {'pfn':pfn,'guid':guid}
-                    files[lfn] = item
-
-            _makeJobO(files, tag=True, type=datasettype, version=atlas_release_major, dtype=datatype)
-
-        # Create symlinks of TAG files since CollInput attaches .root to every filename during processing
-        dir = "."
-        filepat = "pool\.root\.\d+$"
-        pat = re.compile(filepat)
-        filelist = os.listdir(dir)
-        for file in filelist:
-            found = re.findall(pat, file)
-            if found:
-                filenew = re.sub('\.\d+$','',file)
-                try:
-                    os.symlink(file,filenew)
-                except OSError:
-                    pass
-
-        if datasettype == 'TAG_REC':
-            # Parse jobOptions file to include input.py
-            if os.environ.has_key('ATHENA_OPTIONS'):
-                joboptions = os.environ['ATHENA_OPTIONS'].split(' ')
-                
-                if atlas_release_major >= 13:
-                    linepat = "^PoolInputQuery="
-                else:
-                    linepat = "^CollInputQuery="
-                pat = re.compile(linepat)
-
-                for jfile in joboptions:
-                    try:
-                        jolines = [ rline.strip() for rline in open(jfile,'r') ]
-                    except IOError:
-                        jolines = []
-                    newlines = []
-                    for l in jolines:
-                        found = re.findall(pat, l)
-                        if found:
-                            newlines.append("include ( \"input.py\" )")
-                        newlines.append(l)
-                    outFile = open(jfile,'w')
-                    for l in newlines:
-                        outFile.write(l+'\n')
-                    outFile.close()
-                
     ##########################################################################
     # DQ2_OUT
     # DQ2 output registration
