@@ -1,0 +1,15 @@
+t = JobTemplate()
+
+assert(len(templates) == 1)
+assert(len(jobs) == 0)
+
+Job()
+
+assert(len(templates) == 1)
+assert(len(jobs) == 1)
+
+t.copy()
+assert(len(templates) == 2)
+
+assert(len(jobs) == 1)
+
