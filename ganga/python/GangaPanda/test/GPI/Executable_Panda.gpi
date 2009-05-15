@@ -1,0 +1,7 @@
+from GangaTest.Framework.utils import sleep_until_completed
+config['TestingFramework']['timeout']=3600
+j = Job()
+j.backend=Panda()
+assert(j.submit()==True)
+assert sleep_until_completed(j,3600)
+j.remove()

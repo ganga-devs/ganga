@@ -1,0 +1,24 @@
+from Ganga.Core.FileWorkspace import FileWorkspace
+iws = FileWorkspace('.')
+
+from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.Core.Sandbox import *
+
+contents = 'test file \n is test file \n and nothing else'
+
+fb = FileBuffer('test.file',contents)
+fb_exe = FileBuffer('test_exe.file',contents,'.',True)
+
+tgz_name = createPackedInputSandbox([fb,fb_exe],iws,'testtarfile.tgz')[0]
+
+import tarfile
+tf = tarfile.open(tgz_name,"r:gz")
+
+
+assert tf.extractfile('test.file').read()==contents, 'Contents of FuleBuffer is not correct'
+assert tf.extractfile('test_exe.file').read()==contents, 'Contents of FuleBuffer is not correct'
+
+import stat
+assert not tf.getmember('test.file').mode&stat.S_IXUSR, "UserExecutable in mode for nonexecutable FileBuffer"
+assert tf.getmember('test_exe.file').mode&stat.S_IXUSR, "UserExecutable not in mode for executable FileBuffer"

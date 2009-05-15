@@ -1,0 +1,51 @@
+from Ganga.GPIDev.Base.Proxy import addProxy,getProxyAttr,isProxy,isType
+
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+GangaList = GangaList._proxyClass
+
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as glist
+
+"""
+Test case the adding lists to GangaLists, where the normal list is the first argument
+i.e.    list + GangaList
+        list += GangaList
+"""
+
+def makeGangaList(start, stop):
+    g = GangaList()
+    for i in xrange(start,stop):
+        g.append(str(i))
+    return g
+
+def makeNormalList(start,stop):
+    return [str(i) for i in xrange(start,stop)]
+
+a = makeNormalList(10,100)
+b = makeGangaList(10,100)
+
+assert len(a) == len(b), 'Lists should have the same length'
+assert a == b, 'Lists should be the same'
+
+assert type(a) == type([])
+assert isType(b,glist)
+
+assert len(a + b) == 2*len(a), 'Lengths should add'
+assert isinstance(a + b,list)
+
+assert type(a) == type([])
+a += b
+assert isinstance(a,list)
+assert isType(b,glist)
+assert len(a) == 2*len(b), 'Lengths should add'
+
+for i in range(len(b)):
+    assert a[i] == b[i], 'Element %i must be the same in both' % i  
+    
+gl = GangaList()
+gl.append(1)
+l = [2]
+
+assert gl + l == [1,2], 'List order changed'
+assert l + gl == [2,1], 'List order changed'
+
+  

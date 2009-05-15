@@ -1,0 +1,18 @@
+j = Job(application = Executable(), backend = Dirac(), splitter = ArgSplitter(args = [['foo'],['bar']]))
+j.submit()
+
+#submit is blocking...
+assert j.status == 'submitted'
+assert len(j.subjobs) == 2, 'I\'m expecting subjobs' 
+#set the job to failed
+j.subjobs[0]._impl.updateStatus('failed')
+j._impl.updateMasterJobStatus()
+assert j.subjobs[0].status == 'failed'
+
+j.subjobs[0].backend.reset()
+assert j.subjobs[0].status == 'submitted'
+assert j.status == 'submitted'
+
+j.kill()
+
+                                                                    
