@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.32 2009-05-12 13:52:37 dvanders Exp $
+# $Id: Panda.py,v 1.33 2009-05-18 12:28:41 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -504,7 +504,7 @@ class Panda(IBackend):
             'outse':"self.jobSpec['destinationSE']",
             'jdltime':"''",
             'submittime':"int(time.mktime(time.strptime(self.jobSpec['creationTime'],'%Y-%m-%d %H:%M:%S')))",
-            'startime':"int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S')))",
+            'starttime':"int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S')))",
             'stoptime':"int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))",
             'totalevents':"int(self.jobSpec['nEvents'])", 
             'wallclock':"(int(time.mktime(time.strptime(self.jobSpec['endTime'],'%Y-%m-%d %H:%M:%S')))-int(time.mktime(time.strptime(self.jobSpec['startTime'],'%Y-%m-%d %H:%M:%S'))))",
@@ -559,6 +559,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.32  2009/05/12 13:52:37  dvanders
+# concat all ErrorDiags for backend reason
+#
 # Revision 1.31  2009/05/12 13:06:09  elmsheus
 # Correct logic for enableDownloadLogs
 #
