@@ -7,9 +7,16 @@ from time import time
 
 class MSGMS(IMonitoringService):
 
+    #KUBA: do we need these class attributes?
     gangaJobId = None
     gangaTaskId = None
     gridJobId = None
+
+    #KUBA: we should send the following information
+    # ganga_job_uuid - unique job identifier
+    # ganga_job_master_uuid - unique job identifier of the master (==job_uuid if no master)
+    # ganga_user_repository - "lostman@host:/path/to/repository"
+    # ganga_job_id - plain job id which may be used as argument to jobs, e.g. jobs("i.k") in case of split job
 
     def __init__(self, job_info):
         IMonitoringService.__init__(self,job_info)
