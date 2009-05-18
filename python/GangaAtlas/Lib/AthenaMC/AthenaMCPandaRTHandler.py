@@ -94,7 +94,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             for file in job.inputsandbox:
                 inputbox += [ file ]
 #        add option files
-        for extFile in job.backend.extFile:
+        for extFile in job.backend.extOutFile:
             try:
                 shutil.copy(extFile,tmpdir)
             except IOError:

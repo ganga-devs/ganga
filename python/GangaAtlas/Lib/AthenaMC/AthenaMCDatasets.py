@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.39 2009-05-15 15:50:11 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.40 2009-05-18 13:56:28 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -929,7 +929,9 @@ class AthenaMCOutputDatasets(Dataset):
         lfcstrings=getLFCmap()
         outputlocation={}
         default_site="CERN-PROD_USERDISK"
-            
+        job=self._getParent()
+        app=job.application
+        
         for site, desc in ToACache.sites.iteritems():
             try:
                 outloc = desc['srm'].strip()
@@ -958,7 +960,9 @@ class AthenaMCOutputDatasets(Dataset):
             if string.find(se_name,"LOCALGROUPDISK")<0 and string.find(se_name,"USERDISK")<0  and string.find(se_name,"SCRATCHDISK")<0 : # need to check if one can use LOCALGROUPDISK
             #if  string.find(se_name,"USERDISK")<-1: # no support for LOCALUSERDISK yet as space token requires explicit voms role.
                 selsite=""
-                logger.info("Space token proposed for output: %s is forbidden for writing. Attempting to find alternative space token in the same site."% se_name)
+                if se_name not in app.sites: # se_name not coming from input data...
+                    logger.warning("Space token proposed for output: %s is forbidden for writing. Attempting to find alternative space token in the same site."% se_name)
+
                 imax=se_name.find("_")
                 sitename=se_name[:imax]
                 # build all possible alternative, check that they are in DQ2 site list.
