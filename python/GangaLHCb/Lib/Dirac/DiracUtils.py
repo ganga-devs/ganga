@@ -98,13 +98,11 @@ rc = os.system('dirac-bookkeeping-gui %s')
 
 def getOutput_command(dir,id):
     return """
-def getOutput(dirac, num):
-
-    outputDir = os.path.join('%s',str(num))
-    id = %d
+def getOutput(dirac, outputDir):
     
+    id = %d
     if not os.path.exists(outputDir):
-        os.mkdir(outputDir)
+        os.makedirs(outputDir)
 
     pwd = os.getcwd()
     result = None
@@ -129,17 +127,27 @@ def getOutput(dirac, num):
     return result
 
 for i in range(3):
-    result = getOutput(dirac, i)
-    if (result is None) \
-           or (result is not None and not result.get('OK', False)):
+    outputDir = os.path.join('%s',str(i))
+    result = None
+    try:
+        result = getOutput(dirac, outputDir)
+    finally:
+        if (result is None) or (result is not None and not result.get('OK', False)):
+
+            if outputDir is not None and os.path.exists(outputDir):
+                #remove any output if we have a failure
+                import shutil
+                shutil.rmtree(outputDir, ignore_errors = True)
+
             import time
             time.sleep(5)
             rc = 1
-    else:
-        storeResult(result)
-        rc = 0
-        break
-""" % (dir, id)
+    
+        else:
+            storeResult(result)
+            rc = 0
+            break
+""" % (id, dir)
 
 def getOutputData_command(names,dir,id):                    
     return  """

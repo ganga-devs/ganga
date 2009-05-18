@@ -538,7 +538,10 @@ class Dirac(IBackend):
             except OSError:
                 logger.warning("Failed to move file '%s' file from " \
                                        "'%s'", f, tmpdir)
-                
+        
+        #now make sure the tmp directory is deleted
+        if os.path.exists(tmpdir):
+            shutil.rmtree(tmpdir, ignore_errors = True)        
   
     def updateMonitoringInformation( jobs ):
         """Check the status of jobs and retrieve output sandboxes"""
