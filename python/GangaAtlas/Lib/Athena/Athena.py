@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.53 2009-05-14 16:25:28 dvanders Exp $
+# $Id: Athena.py,v 1.54 2009-05-19 09:11:22 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -458,6 +458,12 @@ class Athena(IApplication):
                     except:
                         self.stats['NET_ETH_RX_PREATHENA'] = 0
                         self.stats['NET_ETH_RX_AFTERATHENA'] = 0
+
+                    try:
+                        if line.find('### node info:')==0:
+                            self.stats['arch'] = re.match('### node info: .*,(.*, .*),.*,.*,.*,.*', line).group(1).strip()
+                    except:
+                        self.stats['arch'] = ''
 
                 self.stats['numfiles2'] = numfiles2
 
@@ -1247,6 +1253,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.53  2009/05/14 16:25:28  dvanders
+# added option 'append_to_user_area'
+#
 # Revision 1.52  2009/05/07 06:32:56  dvanders
 # Fix for https://savannah.cern.ch/bugs/index.php?50086
 #
