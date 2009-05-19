@@ -2,11 +2,11 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.30 2009-05-12 13:06:36 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.31 2009-05-19 09:33:48 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
-import sys, os, re, urllib, commands, imp, threading, time
+import sys, os, re, urllib, commands, imp, threading, time, fnmatch
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
@@ -276,6 +276,7 @@ class DQ2Dataset(Dataset):
         'use_aodesd_backnav' : SimpleItem(defvalue = False, doc = 'Use AOD to ESD Backnavigation'),
         'names'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to use for processing'),
         'exclude_names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to exclude from processing'),
+        'exclude_pattern'    : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical file name pattern to exclude from processing'),
         'number_of_files'    : SimpleItem(defvalue = 0, doc = 'Number of files. '),
         'guids'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'GUID of Logical File Names'),
         'type'               : SimpleItem(defvalue = '', doc = 'Dataset access on worker node: DQ2_LOCAL (default), DQ2_COPY, TAG, LFC, TNT_LOCAL, TNT_DOWNLOAD'),
@@ -293,16 +294,17 @@ class DQ2Dataset(Dataset):
                        'list_locations_ce', 'list_locations_num_files',
                        'get_contents', 'get_locations', 'list_locations_siteindex' ]
 
-    _GUIPrefs = [ { 'attribute' : 'dataset',        'widget' : 'String_List' },
-                  { 'attribute' : 'tagdataset',     'widget' : 'String_List' },
-                  { 'attribute' : 'names',          'widget' : 'String_List' },
-                  { 'attribute' : 'exclude_names',          'widget' : 'String_List' },
+    _GUIPrefs = [ { 'attribute' : 'dataset',         'widget' : 'String_List' },
+                  { 'attribute' : 'tagdataset',      'widget' : 'String_List' },
+                  { 'attribute' : 'names',           'widget' : 'String_List' },
+                  { 'attribute' : 'exclude_names',   'widget' : 'String_List' },
+                  { 'attribute' : 'exclude_pattern', 'widget' : 'String_List' },
                   { 'attribute' : 'number_of_files', 'widget' : 'String' },
                   { 'attribute' : 'guids',           'widget' : 'String_List' },
-                  {'attribute'  : 'type',            'widget' : 'String_Choice', 'choices':['DQ2_LOCAL', 'DQ2_COPY', 'TAG', 'LFC', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_DOWNLOAD' ]},
+                  { 'attribute' : 'type',            'widget' : 'String_Choice', 'choices':['DQ2_LOCAL', 'DQ2_COPY', 'TAG', 'LFC', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_DOWNLOAD' ]},
                   { 'attribute' : 'failover',        'widget' : 'Bool' },
                   { 'attribute' : 'datatype',        'widget' : 'String_Choice', 'choices':['DATA', 'MC', 'MuonCalibStream' ]},
-                  {'attribute'  : 'accessprotocol',  'widget' : 'String' },
+                  { 'attribute' : 'accessprotocol',  'widget' : 'String' },
                   { 'attribute' : 'match_ce_all',    'widget' : 'Bool' },
                   { 'attribute' : 'min_num_files',   'widget' : 'Int' },
                   { 'attribute' : 'check_md5sum',    'widget' : 'Bool' } ]
@@ -394,13 +396,21 @@ class DQ2Dataset(Dataset):
 
             # Process only certain filenames ?
             if self.names:
-                job = self.getJobObject()
-                contents = [ (guid,lfn) for guid, lfn in contents if lfn in job.inputdata.names ]
+                #job = self.getJobObject()
+                contents = [ (guid,lfn) for guid, lfn in contents if lfn in self.names ]
 
             # Exclude certain filenames ?
             if self.exclude_names:
-                job = self.getJobObject()
-                contents = [ (guid,lfn) for guid, lfn in contents if not lfn in job.inputdata.exclude_names ]
+                #job = self.getJobObject()
+                contents = [ (guid,lfn) for guid, lfn in contents if not lfn in self.exclude_names ]
+
+            # Exclude certain file pattern ?
+            if self.exclude_pattern:
+                for expattern in self.exclude_pattern:
+                    regex = fnmatch.translate(expattern)
+                    pat = re.compile(regex, re.IGNORECASE)
+                    contents = [ (guid,lfn) for guid, lfn in contents if not pat.match(lfn) ]
+
 
             # Exclude log files
             contents = [ (guid,lfn) for guid, lfn in contents if not lfn.endswith('log.tgz') ]
@@ -1252,6 +1262,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.30  2009/05/12 13:06:36  elmsheus
+#Correct Panda retrieve
+#
 #Revision 1.29  2009/05/12 12:47:25  elmsheus
 #Change Panda retrieve logic
 #
