@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.11 2009-05-20 09:23:46 moscicki Exp $
+# $Id: Job.py,v 1.12 2009-05-20 12:35:40 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -332,7 +332,7 @@ class Job(GangaObject):
         self._setDirty(1)
         
     def _init_workspace(self):
-        self.getWorkspace('DebugWorkspace',create=True)
+        self.getDebugWorkspace(create=True)
 
 
     def getWorkspace(self,what,create=True):
@@ -399,6 +399,9 @@ class Job(GangaObject):
 
     def getOutputWorkspace(self,create=True):
         return self.getWorkspace('OutputWorkspace',create=create)
+
+    def getDebugWorkspace(self,create=True):
+        return self.getWorkspace('DebugWorkspace',create=create)
     
     def _setRegistry(self, registry):
         #print "Setting registry for ",self.getFQID('.')
@@ -589,7 +592,7 @@ class Job(GangaObject):
                 self.status = 'new'
                 raise JobError(msg)
 
-            self.getWorkspace('DebugWorkspace',create=True).remove(preserve_top=True)
+            self.getDebugWorkspace().remove(preserve_top=True)
             
             appmasterconfig = self.application.master_configure()[1] # FIXME: obsoleted "modified" flag
             # split into subjobs
@@ -738,7 +741,7 @@ class Job(GangaObject):
 
             doit(wsp.remove)
 
-            self.getWorkspace('DebugWorkspace',create=False).remove(preserve_top=False)
+            self.getDebugWorkspace(create=False).remove(preserve_top=False)
 
 
     def fail(self,force=False):
@@ -855,7 +858,7 @@ class Job(GangaObject):
             raise JobError(msg)
 
 
-        self.getWorkspace('DebugWorkspace',create=True).remove(preserve_top=True)
+        self.getDebugWorkspace().remove(preserve_top=True)
 
         try:
             rjobs = self.subjobs
@@ -998,6 +1001,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.11  2009/05/20 09:23:46  moscicki
+# debug directory (https://savannah.cern.ch/bugs/?50305)
+#
 # Revision 1.10  2009/02/24 14:59:34  moscicki
 # when removing jobs which are in the "incomplete" or "unknown" status, do not trigger callbacks on application and backend -> they may be missing!
 #
