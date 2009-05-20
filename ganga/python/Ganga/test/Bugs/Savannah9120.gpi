@@ -1,0 +1,14 @@
+t = TestApplication()
+t.sequence += ['1']
+assert(t.sequence==['1'])
+t.sequence += ['2']
+assert(t.sequence==['1','2'])
+
+print t.sequence
+t.sequence.append('3')
+print t.sequence,id(t.sequence)
+t2 = t.sequence
+t2.append('4')
+print t2,id(t2)
+assert(t.sequence==['1','2','3','4'])
+
