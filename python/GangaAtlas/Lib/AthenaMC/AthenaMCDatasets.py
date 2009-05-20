@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.41 2009-05-20 11:09:12 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.42 2009-05-20 15:20:21 ebke Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -206,6 +206,7 @@ class AthenaMCInputDatasets(Dataset):
         'number_events_file' : SimpleItem(defvalue=1,sequence=0,doc='Number of "events" per input file. This is used together with application.number_events_job to calculate the number of input files per job, or the number of jobs to inputfiles, respectively. This replaces "n_infiles_job".'),
         'skip_files' : SimpleItem(defvalue=0,doc='File numbers to skip in the input dataset. This shifts the numbering of the output files: If skip_files = 10 the processing starts with output file number one at input file 11.'),
         'skip_events' : SimpleItem(defvalue=0,doc='Number of events to skip in the first input file (after skip_files). This shifts the numbering of the output files, so the output file number one will contain the first set of events after skip_files and skip_events.'),
+        'use_partition_numbers'  : SimpleItem(defvalue=False,doc='If True, use the partition numbers "_00001" of the input files. This MUST be enabled if you work with input datasets that keep changing, since only then are you guaranteed not to process the same file twice. If your input dataset is frozen or you only process the dataset once, you can leave this on False.', typelist=["bool"]),
         'redefine_partitions'  : SimpleItem(defvalue ="",doc='FOR EXPERTS: Redefine the input partitions. There are three possibilities to specify the new input partitions: 1) String of input file numbers to be used (each block separated by a comma). A block can be a single number or a closed subrange (x-y). Subranges are defined with a dash. 2) List of input file numbers as integers 3) List of LFNs of input files as strings. This replaces the "inputfiles" property. To only process some events, it is recommended not to use "redefine_partitions" but rather use an AthenaMCSplitter and j.splitter.input_partitions.', typelist=["str","list"]),
         'cavern' : SimpleItem(defvalue = '', doc = 'Name of the dataset to be used for cavern noise (pileup jobs) or extra input dataset (other transforms). This dataset must be a DQ2 dataset'),
         'n_cavern_files_job': SimpleItem(defvalue =1,doc='Number of input cavern files processed by one job or subjob. Minimum 1'),

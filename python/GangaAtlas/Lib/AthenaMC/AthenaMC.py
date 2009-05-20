@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.29 2009-05-14 13:54:14 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.30 2009-05-20 15:20:21 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -334,9 +334,8 @@ class AthenaMC(IApplication):
         self.inputfiles = [fn for fn in self.turls.keys() if matchFile(matchrange, fn)]
         self.inputfiles.sort()
         
-        # Strict matching must be discarded if inputdata.redefine_partitions is not used.
-
-        if (job._getRoot().inputdata and job._getRoot().inputdata.redefine_partitions == ""):
+        # only use strict matching if use_partition_numbers is true
+        if job._getRoot().inputdata and not job._getRoot().inputdata.use_partition_numbers:
             self.inputfiles=[]
             inlfns=self.turls.keys()
             inlfns.sort()
@@ -344,8 +343,7 @@ class AthenaMC(IApplication):
                 try:
                     assert len(inlfns)>= i
                 except:
-                    raise ApplicationConfigurationError(None,"Not enough input files, got %i expected %i" % (len(inlfns),len(inputnumbers)))
-
+                    raise ApplicationConfigurationError(None,"Not enough input files, got %i expected %i" % (len(inlfns),inputnumbers[-1]))
                 self.inputfiles.append(inlfns[i-1])
 
         if not self.dryrun and len(self.inputfiles) < len(inputnumbers):
@@ -738,6 +736,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.29  2009/05/14 13:54:14  fbrochu
+# bug fix in wrapper.sh and stage-in.sh for input file downloading : clashing of environment variables now sorted
+#
 # Revision 1.28  2009/05/13 14:51:45  fbrochu
 # AthenaMCLCGRTHandler.py: fixing bug preventing job submission to sites where the input data is located
 #

@@ -64,6 +64,7 @@ class MCTask(Task):
       # the minus signs are used to get a correct rounding behaviour
       for i in range(1,len(self.transforms)):
          if self.transforms[i].inputdata:
+            self.transforms[i].inputdata.use_partition_numbers = True
             self.transforms[i].inputdata.number_events_file = self.transforms[i-1].application.number_events_job
       for i in range(len(self.transforms)-1,-1,-1):
          tf = self.transforms[i]
@@ -96,6 +97,7 @@ class MCTask(Task):
    def initializeFromGenerator(self,dataset,events_per_file):
       self.initialize()
       self.transforms[0].inputdata = AthenaMCInputDatasets()
+      self.transforms[0].inputdata.use_partition_numbers = True
       self.transforms[0].inputdata.DQ2dataset = dataset
       self.transforms[0].inputdata.number_events_file = events_per_file
       self.check()
@@ -103,6 +105,7 @@ class MCTask(Task):
    def initializeFromEvgen(self,dataset,events_per_file):
       self.initialize()
       self.removeTransform(0) # remove evgen
+      self.transforms[0].inputdata.use_partition_numbers = True
       self.transforms[0].inputdata.DQ2dataset = dataset
       self.transforms[0].inputdata.number_events_file = events_per_file
       self.check()
@@ -111,6 +114,7 @@ class MCTask(Task):
       self.initialize()
       self.removeTransform(0) # remove evgen
       self.removeTransform(0) # remove simul
+      self.transforms[0].inputdata.use_partition_numbers = True
       self.transforms[0].inputdata.DQ2dataset = dataset
       self.transforms[0].inputdata.number_events_file = events_per_file
       self.check()

@@ -145,6 +145,7 @@ class SimulTransform(MCTransform):
       self.application.mode = "simul"
       self.file_type = "simul.RDO"
       self.inputdata = AthenaMCInputDatasets()
+      self.inputdata.use_partition_numbers = True
 
    def getJobsForPartitions(self, partitions):
       jl = super(SimulTransform, self).getJobsForPartitions(partitions)
@@ -163,4 +164,5 @@ class ReconTransform(MCTransform):
       self.application.mode = "recon"
       self.file_type = "recon.AOD"
       self.inputdata = AthenaMCInputDatasets()
+      self.inputdata.use_partition_numbers = True
 
