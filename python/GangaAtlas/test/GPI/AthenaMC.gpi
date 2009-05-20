@@ -20,7 +20,7 @@ evgen.application.firstevent=1
 evgen.application.number_events_job=30
 evgen.application.atlas_release='12.0.4.1'
 evgen.application.mode='evgen'
-evgen.application.se_name='UKI-SOUTHGRID-CAM-HEP_SCRATCHDISK'
+evgen.application.se_name='UKI-SOUTHGRID-CAM-HEP_USERDISK'
 evgen.backend=LCG()
 evgen.outputdata=AthenaMCOutputDatasets()
 

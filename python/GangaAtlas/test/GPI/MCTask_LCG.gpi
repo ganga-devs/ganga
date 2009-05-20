@@ -8,7 +8,7 @@ t.name = "TestTask01"
 t.evgen.application.evgen_job_option = "CSC.005145.PythiaZmumu.py"
 t.total_events = 2
 t.setParameter(run_number="5145", production_name="ganga_test", process_name="PythiaZmumu")
-t.setParameter(atlas_release="14.2.24.1", se_name="FZK-LCG2_SCRATCHDISK")
+t.setParameter(atlas_release="14.2.24.1", se_name="UKI-SOUTHGRID-CAM-HEP_USERDISK")
 t.setParameter(triggerConfig="DEFAULT", geometryTag="ATLAS-GEO-05-00-00")
 t.setParameter(number_events_job=1)
 t.recon.application.number_events_job = 2
