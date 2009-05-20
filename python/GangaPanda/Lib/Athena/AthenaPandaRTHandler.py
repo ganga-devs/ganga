@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.29 2009-04-27 15:14:49 dvanders Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.30 2009-05-20 15:44:02 ebke Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -160,7 +160,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # run brokerage here if not splitting
         if not job.splitter:
             runPandaBrokerage(job)
-        elif job.splitter._name <> 'DQ2JobSplitter':
+        elif job.splitter._name <> 'DQ2JobSplitter' and job.splitter._name <> 'AnaTaskSplitterJob':
             raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter')
         if job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
