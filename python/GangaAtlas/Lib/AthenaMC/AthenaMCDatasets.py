@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.40 2009-05-18 13:56:28 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.41 2009-05-20 11:09:12 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -868,7 +868,7 @@ class AthenaMCOutputDatasets(Dataset):
         ''' generate output paths and file prefixes based on app and outputdata information. Generate corresponding entries in DQ2. '''
         fileprefixes,outputpaths=self.outrootfiles.copy(),{}
         # The common prefix production.00042.physics.
-        app_prefix = "%s" % app.production_name
+        app_prefix = "%s.%s" % (_usertag,app.production_name)
         # backward compatibility
         if app.production_name and app.run_number and app.process_name:
             app_prefix = "%s.%6.6d.%s" % (app.production_name,int(app.run_number),app.process_name)
@@ -879,7 +879,7 @@ class AthenaMCOutputDatasets(Dataset):
 
         job=app._getParent()# prep_data called from master_prepare(), so it should be the master job
         jid=job.id
-        # The Logfile must be set        
+        # The Logfile must be set
         if not "LOG" in fileprefixes:
             fileprefixes["LOG"]="%s.%s.LOG" % (app_prefix,app.mode)
 
@@ -1259,6 +1259,24 @@ class AthenaMCOutputDatasets(Dataset):
         pfn = job.outputdir + "output_data"
         fsize = filecheck(pfn)
         outdata=""
+        # first check grid proxy validity:
+        proxy = GridProxy()
+        timeleft=proxy.timeleft().split(":")
+        totaltime=string.atoi(timeleft[0])*3600+string.atoi(timeleft[1])*60+string.atoi(timeleft[2])
+        maxtime=600
+        njobs=1
+        if job.master:
+            masterjob=job.master
+            njobs=masterjob.splitter.numsubjobs
+        elif job.splitter:
+            njobs=job.splitter.numsubjobs
+        maxtime*=njobs
+        print maxtime, njobs
+        try:
+            assert totaltime>maxtime
+        except:
+            logger.error("Grid proxy lifetime not enough to allow dq2 registration. Aborting. Please refresh proxy and run job.outputdata.recover() ")
+            raise Exception()
         
         if fsize and fsize != -1:
             logger.debug("file size %d" % fsize)

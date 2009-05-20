@@ -126,9 +126,15 @@ fi
 echo "## source $T_HOMEDIR/stage-in.sh"
 
 source $T_HOMEDIR/stage-in.sh
-
+status=$?
 echo "Listing input data"
 ls -l
+if [ $status -ne 0 ];then
+echo "Error in stage-in, aborting"
+exit $status
+fi
+
+
 
 # 13.0.30 turnaround: saving local LCG setup as 13.0.30 breaks LCg tools with useless, obsolete stuff shipped in.
 export LD_LIBRARY_PATH_SAVE=$LD_LIBRARY_PATH

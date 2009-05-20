@@ -79,10 +79,8 @@ stageOutLCG(){
     echo "TIMEOUT set to $timelim"
 
     lfc-mkdir -p /grid/atlas/$lcn
-    let lcgtm=$timelim/10*8
-    echo "LCG TIMEOUT set to $lcgtm"
 
-    stageoutcmd="lcg-cr -t $lcgtm --vo atlas -v $stflag -d $DEST -l $LFN $guidflag file:$PWD/$file"
+    stageoutcmd="lcg-cr --vo atlas -v $stflag -d $DEST -l $LFN $guidflag file:$PWD/$file"
     timeout 1 $timelim $stageoutcmd
     status=$?
     if [ $status -ne 0 -a ! -z "$BACKUP" ]; then
@@ -90,7 +88,7 @@ stageOutLCG(){
         if [ ! -z "$OUTLFC2" ]; then
            export LFC_HOST=$OUTLFC2
         fi
-	stageoutcmd="lcg-cr -t $lcgtm --vo atlas -v $bstflag -d $BACKUP -l $LFN $guidflag file:$PWD/$file"
+	stageoutcmd="lcg-cr --vo atlas -v $bstflag -d $BACKUP -l $LFN $guidflag file:$PWD/$file"
 	timeout 1 $timelim $stageoutcmd
 	status=$?
      fi

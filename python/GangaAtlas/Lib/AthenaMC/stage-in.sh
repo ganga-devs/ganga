@@ -73,7 +73,7 @@ stageInLCG(){
 
     if [ ! -s "$LFNS" ]; then
 	echo "Missing LFN: $LFNS"
-	return 410302; # failed to get any replica...
+	return 111; # failed to get any replica...
     fi
 
     return 0
