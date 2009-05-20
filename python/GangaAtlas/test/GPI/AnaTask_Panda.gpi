@@ -1,0 +1,42 @@
+# testing structure for Athena application
+# this test-case is CERN AFS dependent since it use setup files located in /afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS 
+
+from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_file,sleep_until_state
+import getpass
+
+joboption = '/tmp/ganga_athena_dq2_lcg_testing_data-%s/AnalysisSkeleton_topOptions_v14220.py' % getpass.getuser()
+archivefile = '/tmp/ganga_athena_dq2_lcg_testing_data-%s/UserAnalysis-00003.tar.gz' % getpass.getuser()
+
+config['TestingFramework']['timeout']=5000
+
+t = AnaTask()
+
+t.analysis.application.atlas_release='14.2.20'
+t.analysis.application.option_file=[ joboption ]
+t.analysis.application.user_area=archivefile
+t.analysis.application.max_events=100
+
+t.analysis.files_per_job = 1
+t.analysis.inputdata.dataset = "mc08.105401.SU1_jimmy_susy.recon.AOD.e352_s462_r541_tid026109"
+
+t.analysis.outputdata=DQ2OutputDataset()
+
+t.setBackend(Panda())
+#t.analysis.backend.requirements.cloud='US'
+t.float = 5
+t.info()
+t.run()
+
+import time
+n = t.n_all()
+while 1:
+   c = t.n_status("completed")
+   f = t.n_status("failed")
+   if c+f >= n:
+      print "Test done, %s partitions completed, %s partitions failed" % (c, f)
+      t.info()      
+      break
+   assert t.analysis.status != "pause"
+   time.sleep(10)
+
+t.remove(True)
