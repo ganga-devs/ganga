@@ -117,7 +117,7 @@ echo "TRF FLAGS: $T_JTFLAGS"
 
 # Insert dry-run possibility
 if [ ! -z "$DRYRUN" ]; then
-   if ((0==$(($RANDOM % 5)))); then exit 128; fi
+   #if ((0==$(($RANDOM % 5)))); then exit 128; fi
    echo "./$T_TRF $T_JTFLAGS $T_ARGS"
    exit 0
 fi
