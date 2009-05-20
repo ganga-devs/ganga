@@ -10,6 +10,7 @@ import os
 
 evgen=Job()
 evgen.application=AthenaMC()
+evgen.application.dryrun = True
 evgen.application.random_seed='1102362401'
 evgen.application.evgen_job_option='DC3.007004.singlepart_e_Et40.py'
 evgen.application.production_name='tutorial'   
@@ -27,6 +28,7 @@ assert (evgen.submit()==True)
 
 simul=Job()
 simul.application=AthenaMC()
+simul.application.dryrun = True
 simul.application.random_seed='1102362401'
 simul.application.production_name='tutorial'   
 simul.application.process_name='single_e_Et40'
@@ -50,6 +52,7 @@ assert(simul.submit()==True)
 
 reco=Job()
 reco.application=AthenaMC()
+reco.application.dryrun = True
 reco.application.random_seed='1102362401'
 reco.application.production_name='tutorial'   
 reco.application.process_name='single_e_Et40'
@@ -79,6 +82,10 @@ os.system("cat %s/__jdlfile__" % evgen.inputdir )
 os.system("cat %s/__jdlfile__" % simul.subjobs[0].inputdir)
 os.system("cat %s/__jdlfile__" % reco.subjobs[0].inputdir)
 
+
+assert sleep_until_completed(evgen,2700)
+assert sleep_until_completed(simul,2700)
+assert sleep_until_completed(reco,2700)
 
 # removing all jobs
 evgen.remove()
