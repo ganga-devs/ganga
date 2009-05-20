@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.33 2009-05-18 12:28:41 dvanders Exp $
+# $Id: Panda.py,v 1.34 2009-05-20 12:41:22 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -105,7 +105,7 @@ def runPandaBrokerage(job):
                 dataset = job.inputdata.dataset[0]
             except:
                 try:
-                    dataset = job.inputdata.DQ2Dataset
+                    dataset = job.inputdata.DQ2dataset
                 except:
                     raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
             if not dataset:
@@ -559,6 +559,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.33  2009/05/18 12:28:41  dvanders
+# startime -> starttime
+#
 # Revision 1.32  2009/05/12 13:52:37  dvanders
 # concat all ErrorDiags for backend reason
 #
