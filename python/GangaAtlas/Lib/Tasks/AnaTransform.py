@@ -67,7 +67,8 @@ class AnaTransform(Transform):
       self.outputsandbox = []
       sjl = splitter.split(self) # This works even for Panda, no special "Job" properties are used anywhere.
       self.partitions_data = [sj.inputdata for sj in sjl]
-      self.partitions_sites = [sj.backend.requirements.sites for sj in sjl]
+      if stripProxy(self.backend)._name == 'LCG':
+         self.partitions_sites = [sj.backend.requirements.sites for sj in sjl]
       self.setPartitionsLimit(len(self.partitions_data)+1)
       self.setPartitionsStatus([c for c in range(1,len(self.partitions_data)+1) if self.getPartitionStatus(c) != "completed"], "ready")
       ods = self.getOutputDataset()
