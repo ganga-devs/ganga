@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.10 2009-02-24 14:59:34 moscicki Exp $
+# $Id: Job.py,v 1.11 2009-05-20 09:23:46 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -332,9 +332,8 @@ class Job(GangaObject):
         self._setDirty(1)
         
     def _init_workspace(self):
-        #self.inputdir = self.getInputWorkspace().getPath()
-        #self.outputdir = self.getOutputWorkspace().getPath()
-        pass
+        self.getWorkspace('DebugWorkspace',create=True)
+
 
     def getWorkspace(self,what,create=True):
         import Ganga.Core.FileWorkspace
@@ -590,6 +589,8 @@ class Job(GangaObject):
                 self.status = 'new'
                 raise JobError(msg)
 
+            self.getWorkspace('DebugWorkspace',create=True).remove(preserve_top=True)
+            
             appmasterconfig = self.application.master_configure()[1] # FIXME: obsoleted "modified" flag
             # split into subjobs
 #            try:
@@ -650,6 +651,7 @@ class Job(GangaObject):
         ''' 
         Rollback the job to the "new" state if submitting of job failed:
             - cleanup the input and output workspace preserving the top dir(bug ##19434)
+            - do not remove debug directory
             - cleanup subjobs
         This method is used as a hook for submitting->new transition
         @see updateJobStatus() 
@@ -735,6 +737,8 @@ class Job(GangaObject):
                     logger.warning('cannot remove file workspace associated with the job %d : %s',self.id,str(x))
 
             doit(wsp.remove)
+
+            self.getWorkspace('DebugWorkspace',create=False).remove(preserve_top=False)
 
 
     def fail(self,force=False):
@@ -849,6 +853,9 @@ class Job(GangaObject):
             logger.warning(msg)
             self.status = oldstatus
             raise JobError(msg)
+
+
+        self.getWorkspace('DebugWorkspace',create=True).remove(preserve_top=True)
 
         try:
             rjobs = self.subjobs
@@ -991,6 +998,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.10  2009/02/24 14:59:34  moscicki
+# when removing jobs which are in the "incomplete" or "unknown" status, do not trigger callbacks on application and backend -> they may be missing!
+#
 # Revision 1.9  2009/02/02 12:54:55  moscicki
 # bugfix: bug #45679: j.application.transition_update("removed") is not called on j.remove()
 #

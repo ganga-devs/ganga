@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: FileWorkspace.py,v 1.1 2008-07-17 16:40:49 moscicki Exp $
+# $Id: FileWorkspace.py,v 1.2 2009-05-20 09:23:46 moscicki Exp $
 ################################################################################
 
 """
@@ -188,11 +188,21 @@ class OutputWorkspace(FileWorkspace):
     def __init__(self):
         FileWorkspace.__init__(self,gettop(),subpath='output',splittree=False)        
 
+class DebugWorkspace(FileWorkspace):
+    """ Part of the workspace for storing output sandbox.
+    """    
+    def __init__(self):
+        FileWorkspace.__init__(self,gettop(),subpath='debug',splittree=False)        
 
 
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2008/07/17 16:40:49  moscicki
+# migration of 5.0.2 to HEAD
+#
+# the doc and release/tools have been taken from HEAD
+#
 # Revision 1.16.28.7  2008/04/18 08:17:24  moscicki
 # minor fix
 #
