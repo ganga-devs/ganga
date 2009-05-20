@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.4 2009-04-27 09:22:56 moscicki Exp $
+# $Id: Objects.py,v 1.5 2009-05-20 13:40:22 moscicki Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -158,6 +158,7 @@ class Descriptor(object):
             self._item = item
             self._getter_name = None
             self._checkset_name = None
+            self._filter_name = None
             
             try:
                 self._getter_name = item['getter']
@@ -166,6 +167,11 @@ class Descriptor(object):
 
             try:
                 self._checkset_name = item['checkset']
+            except KeyError:
+                pass
+            
+            try:
+                self._filter_name = item['filter']
             except KeyError:
                 pass
 
@@ -198,6 +204,9 @@ class Descriptor(object):
         cs = self._bind_method(obj,self._checkset_name)
         if cs:
             cs(val)
+        filter = self._bind_method(obj, self._filter_name)
+        if filter:
+            val = filter(val)
         
         #self._check_getter()
             
@@ -478,6 +487,9 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.4  2009/04/27 09:22:56  moscicki
+# fix #29745: use __mro__ rather than first-generation of base classes
+#
 # Revision 1.3  2009/02/24 14:57:56  moscicki
 # set parent correctly for GangaList items (in __setstate__)
 #

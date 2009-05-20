@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ICredential.py,v 1.5 2009-03-18 18:28:15 karl Exp $
+# $Id: ICredential.py,v 1.6 2009-05-20 13:40:22 moscicki Exp $
 ################################################################################
 #
 # File: ICredential.py
@@ -63,7 +63,7 @@ import os, threading, time, tempfile
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
-from Ganga.Utility.Config import ConfigError, getConfig
+from Ganga.Utility.Config import ConfigError, getConfig, expandgangasystemvars
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Plugin.GangaPlugin import allPlugins, PluginManagerError
 from Ganga.Utility.Shell import Shell
@@ -90,11 +90,14 @@ class ICommandSet( GangaObject ):
    """
    _schema = Schema( Version( 1, 0 ), {
       "init" : SimpleItem( defvalue = "",
-         doc = "Command for creating/initialising credential" ),
+         doc = "Command for creating/initialising credential",
+         filter = '__expandGangaSystemVars__'),
       "info" : SimpleItem( defvalue = "",
-         doc = "Command for obtaining information about credential" ),
+         doc = "Command for obtaining information about credential",
+         filter = '__expandGangaSystemVars__'),
       "destroy" : SimpleItem( defvalue = "",
-         doc = "Command for destroying credential" ),
+         doc = "Command for destroying credential",
+         filter = '__expandGangaSystemVars__'),
       "init_parameters" : SimpleItem( defvalue = {},
          doc = "Dictionary of parameter-value pairs to pass to init command" ),
       "destroy_parameters" : SimpleItem( defvalue = {},
@@ -108,6 +111,9 @@ class ICommandSet( GangaObject ):
    _name = "ICommandSet"
    _hidden = 1
    _enable_config = 1
+
+   def __expandGangaSystemVars__(self, value):
+       return expandgangasystemvars(None,value)
 
    def __init__( self ):
       super( ICommandSet, self ).__init__()

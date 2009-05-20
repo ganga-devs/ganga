@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Schema.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
+# $Id: Schema.py,v 1.3 2009-05-20 13:40:22 moscicki Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -244,6 +244,8 @@ class Schema:
 # checkset  : a bound checkset method, restrict write access at the object level (for example job.status
 #             may not be modified directly in backend handlers, instead updateStatus() method should be used)
 #
+# filter    : a bound method can be used to change the values of an attribute. The attribute will be set to the return value
+#
 # visitable : if false then all algorithms based on the visitor patter will not accept this item [true]
 #             this is needed in certain cases (such as job.master) to avoid infinite recursion (and loops)
 #
@@ -287,7 +289,7 @@ class Schema:
 
 class Item:
     # default values of common metaproperties
-    _metaproperties = {'transient' : 0, 'protected' : 0, 'hidden' : 0, 'comparable' : 1, 'sequence' : 0, 'defvalue' : None, 'copyable' : 1, 'doc' : '','visitable':1, 'checkset':None,'strict_sequence':1, 'summary_print':None, 'summary_sequence_maxlen':5,'proxy_get':None,'getter':None}
+    _metaproperties = {'transient' : 0, 'protected' : 0, 'hidden' : 0, 'comparable' : 1, 'sequence' : 0, 'defvalue' : None, 'copyable' : 1, 'doc' : '','visitable':1, 'checkset':None, 'filter':None,'strict_sequence':1, 'summary_print':None, 'summary_sequence_maxlen':5,'proxy_get':None,'getter':None}
     
     def __init__(self):
         self._meta = Item._metaproperties.copy()
@@ -573,6 +575,11 @@ if __name__=='__main__':
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/09/09 14:37:16  moscicki
+# bugfix #40220: Ensure that default values satisfy the declared types in the schema
+#
+# factored out type checking into schema module, fixed a number of wrongly declared schema items in the core
+#
 # Revision 1.1  2008/07/17 16:40:55  moscicki
 # migration of 5.0.2 to HEAD
 #
