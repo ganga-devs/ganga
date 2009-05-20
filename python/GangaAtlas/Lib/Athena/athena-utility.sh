@@ -210,6 +210,30 @@ athena_setup () {
     return $retcode
 }
 
+# determine lcg_utils version and setup lcg-* commands
+get_lcg_util () {
+
+    # find version string
+    export lcgutil_str=`lcg-cr --version | grep lcg | cut -d- -f2`
+    a=`echo ${lcgutil_str} | cut -d. -f1`
+    b=`echo ${lcgutil_str} | cut -d. -f2`
+    c=`echo ${lcgutil_str} | cut -d. -f3`
+    export lcgutil_num=`echo $a \* 1000000 + $b \* 1000 + $c | bc`
+    
+    echo "Current LCG Utilities version: "$lcgutil_str
+
+    # default commands
+    export $lcgcr="lcg-cr -t 300 "
+
+    # check against version 1.7.2 (1000000 * 1 + 1000 * 7 + 2 = 1007002)
+    if ( [ $lcgutil >= 1007002 ] ); then
+	
+	# use the new timout options for lcg-cr
+	echo "WARNING: New lcg-cr timeout commands being used"
+	export lcgcr="lcg-cr --connect-timeout 150 --sendreceive-timeout 150 --srm-timeout 150 --bdii-timeout 150 "
+    fi
+}
+
 # Determine PYTHON executable in ATLAS release
 get_pybin () {
 
@@ -458,17 +482,17 @@ stage_outputs () {
                 ## copy and register files with 3 trials
                 cat output_files | while read filespec; do
                     for file in $filespec; do
-                        lcg-cr --vo atlas -t 300 -d $OUTPUT_LOCATION/$file file:$PWD/$file >> output_guids; echo $? > retcode.tmp
+                        $lcgcr --vo atlas -d $OUTPUT_LOCATION/$file file:$PWD/$file >> output_guids; echo $? > retcode.tmp
                         retcode=`cat retcode.tmp`
                         rm -f retcode.tmp
                         if [ $retcode -ne 0 ]; then
                             sleep 120
-                            lcg-cr --vo atlas -t 300 -d $OUTPUT_LOCATION/$file file:$PWD/$file >> output_guids; echo $? > retcode.tmp
+                            $lcgcr --vo atlas -d $OUTPUT_LOCATION/$file file:$PWD/$file >> output_guids; echo $? > retcode.tmp
                             retcode=`cat retcode.tmp`
                             rm -f retcode.tmp
                             if [ $retcode -ne 0 ]; then
                                 sleep 120
-                                lcg-cr --vo atlas -t 300 -d $OUTPUT_LOCATION/$file file:$PWD/$file >> output_guids; echo $? > retcode.tmp
+                                $lcgcr --vo atlas -d $OUTPUT_LOCATION/$file file:$PWD/$file >> output_guids; echo $? > retcode.tmp
                                 retcode=`cat retcode.tmp`
                                 rm -f retcode.tmp
                                 if [ $retcode -ne 0 ]; then

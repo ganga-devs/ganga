@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.37 2009-05-15 13:59:47 mslater Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.38 2009-05-20 13:25:45 mslater Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -752,16 +752,23 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
         print rc, out
         return -1, -1, -1
 
+    # check which version of lcg-utils we're on
+    if os.environ.has_key('lcgutil_num') and eval(os.environ['lcgutil_num']) >= 1007002:
+        t = timeout / 2
+        cmd = "lcg-cr --connect-timeout %i --sendreceive-timeout %i --srm-timeout %i --bdii-timeout %i" % ( t, t, t, t )
+    else:
+        cmd = "lcg-cr -t %i" % timeout
+    
     # Create file replica
     #cmd = "lcg-cr --vo atlas -t 300 -d %s -l %s -P %s file://%s" %(dest, gridlfn, output_lfn, filename)
     if tokenname:
-        cmd = "lcg-cr --vo atlas -s %s " %tokenname
+        cmd = cmd + " --vo atlas -s %s " %tokenname
     else:
-        cmd = "lcg-cr --vo atlas "
+        cmd = cmd + " --vo atlas "
     if poolguid != '':
-        cmd = cmd + " -t %s -d %s -g %s -l %s file://%s" %(timeout, dest, poolguid, gridlfn, filename)
+        cmd = cmd + " -d %s -g %s -l %s file://%s" %(timeout, dest, poolguid, gridlfn, filename)
     else:
-        cmd = cmd + " -t %s -d %s -l %s file://%s" %(timeout, dest, gridlfn, filename)
+        cmd = cmd + " -d %s -l %s file://%s" %(timeout, dest, gridlfn, filename)
     rc, out = commands.getstatusoutput(cmd)
     if rc == 0:
         # Open output_guids to transfer guids back to GANGA

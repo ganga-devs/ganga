@@ -134,6 +134,10 @@ fi
 # Determine PYTHON executable in ATLAS release
 get_pybin
 
+################################################
+# Determine lcg-utils version and set commands
+get_lcg_util
+
 #################################################
 # Determine SE type
 
