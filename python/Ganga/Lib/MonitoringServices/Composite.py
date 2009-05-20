@@ -2,7 +2,7 @@
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
-# $Id: Composite.py,v 1.1 2008-07-17 16:40:58 moscicki Exp $
+# $Id: Composite.py,v 1.1.2.1 2009-05-20 14:41:33 lostman Exp $
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
@@ -72,6 +72,8 @@ class CompositeMonitoringService(IMonitoringService):
          except Exception,e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="Failed to init %s monitoring service...discarding it" % str(monClass))
+            from Ganga.Utility.logging import log_user_exception
+            log_user_exception(self.logger)
    
    def start(self, **opts):
       """Application is about to start on the worker node.
@@ -84,7 +86,7 @@ class CompositeMonitoringService(IMonitoringService):
             ret[monClass] = monService.start(**opts)
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="%s monitoring service failed to *start*" % monClass)
+            self._log(level="warning",msg="%s monitoring service failed to *start*: %s" % (monClass, e))
                
       return ret
     
@@ -99,7 +101,7 @@ class CompositeMonitoringService(IMonitoringService):
             ret[monClass] = monService.progress(**opts)
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="%s monitoring service failed to *progress*" % monClass)
+            self._log(level="warning",msg="%s monitoring service failed to *progress*: %s" % (monClass, e))
                
       return ret
         
@@ -115,7 +117,7 @@ class CompositeMonitoringService(IMonitoringService):
             ret[monClass] = monService.stop(exitcode,**opts)
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="%s monitoring service failed to *stop*" % monClass)               
+            self._log(level="warning",msg="%s monitoring service failed to *stop*: %s" % (monClass, e))               
       return ret
       
 
@@ -131,6 +133,8 @@ class CompositeMonitoringService(IMonitoringService):
          except Exception,e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed in job *submit*" % monClass)               
+            from Ganga.Utility.logging import log_user_exception
+            log_user_exception(self.logger)
       return ret
       
    def getSandboxModules(self):
