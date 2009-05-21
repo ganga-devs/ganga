@@ -213,6 +213,14 @@ athena_setup () {
 # determine lcg_utils version and setup lcg-* commands
 get_lcg_util () {
 
+    LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+    PATH_BACKUP=$PATH
+    PYTHONPATH_BACKUP=$PYTHONPATH
+
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+    export PATH=$PATH_ORIG
+    export PYTHONPATH=$PYTHONPATH_ORIG
+
     # find version string
     export lcgutil_str=`lcg-cr --version | grep lcg | cut -d- -f2`
     a=`echo ${lcgutil_str} | cut -d. -f1`
@@ -223,7 +231,7 @@ get_lcg_util () {
     echo "Current LCG Utilities version: "$lcgutil_str
 
     # default commands
-    export $lcgcr="lcg-cr -t 300 "
+    export lcgcr="lcg-cr -t 300 "
 
     # check against version 1.7.2 (1000000 * 1 + 1000 * 7 + 2 = 1007002)
     if ( [ $lcgutil >= 1007002 ] ); then
@@ -232,6 +240,11 @@ get_lcg_util () {
 	echo "WARNING: New lcg-cr timeout commands being used"
 	export lcgcr="lcg-cr --connect-timeout 150 --sendreceive-timeout 150 --srm-timeout 150 --bdii-timeout 150 "
     fi
+
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+    export PATH=$PATH_BACKUP
+    export PYTHONPATH=$PYTHONPATH_BACKUP
+
 }
 
 # Determine PYTHON executable in ATLAS release
@@ -302,6 +315,21 @@ detect_setype () {
 	if [ -z $GANGA_SETYPE ]; then
 	    export GANGA_SETYPE=`$pybin ./ganga-stage-in-out-dq2.py --setype`
 	fi
+	if [ -z $GANGA_SETYPE ]; then
+	    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+	    export PATH=$PATH_ORIG
+	    export PYTHONPATH=$PYTHONPATH_ORIG
+	    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+		then
+		source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+	    else
+		if [ -e dq2info.tar.gz ]; then
+		    tar xzf dq2info.tar.gz
+		fi
+	    fi
+	    export GANGA_SETYPE=`./ganga-stage-in-out-dq2.py --setype`
+	fi
+
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
         export PATH=$PATH_BACKUP
         export PYTHONPATH=$PYTHONPATH_BACKUP
@@ -357,6 +385,22 @@ stage_inputs () {
             # Fail over
 	    if [ $retcode -ne 0 ]; then
 		$pybin ./ganga-stage-in-out-dq2.py -v; echo $? > retcode.tmp
+		retcode=`cat retcode.tmp`
+		rm -f retcode.tmp
+	    fi
+	    if [ $retcode -ne 0 ]; then
+		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+		export PATH=$PATH_ORIG
+		export PYTHONPATH=$PYTHONPATH_ORIG
+		if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+		    then
+		    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+		else
+		    if [ -e dq2info.tar.gz ]; then
+			tar xzf dq2info.tar.gz
+		    fi
+		fi
+		./ganga-stage-in-out-dq2.py -v; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    fi
@@ -441,7 +485,22 @@ stage_outputs () {
                 retcode=`cat retcode.tmp`
                 rm -f retcode.tmp
             fi
-
+	    if [ $retcode -ne 0 ]; then
+		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+		export PATH=$PATH_ORIG
+		export PYTHONPATH=$PYTHONPATH_ORIG
+		if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+		    then
+		    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+		else
+		    if [ -e dq2info.tar.gz ]; then
+			tar xzf dq2info.tar.gz
+		    fi
+		fi
+                ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
+		retcode=`cat retcode.tmp`
+		rm -f retcode.tmp
+	    fi
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
             export PATH=$PATH_BACKUP
             export PYTHONPATH=$PYTHONPATH_BACKUP
@@ -693,10 +752,24 @@ EOF
 	if [ -e dq2tracerreport.py ]
 	    then
 	    chmod +x dq2tracerreport.py
-	    $pybin ./dq2tracerreport.py
+	    $pybin ./dq2tracerreport.py; echo $? > retcode.tmp
+	    retcodetr=`cat retcode.tmp`
+	    rm -f retcode.tmp
+	    if [ $retcodetr -ne 0 ]; then
+		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+		export PATH=$PATH_ORIG
+		export PYTHONPATH=$PYTHONPATH_ORIG
+		if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+		    then
+		    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+		else
+		    if [ -e dq2info.tar.gz ]; then
+			tar xzf dq2info.tar.gz
+		    fi
+		fi
+		./dq2tracerreport.py
+	    fi
 	fi
-
-
     fi
 }
 
@@ -745,7 +818,22 @@ make_filestager_joption() {
             retcode=`cat retcode.tmp`
             rm -f retcode.tmp
         fi
-
+	if [ $retcode -ne 0 ]; then
+	    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+	    export PATH=$PATH_ORIG
+	    export PYTHONPATH=$PYTHONPATH_ORIG
+	    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+		then
+		source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+	    else
+		if [ -e dq2info.tar.gz ]; then
+		    tar xzf dq2info.tar.gz
+		fi
+	    fi
+            ./make_filestager_joption.py; echo $? > retcode.tmp
+	    retcode=`cat retcode.tmp`
+	    rm -f retcode.tmp
+	fi
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
         export PATH=$PATH_BACKUP
         export PYTHONPATH=$PYTHONPATH_BACKUP

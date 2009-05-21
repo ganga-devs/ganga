@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.41 2009-04-30 08:19:28 ebke Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.42 2009-05-21 18:35:47 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -416,11 +416,11 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             _append_files(inputbox, 'db_dq2localid.py')
 
         if str(app.atlas_release).find('12.')>=0:
-            _append_files(inputbox, 'libDCache.so','libRFIO.so','libdcap.so')
+            _append_files(inputbox, 'libDCache.so','libRFIO.so','libdcap.so', 'libgfal.so')
         elif str(app.atlas_release).find('13.')>=0:
             _append_files(inputbox,'libdcap.so')
         else:
-            _append_files(inputbox,'libdcap.so')
+            _append_files(inputbox,'libdcap.so', 'libgfal.so')
 
         if job.inputsandbox: inputbox += job.inputsandbox
             

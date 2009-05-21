@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.39 2009-05-21 10:38:17 mslater Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.40 2009-05-21 18:35:47 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -753,7 +753,7 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
         return -1, -1, -1
 
     # check which version of lcg-utils we're on
-    if os.environ.has_key('lcgutil_num') and eval(os.environ['lcgutil_num']) >= 1007002:
+    if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
         t = timeout / 2
         cmd = "lcg-cr --connect-timeout %i --sendreceive-timeout %i --srm-timeout %i --bdii-timeout %i" % ( t, t, t, t )
     else:
@@ -1070,7 +1070,7 @@ if __name__ == '__main__':
             localsitesrm = TiersOfATLAS.getSiteProperty(localsiteid,'srm')
 
         if sename in ['dpm01.grid.sinica.edu.tw']:
-            localsiteid = 'ASGCDISK'
+            localsiteid = 'TAIWAN-LCG2_DATADISK'
 
         if sename in [ 'atlasse.phys.sinica.edu.tw']:
             localsiteid = 'TW-FTT'

@@ -173,6 +173,8 @@ then
     ln -s $LCG_LOCATION/lib/libdpm.so libshift.so.2.1
 fi
 
+chmod +x libgfal.so
+ln -s libgfal.so libgfal.so.0
 export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 
 
@@ -622,14 +624,38 @@ if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
     echo $LOGNAME > logfile
     DATASETTYPE=DQ2_OUT
     if [ ! -z $python32bin ]; then
-	$python32bin ./ganga-stage-in-out-dq2.py --output=logfile
+	$python32bin ./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
     else
 	if [ -e /usr/bin32/python ]
 	    then
-	    /usr/bin32/python ./ganga-stage-in-out-dq2.py --output=logfile
+	    /usr/bin32/python ./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
 	else
-	    ./ganga-stage-in-out-dq2.py --output=logfile
+	    ./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
 	fi
+    fi
+    retcode=`cat retcode.tmp`
+    rm -f retcode.tmp
+    # Fail over
+    if [ $retcode -ne 0 ]; then
+	$pybin ./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
+	retcode=`cat retcode.tmp`
+	rm -f retcode.tmp
+    fi
+    if [ $retcode -ne 0 ]; then
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+	export PATH=$PATH_ORIG
+	export PYTHONPATH=$PYTHONPATH_ORIG
+	if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+	    then
+	    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+	else
+	    if [ -e dq2info.tar.gz ]; then
+		tar xzf dq2info.tar.gz
+	    fi
+	fi
+	./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
+	retcode=`cat retcode.tmp`
+	rm -f retcode.tmp
     fi
 fi
 
