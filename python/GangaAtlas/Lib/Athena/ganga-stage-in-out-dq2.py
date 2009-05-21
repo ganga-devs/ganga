@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.38 2009-05-20 13:25:45 mslater Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.39 2009-05-21 10:38:17 mslater Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -766,9 +766,9 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
     else:
         cmd = cmd + " --vo atlas "
     if poolguid != '':
-        cmd = cmd + " -d %s -g %s -l %s file://%s" %(timeout, dest, poolguid, gridlfn, filename)
+        cmd = cmd + " -d %s -g %s -l %s file://%s" %(dest, poolguid, gridlfn, filename)
     else:
-        cmd = cmd + " -d %s -l %s file://%s" %(timeout, dest, gridlfn, filename)
+        cmd = cmd + " -d %s -l %s file://%s" %(dest, gridlfn, filename)
     rc, out = commands.getstatusoutput(cmd)
     if rc == 0:
         # Open output_guids to transfer guids back to GANGA
