@@ -1,0 +1,2 @@
+timeleft = gridProxy.timeleft()
+assert timeleft and timeleft != '00:00:00', 'Time left not being got correctly'
