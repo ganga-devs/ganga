@@ -68,6 +68,10 @@ stageInLCG(){
 	    break
 	fi
 	echo "attempt failed."
+	if [ -e "$LFNS" ]; then
+	    echo "failed attempt detected, removing it"
+	    rm $LFNS # clear the space for next attempt.
+	fi
     done
     ls -l 
 

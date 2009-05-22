@@ -45,7 +45,18 @@ mc.addOption('AthenaMC/LCG', None, 'FIXME')
 class AthenaMCLCGRTHandler(IRuntimeHandler):
     """Athena MC LCG Runtime Handler"""
 
-    
+    def sortSites(self,insites,outsite):
+        inlist=insites.split(" ")
+        imax=outsite.find("_")
+        outsite=outsite[:imax]
+        newlist=[]
+        for site in inlist:
+            if site.find(outsite)>-1:
+                newlist.insert(0,site)
+            else:
+                newlist.append(site)
+        return string.join(newlist," ")
+            
     def master_prepare(self,app,appmasterconfig):
         if app.siteroot: 
             os.environ["SITEROOT"]=app.siteroot
@@ -304,7 +315,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         for infile in alllfns:
             environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,infile)
             environment["INPUTDATASETS"]+="dset[%d]='%s';"%(infilenr,app.dsetmap[infile])
-            environment["INPUTSITES"]+="site[%d]='%s';"%(infilenr,app.sitemap[infile])
+            insites=app.sitemap[infile]
+            # compare with environment["OUTSITE"] and reorder if needed.
+            newinsites=self.sortSites(insites,environment["OUTSITE"])
+            environment["INPUTSITES"]+="site[%d]='%s';"%(infilenr,newinsites)
             infilenr += 1
 
 
