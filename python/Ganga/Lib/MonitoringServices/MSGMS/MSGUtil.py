@@ -32,27 +32,23 @@ def createPublisher(T):
             self.__should_stop_flag = False
 
         def run(self):
-            print 'running',T
             while not self.should_stop():
                 while not self.msg_q.empty():
                     if not self.connection.is_connected():
                         self.connection.start()
                         self.connection.connect()
                     m = self.msg_q.get()
-                    print 'about to send',m
                     self.__send(m)
                 time.sleep(0.3)
-            print 'finished',T
 
         def send(self, (dst, msg)):
+            msg['_publisher_t'] = time.time()
+            log.debug('Queueing message %s' % msg)
             self.msg_q.put((dst, msg))
-            log.debug("Putting message %s" % msg)
 
         def __send(self, (dst, msg)):
-            print 'sedning message',msg
+            log.debug('Sending message %s' % msg)
             self.connection.send(destination=dst, message=repr(msg))
-            log.debug("Sending message %s" % msg)
-            print 'sent',msg
 
         def should_stop(self):
             return self.__should_stop_flag
