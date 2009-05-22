@@ -46,7 +46,7 @@ then
     if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
     then
 	source $SITEROOT/dist/$ATLAS_RELEASE/Control/AthenaRunTime/AthenaRunTime-*/cmt/setup.sh
-    elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ]
+    elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ]
     then
 	echo 'sourcing AtlasOfflineRunTime'
 	source $SITEROOT/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
@@ -115,7 +115,7 @@ else
 fi
 
 # Determine PYTHON executable in ATLAS release
-if [ ! -z `echo $ATLAS_RELEASE | grep 14.` ]
+if [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ]
 then
     export pybin=$(ls -r $SITEROOT/sw/lcg/external/Python/*/*/bin/python | head -1)
 else
@@ -228,7 +228,7 @@ EOF
 fi
 
 
-if [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] 
+if [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ]
 then
   echo 'Modify input.py'
   sed 's/EventSelector/ServiceMgr.EventSelector/' input.py > input.py.new
