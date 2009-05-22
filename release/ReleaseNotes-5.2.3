@@ -1,0 +1,89 @@
+**************************************************************************************************************
+5.2.3 (2009/5/22)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+debug directory (https://savannah.cern.ch/bugs/?50305)
+
+added Utility.Config.expandgangasystemvars() filter which expands @{VAR} in strings, where VAR is a
+configuration option defined in the System section
+Usage example: specify @{GANGA_PYTHONPATH} in the configuration file to make pathnames relative to
+the location of Ganga release; specify @{GANGA_VERSION} to expand to current Ganga version. etc.
+
+modified credentials package (ICommandSet) to use the expandgangasystemvars() filter.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/GPIDev/Credentials
+--------------------------------------------------------------------------------------------------------------
+modified credentials package (ICommandSet) to use the expandgangasystemvars() filter.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena
+------
+* Feature request #50558: DQ2Dataset exclude pattern / extension
+  DQ2Dataset.exclude_pattern=['.txt', '.root' ]
+  Files patters can now be excluded from DQ2 input dataset
+* Fix bug #50449: Pandatools traceback
+* Added protections against malformed 'lcg-cr' timeout calls in
+  Athena/LCG worker node code, Fixes for PIC
+* More robust Athena/LCG worker node code for SL5:
+  - jobs are now working at FZK SL5 nodes with DQ2_LOCAL
+* TAIWAN-LCG2 now works again with FileStager, but does not with
+  DQ2_LOCAL
+* Add CPU speed and Architecure to Athena.stats
+
+AthenaMC:
+---------
+* Added use_partition_numbers to AthenaMCInputDatasets to make Tasks safe
+  and still accommodate loose matching.
+* AthenaMCDatasets.py: adding proxy lifetime check in outputdata.fill()
+  to force the job to abort output dataset registration if the proxy is
+  about to be expired.
+* wrapper.sh: now catching the exit status code of stage-in.sh to abort job
+  execution if any single input data file is missing (Savannah bug 50622).
+* stage-out.sh: removing -t timeout flag in lcg-cr as it has been made
+  obsolete in the recent version of lcg-utils
+* Bug fix: extFile -> extOutFile in AthenaMCPandaRTHandler.py, improving
+  logging messages in AthenaMCDatasets.py
+* Revisited output site allocation mecanism in LCG (RTHandler), added some
+  info level messages to help passing submission time...(MCDatasets and RTHandler)
+* Attempt to improve input data downloading by clearing up dead copies from
+  failed attempts. Also, reorder list of input sites by forcing local site first.
+* Switched off random failing in wrapper.sh on DRYRUN to make GangaTests repeatable
+
+Tasks:
+------
+* Fix AnaTransform to work for NG and Panda
+
+Tests:
+------
+Add new tests: AnaTask_LCG, AnaTask_Panda, MCTask_LCG
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Fixed overloading of the tmp area when problems occur downloading output sandboxes from DIRAC. A few
+other minor bugfixes as well.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+* Fixed some hardcoding for rel15
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Small fixes in Panda.py: DQ2Dataset->DQ2dataset, startime -> starttime
+* Allow AnaTasks splitter on Panda
+* Fix setPath PANDA_SYS in PACKAGE.PY
+
+**************************************************************************************************************
