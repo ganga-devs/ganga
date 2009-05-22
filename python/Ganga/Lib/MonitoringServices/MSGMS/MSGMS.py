@@ -3,7 +3,7 @@ import MSGUtil
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 
 from types import DictionaryType
-from time import time
+from time import time, sleep
 from Ganga.GPIDev.Lib.Config.Config import config
 import MSGUtil
 
@@ -42,7 +42,7 @@ class MSGMS(IMonitoringService):
         self.ganga_job_uuid = uuid()
 
     def getMessage(self): # returns a dictionary that contains data common to all messages
-        return self.job_info
+        return self.job_info.copy() # copy the dictionary!
         
 
     def getJobInfo(self): # more detailed message
@@ -74,6 +74,8 @@ class MSGMS(IMonitoringService):
             ]
 
     def start(self, **opts): # same as with stop
+        import atexit
+        atexit.register(sleep, 5)
         message = self.getMessage()
         message['event'] = 'running'
         sendJobStatusChange( message )
