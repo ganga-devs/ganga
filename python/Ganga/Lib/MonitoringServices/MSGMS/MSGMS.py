@@ -38,18 +38,30 @@ class MSGMS(IMonitoringService):
 
     def __init__(self, job_info):
         IMonitoringService.__init__(self,job_info)
+        from Ganga.Lib.MonitoringServices.MSGMS.compatibility import uuid
+        self.ganga_job_uuid = uuid()
 
-    def getJobInfo(self):
-        return { 'ganga_job_uuid' : 0
+    def getMessage(self): # returns a dictionary that contains data common to all messages
+        return self.job_info
+        
+
+    def getJobInfo(self): # more detailed message
+        if self.job_info.master is None:
+            ganga_job_id = str(self.job_info.id)
+        else:
+            ganga_job_id = str(self.job_info.master.id) + '.' + str(self.job_info.id)
+
+        return { 'ganga_job_uuid' : self.ganga_job_uuid
                , 'ganga_job_master_uuid' : 0
                , 'ganga_user_repository' : config.Configuration.user
                                            + '@' + config.System.GANGA_HOSTNAME
                                            + ':' + config.Configuration.gangadir
-               , 'ganga_job_id' : str(self.job_info.id)
+               , 'ganga_job_id' : ganga_job_id
                , 'backend' : self.job_info.backend.__class__.__name__
                , 'application' : self.job_info.application.__class__.__name__
-               , 'job_name' : self.job_info.name 
+               , 'job_name' : self.job_info.name
                }
+        return data
 
     def getSandboxModules(self):
         import Ganga.Lib.MonitoringServices.MSGMS
@@ -62,38 +74,35 @@ class MSGMS(IMonitoringService):
             ]
 
     def start(self, **opts): # same as with stop
-        data = { 'event' : 'start'
-               , 'status' : 'running'
-               , 'ganga_job_id' : self.job_info['ganga_job_id']
-               }
-        sendJobStatusChange(data)
+        message = self.getMessage()
+        message['event'] = 'running'
+        sendJobStatusChange( message )
 
     def progress(self, **opts):
         pass
         #return
 
     def stop(self, exitcode, **opts): #this one is on the woerker node; operate on dictonary or whatever getJobInfo returns
-        print 'sending stop...'
         status = None
         if exitcode == 0:
-            status = "finished"
+            exit_status = "finished"
         else:
-            status = "failed"
-        sendJobStatusChange( { 'event' : 'stop', 'status' : status, 'ganga_job_id' : self.job_info['ganga_job_id'] } )
-        time.sleep(4)
-#        print 'stop has been sent...'
-        #sendJobStatusChange({'event':'stop'})#self.job_info['id'], self.job_info['backend'], status)
+            exit_status = "failed"
+
+        message = self.getMessage()
+        message['event'] = exit_status
+        sendJobStatusChange( message )
 
     def submit(self, **opts): #this one is on the client side; so operate on Job object
         #1. send job submitted message with more detailed info
-        data = self.getJobInfo()
-        data['time'] = time()
+        msg = self.getJobInfo()
+        msg['event'] = 'submitted'
         if self.job_info.master is None:
-            data['ganga_job_id'] = self.job_info.id
-            sendJobSubmitted(data)
+            sendJobSubmitted( msg )
         else:
-            data['ganga_job_id'] = str(self.job_info.master.id) + '.' + str(self.job_info.id)
-            if self.job_info.id == 0: sendJobSubmitted(data) #len(self.job_info.master.subjobs) -> number of subjobs
+            if self.job_info.id == 0: sendJobSubmitted( msg ) #len(self.job_info.master.subjobs) -> number of subjobs
             
         #2. send status change message with new submitted status
-        sendJobStatusChange( {'event' : 'submit', 'status' : 'submitted', 'ganga_job_id' : data['ganga_job_id']} )
+        # message = self.getCommonMessage()
+        # message['event'] = 'submitted'
+        # sendJobStatusChange( message )
