@@ -26,6 +26,7 @@ class Transform(GangaObject):
    _exportmethods = [ 
                       'run', 'pause', # Operations
                       'setPartitionStatus', 'setRunlimit', 'setFailed', # Control Partitions
+                      'getPartitionStatus',
                       'overview', 'info', 'n_all', 'n_status' # Info
                     ]
 
@@ -89,7 +90,7 @@ class Transform(GangaObject):
 ## Public methods
    def run(self, check=True):
       """Sets this transform to running status"""
-      if check:
+      if self.status == "new" and check:
          self.check()
       if self.status != "completed":
          self.status = "running"
@@ -100,6 +101,9 @@ class Transform(GangaObject):
       """Pause the task - the background thread will not submit new jobs from this task"""
       if self.status != "completed":
          self.status = "pause"
+         task = self._getParent()
+         if task:
+            task.updateStatus()
       else:
          logger.warning("Transform is already completed!")
 
@@ -150,9 +154,7 @@ class Transform(GangaObject):
       """warns the user if the application is not compatible """
       if app == None:
          return
-      try:
-         app.tasks_id = "-1:-1"
-      except AttributeError:
+      if not "tasks_id" in stripProxy(app)._data:
          logger.error("The application %s can not be used with the Tasks package.", app)
          logger.error("Please contact the Tasks developers if you want to use this Application with tasks.")
          logger.error("(This is a very simple operation, so do not hesitate!)")
@@ -332,7 +334,10 @@ class Transform(GangaObject):
       """ Get an ascii art overview over task status. Can be overridden """
       o = markup("%s '%s'\n" % (self.__class__.__name__, self.name), status_colours[self.status])
       i = 0
-      for (c,s) in self._partition_status.iteritems():
+      partitions = self._partition_status.keys()
+      partitions.sort()
+      for c in partitions:
+         s = self._partition_status[c]
          if c in self._partition_apps:
             failures = len([1 for app in self._partition_apps[c] if app in self._app_status and self._app_status[app] in ["new","failed"]])
             o += markup("%i:%i " % (c, failures), overview_colours[s])

@@ -54,12 +54,22 @@ class Task(GangaObject):
 # - insertTransform(id, tf) insert a new processing step
 # - removeTransform(id) remove a processing step
 
-   def remove(self,really=False):
+   def remove(self,remove_jobs="do_nothing"):
       """Delete the task"""
-      if not really == True:
+      if not remove_jobs in [True,False]:
          print "You want to remove the task %i named '%s'." % (self.id,self.name)
-         print "Since this operation cannot be easily undone, please call this command again as tasks(%i).remove(really=True)" % (self.id)
+         print "Since this operation cannot be easily undone, please call this command again:"
+         print " * as tasks(%i).remove(remove_jobs=True) if you want to remove all associated jobs," % (self.id)
+         print " * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id)
          return
+      if remove_jobs:
+         for j in GPI.jobs:
+            try:
+               tid = j.application.tasks_id
+               if tid.startswith("00:%i:"%self.id) or tid.startswith("%i:"%self.id):
+                  j.remove()
+            except:
+               pass
       self._getParent().tasks.remove(self)
       logger.info("Task #%s deleted" % self.id)
 
@@ -128,7 +138,7 @@ class Task(GangaObject):
       if self.status != "new" and id < len(self.transforms):
          logger.error("You can only insert transforms at the end of the list. Only if a task is new it can be freely modified!")
          return
-      self.transforms.insert(id,tf)
+      self.transforms.insert(id,tf.copy())
 
    def removeTransform(self, id):
       """Remove the transform with the index id (counting from 0)"""
@@ -141,29 +151,36 @@ class Task(GangaObject):
    def updateStatus(self):
       """Updates status based on transform status.
          Called from check() or if status of a transform changes"""
-      if self.status == "running":
-         for tf in self.transforms:
-            if tf.status != "completed":
-               return
-         self.status = "completed"
-         print "Task %i '%s' has completed!" % (self.id, self.name)
-      if self.status == "completed":
-         for tf in self.transforms:
-            if tf.status != "completed":
-               self.status = "running"
-               print "Task %i '%s' has been reopened!" % (self.id, self.name)
-               return
+      # Calculate status from transform status:
+      states = [tf.status for tf in self.transforms]
+      if "running" in states and "pause" in states:
+         new_status = "running/pause"
+      elif "running" in states:
+         new_status = "running"
+      elif "pause" in states:
+         new_status = "pause"
+      elif "new" in states:
+         new_status = "new"
+      elif "completed" in states:
+         new_status = "completed"
+      # Handle status changes here:
+      if self.status != new_status:
+         if new_status == "running/pause":
+            logger.warning("Some Transforms of Task %i '%s' have been paused. Check tasks.table() for details!" % (self.id, self.name))
+         elif new_status == "completed":
+            logger.warning("Task %i '%s' has completed!" % (self.id, self.name))
+         elif self.status == "completed":
+            logger.warning("Task %i '%s' has been reopened!" % (self.id, self.name))
+      self.status = new_status
+      return self.status
 
    def submitJobs(self):
       """Submits as many jobs as necessary to maintain the float. Internal"""
-      if self.status != "running":
-         logger.error("Cannot run jobs for task #%i because the task is %s." % (self.id, self.status))
-         return
       for i in range(len(self.transforms)-1,-1,-1):
          tf = self.transforms[i]
          to_run = self.float - self.n_status("running")
          run = (self.resub_limit * self.float >= self.n_status("running"))
-         if tf.status != "pause" and to_run > 0 and run:
+         if tf.status == "running" and to_run > 0 and run:
             tf.submitJobs(to_run)
 
 ## Information methods

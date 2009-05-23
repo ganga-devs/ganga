@@ -110,7 +110,7 @@ class TaskList(GangaObject):
       ## Main loop
       while not self._main_thread.should_stop():
          ## For each task try to run it
-         for p in [p for p in self.tasks if p.status in ["running"]]:
+         for p in [p for p in self.tasks if p.status in ["running","running/pause"]]:
             if self._main_thread.should_stop():
                break
             try:

@@ -28,10 +28,11 @@ def fgcol(f):
    return '\033[%i%im' % (3+cols[f][0],cols[f][1])
 # Status and overview colours
 status_colours = { 
-                   'new'        : "",
-                   'running'    : fgcol("green"),
-                   'completed'  : fgcol("blue"),
-                   'pause'      : fgcol("cyan"),
+                   'new'          : "",
+                   'running'      : fgcol("green"),
+                   'completed'    : fgcol("blue"),
+                   'pause'        : fgcol("cyan"),
+                   'running/pause': fgcol("cyan"),
                    }
 overview_colours = {
                    'ignored'    : "",
