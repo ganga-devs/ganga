@@ -113,6 +113,8 @@ class Task(GangaObject):
    def pause(self):
       """Pause the task - the background thread will not submit new jobs from this task"""
       if self.status != "completed":
+         for tf in self.transforms:
+            tf.pause()
          self.status = "pause"
       else:
          logger.info("Transform is already completed!")
