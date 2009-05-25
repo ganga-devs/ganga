@@ -3,7 +3,7 @@
 # this test-case is CERN AFS dependent since it use setup files located in /afs/cern.ch/sw/ganga/install/TEST/athenaMC_testing_data
 
 import re,sys,popen2,time,getpass
-
+from GangaTest.Framework.utils import sleep_until_completed
 import os
 
 #transform_archive_path = '/tmp/ganga_athenaMC_testing_data-%s/AtlasProduction_12_0_4_1_noarch.tar.gz' % getpass.getuser()
