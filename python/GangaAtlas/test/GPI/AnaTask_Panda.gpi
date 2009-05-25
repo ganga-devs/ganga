@@ -26,6 +26,7 @@ t.setBackend(Panda())
 t.float = 5
 t.info()
 t.run()
+t.analysis.setRunlimit(2)
 
 import time
 n = t.n_all()
