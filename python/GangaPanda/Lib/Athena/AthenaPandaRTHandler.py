@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.30 2009-05-20 15:44:02 ebke Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.31 2009-05-25 10:19:38 ebke Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -86,6 +86,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.runConfig = AthenaUtils.ConfigAttr(app.atlas_run_config)
         for k in self.runConfig.keys():
             self.runConfig[k]=AthenaUtils.ConfigAttr(self.runConfig[k])
+        if not app.atlas_run_dir:
+            raise ApplicationConfigurationError(None,"application.atlas_run_dir is not set. Did you run application.prepare()")
         self.rundirectory = app.atlas_run_dir
         self.cacheVer = ''
         if app.atlas_project and app.atlas_production:
