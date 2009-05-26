@@ -16,7 +16,7 @@ class Task(GangaObject):
    _category = 'tasks'
    _name = 'Task'
    _exportmethods = [
-                'setBackend', 'setParameter', 'insertTransform', 'removeTransform', # Settings
+                'setBackend', 'setParameter', 'insertTransform', 'appendTransform', 'removeTransform', # Settings
                 'check', 'run', 'pause', 'remove', # Operations
                 'overview', 'info', 'n_all', 'n_status', 'help' # Info
                 ]
@@ -141,6 +141,10 @@ class Task(GangaObject):
          logger.error("You can only insert transforms at the end of the list. Only if a task is new it can be freely modified!")
          return
       self.transforms.insert(id,tf.copy())
+
+   def appendTransform(self, tf):
+      """Append transform"""
+      return self.insertTransform(len(self.transforms), tf)
 
    def removeTransform(self, id):
       """Remove the transform with the index id (counting from 0)"""
