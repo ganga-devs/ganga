@@ -159,7 +159,7 @@ class TaskList(GangaObject):
          print " The following is the output of "+markup("tasks.table()",fgcol("blue"))
          short = False
 
-      fstring = " %5s | %17s | %12s | %9s | %33s | %5s\n"
+      fstring = " %5s | %17s | %30s | %9s | %33s | %5s\n"
       lenfstring = 98
       ds = "\n" + fstring % ("#", "Type", "Name", "State", "%4s: %4s/ %4s/ %4s/ %4s/ %4s" % (
            "Jobs",markup("done",overview_colours["completed"])," "+markup("run",overview_colours["running"]),markup("fail",overview_colours["failed"]),markup("hold",overview_colours["hold"])," "+markup("bad",overview_colours["bad"])), "Float")
