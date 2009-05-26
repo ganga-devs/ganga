@@ -18,8 +18,8 @@ o+="\n"+ 't.name = "FirstAnalysis"'
 o+="\n"+ 't.setDataset("user08.MyName.ganga.dataset.recon.AOD.root")'
 o+="\n"+ "t.analysis.outputdata.outputdata  = ['nTuple.root' ]"
 o+="\n"+ 't.analysis.application.exclude_from_user_area=["*.o","*.root*","*.exe", "*.txt"]'
-o+="\n"+ "t.analysis.application.prepare(athena_compile=False)"
 o+="\n"+ "t.analysis.application.option_file = ['./myTopOptions.py' ]"
+o+="\n"+ "t.analysis.application.prepare()"
 o+="\n"+ "t.float = 10"
 o+="\n"+ "t.info() # Check here if settings are correct"
 o+="\n"+ "t.run()"
