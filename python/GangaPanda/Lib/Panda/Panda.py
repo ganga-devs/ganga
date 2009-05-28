@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.35 2009-05-28 11:11:20 ebke Exp $
+# $Id: Panda.py,v 1.36 2009-05-28 21:46:21 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -35,7 +35,7 @@ config.addOption( 'prodSourceLabelBuild', 'panda', 'prodSourceLabelBuild')
 config.addOption( 'prodSourceLabelRun', 'user', 'prodSourceLabelRun')
 config.addOption( 'assignedPriorityBuild', 2000, 'assignedPriorityBuild' )
 config.addOption( 'assignedPriorityRun', 1000, 'assignedPriorityRun' )
-config.addOption( 'processingType', '', 'processingType' )
+config.addOption( 'processingType', 'ganga', 'processingType' )
 config.addOption( 'enableDownloadLogs', False , 'enableDownloadLogs' )  
 
 def queueToAllowedSites(queue):
@@ -560,6 +560,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.35  2009/05/28 11:11:20  ebke
+# Outputdata now filled even if enableDownloadLogs disabled
+#
 # Revision 1.34  2009/05/20 12:41:22  dvanders
 # DQ2Dataset->DQ2dataset
 #
