@@ -53,9 +53,8 @@ class AnaTask(Task):
 
    def initAliases(self):
       self.analysis = None
-      for tf in self.transforms:
-         if "Ana" in tf.__class__.__name__:
-            self.analysis = tf
+      if len(self.transforms) == 1:
+         self.analysis = self.transforms[0]
 
    def help(self):
       print task_help

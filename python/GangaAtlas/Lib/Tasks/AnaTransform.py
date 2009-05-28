@@ -3,7 +3,7 @@ from Transform import Transform
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 from TaskApplication import AthenaTask, AnaTaskSplitterJob
-
+import time
 
 class AnaTransform(Transform):
    """ Analyzes Events """
@@ -67,8 +67,11 @@ class AnaTransform(Transform):
       self.outputsandbox = []
       sjl = splitter.split(self) # This works even for Panda, no special "Job" properties are used anywhere.
       self.partitions_data = [sj.inputdata for sj in sjl]
-      if stripProxy(self.backend)._name == 'LCG':
+      try:
          self.partitions_sites = [sj.backend.requirements.sites for sj in sjl]
+      except AttributeError:
+         self.partitions_sites = None
+         pass
       self.setPartitionsLimit(len(self.partitions_data)+1)
       self.setPartitionsStatus([c for c in range(1,len(self.partitions_data)+1) if self.getPartitionStatus(c) != "completed"], "ready")
       ods = self.getOutputDataset()
@@ -81,9 +84,12 @@ class AnaTransform(Transform):
           j.splitter = AnaTaskSplitterJob()
           j.splitter.subjobs = partitions
       j.inputdata = self.partitions_data[partitions[0]-1]
-      if stripProxy(j.backend)._name == 'LCG':
+      if self.partitions_sites:
          j.backend.requirements.sites = self.partitions_sites[partitions[0]-1]
       j.outputdata = self.outputdata
+      if j.outputdata.datasetname:
+         today = time.strftime("%Y%m%d",time.localtime())
+         j.outputdata.datasetname = "%s.%i.%s" % (j.outputdata.datasetname, j.id, today)
       return [j]
 
    def info(self):

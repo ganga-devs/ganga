@@ -107,6 +107,14 @@ class TaskList(GangaObject):
       time.sleep(0.5)
       self.logger = getLogger()
       ## .. hopefully ganga is now initialized. TODO: better way to find this out.
+
+      ## Add runtime handlers for all the taskified applications, since now all the backends are loaded
+      from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+      from TaskApplication import handler_map
+      for basename, name in handler_map:
+         for backend in allHandlers.getAllBackends(basename):
+            allHandlers.add(name, backend, allHandlers.get(basename,backend))
+
       ## Main loop
       while not self._main_thread.should_stop():
          ## For each task try to run it

@@ -105,7 +105,7 @@ class Transform(GangaObject):
          if task:
             task.updateStatus()
       else:
-         logger.info("Transform is already completed!")
+         logger.debug("Transform is already completed!")
 
    def setRunlimit(self,newRL):
       """Set the number of times a job should be resubmitted before the transform is paused"""

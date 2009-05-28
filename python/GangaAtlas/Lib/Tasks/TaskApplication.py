@@ -2,7 +2,9 @@
 from Ganga.GPIDev.Schema import *
 from common import *
 from new import classobj
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+
+
+handler_map = []
 
 def __task__init__(self):
     ## This assumes TaskApplication is #1 in MRO ( the list of methods )
@@ -10,7 +12,7 @@ def __task__init__(self):
     baseclass.__init__(self)
     ## Now do a trick to convince classes to use us if they foolishly check the name
     ## (this is a bug workaround)
-    self._name = baseclass._name
+    #self._name = baseclass._name
 
 def taskify(baseclass,name):
     smajor = baseclass._schema.version.major
@@ -37,10 +39,10 @@ def taskify(baseclass,name):
         if var in baseclass.__dict__: 
             classdict[var] = baseclass.__dict__[var]
     cls = classobj(name,(taskclass,baseclass), classdict)
- 
+
     ## Use the same handlers as for the base class
-    for backend in allHandlers.getAllBackends(baseclass.__name__):
-        allHandlers.add(name, backend, allHandlers.get(baseclass.__name__,backend))
+    handler_map.append((baseclass.__name__, name))
+
     return cls
 
 class TaskApplication(object):
@@ -115,7 +117,7 @@ class AnaTaskSplitterJob(ISplitter):
             j.application = job.application
             j.application.atlas_environment.append("OUTPUT_FILE_NUMBER=%i" % sj)
             j.backend = job.backend
-            if stripProxy(j.backend)._name == 'LCG':
+            if transform.partitions_sites:
                 j.backend.requirements.sites = transform.partitions_sites[sj-1]
             j.inputsandbox = job.inputsandbox
             j.outputsandbox = job.outputsandbox
