@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.8 2009-02-19 13:36:36 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.9 2009-05-28 09:41:22 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -296,8 +296,12 @@ class AthenaNGRTHandler(IRuntimeHandler):
             elif job.outputdata and not job.outputdata.outputdata:
                 raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
             
-        exe = os.path.join(os.path.dirname(__file__),'athena-ng.sh')
+        exe = os.path.join(os.path.dirname(__file__),'athena-ng-wrapper.sh')
+        inputbox.append(File(os.path.join(os.path.dirname(__file__),'athena-ng.sh')))
+        #_append_file_buffer(inputbox,'athena-ng.sh',[os.path.join(os.path.dirname(__file__),'athena-ng.sh')])
         outputbox = jobmasterconfig.outputbox
+        #outputbox.append("stdout.txt.gz")
+        #outputbox.append("stderr.txt.gz")
         requirements = jobmasterconfig.requirements
         #print '%%% prepare requiremants RT', requirements.runtimeenvironment
         environment = jobmasterconfig.env.copy()
@@ -449,6 +453,10 @@ class AthenaNGRTHandler(IRuntimeHandler):
         # Set application exe type in environment variable
         environment['ATHENA_EXE_TYPE']=app.atlas_exetype
 
+        # Add special log files to be able to compress athena mega-logs
+        environment['ATHENA_STDOUT'] = 'stdout.txt'
+        environment['ATHENA_STDERR'] = 'stderr.txt'
+        
         requirements = NGRequirements()
         
         if job.inputdata and job.inputdata._name == 'DQ2Dataset':
@@ -470,13 +478,16 @@ class AthenaNGRTHandler(IRuntimeHandler):
                 
 #       prepare job requirements
 
-        # fix a test is more something is already chosen
+        # Find the athena release, either from athena_production or athena_release if the first is not set
         if app._name == 'Athena':
             if app.atlas_release == '':
                 raise ConfigError("j.application.atlas_release='' - No ATLAS release version found by prepare() or specified.")
             else:
-                requirements.runtimeenvironment += [ 'APPS/HEP/ATLAS-%s' % app.atlas_release ]
-                environment['ATLAS_RELEASE'] = app.atlas_release
+                current_release = app.atlas_release
+                if app.atlas_production != '':
+                    current_release = app.atlas_production
+                requirements.runtimeenvironment += [ 'APPS/HEP/ATLAS-%s' %  current_release ]
+                environment['ATLAS_RELEASE'] = current_release
 
 #       inputdata
         inputdata = []
@@ -484,7 +495,7 @@ class AthenaNGRTHandler(IRuntimeHandler):
         #    inputdata = [ 'lfn:%s' % lfn for lfn in input_files ]
         
 #       jobscript
-        exe = os.path.join(os.path.dirname(__file__),'athena-ng.sh')
+        exe = os.path.join(os.path.dirname(__file__),'athena-ng-wrapper.sh')
         #print '%%% This is exe ', exe
 
 #       output sandbox
@@ -579,6 +590,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.8  2009/02/19 13:36:36  bsamset
+# Added capability to move files to local disk from symlinks
+#
 # Revision 1.7  2009/02/17 13:17:17  bsamset
 # Fixed guid handling
 #

@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.32 2009-05-14 11:53:37 pajchel Exp $
+# $Id: NG.py,v 1.33 2009-05-28 09:41:22 bsamset Exp $
 ###############################################################################
 #
 # NG backend 
@@ -1658,8 +1658,10 @@ class NG(IBackend):
           self.requirements.runtimeenvironment = jobconfig.requirements.runtimeenvironment  
 
       outfile = []
-      if xrslDict['stdout']:
-         outfile.append("(" + "stdout.gz" + " \"\")")
+      
+      # Do this in another way - make a wrapper instead
+      #if xrslDict['stdout']:
+      #   outfile.append("(" + "stdout.gz" + " \"\")")
 
       srm_endpoint = ''
       output_lfn = ''
@@ -1705,6 +1707,13 @@ class NG(IBackend):
       if job.outputdata and job.outputdata._name == "ATLASOutputDataset":
           for f in job.outputdata.outputdata:
               outfile.append("( " + f + " \"\")" ) 
+
+      # Add some specific log files if requested by user
+      if jobconfig.env.has_key('ATHENA_STDOUT'):
+        outfile.append("( %s.gz \"\")" % jobconfig.env['ATHENA_STDOUT'] )
+
+      if jobconfig.env.has_key('ATHENA_STDERR'):
+        outfile.append("( %s.gz \"\")" % jobconfig.env['ATHENA_STDERR'] )
 
       if job.application._name == 'Executable':
           arguments = job.application.args
@@ -2210,6 +2219,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.32  2009/05/14 11:53:37  pajchel
+# srm url corrected for lfc registration
+#
 # Revision 1.31  2009/05/12 12:19:18  pajchel
 # use spacetoken in srm url
 #
