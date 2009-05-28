@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.54 2009-05-19 09:11:22 elmsheus Exp $
+# $Id: Athena.py,v 1.55 2009-05-28 08:48:32 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -424,7 +424,7 @@ class Athena(IApplication):
                         self.stats['failalg'] = True
                     if line.find('events processed so far')>-1:
                         itotalevents = int(re.match('.* run #\d+ (\d+) events processed so far.*',line).group(1))
-                        jtotalevents = itotalevents
+                        jtotalevents = int(itotalevents)
                     if line.find('cObj_DataHeader...')>-1:
                         numfiles2 = numfiles2 + int(re.match('.* #=(.*)',line).group(1))
                     if line.find('"PFN:')>-1:
@@ -530,7 +530,7 @@ class Athena(IApplication):
                         numfiles2 = numfiles2 + subjob.application.stats['numfiles2']
                 if subjob.application.stats.has_key('totalevents'):
                     if subjob.application.stats['totalevents']:
-                        totalevents = totalevents + subjob.application.stats['totalevents']
+                        totalevents = int(totalevents) + int(subjob.application.stats['totalevents'])
             self.stats['numfiles']=numfiles
             self.stats['numfiles2']=numfiles2
             self.stats['totalevents']=totalevents        
@@ -1253,6 +1253,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.54  2009/05/19 09:11:22  elmsheus
+# Add CPU speed Architecure to stats
+#
 # Revision 1.53  2009/05/14 16:25:28  dvanders
 # added option 'append_to_user_area'
 #
