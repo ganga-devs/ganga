@@ -868,6 +868,28 @@ runtime_setup () {
 
 }
 
+## copy sqlite files to local working directory
+## this one has to be called after athena_setup
+get_sqlite_files()
+{
+    # Make a local copy of requested geomDB if none already available
+    if [ ! -e geomDB ]; then
+        mkdir geomDB
+        cd geomDB
+        get_files -data geomDB/larHV_sqlite
+        get_files -data geomDB/geomDB_sqlite
+        cd ..
+    fi
+    if [ ! -e sqlite200 ]; then
+        mkdir sqlite200
+        cd sqlite200
+        get_files -data sqlite200/ALLP200.db
+        cd ..
+    fi
+
+    ls -rtla
+}  
+
 ## compile the packages
 athena_compile()
 {
