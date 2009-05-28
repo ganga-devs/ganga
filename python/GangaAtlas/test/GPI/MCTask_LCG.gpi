@@ -3,6 +3,8 @@
 import re,sys,popen2,time,getpass
 import os
 
+
+
 t = MCTask()
 t.name = "TestTask01"
 t.evgen.application.evgen_job_option = "CSC.005145.PythiaZmumu.py"
@@ -12,6 +14,7 @@ t.setParameter(atlas_release="14.2.24.1", se_name="UKI-SOUTHGRID-CAM-HEP_USERDIS
 t.setParameter(triggerConfig="DEFAULT", geometryTag="ATLAS-GEO-05-00-00")
 t.setParameter(number_events_job=1)
 t.recon.application.number_events_job = 2
+t.recon.application.extraArgs = " jobConfig=ForceFullReco.py "
 t.float = 2
 t.run()
 
