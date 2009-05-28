@@ -5,7 +5,7 @@ from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_
 import getpass
 
 joboption = '/tmp/ganga_athena_dq2_lcg_testing_data-%s/AnalysisSkeleton_topOptions_v14220.py' % getpass.getuser()
-archivefile = '/tmp/ganga_athena_dq2_lcg_testing_data-%s/UserAnalysis-00003.tar.gz' % getpass.getuser()
+archivefile = '/tmp/ganga_athena_dq2_lcg_testing_data-%s/UserAnalysis-00004.tar.gz' % getpass.getuser()
 
 config['TestingFramework']['timeout']=5000
 
@@ -14,22 +14,26 @@ t = AnaTask()
 t.analysis.application.atlas_release='14.2.20'
 t.analysis.application.option_file=[ joboption ]
 t.analysis.application.user_area=archivefile
-t.analysis.application.max_events=100
+t.analysis.application.max_events=10
+t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
 
 t.analysis.files_per_job = 1
-t.analysis.inputdata.dataset = "mc08.105401.SU1_jimmy_susy.merge.AOD.e352_s462_r635_t53_tid060443"
+t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808_sub01236389"
+#t.analysis.inputdata.dataset = "mc08.105401.SU1_jimmy_susy.merge.AOD.e352_s462_r635_t53_tid060443"
 
 t.analysis.outputdata=DQ2OutputDataset()
 
 t.setBackend(Panda())
-#t.analysis.backend.requirements.cloud='US'
-t.float = 5
+t.analysis.backend.requirements.cloud='US'
+t.float = 20
 t.info()
 t.run()
 t.analysis.setRunlimit(2)
 
 import time
 n = t.n_all()
+assert n > 0
+
 while 1:
    c = t.n_status("completed")
    f = t.n_status("failed")
