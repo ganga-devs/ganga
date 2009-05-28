@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.34 2009-05-20 12:41:22 dvanders Exp $
+# $Id: Panda.py,v 1.35 2009-05-28 11:11:20 ebke Exp $
 ################################################################################
                                                                                                               
 
@@ -453,9 +453,10 @@ class Panda(IBackend):
                     elif status.jobStatus in ['starting','running','holding','transferring']:
                         job.updateStatus('running')
                     elif status.jobStatus == 'finished':
-                        if not job.backend._name=='PandaBuildJob' and config['enableDownloadLogs'] and job.status != "completed":
-                            job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
+                        if not job.backend._name=='PandaBuildJob' and job.status != "completed":
                             job.backend.fillOutputData(job, status)
+                            if config['enableDownloadLogs']:
+                                job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
                         job.updateStatus('completed')
                     elif status.jobStatus == 'failed':
                         job.updateStatus('failed')
@@ -559,6 +560,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.34  2009/05/20 12:41:22  dvanders
+# DQ2Dataset->DQ2dataset
+#
 # Revision 1.33  2009/05/18 12:28:41  dvanders
 # startime -> starttime
 #
