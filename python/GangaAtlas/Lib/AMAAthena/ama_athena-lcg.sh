@@ -168,6 +168,9 @@ if [ n$DATASETTYPE == n'DQ2_COPY' ]; then
         exit $EC_ATHENA_COMPILATION_ERROR
     fi
 
+    ## copy SQLite files locally to avoid SQLite+NFS lock 
+    get_sqlite_files
+
     GANGATIME3=`date +'%s'`
 
     ## !TO BE CHECKED! the DQ2_COPY mode can cause the summary root file incorrect.
@@ -191,6 +194,9 @@ else
         echo "Athena setup/compilation error." 1>&2
         exit $EC_ATHENA_COMPILATION_ERROR
     fi
+
+    ## copy SQLite files locally to avoid SQLite+NFS lock 
+    get_sqlite_files
 
     GANGATIME3=`date +'%s'`
 
