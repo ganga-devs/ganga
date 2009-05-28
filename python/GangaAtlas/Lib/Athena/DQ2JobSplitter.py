@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.34 2009-03-03 15:43:26 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.35 2009-05-28 11:17:00 ebke Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -108,7 +108,6 @@ class DQ2JobSplitter(ISplitter):
                     allowed_sites = job.backend.requirements.list_sites_cloud()
                 else: 
                     raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
-                
                 allowed_sites_all = job.backend.requirements.list_sites(True,True)
                 # Apply GangaRobot blacklist
                 if self.use_blacklist:
@@ -131,14 +130,15 @@ class DQ2JobSplitter(ISplitter):
                     except:
                         raise ApplicationConfigurationError(None,'Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
                     db_allowed_sites=[]
+                    dq2alternatenames=[]
                     for site in allowed_sites:
                         if site in db_locations:
                             db_allowed_sites.append(site)
-                            dq2alternatename = TiersOfATLAS.getSiteProperty(site,'alternateName')
-                            for sitename in TiersOfATLAS.getAllSources():
-                                if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
-                                    if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and not sitename in db_allowed_sites:
-                                        db_allowed_sites.append(sitename)
+                            dq2alternatenames.append(TiersOfATLAS.getSiteProperty(site,'alternateName'))
+                    for sitename in TiersOfATLAS.getAllSources():
+                        if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
+                            if TiersOfATLAS.getSiteProperty(sitename,'alternateName') in dq2alternatenames and not sitename in db_allowed_sites:
+                                db_allowed_sites.append(sitename)
                     allowed_sites = db_allowed_sites
                 # Check if site is online:
                 newsites = []
