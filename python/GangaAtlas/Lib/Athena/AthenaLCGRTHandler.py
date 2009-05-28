@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.43 2009-05-22 10:00:19 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.44 2009-05-28 13:32:02 ebke Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -560,9 +560,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['DQ2_CLIENT_VERSION'] = dq2client_version
 
         if app.atlas_dbrelease:
-            if not (job.splitter and job.splitter._name == 'DQ2JobSplitter'):
+            if not app._name == "AthenaTask" and not (job.splitter and job.splitter._name == 'DQ2JobSplitter'):
                 raise ApplicationConfigurationError(None,'Job submission failed ! Please use DQ2JobSplitter if you are using j.application.atlas_dbrelease !')
-                            
             try:
                 environment['ATLAS_DBRELEASE'] = app.atlas_dbrelease.split(':')[0]
                 environment['ATLAS_DBFILE'] = app.atlas_dbrelease.split(':')[1]
