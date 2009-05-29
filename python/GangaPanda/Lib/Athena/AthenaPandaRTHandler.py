@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaPandaRTHandler.py,v 1.31 2009-05-25 10:19:38 ebke Exp $
+# $Id: AthenaPandaRTHandler.py,v 1.32 2009-05-29 13:27:14 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -68,7 +68,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
         usertag = configDQ2['usertag'] 
-        username = gridProxy.identity(safe=True)
+        self.username = gridProxy.identity(safe=True)
+        username = self.username
         if job.backend.libds:
             self.libDataset = job.backend.libds
             self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
@@ -267,7 +268,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             raise ApplicationConfigurationError(None,'DQ2OutputDataset has no datasetname')
         
         usertag = configDQ2['usertag'] 
-        username = gridProxy.identity(safe=True)
+        username = self.username
         if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,username)):
             job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
         
