@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.36 2009-05-28 21:46:21 dvanders Exp $
+# $Id: Panda.py,v 1.37 2009-05-29 18:10:22 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -475,6 +475,12 @@ class Panda(IBackend):
                         job.backend.getLogFiles(job.getOutputWorkspace().getPath("buildJob"), status)
 
                     job.backend.buildjob.status = status.jobStatus
+   
+                    try: 
+                        if status.jobStatus == 'finished':
+                            job.backend.libds = job.backend.buildjob.jobSpec['destinationDBlock']
+                    except KeyError:
+                        pass
 
                     if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
                         pass
@@ -560,6 +566,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.36  2009/05/28 21:46:21  dvanders
+# processingType=ganga
+#
 # Revision 1.35  2009/05/28 11:11:20  ebke
 # Outputdata now filled even if enableDownloadLogs disabled
 #
