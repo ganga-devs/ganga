@@ -46,15 +46,38 @@ def get_md5sum(fname):
 def get_adler32sum(fname):
     ''' Calculate the Adler32 checksum of a file '''
 
+    cksum = None
     f = open(fname,'rb')
-    data = f.read()
-    cksum = hex( zlib.adler32(data) & 0xffffffff )
+    while True:
+        d = f.read(8096)
+        if not d:
+            break
+
+        if not cksum:
+            #cksum = hex( zlib.adler32(d) & 0xffffffff )
+            cksum = zlib.adler32(d)
+        else:
+            #cksum = hex( zlib.adler32(d, cksum) & 0xffffffff )
+            cksum = zlib.adler32(d, cksum)
     f.close()
 
     # remove the tailing 'L' charactor
-    cksum = re.sub(r'L$','',cksum)
+    cksum_str = re.sub(r'L$','', hex(cksum & 0xffffffff) )
 
-    return cksum
+    return cksum_str
+
+#def get_adler32sum(fname):
+#    ''' Calculate the Adler32 checksum of a file '''
+#
+#    f = open(fname,'rb')
+#    data = f.read()
+#    cksum = hex( zlib.adler32(data) & 0xffffffff )
+#    f.close()
+#
+#    # remove the tailing 'L' charactor
+#    cksum = re.sub(r'L$','',cksum)
+#
+#    return cksum
 
 def urisplit(uri):
    """
