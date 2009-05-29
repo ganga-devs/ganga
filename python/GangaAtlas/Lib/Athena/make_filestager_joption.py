@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: make_filestager_joption.py,v 1.6 2009-04-29 06:26:35 hclee Exp $
+# $Id: make_filestager_joption.py,v 1.7 2009-05-29 14:00:56 hclee Exp $
 ###############################################################################
 # making input job option file for FileStager
 
@@ -101,6 +101,10 @@ if (io_type in ['FILE_STAGER']):
 
     if protocols:
         my_protocol = protocols[0]
+
+    ## avoid using dcap or gsidcap until the load on SE with dcap is solved 
+    if my_protocol in ['dcap', 'gsidcap']:
+        my_protocol = 'lcgcp'
 
     print >> sys.stdout, 'picked transfer protocol: %s' % my_protocol
 
