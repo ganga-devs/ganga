@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.9 2009-05-28 09:41:22 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.10 2009-05-30 08:49:06 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -180,7 +180,7 @@ class AthenaNGRTHandler(IRuntimeHandler):
         if job.outputdata and job.outputdata._name=='DQ2OutputDataset':
             # Set a default output if none is provided
             if job.outputdata.location=='':
-                job.outputdata.location = 'NDGF-T1_USERDISK'
+                job.outputdata.location = 'NDGF-T1_SCRATCHDISK'
 
         if job.outputdata and job.outputdata._name=='DQ2OutputDataset':
             if job._getRoot().subjobs:
@@ -590,6 +590,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.9  2009/05/28 09:41:22  bsamset
+# Added gziping of athena log files, settable log file names through environment variables etc. Also fixed the propagation of atlas_production (again). Note: This update looses us live log file peeking of athena jobs. Must look into this later.
+#
 # Revision 1.8  2009/02/19 13:36:36  bsamset
 # Added capability to move files to local disk from symlinks
 #
