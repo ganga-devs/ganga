@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.37 2009-05-29 18:10:22 dvanders Exp $
+# $Id: Panda.py,v 1.38 2009-05-30 05:48:38 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -330,7 +330,7 @@ class Panda(IBackend):
         for job in jobs: 
             jobIDs[job.backend.id] = job
 
-        rc,jspecs = Client.getJobStatus(jobIDs.keys())
+        rc,jspecs = Client.getFullJobStatus(jobIDs.keys(),False)
         if rc:
             logger.error('Return code %d retrieving job status information.',rc)
             raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
@@ -413,7 +413,7 @@ class Panda(IBackend):
                 if subjob.backend.status in active_status:
                     jobdict[subjob.backend.id] = subjob
 
-        rc, jobsStatus = Client.getJobStatus(jobdict.keys())
+        rc, jobsStatus = Client.getFullJobStatus(jobdict.keys(),False)
         if rc:
             logger.error('Return code %d retrieving job status information.',rc)
             raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
@@ -566,6 +566,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.37  2009/05/29 18:10:22  dvanders
+# fill libds if buildjob succeeds.
+#
 # Revision 1.36  2009/05/28 21:46:21  dvanders
 # processingType=ganga
 #
