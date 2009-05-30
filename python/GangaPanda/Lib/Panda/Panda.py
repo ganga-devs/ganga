@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.39 2009-05-30 07:22:09 dvanders Exp $
+# $Id: Panda.py,v 1.40 2009-05-30 08:31:59 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -280,6 +280,9 @@ class Panda(IBackend):
             jobspecs = [buildjobspec] + subjobspecs
         else:
             jobspecs = subjobspecs
+
+        if len(jobspecs) > 2000:
+            raise BackendError('Panda','Cannot submit %d subjobs. Server limits to 2000.' % len(jobspecs))
 
         verbose = logger.isEnabledFor(10)
         status, jobids = Client.submitJobs(jobspecs,verbose)
@@ -571,6 +574,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.39  2009/05/30 07:22:09  dvanders
+# Panda server has a per call limit of 2500 subjobs per getFullJobStatus.
+#
 # Revision 1.38  2009/05/30 05:48:38  dvanders
 # getFullJobStatus
 #
