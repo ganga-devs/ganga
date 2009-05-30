@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.38 2009-05-30 05:48:38 dvanders Exp $
+# $Id: Panda.py,v 1.39 2009-05-30 07:22:09 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -413,85 +413,90 @@ class Panda(IBackend):
                 if subjob.backend.status in active_status:
                     jobdict[subjob.backend.id] = subjob
 
-        rc, jobsStatus = Client.getFullJobStatus(jobdict.keys(),False)
-        if rc:
-            logger.error('Return code %d retrieving job status information.',rc)
-            raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
-     
-        for status in jobsStatus:
+        # split into 2000-job pieces
+        allJobIDs = jobdict.keys()
+        jIDPieces = [allJobIDs[i:i+2000] for i in range(0,len(allJobIDs),2000)]
 
-            if not status: continue
+        for jIDs in jIDPieces:
+            rc, jobsStatus = Client.getFullJobStatus(jIDs,False)
+            if rc:
+                logger.error('Return code %d retrieving job status information.',rc)
+                raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
+         
+            for status in jobsStatus:
 
-            job = jobdict[status.PandaID]
-            if job.backend.id == status.PandaID:
+                if not status: continue
 
-                if job.backend.status != status.jobStatus:
-                    job.backend.jobSpec = dict(zip(status._attributes,status.values()))
+                job = jobdict[status.PandaID]
+                if job.backend.id == status.PandaID:
 
-                    for k in job.backend.jobSpec.keys():
-                        if type(job.backend.jobSpec[k]) not in [type(''),type(1)]:
-                            job.backend.jobSpec[k]=str(job.backend.jobSpec[k])
+                    if job.backend.status != status.jobStatus:
+                        job.backend.jobSpec = dict(zip(status._attributes,status.values()))
 
-                    logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
-                    job.backend.status = status.jobStatus
+                        for k in job.backend.jobSpec.keys():
+                            if type(job.backend.jobSpec[k]) not in [type(''),type(1)]:
+                                job.backend.jobSpec[k]=str(job.backend.jobSpec[k])
 
-                    if status.computingElement != 'NULL':
-                        job.backend.CE = status.computingElement
-                    else:
-                        job.backend.CE = None
+                        logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
+                        job.backend.status = status.jobStatus
 
-                    job.backend.exitcode = str(status.transExitCode)
-                    job.backend.piloterrorcode = str(status.pilotErrorCode)
+                        if status.computingElement != 'NULL':
+                            job.backend.CE = status.computingElement
+                        else:
+                            job.backend.CE = None
 
-                    job.backend.reason = ''
-                    for k in job.backend.jobSpec.keys():
-                        if k.endswith('ErrorDiag') and job.backend.jobSpec[k]!='NULL':
-                            job.backend.reason = job.backend.reason + str(job.backend.jobSpec[k])
+                        job.backend.exitcode = str(status.transExitCode)
+                        job.backend.piloterrorcode = str(status.pilotErrorCode)
 
-                    if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
-                        pass
-                    elif status.jobStatus in ['starting','running','holding','transferring']:
-                        job.updateStatus('running')
-                    elif status.jobStatus == 'finished':
-                        if not job.backend._name=='PandaBuildJob' and job.status != "completed":
-                            job.backend.fillOutputData(job, status)
-                            if config['enableDownloadLogs']:
-                                job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
-                        job.updateStatus('completed')
-                    elif status.jobStatus == 'failed':
-                        job.updateStatus('failed')
-                    else:
-                        logger.warning('Unexpected job status %s',status.jobStatus)
+                        job.backend.reason = ''
+                        for k in job.backend.jobSpec.keys():
+                            if k.endswith('ErrorDiag') and job.backend.jobSpec[k]!='NULL':
+                                job.backend.reason = job.backend.reason + str(job.backend.jobSpec[k])
 
-            elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
-                if job.backend.buildjob.status != status.jobStatus:
-                    job.backend.buildjob.jobSpec = dict(zip(status._attributes,status.values()))
-                    for k in job.backend.buildjob.jobSpec.keys():
-                        if type(job.backend.buildjob.jobSpec[k]) not in [type(''),type(1)]:
-                            job.backend.buildjob.jobSpec[k]=str(job.backend.buildjob.jobSpec[k])
+                        if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
+                            pass
+                        elif status.jobStatus in ['starting','running','holding','transferring']:
+                            job.updateStatus('running')
+                        elif status.jobStatus == 'finished':
+                            if not job.backend._name=='PandaBuildJob' and job.status != "completed":
+                                job.backend.fillOutputData(job, status)
+                                if config['enableDownloadLogs']:
+                                    job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
+                            job.updateStatus('completed')
+                        elif status.jobStatus == 'failed':
+                            job.updateStatus('failed')
+                        else:
+                            logger.warning('Unexpected job status %s',status.jobStatus)
 
-                    logger.debug('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
-                    if config['enableDownloadLogs'] and not job.backend._name=='PandaBuildJob' and status.jobStatus == "finished" and job.backend.buildjob.status != "finished":
-                        job.backend.getLogFiles(job.getOutputWorkspace().getPath("buildJob"), status)
+                elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
+                    if job.backend.buildjob.status != status.jobStatus:
+                        job.backend.buildjob.jobSpec = dict(zip(status._attributes,status.values()))
+                        for k in job.backend.buildjob.jobSpec.keys():
+                            if type(job.backend.buildjob.jobSpec[k]) not in [type(''),type(1)]:
+                                job.backend.buildjob.jobSpec[k]=str(job.backend.buildjob.jobSpec[k])
 
-                    job.backend.buildjob.status = status.jobStatus
-   
-                    try: 
-                        if status.jobStatus == 'finished':
-                            job.backend.libds = job.backend.buildjob.jobSpec['destinationDBlock']
-                    except KeyError:
-                        pass
+                        logger.debug('Buildjob %s has changed status from %s to %s',job.getFQID('.'),job.backend.buildjob.status,status.jobStatus)
+                        if config['enableDownloadLogs'] and not job.backend._name=='PandaBuildJob' and status.jobStatus == "finished" and job.backend.buildjob.status != "finished":
+                            job.backend.getLogFiles(job.getOutputWorkspace().getPath("buildJob"), status)
 
-                    if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
-                        pass
-                    elif status.jobStatus in ['starting','running','holding','transferring']:
-                        job.updateStatus('running')
-                    elif status.jobStatus == 'failed':
-                        job.updateStatus('failed')
-                    else:
-                        logger.warning('Unexpected job status %s',status.jobStatus)
-            else:
-                logger.warning('Unexpected Panda ID %s',status.PandaID)
+                        job.backend.buildjob.status = status.jobStatus
+       
+                        try: 
+                            if status.jobStatus == 'finished':
+                                job.backend.libds = job.backend.buildjob.jobSpec['destinationDBlock']
+                        except KeyError:
+                            pass
+
+                        if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
+                            pass
+                        elif status.jobStatus in ['starting','running','holding','transferring']:
+                            job.updateStatus('running')
+                        elif status.jobStatus == 'failed':
+                            job.updateStatus('failed')
+                        else:
+                            logger.warning('Unexpected job status %s',status.jobStatus)
+                else:
+                    logger.warning('Unexpected Panda ID %s',status.PandaID)
 
         for job in jobs:
             if job.subjobs and job.status <> 'failed': job.updateMasterJobStatus()
@@ -566,6 +571,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.38  2009/05/30 05:48:38  dvanders
+# getFullJobStatus
+#
 # Revision 1.37  2009/05/29 18:10:22  dvanders
 # fill libds if buildjob succeeds.
 #
