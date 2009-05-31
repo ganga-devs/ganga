@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.56 2009-05-31 17:00:09 elmsheus Exp $
+# $Id: Athena.py,v 1.57 2009-05-31 17:33:33 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -328,13 +328,16 @@ class Athena(IApplication):
         # collect stats from __jobscript__.log
         if '__jobscript__.log' in os.listdir(job.outputdir):
             fileName = os.path.join(job.outputdir,'__jobscript__.log' )
-            for line in fileinput.input([fileName]):
-                if line.find('[Info] Job Wrapper start.')>-1:
-                    starttime = re.match('(.*)  .*Info.* Job Wrapper start.',line).group(1)
-                    self.stats['starttime'] = time.mktime(time.strptime(starttime))-time.timezone
-                if line.find('[Info] Job Wrapper stop.')>-1:
-                    stoptime = re.match('(.*)  .*Info.* Job Wrapper stop.',line).group(1)
-                    self.stats['stoptime'] = time.mktime(time.strptime(stoptime))-time.timezone
+            try:
+                for line in fileinput.input([fileName]):
+                    if line.find('[Info] Job Wrapper start.')>-1:
+                        starttime = re.match('(.*)  .*Info.* Job Wrapper start.',line).group(1)
+                        self.stats['starttime'] = time.mktime(time.strptime(starttime))-time.timezone
+                    if line.find('[Info] Job Wrapper stop.')>-1:
+                        stoptime = re.match('(.*)  .*Info.* Job Wrapper stop.',line).group(1)
+                        self.stats['stoptime'] = time.mktime(time.strptime(stoptime))-time.timezone
+            except:
+                pass
 
         # collect stats from stderr
         try:
@@ -500,7 +503,14 @@ class Athena(IApplication):
             if self.stats.has_key('gangatime5'):
                 self.stats['stoptime'] = self.stats['gangatime5'] 
 
-
+        try:        
+            if not self.stats.has_key('starttime') and self.stats.has_key('gangatime1'):
+                self.stats['starttime'] = self.stats['gangatime1']
+            if not self.stats.has_key('stoptime') and self.stats.has_key('gangatime5'):
+                self.stats['stoptime'] = self.stats['gangatime5'] 
+        except:
+            pass
+    
     def postprocess(self):
         """Determine outputdata and outputsandbox locations of finished jobs
         and fill output variable"""
@@ -1256,6 +1266,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.56  2009/05/31 17:00:09  elmsheus
+# Protection for itotalevents
+#
 # Revision 1.55  2009/05/28 08:48:32  elmsheus
 # Fix totalevents problem
 #
