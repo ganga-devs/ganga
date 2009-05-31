@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.44 2009-05-28 13:32:02 ebke Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.45 2009-05-31 15:40:11 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -322,7 +322,11 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import resolve_container
                 datasets = resolve_container(job.inputdata.dataset)
                 environment['DATASETNAME'] = datasets[0]
-                environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations(overlap=False)[ datasets[0] ])
+                try:
+                    environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations(overlap=False)[ datasets[0] ])
+                except:
+                    printout = 'Job submission failed ! Dataset %s could not be found in DQ2 ! Maybe retry ?' %(datasets[0])
+                    raise ApplicationConfigurationError(None,printout )
 
         # Work around for glite WMS spaced environement variable problem
         inputbox.append(FileBuffer('athena_options',environment['ATHENA_OPTIONS']+'\n'))
