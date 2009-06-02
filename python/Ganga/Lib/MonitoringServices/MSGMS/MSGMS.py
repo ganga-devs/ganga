@@ -65,13 +65,32 @@ class MSGMS(IMonitoringService):
 
     def getSandboxModules(self):
         import Ganga.Lib.MonitoringServices.MSGMS
-        return IMonitoringService.getSandboxModules(self) + [
+        import Ganga.Lib.MonitoringServices.MSGMS.MSGMS
+        return [
             Ganga,
             Ganga.Lib,
             Ganga.Lib.MonitoringServices,
             Ganga.Lib.MonitoringServices.MSGMS,
             Ganga.Lib.MonitoringServices.MSGMS.MSGMS,
-            ]
+            Ganga.Lib.MonitoringServices.MSGMS.MSGUtil,
+            Ganga.Lib.MonitoringServices.MSGMS.compatibility,
+            Ganga.Lib.MonitoringServices.MSGMS.stomp,
+            Ganga.Utility,
+            Ganga.Utility.logging,
+            Ganga.Utility.strings,
+            Ganga.Utility.files,
+            #Ganga.Utility.files.remove_prefix,
+            Ganga.Utility.ColourText,
+            Ganga.Utility.Config,
+            Ganga.Utility.Config.Config,
+            Ganga.GPIDev,
+            Ganga.GPIDev.Lib,
+            Ganga.GPIDev.Lib.Config,
+            Ganga.GPIDev.Lib.Config.Config,
+            Ganga.Core,
+            Ganga.Core.exceptions,
+            Ganga.Core.exceptions.GangaException
+            ] + IMonitoringService.getSandboxModules(self)
 
     def start(self, **opts): # same as with stop
         import atexit
