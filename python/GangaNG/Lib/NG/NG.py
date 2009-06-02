@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.33 2009-05-28 09:41:22 bsamset Exp $
+# $Id: NG.py,v 1.34 2009-06-02 10:40:18 bsamset Exp $
 ###############################################################################
 #
 # NG backend 
@@ -1780,6 +1780,8 @@ class NG(IBackend):
               xrslList.append("(ATHENA_USERSETUPFILE  %s" % str( jobconfig.env['ATHENA_USERSETUPFILE'] ) + ")")  
           if jobconfig.env.has_key('ATLAS_RELEASE'):
               xrslList.append("(ATLAS_RELEASE  %s" % str( jobconfig.env['ATLAS_RELEASE'] ) + ")")
+          if jobconfig.env.has_key('ATLAS_PRODUCTION'):
+              xrslList.append("(ATLAS_PRODUCTION  %s" % str( jobconfig.env['ATLAS_PRODUCTION'] ) + ")")
           if jobconfig.env.has_key('GROUP_AREA'):
               xrslList.append("(GROUP_AREA  %s" % str( jobconfig.env['GROUP_AREA'] ) + ")")
           if jobconfig.env.has_key('GROUP_AREA_REMOTE'):
@@ -2219,6 +2221,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.33  2009/05/28 09:41:22  bsamset
+# Added gziping of athena log files, settable log file names through environment variables etc. Also fixed the propagation of atlas_production (again). Note: This update looses us live log file peeking of athena jobs. Must look into this later.
+#
 # Revision 1.32  2009/05/14 11:53:37  pajchel
 # srm url corrected for lfc registration
 #
