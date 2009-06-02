@@ -300,8 +300,7 @@ if __name__ == "__main__":
         main()
     except SystemExit, e:
         raise e #just propagate exits
-#    except Exception, e:
-#        print "Exception: %s : '%s'" % (e.__class__.__name__ , str(e))
+    except Exception, e:
         #fall back on the wrapper script if something goes wrong
-#        os.system('lhcb-proxy-info')
+        os.system('lhcb-proxy-info')
     
