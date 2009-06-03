@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.42 2009-05-20 15:20:21 ebke Exp $
+# $Id: AthenaMCDatasets.py,v 1.43 2009-06-03 15:50:58 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1273,6 +1273,8 @@ class AthenaMCOutputDatasets(Dataset):
             njobs=job.splitter.numsubjobs
         maxtime*=njobs
         print maxtime, njobs
+        if maxtime>80000:
+            maxtime=80000
         try:
             assert totaltime>maxtime
         except:
