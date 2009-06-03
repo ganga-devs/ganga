@@ -94,6 +94,17 @@ class Transform(GangaObject):
          self.check()
       if self.status != "completed":
          self.status = "running"
+         # Check if this transform has completed in the meantime
+         is_complete = True
+         for s in self._partition_status.values():
+            if s != "completed" and s != "bad":
+               is_complete = False
+               break
+         if is_complete:
+            self.status = "completed"
+         task = self._getParent()
+         if task:
+            task.updateStatus()
       else:
          logger.warning("Transform is already completed!")
 
