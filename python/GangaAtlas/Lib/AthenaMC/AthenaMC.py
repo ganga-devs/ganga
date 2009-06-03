@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.30 2009-05-20 15:20:21 ebke Exp $
+# $Id: AthenaMC.py,v 1.31 2009-06-03 16:55:15 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -597,7 +597,7 @@ class AthenaMC(IApplication):
        
        if job.splitter:
            try:
-               assert job.splitter._name=="AthenaMCSplitterJob"
+               assert job.splitter._name=="AthenaMCSplitterJob" or job.splitter._name=="AthenaMCTaskSplitterJob"
            except AssertionError:
                raise ApplicationConfigurationError(None,'If you want to use a job splitter with the AthenaMC application, you have to use AthenaMCSplitterJob')
            
@@ -736,6 +736,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.30  2009/05/20 15:20:21  ebke
+# Added use_partition_numbers to AthenaMCInputDatasets to make Tasks safe and still accommodate loose matching.
+#
 # Revision 1.29  2009/05/14 13:54:14  fbrochu
 # bug fix in wrapper.sh and stage-in.sh for input file downloading : clashing of environment variables now sorted
 #
