@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.32 2009-05-31 16:59:54 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.33 2009-06-04 10:04:55 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -166,9 +166,11 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         while not allchecked and retry<4: 
             for location in alllocations:
                 try:
+                    dq2_lock.acquire()
                     datasetinfo = dq2.listMetaDataReplica(location, dataset)
-                except:
-                    continue
+                finally:
+                    dq2_lock.release()
+                    
                 if datasetinfo.has_key('checkdate'):
                     checkdate = datasetinfo['checkdate']
                     try:
@@ -180,7 +182,12 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                     continue
 
                 if (time.time()-checktime > days*86000): 
-                    dq2.checkDatasetConsistency(location, dataset)
+                    try:
+                        dq2_lock.acquire()
+                        dq2.checkDatasetConsistency(location, dataset)
+                    finally:
+                        dq2_lock.release()
+                        
                     logger.warning('Please be patient - waiting for site-index update at site %s ...', location)
                     locations_checktime[location] = False
                 else:
@@ -200,7 +207,11 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
             time.sleep(timeout)
 
         for location in alllocations:
-            datasetsiteinfo = dq2.listFileReplicas(location, dataset)
+            try:
+                dq2_lock.acquire()
+                datasetsiteinfo = dq2.listFileReplicas(location, dataset)
+            finally:
+                dq2_lock.release()
             numberoffiles = datasetsiteinfo[0]['found']
             locations_num[location]=int(numberoffiles)
 
@@ -1265,6 +1276,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.32  2009/05/31 16:59:54  elmsheus
+#Protection for listMetaDataReplica
+#
 #Revision 1.31  2009/05/19 09:33:48  elmsheus
 #Add feature #50558 and remove getJobObject() dependency for self.names, self.exclude_names
 #
