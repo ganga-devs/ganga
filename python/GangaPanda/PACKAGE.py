@@ -1,14 +1,14 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.7 2009-05-15 19:50:18 dvanders Exp $
+# $Id: PACKAGE.py,v 1.8 2009-06-04 09:45:34 elmsheus Exp $
 ################################################################################
 
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 """
 
 _external_packages = {
-    'panda-client' : { 'version' : '0.1.53', 
+    'panda-client' : { 'version' : '0.1.64', 
                     'PYTHONPATH':['lib/python2.3/site-packages'],
                     'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                     'PANDA_SYS':'.',
