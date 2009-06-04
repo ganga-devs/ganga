@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.33 2009-06-04 10:04:55 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.34 2009-06-04 10:19:46 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -167,7 +167,10 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
             for location in alllocations:
                 try:
                     dq2_lock.acquire()
-                    datasetinfo = dq2.listMetaDataReplica(location, dataset)
+                    try:
+                        datasetinfo = dq2.listMetaDataReplica(location, dataset)
+                    except:
+                        continue
                 finally:
                     dq2_lock.release()
                     
@@ -1276,6 +1279,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.33  2009/06/04 10:04:55  elmsheus
+#Aquire locks for dq2 calls in dq2_list_locations_siteindex
+#
 #Revision 1.32  2009/05/31 16:59:54  elmsheus
 #Protection for listMetaDataReplica
 #
