@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: __init__.py,v 1.4 2009-04-28 13:36:45 kubam Exp $
+# $Id: __init__.py,v 1.4.2.1 2009-06-04 15:57:19 moscicki Exp $
 ################################################################################
 
 #
@@ -120,6 +120,7 @@ def _set_formatter(handler):
 
 
 def _make_file_handler(logfile,logfile_size):
+    import traceback
     import os.path
     logfile = os.path.expanduser(logfile)
     global file_handler
@@ -130,10 +131,19 @@ def _make_file_handler(logfile,logfile_size):
             private_logger.error('Cannot open the log file: %s',str(x))
             return
         # remove old handler if exists
-        main_logger.removeHandler(file_handler)
-
+        #print 'removing old file handler',file_handler
+        #print 'installing new file handler',new_file_handler
+        if file_handler:
+            main_logger.removeHandler(file_handler)
+            file_handler.flush()
+            file_handler.close()
+            # this is required to properly remove the file handler from the logging system
+            # otherwise I/O Error at shutdown
+            del logging._handlers[file_handler] #WARNING: this relies on the implementation details of the logging module
+        
         new_file_handler.setFormatter(logging.Formatter(_formats['VERBOSE']))
-        main_logger.addHandler(new_file_handler)    
+        main_logger.addHandler(new_file_handler)
+        file_handler = new_file_handler
 
 # reflect all user changes immediately
 def post_config_handler(opt,value):
