@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5 2009-05-20 13:40:22 moscicki Exp $
+# $Id: Objects.py,v 1.5.2.1 2009-06-04 12:00:37 moscicki Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -193,6 +193,12 @@ class Descriptor(object):
             if g:
                 result = g()
             else:
+                #LAZYLOADING
+                #if obj._data is None:
+                # try:
+                #  return obj.getCacheValue(self._name)
+                # except ValueNotInCache:
+                #   trigger full load
                 result = obj._data[self._name]
             
             return result
@@ -204,6 +210,14 @@ class Descriptor(object):
         cs = self._bind_method(obj,self._checkset_name)
         if cs:
             cs(val)
+
+        #LOCKING
+        #obj.getWriteLock():
+        # 
+        #r = obj._getRegistry()
+        #if r and not obj.write_lock:
+        #   r.getWriteLock(obj)
+
         filter = self._bind_method(obj, self._filter_name)
         if filter:
             val = filter(val)
@@ -487,6 +501,14 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2009/05/20 13:40:22  moscicki
+# added filter property for GangaObjects
+#
+# added Utility.Config.expandgangasystemvars() filter which expands @{VAR} in strings, where VAR is a configuration option defined in the System section
+# Usage example: specify @{GANGA_PYTHONPATH} in the configuration file to make pathnames relative to the location of Ganga release; specify @{GANGA_VERSION} to expand to current Ganga version. etc.
+#
+# modified credentials package (ICommandSet) to use the expandgangasystemvars() filter.
+#
 # Revision 1.4  2009/04/27 09:22:56  moscicki
 # fix #29745: use __mro__ rather than first-generation of base classes
 #
