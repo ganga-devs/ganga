@@ -2,7 +2,7 @@ import LCG
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.34 2009-03-27 10:14:33 hclee Exp $
+# $Id: LCG.py,v 1.35 2009-06-05 12:23:15 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -56,13 +56,6 @@ def start_lcg_output_downloader():
 def get_lcg_output_downloader():
     global lcg_output_downloader
     return lcg_output_downloader
-
-#def stop_ganga_thread_pool():
-#    from Ganga.Lib.LCG.GangaThread.GangaThreadPool import GangaThreadPool
-#
-#    tpool = GangaThreadPool.getInstance()
-#    tpool.SHUTDOWN_TIMEOUT = 5
-#    tpool.shutdown()
 
 start_lcg_output_downloader()
 
@@ -534,6 +527,10 @@ class LCG(IBackend):
                 try:
                     logger.debug("preparing job %s" % my_sj.getFQID('.'))
                     jdlpath = my_sj.backend.preparejob(my_sc, master_input_sandbox)
+
+                    if (not jdlpath) or (not os.path.exists(jdlpath)):
+                        raise GangaException('job %s not properly prepared' % my_sj.getFQID('.'))
+
                     self.__appendResult__( my_sj.id, jdlpath )
                     return True
                 except Exception,x:
@@ -1479,7 +1476,7 @@ sys.exit(0)
             pass
      
         else:
-            logger.warning('Unexpected job status "%s"',info['status'])
+            logger.warning('Unexpected job status "%s"',status)
 
     updateGangaJobStatus = staticmethod(updateGangaJobStatus)
 
@@ -1942,6 +1939,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.34  2009/03/27 10:14:33  hclee
+# fix race condition issue: https://savannah.cern.ch/bugs/?48435
+#
 # Revision 1.33  2009/03/12 12:26:16  hclee
 # merging bug fixes from branch Ganga-LCG-old-MTRunner to trunk
 #
