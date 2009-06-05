@@ -1,0 +1,102 @@
+**************************************************************************************************************
+5.2.4 (2009/6/5)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+------
+* Athena.py:
+  Various additional variable protections in Athena.collectStats()
+* AthenaLCGRTHandler.py: 
+  DATASETLOCATION protection
+  Skip splitter check for dbrelease if AnaTask is used 
+  (splitter already used internally)
+* DQ2JobSplitter.py:
+  Increased speed of loop testing for db_release presence
+* athena-utility.sh:
+  add a function to get SQLite files to local working directory
+* db_dq2localid.py
+  - Changed local dq2 site discovery, relies more on environment
+  - Works too if the site still has _USERDISK set and is not in 
+    TiersOfATLAS
+* fs-copy.sh:
+  fix the broken alder32 checksum calculation - read file data 
+  piece-by-piece
+* make_filestager_joption.py:
+  disable the usage of dccp protocol in FileStager
+* DQ2Dataset.py
+  Better threading protection for dq2 calls in 
+  dq2_list_locations_siteindex
+
+AthenaMC:
+---------
+* Added AthenaMCTaskSplitterJob to the possible splitters
+* Adding asymptotic limit to proxy lifetime estimate to 
+  allow big jobs to complete.
+
+AMAAthena:
+---------
+* get sqlite files to local working directory
+
+Tasks:
+-----
+* AnaTask.py/AnaTransform.py/TaskApplication.py/TaskList.py:
+  - reduced usage of _name
+  - moved adding handlers to the initialization of TaskList, 
+    since not all handlers are added before tasks loading
+  - Added .jobid.date to dataset name for AnaTask if datasetname 
+    is not set automatically (necessary at least for Panda)
+* Task.py
+  - Add appendTransform for convenience
+  - Fix so that pause() works with the new task status update
+  - Added state running/pause to Task to show that some transforms 
+    are paused
+  - Set Task state dependent on transform states
+* Transform.py
+  - Fix minor bug: if transforms complete while task is paused, 
+    they will now be "completed" if the task is run()
+* common.py
+  - Added state running/pause to Task to show that some 
+    transforms are paused
+  - Set Task state dependent on transform states
+
+Externals
+----------
+* Update to panda-client 0.1.64
+* Update to DQ2Clients 0.1.28
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* update the caching proxy so that the fall back in case of error is to run lhcb-proxy-info
+* update the LHCb.ini file to use the caching proxy also.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+Bugfixes:
+- Removed a last reference to USERDISK, now SCRATCHDISK is always default
+- Fixed propagation of prod.cache number for atlas releases
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Changes to Panda backend:
+ - limit submit to 2000 subjobs
+ - split monitoring update into 2500-job blocks (fixes https://savannah.cern.ch/bugs/?50903)
+ - use getFullJobStatus to get jobs up to 30 days old (fixes https://savannah.cern.ch/bugs/?50903)
+ - fill libds if buildjob succeeds. Now if you j1=j.copy(); j1.submit() the libds will be reused by
+default.
+ - set default processingType=ganga to track ganga usage
+ - Outputdata now filled even if enableDownloadLogs disabled. Allows j.outputdata.retrieve().
+
+Changes to AthenaPandaRTHandler:
+ - cache the grid proxy identity for subjobs. Submission on loaded systems is now orders of
+magnitude faster.
+
+**************************************************************************************************************
