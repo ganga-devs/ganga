@@ -18,11 +18,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.12 2009-06-08 15:48:17 moscicki Exp $
+# $Id: bootstrap.py,v 1.12.2.1 2009-06-08 16:08:24 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
-_gangaVersion = "$Name: not supported by cvs2svn $"
+_gangaVersion = ""
 
 import re
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
@@ -30,7 +30,7 @@ r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
 if r:
    _gangaVersion = r.group('version')
 else:
-   _gangaVersion = "CVS_HEAD"
+   _gangaVersion = "5.2.3-CPC"
 
 # store a path to Ganga libraries
 
@@ -67,13 +67,21 @@ class GangaProgram:
         if hello_string is None:
             self.hello_string = """
 *** Welcome to Ganga ***
-Version: %s
+Version: CPC Library (based on version 5.2.3)
 Documentation and support: http://cern.ch/ganga
 Type help() or help('index') for online help.
 
 This is free software (GPL), and you are welcome to redistribute it
 under certain conditions; type license() for details.
-""" % _gangaVersion
+
+-------------------------------------------------------------------
++ CPC Library users:                                              +
++  * You may get the latest version from Ganga website.           +
++  * To use the Remote backend you need to install in your system +
++    the pycrypto and paramiko python modules.                    +
++  * Test of Ganga core: j = Job(); j.submit()                    +
+-------------------------------------------------------------------
+"""# % _gangaVersion
         else:
             self.hello_string = hello_string
 
