@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.40 2009-05-30 08:31:59 dvanders Exp $
+# $Id: Panda.py,v 1.41 2009-06-08 08:25:24 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -443,10 +443,10 @@ class Panda(IBackend):
                         logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
                         job.backend.status = status.jobStatus
 
-                        if status.computingElement != 'NULL':
-                            job.backend.CE = status.computingElement
-                        else:
-                            job.backend.CE = None
+#                        if status.computingElement != 'NULL':
+#                            job.backend.CE = status.computingElement
+#                        else:
+#                            job.backend.CE = None
 
                         job.backend.exitcode = str(status.transExitCode)
                         job.backend.piloterrorcode = str(status.pilotErrorCode)
@@ -574,6 +574,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.40  2009/05/30 08:31:59  dvanders
+# limit submit to 2000 subjobs
+#
 # Revision 1.39  2009/05/30 07:22:09  dvanders
 # Panda server has a per call limit of 2500 subjobs per getFullJobStatus.
 #
