@@ -56,6 +56,11 @@
 \newcommand{\qq}[1]{#1}
 %\newcommand{\qq}[1]{{\color{red}\textbf{}}}
 
+%\newcommand{\CPCProgramSummary}[1]{{\tt {\large Program Summary}\\\\{\small #1}}}
+\newcommand{\CPCProgramSummary}[1]{{\bf PROGRAM SUMMARY} %NEW VERSION PROGRAM SUMMARY
+\begin{small} \noindent #1 \end{small} \newpage}
+
+
 \begin{document}
 
 \begin{frontmatter}
@@ -151,6 +156,92 @@ Grid computing \sep Data mining \sep Task management \sep User interface \sep In
 \end{frontmatter}
 
 % main text
+
+\CPCProgramSummary{
+
+% Computer program descriptions should contain the following
+% PROGRAM SUMMARY.
+
+%{\bf PROGRAM SUMMARY/NEW VERSION PROGRAM SUMMARY}
+  %Delete as appropriate.
+
+%\begin{small}
+%\noindent
+
+{\em Manuscript Title:} Ganga: a tool for computational-task management and easy access to \grid resources\\
+{\em Authors:} J.T.~Mo{\'s}cicki et al.                                                \\
+{\em Program Title:} Ganga                                          \\
+{\em Journal Reference:}                                      \\
+  %Leave blank, supplied by Elsevier.
+{\em Catalogue identifier:}                                   \\
+  %Leave blank, supplied by Elsevier.
+{\em Licensing provisions:} GPL                                   \\
+  %enter "none" if CPC non-profit use license is sufficient.
+{\em Programming language:} python                                   \\
+{\em Computer:} personal computers, laptops                                               \\
+  %Computer(s) for which program has been designed.
+{\em Operating system:} linux/unix                                       \\
+  %Operating system(s) for which program has been designed.
+{\em RAM:} 1MB \\
+  %RAM in bytes required to execute program with typical data.
+{\em Number of processors used:}                              \\
+  %If more than one processor.
+{\em Supplementary material:}                                 \\
+  % Fill in if necessary, otherwise leave out.
+{\em Keywords:}  Grid computing, Data mining, Task management, 
+User interface, Interoperability, System integration, 
+Application configuration  \\
+  % Please give some freely chosen keywords that we can use in a
+  % cumulative keyword index.
+{\em PACS:} 07.05.Kf, 07.05.Wr, 29.50.+v, 
+29.85.+c, 87.18.Bb, 89.20.Ff \\
+  % see http://www.aip.org/pacs/pacs.html
+{\em Classification:}  Computer Languages and Software                                       \\
+  %Classify using CPC Program Library Subject Index, see (
+  % http://cpc.cs.qub.ac.uk/subjectIndex/SUBJECT_index.html)
+  %e.g. 4.4 Feynman diagrams, 5 Computer Algebra.
+{\em External routines/libraries:}                                      \\
+  % Fill in if necessary, otherwise leave out.
+{\em Subprograms used:}                                       \\
+  %Fill in if necessary, otherwise leave out.
+
+{\em Nature of problem:}\\
+Management of computational tasks for scientific applications 
+on heterogenous distributed systems, including local, 
+batch farms, opportunistic clusters and Grids.  %Describe the nature of the problem here.
+   \\
+{\em Solution method:}
+High-level job management interface, including command line, 
+scripting and GUI components.
+  %Describe the method solution here.
+\\
+{\em Restrictions:}\\
+Access to the distributed resources depends on the installed, 
+3rd party software such as  batch system client or 
+Grid user interface.
+  %Describe any restrictions on the complexity of the problem here.
+   \\
+{\em Unusual features:}\\
+%  %Describe any unusual features of the program/problem here.
+%   \\
+{\em Additional comments:}\\
+%  %Provide any additional comments here.
+%   \\
+{\em Running time:}\\
+%  %Give an indication of the typical running time here.
+%   \\
+{\em References:} http://cern.ch/ganga 
+%\begin{refnummer}
+%\item Reference 1         % This is the reference list of the Program Summary
+%\item Reference 2         % Type references in text as [1], [2], etc.
+%\item Reference 3         % This list is different from the bibliography, which
+                          % you can use in the Long Write-Up.
+%\end{refnummer}
+%* Items marked with an asterisk are only required for new versions
+%of programs previously published in the CPC Program Library.\\
+
+}
+
 
 \begin{linenumbers}
 
