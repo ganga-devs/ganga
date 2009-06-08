@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.11 2009-04-28 13:37:12 kubam Exp $
+# $Id: bootstrap.py,v 1.12 2009-06-08 15:48:17 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -380,7 +380,16 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         ipconfig = Ganga.Utility.Config.makeConfig('TextShell_IPython','''IPython shell configuration
 See IPython manual for more details:
 http://ipython.scipy.org/doc/manual''')
-        ipconfig.addOption('args',"['-colors','LightBG', '-noautocall']",'FIXME')
+        try:
+           from IPython import __version__ as ipver
+        except ImportError:
+           ipver="0.6.13"
+        if ipver == "0.6.13": #in older ipython version the option is -noautocall (this is the version shipped with Ganga in 06/2009)
+           noautocall = "'-noautocall'"
+        else:
+           noautocall = "'-autocall','0'"
+
+        ipconfig.addOption('args',"['-colors','LightBG', %s]"%noautocall,'FIXME') 
 
         # import configuration from spyware
         import spyware
@@ -941,6 +950,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.11  2009/04/28 13:37:12  kubam
+# simplified handling of logging filters
+#
 # Revision 1.10  2009/02/02 13:43:26  moscicki
 # fixed: bug #44934: Didn't create .gangarc on first usage
 #
