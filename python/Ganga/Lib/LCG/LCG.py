@@ -2,7 +2,7 @@ import LCG
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.35 2009-06-05 12:23:15 hclee Exp $
+# $Id: LCG.py,v 1.36 2009-06-09 15:41:44 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -1019,8 +1019,17 @@ elif os.getenv('TMPDIR'):
     scratchdir = os.getenv('TMPDIR')
 
 if scratchdir:
-    tmpdir = commands.getoutput('mktemp -d %s/gangajob_XXXXXXXX' % (scratchdir))
-    os.chdir(tmpdir)
+    (status, tmpdir) = commands.getstatusoutput('mktemp -d %s/gangajob_XXXXXXXX' % (scratchdir))
+    if status == 0:
+        os.chdir(tmpdir)
+    else:
+        ## if status != 0, tmpdir should contains error message so print it to stderr
+        printError('Error making ganga job scratch dir: %s' % tmpdir)
+        printInfo('Unable to create ganga job scratch dir in %s. Run directly in: %s' % ( scratchdir, os.getcwd() ) )
+
+        ## reset scratchdir and tmpdir to disable the usage of Ganga scratch dir 
+        scratchdir = ''
+        tmpdir = ''
 
 wdir = os.getcwd()
 
@@ -1939,6 +1948,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.35  2009/06/05 12:23:15  hclee
+# bugfix for https://savannah.cern.ch/bugs/?51298
+#
 # Revision 1.34  2009/03/27 10:14:33  hclee
 # fix race condition issue: https://savannah.cern.ch/bugs/?48435
 #
