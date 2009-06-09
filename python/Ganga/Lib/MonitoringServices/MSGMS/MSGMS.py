@@ -21,10 +21,10 @@ def send(dst, msg): # enqueue the msg in msg_q for the connection thread to cons
     publisher.send((dst, msg)) 
 
 def sendJobStatusChange(msg):
-    send('/topic/lostman-test/status', msg)
+    send('/queue/lostman-test/status', msg)
         
 def sendJobSubmitted(msg):
-    send('/topic/lostman-test/submitted', msg)
+    send('/queue/lostman-test/submitted', msg)
 
 def hostname():
     """ Try to get the hostname in the most possible reliable way as described in the Python 
