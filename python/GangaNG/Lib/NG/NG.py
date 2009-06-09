@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.34 2009-06-02 10:40:18 bsamset Exp $
+# $Id: NG.py,v 1.35 2009-06-09 09:01:13 bsamset Exp $
 ###############################################################################
 #
 # NG backend 
@@ -1120,24 +1120,36 @@ class NG(IBackend):
         else:
             logger.error('No valid xrsl. Try to run j.backend.update_crls()')
             return False
-        
+      
         if not master_jid:
             logger.error('Job submission failed not master_jid')
             return False
             #raise IncompleteJobSubmissionError(job.id,'native master job submission failed.')
-        else:
-            i = 0
-            for sj in rjobs:
-                i = i + 1
-                if i>len(master_jid):
-                    logger.warning("Not enough job IDs for subjobs - job submission most likely incomplete.")
-                    continue
-                sj.backend.id=master_jid[i-1]
-                # job submitted update monitorint
-                #print 'sending moinitoring info'
-                sj.getMonitoringService().submit()
-                #print 'update status submitted '
-                sj.updateStatus('submitted')
+
+        # Are all entries in master_jid empty strings?
+        all_failed = True
+        for jid in master_jid:
+          if jid!='':
+            all_failed = False
+        if all_failed:
+          logger.error('All subjobs failed to submit')
+          return False
+
+        # Assign jid's to subjobs
+        i = 0
+        for sj in rjobs:
+          i = i + 1
+          if i>len(master_jid):
+            logger.warning("Not enough job IDs for subjobs - job submission most likely incomplete.")
+            continue
+          if master_jid[i-1] == '':
+            logger.error("Subjob %d failed to submit" % sj.id)
+            sj.updateStatus('failed')
+          else:
+            sj.backend.id=master_jid[i-1]
+            sj.getMonitoringService().submit()
+            #print 'update status submitted '
+            sj.updateStatus('submitted')
                 
         return True
 
@@ -1494,6 +1506,14 @@ class NG(IBackend):
          fileList.append( os.path.basename( filePath ) )   
 
       # inputfiles
+
+      # Do the input sandbox first, then check for j.inputdata
+      if len(job.inputsandbox)>0:
+        # inputsandbox should contain File objects, that have a name = full path
+        for f in job.inputsandbox:
+          infileList.append( f.name )
+      
+      # Do we have any j.inputdata (that we recognize)?      
       if job.inputdata and job.inputdata._name == 'ATLASLocalDataset':
           for filePath in job.inputdata.names:
               infileList.append( filePath )
@@ -1658,7 +1678,13 @@ class NG(IBackend):
           self.requirements.runtimeenvironment = jobconfig.requirements.runtimeenvironment  
 
       outfile = []
-      
+
+      # Do the output sandbox first, then check for j.outputdata
+      if len(job.outputsandbox)>0:
+        # inputsandbox should contain File objects, that have a name = full path
+        for f in job.outputsandbox:
+          outfile.append( '(%s "")' %  f )
+                           
       # Do this in another way - make a wrapper instead
       #if xrslDict['stdout']:
       #   outfile.append("(" + "stdout.gz" + " \"\")")
@@ -2221,6 +2247,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.34  2009/06/02 10:40:18  bsamset
+# Re-fixed a bug for treating ATLAS_PRODUCTION in rel. 14-series
+#
 # Revision 1.33  2009/05/28 09:41:22  bsamset
 # Added gziping of athena log files, settable log file names through environment variables etc. Also fixed the propagation of atlas_production (again). Note: This update looses us live log file peeking of athena jobs. Must look into this later.
 #
