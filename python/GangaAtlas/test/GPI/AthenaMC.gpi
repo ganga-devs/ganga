@@ -83,9 +83,9 @@ os.system("cat %s/__jdlfile__" % simul.subjobs[0].inputdir)
 os.system("cat %s/__jdlfile__" % reco.subjobs[0].inputdir)
 
 
-assert sleep_until_completed(evgen,2700)
-assert sleep_until_completed(simul,2700)
-assert sleep_until_completed(reco,2700)
+assert sleep_until_completed(evgen,3600)
+assert sleep_until_completed(simul,3600)
+assert sleep_until_completed(reco,3600)
 
 # removing all jobs
 evgen.remove()
