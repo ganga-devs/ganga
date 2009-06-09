@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2SandboxCache.py,v 1.8 2009-03-12 12:17:30 hclee Exp $
+# $Id: DQ2SandboxCache.py,v 1.9 2009-06-09 07:54:42 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -76,7 +76,7 @@ class DQ2SandboxCache(GridSandboxCache):
 
     dq2_sandbox_cache_schema_datadict.update({
         'setup'          : SimpleItem(defvalue='/afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/latest/setup.sh', doc='the DQ2 setup script'),
-        'local_site_id'  : SimpleItem(defvalue='CERN-PROD_USERDISK', copyable=1, doc='the DQ2 local site id'),
+        'local_site_id'  : SimpleItem(defvalue='CERN-PROD_SCRATCHDISK', copyable=1, doc='the DQ2 local site id'),
         'dataset_name'   : SimpleItem(defvalue='', copyable=0, doc='the DQ2 dataset name')
         } )
 
@@ -138,7 +138,7 @@ class DQ2SandboxCache(GridSandboxCache):
                 finfo[tmp_fname]['surl'] = ''
 
             # compose dq2-put command
-            cmd = 'source %s; dq2-put -a -d -C ' % (self.setup)
+            cmd = 'source %s; export VOMS_PROXY_INFO_DONT_VERIFY_AC=1; dq2-put -a -d -C ' % (self.setup)
 
             if self.local_site_id:
                 cmd += '-L %s ' % self.local_site_id
@@ -157,7 +157,7 @@ class DQ2SandboxCache(GridSandboxCache):
             file_idx = []
             if rc == 0:
                 # compose dq2-ls command
-                cmd = 'source %s; dq2-ls -L %s -f -p %s' % (self.setup, self.local_site_id, self.dataset_name)
+                cmd = 'source %s; export VOMS_PROXY_INFO_DONT_VERIFY_AC=1; dq2-ls -L %s -f -p %s' % (self.setup, self.local_site_id, self.dataset_name)
                 rc,output,m = self.__cmd_retry_loop__(shell, cmd, self.max_try)
 
                 if rc == 0:
