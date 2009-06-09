@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.12 2009-06-08 15:48:17 moscicki Exp $
+# $Id: bootstrap.py,v 1.13 2009-06-09 10:44:55 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -882,7 +882,7 @@ default_backends = LCG
             # buffering of log messages from all threads called "GANGA_Update_Thread"
             # the logs are displayed at the next IPython prompt
             
-            from Ganga.Utility.logging import enableCaching, default_handler
+            from Ganga.Utility.logging import enableCaching
 
             import Ganga.Utility.logging
             Ganga.Utility.logging.enableCaching()
@@ -950,6 +950,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12  2009/06/08 15:48:17  moscicki
+# fix Ganga to work with newer versions of ipython (-noautocall option was removed in newer ipython versions)
+#
 # Revision 1.11  2009/04/28 13:37:12  kubam
 # simplified handling of logging filters
 #
