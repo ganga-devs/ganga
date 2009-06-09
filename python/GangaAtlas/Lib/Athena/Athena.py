@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.59 2009-06-09 16:13:34 elmsheus Exp $
+# $Id: Athena.py,v 1.60 2009-06-09 17:29:13 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -357,7 +357,10 @@ class Athena(IApplication):
                     zfile = os.popen('zcat '+os.path.join(job.outputdir,'stdout.gz' ))   
                 for line in zfile:
                     if line.find('Percent of CPU this job got')>-1:
-                        percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
+                        try:
+                            percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
+                        except ValueError:
+                            percentcpu = 0  
                         ipercentcpu = ipercentcpu + 1
                     if line.find('Elapsed (wall clock) time')>-1:
                         try:
@@ -1270,6 +1273,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.59  2009/06/09 16:13:34  elmsheus
+# bug #51369: the new prepare method generates bad requirements file
+#
 # Revision 1.58  2009/05/31 17:36:04  elmsheus
 # Protection for fileinput.input
 #
