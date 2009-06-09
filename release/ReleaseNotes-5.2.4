@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.2.4 (2009/6/5)
+5.2.4 (2009/6/9)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -15,6 +15,7 @@ Athena:
   (splitter already used internally)
 * DQ2JobSplitter.py:
   Increased speed of loop testing for db_release presence
+  set MaxFileSizePandaDQ2JobSplitter to 10GB
 * athena-utility.sh:
   add a function to get SQLite files to local working directory
 * db_dq2localid.py
@@ -29,6 +30,7 @@ Athena:
 * DQ2Dataset.py
   Better threading protection for dq2 calls in 
   dq2_list_locations_siteindex
+* Fix bug #51369, 51300
 
 AthenaMC:
 ---------
@@ -62,6 +64,10 @@ Tasks:
     transforms are paused
   - Set Task state dependent on transform states
 
+tests:
+------
+* Increase some time-outs to 3600s
+
 Externals
 ----------
 * Update to panda-client 0.1.64
@@ -81,6 +87,8 @@ ganga/python/GangaNG
 Bugfixes:
 - Removed a last reference to USERDISK, now SCRATCHDISK is always default
 - Fixed propagation of prod.cache number for atlas releases
+- Added proper treatment of input_sandbox and output_sandbox entries
+- Set correct state when all subjobs fail to submit
 
 
 --------------------------------------------------------------------------------------------------------------
