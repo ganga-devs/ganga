@@ -26,6 +26,18 @@ def sendJobStatusChange(msg):
 def sendJobSubmitted(msg):
     send('/topic/lostman-test/submitted', msg)
 
+def hostname():
+    """ Try to get the hostname in the most possible reliable way as described in the Python 
+LibRef."""
+    import socket
+    try:
+        return socket.gethostbyaddr(socket.gethostname())[0]
+    # [bugfix #20333]: 
+    # while working offline and with an improper /etc/hosts configuration       
+    # the localhost cannot be resolved 
+    except:
+        return 'localhost'
+
 class MSGMS(IMonitoringService):
 
     #KUBA: we should send the following information
@@ -42,8 +54,9 @@ class MSGMS(IMonitoringService):
         self.ganga_job_uuid = uuid()
 
     def getMessage(self): # returns a dictionary that contains data common to all messages
-        return self.job_info.copy() # copy the dictionary!
-        
+        msg = self.job_info.copy() # copy the dictionary!
+        msg['hostname'] = hostname() # override the hostname value with the worker host name
+        return msg
 
     def getJobInfo(self): # more detailed message
         if self.job_info.master is None:
@@ -60,6 +73,7 @@ class MSGMS(IMonitoringService):
                , 'backend' : self.job_info.backend.__class__.__name__
                , 'application' : self.job_info.application.__class__.__name__
                , 'job_name' : self.job_info.name
+               , 'hostname' : hostname()
                }
         return data
 
