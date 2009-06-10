@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.5 2008-10-02 10:26:20 moscicki Exp $
+# $Id: PACKAGE.py,v 1.6 2009-06-10 14:52:16 moscicki Exp $
 ################################################################################
 
 """ PACKAGE modules describe the installation and setup of the Ganga runtime packages.
@@ -120,10 +120,20 @@ def standardSetup(setup=setup):
     """
 
     from Ganga.Utility.Setup import checkPythonVersion
-
+    import sys
+    
     # here we assume that the Ganga has been already prepended to sys.path by the caller
     if checkPythonVersion(_defaultMinVersion,_defaultMinHexVersion):
         for name in setup.packages:
+            if name == 'pycrypto' and sys.hexversion > 0x2050000:
+                # hack the pycrypto path for 2.5
+                setup.packages['pycrypto']['syspath'] = setup.packages['pycrypto']['syspath'].replace('2.3', '2.5')
+                
+            if name == 'paramiko' and sys.hexversion > 0x2050000:
+                # hack the paramiko path for 2.5
+                setup.packages['paramiko']['syspath'] = setup.packages['paramiko']['syspath'].replace('2.3', '2.5')
+
+
             setup.setSysPath(name)
             # if other PATH variable must be defined, e.g. LD_LIBRARY_PATH, then
             # you should do it this way:
