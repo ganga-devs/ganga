@@ -3,10 +3,11 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import *
-from Ganga.Utility.Config import makeConfig, ConfigError
+from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
 from Ganga.Utility.logging import getLogger
 
 config = makeConfig('Tasks', 'Tasks configuration options')
+
 logger = getLogger()
 
 #  Helper function for singular/plural
