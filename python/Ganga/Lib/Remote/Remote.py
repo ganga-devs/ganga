@@ -22,6 +22,12 @@ from Ganga.Lib.Root import randomString
 
 logger = Ganga.Utility.logging.getLogger()
 
+def shutdown_transport( tr ):
+   """Shutdown the transport cleanly - otherwise python 2.5 throws a wobble"""
+   if (tr != None):
+      tr.close()
+      tr = None
+      
 class Remote( IBackend ):
    """Remote backend - submit jobs to a Remote pool.
 
@@ -123,7 +129,7 @@ class Remote( IBackend ):
    
    def __init__( self ):
       super( Remote, self ).__init__()
-
+         
    def __del__( self ):
       if (self._transport != None):
          self._transport.close()
@@ -168,6 +174,7 @@ print "***_FINISHED_***"
 
       import paramiko
       import getpass
+      import atexit
       
       if (self._transport != None):
          # transport is open
@@ -203,8 +210,15 @@ print "***_FINISHED_***"
                # user specified port
                temp_port = eval( self.host[ self.host.find(":")+1 : ] )
                temp_host = self.host[ : self.host.find(":") ]
-               
+            
             self._transport = paramiko.Transport((temp_host, temp_port))
+
+            # avoid hang on exit my daemonising the thread
+            self._transport.setDaemon(True) 
+
+            # register for proper shutdown
+            atexit.register(shutdown_transport, self._transport)
+
             if self.ssh_key != "" and os.path.exists(os.path.expanduser( os.path.expandvars( self.ssh_key ) ) ):
                privatekeyfile = os.path.expanduser( os.path.expandvars( self.ssh_key ) )
                
@@ -716,7 +730,7 @@ print "***_FINISHED_***"
       import os
       import getpass
       from string import strip
-
+      
       for j in jobs:
 
          # Create a ganga script that updates the job info from the remote site
