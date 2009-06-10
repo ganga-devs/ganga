@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.13 2009-06-09 10:44:55 moscicki Exp $
+# $Id: bootstrap.py,v 1.14 2009-06-10 14:53:05 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -796,7 +796,7 @@ default_backends = LCG
             try:
                 execfile( fileName, local_ns )
             except Exception, x:
-                logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(e))
+                self.logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(e))
         # exec StartupGPI code          
         from Ganga.Utility.Config import getConfig      
         config=getConfig('Configuration')       
@@ -950,6 +950,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.13  2009/06/09 10:44:55  moscicki
+# removed obsolete variable
+#
 # Revision 1.12  2009/06/08 15:48:17  moscicki
 # fix Ganga to work with newer versions of ipython (-noautocall option was removed in newer ipython versions)
 #
