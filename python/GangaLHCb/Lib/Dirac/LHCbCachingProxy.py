@@ -245,7 +245,8 @@ class DiracProxy(object):
             result,output,m = self.shell.cmd1('dirac-proxy-info --checkvalid')
             self.store['TIME'] = time.time()
             info = self.parseProxyInfo(output)
-            self.store['INFO'] = output
+            if info[0]:#check that output was as expected
+                self.store['INFO'] = output
             printProxyInfo(output)
         
         self.debugMsg('Store is %s' % str(self.store))
