@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.12.2.1 2009-06-08 16:08:24 moscicki Exp $
+# $Id: bootstrap.py,v 1.12.2.2 2009-06-10 11:56:55 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -317,9 +317,10 @@ under certain conditions; type license() for details.
                    Ganga.Utility.logging.getLogger().error('file %s is old an Ganga 4 configuration file (%s)',self.options.config_file,r.group('version'))
                    Ganga.Utility.logging.getLogger().error('try -g option to create valid ~/.gangarc')
                else:
-                   if cv[1] != '5':
-                       Ganga.Utility.logging.getLogger().error('file %s was created by a development release (%s)',self.options.config_file, r.group('version'))
-                       Ganga.Utility.logging.getLogger().error('try -g option to create valid ~/.gangarc')
+                  pass
+                   #if cv[1] != '5':
+                   #    Ganga.Utility.logging.getLogger().error('file %s was created by a development release (%s)',self.options.config_file, r.group('version'))
+                   #    Ganga.Utility.logging.getLogger().error('try -g option to create valid ~/.gangarc')
         except IOError,x:
            pass # ignore all I/O errors (e.g. file does not exist), this is just an advisory check
               
@@ -958,6 +959,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12.2.1  2009/06/08 16:08:24  moscicki
+# CPC header
+#
 # Revision 1.11  2009/04/28 13:37:12  kubam
 # simplified handling of logging filters
 #
