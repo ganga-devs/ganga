@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.42 2009-06-08 13:02:10 dvanders Exp $
+# $Id: Panda.py,v 1.43 2009-06-10 13:47:13 ebke Exp $
 ################################################################################
                                                                                                               
 
@@ -289,7 +289,9 @@ class Panda(IBackend):
         if status:
             logger.error('Status %d from Panda submit',status)
             return False
-       
+        if "NULL" in [jobid[0] for jobid in jobids]:
+            logger.error('Panda could not assign job id to some jobs. Dataset name too long?')
+            return False
         if buildjobspec:
             job.backend.buildjob = PandaBuildJob() 
             job.backend.buildjob.id = jobids[0][0]
@@ -574,6 +576,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.42  2009/06/08 13:02:10  dvanders
+# force to submitted (because jobs can go from running to activated)
+#
 # Revision 1.41  2009/06/08 08:25:24  dvanders
 # backend.CE doesn't exist
 #
