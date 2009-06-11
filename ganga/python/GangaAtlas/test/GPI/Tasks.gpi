@@ -1,0 +1,178 @@
+# Testing Tasks framework with local test
+
+import re,sys,popen2,time,getpass
+import os
+
+# First test the Task schema settings:
+t = Task()
+t.name = "TestTask01"
+assert t.name == "TestTask01"
+
+try:
+   t.id = -5
+except ProtectedAttributeError:
+   pae = True
+assert t.id != -5 and pae
+
+try:
+   t.status = "nonsense"
+except ProtectedAttributeError:
+   pae = True
+assert t.status == "new" and pae
+t.float = 10
+
+# Test if insertTransform and removeTransform perform as advertized on a new task:
+tf1 = Transform()
+tf1.name = "TestTransform01"
+tf2 = Transform()
+tf2.name = "TestTransform02"
+tf3 = Transform()
+tf3.name = "TestTransform03"
+tf4 = Transform()
+tf4.name = "TestTransform04"
+
+t.insertTransform(0,tf1)
+tf1.name = "nonsense"
+assert t.transforms[0].name == "TestTransform01"
+t.insertTransform(1,tf2)
+t.insertTransform(2,tf3)
+assert t.transforms[0].name == "TestTransform01"
+assert t.transforms[1].name == "TestTransform02"
+assert t.transforms[2].name == "TestTransform03"
+t.removeTransform(1)
+assert t.transforms[0].name == "TestTransform01"
+assert t.transforms[1].name == "TestTransform03"
+
+# Check if the check for Task applications works
+try:
+   t.transforms[0].application = Executable()
+except AttributeError:
+   attrerr = True
+assert attrerr == True
+t.transforms[0].application = ExecutableTask()
+t.transforms[1].application = ExecutableTask()
+
+# Check setBackend
+be = Local()
+be.nice = 1
+t.setBackend(be)
+assert t.transforms[0].backend.nice == 1
+assert t.transforms[1].backend.nice == 1
+
+# Check setParameter
+t.setParameter(args=["this works"])
+assert t.transforms[0].application.args == ["this works"]
+assert t.transforms[1].application.args == ["this works"]
+
+# t.check() should not do anything for the default
+t.check()
+
+# Test the rest of the exported Tasks methods:
+t.help()
+t.overview()
+t.info()
+assert t.n_all() == 0
+assert t.n_status("strange") == 0
+
+# Now add some partitions to the Transforms:
+t0 = t.transforms[0]
+t1 = t.transforms[1]
+t0.setPartitionStatus(0,"ready")
+t0.setPartitionStatus(1,"hold")
+t0.setPartitionStatus(2,"bad")
+t0.setPartitionStatus(3,"completed")
+t0.setPartitionStatus(4,"completed")
+t1.setPartitionStatus(4,"ready")
+t1.setPartitionStatus(44,"hold")
+t1.setPartitionStatus(444,"bad")
+t1.setPartitionStatus(4444,"completed")
+
+assert t.n_all() == 9
+assert t.n_status("bad") == 2
+t0.setPartitionStatus(3, "ignored")
+assert t.n_all() == 8
+t.overview()
+
+# Set the second transform to fail and the first to run 10 sec:
+t.transforms[1].application.exe = "echo"
+t.transforms[1].application.args = [["boogabooga"]]
+t.transforms[0].application.exe = "sleep"
+t.transforms[0].application.args = ["10"]
+
+assert t.transforms[1].application.args == [["boogabooga"]]
+assert t.transforms[0].application.args == ["10"]
+
+# Run Forrest, Run!
+t.run()
+assert t.status == "running"
+
+t.overview()
+
+print "waiting until status changes from 'running'"
+while t.status == "running":
+   time.sleep(5)
+
+assert t.status == "running/pause"
+tasks.table()
+t.overview()
+assert len(jobs) == 2
+assert jobs[-1].name == "T%i:0 C0" % (t.id)
+assert jobs[-2].name == "T%i:1 C4" % (t.id)
+
+
+t0.setPartitionStatus(1, "ready")
+
+while t.status == "running/pause":
+   time.sleep(1)
+
+assert t.status == "pause"
+assert t0.getPartitionStatus(0) == "completed"
+assert t0.status == "completed"
+assert len(jobs) == 3
+assert jobs[-1].name == "T%i:0 C1" % (t.id)
+
+t.overview()
+jobs
+
+print "'Fix' transform 1"
+t1.application.exe = "boogabooga"
+t1.application.args = ["test"]
+t1.setRunlimit(4)
+t.run()
+assert t.status == "running"
+while t1.getPartitionStatus(4) != "failed":
+   time.sleep(1)
+assert len(jobs) == 3 + 3
+assert jobs[-1].name == "T%i:1 C4" % (t.id)
+assert jobs[-2].name == "T%i:1 C4" % (t.id)
+assert jobs[-3].name == "T%i:1 C4" % (t.id)
+
+print "Really fix transform 1"
+t1.application.exe = "echo"
+t1.setPartitionStatus(44, "ready")
+t1.setRunlimit(5)
+
+assert t.status == "running"
+while t.status == "running":
+   time.sleep(1)
+assert t.status == "completed"
+t.overview()
+assert len(jobs) == 3 + 3 + 2
+assert jobs[-1].name == "T%i:1 C4" % (t.id) or jobs[-1].name == "T%i:1 C44" % (t.id) 
+assert jobs[-2].name == "T%i:1 C4" % (t.id) or jobs[-2].name == "T%i:1 C44" % (t.id) 
+
+# Set 4444 back to failed..
+t1.setFailed(4444)
+assert t.status == "running"
+
+while t.status == "running":
+   time.sleep(1)
+
+assert t.status == "completed"
+t.overview()
+assert len(jobs) == 3 + 3 + 3
+assert jobs[-1].name == "T%i:1 C4444" % (t.id)
+
+# Test t.remove:
+t.remove(remove_jobs=True)
+assert len(jobs) == 0

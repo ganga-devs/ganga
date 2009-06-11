@@ -1,0 +1,5 @@
+from GangaLHCb.Lib.Dirac.diracJobMain import listdirs
+
+path = '.'
+l = listdirs(path)
+assert len(l) == len(listdirs(path)), 'Listing the same dir twice should produce the same things'

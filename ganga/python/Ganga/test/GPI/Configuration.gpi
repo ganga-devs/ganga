@@ -1,0 +1,62 @@
+c = config['TestConfig']
+print c
+
+
+def setopt(o,v):
+    print 'set option %s to value %s (%s type)'%(o,repr(v),type(v))
+    c[o] = v
+    print 'what got set is %s (%s)'%(repr(c[o]),type(c[o]))
+    return c[o]
+
+def is_unchanged(x,y):
+    assert(x==y)
+    assert(type(x) is type(y))
+    return 1
+
+def setopt_fails(opt,val):
+    try:
+        setopt(opt,val)
+        assert(not 'setopt(%s,%s) should raise ConfigError!'%(opt,repr(val)))
+    except ConfigError,x:
+        pass
+
+# for None anything can be set and no checking is performed
+is_unchanged(setopt('None_OPT',1),1)
+is_unchanged(setopt('None_OPT','a'),'a')
+is_unchanged(setopt('None_OPT',[1,2]),[1,2])
+is_unchanged(setopt('None_OPT',None),None)
+    
+#for undefined everything failes
+
+setopt_fails('Undefined_OPT',1)
+setopt_fails('Undefined_OPT','a')
+setopt_fails('Undefined_OPT',[1,2])
+setopt_fails('Undefined_OPT',None)
+
+assert(setopt('None_OPT','3*3') == 9)
+setopt_fails('Undefined_OPT','3*3')
+
+o = 'String_OPT'
+setopt_fails(o,1)
+assert(setopt(o,'a') == 'a')
+setopt_fails(o,None)
+setopt_fails(o,[1,2])
+
+o = 'Int_OPT'
+assert(setopt(o,1) == 1)
+
+assert(setopt(o,'2') == 2)
+assert(setopt(o,'3*3') == 9)
+
+setopt_fails(o,'abc')
+setopt_fails(o,None)
+setopt_fails(o,[1,2,3])
+
+o = 'List_OPT'
+
+assert(setopt(o,[5,6]) == [5,6])
+assert(setopt(o,'[7,8]')==[7,8])
+setopt_fails(o,None)
+setopt_fails(o,'abc')
+setopt_fails(o,'1')
+
