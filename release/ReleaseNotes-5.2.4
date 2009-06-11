@@ -1,5 +1,26 @@
 **************************************************************************************************************
-5.2.4 (2009/6/9)
+5.2.4 (2009/6/11)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+close ~/.ganga.log if redirected (to avoid expired AFS token in $HOME for long running Ganga processes) 
+
+fix Ganga to work with newer versions of ipython (-noautocall option was removed in newer ipython
+versions)
+
+fixed bug #50351: Logging messages aren't displayed while waiting for commands to finish
+fixed bug #51051: Failure to load XML repo (https://savannah.cern.ch/bugs/?51051)
+fixed bug #51592: Add self to logger
+
+syspath hack for pycrypto and paramiko for python2.5
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+Fixed python 2.5 compatibility issues
 
 
 --------------------------------------------------------------------------------------------------------------
