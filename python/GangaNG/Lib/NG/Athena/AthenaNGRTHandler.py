@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.11 2009-06-02 10:40:18 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.12 2009-06-12 09:39:40 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -449,6 +449,14 @@ class AthenaNGRTHandler(IRuntimeHandler):
         if app.user_area.name: environment['USER_AREA']=os.path.basename(app.user_area.name)
         if app.max_events: environment['ATHENA_MAX_EVENTS']=app.max_events
 
+        # Get any special database release info
+        if app.atlas_dbrelease:
+            dbrl = app.atlas_dbrelease.split(':')
+            if len(dbrl)>1:
+                environment['DBDATASETNAME'] = dbrl[0]
+                environment['DBFILENAME'] = dbrl[1]
+            elif len(dbrl)==1:
+                environment['DBFILENAME'] = dbrl[0]
 
         # Set application exe type in environment variable
         environment['ATHENA_EXE_TYPE']=app.atlas_exetype
@@ -591,6 +599,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.11  2009/06/02 10:40:18  bsamset
+# Re-fixed a bug for treating ATLAS_PRODUCTION in rel. 14-series
+#
 # Revision 1.10  2009/05/30 08:49:06  bsamset
 # Removed a remaining reference to USERDISK
 #

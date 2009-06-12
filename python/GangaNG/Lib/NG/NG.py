@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.35 2009-06-09 09:01:13 bsamset Exp $
+# $Id: NG.py,v 1.36 2009-06-12 09:39:40 bsamset Exp $
 ###############################################################################
 #
 # NG backend 
@@ -1766,7 +1766,16 @@ class NG(IBackend):
                self.clean += [group_area]
         else:
           infileString += "(" + jobconfig.env['GROUP_AREA'] + " " + job.application.group_area.name + ")"
-         
+          
+      # Environment settings for special dataset variables
+      if jobconfig.env.has_key('DBDATASETNAME') and jobconfig.env.has_key('DBFILENAME'):
+        baselfc = "lfc://atlaslfc.nordugrid.org//grid/atlas/dq2/ddo/DBRelease"
+        dbset = jobconfig.env['DBDATASETNAME']
+        dbfn = jobconfig.env['DBFILENAME']
+        dblfnpath = "%s/%s/%s" % (baselfc,dbset,dbfn)
+        
+        infileString += "(" + dbfn + " " + dblfnpath + ")"
+
       if infileString:
          xrslDict[ 'inputfiles' ] = infileString
 
@@ -1814,6 +1823,8 @@ class NG(IBackend):
               xrslList.append("(GROUP_AREA_REMOTE  %s" % str( jobconfig.env['GROUP_AREA_REMOTE'] ) + ")")                 
           if jobconfig.env.has_key('ATHENA_EXE_TYPE'):
               xrslList.append("(ATHENA_EXE_TYPE  %s" % str( jobconfig.env['ATHENA_EXE_TYPE'] ) + ")")
+          if jobconfig.env.has_key('DBFILENAME'):
+              xrslList.append("(DBFILENAME  %s" % str( jobconfig.env['DBFILENAME'] ) + ")")
 
           # ROOT env
           if jobconfig.env.has_key('ROOTSYS'):
@@ -2247,6 +2258,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.35  2009/06/09 09:01:13  bsamset
+# Added proper backend treatment of raw input_sandbox and output_sandbox entries; fixed handling of the case where we get a master jid back but all subjobs have empty jid. Will happen e.g. when a site does not have the right release installed.
+#
 # Revision 1.34  2009/06/02 10:40:18  bsamset
 # Re-fixed a bug for treating ATLAS_PRODUCTION in rel. 14-series
 #

@@ -136,6 +136,25 @@ echo $pybin
 
 cmt show macro_value cmt_compiler_version
 
+# Unpack and set up any user-defined db release
+pwd
+if [ ! -z $DBFILENAME ]
+then
+    if [ ! -e $DBFILENAME ]
+    then
+	echo "ERROR: User-requested database file not found!"
+    else
+	tar xzf $DBFILENAME
+	cd DBRelease/current/
+	python setup.py | grep = | sed -e 's/^/export /' > dbsetup.sh
+	source dbsetup.sh
+	cd ../../
+	ln -s DBRelease/current/geomDB/ .
+	ln -s DBRelease/current/sqlite200/ .
+   fi
+fi
+
+
 get_files PDGTABLE.MeV
 # Make a local copy of requested geomDB if none already available
 if [ ! -e geomDB ]; then
