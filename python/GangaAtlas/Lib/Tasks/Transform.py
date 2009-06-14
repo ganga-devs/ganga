@@ -3,6 +3,7 @@ from common import *
 from sets import Set
 from TaskApplication import ExecutableTask, taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
+from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
 
 class Transform(GangaObject):
    _schema = Schema(Version(1,0), {
@@ -26,7 +27,7 @@ class Transform(GangaObject):
    _exportmethods = [ 
                       'run', 'pause', # Operations
                       'setPartitionStatus', 'setRunlimit', 'setFailed', # Control Partitions
-                      'getPartitionStatus',
+                      'getPartitionStatus', 'getJobs', 'getPartitionJobs',
                       'overview', 'info', 'n_all', 'n_status' # Info
                     ]
 
@@ -135,6 +136,37 @@ class Transform(GangaObject):
       """ Set the Status of the given partition to "ready", "hold", "bad" or "completed".
           The status is then updated to the status indicated by the applications"""
       self.setPartitionsStatus([partition],status) 
+
+   def getJobs(self):
+      """ Get the job slice of all jobs for this transform """
+      return self.getPartitionJobs(None)
+
+   def getPartitionJobs(self, partition):
+      """ Get the job slice that processed the given partition. Iterates over the job list. """
+      task = self._getParent() 
+      id = task.transforms.index(self)
+      if partition is None:
+         sname = "tasks(%i).transforms[%i].getJobs()"%(task.id,id)
+      else:
+         sname = "tasks(%i).transforms[%i].getPartitionJobs(%s)"%(task.id,id,partition)
+      jobslice = JobRegistryInstanceInterface(sname)
+      def addjob(j):
+         if partition is None or self._app_partition[j.application.id] == partition:
+            jobslice.jobs[j.fqid] = j
+
+      for j in GPI.jobs:
+         try:
+            stid = j.application.tasks_id.split(":")
+            if int(stid[-2]) == task.id and int(stid[-1]) == id:
+               if j.subjobs:
+                  for sj in j.subjobs:
+                     addjob(sj)
+               else:
+                  addjob(j)
+         except Exception, x:
+            print x
+            pass
+      return jobslice
 
    def setFailed(self, partition):
       """ Tells Tasks that all Applications that have executed this partition have actually failed."""

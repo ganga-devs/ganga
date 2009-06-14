@@ -1,4 +1,5 @@
 from common import *
+from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
 
 ########################################################################
 
@@ -18,7 +19,7 @@ class Task(GangaObject):
    _exportmethods = [
                 'setBackend', 'setParameter', 'insertTransform', 'appendTransform', 'removeTransform', # Settings
                 'check', 'run', 'pause', 'remove', # Operations
-                'overview', 'info', 'n_all', 'n_status', 'help' # Info
+                'overview', 'info', 'n_all', 'n_status', 'help', 'getJobs' # Info
                 ]
 
 ## Special methods:  
@@ -63,13 +64,7 @@ class Task(GangaObject):
          print " * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id)
          return
       if remove_jobs:
-         for j in GPI.jobs:
-            try:
-               tid = j.application.tasks_id
-               if tid.startswith("00:%i:"%self.id) or tid.startswith("%i:"%self.id):
-                  j.remove()
-            except:
-               pass
+         self.getJobs(only_master_jobs=True).remove()
       self._getParent().tasks.remove(self)
       logger.info("Task #%s deleted" % self.id)
 
@@ -152,6 +147,23 @@ class Task(GangaObject):
          logger.error("You can only remove transforms if the task is new!")
          return
       del self.transforms[id]
+
+   def getJobs(self, only_master_jobs=False):
+      """ Get the job slice of all jobs that process this task """
+      jobslice = JobRegistryInstanceInterface("tasks(%i).getJobs(only_master_jobs=%s)"%(self.id, only_master_jobs))
+      for j in GPI.jobs:
+         try:
+            stid = j.application.tasks_id.split(":")
+            if int(stid[-2]) == self.id:
+               if j.subjobs and not only_master_jobs:
+                  for sj in j.subjobs:
+                     jobslice.jobs[sj.fqid] = sj
+               else:
+                  jobslice.jobs[j.fqid] = j
+         except Exception, x:
+            print x
+            pass
+      return jobslice
 
 ## Internal methods
    def updateStatus(self):

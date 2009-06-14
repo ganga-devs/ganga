@@ -13,11 +13,19 @@ class TaskList(GangaObject):
         })    
    _category = 'tasklists'
    _name = 'TaskList'
-   _exportmethods = ['help', 'table', '__str__', '__call__']
+   _exportmethods = ['help', 'table', '__str__', '__call__','__getitem__','__len__']
    _help_printed = False
    _save_thread = None
    _main_thread = None
 
+   def __getitem__(self,key):
+      if type(key) != int:
+         raise Exception("Slicing of tasks is not yet supported!")
+      return addProxy(self.tasks[key])
+
+   def __len__(self):
+      return len(self.tasks)
+   
    def save(self):
       """Writes all tasks to a file 'tasks.xml' in the job repository. This function is usually called automatically. """
       # TODO: Add check if this object is correctly initialized, and the tasks are actually tasks
@@ -219,6 +227,10 @@ class TaskList(GangaObject):
       print " Set backend for all transforms          : "+c("t.setBackend(backend) , p.e. t.setBackend(LCG())")
       print " Limit on how often jobs are resubmitted : "+c("tf.run_limit = 4")
       print " Manually change the status of partitions: "+c("tf.setPartitionStatus(partition, 'status')")
+      print
+      print " Get the jobs submitted by a task        : "+c("t.getJobs()")
+      print " Get the jobs submitted by a transform   : "+c("tf.getJobs()")
+      print " Get the jobs from a certain partition   : "+c("tf.getPartitionJobs(partition)")
       print 
       print " For a Monte Carlo Production Example and specific help type: "+c("MCTask?")
       print " For an Analysis Example and help type: "+c("AnaTask?")
