@@ -1,14 +1,14 @@
 
 from common import *
 from sets import Set
-from TaskApplication import ExecutableTask
+from TaskApplication import ExecutableTask, taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
 
 class Transform(GangaObject):
    _schema = Schema(Version(1,0), {
         'status'         : SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=["str"]),
         'name'           : SimpleItem(defvalue='Simple Transform', doc='Name of the transform (cosmetic)', typelist=["str"]),
-        'application'    : ComponentItem('applications', defvalue=None, optional=1, load_default=False, checkset="checkTaskApplication",doc='Application of the Transform. Must be a Task-Supporting application.'),
+        'application'    : ComponentItem('applications', defvalue=None, optional=1, load_default=False, filter="checkTaskApplication",doc='Application of the Transform. Must be a Task-Supporting application.'),
         'inputsandbox'   : FileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,doc="list of File objects shipped to the worker node "),
         'outputsandbox'  : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of filenames or patterns shipped from the worker node"),
         'inputdata'      : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Input dataset'),
@@ -164,8 +164,9 @@ class Transform(GangaObject):
    def checkTaskApplication(self,app):
       """warns the user if the application is not compatible """
       if app == None:
-         return
+         return None
       if not "tasks_id" in stripProxy(app)._data:
+         return taskApp(app)
          logger.error("The application %s can not be used with the Tasks package.", app)
          logger.error("Please contact the Tasks developers if you want to use this Application with tasks.")
          logger.error("(This is a very simple operation, so do not hesitate!)")

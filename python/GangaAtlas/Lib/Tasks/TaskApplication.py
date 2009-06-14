@@ -135,6 +135,27 @@ from GangaAtlas.Lib.AthenaMC.AthenaMC import AthenaMC, AthenaMCSplitterJob
 from GangaAtlas.Lib.Athena.Athena import Athena
 
 ExecutableTask = taskify(Executable,"ExecutableTask")
+AthenaTask = taskify(Athena,"AthenaTask")
 AthenaMCTask = taskify(AthenaMC,"AthenaMCTask")
 AthenaMCTaskSplitterJob = taskify(AthenaMCSplitterJob,"AthenaMCTaskSplitterJob")
-AthenaTask = taskify(Athena,"AthenaTask")
+
+
+def taskApp(app):
+    """ Copy the application app into a task application. Returns a task application without proxy """ 
+    a = stripProxy(app)
+    if "Task" in a._name:
+       return a
+    elif a._name == "Executable":
+       b = ExecutableTask()
+    elif a._name == "Athena":
+       b = AthenaTask()
+    elif a._name == "AthenaMC":
+       b = AthenaMCTask()
+    else:
+       logger.error("The application '%s' cannot be used with the tasks package yet!" % a._name)
+       raise Exception()
+    for k in a._data:
+       b._data[k] = a._data[k]
+    return b
+    
+       
