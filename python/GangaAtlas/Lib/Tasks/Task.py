@@ -72,11 +72,7 @@ class Task(GangaObject):
       c = super(Task,self).clone()
       for tf in c.transforms:
          tf.status = "new"
-         #tf._partition_status = {}
-         #tf._app_partition = {}
-         #tf._app_status = {}
-         #tf._next_app_id = 0
-         tf._partition_apps = {}
+         tf._partition_apps = {} # This is cleared separately since it is not in the schema
       self._getParent().register(c)
       c.check()
       return c
@@ -86,24 +82,31 @@ class Task(GangaObject):
       if self.status != "new":
          logger.error("The check() function may modify a task and can therefore only be called on new tasks!")
          return
-      for t in self.transforms:
-         t.check()
-      self.updateStatus()
+      try:
+         for t in self.transforms:
+            t.check()
+      finally:
+         self.updateStatus()
       return True
 
    def run(self):
       """Confirms that this task is fully configured and ready to be run."""
       if self.status == "new":
          self.check()
+
       if self.status != "completed":
-         self.status = "running"
          if self.float == 0:
             logger.warning("The 'float', the number of jobs this task may run, is still zero. Type 'tasks(%i).float = 5' to allow this task to submit 5 jobs at a time" % self.id)
-         for tf in self.transforms:
-            if tf.status != "completed":
-               tf.run(check=False)
+         try:
+            for tf in self.transforms:
+               if tf.status != "completed":
+                  tf.run(check=False)
+
+         finally:
+            self.updateStatus()
       else:
          logger.info("Task is already completed!")
+
 
    def pause(self):
       """Pause the task - the background thread will not submit new jobs from this task"""
@@ -157,9 +160,9 @@ class Task(GangaObject):
             if int(stid[-2]) == self.id:
                if j.subjobs and not only_master_jobs:
                   for sj in j.subjobs:
-                     jobslice.jobs[sj.fqid] = sj
+                     jobslice.jobs[sj.fqid] = stripProxy(sj)
                else:
-                  jobslice.jobs[j.fqid] = j
+                  jobslice.jobs[j.fqid] = stripProxy(j)
          except Exception, x:
             print x
             pass
@@ -184,7 +187,7 @@ class Task(GangaObject):
       # Handle status changes here:
       if self.status != new_status:
          if new_status == "running/pause":
-            logger.warning("Some Transforms of Task %i '%s' have been paused. Check tasks.table() for details!" % (self.id, self.name))
+            logger.info("Some Transforms of Task %i '%s' have been paused. Check tasks.table() for details!" % (self.id, self.name))
          elif new_status == "completed":
             logger.warning("Task %i '%s' has completed!" % (self.id, self.name))
          elif self.status == "completed":
