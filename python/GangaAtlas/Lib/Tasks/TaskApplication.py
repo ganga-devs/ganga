@@ -153,7 +153,7 @@ def taskApp(app):
        b = AthenaMCTask()
     else:
        logger.error("The application '%s' cannot be used with the tasks package yet!" % a._name)
-       raise Exception()
+       raise AttributeError()
     for k in a._data:
        b._data[k] = a._data[k]
     return b

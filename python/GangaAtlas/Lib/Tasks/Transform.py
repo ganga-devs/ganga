@@ -199,10 +199,6 @@ class Transform(GangaObject):
          return None
       if not "tasks_id" in stripProxy(app)._data:
          return taskApp(app)
-         logger.error("The application %s can not be used with the Tasks package.", app)
-         logger.error("Please contact the Tasks developers if you want to use this Application with tasks.")
-         logger.error("(This is a very simple operation, so do not hesitate!)")
-         raise AttributeError("This application can not yet be used with the Tasks package, tell us if this should change!")
       return app
   
    def setAppStatus(self, app, new_status):
