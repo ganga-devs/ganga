@@ -11,7 +11,9 @@ from socket import *
 from Ganga.GPIDev.Base.Objects import GangaObject
 import Ganga.Utility.logging
 from Ganga.Core import GangaException
+import Ganga.Utility.Config
 
+configLHCb = Ganga.Utility.Config.getConfig('LHCb')
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -57,8 +59,12 @@ class DiracServer:
         DiracServer.port_blacklist = blacklist
         logger.debug('DiracServer.port_blacklist = %s' % str(blacklist))
 
-    def _getDiracEnv(self,version='v4r10'):
+    def _getDiracEnv(self,version=''):
         '''Gets the DIRAC environment.'''
+        if not version and configLHCb['DiracVersion']:
+            version = configLHCb['DiracVersion']
+        print 'Getting DIRAC %s environment (this may take a few ' \
+              'seconds)' % version
         setup_script = 'SetupProject.sh'
         env = {}
         cmd = '/usr/bin/env bash -c \"source %s Dirac %s >& /dev/null && '\
@@ -204,6 +210,6 @@ class DiracServer:
             num_polls += 1
             if num_polls >= 100: break
             time.sleep(0.1)
-        return self.isActive()
+        return not self.isActive()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

@@ -4,8 +4,6 @@ from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
-from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
-from GangaLHCb.Lib.Dirac import DiracShared
 from LHCbDataFile import LHCbDataFile
 from LHCbDatasetUtils import *
 

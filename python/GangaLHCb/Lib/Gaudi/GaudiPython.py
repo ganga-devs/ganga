@@ -73,7 +73,7 @@ class GaudiPython(Francesc):
         script =  "from Gaudi.Configuration import *\n"
         script += "importOptions('data.opts')\n"
         script += "execfile(\'%s\')\n" % name
-        self.extra.input_buffers['gaudiPythonwrapper.py'] = script
+        self.extra.input_buffers['gaudipython-wrapper.py'] = script
         outsb = collect_lhcb_filelist(self.getJobObject().outputsandbox)
         self.extra.outputsandbox = unique(outsb)
         return (None,self.extra)
@@ -139,12 +139,11 @@ class Bender(GaudiPython):
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.Gaudi.GaudiRunTimeHandler import GaudiRunTimeHandler
-from GangaLHCb.Lib.Dirac.GaudiDiracRunTimeHandler \
-     import GaudiDiracRunTimeHandler
+from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
 
 for app in ['GaudiPython','Bender']:
     for backend in ['LSF','Interactive','PBS','SGE','Local','Condor']:
         allHandlers.add(app, backend, GaudiRunTimeHandler)
-    allHandlers.add(app, 'Dirac', GaudiDiracRunTimeHandler)
+    allHandlers.add(app, 'Dirac', GaudiDiracRTHandler)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

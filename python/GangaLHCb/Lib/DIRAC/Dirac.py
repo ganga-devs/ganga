@@ -94,7 +94,9 @@ class Dirac(IBackend):
         self.actualCE = None
         self.status = None
         msg = grid_proxy_ok()
-        if msg is not None: raise BackendError("Dirac",msg)
+        if msg is not None:
+            logger.error(msg)
+            raise BackendError("Dirac",msg)
 
         global dirac_ganga_server
         dirac_cmd = "execfile('%s')" % self._getDiracScript()
@@ -170,15 +172,18 @@ class Dirac(IBackend):
         j = self.getJobObject()
         if dir is None: dir = j.getOutputWorkspace().getPath()
         tmpdir = j.getDebugWorkspace().getPath()
+        if os.path.exists("%s/%d" % (tmpdir,self.id)):
+            os.system('rmdir --ignore-fail-on-non-empty %s/%d' \
+                      % (tmpdir,self.id))
         dirac_cmd = 'result = DiracCommands.getOutputSandbox(%d,"%s","%s")' \
                     % (self.id,tmpdir,dir)
         result = server.execute(dirac_cmd)
         if not result_ok(result):
             msg = 'Problem retreiving output: %s' % str(result)
             logger.warning(msg)
-            return []
-        
-        return result.get('Value',[])
+            return False
+
+        return True
 
     def getOutputData(self,dir=None,names=None):
         """Retrieve data stored on SE to dir (default=job output workspace).
@@ -265,8 +270,8 @@ class Dirac(IBackend):
                 jobs[i].updateStatus(result[i][3])
             if result[i][3] == 'completed':
                 jobs[i].updateStatus('completing')
-                df = jobs[i].backend._getOutputSandbox(dirac_monitoring_server)
-                if len(df) == 0: jobs[i].updateStatus('failed')
+                ok = jobs[i].backend._getOutputSandbox(dirac_monitoring_server)
+                if not ok: jobs[i].updateStatus('failed')
                 else: jobs[i].updateStatus('completed')
                     
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
@@ -278,6 +283,13 @@ class Dirac(IBackend):
         return dirac_ganga_server.execute(cmd,timeout)
 
     execAPI = staticmethod(execAPI)
+
+    def killServer():
+        '''Kills the DIRAC server child process.'''
+        global dirac_ganga_server
+        return dirac_ganga_server.disconnect()
+
+    killServer = staticmethod(killServer)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
