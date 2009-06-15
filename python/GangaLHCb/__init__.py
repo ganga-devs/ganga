@@ -64,7 +64,7 @@ def getEnvironment( config = {} ):
    return
 
 def loadPlugins( config = {} ):
-    import Lib.Dirac
+    #import Lib.Dirac
     import Lib.Gaudi
     import Lib.LHCbDataset
-
+    import Lib.DIRAC
