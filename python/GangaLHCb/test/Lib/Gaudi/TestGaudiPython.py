@@ -37,7 +37,7 @@ class TestGaudiPython(GangaGPITestCase):
     def test_GaudiPtython_configure(self):
         gp = self.gp
         gp.configure(None)
-        assert gp.extra.input_buffers['gaudiPythonwrapper.py'] is not None
+        assert gp.extra.input_buffers['gaudipython-wrapper.py'] is not None
 
     # not much to check here...as this method simply runs checks itself
     #def test_GaudiPython__check_inputs(self):

@@ -62,7 +62,7 @@ if __name__ == '__main__':
         finally:
             outpy_file.close()
 
-        root = Root(script=outpy,version='5.18.00d')
+        root = Root(script=outpy)
         j = Job(application=root,backend=Local())
         j.outputsandbox = ['out.txt']
         j.submit()

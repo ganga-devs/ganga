@@ -12,6 +12,7 @@ class TestRTHUtils(GangaGPITestCase):
 
     def test_jobid_as_string(self):
         j = Job(application=DaVinci())
+        print 'version =', j.application.version
         ok = jobid_as_string(j).rfind(str(j.id)) >= 0
         assert ok, 'job id string should contain the job id number'
         j.inputdata = ['a','b']
@@ -76,4 +77,4 @@ class TestRTHUtils(GangaGPITestCase):
         script = create_runscript(dv,'stuff',j)
         assert script.find('gaudirun.py') >= 0
         script = create_runscript(gp,'stuff',j)
-        assert script.find('gaudiPythonwrapper.py') >= 0
+        assert script.find('gaudipython-wrapper.py') >= 0
