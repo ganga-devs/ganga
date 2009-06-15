@@ -63,11 +63,11 @@ if __name__ == '__main__':
         finally:
             outpy_file.close()
         
-        j = Job(application = Root(script = outpy,version = '5.18.00d'), backend = Local())
-        j.outputsandbox = ['out.txt']
-        j.submit()
-        
+        j = Job(application = Root(script = outpy), backend = Local())
+        j.outputsandbox = ['out.txt']        
+        j.submit()        
         sleep_until_completed(j)
+        print j
         assert j.status == 'completed'
 
         log_file = os.path.join(j.outputdir,'out.txt')

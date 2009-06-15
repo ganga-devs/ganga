@@ -1,17 +1,34 @@
 import os, tempfile, sys
+from GangaTest.Framework.utils import sleep_until_completed, write_file, file_contains
+from os.path import join,basename,exists
+import time
 
-j = Job(backend = Dirac())
+# Job with a script
+scriptname=tempfile.mktemp()
+code = """#!/bin/env python
+f=open('output.txt','w')
+f.write('This is a test %f \\n')
+f.close()
+""" % time.time()
+write_file(scriptname,code)
+print 'code =', code
+jscript=Job(application=Executable(),backend=Dirac(CPUTime=300))
+jscript.application.exe=File(scriptname)
+jscript.application.args=[]
+jscript.outputdata = ['output.txt']
+jscript.submit()
+sleep_until_completed(jscript)
 
-lfns = ['/lhcb/production/DC06/phys-v2-lumi2/00001889/DST/0000/00001889_00000003_5.dst','/foo/bar/doesnt_exist.dst']
+print 'j = ', jscript
 
 tmpdir = tempfile.mktemp()
 os.mkdir(tmpdir)
-j.backend._impl.id = 123 #hack as we don't have a job
-output = j.backend.getOutputData(dir = tmpdir, names = lfns)
+
+output = jscript.backend.getOutputData(dir=tmpdir)
 
 assert len(output) == 1, 'Only one file should have been downloaded - %s' % output
 
-outfile = os.path.join(tmpdir,os.path.basename(lfns[0]))
+outfile = os.path.join(tmpdir,'output.txt')
 assert os.path.exists(outfile), 'File should exist'
 
 #clean up

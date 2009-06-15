@@ -139,9 +139,6 @@ class DaVinciJob(ICheckTest):
         file = open(join(self.j.outputdir,'stdout'))
         print 'stdout: ', file.read()
         file.close()
-        file = open(join(self.j.outputdir,'stderr'))
-        print 'stderr: ', file.read()
-        file.close()        
         fname = join(self.j.outputdir,'stdout')
         file = open(fname)
         found_line = False
