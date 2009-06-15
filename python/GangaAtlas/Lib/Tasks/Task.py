@@ -1,5 +1,6 @@
 from common import *
 from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
+from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import JobRegistryInterface
 
 ########################################################################
 
@@ -166,7 +167,7 @@ class Task(GangaObject):
          except Exception, x:
             print x
             pass
-      return jobslice
+      return JobRegistryInterface(jobslice)
 
 ## Internal methods
    def updateStatus(self):

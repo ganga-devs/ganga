@@ -4,6 +4,7 @@ from sets import Set
 from TaskApplication import ExecutableTask, taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
+from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import JobRegistryInterface
 
 class Transform(GangaObject):
    _schema = Schema(Version(1,0), {
@@ -166,7 +167,7 @@ class Transform(GangaObject):
          except Exception, x:
             print x
             pass
-      return jobslice
+      return JobRegistryInterface(jobslice)
 
    def setFailed(self, partition):
       """ Tells Tasks that all Applications that have executed this partition have actually failed."""
