@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.32 2009-06-16 09:02:29 ebke Exp $
+# $Id: AthenaMC.py,v 1.33 2009-06-16 09:30:11 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -198,8 +198,8 @@ class AthenaMC(IApplication):
     def getEvgenArgs(self):
         """prepare args vector for evgen mode"""
         args=[]
-        if not self.transform_script:
-            self.transform_script="csc_evgen_trf.py"
+##        if not self.transform_script:
+##            self.transform_script="csc_evgen_trf.py"
 
         args =  [ self.atlas_rel,
                   self.se_name,
@@ -558,13 +558,19 @@ class AthenaMC(IApplication):
           try:
              assert self.evgen_job_option
           except AssertionError:
-             logger.error('Please provide a start value for parameter evgen_job_option needed for any evgen transformation')
+             raise ApplicationConfigurationError(None,'Please provide a start value for parameter evgen_job_option needed for any evgen transformation')
+         
           if os.path.exists(self.evgen_job_option):
               # need to strip the path away.
               self.evgen_job_option_filename = self.evgen_job_option.split("/")[-1]
           else:
               self.evgen_job_option_filename = self.evgen_job_option
 
+          try:
+              assert self.transform_script
+          except AssertionError:
+              raise ApplicationConfigurationError(None,'Please set job.application.transform_script. A possible value for 14 TeV event generation is csc_evgen_trf.py. For 10 TeV event generation, one can use csc_evgen08_trf.py')
+          
           jobfields=self.evgen_job_option_filename.split(".")
           try:
               assert len(jobfields)==4 and jobfields[1].isdigit() and len(jobfields[1])==6
@@ -739,6 +745,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.32  2009/06/16 09:02:29  ebke
+# Fix AthenaMCSplitterJob to use the use_partition_numbers flag
+#
 # Revision 1.31  2009/06/03 16:55:15  ebke
 # Added AthenaMCTaskSplitterJob to the possible splitters
 #

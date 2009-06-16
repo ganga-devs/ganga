@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.43 2009-06-03 15:50:58 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.44 2009-06-16 09:30:11 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -929,7 +929,7 @@ class AthenaMCOutputDatasets(Dataset):
         ''' Provides the triplet: LFC, site and srm path from input se'''
         lfcstrings=getLFCmap()
         outputlocation={}
-        default_site="CERN-PROD_USERDISK"
+        default_site="CERN-PROD_SCRATCHDISK"
         job=self._getParent()
         app=job.application
         
@@ -970,7 +970,7 @@ class AthenaMCOutputDatasets(Dataset):
                 makeSites=[]
                 makeSites.append(sitename+"_SCRATCHDISK")
                 makeSites.append(sitename+"_LOCALGROUPDISK")
-                makeSites.append(sitename+"_USERDISK")
+#                makeSites.append(sitename+"_USERDISK") # now retired and read-only. Not suitable for output then.
                 
                 for site in makeSites:
                     if site in sites:
