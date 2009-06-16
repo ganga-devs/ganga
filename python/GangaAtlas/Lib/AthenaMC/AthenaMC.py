@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.31 2009-06-03 16:55:15 ebke Exp $
+# $Id: AthenaMC.py,v 1.32 2009-06-16 09:02:29 ebke Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -699,8 +699,11 @@ class AthenaMCSplitterJob(ISplitter):
                 matchrange = (job._getRoot().inputdata.numbersToMatcharray(inputnumbers), openrange)
             else:
                 matchrange = ([],False)
-            infiles = [fn for fn in job.application.turls.keys() if matchFile(matchrange, fn)]
-            innumbers = job._getRoot().inputdata.filesToNumbers(infiles)
+            if job._getRoot().inputdata and job._getRoot().inputdata.use_partition_numbers:
+                infiles = [fn for fn in job.application.turls.keys() if matchFile(matchrange, fn)]
+                innumbers = job._getRoot().inputdata.filesToNumbers(infiles)
+            else:
+                innumbers = range(1,len(job.application.turls.keys())+1)
             partitions = partitions[:-1] # the partition start of the open range beginning is not mandatory 
             partitions.extend(job.application.getPartitionsForInputs(innumbers, job.inputdata))
             partitions = dict([(i,1)for i in partitions]).keys() # make unique
@@ -736,6 +739,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.31  2009/06/03 16:55:15  ebke
+# Added AthenaMCTaskSplitterJob to the possible splitters
+#
 # Revision 1.30  2009/05/20 15:20:21  ebke
 # Added use_partition_numbers to AthenaMCInputDatasets to make Tasks safe and still accommodate loose matching.
 #
