@@ -2,7 +2,7 @@ from ROOT import TH1F, TBrowser, TCanvas
 from Gaudi.Configuration import *
 
 importOptions('$STDOPTS/LHCbApplication.opts')
-importOptions('$STDOPTS/DstDicts.opts')
+#importOptions('$STDOPTS/DstDicts.opts')
 
 appConf = ApplicationMgr( OutputLevel = INFO, AppName = 'Ex3' )
 appConf.TopAlg += ["UnpackMCParticle","UnpackMCVertex"]
