@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.40 2009-05-21 18:35:47 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.41 2009-06-16 09:00:34 mslater Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1896,7 +1896,10 @@ if __name__ == '__main__':
         for i in xrange(0,len(output_files_new)):
             try:
                 open(output_files_new[i],'r')
-                output_files.append(output_files_new[i])
+                
+                if not output_files_new[i] in output_files:
+                    output_files.append(output_files_new[i])
+                    
                 # Fail over if Athena has produced more than one outputfile due to file size limit 
                 filepat = re.sub('\.(\w+)$','', output_files_new[i])
                 pat = re.compile(filepat)
