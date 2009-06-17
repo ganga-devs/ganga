@@ -170,6 +170,7 @@ class TestAthena(AtlasTest):
 
 class TestAthenaDQ2LCG(TestAthena):
     def setup(self):
+        TestAthena.setup(self)
         self.j.backend=LCG()
         #self.j.backend.requirements.sites=['FZK-LCG2_MCDISK']
         #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
@@ -178,6 +179,7 @@ class TestAthenaDQ2LCG(TestAthena):
 
 class TestAthenaDQ2LCGFileStager(TestAthena):
     def setup(self):
+        TestAthena.setup(self)
         self.j.backend=LCG()
         #self.j.backend.requirements.sites=['FZK-LCG2_MCDISK']
         #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
@@ -243,6 +245,7 @@ class TestAthenaMCLCG(AtlasTest):
 
 class TestAthenaMCLCG_evgen(TestAthenaMCLCG):
     def setup(self):
+        TestAthenaMCLCG.setup(self)
         self.j.application.evgen_job_option='DC3.007004.singlepart_e_Et40.py'
         self.j.application.number_events_job=30
         self.j.application.mode='evgen'
@@ -250,6 +253,7 @@ class TestAthenaMCLCG_evgen(TestAthenaMCLCG):
 
 class TestAthenaMCLCG_simul(TestAthenaMCLCG):
     def setup(self):
+        TestAthenaMCLCG.setup(self)
         self.j.application.atlas_release='12.0.4'
         self.j.application.transform_archive='AtlasProduction_12_0_4_1_noarch.tar.gz' #old style submission
         self.j.application.mode='simul'
@@ -264,6 +268,7 @@ class TestAthenaMCLCG_simul(TestAthenaMCLCG):
 
 class TestAthenaMCLCG_recon(TestAthenaMCLCG):
     def setup(self):
+        TestAthenaMCLCG.setup(self)
         self.j.application.mode='recon'
         self.j.inputdata=AthenaMCInputDatasets()
         self.j.inputdata.DQ2dataset='user08.fredericbrochu.ganga.datafiles.GangaTests.000001.single_e_Et40.simul.RDO'
@@ -292,6 +297,7 @@ class TestAthenaMCPanda(AtlasTest):
 
 class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
     def setup(self):
+        TestAthenaMCPanda.setup(self)
         self.j.application.se_name='ANALY_SLAC'
         self.j.application.evgen_job_option='MC8.107004.singlepart_e_Et40.py'
         self.j.application.transform_script='csc_evgen08_trf.py'
@@ -302,6 +308,7 @@ class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
 
 class TestAthenaMCPanda_simul(TestAthenaMCPanda):
     def setup(self):
+        TestAthenaMCPanda.setup(self)
         self.j.application.atlas_release='14.5.0.1'
         self.j.application.mode='simul'
         self.j.application.geometryTag = 'ATLAS-CSC-05'
@@ -315,6 +322,7 @@ class TestAthenaMCPanda_simul(TestAthenaMCPanda):
 
 class TestAthenaMCPanda_recon(TestAthenaMCPanda):
     def setup(self):
+        TestAthenaMCPanda.setup(self)
         self.j.application.run_number='000001'
         self.j.application.atlas_release='12.0.4.1'
         self.j.application.mode='recon'
