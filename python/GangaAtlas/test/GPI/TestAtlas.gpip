@@ -55,8 +55,6 @@ class TestAnaTaskBasic(ICheckTest):
     def checkTest(self):
         t = AnaTask()
         t.analysis.application.atlas_release='14.2.20'
-        t.analysis.application.option_file=[ self.joboption ]
-        t.analysis.application.user_area = self.archivefile
         t.analysis.application.max_events=10
         t.analysis.files_per_job = 1
         t.analysis.inputdata.dataset = "mc08.105401.SU1_jimmy_susy.recon.AOD.e352_s462_r541_tid026109"
@@ -102,9 +100,9 @@ class TestTask(AtlasTest):
         f = self.t.n_status("failed")
         print "TestTask %s: %s partitions completed, %s partitions failed, %s partitions total" % (self.__class__.__name__, c, f, n)
         assert c+f == n
-        assert t.status == "completed"
+        assert self.t.status == "completed"
         self.t.remove(True)
-        t.cleanup()
+        self.t.cleanup()
 
 class TestAnaTask(TestTask):
     def setup(self):
