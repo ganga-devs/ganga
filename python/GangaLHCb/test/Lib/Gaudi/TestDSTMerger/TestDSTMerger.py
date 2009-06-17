@@ -32,7 +32,7 @@ class TestDSTMerger(GangaGPITestCase):
         outdst = tempfile.mktemp('.dst')
         
         tool = dstTool()
-        tool.version = 'v23r0p1'
+        tool.version = 'v23r1'
         tool.mergefiles(dst_files,outdst)
         assert os.path.exists(outdst), 'Test file must be created'
         
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         finally:
             outpy_file.close()
 
-        root = Root(script=outpy,version='5.22.00a')
+        root = Root(script=outpy,version='5.22.00b')
         j = Job(application=root,backend=Local())
         j.outputsandbox = ['out.txt']
         j.submit()
