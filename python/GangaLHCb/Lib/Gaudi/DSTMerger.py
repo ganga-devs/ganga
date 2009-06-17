@@ -16,6 +16,7 @@ from Ganga.Lib.Mergers.Merger import AbstractMerger, IMergeTool
 from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger, log_user_exception
+from GangaLHCb.Lib.Gaudi.CMTVersion import CMTVersion
 
 logger = getLogger()
 
@@ -31,14 +32,57 @@ class _DSTMergeTool(IMergeTool):
     _schema.datadict['merge_opts'] = FileItem(defvalue=None,doc=docstr)
     docstr = 'The version of DaVinci to use when merging. (e.g. v19r14)'
     _schema.datadict['version'] = SimpleItem(defvalue='',doc=docstr)
+    
+    def selectOptionsFile(self, version_string):
+        """Trys to find the correct version of the optsions file to use based on the version."""
+        
+        dir = os.path.dirname(inspect.getsourcefile(_DSTMergeTool))
+        options_dir = os.path.join(dir,'options')
+            
+        #search for the version of the merge opts which most closly matches 'version'
+        import glob
+        files = glob.glob(options_dir + os.path.sep + 'DSTMerger*.opts')
+
+        #try to find the best options file to use
+        opts_files = {}
+        for f in files:
+            file_name = os.path.basename(f)
+            v = None
+            #remove the .opts part
+            if file_name.endswith('.opts'):
+                file_name = file_name[0:-5]
+            #remove the DSTMerger bit
+            if file_name.startswith('DSTMerger-'):
+                file_name = file_name[10:]
+            if file_name:
+                v = CMTVersion(file_name)
+            else:
+                v = CMTVersion()
+            opts_files[v] = f
+        
+        #the result to return
+        opts_file = None
+        
+        #itterate over the versions in order
+        keys = opts_files.keys()
+        keys.sort()
+        saved = keys[-1]#default is latest one
+        if version_string:
+            version = CMTVersion(version_string)
+            for k in keys:
+                if version < k:
+                    break
+                else:
+                    saved = k
+        opts_file = opts_files[saved]
+        return opts_file
 
     def mergefiles(self, file_list, output_file):
         
-        #if no opts file is specified, then use version from instellation
+        #if no opts file is specified, then use version from installation
         if self.merge_opts is None or not self.merge_opts.name:
-            dir = os.path.dirname(inspect.getsourcefile(_DSTMergeTool))
-            self.merge_opts = File(os.path.join(dir,'options/DSTMerger.opts'))
-    
+            self.merge_opts = File(self.selectOptionsFile(self.version))       
+                            
         if not os.path.exists(self.merge_opts.name):
             msg = "The options file '%s' needed for merging does not exist." 
             raise MergerError(msg % self.merge_opts.name)
