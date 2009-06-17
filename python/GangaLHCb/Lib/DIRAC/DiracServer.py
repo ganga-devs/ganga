@@ -6,6 +6,7 @@ import time
 import re
 import random
 import inspect
+import tempfile
 from subprocess import *
 from socket import *
 from Ganga.GPIDev.Base.Objects import GangaObject
@@ -85,7 +86,7 @@ class DiracServer:
                                              self.end_data_str,
                                              dirac_cmds,self.server_id)
         self.server = Popen([cmd],shell=True,env=DiracServer.dirac_env,
-                            stdout=PIPE,stderr=PIPE)
+                            stdout=open(os.devnull,'w'),stderr=STDOUT)
         time.sleep(1)
         rc = self.server.poll()
         return rc
@@ -96,10 +97,9 @@ class DiracServer:
         if self.server.poll() is None: return True
         else: return False
 
-    def communicate(self):
-        '''Returns (stdout,stderr) from server (only avail after disconnect)'''
-        if self.isActive(): return None
-        else: return self.server.communicate()
+    def read_stdout(self):
+        '''Returns stdout/stderr from server (not implemented yet)'''
+        return 'NOT AVAILABLE'
 
     def connect(self):
         '''Run the server and connect it and the client to the same port.'''
@@ -132,9 +132,9 @@ class DiracServer:
                 pass
 
         if self.port is None:
-            stdout, stderr = self.communicate()
-            msg = 'Failed to open server/client connection [stderr = %s]' \
-                  % stderr 
+            stdout = self.read_stdout()
+            msg = 'Failed to open server/client connection [stdout = %s]' \
+                  % stdout 
             raise GangaException(msg)
         logger.debug('Connected to port %d' % self.port)
         return self.port
@@ -144,9 +144,9 @@ class DiracServer:
         command = build_command_string(cmd,self.end_data_str)
         self.socket.sendall(command)
         if not self.isActive():
-            stdout, stderr = self.communicate()
+            stdout = self.read_stdout()
             msg = 'Server died after attempting to execute command: %s ' \
-                  '[stderr = %s]' % (cmd,stderr)
+                  '[stdout = %s]' % (cmd,stdout)
             raise GangaException(msg)
         return command
 
@@ -157,6 +157,7 @@ class DiracServer:
         while self.isActive():
             try:
                 data = self.socket.recv(1024)
+                if(data.find('###RECV-DATA###') >= 0): data = ''
             except error, e:
                 msg = 'Timeout [t>%.1fs] attempting to receive result of ' \
                       'command: %s' % (self.socket.gettimeout(), cmd)
@@ -173,9 +174,9 @@ class DiracServer:
                             
         if not recv_completed:
             if not self.isActive():
-                stdout, stderr = self.communicate()
+                stdout = self.read_stdout()
                 msg = 'Server died while attempting to receive result of ' \
-                      'command %s [stderr = %s]' % (cmd,stderr)
+                      'command %s [stdout = %s]' % (cmd,stdout)
             else:
                 msg = 'An unknown error occured while trying to receive a '\
                       'command result from the Dirac server.  Please contact '\
