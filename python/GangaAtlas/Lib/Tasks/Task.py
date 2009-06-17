@@ -65,7 +65,13 @@ class Task(GangaObject):
          print " * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id)
          return
       if remove_jobs:
-         self.getJobs(only_master_jobs=True).remove()
+         for j in GPI.jobs:
+            try:
+               stid = j.application.tasks_id.split(":")
+               if int(stid[-2]) == self.id:
+                  j.remove()
+            except Exception, x:
+               pass
       self._getParent().tasks.remove(self)
       logger.info("Task #%s deleted" % self.id)
 
@@ -121,8 +127,7 @@ class Task(GangaObject):
    def setBackend(self,backend):
       """Sets the backend on all transforms, except if the backend is None"""
       for tf in self.transforms:
-         if tf.backend:
-            tf.backend = stripProxy(backend)
+         tf.backend = stripProxy(backend)
 
    def setParameter(self,**args):
       """Use: setParameter(processName="HWW") to set the processName in all applications to "HWW"
@@ -152,7 +157,7 @@ class Task(GangaObject):
          return
       del self.transforms[id]
 
-   def getJobs(self, only_master_jobs=False):
+   def getJobs(self, only_master_jobs=True):
       """ Get the job slice of all jobs that process this task """
       jobslice = JobRegistryInstanceInterface("tasks(%i).getJobs(only_master_jobs=%s)"%(self.id, only_master_jobs))
       for j in GPI.jobs:
