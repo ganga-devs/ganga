@@ -111,16 +111,26 @@ class Grid(object):
 
         return submit_option
 
-    def __print_gridcmd_log__(self,regxp_logfname,cmd_output):
-
+    def __resolve_gridcmd_log_path__(self, regxp_logfname, cmd_output):
         match_log = re.search(regxp_logfname,cmd_output)
 
+        logfile = None
         if match_log:
             logfile = match_log.group(1)
+        return logfile 
+
+    def __print_gridcmd_log__(self,regxp_logfname,cmd_output):
+
+        logfile = self.__resolve_gridcmd_log_path__(regxp_logfname,cmd_output)
+
+        if logfile:
             f = open(logfile,'r')
             for l in f.readlines():
                 logger.warning(l.strip())
             f.close()
+
+            ## here we assume the logfile is no longer needed at this point - remove it
+            os.remove(logfile)
         else:
             logger.warning('output\n%s\n',cmd_output)
             logger.warning('end of output')
@@ -152,13 +162,12 @@ class Grid(object):
     def __resolve_no_matching_jobs__(self, cmd_output):
         '''Parsing the glite-wms-job-status log to get the glite jobs which have been removed from the WMS'''
 
-        match_log = re.search('(.*-job-status.*\.log)', cmd_output)
+        logfile = self.__resolve_gridcmd_log_path__('(.*-job-status.*\.log)',cmd_output)
 
         glite_ids = []
 
-        if match_log:
+        if logfile:
             
-            logfile = match_log.group(1)
             f = open(logfile,'r')
             output = f.readlines()
             f.close()
