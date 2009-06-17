@@ -1,0 +1,134 @@
+import os, getpass
+
+from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
+from GangaTest.Framework.utils import is_job_finished, write_file
+
+from time import time
+loadtime = time()
+def check_timeout():
+    if (time() - loadtime) > (config.TestingFramework.timeout - 200):
+        print "Individual timeout!"
+        raise Exception("Individual timeout!")
+        
+
+class TestAtlas(GangaGPITestCase):
+    def testAnaTaskBasic(self):
+        return TestAnaTaskBasic()
+
+    def testAnaTaskLCG(self):
+        test = TestAnaTaskLCG('/tmp/ganga_AnaTaskLCG_testing_data-%s' % getpass.getuser())
+        test.setup()
+        return test
+
+    def testAnaTaskPanda(self):
+        test = TestAnaTaskPanda('/tmp/ganga_AnaTaskPanda_testing_data-%s' % getpass.getuser())
+        test.setup()
+        return test
+
+    def testAnaTaskAuto(self):
+        test = TestAnaTaskAuto('/tmp/ganga_AnaTaskAuto_testing_data-%s' % getpass.getuser())
+        test.setup()
+        return test
+
+class TestAnaTaskBasic(ICheckTest):
+    def __init__(self):
+        pass
+
+    def isReadyForCheck(self):
+        return True
+
+    def checkTest(self):
+        t = AnaTask()
+        t.analysis.application.atlas_release='14.2.20'
+        t.analysis.application.option_file=[ self.joboption ]
+        t.analysis.application.user_area = self.archivefile
+        t.analysis.application.max_events=10
+        t.analysis.files_per_job = 1
+        t.analysis.inputdata.dataset = "mc08.105401.SU1_jimmy_susy.recon.AOD.e352_s462_r541_tid026109"
+        t.analysis.outputdata=DQ2OutputDataset()
+        t.analysis.setRunlimit(2)
+        t.float = 5
+        t.info()
+        t.remove(True)
+
+
+class TestTask(ICheckTest):
+    def __init__(self):
+        pass
+
+    def isReadyForCheck(self):
+        check_timeout()
+        n = self.t.n_all()
+        c = self.t.n_status("completed")
+        f = self.t.n_status("failed")
+        if c+f >= n:
+           return True
+        if self.t.analysis.status == "pause":
+           return True
+        return False
+
+    def checkTest(self):
+        n = self.t.n_all()
+        c = self.t.n_status("completed")
+        f = self.t.n_status("failed")
+        print "Test %s: %s partitions completed, %s partitions failed, %s partitions total" % (self.__class__, c, f, n)
+        assert c+f == n
+        assert t.status == "completed"
+        self.t.remove(True)
+        t.cleanup()
+
+    def cleanup(self):
+        pass
+
+class TestAnaTask(TestTask):
+    def __init__(self, tmpdir): 
+        self.tmpdir = tmpdir
+        print 'copying testing data to ', tmpdir
+        os.system('rm -rf %s' % tmpdir)
+        os.system('cp -r /afs/cern.ch/user/e/ebke/public/ganga_testing %s' %tmpdir)
+        self.joboption = '%s/AnalysisSkeleton_topOptions_v14220.py' % tmpdir
+        self.archivefile = '%s/UserAnalysis-00004.tar.gz' % tmpdir
+
+    def setup(self):
+        t = AnaTask()
+        t.analysis.application.atlas_release='14.2.20'
+        t.analysis.application.option_file=[ self.joboption ]
+        t.analysis.application.user_area = self.archivefile
+        t.analysis.application.max_events=10
+        t.analysis.files_per_job = 1
+        t.analysis.inputdata.dataset = "mc08.105401.SU1_jimmy_susy.recon.AOD.e352_s462_r541_tid026109"
+        t.analysis.outputdata=DQ2OutputDataset()
+        t.analysis.setRunlimit(2)
+        t.float = 5
+        t.info()
+        self.t = t
+
+    def cleanup(self):
+        print 'removing Athena_DQ2_LCG testing data ' , self.tmpdir
+        os.system('rm -rf %s' % self.tmpdir)
+
+class TestAnaTaskLCG(TestAnaTask):
+    def setup(self):
+        TestAnaTask.setup(self)
+        be = LCG()
+        self.t.setBackend(LCG())
+        self.t.analysis.backend.requirements.cloud='DE'
+        self.t.analysis.backend.requirements.sites=['IN2P3-CC_MCDISK']
+        self.t.analysis.outputdata.outputdata=['muTri.root' ]
+        self.t.run()
+
+class TestAnaTaskPanda(TestAnaTask):
+    def setup(self):
+        TestAnaTask.setup(self)
+        self.t.setBackend(Panda())
+        self.t.analysis.backend.requirements.cloud='US'
+        self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
+        self.t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808_sub01236389"
+        self.t.run()
+
+class TestAnaTaskAuto(TestAnaTask):
+    def setup(self):
+        TestAnaTask.setup(self)
+        self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
+        self.t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808_sub01236389"
+        self.t.run()
