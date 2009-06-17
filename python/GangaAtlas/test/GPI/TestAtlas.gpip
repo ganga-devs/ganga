@@ -175,7 +175,7 @@ class TestAthenaDQ2LCG(TestAthena):
         #self.j.backend.requirements.sites=['FZK-LCG2_MCDISK']
         #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
         self.j.backend.requirements.cloud='DE'
-        assert(j.submit()==True)
+        assert(self.j.submit()==True)
 
 class TestAthenaDQ2LCGFileStager(TestAthena):
     def setup(self):
@@ -185,7 +185,7 @@ class TestAthenaDQ2LCGFileStager(TestAthena):
         #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
         self.j.backend.requirements.cloud='DE'
         self.j.inputdata.type = 'FILE_STAGER'
-        assert(j.submit()==True)
+        assert(self.j.submit()==True)
 
 class TestAthenaLCG(AtlasTest):
     def setup(self):
@@ -249,7 +249,7 @@ class TestAthenaMCLCG_evgen(TestAthenaMCLCG):
         self.j.application.evgen_job_option='DC3.007004.singlepart_e_Et40.py'
         self.j.application.number_events_job=30
         self.j.application.mode='evgen'
-        assert (j.submit()==True)
+        assert (self.j.submit()==True)
 
 class TestAthenaMCLCG_simul(TestAthenaMCLCG):
     def setup(self):

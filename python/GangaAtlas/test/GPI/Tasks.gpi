@@ -3,6 +3,10 @@
 import re,sys,popen2,time,getpass
 import os
 
+for t in tasks._impl.tasks:
+   t.remove(True)
+jobs.remove()
+
 # First test the Task schema settings:
 t = Task()
 t.name = "TestTask01"
@@ -48,7 +52,7 @@ try:
    t.transforms[0].application = Executable()
 except AttributeError:
    attrerr = True
-assert attrerr == True
+assert "Task" in t.transforms[0].application._impl._name
 t.transforms[0].application = ExecutableTask()
 t.transforms[1].application = ExecutableTask()
 
@@ -107,6 +111,7 @@ t.run()
 assert t.status == "running"
 
 t.overview()
+t.getJobs()
 
 print "waiting until status changes from 'running'"
 while t.status == "running":
@@ -133,6 +138,7 @@ assert jobs[-1].name == "T%i:0 C1" % (t.id)
 
 t.overview()
 jobs
+t.getJobs()
 
 print "'Fix' transform 1"
 t1.application.exe = "boogabooga"
