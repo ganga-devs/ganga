@@ -173,11 +173,7 @@ then
     ln -s $LCG_LOCATION/lib/libdpm.so libshift.so.2.1
 fi
 
-chmod +x libgfal.so
-ln -s libgfal.so libgfal.so.0
 export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
-
-
 
 GANGATIME2=`date +'%s'`
 ################################################
