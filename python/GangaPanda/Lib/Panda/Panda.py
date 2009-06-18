@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.43 2009-06-10 13:47:13 ebke Exp $
+# $Id: Panda.py,v 1.44 2009-06-18 08:35:46 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -37,6 +37,7 @@ config.addOption( 'assignedPriorityBuild', 2000, 'assignedPriorityBuild' )
 config.addOption( 'assignedPriorityRun', 1000, 'assignedPriorityRun' )
 config.addOption( 'processingType', 'ganga', 'processingType' )
 config.addOption( 'enableDownloadLogs', False , 'enableDownloadLogs' )  
+config.addOption( 'trustIS', True , 'Trust the Information System' )  
 
 def queueToAllowedSites(queue):
     try:
@@ -142,11 +143,11 @@ def runPandaBrokerage(job):
         except:
             pass
         try:
-            status,out = Client.runBrokerage(tmpSites,tag,verbose=False)
+            status,out = Client.runBrokerage(tmpSites,tag,verbose=False,trustIS=config['trustIS'])
         except exceptions.SystemExit:
-            raise BackendError('Panda','Error in Client.runBrokerage')
+            raise BackendError('Panda','Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
         if status != 0:
-            raise BackendError('Panda','failed to run brokerage for automatic assignment: %s' % out)
+            raise BackendError('Panda','Non-zero to run brokerage for automatic assignment: %s' % out)
         if not Client.PandaSites.has_key(out):
             raise BackendError('Panda','brokerage gave wrong PandaSiteID:%s' % out)
         # set site
@@ -576,6 +577,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.43  2009/06/10 13:47:13  ebke
+# Check for NULL return string of Panda job Id and suggest to shorten dataset name
+#
 # Revision 1.42  2009/06/08 13:02:10  dvanders
 # force to submitted (because jobs can go from running to activated)
 #
