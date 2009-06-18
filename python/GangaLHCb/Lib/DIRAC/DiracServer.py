@@ -15,6 +15,7 @@ from Ganga.Core import GangaException
 import Ganga.Utility.Config
 
 configLHCb = Ganga.Utility.Config.getConfig('LHCb')
+configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -42,6 +43,7 @@ class DiracServer:
         self.path = os.path.dirname(inspect.getsourcefile(DiracServer))
         logger.debug('Set DiracServer.path = %s' % self.path)
         self.server_id = random.randrange(0,os.sys.maxint)
+        self.show_stdout = None
 
     def _getPortBlacklist(self):
         '''Obtains a list of ports used by system services. '''
@@ -85,8 +87,12 @@ class DiracServer:
         cmd = 'python %s %d \'%s\' %s %d' % (server_script,port,
                                              self.end_data_str,
                                              dirac_cmds,self.server_id)
+        stdout = open(os.devnull,'w')
+        if configDirac['ShowDIRACstdout']: stdout = None
+           
         self.server = Popen([cmd],shell=True,env=DiracServer.dirac_env,
-                            stdout=open(os.devnull,'w'),stderr=STDOUT)
+                            stdout=stdout,stderr=STDOUT)
+        self.show_stdout = configDirac['ShowDIRACstdout']
         time.sleep(1)
         rc = self.server.poll()
         return rc
@@ -188,6 +194,9 @@ class DiracServer:
         '''Sends the command to the server then waits for it to return the
         result.'''
         if not self.isActive(): self.connect()
+        elif self.show_stdout is not configDirac['ShowDIRACstdout']:
+            self.disconnect()
+            self.connect()
         def_timeout = self.socket.gettimeout()
         if timeout is not None:
             self.socket.settimeout(timeout)
