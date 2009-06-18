@@ -1,0 +1,56 @@
+**************************************************************************************************************
+5.3.0 (2009/6/18)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+bugfix: https://savannah.cern.ch/bugs/?50589
+bugfix: https://savannah.cern.ch/bugs/?51298
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Stopped multiple data copying for DQ2_COPY mode (bug 51512)
+
+AthenaMC:
+---------
+* Replaced references to USERDISK by SCRATCHDISK
+* removed default for evgen transform_script, replaced by documented 
+  exception thrown if not set by the user
+* Fix AthenaMCSplitterJob to use the use_partition_numbers flag
+
+TNT:
+----
+* Major GangaTnt update to allow splitting on TAG files again
+
+Tasks:
+------
+* added backend/cloud detection and initializeFromDatasets to AnaTasks
+* Add getJobs() to Task and Transform and getPartitionJobs() to 
+  Transform, returning the job slice corresponding to that task/transform
+
+tests:
+------
+* Updating evgen test with new space token for output destination 
+* Committed Atlas GPIP test containing all GangaATLAS tests for parallel
+  testing
+
+Externals
+----------
+* Update to panda-client 0.1.71
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- Update to panda-client 0.1.71
+- Trust the information system (jobs won't submit if athena release not installed).
+- Check for NULL return string of Panda job Id and suggest to shorten dataset name
+- Always update 'submitted' states (because jobs can go from running to activated)
+- small bug fix
+
+**************************************************************************************************************
