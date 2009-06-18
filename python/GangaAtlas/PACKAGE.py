@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.15 2009-06-04 09:58:58 elmsheus Exp $
+# $Id: PACKAGE.py,v 1.16 2009-06-18 08:32:28 dvanders Exp $
 ###############################################################################
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 """
@@ -21,7 +21,7 @@ _external_packages = {
                      'DQ2_ENDUSER_SETUP' : 'True',
                      'noarch':True 
                      },
-    'panda-client' : { 'version' : '0.1.64', 
+    'panda-client' : { 'version' : '0.1.71', 
                        'PYTHONPATH':['lib/python2.3/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
