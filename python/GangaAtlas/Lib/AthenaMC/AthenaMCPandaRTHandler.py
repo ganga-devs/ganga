@@ -287,6 +287,8 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         pandaOutfiles={}
         for type in outfiles.keys():
             pandaOutfiles[type]=outfiles[type]+"."+str(jidtag)
+            if type=="LOG":
+                pandaOutfiles[type]+=".tgz"
         #print pandaOutfiles
 
         for outtype in pandaOutfiles.keys():
@@ -297,7 +299,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             fout.lfn=pandaOutfiles[outtype]
             fout.type              = 'output'
             #            fout.destinationDBlock = jspec.destinationDBlock
-            fout.destinationDBlock = fout.dataset # let's be crazy and see how it goes...
+            fout.destinationDBlock = fout.dataset
             fout.destinationSE    = jspec.destinationSE
             if outtype=='LOG':
                 fout.type='log'
