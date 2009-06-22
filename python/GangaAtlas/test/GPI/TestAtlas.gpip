@@ -236,7 +236,7 @@ class TestAthenaMCLCG(AtlasTest):
         j.application.firstevent=1
         j.application.number_events_job=1
         j.application.atlas_release='12.0.4.1'
-        j.application.se_name='UKI-SOUTHGRID-CAM-HEP_USERDISK'
+        j.application.se_name='UKI-SOUTHGRID-CAM-HEP_SCRATCHDISK'
         j.backend=LCG()
         j.outputdata=AthenaMCOutputDatasets()
         self.j = j
