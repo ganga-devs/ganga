@@ -637,7 +637,14 @@ run_athena () {
 
 	if [ n$ATLAS_EXETYPE == n'ATHENA' ]
 	    then 
-	    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+
+	    if [ n$RECEXTYPE == n'' ]
+		then
+		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	    else
+		$timecmd athena.py input.py $ATHENA_OPTIONS evtmax.py; echo $? > retcode.tmp
+	    fi
+
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	elif [ n$ATLAS_EXETYPE == n'PYARA' ]
@@ -729,7 +736,13 @@ EOF
 		mv output_files.copy output_files.new
 	    fi
 	else
-	    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	    if [ n$RECEXTYPE == n'' ]
+		then
+		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	    else
+		$timecmd athena.py input.py $ATHENA_OPTIONS evtmax.py; echo $? > retcode.tmp
+	    fi
+
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	fi

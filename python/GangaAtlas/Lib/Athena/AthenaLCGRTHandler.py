@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.45 2009-05-31 15:40:11 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.46 2009-06-22 14:36:19 mslater Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -342,6 +342,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         if trf_params!=' ' and job.application.atlas_exetype=='TRF':
            _append_file_buffer(inputbox,'trf_params', [ trf_params ] ) 
 
+        # set RecExCommon options
+        environment['RECEXTYPE'] = job.application.recex_type
+        
 # append a property for monitoring to the jobconfig of subjobs
         lcg_config = LCGJobConfig(File(exe), inputbox, [], outputbox, environment, [], requirements)
         lcg_config.monitoring_svc = mc['Athena']

@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.60 2009-06-09 17:29:13 elmsheus Exp $
+# $Id: Athena.py,v 1.61 2009-06-22 14:36:19 mslater Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -168,7 +168,8 @@ class Athena(IApplication):
                  'append_to_user_area'    : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Extra files to include in the user area'),
                  'exclude_package'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Packages to exclude from user area requirements file'),
                  'stats'                  : SimpleItem(defvalue = {}, doc='Dictionary of stats info'),
-                 'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field')
+                 'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field'),
+                 'recex_type'             : SimpleItem(defvalue = '',doc='Set to RDO, ESD or AOD to enable RecExCommon type jobs of appropriate type')
               })
                      
     _category = 'applications'
@@ -192,7 +193,8 @@ class Athena(IApplication):
                   { 'attribute' : 'user_setupfile',    'widget' : 'FileOrString' },
                   { 'attribute' : 'exclude_from_user_area', 'widget' : 'FileOrString_List' },
                   { 'attribute' : 'exclude_package',   'widget' : 'String_List' },
-                  { 'attribute' : 'collect_stats',     'widget' : 'Bool' }                  
+                  { 'attribute' : 'collect_stats',     'widget' : 'Bool' },
+                  { 'attribute' : 'recex_type',     'widget' : 'String' }  
                   ]
     
                   
@@ -947,6 +949,11 @@ class Athena(IApplication):
                 if job.inputdata.tagdataset and not job.inputdata.tagdataset_exists():
                     raise ApplicationConfigurationError(None,'DQ2 tag dataset %s does not exist.' % job.inputdata.tagdataset)
 
+
+        # check recex options
+        if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
+            raise ApplicationConfigurationError(None, 'RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
+        
         return (0,None)
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -1273,6 +1280,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.60  2009/06/09 17:29:13  elmsheus
+# Fix bug #51300
+#
 # Revision 1.59  2009/06/09 16:13:34  elmsheus
 # bug #51369: the new prepare method generates bad requirements file
 #

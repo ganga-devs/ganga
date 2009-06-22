@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.41 2009-06-16 09:00:34 mslater Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.42 2009-06-22 14:36:19 mslater Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -572,22 +572,37 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
             outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
             outFile.write('%sEventSelector.InputCollections = ['%versionString)
     else:
-        try:
-            if os.environ.has_key('ATHENA_MAX_EVENTS'):
-                evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
-            else:
+        if os.environ['RECEXTYPE'] == '':
+
+            try:
+                if os.environ.has_key('ATHENA_MAX_EVENTS'):
+                    evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
+                else:
+                    evtmax = -1
+            except:
                 evtmax = -1
-        except:
-            evtmax = -1
-        outFile.write('theApp.EvtMax = %d\n' %evtmax)
-        if dtype == 'DATA':
-            outFile.write('%sByteStreamInputSvc.FullFileName = ['%versionString)
-        elif dtype == 'MC':
-            outFile.write('%sEventSelector.InputCollections = ['%versionString)
-        elif dtype == 'MuonCalibStream':
-            outFile.write('svcMgr.MuonCalibStreamFileInputSvc.InputFiles = [')
+            outFile.write('theApp.EvtMax = %d\n' %evtmax)
+            if dtype == 'DATA':
+                outFile.write('%sByteStreamInputSvc.FullFileName = ['%versionString)
+            elif dtype == 'MC':
+                outFile.write('%sEventSelector.InputCollections = ['%versionString)
+            elif dtype == 'MuonCalibStream':
+                outFile.write('svcMgr.MuonCalibStreamFileInputSvc.InputFiles = [')
+            else:
+                outFile.write('%sEventSelector.InputCollections = ['%versionString)
         else:
-            outFile.write('%sEventSelector.InputCollections = ['%versionString)
+            # Write input for RecExCommon jobs
+            outFile.write('from AthenaCommon.AthenaCommonFlags import athenaCommonFlags\n')
+            outFile.write('athenaCommonFlags.Pool%sInput.set_Value_and_Lock([' %
+                          os.environ['RECEXTYPE'])
+            try:
+                if os.environ.has_key('ATHENA_MAX_EVENTS'):
+                    evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
+                else:
+                    evtmax = -1
+            except:
+                evtmax = -1
+            outFile = open('evtmax.py','w').write('theApp.EvtMax = %d\n' %evtmax)
             
     # loop over all files
     flatFile = 'input.txt'
@@ -605,7 +620,11 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
         outFile.write('"%s",' % filename)
         outFlatFile.write('%s\n' %filename)
         
-    outFile.write(']\n')
+    if os.environ['RECEXTYPE'] == '':
+        outFile.write(']\n')
+    else:
+        outFile.write('])\n')
+
     # close
     outFile.close()
     outFlatFile.close()
