@@ -219,6 +219,9 @@ class TestMCTask(TestTask):
         t.setParameter(number_events_job=1)
         t.recon.application.number_events_job = 2
         t.recon.application.extraArgs = " jobConfig=ForceFullReco.py "
+        t.evgen.application.transform_script = "csc_evgen_trf.py"
+        t.simul.application.transform_script = "csc_simul_trf.py"
+        t.recon.application.transform_script = "csc_reco_trf.py"
         t.float = 2
         t.run()
         assert t.n_all() == 5
