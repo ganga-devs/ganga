@@ -13,7 +13,7 @@ config = Ganga.Utility.Config.getConfig('DIRAC')
 class TestBender(GangaGPITestCase):
 
     def testLocal(self):
-        j = Job(application=Bender(), backend=Local())        
+        j = Job(application=Bender(), backend=Local())
         j.submit()
         assert j.application.script != [],\
                'Submit should assign defaults script file'
@@ -55,6 +55,9 @@ class LocalJob(ICheckTest):
     def checkTest(self):
         fname = join(self.j.outputdir,'stdout')
         print "fname = %s" % fname
+        f = open(fname)
+        print 'f =', f.read()
+        f.close()
         executionstring = 'Application Manager Configured successfully'
         assert file_contains(fname,executionstring),\
                'stdout should contain string: ' + executionstring

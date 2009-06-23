@@ -52,7 +52,8 @@ services = {'Bookkeeping':'Bookkeeping/BookkeepingManager',
             'Outputsandbox':'WorkloadManagement/OutputSandbox'
             }
 configDirac.addOption('DIRACServices',services,dscrpt)
-
+dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
+configDirac.addOption('ShowDIRACstdout',False,dscrpt)
 
     
 def getEnvironment( config = {} ):
