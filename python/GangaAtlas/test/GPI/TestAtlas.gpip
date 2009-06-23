@@ -245,6 +245,7 @@ class TestAthenaMCLCG_evgen(TestAthenaMCLCG):
     def setup(self):
         TestAthenaMCLCG.setup(self)
         self.j.application.evgen_job_option='DC3.007004.singlepart_e_Et40.py'
+        self.j.application.transform_script = "csc_evgen_trf.py"
         self.j.application.number_events_job=30
         self.j.application.mode='evgen'
         assert (self.j.submit()==True)
@@ -255,6 +256,7 @@ class TestAthenaMCLCG_simul(TestAthenaMCLCG):
         self.j.application.atlas_release='12.0.4'
         self.j.application.transform_archive='AtlasProduction_12_0_4_1_noarch.tar.gz' #old style submission
         self.j.application.mode='simul'
+        self.j.application.transform_script = "csc_simul_trf.py"
         self.j.application.geometryTag = 'ATLAS-DC3-05' 
         self.j.inputdata=AthenaMCInputDatasets()
         self.j.inputdata.DQ2dataset='user08.fredericbrochu.ganga.datafiles.GangaTests.000001.single_e_Et40.evgen.EVNT'
@@ -268,6 +270,7 @@ class TestAthenaMCLCG_recon(TestAthenaMCLCG):
     def setup(self):
         TestAthenaMCLCG.setup(self)
         self.j.application.mode='recon'
+        self.j.application.transform_script = "csc_reco_trf.py"
         self.j.inputdata=AthenaMCInputDatasets()
         self.j.inputdata.DQ2dataset='user08.fredericbrochu.ganga.datafiles.GangaTests.000001.single_e_Et40.simul.RDO'
         self.j.inputdata.datasetType='DQ2'
@@ -301,6 +304,7 @@ class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
         self.j.application.transform_script='csc_evgen08_trf.py'
         self.j.application.number_events_job=30
         self.j.application.mode='evgen'
+        self.j.application.transform_script = "csc_evgen_trf.py"
         self.j.application.verbosity='INFO'
         assert (self.j.submit()==True)
 
@@ -309,6 +313,8 @@ class TestAthenaMCPanda_simul(TestAthenaMCPanda):
         TestAthenaMCPanda.setup(self)
         self.j.application.atlas_release='14.5.0.1'
         self.j.application.mode='simul'
+        self.j.application.transform_script = "csc_simul_trf.py"
+        self.j.application.verbosity='INFO'
         self.j.application.geometryTag = 'ATLAS-CSC-05'
         self.j.inputdata=AthenaMCInputDatasets()
         self.j.inputdata.DQ2dataset='user09.JohannesEbke.ganga.tutorial.007004.single_e_Et40.evgen.EVNT.jid000004'
@@ -324,6 +330,7 @@ class TestAthenaMCPanda_recon(TestAthenaMCPanda):
         self.j.application.run_number='000001'
         self.j.application.atlas_release='12.0.4.1'
         self.j.application.mode='recon'
+        self.j.application.transform_script = "csc_recon_trf.py"
         self.j.inputdata=AthenaMCInputDatasets()
         self.j.inputdata.DQ2dataset='user08.fredericbrochu.ganga.datafiles.GangaTests.000001.single_e_Et40.simul.RDO'
         self.j.inputdata.datasetType='DQ2'
