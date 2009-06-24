@@ -2,7 +2,7 @@ import LCG
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.36 2009-06-09 15:41:44 hclee Exp $
+# $Id: LCG.py,v 1.37 2009-06-24 19:12:48 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -1454,7 +1454,7 @@ sys.exit(0)
 
 #       additional settings from the configuration
         ## !!note!! StorageIndex is not defined in EDG middleware
-        for name in [ 'ShallowRetryCount','RetryCount', 'Rank', 'ReplicaCatalog', 'StorageIndex', 'MyProxyServer' ]:
+        for name in [ 'ShallowRetryCount','RetryCount', 'Rank', 'ReplicaCatalog', 'StorageIndex', 'MyProxyServer', 'DataRequirements', 'DataAccessProtocol' ]:
             if config[name]:
                 jdl[name] = config[name]
 
@@ -1913,6 +1913,10 @@ config.addOption('BoundSandboxLimit',10 * 1024 * 1024,'sets the size limitation 
 
 config.addOption('Requirements','Ganga.Lib.LCG.LCGRequirements','sets the full qualified class name for other specific LCG job requirements')
 
+config.addOption('DataRequirements','','sets the DataRequirements of the job')
+
+config.addOption('DataAccessProtocol', ['gsiftp'], 'sets the DataAccessProtocol')
+
 config.addOption('SandboxCache','Ganga.Lib.LCG.LCGSandboxCache','sets the full qualified class name for handling the oversized input sandbox')
 
 config.addOption('GliteBulkJobSize', 50, 'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
@@ -1948,6 +1952,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.36  2009/06/09 15:41:44  hclee
+# bugfix: https://savannah.cern.ch/bugs/?50589
+#
 # Revision 1.35  2009/06/05 12:23:15  hclee
 # bugfix for https://savannah.cern.ch/bugs/?51298
 #
