@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.36 2009-06-12 09:39:40 bsamset Exp $
+# $Id: NG.py,v 1.37 2009-06-24 09:09:53 bsamset Exp $
 ###############################################################################
 #
 # NG backend 
@@ -1531,6 +1531,13 @@ class NG(IBackend):
           for f in job.inputdata.names:
             infileList.append(f)                    
 
+      elif job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.accessprotocol =='GSIDCAP':
+          # Names should already be set to gsidcap://... 
+          arguments += [len(job.inputdata.names)]
+          
+          for i in range(len(job.inputdata.names)):
+              arguments += [job.inputdata.names[i]]
+              arguments += [job.inputdata.guids[i]]
 
       elif job.inputdata and job.inputdata._name == 'DQ2Dataset':
           # prepare the dataset namelist with tids - needed for check availability and paths
@@ -1797,6 +1804,10 @@ class NG(IBackend):
          xrslList.append( "(%s = %s)" % ( key, value ) )
       ## User requiremants   
       xrslList.append( self.requirements.convert() )
+
+      ## Setup for dcap access
+      if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.accessprotocol =='GSIDCAP':
+        xrslList.append("(%s = %s)" % ( "runtimeenvironment", "ENV/RUNTIME/PROXY" ) )
 
       ## Athena max events and other optiions must be specified through
       ## envrionment variables.
@@ -2258,6 +2269,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.36  2009/06/12 09:39:40  bsamset
+# Added functionality to use a user-speficied database release, as set in j.application.atlas_dbrelease. Same syntax as on lcg.
+#
 # Revision 1.35  2009/06/09 09:01:13  bsamset
 # Added proper backend treatment of raw input_sandbox and output_sandbox entries; fixed handling of the case where we get a master jid back but all subjobs have empty jid. Will happen e.g. when a site does not have the right release installed.
 #

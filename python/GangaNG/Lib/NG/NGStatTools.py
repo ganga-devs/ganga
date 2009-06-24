@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NGStatTools.py,v 1.1 2009-02-17 10:52:22 bsamset Exp $
+# $Id: NGStatTools.py,v 1.2 2009-06-24 09:09:53 bsamset Exp $
 ###############################################################################
 #
 # NGStatTools
@@ -224,4 +224,104 @@ def testNGStatTools(outputdir):
     print "%30s %30s" % ( "getdiag('CPUUsage')",getdiag(outputdir,"CPUUsage"))
     print "%30s %30s" % ( "getdiag('nodename')",getdiag(outputdir,"nodename"))
         
+
+def gatherstats(jobnum = "all"):
+    
+    d = dircache.listdir(".")
+    
+    of = open("HCStats_%s.log" % jobnum,"w")
+    
+    for job in d:
+        if len(job)>4:
+            continue
+
+        if jobnum!="all" and jobnum!=job:
+            continue
+        
+        s = "%10s %10s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %20s" % ("job","subjob","status","infiles","insize","outsize","walltime","kerneltime","usertime","cpuusage","insize/outsize","DLtime","ULtime", "nodename")
+        print s
+        of.write(s+"\n")
+        
+        sd = dircache.listdir(job)
+        for subjob in sd:
+            if subjob.strip()=='input':
+                continue
+            if subjob.strip()=='output':
+                continue
+            
+            
+            if not os.path.exists("%s/%s/output/gmlog" % (str(job),str(subjob))):
+                continue
+
+            outputdir = "%s/%s/output/" % (str(job),str(subjob))
+            
+            #print "%s %s" % (job, subjob)
+            
+            status = getstatus(outputdir)
+            ninfiles = getnfiles2(outputdir)
+            insize = getinputsize(outputdir)
+            outsize = getoutputsize(outputdir)
+            walltime = getdiag(outputdir,"WallTime")
+            kerneltime = getdiag(outputdir,"KernelTime")
+            usertime = getdiag(outputdir,"UserTime")
+            cpuusage = getdiag(outputdir,"CPUUsage")
+            node = getdiag(outputdir,"nodename")
+            #ce = getdiag(outputdir,"frontend_subject")[5:-1]
+            dltime = getDLtime(outputdir)
+            ultime = getULtime(outputdir)
+            
+            ioratio = 0.0
+            if float(insize)>0:
+                ioratio = float(outsize)/float(insize)
+                
+            s = "%10s %10s %15s %15s %15s %15s %15s %15s %15s %15s        %.6f %15s %15s %20s" % (job,subjob,status,ninfiles,insize,outsize,walltime,kerneltime,usertime,cpuusage,ioratio,dltime,ultime,node)
+            print s
+            of.write(s+"\n")
+            
+    of.close()
+                
+def stats2ntuple(jobnum = "all"):
+        
+    import ROOT
+    
+    f = open("HCStats_%s.log" % jobnum)
+    
+    nt = ROOT.TNtuple("fHCNT","HC NT","job:subjob:status:ninfiles:insize:outsize:walltime:kerneltime:usertime:cpuusage:dltime:ultime")
+    
+    for l in f.readlines():
+        ls = l.split()
+        if ls[0].strip()=='job':
+            continue
+        
+        for i in range(len(ls)):
+            ls[i] = str(ls[i])
+            ls[i] = ls[i].strip()
+            if ls[i] == "None":
+                ls[i] = "-1"
+            if ls[i].endswith("s"):
+                ls[i] = ls[i][:-1]
+            if ls[i].endswith("%"):
+                ls[i] = ls[i][:-1]
+        if ls[2]=='FINISHED':
+            ls[2] = "1"
+        else:
+            ls[2] = "0"
+                            
+        for i in range(13):
+            ls[i] = float(ls[i])
+                                
+        nt.Fill(ls[0],ls[1],ls[2],ls[3],ls[4],ls[5],ls[6],ls[7],ls[8],ls[9],ls[11],ls[12]);
+                                
+    f.close()
+                                
+    of = ROOT.TFile("HCSummary_%s.root" % jobnum,"RECREATE")
+    of.cd()
+    nt.Write()
+    of.Close()
+    
+                                                                                                                                                                            
+
 # $Log: not supported by cvs2svn $
+# Revision 1.1  2009/02/17 10:52:22  bsamset
+# Added NGStatTools
+#

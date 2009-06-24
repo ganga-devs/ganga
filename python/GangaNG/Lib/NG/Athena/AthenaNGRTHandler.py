@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.12 2009-06-12 09:39:40 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.13 2009-06-24 09:09:53 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -12,6 +12,8 @@
 
 import os, pwd, commands, re 
 import time
+
+import lfc
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -101,6 +103,37 @@ class AthenaNGRTHandler(IRuntimeHandler):
                         fs = f.split('/')
                         input_files.append(fs[-1])
                         input_guids.append("00000000-0000-0000-0000-000000000000") #No guids needed, just for input file parsing
+
+                elif job.inputdata._name == 'DQ2Dataset' and job.inputdata.accessprotocol =='GSIDCAP':
+                    if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
+                    #if not job.inputdata.names: raise Exception('No inputdata has been specified.')
+                    input_guids = job.inputdata.guids
+                    #input_files = job.inputdata.names
+
+                    # check and set env. variables for default LFC setup 
+                    if not os.environ.has_key('LFC_HOST'):
+                        try:
+                            os.environ['LFC_HOST'] = config['DefaultLFC']
+                        except Ganga.Utility.Config.ConfigError:
+                            os.environ['LFC_HOST'] = 'lfc1.ndgf.org'
+                            
+                    for guid in input_guids:
+
+                        #site = "srm.swegrid.se"
+                        site = job.backend.requirements.gsidcap
+                        sfn = get_dcap_path(guid,site)
+
+                        if sfn!="":
+                            input_files.append(sfn)
+                        else:
+                            print "Found no replica for guid "+guid+" at "+site+". Removing from inputs."
+                            input_guids.remove(guid)
+
+                    # Update job names to the gsidcap values
+                    job.inputdata.names = input_files
+                        
+                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD']:
+                        job.inputdata.type ='DQ2_LOCAL'
                     
                 elif job.inputdata._name == 'DQ2Dataset': 
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
@@ -127,6 +160,46 @@ class AthenaNGRTHandler(IRuntimeHandler):
                         fs = f.split('/')
                         input_files.append(fs[-1])
                         input_guids.append("00000000-0000-0000-0000-000000000000") #No guids needed, just for input file parsing
+
+                elif job.inputdata._name == 'DQ2Dataset' and job.inputdata.accessprotocol =='GSIDCAP':
+                                    
+                    contents = job.inputdata.get_contents()
+                    input_guids = [ guid for guid, lfn in contents ]
+
+                    # HACK! Mail Johannes about this...
+                    if job.splitter==None:
+                        #job.inputdata.names=[ lfn  for guid, lfn in contents ]
+                        job.inputdata.guids=input_guids
+                                                                        
+                    if job.inputdata.tagdataset:
+                        tag_contents = job.inputdata.get_tag_contents()
+                        input_tag_files = [ lfn  for guid, lfn in tag_contents ]
+                        input_tag_guids = [ guid for guid, lfn in tag_contents ] 
+
+                    # check and set env. variables for default LFC setup 
+                    if not os.environ.has_key('LFC_HOST'):
+                        try:
+                            os.environ['LFC_HOST'] = config['DefaultLFC']
+                        except Ganga.Utility.Config.ConfigError:
+                            os.environ['LFC_HOST'] = 'lfc1.ndgf.org'
+                            
+                    for guid in input_guids:
+
+                        site = "srm.swegrid.se"
+
+                        sfn = get_dcap_path(guid,site)
+
+                        if sfn!="":
+                            input_files.append(sfn)
+                        else:
+                            print "Found no replica for guid "+guid+" at "+site+". Removing from inputs."
+                            input_guids.remove(guid)
+
+                    job.inputdata.names = input_files
+                        
+                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD']:
+                        job.inputdata.type ='DQ2_LOCAL'
+
                     
                 elif job.inputdata._name == 'DQ2Dataset':
                     if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD']:
@@ -576,6 +649,50 @@ def register_dataset(datasetname,siteID):
         print 'Dataset already registered ', datasetname 
     return
 
+def get_dcap_path(guid, requiredhost=""):
+
+    # Assume that LFC_HOST has been set
+    
+    # Get the replicas 
+    l = lfc.lfc_getreplica("",guid,"")
+    replicas = l[1]
+    replica = -1
+
+    #for r in replicas:
+    #    print r.host
+
+    # Did we get anything?
+    if len(replicas)==0:
+        return ""
+
+    # Check if file exists at required host
+    if requiredhost!="":
+        for i in range(len(replicas)):
+            print replicas[i].host
+            if replicas[i].host==requiredhost:
+                replica = i
+                break
+    if replica<0:
+        return ""
+
+    # Pick out the srm path and host
+    sfn = replicas[replica].sfn
+
+    # Get the host
+    host = replicas[replica].host
+
+    # Turn the srm path into a gsidcap one
+    sfn = sfn.replace("srm://","gsidcap://")
+    if requiredhost=='srm.swegrid.se':
+        sfn = sfn.replace(host,"%s:22128/pnfs/swegrid.se/data" % host)
+    else:
+        sfn = sfn.replace(host,"%s:22128" % host)
+
+    print sfn
+    
+    return sfn
+
+
 def get_guids(input_files):
 
     input_guids = []
@@ -599,6 +716,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.12  2009/06/12 09:39:40  bsamset
+# Added functionality to use a user-speficied database release, as set in j.application.atlas_dbrelease. Same syntax as on lcg.
+#
 # Revision 1.11  2009/06/02 10:40:18  bsamset
 # Re-fixed a bug for treating ATLAS_PRODUCTION in rel. 14-series
 #

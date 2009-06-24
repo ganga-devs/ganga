@@ -219,11 +219,16 @@ cat - >input.py <<EOF
 ic = []
 if os.path.exists('input_files'):
     for lfn in file('input_files'):
-        name = os.path.basename(lfn.strip())
-        pfn = os.path.join(os.getcwd(),name)
-        if (os.path.exists(pfn)) and (os.stat(pfn).st_size>0):
-            print 'Input: %s' % name
-            ic.append('%s' % name)
+        if lfn.find("gsidcap://")>-1:
+          lfn = lfn.strip()
+          print 'gsidcap input: %s' % lfn
+          ic.append('%s' % lfn)
+        else:
+          name = os.path.basename(lfn.strip())
+          pfn = os.path.join(os.getcwd(),name)
+          if (os.path.exists(pfn)) and (os.stat(pfn).st_size>0):
+              print 'Input: %s' % name
+              ic.append('%s' % name)
     EventSelector.InputCollections = ic
     if os.environ.has_key('ATHENA_MAX_EVENTS'):
         theApp.EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
@@ -286,6 +291,12 @@ echo 'GROUP_AREA_REMOTE'
 echo $GROUP_AREA_REMOTE
 echo 'GROUP_AREA'
 echo $GROUP_AREA
+
+# Set up for dcap access (32bit is OK within athena for now)
+export LD_LIBRARY_PATH=$SITEROOT/sw/lcg/external/dcache_client/1.8.0/slc4_ia32_gcc34/dcap/lib/:$LD_LIBRARY_PATH
+#export LD_PRELOAD=$SITEROOT/sw/lcg/external/dcache_client/1.8.0p1/slc4_ia32_gcc34/dcap/lib/libpdcap.so
+export LD_PRELOAD_32=$SITEROOT/sw/lcg/external/dcache_client/1.8.0/slc4_ia32_gcc34/dcap/lib/libpdcap.so
+export DCACHE_IO_TUNNEL=$SITEROOT/sw/lcg/external/dcache_client/1.8.0/slc4_ia32_gcc34/dcap/lib/libgsiTunnel.so
 
 #if [ ! -z $OUTPUT_JOBID ] && [ -e ganga-joboption-parse.py ] && [ -e output_files ]
 #    then
