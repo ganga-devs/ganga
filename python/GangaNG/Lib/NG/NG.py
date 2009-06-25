@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.37 2009-06-24 09:09:53 bsamset Exp $
+# $Id: NG.py,v 1.38 2009-06-25 10:10:04 bsamset Exp $
 ###############################################################################
 #
 # NG backend 
@@ -868,6 +868,31 @@ class Grid:
             self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return False
 
+    def bulkcancel(self,killids):
+        '''Cancel a job'''
+        # remove -k, info sustem is not updated before cleanup
+        cmd = 'ngkill '
+        
+        if not self.active:
+            logger.warning('NG plugin is not active.')
+            return False
+
+        if not self.credential.isValid():
+            logger.warning('GRID proxy not valid. Use gridProxy.renew() to renew it.')
+            return False
+          
+        idsfile = tempfile.mktemp('.jids')
+        file(idsfile,'w').write('\n'.join(killids)+'\n')
+        rc, output, m = self.shell.cmd1('%s%s -i %s' % (self.__get_cmd_prefix_hack__(),cmd,idsfile), allowed_exit=[0,255])
+        os.unlink(idsfile)
+
+        if rc == 0:
+            return True
+        else:
+            logger.warning( "Failed to cancel job.\n%s" % ( jobid, output ) )
+            self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
+            return False
+
     def clean(self,jobid):
         '''Clean a job from site a job'''
         # remove -k, info sustem is not updated before cleanup
@@ -1441,6 +1466,51 @@ class NG(IBackend):
 
         return not self.id is None
 
+    def master_kill(self):
+        """ Kill a job and all its subjobs. Return 1 in case of success.
+        
+        The default implementation uses the kill() method and emulates
+        the bulk  operation on all subjobs.  It tries to  kill as many
+        subjobs  as  possible even  if  there  are  failures.  If  the
+        operation is incomplete then raise IncompleteKillError().
+        """
+        
+        job = self.getJobObject()
+
+        r = True
+
+        mt = self.middleware.upper()
+        if not config['%s_ENABLE' % mt]:
+            logger.warning('Operations of %s middleware are disabled.' % mt)
+            return False
+                                
+        killids = []
+        
+        if len(job.subjobs):
+            for s in job.subjobs:
+                if s.status in ['submitted','running']:
+                    killids.append(s.backend.id)
+        else:
+            killids.append(job.backend.id)
+
+        #r = job.backend.kill(killids)
+        r = grids[self.middleware.upper()].bulkcancel(killids)
+
+        if not r:
+          from Ganga.Core import IncompleteKillError
+          raise IncompleteKillError('Some (sub)jobs were not killed. Try killing each subjob individually.')
+
+        if len(job.subjobs):
+            for s in job.subjobs:
+                if s.backend.id in killids:
+                    s.updateStatus('killed')
+        else:
+            job.updateStatus('killed')
+
+        return r
+    
+
+
     def kill(self):
         '''Kill the job'''
 
@@ -1458,7 +1528,18 @@ class NG(IBackend):
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return False
 
-        return grids[self.middleware.upper()].cancel(self.id)
+        killids = []
+        if len(job.subjobs)>0:
+            for sj in job.subjobs:
+                killids.append(sj.backend.id)
+                logger.info('Killing subjob %s' % sj.getFQID('.'))
+        else:
+            killids.append(self.id)
+
+        print killids
+
+        #return grids[self.middleware.upper()].cancel(self.id)
+        return grids[self.middleware.upper()].bulkcancel(killids)
 
 
     def preparejob(self,jobconfig=None,master_input_sandbox=[],subjob=False,group_area=None):
@@ -2269,6 +2350,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.37  2009/06/24 09:09:53  bsamset
+# Added direct gsidcap access functionality
+#
 # Revision 1.36  2009/06/12 09:39:40  bsamset
 # Added functionality to use a user-speficied database release, as set in j.application.atlas_dbrelease. Same syntax as on lcg.
 #
