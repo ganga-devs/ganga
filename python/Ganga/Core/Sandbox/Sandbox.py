@@ -1,4 +1,5 @@
-import os 
+import os
+import sys
 import shutil
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=True)
@@ -148,14 +149,14 @@ def getPackedOutputSandbox(src_dir,dest_dir):
         tgzfile = os.path.join(src_dir,OUTPUT_TARBALL_NAME)
         if os.access(tgzfile,os.F_OK):
 
-#
-##      Curent release with os module 
-#                           
-#                       os.system("tar -C %s -xzf %s"%(dest_dir,tgzfile))
-                
-#
-##      Future release with tarball module 
-#
+            # workaround for broken tarfile module (2.4) which does
+            # not open certain tarfiles
+            # see: http://bugs.python.org/issue4218
+            if sys.hexversion < sys.hexversion < 0x020002F0:
+                if os.system("tar -C %s -xzf %s"%(dest_dir,tgzfile)):
+                    logger.warning("Problem with extracting sandbox file %s to %s. This is os.system() workaround for python < 2.5.",tgzfile,dest_dir)
+                return
+
             import tarfile
 
             try:
