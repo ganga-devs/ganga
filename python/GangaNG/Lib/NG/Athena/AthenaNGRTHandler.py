@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.13 2009-06-24 09:09:53 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.14 2009-06-25 09:05:36 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -369,7 +369,7 @@ class AthenaNGRTHandler(IRuntimeHandler):
             elif job.outputdata and not job.outputdata.outputdata:
                 raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
             
-        exe = os.path.join(os.path.dirname(__file__),'athena-ng-wrapper.sh')
+        exe = os.path.join(os.path.dirname(__file__),'wrapper-athena-ng.sh')
         inputbox.append(File(os.path.join(os.path.dirname(__file__),'athena-ng.sh')))
         #_append_file_buffer(inputbox,'athena-ng.sh',[os.path.join(os.path.dirname(__file__),'athena-ng.sh')])
         outputbox = jobmasterconfig.outputbox
@@ -577,7 +577,7 @@ class AthenaNGRTHandler(IRuntimeHandler):
         #    inputdata = [ 'lfn:%s' % lfn for lfn in input_files ]
         
 #       jobscript
-        exe = os.path.join(os.path.dirname(__file__),'athena-ng-wrapper.sh')
+        exe = os.path.join(os.path.dirname(__file__),'wrapper-athena-ng.sh')
         #print '%%% This is exe ', exe
 
 #       output sandbox
@@ -716,6 +716,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.13  2009/06/24 09:09:53  bsamset
+# Added direct gsidcap access functionality
+#
 # Revision 1.12  2009/06/12 09:39:40  bsamset
 # Added functionality to use a user-speficied database release, as set in j.application.atlas_dbrelease. Same syntax as on lcg.
 #
