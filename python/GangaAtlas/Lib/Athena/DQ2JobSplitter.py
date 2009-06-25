@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.36 2009-06-05 12:59:06 dvanders Exp $
+# $Id: DQ2JobSplitter.py,v 1.37 2009-06-25 08:14:49 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -301,4 +301,4 @@ config = getConfig('Athena')
 config.addOption('MaxJobsDQ2JobSplitter', 1000, 'Maximum number of allowed subjobs of DQ2JobSplitter')
 config.addOption('MaxFileSizeNGDQ2JobSplitter', 5000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the NG backend (im MB)')
 config.addOption('MaxFileSizePandaDQ2JobSplitter', 10000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (im MB)')
-config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_MCDISK', 'NDGF-T1_PRODDISK', 'NDGF-T1_USERDISK' ], 'Allowed space tokens/sites for DQ2JobSplitter on NG backend' )
+config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_MCDISK', 'NDGF-T1_PRODDISK', 'NDGF-T1_SCRATCHDISK' ], 'Allowed space tokens/sites for DQ2JobSplitter on NG backend' )
