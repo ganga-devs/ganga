@@ -1,5 +1,6 @@
 #! /bin/sh -x
 
+
 if [ -z $ATHENA_STDOUT ]
 then
     export ATHENA_STDOUT='stdout.txt'
