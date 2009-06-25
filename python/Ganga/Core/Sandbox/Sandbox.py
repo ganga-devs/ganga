@@ -152,7 +152,7 @@ def getPackedOutputSandbox(src_dir,dest_dir):
             # workaround for broken tarfile module (2.4) which does
             # not open certain tarfiles
             # see: http://bugs.python.org/issue4218
-            if sys.hexversion < sys.hexversion < 0x020002F0:
+            if sys.hexversion < 0x020500F0:
                 if os.system("tar -C %s -xzf %s"%(dest_dir,tgzfile)):
                     logger.warning("Problem with extracting sandbox file %s to %s. This is os.system() workaround for python < 2.5.",tgzfile,dest_dir)
                 return
