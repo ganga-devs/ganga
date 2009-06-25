@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: __init__.py,v 1.6 2009-06-09 10:45:55 moscicki Exp $
+# $Id: __init__.py,v 1.7 2009-06-25 13:30:00 moscicki Exp $
 ################################################################################
 
 #
@@ -139,7 +139,10 @@ def _make_file_handler(logfile,logfile_size):
             file_handler.close()
             # this is required to properly remove the file handler from the logging system
             # otherwise I/O Error at shutdown
-            del logging._handlers[file_handler] #WARNING: this relies on the implementation details of the logging module
+            try:
+                del logging._handlers[file_handler] #WARNING: this relies on the implementation details of the logging module
+            except KeyError:
+                pass # don't complain if the handler was correctly unregistered by the logging system
         
         new_file_handler.setFormatter(logging.Formatter(_formats['VERBOSE']))
         main_logger.addHandler(new_file_handler)
