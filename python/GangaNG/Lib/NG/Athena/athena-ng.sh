@@ -293,10 +293,22 @@ echo 'GROUP_AREA'
 echo $GROUP_AREA
 
 # Set up for dcap access (32bit is OK within athena for now)
-export LD_LIBRARY_PATH=$SITEROOT/sw/lcg/external/dcache_client/1.8.0/slc4_ia32_gcc34/dcap/lib/:$LD_LIBRARY_PATH
-#export LD_PRELOAD=$SITEROOT/sw/lcg/external/dcache_client/1.8.0p1/slc4_ia32_gcc34/dcap/lib/libpdcap.so
-export LD_PRELOAD_32=$SITEROOT/sw/lcg/external/dcache_client/1.8.0/slc4_ia32_gcc34/dcap/lib/libpdcap.so
-export DCACHE_IO_TUNNEL=$SITEROOT/sw/lcg/external/dcache_client/1.8.0/slc4_ia32_gcc34/dcap/lib/libgsiTunnel.so
+# Note the '*' - we assume there's only one dcache version in athena, but it does change with the release...
+export DCAP_PATH=$SITEROOT/sw/lcg/external/dcache_client/$(ls $SITEROOT/sw/lcg/external/dcache_client)/slc4_ia32_gcc34/dcap/lib/
+export LD_LIBRARY_PATH=$DCAP_PATH:$LD_LIBRARY_PATH
+export LD_PRELOAD=$SITEROOT/sw/lcg/external/dcache_client/*/slc4_ia32_gcc34/dcap/lib/libpdcap.so
+export LD_PRELOAD_32=$SITEROOT/sw/lcg/external/dcache_client/*/slc4_ia32_gcc34/dcap/lib/libpdcap.so
+export DCACHE_IO_TUNNEL=$SITEROOT/sw/lcg/external/dcache_client/*/slc4_ia32_gcc34/dcap/lib/libgsiTunnel.so
+
+echo 'LD_LIBRARY_PATH'
+echo $LD_LIBRARY_PATH
+echo 'LD_PRELOAD'
+echo $LD_PRELOAD
+echo 'LD_PRELOAD_32'
+echo $LD_PRELOAD_32
+echo 'DCACHE_IO_TUNNEL'
+echo $DCACHE_IO_TUNNEL
+
 
 #if [ ! -z $OUTPUT_JOBID ] && [ -e ganga-joboption-parse.py ] && [ -e output_files ]
 #    then

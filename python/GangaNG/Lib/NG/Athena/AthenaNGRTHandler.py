@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.14 2009-06-25 09:05:36 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.15 2009-06-25 13:04:37 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -129,6 +129,10 @@ class AthenaNGRTHandler(IRuntimeHandler):
                             print "Found no replica for guid "+guid+" at "+site+". Removing from inputs."
                             input_guids.remove(guid)
 
+                    # Were all inputs removed?
+                    if len(input_guids)==0:
+                        raise ApplicationConfigurationError(None,'No inputs found for job %s at site %s.' % (job.getFQID('.'),site))
+
                     # Update job names to the gsidcap values
                     job.inputdata.names = input_files
                         
@@ -185,8 +189,8 @@ class AthenaNGRTHandler(IRuntimeHandler):
                             
                     for guid in input_guids:
 
-                        site = "srm.swegrid.se"
-
+                        #site = "srm.swegrid.se"
+                        site = job.backend.requirements.gsidcap
                         sfn = get_dcap_path(guid,site)
 
                         if sfn!="":
@@ -194,6 +198,10 @@ class AthenaNGRTHandler(IRuntimeHandler):
                         else:
                             print "Found no replica for guid "+guid+" at "+site+". Removing from inputs."
                             input_guids.remove(guid)
+
+                    # Were all inputs removed?
+                    if len(input_guids)==0:
+                        raise ApplicationConfigurationError(None,'No inputs found for job %s at site %s.' % (job.getFQID('.'),site))
 
                     job.inputdata.names = input_files
                         
@@ -260,17 +268,19 @@ class AthenaNGRTHandler(IRuntimeHandler):
                 jobid = "%d" % (job._getRoot().id)
             else:
                 jobid = "%d" % job.id
-            
+
+            username = job.backend.getidentity(True)
+
             # Extract username from certificate 
-            username=""
+            #username=""
             # ARC not working 
             # proxy = GridProxy(job.backend.middleware.upper())
-            proxyNG = GridProxy('ARC')
+            #proxyNG = GridProxy('ARC')
             #print 'AthenaNGRTHandler calling proxy.info '
             #useridARC = proxyNG.info(opt="-identity")
             #print 'AthenaNGRTHandler usridARC ', useridARC
             #proxy = GridProxy()
-            username = proxyNG.identity()
+            #username = proxyNG.identity()
             #print 'AthenaNGRTHandler username ', username
 
             """
@@ -668,7 +678,7 @@ def get_dcap_path(guid, requiredhost=""):
     # Check if file exists at required host
     if requiredhost!="":
         for i in range(len(replicas)):
-            print replicas[i].host
+            #print replicas[i].host
             if replicas[i].host==requiredhost:
                 replica = i
                 break
@@ -688,7 +698,7 @@ def get_dcap_path(guid, requiredhost=""):
     else:
         sfn = sfn.replace(host,"%s:22128" % host)
 
-    print sfn
+    #print sfn
     
     return sfn
 
@@ -716,6 +726,9 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.14  2009/06/25 09:05:36  bsamset
+# Changed to using wrapper-athena-ng.sh
+#
 # Revision 1.13  2009/06/24 09:09:53  bsamset
 # Added direct gsidcap access functionality
 #

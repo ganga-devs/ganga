@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.38 2009-06-25 10:10:04 bsamset Exp $
+# $Id: NG.py,v 1.39 2009-06-25 13:04:36 bsamset Exp $
 ###############################################################################
 #
 # NG backend 
@@ -991,7 +991,7 @@ class NG(IBackend):
 
     _category = 'backends'
     _name =  'NG'
-    _exportmethods = ['check_proxy','peek','update_crls','setup','printstats','resume','ngclean']
+    _exportmethods = ['check_proxy','peek','update_crls','setup','printstats','resume','ngclean','getidentity']
     
     def __init__(self):
         super(NG,self).__init__()
@@ -2208,6 +2208,36 @@ class NG(IBackend):
         outputdir = self.getJobObject().outputdir
         testNGStatTools(outputdir)
     
+    def getidentity(self, safe = False):
+        # Get the identity from the current proxy
+        # Needs special implementation because of the prefix hack...
+
+        # Fallback
+        cn = os.path.basename( os.path.expanduser( "~" ) )
+
+        # Get info from proxy
+        grid = grids['ARC']
+        cmd = 'voms-proxy-info -identity -dont-verify-ac'
+        rc, output, m = grid.shell.cmd1('%s%s' % (grid.__get_cmd_prefix_hack__(),cmd),allowed_exit=[0,500],capture_stderr=True)
+        
+        idlist = output.split("/")
+        idlist.reverse()
+
+        for subjectElement in idlist:
+          element = subjectElement.strip()
+          try:
+            cn = element.split( "CN=" )[ 1 ].strip()
+            if cn != "proxy":
+              break
+          except IndexError:
+            pass
+                                                                      
+        id = "".join( cn.split() )
+        if safe:
+          id = re.sub( "[^a-zA-Z0-9]", "" ,id )
+               
+        return id
+                                            
 
 class NGJobConfig(StandardJobConfig):
     '''Extends the standard Job Configuration with additional attributes'''
@@ -2350,6 +2380,9 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.38  2009/06/25 10:10:04  bsamset
+# Changed kill command to do bulk kill of subjobs
+#
 # Revision 1.37  2009/06/24 09:09:53  bsamset
 # Added direct gsidcap access functionality
 #
