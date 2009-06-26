@@ -4,7 +4,7 @@
 ganga/LICENSE_GPL                                                      Ganga-LICENSE-20-0
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Base-23-8
+ganga/python/Ganga                                                     Ganga-Base-23-9
 
 #alexander
 ganga/python/Ganga/Core/JobRepository                                  Ganga-JobRepository-20-2
@@ -13,7 +13,7 @@ ganga/python/Ganga/Core/JobRepository                                  Ganga-Job
 ganga/python/Ganga/Core/MonitoringComponent                            Ganga-MonitoringComponent-20-1
 
 #vladimir
-ganga/python/Ganga/Core/Sandbox                                        Ganga-Sandbox-20-0
+ganga/python/Ganga/Core/Sandbox                                        Ganga-Sandbox-20-1
 
 #karl
 ganga/python/Ganga/GPIDev/Credentials                                  Ganga-Credentials-20-6
@@ -62,7 +62,7 @@ ganga/python/Ganga/Utility/external/ARDAMDClient                       Ganga-ARD
 ganga/python/Ganga/scripts                                             Ganga-scripts-20-00
 
 #johannes/dan/mark
-ganga/python/GangaAtlas                                                GangaAtlas-21-10
+ganga/python/GangaAtlas                                                GangaAtlas-21-11
 
 #rod
 ganga/python/GangaCronus                                               GangaCronus-20-0
@@ -74,10 +74,10 @@ ganga/python/GangaGUI                                                  GangaGUI-
 ganga/python/GangaGUI/LHCB_BKDB_browser                                GangaGUI-LHCB_BKDB_browser-20-0
 
 #will/ulrik
-ganga/python/GangaLHCb                                                 GangaLHCb-21-01
+ganga/python/GangaLHCb                                                 GangaLHCb-21-02
 
 #pajchel/bsamset
-ganga/python/GangaNG                                                   GangaNG-20-26
+ganga/python/GangaNG                                                   GangaNG-20-27
 
 #dan/johannes
 ganga/python/GangaPanda                                                GangaPanda-21-8
