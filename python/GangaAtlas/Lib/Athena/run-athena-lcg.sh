@@ -278,7 +278,38 @@ then
 		break
 	    else
 		echo 'ERROR: dq2-get of DBRELEASE failed !'
-		echo '1'>retcode.tmp
+		echo 'Retry with changed environment'
+		LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+		PATH_BACKUP=$PATH
+		PYTHONPATH_BACKUP=$PYTHONPATH
+		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+		export PATH=$PATH_ORIG
+		export PYTHONPATH=$PYTHONPATH_ORIG
+		if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+		    then
+		    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+		fi
+		dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
+		if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]
+		    then
+		    mv $ATLAS_DBRELEASE/* .
+		    echo successfully retrieved $ATLAS_DBFILE
+		    tar xzf $ATLAS_DBFILE
+		    cd DBRelease/current/
+		    python setup.py | grep = | sed -e 's/^/export /' > dbsetup.sh
+		    source dbsetup.sh
+		    cd ../../
+		    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+		    export PATH=$PATH_BACKUP
+		    export PYTHONPATH=$PYTHONPATH_BACKUP
+		    break
+		else
+		    echo 'ERROR: dq2-get of $ATLAS_DBRELEASE failed !'
+		    echo '1'>retcode.tmp
+		fi 
+		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+		export PATH=$PATH_BACKUP
+		export PYTHONPATH=$PYTHONPATH_BACKUP
 	    fi
 	done
     else
@@ -434,7 +465,29 @@ EOF
 		break
 	    else
 		echo 'ERROR: dq2-get of $DBDATASETNAME failed !'
-		echo '1'>retcode.tmp
+		echo 'Retry with changed environment'
+		LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+		PATH_BACKUP=$PATH
+		PYTHONPATH_BACKUP=$PYTHONPATH
+		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+		export PATH=$PATH_ORIG
+		export PYTHONPATH=$PYTHONPATH_ORIG
+		if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+		    then
+		    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+		fi
+		dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
+		if [ -e $DBDATASETNAME/$DBFILENAME ]
+		    then
+		    mv $DBDATASETNAME/* .
+		    echo successfully retrieved $DBFILENAME
+		else
+		    echo 'ERROR: dq2-get of $DBDATASETNAME failed !'
+		    echo '1'>retcode.tmp
+		fi 
+		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+		export PATH=$PATH_BACKUP
+		export PYTHONPATH=$PYTHONPATH_BACKUP
 	    fi
             # Set DQ2_LOCAL_SITE_ID to dataset location
 	    if [ -e dq2localid.txt ]
@@ -481,7 +534,35 @@ EOF
 		    break
 		else
 		    echo 'ERROR: dq2-get of inputfile failed !'
-		    echo '1'>retcode.tmp
+		    echo 'Retry with changed environment'
+		    LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+		    PATH_BACKUP=$PATH
+		    PYTHONPATH_BACKUP=$PYTHONPATH
+		    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+		    export PATH=$PATH_ORIG
+		    export PYTHONPATH=$PYTHONPATH_ORIG
+		    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+			then
+			source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+		    fi
+		    dq2-get --client-id=ganga -d --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
+
+		    if [ -e $DATASETNAME/$file ]
+			then
+			mv $DATASETNAME/* .
+			echo $file > input.txt
+			echo successfully retrieved $file
+			export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+			export PATH=$PATH_BACKUP
+			export PYTHONPATH=$PYTHONPATH_BACKUP
+			break
+		    else
+			echo 'ERROR: dq2-get of inputfile failed !'
+			echo '1'>retcode.tmp
+		    fi 
+		    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+		    export PATH=$PATH_BACKUP
+		    export PYTHONPATH=$PYTHONPATH_BACKUP
 		fi
 	    done
 	else
