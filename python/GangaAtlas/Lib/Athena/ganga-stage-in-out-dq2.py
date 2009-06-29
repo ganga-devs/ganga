@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.46 2009-06-29 12:34:50 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.47 2009-06-29 18:44:05 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -423,7 +423,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                 pfn = "rfio:" + pfn
         elif ( configLOCALPROTOCOL == "rfio" and \
                ( configSTORAGEROOT == '/dpm' or sURLHost == 'castorsc.grid.sinica.edu.tw')) \
-               or ( configLOCALPROTOCOL == "file" and ('storm-fe.cr.cnaf.infn.it' in defaultSE or 'se03.esc.qmul.ac.uk' in defaultSE)):
+               or ( configLOCALPROTOCOL == "file" and ('storm-fe.cr.cnaf.infn.it' in defaultSE)):
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
             cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
@@ -1270,7 +1270,7 @@ if __name__ == '__main__':
                 configLOCALPREFIX = 'rfio:'
             # CNAF uses StoRM, needs extra treatment
             # IFIC, LIP-LISBON use lustre
-            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1') or localsiteid.startswith('IFIC') or localsiteid.startswith('LIP-LISBON') or localsiteid.startswith('UKI-LT2-QMUL'):
+            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1') or localsiteid.startswith('IFIC') or localsiteid.startswith('LIP-LISBON'):
                 configLOCALPROTOCOL = 'file'
                 configSTORAGEROOT = '/storage'
                 configLOCALPREFIX = 'file:'
