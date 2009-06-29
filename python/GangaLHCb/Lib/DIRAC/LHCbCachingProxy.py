@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys
+import os, sys, tempfile, inspect
 
 class __ProxyFile(object):
     """A marker class for inspect to use"""
@@ -202,6 +202,16 @@ class DiracProxy(object):
                 result = 1
             return result
         
+        def findProxyFile():
+            """Trys to guess what the proxy file is called."""
+            proxy_file = os.environ.get('X509_USER_PROXY',None)
+            if proxy_file is None:
+                tmp_dir = tempfile.gettempdir()
+                file_name = 'x509up_u%i' % os.getuid()
+                proxy_file = os.path.join(tmp_dir,file_name)
+            return proxy_file
+                
+        
         def printProxyInfo(output, time_left = None, age = None):
             
             if time_left is None: 
@@ -225,6 +235,39 @@ class DiracProxy(object):
                         print '%s: '.join(tokens) % (' ' * (13 - len(tokens[0])))
             print 'Cache age    : %s' % toTimeString(age)
             print ''
+        
+        def checkProxyAge(proxy_file, cache_file):
+            
+            import stat
+            result = False
+            if os.path.exists(proxy_file) and os.path.exists(cache_file):
+                
+                mtime_proxy = os.stat(proxy_file)[stat.ST_MTIME]
+                mtime_cache = os.stat(cache_file)[stat.ST_MTIME]
+                
+                #proxy is older than the cache
+                if mtime_proxy < mtime_cache:
+                    result = True
+
+            return result
+        
+        def checkEnvironment(self):
+            #check that the value of X509_USER_PROXY has not changed
+            if self.store and self.store.has_key('ENV'):
+                env = self.store.get('ENV',{})
+                self.debugMsg("Comparing '%s' and '%s'" % (env.get('X509_USER_PROXY',''),os.environ.get('X509_USER_PROXY','')))
+                if env.get('X509_USER_PROXY','') != os.environ.get('X509_USER_PROXY',''):
+                    self.readCache(True) #refresh the environment
+
+        
+        self.debugMsg("The expected proxy location is '%s'" % findProxyFile())
+        checkEnvironment(self) #check the proxy is synched with the environment
+        
+        #check the age of the proxy
+        if not checkProxyAge(findProxyFile(),self.cache_file):
+            self.debugMsg("The proxy is newer than the cache, so clearing cache.")
+            #clear the output cache
+            del self.store['INFO']
         
         #always invalidate the cache after 10 minutes
         diff = (time.time() - self.store['TIME'])
