@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.34 2009-06-04 10:19:46 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.35 2009-06-29 13:47:15 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1265,7 +1265,7 @@ except KeyError:
     config.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
 
 
-config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK'] , 'Allowed space tokens names of DQ2OutputDataset output' )
+config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK', 'T2ATLASSCRATCHDISK', 'T2ATLASLOCALGROUPDISK' ] , 'Allowed space tokens names of DQ2OutputDataset output' )
 
 config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_SCRATCHDISK', 'CERN-PROD_USERTAPE', 'FZK-LCG2_SCRATCHDISK', 'IN2P3-CC_SCRATCHDISK', 'TRIUMF-LCG2_SCRATCHDISK', 'IFAE_SCRATCHDISK', 'NIKHEF-ELPROD_SCRATCHDISK' ], 'Default backup locations of DQ2OutputDataset output' )
 
@@ -1279,6 +1279,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.34  2009/06/04 10:19:46  elmsheus
+#Add exception for listMetaReplica
+#
 #Revision 1.33  2009/06/04 10:04:55  elmsheus
 #Aquire locks for dq2 calls in dq2_list_locations_siteindex
 #
