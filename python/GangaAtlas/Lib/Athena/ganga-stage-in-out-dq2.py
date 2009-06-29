@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.47 2009-06-29 18:44:05 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.48 2009-06-29 19:55:19 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -423,7 +423,8 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                 pfn = "rfio:" + pfn
         elif ( configLOCALPROTOCOL == "rfio" and \
                ( configSTORAGEROOT == '/dpm' or sURLHost == 'castorsc.grid.sinica.edu.tw')) \
-               or ( configLOCALPROTOCOL == "file" and ('storm-fe.cr.cnaf.infn.it' in defaultSE)):
+               or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE) \
+               or ( configLOCALPROTOCOL == "file" and 'se03.esc.qmul.ac.uk' in defaultSE):
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
             cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
@@ -1130,7 +1131,7 @@ if __name__ == '__main__':
         # TODO: avoiding  getAggName() is just a workaround; should be tuned
         if datasettype not in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD']:
             if not localsiteid.startswith('NIKHEF'):
-                localsiteid = getAggName(localsiteid)
+                #localsiteid = getAggName(localsiteid)
                 if not detsetype:
                     print 'localsiteid after getAggName(): %s' % localsiteid
 
