@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.44 2009-06-29 09:58:39 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.45 2009-06-29 10:29:49 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -423,7 +423,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                 pfn = "rfio:" + pfn
         elif ( configLOCALPROTOCOL == "rfio" and \
                ( configSTORAGEROOT == '/dpm' or sURLHost == 'castorsc.grid.sinica.edu.tw')) \
-               or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE):
+               or ( configLOCALPROTOCOL == "file" and ('storm-fe.cr.cnaf.infn.it' in defaultSE or 'se03.esc.qmul.ac.uk' in defaultSE):
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
             cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
