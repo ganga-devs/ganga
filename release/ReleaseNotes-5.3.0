@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.3.0 (2009/6/26)
+5.3.0 (2009/6/29)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -34,7 +34,10 @@ Athena:
   - Added 'recex_type' variable to Athena class to specify RDO,
     ESD or AOD input
   - PoolxxxInput prepended to Athena command line
-
+* ganga-stage-in-out-dq2.py: 
+  - Fix file access mode and add QMUL
+  - Add T2ATLASSCRATCHDISK in stage-out algorithm
+* Add protections for bad environment around dq2-get calls
 
 AthenaMC:
 ---------
