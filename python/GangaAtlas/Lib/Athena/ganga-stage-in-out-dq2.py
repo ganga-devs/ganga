@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.42 2009-06-22 14:36:19 mslater Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.43 2009-06-29 08:07:26 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1242,6 +1242,10 @@ if __name__ == '__main__':
                     configLOCALPROTOCOL = 'dcap'
                     configSTORAGEROOT = '/pnfs'
                     configLOCALPREFIX = 'dcap:'
+                elif 'file' in prot:
+                    configLOCALPROTOCOL = 'file'
+                    configSTORAGEROOT = '/storage'
+                    configLOCALPREFIX = 'file:'
                 else:
                     configLOCALPROTOCOL = ''
                     configSTORAGEROOT = '/'
@@ -1266,7 +1270,7 @@ if __name__ == '__main__':
                 configLOCALPREFIX = 'rfio:'
             # CNAF uses StoRM, needs extra treatment
             # IFIC, LIP-LISBON use lustre
-            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1') or localsiteid.startswith('IFIC') or localsiteid.startswith('LIP-LISBON'):
+            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1') or localsiteid.startswith('IFIC') or localsiteid.startswith('LIP-LISBON') or localsiteid.startswith('UKI-LT2-QMUL'):
                 configLOCALPROTOCOL = 'file'
                 configSTORAGEROOT = '/storage'
                 configLOCALPREFIX = 'file:'
