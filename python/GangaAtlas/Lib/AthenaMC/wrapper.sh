@@ -74,8 +74,6 @@ echo "OUTPUT FILES: $OUTPUTFILES"
 
 # Working directory
 T_HOMEDIR=${PWD}
-#T_TMPDIR=${PWD}/atlas.tmp$$
-#mkdir -p ${T_TMPDIR}
 
 if [ ! -z $TRANSFORM_ARCHIVE ] ; then
     echo "Fetching transform archive $TRANSFORM_ARCHIVE..."
@@ -122,19 +120,12 @@ if [ ! -z "$DRYRUN" ]; then
    exit 0
 fi
 
-# stage-in input data (use dq2-get, not dependant upon athena setup, but potentially screwed up by it. So we moved it before the athena set up.)
-echo "## source $T_HOMEDIR/stage-in.sh"
 
-source $T_HOMEDIR/stage-in.sh
-status=$?
-echo "Listing input data"
-ls -l
-if [ $status -ne 0 ];then
-echo "Error in stage-in, aborting"
-exit $status
-fi
-
-
+echo "test python #1"
+which python
+which python32
+python -V
+python32 -V
 
 # 13.0.30 turnaround: saving local LCG setup as 13.0.30 breaks LCg tools with useless, obsolete stuff shipped in.
 export LD_LIBRARY_PATH_SAVE=$LD_LIBRARY_PATH
@@ -145,8 +136,44 @@ export PYTHONPATH_SAVE=$PYTHONPATH
 # set up the release
 echo "## source $T_HOMEDIR/setup-release.sh"
 source $T_HOMEDIR/setup-release.sh
+
+echo "test python #2"
+which python
+which python32
+python -V
+python32 -V
 printenv
-pwd
+
+export LD_LIBRARY_PATH_SAVE2=$LD_LIBRARY_PATH
+export PATH_SAVE2=$PATH
+export PYTHONPATH_SAVE2=$PYTHONPATH
+# restore LCG presetup (needed by DQ2 tools!)
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_SAVE
+export PATH=$PATH_SAVE
+export PYTHONPATH=$PYTHONPATH_SAVE
+# stage-in input data 
+echo "## source $T_HOMEDIR/stage-in.sh"
+source $T_HOMEDIR/stage-in.sh
+status=$?
+echo "Listing input data"
+ls -l
+if [ $status -ne 0 ];then
+echo "Error in stage-in, aborting"
+exit $status
+fi
+
+# restore athena setup. 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_SAVE2
+export PATH=$PATH_SAVE2
+export PYTHONPATH=$PYTHONPATH_SAVE2
+echo "test python #4"
+which python
+which python32
+python -V
+python32 -V
+echo $PYTHONPATH
+echo $PATH
+echo $LD_LIBRARY_PATH
 
 echo
 /usr/bin/env date

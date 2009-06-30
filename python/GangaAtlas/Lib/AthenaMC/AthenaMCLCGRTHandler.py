@@ -113,12 +113,15 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         # setting output site from input data if any.
         outsite,backup,outputlocation,backuplocation="","","",""
         logger.info("checking sites from input data: %s" % str(app.sites))
+
+        # must distinguish running site (backend.requirements.sites) and output storage site (app.se_name)
+        
         # matching with user's wishes (app.se_name or backend.requirements.sites)
         usersites=[]
         if len(job.backend.requirements.sites)>0:
             usersites=job.backend.requirements.sites
-        elif job.application.se_name and job.application.se_name != "none":
-            usersites=job.application.se_name.split(" ")
+##        elif job.application.se_name and job.application.se_name != "none":
+##            usersites=job.application.se_name.split(" ")
         logger.info("user selection: %s" % str(usersites))
             
         # select sites which are matching user's wishes, if any.
@@ -136,10 +139,32 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,"Could not find a match between input dataset locations: %s and your requested sites: %s. Please use a space token compatible with one of the input dataset locations (replace _XXXDISK or _XXXTAPE by _LOCALGROUPDISK or _SCRATCHDISK if necessary)" % (str(app.sites),str(usersites)))
             logger.warning("Failed to obtain processing site from input data, will use default value: CERN-PROD_SCRATCHDISK and submit production to CERN")
             selectedSites.append("CERN-PROD_SCRATCHDISK")
- 
+
+
         [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(selectedSites[0])
         if len(selectedSites)>1:
             [outlfc2,backup,backuplocation]=job.outputdata.getDQ2Locations(selectedSites[1])
+
+        # app.se_name set: users wishes to get the output data written to another site than the one hosting the input.
+        # One needs to ensure that this location is at least in the same cloud as the targetted processing site. This is done by insuring that the lfcs are the same.
+        userSEs=[]
+        outse=""
+        if job.application.se_name and job.application.se_name != "none":
+            userSEs=job.application.se_name.split(" ")
+            # loop through userSEs until up to 2 valid sites are found...
+            outse=""
+            for SE in userSEs:
+                [lfc,se,location]=job.outputdata.getDQ2Locations(SE)
+                if lfc==outlfc:
+                    if not outse:
+                        outse=se # important to use outse and not outsite here, as outsite is used for selection of processing site.
+                        # userSEs overrides outlfc,outputlocation, but not outsite as outsite is unfortunately used for choice of the processing site.
+                        outputlocation=location
+                    else:
+                        outlfc2=lfc
+                        backup=se
+                        backuplocation=location
+                        break
 
         logger.info("Final selection of output sites: %s , backup: %s" % (outsite,backup))
         try:
@@ -165,6 +190,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
         environment["OUTLFC"]=outlfc
         environment["OUTSITE"]=outsite
+        if outse:
+           environment["OUTSITE"]=outse # user's choice for output storage location overriding AthenaMC's.
+           
         environment["OUTPUT_LOCATION"]=outputlocation
         if spacetoken:
             environment["SPACETOKEN"]=spacetoken
@@ -285,8 +313,42 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         
         requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
 #        requirements.other+=['RegExp("VO-atlas-dq2clients",other.GlueHostApplicationSoftwareRunTimeEnvironment)']
-        # job to data, strict: target outsite and nothing else.
+
+        # controlled relaxation for simple cases: one single input dataset, less than 200 subjobs. In this case, the subjobs can be submitted to the whole cloud.
+        loosematch="true"
+        if job.splitter and job.splitter.numsubjobs>200:
+            loosematch="false"
+        if job.inputdata and (job.inputdata.cavern or job.inputdata.minbias):
+            loosematch="false"
+# commented the nex block out as stage-in.sh can now ensure that the local copy is downloaded in the first attempt. However, as a safety net, we maintain the veto on complex jobs with pileup and or minbias, because they are heavy weight anyway and should not be run everywhere.
+#        if app.dbrelease: 
+#            loosematch="false"
+        if len(job.backend.requirements.sites)>0:
+            loosematch="false" # specified sites take precedence over cloud.
+            
+        userCloud=job.backend.requirements.cloud
+        
+        # By default: job to data, strict: target outsite and nothing else.
         requirements.sites=outsite
+        if loosematch=="true" and userCloud :
+            logger.debug("Your job qualifies for controlled relaxation of the current job-to-data policy. Now checking that requested cloud matches with input data")
+            
+            from dq2.info.TiersOfATLAS import whichCloud,ToACache
+            targetSites=whichCloud(outsite)
+            cloud=""
+            for cloudID,sites in ToACache.dbcloud.iteritems():
+                if sites==targetSites:
+                    cloud=cloudID
+            try:
+                assert cloud==userCloud
+            except:
+                raise ApplicationConfigurationError(None,"Requested cloud: %s did not match selected processing cloud: %s. Reverting to submission to site %s" % (userCloud,cloud,outsite))
+
+            requirements.cloud=cloud
+            # looks like cloud has to be converted in a list of sites anyway, and this is not done in AtlasLCGRequirements.convert()... 
+            requirements.sites=requirements.list_sites_cloud()
+            #print requirements.sites
+            logger.debug("Relaxing job to data policy to job to cloud. Selected cloud is %s" % cloud)
  
         logger.debug("master job submit?")
         

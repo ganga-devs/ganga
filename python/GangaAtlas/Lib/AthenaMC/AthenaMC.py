@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.33 2009-06-16 09:30:11 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.34 2009-06-30 11:28:45 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -87,11 +87,11 @@ class AthenaMC(IApplication):
            job.outputdata.fill()
               
     def prepare(self):
-       """Prepare each job/subjob from the user area"""
-       # will call backend related method in RTHandler.py
-       # can call configure(), then master_configure()
-       pass
-   
+        """Prepare each job/subjob from the user area"""
+        # will call backend related method in RTHandler.py
+        # can call configure(), then master_configure()
+        pass
+
     def getPartitionList(self):
         """ Calculates the list of partitions that should be processed by this application. 
             If no splitter is present, the list has always length one.
@@ -745,6 +745,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.33  2009/06/16 09:30:11  fbrochu
+# Replaced references to USERDISK by SCRATCHDISK, removed default for evgen transform_script, replaced by documented exception thrown if not set by the user
+#
 # Revision 1.32  2009/06/16 09:02:29  ebke
 # Fix AthenaMCSplitterJob to use the use_partition_numbers flag
 #
