@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.34 2009-06-30 11:28:45 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.35 2009-07-01 14:44:45 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -406,6 +406,9 @@ class AthenaMC(IApplication):
 # now doing output files....
         outpartition = partition + job._getRoot().outputdata.output_firstfile - 1
         for filetype in self.fileprefixes.keys():
+            if self.fileprefixes[filetype].upper()=="NONE":
+                self.outputfiles[filetype]=self.fileprefixes[filetype]# propagating the NONE
+                continue
             if filetype=="LOG":
                 self.outputfiles["LOG"]=self.fileprefixes["LOG"]+"._%5.5d.job.log" % outpartition 
             elif  filetype=="HIST":
@@ -745,6 +748,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.34  2009/06/30 11:28:45  fbrochu
+# Revisiting dataset registration implementation to allow job.resubmit() to work without troubles. Also put stage-in back after athena setup, in order to avoid downloading DBrelease tarball if there is already a local setup available. Paving the way for support for perf/phys/trigger group production managers
+#
 # Revision 1.33  2009/06/16 09:30:11  fbrochu
 # Replaced references to USERDISK by SCRATCHDISK, removed default for evgen transform_script, replaced by documented exception thrown if not set by the user
 #
