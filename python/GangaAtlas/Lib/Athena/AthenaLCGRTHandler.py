@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.46 2009-06-22 14:36:19 mslater Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.47 2009-07-02 09:31:47 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -503,6 +503,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if (not job.backend.CE and 
                 not (job.backend.requirements._name == 'AtlasLCGRequirements' and job.backend.requirements.sites) and
                 not (job.splitter and job.splitter._name == 'DQ2JobSplitter') and
+                not (job.splitter and job.splitter._name == 'TNTJobSplitter') and
                 not (job.splitter and job.splitter._name == 'AnaTaskSplitterJob')):
 
                 raise ApplicationConfigurationError(None,'Job submission failed ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
