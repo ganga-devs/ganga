@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.61 2009-06-22 14:36:19 mslater Exp $
+# $Id: Athena.py,v 1.62 2009-07-02 18:15:29 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -307,6 +307,45 @@ class Athena(IApplication):
             self.stats = job.backend.get_stats()
             return
 
+        # Collect stats from LCG backend stats.pickle file
+        if job.backend.__class__.__name__ in [ 'LCG' ]:
+            import pickle
+            fileName =  os.path.join(job.outputdir + "stats.pickle")
+            if "stats.pickle" in os.listdir(job.outputdir):  
+                f = open(fileName,"r")
+                self.stats = pickle.load(f)
+                f.close()
+                
+        # collect stats from __jobscript__.log
+        if '__jobscript__.log' in os.listdir(job.outputdir):
+            fileName = os.path.join(job.outputdir,'__jobscript__.log' )
+            try:
+                for line in fileinput.input([fileName]):
+                    if line.find('[Info] Job Wrapper start.')>-1:
+                        starttime = re.match('(.*)  .*Info.* Job Wrapper start.',line).group(1)
+                        self.stats['starttime'] = time.mktime(time.strptime(starttime))-time.timezone
+                    if line.find('[Info] Job Wrapper stop.')>-1:
+                        stoptime = re.match('(.*)  .*Info.* Job Wrapper stop.',line).group(1)
+                        self.stats['stoptime'] = time.mktime(time.strptime(stoptime))-time.timezone
+            except:
+                pass
+
+        # Collect stats from __jdlfile__ (LCG)
+        if '__jdlfile__' in os.listdir(job.inputdir):
+            self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
+
+        try:        
+            if not self.stats.has_key('starttime') and self.stats.has_key('gangatime1'):
+                self.stats['starttime'] = self.stats['gangatime1']
+            if not self.stats.has_key('stoptime') and self.stats.has_key('gangatime5'):
+                self.stats['stoptime'] = self.stats['gangatime5'] 
+        except:
+            pass
+
+        # Return for LCG backend since stats.pickle is used
+        if job.backend.__class__.__name__ in [ 'LCG' ]:
+            return
+
         # Compress NG stdout.txt
         if 'stdout.txt' in os.listdir(job.outputdir):
             fileNameIn = os.path.join(job.outputdir,'stdout.txt')
@@ -326,20 +365,6 @@ class Athena(IApplication):
             f_out.writelines(f_in)
             f_out.close()
             f_in.close()
-
-        # collect stats from __jobscript__.log
-        if '__jobscript__.log' in os.listdir(job.outputdir):
-            fileName = os.path.join(job.outputdir,'__jobscript__.log' )
-            try:
-                for line in fileinput.input([fileName]):
-                    if line.find('[Info] Job Wrapper start.')>-1:
-                        starttime = re.match('(.*)  .*Info.* Job Wrapper start.',line).group(1)
-                        self.stats['starttime'] = time.mktime(time.strptime(starttime))-time.timezone
-                    if line.find('[Info] Job Wrapper stop.')>-1:
-                        stoptime = re.match('(.*)  .*Info.* Job Wrapper stop.',line).group(1)
-                        self.stats['stoptime'] = time.mktime(time.strptime(stoptime))-time.timezone
-            except:
-                pass
 
         # collect stats from stderr
         try:
@@ -498,9 +523,6 @@ class Athena(IApplication):
         except MemoryError:
             logger.warning('ERROR in Athena.collectStats - logfiles too large to be unpacked.')
             pass
-
-        if '__jdlfile__' in os.listdir(job.inputdir):
-            self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
 
         if job.backend.__class__.__name__ in [ 'NG' ]:
             if self.stats.has_key('gangatime1'):
@@ -1280,6 +1302,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.61  2009/06/22 14:36:19  mslater
+# Added better support for RecEx* analyses
+#
 # Revision 1.60  2009/06/09 17:29:13  elmsheus
 # Fix bug #51300
 #

@@ -736,4 +736,6 @@ if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
     fi
 fi
 
+./getstats.py
+
 exit $retcode

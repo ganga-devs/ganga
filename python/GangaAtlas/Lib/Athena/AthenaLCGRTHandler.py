@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.47 2009-07-02 09:31:47 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.48 2009-07-02 18:15:29 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -421,6 +421,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             _append_files(inputbox, 'dq2tracerreport.py')
         if not 'db_dq2localid.py' in [ os.path.basename(file.name) for file in inputbox ]:
             _append_files(inputbox, 'db_dq2localid.py')
+        if not 'getstats.py' in [ os.path.basename(file.name) for file in inputbox ]:
+            _append_files(inputbox, 'getstats.py')
+
 
         if str(app.atlas_release).find('12.')>=0:
             _append_files(inputbox, 'libDCache.so','libRFIO.so','libdcap.so')
@@ -584,7 +587,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         outputbox = [
             'output_guids',
             'output_location',
-            'output_data'
+            'output_data',
+            'stats.pickle'
         ]
 
         ## retrieve the FileStager log
