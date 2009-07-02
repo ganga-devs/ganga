@@ -18,7 +18,7 @@ if __name__ == '__main__':
         datasettype = 'DQ2_LOCAL'
         pass
     # use DQ2_LOCAL as default
-    if not datasettype in [ 'DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'DQ2_OUT', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
+    if not datasettype in [ 'DQ2_LOCAL', 'DQ2_COPY', 'FILE_STAGER' ]:
         datasettype = 'DQ2_LOCAL'
 
     numfiles3 = 0
