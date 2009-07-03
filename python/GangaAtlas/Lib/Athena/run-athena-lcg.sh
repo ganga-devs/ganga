@@ -697,7 +697,7 @@ if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
     
     LOGNAME=${OUTPUT_DATASETNAME}_${OUTPUT_JOBID}.log.tgz
     echo "Storing logfiles as "$LOGNAME" in dq2 dataset..."
-    tar czf $LOGNAME stdout stderr
+    tar czhf $LOGNAME stdout stderr
     echo $LOGNAME > logfile
     DATASETTYPE=DQ2_OUT
     if [ ! -z $python32bin ]; then
