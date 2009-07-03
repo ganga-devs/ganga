@@ -1,0 +1,344 @@
+import os, getpass
+from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
+
+class TestAtlas(GangaGPITestCase):
+    def testAnaTaskBasic(self):
+        return TestAnaTaskBasic()
+
+    def testAnaTaskLCG(self):
+        return TestAnaTaskLCG("/afs/cern.ch/user/e/ebke/public/ganga_testing")
+
+    def testAnaTaskPanda(self):
+        return TestAnaTaskPanda("/afs/cern.ch/user/e/ebke/public/ganga_testing")
+
+    def testAnaTaskAuto(self):
+        return TestAnaTaskAuto("/afs/cern.ch/user/e/ebke/public/ganga_testing")
+
+    def testAthenaDQ2LCG(self):
+        return TestAthenaDQ2LCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS")
+
+    def testAthenaDQ2LCGFileStager(self):
+        return TestAthenaDQ2LCGFileStager("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS")
+
+    def testAthenaLCG(self):
+        return TestAthenaLCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS")
+
+    def testAthenaLocal(self):
+        return TestAthenaLCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS")
+
+    def testMCTask(self):
+        return TestMCTask()
+
+    def testAthenaMCLCG_evgen(self):
+        return TestAthenaMCLCG()
+
+    def testAthenaMCLCG_simul(self):
+        return TestAthenaMCLCG("/afs/cern.ch/sw/ganga/install/TEST/athenaMC_testing_data")
+
+    def testAthenaMCLCG_recon(self):
+        return TestAthenaMCLCG()
+
+    def testAthenaMCPanda_evgen(self):
+        return TestAthenaMCPanda()
+
+    def testAthenaMCPanda_simul(self):
+        return TestAthenaMCPanda()
+
+    def testAthenaMCPanda_recon(self):
+        return TestAthenaMCPanda()
+
+class TestAnaTaskBasic(ICheckTest):
+    def __init__(self):
+        pass
+    def isReadyForCheck(self):
+        return True
+    def checkTest(self):
+        t = AnaTask()
+        t.analysis.application.atlas_release='14.2.20'
+        t.analysis.application.max_events=10
+        t.analysis.files_per_job = 1
+        t.analysis.inputdata.dataset = "mc08.105401.SU1_jimmy_susy.recon.AOD.e352_s462_r541_tid026109"
+        t.analysis.outputdata=DQ2OutputDataset()
+        t.analysis.setRunlimit(2)
+        t.float = 5
+        t.info()
+        t.remove(True)
+
+class AtlasTest(ICheckTest):
+    def __init__(self,srcdir=None,j = None):
+        if srcdir is None:
+            self.setup()
+            self.tmpdir = None
+            return
+        self.tmpdir = '/tmp/ganga_%s_testing_data-%s' % (self.__class__.__name__, getpass.getuser())
+        print 'AtlasTest %s: copying testing data from %s to %s' % (self.__class__.__name__, srcdir, self.tmpdir)
+        os.system('rm -rf %s' % self.tmpdir)
+        os.system('cp -r %s %s' % (srcdir, self.tmpdir))
+        self.j = j
+        self.setup()
+
+    def cleanup(self):
+        if self.tmpdir is None:
+            return
+        print 'AtlasTest %s: removing temporary directory %s' % (self.__class__.__name__, self.tmpdir)
+        os.system('rm -rf %s' % self.tmpdir)
+
+class TestTask(AtlasTest):
+    def isReadyForCheck(self):
+        n = self.t.n_all()
+        c = self.t.n_status("completed")
+        f = self.t.n_status("failed")
+        if c+f >= n:
+           return True
+        if self.t.analysis.status == "pause":
+           return True
+        return False
+
+    def checkTest(self):
+        n = self.t.n_all()
+        c = self.t.n_status("completed")
+        f = self.t.n_status("failed")
+        print "TestTask %s: %s partitions completed, %s partitions failed, %s partitions total" % (self.__class__.__name__, c, f, n)
+        assert c+f == n
+        assert self.t.status == "completed"
+        self.t.remove(True)
+        self.cleanup()
+
+class TestAnaTask(TestTask):
+    def setup(self):
+        self.joboption = '%s/AnalysisSkeleton_topOptions_v14220.py' % self.tmpdir
+        self.archivefile = '%s/UserAnalysis-00004.tar.gz' % self.tmpdir
+        t = AnaTask()
+        t.analysis.application.atlas_release='14.2.20'
+        t.analysis.application.option_file=[ self.joboption ]
+        t.analysis.application.user_area = self.archivefile
+        t.analysis.application.max_events=10
+        t.analysis.files_per_job = 1
+        t.analysis.inputdata.dataset = "mc08.105401.SU1_jimmy_susy.recon.AOD.e352_s462_r541_tid026109"
+        t.analysis.outputdata=DQ2OutputDataset()
+        t.analysis.setRunlimit(2)
+        t.float = 5
+        t.info()
+        self.t = t
+
+class TestAnaTaskLCG(TestAnaTask):
+    def setup(self):
+        TestAnaTask.setup(self)
+        be = LCG()
+        self.t.setBackend(LCG())
+        self.t.analysis.backend.requirements.cloud='DE'
+        self.t.analysis.backend.requirements.sites=['IN2P3-CC_MCDISK']
+        self.t.analysis.outputdata.outputdata=['muTri.root' ]
+        self.t.run()
+
+class TestAnaTaskPanda(TestAnaTask):
+    def setup(self):
+        TestAnaTask.setup(self)
+        self.t.setBackend(Panda())
+        self.t.analysis.backend.requirements.cloud='US'
+        self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
+        self.t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808_sub01236389"
+        self.t.run()
+
+class TestAnaTaskAuto(TestAnaTask):
+    def setup(self):
+        TestAnaTask.setup(self)
+        self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
+        self.t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808_sub01236389"
+        self.t.run()
+
+class TestAthena(AtlasTest):
+    def setup(self):
+        joboption = '%s/AnalysisSkeleton_topOptions_v14220.py' % self.tmpdir
+        archivefile = '%s/UserAnalysis-00003.tar.gz' % self.tmpdir
+        j = Job()
+        j.application=Athena()
+        j.application.atlas_release='14.2.20'
+        j.application.option_file=[ joboption ]
+        j.application.user_area=archivefile
+        j.application.max_events=100
+        j.inputdata=DQ2Dataset()
+        j.inputdata.dataset='mc08.105401.SU1_jimmy_susy.recon.AOD.e352_s462_r541_tid026109'
+        j.inputdata.type='DQ2_COPY'
+        j.outputdata=DQ2OutputDataset()
+        j.outputdata.outputdata=['muTri.root' ]
+        j.splitter=DQ2JobSplitter()
+        j.splitter.numsubjobs=2
+        self.j = j
+
+class TestAthenaDQ2LCG(TestAthena):
+    def setup(self):
+        TestAthena.setup(self)
+        self.j.backend=LCG()
+        #self.j.backend.requirements.sites=['FZK-LCG2_MCDISK']
+        #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
+        self.j.backend.requirements.cloud='DE'
+        assert(self.j.submit()==True)
+
+class TestAthenaDQ2LCGFileStager(TestAthena):
+    def setup(self):
+        TestAthena.setup(self)
+        self.j.backend=LCG()
+        #self.j.backend.requirements.sites=['FZK-LCG2_MCDISK']
+        #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
+        self.j.backend.requirements.cloud='DE'
+        self.j.inputdata.type = 'FILE_STAGER'
+        assert(self.j.submit()==True)
+
+class TestAthenaLCG(AtlasTest):
+    def setup(self):
+        joboption = '%s/HelloWorldOptions.py' % self.tmpdir
+        j = Job()
+        j.application=Athena()
+        j.application.option_file=[ joboption ]
+        j.application.atlas_release='14.2.20'
+        j.backend=LCG()
+        assert (j.submit()==True)
+        self.j = j
+
+class TestAthenaLocal(AtlasTest):
+    def setup(self):
+        joboption = '%s/HelloWorldOptions.py' % self.tmpdir
+        j = Job()
+        j.application=Athena()
+        j.application.option_file=[ joboption ]
+        j.application.atlas_release='14.2.20'
+        j.backend=Local()
+        assert (j.submit()==True)
+        self.j = j
+
+class TestMCTask(TestTask):
+    def setup(self):
+        t = MCTask()
+        t.name = "TestTask01"
+        t.evgen.application.evgen_job_option = "CSC.005145.PythiaZmumu.py"
+        t.total_events = 2
+        t.setParameter(run_number="5145", production_name="ganga_test", process_name="PythiaZmumu")
+        t.setParameter(atlas_release="14.2.24.1", se_name="LRZ-LMU_SCRATCHDISK")
+        t.setParameter(triggerConfig="DEFAULT", geometryTag="ATLAS-GEO-05-00-00")
+        t.setParameter(number_events_job=1)
+        t.recon.application.number_events_job = 2
+        t.recon.application.extraArgs = " jobConfig=ForceFullReco.py "
+        t.evgen.application.transform_script = "csc_evgen_trf.py"
+        t.simul.application.transform_script = "csc_simul_trf.py"
+        t.recon.application.transform_script = "csc_reco_trf.py"
+        t.float = 2
+        t.run()
+        assert t.n_all() == 5
+        self.t = t
+
+class TestAthenaMCLCG(AtlasTest):
+    def setup(self):
+        j=Job()
+        j.application=AthenaMC()
+        j.application.dryrun = True
+        j.application.random_seed='1102362401'
+        j.application.production_name='tutorial'   
+        j.application.process_name='single_e_Et40'
+        j.application.run_number='000001'
+        j.application.firstevent=1
+        j.application.number_events_job=1
+        j.application.atlas_release='12.0.4.1'
+        j.application.se_name='UKI-SOUTHGRID-CAM-HEP_SCRATCHDISK'
+        j.backend=LCG()
+        j.outputdata=AthenaMCOutputDatasets()
+        self.j = j
+
+class TestAthenaMCLCG_evgen(TestAthenaMCLCG):
+    def setup(self):
+        TestAthenaMCLCG.setup(self)
+        self.j.application.evgen_job_option='DC3.007004.singlepart_e_Et40.py'
+        self.j.application.transform_script = "csc_evgen_trf.py"
+        self.j.application.number_events_job=30
+        self.j.application.mode='evgen'
+        assert (self.j.submit()==True)
+
+class TestAthenaMCLCG_simul(TestAthenaMCLCG):
+    def setup(self):
+        TestAthenaMCLCG.setup(self)
+        self.j.application.atlas_release='12.0.4'
+        self.j.application.transform_archive='AtlasProduction_12_0_4_1_noarch.tar.gz' #old style submission
+        self.j.application.mode='simul'
+        self.j.application.transform_script = "csc_simul_trf.py"
+        self.j.application.geometryTag = 'ATLAS-DC3-05' 
+        self.j.inputdata=AthenaMCInputDatasets()
+        self.j.inputdata.DQ2dataset='user08.fredericbrochu.ganga.datafiles.GangaTests.000001.single_e_Et40.evgen.EVNT'
+        self.j.inputdata.datasetType='DQ2'
+        self.j.inputdata.number_events_file=3
+        self.j.splitter=AthenaMCSplitterJob()
+        self.j.splitter.numsubjobs = 3
+        assert(self.j.submit()==True)
+
+class TestAthenaMCLCG_recon(TestAthenaMCLCG):
+    def setup(self):
+        TestAthenaMCLCG.setup(self)
+        self.j.application.mode='recon'
+        self.j.application.transform_script = "csc_reco_trf.py"
+        self.j.inputdata=AthenaMCInputDatasets()
+        self.j.inputdata.DQ2dataset='user08.fredericbrochu.ganga.datafiles.GangaTests.000001.single_e_Et40.simul.RDO'
+        self.j.inputdata.datasetType='DQ2'
+        self.j.inputdata.number_events_file=1
+        self.j.splitter=AthenaMCSplitterJob()
+        self.j.splitter.numsubjobs = 3
+        assert(self.j.submit()==True)
+
+
+class TestAthenaMCPanda(AtlasTest):
+    def setup(self):
+        self.j=Job()
+        self.j.application=AthenaMC()
+        self.j.application.atlas_release='14.5.0.1'
+        self.j.application.random_seed='1102362401'
+        self.j.application.production_name='tutorial'   
+        self.j.application.process_name='single_e_Et40'
+        self.j.application.run_number='7004'
+        self.j.application.firstevent=1
+        self.j.application.number_events_job=1
+        self.j.backend=Panda()
+        self.j.backend.site = "ANALY_SLAC"
+        self.j.outputdata=AthenaMCOutputDatasets()
+     
+
+class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
+    def setup(self):
+        TestAthenaMCPanda.setup(self)
+        self.j.application.se_name='ANALY_SLAC'
+        self.j.application.evgen_job_option='MC8.107004.singlepart_e_Et40.py'
+        self.j.application.transform_script='csc_evgen08_trf.py'
+        self.j.application.number_events_job=30
+        self.j.application.mode='evgen'
+        self.j.application.transform_script = "csc_evgen_trf.py"
+        self.j.application.verbosity='INFO'
+        assert (self.j.submit()==True)
+
+class TestAthenaMCPanda_simul(TestAthenaMCPanda):
+    def setup(self):
+        TestAthenaMCPanda.setup(self)
+        self.j.application.atlas_release='14.5.0.1'
+        self.j.application.mode='simul'
+        self.j.application.transform_script = "csc_simul_trf.py"
+        self.j.application.verbosity='INFO'
+        self.j.application.geometryTag = 'ATLAS-CSC-05'
+        self.j.inputdata=AthenaMCInputDatasets()
+        self.j.inputdata.DQ2dataset='user09.JohannesEbke.ganga.tutorial.007004.single_e_Et40.evgen.EVNT.jid000004'
+        self.j.inputdata.datasetType='DQ2'
+        self.j.inputdata.number_events_file=30
+        self.j.splitter=AthenaMCSplitterJob()
+        self.j.splitter.numsubjobs = 3
+        assert(self.j.submit()==True)
+
+class TestAthenaMCPanda_recon(TestAthenaMCPanda):
+    def setup(self):
+        TestAthenaMCPanda.setup(self)
+        self.j.application.run_number='000001'
+        self.j.application.atlas_release='12.0.4.1'
+        self.j.application.mode='recon'
+        self.j.application.transform_script = "csc_recon_trf.py"
+        self.j.inputdata=AthenaMCInputDatasets()
+        self.j.inputdata.DQ2dataset='user08.fredericbrochu.ganga.datafiles.GangaTests.000001.single_e_Et40.simul.RDO'
+        self.j.inputdata.datasetType='DQ2'
+        self.j.inputdata.number_events_file=1
+        self.j.outputdata=AthenaMCOutputDatasets()
+        self.j.splitter=AthenaMCSplitterJob()
+        self.j.splitter.numsubjobs = 3
+        assert(self.j.submit()==True)

@@ -1,0 +1,5 @@
+
+import os
+tmpdir = '/tmp/ganga_ara_panda_testing_data-$USER'
+print 'removing ARA Panda testing data',tmpdir
+os.system('rm -rf %s'%tmpdir)

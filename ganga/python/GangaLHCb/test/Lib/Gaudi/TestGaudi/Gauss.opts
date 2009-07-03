@@ -1,0 +1,30 @@
+/** Sets up a quick & simply Gauss "generation-only" job. */
+
+#include "$GAUSSOPTS/Common.opts"    // Necessary for any Gauss executable
+
+ApplicationMgr.TopAlg += { "GaudiSequencer/Gauss" };
+Gauss.Members         += { "GaudiSequencer/Generator"  };
+
+Generator.Members         = { "GenInit/GaussGen" };
+GaussGen.FirstEventNumber = 1;
+GaussGen.RunNumber        = 1;
+EventClockSvc.FakeEventTime.StartTime = 0;
+EventClockSvc.FakeEventTime.TimeStep  = 25*ns;
+
+#include "$GAUSSOPTS/Generator.opts"
+#include "$GAUSSOPTS/GenStandAlone.opts"
+
+Generator.Members       += { "GaudiSequencer/GenMonitor" };
+
+#include "$GAUSSOPTS/Monitor.opts"
+#include "$GAUSSOPTS/MonitorInDetail.opts" // ntuples and commented examples
+
+ApplicationMgr.OutStream +=  { "GaussTape" };
+ApplicationMgr.EvtMax     = 1;
+
+GaussTape.Output = "DATAFILE='PFN:Gauss.sim' TYP='POOL_ROOTTREE' OPT='RECREATE'";
+FileCatalog.Catalogs = { "xmlcatalog_file:NewCatalog.xml" };
+
+HistogramPersistencySvc.OutputFile = "GaussHistos.root";
+
+#include "$DECFILESROOT/options/11144100.opts"  // Bs->J/Psi(mumu)Kshort

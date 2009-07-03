@@ -1,0 +1,7 @@
+
+j = Job()
+r = jobs
+
+assert(j in [j])
+assert(j.id in r.ids())
+assert(j in r)
