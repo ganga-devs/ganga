@@ -20,6 +20,9 @@ config = makeConfig('Shell','We overwrite the Shell config')
 config.addOption('IgnoredVars',[],'This is a dummy so we can use the Shell object')
 from Ganga.Utility import Shell
 
+#needs to be global
+DEBUG_MODE = False
+
 class DiracProxy(object):
     """Object for handling the dirac-proxy-info command so that the output can be cached so speed things up. """
 
@@ -206,9 +209,7 @@ class DiracProxy(object):
             """Trys to guess what the proxy file is called."""
             proxy_file = os.environ.get('X509_USER_PROXY',None)
             if proxy_file is None:
-                tmp_dir = tempfile.gettempdir()
-                file_name = 'x509up_u%i' % os.getuid()
-                proxy_file = os.path.join(tmp_dir,file_name)
+                proxy_file = '/tmp/x509up_u%i' % os.getuid()
             return proxy_file
                 
         
@@ -266,8 +267,9 @@ class DiracProxy(object):
         #check the age of the proxy
         if not checkProxyAge(findProxyFile(),self.cache_file):
             self.debugMsg("The proxy is newer than the cache, so clearing cache.")
-            #clear the output cache
-            del self.store['INFO']
+            if self.store.has_key('INFO'):
+                #clear the output cache
+                del self.store['INFO']
         
         #always invalidate the cache after 10 minutes
         diff = (time.time() - self.store['TIME'])
@@ -331,6 +333,10 @@ def main():
             debug = True
         if o in ("-z"):
             clean = True
+    #sets the debug mode for exception printing
+    global DEBUG_MODE        
+    DEBUG_MODE = debug
+
     #check the proxy using the caching class...
     dirac = DiracProxy(version,devVersion,cacheFile,debug=debug,clean=clean)
     sys.exit(dirac.proxyInfo())
@@ -345,6 +351,8 @@ if __name__ == "__main__":
     except SystemExit, e:
         raise e #just propagate exits
     except Exception, e:
+        if DEBUG_MODE:
+            print 'There was an error while getting the proxy info:',e.__class__.__name__,e
         #fall back on the wrapper script if something goes wrong
         os.system('lhcb-proxy-info')
     
