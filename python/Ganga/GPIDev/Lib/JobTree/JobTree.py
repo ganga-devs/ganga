@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobTree.py,v 1.2.4.1 2009-07-08 11:18:21 ebke Exp $
+# $Id: JobTree.py,v 1.2.4.2 2009-07-08 11:26:34 ebke Exp $
 ################################################################################
 import os
 import types
@@ -144,6 +144,7 @@ class JobTree(GangaObject):
         if registry is None:
             from Ganga.Core.GangaRepository import getRegistry
             registry = getRegistry(self.default_registry)
+        self._setRegistry(registry) 
         self._checkout()
 
     def _copy(self):
