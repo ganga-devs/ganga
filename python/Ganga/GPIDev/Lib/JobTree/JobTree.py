@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobTree.py,v 1.2.4.2 2009-07-08 11:26:34 ebke Exp $
+# $Id: JobTree.py,v 1.2.4.3 2009-07-08 12:54:33 ebke Exp $
 ################################################################################
 import os
 import types
@@ -120,8 +120,8 @@ class JobTree(GangaObject):
     
     def _commit(self):
         registry = self._getRegistry()
-        if registry is not None:        
-            registry.repository.setJobTree(self)
+        #if registry is not None:        
+        #    registry.repository.setJobTree(self)
 
     def _auto_commit(self):
         self._counter += 1
@@ -131,10 +131,10 @@ class JobTree(GangaObject):
 
     def _checkout(self):
         registry = self._getRegistry()
-        if registry is not None:
-            jobtree = registry.repository.getJobTree()
-            if jobtree:
-                self.copyFrom(jobtree)
+        #if registry is not None:
+        #    jobtree = registry.repository.getJobTree()
+        #    if jobtree:
+        #        self.copyFrom(jobtree)
                 
     def _wrap(self, obj):
         if isinstance(obj, GangaObject):
