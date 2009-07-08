@@ -14,7 +14,7 @@ def makeRepository(registry):
     if registry.type in ["LocalXML","LocalPickle"]:
         reg = GangaRepositoryLocal(registry)
     else:
-        raise RepositoryError(msg = "Repository %s: Unknown repository type %s" % (registry.name, registry.type))
+        raise GangaException(msg = "Repository %s: Unknown repository type %s" % (registry.name, registry.type))
     return reg  
 
 class RegistryAccessError(GangaException):
