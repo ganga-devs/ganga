@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5.2.3 2009-07-08 12:36:54 ebke Exp $
+# $Id: Objects.py,v 1.5.2.4 2009-07-08 12:51:52 ebke Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -195,8 +195,7 @@ class Descriptor(object):
             else:
                 #LAZYLOADING
                 if obj._data is None:
-                    root = obj._getRoot()
-                    reg = root._getRegistry()
+                    reg = self._getRegistry()
                     if reg is not None:
                         reg.load(obj)
                 #    try:
@@ -218,15 +217,11 @@ class Descriptor(object):
         #LOCKING
         #obj._getRegistry()getWriteLock():
         # 
-        reg = None
-        try:
-            root = obj._getRoot()
-            reg = root._getRegistry()
-        except AttributeError:
-            pass # This is probably during init where _registry is unset
+        root = obj._getRoot()
+        reg = root._getRegistry()
         if reg is not None:
-            if not reg.acquireWriteLock(obj):
-                raise GangaAttributeError("Could not lock object %s!"%obj) 
+            if not reg.acquireWriteLock(root):
+                raise GangaAttributeError("Could not lock object %s!" % root) 
             else:
                 reg.repository._dirty(root)
 
@@ -412,9 +407,10 @@ class GangaObject(Node):
 
     # define when the object is writable (repository online and locked)
     def _writable(self):
-        reg = self._getRegistry()
+        root = self._getRoot()
+        reg = root._getRegistry()
         if reg is not None:
-            return reg.acquireWriteLock(r)
+            return reg.acquireWriteLock(root)
         return True
 
     # define when the object is read-only (for example a job is read-only in the states other than new)
@@ -491,14 +487,6 @@ class GangaObject(Node):
     def _attribute_filter__set__(self,name,v):
         return v
 
-    #### OBSOLETE #####
-    # FIXME: these functions are dangerous to use and probably should dissapear in the next ganga releases
-    def _object_filter__get__(self,obj):
-        return None
-    def _attribute_filter__get__(self,name,v):
-        return v
-    #### OBSOLETE #####
-
 # define the default component object filter:
 # obj.x = "Y"   <=> obj.x = Y()
  
@@ -526,6 +514,9 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.2.3  2009/07/08 12:36:54  ebke
+# Simplified _writable
+#
 # Revision 1.5.2.2  2009/07/08 11:18:21  ebke
 # Initial commit of all - mostly small - modifications due to the new GangaRepository.
 # No interface visible to the user is changed
