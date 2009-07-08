@@ -6,15 +6,14 @@
 from GangaRepository import *
 from Ganga.Utility.Config import getConfig
 import os, os.path, fcntl, time, errno
-from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
+
 from SessionLock import SessionLockManager
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-
-def safe_save_xml(fn,obj):
-    """Writes an XML file safely, raises IOError on error"""
+def safe_save(fn,obj,to_file):
+    """Writes a file safely, raises IOError on error"""
     try:
         tmpfile = open(fn + ".new", "w")
         to_file(obj, tmpfile)
@@ -34,8 +33,7 @@ def safe_save_xml(fn,obj):
     except OSError, e:
         raise IOError("Error on moving file %s.new (%s) " % (fn,e))
 
-
-class GangaRepositoryXML(GangaRepository):
+class GangaRepositoryLocal(GangaRepository):
     """GangaRepository XML"""
 
     def get_fn(self,id):
@@ -43,10 +41,21 @@ class GangaRepositoryXML(GangaRepository):
         return os.path.join(self.root,"%ixxx"%(id/1000), "%i"%id, "data")
 
     def startup(self):
-        """ Starts an XML repository and reads in a directory structure."""
+        """ Starts an repository and reads in a directory structure."""
         self._load_timestamp = {}
         self.root = os.path.join(self.location,"6.0",self.name)
-        self.sessionlock = SessionLockManager(self.root, "LocalXML."+self.name)
+        self.sessionlock = SessionLockManager(self.root, self.type+"."+self.name)
+        if "XML" in self.type:
+            from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
+            self.to_file = to_file
+            self.from_file = from_file
+        elif "Pickle" in self.type:
+            from Ganga.Core.GangaRepository.PickleStreamer import to_file, from_file
+            self.to_file = to_file
+            self.from_file = from_file
+        else:
+            raise Exception("Unknown Repository type: %s"%self.type)
+
         ids = []
         # Obtain candidate list of ids by scanning directories
         for d in os.listdir(self.root):
@@ -87,8 +96,10 @@ class GangaRepositoryXML(GangaRepository):
         for id in locked_ids:
             fn = self.get_fn(id)
             obj = self._objects[id]
+            if self.dirty_objs.has_key(obj):
+                del self.dirty_objs[obj]
             if obj._name != "Unknown":
-                safe_save_xml(fn, self._objects[id])
+                safe_save(fn, self._objects[id], self.to_file)
 
     def load(self, ids):
         for id in ids:
@@ -101,14 +112,14 @@ class GangaRepositoryXML(GangaRepository):
             try:
                 if id in self._objects:
                     if self._objects[id]._data is None or self._load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime:
-                        tmpobj = from_file(fobj)[0]
+                        tmpobj = self.from_file(fobj)[0]
                         self._objects[id]._data = tmpobj._data
                 else:
-                    self._internal_setitem__(id, from_file(fobj)[0])
+                    self._internal_setitem__(id, self.from_file(fobj)[0])
                 self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
             except Exception, x:
-                print x
-                self._internal_setitem__(id, EmptyGangaObject())
+                print "Could not load object ", id, " :", x
+                #self._internal_setitem__(id, EmptyGangaObject())
         return [self._objects[id] for id in ids]
 
     def delete(self, ids):

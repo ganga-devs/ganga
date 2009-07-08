@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GangaRepository.py,v 1.1.2.2 2009-07-08 10:32:24 ebke Exp $
+# $Id: GangaRepository.py,v 1.1.2.3 2009-07-08 14:40:42 ebke Exp $
 ################################################################################
 #
 # Note: Following stuff must be considered in a GangaRepository:
@@ -35,14 +35,15 @@ class GangaRepository(object):
     """
 
 ## Functions that should not be overridden
-    def __init__(self, name, location, dirty_flush_counter=10):
+    def __init__(self, registry, dirty_flush_counter=10):
         """ GangaRepository abstract constructor. 
         name is: box, jobs, templates, tasks
         location is: gangadir/.../...
         """
-        self.name = name
-        self.location = location
-        self.registry = None
+        self.name = registry.name
+        self.location = registry.location
+        self.type = registry.type
+        self.registry = registry
         self._objects = {}
         self._object_id_map = {}
         self._lock = threading.RLock()
