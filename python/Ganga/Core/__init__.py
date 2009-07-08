@@ -52,8 +52,9 @@ def bootstrap(reg, interactive_session):
 
     # backend-specific setup (e.g. Remote: setup any remote ssh pipes)
     for j in reg:
-        if hasattr(j.backend,'setup'): # protect: EmptyGangaObject does not have setup() method
-            j.backend.setup()
+        if hasattr(j,'backend'): # protect: EmptyGangaObject does not have backend either
+            if hasattr(j.backend,'setup'): # protect: EmptyGangaObject does not have setup() method
+                j.backend.setup()
             
     #start the monitoring loop
     global monitoring_component
