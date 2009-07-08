@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.12 2009-05-20 12:35:40 moscicki Exp $
+# $Id: Job.py,v 1.12.2.1 2009-07-08 11:18:21 ebke Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -126,7 +126,7 @@ class Job(GangaObject):
     _name = 'Job'
     _exportmethods = ['submit','remove','kill', 'resubmit', 'peek','fail', 'force_status' ]
 
-    default_registry = 'native_jobs'
+    default_registry = 'jobs'
 
     # preferences for the GUI...
     _GUIPrefs = [ { 'attribute' : 'id' },
@@ -321,8 +321,8 @@ class Job(GangaObject):
 
     def _auto__init__(self,registry=None):
         if registry is None:
-            from Ganga.GPIDev.Lib.JobRegistry import JobRegistryDev
-            registry = JobRegistryDev.allJobRegistries[self.default_registry]
+            from Ganga.Core.GangaRepository import getRegistry
+            registry = getRegistry(self.default_registry)
 
         # register the job (it will also commit it)
         # job gets its id now
@@ -403,16 +403,6 @@ class Job(GangaObject):
     def getDebugWorkspace(self,create=True):
         return self.getWorkspace('DebugWorkspace',create=create)
     
-    def _setRegistry(self, registry):
-        #print "Setting registry for ",self.getFQID('.')
-        self._registry = registry
-        # set the registry in the subjobs as well (bugfix 23737)
-        for s in self.subjobs:
-            s._setRegistry(registry)
-
-    def _getRegistry(self):
-        return self._registry
-
     def __getstate__(self):
         dict = super(Job, self).__getstate__()
         #FIXME: dict['_data']['id'] = 0 # -> replaced by 'copyable' mechanism in base class
@@ -605,15 +595,17 @@ class Job(GangaObject):
                     #subjobs[0].printTree(sys.stdout)
 
                     self.subjobs = subjobs
-                    registry = self._getRegistry()
-                    registry.repository.registerJobs(self.subjobs, self)
-                    for j in self.subjobs:
-                        j._setRegistry(registry)
-                        j.status='new'
-                        j._init_workspace()                        
+                    # EBKE changes
+                    #registry = self._getRegistry()
+                    #registry.repository.registerJobs(self.subjobs, self)
+                    #for j in self.subjobs:
+                    #    j._setRegistry(registry)
+                    #    j.status='new'
+                    #    j._init_workspace()                        
 
                     rjobs = self.subjobs
-                    self._commit(self.subjobs)
+                    #self._commit(self.subjobs)
+                    self._commit()
                 else:
                     rjobs = [self]
 
@@ -665,14 +657,9 @@ class Job(GangaObject):
         for sj in self.subjobs:
             sj.application.transition_update("removed")
         #delete subjobs
-        try:
-            rep = self._getRegistry().repository
-            rep.deleteJobs(map(lambda sj: tuple(sj.getFQID()), self.subjobs))#FIXME: convert to tuple because ARDA JobRepository checks if is tuple
-            #FIXME: this should be fixed when the new function to update to new status in repository is available
-        except Exception, x:
-            logger.error('Cannot delete subjobs of the job %d while reverting to the previous state (%s)', self.id, str(x))
-        else:                                                                         
-            self.subjobs = []
+        self.subjobs = []
+        self._commit()
+
     
     def remove(self,force=False):
         '''Remove the job.
@@ -720,7 +707,7 @@ class Job(GangaObject):
                 sj.application.transition_update("removed")
         
         if self._registry:
-            self._registry._remove_by_object(self,auto_removed=1)
+            self._registry._remove(self,auto_removed=1)
 
         self._data['status'] = 'removed'
 
@@ -887,6 +874,8 @@ class Job(GangaObject):
 
         if objects is None:
             objects = [self]
+        # EBKE changes
+        objects = [self]
         self._getRegistry()._flush(objects)
         
 
@@ -976,10 +965,11 @@ class JobTemplate(Job):
 
     _schema = Job._schema.inherit_copy()
     
-    default_registry = 'native_templates'
+    default_registry = 'templates'
     
     def __init__(self):
         super(JobTemplate, self).__init__()
+        self.status = "template"
 
     def _readonly(self):
         return 0
@@ -1001,6 +991,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12  2009/05/20 12:35:40  moscicki
+# debug directory (https://savannah.cern.ch/bugs/?50305)
+#
 # Revision 1.11  2009/05/20 09:23:46  moscicki
 # debug directory (https://savannah.cern.ch/bugs/?50305)
 #

@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.5 2008-09-09 12:18:25 moscicki Exp $
+# $Id: JobRegistryDev.py,v 1.5.4.1 2009-07-08 11:18:21 ebke Exp $
 ################################################################################
 
 
@@ -33,14 +33,11 @@ config.addOption('registry_columns_show_empty',
                  'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
 
 
-# all job registry classes are stored in a lookup table for late initialization 
-allJobRegistries = {}
-
-##from JobRegistrySlice import JobRegistrySlice
-
 from Ganga.Utility.external.ordereddict import oDict
 
 from Ganga.Core import GangaException
+
+from Ganga.Core.GangaRepository import Registry
 
 class JobAccessError(GangaException):
     def __init__(self,what):
@@ -56,7 +53,7 @@ class JobAccessIndexError(GangaException,IndexError):
     def __str__(self):
         return "JobAccessIndexError: %s"%self.what
     
-from Ganga.Core.InternalServices.Coordinator import checkInternalServices
+
 
 class JobRegistryInstanceInterface:
     """ Read-only interface of job registry. Provides collective operations and job management.
@@ -232,6 +229,7 @@ class JobRegistryInstanceInterface:
         except AttributeError:
             ids = id
 
+        print "IDS:", ids
         try:
             ids = [int(id) for id in ids]
         except TypeError:
@@ -409,217 +407,14 @@ class JobRegistryInstanceInterface:
         return id(self)
 
 
-class JobRegistryInstanceBase(JobRegistryInstanceInterface):
-    """ Container of user jobs. Provides collective operations and job management.
-        It does not have any associations with persistent storage.
-        This is a base class intended for subclassing.        
-    """
-    def __init__(self,name):
-        JobRegistryInstanceInterface.__init__(self,name)
-        
-
-
-    def clean(self):
-        "Delete all jobs. Typically this operation is faster then deleting jobs individually."
-        # FIXME: possible bug: job objects are not changed into the state "removed"
-        self.jobs = oDict()
-        self.lastid = 0
-
-    
-    def _add(self,job):
-        """ Add a job to the registry. This is a private method which must be called for each newly constructed
-        job object. """
-        #from control import reglock_acquire, reglock_release    
-
-        #reglock_acquire()
-        try:
-            # call registry-specific job initialization
-            #check the internal services state
-            checkInternalServices()
-            
-            self._init_new_job(job)
-            
-            logger.debug('registering new job')
-
-            self.repository.registerJobs([job])
-
-            logger.debug('commiting new job')
-            self.repository.commitJobs([job])
-
-            assert(type(job.id) is type(1))
-            logger.debug('job %d registered',job.id)
-            job._setRegistry(self)
-            self.jobs[job.id] = job
-
-        finally:
-            #reglock_release()
-            pass
-        
-        
-    def _remove_by_id(self,id,auto_removed=0):
-        """ Private helper method removing job object from registry by id.
-        'auto_removed' should be set to true if this method is called in the context of job.remove() method to avoid recursion. """
-        if self.jobs.has_key(id):
-            self._do_remove(id,auto_removed)
-        else:
-            s='You attempted to remove a job which does not exist in this registry (ID %d not found)'%(id,)
-            print s
-            print self.jobs
-            raise IndexError(s)
-        
-    def _remove_by_object(self,job,auto_removed=0):
-        """ Private helper method removing job object from registry.
-        'auto_removed' should be set to true if this method is called in the context of job.remove() method to avoid recursion."""
-        if job._getRegistry()._id() != self._id():
-            raise ValueError('Attempt to delete job object owned by another registry (%s). This registry is %s' %(repr(job._registry),repr(self)))
-        if self.jobs.has_key(job.id):
-            if self.jobs[job.id] is job:
-                self._do_remove(job.id,auto_removed)
-            else:
-                mj = self.jobs[job.id]
-                s = "Indexing error. At your's job id I have: %s, id=%d. You try to delete object %s,id=%d. Your object seems to be registered in my registry. Please report this error." % (repr(mj),mj.id,repr(job),job.id)
-                print s
-                raise InternalError(s)
-        else:
-            s='Attempted to remove a job which does not exist in this registry (ID %d not found)'%(job.id,)
-            print s
-            print self.jobs
-            raise ValueError(s)
-
-    def _do_remove(self,id,auto_removed):
-        """ Private template method removing the job from the registry. This method always called.
-        This method may be overriden in the subclass to trigger additional actions on the removal.
-        'auto_removed' is set to true if this method is called in the context of job.remove() method to avoid recursion.
-        Only then the removal takes place. In the opposite case the job.remove() is called first which eventually calls
-        this method again with "auto_removed" set to true. This is done so that job.remove() is ALWAYS called once independent
-        on the removing conetxt."""
-        #from control import reglock_acquire, reglock_release    
-
-        #reglock_acquire()
-        try:
-            job = self.jobs[id]
-
-            if not auto_removed:
-                job.remove()
-            else:
-                logger.debug('deleting the job %d from the jobs dictionary',id)
-                job._setRegistry(None)
-                del self.jobs[id], job
-        finally:
-            pass
-            #reglock_release()
-        
-
-
-
-class JobRegistryInstance(JobRegistryInstanceBase):
-    """ JobRegistry connected to a persistent job repository. Provides additional interface to
-        count ditry hits (modifications not commited to repository) and periodic flushing.
-
-        dirty_flush_counter specifies after how many dirty hits will manke the flush to the repository
-    """
-    def __init__(self,name, repository, dirty_flush_counter=10):
-        JobRegistryInstanceBase.__init__(self,name)
-        self.thread = None
-        self.repository = repository
-        self.dirty_jobs = {}
-        self.dirty_hits = 0
-        import threading
-        self.lock = threading.RLock()
-        self.DIRTY_FLUSH_COUNTER = dirty_flush_counter
-
-    def clean(self):
-        # use bulk operations to clean the whole repository
-        
-        checkInternalServices()
-
-        self.repository.resetAll()
-
-        self.dirty_jobs = {}
-        self.dirty_hits = 0
-
-        #FIXME: kilall running jobs!
-
-        #if templates then should not delete the workspace!!
-        if self.name != 'templates':
-            from Ganga.Core.FileWorkspace import InputWorkspace, OutputWorkspace
-            inw,outw = InputWorkspace(),OutputWorkspace()
-            inw.remove(preserve_top=1)
-            outw.remove(preserve_top=1)
-            
-        JobRegistryInstanceBase.clean(self)
-        
-    def _init_new_job(self,job):
-        if self.name == 'templates':
-            job.status = 'template'
-
-    def _scan_repository(self):
-        #ids = self.repository.getJobIds({})
-        import time
-        t0 = time.time()
-        jobs = self.repository.checkoutJobs({})
-        t1 = time.time()
-        logger.info('Found %d jobs in "%s", completed in %d seconds',len(jobs), self.name, t1-t0)
-        logger.debug('scanned job ids: %s',repr(map(lambda j: j.id,jobs)))
-        
-        for j in jobs:
-            j._setRegistry(self)
-            self.jobs[j.id] = j
-
-    def _dirty(self,j):
-        """ mark a job as dirty
-            trigger automatic job flush after specified number of dirty hits """
-        
-        checkInternalServices("Cannot modify job object. Internal services disabled and job repository in read-only mode.")     
-        logger.debug('dirty job %d...',j.id)
-
-        self.dirty_jobs[j.id] = j
-        self.dirty_hits += 1
-        
-        if self.dirty_hits%self.DIRTY_FLUSH_COUNTER == self.DIRTY_FLUSH_COUNTER-1:
-            logger.debug('commiting jobs after %d dirty hits', self.dirty_hits)
-            self._flush()
-
-
-    def _flush(self,jobs=None):
-        """ flush dirty jobs to the persistent storage
-            if jobs are not specified, flush all of the dirty jobs
-        """
-        checkInternalServices()
-        all = False
-        if jobs is None:
-            jobs = self.dirty_jobs.values()
-            all = True
-            
-        logger.debug('flushing (commiting) jobs %s',str([j.id for j in jobs]))
-
-        # FIXME: need to use more detailed error info from bulk failure...
-        self.repository.commitJobs(jobs)
-
-        if all:
-            self.dirty_jobs = {}
-        else:
-            for j in jobs:
-                try:
-                    del self.dirty_jobs[j.id]
-                except KeyError:
-                    # explicitly specified jobs may be not marked as dirty
-                    pass
-
-    def _do_remove(self,id,auto_removed):       
-        checkInternalServices()
-        JobRegistryInstanceBase._do_remove(self,id,auto_removed)
-        if auto_removed:
-            try:
-                del self.dirty_jobs[id]
-            except KeyError:
-                pass
-            self.repository.deleteJobs([id])
-
 
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5  2008/09/09 12:18:25  moscicki
+#
+# #38646 bugfix: accept jobs.select(xrange(..))
+#
 # Revision 1.4  2008/08/25 08:16:19  moscicki
 # fixed problems found in 5.0.6-pre:
 #

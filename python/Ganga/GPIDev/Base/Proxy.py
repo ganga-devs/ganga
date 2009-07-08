@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Proxy.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
+# $Id: Proxy.py,v 1.2.4.1 2009-07-08 11:18:21 ebke Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -144,7 +144,9 @@ class ProxyDataDescriptor(object):
         if item['protected']:
             raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified'%(self._name,))
         if obj._impl._readonly():
-            raise ReadOnlyObjectError('object %s is readonly and attribute "%s" cannot be modified now'%(repr(obj),self._name))
+            raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj),self._name))
+        if not obj._impl._writable():
+            raise ReadOnlyObjectError('object %s is locked by another Ganga session and attribute "%s" cannot be modified'%(repr(obj),self._name))
 
         # apply attribute conversion
         def stripAttribute(v):
@@ -185,9 +187,8 @@ class ProxyDataDescriptor(object):
         self._check_type(obj,val)
         setattr(obj._impl, self._name, val)
 
-        #FIXME: save the object to persistent storage if applicable
-        root = obj._impl._getRoot()
-        root._setDirty(1)
+        #FIXME: save the object to persistent storage if applicable (Done on setattr, not?)
+        obj._impl._setDirty(1)
         #registry = root._getRegistry()
         #if registry:
         #    registry.save(root)
@@ -342,6 +343,11 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2  2008/09/09 14:37:16  moscicki
+# bugfix #40220: Ensure that default values satisfy the declared types in the schema
+#
+# factored out type checking into schema module, fixed a number of wrongly declared schema items in the core
+#
 # Revision 1.1  2008/07/17 16:40:52  moscicki
 # migration of 5.0.2 to HEAD
 #

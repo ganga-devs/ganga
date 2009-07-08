@@ -133,7 +133,7 @@ class GangaList(GangaObject):
     
     def checkReadOnly(self):
         """Puts a hook in to stop mutable access to readonly jobs."""
-        if self._readonly():
+        if self._readonly() or not self._writable():
             raise ReadOnlyObjectError('object %s is readonly and attribute "%s" cannot be modified now'%(repr(self),self._name))
         else:
             root = GangaObject.__getattribute__(self,'_getRoot')()

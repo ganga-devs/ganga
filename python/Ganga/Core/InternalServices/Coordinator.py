@@ -2,7 +2,7 @@
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
-# $Id: Coordinator.py,v 1.1 2008-07-17 16:40:50 moscicki Exp $
+# $Id: Coordinator.py,v 1.1.4.1 2009-07-08 11:18:21 ebke Exp $
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
@@ -146,8 +146,8 @@ def disableInternalServices():
     from Ganga.Core import monitoring_component
     monitoring_component.disableMonitoring()  
     #flush the registries
-    from Ganga.Runtime.Repository_runtime import repository_runtime
-    repository_runtime.shutdown()
+    from Ganga.Runtime import Repository_runtime
+    Repository_runtime.shutdown()
     #this will disable any interactions with the registries (implicitly with the GPI)
     servicesEnabled = False    
     
@@ -208,6 +208,11 @@ def bootstrap():
 
 #
 #$Log: not supported by cvs2svn $
+#Revision 1.1  2008/07/17 16:40:50  moscicki
+#migration of 5.0.2 to HEAD
+#
+#the doc and release/tools have been taken from HEAD
+#
 #Revision 1.3.6.4  2008/03/11 15:22:42  moscicki
 #merge from Ganga-5-0-restructure-config-branch
 #

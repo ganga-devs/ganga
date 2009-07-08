@@ -1,5 +1,5 @@
 """
-Internal initialization of the registries.
+Internal initialization of the repositories.
 """
 
 import Ganga.Utility.Config
@@ -10,15 +10,15 @@ logger = getLogger()
 
 import os.path
 from Ganga.Utility.files import expandfilename
+from Ganga.Core.exceptions import RepositoryError
+from Ganga.Core.GangaRepository import getRegistries
 
 def requiresAfsToken():
-    if hasattr(repository_runtime,'requiresAfsToken'):
-        return repository_runtime.requiresAfsToken()
     from Ganga.Utility.files import fullpath
-    return fullpath(repository_runtime.getLocalRoot()).find('/afs') == 0
+    return fullpath(getLocalRoot()).find('/afs') == 0
 
 def requiresGridProxy():
-    return repository_runtime.requiresGridProxy()
+    return False
 
 def getLocalRoot():
     if config['repositorytype'] in ['LocalXML','LocalAMGA']:
@@ -26,40 +26,24 @@ def getLocalRoot():
     else:
         return ''
 
-def __selectRepository():
-    
-    import XML_repository_runtime
-    import AMGA_repository_runtime
-    
-    if config['repositorytype'] == 'LocalXML':
-        repository_runtime = XML_repository_runtime
-    else:
-        if config['repositorytype'] in ['LocalAMGA','RemoteAMGA']:
-            repository_runtime = AMGA_repository_runtime
-        else:
-            raise Ganga.Utility.Config.ConfigError('"%s" is unsupported repository type'%config['repositorytype'])
+started_registries = []
+def bootstrap():
+    retval = []
+    for registry in getRegistries():
+        if registry.name in started_registries: continue
+        registry.type = config["repositorytype"]
+        registry.location = getLocalRoot()
+        registry.startup()
+        started_registries.append(registry.name)
+        retval.append((registry.name, registry.getProxy(), registry.doc))
+    import atexit
+    atexit.register(shutdown)
+    return retval
 
-    return repository_runtime
-
-repository_runtime = __selectRepository()
-repository_runtime.getLocalRoot = getLocalRoot
-bootstrap = repository_runtime.bootstrap
-
-def _shutdown(names,regs):
-    logger.debug("repository shutdown")
-
-    # check if the repository has been already disabled (by Ganga.Core.Coordinator)
-    from Ganga.Core.InternalServices import Coordinator
-    if not Coordinator.servicesEnabled:
-        logger.debug("repository has already been shut down")        
-        return 
-    
-    for n,r in zip(names,regs):
-        logger.debug("flushing %s cache to the persistent storage...",n)
-        r._flush()
-        logger.debug("releasing possible locks")
-        # use ARDAMD interface directly to release all locks which may have been left over
-        # from the other threads (which are daemonic so they may be interrupted inside the critical section)
-        r.repository.releaseAllLocks()
-        
+def shutdown():
+    logger.debug("registry shutdown")
+    for registry in getRegistries():
+        if not registry.name in started_registries: continue
+        registry.shutdown() # flush and release locks
+        started_registries.remove(registry.name)
 

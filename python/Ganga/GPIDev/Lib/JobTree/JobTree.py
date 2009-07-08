@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobTree.py,v 1.2 2008-08-01 10:54:26 asaroka Exp $
+# $Id: JobTree.py,v 1.2.4.1 2009-07-08 11:18:21 ebke Exp $
 ################################################################################
 import os
 import types
@@ -51,7 +51,7 @@ class JobTree(GangaObject):
                       'mkdir', 'ls', 'pwd', 'listdirs', 'listjobs',
                       'getjobs', 'find', 'cleanlinks', 'printtree']
 
-    default_registry = 'native_jobs'
+    default_registry = 'jobs'
 
     def __init__(self):
         super(JobTree, self).__init__()
@@ -109,12 +109,6 @@ class JobTree(GangaObject):
                 raise TreeError(2, "%s not a directory" % str(d))
         return f        
                 
-    def _setRegistry(self, registry):
-        self._registry = registry
-
-    def _getRegistry(self):
-        return self._registry
-
     def _setCounter(self, counter):
         self._counter = counter
 
@@ -148,8 +142,8 @@ class JobTree(GangaObject):
 
     def _auto__init__(self, registry = None):
         if registry is None:
-            from Ganga.GPIDev.Lib.JobRegistry import JobRegistryDev
-        self._setRegistry(JobRegistryDev.allJobRegistries[self.default_registry])
+            from Ganga.Core.GangaRepository import getRegistry
+            registry = getRegistry(self.default_registry)
         self._checkout()
 
     def _copy(self):

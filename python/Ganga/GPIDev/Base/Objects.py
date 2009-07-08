@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5.2.1 2009-06-04 12:00:37 moscicki Exp $
+# $Id: Objects.py,v 1.5.2.2 2009-07-08 11:18:21 ebke Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -194,11 +194,15 @@ class Descriptor(object):
                 result = g()
             else:
                 #LAZYLOADING
-                #if obj._data is None:
-                # try:
-                #  return obj.getCacheValue(self._name)
-                # except ValueNotInCache:
-                #   trigger full load
+                if obj._data is None:
+                    root = obj._getRoot()
+                    reg = root._getRegistry()
+                    if reg is not None:
+                        reg.load(obj)
+                #    try:
+                #        return obj.getCacheValue(self._name)
+                #    except ValueNotInCache:
+                #        obj._getRegistry().load(obj)
                 result = obj._data[self._name]
             
             return result
@@ -212,11 +216,19 @@ class Descriptor(object):
             cs(val)
 
         #LOCKING
-        #obj.getWriteLock():
+        #obj._getRegistry()getWriteLock():
         # 
-        #r = obj._getRegistry()
-        #if r and not obj.write_lock:
-        #   r.getWriteLock(obj)
+        reg = None
+        try:
+            root = obj._getRoot()
+            reg = root._getRegistry()
+        except AttributeError:
+            pass # This is probably during init where _registry is unset
+        if reg is not None:
+            if not reg.acquireWriteLock(obj):
+                raise GangaAttributeError("Could not lock object %s!"%obj) 
+            else:
+                reg.repository._dirty(root)
 
         filter = self._bind_method(obj, self._filter_name)
         if filter:
@@ -267,6 +279,7 @@ class Descriptor(object):
                 val = makeGangaList(val, parent = obj)
 
         obj._data[self._name] = val
+
             
     def __delete__(self, obj):
         #self._check_getter()
@@ -397,13 +410,32 @@ class GangaObject(Node):
                 setattr(c,name,self._schema.getDefaultValue(name))
         return c
 
+    # define when the object is writable (repository online and locked)
+    def _writable(self):
+        r = self._getRoot()
+        try:
+            reg = r._getRegistry()
+        except AttributeError:
+            print "STRANGE PROBLEM"
+            return True # Strange problem
+        if reg is not None:
+            if not reg.acquireWriteLock(r):
+                return False
+                #raise GangaAttributeError("Could not lock object %s!"%obj) 
+        return True
+
     # define when the object is read-only (for example a job is read-only in the states other than new)
     def _readonly(self):
         r = self._getRoot()
-        # is object a root for itself? check needed otherwise infinite recursion
-        if r is None or r is self: return 0
+        if r is None or r is self:
+            return 0
         else:
             return r._readonly()
+
+    # set the registry for this object (assumes this object is a root object)
+    def _setRegistry(self, registry):
+        assert self._getParent() is None
+        self._registry = registry
 
     # get the registry for the object by getting the registry associated with the root object (if any)
     def _getRegistry(self):
@@ -420,7 +452,7 @@ class GangaObject(Node):
         root = self._getRoot()
         reg = root._getRegistry()
         if dirty and reg is not None:
-            reg._dirty(root)
+            reg.repository._dirty(root)
 
     # post __init__ hook automatically called by GPI Proxy __init__
     def _auto__init__(self):
@@ -501,6 +533,9 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.2.1  2009/06/04 12:00:37  moscicki
+# *** empty log message ***
+#
 # Revision 1.5  2009/05/20 13:40:22  moscicki
 # added filter property for GangaObjects
 #

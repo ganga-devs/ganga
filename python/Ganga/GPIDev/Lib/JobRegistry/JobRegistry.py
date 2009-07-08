@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistry.py,v 1.3 2009-02-02 14:22:56 moscicki Exp $
+# $Id: JobRegistry.py,v 1.3.4.1 2009-07-08 11:18:21 ebke Exp $
 ################################################################################
 
 def apply_keyword_args(ns,d,**kwds):
@@ -179,9 +179,26 @@ def _unwrap(obj):
         pass
     return obj
 
+
+from JobRegistryDev import JobRegistryInstanceInterface
+from Ganga.Core.GangaRepository.Registry import Registry
+
+class JobRegistry(Registry):
+    def getProxy(self):
+        jri = JobRegistryInstanceInterface(self.name)
+        jri.jobs = self.repository
+        #for id in self.repository.ids():
+        #    jri.jobs[id] = self.repository[id]
+        return JobRegistryInterface(jri)
+    
+
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3  2009/02/02 14:22:56  moscicki
+# fixed:
+# bug #43249: jobs.remove(10) works, removes all jobs
+#
 # Revision 1.2  2008/08/18 13:18:58  moscicki
 # added force_status() method to replace job.fail(), force_job_failed() and
 # force_job_completed()
