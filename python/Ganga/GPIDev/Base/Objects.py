@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5.2.2 2009-07-08 11:18:21 ebke Exp $
+# $Id: Objects.py,v 1.5.2.3 2009-07-08 12:36:54 ebke Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -412,16 +412,9 @@ class GangaObject(Node):
 
     # define when the object is writable (repository online and locked)
     def _writable(self):
-        r = self._getRoot()
-        try:
-            reg = r._getRegistry()
-        except AttributeError:
-            print "STRANGE PROBLEM"
-            return True # Strange problem
+        reg = self._getRegistry()
         if reg is not None:
-            if not reg.acquireWriteLock(r):
-                return False
-                #raise GangaAttributeError("Could not lock object %s!"%obj) 
+            return reg.acquireWriteLock(r)
         return True
 
     # define when the object is read-only (for example a job is read-only in the states other than new)
@@ -533,6 +526,10 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.2.2  2009/07/08 11:18:21  ebke
+# Initial commit of all - mostly small - modifications due to the new GangaRepository.
+# No interface visible to the user is changed
+#
 # Revision 1.5.2.1  2009/06/04 12:00:37  moscicki
 # *** empty log message ***
 #
