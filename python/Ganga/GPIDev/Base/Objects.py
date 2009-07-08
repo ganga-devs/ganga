@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5.2.4 2009-07-08 12:51:52 ebke Exp $
+# $Id: Objects.py,v 1.5.2.5 2009-07-08 15:27:50 ebke Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -33,16 +33,14 @@ class Node(object):
         return dict
 
     def __setstate__(self, dict):
-        def setParent(v):
-            if isinstance(v, Node):
-                v._setParent(self)
-
         for n, v in dict['_data'].items():
-            setParent(v)
-            # set the parent of the list or dictionary (or other iterable) items
-            if not isStringLike(v) and canLoopOver(v):
+            if isinstance(v,Node):
+                v._setParent(self)
+            elif isinstance(v,list):
+                # set the parent of the list or dictionary (or other iterable) items
                 for i in v:
-                    setParent(i)
+                    if isinstance(v,Node):
+                        i._setParent(self)
         self.__dict__ = dict
 
     def __copy__(self, memo = None):
@@ -514,6 +512,9 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.2.4  2009/07/08 12:51:52  ebke
+# Fixes some bugs introduced in the latest version
+#
 # Revision 1.5.2.3  2009/07/08 12:36:54  ebke
 # Simplified _writable
 #
