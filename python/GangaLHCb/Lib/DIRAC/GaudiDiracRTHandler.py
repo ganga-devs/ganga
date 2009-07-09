@@ -62,8 +62,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
             dirac_script.inputdata = DiracInputData(app.extra.inputdata)
           
         if app.extra.outputdata:
-            data = app.extra.outputdata
-            dirac_script.outputdata = [f.name for f in data.files]
+            dirac_script.outputdata = app.extra.outputdata
 
         c.script = dirac_script        
         return c

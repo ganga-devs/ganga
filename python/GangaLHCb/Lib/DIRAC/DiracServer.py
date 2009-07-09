@@ -72,11 +72,19 @@ class DiracServer:
         env = {}
         cmd = '/usr/bin/env bash -c \"source %s Dirac %s >& /dev/null && '\
               'printenv > env.tmp\"' % (setup_script,version)
-        Popen([cmd],shell=True).wait()
+        rc = Popen([cmd],shell=True).wait()
+        if rc != 0 or not os.path.exists('env.tmp'):
+            msg = 'Could not obtain the DIRAC environment.'
+            raise GangaException(msg)
+        count = 0
         for line in open('env.tmp').readlines():
+            if line.find('DIRAC') >= 0: count += 1
             varval = line.strip().split('=')
             env[varval[0]] = ''.join(varval[1:])
         os.system('rm -f env.tmp')
+        if count == 0:
+            msg = 'Could not obtain the DIRAC environment.'
+            raise GangaException(msg)
         DiracServer.dirac_env = env
         logger.debug('DiracServer.dirac_env = %s' % str(env))
 

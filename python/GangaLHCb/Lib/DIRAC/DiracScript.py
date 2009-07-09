@@ -59,7 +59,9 @@ class DiracRoot:
         app = self.root_app
         args = ''
         if app.args:
-            args = string.join([str(s) for s in app.args],',')
+            if app.usepython:
+                args = string.join([str(s) for s in app.args],' ')
+            else: args = string.join([str(s) for s in app.args],',')
         script = self.script
         arg_str = '("%s","%s","%s","%s")' % (app.version,script,args,self.log)
         if app.usepython:
