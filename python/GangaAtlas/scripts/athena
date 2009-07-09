@@ -109,6 +109,7 @@ p.add_option('--user_area', action='store', type='string', dest='user_area', hel
 p.add_option('--group_area', action='store', type='string', dest='group_area', help='Tar file of GroupArea produced e.g. by a previous Ganga job' )
 p.add_option('--user_setupfile', action='store', type='string', dest='user_setupfile', help='User setup script for special setup on the grid worker node' )
 p.add_option('--excludepackage', action='store', type='string', dest='excludepackage', help='Pattern of files to exclude from user area requirements files, separated by : , e.g. --excludepackage=MyPackage:YourPackage' )
+p.add_option('--prepare_old', action='store_true', help='Use prepare_old instead of new prepare method' )
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -170,7 +171,7 @@ j = Job()
 # job object
 
 if opt.name:
-   j.name = opt.name
+    j.name = opt.name
 
 # application
 
@@ -195,25 +196,34 @@ if opt.group_area:
 
 j.application.option_file = option_files
 if opt.options:
-   aoptions = opt.options.replace('"',"'''")        
-   aoptions = opt.options.replace('\'',"'''")        
-   j.application.options = "-c '''%s''' " %aoptions
+    aoptions = opt.options.replace('"',"'''")        
+    aoptions = opt.options.replace('\'',"'''")        
+    j.application.options = "-c '''%s''' " %aoptions
 if opt.user_setupfile:
     j.application.user_setupfile = opt.user_setupfile
 
 # max_events
 if opt.maxevt:
-   j.application.max_events = int(opt.maxevt)
+    j.application.max_events = int(opt.maxevt)
 
 if opt.compile:
-   j.application.athena_compile=True
-   j.application.prepare()
+    j.application.athena_compile=True
+    if opt.prepare_old:	
+        j.application.prepare_old(athena_compile=True)
+    else:
+        j.application.prepare()
 elif opt.nocompile:
-   j.application.athena_compile=False
-   j.application.prepare()
+    j.application.athena_compile=False
+    if opt.prepare_old:	
+        j.application.prepare_old(athena_compile=False)
+    else:
+        j.application.prepare()
 else:
-   if not (opt.athena_release or opt.user_area):
-       j.application.prepare()
+    if not (opt.athena_release or opt.user_area):
+        if opt.prepare_old:	
+            j.application.prepare_old()
+        else:
+	    j.application.prepare()
 
 # inputdata
 
