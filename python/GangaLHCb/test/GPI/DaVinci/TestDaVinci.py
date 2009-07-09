@@ -44,3 +44,10 @@ class TestDaVinci(GangaGPITestCase):
         #assert sleep_until_completed(j,1800)
         #j.peek()
         #assert(os.path.exists(os.path.join(j.outputdir,'DVHistos.root')))
+
+    def test_outputdata_submit(self):
+        j = Job(application=DaVinci(),backend=Dirac())
+        j.application.platform = config.DIRAC.AllowedPlatforms[0]
+        j.outputdata = ['Something.root']
+        j.submit()
+        j.kill()
