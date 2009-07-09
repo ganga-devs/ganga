@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.63 2009-07-02 19:36:23 elmsheus Exp $
+# $Id: Athena.py,v 1.64 2009-07-09 19:04:03 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -565,18 +565,31 @@ class Athena(IApplication):
             for subjob in job.subjobs:
                 if subjob.application.stats.has_key('numfiles'):
                     if subjob.application.stats['numfiles']:
-                        numfiles = numfiles + subjob.application.stats['numfiles']
+                        try:
+                            numfiles = numfiles + int(subjob.application.stats['numfiles'])
+                        except:
+                            pass
                 if subjob.application.stats.has_key('numfiles2'):
                     if subjob.application.stats['numfiles2']:
-                        numfiles2 = numfiles2 + subjob.application.stats['numfiles2']
+                        try:
+                            numfiles2 = numfiles2 + int(subjob.application.stats['numfiles2'])
+                        except:
+                            pass
                 if subjob.application.stats.has_key('numfiles3'):
                     if subjob.application.stats['numfiles3']:
-                        numfiles3 = numfiles3 + subjob.application.stats['numfiles3']
+                        try:
+                            numfiles3 = numfiles3 + int(subjob.application.stats['numfiles3'])
+                        except:
+                            pass
                 if subjob.application.stats.has_key('totalevents'):
                     if subjob.application.stats['totalevents']:
-                        totalevents = int(totalevents) + int(subjob.application.stats['totalevents'])
+                        try:
+                            totalevents = int(totalevents) + int(subjob.application.stats['totalevents'])
+                        except:
+                            pass
             self.stats['numfiles']=numfiles
             self.stats['numfiles2']=numfiles2
+            self.stats['numfiles3']=numfiles3
             self.stats['totalevents']=totalevents        
 
     def files_lcg_ng(self):
@@ -1306,6 +1319,9 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.63  2009/07/02 19:36:23  elmsheus
+# Small fix
+#
 # Revision 1.62  2009/07/02 18:15:29  elmsheus
 # Initial import
 #
