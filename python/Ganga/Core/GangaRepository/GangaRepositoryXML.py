@@ -117,6 +117,7 @@ class GangaRepositoryLocal(GangaRepository):
                 else:
                     self._internal_setitem__(id, self.from_file(fobj)[0])
                 self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
+                self._objects[id]._index_cache = None 
             except Exception, x:
                 print "Could not load object ", id, " :", x
                 #self._internal_setitem__(id, EmptyGangaObject())
@@ -148,7 +149,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def acquireWriteLock(self,ids):
         locked_ids = self.sessionlock.lock_ids(ids)
-        self.load(ids)
+        #self.load(ids)
         return locked_ids
 
     def releaseWriteLock(self,ids):
