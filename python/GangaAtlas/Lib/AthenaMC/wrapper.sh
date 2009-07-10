@@ -192,18 +192,25 @@ echo "======================="
 echo "TRANSFORMATION STARTING"
 echo "======================="
 echo
+
 if [ -z "$JTPATH" ]; then
     if [ -e "$T_TRF" ]; then
 	chmod +x $T_TRF
 	echo "./$T_TRF $T_JTFLAGS $T_ARGS"
 	./$T_TRF $T_JTFLAGS $T_ARGS
+        retcode=$?
+	echo $retcode > retcode.tmp
     else
 	echo "$T_TRF $T_JTFLAGS $T_ARGS"
 	$T_TRF $T_JTFLAGS $T_ARGS
+        retcode=$?
+	echo $retcode > retcode.tmp
     fi
 else
-echo "$JTPATH/$T_TRF $T_JTFLAGS $T_ARGS"
-$JTPATH/$T_TRF $T_JTFLAGS $T_ARGS
+   echo "$JTPATH/$T_TRF $T_JTFLAGS $T_ARGS"
+   $JTPATH/$T_TRF $T_JTFLAGS $T_ARGS
+   retcode=$?
+   echo $retcode > retcode.tmp
 fi
 
 echo
@@ -211,11 +218,11 @@ echo "======================="
 echo " END OF TRANSFORMATION"
 echo "======================="
 echo
-
+trfstatus=`cat retcode.tmp`
+echo "transform exit code is $trfstatus"
 echo
 /usr/bin/env date
 echo
-
 \ls -l 
 
 if [ -z $isJT ]; then
@@ -246,4 +253,5 @@ if [ ! -s "output_data" ]; then
     exit 128
 fi
 
-exit 0
+echo "returning exit code $trfstatus"
+exit $trfstatus

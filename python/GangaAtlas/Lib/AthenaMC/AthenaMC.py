@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.35 2009-07-01 14:44:45 fbrochu Exp $
+# $Id: AthenaMC.py,v 1.36 2009-07-10 12:16:38 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -79,10 +79,14 @@ class AthenaMC(IApplication):
                logger.info("entering Master job completion thread")
                stats = [s.status for s in job.subjobs]
                logger.info("subjob status: %s" % str(stats))
+               nattempt=0
                while "completing" in stats:
-                   logger.info("Master job completing while at least one subjob is still completing. Delaying master job completion until all subjobs have left the 'completing' state")
                    time.sleep(20)
+                   nattempt+=1
+                   if nattempt==3:
+                       logger.warning("Master job completing while at least one subjob is still completing. Delaying master job completion until all subjobs have left the 'completing' state. Please abort by hand if this is the result of job.force_status('completed')")
                    stats = [s.status for s in job.subjobs]
+                   
                logger.info("All subjobs are done, now running fill() for master job")
            job.outputdata.fill()
               
@@ -748,6 +752,9 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.35  2009/07/01 14:44:45  fbrochu
+# AthenaMC.py: fixing propagation of 'none' from outputdata.outrootfiles to final fileprefixes, allowing users to effectively disable output types in all modes
+#
 # Revision 1.34  2009/06/30 11:28:45  fbrochu
 # Revisiting dataset registration implementation to allow job.resubmit() to work without troubles. Also put stage-in back after athena setup, in order to avoid downloading DBrelease tarball if there is already a local setup available. Paving the way for support for perf/phys/trigger group production managers
 #

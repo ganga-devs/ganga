@@ -41,6 +41,7 @@ mc = getConfig('MonitoringServices')
 mc.addOption('AthenaMC', None, 'FIXME')
 mc.addOption('AthenaMC/LCG', None, 'FIXME')
 
+_defaultSite='CERN-PROD_SCRATCHDISK'
 
 class AthenaMCLCGRTHandler(IRuntimeHandler):
     """Athena MC LCG Runtime Handler"""
@@ -117,6 +118,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         # must distinguish running site (backend.requirements.sites) and output storage site (app.se_name)
         
         # matching with user's wishes (app.se_name or backend.requirements.sites)
+
         usersites=[]
         if len(job.backend.requirements.sites)>0:
             usersites=job.backend.requirements.sites
@@ -138,7 +140,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             except:
                 raise ApplicationConfigurationError(None,"Could not find a match between input dataset locations: %s and your requested sites: %s. Please use a space token compatible with one of the input dataset locations (replace _XXXDISK or _XXXTAPE by _LOCALGROUPDISK or _SCRATCHDISK if necessary)" % (str(app.sites),str(usersites)))
             logger.warning("Failed to obtain processing site from input data, will use default value: CERN-PROD_SCRATCHDISK and submit production to CERN")
-            selectedSites.append("CERN-PROD_SCRATCHDISK")
+            selectedSites.append(_defaultSite)
 
 
         [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(selectedSites[0])
@@ -165,7 +167,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                         backup=se
                         backuplocation=location
                         break
-
+        # finally: if no backup location is defined at this point, enforce CERN-PROD_SCRATCHDISK as backup location
+        if backup=="":
+             [outlfc2,backup,backuplocation]=job.outputdata.getDQ2Locations(_defaultSite)
+        
         logger.info("Final selection of output sites: %s , backup: %s" % (outsite,backup))
         try:
             assert outsite
