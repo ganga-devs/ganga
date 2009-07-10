@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.5.4.1 2009-07-08 11:18:21 ebke Exp $
+# $Id: JobRegistryDev.py,v 1.5.4.2 2009-07-10 13:30:19 ebke Exp $
 ################################################################################
 
 
@@ -375,6 +375,7 @@ class JobRegistryInstanceInterface:
                         return getatr(val,members[1:])
                     else:
                         return val
+
                 try:
                     val = getatr(j,item.split('.'))
 
@@ -395,7 +396,13 @@ class JobRegistryInstanceInterface:
                     width = 10
                 else:
                    width = config['registry_columns_width'][d]
-                vals.append(getstr(item,width))
+
+                try:
+                   if not j._index_cache:
+                      raise KeyError()
+                   vals.append(j._index_cache["display:"+item][0:width])
+                except KeyError:
+                   vals.append(getstr(item,width))
 
             ds += markup(format % tuple(vals), colour)
             
@@ -411,6 +418,10 @@ class JobRegistryInstanceInterface:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.4.1  2009/07/08 11:18:21  ebke
+# Initial commit of all - mostly small - modifications due to the new GangaRepository.
+# No interface visible to the user is changed
+#
 # Revision 1.5  2008/09/09 12:18:25  moscicki
 #
 # #38646 bugfix: accept jobs.select(xrange(..))
