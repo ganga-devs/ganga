@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.12.2.1 2009-07-08 11:18:21 ebke Exp $
+# $Id: Job.py,v 1.12.2.2 2009-07-10 11:30:34 ebke Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -709,7 +709,7 @@ class Job(GangaObject):
         if self._registry:
             self._registry._remove(self,auto_removed=1)
 
-        self._data['status'] = 'removed'
+        self.status = 'removed'
 
         if not template:
             # remove the corresponding workspace files
@@ -991,6 +991,10 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12.2.1  2009/07/08 11:18:21  ebke
+# Initial commit of all - mostly small - modifications due to the new GangaRepository.
+# No interface visible to the user is changed
+#
 # Revision 1.12  2009/05/20 12:35:40  moscicki
 # debug directory (https://savannah.cern.ch/bugs/?50305)
 #
