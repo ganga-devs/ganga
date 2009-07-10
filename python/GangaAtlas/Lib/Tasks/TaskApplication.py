@@ -25,7 +25,9 @@ def taskify(baseclass,name):
             }.items()
         taskclass = TaskApplication
     elif baseclass._category == "splitters":
-        schema_items = []
+        schema_items = {
+            'task_partitions' : SimpleItem(defvalue=[], copyable=1,doc='task partition numbers.', typelist=["list"]),
+        }.items()
         taskclass = TaskSplitter
 
     classdict = {
@@ -87,7 +89,7 @@ class TaskSplitter(object):
         ## .. but the subjobs will be
         for i in range(0,len(subjobs)):
             subjobs[i].application.tasks_id = job.application.tasks_id
-            subjobs[i].application.id = transform.getNewAppID(subjobs[i].application.partition_number)
+            subjobs[i].application.id = transform.getNewAppID(self.task_partitions[i])
             # Do not set to submitting - failed submission will make the applications stuck...
             # transform.setAppStatus(subjobs[i].application, "submitting")
         if not job.application.tasks_id.startswith("00"):
@@ -130,14 +132,17 @@ class AnaTaskSplitterJob(ISplitter):
             job.application.tasks_id = "00:%s" % job.application.tasks_id
         return sjl
 
+
 from Ganga.Lib.Executable.Executable import Executable
 from GangaAtlas.Lib.AthenaMC.AthenaMC import AthenaMC, AthenaMCSplitterJob
 from GangaAtlas.Lib.Athena.Athena import Athena
+from Ganga.Lib.Splitters import ArgSplitter
 
 ExecutableTask = taskify(Executable,"ExecutableTask")
 AthenaTask = taskify(Athena,"AthenaTask")
 AthenaMCTask = taskify(AthenaMC,"AthenaMCTask")
 AthenaMCTaskSplitterJob = taskify(AthenaMCSplitterJob,"AthenaMCTaskSplitterJob")
+ArgSplitterTask = taskify(ArgSplitter,"ArgSplitterTask")
 
 
 def taskApp(app):

@@ -59,6 +59,7 @@ class MCTransform(Transform):
       if len(partitions) > 1:
          j.splitter=GPI.AthenaMCTaskSplitterJob()
          j.splitter.output_partitions = partitions
+         j.splitter.task_partitions = partitions
          j.splitter.random_seeds = [self.random_seeds[part] for part in partitions]
       else:
          j.application.partition_number = partitions[0]

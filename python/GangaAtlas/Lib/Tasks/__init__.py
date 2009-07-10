@@ -11,6 +11,7 @@ from AnaTask import AnaTask
 from Transform import Transform
 from MCTransforms import EvgenTransform, SimulTransform, ReconTransform
 from AnaTransform import AnaTransform
+from ArgTransform import ArgTransform
 
 # Applications
 from TaskApplication import ExecutableTask, AthenaMCTask, AthenaMCTaskSplitterJob, AthenaTask, AnaTaskSplitterJob
