@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.5.4.3 2009-07-10 13:31:52 ebke Exp $
+# $Id: JobRegistryDev.py,v 1.5.4.4 2009-07-10 13:38:15 ebke Exp $
 ################################################################################
 
 
@@ -400,7 +400,7 @@ class JobRegistryInstanceInterface:
                 try:
                    if not hasattr(j,"_index_cache") or not j._index_cache:
                       raise KeyError()
-                   vals.append(j._index_cache["display:"+item][0:width])
+                   vals.append(str(j._index_cache["display:"+item])[0:width])
                 except KeyError:
                    vals.append(getstr(item,width))
 
@@ -418,6 +418,9 @@ class JobRegistryInstanceInterface:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.4.3  2009/07/10 13:31:52  ebke
+# Added display: index cache support to job display
+#
 # Revision 1.5.4.2  2009/07/10 13:30:19  ebke
 # Added possibility for
 #
