@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GangaRepository.py,v 1.1.2.3 2009-07-08 14:40:42 ebke Exp $
+# $Id: GangaRepository.py,v 1.1.2.4 2009-07-10 11:33:06 ebke Exp $
 ################################################################################
 #
 # Note: Following stuff must be considered in a GangaRepository:
@@ -40,13 +40,13 @@ class GangaRepository(object):
         name is: box, jobs, templates, tasks
         location is: gangadir/.../...
         """
+        self._lock = threading.RLock() # currently not used
         self.name = registry.name
         self.location = registry.location
         self.type = registry.type
         self.registry = registry
         self._objects = {}
         self._object_id_map = {}
-        self._lock = threading.RLock()
         self.dirty_flush_counter = dirty_flush_counter
         self.dirty_objs = {}
         self.dirty_hits = 0
@@ -56,7 +56,7 @@ class GangaRepository(object):
             May return a not fully initialized object
             Raise KeyError"""
         if not id in self._objects:
-            self.load([id])
+            self.index_load([id])
         return self._objects[id]
 
     def __len__(self):
@@ -143,6 +143,14 @@ class GangaRepository(object):
         Flush the objects with the given ids to disk.
         """
         raise NotImplementedError
+
+    def index_load(self, ids):
+        """index_load(self, ids) --> list of objects loaded from index
+        Raise RepositoryError
+        Raise KeyError
+        ids -- list of object ids to load from index
+        """
+        raise KeyError
 
     def load(self, ids):
         """checkout(self, ids) --> list of objects

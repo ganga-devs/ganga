@@ -5,14 +5,15 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
-
-from GangaRepositoryXML import GangaRepositoryLocal
-
 from Ganga.Core.InternalServices.Coordinator import checkInternalServices
 
 def makeRepository(registry):
     if registry.type in ["LocalXML","LocalPickle"]:
+        from GangaRepositoryXML import GangaRepositoryLocal
         reg = GangaRepositoryLocal(registry)
+    elif registry.type in ["SQLite"]:
+        from GangaRepositorySQLite import GangaRepositorySQLite
+        reg = GangaRepositorySQLite(registry)
     else:
         raise GangaException(msg = "Repository %s: Unknown repository type %s" % (registry.name, registry.type))
     return reg  
@@ -78,6 +79,9 @@ class Registry(object):
 
     def _flush(self, objects):
         self.repository.flush([self.repository.find(obj) for obj in objects])
+
+    def load(self, objects):
+        self.repository.load([self.repository.find(obj) for obj in objects])
 
     def acquireWriteLock(self,obj):
         return 1 == len(self.repository.acquireWriteLock([self.repository.find(obj)]))

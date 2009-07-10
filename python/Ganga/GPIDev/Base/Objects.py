@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5.2.5 2009-07-08 15:27:50 ebke Exp $
+# $Id: Objects.py,v 1.5.2.6 2009-07-10 11:33:06 ebke Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -24,6 +24,7 @@ from Ganga.Utility.util import canLoopOver, isStringLike
 class Node(object):
     def __init__(self, parent):
         self._data= {}
+        self._index_cache = None
         self._setParent(parent)
             
     def __getstate__(self):
@@ -36,10 +37,10 @@ class Node(object):
         for n, v in dict['_data'].items():
             if isinstance(v,Node):
                 v._setParent(self)
-            elif isinstance(v,list):
+            elif isinstance(v,list) and len(v) > 0:
                 # set the parent of the list or dictionary (or other iterable) items
-                for i in v:
-                    if isinstance(v,Node):
+                if isinstance(v[0],Node):
+                    for i in v:
                         i._setParent(self)
         self.__dict__ = dict
 
@@ -60,10 +61,13 @@ class Node(object):
         return obj
 
     def _getParent(self):
-        return self._data['parent']
+        if not self._data is None:
+            return self._data['parent']
+        return None
 
     def _setParent(self, parent):
-        self._data['parent'] = parent
+        if not self._data is None:
+            self._data['parent'] = parent
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -193,14 +197,15 @@ class Descriptor(object):
             else:
                 #LAZYLOADING
                 if obj._data is None:
-                    reg = self._getRegistry()
-                    if reg is not None:
-                        reg.load(obj)
-                #    try:
-                #        return obj.getCacheValue(self._name)
-                #    except ValueNotInCache:
-                #        obj._getRegistry().load(obj)
-                result = obj._data[self._name]
+                    if obj._index_cache and self._name in obj._index_cache:
+                        result = obj._index_cache[self._name]
+                    else:
+                        reg = obj._getRegistry()
+                        if reg is not None:
+                            reg.load([obj])
+                        result = obj._data[self._name]
+                else:
+                    result = obj._data[self._name]
             
             return result
 
@@ -356,6 +361,7 @@ class GangaObject(Node):
     __metaclass__ = ObjectMetaclass
     _schema       = None # obligatory, specified in the derived classes
     _proxyClass   = None # created automatically
+    _registry     = None # automatically set for Root objects
     _exportmethods= [] # optional, specified in the derived classes
 
     # by default classes are not hidden, config generation and plugin registration is enabled
@@ -367,6 +373,8 @@ class GangaObject(Node):
     # additional properties that may be set in derived classes which were declared as _hidden:
     #   _enable_plugin = 1 -> allow registration of _hidden classes in the allPlugins dictionary
     #   _enable_config = 1 -> allow generation of [default_X] configuration section with schema properties
+
+
     
     # the constructor is directly used by the GPI proxy so the GangaObject must be fully initialized
     def __init__(self):
@@ -512,6 +520,9 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.2.5  2009/07/08 15:27:50  ebke
+# Removed load speed bottleneck for pickle - reduced __setstate__ time by factor 3.
+#
 # Revision 1.5.2.4  2009/07/08 12:51:52  ebke
 # Fixes some bugs introduced in the latest version
 #
