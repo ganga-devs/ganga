@@ -130,14 +130,14 @@ class GangaList(GangaObject):
                 result.append(category)
         return result
     
-    
     def checkReadOnly(self):
         """Puts a hook in to stop mutable access to readonly jobs."""
-        if self._readonly() or not self._writable():
+        if self._readonly():
             raise ReadOnlyObjectError('object %s is readonly and attribute "%s" cannot be modified now'%(repr(self),self._name))
+        elif not self._writable():
+            raise ReadOnlyObjectError('object %s is locked by another sessionand attribute "%s" cannot be modified now'%(repr(self),self._name))
         else:
-            root = GangaObject.__getattribute__(self,'_getRoot')()
-            root._setDirty(True)
+            self._setDirty(True)
             
     def checkNestedLists(self,value):
         """The rule is that if there are nested lists then they 
