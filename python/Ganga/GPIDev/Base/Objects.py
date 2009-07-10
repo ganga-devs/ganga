@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5.2.6 2009-07-10 11:33:06 ebke Exp $
+# $Id: Objects.py,v 1.5.2.7 2009-07-10 12:14:10 ebke Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -278,6 +278,9 @@ class Descriptor(object):
 
         obj._data[self._name] = val
 
+        if reg is not None:
+            reg.repository._dirty(root)
+
             
     def __delete__(self, obj):
         #self._check_getter()
@@ -520,6 +523,9 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.2.6  2009/07/10 11:33:06  ebke
+# Preparations and fixes for lazy loading
+#
 # Revision 1.5.2.5  2009/07/08 15:27:50  ebke
 # Removed load speed bottleneck for pickle - reduced __setstate__ time by factor 3.
 #
