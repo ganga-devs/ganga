@@ -21,7 +21,7 @@ def requiresGridProxy():
     return False
 
 def getLocalRoot():
-    if config['repositorytype'] in ['LocalXML','LocalAMGA','LocalPickle']:
+    if config['repositorytype'] in ['LocalXML','LocalAMGA','LocalPickle','SQLite']:
         return os.path.join(expandfilename(config['gangadir']),'repository',config['user'],config['repositorytype'])
     else:
         return ''
