@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GangaRepository.py,v 1.1.2.4 2009-07-10 11:33:06 ebke Exp $
+# $Id: GangaRepository.py,v 1.1.2.5 2009-07-10 13:33:06 ebke Exp $
 ################################################################################
 #
 # Note: Following stuff must be considered in a GangaRepository:
@@ -27,6 +27,45 @@ class EmptyGangaObject(GangaObject):
 # Error raised on schema version error
 class SchemaVersionError(Exception):
     pass
+
+import Ganga.Utility.Config
+display_config = Ganga.Utility.Config.getConfig('Display')
+
+def get_display_value(j,item):
+
+    registry_column_converter = {}
+    try:
+        for c in display_config['registry_columns_converter']:
+            registry_column_converter[c] = eval(display_config['registry_columns_converter'][c])
+    except Exception,x:
+        pass # this will appear if the user types "jobs"
+    def getatr(obj,members):
+        val = getattr(obj,members[0])
+        if len(members)>1:
+            return getatr(val,members[1:])
+        else:
+            return val
+    try:
+        val = getatr(j,item.split('.'))
+        try:
+            val = registry_column_converter[item](val)
+        except KeyError:
+            pass
+        if not val and not item in display_config['registry_columns_show_empty']:
+                val = ""
+    except AttributeError:
+        val = ""
+    return val
+
+cached_values = ['status','id','name']
+def make_index_cache(obj):
+    c = {}
+    for cv in cached_values:
+        if cv in obj._data:
+            c[cv] = obj._data[cv]
+    for dpv in display_config['registry_columns']:
+        c["display:"+dpv] = get_display_value(obj, dpv)
+    return c
 
 class GangaRepository(object):
     """GangaRepository is the base class for repository backend implementation.

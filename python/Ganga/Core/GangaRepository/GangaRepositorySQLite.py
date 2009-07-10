@@ -47,7 +47,9 @@ class GangaRepositorySQLite(GangaRepository):
             self.cur.execute("SELECT id,classname,category,idx FROM objects WHERE id IN (%s)" % (",".join(map(str,ids))))
         for e in self.cur:
             id = int(e[0])
-            print "load_index: ",e
+            if e[1] is None: # deleted object
+                continue
+            #print "load_index: ",e
             if not id in self._objects:
                 try:
                     cls = allPlugins.find(e[2],e[1])
@@ -69,7 +71,7 @@ class GangaRepositorySQLite(GangaRepository):
         else:
             self.cur.execute("SELECT id,classname,category,data FROM objects WHERE id IN (%s)" % (",".join(map(str,ids))))
         for e in self.cur:
-            print "load: ",e
+            #print "load: ",e
             id = int(e[0])
             if e[1] is None: # deleted object
                 continue
@@ -109,6 +111,7 @@ class GangaRepositorySQLite(GangaRepository):
         for i in range(0,len(objs)):
             cls = objs[i]._name
             cat = objs[i]._category
+            objs[i]._index_cache = make_index_cache(objs[i])
             data = pickle.dumps(objs[i]._data).replace("'","''")
             idx = pickle.dumps(objs[i]._index_cache).replace("'","''")
             self.cur.execute("INSERT INTO objects (id,classname,category,idx,data) VALUES (NULL,'%s','%s','%s','%s')" % (cls,cat,idx,data))
@@ -118,15 +121,17 @@ class GangaRepositorySQLite(GangaRepository):
         return ids
 
     def flush(self, ids):
-        self.acquireWriteLock(ids)
+        self.acquireWriteLock(ids) # makes sure _data is filled
         for id in ids:
             obj = self._objects[id] 
             if self.dirty_objs.has_key(obj):
                 del self.dirty_objs[obj]
             if obj._name != "Unknown":
+                obj._index_cache = make_index_cache(obj)
                 data = pickle.dumps(obj._data).replace("'","''")
                 idx = pickle.dumps(obj._index_cache).replace("'","''")
                 self.cur.execute("UPDATE objects SET idx='%s',data='%s' WHERE id=%s" % (idx, data, id))
+                #print "flushing id ", id, " backend ", obj.backend._name
         self.con.commit()
 
     def delete(self, ids):
@@ -142,7 +147,7 @@ class GangaRepositorySQLite(GangaRepository):
         self.con.commit()
 
     def acquireWriteLock(self,ids):
-        new_ids = [id for id in ids if not id in self._objects]
+        new_ids = [id for id in ids if not id in self._objects or self._objects[id]._data is None]
         if len(new_ids) > 0:
             self.load(ids)
         return ids
