@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.5.4.2 2009-07-10 13:30:19 ebke Exp $
+# $Id: JobRegistryDev.py,v 1.5.4.3 2009-07-10 13:31:52 ebke Exp $
 ################################################################################
 
 
@@ -398,7 +398,7 @@ class JobRegistryInstanceInterface:
                    width = config['registry_columns_width'][d]
 
                 try:
-                   if not j._index_cache:
+                   if not hasattr(j,"_index_cache") or not j._index_cache:
                       raise KeyError()
                    vals.append(j._index_cache["display:"+item][0:width])
                 except KeyError:
@@ -418,6 +418,9 @@ class JobRegistryInstanceInterface:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.4.2  2009/07/10 13:30:19  ebke
+# Added possibility for
+#
 # Revision 1.5.4.1  2009/07/08 11:18:21  ebke
 # Initial commit of all - mostly small - modifications due to the new GangaRepository.
 # No interface visible to the user is changed
