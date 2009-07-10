@@ -60,10 +60,16 @@ class DiracRoot:
         args = ''
         if app.args:
             if app.usepython:
-                args = string.join([str(s) for s in app.args],' ')
-            else: args = string.join([str(s) for s in app.args],',')
+                args = string.join(['"%s"' % str(s) for s in app.args],' ')
+            else:
+                arglist = []
+                for arg in app.args:
+                    if type(arg)==type('str'): arglist.append('"%s"' % arg)
+                    else: arglist.append(arg)
+                args = string.join([str(s) for s in arglist],',')
         script = self.script
-        arg_str = '("%s","%s","%s","%s")' % (app.version,script,args,self.log)
+        arg_str = "(\"%s\",\"%s\",'''%s''',\"%s\")" \
+                  % (app.version,script,args,self.log)
         if app.usepython:
             if app.script.name.split('.')[-1] != 'py':
                 logger.warning('Root application has "usepython" set to True,'\
