@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GangaRepository.py,v 1.1.2.5 2009-07-10 13:33:06 ebke Exp $
+# $Id: GangaRepository.py,v 1.1.2.6 2009-07-10 13:38:58 ebke Exp $
 ################################################################################
 #
 # Note: Following stuff must be considered in a GangaRepository:
@@ -55,7 +55,7 @@ def get_display_value(j,item):
                 val = ""
     except AttributeError:
         val = ""
-    return val
+    return str(val)
 
 cached_values = ['status','id','name']
 def make_index_cache(obj):
