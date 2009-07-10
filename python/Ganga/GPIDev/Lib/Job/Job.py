@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.12.2.2 2009-07-10 11:30:34 ebke Exp $
+# $Id: Job.py,v 1.12.2.3 2009-07-10 13:30:06 ebke Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -875,7 +875,7 @@ class Job(GangaObject):
         if objects is None:
             objects = [self]
         # EBKE changes
-        objects = [self]
+        objects = [self._getRoot()]
         self._getRegistry()._flush(objects)
         
 
@@ -991,6 +991,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12.2.2  2009/07/10 11:30:34  ebke
+# Remove reference to _data in status in preparation for lazy loading
+#
 # Revision 1.12.2.1  2009/07/08 11:18:21  ebke
 # Initial commit of all - mostly small - modifications due to the new GangaRepository.
 # No interface visible to the user is changed
