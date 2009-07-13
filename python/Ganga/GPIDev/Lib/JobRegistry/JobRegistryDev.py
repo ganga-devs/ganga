@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.5.4.4 2009-07-10 13:38:15 ebke Exp $
+# $Id: JobRegistryDev.py,v 1.5.4.5 2009-07-13 22:10:52 ebke Exp $
 ################################################################################
 
 
@@ -53,7 +53,30 @@ class JobAccessIndexError(GangaException,IndexError):
     def __str__(self):
         return "JobAccessIndexError: %s"%self.what
     
-
+def get_display_value(j,item):
+    registry_column_converter = {}
+    try:
+        for c in config['registry_columns_converter']:
+            registry_column_converter[c] = eval(config['registry_columns_converter'][c])
+    except Exception,x:
+        pass # TODO: print this once, but not every time!
+    def getatr(obj,members):
+        val = getattr(obj,members[0])
+        if len(members)>1:
+            return getatr(val,members[1:])
+        else:
+            return val
+    try:
+        val = getatr(j,item.split('.'))
+        try:
+            val = registry_column_converter[item](val)
+        except KeyError:
+            pass
+        if not val and not item in config['registry_columns_show_empty']:
+                val = ""
+    except AttributeError:
+        val = ""
+    return str(val)
 
 class JobRegistryInstanceInterface:
     """ Read-only interface of job registry. Provides collective operations and job management.
@@ -258,11 +281,10 @@ class JobRegistryInstanceInterface:
         "Iterator for the jobs. "
         class Iterator:
             def __init__(self,reg):
-                self.reg = reg
-                self.it = reg.jobs.__iter__()
+                self.it = reg.jobs.values().__iter__()
             def __iter__(self): return self
             def next(self):
-                return self.reg(self.it.next())
+                return self.it.next()
         return Iterator(self)
                 
     def __len__(self):
@@ -418,6 +440,9 @@ class JobRegistryInstanceInterface:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.4.4  2009/07/10 13:38:15  ebke
+# Fix for index cache not being a string object
+#
 # Revision 1.5.4.3  2009/07/10 13:31:52  ebke
 # Added display: index cache support to job display
 #

@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistry.py,v 1.3.4.1 2009-07-08 11:18:21 ebke Exp $
+# $Id: JobRegistry.py,v 1.3.4.2 2009-07-13 22:10:52 ebke Exp $
 ################################################################################
 
 def apply_keyword_args(ns,d,**kwds):
@@ -180,21 +180,33 @@ def _unwrap(obj):
     return obj
 
 
-from JobRegistryDev import JobRegistryInstanceInterface
+from JobRegistryDev import JobRegistryInstanceInterface, config, get_display_value
 from Ganga.Core.GangaRepository.Registry import Registry
 
 class JobRegistry(Registry):
     def getProxy(self):
         jri = JobRegistryInstanceInterface(self.name)
-        jri.jobs = self.repository
-        #for id in self.repository.ids():
-        #    jri.jobs[id] = self.repository[id]
+        jri.jobs = self
         return JobRegistryInterface(jri)
+
+    def getIndexCache(self,obj):
+        cached_values = ['status','id','name']
+        c = {}
+        for cv in cached_values:
+            if cv in obj._data:
+                c[cv] = obj._data[cv]
+        for dpv in config['registry_columns']:
+            c["display:"+dpv] = get_display_value(obj, dpv)
+        return c
     
 
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3.4.1  2009/07/08 11:18:21  ebke
+# Initial commit of all - mostly small - modifications due to the new GangaRepository.
+# No interface visible to the user is changed
+#
 # Revision 1.3  2009/02/02 14:22:56  moscicki
 # fixed:
 # bug #43249: jobs.remove(10) works, removes all jobs

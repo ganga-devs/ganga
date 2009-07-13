@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.12.2.3 2009-07-10 13:30:06 ebke Exp $
+# $Id: Job.py,v 1.12.2.4 2009-07-13 22:10:52 ebke Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -139,7 +139,6 @@ class Job(GangaObject):
     # TODO: usage of **kwds may be envisaged at this level to optimize the overriding of values, this must be reviewed
     def __init__(self):
         super(Job, self).__init__()
-        self._setRegistry(None)
 
     def _readonly(self):
         return self.status != 'new'
@@ -326,7 +325,7 @@ class Job(GangaObject):
 
         # register the job (it will also commit it)
         # job gets its id now
-        #self._setRegistry(registry)
+        print "Registry add ", self
         registry._add(self)
         self._init_workspace()
         self._setDirty(1)
@@ -596,15 +595,14 @@ class Job(GangaObject):
 
                     self.subjobs = subjobs
                     # EBKE changes
-                    #registry = self._getRegistry()
-                    #registry.repository.registerJobs(self.subjobs, self)
-                    #for j in self.subjobs:
-                    #    j._setRegistry(registry)
-                    #    j.status='new'
-                    #    j._init_workspace()                        
+                    i = 0
+                    for j in self.subjobs:
+                        j.id = i
+                        j.status='new'
+                        j._init_workspace()
+                        i += 1
 
                     rjobs = self.subjobs
-                    #self._commit(self.subjobs)
                     self._commit()
                 else:
                     rjobs = [self]
@@ -991,6 +989,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12.2.3  2009/07/10 13:30:06  ebke
+# Fixed _commit not commiting the root object
+#
 # Revision 1.12.2.2  2009/07/10 11:30:34  ebke
 # Remove reference to _data in status in preparation for lazy loading
 #

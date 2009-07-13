@@ -1,8 +1,17 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5.2.7 2009-07-10 12:14:10 ebke Exp $
+# $Id: Objects.py,v 1.5.2.8 2009-07-13 22:10:53 ebke Exp $
 ################################################################################
+# NOTE: Make sure that _data and __dict__ of any GangaObject are only referenced
+# here - this is necessary for write locking and lazy loading!
+# IN THIS FILE:
+# * Make sure every time _data or __dict__ is accessed that _data is not None. If yes, do:
+#    obj._getReadAccess()
+# * Make sure every write access is preceded with:
+#    obj._getWriteAccess()
+#   and followed by
+#    obj._setDirty(True)
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=1)
@@ -22,6 +31,8 @@ from Ganga.Utility.util import canLoopOver, isStringLike
 
     
 class Node(object):
+    _parent = None
+
     def __init__(self, parent):
         self._data= {}
         self._index_cache = None
@@ -30,21 +41,23 @@ class Node(object):
     def __getstate__(self):
         dict = self.__dict__.copy()
         dict['_data'] = dict['_data'].copy()
-        dict['_data']['parent'] = None
+        dict['_parent'] = None
         return dict
 
     def __setstate__(self, dict):
         for n, v in dict['_data'].items():
             if isinstance(v,Node):
                 v._setParent(self)
-            elif isinstance(v,list) and len(v) > 0:
+            if (isinstance(v,list) or v.__class__.__name__ == "GangaList") and len(v) > 0:
                 # set the parent of the list or dictionary (or other iterable) items
                 if isinstance(v[0],Node):
                     for i in v:
                         i._setParent(self)
+
         self.__dict__ = dict
 
     def __copy__(self, memo = None):
+        print "Node __copy__ called!"
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
         dict = self.__dict__.copy() #FIXME: this is different than for deepcopy... is this really correct?
@@ -61,13 +74,15 @@ class Node(object):
         return obj
 
     def _getParent(self):
-        if not self._data is None:
-            return self._data['parent']
-        return None
+        return self._parent
+        #if "_data" in self.__dict__ and not self._data is None:
+        #    return self._data['parent']
+        #return None
 
     def _setParent(self, parent):
-        if not self._data is None:
-            self._data['parent'] = parent
+        self._parent = parent
+        #if not self._data is None:
+        #    self._data['parent'] = parent
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -82,7 +97,8 @@ class Node(object):
             obj = obj._getParent()
         return root
 
-    # accept a visitor pattern
+    # accept a visitor pattern 
+    # TODO: make lazy loading safe
     def accept(self,visitor):
         visitor.nodeBegin(self)
 
@@ -104,7 +120,7 @@ class Node(object):
 
     # clone self and return a properly initialized object
     def clone(self):
-        return copy.deepcopy(self)    
+        return copy.deepcopy(self)
 
     # copy all the properties recursively from the srcobj
     # if schema of self and srcobj are not compatible raises a ValueError
@@ -196,15 +212,10 @@ class Descriptor(object):
                 result = g()
             else:
                 #LAZYLOADING
-                if obj._data is None:
-                    if obj._index_cache and self._name in obj._index_cache:
-                        result = obj._index_cache[self._name]
-                    else:
-                        reg = obj._getRegistry()
-                        if reg is not None:
-                            reg.load([obj])
-                        result = obj._data[self._name]
+                if obj._data is None and not obj._index_cache is None and self._name in obj._index_cache:
+                    result = obj._index_cache[self._name]
                 else:
+                    obj._getReadAccess()
                     result = obj._data[self._name]
             
             return result
@@ -218,19 +229,7 @@ class Descriptor(object):
             cs(val)
 
         #LOCKING
-        #obj._getRegistry()getWriteLock():
-        # 
-        root = obj._getRoot()
-        reg = root._getRegistry()
-        if reg is not None:
-            if not reg.acquireWriteLock(root):
-                raise GangaAttributeError("Could not lock object %s!" % root) 
-            else:
-                reg.repository._dirty(root)
-
-        filter = self._bind_method(obj, self._filter_name)
-        if filter:
-            val = filter(val)
+        obj._getWriteAccess()
         
         #self._check_getter()
             
@@ -278,8 +277,7 @@ class Descriptor(object):
 
         obj._data[self._name] = val
 
-        if reg is not None:
-            reg.repository._dirty(root)
+        obj._setDirty(True)
 
             
     def __delete__(self, obj):
@@ -395,12 +393,14 @@ class GangaObject(Node):
 
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__
+        self._getReadAccess()
         dict = super(GangaObject, self).__getstate__()
         dict['_proxyObject'] = None
         dict['_dirty'] = 0
         return dict
 
     def __setstate__(self, dict):
+        self._getWriteAccess()
         super(GangaObject, self).__setstate__(dict)
         self._setParent(None)
         self._proxyObject = None
@@ -408,19 +408,36 @@ class GangaObject(Node):
 
     # on the deepcopy reset all non-copyable properties as defined in the schema
     def __deepcopy__(self, memo = None):
+        self._getReadAccess()
         c = super(GangaObject,self).__deepcopy__(memo)
         for name,item in self._schema.allItems():
             if not item['copyable']:
                 setattr(c,name,self._schema.getDefaultValue(name))
         return c
 
-    # define when the object is writable (repository online and locked)
-    def _writable(self):
+    def accept(self, visitor):
+        self._getReadAccess()
+        super(GangaObject, self).accept(visitor)
+
+    def _getWriteAccess(self):
+        """ tries to get write access to the object.
+        Raise LockingError (or so) on fail """
         root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
-            return reg.acquireWriteLock(root)
-        return True
+            reg._write_access(root)
+
+    def _getReadAccess(self):
+        """ makes sure the objects _data is there and the object itself has a recent state.
+        Raise RepositoryError"""
+        root = self._getRoot()
+        reg = root._getRegistry()
+        if reg is not None:
+            reg._read_access(root,self)
+            #print "excepting because of access to ", self._name
+            #import traceback
+            #traceback.print_stack()
+            #raise Exception(self._name)
 
     # define when the object is read-only (for example a job is read-only in the states other than new)
     def _readonly(self):
@@ -450,7 +467,7 @@ class GangaObject(Node):
         root = self._getRoot()
         reg = root._getRegistry()
         if dirty and reg is not None:
-            reg.repository._dirty(root)
+            reg._dirty(root)
 
     # post __init__ hook automatically called by GPI Proxy __init__
     def _auto__init__(self):
@@ -523,6 +540,9 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.2.7  2009/07/10 12:14:10  ebke
+# Fixed wrong sequence in __set__: only dirty _after_ writing!
+#
 # Revision 1.5.2.6  2009/07/10 11:33:06  ebke
 # Preparations and fixes for lazy loading
 #
