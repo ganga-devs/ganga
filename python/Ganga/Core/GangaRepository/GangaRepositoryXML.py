@@ -61,14 +61,15 @@ class GangaRepositoryLocal(GangaRepository):
 
     def update_index(self,id = None):
         # First locate and load the index files
-        idx = {}
+        idx = []
         for d in os.listdir(self.root):
             if d.endswith("xxx.index"):
                 try:
-                    idx.update(pickle_from_file(os.path.join(self.root,d)))
+                    idx += pickle_from_file(file(os.path.join(self.root,d)))[0].items()
                 except Exception, x:
                     logger.warning("Failed to load index from %s! %s" % (d,x)) # Probably should be DEBUG
         # Now create objects from the index
+        idx = dict(idx)
         for id in idx:
             try:
                 if not id in self._objects:
@@ -126,7 +127,11 @@ class GangaRepositoryLocal(GangaRepository):
                 raise RepositoryError("IOError: " + str(x))
         for index in indices.keys():
             fn = os.path.join(self.root,"%ixxx.index")
-            # TODO: Write index file
+            cache_dict = {}
+            for id, obj in self._objects.items():
+                if id/1000 == index:
+                    cache_dict[id] = (obj._category,obj._name,obj._index_cache) 
+            pickle_to_file(cache_dict, file(os.path.join(self.root,"%ixxx.index"%index),"w"))
 
     def load(self, ids):
         for id in ids:

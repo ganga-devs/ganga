@@ -1,12 +1,13 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: VStreamer.py,v 1.1.2.1 2009-07-08 14:39:55 ebke Exp $
+# $Id: VStreamer.py,v 1.1.2.2 2009-07-14 09:20:22 ebke Exp $
 ################################################################################
 
 # dump object (job) to file f (or stdout)
 def to_file(j,f=None):
-    vstreamer = VStreamer(out=f,selection='subjobs')#FIXME: hardcoded subjobs handling
+    #vstreamer = VStreamer(out=f,selection='subjobs')#FIXME: hardcoded subjobs handling
+    vstreamer = VStreamer(out=f,selection='')
     vstreamer.begin_root()
     j.accept(vstreamer)
     vstreamer.end_root()
