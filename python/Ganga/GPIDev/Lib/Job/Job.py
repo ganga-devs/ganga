@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.12 2009-05-20 12:35:40 moscicki Exp $
+# $Id: Job.py,v 1.13 2009-07-14 12:43:41 moscicki Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -26,13 +26,19 @@ class JobError(GangaException):
         self.what=what
     def __str__(self):
         return "JobError: %s"%str(self.what)
+
+import Ganga.Utility.guid
     
 class JobInfo(GangaObject):
     ''' Additional job information.
         Partially implemented
     '''    
-    _schema = Schema(Version(0,0),{ 'submit_counter' : SimpleItem(defvalue=0,protected=1,doc="job submition/resubmission counter"),
-                                    })
+    _schema = Schema(Version(0,0),
+                     { 'submit_counter' : 
+                       SimpleItem(defvalue=0,protected=1,doc="job submition/resubmission counter"),
+                       'uuid' :
+                           SimpleItem(defvalue='',protected=1,doc='globally unique job identifier')
+                      })
     _category = 'jobinfos'
     _name = 'JobInfo'
     
@@ -324,12 +330,15 @@ class Job(GangaObject):
             from Ganga.GPIDev.Lib.JobRegistry import JobRegistryDev
             registry = JobRegistryDev.allJobRegistries[self.default_registry]
 
+        self.info.uuid = Ganga.Utility.guid.uuid()
+
         # register the job (it will also commit it)
         # job gets its id now
         #self._setRegistry(registry)
         registry._add(self)
         self._init_workspace()
         self._setDirty(1)
+
         
     def _init_workspace(self):
         self.getDebugWorkspace(create=True)
@@ -1001,6 +1010,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12  2009/05/20 12:35:40  moscicki
+# debug directory (https://savannah.cern.ch/bugs/?50305)
+#
 # Revision 1.11  2009/05/20 09:23:46  moscicki
 # debug directory (https://savannah.cern.ch/bugs/?50305)
 #
