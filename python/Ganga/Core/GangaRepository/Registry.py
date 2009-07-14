@@ -54,7 +54,7 @@ class Registry(object):
     Base class providing a dict-like locked and lazy-loading interface to a Ganga repository
     """
 
-    def __init__(self, name, doc, dirty_flush_counter=10):
+    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time = 30):
         """Registry constructor, giving public name and documentation"""
         self.name = name
         self.doc = doc
@@ -63,6 +63,8 @@ class Registry(object):
         self.dirty_flush_counter = dirty_flush_counter
         self.dirty_objs = {}
         self.dirty_hits = 0
+        self.update_index_time = update_index_time 
+        self._update_index_timer = 0
 
 # Methods intended to be called from ''outside code''
     def __getitem__(self,id):
@@ -83,7 +85,9 @@ class Registry(object):
 
     def ids(self):
         """ Returns the list of ids of this registry """
-        self.repository.update_index()
+        if time.time() > self._update_index_timer + self.update_index_time:
+            self.repository.update_index()
+            self._update_index_timer = time.time()
         k = self._objects.keys()
         k.sort()
         return k
@@ -91,7 +95,9 @@ class Registry(object):
     def items(self):
         """ Return the items (ID,obj) in this registry. 
         Recommended access for iteration, since accessing by ID can fail if the ID iterator is old"""
-        self.repository.update_index()
+        if time.time() > self._update_index_timer + self.update_index_time:
+            self.repository.update_index()
+            self._update_index_timer = time.time()
         its = self._objects.items()
         its.sort()
         return its
@@ -191,12 +197,15 @@ class Registry(object):
         sub-obj is the object the read access is actually desired (ignored at the moment)
         Raise RepositoryError
         Raise ObjectNotInRegistryError"""
-        logger.debug("_read_access(%s)" % obj)
-        if not obj._data and self._started:
+        #logger.debug("_read_access(%s)" % obj)
+        if not obj._data:
+            if not self._started:
+                raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect."%(self.find(obj),self.name))
             try:
                 self.repository.load([self.find(obj)])
             except KeyError:
                 raise RegistryKeyError("The object #%i in registry '%s' was deleted or cannot be loaded." % (self.find(obj),self.name))
+        
 
     def _write_access(self, obj):
         """Obtain write access on a given object.
@@ -255,6 +264,7 @@ class Registry(object):
             self._flush()
         except Exception, x:
             logger.error("Exception on flushing '%s' registry: %s", self.name, x)
+        
         self._started = False
         self.repository.shutdown()
 

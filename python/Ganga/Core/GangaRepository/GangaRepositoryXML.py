@@ -15,6 +15,8 @@ logger = Ganga.Utility.logging.getLogger()
 from Ganga.Core.GangaRepository.PickleStreamer import to_file as pickle_to_file
 from Ganga.Core.GangaRepository.PickleStreamer import from_file as pickle_from_file
 
+from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
+
 def safe_save(fn,obj,to_file):
     """Writes a file safely, raises IOError on error"""
     try:
@@ -28,6 +30,7 @@ def safe_save(fn,obj,to_file):
         raise IOError("Could not write file %s.new (%s)" % (fn,e))
     # Try to make backup copy...
     try:
+        os.unlink(fn+"~")
         os.rename(fn,fn+"~")
     except OSError, e:
         logger.debug("Error on moving file %s (%s) " % (fn,e))
@@ -46,6 +49,8 @@ class GangaRepositoryLocal(GangaRepository):
     def startup(self):
         """ Starts an repository and reads in a directory structure."""
         self._load_timestamp = {}
+        self._cache_load_timestamp = {}
+        self.sub_split = "subjobs"
         self.root = os.path.join(self.registry.location,"6.0",self.registry.name)
         self.sessionlock = SessionLockManager(self.root, self.registry.type+"."+self.registry.name)
         if "XML" in self.registry.type:
@@ -61,43 +66,48 @@ class GangaRepositoryLocal(GangaRepository):
 
     def update_index(self,id = None):
         # First locate and load the index files
-        idx = []
-        for d in os.listdir(self.root):
-            if d.endswith("xxx.index"):
+        obj_chunks = [d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
+        loaded_obj = 0
+        loaded_cache = 0
+        reloaded_cache = 0
+        for d in obj_chunks:
+            dir = os.path.join(self.root,d)
+            listing = os.listdir(dir)
+            indices = [l for l in listing if l.endswith(".index") and l[:-6].isdigit()]
+            ids = [int(l) for l in listing if l.isdigit()]
+            for idx in indices:
                 try:
-                    idx += pickle_from_file(file(os.path.join(self.root,d)))[0].items()
+                    id = int(idx[:-6])
+                    try:
+                        obj = self._objects[id]
+                        if not obj._data:
+                            fobj = file(os.path.join(dir,idx))
+                            if (self._cache_load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime):
+                                logger.debug("Reloading index %i" % id)
+                                cat,cls,cache = pickle_from_file(fobj)[0]
+                                obj._index_cache = cache
+                                self._cache_load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
+                                reloaded_cache += 1
+                    except KeyError:
+                        fobj = file(os.path.join(dir,idx))
+                        logger.debug("Loading index %i" % id)
+                        cat,cls,cache = pickle_from_file(fobj)[0]
+                        obj = self._make_empty_object_(id,cat,cls)
+                        obj._index_cache = cache
+                        self._cache_load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
+                        loaded_cache += 1
                 except Exception, x:
-                    logger.warning("Failed to load index from %s! %s" % (d,x)) # Probably should be DEBUG
-        # Now create objects from the index
-        idx = dict(idx)
-        for id in idx:
-            try:
-                if not id in self._objects:
-                    obj = self._make_empty_object_(id,idx[id][0],idx[id][1])
-                else:
-                    obj = self._objects[id]
-                if not obj._data:
-                    obj._index_cache = idx[id][2]
-            except Exception, x:
-                logger.warning("Error processing cache line %i: %s " % (id, x)) # Probably should be DEBUG
+                    logger.warning("Failed to load index from %s! %s: %s" % (d,x.__class__.__name__,x)) # Probably should be DEBUG
+            for id in ids:
                 if not id in self._objects:
                     try:
                         self.load([id])
+                        loaded_obj += 1
+                    except KeyError:
+                        pass # deleted job
                     except Exception:
-                        logger.warning("Failed to load id %i!" % (id)) # Probably should be DEBUG
-        # now try to load all objects that are not in the index
-        for d in os.listdir(self.root):
-            if d.endswith("xxx"):
-                for sd in os.listdir(os.path.join(self.root,d)):
-                    try:
-                        id = int(sd)
-                    except ValueError:
-                        pass
-                    if not id in idx and not id in self._objects:
-                        try:
-                            self.load([id])
-                        except Exception:
-                            logger.debug("Failed to load id %i!" % (id))
+                        logger.warning("Failed to load id %i!" % (id))
+        logger.warning("Updated cache: Loaded %i objects, %i cached objects and refreshed %i objects from cache" % (loaded_obj,loaded_cache,reloaded_cache))
 
     def add(self, objs):
         ids = self.sessionlock.make_new_ids(len(objs))
@@ -105,33 +115,48 @@ class GangaRepositoryLocal(GangaRepository):
             fn = self.get_fn(ids[i])
             try:
                 os.makedirs(os.path.dirname(fn))
-            except IOError, e:
-                if e.errno != errno.ENOENT: 
-                    raise RepositoryError("IOError: " + str(e))
+            except OSError, e:
+                if e.errno != errno.EEXIST: 
+                    raise RepositoryError(self,"OSError: " + str(e))
             self._internal_setitem__(ids[i], objs[i])
         return ids
 
     def flush(self, ids):
-        indices = {}
         for id in ids:
             try:
                 fn = self.get_fn(id)
                 obj = self._objects[id]
                 if obj._name != "Unknown":
-                    obj._index_cache = self.registry.getIndexCache(obj)
+
+                    split_cache = None
+                    if self.sub_split and self.sub_split in obj._data:
+                        split_cache = obj._data[self.sub_split]
+                        for i in range(len(split_cache)):
+                            if not split_cache[i]._dirty:
+                                continue
+                            sfn = os.path.join(os.path.dirname(fn),str(i),"data")
+                            try:
+                                os.makedirs(os.path.dirname(sfn))
+                            except OSError, e:
+                                if e.errno != errno.EEXIST: 
+                                    raise RepositoryError(self,"OSError: " + str(e))
+                            safe_save(sfn, split_cache[i], self.to_file)
+                        obj._data[self.sub_split] = []
                     safe_save(fn, obj, self.to_file)
-                    indices[id/1000] = 1
+                    if split_cache:
+                        obj._data[self.sub_split] = split_cache
+                    try:
+                        ifn = os.path.dirname(fn) + ".index"
+                        new_idx_cache = self.registry.getIndexCache(obj)
+                        if new_idx_cache != obj._index_cache:
+                            obj._index_cache = new_idx_cache
+                            pickle_to_file((obj._category,obj._name,obj._index_cache),file(ifn,"w"))
+                    except IOError, x:
+                        logger.error("Index saving to '%s' failed: %s %s" % (ifn,x.__class__.__name__,x))
             except OSError, x:
-                raise RepositoryError("OSError: " + str(x))
+                raise RepositoryError(self,"OSError: " + str(x))
             except IOError, x:
-                raise RepositoryError("IOError: " + str(x))
-        for index in indices.keys():
-            fn = os.path.join(self.root,"%ixxx.index")
-            cache_dict = {}
-            for id, obj in self._objects.items():
-                if id/1000 == index:
-                    cache_dict[id] = (obj._category,obj._name,obj._index_cache) 
-            pickle_to_file(cache_dict, file(os.path.join(self.root,"%ixxx.index"%index),"w"))
+                raise RepositoryError(self,"IOError: " + str(x))
 
     def load(self, ids):
         for id in ids:
@@ -142,14 +167,30 @@ class GangaRepositoryLocal(GangaRepository):
                 if x.errno == errno.ENOENT: 
                     raise KeyError(id)
                 else: 
-                    raise RepositoryError("IOError: " + str(x))
+                    raise RepositoryError(self,"IOError: " + str(x))
             try:
+                if (not id in self._objects) or (self._objects[id]._data is None) or (self._load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime):
+                    tmpobj = self.from_file(fobj)[0]
+                    if self.sub_split:
+                        i = 0
+                        ld = os.listdir(os.path.dirname(fn))
+                        l = []
+                        while str(i) in ld:
+                            sfn = os.path.join(os.path.dirname(fn),str(i),"data")
+                            try:
+                                sfobj = file(sfn,"r")
+                            except IOError, x:
+                                raise RepositoryError(self,"IOError: " + str(x))
+                            l.append(self.from_file(sfobj)[0])
+                            i += 1
+                        tmpobj._data[self.sub_split] = makeGangaListByRef(l)
+                else:
+                    return
                 if id in self._objects:
                     if self._objects[id]._data is None or self._load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime:
-                        tmpobj = self.from_file(fobj)[0]
                         self._objects[id]._data = tmpobj._data
                 else:
-                    self._internal_setitem__(id, self.from_file(fobj)[0])
+                    self._internal_setitem__(id, tmpobj)
                 self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
                 self._objects[id]._index_cache = None 
             except Exception, x:
@@ -159,7 +200,6 @@ class GangaRepositoryLocal(GangaRepository):
 
     def delete(self, ids):
         for id in ids:
-            obj = self._objects[id]
             fn = self.get_fn(id)
             os.unlink(fn)
             try:
@@ -174,7 +214,7 @@ class GangaRepositoryLocal(GangaRepository):
                 os.removedirs(os.path.dirname(fn))
             except OSError:
                 pass
-            self._internal_del__(id, obj)
+            self._internal_del__(id)
 
     def lock(self,ids):
         locked_ids = self.sessionlock.lock_ids(ids)

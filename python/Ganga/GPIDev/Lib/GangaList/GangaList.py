@@ -136,7 +136,7 @@ class GangaList(GangaObject):
             raise ReadOnlyObjectError('object %s is readonly and attribute "%s" cannot be modified now'%(repr(self),self._name))
         else:
             self._getWriteAccess()
-            self._setDirty(True) # TODO: BUG: This should only be set _after_ the change has been done! This can lead to data loss!
+            self._setDirty() # TODO: BUG: This should only be set _after_ the change has been done! This can lead to data loss!
             
     def checkNestedLists(self,value):
         """The rule is that if there are nested lists then they 

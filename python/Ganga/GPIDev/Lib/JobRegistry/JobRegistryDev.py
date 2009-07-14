@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.5.4.5 2009-07-13 22:10:52 ebke Exp $
+# $Id: JobRegistryDev.py,v 1.5.4.6 2009-07-14 14:44:17 ebke Exp $
 ################################################################################
 
 
@@ -383,7 +383,12 @@ class JobRegistryInstanceInterface:
             #logger.error("Problem with Display.registry_columns_converter['%s']: ")
             from Ganga.Utility.Config import ConfigError
             raise ConfigError("Problem with config.Display.registry_columns_converter['%s']: %s"%(c,str(x)))
-            
+
+        # Save config variables since calling config["xyz"] is quite expensive in the loop
+        registry_columns_show_empty = config['registry_columns_show_empty']
+        registry_columns = config['registry_columns']
+        registry_columns_width = config['registry_columns_width']
+ 
         for j in self.jobs.values():
             try:
                 colour = status_colours[j.status]
@@ -406,18 +411,18 @@ class JobRegistryInstanceInterface:
                     except KeyError:
                         pass
 
-                    if not val and not item in config['registry_columns_show_empty']:
+                    if not val and not item in registry_columns_show_empty:
                             val = ""
                 except AttributeError:
                     val = ""
                 return str(val)[0:length]
 
             vals = []
-            for item in config['registry_columns']:
-                if d not in config['registry_columns_width'].keys():
+            for item in registry_columns:
+                if d not in registry_columns_width.keys():
                     width = 10
                 else:
-                   width = config['registry_columns_width'][d]
+                   width = registry_columns_width[d]
 
                 try:
                    if not hasattr(j,"_index_cache") or not j._index_cache:
@@ -440,6 +445,16 @@ class JobRegistryInstanceInterface:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.4.5  2009/07/13 22:10:52  ebke
+# Update for the new GangaRepository:
+# * Moved dict interface from Repository to Registry
+# * Clearly specified Exceptions to be raised by Repository
+# * proper exception handling in Registry
+# * moved _writable to _getWriteAccess, introduce _getReadAccess
+# * clarified locking, logic in Registry, less in Repository
+# * index reading support in XML (no writing, though..)
+# * general index reading on registry.keys()
+#
 # Revision 1.5.4.4  2009/07/10 13:38:15  ebke
 # Fix for index cache not being a string object
 #

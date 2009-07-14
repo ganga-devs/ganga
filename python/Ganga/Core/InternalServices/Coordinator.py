@@ -2,7 +2,7 @@
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
-# $Id: Coordinator.py,v 1.1.4.1 2009-07-08 11:18:21 ebke Exp $
+# $Id: Coordinator.py,v 1.1.4.2 2009-07-14 14:44:17 ebke Exp $
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
@@ -162,6 +162,9 @@ def enableInternalServices():
         log.error("The following credentials are still required: %s."
                   "Make sure you renew them before reactivating this session" % ','.join(missing_cred))
         return
+    #startup the registries
+    from Ganga.Runtime import Repository_runtime
+    Repository_runtime.startup()
                     
     log.debug("Enabling the internal services")
     # reenable the monitoring loop if *autostart* is set
@@ -208,6 +211,10 @@ def bootstrap():
 
 #
 #$Log: not supported by cvs2svn $
+#Revision 1.1.4.1  2009/07/08 11:18:21  ebke
+#Initial commit of all - mostly small - modifications due to the new GangaRepository.
+#No interface visible to the user is changed
+#
 #Revision 1.1  2008/07/17 16:40:50  moscicki
 #migration of 5.0.2 to HEAD
 #

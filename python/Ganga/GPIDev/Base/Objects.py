@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5.2.8 2009-07-13 22:10:53 ebke Exp $
+# $Id: Objects.py,v 1.5.2.9 2009-07-14 14:44:17 ebke Exp $
 ################################################################################
 # NOTE: Make sure that _data and __dict__ of any GangaObject are only referenced
 # here - this is necessary for write locking and lazy loading!
@@ -11,7 +11,7 @@
 # * Make sure every write access is preceded with:
 #    obj._getWriteAccess()
 #   and followed by
-#    obj._setDirty(True)
+#    obj._setDirty()
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=1)
@@ -277,7 +277,7 @@ class Descriptor(object):
 
         obj._data[self._name] = val
 
-        obj._setDirty(True)
+        obj._setDirty()
 
             
     def __delete__(self, obj):
@@ -462,12 +462,13 @@ class GangaObject(Node):
 
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
-    def _setDirty(self,dirty):
-        self._dirty = dirty
-        root = self._getRoot()
-        reg = root._getRegistry()
-        if dirty and reg is not None:
-            reg._dirty(root)
+    def _setDirty(self):
+        self._dirty = True
+        parent = self._getParent()
+        if parent is not None:
+            parent._setDirty()
+        if self._registry is not None:
+            self._registry._dirty(self)
 
     # post __init__ hook automatically called by GPI Proxy __init__
     def _auto__init__(self):
@@ -540,6 +541,16 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.2.8  2009/07/13 22:10:53  ebke
+# Update for the new GangaRepository:
+# * Moved dict interface from Repository to Registry
+# * Clearly specified Exceptions to be raised by Repository
+# * proper exception handling in Registry
+# * moved _writable to _getWriteAccess, introduce _getReadAccess
+# * clarified locking, logic in Registry, less in Repository
+# * index reading support in XML (no writing, though..)
+# * general index reading on registry.keys()
+#
 # Revision 1.5.2.7  2009/07/10 12:14:10  ebke
 # Fixed wrong sequence in __set__: only dirty _after_ writing!
 #
