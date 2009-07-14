@@ -23,7 +23,6 @@ class Nasim(IApplication):
                  'seed'              : SimpleItem(defvalue=-1, doc='Random seed to use (-1 == based on time)'),
                  'num_triggers'      : SimpleItem(defvalue=10, doc='Number of triggers'),
                  'run_number'        : SimpleItem(defvalue=15000, doc='Run Number'),
-                 'dataset_name'      : SimpleItem(defvalue='', protected=1, doc='Dataset Name'),
                  'prod_num'          : SimpleItem(defvalue=0, doc='Production Number (default == 0)')
                  })
     _category = 'applications'
@@ -37,6 +36,8 @@ class Nasim(IApplication):
     def master_configure(self):
         logger.debug('Athena master_configure called')
 
+        job = self.getJobObject()
+
         # check the job file exists
         if not self.job_file.exists():
             raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % self.job_file.name)
@@ -48,5 +49,10 @@ class Nasim(IApplication):
         # check for valid run number
         if not self.run_number > 15000:
             raise ApplicationConfigurationError(None,'Run number smaller than 15000')
-        
+
+        # check for valid output dataset
+        if not job.outputdata._name == 'NA48OutputDataset':
+            raise ApplicationConfigurationError(None, "Incorrect output dataset. You must specify an 'NA48OutputDataset'")
+
+            
         return (0, None)
