@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.12.2.4 2009-07-13 22:10:52 ebke Exp $
+# $Id: Job.py,v 1.12.2.5 2009-07-14 15:09:37 ebke Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -325,10 +325,9 @@ class Job(GangaObject):
 
         # register the job (it will also commit it)
         # job gets its id now
-        print "Registry add ", self
         registry._add(self)
         self._init_workspace()
-        self._setDirty(1)
+        self._setDirty()
         
     def _init_workspace(self):
         self.getDebugWorkspace(create=True)
@@ -989,6 +988,16 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12.2.4  2009/07/13 22:10:52  ebke
+# Update for the new GangaRepository:
+# * Moved dict interface from Repository to Registry
+# * Clearly specified Exceptions to be raised by Repository
+# * proper exception handling in Registry
+# * moved _writable to _getWriteAccess, introduce _getReadAccess
+# * clarified locking, logic in Registry, less in Repository
+# * index reading support in XML (no writing, though..)
+# * general index reading on registry.keys()
+#
 # Revision 1.12.2.3  2009/07/10 13:30:06  ebke
 # Fixed _commit not commiting the root object
 #
