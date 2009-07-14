@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.44 2009-06-18 08:35:46 dvanders Exp $
+# $Id: Panda.py,v 1.45 2009-07-14 08:29:23 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -300,7 +300,7 @@ class Panda(IBackend):
 
         for subjob, jobid in zip(rjobs,jobids):
             subjob.backend.id = jobid[0]
-            subjob.backend.url = 'http://panda.atlascomp.org?job=%d&reload=yes'%jobid[0]
+            subjob.backend.url = 'http://panda.cern.ch?job=%d'%jobid[0]
             subjob.updateStatus('submitted')
 
         return True
@@ -577,6 +577,10 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.44  2009/06/18 08:35:46  dvanders
+# panda-client 0.1.71
+# trust the information system (jobs won't submit if athena release not installed).
+#
 # Revision 1.43  2009/06/10 13:47:13  ebke
 # Check for NULL return string of Panda job Id and suggest to shorten dataset name
 #
