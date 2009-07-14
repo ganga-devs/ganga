@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.46 2009-06-30 11:28:46 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.47 2009-07-14 09:11:16 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -551,10 +551,6 @@ class AthenaMCInputDatasets(Dataset):
 
         dsetname=""
         dsetmatch=dataset
-        if dataset[-1]=="/":
-            dsetmatch=dataset[:-1] # turning container name into dataset root for matching
-        if string.find(dataset,"DBRelease")<0:
-            dsetmatch='%s*' % dataset # loose matching for all input datasets except DBRelease ones.
         logger.debug( "matching input dataset: %s" % str(dsetmatch))
         try:
             dq2_lock.acquire()
@@ -562,7 +558,20 @@ class AthenaMCInputDatasets(Dataset):
         finally:
             dq2_lock.release()
         logger.debug( "results of the match: %s" % str(datasets))
+        
         if len(datasets.values())==0:
+            logger.warning('could not find exact match for %s, attempting loose matching. This will take considerably longer...'% dataset)
+            dsetmatch='%s*' % dataset
+            if dataset[-1]=="/":
+                dsetmatch='%s*' % dataset[:-1] # turning container name into dataset root for matching
+            try:
+                dq2_lock.acquire()
+                datasets = dq2.listDatasets(dsetmatch)
+            finally:
+                dq2_lock.release()
+            logger.debug( "results of the match: %s" % str(datasets))
+        
+        if len(datasets.values())==0:            
             logger.error('no Dataset matching %s is registered in DQ2 database! Aborting',dataset)
             raise Exception()
 
@@ -961,6 +970,7 @@ class AthenaMCOutputDatasets(Dataset):
                 token=username.upper()
                 allowed_tokens=[token]
             #print allowed_tokens,se_name
+            #allowed_tokens=["SCRATCHDISK"]
             makeSites=[]
             forbiddenSE="true"
             for token in allowed_tokens:
@@ -970,8 +980,8 @@ class AthenaMCOutputDatasets(Dataset):
             if forbiddenSE=="true" and se_name not in app.sites: # se_name not coming from input data...
                 #print app.sites
                 selsite=""
-                logger.warning("Space token proposed for output: %s is forbidden for writing. Attempting to find alternative space token in the same site."% se_name)
-                    
+                #                logger.warning("Space token proposed for output: %s is forbidden for writing. Attempting to find alternative space token in the same site."% se_name)
+                logger.warning("Output data from jobs processing must go to SCRATCHDISK. Once finalized (master job completed), the output datasets can be subscribed to their final destination using dq2-register-subscription or dq2-register-subscription-container")
                 imax=se_name.find("_")
                 sitename=se_name[:imax]
                 
@@ -1111,10 +1121,17 @@ class AthenaMCOutputDatasets(Dataset):
         dsetlist=[]
         try:
             dq2_lock.acquire()
-            dsetlist = dq2.listDatasets('%s*' % datasetname)
+            dsetlist = dq2.listDatasets('%s' % datasetname)
         finally:
             dq2_lock.release()
         if len(dsetlist)>0:
+            # need to work out exactly the number of subdatasets:
+            try:
+                dq2_lock.acquire()
+                dsetlist = dq2.listDatasets('%s*' % datasetname)
+            finally:
+                dq2_lock.release()
+            
             suffix+="v%d" % len(dsetlist)
         datasetname=dataset+"."+suffix
         #print"final dataset name is",datasetname
@@ -1365,7 +1382,7 @@ class AthenaMCOutputDatasets(Dataset):
                 logger.debug("attempting to create container %s from %s" % (containername,dset))
                 try:
                     dq2_lock.acquire()
-                    dsetlist = dq2.listDatasetsInContainer('%s' % containername)
+                    dsetlist = dq2.listDatasets('%s' % containername)
                 finally:
                     dq2_lock.release()
                 logger.debug("found %s" % str(dsetlist))
@@ -1377,6 +1394,13 @@ class AthenaMCOutputDatasets(Dataset):
                     finally:
                         dq2_lock.release()
                 # should check that dset is not already registered in containername
+                # at this point, one should have a container. Updating dsetlist with contents of container:
+                try:
+                    dq2_lock.acquire()
+                    dsetlist = dq2.listDatasetsInContainer('%s' % containername)
+                finally:
+                    dq2_lock.release()
+                
                 if dset in dsetlist:
                     logger.warning("dataset %s already registered in container %s, skipping" % (dset,containername))
                 if len(dsetlist)==0 or dset not in dsetlist:
@@ -1385,6 +1409,7 @@ class AthenaMCOutputDatasets(Dataset):
                     except:
                         logger.error("Error registering the dataset %s in its container %s. Please discard if this job was resubmitted." % (dset,containername))
                         pass
+
                 # if app.se_name is set and dset has more than one locations, then subscribe dset to app.se_name to aggregate the dataset to the intended location
                 if job.application.se_name!="none":
                     locations={}
@@ -1398,11 +1423,16 @@ class AthenaMCOutputDatasets(Dataset):
                         break
                     datasetvuid = datasetinfo[dset]['vuids'][0]
                     sitelist=locations[datasetvuid][1] + locations[datasetvuid][0]
-                    if len(sitelist)>1:
-                        logger.warning("Found more than one location for output dataset, will start subscription to aggregate data to %s. Locations are: %s" % (job.application.se_name,str(sitelist)))
+                    seNames=job.application.se_name.split(" ")
+                    subscribedSite=seNames[0]
+                    if subscribedSite not in sitelist or len(sitelist)>1:
+                        if subscribedSite not in sitelist:
+                            logger.warning("location declared in application.se_name different from existing locations of %s. Subscribing dataset to requested location: %s" % (dset,subscribedSite))
+                        elif len(sitelist)>1:
+                            logger.warning("Found more than one location for output dataset, will start subscription to aggregate data to %s. Locations are: %s" % (subscribedSite,str(sitelist)))
                         try:
                             dq2_lock.acquire()
-                            dq2.registerDatasetSubscription(dset,job.application.se_name)
+                            dq2.registerDatasetSubscription(dset,subscribedSite)
                         finally:
                             dq2_lock.release()
                         
