@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GangaRepository.py,v 1.1.2.7 2009-07-13 22:10:53 ebke Exp $
+# $Id: GangaRepository.py,v 1.1.2.8 2009-07-15 10:05:41 ebke Exp $
 ################################################################################
 
 # Only the corresponding registry may access the methods of a GangaRepository.
@@ -55,8 +55,7 @@ class GangaRepository(object):
         Connect to the repository.
         Raise RepositoryError
         """
-        self._next_id = 0
-        pass
+        raise NotImplementedError
 
     def update_index(self, id = None):
         """update_index(id = None) --> None
@@ -65,14 +64,14 @@ class GangaRepository(object):
         that are not fully loaded.
         Raise RepositoryError
         """
-        pass
+        raise NotImplementedError
 
     def shutdown(self):
         """shutdown() --> None
         Disconnect from the repository.
         Raise RepositoryError
         """
-        pass
+        raise NotImplementedError
 
     def add(self, objs):
         """add(objects) --> list of object IDs in this repository
@@ -81,12 +80,7 @@ class GangaRepository(object):
         for each id/object pair.
         Raise RepositoryError
         """
-        ids = []
-        for obj in objs:
-            self._internal_setitem__(self._next_id, obj)
-            ids.append(self._next_id)
-            self._next_id += 1
-        return ids
+        raise NotImplementedError
         
     def delete(self, ids):
         """delete(ids) --> None
@@ -97,8 +91,7 @@ class GangaRepository(object):
         Raise KeyError
         Raise RepositoryError
         """
-        for id in ids:
-            self._internal_del__(id)
+        raise NotImplementedError
 
     def load(self, ids):
         """load(ids) --> None
@@ -106,7 +99,7 @@ class GangaRepository(object):
         Raise KeyError
         Raise RepositoryError
         """
-        pass
+        raise NotImplementedError
 
     def flush(self, ids):
         """flush(ids) --> None
@@ -114,7 +107,7 @@ class GangaRepository(object):
         Raise KeyError
         Raise RepositoryError
         """
-        pass
+        raise NotImplementedError
 
     def lock(self,ids):
         """lock(ids) --> bool
@@ -123,7 +116,7 @@ class GangaRepository(object):
         Returns True on success, False if one of the ids is already locked by another session
         Also returns False if one of the ids is associated with a deleted object
         """
-        return True
+        raise NotImplementedError
 
     def unlock(self,ids):
         """unlock(ids) --> None
@@ -157,3 +150,41 @@ class GangaRepository(object):
         obj = self._objects[id]
         obj._setRegistry(None)
         del self._objects[id]
+
+
+class GangaRepositoryTransient(object):
+    """This class implements a transient Ganga Repository for testing purposes.
+    """
+## Functions that should be overridden and implemented by derived classes.
+    def startup(self):
+        self._next_id = 0
+
+    def update_index(self, id = None):
+        pass
+
+    def shutdown(self):
+        pass
+
+    def add(self, objs):
+        ids = []
+        for obj in objs:
+            self._internal_setitem__(self._next_id, obj)
+            ids.append(self._next_id)
+            self._next_id += 1
+        return ids
+        
+    def delete(self, ids):
+        for id in ids:
+            self._internal_del__(id)
+
+    def load(self, ids):
+        pass
+
+    def flush(self, ids):
+        pass
+
+    def lock(self,ids):
+        return True
+
+    def unlock(self,ids):
+        pass
