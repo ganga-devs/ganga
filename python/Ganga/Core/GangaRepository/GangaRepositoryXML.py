@@ -20,6 +20,15 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 def safe_save(fn,obj,to_file):
     """Writes a file safely, raises IOError on error"""
     try:
+        file(fn)
+    except IOError:
+        # file does not exist, so make it fast!
+        try:
+            to_file(obj, file(fn,"w"))
+            return
+        except IOError, e:
+            raise IOError("Could not write file %s (%s)" % (fn,e))
+    try:
         tmpfile = open(fn + ".new", "w")
         to_file(obj, tmpfile)
         # Important: Flush, then sync file before renaming!
