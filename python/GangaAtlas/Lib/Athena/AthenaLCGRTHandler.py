@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.48 2009-07-02 18:15:29 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.49 2009-07-15 13:07:29 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -199,6 +199,14 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             jobdate = time.strftime('%Y%m%d')
 
             usertag = configDQ2['usertag']
+
+            # prepare Group Dataset names
+            if job.outputdata.isGroupDS==True:
+                usertag = re.sub("user", "group", usertag)
+                if not usertag.startswith('group'):
+                    usertag = 'group' + time.strftime('%Y')[2:]
+                if job.outputdata.groupname:
+                    username = groupname
             
             if job.outputdata.datasetname:
                 # new datasetname during job resubmission
@@ -212,9 +220,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
                 else:
                     # append user datasetname for new configuration
-#                    if job.outputdata.use_datasetname and job.outputdata.datasetname:
-#                        output_datasetname = job.outputdata.datasetname
-#                    else:
+                    #if job.outputdata.use_datasetname and job.outputdata.datasetname:
+                    #    output_datasetname = job.outputdata.datasetname
+                    #else:
                     output_datasetname = '%s.%s.ganga.%s' % (usertag, username,job.outputdata.datasetname)
 
                     output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)

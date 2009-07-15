@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.35 2009-06-29 13:47:15 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.36 2009-07-15 13:07:29 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -846,6 +846,8 @@ class DQ2OutputDataset(Dataset):
         'location'       : SimpleItem(defvalue='',doc='SE output path location'),
         'local_location' : SimpleItem(defvalue='',doc='Local output path location'),
 #        'use_datasetname' : SimpleItem(defvalue = False, doc = 'Use datasetname as it is and do not prepend users.myname.ganga'),
+        'isGroupDS'      : SimpleItem(defvalue = False, doc = 'Use group datasetname prefix'),
+        'groupname'      : SimpleItem(defvalue='', doc='Name of the group to be used if isGroupDS=True'),
         'use_shortfilename' : SimpleItem(defvalue = False, doc = 'Use shorter version of filenames and do not prepend users.myname.ganga')
         })
     
@@ -861,6 +863,8 @@ class DQ2OutputDataset(Dataset):
                   { 'attribute' : 'location',       'widget' : 'String_List' },
                   { 'attribute' : 'local_location', 'widget' : 'File' },
 #                  { 'attribute' : 'use_datasetname',    'widget' : 'Bool' },
+                  { 'attribute' : 'isGroupDS',      'widget' : 'Bool' },
+                  { 'attribute' : 'groupname',      'widget' : 'String' },
                   { 'attribute' : 'use_shortfilename',    'widget' : 'Bool' }
                   ]
     
@@ -1279,6 +1283,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.35  2009/06/29 13:47:15  elmsheus
+#Fix IFAE
+#
 #Revision 1.34  2009/06/04 10:19:46  elmsheus
 #Add exception for listMetaReplica
 #
