@@ -1,0 +1,15 @@
+from GangaTest.Framework.utils import sleep_until_state
+
+j = Job()
+j.splitter = GenericSplitter()
+j.splitter.attribute = 'application'
+j.splitter.values = [Executable(), Executable(exe=File('sleep_and_abort')), Executable()]
+j.submit()
+sleep_until_state(j,60,'failed')
+s = j.subjobs[1]
+assert(j.status == 'failed')
+assert(s.status == 'failed')
+s.resubmit()
+assert(s.status != 'failed')
+assert(j.status != 'failed')
+sleep_until_state(j,60,'failed')

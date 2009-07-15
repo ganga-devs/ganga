@@ -1,0 +1,46 @@
+
+## GPI - as the user sees the config
+
+c = config['TestConfig2']
+print c
+
+expected = { 'str' : [ (1,ConfigError), (3*3,ConfigError), (2.5, ConfigError), (str,ConfigError), ('str','str'),
+                       ([1,2],ConfigError), ('[1,2]', '[1,2]'), (None,ConfigError) ],
+             'int' : [ (1,1),(3*3,9), (2.5,ConfigError), (str,ConfigError), ('str',ConfigError), ([1,2],ConfigError),
+                       ('[1,2]',ConfigError), (None,ConfigError), ('3*3',9)],
+             'list' : [ (1,ConfigError), (3*3, ConfigError), (2.5, ConfigError), (str,ConfigError), ('str',ConfigError),
+                        ([1,2],[1,2]), ('[1,2]',[1,2]), (None,ConfigError)],
+             'none' : [ (1,1), (3*3,9), (2.5,2.5), (str,str), ('str',str), ([1,2],[1,2]), ('[1,2]',[1,2]), (None,None)],
+             'notexisting' : [ (1,ConfigError), (3*3,ConfigError), (2.5,ConfigError), (str,ConfigError), ('str',ConfigError), ([1,2],ConfigError), ('[1,2]',ConfigError), (None,ConfigError)]
+             }
+
+for t in expected:
+    elist = expected[t]
+    for i in range(1,len(elist)):
+
+        opt = '%s%d'%(t,i)
+
+        def pp():
+            print "c['%s'] = %s -> %s "%(opt,repr(elist[i][0]),repr(elist[i][1]))
+            
+        def assign():
+            c[opt] = elist[i][0]
+            
+        if elist[i][1] is ConfigError:
+            try:
+                assign()
+            except ConfigError:
+                pass
+            else:
+                assert("ConfigError was NOT raised when doing: c['%s'] = %s"%(opt,elist[i][0]))
+        else:
+            assign()
+            if not c[opt] == elist[i][1]:
+                print 'FAILED: assigned value is', repr(c[opt]), 'while setting',
+                pp()
+                assert(0)
+
+        print 'PASSED: ',
+        pp()
+        
+

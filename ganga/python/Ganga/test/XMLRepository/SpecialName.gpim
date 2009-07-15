@@ -1,0 +1,23 @@
+#-*-python-*-
+
+from GangaTest.Framework.tests import MultipassTest
+
+SPECIAL_NAME =  "<>!@#$%^&*()_+-='\".,;:?\n\t\f\0xxx"
+
+class SpecialName(MultipassTest):
+    def __init__(self): 
+        MultipassTest.__init__(self,2)
+
+    def pass1(self):
+        j = Job()
+        j.name = SPECIAL_NAME
+        j.application.env = {'test':SPECIAL_NAME}
+        j.submit()
+
+    def pass2(self):
+        print jobs
+        assert jobs[-1].name == SPECIAL_NAME
+
+# uncomment if you want that jobs are not automatically cleaned up
+#    def tearDown(self):
+#        pass

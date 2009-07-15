@@ -1,0 +1,15 @@
+a = Executable()
+a.args = 'abcd'
+b = Executable()
+b.args = ['abcd']
+print a
+print b
+assert(a == b)
+
+c = Executable()
+c.args = File('abcd')
+d = Executable()
+d.args = [File('abcd')]
+print c
+print d
+assert(c == d)

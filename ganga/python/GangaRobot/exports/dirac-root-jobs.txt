@@ -1,0 +1,127 @@
+#Ganga# File created by Ganga - Tue Jul  3 14:28:42 2007
+#Ganga#
+#Ganga# Object properties may be freely edited before reloading into Ganga
+#Ganga#
+#Ganga# Lines beginning #Ganga# are used to divide object definitions,
+#Ganga# and must not be deleted
+
+#Ganga# Job object (category: jobs)
+Job (
+ name = '' ,
+ outputsandbox = [] ,
+ inputdata = None ,
+ merger = None ,
+ inputsandbox = [ ] ,
+ application = Root (
+    args = [] ,
+    version = '5.15.02' ,
+    usepython = False ,
+    script = File (
+       name = '' ,
+       subdir = '.' 
+       ) 
+    ) ,
+ outputdata = None ,
+ splitter = None ,
+ backend = Dirac (
+    CE = 'all' ,
+    CPUTime = 200 
+    ) 
+ ) 
+
+#Ganga# Job object (category: jobs)
+Job (
+ name = '' ,
+ outputsandbox = [] ,
+ inputdata = None ,
+ merger = None ,
+ inputsandbox = [ ] ,
+ application = Root (
+    args = [] ,
+    version = '5.15.02' ,
+    usepython = False ,
+    script = File (
+       name = '' ,
+       subdir = '.' 
+       ) 
+    ) ,
+ outputdata = None ,
+ splitter = None ,
+ backend = Dirac (
+    CE = 'all' ,
+    CPUTime = 200 
+    ) 
+ ) 
+
+#Ganga# Job object (category: jobs)
+Job (
+ name = '' ,
+ outputsandbox = [] ,
+ inputdata = None ,
+ merger = None ,
+ inputsandbox = [ ] ,
+ application = Root (
+    args = [] ,
+    version = '5.15.02' ,
+    usepython = False ,
+    script = File (
+       name = '' ,
+       subdir = '.' 
+       ) 
+    ) ,
+ outputdata = None ,
+ splitter = None ,
+ backend = Dirac (
+    CE = 'all' ,
+    CPUTime = 200 
+    ) 
+ ) 
+
+#Ganga# Job object (category: jobs)
+Job (
+ name = '' ,
+ outputsandbox = [] ,
+ inputdata = None ,
+ merger = None ,
+ inputsandbox = [ ] ,
+ application = Root (
+    args = [] ,
+    version = '5.15.02' ,
+    usepython = False ,
+    script = File (
+       name = '' ,
+       subdir = '.' 
+       ) 
+    ) ,
+ outputdata = None ,
+ splitter = None ,
+ backend = Dirac (
+    CE = 'all' ,
+    CPUTime = 200 
+    ) 
+ ) 
+
+#Ganga# Job object (category: jobs)
+Job (
+ name = '' ,
+ outputsandbox = [] ,
+ inputdata = None ,
+ merger = None ,
+ inputsandbox = [ ] ,
+ application = Root (
+    args = [] ,
+    version = '5.15.02' ,
+    usepython = False ,
+    script = File (
+       name = '' ,
+       subdir = '.' 
+       ) 
+    ) ,
+ outputdata = None ,
+ splitter = None ,
+ backend = Dirac (
+    CE = 'all' ,
+    CPUTime = 200 
+    ) 
+ ) 
+
