@@ -64,7 +64,8 @@ class DiracRoot:
             else:
                 arglist = []
                 for arg in app.args:
-                    if type(arg)==type('str'): arglist.append('"%s"' % arg)
+                    if type(arg)==type('str'):
+                        arglist.append('\'\"%s\"\'' % arg)
                     else: arglist.append(arg)
                 args = string.join([str(s) for s in arglist],',')
         script = self.script

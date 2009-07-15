@@ -41,7 +41,7 @@ class RootDiracRTHandler(IRuntimeHandler):
         j = app.getJobObject()
         input_dir = j.getInputWorkspace().getPath()
         script_name = '%s/%s' % (input_dir,os.path.basename(app.script.name))
-        c = StandardJobConfig(script_name,[],app.args,j.outputsandbox,{})
+        c = StandardJobConfig(script_name,[],[],j.outputsandbox,{})
 
         # copy script to input dir
         os.system('cp %s %s/.' % (app.script.name,input_dir))
