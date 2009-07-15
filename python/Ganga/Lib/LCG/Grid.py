@@ -210,7 +210,7 @@ class Grid(object):
 
         return True
 
-    def list_match(self, jdlpath):
+    def list_match(self, jdlpath, ce=None):
         '''Returns a list of computing elements can run the job'''
 
         re_ce = re.compile('^\s*\-\s*(\S+\:2119\/\S+)\s*$')
@@ -218,7 +218,7 @@ class Grid(object):
         matched_ces = []
 
         if self.middleware == 'EDG':
-            cmd = 'edg-job-list-match --rank'
+            cmd = 'edg-job-list-match'
         else:
             cmd = 'glite-wms-job-list-match -a'
             
@@ -243,33 +243,39 @@ class Grid(object):
 
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd), allowed_exit=[0,255])
 
-        if output: output = '%s' % output.strip()
-
         for l in output.split('\n'):
+            
             matches = re_ce.match(l)
+            
             if matches:
                 matched_ces.append(matches.group(1))
 
+        if ce:
+            if matched_ces.count(ce) > 0:
+                matched_ces = [ ce ]
+            else:
+                matched_ces = [ ]
+
+        logger.debug('== matched CEs ==')
+        for myce in matched_ces:
+            logger.debug(myce)
+        logger.debug('== matched CEs ==')
+
         return matched_ces
 
-    def submit(self, jdlpath, ce=None, isCollection=False, drySubmit=False):
+    def submit(self, jdlpath, ce=None, doListMatch=False, jdlpathForListMatch=None):
         '''Submit a JDL file to LCG'''
 
-        ## doing job list match if in "DrySubmit" mode
-        if drySubmit:
-            matches = []
-            if not ce:
-                if not isCollection:
-                    matches = self.list_match(jdlpath)
-                else:
-                    logger.warning('resource matching not possible for collection job')
-            else:
-                matches.append(ce)
+        ## doing job list match if required 
+        if doListMatch:
+            if not jdlpathForListMatch:
+                jdlpathForListMatch = jdlpath
+
+            matches = self.list_match(jdlpathForListMatch, ce)
 
             if not matches:
+                logger.warning('no matched resources')
                 return
-            else:
-                return 'dry submit done'
 
         ## doing job submission
         if self.middleware == 'EDG':

@@ -2,7 +2,7 @@ import LCG
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.37 2009-06-24 19:12:48 hclee Exp $
+# $Id: LCG.py,v 1.38 2009-07-15 08:23:29 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -80,6 +80,8 @@ def __fail_missing_jobs__(missing_glite_jids, jobdict):
                         sj.backend.status = 'Removed'
                         sj.backend.reason = 'job removed from WMS'
                         sj.updateStatus('failed')
+
+                j.updateStatus('failed')
     
 class LCG(IBackend):
     '''LCG backend - submit jobs to the EGEE/LCG Grid using gLite/EDG middleware.
@@ -431,7 +433,7 @@ class LCG(IBackend):
                 jdl_cnt  = self.__make_collection_jdl__(my_node_jdls, offset=my_node_offset)
                 jdl_path = self.inpw.writefile( FileBuffer(coll_jdl_name, jdl_cnt) )
 
-                master_jid = self.gridObj.submit(jdl_path,ce=None,isCollection=True,drySubmit=config['DrySubmit'])
+                master_jid = self.gridObj.submit(jdl_path,ce=None)
                 if not master_jid:
                     return False 
                 else:
@@ -582,6 +584,15 @@ class LCG(IBackend):
 
         profiler.checkAndStart('job preparation elapsed time')
 
+        if config['MatchBeforeSubmit']:
+            mt = self.middleware.upper()
+            matches = grids[mt].list_match(node_jdls[-1], ce=self.CE)
+            if not matches:
+                logger.error('No matched resource')
+                return False
+
+        profiler.checkAndStart('job list-match elapsed time')
+
         # set all subjobs to submitting status
         for sj in rjobs:
             sj.updateStatus('submitting')
@@ -620,7 +631,6 @@ class LCG(IBackend):
 
         from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
-        mt  = self.middleware.upper()
 
         job = self.getJobObject()
 
@@ -629,6 +639,13 @@ class LCG(IBackend):
         for sj in rjobs:
             jdlpath = os.path.join(sj.inputdir,'__jdlfile__')
             node_jdls.append(jdlpath)
+
+        if config['MatchBeforeSubmit']:
+            mt = self.middleware.upper()
+            matches = grids[mt].list_match(node_jdls[-1], ce=self.CE)
+            if not matches:
+                logger.error('No matched resource')
+                return False
 
         max_node = config['GliteBulkJobSize']
 
@@ -773,8 +790,14 @@ class LCG(IBackend):
         # If GLITE, tell it whether to enable perusal
         if mt=="GLITE":
             grids[mt].perusable=self.perusable
-        
-        self.id = grids[mt].submit(jdlpath, ce=self.CE, drySubmit=config['DrySubmit'])
+
+        if config['MatchBeforeSubmit']:
+            matches = grids[mt].list_match(jdlpath, ce=self.CE)
+            if not matches:
+                logger.error('No matched resource')
+                return None
+
+        self.id = grids[mt].submit(jdlpath, ce=self.CE)
 
         self.parent_id = self.id
 
@@ -785,7 +808,16 @@ class LCG(IBackend):
         job = self.getJobObject()
       
         mt = self.middleware.upper()
-        self.id = grids[mt].submit(job.getInputWorkspace().getPath("__jdlfile__"), ce=self.CE, drySubmit=config['DrySubmit'])
+
+        jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
+
+        if config['MatchBeforeSubmit']:
+            matches = grids[mt].list_match(jdlpath, ce=self.CE)
+            if not matches:
+                logger.error('No matched resource')
+                return None
+
+        self.id = grids[mt].submit(jdlpath, ce=self.CE)
         self.parent_id = self.id
 
         if self.id:
@@ -1929,7 +1961,7 @@ config.addOption('SandboxTransferTimeout', 60, 'sets the transfer timeout of the
 
 config.addOption('JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
 
-config.addOption('DrySubmit', False, 'sets to True will only list the CEs matching the job\'s requirement instead of doing job submission')
+config.addOption('MatchBeforeSubmit', False, 'sets to True will do resource matching before submitting jobs, jobs without any matched resources will fail the submission')
 
 #config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
 
@@ -1952,6 +1984,9 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.37  2009/06/24 19:12:48  hclee
+# add support for two JDL attributes: DataRequirements & DataAccessProtocol
+#
 # Revision 1.36  2009/06/09 15:41:44  hclee
 # bugfix: https://savannah.cern.ch/bugs/?50589
 #
