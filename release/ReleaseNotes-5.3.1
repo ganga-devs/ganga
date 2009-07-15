@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.3.1 (2009/7/13)
+5.3.1 (2009/7/15)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -25,6 +25,11 @@ AthenaMC:
   group production managers
 * stage-out: fixed a bug in guid extraction by forcing the scan to match
   to ID= instead of ID.
+* AthenaMCDatasets.py: forcing exact matching of input dataset first in 
+  order to cut down DQ2 query time, and therefore job submission time. 
+* Bug fix: new containers for output datasets can now be created at 
+  master job completion time instead of just trashing the master job 
+  completion
 
 Tasks:
 ------
