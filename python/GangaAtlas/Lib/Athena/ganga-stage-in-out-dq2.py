@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.48 2009-06-29 19:55:19 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.49 2009-07-16 15:18:58 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -573,7 +573,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
             outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
             outFile.write('%sEventSelector.InputCollections = ['%versionString)
     else:
-        if os.environ['RECEXTYPE'] == '':
+        if os.environ.has_key('RECEXTYPE') and os.environ['RECEXTYPE'] == '':
 
             try:
                 if os.environ.has_key('ATHENA_MAX_EVENTS'):

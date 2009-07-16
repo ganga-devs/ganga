@@ -131,7 +131,9 @@ get_remote_proxy () {
     export X509_CERT_DIR=$X509CERTDIR
     if [ ! -z $REMOTE_PROXY ]; then
         scp -o StrictHostKeyChecking=no $REMOTE_PROXY $PWD/.proxy
-        export X509_USER_PROXY=$PWD/.proxy
+	if [ -e $PWD/.proxy ]; then 
+	    export X509_USER_PROXY=$PWD/.proxy
+        fi
     fi
 
     # print relevant env. variables for debug 

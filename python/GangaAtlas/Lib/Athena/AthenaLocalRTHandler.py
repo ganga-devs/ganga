@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.25 2009-02-19 11:29:11 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.26 2009-07-16 15:18:58 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -320,7 +320,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
            if not 'db_dq2localid.py' in [ os.path.basename(file.name) for file in inputbox ]:
                _append_files(inputbox, 'db_dq2localid.py')
 
-                           
+        # set RecExCommon options
+        environment['RECEXTYPE'] = job.application.recex_type
 
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
@@ -512,6 +513,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.25  2009/02/19 11:29:11  elmsheus
+#Fix container submission problem
+#
 #Revision 1.24  2009/02/18 14:53:42  elmsheus
 #Add proxy.identity(safe=True)
 #
