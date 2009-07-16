@@ -2,7 +2,7 @@ import LCG
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.38 2009-07-15 08:23:29 hclee Exp $
+# $Id: LCG.py,v 1.39 2009-07-16 10:39:27 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -1486,7 +1486,11 @@ sys.exit(0)
 
 #       additional settings from the configuration
         ## !!note!! StorageIndex is not defined in EDG middleware
-        for name in [ 'ShallowRetryCount','RetryCount', 'Rank', 'ReplicaCatalog', 'StorageIndex', 'MyProxyServer', 'DataRequirements', 'DataAccessProtocol' ]:
+        for name in [ 'ShallowRetryCount', 'RetryCount' ]:
+            if config[name] >= 0:
+                jdl[name] = config[name]
+
+        for name in [ 'Rank', 'ReplicaCatalog', 'StorageIndex', 'MyProxyServer', 'DataRequirements', 'DataAccessProtocol' ]:
             if config[name]:
                 jdl[name] = config[name]
 
@@ -1984,6 +1988,10 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.38  2009/07/15 08:23:29  hclee
+# add resource match-making as an option before doing real job submission to WMS.
+#  - this option can be activated by setting config.LCG.MatchBeforeSubmit = True
+#
 # Revision 1.37  2009/06/24 19:12:48  hclee
 # add support for two JDL attributes: DataRequirements & DataAccessProtocol
 #
