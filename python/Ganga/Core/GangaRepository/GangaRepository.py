@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GangaRepository.py,v 1.1.2.8 2009-07-15 10:05:41 ebke Exp $
+# $Id: GangaRepository.py,v 1.1.2.9 2009-07-16 14:04:17 ebke Exp $
 ################################################################################
 
 # Only the corresponding registry may access the methods of a GangaRepository.
@@ -22,7 +22,7 @@ class EmptyGangaObject(GangaObject):
     """Empty Ganga Object. Is used to construct incomplete jobs"""
     _schema = Schema(Version(0,0), {})
     _name   = "Unknown"
-    _category = "unknownObjects"
+    _category = "internal"
     _hidden = 1
 
 # Error raised on schema version error
@@ -138,7 +138,10 @@ class GangaRepository(object):
 
     def _internal_setitem__(self, id, obj):
         """ Internal function for repository classes to add items to the repository."""
-        self._objects[id] = obj
+        if id == 0:
+            self._metadata = obj
+        else:
+            self._objects[id] = obj
         obj.__dict__["_registry_id"] = id
         obj.__dict__["_registry_locked"] = False
         if obj._data and "id" in obj._data.keys():
@@ -147,10 +150,18 @@ class GangaRepository(object):
 
     def _internal_del__(self, id):
         """ Internal function for repository classes to delete items to the repository."""
-        obj = self._objects[id]
-        obj._setRegistry(None)
-        del self._objects[id]
+        if id == 0:
+            self._metadata._setRegistry(None)
+            self._metadata = None
+        else:
+            self._objects[id]._setRegistry(None)
+            del self._objects[id]
 
+    def _getMetadataObject(self):
+        raise NotImplementedError
+
+    def _setMetadataObject(self, obj):
+        raise NotImplementedError
 
 class GangaRepositoryTransient(object):
     """This class implements a transient Ganga Repository for testing purposes.
@@ -158,6 +169,7 @@ class GangaRepositoryTransient(object):
 ## Functions that should be overridden and implemented by derived classes.
     def startup(self):
         self._next_id = 0
+        self._metadata = None
 
     def update_index(self, id = None):
         pass
@@ -188,3 +200,9 @@ class GangaRepositoryTransient(object):
 
     def unlock(self,ids):
         pass
+
+    def _getMetadataObject(self):
+        return self._metadata
+
+    def _setMetadataObject(self, obj):
+        self._metadata = obj

@@ -33,16 +33,19 @@ def safe_save(fn,obj,to_file):
         to_file(obj, tmpfile)
         # Important: Flush, then sync file before renaming!
         tmpfile.flush()
-        os.fsync(tmpfile.fileno())
+        #os.fsync(tmpfile.fileno())
         tmpfile.close()
     except IOError, e:
         raise IOError("Could not write file %s.new (%s)" % (fn,e))
     # Try to make backup copy...
     try:
         os.unlink(fn+"~")
+    except OSError, e:
+        logger.debug("Error on removing file %s~ (%s) " % (fn,e))
+    try:
         os.rename(fn,fn+"~")
     except OSError, e:
-        logger.debug("Error on moving file %s (%s) " % (fn,e))
+        logger.debug("Error on file backup %s (%s) " % (fn,e))
     try:
         os.rename(fn+".new",fn)
     except OSError, e:
@@ -57,6 +60,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def startup(self):
         """ Starts an repository and reads in a directory structure."""
+        self._metadata = None
         self._load_timestamp = {}
         self._cache_load_timestamp = {}
         self.sub_split = "subjobs"
@@ -73,6 +77,10 @@ class GangaRepositoryLocal(GangaRepository):
             raise RepositoryException("Unknown Repository type: %s"%self.registry.type)
         self.update_index()
 
+    def shutdown(self):
+        """Shutdown the repository. Flushing is done by the Registry"""
+        pass
+
     def update_index(self,id = None):
         # First locate and load the index files
         obj_chunks = [d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
@@ -88,7 +96,10 @@ class GangaRepositoryLocal(GangaRepository):
                 try:
                     id = int(idx[:-6])
                     try:
-                        obj = self._objects[id]
+                        if id != 0 or self._metadata is None:
+                            obj = self._objects[id]
+                        else:
+                            obj = self._metadata
                         if not obj._data:
                             fobj = file(os.path.join(dir,idx))
                             if (self._cache_load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime):
@@ -99,7 +110,7 @@ class GangaRepositoryLocal(GangaRepository):
                                 reloaded_cache += 1
                     except KeyError:
                         fobj = file(os.path.join(dir,idx))
-                        logger.debug("Loading index %i" % id)
+                        #logger.debug("Loading index %i" % id)
                         cat,cls,cache = pickle_from_file(fobj)[0]
                         obj = self._make_empty_object_(id,cat,cls)
                         obj._index_cache = cache
@@ -108,7 +119,7 @@ class GangaRepositoryLocal(GangaRepository):
                 except Exception, x:
                     logger.warning("Failed to load index from %s! %s: %s" % (d,x.__class__.__name__,x)) # Probably should be DEBUG
             for id in ids:
-                if not id in self._objects:
+                if not id in self._objects or (id == 0 and self._metadata is None):
                     try:
                         self.load([id])
                         loaded_obj += 1
@@ -134,9 +145,11 @@ class GangaRepositoryLocal(GangaRepository):
         for id in ids:
             try:
                 fn = self.get_fn(id)
-                obj = self._objects[id]
+                if id != 0:
+                    obj = self._objects[id]
+                else:
+                    obj = self._metadata
                 if obj._name != "Unknown":
-
                     split_cache = None
                     if self.sub_split and self.sub_split in obj._data:
                         split_cache = obj._data[self.sub_split]
@@ -178,7 +191,12 @@ class GangaRepositoryLocal(GangaRepository):
                 else: 
                     raise RepositoryError(self,"IOError: " + str(x))
             try:
-                if (not id in self._objects) or (self._objects[id]._data is None) or (self._load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime):
+                if id == 0:
+                    must_load = self._metadata is None or self._metadata._data is None
+                else:
+                    must_load = (not id in self._objects) or (self._objects[id]._data is None)
+                tmpobj = None
+                if must_load or (self._load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime):
                     tmpobj = self.from_file(fobj)[0]
                     if self.sub_split:
                         i = 0
@@ -193,15 +211,16 @@ class GangaRepositoryLocal(GangaRepository):
                             l.append(self.from_file(sfobj)[0])
                             i += 1
                         tmpobj._data[self.sub_split] = makeGangaListByRef(l)
-                else:
-                    return
-                if id in self._objects:
-                    if self._objects[id]._data is None or self._load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime:
+
+                    if id in self._objects:
                         self._objects[id]._data = tmpobj._data
-                else:
-                    self._internal_setitem__(id, tmpobj)
-                self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
-                self._objects[id]._index_cache = None 
+                        self._objects[id]._index_cache = None
+                    elif id == 0 and not self._metadata is None:
+                        self._metadata._data = tmpobj._data
+                        self._metadata._index_cache = None
+                    else:
+                        self._internal_setitem__(id, tmpobj)
+                    self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
             except Exception, x:
                 logger.error("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
                 raise KeyError(id)
@@ -210,6 +229,10 @@ class GangaRepositoryLocal(GangaRepository):
     def delete(self, ids):
         for id in ids:
             fn = self.get_fn(id)
+            try:
+                os.unlink(os.path.dirname(fn)+".index")
+            except OSError:
+                pass
             os.unlink(fn)
             try:
                 os.unlink(fn+"~")
@@ -236,6 +259,13 @@ class GangaRepositoryLocal(GangaRepository):
         if len(released_ids) < len(ids):
             logger.error("The write locks of some objects could not be released!")
 
+    def _getMetadataObject(self):
+        return self._metadata
 
-
-
+    def _setMetadataObject(self, obj):
+        try:
+            os.makedirs(os.path.dirname(self.get_fn(0)))
+        except OSError, e:
+            if e.errno != errno.EEXIST: 
+                raise RepositoryError(self,"OSError: " + str(e))
+        self._internal_setitem__(0,obj)

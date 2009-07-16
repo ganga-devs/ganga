@@ -115,7 +115,7 @@ class Registry(object):
         """Returns the id of the given object in this registry, or 
         Raise ObjectNotInRegistryError if the Object is not found"""
         try:
-            assert obj == self._objects[obj._registry_id]
+            assert obj._registry_id == 0 or obj == self._objects[obj._registry_id]
             return obj._registry_id
         except AttributeError:
             raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % obj)
@@ -189,6 +189,7 @@ class Registry(object):
                 ids.append(self.find(obj))
             except ObjectNotInRegistryError, x:
                 logger.error(x.what)
+        logger.debug("repository.flush(%s)" % ids)
         self.repository.flush(ids)
         self.dirty_objs = {}
 
@@ -257,6 +258,14 @@ class Registry(object):
         t1 = time.time()
         print "Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0)
         self._started = True
+        self._metadata = self.repository._getMetadataObject()
+        if self._metadata is None:
+            self._metadata = self._createMetadataObject()
+            if self._metadata is not None:
+                self.repository._setMetadataObject(self._metadata)
+                self._metadata._registry_locked = True
+                self._metadata = self.repository._getMetadataObject()
+                self.repository.flush([0])
 
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
@@ -268,5 +277,6 @@ class Registry(object):
         self._started = False
         self.repository.shutdown()
 
-
+    def _createMetadataObject(self):
+        return None
 

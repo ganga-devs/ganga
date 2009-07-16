@@ -236,7 +236,7 @@ class SessionLockManager(object):
         except IOError,x:
             import errno
             if x.errno == errno.ENOENT:
-                return 0
+                return 1
             else:
                 raise OSError(x)
         
