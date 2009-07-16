@@ -74,6 +74,10 @@ ls -la
 # get pybin
 get_pybin
 
+################################################
+# Determine lcg-utils version and set commands
+get_lcg_util
+
 #################################################
 # Determine SE type
 
