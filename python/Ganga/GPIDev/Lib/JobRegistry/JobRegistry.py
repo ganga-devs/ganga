@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistry.py,v 1.3.4.2 2009-07-13 22:10:52 ebke Exp $
+# $Id: JobRegistry.py,v 1.3.4.3 2009-07-16 14:05:21 ebke Exp $
 ################################################################################
 
 def apply_keyword_args(ns,d,**kwds):
@@ -180,10 +180,43 @@ def _unwrap(obj):
     return obj
 
 
-from JobRegistryDev import JobRegistryInstanceInterface, config, get_display_value
+from JobRegistryDev import JobRegistryInstanceInterface, config
 from Ganga.Core.GangaRepository.Registry import Registry
 
+
+
 class JobRegistry(Registry):
+
+    def startup(self):
+        super(JobRegistry,self).startup()
+        self._registry_columns = config['registry_columns']
+        self.registry_column_converter = {}
+        try:
+            for c in config['registry_columns_converter']:
+                self.registry_column_converter[c] = eval(config['registry_columns_converter'][c])
+        except Exception,x:
+            logger.error("Error on evaluating registry columns converter from config file: %s: %s"% (x.__class__.__name__,x))
+        self._registry_columns_show_empty = config['registry_columns_show_empty']
+
+    def _get_display_value(self,j,item):
+        def getatr(obj,members):
+            val = getattr(obj,members[0])
+            if len(members)>1:
+                return getatr(val,members[1:])
+            else:
+                return val
+        try:
+            val = getatr(j,item.split('.'))
+            try:
+                val = self.registry_column_converter[item](val)
+            except KeyError:
+                pass
+            if not val and not item in self._registry_columns_show_empty:
+                val = ""
+        except AttributeError:
+            val = ""
+        return str(val)
+
     def getProxy(self):
         jri = JobRegistryInstanceInterface(self.name)
         jri.jobs = self
@@ -195,14 +228,24 @@ class JobRegistry(Registry):
         for cv in cached_values:
             if cv in obj._data:
                 c[cv] = obj._data[cv]
-        for dpv in config['registry_columns']:
-            c["display:"+dpv] = get_display_value(obj, dpv)
+        for dpv in self._registry_columns:
+            c["display:"+dpv] = self._get_display_value(obj, dpv)
         return c
     
 
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.3.4.2  2009/07/13 22:10:52  ebke
+# Update for the new GangaRepository:
+# * Moved dict interface from Repository to Registry
+# * Clearly specified Exceptions to be raised by Repository
+# * proper exception handling in Registry
+# * moved _writable to _getWriteAccess, introduce _getReadAccess
+# * clarified locking, logic in Registry, less in Repository
+# * index reading support in XML (no writing, though..)
+# * general index reading on registry.keys()
+#
 # Revision 1.3.4.1  2009/07/08 11:18:21  ebke
 # Initial commit of all - mostly small - modifications due to the new GangaRepository.
 # No interface visible to the user is changed

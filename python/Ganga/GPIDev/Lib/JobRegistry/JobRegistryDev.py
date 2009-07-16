@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobRegistryDev.py,v 1.5.4.6 2009-07-14 14:44:17 ebke Exp $
+# $Id: JobRegistryDev.py,v 1.5.4.7 2009-07-16 14:05:21 ebke Exp $
 ################################################################################
 
 
@@ -53,31 +53,6 @@ class JobAccessIndexError(GangaException,IndexError):
     def __str__(self):
         return "JobAccessIndexError: %s"%self.what
     
-def get_display_value(j,item):
-    registry_column_converter = {}
-    try:
-        for c in config['registry_columns_converter']:
-            registry_column_converter[c] = eval(config['registry_columns_converter'][c])
-    except Exception,x:
-        pass # TODO: print this once, but not every time!
-    def getatr(obj,members):
-        val = getattr(obj,members[0])
-        if len(members)>1:
-            return getatr(val,members[1:])
-        else:
-            return val
-    try:
-        val = getatr(j,item.split('.'))
-        try:
-            val = registry_column_converter[item](val)
-        except KeyError:
-            pass
-        if not val and not item in config['registry_columns_show_empty']:
-                val = ""
-    except AttributeError:
-        val = ""
-    return str(val)
-
 class JobRegistryInstanceInterface:
     """ Read-only interface of job registry. Provides collective operations and job management.
         It does not have any associations with persistent storage. It is used an an implementation
@@ -424,12 +399,13 @@ class JobRegistryInstanceInterface:
                 else:
                    width = registry_columns_width[d]
 
-                try:
-                   if not hasattr(j,"_index_cache") or not j._index_cache:
-                      raise KeyError()
-                   vals.append(str(j._index_cache["display:"+item])[0:width])
-                except KeyError:
-                   vals.append(getstr(item,width))
+                if j._data is None and hasattr(j,"_index_cache") and not j._index_cache is None:
+                    try:
+                        vals.append(str(j._index_cache["display:"+item])[0:width])
+                        continue
+                    except KeyError:
+                        pass
+                vals.append(getstr(item,width))
 
             ds += markup(format % tuple(vals), colour)
             
@@ -445,6 +421,12 @@ class JobRegistryInstanceInterface:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.4.6  2009/07/14 14:44:17  ebke
+# * several bugfixes
+# * changed indexing for XML/Pickle
+# * introduce index update minimal time of 20 seconds (reduces lag for typing 'jobs')
+# * subjob splitting and individual flushing for XML/Pickle
+#
 # Revision 1.5.4.5  2009/07/13 22:10:52  ebke
 # Update for the new GangaRepository:
 # * Moved dict interface from Repository to Registry
