@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.26 2009-07-16 15:18:58 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.27 2009-07-16 15:36:06 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -277,7 +277,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             environment['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
             environment['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
             if job.outputdata.use_shortfilename:
-                environment['GANGA_SHORTFILENAME'] = 1
+                environment['GANGA_SHORTFILENAME'] = '1'
             else:
                 environment['GANGA_SHORTFILENAME'] = ''
             try:
@@ -513,6 +513,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.26  2009/07/16 15:18:58  elmsheus
+#Fix #53251: missing protection for RECEXTYPE, also improve X509
+#
 #Revision 1.25  2009/02/19 11:29:11  elmsheus
 #Fix container submission problem
 #

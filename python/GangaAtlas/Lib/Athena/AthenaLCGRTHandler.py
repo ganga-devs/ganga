@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.49 2009-07-15 13:07:29 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.50 2009-07-16 15:36:06 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -303,7 +303,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             environment['DQ2_URL_SERVER']= configDQ2['DQ2_URL_SERVER']
             environment['DQ2_URL_SERVER_SSL'] = configDQ2['DQ2_URL_SERVER_SSL']
             if job.outputdata.use_shortfilename:
-                environment['GANGA_SHORTFILENAME'] = 1
+                environment['GANGA_SHORTFILENAME'] = '1'
             else:
                 environment['GANGA_SHORTFILENAME'] = ''
                 
