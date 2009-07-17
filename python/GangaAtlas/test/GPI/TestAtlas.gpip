@@ -1,7 +1,26 @@
 import os, getpass
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
+from GangaTest.Framework.utils import is_job_finished
 
 class TestAtlas(GangaGPITestCase):
+    def testAthenaLocal(self):
+        return TestAthenaLocal("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/")
+
+    def testAthenaDQ2LSF(self):
+        return TestAthenaDQ2LSF("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+
+    def testAthenaLCG(self):
+        return TestAthenaLCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/")
+
+    def testAthenaDQ2LCG(self):
+        return TestAthenaDQ2LCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+
+    def testAthenaDQ2LCGFileStager(self):
+        return TestAthenaDQ2LCGFileStager("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+
+    def testAthenaDQ2LCGDQ2COPY(self):
+        return TestAthenaDQ2LCGDQ2COPY("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+
     def testAnaTaskBasic(self):
         return TestAnaTaskBasic()
 
@@ -13,18 +32,6 @@ class TestAtlas(GangaGPITestCase):
 
     def testAnaTaskAuto(self):
         return TestAnaTaskAuto("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
-
-    def testAthenaDQ2LCG(self):
-        return TestAthenaDQ2LCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
-
-    def testAthenaDQ2LCGFileStager(self):
-        return TestAthenaDQ2LCGFileStager("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
-
-    def testAthenaLCG(self):
-        return TestAthenaLCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/")
-
-    def testAthenaLocal(self):
-        return TestAthenaLCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/")
 
     def testMCTask(self):
         return TestMCTask()
@@ -76,6 +83,12 @@ class AtlasTest(ICheckTest):
         os.system('cp -r %s %s' % (srcdir, self.tmpdir))
         self.j = j
         self.setup()
+
+    def isReadyForCheck(self):
+        return is_job_finished(self.j)
+
+    def checkTest(self):
+        assert(self.j.status == 'completed'), 'Job status is not \'completed\''
 
     def cleanup(self):
         if self.tmpdir is None:
@@ -173,6 +186,7 @@ class TestAthenaDQ2LCG(TestAthena):
         #self.j.backend.requirements.sites=['FZK-LCG2_MCDISK']
         #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
         self.j.backend.requirements.cloud='DE'
+        self.j.backend.requirements.cputime=1440
         assert(self.j.submit()==True)
 
 class TestAthenaDQ2LCGFileStager(TestAthena):
@@ -183,6 +197,7 @@ class TestAthenaDQ2LCGFileStager(TestAthena):
         #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
         self.j.backend.requirements.cloud='DE'
         self.j.inputdata.type = 'FILE_STAGER'
+        self.j.backend.requirements.cputime=1440
         assert(self.j.submit()==True)
 
 class TestAthenaDQ2LCGDQ2COPY(TestAthena):
@@ -198,7 +213,10 @@ class TestAthenaDQ2LCGDQ2COPY(TestAthena):
 class TestAthenaDQ2LSF(TestAthena):
     def setup(self):
         TestAthena.setup(self)
+	self.j.splitter = None
+	self.j.outputdata.location='CERN-PROD_SCRATCHDISK'
         self.j.backend=LSF()
+	self.j.backend.queue='1nh'
         assert(self.j.submit()==True)
 
 class TestAthenaLCG(AtlasTest):
