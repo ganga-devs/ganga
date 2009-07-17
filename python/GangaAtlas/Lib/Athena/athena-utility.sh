@@ -215,13 +215,15 @@ athena_setup () {
 # determine lcg_utils version and setup lcg-* commands
 get_lcg_util () {
 
-    LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
-    PATH_BACKUP=$PATH
-    PYTHONPATH_BACKUP=$PYTHONPATH
+    if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
+	LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+	PATH_BACKUP=$PATH
+	PYTHONPATH_BACKUP=$PYTHONPATH
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
-    export PATH=$PATH_ORIG
-    export PYTHONPATH=$PYTHONPATH_ORIG
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+	export PATH=$PATH_ORIG
+	export PYTHONPATH=$PYTHONPATH_ORIG
+    fi
 
     # find version string
     export lcgutil_str=`lcg-cr --version | grep lcg | cut -d- -f2`
@@ -243,9 +245,11 @@ get_lcg_util () {
 	export lcgcr="lcg-cr --connect-timeout 150 --sendreceive-timeout 150 --srm-timeout 150 --bdii-timeout 150 "
     fi
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
-    export PATH=$PATH_BACKUP
-    export PYTHONPATH=$PYTHONPATH_BACKUP
+    if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+	export PATH=$PATH_BACKUP
+	export PYTHONPATH=$PYTHONPATH_BACKUP
+    fi
 
 }
 
