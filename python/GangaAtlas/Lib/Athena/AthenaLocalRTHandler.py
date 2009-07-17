@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.27 2009-07-16 15:36:06 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.28 2009-07-17 07:32:12 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -177,6 +177,16 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             tempdate = time.localtime()
             jobdate = "%04d%02d%02d" %(tempdate[0],tempdate[1],tempdate[2])
 
+            usertag = configDQ2['usertag']
+
+            # prepare Group Dataset names
+            if job.outputdata.isGroupDS==True:
+                usertag = re.sub("user", "group", usertag)
+                if not usertag.startswith('group'):
+                    usertag = 'group' + time.strftime('%Y')[2:]
+                if job.outputdata.groupname:
+                    username = groupname
+            
             if job.outputdata.datasetname:
                 # new datasetname during job resubmission
                 pat = re.compile(r'^users\.%s\.ganga' % username)
@@ -184,27 +194,21 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     if job.outputdata.dataset_exists():
                         output_datasetname = job.outputdata.datasetname
                     else:
-                        output_datasetname = 'users.%s.ganga.%s.%s' % ( username, jobid, jobdate)
-                        
-                    #output_lfn = 'users/%s/ganga/%s/' % (username,jobid)
-                    #output_lfn = 'users/%s/ganga/' % (username)
-                    output_lfn = 'users/%s/ganga/%s/' % (username,output_datasetname)
+                        output_datasetname = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
+
+                    output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)    
                 else:
                     # append user datasetname for new configuration
-#                    if job.outputdata.use_datasetname and job.outputdata.datasetname:
-#                        output_datasetname = job.outputdata.datasetname
-#                    else:
-                    output_datasetname = 'users.%s.ganga.%s' % (username,job.outputdata.datasetname)
+                    #if job.outputdata.use_datasetname and job.outputdata.datasetname:
+                    #    output_datasetname = job.outputdata.datasetname
+                    #else:
+                    output_datasetname = '%s.%s.ganga.%s' % (usertag, username,job.outputdata.datasetname)
 
-                    #output_lfn = 'users/%s/ganga/%s/' % (username,job.outputdata.datasetname)
-                    #output_lfn = 'users/%s/ganga/' % (username)
-                    output_lfn = 'users/%s/ganga/%s/' % (username,output_datasetname)
+                    output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
             else:
                 # No datasetname is given
-                output_datasetname = 'users.%s.ganga.%s.%s' % (username,jobid, jobdate)
-                #output_lfn = 'users/%s/ganga/%s/' % (username,jobid)
-                #output_lfn = 'users/%s/ganga/' % (username)
-                output_lfn = 'users/%s/ganga/%s/' % (username,output_datasetname)
+                output_datasetname = '%s.%s.ganga.%s.%s' % (usertag,username,jobid, jobdate)
+                output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
             output_jobid = jid
             job.outputdata.datasetname=output_datasetname
             if not job.outputdata.dataset_exists(output_datasetname):
@@ -513,6 +517,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.27  2009/07/16 15:36:06  elmsheus
+#Fix #53251, short_filename as string
+#
 #Revision 1.26  2009/07/16 15:18:58  elmsheus
 #Fix #53251: missing protection for RECEXTYPE, also improve X509
 #
