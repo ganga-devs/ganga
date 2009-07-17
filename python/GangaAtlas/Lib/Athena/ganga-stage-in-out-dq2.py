@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.49 2009-07-16 15:18:58 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.50 2009-07-17 08:36:59 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -1038,7 +1038,10 @@ if __name__ == '__main__':
 
         # Pre-Identification by domainname
         dq2localids = [ ]
-        celist = TiersOfATLAS.listCEsInCloudByDomain('*'+domainname) 
+        try:
+            celist = TiersOfATLAS.listCEsInCloudByDomain('*'+domainname)
+        except:
+            celist = []
         for sitename in TiersOfATLAS.getAllSources():
             # First search for domainname
             dq2domain = TiersOfATLAS.getSiteProperty(sitename,'domain')
