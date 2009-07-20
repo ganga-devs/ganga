@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.36 2009-07-15 13:07:29 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.37 2009-07-20 14:07:03 mslater Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -203,7 +203,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                 else:
                     allchecked = True
 
-            if allchecked:
+            if allchecked or len(locations_checktime) == 0:
                 break
 
             retry = retry + 1        
@@ -1283,6 +1283,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.36  2009/07/15 13:07:29  elmsheus
+#Enable group dataset names in LCG/Athena, #53155
+#
 #Revision 1.35  2009/06/29 13:47:15  elmsheus
 #Fix IFAE
 #
