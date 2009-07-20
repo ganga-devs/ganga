@@ -132,6 +132,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             selectedSites=usersites
         if len(usersites)>0 and len(app.sites)>0:
             selectedSites=job.inputdata.trimSites(usersites,app.sites)
+        # evgen case (no input data-> app.sites=[])
+        if len(app.sites)==0 and app.se_name and app.se_name != "none":
+            selectedSites=app.se_name.split(" ")
+            
 
         # This comes last: using surviving sites from matching process.
         if len(selectedSites)==0:
@@ -351,7 +355,18 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
             requirements.cloud=cloud
             # looks like cloud has to be converted in a list of sites anyway, and this is not done in AtlasLCGRequirements.convert()... 
-            requirements.sites=requirements.list_sites_cloud()
+            allsites=requirements.list_sites_cloud()
+            # need to weed out unwanted sites from excluded list
+            excludedSites=requirements.excluded_sites
+            goodsites=allsites
+            for checksite in allsites:
+                for site in excludedSites:
+                    imax=site.find("_")
+                    shortSite=site[:imax]
+                    if shortSite in checksite:
+                        goodsites.remove(checksite)
+            allsites=goodsites
+            requirements.sites=allsites
             #print requirements.sites
             logger.debug("Relaxing job to data policy to job to cloud. Selected cloud is %s" % cloud)
  
