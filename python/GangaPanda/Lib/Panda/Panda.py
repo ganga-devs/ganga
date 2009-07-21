@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.45 2009-07-14 08:29:23 dvanders Exp $
+# $Id: Panda.py,v 1.46 2009-07-21 11:15:30 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -100,8 +100,8 @@ def runPandaBrokerage(job):
                 libdslocation = libdslocation.values()[0]
 
         tmpSites = []
+        dataset = ''
         if job.inputdata:
-            dataset = ''
             try:
                 dataset = job.inputdata.dataset[0]
             except:
@@ -123,7 +123,7 @@ def runPandaBrokerage(job):
                 raise BackendError('Panda','Error in Client.getLocations')
             # no location
             if dsLocationMap == {}:
-                raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.requirements.cloud,job.inputdata.dataset[0]))
+                raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.requirements.cloud,dataset))
             # run brokerage
             for tmpItem in dsLocationMap.values():
                 if not libdslocation or tmpItem == libdslocation:
@@ -135,7 +135,7 @@ def runPandaBrokerage(job):
                         tmpSites.append(site)
        
         if not tmpSites: 
-            raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" % (job.backend.requirements.cloud,job.inputdata.dataset,job.backend.libds))
+            raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" % (job.backend.requirements.cloud,dataset,job.backend.libds))
         
         tag = ''
         try:
@@ -577,6 +577,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.45  2009/07/14 08:29:23  dvanders
+# change pandamon url
+#
 # Revision 1.44  2009/06/18 08:35:46  dvanders
 # panda-client 0.1.71
 # trust the information system (jobs won't submit if athena release not installed).
