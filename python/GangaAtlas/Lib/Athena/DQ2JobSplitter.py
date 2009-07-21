@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.37 2009-06-25 08:14:49 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.38 2009-07-21 11:21:19 mslater Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -220,17 +220,18 @@ class DQ2JobSplitter(ISplitter):
                 for g in removal:
                     guids.remove(g)
 
-                nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+                nrfiles = self.numfiles
+                nrjob = int(math.ceil(len(guids)/float(nrfiles)))
                 if nrjob > self.numsubjobs and self.numsubjobs!=0:
-                    self.numfiles = int(math.ceil(len(guids)/float(self.numsubjobs)))
-                    nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+                    nrfiles = int(math.ceil(len(guids)/float(self.numsubjobs)))
+                    nrjob = int(math.ceil(len(guids)/float(nrfiles)))
 
                 if nrjob > config['MaxJobsDQ2JobSplitter']:
-                    self.numfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
-                    nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+                    nrfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
+                    nrjob = int(math.ceil(len(guids)/float(nrfiles)))
 
-                if self.numfiles > len(guids):
-                    self.numfiles = len(guids)
+                if nrfiles > len(guids):
+                    nrfiles = len(guids)
 
                 totalsize = datasetSizes[dataset] * len(guids) / datasetLength[dataset]
 
@@ -245,19 +246,19 @@ class DQ2JobSplitter(ISplitter):
                         maxsize = config['MaxFileSizePandaDQ2JobSplitter']
                     elif job.backend._name == 'LCG':
                         nrjob = 1
-                        self.numfiles = len(guids)
+                        nrfiles = len(guids)
 
                     logger.warning('You are using DQ2JobSplitter.filesize or the backend used supports only a maximum dataset size of %s MB per subjob - job splitting has been adjusted accordingly.', maxsize)
 
                     subjobsize = totalsize / nrjob / (1024*1024)
-                    while subjobsize > maxsize and self.numfiles > 1:
+                    while subjobsize > maxsize and nrfiles > 1:
                         warn = True
-                        self.numfiles = self.numfiles - 1
-                        if self.numfiles < 1:
-                            self.numfiles = 1
+                        nrfiles = nrfiles - 1
+                        if nrfiles < 1:
+                            nrfiles = 1
 
-                        nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
-                        self.numfiles = int(math.ceil(len(guids)/float(nrjob)))
+                        nrjob = int(math.ceil(len(guids)/float(nrfiles)))
+                        nrfiles = int(math.ceil(len(guids)/float(nrjob)))
                         subjobsize = totalsize / nrjob / (1024*1024)
                     if warn:
                         logger.warning('Maximum data size per subjob (%d MB) reached - creating more subjobs.'%maxsize)
@@ -272,7 +273,7 @@ class DQ2JobSplitter(ISplitter):
 
                     j.inputdata       = job.inputdata
                     j.inputdata.dataset = dataset
-                    j.inputdata.guids = guids[i*self.numfiles:(i+1)*self.numfiles]
+                    j.inputdata.guids = guids[i*nrfiles:(i+1)*nrfiles]
                     j.inputdata.names = [ allcontent[guid] for guid in j.inputdata.guids ]
                     j.inputdata.number_of_files = len(j.inputdata.guids)
 
