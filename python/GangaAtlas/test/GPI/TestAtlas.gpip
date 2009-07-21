@@ -37,22 +37,22 @@ class TestAtlas(GangaGPITestCase):
         return TestMCTask()
 
     def testAthenaMCLCG_evgen(self):
-        return TestAthenaMCLCG()
+        return TestAthenaMCLCG_evgen()
 
     def testAthenaMCLCG_simul(self):
-        return TestAthenaMCLCG("/afs/cern.ch/sw/ganga/install/TEST/athenaMC_testing_data")
+        return TestAthenaMCLCG_simul("/afs/cern.ch/sw/ganga/install/TEST/athenaMC_testing_data")
 
     def testAthenaMCLCG_recon(self):
-        return TestAthenaMCLCG()
+        return TestAthenaMCLCG_recon()
 
     def testAthenaMCPanda_evgen(self):
-        return TestAthenaMCPanda()
+        return TestAthenaMCPanda_evgen()
 
     def testAthenaMCPanda_simul(self):
-        return TestAthenaMCPanda()
+        return TestAthenaMCPanda_simul()
 
     def testAthenaMCPanda_recon(self):
-        return TestAthenaMCPanda()
+        return TestAthenaMCPanda_recon()
 
 class TestAnaTaskBasic(ICheckTest):
     def __init__(self):
@@ -140,7 +140,7 @@ class TestAnaTaskLCG(TestAnaTask):
         be = LCG()
         self.t.setBackend(LCG())
         self.t.analysis.backend.requirements.cloud='DE'
-        self.t.analysis.backend.requirements.sites=['IN2P3-CC_MCDISK']
+        #self.t.analysis.backend.requirements.sites=['IN2P3-CC_MCDISK']
         self.t.analysis.outputdata.outputdata=[ 'AnalysisSkeleton.aan.root' ]
         self.t.run()
 
@@ -150,14 +150,14 @@ class TestAnaTaskPanda(TestAnaTask):
         self.t.setBackend(Panda())
         self.t.analysis.backend.requirements.cloud='US'
         self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
-        self.t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808_sub01236389"
+        self.t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808"
         self.t.run()
 
 class TestAnaTaskAuto(TestAnaTask):
     def setup(self):
         TestAnaTask.setup(self)
         self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
-        self.t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808_sub01236389"
+        self.t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808"
         self.t.run()
 
 class TestAthena(AtlasTest):
@@ -321,7 +321,7 @@ class TestAthenaMCPanda(AtlasTest):
     def setup(self):
         self.j=Job()
         self.j.application=AthenaMC()
-        self.j.application.atlas_release='14.5.0.1'
+        self.j.application.atlas_release='15.1.0.1'
         self.j.application.random_seed='1102362401'
         self.j.application.production_name='tutorial'   
         self.j.application.process_name='single_e_Et40'
@@ -329,14 +329,14 @@ class TestAthenaMCPanda(AtlasTest):
         self.j.application.firstevent=1
         self.j.application.number_events_job=1
         self.j.backend=Panda()
-        self.j.backend.site = "ANALY_SLAC"
+        self.j.backend.requirements.cloud = "US"
         self.j.outputdata=AthenaMCOutputDatasets()
      
 
 class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
     def setup(self):
         TestAthenaMCPanda.setup(self)
-        self.j.application.se_name='ANALY_SLAC'
+        #self.j.application.se_name='ANALY_SLAC'
         self.j.application.evgen_job_option='MC8.107004.singlepart_e_Et40.py'
         self.j.application.transform_script='csc_evgen08_trf.py'
         self.j.application.number_events_job=30
@@ -348,7 +348,7 @@ class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
 class TestAthenaMCPanda_simul(TestAthenaMCPanda):
     def setup(self):
         TestAthenaMCPanda.setup(self)
-        self.j.application.atlas_release='14.5.0.1'
+        self.j.application.atlas_release='15.1.0.1'
         self.j.application.mode='simul'
         self.j.application.transform_script = "csc_simul_trf.py"
         self.j.application.verbosity='INFO'
