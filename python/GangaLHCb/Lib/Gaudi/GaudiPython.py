@@ -51,6 +51,9 @@ class GaudiPython(Francesc):
              'at submission time'
     schema['script'] = FileItem(sequence=1,strict_sequence=0,defvalue=[],
                                 doc=docstr)
+    docstr = "List of arguments for the script"
+    schema['args'] =  SimpleItem(defvalue=[],typelist=['str'],
+                                 sequence=1,doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
     schema['project'] = SimpleItem(defvalue=None,
                                    typelist=['str','type(None)'],
@@ -71,6 +74,8 @@ class GaudiPython(Francesc):
         self._configure()
         name = join('.',self.script[0].subdir,split(self.script[0].name)[-1])
         script =  "from Gaudi.Configuration import *\n"
+        if self.args:
+            script += 'import sys\nsys.argv += %s\n' % str(self.args)
         script += "importOptions('data.opts')\n"
         script += "execfile(\'%s\')\n" % name
         self.extra.input_buffers['gaudipython-wrapper.py'] = script
