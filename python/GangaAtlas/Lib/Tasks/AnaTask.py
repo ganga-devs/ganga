@@ -15,12 +15,12 @@ o+="\n"
 o+="\n"+ markup("Procedure to do a usual analysis:", fgcol("red"))
 o+="\n"+ "t = AnaTask()"
 o+="\n"+ 't.name = "FirstAnalysis"'
-o+="\n"+ 't.initializeFromDataset("user08.MyName.ganga.dataset.recon.AOD")'
 o+="\n"+ "t.analysis.outputdata.outputdata  = ['nTuple.root' ]"
 o+="\n"+ 't.analysis.application.exclude_from_user_area=["*.o","*.root*","*.exe", "*.txt"]'
 o+="\n"+ "t.analysis.application.option_file = ['./myTopOptions.py' ]"
 o+="\n"+ "t.analysis.application.prepare()"
 o+="\n"+ "t.float = 10"
+o+="\n"+ 't.initializeFromDatasets(["user08.MyName.ganga.dataset.recon.AOD"])'
 o+="\n"+ "t.info() # Check here if settings are correct"
 o+="\n"+ "t.run()"
 o+="\n"+ "t.overview() # Watch the processing"
@@ -58,8 +58,8 @@ class AnaTask(Task):
       if self.analysis:
          if self.analysis.application.user_area.name:
             trf = stripProxy(self.analysis)
-            if not trf.outputdata.datasetname or "." in trf.outputdata.datasetname:
-               logger.error("You have to set t.analysis.outputdata.datasetname to the identifying name of your analysis, for example 'MyDPDProject01'. There should be no dots in the name.")
+            if not trf.outputdata.datasetname:
+               logger.error("You have to set t.analysis.outputdata.datasetname to the identifying name of your analysis, for example 'MyDPDProject01'.")
                return
          else:
             logger.error("Cannot find user_area in Athena application of first transform! Have you run application.prepare()?")
