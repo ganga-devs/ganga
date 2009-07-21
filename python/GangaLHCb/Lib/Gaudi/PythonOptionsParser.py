@@ -147,17 +147,17 @@ class PythonOptionsParser:
         sbtypes = Ganga.Utility.Config.getConfig('LHCb')['outputsandbox_types']
         outsandbox = []
         outputdata = []
-        
-        if self.opts_dict.has_key('NTupleSvc'):
-            if self.opts_dict['NTupleSvc'].has_key('Output'):
-                tuples = self.opts_dict['NTupleSvc']['Output']
-                # tuple output is returned as a list 
-                for t in tuples:
-                    f = t.split('\'')[1]
-                    if sbtypes.count('NTupleSvc') > 0:
-                        outsandbox.append(f)
-                    else:
-                        outputdata.append(f)
+
+        datatypes = ['NTupleSvc','EvtTupleSvc']
+        for type in datatypes:
+            if self.opts_dict.has_key(type):
+                if self.opts_dict[type].has_key('Output'):
+                    tuples = self.opts_dict[type]['Output']
+                    # tuple output is returned as a list 
+                    for t in tuples:
+                        f = t.split('\'')[1]
+                        if sbtypes.count(type) > 0: outsandbox.append(f)
+                        else: outputdata.append(f)
 
         if self.opts_dict.has_key('HistogramPersistencySvc'):
             if self.opts_dict['HistogramPersistencySvc'].has_key('OutputFile'):
@@ -175,10 +175,8 @@ class PythonOptionsParser:
                     file = self.opts_dict[type]['Output'].split('\'')[1]
                     if file.startswith('PFN:') or file.startswith('pfn:'):
                         file = file[4:]
-                    if sbtypes.count(type) > 0:
-                        outsandbox.append(file)
-                    else:
-                        outputdata.append(file)
+                    if sbtypes.count(type) > 0: outsandbox.append(file)
+                    else: outputdata.append(file)
 
         return outsandbox, outputdata
 
