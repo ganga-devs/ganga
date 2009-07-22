@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.38 2009-07-21 11:21:19 mslater Exp $
+# $Id: DQ2JobSplitter.py,v 1.39 2009-07-22 13:44:26 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -95,6 +95,9 @@ class DQ2JobSplitter(ISplitter):
 
         if job.backend._name <> 'LCG' and job.backend._name <> 'Panda' and job.backend._name <> 'NG':
             raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, Panda or NG backend')
+
+        orig_numfiles = self.numfiles
+        orig_numsubjobs = self.numsubjobs
 
         if self.numfiles <= 0: 
             self.numfiles = 1
@@ -202,6 +205,12 @@ class DQ2JobSplitter(ISplitter):
             allfiles = allfiles + len(info)
         
         for dataset, siteinfo in siteinfos.iteritems():
+            
+            self.numfiles = orig_numfiles
+            self.numsubjobs = orig_numsubjobs
+            if numfiles <= 0: 
+                numfiles = 1
+
             for sites, guids in siteinfo.iteritems():
 
                 if self.numfiles <= 0: 
