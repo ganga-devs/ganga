@@ -196,6 +196,7 @@ class AnaTransform(Transform):
             self.backend = stripProxy(GPI.LCG())
             self.backend.requirements = stripProxy(GPI.AtlasLCGRequirements())
             self.backend.requirements.cloud = using_cloud
+         assert self.backend
          logger.warning("Running on cloud %s using backend %s", using_cloud, using_backend)
 
       logger.warning("Determining partition splitting...")
@@ -209,8 +210,6 @@ class AnaTransform(Transform):
       splitter = DQ2JobSplitter()
       splitter.numfiles = self.files_per_job
       #splitter.use_lfc = True
-      self.inputsandbox = []
-      self.outputsandbox = []
       sjl = splitter.split(self) # This works even for Panda, no special "Job" properties are used anywhere.
       self.partitions_data = [sj.inputdata for sj in sjl]
       try:
