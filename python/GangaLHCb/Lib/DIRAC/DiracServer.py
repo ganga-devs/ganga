@@ -95,7 +95,7 @@ class DiracServer:
         cmd = 'python %s %d \'%s\' %s %d' % (server_script,port,
                                              self.end_data_str,
                                              dirac_cmds,self.server_id)
-        stdout = open(os.devnull,'w')
+        stdout = open('/dev/null','w')
         if configDirac['ShowDIRACstdout']: stdout = None
            
         self.server = Popen([cmd],shell=True,env=DiracServer.dirac_env,
