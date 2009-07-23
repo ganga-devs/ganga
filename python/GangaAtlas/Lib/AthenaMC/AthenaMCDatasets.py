@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.47 2009-07-14 09:11:16 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.48 2009-07-23 11:31:43 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -977,11 +977,12 @@ class AthenaMCOutputDatasets(Dataset):
                 if token in se_name:
                     forbiddenSE="false"
             #print se_name, forbiddenSE
-            if forbiddenSE=="true" and se_name not in app.sites: # se_name not coming from input data...
+            if forbiddenSE=="true" :
                 #print app.sites
                 selsite=""
                 #                logger.warning("Space token proposed for output: %s is forbidden for writing. Attempting to find alternative space token in the same site."% se_name)
-                logger.warning("Output data from jobs processing must go to SCRATCHDISK. Once finalized (master job completed), the output datasets can be subscribed to their final destination using dq2-register-subscription or dq2-register-subscription-container")
+                #logger.warning("Output data from jobs processing must go to SCRATCHDISK or LOCALGROUPDISK. Once finalized (master job completed), the output datasets can be subscribed to their final destination using dq2-register-subscription or dq2-register-subscription-container")
+                logger.warning("Detected forbidden output space token in input: %s. Changing to SCRATCHDISK" % se_name) 
                 imax=se_name.find("_")
                 sitename=se_name[:imax]
                 

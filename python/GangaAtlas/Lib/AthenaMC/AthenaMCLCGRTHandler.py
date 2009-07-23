@@ -135,7 +135,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         # evgen case (no input data-> app.sites=[])
         if len(app.sites)==0 and app.se_name and app.se_name != "none":
             selectedSites=app.se_name.split(" ")
-            
+
 
         # This comes last: using surviving sites from matching process.
         if len(selectedSites)==0:
