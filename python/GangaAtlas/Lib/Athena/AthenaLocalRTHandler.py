@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.28 2009-07-17 07:32:12 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.29 2009-07-23 20:19:37 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -27,8 +27,6 @@ from Ganga.Utility.logging import getLogger
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.Utility.files import expandfilename
-
-from Ganga.GPIDev.Credentials import GridProxy
 
 __directory__ = os.path.dirname(__file__)
 
@@ -168,8 +166,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 jobid = "%d" % job.id
 
             # Extract username from certificate
-            proxy = GridProxy()
-            username = proxy.identity(safe=True)
+            username = self.username
             # Remove apostrophe
             username = re.sub("'","",username)
 
@@ -335,6 +332,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         job = app._getParent() # Returns job or subjob object
 
         logger.debug("AthenaLocalRTHandler master_prepare called, %s", job.id)
+
+        self.username = gridProxy.identity(safe=True)
 
         # Expand Athena jobOptions
         if not app.option_file:
@@ -503,6 +502,8 @@ class AthenaRemoteRTHandler(IRuntimeHandler):
             rt_handler = AthenaLocalRTHandler()
             return rt_handler.master_prepare(app,appmasterconfig)
 
+from Ganga.GPIDev.Credentials import GridProxy
+gridProxy = GridProxy()
 
 allHandlers.add('Athena', 'Local', AthenaLocalRTHandler)
 allHandlers.add('Athena', 'LSF'  , AthenaLocalRTHandler)
@@ -517,6 +518,9 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.28  2009/07/17 07:32:12  elmsheus
+#Fix dataset naming problem
+#
 #Revision 1.27  2009/07/16 15:36:06  elmsheus
 #Fix #53251, short_filename as string
 #
