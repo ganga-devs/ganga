@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.46 2009-07-21 11:15:30 dvanders Exp $
+# $Id: Panda.py,v 1.47 2009-07-23 23:46:50 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -133,7 +133,15 @@ def runPandaBrokerage(job):
                 if spec['cloud']==job.backend.requirements.cloud and spec['status']=='online' and not Client.isExcudedSite(site):
                     if not libdslocation or site == libdslocation:
                         tmpSites.append(site)
-       
+    
+        print tmpSites 
+        newTmpSites = []
+        for site in tmpSites:
+            if site not in job.backend.requirements.excluded_sites:
+                newTmpSites.append(site)
+        tmpSites=newTmpSites
+        print tmpSites 
+ 
         if not tmpSites: 
             raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" % (job.backend.requirements.cloud,dataset,job.backend.libds))
         
@@ -577,6 +585,9 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.46  2009/07/21 11:15:30  dvanders
+# fix for https://savannah.cern.ch/bugs/?53470
+#
 # Revision 1.45  2009/07/14 08:29:23  dvanders
 # change pandamon url
 #
