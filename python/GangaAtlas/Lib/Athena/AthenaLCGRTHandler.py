@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.50 2009-07-16 15:36:06 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.51 2009-07-23 20:12:25 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -25,8 +25,6 @@ from GangaAtlas.Lib.ATLASDataset import ATLASDataset, isDQ2SRMSite, getLocations
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-
-from Ganga.GPIDev.Credentials import GridProxy
 
 # the config file may have a section
 # aboout monitoring
@@ -191,8 +189,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 jobid = "%d" % job.id
 
             # Extract username from certificate
-            proxy = GridProxy()
-            username = proxy.identity(safe=True)
+            username = self.username
             # Remove apostrophe
             username = re.sub("'","",username)
 
@@ -363,6 +360,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         job = app._getParent() # Returns job or subjob object
         logger.debug('AthenaLCGRTHandler master_prepare called: %s', job.id )
+
+        self.username = gridProxy.identity(safe=True)
 
         # Check if all sites are in the same cloud
         if job.backend.requirements.sites:
@@ -607,6 +606,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         return LCGJobConfig(File(exe),inputbox,[],outputbox,environment,[],requirements) 
 
+from Ganga.GPIDev.Credentials import GridProxy
+gridProxy = GridProxy()
 
 allHandlers.add('Athena','LCG',AthenaLCGRTHandler)
 allHandlers.add('Athena','Condor',AthenaLCGRTHandler)
