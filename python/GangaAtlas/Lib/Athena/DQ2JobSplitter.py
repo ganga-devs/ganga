@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.39 2009-07-22 13:44:26 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.40 2009-07-23 20:06:21 elmsheus Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -208,8 +208,8 @@ class DQ2JobSplitter(ISplitter):
             
             self.numfiles = orig_numfiles
             self.numsubjobs = orig_numsubjobs
-            if numfiles <= 0: 
-                numfiles = 1
+            if self.numfiles <= 0: 
+                self.numfiles = 1
 
             for sites, guids in siteinfo.iteritems():
 
