@@ -70,18 +70,19 @@ class DiracServer:
               'seconds)' % version
         setup_script = 'SetupProject.sh'
         env = {}
+        tmp = tempfile.NamedTemporaryFile(suffix='.txt')
         cmd = '/usr/bin/env bash -c \"source %s Dirac %s >& /dev/null && '\
-              'printenv > env.tmp\"' % (setup_script,version)
+              'printenv > %s\"' % (setup_script,version,tmp.name)
         rc = Popen([cmd],shell=True).wait()
-        if rc != 0 or not os.path.exists('env.tmp'):
+        if rc != 0 or not os.path.exists(tmp.name):
             msg = 'Could not obtain the DIRAC environment.'
             raise GangaException(msg)
         count = 0
-        for line in open('env.tmp').readlines():
+        for line in tmp.readlines():
             if line.find('DIRAC') >= 0: count += 1
             varval = line.strip().split('=')
             env[varval[0]] = ''.join(varval[1:])
-        os.system('rm -f env.tmp')
+        tmp.close()
         if count == 0:
             msg = 'Could not obtain the DIRAC environment.'
             raise GangaException(msg)
