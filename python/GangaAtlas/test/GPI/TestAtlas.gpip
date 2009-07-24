@@ -2,36 +2,39 @@ import os, getpass
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from GangaTest.Framework.utils import is_job_finished
 
+srcdir = "/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/"
+srcdir1510 = srcdir + "v1510"
+
 class TestAtlas(GangaGPITestCase):
     def testAthenaLocal(self):
-        return TestAthenaLocal("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/")
+        return TestAthenaLocal(srcdir)
 
     def testAthenaDQ2LSF(self):
-        return TestAthenaDQ2LSF("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+        return TestAthenaDQ2LSF(srcdir1510)
 
     def testAthenaLCG(self):
-        return TestAthenaLCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/")
+        return TestAthenaLCG(srcdir)
 
     def testAthenaDQ2LCG(self):
-        return TestAthenaDQ2LCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+        return TestAthenaDQ2LCG(srcdir1510)
 
     def testAthenaDQ2LCGFileStager(self):
-        return TestAthenaDQ2LCGFileStager("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+        return TestAthenaDQ2LCGFileStager(srcdir1510)
 
     def testAthenaDQ2LCGDQ2COPY(self):
-        return TestAthenaDQ2LCGDQ2COPY("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+        return TestAthenaDQ2LCGDQ2COPY(srcdir1510)
 
     def testAnaTaskBasic(self):
         return TestAnaTaskBasic()
 
     def testAnaTaskLCG(self):
-        return TestAnaTaskLCG("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+        return TestAnaTaskLCG(srcdir1510)
 
     def testAnaTaskPanda(self):
-        return TestAnaTaskPanda("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+        return TestAnaTaskPanda(srcdir1510)
 
     def testAnaTaskAuto(self):
-        return TestAnaTaskAuto("/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/v1510")
+        return TestAnaTaskAuto(srcdir1510)
 
     def testMCTask(self):
         return TestMCTask()
@@ -70,6 +73,7 @@ class TestAnaTaskBasic(ICheckTest):
         t.float = 5
         t.info()
         t.remove(True)
+        print "Test %s succeeded!" % (self.__class__.__name__)
 
 class AtlasTest(ICheckTest):
     def __init__(self,srcdir=None,j = None):
@@ -89,6 +93,7 @@ class AtlasTest(ICheckTest):
 
     def checkTest(self):
         assert(self.j.status == 'completed'), 'Job status is not \'completed\''
+        print "Test %s succeeded!" % (self.__class__.__name__)
 
     def cleanup(self):
         if self.tmpdir is None:
@@ -116,6 +121,7 @@ class TestTask(AtlasTest):
         assert self.t.status == "completed"
         self.t.remove(True)
         self.cleanup()
+        print "Test %s succeeded!" % (self.__class__.__name__)
 
 class TestAnaTask(TestTask):
     def setup(self):
@@ -250,6 +256,7 @@ class TestMCTask(TestTask):
         t.setParameter(run_number="5145", production_name="ganga_test", process_name="PythiaZmumu")
         t.setParameter(atlas_release="14.2.24.1", se_name="LRZ-LMU_SCRATCHDISK")
         t.setParameter(triggerConfig="DEFAULT", geometryTag="ATLAS-GEO-05-00-00")
+        t.setParameter(verbosity="INFO")
         t.setParameter(number_events_job=1)
         t.recon.application.number_events_job = 2
         t.recon.application.extraArgs = " jobConfig=ForceFullReco.py "
@@ -274,6 +281,7 @@ class TestAthenaMCLCG(AtlasTest):
         j.application.number_events_job=1
         j.application.atlas_release='12.0.4.1'
         j.application.se_name='UKI-SOUTHGRID-CAM-HEP_SCRATCHDISK'
+        j.application.verbosity = "INFO"
         j.backend=LCG()
         j.outputdata=AthenaMCOutputDatasets()
         self.j = j
@@ -328,6 +336,7 @@ class TestAthenaMCPanda(AtlasTest):
         self.j.application.run_number='7004'
         self.j.application.firstevent=1
         self.j.application.number_events_job=1
+        self.j.application.verbosity = "INFO"
         self.j.backend=Panda()
         self.j.backend.requirements.cloud = "US"
         self.j.outputdata=AthenaMCOutputDatasets()
