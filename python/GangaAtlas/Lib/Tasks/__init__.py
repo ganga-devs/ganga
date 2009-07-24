@@ -1,6 +1,11 @@
 # Import classes that should be in the Tasks namespace
 ## Import the list of tasks and the task and abstract job definition
-from TaskList import TaskList
+#from TaskList import TaskList
+
+from Ganga.Core.GangaRepository import addRegistry
+from TaskRegistry import TaskRegistry
+print "Adding TaskRegistry"
+addRegistry(TaskRegistry("tasks", "Tasks Registry"))
 
 ## Tasks
 from Task import Task
