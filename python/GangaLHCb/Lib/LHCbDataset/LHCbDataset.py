@@ -115,8 +115,7 @@ class LHCbDataset(Dataset):
                 if not f.replicas or forceUpdate:
                     lfns.append(f._stripFileName())
         
-        result = replicaCache(str(lfns))            
-        if result is None: return #don't do anything more
+        result = replicaCache(str(lfns))
         replicas = result['Value']['Successful']
         
         logger.debug('Replica information received is: ' + repr(replicas))

@@ -3,6 +3,7 @@
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+from Ganga.Core import GangaException
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -30,6 +31,7 @@ def replicaCache(names):
     result = Dirac.execAPI(cmd)
     if not result_ok(result):
         logger.warning('LFC query did not return cleanly: %s' % str(result))
+        raise GangaException('Error updating replica cache.')
     return result
 
 def collect_lhcb_filelist(lhcb_files):
