@@ -4,8 +4,15 @@ from types import DictionaryType
 from time import time, sleep
 from Ganga.GPIDev.Lib.Config.Config import config
 
-import MSGUtil
+from Ganga.Utility.Config import makeConfig
 
+msgms_config = makeConfig('MSGMS','Settings for the MSGMS monitoring plugin')
+msgms_config.addOption('server', 'gridmsg101.cern.ch', 'The server to connect to')
+msgms_config.addOption('port', 6163, 'The port to connect to')
+msgms_config.addOption('username', '', '')
+msgms_config.addOption('password', '', '')
+
+import stomputil 
 
 try:
     from Ganga.Core.GangaThread import GangaThread as Thread
@@ -13,7 +20,17 @@ except ImportError:
     pass
 from threading import Thread
 
-publisher = MSGUtil.createPublisher(Thread)
+from Ganga.Utility.logging import getLogger
+
+msg_config = {
+    'server' : config.MSGMS.server,
+    'port' : config.MSGMS.port,
+    'username' : config.MSGMS.username,
+    'password' : config.MSGMS.password,
+    'error_log' : getLogger('MSGMSErrorLog')
+}
+
+publisher = stomputil.createPublisher(Thread, msg_config)
 publisher.start()
 
 def send(dst, msg): # enqueue the msg in msg_q for the connection thread to consume and send
@@ -87,7 +104,6 @@ class MSGMS(IMonitoringService):
             Ganga.Lib.MonitoringServices,
             Ganga.Lib.MonitoringServices.MSGMS,
             Ganga.Lib.MonitoringServices.MSGMS.MSGMS,
-            Ganga.Lib.MonitoringServices.MSGMS.MSGUtil,
             Ganga.Lib.MonitoringServices.MSGMS.compatibility,
             Ganga.Lib.MonitoringServices.MSGMS.stomp,
             Ganga.Utility,
@@ -104,7 +120,8 @@ class MSGMS(IMonitoringService):
             Ganga.GPIDev.Lib.Config.Config,
             Ganga.Core,
             Ganga.Core.exceptions,
-            Ganga.Core.exceptions.GangaException
+            Ganga.Core.exceptions.GangaException,
+            stomputil
             ] + IMonitoringService.getSandboxModules(self)
 
     def start(self, **opts): # same as with stop
