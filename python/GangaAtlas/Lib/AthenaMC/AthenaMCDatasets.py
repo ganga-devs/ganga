@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.48 2009-07-23 11:31:43 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.49 2009-07-24 13:47:22 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -312,6 +312,13 @@ class AthenaMCInputDatasets(Dataset):
         '''seek dataset informations and returns (hopefully) a formatted set of information for all processing jobs (turls, catalog servers, dataset location for each lfn). Called by master_submit'''
 
 
+        # first of all, check that _usertag is set properly:
+        try:
+            assert _usertag and _usertag!="users"
+        except:
+            logger.error("config['DQ2']['usertag'] is not set properly! Please exit ganga, do: export GANGA_CONFIG_PATH=GangaAtlas/Atlas.ini and restart ganga")
+            raise
+        
         dataset=self.DQ2dataset
         path=self.LFCpath
         datasetType=self.datasetType
@@ -875,6 +882,12 @@ class AthenaMCOutputDatasets(Dataset):
     def prep_data(self,app):
         ''' generate output paths and file prefixes based on app and outputdata information. Generate corresponding entries in DQ2. '''
         fileprefixes,outputpaths=self.outrootfiles.copy(),{}
+        # first of all, check that _usertag is set properly:
+        try:
+            assert _usertag and _usertag!="users"
+        except:
+            logger.error("config['DQ2']['usertag'] is not set properly! Please exit ganga, do: export GANGA_CONFIG_PATH=GangaAtlas/Atlas.ini and restart ganga")
+            raise
         # The common prefix production.00042.physics.
         app_prefix = "%s" % app.production_name
         # backward compatibility
@@ -939,7 +952,13 @@ class AthenaMCOutputDatasets(Dataset):
         default_site="CERN-PROD_SCRATCHDISK"
         job=self._getParent()
         app=job.application
-        
+
+        # first of all, check that _usertag is set properly:
+        try:
+            assert _usertag and _usertag!="users"
+        except:
+            logger.error("config['DQ2']['usertag'] is not set properly! Please exit ganga, do: export GANGA_CONFIG_PATH=GangaAtlas/Atlas.ini and restart ganga")
+            raise
         for site, desc in ToACache.sites.iteritems():
             try:
                 outloc = desc['srm'].strip()
@@ -1546,11 +1565,12 @@ except ConfigError:
        configDQ2.addOption('DQ2_URL_SERVER_SSL', os.environ['DQ2_URL_SERVER_SSL'], 'FIXME')
    except KeyError:
        configDQ2.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
+
 try:
     configDQ2['usertag']
 except ConfigError:
-    configDQ2.addOption('usertag','users','FIXME')
-
+    configDQ2['usertag']="" # removing arbitrary value "users". Will catch this at execution time (somewhere else in the code) as raising an Exception at initialisation time is likely to be drowned among the many startup errors/ warning
+    
 _usertag=configDQ2['usertag']
 
 baseURLDQ2 = configDQ2['DQ2_URL_SERVER']
