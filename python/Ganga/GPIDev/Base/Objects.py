@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5.2.9 2009-07-14 14:44:17 ebke Exp $
+# $Id: Objects.py,v 1.5.2.10 2009-07-24 13:35:53 ebke Exp $
 ################################################################################
 # NOTE: Make sure that _data and __dict__ of any GangaObject are only referenced
 # here - this is necessary for write locking and lazy loading!
@@ -88,6 +88,8 @@ class Node(object):
     # if parent does not exist then the root is the 'self' object
     # cond is an optional function which may cut the search path: when it returns True, then the parent is returned as root
     def _getRoot(self,cond=None):
+        if self._parent is None:
+            return self
         root = None
         obj  = self
         while not obj is None:
@@ -460,6 +462,13 @@ class GangaObject(Node):
         except AttributeError:
             return None
 
+    def _getRegistryID(self):
+        try:
+            return self._registry.find(self)
+        except AttributeError:
+            return None
+
+
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
     def _setDirty(self):
@@ -541,6 +550,12 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.2.9  2009/07/14 14:44:17  ebke
+# * several bugfixes
+# * changed indexing for XML/Pickle
+# * introduce index update minimal time of 20 seconds (reduces lag for typing 'jobs')
+# * subjob splitting and individual flushing for XML/Pickle
+#
 # Revision 1.5.2.8  2009/07/13 22:10:53  ebke
 # Update for the new GangaRepository:
 # * Moved dict interface from Repository to Registry
