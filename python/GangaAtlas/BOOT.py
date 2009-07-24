@@ -105,46 +105,10 @@ except ImportError:
     pass
 
 def starttasks():
-    from GangaAtlas.Lib.Tasks.TaskList import TaskList
-    from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-    from Ganga.Runtime.GPIexport import exportToGPI
+    #from GangaAtlas.Lib.Tasks.TaskRegistry import TaskRegistry
+    from Ganga.Core.GangaRepository import addRegistry
     from Ganga.Utility.Config import getConfig
-    import os, os.path, fcntl, time
-    from sets import Set
-    from Ganga.Core.JobRepositoryXML.VStreamer import from_file 
-
-    fn = os.path.join(getConfig("Configuration")["gangadir"],"tasks.xml")
-    try:
-       last_access = time.time()-os.stat(fn).st_mtime
-       if last_access < 5:
-          logger.error("The Tasks package is already in use from another Ganga session. Tasks will not be available in this session.")
-          return
-       os.utime(fn, None)
-       f = file(fn, "r")
-       plists = from_file(f)
-       if len(plists) > 0:
-          tl = plists[0]
-          logger.info("Found %i tasks" % len(tl.tasks))
-       else:
-          logger.warning("Empty tasks repository! Creating new Task list.")
-          tl = TaskList()
-    except OSError, e:
-       logger.info("Starting for first launch - Creating new Task list.")
-       tl = TaskList()
-    # Set parents - should be fixed soon
-    for t in tl.tasks:
-       t._setParent(tl)
-       for tf in t.transforms:
-          tf._setParent(t)
-
-    # set tasksfile name
-    tl.tasksfile = fn
-    
-    tasks = GPIProxyObjectFactory(tl)
-    del tasks.__class__.copy
-    exportToGPI('tasks',GPIProxyObjectFactory(tl),'Objects','List of all tasks')
-    tl.startup()
-    tl.start()
+    #addRegistry("tasks",TaskRegistry,getConfig("Tasks")["repositoryType"],getConfig("Tasks")["repositoryLocation"])
 
 starttasks()
 del starttasks
