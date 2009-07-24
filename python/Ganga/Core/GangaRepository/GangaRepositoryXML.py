@@ -222,7 +222,7 @@ class GangaRepositoryLocal(GangaRepository):
                         self._internal_setitem__(id, tmpobj)
                     self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
             except Exception, x:
-                logger.error("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
+                logger.warning("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
                 raise KeyError(id)
                 #self._internal_setitem__(id, EmptyGangaObject())
 

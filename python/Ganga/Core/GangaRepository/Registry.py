@@ -73,7 +73,7 @@ class Registry(object):
         try:
             return self._objects[id]
         except KeyError:
-            raise RegistryKeyError("Could not find object #%i" % id)
+            raise RegistryKeyError("Could not find object #%s" % id)
             
     def __len__(self):
         """ Returns the current number of root objects """
@@ -164,7 +164,7 @@ class Registry(object):
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError"""
-        logger.debug("_dirty(%s)" % obj)
+        logger.debug("_dirty(%s)" % id(obj))
         self._write_access(obj)
         self.dirty_objs[obj] = 1
         self.dirty_hits += 1
@@ -261,11 +261,12 @@ class Registry(object):
         self._metadata = self.repository._getMetadataObject()
         if self._metadata is None:
             self._metadata = self._createMetadataObject()
-            if self._metadata is not None:
+            if not self._metadata is None:
                 self.repository._setMetadataObject(self._metadata)
                 self._metadata._registry_locked = True
                 self._metadata = self.repository._getMetadataObject()
                 self.repository.flush([0])
+
 
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
@@ -278,5 +279,6 @@ class Registry(object):
         self.repository.shutdown()
 
     def _createMetadataObject(self):
+        """ Helper function for registries that need a metadata object at all times"""
         return None
 
