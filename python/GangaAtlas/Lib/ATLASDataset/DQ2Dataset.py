@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.37 2009-07-20 14:07:03 mslater Exp $
+# $Id: DQ2Dataset.py,v 1.38 2009-07-24 14:53:46 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -1275,7 +1275,7 @@ config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_SCRATCHDISK', 'CERN
 
 config.addOption('USE_STAGEOUT_SUBSCRIPTION', False, 'Allow DQ2 subscription to aggregate DQ2OutputDataset output on a storage element instead of using remote lcg-cr' )
 
-config.addOption('usertag','users','user tag for a given data taking period')
+config.addOption('usertag','user09','user tag for a given data taking period')
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
@@ -1283,6 +1283,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.37  2009/07/20 14:07:03  mslater
+#Fix for bug in retry of dataset consistency check (52066)
+#
 #Revision 1.36  2009/07/15 13:07:29  elmsheus
 #Enable group dataset names in LCG/Athena, #53155
 #
