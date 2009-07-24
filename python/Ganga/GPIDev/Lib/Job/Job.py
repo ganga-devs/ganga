@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Job.py,v 1.12.2.5 2009-07-14 15:09:37 ebke Exp $
+# $Id: Job.py,v 1.12.2.6 2009-07-24 13:39:39 ebke Exp $
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
@@ -928,11 +928,10 @@ class Job(GangaObject):
             raise
             
     def _subjobs_proxy(self):
-        from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
-        from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import _wrap
-        subjobs = JobRegistryInstanceInterface('jobs(%d).subjobs'%self.id)
+        from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
+        subjobs = JobRegistrySlice('jobs(%d).subjobs'%self.id)
         for j in self.subjobs:
-            subjobs.jobs[j.id] = j
+            subjobs.objects[j.id] = j
         #print 'return slice',subjobs
         return _wrap(subjobs)
 
@@ -988,6 +987,9 @@ class JobTemplate(Job):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.12.2.5  2009/07/14 15:09:37  ebke
+# Missed fix
+#
 # Revision 1.12.2.4  2009/07/13 22:10:52  ebke
 # Update for the new GangaRepository:
 # * Moved dict interface from Repository to Registry

@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: JobTree.py,v 1.2.4.3 2009-07-08 12:54:33 ebke Exp $
+# $Id: JobTree.py,v 1.2.4.4 2009-07-24 13:39:39 ebke Exp $
 ################################################################################
 import os
 import types
@@ -10,13 +10,12 @@ from Ganga.GPIDev.Base   import GangaObject
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Lib.Job import Job
-from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobAccessError
-from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
+from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryAccessError, RegistryKeyError
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
-
 
 class TreeError(Exception):
     """JobTree class can raise a TreeError exception. 
@@ -56,8 +55,6 @@ class JobTree(GangaObject):
     def __init__(self):
         super(JobTree, self).__init__()
         self._setRegistry(None)
-        self._setCounter(0)
-        atexit.register(self._commit)
 
     def __getstate__(self):
         dict = super(JobTree, self).__getstate__()
@@ -68,7 +65,6 @@ class JobTree(GangaObject):
     def __setstate__(self, dict):
         super(JobTree, self).__setstate__(dict)
         self._setRegistry(None)
-        self._setCounter(0)
         
     def __get_path(self, path = None):
         if path == None:
@@ -109,44 +105,6 @@ class JobTree(GangaObject):
                 raise TreeError(2, "%s not a directory" % str(d))
         return f        
                 
-    def _setCounter(self, counter):
-        self._counter = counter
-
-    def _getCounter(self):
-        return self._counter
-
-    def _getThreshold(self):
-        return 5
-    
-    def _commit(self):
-        registry = self._getRegistry()
-        #if registry is not None:        
-        #    registry.repository.setJobTree(self)
-
-    def _auto_commit(self):
-        self._counter += 1
-        if self._counter > self._getThreshold():
-            self._commit()
-            self._setCounter(0)
-
-    def _checkout(self):
-        registry = self._getRegistry()
-        #if registry is not None:
-        #    jobtree = registry.repository.getJobTree()
-        #    if jobtree:
-        #        self.copyFrom(jobtree)
-                
-    def _wrap(self, obj):
-        if isinstance(obj, GangaObject):
-            return GPIProxyObjectFactory(obj)
-
-    def _auto__init__(self, registry = None):
-        if registry is None:
-            from Ganga.Core.GangaRepository import getRegistry
-            registry = getRegistry(self.default_registry)
-        self._setRegistry(registry) 
-        self._checkout()
-
     def _copy(self):
         reg = self._getRegistry()
         c = self.clone()
@@ -230,7 +188,7 @@ class JobTree(GangaObject):
             job = job._impl
         if isinstance(job, Job):
             self.__select_dir(path)[job.getFQID('.')] = job.getFQID('.') #job.id
-            self._auto_commit()
+            self._setDirty()
         else:
             raise TreeError(4, "Not a job object")
         
@@ -253,13 +211,13 @@ class JobTree(GangaObject):
                     del f[k]
         else:
             raise TreeError(3, "Can not delete the root directory")
-        self._auto_commit()
+        self._setDirty()
             
     def mkdir(self, path):
         """Makes a folder. If any folders in the path are missing they will be created as well.
         """
         self.__make_dir(path)
-        self._auto_commit()
+        self._setDirty()
 
     def cd(self, path = os.sep):
         """Changes current directory.
@@ -302,20 +260,22 @@ class JobTree(GangaObject):
         """        
         #jobslice
         ##res = []
-        res = JobRegistryInstanceInterface("") 
+        res = JobRegistrySlice("") 
         registry = self._getRegistry()
+        do_clean = False
         if registry is not None:
             path = os.path.join(*self.__get_path(path))
             res.name = "jobs found in %s" % path
             cont = self.ls(path)
             for i in cont['jobs']:
                 try:
-                    j = registry(i)
-                except JobAccessError:
-                    pass
+                    j = registry[int(i)]
+                except RegistryKeyError:
+                    do_clean = True
                 else:
-                    ##res.append(self._wrap(j))
-                    res.jobs[j.id] = self._wrap(j)
+                    res.objects[j.id] = _wrap(j)
+        if do_clean:
+            self.cleanlinks()
         return res
 
     def find(self, id, path = None):
@@ -353,8 +313,8 @@ class JobTree(GangaObject):
                     self.cleanlinks(os.path.join(path,i))
                 else:
                     try:
-                        j = registry(fc[i])
-                    except JobAccessError:
+                        j = registry[int(fc[i])]
+                    except RegistryKeyError:
                         del f[i]
 
     def printtree(self, path = None):

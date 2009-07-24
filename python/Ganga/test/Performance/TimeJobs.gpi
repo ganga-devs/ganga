@@ -34,7 +34,9 @@ def create_job():
 
 stats = []
 
+
 def time_jobs(N=100):
+ global jcnt
  import time
  t0=time.time()
 

@@ -1,9 +1,9 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: TestMergeFailures.py,v 1.1 2008-07-17 16:41:12 moscicki Exp $
+# $Id: TestMergeFailures.py,v 1.1.4.1 2009-07-24 13:39:40 ebke Exp $
 ################################################################################
-from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobAccessError
+from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryAccessError
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
 import os
@@ -93,7 +93,7 @@ class TestMergeFailures(GangaGPITestCase):
         try:
             jobs(jobID)
             assert False, 'Job should not be found'
-        except  JobAccessError:
+        except  RegsitryAccessError:
             pass
         
      

@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.11.4.1 2009-07-08 11:18:21 ebke Exp $
+# $Id: bootstrap.py,v 1.11.4.2 2009-07-24 13:39:39 ebke Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -692,22 +692,23 @@ default_backends = LCG
                 self.logger.error('problems with bootstrapping %s -- ignored',n)
         
         # bootstrap runtime modules
-        import Ganga.GPIDev.Lib.JobRegistry
+        import Ganga.GPIDev.Lib.Registry
+        from Ganga.GPIDev.Lib.JobTree import JobTree,TreeError
 
         # boostrap the repositories and connect to them
         for n,k,d in Repository_runtime.bootstrap():
             # make all repository proxies visible in GPI
             exportToGPI(n,k,'Objects',d)
+       
+        # JobTree 
+        from Ganga.Core.GangaRepository import getRegistry
+        jobtree = GPIProxyObjectFactory(getRegistry("jobs").getJobTree())
+        exportToGPI('jobtree',jobtree,'Objects','Logical tree view of the jobs')
+        exportToGPI('TreeError',TreeError,'Exceptions')
 
         # bootstrap the workspace
         import Workspace_runtime
         Workspace_runtime.bootstrap()
-
-        from Ganga.GPIDev.Lib.JobTree import JobTree #,TreeError
-        from Ganga.GPIDev.Lib.JobTree.JobTree import TreeError #FIXME: 
-        jobtree = JobTree._proxyClass()
-        exportToGPI('jobtree',jobtree,'Objects','Logical tree view of the jobs')
-        exportToGPI('TreeError',TreeError,'Exceptions')
 
         # migration repository
         #from Ganga.Utility.migrate41to42 import JobCheckForV41, JobConvertToV42
@@ -942,6 +943,10 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.11.4.1  2009/07/08 11:18:21  ebke
+# Initial commit of all - mostly small - modifications due to the new GangaRepository.
+# No interface visible to the user is changed
+#
 # Revision 1.11  2009/04/28 13:37:12  kubam
 # simplified handling of logging filters
 #

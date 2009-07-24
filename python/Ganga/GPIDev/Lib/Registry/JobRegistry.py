@@ -1,0 +1,213 @@
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: JobRegistry.py,v 1.1.2.1 2009-07-24 13:39:39 ebke Exp $
+################################################################################
+
+# display default values for job list
+from RegistrySlice import config
+config.addOption('jobs_columns',
+                 ("fqid","status","name","subjobs","application","backend","backend.actualCE"),
+                 'list of job attributes to be printed in separate columns')
+
+config.addOption('jobs_columns_width',
+                 {'fqid': 5, 'status':10, 'name':10, 'subjobs':8, 'application':15, 'backend':15, 'backend.actualCE':45},
+                 'width of each column')
+
+config.addOption('jobs_columns_functions',
+                 {'subjobs' : "lambda j: len(j.subjobs)", 'application': "lambda j: j.application._name", 'backend': "lambda j:j.backend._name"},
+                 'optional converter functions')
+
+config.addOption('jobs_columns_show_empty',
+                 ['fqid'],
+                 'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
+
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
+
+class JobRegistry(Registry):
+    def getProxy(self):
+        slice = JobRegistrySlice(self.name)
+        slice.objects = self
+        return JobRegistrySliceProxy(slice)
+
+    def getIndexCache(self,obj):
+        cached_values = ['status','id','name']
+        c = {}
+        for cv in cached_values:
+            if cv in obj._data:
+                c[cv] = obj._data[cv]
+        slice = JobRegistrySlice("tmp")
+        for dpv in slice._display_columns:
+            c["display:"+dpv] = slice._get_display_value(obj, dpv)
+        return c
+
+    def _createMetadataObject(self):
+        from Ganga.GPIDev.Lib.JobTree import JobTree
+        return JobTree()
+
+    def getJobTree(self):
+        return self._metadata
+    
+from RegistrySlice import RegistrySlice
+
+
+class JobRegistrySlice(RegistrySlice):
+    def __init__(self,name):
+        super(JobRegistrySlice,self).__init__(name,display_prefix="jobs")
+        from Ganga.Utility.ColourText import Foreground, Background, Effects
+        fg = Foreground()
+        fx = Effects()
+        bg = Background()
+        self.status_colours = { 'new'        : fx.normal,
+                                'submitted'  : fg.orange,
+                                'running'    : fg.green,
+                                'completed'  : fg.blue,
+                                'failed'     : fg.red }
+        self.fx = fx
+        self._proxyClass = JobRegistrySliceProxy
+
+    def _getColour(self,obj):
+        return self.status_colours.get(obj.status,self.fx.normal)
+                                        
+    def __call__(self,id):
+        """ Retrieve a job by id.
+        """
+        t = type(id)
+        if t is int:
+            try:
+                return self.objects[id]
+            except KeyError:
+                raise RegistryKeyError('Job id=%d not found'%id)
+        elif t is tuple:
+            ids = id
+        elif t is list:
+            ids = id.split(".")
+        else:
+            raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
+
+        if not len(ids) in [1,2]:
+            raise RegistryAccessError('Too many ids in the access tuple, 2-tuple (job,subjob) only supported')
+    
+        try:        
+            ids = [int(id) for id in ids]
+        except TypeError:
+            raise RegistryAccessError('Expeted a job id: int, (int,int), or "int.int"')
+        except ValueError:
+            raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
+
+        try:
+            j = self.objects[ids[0]]
+        except KeyError:
+            raise RegistryKeyError('Job %d not found'%ids[0])
+
+        if len(ids)>1:
+            try:
+                return j.subjobs[ids[1]]
+            except IndexError:
+                raise RegistryKeyError('Subjob %s not found' % ('.'.join([str(id) for id in ids])))
+        else:
+            return j
+
+    def submit(self,keep_going):
+        self.do_collective_operation(keep_going,'submit')
+        
+    def kill(self,keep_going):
+        self.do_collective_operation(keep_going,'kill')
+
+    def resubmit(self,keep_going):
+        self.do_collective_operation(keep_going,'resubmit')
+
+    def fail(self,keep_going,force):
+        raise GangaException('fail() is deprecated, use force_status("failed") instead')
+
+    def force_status(self,status,keep_going,force):
+        self.do_collective_operation(keep_going,'force_status',status,force=force)
+        
+    def remove(self,keep_going,force):
+        self.do_collective_operation(keep_going,'remove',force=force)
+
+
+from RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
+
+class JobRegistrySliceProxy(RegistrySliceProxy):
+    """This object is an access list of jobs defined in Ganga. 
+    
+    The 'jobs' represents all existing jobs.
+
+    A subset of jobs may be created by slicing (e.g. jobs[:-10] last ten jobs)
+    or select (e.g. jobs.select(status='new') or jobs.select(10,20) jobs with
+    ids between 10 and 20). A new access list is created as a result of
+    slice/select. The new access list may be further restricted.
+
+    This object allows to perform collective operations listed below such as
+    kill or submit on all jobs in the current range. The keep_going=True
+    (default) means that the operation will continue despite possible errors
+    until all jobs are processed. The keep_going=False means that the
+    operation will bail out with an Exception on a first encountered error.
+    
+    
+    """
+    def submit(self,keep_going=True):
+        """ Submit all jobs."""
+        self._impl.submit(keep_going=keep_going)
+
+    def resubmit(self,keep_going=True):
+        """ Resubmit all jobs."""
+        return self._impl.resubmit(keep_going=keep_going)
+
+    def kill(self,keep_going=True):
+        """ Kill all jobs."""
+        return self._impl.kill(keep_going=keep_going)
+
+    def remove(self,keep_going=True,force=False):
+        """ Remove all jobs."""
+        return self._impl.remove(keep_going=keep_going,force=force)
+
+    def fail(self,keep_going=True,force=False):
+        """ Fail all jobs."""
+        return self._impl.fail(keep_going=keep_going,force=force)
+
+    def force_status(self, status, keep_going=True, force=False):
+        """ Force status of all jobs to 'completed' or 'failed'."""
+        return self._impl.force_status(status,keep_going=keep_going,force=force)
+
+    def copy(self,keep_going=True):
+        """ Copy all jobs. """
+        return JobRegistrySliceProxy(self._impl.copy(keep_going=keep_going))
+
+    def select(self,minid=None,maxid=None,**attrs):
+        """ Select a subset of jobs. Examples:
+        jobs.select(10): select jobs with ids higher or equal to 10;
+        jobs.select(10,20) select jobs with ids in 10,20 range (inclusive);
+        jobs.select(status='new') select all jobs with new status;
+        jobs.select(name='some') select all jobs with some name;
+        jobs.select(application='Executable') select all jobs with Executable application;
+        jobs.select(backend='Local') select all jobs with Local backend.
+        """
+        unwrap_attrs = {}
+        for a in attrs:
+            unwrap_attrs[a] = _unwrap(attrs[a])
+        return JobRegistrySliceProxy(self._impl.select(minid,maxid,**unwrap_attrs))
+
+    def __call__(self,x):
+        """ Access individual job. Examples:
+        jobs(10) : get job with id 10 or raise exception if it does not exist.
+        jobs((10,2)) : get subjobs number 2 of job 10 if exist or raise exception.
+        jobs('10.2')) : same as above
+        """
+        return _wrap(self._impl.__call__(x))
+    
+    def __getslice__(self, i1,i2):
+        """ Get a slice. Examples:
+        jobs[2:] : get first two jobs,
+        jobs[:-10] : get last 10 jobs.
+        """
+        return _wrap(self._impl.__getslice__(i1,i2))
+    
+    def __getitem__(self,x):
+        """ Get a job by positional index. Examples:
+        jobs[-1] : get last job,
+        jobs[0] : get first job,
+        jobs[1] : get second job.
+        """
+        return _wrap(self._impl.__getitem__(_unwrap(x)))
