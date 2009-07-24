@@ -1,10 +1,9 @@
-import MSGUtil
-
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 
 from types import DictionaryType
 from time import time, sleep
 from Ganga.GPIDev.Lib.Config.Config import config
+
 import MSGUtil
 
 
@@ -70,10 +69,12 @@ class MSGMS(IMonitoringService):
                                            + '@' + config.System.GANGA_HOSTNAME
                                            + ':' + config.Configuration.gangadir
                , 'ganga_job_id' : ganga_job_id
+               , 'subjobs' : len(self.job_info.subjobs)
                , 'backend' : self.job_info.backend.__class__.__name__
                , 'application' : self.job_info.application.__class__.__name__
                , 'job_name' : self.job_info.name
                , 'hostname' : hostname()
+               , 'event' : 'dummy' # should be updated in appropriate methods
                }
         return data
 
@@ -129,13 +130,27 @@ class MSGMS(IMonitoringService):
         sendJobStatusChange( message )
 
     def submit(self, **opts): #this one is on the client side; so operate on Job object
+        # send 'submitted' message only from the master job
+        #if self.job_info.master is None:
+        #    sendJobSubmitted( msg )
+        #else:
+        #    if self.job_info.id == 0: sendJobSubmitted( msg ) #len(self.job_info.master.subjobs) -> number of subjobs
+
+        # send 'submitted' message from all jobs
+        if self.job_info.master is None:
+            pass
+        else:
+            if self.job_info.id == 0:
+                masterjob_msg = self.getJobInfo()
+                masterjob_msg['subjobs'] = len(self.job_info.master.subjobs)
+                masterjob_msg['ganga_job_id'] = str(masterjob_msg['ganga_job_id']).split('.')[0]
+                sendJobSubmitted( masterjob_msg )
+
         #1. send job submitted message with more detailed info
         msg = self.getJobInfo()
         msg['event'] = 'submitted'
-        if self.job_info.master is None:
-            sendJobSubmitted( msg )
-        else:
-            if self.job_info.id == 0: sendJobSubmitted( msg ) #len(self.job_info.master.subjobs) -> number of subjobs
+        sendJobSubmitted( msg )
+            
             
         #2. send status change message with new submitted status
         # message = self.getCommonMessage()
