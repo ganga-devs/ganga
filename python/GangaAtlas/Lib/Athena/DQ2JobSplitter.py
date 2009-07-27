@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.40 2009-07-23 20:06:21 elmsheus Exp $
+# $Id: DQ2JobSplitter.py,v 1.41 2009-07-27 13:03:24 mslater Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -20,6 +20,9 @@ import Ganga.Utility.external.ARDAMDClient.mdinterface as mdinterface
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
 from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
+
+from Ganga.GPIDev.Credentials import GridProxy
+gridProxy = GridProxy()
 
 logger = getLogger()
 
@@ -102,13 +105,64 @@ class DQ2JobSplitter(ISplitter):
         if self.numfiles <= 0: 
             self.numfiles = 1
 
+        locations = job.inputdata.get_locations(overlap=False)
+        
         allowed_sites = []
         if job.backend._name == 'LCG':
             if job.backend.requirements._name == 'AtlasLCGRequirements':
                 if job.backend.requirements.sites:
                     allowed_sites = job.backend.requirements.sites
                 elif job.backend.requirements.cloud:
-                    allowed_sites = job.backend.requirements.list_sites_cloud()
+
+                    # to a check for the 'ALL' cloud option and if given, reduce the selection
+                    if job.backend.requirements.cloud == 'ALL' and not job.backend.requirements.sites and job.outputdata._name == 'DQ2OutputDataset':
+                        logger.warning('DQ2OutputDataset being used with \'ALL\' cloud option. Restricting to a single cloud. Note this may not allow all data to be analysed.')
+
+                        avail_clouds = {}
+                        for key in locations:
+                            avail_clouds[key] = []
+
+                            info = job.backend.requirements.cloud_from_sites(locations[key])
+
+                            for all_site in info:
+                                if not info[all_site] in avail_clouds[key]:
+                                    avail_clouds[key].append(info[all_site])
+
+                        # perform logical AND to find a cloud that has all data
+                        from sets import Set
+
+                        cloud_set = Set(job.backend.requirements.list_clouds())
+
+                        for key in avail_clouds:
+                            cloud_set = cloud_set & Set(avail_clouds[key])
+
+                        # find users cloud and submit there by preference
+                        fav_cloud = ''
+                        for ln in gridProxy.info('--all').split('\n'):
+                            if ln.find('attribute') == -1 or ln.find('atlas') == -1:
+                                continue
+
+                            toks = ln.split('/')
+                            
+                            if len(toks) < 3:
+                                continue
+                            
+                            if toks[2].upper() in job.backend.requirements.list_clouds():
+                                fav_cloud = toks[2].upper()
+                                break
+
+                        if len(cloud_set) == 0:
+                            logger.error('Cloud option \'ALL\' could not find a complete replica of the dataset in any cloud. Please try a specific site or cloud.')
+                            allowed_sites = []
+                        else:
+                            cloud_list = list(cloud_set)
+                            if not fav_cloud in cloud_list:
+                                fav_cloud = cloud_list[0]
+                        
+                            logger.warning('\'%s\' cloud selected. Continuing job submission...' % fav_cloud)
+                            allowed_sites = job.backend.requirements.list_sites_cloud( fav_cloud )
+                    else:
+                        allowed_sites = job.backend.requirements.list_sites_cloud()
                 else: 
                     raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
                 allowed_sites_all = job.backend.requirements.list_sites(True,True)
@@ -173,8 +227,6 @@ class DQ2JobSplitter(ISplitter):
             datasetSizes[dataset] = content[1]
             datasetLength[dataset] = len(contents[dataset])
 
-        locations = job.inputdata.get_locations(overlap=False)
-
         siteinfos = {}
         allcontents = {}
         for dataset, content in contents.iteritems():
@@ -228,7 +280,7 @@ class DQ2JobSplitter(ISplitter):
 
                 for g in removal:
                     guids.remove(g)
-
+                    
                 nrfiles = self.numfiles
                 nrjob = int(math.ceil(len(guids)/float(nrfiles)))
                 if nrjob > self.numsubjobs and self.numsubjobs!=0:
