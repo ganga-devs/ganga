@@ -2,7 +2,7 @@
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
-# $Id: Composite.py,v 1.1.2.1 2009-05-20 14:41:33 lostman Exp $
+# $Id: Composite.py,v 1.1.2.2 2009-07-27 13:27:26 lostman Exp $
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
@@ -71,7 +71,7 @@ class CompositeMonitoringService(IMonitoringService):
             self.monMonServices.append(monClass(info))
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="Failed to init %s monitoring service...discarding it" % str(monClass))
+            self._log(level="warning",msg="Failed to init %s monitoring service...discarding it" % str(monClass), traceback=True)
             from Ganga.Utility.logging import log_user_exception
             log_user_exception(self.logger)
    
@@ -86,7 +86,7 @@ class CompositeMonitoringService(IMonitoringService):
             ret[monClass] = monService.start(**opts)
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="%s monitoring service failed to *start*: %s" % (monClass, e))
+            self._log(level="warning",msg="%s monitoring service failed to *start*: %s" % (monClass, e), traceback=True)
                
       return ret
     
@@ -101,7 +101,7 @@ class CompositeMonitoringService(IMonitoringService):
             ret[monClass] = monService.progress(**opts)
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="%s monitoring service failed to *progress*: %s" % (monClass, e))
+            self._log(level="warning",msg="%s monitoring service failed to *progress*: %s" % (monClass, e), traceback=True)
                
       return ret
         
@@ -117,7 +117,7 @@ class CompositeMonitoringService(IMonitoringService):
             ret[monClass] = monService.stop(exitcode,**opts)
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="%s monitoring service failed to *stop*: %s" % (monClass, e))               
+            self._log(level="warning",msg="%s monitoring service failed to *stop*: %s" % (monClass, e), traceback=True)
       return ret
       
 
@@ -132,7 +132,7 @@ class CompositeMonitoringService(IMonitoringService):
             ret[monClass] = monService.submit(**opts)
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="%s monitoring service failed in job *submit*" % monClass)               
+            self._log(level="warning",msg="%s monitoring service failed in job *submit*" % monClass, traceback=True) 
             from Ganga.Utility.logging import log_user_exception
             log_user_exception(self.logger)
       return ret
@@ -156,7 +156,7 @@ class CompositeMonitoringService(IMonitoringService):
             modules.extend(monService.getSandboxModules())
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="%s monitoring service failed in *getSandboxModules* ... ignoring it." % monClass)
+            self._log(level="warning",msg="%s monitoring service failed in *getSandboxModules* ... ignoring it." % monClass, traceback=True)
       return modules
        
    def getJobInfo(self):
@@ -178,7 +178,7 @@ class CompositeMonitoringService(IMonitoringService):
             infos[monClass] = monService.getJobInfo()            
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="%s monitoring service failed in *getJobInfo*: %s" % (monClass,e))
+            self._log(level="warning",msg="%s monitoring service failed in *getJobInfo*: %s" % (monClass,e), traceback=True)
       return infos
 
    def getWrapperScriptConstructorText(self):
@@ -201,16 +201,19 @@ class CompositeMonitoringService(IMonitoringService):
       
       return text
    
-   def _log(self,level='info',msg=''):
+   def _log(self,level='info',msg='',traceback=False):
 
       if self.logger and hasattr(self.logger,level):
          getattr(self.logger,level)(msg)
+         if traceback == True:
+            from Ganga.Utility.logging import log_user_exception
+            log_user_exception(logger = self.logger)
       else:
          #FIXME: this is used to log the monitoring actions in wrapper script
          # and currently we log to stdout (the wrapper scripts does not provide yet
          # a uniform interface to log Ganga specific messages to the wrapper script log 
          # (i.e __syslog__, __jobscript__.log,etc)
          print >>sys.stderr, '[Ganga %s] %s' % (level,str(msg))
-         
+         #FIXME: add traceback 
 
 #
