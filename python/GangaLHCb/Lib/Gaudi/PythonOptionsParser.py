@@ -132,9 +132,19 @@ class PythonOptionsParser:
             data = [f for f in self.opts_dict['EventSelector']['Input']]
         except KeyError, e:
             logger.debug('No inputdata has been defined in the options file.')
-        
-        splitFiles = [x.split('\'')[1] for x in data]
+
+        splitFiles = []
+        dtype_str = ''
+        for d in data:
+            p1 = d.find('DATAFILE=') + len('DATAFILE=')    
+            quote = d[p1]
+            p2 = d.find(quote,p1+1)
+            f = d[p1+1:p2]
+            splitFiles.append(f)
+            dtype_str = d.replace('DATAFILE=%s%s%s' % (quote,f,quote),'')
+            dtype_str = dtype_str.strip()
         lb = LHCbDataset()
+        lb.datatype_string = dtype_str
         for f in splitFiles:
             d = LHCbDataFile()
             d.name = f
