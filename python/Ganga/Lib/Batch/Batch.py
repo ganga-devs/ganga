@@ -291,8 +291,12 @@ class Batch(IBackend):
     def preparejob(self,jobconfig,master_input_sandbox):
 
         job = self.getJobObject()
-                    
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles())
+        mon = job.getMonitoringService()
+        import Ganga.Core.Sandbox as Sandbox
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
+            + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules())
+            + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules()))
+        
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath=job.getOutputWorkspace().getPath()
         outputpatterns = jobconfig.outputbox
@@ -341,6 +345,7 @@ statusfile.flush()
 
 import sys
 sys.path.insert(0, ###GANGADIR###)
+sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
 try:
     import subprocess
