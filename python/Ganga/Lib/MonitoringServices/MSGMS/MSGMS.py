@@ -2,17 +2,23 @@ from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 
 from types import DictionaryType
 from time import time, sleep
-from Ganga.GPIDev.Lib.Config.Config import config
-
-from Ganga.Utility.Config import makeConfig
-
-msgms_config = makeConfig('MSGMS','Settings for the MSGMS monitoring plugin')
-msgms_config.addOption('server', 'gridmsg101.cern.ch', 'The server to connect to')
-msgms_config.addOption('port', 6163, 'The port to connect to')
-msgms_config.addOption('username', '', '')
-msgms_config.addOption('password', '', '')
-
 import stomputil 
+
+# create the configuration options for MSGMS
+from Ganga.Utility.Config import makeConfig, getConfig
+config = makeConfig('MSGMS','Settings for the MSGMS monitoring plugin. Cannot be changed ruding the interactive Ganga session.')
+config.addOption('server', 'gridmsg101.cern.ch', 'The server to connect to')
+config.addOption('port', 6163, 'The port to connect to')
+config.addOption('username', '', '') 
+config.addOption('password', '', '') 
+config.addOption('message_destination', '/topic/ganga.status', '')
+
+# prevent the modification of the MSGMS configuration during the interactive ganga session
+import Ganga.Utility.Config
+def deny_modification(name,x):
+    raise Ganga.Utility.Config.ConfigError('Cannot modify [System] settings (attempted %s=%s)'%(name,x))
+config.attachUserHandler(deny_modification,None)
+                           
 
 try:
     from Ganga.Core.GangaThread import GangaThread as Thread
@@ -21,26 +27,21 @@ except ImportError:
 from threading import Thread
 
 from Ganga.Utility.logging import getLogger
-
-msg_config = {
-    'server' : config.MSGMS.server,
-    'port' : config.MSGMS.port,
-    'username' : config.MSGMS.username,
-    'password' : config.MSGMS.password,
-    'error_log' : getLogger('MSGMSErrorLog')
-}
-
-publisher = stomputil.createPublisher(Thread, msg_config)
-publisher.start()
+publisher = None
 
 def send(dst, msg): # enqueue the msg in msg_q for the connection thread to consume and send
+    global publisher
+    if publisher is None:
+        publisher = stomputil.createPublisher(Thread, config['server'], config['port'], username=config['username'],
+            password=config['password'], logger=getLogger('MSGMSErrorLog'))
+        publisher.start()
     publisher.send((dst, msg)) 
 
 def sendJobStatusChange(msg):
-    send('/queue/lostman-test/status', msg)
+    send(config['message_destination'], msg)
         
 def sendJobSubmitted(msg):
-    send('/queue/lostman-test/submitted', msg)
+    send(config['message_destination'], msg)
 
 def hostname():
     """ Try to get the hostname in the most possible reliable way as described in the Python 
@@ -66,6 +67,10 @@ class MSGMS(IMonitoringService):
 
     def __init__(self, job_info):
         IMonitoringService.__init__(self,job_info)
+        global config
+        if type(job_info) is DictionaryType: # on the workernode
+            for o in ['username', 'password', 'server', 'port', 'message_destination']:
+                config.setSessionValue(o, job_info['_config'][o])
         from Ganga.Lib.MonitoringServices.MSGMS.compatibility import uuid
         self.ganga_job_uuid = uuid()
 
@@ -82,9 +87,9 @@ class MSGMS(IMonitoringService):
 
         return { 'ganga_job_uuid' : self.ganga_job_uuid
                , 'ganga_job_master_uuid' : 0
-               , 'ganga_user_repository' : config.Configuration.user
-                                           + '@' + config.System.GANGA_HOSTNAME
-                                           + ':' + config.Configuration.gangadir
+               , 'ganga_user_repository' : getConfig('Configuration')['user']
+                                           + '@' + getConfig('System')['GANGA_HOSTNAME']
+                                           + ':' + getConfig('Configuration')['gangadir']
                , 'ganga_job_id' : ganga_job_id
                , 'subjobs' : len(self.job_info.subjobs)
                , 'backend' : self.job_info.backend.__class__.__name__
@@ -92,6 +97,7 @@ class MSGMS(IMonitoringService):
                , 'job_name' : self.job_info.name
                , 'hostname' : hostname()
                , 'event' : 'dummy' # should be updated in appropriate methods
+               , '_config' : config.getEffectiveOptions() # pass the MSGMS configuration to the worker nodes
                }
         return data
 
@@ -105,12 +111,12 @@ class MSGMS(IMonitoringService):
             Ganga.Lib.MonitoringServices.MSGMS,
             Ganga.Lib.MonitoringServices.MSGMS.MSGMS,
             Ganga.Lib.MonitoringServices.MSGMS.compatibility,
-            Ganga.Lib.MonitoringServices.MSGMS.stomp,
             Ganga.Utility,
+            Ganga.Utility.util,
+            Ganga.Utility.logic,
             Ganga.Utility.logging,
             Ganga.Utility.strings,
             Ganga.Utility.files,
-            #Ganga.Utility.files.remove_prefix,
             Ganga.Utility.ColourText,
             Ganga.Utility.Config,
             Ganga.Utility.Config.Config,
@@ -118,10 +124,13 @@ class MSGMS(IMonitoringService):
             Ganga.GPIDev.Lib,
             Ganga.GPIDev.Lib.Config,
             Ganga.GPIDev.Lib.Config.Config,
+            Ganga.GPIDev.TypeCheck,
             Ganga.Core,
             Ganga.Core.exceptions,
             Ganga.Core.exceptions.GangaException,
-            stomputil
+            stomputil,
+            stomputil.stompwrapper,
+            stomputil.stomp
             ] + IMonitoringService.getSandboxModules(self)
 
     def start(self, **opts): # same as with stop
