@@ -16,6 +16,7 @@ exportToGPI("check_prime_job",split_prime_job,"Functions")
 
 import os, GangaTutorial
 TUTDIR = os.path.dirname(GangaTutorial.__file__)
+exportToGPI("TUTDIR",TUTDIR,"Objects")
 del os,GangaTutorial
 
 print "*** Ganga Tutorial Loaded OK ***"
