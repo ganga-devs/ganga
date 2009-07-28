@@ -1,0 +1,66 @@
+# File: make_job
+# Author: K. Harrison
+# Created: 060108
+# Last modified: 060108
+
+"""GPI script for creating a file containing a Ganga job description"""
+
+__author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
+__date__    = "8 January 2006"""
+__version__ = "1.0"
+
+from Ganga.Core import FileWorkspace
+
+import os
+import sys
+
+# Create list from command-line arguments
+argList = sys.argv[ 1: ]
+
+if len( argList ) != 3:
+  # Print usage information if no arguments given at command line
+   print ""
+   print "Usage: ganga make_job <application> <backend> <file.py>"
+   print " => Write to <file.py> a Ganga job to run <application> on <backend>"
+   print " => Job can be submitted with: ganga submit <file.py>"
+   print ""
+   print " => Known applications are:"
+   print "    %s" % str( applications() ) 
+   print " => Known backends are:"
+   print "    %s" % str( backends() ) 
+   print ""
+   print " => Note: not all combinations of application and backend are valid."
+   print ""
+else:
+   app = argList[ 0 ]
+   bck = argList[ 1 ]
+   filePath = os.path.expanduser( os.path.expandvars ( argList[ 2] ) )
+   argsOK = True
+   if not app in applications():
+      argsOK = False
+      print ""
+      print "Application '%s' not recognised" % app
+      print " => Known applications are:"
+      print "    %s" % str( applications() ) 
+   if not bck in backends():
+      argsOK = False
+      print ""
+      print "Backend '%s' not recognised" % bck
+      print " => Known backends are:"
+      print "    %s" % str( backends() ) 
+
+   print ""
+   if argsOK:
+      j = Job( application = app, backend = bck )
+      status = export( j, filePath )
+      if status:
+         print "Ganga job to run '%s' on '%s' written to '%s'"\
+            % ( app, bck, filePath )
+
+     # Delete the newly created job from the registry and workspace
+      topDir = \
+         os.path.expandvars( os.path.expanduser( FileWorkspace.gettop() ) )
+      jobDir = os.path.join( topDir, str( j.id ) )
+      j.remove()
+      if os.path.isdir( jobDir ):
+         os.rmdir( jobDir )

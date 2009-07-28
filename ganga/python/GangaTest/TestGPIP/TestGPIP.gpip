@@ -1,0 +1,88 @@
+from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
+
+class TestGPIP(GangaGPITestCase):
+    '''
+    This is the GPIP testcase used by the testing framework
+    '''
+
+    def testFailInPreparation(self):
+        '''Test fail in preparation phase'''
+        print 'Test fail in preparation phase.'
+
+        j = Job()
+
+        assert(1 == 0), 'Failed while preparing the test.!'
+
+        j.submit()
+
+        # This test will be definitely failed before job submission, the returning check test instance doesn't matter.
+        jobTest = _DefaultJobTest(j)
+
+        return jobTest
+
+    def testTimeoutTest(self):
+        '''The preparation doesn't matter'''  
+
+        print 'Let\'s be timeout'
+
+        jobTest = TimeoutJobTest()
+
+        return jobTest
+
+    def testFailInJobTest(self):
+        '''Do the job preparation and be failed while doing job test.
+           This test will be failed, if the job is finished successfully.
+        '''
+        j = Job()
+        j.submit()
+        failedJobTest = FailedJobTest(j)
+
+        return failedJobTest 
+
+    def testSuccessJob(self):
+        '''Do normal local job submission.'''
+
+        j = Job()
+
+        j.submit()
+
+        jobTest = SuccessfulJobTest(j)
+
+        return jobTest
+
+    def testNormalFail(self):
+        '''Test a None value failure'''
+        noneVar = None
+
+        noneVar.test() # Ths method is not exited.
+
+        # The return value doesn't matter
+        return None
+
+class TimeoutJobTest(ICheckTest):
+    def __init__(self):
+        pass
+    def isReadyForCheck(self):
+        ''' Override the check function from super class. '''
+        #Always return false to test the timeout fail.
+        return False
+
+class FailedJobTest(ICheckTest):
+    '''
+    AssertionException will occur while the job status isn't 'failed'.
+    '''
+
+    def isReadyForCheck(self):
+        ''' Once the job status has reached the final status, then True.
+            ['completed','new','killed','failed','unknown','removed']
+        '''
+        from GangaTest.Framework.utils import is_job_finished
+        return is_job_finished(self.j)
+
+    def checkTest(self):
+        assert(self.j.status == 'failed'), 'Job status should be completed. status :%s, failed anyway.' % self.j.status
+
+class SuccessfulJobTest(ICheckTest):
+    def checkTest(self):
+        ''' AssertionException will occur while the job status isn't 'completed'. '''
+        assert(self.j.status == 'completed'), 'Job status should be completed. status : %s' % self.j.status

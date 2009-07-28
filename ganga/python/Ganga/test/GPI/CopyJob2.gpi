@@ -1,0 +1,1 @@
+j=Job();j.name='hello';j.application=Executable(); j2 = j.copy()

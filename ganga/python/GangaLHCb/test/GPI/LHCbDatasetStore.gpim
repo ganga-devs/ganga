@@ -1,0 +1,117 @@
+from GangaTest.Framework.tests import MultipassTest
+
+class LHCbDatasetStore(MultipassTest):
+
+    #lfn data for test
+    LFN_DATA = ["LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000001_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000002_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000003_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000004_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000005_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000006_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000007_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000008_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000009_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000010_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000011_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000012_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000013_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000014_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000015_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000016_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000017_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000018_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000019_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000020_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000022_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000023_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000024_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000025_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000026_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000027_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000028_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000029_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000030_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000031_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000032_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000033_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000034_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000035_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000036_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000037_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000038_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000039_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000041_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000042_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000043_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000045_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000048_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000049_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000050_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000052_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000053_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000055_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000056_5.dst",
+                "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000057_5.dst"]
+
+    def __init__(self):
+        MultipassTest.__init__(self,4)
+        self.id_cache = '/tmp/lhcbdatasetstore_id_cache.txt'
+
+    def saveValue(self, value):
+        try:
+            f = file(self.id_cache,'w')
+            f.write('%d' % value)
+        finally:
+            f.close()
+
+    def readValue(self):
+        result = 0
+        try:
+            f = file(self.id_cache)
+            result = int(f.read())
+        finally:
+            f.close()
+        return result
+
+    def pass1(self):
+        """Create the dataset"""
+
+        data = LHCbDataset(files = [LHCbDataFile(f) for f in self.LFN_DATA])
+        j = Job(backend = TestSubmitter(), inputdata = data)
+        self.saveValue(j.id)
+
+        assert len(j.inputdata.files) == 50, 'No files should be lost'
+        j.inputdata.updateReplicaCache()
+
+    def pass2(self):
+        """Check the storage and then submit."""
+
+        id = self.readValue()
+
+        j = jobs(id)
+        assert len(j.inputdata.files) == 50, 'No files should be lost'
+
+        assert j.submit(), 'Submit should pass'
+
+    def pass3(self):
+        """Check the storage of the submitted job"""
+
+        id = self.readValue()
+
+        j = jobs(id)
+        assert len(j.inputdata.files) == 50, 'No files should be lost'
+        
+    def pass4(self):
+        """Copy the job and make sure everything is still ok"""
+        
+        id = self.readValue()
+        j = jobs(id)
+
+        data = j.inputdata.copy()
+        #nb LHCbDataset has len
+        assert len(data) == 50, 'No files should be lost'
+
+        #update the cache and check again
+        data.updateReplicaCache(forceUpdate = True)
+        assert len(data) == 50, 'No files should be lost'
