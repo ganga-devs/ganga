@@ -1,0 +1,24 @@
+#-*-python-*-
+
+from GangaTest.Framework.tests import MultipassTest
+
+# submit a split job which sleeps for a few seconds
+# then try to monitor it -> the monitoring loop raises an exception 
+# because: 'Job' object has no attribute '_registry' 
+
+class Savannah23737(MultipassTest):
+    def __init__(self): MultipassTest.__init__(self,2)
+
+    def pass1(self):
+	j = load('testjob')[0]
+	j.submit()
+        return j.id
+
+    def pass2(self):
+        j = jobs(self.data[1])
+	import time
+        print "Waiting for the jobs to complete"
+	time.sleep(30)
+        print j
+	assert(j.subjobs[0].status == j.subjobs[1].status == j.status == 'completed')
+

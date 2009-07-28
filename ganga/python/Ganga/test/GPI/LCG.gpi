@@ -1,0 +1,32 @@
+# testLCG.py - Hurng-Chun Lee 
+# 
+# create and submit gLite jobs 
+
+import re,sys,popen2,time
+
+# check if the backend.middleware is by default the GLITE 
+assert(config['LCG']['GLITE_ENABLE'] == True)
+
+# submit a gLite simple job
+j = Job(application=Executable(exe='/bin/echo',args=['Hello World']))
+j.name = 'testLCG_simple'
+j.backend=LCG()
+assert(j.backend.middleware == 'GLITE')
+assert(j.submit() == True)
+
+# submit a gLite collection job
+args = []
+for i in range(100):
+    args.append(['hello %d' % i])
+
+j1 = Job(application=Executable(exe='/bin/echo'))
+j1.name = 'testLCG_multiple'
+j1.backend = LCG(middleware='GLITE')
+j1.splitter = GenericSplitter()
+j1.splitter.attribute = 'application.args'
+j1.splitter.values = args
+assert(j1.submit() == True)
+
+# removing all jobs
+j.remove()
+j1.remove()
