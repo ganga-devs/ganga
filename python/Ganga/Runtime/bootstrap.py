@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.15 2009-07-20 14:13:44 moscicki Exp $
+# $Id: bootstrap.py,v 1.16 2009-07-28 10:21:24 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -516,12 +516,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                 self.logger.debug('re-executing the process for LD_LIBRARY_PATH changes to take effect')
                 os.environ['GANGA_INTERNAL_PROCREEXEC'] = '1'
                 prog = os.path.normpath(sys.argv[0])
-
-                # workaround for weird OS X execv behavior 
-                if sys.platform == "darwin":
-                    os.spawnv(os.P_WAIT, prog, sys.argv)
-                else:
-                    os.execv(prog,sys.argv)
+                os.execv(prog,sys.argv)
 
         else:
             self.logger.debug('skipped the environment initialization -- the processed has been re-execed and setup was done already')
@@ -955,6 +950,9 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.15  2009/07/20 14:13:44  moscicki
+# workaround for wierd OSX execv behaviour (from Ole Weidner)
+#
 # Revision 1.14  2009/06/10 14:53:05  moscicki
 # fixed bug #51592: Add self to logger
 #
