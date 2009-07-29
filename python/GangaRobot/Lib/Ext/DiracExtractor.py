@@ -10,9 +10,14 @@ relevant data may be extracted in a later version.
 
 from GangaRobot.Lib.Base.BaseExtractor import BaseExtractor
 from Ganga.GPI import *
-from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
+from GangaLHCb.Lib.DIRAC.DiracUtils import *
+from GangaLHCb.Lib.DIRAC.DiracServer import DiracServer
 
-from GangaLHCb.Lib.Dirac import DiracShared
+configLHCb = Ganga.Utility.Config.getConfig('LHCb')
+configDirac = Ganga.Utility.Config.getConfig('DIRAC')
+dirac_ganga_server = DiracServer()
+
+logger = Ganga.Utility.logging.getLogger()
 
 
 class DiracExtractor(BaseExtractor):
@@ -63,6 +68,7 @@ class DiracExtractor(BaseExtractor):
         empty if querying Dirac returns no corresponding value.
         
         """
+        global dirac_ganga_server
         if job.backend._impl._name != 'Dirac':
             return
         diracnode = jobnode.addnode('dirac')
@@ -73,35 +79,27 @@ class DiracExtractor(BaseExtractor):
         cpu = None
         # extract data
         diracid = job.backend.id
+        if job.backend._impl._name != 'Dirac':
+                        return
         try:
-                command="""
-jobsummary=dirac.getJobSummary(%i)
-if not result.get('OK',False): rc = -1
-storeResult(jobsummary)
-"""%diracid
-                result=diracwrapper(command)
-                jobSummary=result.getOutput()['Value'][diracid]
+                command='result = DiracCommands.dirac.getJobSummary([%i])'%diracid
+                result=dirac_ganga_server.execute(command)
+                #FIXME missing error checking
+
+                jobSummary=result['Value'][diracid]
+                applicationstatus = jobSummary['ApplicationStatus']
+                
+                command="result = DiracCommands.dirac.getJobCPUTime(%i)"%diracid
+                cputime=result['Value'][diracid]
+                cpu=cputime.get('CPUConsumed',None)
+                #FIXME fins example time
                 
 
-                status = jobSummary['Status']
-                applicationstatus = jobSummary['ApplicationStatus']
-        except KeyError:
-                pass # data unavailable
-        try:
-                command="""
-jobParams=dirac.getJobParams(%i)
-if not result.get('OK',False): rc = -1
-storeResult(jobParams)
-"""%diracid
-                dc=diracwrapper(command)
-                jobParams =dc.getOutput()['Value']
-                edgwljobid = jobParams['EDG_WL_JOBID']
-                cpu = jobParams['CPU']
+               
         except KeyError:
                 pass # data unavailable
         # add subnodes
         diracnode.addnode('status', status)
         diracnode.addnode('application-status', applicationstatus)
-        diracnode.addnode('edg-wl-jobid', edgwljobid)
         diracnode.addnode('cpu', cpu)
 
