@@ -176,6 +176,7 @@ class Gridway(IBackend):
       if outfileString:
          jtDict[ 'OUTPUT_FILES' ] = outfileString
 
+      """
       # 2009/05/13 hgkim
       # HOSTNAME, QUEUE_NAME setting
       if config['Gridway']['HOSTNAME'] != '':
@@ -183,6 +184,7 @@ class Gridway(IBackend):
 
       if config['Gridway']['QUEUE_NAME'] != '':
          jtDict[ 'REQUIREMENTS' ] = 'QUEUE_NAME= "%s"' % ['Gridway']['QUEUE_NAME']
+      """
 
       jtList = [
          "# Gridway Description File created by Ganga",
