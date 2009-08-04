@@ -2,7 +2,7 @@
 
 from optparse import OptionParser
 
-JOB_DEFAULT = 534
+JOB_DEFAULT = 227
 
 
 
@@ -10,7 +10,7 @@ if __name__ == '__main__':
 
     parser = OptionParser()
 
-    parser.add_option('-I', '--id', type = 'int', dest = 'id', default = JOB_DEFAULT,
+    parser.add_option('-I', '--id', type = 'int', dest = 'id', default = str(JOB_DEFAULT),
                       help = 'The id of the job to be collected the output. Defaults to number 0 if not specified.')
     parser.add_option('-H', '--host', type = 'string', dest = 'host', default = 'gridmsg001.cern.ch',
                       help = 'Hostname or IP to connect to. Defaults to gridmsg001.cern.ch if not specified.')
@@ -22,17 +22,16 @@ if __name__ == '__main__':
                       help = 'Password for the connection')
     parser.add_option('-F', '--file', type = 'string', dest = 'filename', default = 'MSGPeek-collector.log',
                       help = 'File containing the output of the jobs')
-#    parser.add_option('-S', '--seconds', type = 'int' , dest = 'sec', default = 1,
-#                      help = 'Number of the seconds that a the collector has to wait in order to collect the data')
+    parser.add_option('-T', '--timeout', type = 'int' , dest = 't_out', default = 3600,
+                      help = 'Time out: Seconds that the client (consumer) will wait until there is a job (producer) running')
 
     (options, args) = parser.parse_args()
 
-    import sys
-    sys.path.append('/afs/cern.ch/user/m/mchamber/Ganga/install/Ganga-MSG-branch/python/Ganga/Lib/MonitoringServices/MSGPeek')
+        
+    from MSGPeekCollector import MSGPeekCollector as MSGPeekCollector
 
-    import MSGPeekCollector as MSGPeekCollector
-
-    collector = MSGPeekCollector.MSGPeekCollector(options.id ,options.host, options.port, options.filename, options.user, options.password)
+    collector = MSGPeekCollector(options.id ,options.host, options.port, options.filename,
+                                  options.user, options.password)
 
 
 #    collector.begin()
@@ -62,10 +61,14 @@ if __name__ == '__main__':
 #    sleep(5)
 #    print "Stop"
 #    collector.end()
-
+    
+    
     collector.begin()
     from time import sleep
-    while not collector.is_finished() :
+    from time import time
+    start = time()
+    
+    while not collector.is_finished() and options.t_out > time()-start:
         try:
             if not collector.conn.is_connected():
                 print 'MasterListener is not connected... attempting to reconnect...'
@@ -78,10 +81,9 @@ if __name__ == '__main__':
         except EOFError:
             import sys, traceback
             traceback.print_exc()
-            sys.exit(1)
+            collector.conn.stop()
         except KeyboardInterrupt:
             import sys, traceback
             traceback.print_exc()
-            sys.exit(1)
-#    sleep(1.4*options.sec)
+            collector.conn.stop()
 

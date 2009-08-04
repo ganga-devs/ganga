@@ -56,7 +56,7 @@ while i < int(sys.argv[1]) :
     s  = ''.join([random.choice(string.letters+string.digits) for j in range(random.randint(30,128))] )
     f.write("Line %d: %s\n" %(i, s))
     print "Line %d: %s" %(i, s)
-    if i % 100 == 0 :
+    if i % 500 == 0 :
         import time
         time.sleep(5)
 f.close()

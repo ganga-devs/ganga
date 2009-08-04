@@ -12,7 +12,7 @@ log = getLogger('MSGErrorLog')
 class LoggerListener(object):
     def __init__(self):
         self.logger = getLogger( '~/MSGLoggerListener')
-        self.f = file( 'Logger.log','w')
+        self.f = file( 'Control.log','w')
         self.streaming = {}
         
     def on_error(self, headers, message):
@@ -23,15 +23,15 @@ class LoggerListener(object):
 
     def on_message(self, headers, message):
         self.logger.debug('received a message %s' % message)
-#========  IF  message were a dictionary   ==================================== 
+#========  When  message is a dictionary   =====================
 #        message = {'2145': 'begin'})
-#        r = message.split(':') #["{'2145'", " 'begin'}"]
-#        id = r[-2][2:-1]
-#        value = r[-1][2:-1]
-
-        r = message.split(',')
-        id = r[-2]
-        value = r[-1]
+        r = message.split(':') #["{'2145'", " 'begin'}"]
+        id = r[-2][1:]
+        value = r[-1][2:-2]
+#========  When  message is just a string  =====================
+#        r = message.split(',')#"2145,begin"
+#        id = r[-2]
+#        value = r[-1]
         self.f.write('id is: ' + id)
         self.f.write('value is: '+value)
         if id not in self.streaming:
@@ -43,8 +43,8 @@ class LoggerListener(object):
         else :
             self.streaming[id] = 'stop'
 
-        self.f.write(message)
-        self.f.write(str(self.streaming))
+#        self.f.write(message)
+#        self.f.write(str(self.streaming))
         self.f.flush()
 
 
@@ -70,22 +70,25 @@ def createPublisher(T):
                     m = self.msg_q.get()
                     self.__send(m)
                 time.sleep(0.3)
-            self.connection.disconnect()
+            self.connection.stop()
 
-        def send(self, (dst, msg)):
+        def send(self, (dst, msg), headers={}):
             msg['_publisher_t'] = time.time()
             log.debug('Queueing message %s' % msg)
-            self.msg_q.put((dst, msg))
+            self.msg_q.put((dst, msg, headers))
 
-        def __send(self, (dst, msg)):
+        def __send(self, (dst, msg, h)):
             log.debug('Sending message %s' % msg)
-            self.connection.send(destination=dst, message=repr(msg))
+            self.connection.send(destination=dst, message=repr(msg),
+                                 headers=h)
 
         def should_stop(self):
             return self.__should_stop_flag
 
         def stop(self):
             self.__should_stop_flag = True
+            
+            
     p = MSGAsynchPublisher(T)
     p.setDaemon(True)
     return p

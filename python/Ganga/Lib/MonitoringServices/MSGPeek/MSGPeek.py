@@ -1,47 +1,51 @@
-import MSGUtil
+import os.path
+import string
+import datetime
+from time import sleep
+from threading import Thread
+from types import DictionaryType
 
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
-
-from types import DictionaryType
-from time import time, sleep
 from Ganga.GPIDev.Lib.Config.Config import config
-import MSGUtil
-
-import os.path, string, datetime
-
-
 try:
     from Ganga.Core.GangaThread import GangaThread as Thread
 except ImportError:
     pass
-from threading import Thread
 
+import MSGUtil
+
+
+"""Number of seconds to poll a queue where the order "streaming" the output of the job is received"""
+NUM_SEC = 8
+SessionNumber = 32
+
+"""The thread is created to send the data and the status to the client"""
 publisher = MSGUtil.createPublisher(Thread)
 publisher.start()
 
-#Number of seconds to poll a queue where the order "streaming" the output of the job is received
-NUM_SEC = 8
-
 def send(id, msg):
-    dst = '/queue/data.%s' %id
-    publisher.send((dst, msg))
-    
-def subscribe(dst):
-    # Wait until the thread is created
+    """If all the job's status go to the same topic uncomment it and finish it""" 
+    #dst = '/topic/job.status.%d' %SessionNumber
+    dst = '/queue/data.%s' % id
+    publisher.send((dst, msg))#, { "status": id })
+
+def subscribe(id):
+    dst = '/topic/control.session.%d' %SessionNumber #MSGPeekCollector.control
     sleep(0.4)
-    publisher.connection.subscribe(destination=dst, ack='auto')
+    publisher.connection.subscribe(destination=dst, ack='auto',
+                                   headers={ 'selector' : "clientid = '%s'" % str(id)})
 
 def unsubscribe(dst):
+    dst = '/topic/control.session.%s' %MSGPeekCollector.SessionId
     publisher.connection.unsubscribe(destination=dst)
 
         
 def is_streaming(id):
     if len(publisher.listener.streaming) <> 0 : 
-        return publisher.listener.streaming.get(id,'end') == 'begin'    
+        return publisher.listener.streaming.get(id, 'end') == 'begin'    
     return False
 
 
-    
 def hostname():
     import socket
     try:
@@ -60,14 +64,17 @@ class MSGPeek(IMonitoringService):
     # job name
 
     def __init__(self, job_info):
-        IMonitoringService.__init__(self,job_info)
+        IMonitoringService.__init__(self, job_info)
         from Ganga.Lib.MonitoringServices.MSGPeek.compatibility import uuid
         self.ganga_job_uuid = uuid()
+        """stdoutFile actualPos are needed to know until where the client has read""" 
         self.stdoutFile = None
         self.actualPos = 0
+        """The streaming is only check to regular intervals @NUM_SEC"""
         self.start_time = datetime.datetime.now()
-          
-
+        self.stream=False
+        
+   
 
     def getMessage(self): # returns a dictionary that contains data common to all messages
         msg = self.job_info.copy() 
@@ -128,14 +135,13 @@ class MSGPeek(IMonitoringService):
         atexit.register(sleep, 5)
         message = self.getMessage()
         message['event'] = 'running'
-        send(str(self.job_info['ganga_job_id']), message )
+        send(str(self.job_info['ganga_job_id']), message)
         
         ## stdoutFile attribute is needed for reading the output
         if self.stdoutFile is None:
             self.stdoutFile = open('stdout', 'r+')
-        
-        subscribe('/queue/control.job.%s' %self.job_info['ganga_job_id'])
-        
+
+        subscribe(self.job_info['ganga_job_id'])      
 
 
     def progress(self, **opts):
@@ -146,24 +152,28 @@ class MSGPeek(IMonitoringService):
             where USER is the user in the machine and NUMBER-OF-JOB is the number
             from Ganga when the job is submitted
         """
-        subscribe('/queue/control.job.%s' %self.job_info['ganga_job_id'])
-
-#        if (datetime.datetime.now() - self.start_time) >= datetime.timedelta(seconds = NUM_SEC) :
-#            self.start_time    = datetime.datetime.now()
-        if is_streaming(self.job_info['ganga_job_id']) :
-            if self.stdoutFile is None:
-                self.stdoutFile = open('stdout', 'r+')
-            msg = {}        
-            LenStdout = self.stdoutFile.tell()
-            self.stdoutFile.seek(self.actualPos)
-            line = self.stdoutFile.read()                
-            if not line or LenStdout < self.actualPos:
-                return
-            else:
-                self.actualPos += len(line)
-                msg['stdout'] = line
-                msg['event'] = "Streaming"
-                send(str(self.job_info['ganga_job_id']) , msg )
+        """check only if @NUM_SEC has not been now and streaming signal haven't been received"""
+        if self.stream or (datetime.datetime.now() - self.start_time) >= datetime.timedelta(seconds = NUM_SEC) :
+            self.start_time  = datetime.datetime.now()
+        
+            if is_streaming(self.job_info['ganga_job_id']) :
+                self.stream = True
+                if self.stdoutFile is None:
+                    self.stdoutFile = open('stdout', 'r+')
+                                      
+                msg = {}        
+                LenStdout = self.stdoutFile.tell()
+                self.stdoutFile.seek(self.actualPos)
+                line = self.stdoutFile.read()                
+                if not line or LenStdout < self.actualPos:
+                    return
+                else:
+                    self.actualPos += len(line)
+                    msg['stdout'] = line
+                    msg['event'] = "Streaming"
+                    send(str(self.job_info['ganga_job_id']) , msg)
+            else :
+                self.stream = False
     #            msg['event'] ="Job %s finished" %(self.job_info['ganga_job_id'])
         #pass
         #return
@@ -178,30 +188,24 @@ class MSGPeek(IMonitoringService):
 
         message = self.getMessage()
         message['event'] = exit_status
-        send(str(self.job_info['ganga_job_id']), message )
+        send(str(self.job_info['ganga_job_id']), message)
 
         
         self.stdoutFile.close()
         #Remove the job from the dictionary
-        publisher.listener.streaming.pop(self.job_info['ganga_job_id'], False)
+        publisher.listener.streaming.pop(self.job_info['ganga_job_id'], False)    
+        unsubscribe(self.job_info['ganga_job_id'])
         
-        unsubscribe('/queue/control.job.%s' %self.job_info['ganga_job_id'])
-
     def submit(self, **opts): #this one is on the client side; so operate on Job object
         #1. send job submitted message with more detailed info
         
         msg = self.getJobInfo()
         msg['event'] = 'submitted'
+        dst = '/queue/data.%s' % msg['ganga_job_id']
         if self.job_info.master is None:
-            send(msg['ganga_job_id'], msg )
+            send(id, msg)
         else:
             if self.job_info.id == 0: 
-                send(msg['ganga_job_id'], msg )
- #len(self.job_info.master.subjobs) -> number of subjobs
-
-        #2. send status change message with new submitted status
-        # message = self.getCommonMessage()
-        # message['event'] = 'submitted'
-        # sendJobStatusChange( message )
-
+                send(id, msg)
+            
 

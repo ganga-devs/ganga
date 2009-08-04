@@ -1,5 +1,7 @@
-import stomp,sys
+import stomp
+import sys
 from time import sleep
+
 
 class PeekListener(stomp.ConnectionListener) :
     def __init__(self, fn):
@@ -15,68 +17,72 @@ class PeekListener(stomp.ConnectionListener) :
         self.f.close()
 
     def on_message(self, headers, message):
-#        dict = eval(message)
-#        dict['_msg_t'] = headers['timestamp']
-##        dict['_msg_t'] = str(time.ctime(headers['timestamp']))
-#        try:
-#            import datetime
-#            time = datetime.datetime.now().strftime("%d/%m/%Y %H:%M.%S")
-#            _col_t, event = time, dict['event']
-#            #_col_t, event = time.time() , dict['event']
-#        except KeyError:
-#            print 'ERROR:', dict
-#        try:
-#            del dict['event']
-#        except KeyError:
-#            print 'KeyError: key \'event\' not in the dictionary'
-#        data = [_col_t, event, dict]
-#        """ The message will be print in the screen """
-#
-#        self.f.write(repr(data) + '\n')
-#        self.f.flush()
-#        print repr(data)
-
         dict = eval(message)
         if dict.has_key("stdout") :
             sys.stdout.write(dict['stdout'])
         if dict.has_key("event") :
-#            print  dict["event"], self.finished
-#            if dict["event"]=="submitted":
-#                self.finished = False
-            if dict["event"]=="finished":
+            if dict["event"] == "finished":
                 self.finished = True
                 self.f.close()
+#        for header_key in headers.keys():
+#            print '%s: %s' % (header_key, headers[header_key])
 #        print message
+        
+
 
 
 class MSGPeekCollector:
-
-    def __init__(self, uuid, host = 'gridmsg001.cern.ch', port=6163, filename='MSGPeekcollector.log', user='', passcode=''):
+    
+#    from compatibility import uuid
+    SessionId = '32' #uuid()
+    control = '/topic/control.session.%s' %SessionId
+    
+    def __init__(self, uuid, host = 'gridmsg001.cern.ch', port=6163, 
+                 filename='MSGPeekcollector.log', user='', passcode=''):
         self.uuid = uuid
         self.conn = stomp.Connection([(host, port)], user, passcode)
         self.listener = PeekListener('MSGPeekcollector.log')
         self.conn.add_listener(self.listener)
         self.conn.start()
-#        print "Selected job: %d" %self.uuid
         self.conn.connect()
         self.data =  '/queue/data.%d' %self.uuid
-        sleep(1)
+        self.control = '/topic/control.session.%s' %self.__class__.SessionId
+
         self.conn.subscribe(destination=self.data, ack='auto')
-#        self.conn.subscribe(destination='/queue/control.job.%s' %self.uuid, ack='auto')
+
+        """Possible implementation to make all the the user's jobs' status in the same topic"""
+#        self.status = '/topic/job.status.%s' %self.__class__.SessionId
+#        self.conn.subscribe(destination=self.status, ack='auto',
+#                            headers = { 'selector' : "status  = '%s'"%self.uuid})
+        """ To clean the queues with the client uncomment the lines below"""
+#        self.conn.subscribe(destination=self.control, ack='auto')
+#                            headers = { 'selector' : "clientid  = '%s'"%self.uuid})
+
+
 
     def begin(self):
-        msg = str(self.uuid)+",begin"
-        self.conn.send(msg , destination='/queue/control.job.%s' %self.uuid)
-        
+        msg = {self.uuid:'begin'}
+        self.conn.send(str(msg) , destination=self.control,
+                       headers={ "clientid": self.uuid })
 
     def end(self):
-        msg = str(self.uuid)+",end"    
-        self.conn.send(msg, destination='/queue/control.job.%s' %self.uuid)                    
+        msg = {self.uuid:'end'} 
+        self.conn.send(str(msg) , destination=self.control,
+                       headers={ "clientid": self.uuid })
 
     def is_finished(self):
         return self.listener.finished
+    
+#    def __clean_queues(self):
+#        self.conn.subscribe(destination='/queue/control.session.%s' %self.uuid, ack='auto')
+#        self.conn.subscribe(destination=self.data, ack='auto')
+#        sleep(1)
+#        self.conn.unsubscribe(destination=self.data)
+#        self.conn.unsubscribe(destination='/queue/control.session.%s' %self.uuid)
+#        sleep(1)
+        
 
     def __del__(self):
         self.conn.unsubscribe(destination=self.data) 
-#        self.conn.unsubscribe(destination='/queue/control.job.%s' %self.uuid)        
+#        self.conn.unsubscribe(destination=self.control)       
         self.conn.stop()
