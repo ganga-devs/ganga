@@ -220,6 +220,11 @@ class GangaRepositoryLocal(GangaRepository):
                         self._metadata._index_cache = None
                     else:
                         self._internal_setitem__(id, tmpobj)
+                    if self.sub_split:
+                        for sobj in self._objects[id]._data[self.sub_split]:
+                            sobj._setParent(self._objects[id])
+                        self._objects[id]._data[self.sub_split]._setParent(self._objects[id])
+
                     self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
             except Exception, x:
                 logger.warning("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
@@ -228,6 +233,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def delete(self, ids):
         for id in ids:
+            self._internal_del__(id)
             fn = self.get_fn(id)
             try:
                 os.unlink(os.path.dirname(fn)+".index")
@@ -246,7 +252,7 @@ class GangaRepositoryLocal(GangaRepository):
                 os.removedirs(os.path.dirname(fn))
             except OSError:
                 pass
-            self._internal_del__(id)
+
 
     def lock(self,ids):
         locked_ids = self.sessionlock.lock_ids(ids)
