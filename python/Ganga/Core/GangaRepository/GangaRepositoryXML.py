@@ -83,6 +83,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def update_index(self,id = None):
         # First locate and load the index files
+        print "updating index..."
         obj_chunks = [d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
         loaded_obj = 0
         loaded_cache = 0
@@ -128,6 +129,7 @@ class GangaRepositoryLocal(GangaRepository):
                     except Exception:
                         logger.warning("Failed to load id %i!" % (id))
         logger.warning("Updated cache: Loaded %i objects, %i cached objects and refreshed %i objects from cache" % (loaded_obj,loaded_cache,reloaded_cache))
+        print "updated index done"
 
     def add(self, objs):
         ids = self.sessionlock.make_new_ids(len(objs))
@@ -243,7 +245,10 @@ class GangaRepositoryLocal(GangaRepository):
                 if os.path.isdir(name):
                     for sfn in os.listdir(name):
                         rmrf(os.path.join(name,sfn))
-                    os.removedirs(name)
+                    try:
+                        os.removedirs(name)
+                    except OSError:
+                        pass
                 else:
                     try:
                         os.unlink(name)
