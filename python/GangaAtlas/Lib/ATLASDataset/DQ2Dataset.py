@@ -2,11 +2,11 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.34 2009-06-04 10:19:46 elmsheus Exp $
+# $Id: DQ2Dataset.py,v 1.34.2.1 2009-08-06 08:49:09 ebke Exp $
 ###############################################################################
 # A DQ2 dataset
 
-import sys, os, re, urllib, commands, imp, threading, time, fnmatch
+import sys, os, re, urllib, commands, threading, time, fnmatch
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
@@ -1279,6 +1279,9 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#Revision 1.34  2009/06/04 10:19:46  elmsheus
+#Add exception for listMetaReplica
+#
 #Revision 1.33  2009/06/04 10:04:55  elmsheus
 #Aquire locks for dq2 calls in dq2_list_locations_siteindex
 #

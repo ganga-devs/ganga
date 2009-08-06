@@ -102,6 +102,10 @@ class Registry(object):
         its.sort()
         return its
 
+    def iteritems(self):
+        """ Return the items (ID,obj) in this registry."""
+        return self.items()
+
     def keys(self):
         """ Returns the list of ids of this registry """
         return self.ids()

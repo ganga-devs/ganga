@@ -239,20 +239,17 @@ class GangaRepositoryLocal(GangaRepository):
                 os.unlink(os.path.dirname(fn)+".index")
             except OSError:
                 pass
-            os.unlink(fn)
-            try:
-                os.unlink(fn+"~")
-            except OSError:
-                pass
-            try:
-                os.unlink(fn+".new")
-            except OSError:
-                pass
-            try:
-                os.removedirs(os.path.dirname(fn))
-            except OSError:
-                pass
-
+            def rmrf(name):
+                if os.path.isdir(name):
+                    for sfn in os.listdir(name):
+                        rmrf(os.path.join(name,sfn))
+                    os.removedirs(name)
+                else:
+                    try:
+                        os.unlink(name)
+                    except OSError:
+                        pass
+            rmrf(os.path.dirname(fn))
 
     def lock(self,ids):
         locked_ids = self.sessionlock.lock_ids(ids)

@@ -13,5 +13,7 @@ try:
  raise Exception('GPI should not allow jobs.remove(x=True) to be executed!')
 except AttributeError:
  pass
+except TypeError:
+ pass
 
 jobs.remove(keep_going=True) #OK

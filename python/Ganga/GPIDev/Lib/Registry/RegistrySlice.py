@@ -37,6 +37,8 @@ class RegistrySlice(object):
     def do_collective_operation(self,keep_going,method,*args,**kwds):
         """
         """
+        if not type(keep_going) is bool:
+            raise TypeError("keep_going must be a boolean. Probably you wanted to do %s(%s).%s()" % (keep_going,self.name,keep_going,method))
         result = []
         for id,obj in self.objects.iteritems():
             try:

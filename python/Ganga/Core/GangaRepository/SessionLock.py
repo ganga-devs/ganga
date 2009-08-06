@@ -55,7 +55,7 @@ class SessionLock(GangaThread):
                     except ValueError:
                         print "DEBUG: INVALID SESSION LINE ", s
                         continue
-                    if dtstamp < 20 and not name == self.session_name: # kill old sessions
+                    if dtstamp < 10 and not name == self.session_name: # kill old sessions
                         current_session_str += s + "\n"
                         current_sessions.append(name)
                 current_session_str += "%i %s\n" % (ctime, self.session_name)
@@ -102,6 +102,22 @@ class SessionLock(GangaThread):
                     fobj.close() # This removes the fcntl lock!
             finally:
                 self._intlock.release()
+
+        # Remove session from lockfile
+        self._intlock.acquire()
+        try:
+            file(self.fn,"a+").close() # create if not there
+            fobj = file(self.fn,"r+")
+            fcntl.lockf(fobj.fileno(),fcntl.LOCK_EX)
+            try:
+                lines = [l for l in fobj.readlines() if not l.endswith(self.session_name+"\n")]
+                fobj.truncate(0)
+                fobj.writelines(lines)
+                fobj.flush()
+            finally:
+                fobj.close() # This removes the fcntl lock!
+        finally:
+            self._intlock.release()
         self.unregister()
 
 class SessionLockManager(object):

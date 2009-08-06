@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: SFrameARA.py,v 1.2 2008-11-24 16:12:50 mbarison Exp $
+# $Id: SFrameARA.py,v 1.2.4.1 2009-08-06 08:49:09 ebke Exp $
 ################################################################################
 import os, socket, pwd, commands, re, string
 
@@ -130,7 +130,7 @@ class SFrameARA(IApplication):
 
     def syncConfig(self, masterClean = True, athenaClean = True, sframeClean = True):
 
-        self._setDirty(1)
+        self._setDirty()
 
         # Copy config between objects in this order:
         # Master to slaves
@@ -182,6 +182,9 @@ config = makeConfig('SFrameARA','SFrameARA configuration parameters')
 logger = getLogger('SFrameARA')
 
 #$Log: not supported by cvs2svn $
+#Revision 1.2  2008/11/24 16:12:50  mbarison
+#*** empty log message ***
+#
 #Revision 1.1  2008/11/19 15:43:01  mbarison
 #first version
 #
