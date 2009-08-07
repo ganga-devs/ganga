@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-svn-release,v 1.1 2009-07-31 09:10:19 moscicki Exp $
+# $Id: ganga-svn-release,v 1.2 2009-08-07 13:17:35 gangage Exp $
 ################################################################################
 
 import os,sys,time,re,shutil
@@ -79,12 +79,13 @@ def askYesNo(msg):
     else:
         return None
 
-def acmd(cmdpath):
+def acmd(cmdpath,ignore_errors=False):
     print 'doing:',cmdpath
     print
     if os.system(cmdpath):
-        print "problem with executing: ",cmdpath
-        sys.exit(1)
+        if not ignore_errors:
+            print "problem with executing: ",cmdpath
+            sys.exit(1)
         
 def toolcmd(cmd):
     if CONFIG['toolsdir']:
@@ -106,10 +107,10 @@ class CollectTags:
         #frelnotes_all = '%(releasenotesdir)s/ReleaseNotes' % CONFIG    
         #acmd('cat %s %s >> .ReleaseNotes.tmp && mv .ReleaseNotes.tmp %s ' % (frelnotes,frelnotes_all,frelnotes_all))
         print 'Add/commit ReleaseNotes-%(version)s to SVN' % CONFIG
-        acmd('cd %(releasenotesdir)s && (svn add ReleaseNotes-%(version)s ; svn commit -m "Added ReleaseNotes-%(version)s" ReleaseNotes-%(version)s)' % CONFIG)
+        acmd('cd %(releasenotesdir)s && (svn add --force ReleaseNotes-%(version)s ; svn commit -m "Added ReleaseNotes-%(version)s" ReleaseNotes-%(version)s)' % CONFIG)
         print 
         print 'Add/commit %(configdir)s/PACKAGES-%(version)s to SVN' % CONFIG
-        acmd('cd %(configdir)s && (svn add PACKAGES-%(version)s ; svn commit -m "Added PACKAGES-%(version)s" PACKAGES-%(version)s)' % CONFIG)
+        acmd('cd %(configdir)s && (svn add --force PACKAGES-%(version)s ; svn commit -m "Added PACKAGES-%(version)s" PACKAGES-%(version)s)' % CONFIG)
 
 class PrereleaseCommand:
     "PRE: create the PRE-RELEASE in the prereldir"
@@ -142,7 +143,7 @@ class PrereleaseCommand:
                 return
 
         # checkout to ganga directory and rename it to prerelease version name
-        toolcmd('ganga-checkout -v %(version)s %(installdir)s'%CONFIG)
+        toolcmd('ganga-svn-checkout -v %(version)s %(installdir)s'%CONFIG)
         #acmd('ls /afs/cern.ch/sw/ganga/install/ganga')
         acmd('mv %(installdir)s/ganga %(prereldir)s'%CONFIG)
         
@@ -177,7 +178,7 @@ class GenerateConfigFilesCommand:
     def do(self):
         gencmd = '%(prereldir)s/bin/ganga %%s %(toolsdir)s/generate_template_file.gpi'%CONFIG
 
-        acmd('cd %(prereldir)s; cvs update -Ad templates'%CONFIG)
+        acmd('cd %(prereldir)s; svn update templates'%CONFIG)
 
         for x in GANGA_ACCOUNTS:
             if not x[0] in ['Ganga','GangaLHCb','GangaAtlas']:
@@ -193,7 +194,7 @@ class GenerateConfigFilesCommand:
             print
 
 class CommitConfigFilesCommand:
-    "COMMIT CONFIG FILES: commit to cvs the previously generated config files (run this command after you've generated all config files on all accounts)"
+    "COMMIT CONFIG FILES: commit to svn the previously generated config files (run this command after you've generated all config files on all accounts)"
     def do(self):
         import glob
         
@@ -206,7 +207,7 @@ class CommitConfigFilesCommand:
 
         for templ in config_templates:
             pars.update({'template_file': templ})
-            acmd('cd %(configtemplatedir)s && (cvs add %(template_file)s ; cvs commit -m "Automatically updated template for %(version)s" %(template_file)s)' % pars)
+            acmd('cd %(configtemplatedir)s && (svn add %(template_file)s ; svn commit -m "Automatically updated template for %(version)s" %(template_file)s)' % pars)
 
         print 'done'
     
@@ -287,13 +288,16 @@ class TagCommand:
             return
 
         toolcmd('prepdist %(prereldir)s clean'%CONFIG)
-        
-        tagcmd = "cd %(prereldir)s && cvs -d %(svnurl)s tag -F %(tag)s" % CONFIG
+
+        acmd("svn delete --force %(svnurl)s/tags/%(tag)s -m 'deleting while creating global tag by the release tool'"%CONFIG,ignore_errors=True)
+
+        #acmd("svn mkdir %(svnurl)s/tags/%(tag)s -m 'ganga-release tool'"%CONFIG)
+        tagcmd = "cd %(installdir)s && svn copy %(version-pre)s %(svnurl)s/tags/%(tag)s -m 'global tag done from %(version-pre)s'" % CONFIG
 
         acmd(tagcmd)
 
         print
-        print 'A global tag %(tag)s has been created in the CVS!'%CONFIG
+        print 'A global tag %(tag)s has been created in the SVN!'%CONFIG
 
 class ReleaseCommand:
     "RELEASE: make a release based on a previously created GLOBAL TAG and create the distribution kits"
@@ -305,7 +309,7 @@ class ReleaseCommand:
 
         print 'Exporting sources with GLOBAL TAG %(tag)s' % CONFIG
 
-        exportcmd = "cd %(installdir)s && cvs -d %(svnurl)s export -r %(tag)s -d %(version)s ganga " % CONFIG
+        exportcmd = "cd %(installdir)s && svn export %(svnurl)s/tags/%(tag)s %(version)s" % CONFIG
         acmd(exportcmd)
             
         print 'Sources with GLOBAL TAG %(tag)s have been exported ' % CONFIG

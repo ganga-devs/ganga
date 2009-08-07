@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-svn-checkout,v 1.1 2009-07-30 13:30:56 moscicki Exp $
+# $Id: ganga-svn-checkout,v 1.2 2009-08-07 13:17:35 gangage Exp $
 ################################################################################
 
 import os,sys
@@ -33,20 +33,32 @@ def update_from_globals(d):
     d.update(dict(svncmd=svncmd,svnurl=svnurl,platf=platf,version=version))
     return d
 
-def shellcmd(cmd):
+def shellcmd(cmd,ignore_errors=False):
     print 'doing:',cmd
     if not dryrun:
         if os.system(cmd):
-            print 'error doing: ',cmd
-            sys.exit(1)
+            if not ignore_errors:
+                print 'error doing: ',cmd
+                sys.exit(1)
+
+def remove_all_files_but(dir,exceptions):
+    for x in os.listdir(dir):
+        if not x in exceptions:
+            fn = os.path.join(dir,x)
+            if not os.path.isdir(fn):
+                os.remove(fn)
+
+def makedirs(d):
+    try:
+        os.makedirs(d)
+    except OSError,x:
+        import errno
+        if x.errno != errno.EEXIST:
+            raise
         
 def export_tags(tagfile):
 
     print 'exporting tags from file',tagfile
-
-    # checkout top level ganga module (all direct files are taken from trunk and are not versioned by tags)
-    cmd = 'svn co --depth files %(svnurl)s/trunk/ganga ganga'%dict(svnurl=svnurl)
-    shellcmd(cmd)
 
     tags = []
 
@@ -62,9 +74,7 @@ def export_tags(tagfile):
         print d
         update_from_globals(d)
 
-	shellcmd('rm -rf %(pkgname)s'%d)
-                  
-        cmd = 'svn %(svncmd)s %(svnurl)s/tags/%(tagname)s/%(pkgname)s %(pkgname)s' %d
+        cmd = 'cd %(pkgname)s && svn switch %(svnurl)s/tags/packages/%(tagname)s'%d
         shellcmd(cmd)
         
 
@@ -89,6 +99,8 @@ except IndexError:
 for o,a in opts:
     if o == '--export':
         svncmd = 'export'
+        print '--export option NOT MIGRATED TO SVN YET'
+        sys.exit(-1)
 
     if o == '--checkout':
         svncmd = 'co'
@@ -115,47 +127,30 @@ os.environ['PATH'] += ':'+sys.path[0]
 topdir = os.path.realpath(topdir)
 os.chdir(topdir)
 
-
-# when exporting config one needs to use -D now because config files are not tagged...
-#if svncmd == 'export':
-#    format['exopt'] = '-D now'
-
 if version in ['HEAD','trunk']:
     print '...checking out the trunk (HEAD)...'
     cmd = 'svn %(svncmd)s %(svnurl)s/trunk/ganga' % format
     shellcmd(cmd)
     sys.exit(0)
 
+# --export option disabled for now
+
+d = update_from_globals({})
+
+#get all
+shellcmd('svn checkout %(svnurl)s/trunk/ganga ganga'%d)
+
 if version is None:
     tagfiles = [pfile]
 else:
-
-    d = update_from_globals({})
-
     tagfiles = ["ganga/release/config/PACKAGES-%(version)s" % d]
     extrafiles = ["ganga/release/ReleaseNotes-%(version)s" % d]
-
-    shellcmd('svn %(svncmd)s --depth empty %(svnurl)s/trunk/ganga/release ganga/release'%d)
-    shellcmd('svn %(svncmd)s --depth empty %(svnurl)s/trunk/ganga/release/config ganga/release/config'%d)
-
-    # export and checkout must be handled differently for FILES
-    if svncmd == 'export':
-        shellcmd('svn export %(svnurl)s/trunk/ganga/release/config/PACKAGES-%(version)s ganga/release/config//PACKAGES-%(version)s'%d)
-        shellcmd('svn export %(svnurl)s/trunk/ganga/release/ReleaseNotes-%(version)s ganga/release/ReleaseNotes-%(version)s'%d)
-    else:
-        shellcmd('svn update ganga/release/config//PACKAGES-%(version)s'%d)
-        shellcmd('svn update ganga/release/ReleaseNotes-%(version)s'%d)
-
+    
+    #clean up
+    remove_all_files_but('ganga/release',['ReleaseNotes-%(version)s'%d,'config'])
+    remove_all_files_but('ganga/release/config',['PACKAGES-%(version)s'%d])
+        
 
 for f in tagfiles:
     export_tags(f)
 
-# updated: if ganga/ top dir has any files (as it's case now: LICENSE_GPL and README) and it's tagged
-# the release/config/PACKAGES-<version> and release/ReleaseNotes-<version> files have to be re-checked out
-# since they are removed when ganga/ dir is updated
-#if version:
-#    print ' Checking out the release notes '
-#    tagfiles = ["ganga/release/config/PACKAGES-%(version)s" % format]
-#    extracheckouts = ["ganga/release/ReleaseNotes-%(version)s" % format]
-#    cmd = 'svn -d %(svnurl)s %(svncmd)s %(exopt)s ' % format + reduce(lambda x,y: x+' '+y, tagfiles+extracheckouts)
-#    shellcmd(cmd)
