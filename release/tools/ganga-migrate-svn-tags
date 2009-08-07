@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-migrate-svn-tags,v 1.1 2009-08-07 13:17:34 gangage Exp $
+# $Id: ganga-migrate-svn-tags,v 1.2 2009/08/07 14:32:08 gangage Exp $
 ################################################################################
 
 
@@ -12,7 +12,8 @@ import os, sys
 
 dryrun = False
 
-svnurl='svn+ssh://svn.cern.ch/svn/cvs2svn/svnconverted/ganga'
+#svnurl='svn+ssh://svn.cern.ch/svn/cvs2svn/svnconverted/ganga'
+svnurl='svn+ssh://svn.cern.ch/reps/ganga'
 
 def shellcmd(cmd,ignore_errors=False):
     print 'doing:',cmd
