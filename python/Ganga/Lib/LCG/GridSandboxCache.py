@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridSandboxCache.py,v 1.10 2009-07-16 10:41:17 hclee Exp $
+# $Id: GridSandboxCache.py,v 1.9 2009-03-12 12:26:16 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -18,6 +18,7 @@ import time
 import random
 import md5
 
+from sets import Set
 from types import *
 from urlparse import urlparse
 

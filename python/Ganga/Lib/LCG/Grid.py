@@ -43,15 +43,13 @@ class Grid(object):
             logger.warning('LCG-%s UI has not been configured. The plugin has been disabled.' % self.middleware)
             return
         else:
-            #create credential for this Grid object
-            self.active = self.check_proxy()
+            lfc_host = self.__get_default_lfc__()
+            if lfc_host:
+                self.shell.env['LFC_HOST'] = lfc_host
+                logger.debug('set LFC_HOST of %s UI to %s.' % (self.middleware,lfc_host))
 
-            #looking for default LFC when the shell is Grid object is activated
-            if self.active:
-                lfc_host = self.__get_default_lfc__()
-                if lfc_host:
-                    self.shell.env['LFC_HOST'] = lfc_host
-                    logger.debug('set LFC_HOST of %s UI to %s.' % (self.middleware,lfc_host))
+#       create credential for this Grid object
+        self.active = self.check_proxy()
 
     def __setattr__(self,attr,value):
         object.__setattr__(self, attr, value)
@@ -92,16 +90,14 @@ class Grid(object):
             else:
                 logger.warning('ConfigVO configuration ignored by %s middleware. Set Config instead.' % self.middleware)
 
-        else:
-            # 2. vo attached in the voms proxy
-            myvo = self.get_proxy().voname()
-            if myvo:
-                msg += 'as %s.' % myvo
-                if self.middleware == 'EDG':
-                    submit_option = '--vo %s' % myvo
-            else: # 3. no vo information is found
-                logger.warning('No Virtual Organisation specified in the configuration. The plugin has been disabeled.')
-                return None
+        elif self.__get_proxy_voname__(): # 2. vo attached in the voms proxy
+            msg += 'as %s.' % self.__get_proxy_voname__()
+        elif self.config['VirtualOrganisation']: # 3. vo is given explicitely 
+            submit_option = '--vo %s' % self.config['VirtualOrganisation']
+            msg += 'as %s.' % self.config['VirtualOrganisation']
+        else: # 4. no vo information is found
+            logger.warning('No Virtual Organisation specified in the configuration. The plugin has been disabeled.')
+            return None 
 
         # general WMS options
         # NB. please be aware the config for gLite WMS is NOT compatible with the config for EDG RB
@@ -139,14 +135,25 @@ class Grid(object):
             logger.warning('output\n%s\n',cmd_output)
             logger.warning('end of output')
 
+    def __get_proxy_voname__(self):
+        '''Check validity of proxy vo'''
+
+        # for EDG, we never check it
+        if self.middleware == 'EDG':
+            return None
+        else:
+            logger.debug('voms of credential: %s' % self.credential.voms)
+            return self.credential.voms
+
     def __get_default_lfc__(self):
         '''Gets the default lfc host from lcg-infosites'''
 
         cmd = 'lcg-infosites'
 
-        rc, output, m = self.shell.cmd1('%s --vo %s lfc' % (cmd,self.get_proxy().voname()),allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s --vo %s lfc' % (cmd,self.config['VirtualOrganisation']),allowed_exit=[0,255])
 
         if rc != 0:
+            #self.__print_gridcmd_log__('lcg-infosites',output)
             return None
         else:
             lfc_list = output.strip().split('\n')
@@ -185,16 +192,16 @@ class Grid(object):
 
         return glite_ids
 
-    def get_proxy(self):
-        '''Get the credential object associated with the Grid object'''
-        return self.credential
-
     def check_proxy(self):
         '''Check the proxy and prompt the user to refresh it'''
 
         if self.credential is None:
             self.credential = getCredential('GridProxy',self.middleware)
-        
+
+        if self.middleware == 'GLITE':
+            self.credential.voms = self.config['VirtualOrganisation'];
+            self.credential = getCredential('GridProxy', 'GLITE')
+
         status = self.credential.renew(maxTry=3)
 
         if not status:
@@ -203,7 +210,7 @@ class Grid(object):
 
         return True
 
-    def list_match(self, jdlpath, ce=None):
+    def list_match(self, jdlpath):
         '''Returns a list of computing elements can run the job'''
 
         re_ce = re.compile('^\s*\-\s*(\S+\:2119\/\S+)\s*$')
@@ -211,7 +218,7 @@ class Grid(object):
         matched_ces = []
 
         if self.middleware == 'EDG':
-            cmd = 'edg-job-list-match'
+            cmd = 'edg-job-list-match --rank'
         else:
             cmd = 'glite-wms-job-list-match -a'
             
@@ -236,39 +243,33 @@ class Grid(object):
 
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd), allowed_exit=[0,255])
 
+        if output: output = '%s' % output.strip()
+
         for l in output.split('\n'):
-            
             matches = re_ce.match(l)
-            
             if matches:
                 matched_ces.append(matches.group(1))
 
-        if ce:
-            if matched_ces.count(ce) > 0:
-                matched_ces = [ ce ]
-            else:
-                matched_ces = [ ]
-
-        logger.debug('== matched CEs ==')
-        for myce in matched_ces:
-            logger.debug(myce)
-        logger.debug('== matched CEs ==')
-
         return matched_ces
 
-    def submit(self, jdlpath, ce=None, doListMatch=False, jdlpathForListMatch=None):
+    def submit(self, jdlpath, ce=None, isCollection=False, drySubmit=False):
         '''Submit a JDL file to LCG'''
 
-        ## doing job list match if required 
-        if doListMatch:
-            if not jdlpathForListMatch:
-                jdlpathForListMatch = jdlpath
-
-            matches = self.list_match(jdlpathForListMatch, ce)
+        ## doing job list match if in "DrySubmit" mode
+        if drySubmit:
+            matches = []
+            if not ce:
+                if not isCollection:
+                    matches = self.list_match(jdlpath)
+                else:
+                    logger.warning('resource matching not possible for collection job')
+            else:
+                matches.append(ce)
 
             if not matches:
-                logger.warning('no matched resources')
                 return
+            else:
+                return 'dry submit done'
 
         ## doing job submission
         if self.middleware == 'EDG':
@@ -682,10 +683,8 @@ class Grid(object):
 
             elif key in ['PerusalFileEnable', 'AllowZippedISB']:
                 text += 'PerusalFileEnable = %s;\n' % value                
-            elif key in ['DataRequirements']:
-                text += 'DataRequirements = { %s };\n' % value
             else:
-                text += '%s = "%s";\n' % (key,value)
+                text += '%s = "%s";\n' % (key,value)  
 
         return text
 

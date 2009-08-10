@@ -23,7 +23,7 @@ class TestGaudi(GangaGPITestCase):
         assert dv._impl.user_release_area, 'ura not set automatically'
 
     def test_Gaudi_master_configure(self):
-        job = Job(application=Gauss(optsfile='./Gauss-Job.py'))
+        job = Job(application=Gauss(optsfile='./Gauss.opts'))
         gauss = job.application
         job.inputdata = ['dummy1.in','dummy2.in']
         job.outputdata = ['Gauss.sim']

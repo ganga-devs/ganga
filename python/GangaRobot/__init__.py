@@ -48,13 +48,13 @@ def _initconfig():
     config.addOption('BaseFinisher_Timeout',3600,
                      'Timeout (seconds) for waiting for jobs to finish')
     config.addOption('BaseExtractor_XmlFile',
-                     '~/gangadir_robot/robot/extract/${runid}.xml',
+                     '~/gangadir/robot/extract/${runid}.xml',
                      'Filename for XML extract data, ${runid} is replaced by current run id')
     config.addOption('BaseReporter_TextFile',
-                     '~/gangadir_robot/robot/report/${runid}.txt',
+                     '~/gangadir/robot/report/${runid}.txt',
                      'Filename for TEXT report data, ${runid} is replaced by current run id')
     config.addOption('BaseReporter_HtmlFile',
-                     '~/gangadir_robot/robot/report/${runid}.html',
+                     '~/gangadir/robot/report/${runid}.html',
                      'Filename for HTML report data, ${runid} is replaced by current run id')
 
     config.addOption('CoreSubmitter_Patterns',

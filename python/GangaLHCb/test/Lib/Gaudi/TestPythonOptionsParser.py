@@ -10,7 +10,7 @@ class TestPythonOptionsParser(GangaGPITestCase):
         job = Job(application=Gauss())
         gauss = job.application._impl
         gauss._getshell()
-        optsfiles = ['./TestGaudi/Gauss-Job.py']
+        optsfiles = ['./TestGaudi/Gauss.opts']
         self.extraopts = 'EventSelector(Input=[\"DATAFILE=\'LFN:dummy.dst\' TYP=\'POOL_ROOTTREE\' OPT=\'READ\'\"])'
         self.parser = PythonOptionsParser(optsfiles,self.extraopts,gauss.shell)
         self.job = job
@@ -36,7 +36,8 @@ class TestPythonOptionsParser(GangaGPITestCase):
                             ['NTupleSvc','HistogramPersistencySvc',
                              'MicroDSTStream'])
         sandbox, data = self.parser.get_output_files()
-        ok = sandbox.count('GaussHistos.root') == 1  and \
+        ok = sandbox.count('GaussMonitor.root') == 1 and \
+             sandbox.count('GaussHistos.root') == 1  and \
              data.count('Gauss.sim') == 1
         assert ok, 'collecting/sorting of output files failed (default)'
         # move the .sim file
@@ -44,16 +45,18 @@ class TestPythonOptionsParser(GangaGPITestCase):
                             ['NTupleSvc','HistogramPersistencySvc',
                              'MicroDSTStream','GaussTape'])
         sandbox, data = self.parser.get_output_files()
-        ok = sandbox.count('GaussHistos.root') == 1  and \
+        ok = sandbox.count('GaussMonitor.root') == 1 and \
+             sandbox.count('GaussHistos.root') == 1  and \
              sandbox.count('Gauss.sim') == 1 and \
              data.count('Gauss.sim') == 0
         assert ok, 'collecting/sorting of output files failed (.sim->sandbox)'
         # move the .root files to data
         config.setUserValue('outputsandbox_types',['GaussTape'])
         sandbox, data = self.parser.get_output_files()
-        ok = data.count('GaussHistos.root') == 1  and \
+        ok = data.count('GaussMonitor.root') == 1 and \
+             data.count('GaussHistos.root') == 1  and \
              sandbox.count('Gauss.sim') == 1 and \
-             len(data) == 1 and len(sandbox) == 1
+             len(data) == 2 and len(sandbox) == 1
         assert ok, 'collecting/sorting of output files failed (.root->data)'
 
     def test_PythonOptionsParser_get_output(self):
@@ -67,7 +70,8 @@ class TestPythonOptionsParser(GangaGPITestCase):
         j.outputsandbox = []
         j.outputdata = None
         sandbox, data = self.parser.get_output(j)
-        ok = sandbox.count('GaussHistos.root') == 1  and \
+        ok = sandbox.count('GaussMonitor.root') == 1 and \
+             sandbox.count('GaussHistos.root') == 1  and \
              data.count('Gauss.sim') == 1
         assert ok, 'collecting/sorting of output files failed (default)'
         j.outputsandbox = ['Gauss.sim']
@@ -77,7 +81,8 @@ class TestPythonOptionsParser(GangaGPITestCase):
         j.outputsandbox = []
         j.outputdata = ['*.root']
         sandbox, data = self.parser.get_output(j)
-        ok = len(sandbox) == 0 and data.count('GaussHistos.root') == 1
+        ok = len(sandbox) == 0 and data.count('GaussMonitor.root') == 1 and \
+             data.count('GaussHistos.root') == 1
         assert ok, 'collecting/sorting of output files failed (.root->data)'
         # make sure if matches both goes to data
         j.outputsandbox = ['*.sim']
