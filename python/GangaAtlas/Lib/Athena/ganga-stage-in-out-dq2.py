@@ -267,7 +267,11 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                            and not 'ccsrm.in2p3.fr' in defaultSE:
 
                         print 'Using lcg-gt for turl retrieval ...'
-                        cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
+                        # check which version of lcg-utils we're on
+                        if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                            cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + configLOCALPROTOCOL
+                        else:
+                            cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
                         print cmd
                         try:
                             signal.signal(signal.SIGALRM, ghandler)
@@ -336,7 +340,11 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                            and configLOCALPROTOCOL!='file' \
                            and not 'ccsrm.in2p3.fr' in defaultSE:
                         print 'Using lcg-gt for turl retrieval ...'
-                        cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
+                        # check which version of lcg-utils we're on
+                        if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                            cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + configLOCALPROTOCOL
+                        else:
+                            cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
                         try:
                             signal.signal(signal.SIGALRM, ghandler)
                             signal.alarm(240)
@@ -422,7 +430,11 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     (('se03.esc.qmul.ac.uk' in defaultSE) or 'storm-fe.cr.cnaf.infn.it' in defaultSE))):
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
-            cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
+            # check which version of lcg-utils we're on
+            if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + configLOCALPROTOCOL
+            else:
+                cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
             print cmd
             try:
                 signal.signal(signal.SIGALRM, ghandler)
