@@ -410,21 +410,16 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                 pfn = re.sub('srm://','gfal:gsidcap://',pfn)
                 pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
 
-        elif (configLOCALPROTOCOL == "rfio" and configSTORAGEROOT == '/castor' \
-                 and not sURLHost == 'castorsc.grid.sinica.edu.tw') \
+        elif (configLOCALPROTOCOL == "rfio" and configSTORAGEROOT == '/castor') \
                  or localsitesrm.find('gla.scotgrid.ac.uk')>-1:
             # remove protocol and host
             pfn = re.sub('^[^:]+://[^/]+','',surl)
             # remove redundant /
             pfn = re.sub('^//','/',pfn)
-            if 'srm.grid.sinica.edu.tw' in defaultSE:
-                pfn = "rfio://castor.grid.sinica.edu.tw/?path=" + pfn
-            else:
-                pfn = "rfio:" + pfn
-        elif ( configLOCALPROTOCOL == "rfio" and \
-               ( configSTORAGEROOT == '/dpm' or sURLHost == 'castorsc.grid.sinica.edu.tw')) \
-               or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE) \
-               or ( configLOCALPROTOCOL == "file" and 'se03.esc.qmul.ac.uk' in defaultSE):
+            pfn = "rfio:" + pfn
+        elif (( configLOCALPROTOCOL == "rfio" and ( configSTORAGEROOT == '/dpm' )) \
+               or ( configLOCALPROTOCOL == "file" and \
+                    (('se03.esc.qmul.ac.uk' in defaultSE) or 'storm-fe.cr.cnaf.infn.it' in defaultSE))):
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
             cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
@@ -449,20 +444,14 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
 
             if turl and turl[0]:
                 pfn = turl[0]
-            elif 'storm-fe.cr.cnaf.infn.it' in defaultSE:
-                pfn = re.sub('srm://storm-fe.cr.cnaf.infn.it/','file:///storage/gpfs_atlas1/',surl)
             else:
-                # If CNAF TURL fails
-                if 'storm-fe.cr.cnaf.infn.it' in defaultSE:
-                    pfn = re.sub('srm://storm-fe.cr.cnaf.infn.it/','file:///storage/gpfs_atlas1/',surl)
-                else:    
-                    # remove protocol and host
-                    pfn = re.sub('^[^:]+://[^/]+','',surl)
-                    # remove redundant /
-                    pfn = re.sub('^//','/',pfn)
-                    # prepend protocol
-                    pfn = configLOCALPROTOCOL + ":" + pfn
-        # file protocol used on lustre at IFIC and LIP-LISBON (no lcg-gt)
+                # remove protocol and host
+                pfn = re.sub('^[^:]+://[^/]+','',surl)
+                # remove redundant /
+                pfn = re.sub('^//','/',pfn)
+                # prepend protocol
+                pfn = configLOCALPROTOCOL + ":" + pfn
+        # file protocol used on Storm/lustre (no lcg-gt)
         elif configLOCALPROTOCOL == "file":
             # remove protocol and host
             pfn = re.sub('^[^:]+://[^/]+','',surl)
@@ -790,15 +779,22 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
     else:
         cmd = cmd + " -d %s -l %s file://%s" %(dest, gridlfn, filename)
     rc, out = commands.getstatusoutput(cmd)
+    
     if rc == 0:
+        match = re.search('([\w]+-[\w]+-[\w]+-[\w]+-[\w]+)', out)
+        if match:
+            guid = match.group(1)
+        else:
+            guid = out
         # Open output_guids to transfer guids back to GANGA
         f = open('output_guids','a')
-        print >>f, '%s,%s' %(out,siteID)
+        print >>f, '%s,%s' %(guid,siteID)
         f.close()
         if globalVerbose:
             print cmd
             print out
-        guid = re.sub('^guid:','',out)
+            print guid
+        guid = re.sub('^guid:','',guid)
     else:
         print 'ERROR during execution of %s' %cmd
         print rc, out
@@ -1235,21 +1231,25 @@ if __name__ == '__main__':
             out2 = out.split('%')
             if len(out2)>1:
                 prot = out2[1].split('&')
-                if 'rfio' in prot:
+                if 'file' in prot:
+                    configLOCALPROTOCOL = 'file'
+                    configSTORAGEROOT = '/storage'
+                    configLOCALPREFIX = 'file:'
+                elif 'rfio' in prot:
                     configLOCALPROTOCOL = 'rfio'
                     configLOCALPREFIX = 'rfio:'
                     if localsitesrm.find('/dpm/')>=0:
                         configSTORAGEROOT = '/dpm'
                     else:
                         configSTORAGEROOT = '/castor'
-                elif 'dcap' in prot or 'gsidcap' in prot:
+                elif 'dcap' in prot:
                     configLOCALPROTOCOL = 'dcap'
                     configSTORAGEROOT = '/pnfs'
                     configLOCALPREFIX = 'dcap:'
-                elif 'file' in prot:
-                    configLOCALPROTOCOL = 'file'
-                    configSTORAGEROOT = '/storage'
-                    configLOCALPREFIX = 'file:'
+                elif 'gsidcap' in prot:
+                    configLOCALPROTOCOL = 'gsidcap'
+                    configSTORAGEROOT = '/pnfs'
+                    configLOCALPREFIX = 'gsidcap:'
                 else:
                     configLOCALPROTOCOL = ''
                     configSTORAGEROOT = '/'
@@ -1259,26 +1259,15 @@ if __name__ == '__main__':
                 configSTORAGEROOT = '/'
                 configLOCALPREFIX = ''
             # Hack for SFU, SNIP, UAM
-            if localsiteid in [ 'SFU', 'SINP', 'UAM' ] or localsiteid.startswith('SFU') or localsiteid.startswith('TRIUMF') or localsiteid.startswith('ALBERTA'):  
+            if localsiteid in [ 'SFU', 'SINP' ] or localsiteid.startswith('SFU') or localsiteid.startswith('TRIUMF') or localsiteid.startswith('ALBERTA'):  
                 configLOCALPROTOCOL = 'dcap'
                 configSTORAGEROOT = '/pnfs'
                 configLOCALPREFIX = 'dcap:'
-            if localsiteid in [ 'MANC', 'MANC-2' ] or localsiteid.startswith('MANC') or localsiteid.startswith('SARA'):
-                configLOCALPROTOCOL = 'gsidcap'
-                configSTORAGEROOT = '/pnfs'
-                configLOCALPREFIX = 'dcap:'
-            # RAL uses castor
-            if localsiteid in [ 'RAL', 'RALDISK' ] or localsiteid.startswith('RAL-LCG2'):
-                configLOCALPROTOCOL = 'rfio'
-                configSTORAGEROOT = '/castor'
-                configLOCALPREFIX = 'rfio:'
-            # CNAF uses StoRM, needs extra treatment
-            # IFIC, LIP-LISBON use lustre
-            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1') or localsiteid.startswith('IFIC') or localsiteid.startswith('LIP-LISBON'):
+            # Hack for CNAF, IFIC
+            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1') or localsiteid.startswith('IFIC'):
                 configLOCALPROTOCOL = 'file'
                 configSTORAGEROOT = '/storage'
                 configLOCALPREFIX = 'file:'
-
             # if no info is found
             if configLOCALPROTOCOL == '':
                 if localsitesrm.find('/pnfs/')>=0:
@@ -1297,7 +1286,7 @@ if __name__ == '__main__':
                     configLOCALPROTOCOL = ""
                     configLOCALPREFIX = ""
                     configSTORAGEROOT = ""
-                elif localsitesrm.find('/lustre/')>=0:
+                elif localsitesrm.find('/lustre/')>=0 or localsitesrm.find('/storm')>=0:
                     configLOCALPROTOCOL = 'file'
                     configSTORAGEROOT = '/storage'
                     configLOCALPREFIX = 'file:'
