@@ -106,7 +106,13 @@ if (io_type in ['FILE_STAGER']):
             pass
 
         if protocols:
-            my_protocol = protocols[0]
+
+            ## make sure the 'file' protocl will be used if it's presented in the protocol list
+            ##  - usually a case of Storm-based SE
+            if 'file' in protocols:
+                my_protocol = 'file'
+            else:
+                my_protocol = protocols[0]
 
     ## avoid using dcap or gsidcap until the load on SE with dcap is solved 
     #if my_protocol in ['dcap', 'gsidcap']:
