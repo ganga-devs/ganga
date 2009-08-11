@@ -269,7 +269,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         except AttributeError:
             pass
 
-        #if output_location:
+        if job.outputdata and job.outputdata._name=='DQ2OutputDataset' and output_location == [ ]:
+            raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
+        
         environment['OUTPUT_LOCATION'] = output_location
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             environment['OUTPUT_DATASETNAME'] = output_datasetname
