@@ -65,24 +65,31 @@ stageInLCG(){
 	echo "Error in local dq2 setup, DQ2_LOCAL_SITE_ID not set. Aborting"
         return 12
     fi
-    LOCALSITE=`echo $DQ2_LOCAL_SITE_ID | sed -e "s:_.*::"`
-    newSITES=""
-    for site in $SITES; do
-	islocal=`echo $site | grep -e $LOCALSITE`
-        if [ ! -z "$islocal" ]; then
-           newSITES="$site $newSITES"  # promote local site to the front of the list
-        else
-           newSITES="$newSITES $site"  # append all other sites to the back.
-        fi
-        SITES=$newSITES
-    done
+#    LOCALSITE=`echo $DQ2_LOCAL_SITE_ID | sed -e "s:_.*::"`
+#    newSITES=""
+#    for site in $SITES; do
+#	islocal=`echo $site | grep -e $LOCALSITE`
+#        if [ ! -z "$islocal" ]; then
+#           newSITES="$site $newSITES"  # promote local site to the front of the list
+#        else
+#           newSITES="$newSITES $site"  # append all other sites to the back.
+#        fi
+#        SITES=$newSITES
+#    done
 
-    python -V
-    python2.5 -V
-    
+#    python -V
+#    python2.5 -V
+
+    SITES=" null $SITES"
     for site in $SITES; do
-        echo "Attempting getting data from $site"
-	cmd="$dq2get --client-id=ganga -a -d -s $site -D -f $LFNS $INPUTDSET" 
+	siteflag=""
+	if [ $site != "null" ]; then
+	    echo "Attempting getting data from $site"
+	    siteflag="-s $site"
+	else
+	    echo "first attempt to get inputdata. Not specifying the site as dq2-get checks and goes for the local instance first, if available".
+	fi
+	cmd="$dq2get --client-id=ganga -a -d $siteflag -D -f $LFNS $INPUTDSET" 
 	echo $cmd
 	$cmd
 	status=$?

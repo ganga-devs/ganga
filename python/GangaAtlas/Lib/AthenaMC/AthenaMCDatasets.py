@@ -1407,7 +1407,7 @@ class AthenaMCOutputDatasets(Dataset):
                     dq2_lock.release()
                 logger.debug("found %s" % str(dsetlist))
                 if len(dsetlist)==0:
-                    logger.debug("creating container: %s", containername)
+                    logger.info("creating container: %s", containername)
                     try:
                         dq2_lock.acquire()
                         containerClient.create(containername)
@@ -1431,7 +1431,7 @@ class AthenaMCOutputDatasets(Dataset):
                         pass
 
                 # if app.se_name is set and dset has more than one locations, then subscribe dset to app.se_name to aggregate the dataset to the intended location
-                if job.application.se_name!="none":
+                if job.application.se_name and job.application.se_name!="none":
                     locations={}
                     try:
                         dq2_lock.acquire()
