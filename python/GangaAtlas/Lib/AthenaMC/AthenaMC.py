@@ -73,7 +73,17 @@ class AthenaMC(IApplication):
        from Ganga.GPIDev.Lib.Job import Job
        import time
 
+
+       trfretcode="0"
        job = self._getParent()
+       pfn = job.outputdir + "stdout.gz"
+       if os.path.exists(pfn):
+           trfretcode=commands.getoutput("zcat %s | grep 'returning transform exit code' | awk '{print $NF}'" % pfn)
+       
+
+       if trfretcode != "0":
+           logger.warning("Job %s returned non-zero transformation code %s. Please check stdout.gz with job.peek('stdout.gz')" % (str(job.id),trfretcode))
+       
        if job.outputdata:
            if job.subjobs: # master job is the only one to have subjobs...
                logger.info("entering Master job completion thread")
