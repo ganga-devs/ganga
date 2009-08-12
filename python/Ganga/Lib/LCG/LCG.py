@@ -2,7 +2,7 @@ import LCG
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.40 2009-07-20 14:23:21 hclee Exp $
+# $Id: LCG.py,v 1.39 2009-07-16 10:39:27 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -114,7 +114,7 @@ class LCG(IBackend):
         'parent_id'           : SimpleItem(defvalue='',protected=1,copyable=0,hidden=1,doc='Middleware job identifier for its parent job'),
         'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
         'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
-        'middleware'          : SimpleItem(defvalue='GLITE',protected=0,copyable=1,doc='Middleware type',checkset='__checkset_middleware__'),
+        'middleware'          : SimpleItem(defvalue='EDG',protected=0,copyable=1,doc='Middleware type',checkset='__checkset_middleware__'),
         'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
         'exitcode_lcg'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
         'reason'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status'),
@@ -182,7 +182,7 @@ class LCG(IBackend):
 
         re_token = re.compile('^token:(.*):(.*)$')
 
-        self.sandboxcache.vo = grids[self.middleware.upper()].get_proxy().voname()
+        self.sandboxcache.vo = config['VirtualOrganisation']
         self.sandboxcache.middleware = self.middleware.upper()
         self.sandboxcache.timeout    = config['SandboxTransferTimeout']
 
@@ -417,7 +417,7 @@ class LCG(IBackend):
         mt  = self.middleware.upper()
 
         logger.warning('submitting %d subjobs ... it may take a while' % len(node_jdls))
-      
+        
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
 
@@ -443,10 +443,12 @@ class LCG(IBackend):
 
             def __make_collection_jdl__(self,nodeJDLFiles=[], offset=0):
                 '''Compose the collection JDL for the master job'''
-      
+   
+                nodes = ',\n'.join(map(lambda x:'[file = "%s";]' % x, nodeJDLFiles))
+   
                 jdl = {
                     'Type'  : 'collection',
-                    'VirtualOrganisation'  : grids[mt].get_proxy().voname(),
+                    'VirtualOrganisation'  : config['VirtualOrganisation'],
                     'Nodes' : ''
                 }
    
@@ -1503,11 +1505,10 @@ sys.exit(0)
             output_sandbox += [Sandbox.OUTPUT_TARBALL_NAME]
 
         ## compose LCG JDL
-        myvoname = grids[self.middleware.upper()].get_proxy().voname()
         jdl = {
-            'VirtualOrganisation' : myvoname,
+            'VirtualOrganisation' : config['VirtualOrganisation'],
             'Executable' : os.path.basename(scriptPath),
-            'Environment': {'GANGA_LCG_VO': myvoname, 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
+            'Environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
             'StdOutput' : 'stdout',
             'StdError' : 'stderr',
             'InputSandbox' : input_sandbox,
@@ -1890,7 +1891,7 @@ def __getVOFromConfigVO__(file):
 # configuration preprocessor : avoid VO switching
 def __avoidVOSwitch__(opt,val):
 
-    if not opt in ['ConfigVO']:
+    if not opt in ['VirtualOrganisation','ConfigVO']:
         # bypass everything irrelevant to the VO 
         return val
     elif opt == 'ConfigVO' and val == '':
@@ -1900,15 +1901,14 @@ def __avoidVOSwitch__(opt,val):
         # try to get current value of VO
         if config['ConfigVO']:
             vo_1 = __getVOFromConfigVO__(config['ConfigVO'])
-        elif grids['GLITE']:
-            vo_1 = grids['GLITE'].get_proxy().voname()
-        elif grids['EDG']:
-            vo_1 = grids['EDG'].get_proxy().voname()
         else:
-            vo_1 = ''
+            vo_1 = config['VirtualOrganisation']
 
         # get the VO that the user trying to switch to
-        vo_2 = __getVOFromConfigVO__(val)
+        if opt == 'ConfigVO':
+            vo_2 = __getVOFromConfigVO__(val)
+        else:
+            vo_2 = val
  
         # if the new VO is not the same as the existing one, raise ConfigError
         if vo_2 != vo_1:
@@ -1985,19 +1985,19 @@ config = makeConfig('LCG','LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')
 
 # set default values for the configuration parameters
-config.addOption('EDG_ENABLE',False,'enables/disables the support of the EDG middleware')
+config.addOption('EDG_ENABLE',True,'enables/disables the support of the EDG middleware')
 
 config.addOption('EDG_SETUP', '/afs/cern.ch/project/gd/LCG-share/current/etc/profile.d/grid_env.sh', \
                  'sets the LCG-UI environment setup script for the EDG middleware', \
                  filter=Ganga.Utility.Config.expandvars)
 
-config.addOption('GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
+config.addOption('GLITE_ENABLE', False, 'Enables/disables the support of the GLITE middleware')
 
 config.addOption('GLITE_SETUP', '/afs/cern.ch/project/gd/LCG-share/current/etc/profile.d/grid_env.sh', \
                  'sets the LCG-UI environment setup script for the GLITE middleware', \
                  filter=Ganga.Utility.Config.expandvars)
 
-#config.addOption('VirtualOrganisation','dteam','sets the name of the grid virtual organisation')
+config.addOption('VirtualOrganisation','dteam','sets the name of the grid virtual organisation')
 
 config.addOption('ConfigVO','','sets the VO-specific LCG-UI configuration script for the EDG resource broker', \
                  filter=Ganga.Utility.Config.expandvars)
@@ -2062,10 +2062,6 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
-# Revision 1.39  2009/07/16 10:39:27  hclee
-# bugfix for https://savannah.cern.ch/bugs/?50048
-#  - RetryCount and ShallowRetryCount to 0 is now included in JDL
-#
 # Revision 1.38  2009/07/15 08:23:29  hclee
 # add resource match-making as an option before doing real job submission to WMS.
 #  - this option can be activated by setting config.LCG.MatchBeforeSubmit = True
