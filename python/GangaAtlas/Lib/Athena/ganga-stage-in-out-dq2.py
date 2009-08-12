@@ -564,47 +564,52 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
     # open jobO
     joName = 'input.py'
     outFile = open(joName,'w')
-    if tag:
-        if type == 'TAG_REC':
-            if version >= 13:
-                outFile.write('PoolTAGInput = [')
-            else:
-                outFile.write('CollInput = [')
-        else:
-            outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
-            outFile.write('%sEventSelector.InputCollections = ['%versionString)
-    else:
-        if os.environ.has_key('RECEXTYPE') and os.environ['RECEXTYPE'] == '':
 
-            try:
-                if os.environ.has_key('ATHENA_MAX_EVENTS'):
-                    evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
-                else:
-                    evtmax = -1
-            except:
-                evtmax = -1
-            outFile.write('theApp.EvtMax = %d\n' %evtmax)
-            if dtype == 'DATA':
-                outFile.write('%sByteStreamInputSvc.FullFileName = ['%versionString)
-            elif dtype == 'MC':
-                outFile.write('%sEventSelector.InputCollections = ['%versionString)
-            elif dtype == 'MuonCalibStream':
-                outFile.write('svcMgr.MuonCalibStreamFileInputSvc.InputFiles = [')
+    if os.environ['RECEXTYPE'] == '':
+
+        try:
+            if os.environ.has_key('ATHENA_MAX_EVENTS'):
+                evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
             else:
-                outFile.write('%sEventSelector.InputCollections = ['%versionString)
-        else:
-            # Write input for RecExCommon jobs
-            outFile.write('from AthenaCommon.AthenaCommonFlags import athenaCommonFlags\n')
-            outFile.write('athenaCommonFlags.Pool%sInput.set_Value_and_Lock([' %
-                          os.environ['RECEXTYPE'])
-            try:
-                if os.environ.has_key('ATHENA_MAX_EVENTS'):
-                    evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
-                else:
-                    evtmax = -1
-            except:
                 evtmax = -1
-            outFile = open('evtmax.py','w').write('theApp.EvtMax = %d\n' %evtmax)
+        except:
+            evtmax = -1
+        outFile.write('theApp.EvtMax = %d\n' %evtmax)
+        if dtype == 'DATA':
+            outFile.write('%sByteStreamInputSvc.FullFileName = ['%versionString)
+        elif dtype == 'MC':
+            outFile.write('%sEventSelector.InputCollections = ['%versionString)
+        elif dtype == 'MuonCalibStream':
+            outFile.write('svcMgr.MuonCalibStreamFileInputSvc.InputFiles = [')
+        else:
+            outFile.write('%sEventSelector.InputCollections = ['%versionString)
+
+            if tag:
+##                 if type == 'TAG_REC':
+##                     if version >= 13:
+##                         outFile.write('PoolTAGInput = [')
+##                     else:
+##                         outFile.write('CollInput = [')
+                outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
+            #outFile.write('%sEventSelector.InputCollections = ['%versionString)
+
+    else:
+        # Write input for RecExCommon jobs
+        outFile.write('from AthenaCommon.AthenaCommonFlags import athenaCommonFlags\n')
+        outFile.write('athenaCommonFlags.Pool%sInput.set_Value_and_Lock([' %
+                      os.environ['RECEXTYPE'])
+        try:
+            if os.environ.has_key('ATHENA_MAX_EVENTS'):
+                evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
+            else:
+                evtmax = -1
+        except:
+            evtmax = -1
+
+        if tag:
+            outFileEvtMax = open('evtmax.py','w').write('%sEventSelector.CollectionType="ExplicitROOT"\ntheApp.EvtMax = %d\n' % (versionString, evtmax) )
+        else:
+            outFileEvtMax = open('evtmax.py','w').write('theApp.EvtMax = %d\n' %evtmax)
             
     # loop over all files
     flatFile = 'input.txt'
@@ -612,12 +617,12 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
     
     for lfn in lfns:
         filename = files[lfn]['pfn']
-        if tag:
-            if atlas_release_major <= 12:
-                filename = re.sub('\.root\.\d+$','',filename)
-                filename = re.sub('\.root$','',filename)
-            else:
-                filename = re.sub('root\.\d+$','root',filename)
+##         if tag:
+##             if atlas_release_major <= 12:
+##                 filename = re.sub('\.root\.\d+$','',filename)
+##                 filename = re.sub('\.root$','',filename)
+##             else:
+##                 filename = re.sub('root\.\d+$','root',filename)
         # write PFN
         outFile.write('"%s",' % filename)
         outFlatFile.write('%s\n' %filename)
@@ -1416,14 +1421,20 @@ if __name__ == '__main__':
                 # execute dq2 command
                 rc, out = getstatusoutput(cmd)
                 print out
-                if (rc!=0):
+
+                bad_dq2_get = False
+                
+                for f in flist:
+                    if not os.path.exists(f):
+                        bad_dq2_get = True
+                        
+                if (rc!=0) or bad_dq2_get:
                     print "ERROR: error during dq2-get occured"
-                    rc, out = getstatusoutput(cmdretry)
+                    rc, out = getstatusoutput('export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP ; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd)
                     print out
                     if (rc!=0):
                         print "ERROR: error during retry of dq2-get occured"
                         sys.exit(EC_DQ2GET)
-
 
             tagddmFileMap = {}
             for i in xrange(0,len(taglfns)):
@@ -1440,7 +1451,12 @@ if __name__ == '__main__':
                     open(pfn)
                     fsize = os.stat(pfn).st_size
                 except IOError:
-                    print "ERROR %s not found" % name
+                    print "ERROR %s not found" % pfn
+                    rc, out = getstatusoutput('ls -ltr')
+                    print out
+                    rc, out = getstatusoutput('ls -ltr directory')
+                    print out
+                    
                     continue
                 if (fsize>0):
                     # append
@@ -1475,11 +1491,10 @@ if __name__ == '__main__':
 
                 # create symlinks as Coll utilties add .root on the end
                 filenew = tagfile + ".root" 
-                try:
-                    os.symlink(tagfile,filenew)
-                except OSError:
-                    pass
-
+                os.symlink(tagfile,filenew)
+                rc, out = getstatusoutput('ls -ltr')
+                print out
+                
                 # run CollListFileGUID
                 print "------------------------------------------_"
                 cmd = "CollListFileGUID -src " + tagfile + " RootCollection |\
@@ -1487,11 +1502,18 @@ if __name__ == '__main__':
                 print "Calling " + cmd
 
                 rc, out = getstatusoutput(cmd)
-
+                print out
+                
                 if (rc!=0):
-                    print "ERROR: error during CollListFileGUID"
+                    print "ERROR: error during CollListFileGUID. Restoring original environment variables and retrying...."                    
+                    cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd
+                    print "Calling " + cmd
+                    rc, out = getstatusoutput(cmd)
                     print out
-                    continue
+                    
+                    if (rc!=0):
+                        print "ERROR: error during CollListFileGUID. Giving up..."
+                        continue
 
                 aod_guids = out.split()
                 print repr(aod_guids)
@@ -1502,15 +1524,31 @@ if __name__ == '__main__':
                 for aod_guid in aod_guids:
 
                     vuid = dq.contentClient.queryDatasetsWithFileByGUID(aod_guid)
+                    name = ''
+                    dataset = ''
                     if len(vuid) == 0:
                         continue
-                    else: 
-                        dataset = dq.repositoryClient.resolveVUID(vuid[0])
-                        name = dataset.get('dsn')
+                    else:
+                        print repr(vuid)
+                        got_name = False
+                        vuidid = 0
+                        while not got_name:
+                            try:
+                                dataset = dq.repositoryClient.resolveVUID(vuid[vuidid])
+                                name = dataset.get('dsn')
+                                print dataset, name
+                                got_name = True
+                            except:
+                                print "ERROR Finding dataset for vuid for " + vuid[vuidid]
 
-                    if name.find("AOD") == -1:
+                            vuidid += 1
+                            if vuidid == len(vuid):
+                                print "ERROR Could not find any matching datasets."
+                                break
+
+                    if not name or not dataset:
                         continue
-
+                    
                     # store useful stuff
                     files = dq.listFilesInDataset(name)
                     out_aod_files.append( files[0][aod_guid]['lfn'] )
@@ -1569,37 +1607,52 @@ if __name__ == '__main__':
                 print out
                 sys.exit(EC_UNSPEC)
 
-            # make job option file
             dir = "."
             filepat = "\.root"
             pat = re.compile(filepat)
             filelist = os.listdir(dir)
-            joName = 'input.py'
-            outFile = open(joName,'w')
-            if datasettype in [ 'TAG_REC', 'TNT_DOWNLOAD', 'TNT_LOCAL' ]:
-                if atlas_release_major >= 13:
-                    outFile.write('PoolTAGInput = [')
-                else:
-                    outFile.write('CollInput = [')
-            else:
-                if atlas_release_major >= 13:
-                    versionString='ServiceMgr.'
-                else:
-                    versionString = ''
-                outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
-                outFile.write('%sEventSelector.RefName = "StreamAOD"\n'%versionString)
-                outFile.write('%sEventSelector.InputCollections = ['%versionString)
-
+            files = {}
             for tagfile in filelist:
                 found = re.findall(pat, tagfile)
                 if found:
                     filename = re.sub('\.root\.\d+$','',tagfile)
                     if atlas_release_major <= 12:
                         filename = re.sub('\.root$','',tagfile)
-                    outFile.write('"%s",' % filename)
-            outFile.write(']\n')
-            # close
-            outFile.close()
+                    item = {'pfn':filename,'guid':''}
+                    files[tagfile] = item
+    
+            # make job option file
+            _makeJobO(files, tag=True, type=datasettype, version=atlas_release_major, dtype=datatype)
+##             dir = "."
+##             filepat = "\.root"
+##             pat = re.compile(filepat)
+##             filelist = os.listdir(dir)
+##             joName = 'input.py'
+##             outFile = open(joName,'w')
+##             if datasettype in [ 'TAG_REC', 'TNT_DOWNLOAD', 'TNT_LOCAL' ]:
+##                 if atlas_release_major >= 13:
+##                     outFile.write('PoolTAGInput = [')
+##                 else:
+##                     outFile.write('CollInput = [')
+##             else:
+##                 if atlas_release_major >= 13:
+##                     versionString='ServiceMgr.'
+##                 else:
+##                     versionString = ''
+##                 outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
+##                 outFile.write('%sEventSelector.RefName = "StreamAOD"\n'%versionString)
+##                 outFile.write('%sEventSelector.InputCollections = ['%versionString)
+
+##             for tagfile in filelist:
+##                 found = re.findall(pat, tagfile)
+##                 if found:
+##                     filename = re.sub('\.root\.\d+$','',tagfile)
+##                     if atlas_release_major <= 12:
+##                         filename = re.sub('\.root$','',tagfile)
+##                     outFile.write('"%s",' % filename)
+##             outFile.write(']\n')
+##             # close
+##             outFile.close()
 
         # Sort out datasets, create PFC and input.py #####################################
         # Get datasetnames
