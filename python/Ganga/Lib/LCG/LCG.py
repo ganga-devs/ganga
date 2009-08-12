@@ -17,6 +17,7 @@ import time
 import errno
 import socket
 import math
+import tempfile
 from types import *
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
@@ -126,7 +127,7 @@ class LCG(IBackend):
 
     _category = 'backends'
     _name =  'LCG'
-    _exportmethods = ['check_proxy', 'loginfo', 'inspect']
+    _exportmethods = ['check_proxy', 'loginfo', 'inspect', 'match']
 
     _GUIPrefs = [ { 'attribute' : 'CE', 'widget' : 'String' },
                   { 'attribute' : 'jobtype', 'widget' : 'String_Choice', 'choices' : ['Normal', 'MPICH'] },
@@ -773,7 +774,80 @@ class LCG(IBackend):
             #return info 
         else:
             logger.debug('Getting logging info of job %s failed.' % job.getFQID('.'))
-            return None 
+            return None
+
+    def match(self):
+        '''Match the job against available grid resources'''
+
+        ## - simulate the job preparation procedure
+        ## - subjobs from job splitter are not created (as its not essential for match-making)
+        ## - create a temporary JDL file for match making
+        ## - call job list match
+        ## - clean up the job's inputdir
+
+        from Ganga.Core import ApplicationConfigurationError, JobManagerError, IncompleteJobSubmissionError
+
+        matches = []
+
+        mt = self.middleware.upper()
+
+        job = self.getJobObject()
+
+        ## catch the files that are already in inputdir
+        existing_files = os.listdir(job.inputdir)
+
+        app = job.application
+
+        # select the runtime handler
+        from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+        try:
+            rtHandler = allHandlers.get(app._name,'LCG')()
+        except KeyError:
+            msg = 'runtime handler not found for application=%s and backend=%s'%(app._name,'LCG')
+            logger.warning(msg)
+            return
+
+        try:
+            logger.info('matching job %d' % job.id)
+
+            appmasterconfig = app.master_configure()[1] # FIXME: obsoleted "modified" flag
+
+            ## here we don't do job splitting - presuming the JDL for non-splitted job is the same as the splitted jobs
+            rjobs = [job]
+
+            # configure the application of each subjob
+            appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
+
+            # prepare the master job with the runtime handler
+            jobmasterconfig = rtHandler.master_prepare(app,appmasterconfig)
+
+            # prepare the subjobs with the runtime handler
+            jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
+
+            # prepare masterjob's inputsandbox
+            master_input_sandbox = self.master_prepare(jobmasterconfig)
+
+            # prepare JDL
+            jdlpath = self.preparejob(jobsubconfig[0], master_input_sandbox)
+
+             # If GLITE, tell it whether to enable perusal
+            if mt=="GLITE":
+                grids[mt].perusable=self.perusable
+
+            matches = grids[mt].list_match(jdlpath, ce=self.CE)
+
+        except Exception, x:
+            logger.warning('job match failed: %s', str(x) )
+
+        ## clean up the job's inputdir
+        logger.debug('clean up job inputdir')
+        files = os.listdir(job.inputdir)
+        for f in files:
+            if f not in existing_files:
+                os.remove( os.path.join(job.inputdir, f) )
+
+        return matches
+
 
     def submit(self,subjobconfig,master_job_sandbox):
         '''Submit the job to the grid'''
