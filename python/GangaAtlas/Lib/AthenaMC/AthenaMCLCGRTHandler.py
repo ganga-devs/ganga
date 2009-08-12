@@ -358,16 +358,17 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             allsites=requirements.list_sites_cloud()
             # need to weed out unwanted sites from excluded list
             excludedSites=requirements.excluded_sites
-            goodsites=allsites
+            goodsites=[]
             for checksite in allsites:
                 for site in excludedSites:
                     imax=site.find("_")
                     shortSite=site[:imax]
-                    if shortSite in checksite:
-                        goodsites.remove(checksite)
-            allsites=goodsites
+                    if shortSite not in checksite and checksite not in goodsites:
+                        goodsites.append(checksite)
+            if len(goodsites)>0:
+                allsites=goodsites
             requirements.sites=allsites
-            #print requirements.sites
+
             logger.debug("Relaxing job to data policy to job to cloud. Selected cloud is %s" % cloud)
  
         logger.debug("master job submit?")

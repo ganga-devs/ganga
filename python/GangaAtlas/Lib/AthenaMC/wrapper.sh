@@ -253,5 +253,6 @@ if [ ! -s "output_data" ]; then
     exit 128
 fi
 
-echo "returning exit code $trfstatus"
-exit $trfstatus
+# disabling this as it results in a waste of CPU resources for returning a failure on harmless error messages from the transform.
+#echo "returning exit code $trfstatus"
+#exit $trfstatus
