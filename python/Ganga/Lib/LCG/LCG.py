@@ -781,19 +781,28 @@ class LCG(IBackend):
     def match(self):
         '''Match the job against available grid resources'''
 
-        ## - simulate the job preparation procedure
+        ## - grabe the existing __jdlfile__ for failed/completed jobs
+        ## - simulate the job preparation procedure (for jobs never been submitted)
         ## - subjobs from job splitter are not created (as its not essential for match-making)
         ## - create a temporary JDL file for match making
         ## - call job list match
         ## - clean up the job's inputdir
 
+        job = self.getJobObject()
+
+        ## check job status
+        if job.status not in ['new','submitted','failed','completed']:
+            msg = 'only jobs in \'new\', \'failed\', \'submitted\' or \'completed\' state can do match'
+            logger.warning(msg)
+            return
+
         from Ganga.Core import ApplicationConfigurationError, JobManagerError, IncompleteJobSubmissionError
+
+        doPrepareEmulation = False
 
         matches = []
 
         mt = self.middleware.upper()
-
-        job = self.getJobObject()
 
         ## catch the files that are already in inputdir
         existing_files = os.listdir(job.inputdir)
@@ -812,27 +821,55 @@ class LCG(IBackend):
         try:
             logger.info('matching job %d' % job.id)
 
-            appmasterconfig = app.master_configure()[1] # FIXME: obsoleted "modified" flag
+            jdlpath = ''
 
-            ## here we don't do job splitting - presuming the JDL for non-splitted job is the same as the splitted jobs
-            rjobs = [job]
+            ## try to pick up the created jdlfile in a failed job
+            if job.status in ['submitted','failed','completed']:
 
-            # configure the application of each subjob
-            appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
+                logger.debug('picking up existing JDL')
 
-            # prepare the master job with the runtime handler
-            jobmasterconfig = rtHandler.master_prepare(app,appmasterconfig)
+                ## looking for existing jdl file
+                if job.master:  ## this is a subjob, take the __jdlfile__ in the job's dir
+                    jdlpath = os.path.join(job.inputdir,'__jdlfile__')
+                else:
+                    if len(job.subjobs) > 0: ## there are subjobs
+                        jdlpath = os.path.join(job.subjobs[0].inputdir, '__jdlfile__')
+                    else:
+                        jdlpath = os.path.join(job.inputdir,'__jdlfile__')
 
-            # prepare the subjobs with the runtime handler
-            jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
+            if not os.path.exists( jdlpath ):
+                jdlpath = ''
 
-            # prepare masterjob's inputsandbox
-            master_input_sandbox = self.master_prepare(jobmasterconfig)
+            ## simulate the job preparation procedure
+            if not jdlpath:
 
-            # prepare JDL
-            jdlpath = self.preparejob(jobsubconfig[0], master_input_sandbox)
+                logger.debug('emulating the job preparation procedure to create JDL')
 
-             # If GLITE, tell it whether to enable perusal
+                doPrepareEmulation = True
+
+                appmasterconfig = app.master_configure()[1] # FIXME: obsoleted "modified" flag
+
+                ## here we don't do job splitting - presuming the JDL for non-splitted job is the same as the splitted jobs
+                rjobs = [job]
+
+                # configure the application of each subjob
+                appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
+
+                # prepare the master job with the runtime handler
+                jobmasterconfig = rtHandler.master_prepare(app,appmasterconfig)
+
+                # prepare the subjobs with the runtime handler
+                jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
+
+                # prepare masterjob's inputsandbox
+                master_input_sandbox = self.master_prepare(jobmasterconfig)
+
+                # prepare JDL
+                jdlpath = self.preparejob(jobsubconfig[0], master_input_sandbox)
+
+            logger.debug('JDL used for match-making: %s' % jdlpath)
+
+            # If GLITE, tell it whether to enable perusal
             if mt=="GLITE":
                 grids[mt].perusable=self.perusable
 
@@ -842,14 +879,14 @@ class LCG(IBackend):
             logger.warning('job match failed: %s', str(x) )
 
         ## clean up the job's inputdir
-        logger.debug('clean up job inputdir')
-        files = os.listdir(job.inputdir)
-        for f in files:
-            if f not in existing_files:
-                os.remove( os.path.join(job.inputdir, f) )
+        if doPrepareEmulation:
+            logger.debug('clean up job inputdir')
+            files = os.listdir(job.inputdir)
+            for f in files:
+                if f not in existing_files:
+                    os.remove( os.path.join(job.inputdir, f) )
 
         return matches
-
 
     def submit(self,subjobconfig,master_job_sandbox):
         '''Submit the job to the grid'''
