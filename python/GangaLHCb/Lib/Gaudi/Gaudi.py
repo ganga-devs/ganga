@@ -187,7 +187,7 @@ class Gaudi(Francesc):
         # use a dummy file to keep the parser happy
         if len(optsfiles)==0: optsfiles.append(dummyfile())
 
-        self._getshell
+        self._getshell()
         inputs = self._check_inputs() 
         if extraopts: extraopts=self.extraopts
         else: extraopts=""

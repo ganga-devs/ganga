@@ -173,13 +173,14 @@ class Dirac(IBackend):
         if dir is None: dir = j.getOutputWorkspace().getPath()
         tmpdir = j.getDebugWorkspace().getPath()
         if os.path.exists("%s/%d" % (tmpdir,self.id)):
+            os.system('rm -f %s/%d/*' % (tmpdir,self.id))
             os.system('rmdir --ignore-fail-on-non-empty %s/%d' \
                       % (tmpdir,self.id))
         dirac_cmd = 'result = DiracCommands.getOutputSandbox(%d,"%s","%s")' \
                     % (self.id,tmpdir,dir)
         result = server.execute(dirac_cmd)
         if not result_ok(result):
-            msg = 'Problem retreiving output: %s' % str(result)
+            msg = 'Problem retrieving output: %s' % str(result)
             logger.warning(msg)
             return False
 

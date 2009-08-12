@@ -58,7 +58,7 @@ class GaudiPython(Francesc):
     schema['project'] = SimpleItem(defvalue=None,
                                    typelist=['str','type(None)'],
                                    doc=docstr)
-    _schema = Schema(Version(1, 1), schema)                                    
+    _schema = Schema(Version(1, 2), schema)                                    
 
     def _auto__init__(self):
         if (not self.project): self.project = 'DaVinci'

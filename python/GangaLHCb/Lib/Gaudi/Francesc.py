@@ -160,7 +160,8 @@ class Francesc(IApplication):
         """Build the code in the release area the application object points
         to. The actual command executed is "cmt broadcast make <argument>"
         after the proper configuration has taken place."""
-        command = '###CMT### config \n ###CMT### broadcast make '+argument
+        command = '###CMT### config \n ###CMT### broadcast ###CMT### make ' \
+                  + argument
         CMTscript.CMTscript(self,command)
 
     def cmt(self, command):
