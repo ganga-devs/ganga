@@ -162,6 +162,25 @@ class Dirac(IBackend):
         if result_ok(result): print result['Value']
         else: logger.error("No peeking available for Dirac job '%i'.", self.id)
 
+    def getStateTime(self, status):
+        """Returns the timestamps for 'running' or 'completed' by extracting their equivalent timestamps from the loggingInfo.
+        """
+        global dirac_monitoring_server
+        logger.debug("Accessing getStateTime() in diracAPI")
+        dirac_cmd = "result = DiracCommands.getStateTime(%d,\'%s\')" % (self.id, status)
+        result = dirac_monitoring_server.execute(dirac_cmd) 
+        return result
+ 
+    def timedetails(self):
+        """Prints contents of the loggingInfo from the Dirac API.
+        """
+        global dirac_ganga_server
+        logger.debug("Accessing getStateTime() in diracAPI")
+        dirac_cmd = 'result = DiracCommands.timedetails(%d)' % self.id
+        result = dirac_ganga_server.execute(dirac_cmd)
+
+        return result
+                            
     def getOutputSandbox(self,dir=None):
         """Retrieve the outputsandbox from the DIRAC WMS. The dir argument
         gives the directory the the sandbox will be retrieved into."""

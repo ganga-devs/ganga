@@ -2,6 +2,7 @@
 
 import os
 import time
+import datetime
 import glob
 from DIRAC.Interfaces.API.Dirac import *
 from DIRAC.Interfaces.API.Job import *
@@ -146,5 +147,46 @@ class DiracCommands:
             os.chdir(pwd)
         return result
     getJobPilotOutput = staticmethod(getJobPilotOutput)
-            
+
+    def getStateTime(id, status):
+        log = DiracCommands.dirac.loggingInfo(id)
+        L = log['Value']
+        checkstr = ''
+
+        if status == 'running':
+            checkstr='Running'
+        elif status =='completed':
+            checkstr='Done'
+        elif status == 'completing': 
+            checkstr='Completed'
+        elif status == 'failed':
+            checkstr='Failed'
+        else:
+            checkstr = ''
+
+        if checkstr=='':
+            return None 
+
+        for l in L:
+            if checkstr in l[0]:
+                T = datetime.datetime(*(time.strptime(l[3],"%Y-%m-%d %H:%M:%S")[0:6]))
+                return T
+
+        return None 
+
+    getStateTime = staticmethod(getStateTime)
+
+    def timedetails(id):
+        log = DiracCommands.dirac.loggingInfo(id)
+
+        d = {}
+
+        for i in range(0, len(log['Value'])):
+            d[i] = log['Value'][i]
+
+        return d
+
+    timedetails = staticmethod(timedetails)
+
+
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
