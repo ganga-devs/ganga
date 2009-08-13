@@ -141,24 +141,44 @@ class JEMMonitoringServiceHandler(object):
             return
 
         submitExecutable = File(executablePath)
-        #jemInputBox += [submitExecutable]
 
+        def locateJemLib():
+            if not os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE):
+                if os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE + '.gz'):
+                    return '.gz'
+                elif os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE + '.zip'):
+                    return '.zip'
+                elif os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE + '.bz2'):
+                    return '.bz2'
+                else:
+                    return None
+            else:
+                return ''
+            
+        # locate JEM lib (incl. possible archive extension)
+        if locateJemLib() == None:
+            logger.info("This seems to be your first job submission with the JobExecutionMonitor enabled.")
+            logger.info("Preparing JEM for first-time use...")
+            try:
+                os.system(JEMConfig.UI_SUBMIT_PACKER + " >/dev/null")
+            except:
+                logger.warn('Failed to prepare JEM library package. Disabled JEM monitoring.')
+                self.__job.info.monitor.enabled = False
+                return
         # (re)pack JEM library (if needed)
-        if jemconfig['JEM_REPACK']:
+        elif jemconfig['JEM_REPACK']:
             logger.debug("Repacking JEM library")
             try:
                 os.system(JEMConfig.UI_SUBMIT_PACKER + " >/dev/null")
             except:
                 logger.warn('Could not repack JEM library package. JEM library package may be out of date.')
 
-        # and locate it (incl. possible archive extension)
-        if not os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE):
-            if os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE + '.gz'):
-                JEMConfig.UI_SUBMIT_PACKAGE += '.gz'
-            elif os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE + '.zip'):
-                JEMConfig.UI_SUBMIT_PACKAGE += '.zip'
-            elif os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE + '.bz2'):
-                JEMConfig.UI_SUBMIT_PACKAGE += '.bz2'
+        ending = locateJemLib()
+        if ending == None:
+            logger.warn('Failed to prepare JEM library package. Disabled JEM monitoring.')
+            self.__job.info.monitor.enabled = False
+            return
+        JEMConfig.UI_SUBMIT_PACKAGE += ending
 
         # add JEM library to inputbox
         libraryPath = os.path.realpath(JEMConfig.UI_SUBMIT_PACKAGE)  
@@ -246,6 +266,9 @@ class JEMMonitoringServiceHandler(object):
                             config.env['JEM_CTRACE_APPS'] = self.__job.info.monitor.ctracer.traceApps
 
                         config.env['JEM_CTRACE_MODULES'] = self.__job.info.monitor.ctracer.traceModules
+                        
+                        if config.env['JEM_CTRACE_APPS'] == '' and config.env['JEM_CTRACE_MODULES'] != '':
+                            config.env['JEM_CTRACE_APPS'] = config.env['JEM_CTRACE_MODULES']
                     else:
                         config.env['JEM_CTRACE_DISABLE'] = "1"
 
