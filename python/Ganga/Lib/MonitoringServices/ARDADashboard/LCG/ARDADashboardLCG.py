@@ -163,7 +163,11 @@ class ARDADashboardLCG(IMonitoringService):
         
         # we can now initialize the dashboard communication thing
         if self.gridJobId is not None:
-            self.dashboard = DashboardAPI(self.gangaTaskId, self.gangaJobId + '_' + self.gridJobId)
+            try:
+                self.dashboard = DashboardAPI(self.gangaTaskId, self.gangaJobId + '_' + self.gridJobId)
+            except TypeError:
+                self.dashboard = DashboardAPI(self.gangaTaskId, self.gangaJobId + '_' + '_'.join(self.gridJobId))
+                
 
                 
     def getJobInfo(self):
