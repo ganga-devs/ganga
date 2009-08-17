@@ -150,7 +150,7 @@ def resolveTURL(surl, protocol, outfile, errfile, timeout=300):
 
     ## default lcg-gt timeout: 5 minutes
     if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
-        cmd = "lcg-gt -v --connect-timeout %d --sendreceive-timeout %d --srm-timeout %d --bdii-timeout %d %s %s" (timeout, timeout, timeout, timeout, surl, protocol) 
+        cmd = "lcg-gt -v --connect-timeout %d --sendreceive-timeout %d --srm-timeout %d --bdii-timeout %d %s %s" % (timeout, timeout, timeout, timeout, surl, protocol) 
     else:
         cmd = 'lcg-gt -v -t %d %s %s' % (timeout, surl, protocol)
 
