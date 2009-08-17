@@ -425,9 +425,9 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             # remove redundant /
             pfn = re.sub('^//','/',pfn)
             pfn = "rfio:" + pfn
-        elif (( configLOCALPROTOCOL == "rfio" and ( configSTORAGEROOT == '/dpm' )) \
-               or ( configLOCALPROTOCOL == "file" and \
-                    (('se03.esc.qmul.ac.uk' in defaultSE) or 'storm-fe.cr.cnaf.infn.it' in defaultSE))):
+        elif ( configLOCALPROTOCOL == "rfio" and ( configSTORAGEROOT == '/dpm' )) \
+                 or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE) \
+                 or ( configLOCALPROTOCOL == "file" and 'se03.esc.qmul.ac.uk' in defaultSE):
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
             # check which version of lcg-utils we're on
@@ -1259,7 +1259,7 @@ if __name__ == '__main__':
                         configSTORAGEROOT = '/dpm'
                     else:
                         configSTORAGEROOT = '/castor'
-                elif 'dcap' in prot:
+                elif 'dcap' in prot or 'gsidcap' in prot:
                     configLOCALPROTOCOL = 'dcap'
                     configSTORAGEROOT = '/pnfs'
                     configLOCALPREFIX = 'dcap:'
