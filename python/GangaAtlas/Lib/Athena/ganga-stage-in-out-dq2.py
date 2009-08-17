@@ -1424,11 +1424,13 @@ if __name__ == '__main__':
 
                 bad_dq2_get = False
                 
-                for f in flist:
+                for f in taglfns:
                     if not os.path.exists(f):
                         bad_dq2_get = True
                         
                 if (rc!=0) or bad_dq2_get:
+                    print taglfns
+                    os.system("ls -ltr")
                     print "ERROR: error during dq2-get occured"
                     rc, out = getstatusoutput('export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP ; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd)
                     print out
