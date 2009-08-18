@@ -68,7 +68,7 @@ def getTidDatasetnames(ds):
   
   for dsn in ds:
     
-    if dsn.endswith('/'): < 0:
+    if dsn.find('_tid') < 0:
       ds_names = dq2.listDatasetsInContainer(dsn)
       lds = len(ds_tid)
       
