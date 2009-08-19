@@ -160,12 +160,14 @@ class JobTime(GangaObject):
 
         if j.master:
             logger.debug("Output file does not exist for master job. Use 'j.subjobs(i).getOutputFile().")
+            return None
             
         try:
             p = os.path.join(j.outputdir, '__jobstatus__')
             f = open(p)
         except IOError:
             print 'Error: cannot find file:', p
+            return None
         else:
             return f
 
@@ -179,7 +181,7 @@ class JobTime(GangaObject):
         backend_final = ['failed', 'completed']
         ganga_master = ['new', 'submitting', 'killed']
 
-        logger.warning("DEBUG: job %d called timenow('%s')", j.id, status)
+        logger.debug("Job %d called timenow('%s')", j.id, status)
                 
         #standard method:
         if not j.subjobs: 
@@ -499,8 +501,8 @@ class JobTime(GangaObject):
     def final(self, format=None):
         """Method for obtaining 'final' timestamp.
         """        
-        return self.statetime('final', format)
-
+        return self.statetime('final', format)  
+    
 
 class Job(GangaObject):
     '''Job is an interface for submision, killing and querying the jobs :-).
@@ -579,7 +581,7 @@ class Job(GangaObject):
                                     'subjobs':ComponentItem('jobs',defvalue=[],sequence=1,protected=1,load_default=0,copyable=0,optional=1,proxy_get="_subjobs_proxy",doc='list of subjobs (if splitting)',summary_print = '_subjobs_summary_print'),
                                     'master':ComponentItem('jobs',getter="_getParent",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,doc='master job',visitable=0),
                                     'merger':ComponentItem('mergers',defvalue=None,load_default=0,optional=1,doc='optional output merger'),
-                                    'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0)
+                                    'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0),
                                     })
 
     _category = 'jobs'
@@ -714,12 +716,12 @@ class Job(GangaObject):
             if transition_update:
                 #we call this even if there was a hook
                 newstatus = self.transition_update(newstatus)       
-            self.status = newstatus # move to the new state AFTER hooks are called
-            if saved_status != newstatus:
-                self.time.timenow(str(self.status))
+            if self.status != newstatus:
+                self.time.timenow(str(newstatus))
                 logger.debug("timenow('%s') called.", self.status)
             else:
-                logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", saved_status, newstatus)
+                logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", self.status, newstatus)
+            self.status = newstatus # move to the new state AFTER hooks are called
             self._commit()
         except Exception,x:
             self.status = saved_status
@@ -1330,17 +1332,17 @@ class Job(GangaObject):
 
         self.status = 'submitting'
 
-        #clears old stamps - neccessary?
-        newstamps = {}
-        newstamps['new'] = self.time.timestamps['new']
-
-        self.time.timestamps.clear()
-        self.time.timestamps['new'] = newstamps['new']
-
-        if self.time.timestamps == newstamps:
-            logger.debug("'new' timestamp transfer SUCCESSFUL!")
-        else:
-            logger.debug("'new' timestamp transfer UNSUCCESSFUL!")
+#        #clears old stamps - neccessary?
+ #       newstamps = {}
+  #      newstamps['new'] = self.time.timestamps['new']
+#
+ #       self.time.timestamps.clear()
+  #      self.time.timestamps['new'] = newstamps['new']
+#
+ #       if self.time.timestamps == newstamps:
+  #          logger.debug("'new' timestamp transfer SUCCESSFUL!")
+   #     else:
+    #        logger.debug("'new' timestamp transfer UNSUCCESSFUL!")
 
         self.time.timenow('submitting') ## << ** 
                
