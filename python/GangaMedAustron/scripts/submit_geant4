@@ -55,18 +55,25 @@ def write_tarball(package,tmpdir):
     tarball.close()
 
     return tarball_name
+
+def getFile(name):
+
+    return File(os.path.abspath(os.path.join(os.path.dirname(GangaMedAustron.__file__),name)))
  
 def gridrun_job(package,macro,subjobs,output,ce):
     '''
     Submit a GEANT4 job
     '''
 
-    gridrun = os.path.abspath(os.path.join(os.path.dirname(GangaMedAustron.__file__),'share/gridrun_geant4.sh'))
-
     job = Job()
     job.application = Executable()
-    job.application.exe = File(gridrun)
-    job.inputsandbox = [ File(package), File(macro) ]
+    job.application.exe = getFile('share/gridrun_geant4.sh')
+    job.inputsandbox = [ File(package), 
+                         File(macro), 
+                         getFile('share/install_geant4.sh'),
+                         getFile('share/MD5SUM'),
+                         getFile('share/patch1'),
+                         getFile('share/patch2') ]
     if output: job.outputsandbox = output
     job.backend = LCG()
     if ce: job.backend.CE = ce
@@ -139,6 +146,8 @@ if __name__ == '__main__':
 
     logger = logging.getLogger('submit_geant4')
     if options.verbose:
+        logget.setLevel(logging.DEBUG)
+    else:
         logger.setLevel(logging.INFO)
 
     tmpdir = '/tmp/submit_geant4_%d' % os.getpid()

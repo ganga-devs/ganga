@@ -7,13 +7,19 @@ import os
 
 import GangaMedAustron
 
+def getFile(name):
+
+    return File(os.path.abspath(os.path.join(os.path.dirname(GangaMedAustron.__file__),name)))
+
 def install_job(ce_list):
 
-    install_file = os.path.abspath(os.path.join(os.path.dirname(GangaMedAustron.__file__),'share/install_geant4.sh'))
-
     job = Job()
+    job.inputsandbox = [ getFile('share/install_geant4.sh'),
+                         getFile('share/MD5SUM'),
+                         getFile('share/patch1'),
+                         getFile('share/patch2') ]
     job.application = Executable()
-    job.application.exe = File(install_file)
+    job.application.exe =  getFile('share/gridinstall_geant4.sh')
     job.application.args = ''
     job.backend = LCG()
     job.splitter = GenericSplitter()

@@ -1,57 +1,33 @@
-#! /bin/sh -x
+#!/bin/sh
 #
-# GangaMedAustron - Dietrich Liko, August 2009
+# Install GEANT4 in current directory
 #
-# Install the GEANT tarball for MedAustron
+# Dietrich Liko, August 2009
 
-if [ -z $VO_VOCE_SW_DIR ]
-then
-   echo "install: VO_VOCE_SW_DIR is not defined."
-   exit 9
-fi
-
-if [ ! -d $VO_VOCE_SW_DIR ]
-then
-   echo "install: VOCE SW directory does not exist"
-   exit 9
-fi
-
-uuid=`uuidgen`
-touch $VO_VOCE_SW_DIR/$uuid
-if [ $? -ne 0 ]
-then
-   echo "install: VOCE SW directory not writeable"
-   exit 9
-fi
-rm $VO_VOCE_SW_DIR
+directory=$(cd `dirname $0` && pwd)
 
 tarball="geant4-9.2.p01-slc4-medaustron.tbz"
 srmurl="srm://hephyse.oeaw.ac.at:8446/srm/managerv2?SFN=/dpm/oeaw.ac.at/home/cms/store/user/liko"
 
-lcg-cp \
-   -v --connect-timeout 10 --srm-timeout 120 --sendreceive-timeout 200 \
-   -b -D srmv2 "$srmurl/$tarball" $tarball
+lcg-cp -t 600 -v -b -D srmv2 "$srmurl/$tarball" $tarball
 if [ $? -ne 0 ]
 then
-   echo "install: Downloading tarball with lcg-cp failed."
+   echo "install_geant4: Downloading tarball with lcg-cp failed."
    exit 9
 fi
 
-md5sum -c <<EOF
-11d2e5a508a6068da962f8b5255ae5e7  geant4-9.2.p01-slc4-medaustron.tbz
-EOF
+md5sum -c $directory/MD5SUM
 if [ $? -ne  0 ]
 then
-   echo "install: MD5SUM of tarball wrong"
+   echo "install_geant4: MD5SUM of downloaded tarball wrong"
    exit 9
 fi
 
-# Clean up old installation
+tar xjvf $tarball
 
-if [ -e $VO_VOCE_SW_DIR/medaustron ]
+if [ `uname -m` = "x86_64" ]
 then
-   rm -rf $VO_VOCE_SW_DIR/medaustron
+   echo "Discovered 64bit architrecture. Patching build files."
+   patch medaustron/dirGeant4-9.2.p01/config/architecture.gmk $directory/patch1
+   patch medaustron/dirGeant4-9.2.p01/config/sys/Linux-g++.gmk $directory/patch2
 fi
-
-tar xjvf $tarball -C $VO_VOCE_SW_DIR
-
