@@ -143,6 +143,35 @@ get_remote_proxy () {
     voms-proxy-info -all
 }
 
+fix_gcc_issue_sl5 () {
+
+    # fix SL5 gcc/g++ problem - need to use version 3.4
+    RHREL=`cat /etc/redhat-release`
+    SC51=`echo $RHREL | grep -c 'Scientific Linux CERN SLC release 5'`
+    SC52=`echo $RHREL | grep -c 'Scientific Linux SL release 5'`
+
+    if [ $SC51 -gt 0 ] || [ $SC52 -gt 0 ]; then 
+        gcc34_path=`which gcc34`
+
+        if [ $? -eq 0 ]; then
+            if [ ! -d comp ]; then
+                mkdir comp
+            fi
+            ln -sf $gcc34_path comp/gcc
+        fi
+
+        gpp34_path=`which g++34`
+        if [ $? -eq 0 ]; then
+            if [ ! -d comp ]; then
+                mkdir comp
+            fi
+            ln -sf $gpp34_path comp/g++
+        fi
+
+        export PATH=$PWD/comp:$PATH
+    fi
+}
+
 ## function for fixing g2c/gcc issues on SLC3/SLC4 against
 ## ATLAS release 11, 12, 13 
 fix_gcc_issue () {

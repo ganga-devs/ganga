@@ -96,6 +96,13 @@ if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ] || [ ! -z `echo $ATLAS_RELEASE | gr
 fi
 
 ################################################
+# fix g2c/gcc issues against SLC5
+fix_gcc_issue_sl5
+
+g++ --version
+gcc --version
+
+################################################
 # setup ATLAS software
 
 retcode=0
