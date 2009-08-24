@@ -13,7 +13,10 @@
 import os, pwd, commands, re 
 import time
 
-import lfc
+try:
+    import lfc
+except:
+    pass
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
