@@ -35,7 +35,7 @@ mc = getConfig('MonitoringServices')
 
 # None by default
 
-mc.addOption('AthenaMC', None, 'FIXME')
+#mc.addOption('AthenaMC', None, 'FIXME')
 mc.addOption('AthenaMC/Local', None, 'FIXME')
 
 _defaultSite='CERN-PROD_SCRATCHDISK'
@@ -257,7 +257,7 @@ class AthenaMCLocalRTHandler(IRuntimeHandler):
 
 
         # backend specifics:
-        if job.backend._name=="SGE" and job.backend.extraopts="":
+        if job.backend._name=="SGE" and job.backend.extraopts=="":
             job.backend.extraopts="-l h_vmem=5G -l s_vmem=5G -l h_cpu=1:00:00 -l h_fsize=10G" # minimum set up for Atlfast II
             
         logger.debug("master job submit?")
