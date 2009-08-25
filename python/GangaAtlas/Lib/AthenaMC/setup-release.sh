@@ -106,7 +106,7 @@ echo $CMTSITE
 
 export ATLRMAIN=`echo $T_RELEASE | sed -e "s:\..*::" `
 
-if [ "$CMTSITE" == "CERN" ]; then 
+if [ "$CMTSITE" != "NONE" ]; then 
 # CERN AFS setup for Cern Local and LSF backends.
     do_CERN_setup
 else

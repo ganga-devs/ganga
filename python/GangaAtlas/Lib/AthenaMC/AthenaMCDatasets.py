@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.49 2009-07-24 13:47:22 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.47 2009-07-14 09:11:16 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -471,11 +471,11 @@ class AthenaMCInputDatasets(Dataset):
         backend=job.backend._name
         
         backend = self.getdq2data(dataset,None,backend,update=False)
-        try:
-            assert backend == job.backend._name
-        except:
-            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
-            raise
+#        try:
+#            assert backend == job.backend._name
+#        except:
+#            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
+#            raise
         app.cavern_turls=self.turls
         app.cavern_lfcs=self.lfcs
         app.cavern_sites=self.trimSites(self.sites,app.sites)
@@ -494,11 +494,11 @@ class AthenaMCInputDatasets(Dataset):
         backend=job.backend._name
         
         backend = self.getdq2data(dataset,None,backend,update=False)
-        try:
-            assert backend == job.backend._name
-        except:
-            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
-            raise        
+#        try:
+#            assert backend == job.backend._name
+#        except:
+#            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
+#            raise        
         app.minbias_turls=self.turls
         app.minbias_lfcs=self.lfcs
         app.minbias_sites=self.trimSites(self.sites,app.sites)
@@ -535,11 +535,11 @@ class AthenaMCInputDatasets(Dataset):
         job = app.getJobObject()
         backend=job.backend._name
         backend = self.getdq2data(dsetname,None,backend,update=False)
-        try:
-            assert backend == job.backend._name
-        except:
-            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s or subscribe the DB release dataset to the desired site" % ( dataset,job.backend._name,backend))
-            raise
+#        try:
+#            assert backend == job.backend._name
+#        except:
+#            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s or subscribe the DB release dataset to the desired site" % ( dataset,job.backend._name,backend))
+#            raise
         app.dbturls=self.turls
         app.dblfcs=self.lfcs
         app.dbsites=self.trimSites(self.sites,app.sites)
@@ -725,11 +725,13 @@ class AthenaMCInputDatasets(Dataset):
         selectedSites=[]
         for site in allSites:
             if backend=="Panda":
-            #and site in USsites: // not necessary true.
                 selectedSites.append(site)
                 continue
             if backend=="LCG" and site not in USsites and site not in NGsites:
                 selectedSites.append(site)
+                continue
+            # all other backends (should perhaps restrict to Local ones...)
+            selectedSites.append(site)
             #if backend=="NG" and site in NGSites:
             #   selectedSites.append(site)
         if len(selectedSites)==0:
@@ -952,7 +954,7 @@ class AthenaMCOutputDatasets(Dataset):
         default_site="CERN-PROD_SCRATCHDISK"
         job=self._getParent()
         app=job.application
-
+        
         # first of all, check that _usertag is set properly:
         try:
             assert _usertag and _usertag!="users"
@@ -1000,7 +1002,7 @@ class AthenaMCOutputDatasets(Dataset):
                 #print app.sites
                 selsite=""
                 #                logger.warning("Space token proposed for output: %s is forbidden for writing. Attempting to find alternative space token in the same site."% se_name)
-                #logger.warning("Output data from jobs processing must go to SCRATCHDISK or LOCALGROUPDISK. Once finalized (master job completed), the output datasets can be subscribed to their final destination using dq2-register-subscription or dq2-register-subscription-container")
+                #logger.warning("Output data from jobs processing must go to SCRATCHDISK. Once finalized (master job completed), the output datasets can be subscribed to their final destination using dq2-register-subscription or dq2-register-subscription-container")
                 logger.warning("Detected forbidden output space token in input: %s. Changing to SCRATCHDISK" % se_name) 
                 imax=se_name.find("_")
                 sitename=se_name[:imax]
@@ -1565,7 +1567,6 @@ except ConfigError:
        configDQ2.addOption('DQ2_URL_SERVER_SSL', os.environ['DQ2_URL_SERVER_SSL'], 'FIXME')
    except KeyError:
        configDQ2.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
-
 try:
     configDQ2['usertag']
 except ConfigError:

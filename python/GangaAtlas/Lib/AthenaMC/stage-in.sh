@@ -79,7 +79,7 @@ stageInLCG(){
 
 #    python -V
 #    python2.5 -V
-
+    
     SITES=" null $SITES"
     for site in $SITES; do
 	siteflag=""
@@ -207,10 +207,11 @@ eval $INPUTSITES
 echo ${lfn[@]}
 bash --version
 ##
-echo "Setting up DQ2 tools"
-source ${VO_ATLAS_SW_DIR}/ddm/latest/setup.sh
-echo "site's SE is $DQ2_LOCAL_SITE_ID"
-
+if [ -z "$DQ2_HOME" -o -z "$DQ2_LOCAL_SITE_ID" ]; then
+    echo "Setting up DQ2 tools"
+    source ${VO_ATLAS_SW_DIR}/ddm/latest/setup.sh
+    echo "site's SE is $DQ2_LOCAL_SITE_ID"
+fi
 # main loop
 
 for ((i=0;i<${#lfn[@]};i++)); do
