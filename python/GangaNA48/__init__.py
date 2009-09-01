@@ -11,6 +11,9 @@ def loadPlugins(c):
     try:
         import Lib.Nasim
         import Lib.Compact
+        import Lib.NA48Dataset
+        import Lib.NA48LCGRequirements
+        import Lib.Fluka
         
     except SystemExit:
         from Ganga.Core.exceptions import ApplicationConfigurationError

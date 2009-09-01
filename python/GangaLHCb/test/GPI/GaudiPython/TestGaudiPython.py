@@ -7,7 +7,7 @@ from os.path import join
 
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.getConfig('DIRAC')
-
+configDaVinci = Ganga.Utility.Config.getConfig('defaults_DaVinci')
 
 class TestGaudiPython(GangaGPITestCase):
     
@@ -15,7 +15,7 @@ class TestGaudiPython(GangaGPITestCase):
     def testLocal(self):
         
         j = Job(application=GaudiPython(), backend=Local())
-        
+        j.application.version = configDaVinci['version']
         j.submit()
 
         assert j.application.script != [],\
@@ -31,13 +31,14 @@ class TestGaudiPython(GangaGPITestCase):
 
     def testDirac(self):
         gp = GaudiPython(platform=config['AllowedPlatforms'][0])
+        gp.version = configDaVinci['version']
         j = Job(application=gp, backend=Dirac())
         j.submit()
         j.remove()
         
     def testScripts(self):
         gp = GaudiPython()
-        
+        gp.version = configDaVinci['version']
         dir = tempfile.mkdtemp()
         name1 = join(dir,'script1.py')
         name2 = join(dir,'script2.py')
@@ -58,7 +59,7 @@ class TestGaudiPython(GangaGPITestCase):
 
     def testAutomaticList(self):
         gp = GaudiPython()
-        
+        gp.version = configDaVinci['version']        
         dir = tempfile.mkdtemp()
         name1 = join(dir,'script1.py')
 
@@ -72,7 +73,7 @@ class TestGaudiPython(GangaGPITestCase):
     def testInvalidPlatform(self):
         gp = GaudiPython()
         gp.platform='FooBar'
-
+        gp.version = configDaVinci['version']
         j = Job(application=gp,backend=Dirac())
 
         try:
@@ -87,6 +88,7 @@ class TestGaudiPython(GangaGPITestCase):
 
     def testSplit(self):
         gp = GaudiPython()
+        gp.version = configDaVinci['version']
         j = Job(application=gp, backend=Local())
         prefix='LFN:/lhcb/production/DC06/v1r0/00002069/DST/0000'
         j.inputdata = LHCbDataset([

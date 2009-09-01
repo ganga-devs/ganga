@@ -10,7 +10,6 @@ class NasimSplitter(ISplitter):
 
     _name = "NasimSplitter"
     _schema = Schema(Version(1,0), {
-        'total_events': SimpleItem(defvalue=0,doc='The total number of events to generate'),
         'num_subjobs':  SimpleItem(defvalue=0,doc='The number of subjobs to use')
         } )
 
@@ -20,26 +19,29 @@ class NasimSplitter(ISplitter):
         
         subjobs = []
 
-        if self.total_events == 0:
-            raise ApplicationConfigurationError(None, "No events to generate")
-
         if self.num_subjobs == 0:
             raise ApplicationConfigurationError(None, "No subjobs selected")
 
         if self.num_subjobs > 1000:
             raise ApplicationConfigurationError(None, "Greater than 1000 subjobs selected - possible seed problems")
 
-        evts_per_job = math.ceil( self.total_events / self.num_subjobs )
-        dataset_name = 'users_run' + str(job.application.run_number) + '_beam' + str(job.application.beam) + '_trigs' + str(self.total_events) + '_' + time.strftime('%b_%a_%m_%d_%H_%M_%S')
+        evts_per_job = job.application.num_triggers
 
         ijob = 0
         while ijob < self.num_subjobs:
             j = self.createSubjob(job)
             
             # Alter arguments for each subjob
-            j.application.num_triggers = int(evts_per_job)
+            j.application.job_file = job.application.job_file
+            j.application.titles_file = job.application.titles_file
+            j.application.beam = job.application.beam
+            j.application.num_triggers = job.application.num_triggers
+            j.application.run_number = job.application.run_number
+            j.application.prod_num = job.application.prod_num
             j.application.seed = j.application.prod_num*100000000+(j.application.run_number-15000)*2000+(j.application.beam-1)*1000+ijob
-            j.application.dataset_name = dataset_name
+
+            j.outputdata.data = job.outputdata.data
+            j.outputdata.name = job.outputdata.name
             
             subjobs.append(j)
             ijob += 1

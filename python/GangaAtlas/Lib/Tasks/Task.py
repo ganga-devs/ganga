@@ -1,4 +1,6 @@
 from common import *
+from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
+from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import JobRegistryInterface
 
 ########################################################################
 
@@ -18,7 +20,7 @@ class Task(GangaObject):
     _exportmethods = [
                 'setBackend', 'setParameter', 'insertTransform', 'appendTransform', 'removeTransform', # Settings
                 'check', 'run', 'pause', 'remove', # Operations
-                'overview', 'info', 'n_all', 'n_status', 'help' # Info
+                'overview', 'info', 'n_all', 'n_status', 'help', 'getJobs' # Info
                 ]
     
     default_registry = "tasks"
@@ -84,10 +86,6 @@ class Task(GangaObject):
         c = super(Task,self).clone()
         for tf in c.transforms:
             tf.status = "new"
-            #tf._partition_status = {}
-            #tf._app_partition = {}
-            #tf._app_status = {}
-            #tf._next_app_id = 0
             tf._partition_apps = {}
         self._getParent().register(c)
         c.check()
@@ -98,9 +96,11 @@ class Task(GangaObject):
         if self.status != "new":
             logger.error("The check() function may modify a task and can therefore only be called on new tasks!")
             return
-        for t in self.transforms:
-            t.check()
-        self.updateStatus()
+        try:
+            for t in self.transforms:
+                t.check()
+        finally:
+            self.updateStatus()
         return True
 
     def run(self):
@@ -108,12 +108,19 @@ class Task(GangaObject):
         if self.status == "new":
             self.check()
         if self.status != "completed":
-            self.status = "running"
+            try:
+                for tf in self.transforms:
+                    if tf.status != "completed":
+                        tf.run(check=False)
+
+            finally:
+                self.updateStatus()
+        else:
+            logger.info("Task is already completed!")
+
+        if self.status != "completed":
             if self.float == 0:
                 logger.warning("The 'float', the number of jobs this task may run, is still zero. Type 'tasks(%i).float = 5' to allow this task to submit 5 jobs at a time" % self.id)
-            for tf in self.transforms:
-                if tf.status != "completed":
-                    tf.run(check=False)
         else:
             logger.info("Task is already completed!")
 
@@ -159,6 +166,23 @@ class Task(GangaObject):
             logger.error("You can only remove transforms if the task is new!")
             return
         del self.transforms[id]
+
+    def getJobs(self, only_master_jobs=True):
+        """ Get the job slice of all jobs that process this task """
+        jobslice = JobRegistryInstanceInterface("tasks(%i).getJobs(only_master_jobs=%s)"%(self.id, only_master_jobs))
+        for j in GPI.jobs:
+            try:
+                stid = j.application.tasks_id.split(":")
+                if int(stid[-2]) == self.id:
+                    if j.subjobs and not only_master_jobs:
+                        for sj in j.subjobs:
+                            jobslice.jobs[sj.fqid] = stripProxy(sj)
+                    else:
+                        jobslice.jobs[j.fqid] = stripProxy(j)
+            except Exception, x:
+                print x
+                pass
+        return JobRegistryInterface(jobslice)
 
 ## Internal methods
     def updateStatus(self):

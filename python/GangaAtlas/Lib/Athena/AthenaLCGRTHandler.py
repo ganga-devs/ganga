@@ -1,7 +1,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLCGRTHandler.py,v 1.45 2009-05-31 15:40:11 elmsheus Exp $
+# $Id: AthenaLCGRTHandler.py,v 1.51 2009-07-23 20:12:25 elmsheus Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -25,8 +25,6 @@ from GangaAtlas.Lib.ATLASDataset import ATLASDataset, isDQ2SRMSite, getLocations
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-
-from Ganga.GPIDev.Credentials import GridProxy
 
 # the config file may have a section
 # aboout monitoring
@@ -191,14 +189,21 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 jobid = "%d" % job.id
 
             # Extract username from certificate
-            proxy = GridProxy()
-            username = proxy.identity(safe=True)
+            username = self.username
             # Remove apostrophe
             username = re.sub("'","",username)
 
             jobdate = time.strftime('%Y%m%d')
 
             usertag = configDQ2['usertag']
+
+            # prepare Group Dataset names
+            if job.outputdata.isGroupDS==True:
+                usertag = re.sub("user", "group", usertag)
+                if not usertag.startswith('group'):
+                    usertag = 'group' + time.strftime('%Y')[2:]
+                if job.outputdata.groupname:
+                    username = groupname
             
             if job.outputdata.datasetname:
                 # new datasetname during job resubmission
@@ -212,9 +217,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
                 else:
                     # append user datasetname for new configuration
-#                    if job.outputdata.use_datasetname and job.outputdata.datasetname:
-#                        output_datasetname = job.outputdata.datasetname
-#                    else:
+                    #if job.outputdata.use_datasetname and job.outputdata.datasetname:
+                    #    output_datasetname = job.outputdata.datasetname
+                    #else:
                     output_datasetname = '%s.%s.ganga.%s' % (usertag, username,job.outputdata.datasetname)
 
                     output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
@@ -295,7 +300,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             environment['DQ2_URL_SERVER']= configDQ2['DQ2_URL_SERVER']
             environment['DQ2_URL_SERVER_SSL'] = configDQ2['DQ2_URL_SERVER_SSL']
             if job.outputdata.use_shortfilename:
-                environment['GANGA_SHORTFILENAME'] = 1
+                environment['GANGA_SHORTFILENAME'] = '1'
             else:
                 environment['GANGA_SHORTFILENAME'] = ''
                 
@@ -342,6 +347,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         if trf_params!=' ' and job.application.atlas_exetype=='TRF':
            _append_file_buffer(inputbox,'trf_params', [ trf_params ] ) 
 
+        # set RecExCommon options
+        environment['RECEXTYPE'] = job.application.recex_type
+        
 # append a property for monitoring to the jobconfig of subjobs
         lcg_config = LCGJobConfig(File(exe), inputbox, [], outputbox, environment, [], requirements)
         lcg_config.monitoring_svc = mc['Athena']
@@ -352,6 +360,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         job = app._getParent() # Returns job or subjob object
         logger.debug('AthenaLCGRTHandler master_prepare called: %s', job.id )
+
+        self.username = gridProxy.identity(safe=True)
 
         # Check if all sites are in the same cloud
         if job.backend.requirements.sites:
@@ -418,6 +428,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             _append_files(inputbox, 'dq2tracerreport.py')
         if not 'db_dq2localid.py' in [ os.path.basename(file.name) for file in inputbox ]:
             _append_files(inputbox, 'db_dq2localid.py')
+        if not 'getstats.py' in [ os.path.basename(file.name) for file in inputbox ]:
+            _append_files(inputbox, 'getstats.py')
+
 
         if str(app.atlas_release).find('12.')>=0:
             _append_files(inputbox, 'libDCache.so','libRFIO.so','libdcap.so')
@@ -500,6 +513,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if (not job.backend.CE and 
                 not (job.backend.requirements._name == 'AtlasLCGRequirements' and job.backend.requirements.sites) and
                 not (job.splitter and job.splitter._name == 'DQ2JobSplitter') and
+                not (job.splitter and job.splitter._name == 'TNTJobSplitter') and
                 not (job.splitter and job.splitter._name == 'AnaTaskSplitterJob')):
 
                 raise ApplicationConfigurationError(None,'Job submission failed ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
@@ -580,7 +594,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         outputbox = [
             'output_guids',
             'output_location',
-            'output_data'
+            'output_data',
+            'stats.pickle'
         ]
 
         ## retrieve the FileStager log
@@ -591,6 +606,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         return LCGJobConfig(File(exe),inputbox,[],outputbox,environment,[],requirements) 
 
+from Ganga.GPIDev.Credentials import GridProxy
+gridProxy = GridProxy()
 
 allHandlers.add('Athena','LCG',AthenaLCGRTHandler)
 allHandlers.add('Athena','Condor',AthenaLCGRTHandler)

@@ -4,6 +4,8 @@ from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_
 from GangaLHCb.test import *
 addDiracTestSubmitter()
 
+ganga_path = os.path.abspath(os.path.dirname(__file__))
+script_file = ganga_path + '/../python/GangaLHCb/test/GPI/Dirac/test.C'
 
 class TestRootDirac(GangaGPITestCase):
 
@@ -13,8 +15,7 @@ class TestRootDirac(GangaGPITestCase):
         
         config.ROOT.arch = 'slc4_ia32_gcc34'
         
-        r = Root()
-        r.usepython = False
+        r = Root(script=script_file)
 
         j = Job(application=r, backend=TestSubmitter())
         j.submit()
@@ -26,10 +27,8 @@ class TestRootDirac(GangaGPITestCase):
 
         config.ROOT.arch = 'slc4_ia32_gcc34-not-a-valid-version'
         
-        r = Root()
-        r.usepython = False
-
-        j = Job(application=r, backend=TestSubmitter())
+        r = Root(script=script_file)
+        j = Job(application=r, backend=Dirac())
         
         try:
             j.submit()
@@ -43,7 +42,7 @@ class TestRootDirac(GangaGPITestCase):
         
         config.ROOT.arch = 'slc4_ia32_gcc34'
         
-        j = Job(application=Root(), backend=Dirac())
+        j = Job(application=Root(script=script_file), backend=Dirac())
         j.submit()
         
         sleep_until_state(j, state = 'submitted')

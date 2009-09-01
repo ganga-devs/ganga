@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: NG.py,v 1.34 2009-06-02 10:40:18 bsamset Exp $
+# $Id: NG.py,v 1.39 2009-06-25 13:04:36 bsamset Exp $
 ###############################################################################
 #
 # NG backend 
@@ -68,7 +68,7 @@ def getTidDatasetnames(ds):
   
   for dsn in ds:
     
-    if dsn.find('_tid') < 0:
+    if dsn.endswith('/') < 0:
       ds_names = dq2.listDatasetsInContainer(dsn)
       lds = len(ds_tid)
       
@@ -868,6 +868,31 @@ class Grid:
             self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return False
 
+    def bulkcancel(self,killids):
+        '''Cancel a job'''
+        # remove -k, info sustem is not updated before cleanup
+        cmd = 'ngkill '
+        
+        if not self.active:
+            logger.warning('NG plugin is not active.')
+            return False
+
+        if not self.credential.isValid():
+            logger.warning('GRID proxy not valid. Use gridProxy.renew() to renew it.')
+            return False
+          
+        idsfile = tempfile.mktemp('.jids')
+        file(idsfile,'w').write('\n'.join(killids)+'\n')
+        rc, output, m = self.shell.cmd1('%s%s -i %s' % (self.__get_cmd_prefix_hack__(),cmd,idsfile), allowed_exit=[0,255])
+        os.unlink(idsfile)
+
+        if rc == 0:
+            return True
+        else:
+            logger.warning( "Failed to cancel job.\n%s" % ( jobid, output ) )
+            self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
+            return False
+
     def clean(self,jobid):
         '''Clean a job from site a job'''
         # remove -k, info sustem is not updated before cleanup
@@ -966,7 +991,7 @@ class NG(IBackend):
 
     _category = 'backends'
     _name =  'NG'
-    _exportmethods = ['check_proxy','peek','update_crls','setup','printstats','resume','ngclean']
+    _exportmethods = ['check_proxy','peek','update_crls','setup','printstats','resume','ngclean','getidentity']
     
     def __init__(self):
         super(NG,self).__init__()
@@ -1120,24 +1145,36 @@ class NG(IBackend):
         else:
             logger.error('No valid xrsl. Try to run j.backend.update_crls()')
             return False
-        
+      
         if not master_jid:
             logger.error('Job submission failed not master_jid')
             return False
             #raise IncompleteJobSubmissionError(job.id,'native master job submission failed.')
-        else:
-            i = 0
-            for sj in rjobs:
-                i = i + 1
-                if i>len(master_jid):
-                    logger.warning("Not enough job IDs for subjobs - job submission most likely incomplete.")
-                    continue
-                sj.backend.id=master_jid[i-1]
-                # job submitted update monitorint
-                #print 'sending moinitoring info'
-                sj.getMonitoringService().submit()
-                #print 'update status submitted '
-                sj.updateStatus('submitted')
+
+        # Are all entries in master_jid empty strings?
+        all_failed = True
+        for jid in master_jid:
+          if jid!='':
+            all_failed = False
+        if all_failed:
+          logger.error('All subjobs failed to submit')
+          return False
+
+        # Assign jid's to subjobs
+        i = 0
+        for sj in rjobs:
+          i = i + 1
+          if i>len(master_jid):
+            logger.warning("Not enough job IDs for subjobs - job submission most likely incomplete.")
+            continue
+          if master_jid[i-1] == '':
+            logger.error("Subjob %d failed to submit" % sj.id)
+            sj.updateStatus('failed')
+          else:
+            sj.backend.id=master_jid[i-1]
+            sj.getMonitoringService().submit()
+            #print 'update status submitted '
+            sj.updateStatus('submitted')
                 
         return True
 
@@ -1429,6 +1466,51 @@ class NG(IBackend):
 
         return not self.id is None
 
+    def master_kill(self):
+        """ Kill a job and all its subjobs. Return 1 in case of success.
+        
+        The default implementation uses the kill() method and emulates
+        the bulk  operation on all subjobs.  It tries to  kill as many
+        subjobs  as  possible even  if  there  are  failures.  If  the
+        operation is incomplete then raise IncompleteKillError().
+        """
+        
+        job = self.getJobObject()
+
+        r = True
+
+        mt = self.middleware.upper()
+        if not config['%s_ENABLE' % mt]:
+            logger.warning('Operations of %s middleware are disabled.' % mt)
+            return False
+                                
+        killids = []
+        
+        if len(job.subjobs):
+            for s in job.subjobs:
+                if s.status in ['submitted','running']:
+                    killids.append(s.backend.id)
+        else:
+            killids.append(job.backend.id)
+
+        #r = job.backend.kill(killids)
+        r = grids[self.middleware.upper()].bulkcancel(killids)
+
+        if not r:
+          from Ganga.Core import IncompleteKillError
+          raise IncompleteKillError('Some (sub)jobs were not killed. Try killing each subjob individually.')
+
+        if len(job.subjobs):
+            for s in job.subjobs:
+                if s.backend.id in killids:
+                    s.updateStatus('killed')
+        else:
+            job.updateStatus('killed')
+
+        return r
+    
+
+
     def kill(self):
         '''Kill the job'''
 
@@ -1446,7 +1528,18 @@ class NG(IBackend):
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return False
 
-        return grids[self.middleware.upper()].cancel(self.id)
+        killids = []
+        if len(job.subjobs)>0:
+            for sj in job.subjobs:
+                killids.append(sj.backend.id)
+                logger.info('Killing subjob %s' % sj.getFQID('.'))
+        else:
+            killids.append(self.id)
+
+        print killids
+
+        #return grids[self.middleware.upper()].cancel(self.id)
+        return grids[self.middleware.upper()].bulkcancel(killids)
 
 
     def preparejob(self,jobconfig=None,master_input_sandbox=[],subjob=False,group_area=None):
@@ -1494,6 +1587,14 @@ class NG(IBackend):
          fileList.append( os.path.basename( filePath ) )   
 
       # inputfiles
+
+      # Do the input sandbox first, then check for j.inputdata
+      if len(job.inputsandbox)>0:
+        # inputsandbox should contain File objects, that have a name = full path
+        for f in job.inputsandbox:
+          infileList.append( f.name )
+      
+      # Do we have any j.inputdata (that we recognize)?      
       if job.inputdata and job.inputdata._name == 'ATLASLocalDataset':
           for filePath in job.inputdata.names:
               infileList.append( filePath )
@@ -1511,6 +1612,13 @@ class NG(IBackend):
           for f in job.inputdata.names:
             infileList.append(f)                    
 
+      elif job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.accessprotocol =='GSIDCAP':
+          # Names should already be set to gsidcap://... 
+          arguments += [len(job.inputdata.names)]
+          
+          for i in range(len(job.inputdata.names)):
+              arguments += [job.inputdata.names[i]]
+              arguments += [job.inputdata.guids[i]]
 
       elif job.inputdata and job.inputdata._name == 'DQ2Dataset':
           # prepare the dataset namelist with tids - needed for check availability and paths
@@ -1658,7 +1766,13 @@ class NG(IBackend):
           self.requirements.runtimeenvironment = jobconfig.requirements.runtimeenvironment  
 
       outfile = []
-      
+
+      # Do the output sandbox first, then check for j.outputdata
+      if len(job.outputsandbox)>0:
+        # inputsandbox should contain File objects, that have a name = full path
+        for f in job.outputsandbox:
+          outfile.append( '(%s "")' %  f )
+                           
       # Do this in another way - make a wrapper instead
       #if xrslDict['stdout']:
       #   outfile.append("(" + "stdout.gz" + " \"\")")
@@ -1740,7 +1854,16 @@ class NG(IBackend):
                self.clean += [group_area]
         else:
           infileString += "(" + jobconfig.env['GROUP_AREA'] + " " + job.application.group_area.name + ")"
-         
+          
+      # Environment settings for special dataset variables
+      if jobconfig.env.has_key('DBDATASETNAME') and jobconfig.env.has_key('DBFILENAME'):
+        baselfc = "lfc://atlaslfc.nordugrid.org//grid/atlas/dq2/ddo/DBRelease"
+        dbset = jobconfig.env['DBDATASETNAME']
+        dbfn = jobconfig.env['DBFILENAME']
+        dblfnpath = "%s/%s/%s" % (baselfc,dbset,dbfn)
+        
+        infileString += "(" + dbfn + " " + dblfnpath + ")"
+
       if infileString:
          xrslDict[ 'inputfiles' ] = infileString
 
@@ -1762,6 +1885,10 @@ class NG(IBackend):
          xrslList.append( "(%s = %s)" % ( key, value ) )
       ## User requiremants   
       xrslList.append( self.requirements.convert() )
+
+      ## Setup for dcap access
+      if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.accessprotocol =='GSIDCAP':
+        xrslList.append("(%s = %s)" % ( "runtimeenvironment", "ENV/RUNTIME/PROXY" ) )
 
       ## Athena max events and other optiions must be specified through
       ## envrionment variables.
@@ -1788,6 +1915,8 @@ class NG(IBackend):
               xrslList.append("(GROUP_AREA_REMOTE  %s" % str( jobconfig.env['GROUP_AREA_REMOTE'] ) + ")")                 
           if jobconfig.env.has_key('ATHENA_EXE_TYPE'):
               xrslList.append("(ATHENA_EXE_TYPE  %s" % str( jobconfig.env['ATHENA_EXE_TYPE'] ) + ")")
+          if jobconfig.env.has_key('DBFILENAME'):
+              xrslList.append("(DBFILENAME  %s" % str( jobconfig.env['DBFILENAME'] ) + ")")
 
           # ROOT env
           if jobconfig.env.has_key('ROOTSYS'):
@@ -2079,6 +2208,36 @@ class NG(IBackend):
         outputdir = self.getJobObject().outputdir
         testNGStatTools(outputdir)
     
+    def getidentity(self, safe = False):
+        # Get the identity from the current proxy
+        # Needs special implementation because of the prefix hack...
+
+        # Fallback
+        cn = os.path.basename( os.path.expanduser( "~" ) )
+
+        # Get info from proxy
+        grid = grids['ARC']
+        cmd = 'voms-proxy-info -identity -dont-verify-ac'
+        rc, output, m = grid.shell.cmd1('%s%s' % (grid.__get_cmd_prefix_hack__(),cmd),allowed_exit=[0,500],capture_stderr=True)
+        
+        idlist = output.split("/")
+        idlist.reverse()
+
+        for subjectElement in idlist:
+          element = subjectElement.strip()
+          try:
+            cn = element.split( "CN=" )[ 1 ].strip()
+            if cn != "proxy":
+              break
+          except IndexError:
+            pass
+                                                                      
+        id = "".join( cn.split() )
+        if safe:
+          id = re.sub( "[^a-zA-Z0-9]", "" ,id )
+               
+        return id
+                                            
 
 class NGJobConfig(StandardJobConfig):
     '''Extends the standard Job Configuration with additional attributes'''
@@ -2221,6 +2380,21 @@ if config['ARC_ENABLE']:
     config.addOption('ARC_ENABLE', grids['ARC'].active, 'FIXME')
 """
 # $Log: not supported by cvs2svn $
+# Revision 1.38  2009/06/25 10:10:04  bsamset
+# Changed kill command to do bulk kill of subjobs
+#
+# Revision 1.37  2009/06/24 09:09:53  bsamset
+# Added direct gsidcap access functionality
+#
+# Revision 1.36  2009/06/12 09:39:40  bsamset
+# Added functionality to use a user-speficied database release, as set in j.application.atlas_dbrelease. Same syntax as on lcg.
+#
+# Revision 1.35  2009/06/09 09:01:13  bsamset
+# Added proper backend treatment of raw input_sandbox and output_sandbox entries; fixed handling of the case where we get a master jid back but all subjobs have empty jid. Will happen e.g. when a site does not have the right release installed.
+#
+# Revision 1.34  2009/06/02 10:40:18  bsamset
+# Re-fixed a bug for treating ATLAS_PRODUCTION in rel. 14-series
+#
 # Revision 1.33  2009/05/28 09:41:22  bsamset
 # Added gziping of athena log files, settable log file names through environment variables etc. Also fixed the propagation of atlas_production (again). Note: This update looses us live log file peeking of athena jobs. Must look into this later.
 #

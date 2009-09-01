@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: make_filestager_joption.py,v 1.7 2009-05-29 14:00:56 hclee Exp $
+# $Id: make_filestager_joption.py,v 1.8 2009-07-21 13:16:42 hclee Exp $
 ###############################################################################
 # making input job option file for FileStager
 
@@ -15,6 +15,10 @@ import dm_util
 import time
 
 io_type = os.environ['DATASETTYPE']
+io_mode = 'local'
+
+if os.environ.has_key( 'FILE_STAGER_IOMODE' ):
+    io_mode = os.environ[ 'FILE_STAGER_IOMODE' ];
 
 dq2tracertime = []
 dq2tracertime.append(time.time())
@@ -86,25 +90,33 @@ if (io_type in ['FILE_STAGER']):
     # define the default gridcopy protocol
     my_protocol = 'lcgcp'
 
-    # determin the supported transfer protocols of the given SE
-    protocols = dm_util.get_transfer_protocols(srm_endpt_info['se_host'])
-    print >> sys.stdout, 'detected transfer protocols: %s' % repr(protocols)
+    # try to detect the available protocol if io_mode is 'local'
+    if io_mode in [ 'local' ]:
+        # determin the supported transfer protocols of the given SE
+        protocols = dm_util.get_transfer_protocols(srm_endpt_info['se_host'])
+        print >> sys.stdout, 'detected transfer protocols: %s' % repr(protocols)
 
-    # chose a suitable protocol
-    # 1. firstly remove gsiftp protocol (do we support it as an alternative of lcgcp?)
-    # 2. pick up the first available protocol
-    # 3. if no first protocol, use lcgcp instead
-    try:
-        protocols.remove('gsiftp')
-    except ValueError:
-        pass
+        # chose a suitable protocol
+        # 1. firstly remove gsiftp protocol (do we support it as an alternative of lcgcp?)
+        # 2. pick up the first available protocol
+        # 3. if no first protocol, use lcgcp instead
+        try:
+            protocols.remove('gsiftp')
+        except ValueError:
+            pass
 
-    if protocols:
-        my_protocol = protocols[0]
+        if protocols:
+
+            ## make sure the 'file' protocl will be used if it's presented in the protocol list
+            ##  - usually a case of Storm-based SE
+            if 'file' in protocols:
+                my_protocol = 'file'
+            else:
+                my_protocol = protocols[0]
 
     ## avoid using dcap or gsidcap until the load on SE with dcap is solved 
-    if my_protocol in ['dcap', 'gsidcap']:
-        my_protocol = 'lcgcp'
+    #if my_protocol in ['dcap', 'gsidcap']:
+    #    my_protocol = 'lcgcp'
 
     print >> sys.stdout, 'picked transfer protocol: %s' % my_protocol
 

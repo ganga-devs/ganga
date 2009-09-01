@@ -166,7 +166,7 @@ FClistGUID(){
     fi
     for line in `cat PoolFileCatalog.xml`; do
         filename=`echo $line | grep "name"`
-        testguid=`echo $line | grep ID`
+        testguid=`echo $line | grep "ID="`
 	if [ ! -z "$testguid" ]; then 
 	    guid=`echo $testguid | sed -e 's:ID=\":guid\::' | sed -e 's:">::'`
         fi

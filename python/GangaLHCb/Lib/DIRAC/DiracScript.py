@@ -59,9 +59,18 @@ class DiracRoot:
         app = self.root_app
         args = ''
         if app.args:
-            args = string.join([str(s) for s in app.args],',')
+            if app.usepython:
+                args = string.join(['"%s"' % str(s) for s in app.args],' ')
+            else:
+                arglist = []
+                for arg in app.args:
+                    if type(arg)==type('str'):
+                        arglist.append('\'\"%s\"\'' % arg)
+                    else: arglist.append(arg)
+                args = string.join([str(s) for s in arglist],',')
         script = self.script
-        arg_str = '("%s","%s","%s","%s")' % (app.version,script,args,self.log)
+        arg_str = "(\"%s\",\"%s\",'''%s''',\"%s\")" \
+                  % (app.version,script,args,self.log)
         if app.usepython:
             if app.script.name.split('.')[-1] != 'py':
                 logger.warning('Root application has "usepython" set to True,'\
@@ -108,6 +117,7 @@ class DiracScript:
     def write(self,file_name):
         contents = '# dirac job created by ganga \n'
         contents += 'j = %s\n' % self.job_type
+        contents += 'dirac = Dirac()\n'
         contents += '\n# default commands added by ganga\n'
         if self.name: contents += 'j.setName("%s")\n' % self.name
         if self.cpu_time: contents += 'j.setCPUTime(%d)\n' % self.cpu_time
@@ -134,7 +144,6 @@ class DiracScript:
             contents += '# diracOpts added by user\n'
             contents += '%s\n' % self.dirac_opts
         contents += '\n# submit the job to dirac\n'
-        contents += 'dirac = Dirac()\n'
         contents += 'result = dirac.submit(j)\n'
         # write it out
         file = open(file_name,'w')

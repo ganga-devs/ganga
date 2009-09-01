@@ -198,6 +198,10 @@ class JobRegistry(Registry):
             logger.error("Error on evaluating registry columns converter from config file: %s: %s"% (x.__class__.__name__,x))
         self._registry_columns_show_empty = config['registry_columns_show_empty']
 
+    def _createMetadataObject(self):
+        from Ganga.GPIDev.Lib.JobTree.JobTree import JobTree
+        return JobTree()
+
     def _get_display_value(self,j,item):
         def getatr(obj,members):
             val = getattr(obj,members[0])
@@ -232,7 +236,8 @@ class JobRegistry(Registry):
             c["display:"+dpv] = self._get_display_value(obj, dpv)
         return c
     
-
+    def getJobTree(self):
+        return self.repository._getMetadataObject()
 #
 #
 # $Log: not supported by cvs2svn $

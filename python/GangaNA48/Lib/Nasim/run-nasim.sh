@@ -19,9 +19,9 @@ print_debug
 echo "-----------------------------------------"
 echo "Setting up environment to run Nasim"
 
-export NA48_ROOT=/afs/cern.ch/user/n/na48grid/public
+export NA48_ROOT=${VO_NA48_SW_DIR}
 export NA48_USER=${NA48_ROOT}/nasim
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${NA48_ROOT}/lib
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${NA48_USER}/lib
 export COMPACT_SQL_DATABASE=${NA48_ROOT}/compact/database/database.db
 
 export CDSERV=${NA48_ROOT}/hepdb
@@ -32,6 +32,15 @@ mv ${NA48_TITLES_FILE} cmc007user.titles.old
 #----------------------------------------------------
 print_debug
 
+#----------------------------------------------------
+echo "-----------------------------------------"
+echo "Some sanity checks..."
+
+if [ n${NA48_DATASET_NAME} = n ]; then
+    echo "ERROR: No Dataset name specified. Exiting..."
+    exit 1
+fi
+    
 #----------------------------------------------------
 echo "-----------------------------------------"
 echo "Altering Job options file"
@@ -69,7 +78,7 @@ echo
 echo "Shower Library changes"
 export NEWPATH=`echo ${NA48_USER} | sed 's/\//\\\//g'`
 echo ${NEWPATH}
-echo ${NA48_USER} | sed 's/\//\\\//g' > newpath
+echo ${VO_NA48_SW_DIR} | sed 's/\//\\\//g' > newpath
 export NEWPATH=`cat newpath`
 echo ${NEWPATH}
 sed 's/\/afs\/cern\.ch\/na48\/maxi97b/'${NEWPATH}'/g' cmc007user.titles.old > temp1
@@ -90,6 +99,15 @@ echo "Running Nasim"
 chmod +x cmc007.job
 
 ./cmc007.job
+if [ $? -ne 0 ]; then
+    echo "ERROR: Problems running cmc. Dodgy install?"
+    exit 1
+fi
+
+if [ `ls -ltr | grep mcrun | wc -l` -eq 0 ]; then
+    echo "ERROR: No MC files produced. Unhandlend exception in Nasim."
+    exit 2
+fi
 
 #----------------------------------------------------
 print_debug
@@ -99,6 +117,10 @@ echo "-----------------------------------------"
 echo "Storing Data"
 
 python store_data.py
+if [ $? -ne 0 ]; then
+    echo "ERROR: Problems storing data"
+    exit $?
+fi
 
 echo "All done!"
 

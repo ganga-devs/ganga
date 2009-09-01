@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaLocalRTHandler.py,v 1.25 2009-02-19 11:29:11 elmsheus Exp $
+# $Id: AthenaLocalRTHandler.py,v 1.29 2009-07-23 20:19:37 elmsheus Exp $
 ###############################################################################
 # Athena Local Runtime Handler
 #
@@ -27,8 +27,6 @@ from Ganga.Utility.logging import getLogger
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.Utility.files import expandfilename
-
-from Ganga.GPIDev.Credentials import GridProxy
 
 __directory__ = os.path.dirname(__file__)
 
@@ -168,8 +166,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 jobid = "%d" % job.id
 
             # Extract username from certificate
-            proxy = GridProxy()
-            username = proxy.identity(safe=True)
+            username = self.username
             # Remove apostrophe
             username = re.sub("'","",username)
 
@@ -177,6 +174,16 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             tempdate = time.localtime()
             jobdate = "%04d%02d%02d" %(tempdate[0],tempdate[1],tempdate[2])
 
+            usertag = configDQ2['usertag']
+
+            # prepare Group Dataset names
+            if job.outputdata.isGroupDS==True:
+                usertag = re.sub("user", "group", usertag)
+                if not usertag.startswith('group'):
+                    usertag = 'group' + time.strftime('%Y')[2:]
+                if job.outputdata.groupname:
+                    username = groupname
+            
             if job.outputdata.datasetname:
                 # new datasetname during job resubmission
                 pat = re.compile(r'^users\.%s\.ganga' % username)
@@ -184,27 +191,21 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     if job.outputdata.dataset_exists():
                         output_datasetname = job.outputdata.datasetname
                     else:
-                        output_datasetname = 'users.%s.ganga.%s.%s' % ( username, jobid, jobdate)
-                        
-                    #output_lfn = 'users/%s/ganga/%s/' % (username,jobid)
-                    #output_lfn = 'users/%s/ganga/' % (username)
-                    output_lfn = 'users/%s/ganga/%s/' % (username,output_datasetname)
+                        output_datasetname = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
+
+                    output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)    
                 else:
                     # append user datasetname for new configuration
-#                    if job.outputdata.use_datasetname and job.outputdata.datasetname:
-#                        output_datasetname = job.outputdata.datasetname
-#                    else:
-                    output_datasetname = 'users.%s.ganga.%s' % (username,job.outputdata.datasetname)
+                    #if job.outputdata.use_datasetname and job.outputdata.datasetname:
+                    #    output_datasetname = job.outputdata.datasetname
+                    #else:
+                    output_datasetname = '%s.%s.ganga.%s' % (usertag, username,job.outputdata.datasetname)
 
-                    #output_lfn = 'users/%s/ganga/%s/' % (username,job.outputdata.datasetname)
-                    #output_lfn = 'users/%s/ganga/' % (username)
-                    output_lfn = 'users/%s/ganga/%s/' % (username,output_datasetname)
+                    output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
             else:
                 # No datasetname is given
-                output_datasetname = 'users.%s.ganga.%s.%s' % (username,jobid, jobdate)
-                #output_lfn = 'users/%s/ganga/%s/' % (username,jobid)
-                #output_lfn = 'users/%s/ganga/' % (username)
-                output_lfn = 'users/%s/ganga/%s/' % (username,output_datasetname)
+                output_datasetname = '%s.%s.ganga.%s.%s' % (usertag,username,jobid, jobdate)
+                output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
             output_jobid = jid
             job.outputdata.datasetname=output_datasetname
             if not job.outputdata.dataset_exists(output_datasetname):
@@ -268,7 +269,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         except AttributeError:
             pass
 
-        #if output_location:
+        if job.outputdata and job.outputdata._name=='DQ2OutputDataset' and output_location == [ ]:
+            raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
+        
         environment['OUTPUT_LOCATION'] = output_location
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             environment['OUTPUT_DATASETNAME'] = output_datasetname
@@ -277,7 +280,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             environment['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
             environment['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
             if job.outputdata.use_shortfilename:
-                environment['GANGA_SHORTFILENAME'] = 1
+                environment['GANGA_SHORTFILENAME'] = '1'
             else:
                 environment['GANGA_SHORTFILENAME'] = ''
             try:
@@ -320,7 +323,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
            if not 'db_dq2localid.py' in [ os.path.basename(file.name) for file in inputbox ]:
                _append_files(inputbox, 'db_dq2localid.py')
 
-                           
+        # set RecExCommon options
+        environment['RECEXTYPE'] = job.application.recex_type
 
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
@@ -330,6 +334,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         job = app._getParent() # Returns job or subjob object
 
         logger.debug("AthenaLocalRTHandler master_prepare called, %s", job.id)
+
+        self.username = gridProxy.identity(safe=True)
 
         # Expand Athena jobOptions
         if not app.option_file:
@@ -498,6 +504,8 @@ class AthenaRemoteRTHandler(IRuntimeHandler):
             rt_handler = AthenaLocalRTHandler()
             return rt_handler.master_prepare(app,appmasterconfig)
 
+from Ganga.GPIDev.Credentials import GridProxy
+gridProxy = GridProxy()
 
 allHandlers.add('Athena', 'Local', AthenaLocalRTHandler)
 allHandlers.add('Athena', 'LSF'  , AthenaLocalRTHandler)
@@ -512,6 +520,18 @@ logger = getLogger()
 
 
 #$Log: not supported by cvs2svn $
+#Revision 1.28  2009/07/17 07:32:12  elmsheus
+#Fix dataset naming problem
+#
+#Revision 1.27  2009/07/16 15:36:06  elmsheus
+#Fix #53251, short_filename as string
+#
+#Revision 1.26  2009/07/16 15:18:58  elmsheus
+#Fix #53251: missing protection for RECEXTYPE, also improve X509
+#
+#Revision 1.25  2009/02/19 11:29:11  elmsheus
+#Fix container submission problem
+#
 #Revision 1.24  2009/02/18 14:53:42  elmsheus
 #Add proxy.identity(safe=True)
 #

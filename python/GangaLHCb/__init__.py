@@ -29,8 +29,8 @@ overridden by the user in a specific job via the Job.outputdata field). Files \
 from all other known handlers will go to output data (unless overridden by \
 the user in a specific job via the Job.outputsandbox field).'
 configLHCb.addOption('outputsandbox_types',
-                     ['NTupleSvc','HistogramPersistencySvc','MicroDSTStream'],
-                     dscrpt)
+                     ['NTupleSvc','HistogramPersistencySvc',
+                      'MicroDSTStream','EvtTupleSvc'],dscrpt) 
  
 # Set default values for the Dirac section.
 dscrpt = 'Root versions used by Dirac for given versions of DaVinci'
@@ -52,7 +52,8 @@ services = {'Bookkeeping':'Bookkeeping/BookkeepingManager',
             'Outputsandbox':'WorkloadManagement/OutputSandbox'
             }
 configDirac.addOption('DIRACServices',services,dscrpt)
-
+dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
+configDirac.addOption('ShowDIRACstdout',False,dscrpt)
 
     
 def getEnvironment( config = {} ):
@@ -64,7 +65,7 @@ def getEnvironment( config = {} ):
    return
 
 def loadPlugins( config = {} ):
-    import Lib.Dirac
+    #import Lib.Dirac
     import Lib.Gaudi
     import Lib.LHCbDataset
-
+    import Lib.DIRAC

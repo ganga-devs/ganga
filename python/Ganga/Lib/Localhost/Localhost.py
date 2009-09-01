@@ -99,8 +99,12 @@ class Localhost(IBackend):
     def preparejob(self,jobconfig,master_input_sandbox):
 
       job = self.getJobObject()
-
-      subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles())
+      mon = job.getMonitoringService()
+      import Ganga.Core.Sandbox as Sandbox
+      subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
+        + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules())
+        + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules()))
+      
       appscriptpath = [jobconfig.getExeString()]+jobconfig.getArgStrings()
       if self.nice:
           appscriptpath = ['nice','-n %d'%self.nice] + appscriptpath
@@ -166,6 +170,7 @@ os.chdir(workdir)
 
 import sys
 sys.path.insert(0, ###GANGADIR###)
+sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 try:
     import subprocess
 except ImportError,x:
@@ -249,7 +254,6 @@ sys.exit()
 """
 
       import inspect
-      import Ganga.Core.Sandbox as Sandbox
       script = script.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
 
       script = script.replace('###APPLICATION_NAME###',repr(job.application._name))

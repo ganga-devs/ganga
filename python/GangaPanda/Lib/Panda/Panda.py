@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Panda.py,v 1.40 2009-05-30 08:31:59 dvanders Exp $
+# $Id: Panda.py,v 1.47 2009-07-23 23:46:50 dvanders Exp $
 ################################################################################
                                                                                                               
 
@@ -37,6 +37,7 @@ config.addOption( 'assignedPriorityBuild', 2000, 'assignedPriorityBuild' )
 config.addOption( 'assignedPriorityRun', 1000, 'assignedPriorityRun' )
 config.addOption( 'processingType', 'ganga', 'processingType' )
 config.addOption( 'enableDownloadLogs', False , 'enableDownloadLogs' )  
+config.addOption( 'trustIS', True , 'Trust the Information System' )  
 
 def queueToAllowedSites(queue):
     try:
@@ -99,8 +100,8 @@ def runPandaBrokerage(job):
                 libdslocation = libdslocation.values()[0]
 
         tmpSites = []
+        dataset = ''
         if job.inputdata:
-            dataset = ''
             try:
                 dataset = job.inputdata.dataset[0]
             except:
@@ -122,7 +123,7 @@ def runPandaBrokerage(job):
                 raise BackendError('Panda','Error in Client.getLocations')
             # no location
             if dsLocationMap == {}:
-                raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.requirements.cloud,job.inputdata.dataset[0]))
+                raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.requirements.cloud,dataset))
             # run brokerage
             for tmpItem in dsLocationMap.values():
                 if not libdslocation or tmpItem == libdslocation:
@@ -132,9 +133,15 @@ def runPandaBrokerage(job):
                 if spec['cloud']==job.backend.requirements.cloud and spec['status']=='online' and not Client.isExcudedSite(site):
                     if not libdslocation or site == libdslocation:
                         tmpSites.append(site)
-       
+    
+        newTmpSites = []
+        for site in tmpSites:
+            if site not in job.backend.requirements.excluded_sites:
+                newTmpSites.append(site)
+        tmpSites=newTmpSites
+ 
         if not tmpSites: 
-            raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" % (job.backend.requirements.cloud,job.inputdata.dataset,job.backend.libds))
+            raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" % (job.backend.requirements.cloud,dataset,job.backend.libds))
         
         tag = ''
         try:
@@ -142,11 +149,11 @@ def runPandaBrokerage(job):
         except:
             pass
         try:
-            status,out = Client.runBrokerage(tmpSites,tag,verbose=False)
+            status,out = Client.runBrokerage(tmpSites,tag,verbose=False,trustIS=config['trustIS'])
         except exceptions.SystemExit:
-            raise BackendError('Panda','Error in Client.runBrokerage')
+            raise BackendError('Panda','Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
         if status != 0:
-            raise BackendError('Panda','failed to run brokerage for automatic assignment: %s' % out)
+            raise BackendError('Panda','Non-zero to run brokerage for automatic assignment: %s' % out)
         if not Client.PandaSites.has_key(out):
             raise BackendError('Panda','brokerage gave wrong PandaSiteID:%s' % out)
         # set site
@@ -289,7 +296,9 @@ class Panda(IBackend):
         if status:
             logger.error('Status %d from Panda submit',status)
             return False
-       
+        if "NULL" in [jobid[0] for jobid in jobids]:
+            logger.error('Panda could not assign job id to some jobs. Dataset name too long?')
+            return False
         if buildjobspec:
             job.backend.buildjob = PandaBuildJob() 
             job.backend.buildjob.id = jobids[0][0]
@@ -297,7 +306,7 @@ class Panda(IBackend):
 
         for subjob, jobid in zip(rjobs,jobids):
             subjob.backend.id = jobid[0]
-            subjob.backend.url = 'http://panda.atlascomp.org?job=%d&reload=yes'%jobid[0]
+            subjob.backend.url = 'http://panda.cern.ch?job=%d'%jobid[0]
             subjob.updateStatus('submitted')
 
         return True
@@ -443,10 +452,10 @@ class Panda(IBackend):
                         logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
                         job.backend.status = status.jobStatus
 
-                        if status.computingElement != 'NULL':
-                            job.backend.CE = status.computingElement
-                        else:
-                            job.backend.CE = None
+#                        if status.computingElement != 'NULL':
+#                            job.backend.CE = status.computingElement
+#                        else:
+#                            job.backend.CE = None
 
                         job.backend.exitcode = str(status.transExitCode)
                         job.backend.piloterrorcode = str(status.pilotErrorCode)
@@ -457,7 +466,7 @@ class Panda(IBackend):
                                 job.backend.reason = job.backend.reason + str(job.backend.jobSpec[k])
 
                         if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
-                            pass
+                            job.updateStatus('submitted')
                         elif status.jobStatus in ['starting','running','holding','transferring']:
                             job.updateStatus('running')
                         elif status.jobStatus == 'finished':
@@ -491,7 +500,7 @@ class Panda(IBackend):
                             pass
 
                         if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
-                            pass
+                            job.updateStatus('submitted')
                         elif status.jobStatus in ['starting','running','holding','transferring']:
                             job.updateStatus('running')
                         elif status.jobStatus == 'failed':
@@ -574,6 +583,28 @@ class Panda(IBackend):
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.46  2009/07/21 11:15:30  dvanders
+# fix for https://savannah.cern.ch/bugs/?53470
+#
+# Revision 1.45  2009/07/14 08:29:23  dvanders
+# change pandamon url
+#
+# Revision 1.44  2009/06/18 08:35:46  dvanders
+# panda-client 0.1.71
+# trust the information system (jobs won't submit if athena release not installed).
+#
+# Revision 1.43  2009/06/10 13:47:13  ebke
+# Check for NULL return string of Panda job Id and suggest to shorten dataset name
+#
+# Revision 1.42  2009/06/08 13:02:10  dvanders
+# force to submitted (because jobs can go from running to activated)
+#
+# Revision 1.41  2009/06/08 08:25:24  dvanders
+# backend.CE doesn't exist
+#
+# Revision 1.40  2009/05/30 08:31:59  dvanders
+# limit submit to 2000 subjobs
+#
 # Revision 1.39  2009/05/30 07:22:09  dvanders
 # Panda server has a per call limit of 2500 subjobs per getFullJobStatus.
 #

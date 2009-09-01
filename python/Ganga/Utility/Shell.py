@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Shell.py,v 1.6 2008-11-27 15:06:08 moscicki Exp $
+# $Id: Shell.py,v 1.7 2009-06-26 11:35:09 moscicki Exp $
 ################################################################################
 #
 # Shell wrapper with environment caching 
@@ -104,11 +104,12 @@ class Shell:
       except OSError, (num,text):
          logger.warning( 'Problem with shell command: %s, %s', num,text)
          rc = 255
-       
+      
+      BYTES = 4096
       if rc not in allowed_exit:
          logger.warning('exit status [%d] of command %s',rc,cmd)
          logger.warning('full output is in file: %s',soutfile)
-         logger.warning('<first 255 bytes of output>\n%s',file(soutfile).read(255))
+         logger.warning('<first %d bytes of output>\n%s',BYTES,file(soutfile).read(BYTES))
          logger.warning('<end of first 255 bytes of output>')
            
 #FIXME /bin/sh might have also other error messages                                                                                            
@@ -182,6 +183,9 @@ class Shell:
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.6  2008/11/27 15:06:08  moscicki
+# bug #44393: wrong redirection of stdout/stderr in Shell
+#
 # Revision 1.5  2008/11/21 15:42:03  moscicki
 # bug #44259: GangaLHCb tests fail due to gridProxy check
 #

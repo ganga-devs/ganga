@@ -10,7 +10,10 @@
 # Cut and apsted by David Cameron, May 2008, from DQ2 site services codebase
 #
 
-import lfc
+try:
+    import lfc
+except:
+    pass
 import errno
 import os
 import re

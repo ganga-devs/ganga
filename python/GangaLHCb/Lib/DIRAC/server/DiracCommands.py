@@ -121,9 +121,10 @@ class DiracCommands:
     getServicePorts = staticmethod(getServicePorts)
 
     def getInputDataCatalog(lfns,depth,site,xml_file):
-        result = getAncestorFiles(lfns,depth)
-        if not result or not result.get('OK',False): return result
-        lfns = result['Value']
+        if depth > 0:
+            result = getAncestorFiles(lfns,depth)
+            if not result or not result.get('OK',False): return result
+            lfns = result['Value']
         return DiracCommands.dirac.getInputDataCatalog(lfns,site,xml_file)
     getInputDataCatalog = staticmethod(getInputDataCatalog)
 

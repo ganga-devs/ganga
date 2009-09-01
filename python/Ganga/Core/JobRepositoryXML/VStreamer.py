@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: VStreamer.py,v 1.4 2009-05-05 15:15:02 moscicki Exp $
+# $Id: VStreamer.py,v 1.5 2009-06-09 13:03:16 moscicki Exp $
 ################################################################################
 
 # dump object (job) to file f (or stdout)
@@ -137,10 +137,7 @@ class VStreamer(object):
             self.level-=1 
 
     def quote(self,x):
-        #FIXME: also quote % characters (to allow % operator later)
-        if type(x) == type(''):
-            return escape(repr(x))
-        return x    
+        return escape(repr(x))
 
 
 ################################################################################

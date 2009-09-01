@@ -1183,7 +1183,7 @@ class JobNavListView( QListView ):
       self.iterator = None
       self.addColumn( "Job attributes" )
       self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,qt.QSizePolicy.Expanding,0,0,self.sizePolicy().hasHeightForWidth()))
-      
+      self.setSorting( -1 )
       # Slots
       self.connect( self, 
                     SIGNAL( 'contextMenuRequested( QListViewItem*, const QPoint&, int )' ), 

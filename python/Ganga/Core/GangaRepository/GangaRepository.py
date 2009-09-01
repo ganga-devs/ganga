@@ -155,6 +155,8 @@ class GangaRepository(object):
             self._metadata = None
         else:
             self._objects[id]._setRegistry(None)
+            del self._objects[id].__dict__["_registry_id"]
+            del self._objects[id].__dict__["_registry_locked"]
             del self._objects[id]
 
     def _getMetadataObject(self):

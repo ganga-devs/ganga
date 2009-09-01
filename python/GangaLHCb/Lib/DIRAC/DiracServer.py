@@ -6,12 +6,16 @@ import time
 import re
 import random
 import inspect
+import tempfile
 from subprocess import *
 from socket import *
 from Ganga.GPIDev.Base.Objects import GangaObject
 import Ganga.Utility.logging
 from Ganga.Core import GangaException
+import Ganga.Utility.Config
 
+configLHCb = Ganga.Utility.Config.getConfig('LHCb')
+configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -39,6 +43,7 @@ class DiracServer:
         self.path = os.path.dirname(inspect.getsourcefile(DiracServer))
         logger.debug('Set DiracServer.path = %s' % self.path)
         self.server_id = random.randrange(0,os.sys.maxint)
+        self.show_stdout = None
 
     def _getPortBlacklist(self):
         '''Obtains a list of ports used by system services. '''
@@ -57,17 +62,30 @@ class DiracServer:
         DiracServer.port_blacklist = blacklist
         logger.debug('DiracServer.port_blacklist = %s' % str(blacklist))
 
-    def _getDiracEnv(self,version='v4r10'):
+    def _getDiracEnv(self,version=''):
         '''Gets the DIRAC environment.'''
+        if not version and configLHCb['DiracVersion']:
+            version = configLHCb['DiracVersion']
+        print 'Getting DIRAC %s environment (this may take a few ' \
+              'seconds)' % version
         setup_script = 'SetupProject.sh'
         env = {}
+        tmp = tempfile.NamedTemporaryFile(suffix='.txt')
         cmd = '/usr/bin/env bash -c \"source %s Dirac %s >& /dev/null && '\
-              'printenv > env.tmp\"' % (setup_script,version)
-        Popen([cmd],shell=True).wait()
-        for line in open('env.tmp').readlines():
+              'printenv > %s\"' % (setup_script,version,tmp.name)
+        rc = Popen([cmd],shell=True).wait()
+        if rc != 0 or not os.path.exists(tmp.name):
+            msg = 'Could not obtain the DIRAC environment.'
+            raise GangaException(msg)
+        count = 0
+        for line in tmp.readlines():
+            if line.find('DIRAC') >= 0: count += 1
             varval = line.strip().split('=')
             env[varval[0]] = ''.join(varval[1:])
-        os.system('rm -f env.tmp')
+        tmp.close()
+        if count == 0:
+            msg = 'Could not obtain the DIRAC environment.'
+            raise GangaException(msg)
         DiracServer.dirac_env = env
         logger.debug('DiracServer.dirac_env = %s' % str(env))
 
@@ -78,8 +96,12 @@ class DiracServer:
         cmd = 'python %s %d \'%s\' %s %d' % (server_script,port,
                                              self.end_data_str,
                                              dirac_cmds,self.server_id)
+        stdout = open('/dev/null','w')
+        if configDirac['ShowDIRACstdout']: stdout = None
+           
         self.server = Popen([cmd],shell=True,env=DiracServer.dirac_env,
-                            stdout=PIPE,stderr=PIPE)
+                            stdout=stdout,stderr=STDOUT)
+        self.show_stdout = configDirac['ShowDIRACstdout']
         time.sleep(1)
         rc = self.server.poll()
         return rc
@@ -90,10 +112,9 @@ class DiracServer:
         if self.server.poll() is None: return True
         else: return False
 
-    def communicate(self):
-        '''Returns (stdout,stderr) from server (only avail after disconnect)'''
-        if self.isActive(): return None
-        else: return self.server.communicate()
+    def read_stdout(self):
+        '''Returns stdout/stderr from server (not implemented yet)'''
+        return 'NOT AVAILABLE'
 
     def connect(self):
         '''Run the server and connect it and the client to the same port.'''
@@ -126,9 +147,9 @@ class DiracServer:
                 pass
 
         if self.port is None:
-            stdout, stderr = self.communicate()
-            msg = 'Failed to open server/client connection [stderr = %s]' \
-                  % stderr 
+            stdout = self.read_stdout()
+            msg = 'Failed to open server/client connection [stdout = %s]' \
+                  % stdout 
             raise GangaException(msg)
         logger.debug('Connected to port %d' % self.port)
         return self.port
@@ -138,9 +159,9 @@ class DiracServer:
         command = build_command_string(cmd,self.end_data_str)
         self.socket.sendall(command)
         if not self.isActive():
-            stdout, stderr = self.communicate()
+            stdout = self.read_stdout()
             msg = 'Server died after attempting to execute command: %s ' \
-                  '[stderr = %s]' % (cmd,stderr)
+                  '[stdout = %s]' % (cmd,stdout)
             raise GangaException(msg)
         return command
 
@@ -151,6 +172,7 @@ class DiracServer:
         while self.isActive():
             try:
                 data = self.socket.recv(1024)
+                if(data.find('###RECV-DATA###') >= 0): data = ''
             except error, e:
                 msg = 'Timeout [t>%.1fs] attempting to receive result of ' \
                       'command: %s' % (self.socket.gettimeout(), cmd)
@@ -167,9 +189,9 @@ class DiracServer:
                             
         if not recv_completed:
             if not self.isActive():
-                stdout, stderr = self.communicate()
+                stdout = self.read_stdout()
                 msg = 'Server died while attempting to receive result of ' \
-                      'command %s [stderr = %s]' % (cmd,stderr)
+                      'command %s [stdout = %s]' % (cmd,stdout)
             else:
                 msg = 'An unknown error occured while trying to receive a '\
                       'command result from the Dirac server.  Please contact '\
@@ -181,6 +203,9 @@ class DiracServer:
         '''Sends the command to the server then waits for it to return the
         result.'''
         if not self.isActive(): self.connect()
+        elif self.show_stdout is not configDirac['ShowDIRACstdout']:
+            self.disconnect()
+            self.connect()
         def_timeout = self.socket.gettimeout()
         if timeout is not None:
             self.socket.settimeout(timeout)
@@ -204,6 +229,6 @@ class DiracServer:
             num_polls += 1
             if num_polls >= 100: break
             time.sleep(0.1)
-        return self.isActive()
+        return not self.isActive()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

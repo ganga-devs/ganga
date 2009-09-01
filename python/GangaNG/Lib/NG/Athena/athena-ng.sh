@@ -136,6 +136,25 @@ echo $pybin
 
 cmt show macro_value cmt_compiler_version
 
+# Unpack and set up any user-defined db release
+pwd
+if [ ! -z $DBFILENAME ]
+then
+    if [ ! -e $DBFILENAME ]
+    then
+	echo "ERROR: User-requested database file not found!"
+    else
+	tar xzf $DBFILENAME
+	cd DBRelease/current/
+	python setup.py | grep = | sed -e 's/^/export /' > dbsetup.sh
+	source dbsetup.sh
+	cd ../../
+	ln -s DBRelease/current/geomDB/ .
+	ln -s DBRelease/current/sqlite200/ .
+   fi
+fi
+
+
 get_files PDGTABLE.MeV
 # Make a local copy of requested geomDB if none already available
 if [ ! -e geomDB ]; then
@@ -200,11 +219,16 @@ cat - >input.py <<EOF
 ic = []
 if os.path.exists('input_files'):
     for lfn in file('input_files'):
-        name = os.path.basename(lfn.strip())
-        pfn = os.path.join(os.getcwd(),name)
-        if (os.path.exists(pfn)) and (os.stat(pfn).st_size>0):
-            print 'Input: %s' % name
-            ic.append('%s' % name)
+        if lfn.find("gsidcap://")>-1:
+          lfn = lfn.strip()
+          print 'gsidcap input: %s' % lfn
+          ic.append('%s' % lfn)
+        else:
+          name = os.path.basename(lfn.strip())
+          pfn = os.path.join(os.getcwd(),name)
+          if (os.path.exists(pfn)) and (os.stat(pfn).st_size>0):
+              print 'Input: %s' % name
+              ic.append('%s' % name)
     EventSelector.InputCollections = ic
     if os.environ.has_key('ATHENA_MAX_EVENTS'):
         theApp.EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
@@ -267,6 +291,24 @@ echo 'GROUP_AREA_REMOTE'
 echo $GROUP_AREA_REMOTE
 echo 'GROUP_AREA'
 echo $GROUP_AREA
+
+# Set up for dcap access (32bit is OK within athena for now)
+# Note the '*' - we assume there's only one dcache version in athena, but it does change with the release...
+export DCAP_PATH=$SITEROOT/sw/lcg/external/dcache_client/$(ls $SITEROOT/sw/lcg/external/dcache_client)/slc4_ia32_gcc34/dcap/lib/
+export LD_LIBRARY_PATH=$DCAP_PATH:$LD_LIBRARY_PATH
+export LD_PRELOAD=$SITEROOT/sw/lcg/external/dcache_client/*/slc4_ia32_gcc34/dcap/lib/libpdcap.so
+export LD_PRELOAD_32=$SITEROOT/sw/lcg/external/dcache_client/*/slc4_ia32_gcc34/dcap/lib/libpdcap.so
+export DCACHE_IO_TUNNEL=$SITEROOT/sw/lcg/external/dcache_client/*/slc4_ia32_gcc34/dcap/lib/libgsiTunnel.so
+
+echo 'LD_LIBRARY_PATH'
+echo $LD_LIBRARY_PATH
+echo 'LD_PRELOAD'
+echo $LD_PRELOAD
+echo 'LD_PRELOAD_32'
+echo $LD_PRELOAD_32
+echo 'DCACHE_IO_TUNNEL'
+echo $DCACHE_IO_TUNNEL
+
 
 #if [ ! -z $OUTPUT_JOBID ] && [ -e ganga-joboption-parse.py ] && [ -e output_files ]
 #    then

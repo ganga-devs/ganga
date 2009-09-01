@@ -131,7 +131,9 @@ get_remote_proxy () {
     export X509_CERT_DIR=$X509CERTDIR
     if [ ! -z $REMOTE_PROXY ]; then
         scp -o StrictHostKeyChecking=no $REMOTE_PROXY $PWD/.proxy
-        export X509_USER_PROXY=$PWD/.proxy
+	if [ -e $PWD/.proxy ]; then 
+	    export X509_USER_PROXY=$PWD/.proxy
+        fi
     fi
 
     # print relevant env. variables for debug 
@@ -139,6 +141,35 @@ get_remote_proxy () {
     env | grep 'X509'
     env | grep 'GLOBUS' 
     voms-proxy-info -all
+}
+
+fix_gcc_issue_sl5 () {
+
+    # fix SL5 gcc/g++ problem - need to use version 3.4
+    RHREL=`cat /etc/redhat-release`
+    SC51=`echo $RHREL | grep -c 'Scientific Linux CERN SLC release 5'`
+    SC52=`echo $RHREL | grep -c 'Scientific Linux SL release 5'`
+
+    if [ $SC51 -gt 0 ] || [ $SC52 -gt 0 ]; then 
+        gcc34_path=`which gcc34`
+
+        if [ $? -eq 0 ]; then
+            if [ ! -d comp ]; then
+                mkdir comp
+            fi
+            ln -sf $gcc34_path comp/gcc
+        fi
+
+        gpp34_path=`which g++34`
+        if [ $? -eq 0 ]; then
+            if [ ! -d comp ]; then
+                mkdir comp
+            fi
+            ln -sf $gpp34_path comp/g++
+        fi
+
+        export PATH=$PWD/comp:$PATH
+    fi
 }
 
 ## function for fixing g2c/gcc issues on SLC3/SLC4 against
@@ -213,13 +244,15 @@ athena_setup () {
 # determine lcg_utils version and setup lcg-* commands
 get_lcg_util () {
 
-    LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
-    PATH_BACKUP=$PATH
-    PYTHONPATH_BACKUP=$PYTHONPATH
+    if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
+	LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+	PATH_BACKUP=$PATH
+	PYTHONPATH_BACKUP=$PYTHONPATH
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
-    export PATH=$PATH_ORIG
-    export PYTHONPATH=$PYTHONPATH_ORIG
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+	export PATH=$PATH_ORIG
+	export PYTHONPATH=$PYTHONPATH_ORIG
+    fi
 
     # find version string
     export lcgutil_str=`lcg-cr --version | grep lcg | cut -d- -f2`
@@ -241,9 +274,11 @@ get_lcg_util () {
 	export lcgcr="lcg-cr --connect-timeout 150 --sendreceive-timeout 150 --srm-timeout 150 --bdii-timeout 150 "
     fi
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
-    export PATH=$PATH_BACKUP
-    export PYTHONPATH=$PYTHONPATH_BACKUP
+    if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+	export PATH=$PATH_BACKUP
+	export PYTHONPATH=$PYTHONPATH_BACKUP
+    fi
 
 }
 
@@ -637,7 +672,14 @@ run_athena () {
 
 	if [ n$ATLAS_EXETYPE == n'ATHENA' ]
 	    then 
-	    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+
+	    if [ n$RECEXTYPE == n'' ]
+		then
+		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	    else
+		$timecmd athena.py input.py $ATHENA_OPTIONS evtmax.py; echo $? > retcode.tmp
+	    fi
+
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	elif [ n$ATLAS_EXETYPE == n'PYARA' ]
@@ -673,8 +715,30 @@ run_athena () {
 			break
 		    else
 			echo 'ERROR: dq2-get of $DBDATASETNAME failed !'
-			echo '1'>retcode.tmp
-		    fi
+			echo 'Retry with changed environment'
+			LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+			PATH_BACKUP=$PATH
+			PYTHONPATH_BACKUP=$PYTHONPATH
+			export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+			export PATH=$PATH_ORIG
+			export PYTHONPATH=$PYTHONPATH_ORIG
+			if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+			    then
+			    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+			fi
+			dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
+			if [ -e $DBDATASETNAME/$DBFILENAME ]
+			    then
+			    mv $DBDATASETNAME/* .
+			    echo successfully retrieved $DBFILENAME
+			else
+			    echo 'ERROR: dq2-get of $DBDATASETNAME failed !'
+			    echo '1'>retcode.tmp
+			fi 
+			export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+			export PATH=$PATH_BACKUP
+			export PYTHONPATH=$PYTHONPATH_BACKUP
+   		    fi
 		fi
 	    fi
 	    ##
@@ -729,7 +793,13 @@ EOF
 		mv output_files.copy output_files.new
 	    fi
 	else
-	    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	    if [ n$RECEXTYPE == n'' ]
+		then
+		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+	    else
+		$timecmd athena.py input.py $ATHENA_OPTIONS evtmax.py; echo $? > retcode.tmp
+	    fi
+
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	fi

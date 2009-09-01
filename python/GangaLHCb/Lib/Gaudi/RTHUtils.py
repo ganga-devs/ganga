@@ -2,12 +2,13 @@
 import os
 import tempfile
 from Ganga.Core import ApplicationConfigurationError
-from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
 import Ganga.Utility.Config
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
+from GangaLHCb.Lib.DIRAC.Dirac import Dirac
+from GangaLHCb.Lib.DIRAC.DiracUtils import *
 
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -22,25 +23,15 @@ def gen_catalog(dataset,site):
   lfns = collect_lfn_filelist(dataset)
   depth = dataset.depth
   tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
-  #cmd = "os.system('dirac-lhcb-generate-catalog -d %d -n %s -f %s %s')" \
-  #          % (depth,site,tmp_xml.name,lfns)
-  cmd = '''
-from DIRAC.LHCbSystem.Utilities.AncestorFiles import getAncestorFiles
-from DIRAC.Interfaces.API.Dirac import *
-lfns = %s
-result = getAncestorFiles(lfns,%d)
-if not result: sys.exit(2)
-if not result[\'OK\']: sys.exit(2)
-lfns = result[\'Value\']
-dirac.getInputDataCatalog(lfns,\'%s\',\'%s\')
-''' % (str(lfns),depth,site,tmp_xml.name)
-
-  dw = diracwrapper(cmd)
+  cmd = 'result = DiracCommands.getInputDataCatalog(%s,%d,"%s","%s")' \
+        % (str(lfns),depth,site,tmp_xml.name)
+  result = Dirac.execAPI(cmd)
   xml_catalog = tmp_xml.read()
-  if dw.returnCode != 0 or not xml_catalog:    
-    msg = "Error getting PFN's from LFN's (couldn't build catalog)"
+  if not result_ok(result) or not xml_catalog:    
+    msg = "Error getting PFN's from LFN's"
+    if result.get('Message',''): msg += ': %s\n' % result['Message']
     logger.error(msg)
-    raise ApplicationConfigurationError(None,msg)
+    raise ApplicationConfigurationError(None,'XML catalog build error!')
 
   tmp_xml.close()
   return xml_catalog
@@ -132,7 +123,7 @@ os.environ['PYTHONPATH'] = '%s/python:%s' % (os.getcwd(),
 
 """
   if which is 'GaudiPython':
-    script += 'cmdline = \"python ./gaudiPythonwrapper.py\"\n'
+    script += 'cmdline = \"python ./gaudipython-wrapper.py\"\n'
   else:
     script += 'cmdline = \"%s/scripts/gaudirun.py %s data.opts\" % '
     script += "(os.environ['GAUDIROOT'],opts)\n"

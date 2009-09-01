@@ -33,15 +33,19 @@ def grid_proxy_ok():
         except ValueError: proxy_timeleft = 0.0
         
     if proxy_timestamp is None or proxy_timeleft is None: setTimeLeft()
+    
     now = time.time()
     diff = now - proxy_timestamp
-    if diff > 4*mintime: setTimeLeft()
-    else: proxy_timeleft = proxy_timeleft - diff
-
+    timeleft = proxy_timeleft - diff
+    
+    if (timeleft < mintime) or (diff > 1000):
+        setTimeLeft()
+        timeleft = proxy_timeleft
+    
     result = None
-    if proxy_timeleft < mintime:
+    if timeleft < mintime:
         result = "Failed to submit job. Grid proxy validity %s s, while " \
-                 "%s s required" % (str(proxy_timeleft),str(mintime))
+                 "%s s required" % (str(timeleft),str(mintime))
 
     return result
 

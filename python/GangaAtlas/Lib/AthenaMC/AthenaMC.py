@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMC.py,v 1.31 2009-06-03 16:55:15 ebke Exp $
+# $Id: AthenaMC.py,v 1.36 2009-07-10 12:16:38 fbrochu Exp $
 ###############################################################################
 # AthenaMC Job Handler
 #
@@ -73,25 +73,39 @@ class AthenaMC(IApplication):
        from Ganga.GPIDev.Lib.Job import Job
        import time
 
+
+       trfretcode="0"
        job = self._getParent()
+       pfn = job.outputdir + "stdout.gz"
+       if os.path.exists(pfn):
+           trfretcode=commands.getoutput("zcat %s | grep 'returning transform exit code' | awk '{print $NF}'" % pfn)
+       
+
+       if trfretcode != "0":
+           logger.warning("Job %s returned non-zero transformation code %s. Please check stdout.gz with job.peek('stdout.gz')" % (str(job.id),trfretcode))
+       
        if job.outputdata:
            if job.subjobs: # master job is the only one to have subjobs...
                logger.info("entering Master job completion thread")
                stats = [s.status for s in job.subjobs]
                logger.info("subjob status: %s" % str(stats))
+               nattempt=0
                while "completing" in stats:
-                   logger.info("Master job completing while at least one subjob is still completing. Delaying master job completion until all subjobs have left the 'completing' state")
                    time.sleep(20)
+                   nattempt+=1
+                   if nattempt==3:
+                       logger.warning("Master job completing while at least one subjob is still completing. Delaying master job completion until all subjobs have left the 'completing' state. Please abort by hand if this is the result of job.force_status('completed')")
                    stats = [s.status for s in job.subjobs]
+                   
                logger.info("All subjobs are done, now running fill() for master job")
            job.outputdata.fill()
               
     def prepare(self):
-       """Prepare each job/subjob from the user area"""
-       # will call backend related method in RTHandler.py
-       # can call configure(), then master_configure()
-       pass
-   
+        """Prepare each job/subjob from the user area"""
+        # will call backend related method in RTHandler.py
+        # can call configure(), then master_configure()
+        pass
+
     def getPartitionList(self):
         """ Calculates the list of partitions that should be processed by this application. 
             If no splitter is present, the list has always length one.
@@ -198,8 +212,8 @@ class AthenaMC(IApplication):
     def getEvgenArgs(self):
         """prepare args vector for evgen mode"""
         args=[]
-        if not self.transform_script:
-            self.transform_script="csc_evgen_trf.py"
+##        if not self.transform_script:
+##            self.transform_script="csc_evgen_trf.py"
 
         args =  [ self.atlas_rel,
                   self.se_name,
@@ -406,6 +420,9 @@ class AthenaMC(IApplication):
 # now doing output files....
         outpartition = partition + job._getRoot().outputdata.output_firstfile - 1
         for filetype in self.fileprefixes.keys():
+            if self.fileprefixes[filetype].upper()=="NONE":
+                self.outputfiles[filetype]=self.fileprefixes[filetype]# propagating the NONE
+                continue
             if filetype=="LOG":
                 self.outputfiles["LOG"]=self.fileprefixes["LOG"]+"._%5.5d.job.log" % outpartition 
             elif  filetype=="HIST":
@@ -558,13 +575,19 @@ class AthenaMC(IApplication):
           try:
              assert self.evgen_job_option
           except AssertionError:
-             logger.error('Please provide a start value for parameter evgen_job_option needed for any evgen transformation')
+             raise ApplicationConfigurationError(None,'Please provide a start value for parameter evgen_job_option needed for any evgen transformation')
+         
           if os.path.exists(self.evgen_job_option):
               # need to strip the path away.
               self.evgen_job_option_filename = self.evgen_job_option.split("/")[-1]
           else:
               self.evgen_job_option_filename = self.evgen_job_option
 
+          try:
+              assert self.transform_script
+          except AssertionError:
+              raise ApplicationConfigurationError(None,'Please set job.application.transform_script. A possible value for 14 TeV event generation is csc_evgen_trf.py. For 10 TeV event generation, one can use csc_evgen08_trf.py')
+          
           jobfields=self.evgen_job_option_filename.split(".")
           try:
               assert len(jobfields)==4 and jobfields[1].isdigit() and len(jobfields[1])==6
@@ -699,8 +722,11 @@ class AthenaMCSplitterJob(ISplitter):
                 matchrange = (job._getRoot().inputdata.numbersToMatcharray(inputnumbers), openrange)
             else:
                 matchrange = ([],False)
-            infiles = [fn for fn in job.application.turls.keys() if matchFile(matchrange, fn)]
-            innumbers = job._getRoot().inputdata.filesToNumbers(infiles)
+            if job._getRoot().inputdata and job._getRoot().inputdata.use_partition_numbers:
+                infiles = [fn for fn in job.application.turls.keys() if matchFile(matchrange, fn)]
+                innumbers = job._getRoot().inputdata.filesToNumbers(infiles)
+            else:
+                innumbers = range(1,len(job.application.turls.keys())+1)
             partitions = partitions[:-1] # the partition start of the open range beginning is not mandatory 
             partitions.extend(job.application.getPartitionsForInputs(innumbers, job.inputdata))
             partitions = dict([(i,1)for i in partitions]).keys() # make unique
@@ -736,6 +762,21 @@ logger = getLogger()
 # some default values
 
 # $Log: not supported by cvs2svn $
+# Revision 1.35  2009/07/01 14:44:45  fbrochu
+# AthenaMC.py: fixing propagation of 'none' from outputdata.outrootfiles to final fileprefixes, allowing users to effectively disable output types in all modes
+#
+# Revision 1.34  2009/06/30 11:28:45  fbrochu
+# Revisiting dataset registration implementation to allow job.resubmit() to work without troubles. Also put stage-in back after athena setup, in order to avoid downloading DBrelease tarball if there is already a local setup available. Paving the way for support for perf/phys/trigger group production managers
+#
+# Revision 1.33  2009/06/16 09:30:11  fbrochu
+# Replaced references to USERDISK by SCRATCHDISK, removed default for evgen transform_script, replaced by documented exception thrown if not set by the user
+#
+# Revision 1.32  2009/06/16 09:02:29  ebke
+# Fix AthenaMCSplitterJob to use the use_partition_numbers flag
+#
+# Revision 1.31  2009/06/03 16:55:15  ebke
+# Added AthenaMCTaskSplitterJob to the possible splitters
+#
 # Revision 1.30  2009/05/20 15:20:21  ebke
 # Added use_partition_numbers to AthenaMCInputDatasets to make Tasks safe and still accommodate loose matching.
 #

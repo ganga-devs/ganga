@@ -2,9 +2,8 @@
 
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
-from GangaLHCb.Lib.Dirac.DiracWrapper import diracwrapper
-from GangaLHCb.Lib.Dirac import DiracShared
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+from Ganga.Core import GangaException
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -26,25 +25,13 @@ def getCacheAge():
     return maximum_cache_age
 
 def replicaCache(names):
-    # Execute LFC command in separate process as it needs special environment.
-    command = """
-result = dirac.getReplicas(%s)
-if not result.get('OK',False): rc = -1
-storeResult(result)
-""" % names
-    dw = diracwrapper(command)
-    result = dw.getOutput()
-
-    if dw.returnCode != 0 or result is None or \
-           (result is not None and not result['OK']):
-        logger.warning('The LFC query did not return cleanly. '\
-                       'Some of the replica information may be missing.')
-    if result is not None and result.has_key('Message'):
-        logger.warning("Message from Dirac3 was '%s'" % result['Message'])
-            
-    if (result is not None and not result.has_key('Value')):
-        result = None
-
+    from GangaLHCb.Lib.DIRAC.Dirac import Dirac
+    from GangaLHCb.Lib.DIRAC.DiracUtils import result_ok
+    cmd = 'result = DiracCommands.getReplicas(%s)' % names
+    result = Dirac.execAPI(cmd)
+    if not result_ok(result):
+        logger.warning('LFC query did not return cleanly: %s' % str(result))
+        raise GangaException('Error updating replica cache.')
     return result
 
 def collect_lhcb_filelist(lhcb_files):

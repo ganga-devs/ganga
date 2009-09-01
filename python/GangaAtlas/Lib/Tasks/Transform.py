@@ -1,14 +1,16 @@
 
 from common import *
 from sets import Set
-from TaskApplication import ExecutableTask
+from TaskApplication import ExecutableTask, taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
+from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
+from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import JobRegistryInterface
 
 class Transform(GangaObject):
    _schema = Schema(Version(1,0), {
         'status'         : SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=["str"]),
         'name'           : SimpleItem(defvalue='Simple Transform', doc='Name of the transform (cosmetic)', typelist=["str"]),
-        'application'    : ComponentItem('applications', defvalue=None, optional=1, load_default=False, checkset="checkTaskApplication",doc='Application of the Transform. Must be a Task-Supporting application.'),
+        'application'    : ComponentItem('applications', defvalue=None, optional=1, load_default=False, filter="checkTaskApplication",doc='Application of the Transform. Must be a Task-Supporting application.'),
         'inputsandbox'   : FileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,doc="list of File objects shipped to the worker node "),
         'outputsandbox'  : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of filenames or patterns shipped from the worker node"),
         'inputdata'      : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Input dataset'),
@@ -26,7 +28,7 @@ class Transform(GangaObject):
    _exportmethods = [ 
                       'run', 'pause', # Operations
                       'setPartitionStatus', 'setRunlimit', 'setFailed', # Control Partitions
-                      'getPartitionStatus',
+                      'getPartitionStatus', 'getJobs', 'getPartitionJobs',
                       'overview', 'info', 'n_all', 'n_status' # Info
                     ]
 
@@ -136,6 +138,37 @@ class Transform(GangaObject):
           The status is then updated to the status indicated by the applications"""
       self.setPartitionsStatus([partition],status) 
 
+   def getJobs(self):
+      """ Get the job slice of all jobs for this transform """
+      return self.getPartitionJobs(None)
+
+   def getPartitionJobs(self, partition):
+      """ Get the job slice that processed the given partition. Iterates over the job list. """
+      task = self._getParent() 
+      id = task.transforms.index(self)
+      if partition is None:
+         sname = "tasks(%i).transforms[%i].getJobs()"%(task.id,id)
+      else:
+         sname = "tasks(%i).transforms[%i].getPartitionJobs(%s)"%(task.id,id,partition)
+      jobslice = JobRegistryInstanceInterface(sname)
+      def addjob(j):
+         if partition is None or self._app_partition[j.application.id] == partition:
+            jobslice.jobs[j.fqid] = stripProxy(j)
+
+      for j in GPI.jobs:
+         try:
+            stid = j.application.tasks_id.split(":")
+            if int(stid[-2]) == task.id and int(stid[-1]) == id:
+               if j.subjobs:
+                  for sj in j.subjobs:
+                     addjob(sj)
+               else:
+                  addjob(j)
+         except Exception, x:
+            print x
+            pass
+      return JobRegistryInterface(jobslice)
+
    def setFailed(self, partition):
       """ Tells Tasks that all Applications that have executed this partition have actually failed."""
       for aid in self._app_partition:
@@ -164,12 +197,9 @@ class Transform(GangaObject):
    def checkTaskApplication(self,app):
       """warns the user if the application is not compatible """
       if app == None:
-         return
+         return None
       if not "tasks_id" in stripProxy(app)._data:
-         logger.error("The application %s can not be used with the Tasks package.", app)
-         logger.error("Please contact the Tasks developers if you want to use this Application with tasks.")
-         logger.error("(This is a very simple operation, so do not hesitate!)")
-         raise AttributeError("This application can not yet be used with the Tasks package, tell us if this should change!")
+         return taskApp(app)
       return app
   
    def setAppStatus(self, app, new_status):

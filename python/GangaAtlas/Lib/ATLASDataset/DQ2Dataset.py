@@ -2,7 +2,7 @@
 ##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2Dataset.py,v 1.34.2.1 2009-08-06 08:49:09 ebke Exp $
+# $Id: DQ2Dataset.py,v 1.38 2009-07-24 14:53:46 elmsheus Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -203,7 +203,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                 else:
                     allchecked = True
 
-            if allchecked:
+            if allchecked or len(locations_checktime) == 0:
                 break
 
             retry = retry + 1        
@@ -846,6 +846,8 @@ class DQ2OutputDataset(Dataset):
         'location'       : SimpleItem(defvalue='',doc='SE output path location'),
         'local_location' : SimpleItem(defvalue='',doc='Local output path location'),
 #        'use_datasetname' : SimpleItem(defvalue = False, doc = 'Use datasetname as it is and do not prepend users.myname.ganga'),
+        'isGroupDS'      : SimpleItem(defvalue = False, doc = 'Use group datasetname prefix'),
+        'groupname'      : SimpleItem(defvalue='', doc='Name of the group to be used if isGroupDS=True'),
         'use_shortfilename' : SimpleItem(defvalue = False, doc = 'Use shorter version of filenames and do not prepend users.myname.ganga')
         })
     
@@ -861,6 +863,8 @@ class DQ2OutputDataset(Dataset):
                   { 'attribute' : 'location',       'widget' : 'String_List' },
                   { 'attribute' : 'local_location', 'widget' : 'File' },
 #                  { 'attribute' : 'use_datasetname',    'widget' : 'Bool' },
+                  { 'attribute' : 'isGroupDS',      'widget' : 'Bool' },
+                  { 'attribute' : 'groupname',      'widget' : 'String' },
                   { 'attribute' : 'use_shortfilename',    'widget' : 'Bool' }
                   ]
     
@@ -1265,13 +1269,13 @@ except KeyError:
     config.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
 
 
-config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK'] , 'Allowed space tokens names of DQ2OutputDataset output' )
+config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK', 'T2ATLASSCRATCHDISK', 'T2ATLASLOCALGROUPDISK' ] , 'Allowed space tokens names of DQ2OutputDataset output' )
 
 config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_SCRATCHDISK', 'CERN-PROD_USERTAPE', 'FZK-LCG2_SCRATCHDISK', 'IN2P3-CC_SCRATCHDISK', 'TRIUMF-LCG2_SCRATCHDISK', 'IFAE_SCRATCHDISK', 'NIKHEF-ELPROD_SCRATCHDISK' ], 'Default backup locations of DQ2OutputDataset output' )
 
 config.addOption('USE_STAGEOUT_SUBSCRIPTION', False, 'Allow DQ2 subscription to aggregate DQ2OutputDataset output on a storage element instead of using remote lcg-cr' )
 
-config.addOption('usertag','users','user tag for a given data taking period')
+config.addOption('usertag','user09','user tag for a given data taking period')
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
@@ -1279,6 +1283,16 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
+#
+#Revision 1.37  2009/07/20 14:07:03  mslater
+#Fix for bug in retry of dataset consistency check (52066)
+#
+#Revision 1.36  2009/07/15 13:07:29  elmsheus
+#Enable group dataset names in LCG/Athena, #53155
+#
+#Revision 1.35  2009/06/29 13:47:15  elmsheus
+#Fix IFAE
+#
 #Revision 1.34  2009/06/04 10:19:46  elmsheus
 #Add exception for listMetaReplica
 #

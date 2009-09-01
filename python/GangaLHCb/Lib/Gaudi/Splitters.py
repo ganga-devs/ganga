@@ -12,7 +12,7 @@ from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
 from Ganga.Utility.util import unique 
 import Ganga.Utility.logging
-from GangaLHCb.Lib.LHCbDataset import dataset_to_options_string
+from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 from Francesc import GaudiExtras
 
 logger = Ganga.Utility.logging.getLogger()

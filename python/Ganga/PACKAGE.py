@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.5 2008-10-02 10:26:20 moscicki Exp $
+# $Id: PACKAGE.py,v 1.7 2009-07-27 15:15:56 moscicki Exp $
 ################################################################################
 
 """ PACKAGE modules describe the installation and setup of the Ganga runtime packages.
@@ -21,7 +21,8 @@ _defaultMinHexVersion = 0x20200f0
 
 # The default values will be guessed but you may override them here
 _defaultPlatform = None #'slc3_gcc323'
-_defaultExternalHome = None
+#_defaultExternalHome = "/software/atlas/ganga/external"
+_defaultExternalHome = "/afs/cern.ch/sw/ganga/external"
 
 # The dictionary of external  packages is used by the release/download
 # system to handle the installation  tarballs. Make sure that all your
@@ -62,7 +63,10 @@ _externalPackages = {
                  'noarch':True,
                  'syspath':'lib/python2.3/site-packages'},
    'pycrypto' : {'version' : '2.0.1',
-                 'syspath':'lib/python2.3/site-packages'}
+                 'syspath':'lib/python2.3/site-packages'},
+   'stomputil' : {'version' : '1.0',
+                  'noarch': True,
+                  'syspath' : 'python'} 
    }
 
 
@@ -120,10 +124,20 @@ def standardSetup(setup=setup):
     """
 
     from Ganga.Utility.Setup import checkPythonVersion
-
+    import sys
+    
     # here we assume that the Ganga has been already prepended to sys.path by the caller
     if checkPythonVersion(_defaultMinVersion,_defaultMinHexVersion):
         for name in setup.packages:
+            if name == 'pycrypto' and sys.hexversion > 0x2050000:
+                # hack the pycrypto path for 2.5
+                setup.packages['pycrypto']['syspath'] = setup.packages['pycrypto']['syspath'].replace('2.3', '2.5')
+                
+            if name == 'paramiko' and sys.hexversion > 0x2050000:
+                # hack the paramiko path for 2.5
+                setup.packages['paramiko']['syspath'] = setup.packages['paramiko']['syspath'].replace('2.3', '2.5')
+
+
             setup.setSysPath(name)
             # if other PATH variable must be defined, e.g. LD_LIBRARY_PATH, then
             # you should do it this way:

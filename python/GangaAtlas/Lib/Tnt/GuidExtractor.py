@@ -13,6 +13,7 @@ import re
 import sys
 import commands
 import random
+import popen2
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
@@ -83,9 +84,11 @@ def pythonCalled(opts = []):
      if o == 'p':
        generatePOOLcat = True
      if o != 'm' and o != 'p':
-       srcRootFile = o
+       #srcRootFile = o
+       src_collection_name = o
 
-   return main(generateMiniCats, generatePOOLcat, srcRootFile)
+   #return main(generateMiniCats, generatePOOLcat, srcRootFile)
+   return main(generateMiniCats, generatePOOLcat, src_collection_name)
 
 
 
@@ -123,12 +126,38 @@ def getGuidLfnMap():
    #print _guidLfnMap
    return _guidLfnMap
 
+def writeCollListFileGUIDXML(src_collection_name):
+      #print "########################"
+      #print "IN writeCollListFileGUIDXML - again using tag file as source and not myEvent created by CollAppend"
+      #print "########################"
+      collListfile = open("CollListFileGUID.exe.xml","w")
+      collListfile.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n")
+      collListfile.write("<!DOCTYPE ArgList>\n")
+      collListfile.write("<ArgList>\n")
+      collListfile.write("<ToolInfo date=\"Thu Nov 20 18:29:03 2008&#xA;\" toolID=\"CollListFileGUID.exe\">\n")
+      #collListfile.write("<CliArg name=\"local\" option=\"-xmlInput\">ThisCondition &gt; ThisNumber</CliArg>\n")
+      collListfile.write("<CliArg name=\"SrcInfo\" option=\"-src\">"+src_collection_name+" RootCollection"+"</CliArg>\n")
+      #collListfile.write("<CliArg name=\"SrcInfo\" option=\"-src\">"+ srcRootFile +" RootCollection"+"</CliArg>\n")
+      collListfile.write("</ToolInfo>\n")
+      collListfile.write("</ArgList>\n")
 
-def main(generateMiniCats, generatePOOLcat, srcRootFile):
+
+#def main(generateMiniCats, generatePOOLcat, srcRootFile):
+def main(generateMiniCats, generatePOOLcat, src_collection_name):
 
    guids = []
    outputLFNs = False
    outputGUIDs = False
+   #print "########################"
+   #print "IN GUIDEXTRACTOR MAIN"
+   #print "########################"
+   
+   #does CollListFileGUID  exist in the current directory?
+   cwd = os.getcwd()
+   if not os.path.exists("CollListFileGUID.exe..xml"):
+      writeCollListFileGUIDXML(src_collection_name)
+   else:
+      writeCollListFileGUIDXML(src_collection_name) 
 
    try:
       dq = DQ2 (
@@ -145,10 +174,12 @@ def main(generateMiniCats, generatePOOLcat, srcRootFile):
             sub_urlsec = Config().getConfig('dq2-subscription-client').get('dq2-subscription-client', 'secure'),
       )
          
-      guid_string = commands.getoutput("CollListFileGUID -src " + srcRootFile + " RootCollection |\
+     
+      guid_string = commands.getoutput("CollListFileGUID.exe -xmlInput CollListFileGUID.exe.xml |\
                                    grep -E [[:alnum:]]{8}'-'[[:alnum:]]{4}'-'[[:alnum:]]{4}'-'[[:alnum:]]{4}'-'[[:alnum:]]{12} " \
                                   )
-
+      #print guid_string
+      ##########################################################
       if guid_string.find('Exception') > -1:
          logger.warning("Error: incorrect query, or problem with collection utilities")
          return
@@ -169,58 +200,67 @@ def main(generateMiniCats, generatePOOLcat, srcRootFile):
       firstLoop = True
 
       for guid in guids:
-         vuid = dq.contentClient.queryDatasetsWithFileByGUID(guid)
-         if len(vuid) == 0:
-            logger.warning("Error: guid "+ guid + " returned by query is not registered in any DQ2 dataset!")
-            logger.warning("Skipping to next file...")
-            continue
-         else: 
-            #TODO: choose 'best' dataset, not just the first one 
-            n=0
-            noDataset = 'False'
-            try:
-               dataset = dq.repositoryClient.resolveVUID(vuid[n])
-               name = dataset.get('dsn')
-            except:
-               if (len(vuid)==1):
-                  noDataset = 'True'
-                  continue
-            # hack to avoid non-official datasets -- FIXME!!!
-            match = re.compile('user')
-            while (match.search(name) and n < len(vuid)-1):
-               try:
-                  dataset = dq.repositoryClient.resolveVUID(vuid[n+1])
-                  name = dataset.get('dsn')
-                  noDataset = 'False'
-               except:
-                  noDataset = 'True'
-                  n=n+1
-                  continue
-               n=n+1
-            if match.search(name):
-               logger.warning("No official dataset found for guid "+guid)
-               noDataset = 'True'
+         if guid != "StreamRAW_ref" and guid != "StreamESD_ref" and guid != "Token":
+            vuid = dq.contentClient.queryDatasetsWithFileByGUID(guid)
+            if len(vuid) == 0:
+               logger.warning("Error: guid "+ guid + " returned by query is not registered in any DQ2 dataset!")
+               logger.warning("Skipping to next file...")
                continue
+            else: 
+               #TODO: choose 'best' dataset, not just the first one 
+               n=0
+               noDataset = 'False'
+               try:
+                  dataset = dq.repositoryClient.resolveVUID(vuid[n])
+                  name = dataset.get('dsn')
+               except:
+                  if (len(vuid)==1):
+                     noDataset = 'True'
+                     continue
+            # hack to avoid non-official datasets -- FIXME!!!
+               match = re.compile('user')
+               while (match.search(name) and n < len(vuid)-1):
+                  try:
+                     dataset = dq.repositoryClient.resolveVUID(vuid[n+1])
+                     name = dataset.get('dsn')
+                     noDataset = 'False'
+                  except:
+                     noDataset = 'True'
+                     n=n+1
+                     continue
+                  n=n+1
+               if match.search(name):
+                  logger.warning("No official dataset found for guid "+guid)
+                  noDataset = 'True'
+                  continue
 
-            if noDataset == 'True':
-               name = 'NO.DATASET'
+               if noDataset == 'True':
+                  name = 'NO.DATASET'
 
-            if vuids.count(vuid[n]) == 0:
-               vuids.append(vuid[n])
-               dataset_names.append(name)
-            guidDatasetMap[guid] = name
-            files = dq.listFilesInDataset(name)
-            try:
-               lfn = (files[0][guid])['lfn']
-               guidLfnMap[guid] = str(lfn)
-            except:
-               logger.warning("Could not resolve GUID "+guid+" to any file in dataset "+str(name))
-               guidDatasetMap[guid] = 'NO.DATASET'
+               if vuids.count(vuid[n]) == 0:
+                  vuids.append(vuid[n])
+                  dataset_names.append(name)
+               guidDatasetMap[guid] = name
+               files = dq.listFilesInDataset(name)
+               #print "###########FILES###########"
+               #print files
+               #print "######################"
+               try:
+                  lfn = (files[0][guid])['lfn']
+                  #print lfn
+                  guidLfnMap[guid] = str(lfn)
+               except:
+                  logger.warning("Could not resolve GUID "+guid+" to any file in dataset "+str(name))
+                  guidDatasetMap[guid] = 'NO.DATASET'
 
-      global _guidDatasetMap
-      global _guidLfnMap
-      _guidDatasetMap = guidDatasetMap
-      _guidLfnMap = guidLfnMap
+         global _guidDatasetMap
+         #print "guidDatasetMap:"
+         #print _guidDatasetMap
+         global _guidLfnMap
+         #print "guidLfnMap:"
+         #print _guidLfnMap
+         _guidDatasetMap = guidDatasetMap
+         _guidLfnMap = guidLfnMap
       
 
       # sort the list of guids by their datasets
@@ -250,7 +290,7 @@ def main(generateMiniCats, generatePOOLcat, srcRootFile):
       # generate POOL XML catalogue with required files
       # if specified, also generates a 'mini-catalogue' per file
       # Should be done on-the-fly by Ganga at worker nodes, so comment out
-      """
+      """ 
       if generatePOOLcat == True:
          pfns = GenerateCatalogs.getPFNsFromLFC(guidLfnMap)
          GenerateCatalogs.generateCatalog(guidLfnMap, pfns, "PoolFileCatalog.xml")

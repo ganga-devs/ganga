@@ -214,8 +214,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.indexFiles   = 0
         self.indexCavern  = 0
         self.indexMin     = 0
+        self.indexBHalo   = 0
         self.indexBHaloA  = 0
         self.indexBHaloC  = 0
+        self.indexBGas    = 0
         self.indexBGasH   = 0
         self.indexBGasC   = 0
         self.indexBGasO   = 0
@@ -233,9 +235,22 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.indexStream2 = 0
         self.indexStreamG = 0
         self.indexBS      = 0
+        self.indexSelBS   = 0
         self.indexMeta    = 0
+        self.indexMS      = 0
 
         return jspec
+
+    # get maximum index
+    def getIndex(list,pattern):
+        maxIndex = 0
+        for item in list:
+            match = re.match(pattern,item)
+            if match != None:
+                tmpIndex = int(match.group(1))
+                if maxIndex < tmpIndex:
+                    maxIndex = tmpIndex
+        return maxIndex
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         '''prepare the subjob specific configuration'''
@@ -497,6 +512,20 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['BS'] = fout.lfn
 
+        if self.runConfig.output and self.runConfig.output.outSelBS:
+            self.indexSelBS += 1
+            fout = FileSpec()
+            fout.dataset           = job.outputdata.datasetname
+            fout.lfn               = '%s.%s._%05d.data' % (job.outputdata.datasetname,self.runConfig.output.outSelBS,self.indexSelBS)
+            fout.type              = 'output'
+            fout.destinationDBlock = jspec.destinationDBlock
+            fout.destinationSE     = jspec.destinationSE
+            jspec.addFile(fout)
+            outMap['BS'] = fout.lfn
+            if not 'IROOT' in outMap:  # this is not a typo!
+                outMap['IROOT'] = []
+            outMap['IROOT'].append(('%s.*.data' % self.runConfig.output.outSelBS,fout.lfn))
+
         if self.runConfig.output and self.runConfig.output.outStreamG:
             self.indexStreamG += 1
             for name in self.runConfig.output.outStreamG:
@@ -511,7 +540,77 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['StreamG'] = []
                 outMap['StreamG'].append((name,fout.lfn))
         
-        #FIXME: if options.outMeta != []:
+        if self.runConfig.output and self.runConfig.output.outMeta:
+            iMeta = 0
+            self.indexMeta += 1
+            for sName,sAsso in self.runConfig.output.outMeta:
+                foundLFN = ''
+                if sAsso == 'None':
+                    # non-associated metadata
+                    fout = FileSpec()
+                    fout.lfn  = '%s.META%s._%05d.root' % (job.outputdata.datasetname,iMeta,self.indexMeta)
+                    fout.type = 'output'
+                    fout.dataset = job.outputdata.datasetname
+                    fout.destinationDBlock = jspec.destinationDBlock
+                    fout.destinationSE = jspec.destinationSE
+                    jspec.addFile(fout)
+                    iMeta += 1
+                    foundLFN = fout.lfn
+                elif outMap.has_key(sAsso):
+                    # Stream1,2
+                    foundLFN = outMap[sAsso]
+                elif sAsso in ['StreamRDO','StreamESD','StreamAOD']:
+                    # RDO,ESD,AOD
+                    stKey = re.sub('^Stream','',sAsso)
+                    if outMap.has_key(stKey):
+                        foundLFN = outMap[stKey]
+                else:
+                    # general stream
+                    if outMap.has_key('StreamG'):
+                        for tmpStName,tmpLFN in outMap['StreamG']:
+                            if tmpStName == sAsso:
+                                foundLFN = tmpLFN
+                if foundLFN != '':
+                    if not outMap.has_key('Meta'):
+                        outMap['Meta'] = []
+                    outMap['Meta'].append((sName,foundLFN))
+
+        if self.runConfig.output and self.runConfig.output.outMS:
+            self.indexMS += 1
+            for sName,sAsso in self.runConfig.output.outMS:
+                fout = FileSpec()
+                fout.lfn  = '%s.%s._%05d.pool.root' % (job.outputdata.datasetname,sName,self.indexMS)
+                fout.type = 'output'
+                fout.dataset = job.outputdata.datasetname
+                fout.destinationDBlock = jspec.destinationDBlock
+                fout.destinationSE = jspec.destinationSE
+                jspec.addFile(fout)
+                if not outMap.has_key('IROOT'):
+                    outMap['IROOT'] = []
+                outMap['IROOT'].append((sAsso,fout.lfn))
+
+        if self.runConfig.output and self.runConfig.output.outUserData:
+            for sAsso in self.runConfig.output.outUserData:
+                # look for associated LFN
+                foundLFN = ''
+                if outMap.has_key(sAsso):
+                    # Stream1,2
+                    foundLFN = outMap[sAsso]
+                elif sAsso in ['StreamRDO','StreamESD','StreamAOD']:
+                    # RDO,ESD,AOD
+                    stKey = re.sub('^Stream','',sAsso)
+                    if outMap.has_key(stKey):
+                        foundLFN = outMap[stKey]
+                else:
+                    # general stream
+                    if outMap.has_key('StreamG'):
+                        for tmpStName,tmpLFN in outMap['StreamG']:
+                            if tmpStName == sAsso:
+                                foundLFN = tmpLFN
+                if foundLFN != '':
+                    if not outMap.has_key('UserData'):
+                        outMap['UserData'] = []
+                    outMap['UserData'].append(foundLFN)
 
 #       log files
 

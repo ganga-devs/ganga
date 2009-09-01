@@ -34,13 +34,21 @@ def get_server_id():
     global server_id
     return server_id
 
+counter = 0
+
 def execute_dirac_command(cmd):
     '''Executes a command (handles the decoration).'''
-    command = cmd.replace(end_data_str,'') 
+    command = cmd.replace(end_data_str,'')
+    global counter
+    #if counter > 0:
+    #    return pickle.dumps(command) + end_data_str
+    #else: counter += 1
     presult = ''
     result = None
     try:
         exec(command)
+        #if counter > 0: result = 'OK'
+        #else: counter += 1
         presult = pickle.dumps(result)
     except:
         presult = pickle.dumps(traceback.format_exc()+'###TRACEBACK###')    
@@ -56,8 +64,9 @@ while True:
     else:        
         cmd += data
         if(cmd.find(end_data_str) >= 0):
+            conn.sendall('###RECV-DATA###')
             result = execute_dirac_command(cmd)
-            conn.send(result)
+            conn.sendall(result)
             cmd = ''
 
 # close the connection

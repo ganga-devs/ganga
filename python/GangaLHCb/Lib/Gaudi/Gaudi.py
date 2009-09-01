@@ -7,7 +7,6 @@ from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.logging
 from GaudiUtils import *
 from GaudiRunTimeHandler import * 
-from GangaLHCb.Lib.Dirac.GaudiDiracRunTimeHandler import *
 from PythonOptionsParser import PythonOptionsParser
 from Francesc import *
 from Ganga.Utility.util import unique
@@ -86,14 +85,15 @@ class Gaudi(Francesc):
         self._init(self.appname,True)
             
     def master_configure(self):
-        
-        debug_dir = self._master_configure()
+
+        job = self.getJobObject()
+        self._master_configure()
         inputs = self._check_inputs()         
         optsfiles = [fileitem.name for fileitem in self.optsfile]
         try:
             parser = PythonOptionsParser(optsfiles,self.extraopts,self.shell)
         except ApplicationConfigurationError, e:
-            os.system('mkdir -p %s' % debug_dir)
+            debug_dir = job.getDebugWorkspace().getPath()
             f = open(debug_dir + '/gaudirun.stdout','w')
             f.write(e.message)
             f.close()
@@ -101,14 +101,13 @@ class Gaudi(Francesc):
                   'files and extraopts. The output from gaudyrun.py can be ' \
                   'found in %s. You can also view this from within ganga '\
                   'by doing job.peek(\'../debug/gaudirun.stdout\').' % f.name
-            logger.error(msg)
+            #logger.error(msg)
             raise ApplicationConfigurationError(None,msg)
 
         self.extra.master_input_buffers['options.pkl'] = parser.opts_pkl_str
         inputdata = parser.get_input_data()
   
         # If user specified a dataset, ignore optsfile data but warn the user.
-        job = self.getJobObject()
         if len(inputdata.files) > 0:
             if job.inputdata:
                 msg = 'A dataset was specified for this job but one was ' \
@@ -188,7 +187,7 @@ class Gaudi(Francesc):
         # use a dummy file to keep the parser happy
         if len(optsfiles)==0: optsfiles.append(dummyfile())
 
-        self._getshell
+        self._getshell()
         inputs = self._check_inputs() 
         if extraopts: extraopts=self.extraopts
         else: extraopts=""
@@ -245,6 +244,7 @@ class ###CLASS###(Gaudi):
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.Gaudi.GaudiRunTimeHandler import GaudiRunTimeHandler
+from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
 
 for app in available_apps():
     exec_str = class_str.replace('###CLASS###', app)
@@ -259,7 +259,7 @@ for app in available_apps():
 
     for backend in ['LSF','Interactive','PBS','SGE','Local','Condor']:
         allHandlers.add(app, backend, GaudiRunTimeHandler)
-    allHandlers.add(app, 'Dirac', GaudiDiracRunTimeHandler)
+    allHandlers.add(app, 'Dirac', GaudiDiracRTHandler)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

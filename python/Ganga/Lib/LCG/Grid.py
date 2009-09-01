@@ -111,16 +111,26 @@ class Grid(object):
 
         return submit_option
 
-    def __print_gridcmd_log__(self,regxp_logfname,cmd_output):
-
+    def __resolve_gridcmd_log_path__(self, regxp_logfname, cmd_output):
         match_log = re.search(regxp_logfname,cmd_output)
 
+        logfile = None
         if match_log:
             logfile = match_log.group(1)
+        return logfile 
+
+    def __print_gridcmd_log__(self,regxp_logfname,cmd_output):
+
+        logfile = self.__resolve_gridcmd_log_path__(regxp_logfname,cmd_output)
+
+        if logfile:
             f = open(logfile,'r')
             for l in f.readlines():
                 logger.warning(l.strip())
             f.close()
+
+            ## here we assume the logfile is no longer needed at this point - remove it
+            os.remove(logfile)
         else:
             logger.warning('output\n%s\n',cmd_output)
             logger.warning('end of output')
@@ -152,13 +162,12 @@ class Grid(object):
     def __resolve_no_matching_jobs__(self, cmd_output):
         '''Parsing the glite-wms-job-status log to get the glite jobs which have been removed from the WMS'''
 
-        match_log = re.search('(.*-job-status.*\.log)', cmd_output)
+        logfile = self.__resolve_gridcmd_log_path__('(.*-job-status.*\.log)',cmd_output)
 
         glite_ids = []
 
-        if match_log:
+        if logfile:
             
-            logfile = match_log.group(1)
             f = open(logfile,'r')
             output = f.readlines()
             f.close()
@@ -201,7 +210,7 @@ class Grid(object):
 
         return True
 
-    def list_match(self, jdlpath):
+    def list_match(self, jdlpath, ce=None):
         '''Returns a list of computing elements can run the job'''
 
         re_ce = re.compile('^\s*\-\s*(\S+\:2119\/\S+)\s*$')
@@ -209,7 +218,7 @@ class Grid(object):
         matched_ces = []
 
         if self.middleware == 'EDG':
-            cmd = 'edg-job-list-match --rank'
+            cmd = 'edg-job-list-match'
         else:
             cmd = 'glite-wms-job-list-match -a'
             
@@ -234,33 +243,39 @@ class Grid(object):
 
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd), allowed_exit=[0,255])
 
-        if output: output = '%s' % output.strip()
-
         for l in output.split('\n'):
+            
             matches = re_ce.match(l)
+            
             if matches:
                 matched_ces.append(matches.group(1))
 
+        if ce:
+            if matched_ces.count(ce) > 0:
+                matched_ces = [ ce ]
+            else:
+                matched_ces = [ ]
+
+        logger.debug('== matched CEs ==')
+        for myce in matched_ces:
+            logger.debug(myce)
+        logger.debug('== matched CEs ==')
+
         return matched_ces
 
-    def submit(self, jdlpath, ce=None, isCollection=False, drySubmit=False):
+    def submit(self, jdlpath, ce=None, doListMatch=False, jdlpathForListMatch=None):
         '''Submit a JDL file to LCG'''
 
-        ## doing job list match if in "DrySubmit" mode
-        if drySubmit:
-            matches = []
-            if not ce:
-                if not isCollection:
-                    matches = self.list_match(jdlpath)
-                else:
-                    logger.warning('resource matching not possible for collection job')
-            else:
-                matches.append(ce)
+        ## doing job list match if required 
+        if doListMatch:
+            if not jdlpathForListMatch:
+                jdlpathForListMatch = jdlpath
+
+            matches = self.list_match(jdlpathForListMatch, ce)
 
             if not matches:
+                logger.warning('no matched resources')
                 return
-            else:
-                return 'dry submit done'
 
         ## doing job submission
         if self.middleware == 'EDG':
@@ -674,8 +689,10 @@ class Grid(object):
 
             elif key in ['PerusalFileEnable', 'AllowZippedISB']:
                 text += 'PerusalFileEnable = %s;\n' % value                
+            elif key in ['DataRequirements']:
+                text += 'DataRequirements = { %s };\n' % value
             else:
-                text += '%s = "%s";\n' % (key,value)  
+                text += '%s = "%s";\n' % (key,value)
 
         return text
 

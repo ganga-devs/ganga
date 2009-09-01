@@ -229,9 +229,10 @@ class GangaRepositoryLocal(GangaRepository):
 
                     self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
             except Exception, x:
-                logger.warning("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
-                raise KeyError(id)
-                #self._internal_setitem__(id, EmptyGangaObject())
+                if not id == 0:
+                    logger.warning("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
+                    raise KeyError(id)
+                    #self._internal_setitem__(id, EmptyGangaObject())
 
     def delete(self, ids):
         for id in ids:

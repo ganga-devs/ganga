@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaMCDatasets.py,v 1.43 2009-06-03 15:50:58 fbrochu Exp $
+# $Id: AthenaMCDatasets.py,v 1.47 2009-07-14 09:11:16 fbrochu Exp $
 ###############################################################################
 # A DQ2 dataset
 
@@ -27,9 +27,7 @@ from Ganga.Utility.GridShell import getShell
 _refreshToACache()
 gridshell = getShell("EDG")
 
-# Extract username from certificate
-proxy = GridProxy()
-username = proxy.identity()
+
 
 def getLFCmap():
     lfcstrings,lfccloud={},{}
@@ -314,6 +312,13 @@ class AthenaMCInputDatasets(Dataset):
         '''seek dataset informations and returns (hopefully) a formatted set of information for all processing jobs (turls, catalog servers, dataset location for each lfn). Called by master_submit'''
 
 
+        # first of all, check that _usertag is set properly:
+        try:
+            assert _usertag and _usertag!="users"
+        except:
+            logger.error("config['DQ2']['usertag'] is not set properly! Please exit ganga, do: export GANGA_CONFIG_PATH=GangaAtlas/Atlas.ini and restart ganga")
+            raise
+        
         dataset=self.DQ2dataset
         path=self.LFCpath
         datasetType=self.datasetType
@@ -466,11 +471,11 @@ class AthenaMCInputDatasets(Dataset):
         backend=job.backend._name
         
         backend = self.getdq2data(dataset,None,backend,update=False)
-        try:
-            assert backend == job.backend._name
-        except:
-            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
-            raise
+#        try:
+#            assert backend == job.backend._name
+#        except:
+#            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
+#            raise
         app.cavern_turls=self.turls
         app.cavern_lfcs=self.lfcs
         app.cavern_sites=self.trimSites(self.sites,app.sites)
@@ -489,11 +494,11 @@ class AthenaMCInputDatasets(Dataset):
         backend=job.backend._name
         
         backend = self.getdq2data(dataset,None,backend,update=False)
-        try:
-            assert backend == job.backend._name
-        except:
-            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
-            raise        
+#        try:
+#            assert backend == job.backend._name
+#        except:
+#            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s" % ( dataset,job.backend._name,backend))
+#            raise        
         app.minbias_turls=self.turls
         app.minbias_lfcs=self.lfcs
         app.minbias_sites=self.trimSites(self.sites,app.sites)
@@ -530,11 +535,11 @@ class AthenaMCInputDatasets(Dataset):
         job = app.getJobObject()
         backend=job.backend._name
         backend = self.getdq2data(dsetname,None,backend,update=False)
-        try:
-            assert backend == job.backend._name
-        except:
-            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s or subscribe the DB release dataset to the desired site" % ( dataset,job.backend._name,backend))
-            raise
+#        try:
+#            assert backend == job.backend._name
+#        except:
+#            logger.error("Dataset %s not found on backend %s. Please change the backend  to %s or subscribe the DB release dataset to the desired site" % ( dataset,job.backend._name,backend))
+#            raise
         app.dbturls=self.turls
         app.dblfcs=self.lfcs
         app.dbsites=self.trimSites(self.sites,app.sites)
@@ -553,10 +558,6 @@ class AthenaMCInputDatasets(Dataset):
 
         dsetname=""
         dsetmatch=dataset
-        if dataset[-1]=="/":
-            dsetmatch=dataset[:-1] # turning container name into dataset root for matching
-        if string.find(dataset,"DBRelease")<0:
-            dsetmatch='%s*' % dataset # loose matching for all input datasets except DBRelease ones.
         logger.debug( "matching input dataset: %s" % str(dsetmatch))
         try:
             dq2_lock.acquire()
@@ -564,7 +565,20 @@ class AthenaMCInputDatasets(Dataset):
         finally:
             dq2_lock.release()
         logger.debug( "results of the match: %s" % str(datasets))
+        
         if len(datasets.values())==0:
+            logger.warning('could not find exact match for %s, attempting loose matching. This will take considerably longer...'% dataset)
+            dsetmatch='%s*' % dataset
+            if dataset[-1]=="/":
+                dsetmatch='%s*' % dataset[:-1] # turning container name into dataset root for matching
+            try:
+                dq2_lock.acquire()
+                datasets = dq2.listDatasets(dsetmatch)
+            finally:
+                dq2_lock.release()
+            logger.debug( "results of the match: %s" % str(datasets))
+        
+        if len(datasets.values())==0:            
             logger.error('no Dataset matching %s is registered in DQ2 database! Aborting',dataset)
             raise Exception()
 
@@ -711,11 +725,13 @@ class AthenaMCInputDatasets(Dataset):
         selectedSites=[]
         for site in allSites:
             if backend=="Panda":
-            #and site in USsites: // not necessary true.
                 selectedSites.append(site)
                 continue
             if backend=="LCG" and site not in USsites and site not in NGsites:
                 selectedSites.append(site)
+                continue
+            # all other backends (should perhaps restrict to Local ones...)
+            selectedSites.append(site)
             #if backend=="NG" and site in NGSites:
             #   selectedSites.append(site)
         if len(selectedSites)==0:
@@ -868,8 +884,14 @@ class AthenaMCOutputDatasets(Dataset):
     def prep_data(self,app):
         ''' generate output paths and file prefixes based on app and outputdata information. Generate corresponding entries in DQ2. '''
         fileprefixes,outputpaths=self.outrootfiles.copy(),{}
+        # first of all, check that _usertag is set properly:
+        try:
+            assert _usertag and _usertag!="users"
+        except:
+            logger.error("config['DQ2']['usertag'] is not set properly! Please exit ganga, do: export GANGA_CONFIG_PATH=GangaAtlas/Atlas.ini and restart ganga")
+            raise
         # The common prefix production.00042.physics.
-        app_prefix = "%s.%s" % (_usertag,app.production_name)
+        app_prefix = "%s" % app.production_name
         # backward compatibility
         if app.production_name and app.run_number and app.process_name:
             app_prefix = "%s.%6.6d.%s" % (app.production_name,int(app.run_number),app.process_name)
@@ -929,10 +951,16 @@ class AthenaMCOutputDatasets(Dataset):
         ''' Provides the triplet: LFC, site and srm path from input se'''
         lfcstrings=getLFCmap()
         outputlocation={}
-        default_site="CERN-PROD_USERDISK"
+        default_site="CERN-PROD_SCRATCHDISK"
         job=self._getParent()
         app=job.application
         
+        # first of all, check that _usertag is set properly:
+        try:
+            assert _usertag and _usertag!="users"
+        except:
+            logger.error("config['DQ2']['usertag'] is not set properly! Please exit ganga, do: export GANGA_CONFIG_PATH=GangaAtlas/Atlas.ini and restart ganga")
+            raise
         for site, desc in ToACache.sites.iteritems():
             try:
                 outloc = desc['srm'].strip()
@@ -958,27 +986,40 @@ class AthenaMCOutputDatasets(Dataset):
                 
         else:
             selsite=se_name
-            if string.find(se_name,"LOCALGROUPDISK")<0 and string.find(se_name,"USERDISK")<0  and string.find(se_name,"SCRATCHDISK")<0 : # need to check if one can use LOCALGROUPDISK
-            #if  string.find(se_name,"USERDISK")<-1: # no support for LOCALUSERDISK yet as space token requires explicit voms role.
+            allowed_tokens=["LOCALGROUPDISK","SCRATCHDISK"]
+            if string.find(_usertag,"group")>-1 :
+                token=username.upper()
+                allowed_tokens=[token]
+            #print allowed_tokens,se_name
+            #allowed_tokens=["SCRATCHDISK"]
+            makeSites=[]
+            forbiddenSE="true"
+            for token in allowed_tokens:
+                if token in se_name:
+                    forbiddenSE="false"
+            #print se_name, forbiddenSE
+            if forbiddenSE=="true" :
+                #print app.sites
                 selsite=""
-                if se_name not in app.sites: # se_name not coming from input data...
-                    logger.warning("Space token proposed for output: %s is forbidden for writing. Attempting to find alternative space token in the same site."% se_name)
-
+                #                logger.warning("Space token proposed for output: %s is forbidden for writing. Attempting to find alternative space token in the same site."% se_name)
+                #logger.warning("Output data from jobs processing must go to SCRATCHDISK. Once finalized (master job completed), the output datasets can be subscribed to their final destination using dq2-register-subscription or dq2-register-subscription-container")
+                logger.warning("Detected forbidden output space token in input: %s. Changing to SCRATCHDISK" % se_name) 
                 imax=se_name.find("_")
                 sitename=se_name[:imax]
-                # build all possible alternative, check that they are in DQ2 site list.
-                makeSites=[]
-                makeSites.append(sitename+"_SCRATCHDISK")
-                makeSites.append(sitename+"_LOCALGROUPDISK")
-                makeSites.append(sitename+"_USERDISK")
                 
+                # build all possible alternative, check that they are in DQ2 site list.
+                for token in allowed_tokens:
+                    makeSites.append(sitename+"_"+token)
+                    #                makeSites.append(sitename+"_LOCALGROUPDISK")
+                    #                makeSites.append(sitename+"_USERDISK") # now retired and read-only. Not suitable for output then.
                 for site in makeSites:
                     if site in sites:
                         selsite=site
                         logger.info("Found alternative: %s" % selsite)
                         break
-            if not selsite:
-                return ["","",""]
+                if not selsite:
+                    logger.error("Could not come up with alternative to %s" % se_name)
+                    return ["","",""]
             imin=string.find(lfcstrings[selsite],"lfc://") # lfc:// notation from ToA
             if imin>-1:
                 imax=string.rfind(lfcstrings[selsite],":/")
@@ -1035,26 +1076,61 @@ class AthenaMCOutputDatasets(Dataset):
     
         return datasets
 
-
-##    def create_dataset(self, datasetname = ''):
-##        """Create dataset in central DQ2 database"""
+    def checkDataset(self,dataset):
+        """check that dataset is not already frozen, and if yes, then create a new instance with an extra suffix (vX) """
+        # stupidity check
+        dsexisted="true"
+        try:
+            dq2_lock.acquire()
+            dsetlist = dq2.listDatasets('%s' % dataset)
+            if len(dsetlist)==0:
+                dsexisted="false"
+                logger.info("Dataset %s does not exist, creating it" % dataset)
+                logger.info("Opening new dataset: %s" % dataset)
+                dq2.registerNewDataset(dataset)
+        finally:
+            dq2_lock.release()
+        if dsexisted=="false":
+            return dataset
         
-
-##        try:
-##            dq2_lock.acquire()
-##            datasets = dq2.listDatasets('%s' % datasetname)
-##        finally:
-##            dq2_lock.release()
-##        if len(datasets)>0:
-##            logger.debug("dataset %s already exists: skipping", datasetname)
-##            return
-##        logger.debug("creating dataset: %s", datasetname)
-##        try:
-##            dq2_lock.acquire()
-##            dq2.registerNewDataset(datasetname)
-##        finally:
-##            dq2_lock.release()
-
+        try:
+            dq2_lock.acquire()
+            frozen=dq2.getMetaDataAttribute(dataset,["frozendate"])
+        finally:
+            dq2_lock.release()
+        if frozen.values()[0]=="None":
+            logger.info("Dataset %s is still open, using this for file and location registration" % dataset)
+            return dataset
+        else:
+            logger.warning("Dataset %s is already frozen, will create alternative" % dataset)
+            
+        # now generating the vX suffix.
+        dsetlist=[]
+        try:
+            dq2_lock.acquire()
+            dsetlist = dq2.listDatasets('%sv*' % dataset)
+        finally:
+            dq2_lock.release()            
+        for dset in dsetlist:
+            try:
+                dq2_lock.acquire()
+                frozen=dq2.getMetaDataAttribute(dset,["frozendate"])
+            finally:
+                dq2_lock.release()
+            if frozen.values()[0]=="None":
+                logger.warning("Dataset %s is still open, using this for file and location registration" % dset)
+                return dset
+        # if we are still there, then we need to create another opus...
+        suffix="v"+str(len(dsetlist)+1)
+        newdataset=dataset+suffix
+        logger.info("Opening new dataset: %s" % newdataset)
+        try:
+            dq2_lock.acquire()
+            dq2.registerNewDataset(newdataset)
+        finally:
+            dq2_lock.release()             
+        return newdataset
+        
     def get_dataset_suffix(self, dataset,jobid):
         """generate final output dataset name using dataset and jobid. Returns the created suffix"""
         # first, create the jid suffix. First part is the job id, zfill to make it 6 digits.
@@ -1067,10 +1143,17 @@ class AthenaMCOutputDatasets(Dataset):
         dsetlist=[]
         try:
             dq2_lock.acquire()
-            dsetlist = dq2.listDatasets('%s*' % datasetname)
+            dsetlist = dq2.listDatasets('%s' % datasetname)
         finally:
             dq2_lock.release()
         if len(dsetlist)>0:
+            # need to work out exactly the number of subdatasets:
+            try:
+                dq2_lock.acquire()
+                dsetlist = dq2.listDatasets('%s*' % datasetname)
+            finally:
+                dq2_lock.release()
+            
             suffix+="v%d" % len(dsetlist)
         datasetname=dataset+"."+suffix
         #print"final dataset name is",datasetname
@@ -1165,38 +1248,18 @@ class AthenaMCOutputDatasets(Dataset):
                 logger.warning("Wrong checksum information, skipping registration %s"%  md5sum)
                 continue
             siteID=siteID.strip() # remove \n from last component
+            # Must check whether or not the dataset is frozen. If this is the case (job resubmission), then one should create a new one with a vX suffix, and use this new dataset to store the data.
+            dataset=self.checkDataset(dataset)
             datasets.append(dataset)
             regline=dataset+","+siteID
             if regline in reglines:
-                logger.debug("Registration of %s in %s already done, skipping" % (dataset,siteID))
+                logger.warning("Registration of %s in %s already done, skipping" % (dataset,siteID))
                 #continue
             else:
                 reglines.append(regline)
                 logger.debug("Registering dataset %s in %s" % (dataset,siteID))
                 self.actual_output.append("%s %s" % (lfn,siteID))
-                try:
-                    dq2_lock.acquire()
-                    dsetlist = dq2.listDatasets('%s' % dataset)
-                finally:
-                    dq2_lock.release()
-                if len(dsetlist)==0:
-                    try:
-                        dq2_lock.acquire()
-                        dq2.registerNewDataset(dataset)
-                    finally:
-                        dq2_lock.release()
-                try:
-                    dq2_lock.acquire()
-                    frozen=dq2.getMetaDataAttribute(dataset,["frozendate"])
-                finally:
-                    dq2_lock.release()
-                if frozen.values()[0]!="None":
-                    logger.error("Dataset is already frozen, cannot add extra files to this dataset")
-                    return []
-                
                 self.register_dataset_location(dataset,siteID)
-                    
-
             self.register_file_in_dataset(dataset,[lfn],[guid], [size],[adler32])
         return datasets
     def recover(self,freeze="yes"):
@@ -1272,7 +1335,6 @@ class AthenaMCOutputDatasets(Dataset):
         elif job.splitter:
             njobs=job.splitter.numsubjobs
         maxtime*=njobs
-        print maxtime, njobs
         if maxtime>80000:
             maxtime=80000
         try:
@@ -1325,7 +1387,7 @@ class AthenaMCOutputDatasets(Dataset):
                     dq2_lock.acquire()
                     frozen=dq2.getMetaDataAttribute(dset,["frozendate"])
                     if frozen.values()[0]!="None":
-                        logger.error("Dataset is already frozen, cannot add extra files to this dataset")
+                        logger.info("Dataset %s is already frozen, skipping" % dset)
                     else:
                         logger.info("proceeding with freezing the dataset %s" % dset)
                         try:
@@ -1347,19 +1409,31 @@ class AthenaMCOutputDatasets(Dataset):
                     dq2_lock.release()
                 logger.debug("found %s" % str(dsetlist))
                 if len(dsetlist)==0:
-                    logger.debug("creating container: %s", containername)
+                    logger.info("creating container: %s", containername)
                     try:
                         dq2_lock.acquire()
                         containerClient.create(containername)
                     finally:
                         dq2_lock.release()
+                # should check that dset is not already registered in containername
+                # at this point, one should have a container. Updating dsetlist with contents of container:
                 try:
-                    containerClient.register(containername,[dset])
-                except:
-                    logger.error("Error registering the dataset %s in its container %s" % (dset,containername))
-                    pass
+                    dq2_lock.acquire()
+                    dsetlist = dq2.listDatasetsInContainer('%s' % containername)
+                finally:
+                    dq2_lock.release()
+                
+                if dset in dsetlist:
+                    logger.warning("dataset %s already registered in container %s, skipping" % (dset,containername))
+                if len(dsetlist)==0 or dset not in dsetlist:
+                    try:
+                        containerClient.register(containername,[dset])
+                    except:
+                        logger.error("Error registering the dataset %s in its container %s. Please discard if this job was resubmitted." % (dset,containername))
+                        pass
+
                 # if app.se_name is set and dset has more than one locations, then subscribe dset to app.se_name to aggregate the dataset to the intended location
-                if job.application.se_name!="none":
+                if job.application.se_name and job.application.se_name!="none":
                     locations={}
                     try:
                         dq2_lock.acquire()
@@ -1371,11 +1445,16 @@ class AthenaMCOutputDatasets(Dataset):
                         break
                     datasetvuid = datasetinfo[dset]['vuids'][0]
                     sitelist=locations[datasetvuid][1] + locations[datasetvuid][0]
-                    if len(sitelist)>1:
-                        logger.warning("Found more than one location for output dataset, will start subscription to aggregate data to %s. Locations are: %s" % (job.application.se_name,str(sitelist)))
+                    seNames=job.application.se_name.split(" ")
+                    subscribedSite=seNames[0]
+                    if subscribedSite not in sitelist or len(sitelist)>1:
+                        if subscribedSite not in sitelist:
+                            logger.warning("location declared in application.se_name different from existing locations of %s. Subscribing dataset to requested location: %s" % (dset,subscribedSite))
+                        elif len(sitelist)>1:
+                            logger.warning("Found more than one location for output dataset, will start subscription to aggregate data to %s. Locations are: %s" % (subscribedSite,str(sitelist)))
                         try:
                             dq2_lock.acquire()
-                            dq2.registerDatasetSubscription(dset,job.application.se_name)
+                            dq2.registerDatasetSubscription(dset,subscribedSite)
                         finally:
                             dq2_lock.release()
                         
@@ -1491,11 +1570,31 @@ except ConfigError:
 try:
     configDQ2['usertag']
 except ConfigError:
-    configDQ2.addOption('usertag','users','FIXME')
+    configDQ2['usertag']="" # removing arbitrary value "users". Will catch this at execution time (somewhere else in the code) as raising an Exception at initialisation time is likely to be drowned among the many startup errors/ warning
     
+_usertag=configDQ2['usertag']
 
 baseURLDQ2 = configDQ2['DQ2_URL_SERVER']
 baseURLDQ2SSL = configDQ2['DQ2_URL_SERVER_SSL']
-_usertag=configDQ2['usertag']
 
+# Extract username from certificate
+proxy = GridProxy()
+username = proxy.identity()
+
+if proxy.init_opts:
+    proxyrole=proxy.init_opts
+    #print "found proxy role:",proxyrole
+    imin=string.find(proxyrole,"atlas/")
+    imax=string.rfind(proxyrole,"/")
+    if imin>-1:
+        role=proxyrole[imin+6:]
+    if imax-imin>6:
+        role=proxyrole[imin+6:imax]
+    if string.find(role,"phys")>-1 or string.find(role,"perf") >-1 or string.find(role,"trig") >-1:
+        logger.warning("Detected physics/performance group: %s in .gangarc, using this for dataset naming and storage" % role)
+        username=role
+        _usertag=_usertag.replace("user","group")
+    logger.info("user data for data management: group: %s, username: %s" % (_usertag,username))
+
+        
 

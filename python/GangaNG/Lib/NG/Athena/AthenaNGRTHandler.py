@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AthenaNGRTHandler.py,v 1.11 2009-06-02 10:40:18 bsamset Exp $
+# $Id: AthenaNGRTHandler.py,v 1.15 2009-06-25 13:04:37 bsamset Exp $
 ###############################################################################
 # Athena NG Runtime Handler
 #
@@ -12,6 +12,11 @@
 
 import os, pwd, commands, re 
 import time
+
+try:
+    import lfc
+except:
+    pass
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -101,6 +106,41 @@ class AthenaNGRTHandler(IRuntimeHandler):
                         fs = f.split('/')
                         input_files.append(fs[-1])
                         input_guids.append("00000000-0000-0000-0000-000000000000") #No guids needed, just for input file parsing
+
+                elif job.inputdata._name == 'DQ2Dataset' and job.inputdata.accessprotocol =='GSIDCAP':
+                    if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
+                    #if not job.inputdata.names: raise Exception('No inputdata has been specified.')
+                    input_guids = job.inputdata.guids
+                    #input_files = job.inputdata.names
+
+                    # check and set env. variables for default LFC setup 
+                    if not os.environ.has_key('LFC_HOST'):
+                        try:
+                            os.environ['LFC_HOST'] = config['DefaultLFC']
+                        except Ganga.Utility.Config.ConfigError:
+                            os.environ['LFC_HOST'] = 'lfc1.ndgf.org'
+                            
+                    for guid in input_guids:
+
+                        #site = "srm.swegrid.se"
+                        site = job.backend.requirements.gsidcap
+                        sfn = get_dcap_path(guid,site)
+
+                        if sfn!="":
+                            input_files.append(sfn)
+                        else:
+                            print "Found no replica for guid "+guid+" at "+site+". Removing from inputs."
+                            input_guids.remove(guid)
+
+                    # Were all inputs removed?
+                    if len(input_guids)==0:
+                        raise ApplicationConfigurationError(None,'No inputs found for job %s at site %s.' % (job.getFQID('.'),site))
+
+                    # Update job names to the gsidcap values
+                    job.inputdata.names = input_files
+                        
+                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD']:
+                        job.inputdata.type ='DQ2_LOCAL'
                     
                 elif job.inputdata._name == 'DQ2Dataset': 
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
@@ -127,6 +167,50 @@ class AthenaNGRTHandler(IRuntimeHandler):
                         fs = f.split('/')
                         input_files.append(fs[-1])
                         input_guids.append("00000000-0000-0000-0000-000000000000") #No guids needed, just for input file parsing
+
+                elif job.inputdata._name == 'DQ2Dataset' and job.inputdata.accessprotocol =='GSIDCAP':
+                                    
+                    contents = job.inputdata.get_contents()
+                    input_guids = [ guid for guid, lfn in contents ]
+
+                    # HACK! Mail Johannes about this...
+                    if job.splitter==None:
+                        #job.inputdata.names=[ lfn  for guid, lfn in contents ]
+                        job.inputdata.guids=input_guids
+                                                                        
+                    if job.inputdata.tagdataset:
+                        tag_contents = job.inputdata.get_tag_contents()
+                        input_tag_files = [ lfn  for guid, lfn in tag_contents ]
+                        input_tag_guids = [ guid for guid, lfn in tag_contents ] 
+
+                    # check and set env. variables for default LFC setup 
+                    if not os.environ.has_key('LFC_HOST'):
+                        try:
+                            os.environ['LFC_HOST'] = config['DefaultLFC']
+                        except Ganga.Utility.Config.ConfigError:
+                            os.environ['LFC_HOST'] = 'lfc1.ndgf.org'
+                            
+                    for guid in input_guids:
+
+                        #site = "srm.swegrid.se"
+                        site = job.backend.requirements.gsidcap
+                        sfn = get_dcap_path(guid,site)
+
+                        if sfn!="":
+                            input_files.append(sfn)
+                        else:
+                            print "Found no replica for guid "+guid+" at "+site+". Removing from inputs."
+                            input_guids.remove(guid)
+
+                    # Were all inputs removed?
+                    if len(input_guids)==0:
+                        raise ApplicationConfigurationError(None,'No inputs found for job %s at site %s.' % (job.getFQID('.'),site))
+
+                    job.inputdata.names = input_files
+                        
+                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD']:
+                        job.inputdata.type ='DQ2_LOCAL'
+
                     
                 elif job.inputdata._name == 'DQ2Dataset':
                     if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD']:
@@ -187,17 +271,19 @@ class AthenaNGRTHandler(IRuntimeHandler):
                 jobid = "%d" % (job._getRoot().id)
             else:
                 jobid = "%d" % job.id
-            
+
+            username = job.backend.getidentity(True)
+
             # Extract username from certificate 
-            username=""
+            #username=""
             # ARC not working 
             # proxy = GridProxy(job.backend.middleware.upper())
-            proxyNG = GridProxy('ARC')
+            #proxyNG = GridProxy('ARC')
             #print 'AthenaNGRTHandler calling proxy.info '
             #useridARC = proxyNG.info(opt="-identity")
             #print 'AthenaNGRTHandler usridARC ', useridARC
             #proxy = GridProxy()
-            username = proxyNG.identity()
+            #username = proxyNG.identity()
             #print 'AthenaNGRTHandler username ', username
 
             """
@@ -296,7 +382,7 @@ class AthenaNGRTHandler(IRuntimeHandler):
             elif job.outputdata and not job.outputdata.outputdata:
                 raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
             
-        exe = os.path.join(os.path.dirname(__file__),'athena-ng-wrapper.sh')
+        exe = os.path.join(os.path.dirname(__file__),'wrapper-athena-ng.sh')
         inputbox.append(File(os.path.join(os.path.dirname(__file__),'athena-ng.sh')))
         #_append_file_buffer(inputbox,'athena-ng.sh',[os.path.join(os.path.dirname(__file__),'athena-ng.sh')])
         outputbox = jobmasterconfig.outputbox
@@ -449,6 +535,14 @@ class AthenaNGRTHandler(IRuntimeHandler):
         if app.user_area.name: environment['USER_AREA']=os.path.basename(app.user_area.name)
         if app.max_events: environment['ATHENA_MAX_EVENTS']=app.max_events
 
+        # Get any special database release info
+        if app.atlas_dbrelease:
+            dbrl = app.atlas_dbrelease.split(':')
+            if len(dbrl)>1:
+                environment['DBDATASETNAME'] = dbrl[0]
+                environment['DBFILENAME'] = dbrl[1]
+            elif len(dbrl)==1:
+                environment['DBFILENAME'] = dbrl[0]
 
         # Set application exe type in environment variable
         environment['ATHENA_EXE_TYPE']=app.atlas_exetype
@@ -496,7 +590,7 @@ class AthenaNGRTHandler(IRuntimeHandler):
         #    inputdata = [ 'lfn:%s' % lfn for lfn in input_files ]
         
 #       jobscript
-        exe = os.path.join(os.path.dirname(__file__),'athena-ng-wrapper.sh')
+        exe = os.path.join(os.path.dirname(__file__),'wrapper-athena-ng.sh')
         #print '%%% This is exe ', exe
 
 #       output sandbox
@@ -568,6 +662,50 @@ def register_dataset(datasetname,siteID):
         print 'Dataset already registered ', datasetname 
     return
 
+def get_dcap_path(guid, requiredhost=""):
+
+    # Assume that LFC_HOST has been set
+    
+    # Get the replicas 
+    l = lfc.lfc_getreplica("",guid,"")
+    replicas = l[1]
+    replica = -1
+
+    #for r in replicas:
+    #    print r.host
+
+    # Did we get anything?
+    if len(replicas)==0:
+        return ""
+
+    # Check if file exists at required host
+    if requiredhost!="":
+        for i in range(len(replicas)):
+            #print replicas[i].host
+            if replicas[i].host==requiredhost:
+                replica = i
+                break
+    if replica<0:
+        return ""
+
+    # Pick out the srm path and host
+    sfn = replicas[replica].sfn
+
+    # Get the host
+    host = replicas[replica].host
+
+    # Turn the srm path into a gsidcap one
+    sfn = sfn.replace("srm://","gsidcap://")
+    if requiredhost=='srm.swegrid.se':
+        sfn = sfn.replace(host,"%s:22128/pnfs/swegrid.se/data" % host)
+    else:
+        sfn = sfn.replace(host,"%s:22128" % host)
+
+    #print sfn
+    
+    return sfn
+
+
 def get_guids(input_files):
 
     input_guids = []
@@ -591,6 +729,18 @@ configDQ2 = getConfig('DQ2')
 logger = getLogger('Athena')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.14  2009/06/25 09:05:36  bsamset
+# Changed to using wrapper-athena-ng.sh
+#
+# Revision 1.13  2009/06/24 09:09:53  bsamset
+# Added direct gsidcap access functionality
+#
+# Revision 1.12  2009/06/12 09:39:40  bsamset
+# Added functionality to use a user-speficied database release, as set in j.application.atlas_dbrelease. Same syntax as on lcg.
+#
+# Revision 1.11  2009/06/02 10:40:18  bsamset
+# Re-fixed a bug for treating ATLAS_PRODUCTION in rel. 14-series
+#
 # Revision 1.10  2009/05/30 08:49:06  bsamset
 # Removed a remaining reference to USERDISK
 #

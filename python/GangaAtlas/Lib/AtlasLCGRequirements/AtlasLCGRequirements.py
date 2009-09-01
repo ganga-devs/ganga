@@ -320,8 +320,8 @@ def getCloudInfo():
     info += [ ( 'T2', 'ES', site ) for site in listT2s('SPAINSITES','PIC') ]
     info += [ ( 'T1', 'FR', 'LYON' ) ]
     info += [ ( 'T2', 'FR', site ) for site in listT2s('FRTIER2S') ]
-    info += [ ( 'T1', 'GB', 'RAL' ) ]
-    info += [ ( 'T2', 'GB', site ) for site in listT2s('UKTIER2S') ]
+    info += [ ( 'T1', 'UK', 'RAL' ) ]
+    info += [ ( 'T2', 'UK', site ) for site in listT2s('UKTIER2S') ]
     info += [ ( 'T1', 'DE', 'FZK' ) ]
     info += [ ( 'T2', 'DE', site ) for site in listT2s('FZKSITES','FZK') ]
     info += [ ( 'T1', 'NL', 'SARA' ) ]
@@ -359,8 +359,21 @@ class AtlasLCGRequirements(LCGRequirements):
 
     _category = 'LCGRequirements'
     _name = 'AtlasLCGRequirements'
-    _exportmethods = ['list_ce', 'list_se','list_sites','list_clouds', 'list_sites_cloud' ]
+    _exportmethods = ['list_ce', 'list_se','list_sites','list_clouds', 'list_sites_cloud', 'cloud_from_sites' ]
 
+    _cloudNameList = { 'TO' : 'CERN',
+                       'IT' : 'ITALYSITES',
+                       'ES' : 'SPAINSITES',
+                       'FR' : 'FRANCESITES',
+                       'UK' : 'UKSITES',
+                       'DE' : 'FZKSITES',
+                       'NL' : 'NLSITES',
+                       'TW' : 'TAIWANSITES',
+                       'CA' : 'CANADASITES',
+                       'US' : 'USASITES',
+                       'NG' : 'NDGF'
+                       }
+    
     _GUIPrefs = [ 
          { 'attribute' : 'software',       'widget' : 'String_List' },
          { 'attribute' : 'nodenumber',     'widget' : 'Int' },
@@ -438,30 +451,48 @@ class AtlasLCGRequirements(LCGRequirements):
 
     def list_clouds(self):
 
-        return getCloudInfo()
+        #return getCloudInfo()
+        return self._cloudNameList.keys()
 
     def list_sites_cloud(self, cloudName=''):
 
-        couldNameList = { 'TO' : 'CERN',
-                          'IT' : 'ITALYSITES',
-                          'ES' : 'SPAINSITES',
-                          'FR' : 'FRANCESITES',
-                          'UK' : 'UKSITES',
-                          'DE' : 'FZKSITES',
-                          'NL' : 'NLSITES',
-                          'TW' : 'TAIWANSITES',
-                          'CA' : 'CANADASITES',
-                          'US' : 'USASITES',
-                          'NG' : 'NDGF'
-                          }
+
         if cloudName:
             cloudID = cloudName
         else:
             cloudID = self.cloud
 
         try:
-            cloud = couldNameList[cloudID]
+            cloud = self._cloudNameList[cloudID]
         except:
             cloud = cloudID
             
         return getSites(cloud)
+
+    def cloud_from_sites( self, sites = [] ):
+        
+        # Return the cloud given the site
+        if not sites:
+            sites = self.sites
+
+        if sites.__class__.__name__ == 'str':
+            sites = [sites]
+
+        if len(sites) == 0:
+            return {}
+        
+        mapping = {}
+        
+        # sort info for site -> cloud
+        for cloud in self.list_clouds():
+            cloud_sites = self.list_sites_cloud( cloud )
+            for site in cloud_sites:
+                mapping[ site ] = cloud
+
+        # now output the mapping requested
+        output = {}
+        for site in sites:
+            output[site] = mapping[site]
+
+        return output
+                                               

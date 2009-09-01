@@ -149,7 +149,10 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
 def resolveTURL(surl, protocol, outfile, errfile, timeout=300):
 
     ## default lcg-gt timeout: 5 minutes
-    cmd = 'lcg-gt -v -t %d %s %s' % (timeout, surl, protocol)
+    if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+        cmd = "lcg-gt -v --connect-timeout %d --sendreceive-timeout %d --srm-timeout %d --bdii-timeout %d %s %s" % (timeout, timeout, timeout, timeout, surl, protocol) 
+    else:
+        cmd = 'lcg-gt -v -t %d %s %s' % (timeout, surl, protocol)
 
     exitcode = -999
 
@@ -193,7 +196,7 @@ if __name__ == '__main__':
     errfile = open('FileStager.err','a')
 
     ## default value specification
-    supported_protocols = ['lcgcp','rfio','gsidcap','dcap','gsiftp']
+    supported_protocols = ['lcgcp','rfio','gsidcap','dcap','gsiftp','file']
 
     protocol  = 'lcgcp'
     timeout   = 1200
@@ -229,12 +232,20 @@ if __name__ == '__main__':
 
                 dest_fpath = '/' + re.sub(r'^(file:)?\/*','',dest_surl)
 
+                ## for dCache
                 if protocol in [ 'gsidcap', 'dcap' ]:
                     cmd = 'dccp -A -d 2 -o %d %s %s' % (timeout, src_turl, dest_fpath)
 
+                ## for DPM/Castor
                 elif protocol in [ 'rfio' ]:
                     cmd = 'rfcp %s %s' % (src_turl, dest_fpath)
 
+                ## for Storm/Luster
+                elif protocol in [ 'file' ]:
+                    ##src_fpath = '/' + re.sub(r'^(file:)?\/*','',src_surl)
+                    cmd = 'curl -v %s -o %s' % (src_turl, dest_fpath)
+
+                ## for classic grid storage
                 elif protocol in [ 'gsiftp' ]:
                     ## keep retrying the failed transfer operation within the given timeout
                     ## wait for 30 seconds to the next retry

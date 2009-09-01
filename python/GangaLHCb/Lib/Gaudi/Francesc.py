@@ -8,10 +8,11 @@ import CMTscript
 from GangaLHCb.Lib.Gaudi.CMTscript import parse_master_package
 import Ganga.Utility.logging
 from Ganga.Utility.files import expandfilename, fullpath
-from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 from GaudiUtils import *
 from Ganga.GPIDev.Lib.File import File
+from Ganga.Core import ApplicationConfigurationError
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -159,7 +160,8 @@ class Francesc(IApplication):
         """Build the code in the release area the application object points
         to. The actual command executed is "cmt broadcast make <argument>"
         after the proper configuration has taken place."""
-        command = '###CMT### config \n ###CMT### broadcast make '+argument
+        command = '###CMT### config \n ###CMT### broadcast ###CMT### make ' \
+                  + argument
         CMTscript.CMTscript(self,command)
 
     def cmt(self, command):
@@ -172,11 +174,6 @@ class Francesc(IApplication):
     def _master_configure(self):
         '''Handles all common master_configure actions.'''
         self.extra = GaudiExtras()
-        debug_dir = self.getJobObject().outputdir
-        debug_dir = debug_dir.rstrip('/')
-        debug_dir = debug_dir.rstrip('/output')
-        debug_dir += '/debug'
-        if os.path.exists(debug_dir): os.system('rm -f %s/*' % debug_dir)
         self._getshell()
         
         job=self.getJobObject()                
@@ -187,7 +184,7 @@ class Francesc(IApplication):
         if job.outputdata:
             self.extra.outputdata = collect_lhcb_filelist(job.outputdata)
                         
-        if not self.user_release_area: return debug_dir
+        if not self.user_release_area: return
 
         appname = self.get_gaudi_appname()
         dlls, pys, subpys = get_user_dlls(appname, self.version,
@@ -199,8 +196,6 @@ class Francesc(IApplication):
         for dir, files in subpys.iteritems():
             input_files = [File(f,subdir='python'+os.sep+dir) for f in files]
             self.extra.master_input_files += input_files
-
-        return debug_dir
 
     def _configure(self):
         data_str = dataset_to_options_string(self.extra.inputdata)

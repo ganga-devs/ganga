@@ -46,19 +46,50 @@ stageInLCG(){
     SITES=$@
     dq2get=`which dq2-get`
     py32=`which python32`
+    py25=`which python2.5`
+
+    echo "test python #3"
+    echo $py32
+    echo $py25
+    which python
+    python -V
+    python32 -V  
+ 
     matchDB=`echo $LFNS | grep DBRelease`
     echo "test matching",$LFNS,$matchDB,$newDB_location
     if [ ! -z "$newDB_location" -a ! -z "$matchDB" ]; then
 	echo "DBRelease already set, NOT downloading the archive: $LFNS"
 	return 0
     fi
+    if [ -z "$DQ2_LOCAL_SITE_ID" ]; then
+	echo "Error in local dq2 setup, DQ2_LOCAL_SITE_ID not set. Aborting"
+        return 12
+    fi
+#    LOCALSITE=`echo $DQ2_LOCAL_SITE_ID | sed -e "s:_.*::"`
+#    newSITES=""
+#    for site in $SITES; do
+#	islocal=`echo $site | grep -e $LOCALSITE`
+#        if [ ! -z "$islocal" ]; then
+#           newSITES="$site $newSITES"  # promote local site to the front of the list
+#        else
+#           newSITES="$newSITES $site"  # append all other sites to the back.
+#        fi
+#        SITES=$newSITES
+#    done
 
+#    python -V
+#    python2.5 -V
+    
+    SITES=" null $SITES"
     for site in $SITES; do
-        echo "Attempting getting data from $site"
-	cmd="$dq2get --client-id=ganga -a -d -s $site -D -f $LFNS $INPUTDSET" 
-	if [ ! -z "$py32" ]; then
-	    cmd="python32 "$cmd
+	siteflag=""
+	if [ $site != "null" ]; then
+	    echo "Attempting getting data from $site"
+	    siteflag="-s $site"
+	else
+	    echo "first attempt to get inputdata. Not specifying the site as dq2-get checks and goes for the local instance first, if available".
 	fi
+	cmd="$dq2get --client-id=ganga -a -d $siteflag -D -f $LFNS $INPUTDSET" 
 	echo $cmd
 	$cmd
 	status=$?
@@ -67,7 +98,36 @@ stageInLCG(){
 	    #mv $INPUTDSET*/* .  # -D flag should make this block irrelevant and trigger an harmless error message
 	    break
 	fi
-	echo "attempt failed."
+	echo "attempt failed. Trying alternative command line:"
+	# checking presence of atlas python if needed:
+	if [ ! -z "$py32" ]; then
+	    cmd="$py32 "$cmd
+	else
+	    atlasPythonBin=`ls -d ${VO_ATLAS_SW_DIR}/prod/releases/*/sw/lcg/external/Python/2.5.4/slc4_ia32_gcc34/bin | head -1`
+	    if [ ! -z "$atlasPythonBin" ]; then
+		echo "Atlas python2.5 detected, setting it up"
+		export oldPATH=$PATH
+		export oldLDLBPATH=$LD_LIBRARY_PATH
+		export PATH=$atlasPythonBin:$PATH
+		atlasPythonLib=`echo $atlasPythonBin | sed -e "s:bin:lib:"`
+		export LD_LIBRARY_PATH=$atlasPythonLib:$LD_LIBRARY_PATH
+	    fi
+	    cmd="python "$cmd
+	fi
+	echo $cmd
+	$cmd
+	status=$?
+	if [ ! -z "$oldPATH" ]; then
+	    # restore defaults
+	    export PATH=$oldPATH
+	    export LD_LIBRARY_PATH=$oldLDLBPATH
+	fi
+	if [ $status -eq 0 -a -s "$LFNS" ]; then
+	    echo "$LFNS downloaded succesfully"
+	    #mv $INPUTDSET*/* .  # -D flag should make this block irrelevant and trigger an harmless error message
+	    break
+	fi
+
 	if [ -e "$LFNS" ]; then
 	    echo "failed attempt detected, removing it"
 	    rm $LFNS # clear the space for next attempt.
@@ -147,10 +207,11 @@ eval $INPUTSITES
 echo ${lfn[@]}
 bash --version
 ##
-echo "Setting up DQ2 tools"
-source ${VO_ATLAS_SW_DIR}/ddm/latest/setup.sh
-echo "site's SE is $DQ2_LOCAL_SITE_ID"
-
+if [ -z "$DQ2_HOME" -o -z "$DQ2_LOCAL_SITE_ID" ]; then
+    echo "Setting up DQ2 tools"
+    source ${VO_ATLAS_SW_DIR}/ddm/latest/setup.sh
+    echo "site's SE is $DQ2_LOCAL_SITE_ID"
+fi
 # main loop
 
 for ((i=0;i<${#lfn[@]};i++)); do
@@ -186,6 +247,7 @@ for ((i=0;i<${#lfn[@]};i++)); do
     'LCG')
 #    stageInLCG $INPUTFILE $INPUTTURL ${lfc[${i}]};
     stageInLCG $INPUTFILE $INPUTDSET $SITE
+    status=$?
     ;;
     'NG')
     stageInNG;
@@ -205,6 +267,11 @@ for ((i=0;i<${#lfn[@]};i++)); do
     ;;
     
  esac
+
+if [ $status -ne 0 ];then
+   echo "Error in stage-in, aborting"
+   exit $status
+fi
 
 # echo "doing pool insert"
 #    pool_insertFileToCatalog $INPUTFILE

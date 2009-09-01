@@ -41,7 +41,7 @@ class TestFrancesc(GangaGPITestCase):
     # test these 3 methods together
     def test_Francesc_get_pack_AND_make_AND_cmt(self):
         #apps = available_apps() # takes too long to do them all
-        apps = ['DaVinci']
+        apps = [] #apps = ['DaVinci']
         cmtuserpath = tempfile.mktemp()
         os.mkdir(cmtuserpath)
         for appname in apps:

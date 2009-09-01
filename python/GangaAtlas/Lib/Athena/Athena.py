@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Athena.py,v 1.58 2009-05-31 17:36:04 elmsheus Exp $
+# $Id: Athena.py,v 1.64 2009-07-09 19:04:03 elmsheus Exp $
 ###############################################################################
 # Athena Job Handler
 #
@@ -168,7 +168,8 @@ class Athena(IApplication):
                  'append_to_user_area'    : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Extra files to include in the user area'),
                  'exclude_package'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Packages to exclude from user area requirements file'),
                  'stats'                  : SimpleItem(defvalue = {}, doc='Dictionary of stats info'),
-                 'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field')
+                 'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field'),
+                 'recex_type'             : SimpleItem(defvalue = '',doc='Set to RDO, ESD or AOD to enable RecExCommon type jobs of appropriate type')
               })
                      
     _category = 'applications'
@@ -192,7 +193,8 @@ class Athena(IApplication):
                   { 'attribute' : 'user_setupfile',    'widget' : 'FileOrString' },
                   { 'attribute' : 'exclude_from_user_area', 'widget' : 'FileOrString_List' },
                   { 'attribute' : 'exclude_package',   'widget' : 'String_List' },
-                  { 'attribute' : 'collect_stats',     'widget' : 'Bool' }                  
+                  { 'attribute' : 'collect_stats',     'widget' : 'Bool' },
+                  { 'attribute' : 'recex_type',     'widget' : 'String' }  
                   ]
     
                   
@@ -305,6 +307,45 @@ class Athena(IApplication):
             self.stats = job.backend.get_stats()
             return
 
+        # Collect stats from LCG backend stats.pickle file
+        if job.backend.__class__.__name__ in [ 'LCG' ]:
+            import pickle
+            fileName =  os.path.join(job.outputdir + "stats.pickle")
+            if "stats.pickle" in os.listdir(job.outputdir):  
+                f = open(fileName,"r")
+                self.stats = pickle.load(f)
+                f.close()
+                
+        # collect stats from __jobscript__.log
+        if '__jobscript__.log' in os.listdir(job.outputdir):
+            fileName = os.path.join(job.outputdir,'__jobscript__.log' )
+            try:
+                for line in fileinput.input([fileName]):
+                    if line.find('[Info] Job Wrapper start.')>-1:
+                        starttime = re.match('(.*)  .*Info.* Job Wrapper start.',line).group(1)
+                        self.stats['starttime'] = time.mktime(time.strptime(starttime))-time.timezone
+                    if line.find('[Info] Job Wrapper stop.')>-1:
+                        stoptime = re.match('(.*)  .*Info.* Job Wrapper stop.',line).group(1)
+                        self.stats['stoptime'] = time.mktime(time.strptime(stoptime))-time.timezone
+            except:
+                pass
+
+        # Collect stats from __jdlfile__ (LCG)
+        if '__jdlfile__' in os.listdir(job.inputdir):
+            self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
+
+        try:        
+            if not self.stats.has_key('starttime') and self.stats.has_key('gangatime1'):
+                self.stats['starttime'] = self.stats['gangatime1']
+            if not self.stats.has_key('stoptime') and self.stats.has_key('gangatime5'):
+                self.stats['stoptime'] = self.stats['gangatime5'] 
+        except:
+            pass
+
+        # Return for LCG backend since stats.pickle is used
+        if job.backend.__class__.__name__ in [ 'LCG' ]:
+            return
+
         # Compress NG stdout.txt
         if 'stdout.txt' in os.listdir(job.outputdir):
             fileNameIn = os.path.join(job.outputdir,'stdout.txt')
@@ -325,20 +366,6 @@ class Athena(IApplication):
             f_out.close()
             f_in.close()
 
-        # collect stats from __jobscript__.log
-        if '__jobscript__.log' in os.listdir(job.outputdir):
-            fileName = os.path.join(job.outputdir,'__jobscript__.log' )
-            try:
-                for line in fileinput.input([fileName]):
-                    if line.find('[Info] Job Wrapper start.')>-1:
-                        starttime = re.match('(.*)  .*Info.* Job Wrapper start.',line).group(1)
-                        self.stats['starttime'] = time.mktime(time.strptime(starttime))-time.timezone
-                    if line.find('[Info] Job Wrapper stop.')>-1:
-                        stoptime = re.match('(.*)  .*Info.* Job Wrapper stop.',line).group(1)
-                        self.stats['stoptime'] = time.mktime(time.strptime(stoptime))-time.timezone
-            except:
-                pass
-
         # collect stats from stderr
         try:
             if 'stderr.gz' in os.listdir(job.outputdir) or 'stdout.txt.gz' in os.listdir(job.outputdir) or 'stdout.gz' in os.listdir(job.outputdir):
@@ -357,7 +384,10 @@ class Athena(IApplication):
                     zfile = os.popen('zcat '+os.path.join(job.outputdir,'stdout.gz' ))   
                 for line in zfile:
                     if line.find('Percent of CPU this job got')>-1:
-                        percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
+                        try:
+                            percentcpu = percentcpu + int(re.match('.*got: (.*).',line).group(1))
+                        except ValueError:
+                            percentcpu = 0  
                         ipercentcpu = ipercentcpu + 1
                     if line.find('Elapsed (wall clock) time')>-1:
                         try:
@@ -494,9 +524,6 @@ class Athena(IApplication):
             logger.warning('ERROR in Athena.collectStats - logfiles too large to be unpacked.')
             pass
 
-        if '__jdlfile__' in os.listdir(job.inputdir):
-            self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
-
         if job.backend.__class__.__name__ in [ 'NG' ]:
             if self.stats.has_key('gangatime1'):
                 self.stats['starttime'] = self.stats['gangatime1'] 
@@ -533,19 +560,36 @@ class Athena(IApplication):
         if not job.master and job.subjobs:
             numfiles = 0
             numfiles2 = 0
+            numfiles3 = 0
             totalevents = 0
             for subjob in job.subjobs:
                 if subjob.application.stats.has_key('numfiles'):
                     if subjob.application.stats['numfiles']:
-                        numfiles = numfiles + subjob.application.stats['numfiles']
+                        try:
+                            numfiles = numfiles + int(subjob.application.stats['numfiles'])
+                        except:
+                            pass
                 if subjob.application.stats.has_key('numfiles2'):
                     if subjob.application.stats['numfiles2']:
-                        numfiles2 = numfiles2 + subjob.application.stats['numfiles2']
+                        try:
+                            numfiles2 = numfiles2 + int(subjob.application.stats['numfiles2'])
+                        except:
+                            pass
+                if subjob.application.stats.has_key('numfiles3'):
+                    if subjob.application.stats['numfiles3']:
+                        try:
+                            numfiles3 = numfiles3 + int(subjob.application.stats['numfiles3'])
+                        except:
+                            pass
                 if subjob.application.stats.has_key('totalevents'):
                     if subjob.application.stats['totalevents']:
-                        totalevents = int(totalevents) + int(subjob.application.stats['totalevents'])
+                        try:
+                            totalevents = int(totalevents) + int(subjob.application.stats['totalevents'])
+                        except:
+                            pass
             self.stats['numfiles']=numfiles
             self.stats['numfiles2']=numfiles2
+            self.stats['numfiles3']=numfiles3
             self.stats['totalevents']=totalevents        
 
     def files_lcg_ng(self):
@@ -578,7 +622,11 @@ class Athena(IApplication):
         req.write('# generated by GANGA\nuse AtlasPolicy AtlasPolicy-*\n')
 
         user_excludes = ['']
-        out = commands.getoutput('find . -name cmt')
+
+        os.chdir(self.userarea)
+        out = commands.getoutput('find . -name cmt' )
+        os.chdir(savedir)
+
         re_package1 = None
         re_package2 = None
         if self.atlas_release.find('11.')>=0 or self.atlas_release.find('10.')>=0:
@@ -940,6 +988,11 @@ class Athena(IApplication):
                 if job.inputdata.tagdataset and not job.inputdata.tagdataset_exists():
                     raise ApplicationConfigurationError(None,'DQ2 tag dataset %s does not exist.' % job.inputdata.tagdataset)
 
+
+        # check recex options
+        if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
+            raise ApplicationConfigurationError(None, 'RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
+        
         return (0,None)
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -1266,6 +1319,24 @@ config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs a
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
 # $Log: not supported by cvs2svn $
+# Revision 1.63  2009/07/02 19:36:23  elmsheus
+# Small fix
+#
+# Revision 1.62  2009/07/02 18:15:29  elmsheus
+# Initial import
+#
+# Revision 1.61  2009/06/22 14:36:19  mslater
+# Added better support for RecEx* analyses
+#
+# Revision 1.60  2009/06/09 17:29:13  elmsheus
+# Fix bug #51300
+#
+# Revision 1.59  2009/06/09 16:13:34  elmsheus
+# bug #51369: the new prepare method generates bad requirements file
+#
+# Revision 1.58  2009/05/31 17:36:04  elmsheus
+# Protection for fileinput.input
+#
 # Revision 1.56  2009/05/31 17:00:09  elmsheus
 # Protection for itotalevents
 #

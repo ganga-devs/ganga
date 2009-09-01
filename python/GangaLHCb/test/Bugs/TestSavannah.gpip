@@ -92,9 +92,10 @@ class Savannah33992(ICheckTest):
 
     def checkTest(self):
         assert(self.j.status == 'failed'), 'Job should fail'
-        f = os.path.join(self.j.outputdir,'__jobstatus__')
+        self.j.backend.getOutputSandbox()
+        f = os.path.join(self.j.outputdir,'std.out')
         assert os.path.exists(f)
-        assert file_contains(f, 'EXITCODE: 45'), 'Incorrect exit code'
+        assert file_contains(f, 'Status after exitCode.C execution is 45'), 'Incorrect exit code'
 
 
 

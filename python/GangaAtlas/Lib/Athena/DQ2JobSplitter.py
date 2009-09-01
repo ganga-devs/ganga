@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: DQ2JobSplitter.py,v 1.35 2009-05-28 11:17:00 ebke Exp $
+# $Id: DQ2JobSplitter.py,v 1.41 2009-07-27 13:03:24 mslater Exp $
 ###############################################################################
 # Athena DQ2JobSplitter
 
@@ -20,6 +20,9 @@ import Ganga.Utility.external.ARDAMDClient.mdinterface as mdinterface
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
 from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
+
+from Ganga.GPIDev.Credentials import GridProxy
+gridProxy = GridProxy()
 
 logger = getLogger()
 
@@ -96,16 +99,70 @@ class DQ2JobSplitter(ISplitter):
         if job.backend._name <> 'LCG' and job.backend._name <> 'Panda' and job.backend._name <> 'NG':
             raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, Panda or NG backend')
 
+        orig_numfiles = self.numfiles
+        orig_numsubjobs = self.numsubjobs
+
         if self.numfiles <= 0: 
             self.numfiles = 1
 
+        locations = job.inputdata.get_locations(overlap=False)
+        
         allowed_sites = []
         if job.backend._name == 'LCG':
             if job.backend.requirements._name == 'AtlasLCGRequirements':
                 if job.backend.requirements.sites:
                     allowed_sites = job.backend.requirements.sites
                 elif job.backend.requirements.cloud:
-                    allowed_sites = job.backend.requirements.list_sites_cloud()
+
+                    # to a check for the 'ALL' cloud option and if given, reduce the selection
+                    if job.backend.requirements.cloud == 'ALL' and not job.backend.requirements.sites and job.outputdata._name == 'DQ2OutputDataset':
+                        logger.warning('DQ2OutputDataset being used with \'ALL\' cloud option. Restricting to a single cloud. Note this may not allow all data to be analysed.')
+
+                        avail_clouds = {}
+                        for key in locations:
+                            avail_clouds[key] = []
+
+                            info = job.backend.requirements.cloud_from_sites(locations[key])
+
+                            for all_site in info:
+                                if not info[all_site] in avail_clouds[key]:
+                                    avail_clouds[key].append(info[all_site])
+
+                        # perform logical AND to find a cloud that has all data
+                        from sets import Set
+
+                        cloud_set = Set(job.backend.requirements.list_clouds())
+
+                        for key in avail_clouds:
+                            cloud_set = cloud_set & Set(avail_clouds[key])
+
+                        # find users cloud and submit there by preference
+                        fav_cloud = ''
+                        for ln in gridProxy.info('--all').split('\n'):
+                            if ln.find('attribute') == -1 or ln.find('atlas') == -1:
+                                continue
+
+                            toks = ln.split('/')
+                            
+                            if len(toks) < 3:
+                                continue
+                            
+                            if toks[2].upper() in job.backend.requirements.list_clouds():
+                                fav_cloud = toks[2].upper()
+                                break
+
+                        if len(cloud_set) == 0:
+                            logger.error('Cloud option \'ALL\' could not find a complete replica of the dataset in any cloud. Please try a specific site or cloud.')
+                            allowed_sites = []
+                        else:
+                            cloud_list = list(cloud_set)
+                            if not fav_cloud in cloud_list:
+                                fav_cloud = cloud_list[0]
+                        
+                            logger.warning('\'%s\' cloud selected. Continuing job submission...' % fav_cloud)
+                            allowed_sites = job.backend.requirements.list_sites_cloud( fav_cloud )
+                    else:
+                        allowed_sites = job.backend.requirements.list_sites_cloud()
                 else: 
                     raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
                 allowed_sites_all = job.backend.requirements.list_sites(True,True)
@@ -170,8 +227,6 @@ class DQ2JobSplitter(ISplitter):
             datasetSizes[dataset] = content[1]
             datasetLength[dataset] = len(contents[dataset])
 
-        locations = job.inputdata.get_locations(overlap=False)
-
         siteinfos = {}
         allcontents = {}
         for dataset, content in contents.iteritems():
@@ -202,6 +257,12 @@ class DQ2JobSplitter(ISplitter):
             allfiles = allfiles + len(info)
         
         for dataset, siteinfo in siteinfos.iteritems():
+            
+            self.numfiles = orig_numfiles
+            self.numsubjobs = orig_numsubjobs
+            if self.numfiles <= 0: 
+                self.numfiles = 1
+
             for sites, guids in siteinfo.iteritems():
 
                 if self.numfiles <= 0: 
@@ -219,18 +280,19 @@ class DQ2JobSplitter(ISplitter):
 
                 for g in removal:
                     guids.remove(g)
-
-                nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+                    
+                nrfiles = self.numfiles
+                nrjob = int(math.ceil(len(guids)/float(nrfiles)))
                 if nrjob > self.numsubjobs and self.numsubjobs!=0:
-                    self.numfiles = int(math.ceil(len(guids)/float(self.numsubjobs)))
-                    nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+                    nrfiles = int(math.ceil(len(guids)/float(self.numsubjobs)))
+                    nrjob = int(math.ceil(len(guids)/float(nrfiles)))
 
                 if nrjob > config['MaxJobsDQ2JobSplitter']:
-                    self.numfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
-                    nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
+                    nrfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
+                    nrjob = int(math.ceil(len(guids)/float(nrfiles)))
 
-                if self.numfiles > len(guids):
-                    self.numfiles = len(guids)
+                if nrfiles > len(guids):
+                    nrfiles = len(guids)
 
                 totalsize = datasetSizes[dataset] * len(guids) / datasetLength[dataset]
 
@@ -245,19 +307,19 @@ class DQ2JobSplitter(ISplitter):
                         maxsize = config['MaxFileSizePandaDQ2JobSplitter']
                     elif job.backend._name == 'LCG':
                         nrjob = 1
-                        self.numfiles = len(guids)
+                        nrfiles = len(guids)
 
                     logger.warning('You are using DQ2JobSplitter.filesize or the backend used supports only a maximum dataset size of %s MB per subjob - job splitting has been adjusted accordingly.', maxsize)
 
                     subjobsize = totalsize / nrjob / (1024*1024)
-                    while subjobsize > maxsize and self.numfiles > 1:
+                    while subjobsize > maxsize and nrfiles > 1:
                         warn = True
-                        self.numfiles = self.numfiles - 1
-                        if self.numfiles < 1:
-                            self.numfiles = 1
+                        nrfiles = nrfiles - 1
+                        if nrfiles < 1:
+                            nrfiles = 1
 
-                        nrjob = int(math.ceil(len(guids)/float(self.numfiles)))
-                        self.numfiles = int(math.ceil(len(guids)/float(nrjob)))
+                        nrjob = int(math.ceil(len(guids)/float(nrfiles)))
+                        nrfiles = int(math.ceil(len(guids)/float(nrjob)))
                         subjobsize = totalsize / nrjob / (1024*1024)
                     if warn:
                         logger.warning('Maximum data size per subjob (%d MB) reached - creating more subjobs.'%maxsize)
@@ -272,7 +334,7 @@ class DQ2JobSplitter(ISplitter):
 
                     j.inputdata       = job.inputdata
                     j.inputdata.dataset = dataset
-                    j.inputdata.guids = guids[i*self.numfiles:(i+1)*self.numfiles]
+                    j.inputdata.guids = guids[i*nrfiles:(i+1)*nrfiles]
                     j.inputdata.names = [ allcontent[guid] for guid in j.inputdata.guids ]
                     j.inputdata.number_of_files = len(j.inputdata.guids)
 
@@ -300,5 +362,5 @@ class DQ2JobSplitter(ISplitter):
 config = getConfig('Athena')
 config.addOption('MaxJobsDQ2JobSplitter', 1000, 'Maximum number of allowed subjobs of DQ2JobSplitter')
 config.addOption('MaxFileSizeNGDQ2JobSplitter', 5000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the NG backend (im MB)')
-config.addOption('MaxFileSizePandaDQ2JobSplitter', 5000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (im MB)')
-config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_MCDISK', 'NDGF-T1_PRODDISK', 'NDGF-T1_USERDISK' ], 'Allowed space tokens/sites for DQ2JobSplitter on NG backend' )
+config.addOption('MaxFileSizePandaDQ2JobSplitter', 10000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (im MB)')
+config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_MCDISK', 'NDGF-T1_PRODDISK', 'NDGF-T1_SCRATCHDISK' ], 'Allowed space tokens/sites for DQ2JobSplitter on NG backend' )

@@ -2,7 +2,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-stage-in-out-dq2.py,v 1.40 2009-05-21 18:35:47 elmsheus Exp $
+# $Id: ganga-stage-in-out-dq2.py,v 1.50 2009-07-17 08:36:59 elmsheus Exp $
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
@@ -267,7 +267,11 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                            and not 'ccsrm.in2p3.fr' in defaultSE:
 
                         print 'Using lcg-gt for turl retrieval ...'
-                        cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
+                        # check which version of lcg-utils we're on
+                        if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                            cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + configLOCALPROTOCOL
+                        else:
+                            cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
                         print cmd
                         try:
                             signal.signal(signal.SIGALRM, ghandler)
@@ -336,7 +340,11 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                            and configLOCALPROTOCOL!='file' \
                            and not 'ccsrm.in2p3.fr' in defaultSE:
                         print 'Using lcg-gt for turl retrieval ...'
-                        cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
+                        # check which version of lcg-utils we're on
+                        if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                            cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + configLOCALPROTOCOL
+                        else:
+                            cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
                         try:
                             signal.signal(signal.SIGALRM, ghandler)
                             signal.alarm(240)
@@ -410,23 +418,23 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                 pfn = re.sub('srm://','gfal:gsidcap://',pfn)
                 pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
 
-        elif (configLOCALPROTOCOL == "rfio" and configSTORAGEROOT == '/castor' \
-                 and not sURLHost == 'castorsc.grid.sinica.edu.tw') \
+        elif (configLOCALPROTOCOL == "rfio" and configSTORAGEROOT == '/castor') \
                  or localsitesrm.find('gla.scotgrid.ac.uk')>-1:
             # remove protocol and host
             pfn = re.sub('^[^:]+://[^/]+','',surl)
             # remove redundant /
             pfn = re.sub('^//','/',pfn)
-            if 'srm.grid.sinica.edu.tw' in defaultSE:
-                pfn = "rfio://castor.grid.sinica.edu.tw/?path=" + pfn
-            else:
-                pfn = "rfio:" + pfn
-        elif ( configLOCALPROTOCOL == "rfio" and \
-               ( configSTORAGEROOT == '/dpm' or sURLHost == 'castorsc.grid.sinica.edu.tw')) \
-               or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE):
+            pfn = "rfio:" + pfn
+        elif ( configLOCALPROTOCOL == "rfio" and ( configSTORAGEROOT == '/dpm' )) \
+                 or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE) \
+                 or ( configLOCALPROTOCOL == "file" and 'se03.esc.qmul.ac.uk' in defaultSE):
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
-            cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
+            # check which version of lcg-utils we're on
+            if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + configLOCALPROTOCOL
+            else:
+                cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
             print cmd
             try:
                 signal.signal(signal.SIGALRM, ghandler)
@@ -448,20 +456,14 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
 
             if turl and turl[0]:
                 pfn = turl[0]
-            elif 'storm-fe.cr.cnaf.infn.it' in defaultSE:
-                pfn = re.sub('srm://storm-fe.cr.cnaf.infn.it/','file:///storage/gpfs_atlas1/',surl)
             else:
-                # If CNAF TURL fails
-                if 'storm-fe.cr.cnaf.infn.it' in defaultSE:
-                    pfn = re.sub('srm://storm-fe.cr.cnaf.infn.it/','file:///storage/gpfs_atlas1/',surl)
-                else:    
-                    # remove protocol and host
-                    pfn = re.sub('^[^:]+://[^/]+','',surl)
-                    # remove redundant /
-                    pfn = re.sub('^//','/',pfn)
-                    # prepend protocol
-                    pfn = configLOCALPROTOCOL + ":" + pfn
-        # file protocol used on lustre at IFIC and LIP-LISBON (no lcg-gt)
+                # remove protocol and host
+                pfn = re.sub('^[^:]+://[^/]+','',surl)
+                # remove redundant /
+                pfn = re.sub('^//','/',pfn)
+                # prepend protocol
+                pfn = configLOCALPROTOCOL + ":" + pfn
+        # file protocol used on Storm/lustre (no lcg-gt)
         elif configLOCALPROTOCOL == "file":
             # remove protocol and host
             pfn = re.sub('^[^:]+://[^/]+','',surl)
@@ -562,16 +564,9 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
     # open jobO
     joName = 'input.py'
     outFile = open(joName,'w')
-    if tag:
-        if type == 'TAG_REC':
-            if version >= 13:
-                outFile.write('PoolTAGInput = [')
-            else:
-                outFile.write('CollInput = [')
-        else:
-            outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
-            outFile.write('%sEventSelector.InputCollections = ['%versionString)
-    else:
+
+    if os.environ['RECEXTYPE'] == '':
+
         try:
             if os.environ.has_key('ATHENA_MAX_EVENTS'):
                 evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
@@ -588,6 +583,33 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
             outFile.write('svcMgr.MuonCalibStreamFileInputSvc.InputFiles = [')
         else:
             outFile.write('%sEventSelector.InputCollections = ['%versionString)
+
+            if tag:
+##                 if type == 'TAG_REC':
+##                     if version >= 13:
+##                         outFile.write('PoolTAGInput = [')
+##                     else:
+##                         outFile.write('CollInput = [')
+                outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
+            #outFile.write('%sEventSelector.InputCollections = ['%versionString)
+
+    else:
+        # Write input for RecExCommon jobs
+        outFile.write('from AthenaCommon.AthenaCommonFlags import athenaCommonFlags\n')
+        outFile.write('athenaCommonFlags.Pool%sInput.set_Value_and_Lock([' %
+                      os.environ['RECEXTYPE'])
+        try:
+            if os.environ.has_key('ATHENA_MAX_EVENTS'):
+                evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
+            else:
+                evtmax = -1
+        except:
+            evtmax = -1
+
+        if tag:
+            outFileEvtMax = open('evtmax.py','w').write('%sEventSelector.CollectionType="ExplicitROOT"\ntheApp.EvtMax = %d\n' % (versionString, evtmax) )
+        else:
+            outFileEvtMax = open('evtmax.py','w').write('theApp.EvtMax = %d\n' %evtmax)
             
     # loop over all files
     flatFile = 'input.txt'
@@ -595,17 +617,21 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
     
     for lfn in lfns:
         filename = files[lfn]['pfn']
-        if tag:
-            if atlas_release_major <= 12:
-                filename = re.sub('\.root\.\d+$','',filename)
-                filename = re.sub('\.root$','',filename)
-            else:
-                filename = re.sub('root\.\d+$','root',filename)
+##         if tag:
+##             if atlas_release_major <= 12:
+##                 filename = re.sub('\.root\.\d+$','',filename)
+##                 filename = re.sub('\.root$','',filename)
+##             else:
+##                 filename = re.sub('root\.\d+$','root',filename)
         # write PFN
         outFile.write('"%s",' % filename)
         outFlatFile.write('%s\n' %filename)
         
-    outFile.write(']\n')
+    if os.environ['RECEXTYPE'] == '':
+        outFile.write(']\n')
+    else:
+        outFile.write('])\n')
+
     # close
     outFile.close()
     outFlatFile.close()
@@ -770,15 +796,22 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
     else:
         cmd = cmd + " -d %s -l %s file://%s" %(dest, gridlfn, filename)
     rc, out = commands.getstatusoutput(cmd)
+    
     if rc == 0:
+        match = re.search('([\w]+-[\w]+-[\w]+-[\w]+-[\w]+)', out)
+        if match:
+            guid = match.group(1)
+        else:
+            guid = out
         # Open output_guids to transfer guids back to GANGA
         f = open('output_guids','a')
-        print >>f, '%s,%s' %(out,siteID)
+        print >>f, '%s,%s' %(guid,siteID)
         f.close()
         if globalVerbose:
             print cmd
             print out
-        guid = re.sub('^guid:','',out)
+            print guid
+        guid = re.sub('^guid:','',guid)
     else:
         print 'ERROR during execution of %s' %cmd
         print rc, out
@@ -1018,7 +1051,10 @@ if __name__ == '__main__':
 
         # Pre-Identification by domainname
         dq2localids = [ ]
-        celist = TiersOfATLAS.listCEsInCloudByDomain('*'+domainname) 
+        try:
+            celist = TiersOfATLAS.listCEsInCloudByDomain('*'+domainname)
+        except:
+            celist = []
         for sitename in TiersOfATLAS.getAllSources():
             # First search for domainname
             dq2domain = TiersOfATLAS.getSiteProperty(sitename,'domain')
@@ -1111,7 +1147,7 @@ if __name__ == '__main__':
         # TODO: avoiding  getAggName() is just a workaround; should be tuned
         if datasettype not in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD']:
             if not localsiteid.startswith('NIKHEF'):
-                localsiteid = getAggName(localsiteid)
+                #localsiteid = getAggName(localsiteid)
                 if not detsetype:
                     print 'localsiteid after getAggName(): %s' % localsiteid
 
@@ -1212,7 +1248,11 @@ if __name__ == '__main__':
             out2 = out.split('%')
             if len(out2)>1:
                 prot = out2[1].split('&')
-                if 'rfio' in prot:
+                if 'file' in prot:
+                    configLOCALPROTOCOL = 'file'
+                    configSTORAGEROOT = '/storage'
+                    configLOCALPREFIX = 'file:'
+                elif 'rfio' in prot:
                     configLOCALPROTOCOL = 'rfio'
                     configLOCALPREFIX = 'rfio:'
                     if localsitesrm.find('/dpm/')>=0:
@@ -1223,6 +1263,10 @@ if __name__ == '__main__':
                     configLOCALPROTOCOL = 'dcap'
                     configSTORAGEROOT = '/pnfs'
                     configLOCALPREFIX = 'dcap:'
+                elif 'gsidcap' in prot:
+                    configLOCALPROTOCOL = 'gsidcap'
+                    configSTORAGEROOT = '/pnfs'
+                    configLOCALPREFIX = 'gsidcap:'
                 else:
                     configLOCALPROTOCOL = ''
                     configSTORAGEROOT = '/'
@@ -1232,26 +1276,15 @@ if __name__ == '__main__':
                 configSTORAGEROOT = '/'
                 configLOCALPREFIX = ''
             # Hack for SFU, SNIP, UAM
-            if localsiteid in [ 'SFU', 'SINP', 'UAM' ] or localsiteid.startswith('SFU') or localsiteid.startswith('TRIUMF') or localsiteid.startswith('ALBERTA'):  
+            if localsiteid in [ 'SFU', 'SINP' ] or localsiteid.startswith('SFU') or localsiteid.startswith('TRIUMF') or localsiteid.startswith('ALBERTA'):  
                 configLOCALPROTOCOL = 'dcap'
                 configSTORAGEROOT = '/pnfs'
                 configLOCALPREFIX = 'dcap:'
-            if localsiteid in [ 'MANC', 'MANC-2' ] or localsiteid.startswith('MANC') or localsiteid.startswith('SARA'):
-                configLOCALPROTOCOL = 'gsidcap'
-                configSTORAGEROOT = '/pnfs'
-                configLOCALPREFIX = 'dcap:'
-            # RAL uses castor
-            if localsiteid in [ 'RAL', 'RALDISK' ] or localsiteid.startswith('RAL-LCG2'):
-                configLOCALPROTOCOL = 'rfio'
-                configSTORAGEROOT = '/castor'
-                configLOCALPREFIX = 'rfio:'
-            # CNAF uses StoRM, needs extra treatment
-            # IFIC, LIP-LISBON use lustre
-            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1') or localsiteid.startswith('IFIC') or localsiteid.startswith('LIP-LISBON'):
+            # Hack for CNAF, IFIC
+            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1') or localsiteid.startswith('IFIC'):
                 configLOCALPROTOCOL = 'file'
                 configSTORAGEROOT = '/storage'
                 configLOCALPREFIX = 'file:'
-
             # if no info is found
             if configLOCALPROTOCOL == '':
                 if localsitesrm.find('/pnfs/')>=0:
@@ -1270,7 +1303,7 @@ if __name__ == '__main__':
                     configLOCALPROTOCOL = ""
                     configLOCALPREFIX = ""
                     configSTORAGEROOT = ""
-                elif localsitesrm.find('/lustre/')>=0:
+                elif localsitesrm.find('/lustre/')>=0 or localsitesrm.find('/storm')>=0:
                     configLOCALPROTOCOL = 'file'
                     configSTORAGEROOT = '/storage'
                     configLOCALPREFIX = 'file:'
@@ -1388,14 +1421,22 @@ if __name__ == '__main__':
                 # execute dq2 command
                 rc, out = getstatusoutput(cmd)
                 print out
-                if (rc!=0):
+
+                bad_dq2_get = False
+                
+                for f in taglfns:
+                    if not os.path.exists(f):
+                        bad_dq2_get = True
+                        
+                if (rc!=0) or bad_dq2_get:
+                    print taglfns
+                    os.system("ls -ltr")
                     print "ERROR: error during dq2-get occured"
-                    rc, out = getstatusoutput(cmdretry)
+                    rc, out = getstatusoutput('export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP ; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd)
                     print out
                     if (rc!=0):
                         print "ERROR: error during retry of dq2-get occured"
                         sys.exit(EC_DQ2GET)
-
 
             tagddmFileMap = {}
             for i in xrange(0,len(taglfns)):
@@ -1412,7 +1453,12 @@ if __name__ == '__main__':
                     open(pfn)
                     fsize = os.stat(pfn).st_size
                 except IOError:
-                    print "ERROR %s not found" % name
+                    print "ERROR %s not found" % pfn
+                    rc, out = getstatusoutput('ls -ltr')
+                    print out
+                    rc, out = getstatusoutput('ls -ltr directory')
+                    print out
+                    
                     continue
                 if (fsize>0):
                     # append
@@ -1447,11 +1493,10 @@ if __name__ == '__main__':
 
                 # create symlinks as Coll utilties add .root on the end
                 filenew = tagfile + ".root" 
-                try:
-                    os.symlink(tagfile,filenew)
-                except OSError:
-                    pass
-
+                os.symlink(tagfile,filenew)
+                rc, out = getstatusoutput('ls -ltr')
+                print out
+                
                 # run CollListFileGUID
                 print "------------------------------------------_"
                 cmd = "CollListFileGUID -src " + tagfile + " RootCollection |\
@@ -1459,11 +1504,18 @@ if __name__ == '__main__':
                 print "Calling " + cmd
 
                 rc, out = getstatusoutput(cmd)
-
+                print out
+                
                 if (rc!=0):
-                    print "ERROR: error during CollListFileGUID"
+                    print "ERROR: error during CollListFileGUID. Restoring original environment variables and retrying...."                    
+                    cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd
+                    print "Calling " + cmd
+                    rc, out = getstatusoutput(cmd)
                     print out
-                    continue
+                    
+                    if (rc!=0):
+                        print "ERROR: error during CollListFileGUID. Giving up..."
+                        continue
 
                 aod_guids = out.split()
                 print repr(aod_guids)
@@ -1474,15 +1526,31 @@ if __name__ == '__main__':
                 for aod_guid in aod_guids:
 
                     vuid = dq.contentClient.queryDatasetsWithFileByGUID(aod_guid)
+                    name = ''
+                    dataset = ''
                     if len(vuid) == 0:
                         continue
-                    else: 
-                        dataset = dq.repositoryClient.resolveVUID(vuid[0])
-                        name = dataset.get('dsn')
+                    else:
+                        print repr(vuid)
+                        got_name = False
+                        vuidid = 0
+                        while not got_name:
+                            try:
+                                dataset = dq.repositoryClient.resolveVUID(vuid[vuidid])
+                                name = dataset.get('dsn')
+                                print dataset, name
+                                got_name = True
+                            except:
+                                print "ERROR Finding dataset for vuid for " + vuid[vuidid]
 
-                    if name.find("AOD") == -1:
+                            vuidid += 1
+                            if vuidid == len(vuid):
+                                print "ERROR Could not find any matching datasets."
+                                break
+
+                    if not name or not dataset:
                         continue
-
+                    
                     # store useful stuff
                     files = dq.listFilesInDataset(name)
                     out_aod_files.append( files[0][aod_guid]['lfn'] )
@@ -1541,37 +1609,52 @@ if __name__ == '__main__':
                 print out
                 sys.exit(EC_UNSPEC)
 
-            # make job option file
             dir = "."
             filepat = "\.root"
             pat = re.compile(filepat)
             filelist = os.listdir(dir)
-            joName = 'input.py'
-            outFile = open(joName,'w')
-            if datasettype in [ 'TAG_REC', 'TNT_DOWNLOAD', 'TNT_LOCAL' ]:
-                if atlas_release_major >= 13:
-                    outFile.write('PoolTAGInput = [')
-                else:
-                    outFile.write('CollInput = [')
-            else:
-                if atlas_release_major >= 13:
-                    versionString='ServiceMgr.'
-                else:
-                    versionString = ''
-                outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
-                outFile.write('%sEventSelector.RefName = "StreamAOD"\n'%versionString)
-                outFile.write('%sEventSelector.InputCollections = ['%versionString)
-
+            files = {}
             for tagfile in filelist:
                 found = re.findall(pat, tagfile)
                 if found:
                     filename = re.sub('\.root\.\d+$','',tagfile)
                     if atlas_release_major <= 12:
                         filename = re.sub('\.root$','',tagfile)
-                    outFile.write('"%s",' % filename)
-            outFile.write(']\n')
-            # close
-            outFile.close()
+                    item = {'pfn':filename,'guid':''}
+                    files[tagfile] = item
+    
+            # make job option file
+            _makeJobO(files, tag=True, type=datasettype, version=atlas_release_major, dtype=datatype)
+##             dir = "."
+##             filepat = "\.root"
+##             pat = re.compile(filepat)
+##             filelist = os.listdir(dir)
+##             joName = 'input.py'
+##             outFile = open(joName,'w')
+##             if datasettype in [ 'TAG_REC', 'TNT_DOWNLOAD', 'TNT_LOCAL' ]:
+##                 if atlas_release_major >= 13:
+##                     outFile.write('PoolTAGInput = [')
+##                 else:
+##                     outFile.write('CollInput = [')
+##             else:
+##                 if atlas_release_major >= 13:
+##                     versionString='ServiceMgr.'
+##                 else:
+##                     versionString = ''
+##                 outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
+##                 outFile.write('%sEventSelector.RefName = "StreamAOD"\n'%versionString)
+##                 outFile.write('%sEventSelector.InputCollections = ['%versionString)
+
+##             for tagfile in filelist:
+##                 found = re.findall(pat, tagfile)
+##                 if found:
+##                     filename = re.sub('\.root\.\d+$','',tagfile)
+##                     if atlas_release_major <= 12:
+##                         filename = re.sub('\.root$','',tagfile)
+##                     outFile.write('"%s",' % filename)
+##             outFile.write(']\n')
+##             # close
+##             outFile.close()
 
         # Sort out datasets, create PFC and input.py #####################################
         # Get datasetnames
@@ -1896,7 +1979,10 @@ if __name__ == '__main__':
         for i in xrange(0,len(output_files_new)):
             try:
                 open(output_files_new[i],'r')
-                output_files.append(output_files_new[i])
+                
+                if not output_files_new[i] in output_files:
+                    output_files.append(output_files_new[i])
+                    
                 # Fail over if Athena has produced more than one outputfile due to file size limit 
                 filepat = re.sub('\.(\w+)$','', output_files_new[i])
                 pat = re.compile(filepat)
@@ -1965,7 +2051,7 @@ if __name__ == '__main__':
         dq2alternatename = TiersOfATLAS.getSiteProperty(siteID,'alternateName')
         for sitename in TiersOfATLAS.getAllSources():
             if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
-                if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASSCRATCHDISK'):
+                if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and (TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASSCRATCHDISK') or TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:T2ATLASSCRATCHDISK')): 
                     siteID = sitename
                     break
 

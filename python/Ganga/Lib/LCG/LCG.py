@@ -2,7 +2,7 @@ import LCG
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.34 2009-03-27 10:14:33 hclee Exp $
+# $Id: LCG.py,v 1.39 2009-07-16 10:39:27 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -17,6 +17,7 @@ import time
 import errno
 import socket
 import math
+import tempfile
 from types import *
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
@@ -57,13 +58,6 @@ def get_lcg_output_downloader():
     global lcg_output_downloader
     return lcg_output_downloader
 
-#def stop_ganga_thread_pool():
-#    from Ganga.Lib.LCG.GangaThread.GangaThreadPool import GangaThreadPool
-#
-#    tpool = GangaThreadPool.getInstance()
-#    tpool.SHUTDOWN_TIMEOUT = 5
-#    tpool.shutdown()
-
 start_lcg_output_downloader()
 
 ## helper routines
@@ -87,6 +81,8 @@ def __fail_missing_jobs__(missing_glite_jids, jobdict):
                         sj.backend.status = 'Removed'
                         sj.backend.reason = 'job removed from WMS'
                         sj.updateStatus('failed')
+
+                j.updateStatus('failed')
     
 class LCG(IBackend):
     '''LCG backend - submit jobs to the EGEE/LCG Grid using gLite/EDG middleware.
@@ -131,7 +127,7 @@ class LCG(IBackend):
 
     _category = 'backends'
     _name =  'LCG'
-    _exportmethods = ['check_proxy', 'loginfo', 'inspect']
+    _exportmethods = ['check_proxy', 'loginfo', 'inspect', 'match']
 
     _GUIPrefs = [ { 'attribute' : 'CE', 'widget' : 'String' },
                   { 'attribute' : 'jobtype', 'widget' : 'String_Choice', 'choices' : ['Normal', 'MPICH'] },
@@ -438,7 +434,7 @@ class LCG(IBackend):
                 jdl_cnt  = self.__make_collection_jdl__(my_node_jdls, offset=my_node_offset)
                 jdl_path = self.inpw.writefile( FileBuffer(coll_jdl_name, jdl_cnt) )
 
-                master_jid = self.gridObj.submit(jdl_path,ce=None,isCollection=True,drySubmit=config['DrySubmit'])
+                master_jid = self.gridObj.submit(jdl_path,ce=None)
                 if not master_jid:
                     return False 
                 else:
@@ -534,6 +530,10 @@ class LCG(IBackend):
                 try:
                     logger.debug("preparing job %s" % my_sj.getFQID('.'))
                     jdlpath = my_sj.backend.preparejob(my_sc, master_input_sandbox)
+
+                    if (not jdlpath) or (not os.path.exists(jdlpath)):
+                        raise GangaException('job %s not properly prepared' % my_sj.getFQID('.'))
+
                     self.__appendResult__( my_sj.id, jdlpath )
                     return True
                 except Exception,x:
@@ -585,6 +585,15 @@ class LCG(IBackend):
 
         profiler.checkAndStart('job preparation elapsed time')
 
+        if config['MatchBeforeSubmit']:
+            mt = self.middleware.upper()
+            matches = grids[mt].list_match(node_jdls[-1], ce=self.CE)
+            if not matches:
+                logger.error('No matched resource')
+                return False
+
+        profiler.checkAndStart('job list-match elapsed time')
+
         # set all subjobs to submitting status
         for sj in rjobs:
             sj.updateStatus('submitting')
@@ -623,7 +632,6 @@ class LCG(IBackend):
 
         from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
-        mt  = self.middleware.upper()
 
         job = self.getJobObject()
 
@@ -632,6 +640,13 @@ class LCG(IBackend):
         for sj in rjobs:
             jdlpath = os.path.join(sj.inputdir,'__jdlfile__')
             node_jdls.append(jdlpath)
+
+        if config['MatchBeforeSubmit']:
+            mt = self.middleware.upper()
+            matches = grids[mt].list_match(node_jdls[-1], ce=self.CE)
+            if not matches:
+                logger.error('No matched resource')
+                return False
 
         max_node = config['GliteBulkJobSize']
 
@@ -761,7 +776,117 @@ class LCG(IBackend):
             #return info 
         else:
             logger.debug('Getting logging info of job %s failed.' % job.getFQID('.'))
-            return None 
+            return None
+
+    def match(self):
+        '''Match the job against available grid resources'''
+
+        ## - grabe the existing __jdlfile__ for failed/completed jobs
+        ## - simulate the job preparation procedure (for jobs never been submitted)
+        ## - subjobs from job splitter are not created (as its not essential for match-making)
+        ## - create a temporary JDL file for match making
+        ## - call job list match
+        ## - clean up the job's inputdir
+
+        job = self.getJobObject()
+
+        ## check job status
+        if job.status not in ['new','submitted','failed','completed']:
+            msg = 'only jobs in \'new\', \'failed\', \'submitted\' or \'completed\' state can do match'
+            logger.warning(msg)
+            return
+
+        from Ganga.Core import ApplicationConfigurationError, JobManagerError, IncompleteJobSubmissionError
+
+        doPrepareEmulation = False
+
+        matches = []
+
+        mt = self.middleware.upper()
+
+        ## catch the files that are already in inputdir
+        existing_files = os.listdir(job.inputdir)
+
+        app = job.application
+
+        # select the runtime handler
+        from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+        try:
+            rtHandler = allHandlers.get(app._name,'LCG')()
+        except KeyError:
+            msg = 'runtime handler not found for application=%s and backend=%s'%(app._name,'LCG')
+            logger.warning(msg)
+            return
+
+        try:
+            logger.info('matching job %d' % job.id)
+
+            jdlpath = ''
+
+            ## try to pick up the created jdlfile in a failed job
+            if job.status in ['submitted','failed','completed']:
+
+                logger.debug('picking up existing JDL')
+
+                ## looking for existing jdl file
+                if job.master:  ## this is a subjob, take the __jdlfile__ in the job's dir
+                    jdlpath = os.path.join(job.inputdir,'__jdlfile__')
+                else:
+                    if len(job.subjobs) > 0: ## there are subjobs
+                        jdlpath = os.path.join(job.subjobs[0].inputdir, '__jdlfile__')
+                    else:
+                        jdlpath = os.path.join(job.inputdir,'__jdlfile__')
+
+            if not os.path.exists( jdlpath ):
+                jdlpath = ''
+
+            ## simulate the job preparation procedure
+            if not jdlpath:
+
+                logger.debug('emulating the job preparation procedure to create JDL')
+
+                doPrepareEmulation = True
+
+                appmasterconfig = app.master_configure()[1] # FIXME: obsoleted "modified" flag
+
+                ## here we don't do job splitting - presuming the JDL for non-splitted job is the same as the splitted jobs
+                rjobs = [job]
+
+                # configure the application of each subjob
+                appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
+
+                # prepare the master job with the runtime handler
+                jobmasterconfig = rtHandler.master_prepare(app,appmasterconfig)
+
+                # prepare the subjobs with the runtime handler
+                jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
+
+                # prepare masterjob's inputsandbox
+                master_input_sandbox = self.master_prepare(jobmasterconfig)
+
+                # prepare JDL
+                jdlpath = self.preparejob(jobsubconfig[0], master_input_sandbox)
+
+            logger.debug('JDL used for match-making: %s' % jdlpath)
+
+            # If GLITE, tell it whether to enable perusal
+            if mt=="GLITE":
+                grids[mt].perusable=self.perusable
+
+            matches = grids[mt].list_match(jdlpath, ce=self.CE)
+
+        except Exception, x:
+            logger.warning('job match failed: %s', str(x) )
+
+        ## clean up the job's inputdir
+        if doPrepareEmulation:
+            logger.debug('clean up job inputdir')
+            files = os.listdir(job.inputdir)
+            for f in files:
+                if f not in existing_files:
+                    os.remove( os.path.join(job.inputdir, f) )
+
+        return matches
 
     def submit(self,subjobconfig,master_job_sandbox):
         '''Submit the job to the grid'''
@@ -776,8 +901,14 @@ class LCG(IBackend):
         # If GLITE, tell it whether to enable perusal
         if mt=="GLITE":
             grids[mt].perusable=self.perusable
-        
-        self.id = grids[mt].submit(jdlpath, ce=self.CE, drySubmit=config['DrySubmit'])
+
+        if config['MatchBeforeSubmit']:
+            matches = grids[mt].list_match(jdlpath, ce=self.CE)
+            if not matches:
+                logger.error('No matched resource')
+                return None
+
+        self.id = grids[mt].submit(jdlpath, ce=self.CE)
 
         self.parent_id = self.id
 
@@ -788,7 +919,16 @@ class LCG(IBackend):
         job = self.getJobObject()
       
         mt = self.middleware.upper()
-        self.id = grids[mt].submit(job.getInputWorkspace().getPath("__jdlfile__"), ce=self.CE, drySubmit=config['DrySubmit'])
+
+        jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
+
+        if config['MatchBeforeSubmit']:
+            matches = grids[mt].list_match(jdlpath, ce=self.CE)
+            if not matches:
+                logger.error('No matched resource')
+                return None
+
+        self.id = grids[mt].submit(jdlpath, ce=self.CE)
         self.parent_id = self.id
 
         if self.id:
@@ -1022,8 +1162,17 @@ elif os.getenv('TMPDIR'):
     scratchdir = os.getenv('TMPDIR')
 
 if scratchdir:
-    tmpdir = commands.getoutput('mktemp -d %s/gangajob_XXXXXXXX' % (scratchdir))
-    os.chdir(tmpdir)
+    (status, tmpdir) = commands.getstatusoutput('mktemp -d %s/gangajob_XXXXXXXX' % (scratchdir))
+    if status == 0:
+        os.chdir(tmpdir)
+    else:
+        ## if status != 0, tmpdir should contains error message so print it to stderr
+        printError('Error making ganga job scratch dir: %s' % tmpdir)
+        printInfo('Unable to create ganga job scratch dir in %s. Run directly in: %s' % ( scratchdir, os.getcwd() ) )
+
+        ## reset scratchdir and tmpdir to disable the usage of Ganga scratch dir 
+        scratchdir = ''
+        tmpdir = ''
 
 wdir = os.getcwd()
 
@@ -1448,7 +1597,11 @@ sys.exit(0)
 
 #       additional settings from the configuration
         ## !!note!! StorageIndex is not defined in EDG middleware
-        for name in [ 'ShallowRetryCount','RetryCount', 'Rank', 'ReplicaCatalog', 'StorageIndex', 'MyProxyServer' ]:
+        for name in [ 'ShallowRetryCount', 'RetryCount' ]:
+            if config[name] >= 0:
+                jdl[name] = config[name]
+
+        for name in [ 'Rank', 'ReplicaCatalog', 'StorageIndex', 'MyProxyServer', 'DataRequirements', 'DataAccessProtocol' ]:
             if config[name]:
                 jdl[name] = config[name]
 
@@ -1479,7 +1632,7 @@ sys.exit(0)
             pass
      
         else:
-            logger.warning('Unexpected job status "%s"',info['status'])
+            logger.warning('Unexpected job status "%s"',status)
 
     updateGangaJobStatus = staticmethod(updateGangaJobStatus)
 
@@ -1907,6 +2060,10 @@ config.addOption('BoundSandboxLimit',10 * 1024 * 1024,'sets the size limitation 
 
 config.addOption('Requirements','Ganga.Lib.LCG.LCGRequirements','sets the full qualified class name for other specific LCG job requirements')
 
+config.addOption('DataRequirements','','sets the DataRequirements of the job')
+
+config.addOption('DataAccessProtocol', ['gsiftp'], 'sets the DataAccessProtocol')
+
 config.addOption('SandboxCache','Ganga.Lib.LCG.LCGSandboxCache','sets the full qualified class name for handling the oversized input sandbox')
 
 config.addOption('GliteBulkJobSize', 50, 'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
@@ -1919,7 +2076,7 @@ config.addOption('SandboxTransferTimeout', 60, 'sets the transfer timeout of the
 
 config.addOption('JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
 
-config.addOption('DrySubmit', False, 'sets to True will only list the CEs matching the job\'s requirement instead of doing job submission')
+config.addOption('MatchBeforeSubmit', False, 'sets to True will do resource matching before submitting jobs, jobs without any matched resources will fail the submission')
 
 #config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
 
@@ -1942,6 +2099,22 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
+# Revision 1.38  2009/07/15 08:23:29  hclee
+# add resource match-making as an option before doing real job submission to WMS.
+#  - this option can be activated by setting config.LCG.MatchBeforeSubmit = True
+#
+# Revision 1.37  2009/06/24 19:12:48  hclee
+# add support for two JDL attributes: DataRequirements & DataAccessProtocol
+#
+# Revision 1.36  2009/06/09 15:41:44  hclee
+# bugfix: https://savannah.cern.ch/bugs/?50589
+#
+# Revision 1.35  2009/06/05 12:23:15  hclee
+# bugfix for https://savannah.cern.ch/bugs/?51298
+#
+# Revision 1.34  2009/03/27 10:14:33  hclee
+# fix race condition issue: https://savannah.cern.ch/bugs/?48435
+#
 # Revision 1.33  2009/03/12 12:26:16  hclee
 # merging bug fixes from branch Ganga-LCG-old-MTRunner to trunk
 #

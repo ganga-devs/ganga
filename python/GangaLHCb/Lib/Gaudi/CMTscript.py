@@ -68,6 +68,12 @@ def CMTscript(app,command=''):
       reqfile.write('use '+alg+' '+ver+' '+pack+'\n')
    reqfile.close()
 
+   ura = app.user_release_area
+   if not ura:
+      expanded = os.path.expandvars("$User_release_area")
+      if expanded == "$User_release_area": ura = ""
+      else: ura = expanded.split(os.pathsep)[0]
+      
    cmtoption = '-pack=cmttemp -version=v1 -path='+ tmppath
 
    # generate shell script
@@ -75,7 +81,7 @@ def CMTscript(app,command=''):
    script+='unalias -a\n'
    script+='unset CMTPROJECTPATH\n'
    script+='export CMTCONFIG='+str(app.platform)+'\n' 
-   script+='export User_release_area='+str(app.user_release_area)+'\n'
+   script+='export User_release_area='+str(ura)+'\n'
    script+='. setenvProject.sh '
    setupProjectOptions = ''
    if app.setupProjectOptions: setupProjectOptions = app.setupProjectOptions

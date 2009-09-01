@@ -11,6 +11,7 @@ class SpecialName(MultipassTest):
     def pass1(self):
         j = Job()
         j.name = SPECIAL_NAME
+        j.application.env = {'test':SPECIAL_NAME}
         j.submit()
 
     def pass2(self):

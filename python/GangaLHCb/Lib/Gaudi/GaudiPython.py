@@ -51,11 +51,14 @@ class GaudiPython(Francesc):
              'at submission time'
     schema['script'] = FileItem(sequence=1,strict_sequence=0,defvalue=[],
                                 doc=docstr)
+    docstr = "List of arguments for the script"
+    schema['args'] =  SimpleItem(defvalue=[],typelist=['str'],
+                                 sequence=1,doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
     schema['project'] = SimpleItem(defvalue=None,
                                    typelist=['str','type(None)'],
                                    doc=docstr)
-    _schema = Schema(Version(1, 1), schema)                                    
+    _schema = Schema(Version(1, 2), schema)                                    
 
     def _auto__init__(self):
         if (not self.project): self.project = 'DaVinci'
@@ -71,9 +74,11 @@ class GaudiPython(Francesc):
         self._configure()
         name = join('.',self.script[0].subdir,split(self.script[0].name)[-1])
         script =  "from Gaudi.Configuration import *\n"
+        if self.args:
+            script += 'import sys\nsys.argv += %s\n' % str(self.args)
         script += "importOptions('data.opts')\n"
         script += "execfile(\'%s\')\n" % name
-        self.extra.input_buffers['gaudiPythonwrapper.py'] = script
+        self.extra.input_buffers['gaudipython-wrapper.py'] = script
         outsb = collect_lhcb_filelist(self.getJobObject().outputsandbox)
         self.extra.outputsandbox = unique(outsb)
         return (None,self.extra)
@@ -139,12 +144,11 @@ class Bender(GaudiPython):
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.Gaudi.GaudiRunTimeHandler import GaudiRunTimeHandler
-from GangaLHCb.Lib.Dirac.GaudiDiracRunTimeHandler \
-     import GaudiDiracRunTimeHandler
+from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
 
 for app in ['GaudiPython','Bender']:
     for backend in ['LSF','Interactive','PBS','SGE','Local','Condor']:
         allHandlers.add(app, backend, GaudiRunTimeHandler)
-    allHandlers.add(app, 'Dirac', GaudiDiracRunTimeHandler)
+    allHandlers.add(app, 'Dirac', GaudiDiracRTHandler)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
