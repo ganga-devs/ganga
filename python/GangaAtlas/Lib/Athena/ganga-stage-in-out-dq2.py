@@ -1553,10 +1553,13 @@ if __name__ == '__main__':
                     
                     # store useful stuff
                     files = dq.listFilesInDataset(name)
-                    out_aod_files.append( files[0][aod_guid]['lfn'] )
-                    out_aod_guids.append( aod_guid )
-                    if not name in out_aod_datasets:
-                        out_aod_datasets.append(name)
+                    if files[0].has_key(aod_guid):
+                        out_aod_files.append( files[0][aod_guid]['lfn'] )
+                        out_aod_guids.append( aod_guid )
+                        if not name in out_aod_datasets:
+                            out_aod_datasets.append(name)
+                    else:
+                        print "ERROR: Could not match input aod_guid '%s' with any files from dataset '%s'." % (aod_guid, name)
 
             print "---------------------------------------------"
             print "Setting DATASETNAME to " + ':'.join( out_aod_datasets )
