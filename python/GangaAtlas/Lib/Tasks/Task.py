@@ -1,6 +1,5 @@
 from common import *
-from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
-from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import JobRegistryInterface
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceInterface
 
 ########################################################################
 
@@ -169,7 +168,7 @@ class Task(GangaObject):
 
     def getJobs(self, only_master_jobs=True):
         """ Get the job slice of all jobs that process this task """
-        jobslice = JobRegistryInstanceInterface("tasks(%i).getJobs(only_master_jobs=%s)"%(self.id, only_master_jobs))
+        jobslice = JobRegistrySlice("tasks(%i).getJobs(only_master_jobs=%s)"%(self.id, only_master_jobs))
         for j in GPI.jobs:
             try:
                 stid = j.application.tasks_id.split(":")
@@ -182,7 +181,7 @@ class Task(GangaObject):
             except Exception, x:
                 print x
                 pass
-        return JobRegistryInterface(jobslice)
+        return JobRegistrySliceInterface(jobslice)
 
 ## Internal methods
     def updateStatus(self):
