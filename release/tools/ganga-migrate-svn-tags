@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+#-*- python -*-
+
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: ganga-migrate-svn-tags,v 1.2 2009/08/07 14:32:08 gangage Exp $
+################################################################################
+
+
+import os, sys
+
+dryrun = False
+
+#svnurl='svn+ssh://svn.cern.ch/svn/cvs2svn/svnconverted/ganga'
+svnurl='svn+ssh://svn.cern.ch/reps/ganga'
+
+def shellcmd(cmd,ignore_errors=False):
+    print 'doing:',cmd
+    if not dryrun:
+        if os.system(cmd):
+            if not ignore_errors:
+                print 'error doing: ',cmd
+                sys.exit(1)
+
+def export_tags(tagfile):
+
+    print 'exporting tags from file',tagfile
+
+    # checkout top level ganga module (all direct files are taken from trunk and are not versioned by tags)
+    #cmd = 'svn co %(svnurl)s/trunk/ganga ganga'%dict(svnurl=svnurl) #SVN 1.5: --depth files 
+    #shellcmd(cmd)
+
+    tags = []
+
+    for x in file(tagfile).readlines():
+        body = x.split('#')[0].strip()
+        if body == '':
+          continue
+        tags.append(body.split())
+
+    
+    for t in tags:
+        d = dict(tagname=t[1],pkgname=t[0], svnurl=svnurl)
+
+        cmd = 'svn cp %(svnurl)s/old_tags/%(tagname)s/%(pkgname)s %(svnurl)s/tags/packages/%(tagname)s -m "migration of old tags"'%d
+        shellcmd(cmd)
+
+export_tags(sys.argv[1])

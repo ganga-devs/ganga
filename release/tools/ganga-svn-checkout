@@ -1,0 +1,157 @@
+#!/usr/bin/env python
+#-*- python -*-
+
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: ganga-svn-checkout,v 1.3 2009/08/07 14:32:08 gangage Exp $
+################################################################################
+
+import os,sys
+import getopt
+
+def usage():
+    print '''
+usage: ganga-svn-checkout [-d URL] [-f PACKAGES|-v VERSION] [--platf=slc4_ia32_gcc34] [--export|--checkout] topdir
+
+Checkout ganga release as defined in the PACKAGES file to the topdir. This is the release helper tool.
+
+Exactly one option -f PACKAGES or -v VERSION must be provided:
+
+ -f refers to the existing PACKAGES file
+ -v first checks out the ganga/release/PACKAGES-$VERSION from SVN trunk
+
+--platf option is currently not used
+'''
+
+dryrun = 0
+svncmd = 'co'
+#svnurl = 'svn+ssh://svn.cern.ch/svn/cvs2svn/svnconverted/ganga'
+svnurl = 'svn+ssh://svn.cern.ch/reps/ganga'
+platf = 'slc4_ia32_gcc34'
+
+def update_from_globals(d):
+    d.update(dict(svncmd=svncmd,svnurl=svnurl,platf=platf,version=version))
+    return d
+
+def shellcmd(cmd,ignore_errors=False):
+    print 'doing:',cmd
+    if not dryrun:
+        if os.system(cmd):
+            if not ignore_errors:
+                print 'error doing: ',cmd
+                sys.exit(1)
+
+def remove_all_files_but(dir,exceptions):
+    for x in os.listdir(dir):
+        if not x in exceptions:
+            fn = os.path.join(dir,x)
+            if not os.path.isdir(fn):
+                os.remove(fn)
+
+def makedirs(d):
+    try:
+        os.makedirs(d)
+    except OSError,x:
+        import errno
+        if x.errno != errno.EEXIST:
+            raise
+        
+def export_tags(tagfile):
+
+    print 'exporting tags from file',tagfile
+
+    tags = []
+
+    for x in file(tagfile).readlines():
+        body = x.split('#')[0].strip()
+        if body == '':
+          continue
+        tags.append(body.split())
+
+    
+    for t in tags:
+        d = dict(tagname=t[1],pkgname=t[0])
+        print d
+        update_from_globals(d)
+
+        cmd = 'cd %(pkgname)s && svn switch %(svnurl)s/tags/packages/%(tagname)s'%d
+        shellcmd(cmd)
+        
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "d:v:f:", ["export","checkout","svnurl=",'platf='])
+except getopt.error, x:
+    print "command line syntax error"
+    usage()
+    sys.exit(2)
+
+version = None
+pfile = None
+
+try:
+    topdir = args[0]
+
+except IndexError:
+    usage()
+    sys.exit(2)
+
+
+for o,a in opts:
+    if o == '--export':
+        svncmd = 'export'
+        print '--export option NOT MIGRATED TO SVN YET'
+        sys.exit(-1)
+
+    if o == '--checkout':
+        svncmd = 'co'
+
+    if o in('--svnurl','-d'):
+        svnurl = a
+        
+    if o == '--platf':
+        platf = a
+
+    if o == '-v':
+        version = a
+
+    if o == '-f':
+        pfile = os.path.abspath(a)
+        
+
+if pfile and version or (not pfile and not version):
+    print 'ERROR: specified EITHER version OR PACKAGES file, exactly one of these options!'
+    sys.exit(1)
+
+os.environ['PATH'] += ':'+sys.path[0]
+
+topdir = os.path.realpath(topdir)
+os.chdir(topdir)
+
+if version in ['HEAD','trunk']:
+    print '...checking out the trunk (HEAD)...'
+    cmd = 'svn %(svncmd)s %(svnurl)s/trunk/ganga' % format
+    shellcmd(cmd)
+    sys.exit(0)
+
+# --export option disabled for now
+
+d = update_from_globals({})
+
+#get all
+shellcmd('svn checkout %(svnurl)s/trunk/ganga ganga'%d)
+
+if version is None:
+    tagfiles = [pfile]
+else:
+    tagfiles = ["ganga/release/config/PACKAGES-%(version)s" % d]
+    extrafiles = ["ganga/release/ReleaseNotes-%(version)s" % d]
+    
+    #clean up
+    remove_all_files_but('ganga/release',['ReleaseNotes-%(version)s'%d,'config'])
+    remove_all_files_but('ganga/release/config',['PACKAGES-%(version)s'%d])
+        
+
+for f in tagfiles:
+    export_tags(f)
+

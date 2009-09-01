@@ -1,0 +1,128 @@
+**************************************************************************************************************
+5.3.2 (2009/7/28)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+added stomputil external package (for MSG monitoring)
+
+changes in Localhost and Batch to emulate the _python modules (as in backend without shared
+filesystem with Ganga client): monitoring modules are added to _python on the WN when the job is
+submitted
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/MSGMS
+--------------------------------------------------------------------------------------------------------------
+First release of MSGMS monitoring plugin for Ganga.
+
+Uses stomputil external package for communicating with the MSG server.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Feature request  #53155: group09 output datasets
+  Available in Athena/DQ2OutputDataset/LCG
+  DQ2OutputDataset.isGroupDS = True
+  DQ2OutputDataset.groupname = 'bla'
+  DQ2OutputDataset.datasetname = 'mydatasetname'
+  results in 'group09.bla.mydatasetname'
+* Several bugfixes in #53251:
+  affected: Athena/Local/Batch/DQ2OutputDataset
+  - $GANGA_USESHORTFILENAME is set to '1' now
+  - $RECEXTYPE is correctly set
+  - A small X509_USER_PROXY update
+  - Add get_lcg_util and correct environment in run-athena-local.sh
+* Fix for bug in retry of dataset consistency check (#52066)
+* DQ2JobSplitter now preserves numfiles selection (#51299)
+* Restore orginal settings of numfiles and  numsubjobs for every
+  subdataset (#47680)
+* Re-enabled the usage of dcap and gsidcap protocols for FILE_STAGER.
+  Now the FILE_STAGER mode behaves as the following:
+  1. by default, the job on WN checks an available local protocol:
+     rfio/gsidcap/dcap and use it to download files from local storage
+     to WN ... If it fails 3 times to download files via local protocol,
+     FILE_STAGER will automatically roll back to try with lcg-cp for
+     another 3 attempts.
+  2. user can enforce the usage of lcg-cp by adding
+     Athena.atlas_environment += ['FILE_STAGER_IOMODE=remote']
+* Improved gridProxy access in AthenaLCG/LocalRTHandler.py
+* Improved cloud <-> site info retrieval with the addition of
+  'cloud_from_sites' method (Bug 41959)
+* Allowed the safe use of cloud=='ALL'. Clouds that have the datasets
+  are selected and then the cloud the user is based in (from the grid proxy)
+  or the first in the list is taken
+
+AthenaMC:
+---------
+* Removing default value provided to config[DQ2][usertag] as this has
+  the potential to create wrongly named datasets. Adding extra try cases
+  in functions to catch these wrong defaults at job submission time
+* Critical patch in AthenaMCDatasets.getDQ2Location(), preventing jobs
+  to write into production space tokens if no specific output site is
+  specified via app.se_name or backend.requirements.sites
+* AthenaMCLCGRTHandler.py, bug fix: app.se_name is restored as output
+  data location handler. Also enabled support of requirements.excludedSites
+
+Tasks:
+------
+* Fix: input/outputsandbox not settable
+
+tests:
+-----
+* Fixed reporting logic and fixed several tests
+* Added LSF, DQ2_COPY test, fixed Local test
+* Decreased time-out to 3h
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaKISTI
+--------------------------------------------------------------------------------------------------------------
+This is the first release of the GangaKISTI where three plugin modules
+are included:
+ 
+* Gridway backend plugin allows to submit jobs to Globus resources using
+  the Ganga interface.
+* Intergrid backend plugin enables access to both gLite/LCG resources and 
+  Globus resources simultaneously. Resource selection is done automatically.
+* Autodock application plugin supports the AutoDock tool to be run on the Grid. 
+  http://autodock.scripps.edu/ 
+ 
+To use the Gridway and InterGrid backend plugins to have access to Globus
+resources, the Gridway package is required to be installed and configured
+on the machine where Ganga is installed.
+http://www.gridway.org/
+
+For further information, please contact Hangi Kim at hgkim!@kisti.re.kr
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Several minor bug fixes along w/ the following new features:
+
+* GaudiPython scripts now accept command line arguments.
+* ETC files are now automatically collected just like NTuple, Histogram,... files are.
+* For inputdata specified in an options file, the datatype_string in the LHCbDataset is extracted
+from the options file.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+# fix for https://savannah.cern.ch/bugs/?53470
+# change pandamon url
+# Added excluded_sites to PandaRequirements. Use like this to avoid matching to sites:
+   j.backend.requirements.excluded_sites = ['ANALY_A','ANALY_B']
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTutorial
+--------------------------------------------------------------------------------------------------------------
+fix: export TUTDIR to GPI
+
+**************************************************************************************************************
