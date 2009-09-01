@@ -10,6 +10,7 @@
 import os, sys, pwd, commands, re, shutil, urllib, time, string 
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.Core import BackendError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
@@ -89,6 +90,11 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             raise ApplicationConfigurationError(None,'outputdata.datasetname must start with %s.%s.ganga.'%(usertag,gridProxy.identity()))
 
         logger.info('Output dataset %s',job.outputdata.datasetname)
+        try:
+            Client.addDataset(job.outputdata.datasetname,False)
+        except exceptions.SystemExit:
+            raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
+
 
         # collect extOutFiles
         self.extOutFile = []

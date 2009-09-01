@@ -17,6 +17,7 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
 from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibFileSpecFromLibDS
+from Ganga.Core import BackendError
 
 # PandaTools
 from pandatools import Client
@@ -77,6 +78,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         else:
             self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,username,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
             self.library = '%s.lib.tgz' % self.libDataset
+            try:
+                Client.addDataset(self.libDataset,False)
+            except exceptions.SystemExit:
+                raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDataset,sys.exc_info()[0],sys.exc_info()[1]))
+
 
         # validate application
         if not app.atlas_release:
@@ -125,6 +131,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             logger.info('outputdata.datasetname must start with %s.%s.ganga. Prepending it for you.'%(usertag,username))
             job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
         logger.info('Output dataset %s',job.outputdata.datasetname)
+        try:
+            Client.addDataset(job.outputdata.datasetname,False)
+        except exceptions.SystemExit:
+            raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
 
         # handle different atlas_exetypes
         self.job_options = ''
