@@ -3,7 +3,7 @@ from common import *
 from sets import Set
 from TaskApplication import ExecutableTask, taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceInterface
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 
 class Transform(GangaObject):
    _schema = Schema(Version(1,0), {
@@ -166,7 +166,7 @@ class Transform(GangaObject):
          except Exception, x:
             print x
             pass
-      return JobRegistrySliceInterface(jobslice)
+      return JobRegistrySliceProxy(jobslice)
 
    def setFailed(self, partition):
       """ Tells Tasks that all Applications that have executed this partition have actually failed."""
