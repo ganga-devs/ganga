@@ -471,7 +471,7 @@ class GangaObject(Node):
 
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
-    def _setDirty(self):
+    def _setDirty(self, dummy=1):
         self._dirty = True
         parent = self._getParent()
         if parent is not None:
