@@ -167,8 +167,8 @@ class LHCbDataset(Dataset):
     def extend(self,files,unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''        
-        if type(files) is not type([]):
-            raise GangaException('Argument "files" must be a [].')
+        if not hasattr(files,"__getitem__"):
+            raise GangaException('Argument "files" must be a iterable.')
         names = self._getFileNames()
         for f in files:
             if type(f) is type(''):
