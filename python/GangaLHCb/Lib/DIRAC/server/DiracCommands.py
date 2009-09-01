@@ -131,6 +131,14 @@ class DiracCommands:
     def getReplicas(files): return DiracCommands.dirac.getReplicas(files)
     getReplicas = staticmethod(getReplicas)
 
+    def replicateFile(lfn,destSE,srcSE,locCache):
+        return DiracCommands.dirac.replicateFile(lfn,destSE,srcSE,locCache)
+    replicateFile = staticmethod(replicateFile)
+
+    def removeReplica(lfn,sE):
+        return DiracCommands.dirac.removeReplica(lfn,sE)
+    removeReplica = staticmethod(removeReplica)
+
     def bookkeepingGUI(file):
         return os.system('dirac-bookkeeping-gui %s' % file)
     bookkeepingGUI = staticmethod(bookkeepingGUI)
