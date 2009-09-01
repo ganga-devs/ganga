@@ -22,7 +22,7 @@ class LHCbDataFile(GangaObject):
 
     _category='datafiles'
     _name='LHCbDataFile'
-    _exportmethods = ['updateReplicaCache','isLFN','replicate','removeReplica']
+    _exportmethods = ['updateReplicaCache','isLFN','replicate']
 
     def __init__(self,name=''):        
         super(LHCbDataFile,self).__init__()
