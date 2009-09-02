@@ -34,6 +34,27 @@ def replicaCache(names):
         raise GangaException('Error updating replica cache.')
     return result
 
+def replicateFile(lfn,destSE,srcSE,locCache): 
+    from GangaLHCb.Lib.DIRAC.Dirac import Dirac
+    from GangaLHCb.Lib.DIRAC.DiracUtils import result_ok
+    cmd = 'result = DiracCommands.replicateFile("%s","%s","%s","%s")' % \
+          (lfn,destSE,srcSE,locCache)
+    result = Dirac.execAPI(cmd)
+    if not result_ok(result):
+        logger.warning('File replication error: %s' % str(result))
+        raise GangaException('Error replicating file.')
+    return result
+
+def removeReplica(lfn,sE): 
+    from GangaLHCb.Lib.DIRAC.Dirac import Dirac
+    from GangaLHCb.Lib.DIRAC.DiracUtils import result_ok
+    cmd = 'result = DiracCommands.removeReplica("%s","%s")' % (lfn,sE)
+    result = Dirac.execAPI(cmd)
+    if not result_ok(result):
+        logger.warning('File replication error: %s' % str(result))
+        raise GangaException('Error replicating file.')
+    return result
+   
 def collect_lhcb_filelist(lhcb_files):
   """Forms list of filenames if files is list or LHCbDataset"""
   filelist = []
@@ -71,5 +92,9 @@ def dataset_to_lfn_string(ds):
     for k in ds.files:
       if k.isLFN(): s += ' %s' % k.name
     return s
+
+def get_dirac_space_tokens():
+    return ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','NIKHEF-USER',
+            'PIC-USER','RAL-USER']
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
