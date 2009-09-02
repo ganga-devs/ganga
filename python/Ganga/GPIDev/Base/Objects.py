@@ -57,7 +57,6 @@ class Node(object):
         self.__dict__ = dict
 
     def __copy__(self, memo = None):
-        print "Node __copy__ called!"
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
         dict = self.__dict__.copy() #FIXME: this is different than for deepcopy... is this really correct?
