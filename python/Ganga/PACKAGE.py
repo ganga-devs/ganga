@@ -21,6 +21,7 @@ _defaultMinHexVersion = 0x20200f0
 
 # The default values will be guessed but you may override them here
 _defaultPlatform = None #'slc3_gcc323'
+_defaultExternalHome = None
 
 # The dictionary of external  packages is used by the release/download
 # system to handle the installation  tarballs. Make sure that all your
