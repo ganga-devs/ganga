@@ -36,12 +36,12 @@ def getOldJobs():
         if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
             try:
                 rep = factory(dir = path)
-                salvaged_jobs[name].extend(rep.checkoutJobs())
+                salvaged_jobs[name].extend(rep.checkoutJobs({}))
                 file(os.path.join(path,"converted.to.XML.6.0"),"w").close()
                 rep.releaseAllLocks()
             except Exception,x:
                 logger.error("Could not load old XML repository:" % x)
-                pass
+                raise
                 
     from Ganga.Core.JobRepository.ARDA import repositoryFactory
     for name in names:
@@ -49,12 +49,12 @@ def getOldJobs():
         if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
             try:
                 rep = repositoryFactory(subpath = name)
-                salvaged_jobs[name].extend(rep.checkoutJobs())
+                salvaged_jobs[name].extend(rep.checkoutJobs({}))
                 file(os.path.join(path,"converted.to.XML.6.0"),"w").close()
                 rep.releaseAllLocks()
             except Exception,x:
                 logger.error("Could not load old AMGA repository:" % x)
-                pass
+                raise
     return salvaged_jobs
 
 started_registries = []
@@ -70,6 +70,7 @@ def bootstrap():
         retval.append((registry.name, registry.getProxy(), registry.doc))
         if registry.name in oldJobs:
             for j in oldJobs[registry.name]:
+                j._index_cache = None
                 registry._add(j)
     import atexit
     atexit.register(shutdown)

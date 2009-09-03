@@ -2010,7 +2010,8 @@ def repositoryFactory(**kwargs):
     config = Ganga.Utility.Config.getConfig('Configuration')
     
     ## def rep type
-    repositoryType = config['repositorytype']
+    repositoryType = "LocalAMGA"
+    #repositoryType = config['repositorytype']
     assert repositoryType in ['LocalAMGA', 'RemoteAMGA', 'Test']
 
     # synchronize kwargs with the repository configuration
