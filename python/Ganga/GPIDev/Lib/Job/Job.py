@@ -601,15 +601,18 @@ class Job(GangaObject):
                     #import sys
                     #subjobs[0].printTree(sys.stdout)
 
-                    self.subjobs = subjobs
                     # EBKE changes
                     i = 0
-                    for j in self.subjobs:
+                    for j in subjobs:
                         j.id = i
                         j.info.uuid = Ganga.Utility.guid.uuid()
                         j.status='new'
-                        j._init_workspace()
                         i += 1
+
+                    self.subjobs = subjobs
+
+                    for j in self.subjobs:
+                        j._init_workspace()
 
                     rjobs = self.subjobs
                     self._commit()
