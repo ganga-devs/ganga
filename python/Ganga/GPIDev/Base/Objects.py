@@ -374,8 +374,6 @@ class GangaObject(Node):
     # additional properties that may be set in derived classes which were declared as _hidden:
     #   _enable_plugin = 1 -> allow registration of _hidden classes in the allPlugins dictionary
     #   _enable_config = 1 -> allow generation of [default_X] configuration section with schema properties
-
-
     
     # the constructor is directly used by the GPI proxy so the GangaObject must be fully initialized
     def __init__(self):
@@ -442,8 +440,8 @@ class GangaObject(Node):
     # define when the object is read-only (for example a job is read-only in the states other than new)
     def _readonly(self):
         r = self._getRoot()
-        if r is None or r is self:
-            return 0
+        # is object a root for itself? check needed otherwise infinite recursion
+        if r is None or r is self: return 0
         else:
             return r._readonly()
 

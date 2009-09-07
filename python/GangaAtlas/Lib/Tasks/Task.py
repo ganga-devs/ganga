@@ -73,10 +73,10 @@ class Task(GangaObject):
         if remove_jobs:
             for j in GPI.jobs:
                 try:
-                    tid = j.application.tasks_id
-                    if tid.startswith("00:%i:"%self.id) or tid.startswith("%i:"%self.id):
+                    stid = j.application.tasks_id.split(":")
+                    if int(stid[-2]) == self.id:
                         j.remove()
-                except:
+                except Exception, x:
                     pass
         self._getRegistry()._remove(self)
         logger.info("Task #%s deleted" % self.id)
@@ -85,7 +85,7 @@ class Task(GangaObject):
         c = super(Task,self).clone()
         for tf in c.transforms:
             tf.status = "new"
-            tf._partition_apps = {}
+            tf._partition_apps = {} # This is cleared separately since it is not in the schema
         self._getParent().register(c)
         c.check()
         return c
@@ -106,7 +106,10 @@ class Task(GangaObject):
         """Confirms that this task is fully configured and ready to be run."""
         if self.status == "new":
             self.check()
+
         if self.status != "completed":
+            if self.float == 0:
+                logger.warning("The 'float', the number of jobs this task may run, is still zero. Type 'tasks(%i).float = 5' to allow this task to submit 5 jobs at a time" % self.id)
             try:
                 for tf in self.transforms:
                     if tf.status != "completed":
@@ -117,11 +120,6 @@ class Task(GangaObject):
         else:
             logger.info("Task is already completed!")
 
-        if self.status != "completed":
-            if self.float == 0:
-                logger.warning("The 'float', the number of jobs this task may run, is still zero. Type 'tasks(%i).float = 5' to allow this task to submit 5 jobs at a time" % self.id)
-        else:
-            logger.info("Task is already completed!")
 
     def pause(self):
         """Pause the task - the background thread will not submit new jobs from this task"""
@@ -135,8 +133,7 @@ class Task(GangaObject):
     def setBackend(self,backend):
         """Sets the backend on all transforms, except if the backend is None"""
         for tf in self.transforms:
-            if tf.backend:
-                tf.backend = stripProxy(backend)
+            tf.backend = stripProxy(backend)
 
     def setParameter(self,**args):
         """Use: setParameter(processName="HWW") to set the processName in all applications to "HWW"
@@ -202,7 +199,7 @@ class Task(GangaObject):
         # Handle status changes here:
         if self.status != new_status:
             if new_status == "running/pause":
-                logger.warning("Some Transforms of Task %i '%s' have been paused. Check tasks.table() for details!" % (self.id, self.name))
+                logger.info("Some Transforms of Task %i '%s' have been paused. Check tasks.table() for details!" % (self.id, self.name))
             elif new_status == "completed":
                 logger.warning("Task %i '%s' has completed!" % (self.id, self.name))
             elif self.status == "completed":
