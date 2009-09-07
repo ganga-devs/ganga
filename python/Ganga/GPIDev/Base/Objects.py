@@ -99,7 +99,6 @@ class Node(object):
         return root
 
     # accept a visitor pattern 
-    # TODO: make lazy loading safe
     def accept(self,visitor):
         visitor.nodeBegin(self)
 

@@ -1,0 +1,85 @@
+**************************************************************************************************************
+5.3.4 (2009/9/4)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Condor
+--------------------------------------------------------------------------------------------------------------
+* Changed logic for updating job status to final value.
+   Condor log file is now searched to check whether job is marked as "aborted" or "terminated".
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* add workaround for compilation on SL5/64-bit machine
+  search for gcc34 and g++34 and use them instead of the
+  default ones
+* TAGs: Added protection for odd DQ2 inconsistency
+
+AthenaMC:
+---------
+* Adding dedicated run-time handler for Local and batch
+  backends, which are now no longer convered by
+  AthenaMCLCGRTHandler.py.
+* Modified job scripts and AthenaMCDatasets.py to allow for
+  potential DQ2 support for Local and batch backends
+  (this requires a full DQ2 installation available locally)
+* Fixing bug in setup-release.sh preventing kit setup on remote
+  grid nodes.
+* Creating output datasets from AthenaMCPandaRTHandler.py
+  before job submission to make sure that the user owns
+  his/her output datasets
+
+externals:
+----------
+Upgrade to panda-client 0.1.87
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor bug fixes, along w/ some updates to LHCbDataset:
+
+* User can replicate an LFN directly using the LHCbDataFile, e.g. f =
+LHCbDataFile('LFN:/.../file.dst'), then f.replicate('CERN-USER') or any "allowed" space token (do
+f.replicate() for a list of allowed ones).
+
+* An entire LHCbDataset can be replicated by simply calling dataset.replicate('CERN-USER')
+
+* LHCbDataset's are now "scriptable", i.e. this works: 
+  ds = LHCbDataset(files=['a','b','c'])
+  ds[0] # same as ds.files[0]
+  ds[-1] # same as ds.files[-1]
+  ds[0:2] # same as ds.files[0:2], except returns a new LHCbDataset as opposed to a []
+
+* An LHCbDataset can be "extended", e.g. 
+  ds1 = LHCbDataset(files=['a','b','c'])
+  ds2 = LHCbDataset(files=['d','e'])
+  ds1.extend(ds2) # it's now ['a','b','c','d','e']
+  ds1.extend(['f','g']) # and now ['a','b','c','d','e','f','g']
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+- A few bugfixes related to analysing cosmic data
+- Added try: protection to lfc import statements
+- slc5 binaries, 32 and 64 bit, are added to ARC and LFC external areas
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Create output dataset and libds at submit time.
+depend on panda-client 0.1.87
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTutorial
+--------------------------------------------------------------------------------------------------------------
+bugfix
+
+**************************************************************************************************************

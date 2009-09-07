@@ -24,8 +24,8 @@ from Ganga.Lib.LCG import LCGRequirements, LCGJobConfig
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
-from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
-from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
+#from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
+#from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
 from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import extractFileNumber, matchFile
 
 
@@ -295,6 +295,11 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             fout = FileSpec()
             dset=string.replace(app.outputpaths[outtype],"/",".")
             dset=dset[1:-1]
+            try:
+                Client.addDataset(dset,False)
+            except:
+                raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % dset)
+                
             fout.dataset=dset
             fout.lfn=pandaOutfiles[outtype]
             fout.type              = 'output'
