@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ExecutablePandaRTHandler.py,v 1.4 2009-04-22 07:43:44 dvanders Exp $
+# $Id: ExecutablePandaRTHandler.py,v 1.4 2009/04/22 07:43:44 dvanders Exp $
 ###############################################################################
 # Athena LCG Runtime Handler
 #
@@ -77,24 +77,27 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
 #       output dataset
         usertag = configDQ2['usertag']
+        self.username = gridProxy.identity(safe=True)
+        username = self.username
+
         if job.outputdata:
             if job.outputdata._name <> 'DQ2OutputDataset':
                 raise ApplicationConfigurationError(None,'PANDA application supports only DQ2OutputDataset')
             if not job.outputdata.datasetname:
-                job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
+                job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,username,job.id,time.strftime("%Y%m%d",time.localtime()))
         else:
             job.outputdata = DQ2OutputDataset()
-            job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,gridProxy.identity(),job.id,time.strftime("%Y%m%d",time.localtime()))
+            job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,username,job.id,time.strftime("%Y%m%d",time.localtime()))
 
-        if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,gridProxy.identity())):
-            raise ApplicationConfigurationError(None,'outputdata.datasetname must start with %s.%s.ganga.'%(usertag,gridProxy.identity()))
+        if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,username)):
+            logger.info('outputdata.datasetname must start with %s.%s.ganga. Prepending it for you.'%(usertag,username))
+            job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
 
         logger.info('Output dataset %s',job.outputdata.datasetname)
         try:
             Client.addDataset(job.outputdata.datasetname,False)
         except exceptions.SystemExit:
             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
-
 
         # collect extOutFiles
         self.extOutFile = []
@@ -151,6 +154,11 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
         if not job.outputdata.datasetname:
             raise ApplicationConfigurationError(None,'DQ2OutputDataset has no datasetname')
+
+        usertag = configDQ2['usertag'] 
+        username = self.username
+        if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,username)):
+            job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
 
         jspec = JobSpec()
         jspec.jobDefinitionID   = job._getRoot().id
