@@ -65,6 +65,8 @@ class Registry(object):
         self.dirty_hits = 0
         self.update_index_time = update_index_time 
         self._update_index_timer = 0
+        self._needs_metadata = False
+        self.metadata = None
 
 # Methods intended to be called from ''outside code''
     def __getitem__(self,id):
@@ -135,10 +137,16 @@ class Registry(object):
                 logger.error("Error while removing object #%i: %s" % (self.find(obj), x))
 
 # Methods that can be called by derived classes or Ganga-internal classes like Job
-    def _add(self,obj):
+    def _add(self,obj,force_index=None):
         """ Add an object to the registry and assigns an ID to it. 
+        use force_index to set the index (for example for metadata). This overwrites existing objects!
         Raises RepositoryError"""
-        ids = self.repository.add([obj])
+        if force_index is None:
+            ids = self.repository.add([obj])
+        else:
+            if not self.repository.lock([force_index]):
+                raise RegistryLockError("Could not lock '%s' id #%i for a new object!" % (self.name,force_index))
+            ids = self.repository.add([obj],[force_index])
         obj._registry_locked = True
         self.repository.flush(ids)
 
@@ -262,27 +270,25 @@ class Registry(object):
         t1 = time.time()
         print "Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0)
         self._started = True
-        self._metadata = self.repository._getMetadataObject()
-        if self._metadata is None:
-            self._metadata = self._createMetadataObject()
-            if not self._metadata is None:
-                self.repository._setMetadataObject(self._metadata)
-                self._metadata._registry_locked = True
-                self._metadata = self.repository._getMetadataObject()
-                self.repository.flush([0])
 
-
+        if self._needs_metadata:
+            if self.metadata is None:
+                self.metadata = Registry(self.name+".metadata", "Metadata repository for %s"%self.name, dirty_flush_counter=self.dirty_flush_counter, update_index_time = self.update_index_time)
+                self.metadata.type = self.type
+                self.metadata.location = self.location
+            self.metadata.startup()
+        
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
+        try:
+            if not self.metadata is None:
+                self.metadata.shutdown()
+        except Exception, x:
+            logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
         try:
             self._flush()
         except Exception, x:
             logger.error("Exception on flushing '%s' registry: %s", self.name, x)
-        
         self._started = False
         self.repository.shutdown()
-
-    def _createMetadataObject(self):
-        """ Helper function for registries that need a metadata object at all times"""
-        return None
 

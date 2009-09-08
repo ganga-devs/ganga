@@ -27,47 +27,33 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 class BoxMetadataObject(GangaObject):
     """Internal object to store names"""
-    _schema = Schema(Version(1,0), {"names": SimpleItem(defvalue={},copyable=1,doc='the map of ids to names of the items in the box.',typelist=["dict"])})
+    _schema = Schema(Version(1,0), {"name": SimpleItem(defvalue="",copyable=1,doc='the name of this object',typelist=["str"])})
     _name   = "BoxMetadataObject"
     _category = "internal"
     _enable_plugin = True
     _hidden = 1
-    
 
 from Ganga.Core.GangaRepository.Registry import Registry
 class BoxRegistry(Registry):
-    def _createMetadataObject(self):
-        return BoxMetadataObject()
-
     def _setName(self,obj,name):
+        nobj = self.metadata[self.find(obj)]
         obj._getWriteAccess()
-        self._metadata._getWriteAccess()
-        self._metadata.names[self.find(obj)] = name
-        self._dirty(self._metadata)
+        nobj._getWriteAccess()
+        nobj.name = name
+        self._dirty(nobj)
         self._dirty(obj)
 
     def _getName(self,obj):
-        obj._getReadAccess()
-        self._metadata._getReadAccess()
-        self._metadata.names.get(self.find(obj))
+        nobj = self.metadata[self.find(obj)]
+        nobj._getReadAccess()
+        return nobj.name
     
-    def _getIDByName(self,name):
-        for id,n in self._metadata.names.iteritems():
-            if n == name:
-                return id
-        return -1
-        
     def _remove(self, obj, auto_removed=0):
-        id = self.find(obj)
-        try:
-            del self._metadata.names[id]
-        except KeyError:
-            pass
+        nobj = self.metadata[self.find(obj)]
         super(BoxRegistry,self)._remove(obj,auto_removed)
+        self.metadata._remove(nobj,auto_removed)
 
     def getIndexCache(self,obj):
-        if obj == self._metadata:
-            return {}
         cached_values = ['status','id','name']
         c = {}
         for cv in cached_values:
@@ -91,8 +77,10 @@ class BoxRegistry(Registry):
     def proxy_add(self,obj,name):
         obj = _unwrap(obj)
         obj = obj.clone()
+        nobj = BoxMetadataObject()
+        nobj.name = name
         self._add(obj)
-        self._setName(obj,name)
+        self.metadata._add(nobj,self.find(obj))
 
     def proxy_rename(self,obj_id,name):
         self._setName(self._get_obj(obj_id), name)
@@ -109,16 +97,18 @@ class BoxRegistry(Registry):
         proxy.remove = self.proxy_remove
         return proxy
 
-
+    def startup(self):
+        self._needs_metadata = True
+        super(BoxRegistry,self).startup()
 
 from RegistrySlice import RegistrySlice 
 from Ganga.Core.GangaRepository import getRegistry
 class BoxRegistrySlice(RegistrySlice):
     def __init__(self,name):
         super(BoxRegistrySlice,self).__init__(name,display_prefix="box")
-        self._display_columns_functions["id"] = lambda obj : obj._getRegistryID()
+        self._display_columns_functions["id"] = lambda obj : obj._getRegistry().find(obj)
         self._display_columns_functions["type"] = lambda obj : obj._name
-        self._display_columns_functions["name"] = lambda obj : obj._getRegistry()._metadata.names.get(obj._getRegistryID(),"")
+        self._display_columns_functions["name"] = lambda obj : obj._getRegistry()._getName(obj)
         from Ganga.Utility.ColourText import Foreground, Background, Effects
         fg = Foreground()
         fx = Effects()

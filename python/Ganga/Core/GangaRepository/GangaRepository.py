@@ -73,7 +73,7 @@ class GangaRepository(object):
         """
         raise NotImplementedError
 
-    def add(self, objs):
+    def add(self, objs, force_ids = None):
         """add(objects) --> list of object IDs in this repository
         Add the given objects to the repository and return their IDs 
         After successfully determining the id call _internal_setitem__(id,obj)
@@ -138,10 +138,7 @@ class GangaRepository(object):
 
     def _internal_setitem__(self, id, obj):
         """ Internal function for repository classes to add items to the repository."""
-        if id == 0:
-            self._metadata = obj
-        else:
-            self._objects[id] = obj
+        self._objects[id] = obj
         obj.__dict__["_registry_id"] = id
         obj.__dict__["_registry_locked"] = False
         if obj._data and "id" in obj._data.keys():
@@ -150,20 +147,11 @@ class GangaRepository(object):
 
     def _internal_del__(self, id):
         """ Internal function for repository classes to delete items to the repository."""
-        if id == 0:
-            self._metadata._setRegistry(None)
-            self._metadata = None
-        else:
-            self._objects[id]._setRegistry(None)
-            del self._objects[id].__dict__["_registry_id"]
-            del self._objects[id].__dict__["_registry_locked"]
-            del self._objects[id]
+        self._objects[id]._setRegistry(None)
+        del self._objects[id].__dict__["_registry_id"]
+        del self._objects[id].__dict__["_registry_locked"]
+        del self._objects[id]
 
-    def _getMetadataObject(self):
-        raise NotImplementedError
-
-    def _setMetadataObject(self, obj):
-        raise NotImplementedError
 
 class GangaRepositoryTransient(object):
     """This class implements a transient Ganga Repository for testing purposes.
@@ -171,7 +159,6 @@ class GangaRepositoryTransient(object):
 ## Functions that should be overridden and implemented by derived classes.
     def startup(self):
         self._next_id = 0
-        self._metadata = None
 
     def update_index(self, id = None):
         pass
@@ -179,12 +166,18 @@ class GangaRepositoryTransient(object):
     def shutdown(self):
         pass
 
-    def add(self, objs):
+    def add(self, objs, force_ids = None):
+        assert force_ids is None or len(force_ids) == len(objs)
         ids = []
-        for obj in objs:
-            self._internal_setitem__(self._next_id, obj)
-            ids.append(self._next_id)
-            self._next_id += 1
+        for i in range(len(objs)):
+            obj = objs[i]
+            if force_ids:
+                id = force_ids[i]
+            else:
+                id = self._next_id
+            self._internal_setitem__(id, obj)
+            ids.append(id)
+            self._next_id = max(self._next_id + 1, id + 1)
         return ids
         
     def delete(self, ids):
@@ -202,9 +195,3 @@ class GangaRepositoryTransient(object):
 
     def unlock(self,ids):
         pass
-
-    def _getMetadataObject(self):
-        return self._metadata
-
-    def _setMetadataObject(self, obj):
-        self._metadata = obj

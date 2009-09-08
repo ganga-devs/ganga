@@ -41,12 +41,16 @@ class JobRegistry(Registry):
             c["display:"+dpv] = slice._get_display_value(obj, dpv)
         return c
 
-    def _createMetadataObject(self):
-        from Ganga.GPIDev.Lib.JobTree import JobTree
-        return JobTree()
-
+    def startup(self):
+        self._needs_metadata = True
+        super(JobRegistry,self).startup()
+        if len(self.metadata.ids()) == 0:
+            from Ganga.GPIDev.Lib.JobTree import JobTree
+            self.metadata._add(JobTree())
+        self.jobtree = self.metadata[self.metadata.ids()[-1]]
+        
     def getJobTree(self):
-        return self._metadata
+        return self.jobtree
     
 from RegistrySlice import RegistrySlice
 

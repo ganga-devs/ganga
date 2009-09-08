@@ -60,7 +60,6 @@ class GangaRepositoryLocal(GangaRepository):
 
     def startup(self):
         """ Starts an repository and reads in a directory structure."""
-        self._metadata = None
         self._load_timestamp = {}
         self._cache_load_timestamp = {}
         self.sub_split = "subjobs"
@@ -97,10 +96,7 @@ class GangaRepositoryLocal(GangaRepository):
                 try:
                     id = int(idx[:-6])
                     try:
-                        if id != 0 or self._metadata is None:
-                            obj = self._objects[id]
-                        else:
-                            obj = self._metadata
+                        obj = self._objects[id]
                         if not obj._data:
                             fobj = file(os.path.join(dir,idx))
                             if (self._cache_load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime):
@@ -120,7 +116,7 @@ class GangaRepositoryLocal(GangaRepository):
                 except Exception, x:
                     logger.warning("Failed to load index from %s! %s: %s" % (d,x.__class__.__name__,x)) # Probably should be DEBUG
             for id in ids:
-                if not id in self._objects or (id == 0 and self._metadata is None):
+                if not id in self._objects:
                     try:
                         self.load([id])
                         loaded_obj += 1
@@ -131,8 +127,13 @@ class GangaRepositoryLocal(GangaRepository):
         logger.warning("Updated cache: Loaded %i objects, %i cached objects and refreshed %i objects from cache" % (loaded_obj,loaded_cache,reloaded_cache))
         print "updated index done"
 
-    def add(self, objs):
-        ids = self.sessionlock.make_new_ids(len(objs))
+    def add(self, objs, force_ids = None):
+        if not force_ids is None: # assume the ids are already locked by Registry
+            if not len(objs) == len(force_ids):
+                raise RepositoryError("Internal Error: add with different number of objects and force_ids!")
+            ids = force_ids
+        else:
+            ids = self.sessionlock.make_new_ids(len(objs))
         for i in range(0,len(objs)):
             fn = self.get_fn(ids[i])
             try:
@@ -147,10 +148,7 @@ class GangaRepositoryLocal(GangaRepository):
         for id in ids:
             try:
                 fn = self.get_fn(id)
-                if id != 0:
-                    obj = self._objects[id]
-                else:
-                    obj = self._metadata
+                obj = self._objects[id]
                 if obj._name != "Unknown":
                     split_cache = None
                     if self.sub_split and self.sub_split in obj._data:
@@ -193,10 +191,7 @@ class GangaRepositoryLocal(GangaRepository):
                 else: 
                     raise RepositoryError(self,"IOError: " + str(x))
             try:
-                if id == 0:
-                    must_load = self._metadata is None or self._metadata._data is None
-                else:
-                    must_load = (not id in self._objects) or (self._objects[id]._data is None)
+                must_load = (not id in self._objects) or (self._objects[id]._data is None)
                 tmpobj = None
                 if must_load or (self._load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime):
                     tmpobj = self.from_file(fobj)[0]
@@ -217,9 +212,6 @@ class GangaRepositoryLocal(GangaRepository):
                     if id in self._objects:
                         self._objects[id]._data = tmpobj._data
                         self._objects[id]._index_cache = None
-                    elif id == 0 and not self._metadata is None:
-                        self._metadata._data = tmpobj._data
-                        self._metadata._index_cache = None
                     else:
                         self._internal_setitem__(id, tmpobj)
                     if self.sub_split:
@@ -229,10 +221,9 @@ class GangaRepositoryLocal(GangaRepository):
 
                     self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
             except Exception, x:
-                if not id == 0:
-                    logger.warning("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
-                    raise KeyError(id)
-                    #self._internal_setitem__(id, EmptyGangaObject())
+                logger.warning("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
+                raise KeyError(id)
+                #self._internal_setitem__(id, EmptyGangaObject())
 
     def delete(self, ids):
         for id in ids:
@@ -268,13 +259,3 @@ class GangaRepositoryLocal(GangaRepository):
         if len(released_ids) < len(ids):
             logger.error("The write locks of some objects could not be released!")
 
-    def _getMetadataObject(self):
-        return self._metadata
-
-    def _setMetadataObject(self, obj):
-        try:
-            os.makedirs(os.path.dirname(self.get_fn(0)))
-        except OSError, e:
-            if e.errno != errno.EEXIST: 
-                raise RepositoryError(self,"OSError: " + str(e))
-        self._internal_setitem__(0,obj)

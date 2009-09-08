@@ -50,10 +50,6 @@ class TaskRegistry(Registry):
             c["display:"+dpv] = slice._get_display_value(obj, dpv)
         return c
 
-    def _createMetadataObject(self):
-        return None
-
-
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 
 class TaskRegistrySlice(RegistrySlice):
