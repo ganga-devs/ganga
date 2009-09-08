@@ -13,21 +13,21 @@ access JEMs methods by j.info.monitor.<method>.
 
         Copyright (c) 2007-2009 University of Wuppertal, Department of physics
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-    software and associated documentation files (the "Software"), to deal in the Software 
-    without restriction, including without limitation the rights to use, copy, modify, merge, 
-    publish, distribute, sublicense, and/or sell copies of the Software, and to permit 
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this
+    software and associated documentation files (the "Software"), to deal in the Software
+    without restriction, including without limitation the rights to use, copy, modify, merge,
+    publish, distribute, sublicense, and/or sell copies of the Software, and to permit
     persons to whom the Software is furnished to do so, subject to the following conditions:
-    
-    The above copyright notice and this permission notice shall be included in all copies 
+
+    The above copyright notice and this permission notice shall be included in all copies
     or substantial portions of the Software.
-    
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-    PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-    OR OTHER DEALINGS IN THE SOFTWARE. 
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+    PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+    OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import sys
 
@@ -102,7 +102,7 @@ if JEMloader.INITIALIZED:
         from JEMlib.utils.ReverseFileReader import ropen
         from JEMlib.utils.DictPacker import multiple_replace
         from JEMlib.utils import Utils
-        from JEMlib.utils import uuid        
+        from JEMlib.utils import uuid
     except:
         logger.debug("Something went wrong when importing JEMs core modules:")
         logger.debug(str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
@@ -113,18 +113,18 @@ if JEMloader.INITIALIZED:
 #####################################################################################################################################################
 class JEMAdvancedOptions(GangaObject):
     """JEM - The Job Execution Monitor - advanced configuration.
-    
+
     This object represents advanced options for JEM. All of this options provide sensible
     default-values, but may be tweaked for optimization- or debugging purposes.
-    
+
     Refer to the help() of each option to learn more.
-    
+
     See also: http://www.grid.uni-wuppertal.de/grid/jem
-    
+
     JEM (c)2004-2009 Bergische Universitaet Wuppertal
-    
+
     """
-    _schema = Schema(Version(0,1), { 
+    _schema = Schema(Version(0,1), {
         'valves'                : SimpleItem(defvalue=jemconfig['JEM_DEFAULT_VALVES'], sequence=1, typelist=["str"],\
                                              doc='The communication valve(s) to use. If left empty, use JEMs \
                                                   configuration (and/or .JEMrc). The value of this option is \
@@ -145,25 +145,25 @@ class JEMAdvancedOptions(GangaObject):
 
 class JEMCTraceOptions(GangaObject):
     """JEM - The Job Execution Monitor - C/C++-Tracer configuration.
-    
+
     This object represents the configuration of the C/C++ module tracing subsystem of JEM.
-    
+
     The ctracer must be seperately enabled; set 'enabled' to True to do this. Also, to use
     the ctracer, the to-be-traced module(s) must be specified.
-    
+
     The to-be-traced module(s) must be defined in 'traceModules', whereas the application(s)
     that load the to-be-traced module(s) must be defined in 'traceApps'. If an executable
     should be traced, usually the contents of 'traceModules' and 'traceApps' is equal. The
     values of 'traceModules' and 'traceApps' usually differ if a shared library should be
     traced. If 'traceApps' is left empty, it is assumed to be equal to 'traceModules'.
-    
+
     For both 'traceModules' and 'traceApps', several entries can be made, seperated by
     whitespace, commas or colons. Note that either the relative path from the working
     directory on the grid worker node, or an absolute path must be specified for the trace-
     module(s) and -app(s).
 
     Examples:
-    
+
     traceModules               traceApps                  behaviour
     -------------------------------------------------------------------------------------------
     '/usr/bin/echo'            '/usr/bin/echo'            events in /usr/bin/echo are traced.
@@ -176,16 +176,16 @@ class JEMCTraceOptions(GangaObject):
                                                           traced for python scripts loading
                                                           and using them.
     -------------------------------------------------------------------------------------------
-    
+
     Note for ATLAS-related jobs (Athena users):
     If the job's application is an Athena-instance, the user algorithm's library has to be
     specified in 'traceModules', but 'traceApps' can be left blank (it is set automatically by
     JEM to the python interpreter on the worker node running athena.py).
-    
+
     Example setting for 'traceModules':
     './work/Control/AthenaExamples/AthExHelloWorld/i686-slc4-gcc34-opt/libAthExHelloWorld.so'
-    
-    
+
+
     The resolving of symbol values allows you to inspect the user algorithm's memory at each
     logged step, much like a remote debugger provides. Please be aware that this slows down
     the application's execution by a large amount. Also, the maximum nesting depth at which
@@ -193,13 +193,13 @@ class JEMCTraceOptions(GangaObject):
     performance. You might consider disabling the ctracer for normal job runs and resubmit
     failing jobs with increasing verbosity (maxStructDepth settings, resolveValues setting)
     until the issue is resolved.
-    
+
     See also: http://www.grid.uni-wuppertal.de/grid/jem
-    
+
     JEM (c)2004-2009 Bergische Universitaet Wuppertal
-    
+
     """
-    _schema = Schema(Version(0,1), { 
+    _schema = Schema(Version(0,1), {
         'enabled'               : SimpleItem(defvalue=False,\
                                              doc='Enables C/C++ module tracing'),
         'traceModules'          : SimpleItem(defvalue='',\
@@ -218,28 +218,28 @@ class JEMCTraceOptions(GangaObject):
 
 class JobExecutionMonitor(GangaObject):
     """JEM - The Job Execution Monitor - enables realtime user job monitoring.
-    
+
     This object is the interface to JEM monitoring. It is a part of the jobinfo-object of a job.
-    
+
     To activate monitoring, set 'enabled' to True. To receive monitoring data in (nearly) realtime,
     set 'realtime' to True. Note that both of this per-job-settings might be overridden globally
     in the .gangarc-file.
-    
+
     Advanced options are available via the config subobject 'advanced'. You can access these
     configuration options with "j.info.monitor.advanced", if "j" is your job-object. In most
     cases, the default settings of these options are suffient; please read the documentation of
     JEM before changing these options. Type help(JEMAdvancedOptions) for a detailled description.
-    
+
     Since version alpha 0.2.3, JEM includes a C/C++ module tracing subsystem - the ctracer. it is
     configured in an own config subobject, 'ctracer'. If "j" is your job-object, the ctracer-config
     can be accessed with "j.info.monitor.ctracer". Type 'help(JEMCTraceOptions)' for more informa-
     tion on setting up and using the ctracer.
-    
+
     Note that when using splitjobs, by default JEM is enabled only for every 100th subjob to
     prevent monitoring data flooding. You can change this behaviour in .gangarc.
-    
+
     Methods of interest for the everyday-usage of JEM are:
-    
+
     getStatus()                  prints status information about the monitored job
     getMetrics()                 prints current WN metrics (load, RAM usage, disk space, etc)
     plotMetrics()                plots the recorded WN metrics using gnuplot (must be installed)
@@ -249,8 +249,8 @@ class JobExecutionMonitor(GangaObject):
     showCommand()                prints verbose information about a command / call / return
     extractLogfiles()            extract JEMs logfiles (available after the job finished)
     waitForRealStart()           waits until the the user application on the WN has started
-                                 (this wait may be aborted by pressing <return>) 
-    
+                                 (this wait may be aborted by pressing <return>)
+
     You can get further help on each of those methods by typing e.g.
 
         'help(JobExecutionMonitor.getStatus)'.
@@ -258,13 +258,13 @@ class JobExecutionMonitor(GangaObject):
 
     NOTE: This is an ALPHA version of JEM. If you have any comments, suggestions or encounter a
           bug, please don't hesitate to give feedback! Visit our webpage for contact information.
-    
+
     See also: http://www.grid.uni-wuppertal.de/grid/jem
-    
+
     JEM (c)2004-2009 Bergische Universitaet Wuppertal
-    
+
     """
-    _schema = Schema(Version(0,1), { 
+    _schema = Schema(Version(0,1), {
         'enabled'                : SimpleItem(defvalue=True,\
                                               doc='Enables JEM monitoring for the job'),
         'realtime'               : SimpleItem(defvalue=False,\
@@ -277,6 +277,8 @@ class JobExecutionMonitor(GangaObject):
                                               typelist=['type(None)', 'type(str)'], doc='Real backend-jobID (or generated)'),
         'pid'                    : SimpleItem(hidden=True, defvalue=-1, protected=1, copyable=0,\
                                               doc='Process id of the job listener'),
+        'port'                   : SimpleItem(hidden=True, defvalue=0, protected=1, copyable=0,\
+                                              doc='Port number of the job listeners HTTPS server'),
         'jmdfile'                : SimpleItem(hidden=True, defvalue='', protected=1, copyable=0,\
                                               doc='Path to jmd logfile'),
         'userAppRunning'         : SimpleItem(hidden=True, defvalue=False, protected=1, copyable=0,\
@@ -288,14 +290,34 @@ class JobExecutionMonitor(GangaObject):
 
     _category = 'monitor'           # allow insertion into Job.JobInfo object
     _name = 'JobExecutionMonitor'   # GPI-public classname
-    
+
     _exportmethods = ['getStatus', 'getMetrics', 'listExceptions', 'listCommands', 'showException', 'showCommand',\
-                      'extractLogfiles', 'getListenerLog', 'watch', 'abortWatch', 'plotMetrics', 'waitForRealStart']
+                      'extractLogfiles', 'getListenerLog', 'watch', 'abortWatch', 'plotMetrics', 'waitForRealStart',\
+                      '_getListenerPid', '_getServerPid', '_getServerPort', '_getServerStatus', '_hasUserAppStarted']
 
 
     ####################################################################################################################
     ### public interface (methods exported via _exportmethods)
-    
+    def _getListenerPid(self):
+        return self.pid
+
+
+    def _getServerPid(self):
+        return self.__getServerPid()
+
+
+    def _getServerPort(self):
+        return self.port
+
+
+    def _getServerStatus(self):
+        return self.__checkStatus(True)
+
+
+    def _hasUserAppStarted(self):
+        return self.userAppRunning
+
+
     def getStatus(self):
         """
         This method prints basic information about the running job, like its job-id
@@ -304,7 +326,7 @@ class JobExecutionMonitor(GangaObject):
         if self.__checkStatus():
             s = PrettyStrings.makeHeader("current job status")
             job = self.getJobObject()
-        
+
             appstate = "In progress"
             l = self.__seekJMDinfo("JOBSTATE", 1, 1)
             if len(l) and l[0]:
@@ -320,7 +342,7 @@ class JobExecutionMonitor(GangaObject):
                 s += PrettyStrings.formatDatum("status (user application)", appstate)
                 s += PrettyStrings.formatDatum("job-id", str(job.backend.id)) # pylint: disable-msg=E1101
                 s += PrettyStrings.formatDatum("compute element", str(job.backend.actualCE)) # pylint: disable-msg=E1101
-                
+
                 if l.has_key("WN"):
                     s += PrettyStrings.formatDatum("worker node", l["WN"])
 
@@ -384,10 +406,10 @@ class JobExecutionMonitor(GangaObject):
         """
         This method lists exceptions happened during the job run. For details about
         an exception, see showException().
-        
+
         @param n: how many exceptions to list. default = 5
         @param start: the list begins at the start-th exception. default = 1
-        @param ascending: wether to start at the beginning of the list. default = False  
+        @param ascending: wether to start at the beginning of the list. default = False
         """
         if self.__checkStatus():
             if ascending:
@@ -406,7 +428,7 @@ class JobExecutionMonitor(GangaObject):
                     s += "unknown error"
 
                 s += " in " + PrettyStrings.formatLocation(data) + "\n"
-                
+
                 z += 1
             logger.info(s)
 
@@ -416,10 +438,10 @@ class JobExecutionMonitor(GangaObject):
         This method lists commands executed during the job run. For details about
         a command, see showCommand(). Commands can be commands executed in a script,
         function calls or function returns.
-        
+
         @param n: how many commands to list. default = 5
         @param start: the list begins at the start-th command. default = 1
-        @param ascending: wether to start at the beginning of the list. default = False  
+        @param ascending: wether to start at the beginning of the list. default = False
         """
         if self.__checkStatus():
             if ascending:
@@ -469,7 +491,7 @@ class JobExecutionMonitor(GangaObject):
         """
         This method prints detailled information about an exception that
         happened during the job run.
-        
+
         @param n: The n-th exception is shown. default = 1
         @param ascending: Wether n counts from the beginning of the list. default = False
         """
@@ -479,7 +501,7 @@ class JobExecutionMonitor(GangaObject):
                 data = l[0]
                 s = PrettyStrings.makeHeader("exception info")
                 s += PrettyStrings.formatDatum("time", PrettyStrings.formatTime(data))
-                
+
                 if data.has_key("Error"):
                     s += PrettyStrings.formatDatum("type", data["Error"])
                 else:
@@ -537,7 +559,7 @@ class JobExecutionMonitor(GangaObject):
         """
         This method prints detailled information about a command that
         happened during the job run.
-        
+
         @param n: The n-th command is shown. default = 1
         @param ascending: Wether n counts from the beginning of the list. default = False
         """
@@ -580,7 +602,7 @@ class JobExecutionMonitor(GangaObject):
                 if data["SubType"] == "CALL":
                     s = PrettyStrings.makeHeader("function call info")
                     s += ss
-                    
+
                     if data.has_key("M2"):
                         if data["M2"] == "?" and lang == "PYTHON":
                             s += PrettyStrings.formatDatum("caller", "<module>")
@@ -588,7 +610,7 @@ class JobExecutionMonitor(GangaObject):
                             s += PrettyStrings.formatDatum("caller", PrettyStrings.formatString(data["M2"], 128))
                     else:
                         s += PrettyStrings.formatDatum("caller", "<unknown>")
-                    
+
                     if data.has_key("M3"):
                         s += PrettyStrings.formatDatum("caller file", data["M3"].split(":")[0])
                         value = data["M3"].split(":")
@@ -618,13 +640,13 @@ class JobExecutionMonitor(GangaObject):
                         ss = data["M1"]
                         if ss[0:2] == "{{" and ss[-2:] == "}}":
                             ss = ss[1:-1]
-                   
+
                     s += PrettyStrings.formatVarList("call arguments:", ss)
 
                 elif data["SubType"] == "RETURN":
                     s = PrettyStrings.makeHeader("function return info")
                     s += ss
-                    
+
                     if lang == "PYTHON" and data.has_key("M1"):
                         s += PrettyStrings.formatDatum("return value", data["M1"])
 
@@ -645,7 +667,7 @@ class JobExecutionMonitor(GangaObject):
                 elif data["SubType"] == "SYNTAX":
                     s = PrettyStrings.makeHeader("script expression info")
                     s += ss
-                
+
                     if data.has_key("M1"):
                         s += PrettyStrings.formatDatum("expression", data["M1"])
 
@@ -798,7 +820,7 @@ class JobExecutionMonitor(GangaObject):
                 self.watcherThread = None
         except:
            pass
-            
+
 
     ####################################################################################################################
     ### methods not exported to GPI
@@ -832,7 +854,7 @@ class JobExecutionMonitor(GangaObject):
                     self.watcherThread.stop()
         except:
             pass
-        
+
 
     def getJobID(self):
         if not self.jobID:
@@ -840,8 +862,12 @@ class JobExecutionMonitor(GangaObject):
             if job.backend.__class__.__name__ == "Localhost":
                 self.jobID = uuid.getUniqueID()
                 logger.debug("Detected localhost-backend; created jobID \"" + self.jobID + "\"")
-            else:    
-                self.jobID = str(job.backend.id)
+            else:
+                if type(job.backend.id) == type([]):
+                    logger.debug("Multiple backend ids detected - use the 1st (?)")
+                    self.jobID = str(job.backend.id[0])
+                else: 
+                    self.jobID = str(job.backend.id)
         return self.jobID
 
 
@@ -854,13 +880,13 @@ class JobExecutionMonitor(GangaObject):
         return str(attribute)
 
 
-    def __checkStatus(self):
+    def __checkStatus(self, onlyReport = False):
         """
         Checks JEM's overall health.
-        Returns True if JEM is enabled and working correctly. Otherwise 
+        Returns True if JEM is enabled and working correctly. Otherwise
         returns False. Can utters a warning or error message, for example
         for the following reasons:
-        
+
         - JEM is disabled globally
         - JEM is disabled for this job
         - the JEM library couldn't be found or loaded
@@ -868,27 +894,41 @@ class JobExecutionMonitor(GangaObject):
           (note: this is normal for finished jobs!)
         """
         if not JEMloader.INITIALIZED:
+            if onlyReport:
+                return "disabled"
             logger.info("Monitoring is globally disabled. No monitoring data is available.")
             return False
         if not self.enabled: # pylint: disable-msg=E1101
+            if onlyReport:
+                return "disabled"
             logger.info("Monitoring is disabled for this job. No monitoring data is available.")
             return False
         if not self.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
+            if onlyReport:
+                return "disabled"
             logger.info("Realtime monitoring is disabled. Monitoring data will only be available in the output sandbox.")
             return False
         if self.pid == -1:
             if self.getJobObject().status == 'new': # pylint: disable-msg=E1101
+                if onlyReport:
+                    return "not yet started"
                 logger.info("Job has not been submitted yet. No monitoring data is available.")
             else:
+                if onlyReport:
+                    return "error"
                 logger.info("No monitoring process started (check configuration). No monitoring data is available.")
             return False
         if not os.path.exists(self.jmdfile):
+            if onlyReport:
+                return "waiting"
             logger.info("No monitoring data was received yet.")
             return False
-        
+
         # To potentially utter a warning, we check the Listener status...
+        if onlyReport:
+            return self.__isListenerActive(True)
+
         self.__isListenerActive()
-        
         return True
 
 
@@ -940,7 +980,37 @@ class JobExecutionMonitor(GangaObject):
                 return
 
 
-    def __isListenerActive(self):
+    def __getServerPid(self):
+        pid = str(self.pid)
+        job = self.getJobObject()
+        jobID = self.getJobID() # pylint: disable-msg=E1101
+
+        if job.status not in ['running','submitted']: # pylint: disable-msg=E1101
+            return 0
+        if JEMloader.httpsPubEnabled and JEMloader.httpsExternal:
+            return 0
+
+        pids, ppids, cmds = self.__getChildProcesses()
+
+        # Check if all processes are running
+        if not pid in pids:
+            return 0
+        else:
+            z = pids.index(pid)
+            if cmds[z].find("[python] <defunct>") != -1:
+                return 0
+            else:
+                for z,p in enumerate(ppids):
+                    if p == pid:
+                        if JEMloader.httpsPubEnabled and cmds[z].find("HTTPSServer") != -1 and cmds[z].find("<defunct>") == -1:
+                            return int(pids[z])
+                        if JEMloader.rgmaPubEnabled and cmds[z].find("RGMAServer") != -1 and cmds[z].find("<defunct>") == -1:
+                            return int(pids[z])
+
+                return 0
+
+
+    def __isListenerActive(self, onlyReport = False):
         """
         Checks if the R-GMA/HTTPS Server and job listener are active
         """
@@ -953,43 +1023,61 @@ class JobExecutionMonitor(GangaObject):
 
         # check the job state
         if job.status not in ['running','submitted']: # pylint: disable-msg=E1101
+            if onlyReport:
+                return "finished"
             logger.info("Job execution finished. No new data will be received.")
             return True
 
         if JEMloader.httpsPubEnabled and JEMloader.httpsExternal:
+            if onlyReport:
+                return "inactive (ext)"
             return True
 
         # check if RGMA/HTTPS started correctly
         stdoutFileName = logDir + os.sep + 'stdout.log'
-        if os.path.exists(stdoutFileName): 
+        if os.path.exists(stdoutFileName):
             fd = open(stdoutFileName,'r')
             stdout = fd.read()
 
             if JEMloader.rgmaPubEnabled:
                 # try to find some strings to check if rgma is active
                 if stdout.find('Can not create server process R-GMA') != -1:
+                    if onlyReport:
+                        return "error"
                     logger.error('Failed to start R-GMA server. Monitoring is not active!')
                     return False
                 if stdout.find('R-GMA package not found') != -1:
+                    if onlyReport:
+                        return "error"
                     logger.error('Failed to start R-GMA server. Monitoring is not active!')
                     return False
                 if stdout.find("consumer has not started!") != -1:
+                    if onlyReport:
+                        return "error"
                     logger.error('Failed to start R-GMA server. Monitoring is not active!')
                     return False
             elif JEMloader.httpsPubEnabled:
                 # try to find some strings to check if https is active
                 if stdout.find('Can not create server process HTTPS') != -1:
+                    if onlyReport:
+                        return "error"
                     logger.error('Failed to start HTTPS server. Monitoring is not active!')
                     return False
                 if stdout.find("consumer has not started!") != -1:
+                    if onlyReport:
+                        return "error"
                     logger.error('Failed to start HTTPS server. Monitoring is not active!')
                     return False
             elif JEMloader.tcpPubEnabled:
                 # try to find some strings to check if TCP is active
                 if stdout.find('Can not create server process TCP') != -1:
+                    if onlyReport:
+                        return "error"
                     logger.error('Failed to start TCP server. Monitoring is not active!')
                     return False
                 if stdout.find("consumer has not started!") != -1:
+                    if onlyReport:
+                        return "error"
                     logger.error('Failed to start TCP server. Monitoring is not active!')
                     return False
 
@@ -997,25 +1085,49 @@ class JobExecutionMonitor(GangaObject):
 
         # Check if all processes are running
         if not pid in pids:
-            logger.warning("The job listener process is not working. No new data will be received (Displayed data may be outdated).")
+            if not onlyReport:
+                logger.warning("The job listener process is not working. No new data will be received (Displayed data may be outdated).")
+            else:
+                return "error"
             #logger.debug("cause: not in there. pids: " + str(pids))
         else:
             z = pids.index(pid)
             if cmds[z].find("[python] <defunct>") != -1:
-                logger.warning("The job listener process is not working. No new data will be received (Displayed data may be outdated).")
+                if not onlyReport:
+                    logger.warning("The job listener process is not working. No new data will be received (Displayed data may be outdated).")
+                else:
+                    return "error"
                 #logger.debug("cause: <defunct>. pids: " + str(pids))
             else:
                 for z,p in enumerate(ppids):
                     if p == pid:
-                        if JEMloader.httpsPubEnabled and cmds[z].find("HTTPSServer") != -1 and cmds[z].find("<defunct>") == -1:
-                            return True
-                        if JEMloader.rgmaPubEnabled and cmds[z].find("RGMAServer") != -1 and cmds[z].find("<defunct>") == -1:
-                            return True
+                        if JEMloader.httpsPubEnabled and cmds[z].find("HTTPSServer") != -1:
+                            if cmds[z].find("<defunct>") == -1:
+                                if onlyReport:
+                                    return "OK"
+                                return True
+                            else:
+                                if onlyReport:
+                                    return "error"
+                                break
+                        if JEMloader.rgmaPubEnabled and cmds[z].find("RGMAServer") != -1:
+                            if cmds[z].find("<defunct>") == -1:
+                                if onlyReport:
+                                    return "OK"
+                                return True
+                            else:
+                                if onlyReport:
+                                    return "error"
+                                break
 
                 if JEMloader.rgmaPubEnabled:
-                    logger.warning("The RGMA Server seems to be down. No new data will be received (Displayed data may be outdated).")
+                    if not onlyReport:
+                        logger.warning("The RGMA Server seems to be down. No new data will be received (Displayed data may be outdated).")
                 elif JEMloader.httpsPubEnabled:
-                    logger.warning("The HTTPS Server seems to be down. No new data will be received (Displayed data may be outdated).")
+                    if not onlyReport:
+                        logger.warning("The HTTPS Server seems to be down. No new data will be received (Displayed data may be outdated).")
+        if onlyReport:
+            return "unknown"
         return True
 
 
@@ -1068,12 +1180,12 @@ class JobExecutionMonitor(GangaObject):
         except:
             return {}
         return result
-    
+
 
     def __seekJMDinfo(self, tag, n, start, ascending = False):
         """
         read the 'n' first/last lines after 'start' lines of the type 'tag' from the JMD file
-        
+
         @param tag: The type of messages to look for
         @param n: The number of messages to read
         @param start: The start-th message to start at
@@ -1140,7 +1252,7 @@ class JobExecutionMonitor(GangaObject):
             self.jobID = jobID
             self.gotData = False
             self.setDaemon(True)
-            
+
         def run(self):
             logger.debug("started watcher thread for job " + str(self.gangaID))
             while not self.stopThread:
@@ -1156,9 +1268,9 @@ class JobExecutionMonitor(GangaObject):
                 else:
                     time.sleep(5)
                     self.jemObject.onWatcherThink()
-                    
+
             logger.debug("watcher thread of job " + str(self.gangaID) + " exits")
-    
+
         def stop(self):
             self.stopThread = True
 

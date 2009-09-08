@@ -15,21 +15,21 @@ passing the callbacks to here.
 
         Copyright (c) 2007-2009 University of Wuppertal, Department of physics
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-    software and associated documentation files (the "Software"), to deal in the Software 
-    without restriction, including without limitation the rights to use, copy, modify, merge, 
-    publish, distribute, sublicense, and/or sell copies of the Software, and to permit 
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this
+    software and associated documentation files (the "Software"), to deal in the Software
+    without restriction, including without limitation the rights to use, copy, modify, merge,
+    publish, distribute, sublicense, and/or sell copies of the Software, and to permit
     persons to whom the Software is furnished to do so, subject to the following conditions:
-    
-    The above copyright notice and this permission notice shall be included in all copies 
+
+    The above copyright notice and this permission notice shall be included in all copies
     or substantial portions of the Software.
-    
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-    PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-    OR OTHER DEALINGS IN THE SOFTWARE. 
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+    PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+    OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import os, sys, re, socket, getpass
 
@@ -47,6 +47,7 @@ jemconfig = getConfig("JEM")
 # JEMloader is a proxy object trying to load JEMs core modules. If this
 # does not succeed, JEMloader.INITIALIZED will be False afterwards.
 import JEMloader
+import PrettyStrings
 
 if not jemconfig['JEM_ENABLE']:
     JEMloader.INITIALIZED = False
@@ -96,6 +97,10 @@ class JEMMonitoringServiceHandler(object):
         This method is called by Job() via IMonitoringService when the job is about to be
         submitted / started.
         """
+        # dont react on subjobs...
+        if self.__job.master:
+            return
+
         logger.debug("Job " + str(self.__job.id) + " is being submitted.")
 
         if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
@@ -117,10 +122,10 @@ class JEMMonitoringServiceHandler(object):
         pared by the runtime handler. We can add files to the sandboxes here and change
         the executable to JEMs Workernode-script.
         """
-        logger.debug("Job " + str(self.__job.id) + " is being prepared.")
+        logger.debug("Job " + self.__getFullJobId() + " is being prepared.")
 
         if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
-            logger.warning("Job " + str(self.__job.id) + " has no JobExecutionMonitor-instance")
+            logger.warning("Job " + self.__getFullJobId() + " has no JobExecutionMonitor-instance")
             return
 
         if not JEMloader.INITIALIZED:
@@ -154,7 +159,7 @@ class JEMMonitoringServiceHandler(object):
                     return None
             else:
                 return ''
-            
+
         # locate JEM lib (incl. possible archive extension)
         if locateJemLib() == None:
             logger.info("This seems to be your first job submission with the JobExecutionMonitor enabled.")
@@ -181,7 +186,7 @@ class JEMMonitoringServiceHandler(object):
         JEMConfig.UI_SUBMIT_PACKAGE += ending
 
         # add JEM library to inputbox
-        libraryPath = os.path.realpath(JEMConfig.UI_SUBMIT_PACKAGE)  
+        libraryPath = os.path.realpath(JEMConfig.UI_SUBMIT_PACKAGE)
         submitLibrary = File(libraryPath)
         jemInputBox += [submitLibrary]
 
@@ -229,28 +234,30 @@ class JEMMonitoringServiceHandler(object):
         # apply to JEM-enabled subjobs
 
         import sys
-        
+
         #import pprint
         #pp = pprint.PrettyPrinter(width=40)
 
         try:
             for i, config in enumerate(subjobconfig):
-                if i % jemconfig['JEM_MONITOR_SUBJOBS_FREQ'] == 0:
+                if (i == 0) or (i % jemconfig['JEM_MONITOR_SUBJOBS_FREQ'] == 0):
+                    logger.debug("Enabling JEM realtime monitoring for job " + self.__getFullJobId() + ". Config:" + str(i))
+
                     # as we're replacing the executable with our wrapper script, the executable has to be
                     # seperately put into the input sandbox!
                     config.inputbox += [config.exe]
-                    
+
                     # now add JEMs files to the boxes...
                     config.inputbox += jemInputBox
                     config.outputbox += jemOutputBox
 
                     # set the executable to our main WN script, and the original exe to its 1st argument
                     theArgs = [config.getExeString()] + config.args
-                    
+
                     # if we're running at Localhost, inject virtual jobID (d'oh...)
                     if self.__job.backend.__class__.__name__ == "Localhost":
                         theArgs = ["--jobid", self.__job.info.monitor.getJobID()] + theArgs
-                    
+
                     config.args = theArgs
                     config.exe = submitExecutable
 
@@ -266,7 +273,7 @@ class JEMMonitoringServiceHandler(object):
                             config.env['JEM_CTRACE_APPS'] = self.__job.info.monitor.ctracer.traceApps
 
                         config.env['JEM_CTRACE_MODULES'] = self.__job.info.monitor.ctracer.traceModules
-                        
+
                         if config.env['JEM_CTRACE_APPS'] == '' and config.env['JEM_CTRACE_MODULES'] != '':
                             config.env['JEM_CTRACE_APPS'] = config.env['JEM_CTRACE_MODULES']
                     else:
@@ -280,34 +287,39 @@ class JEMMonitoringServiceHandler(object):
                     # commit all changes we did to the subjobconfig
                     config.processValues()
 
-                    ## DEBUG OUTPUT #################################
-                    s =  "\nconfig of " + str(i) + "th subjob:"     #
-                    s += "\n    exe = " + str(config.exe)           #
-                    s += "\n   args = " + str(config.args)          #
-                    s += "\n    env = " + str(config.env)           #
-                                                                    #
-                    s += "\n inp-sb = ["                            #
-                    for z,ii in enumerate(config.inputbox):         #
-                        s += "\n            '" + str(ii) + "'"      #
-                        if z < len(config.inputbox)-1:              #
-                            s += ","                                #
-                    s += "\n          ]"                            #
-                                                                    #
-                    s += "\n out-sb = ["                            #
-                    for z,ii in enumerate(config.outputbox):        #
-                        s += "\n            '" + str(ii) + "'"      #
-                        if z < len(config.outputbox)-1:             #
-                            s += ","                                #
-                    s += "\n          ]"                            #
-                    logger.debug(s)                                 #
-                    #################################################
+                    ## DEBUG OUTPUT #################################################################
+                    s =  ""                                                                         #
+                    s += "\n    exe = " + str(config.exe)                                           #
+                    s += "\n   args = " + str(config.args)                                          #
+                                                                                                    #
+                    s += "\n    env = {"                                                            #
+                    for k in config.env:                                                            #
+                        s += "\n            '" + str(k) + "': '"                                    #
+                        s += PrettyStrings.formatString(str(config.env[k]), 80).strip() +  "',"     #
+                    s += "\n          }"                                                            #
+                                                                                                    #
+                    s += "\n inp-sb = ["                                                            #
+                    for z,ii in enumerate(config.inputbox):                                         #
+                        s += "\n            '" + str(ii) + "'"                                      #
+                        if z < len(config.inputbox)-1:                                              #
+                            s += ","                                                                #
+                    s += "\n          ]"                                                            #
+                                                                                                    #
+                    s += "\n out-sb = ["                                                            #
+                    for z,ii in enumerate(config.outputbox):                                        #
+                        s += "\n            '" + str(ii) + "'"                                      #
+                        if z < len(config.outputbox)-1:                                             #
+                            s += ","                                                                #
+                    s += "\n          ]"                                                            #
+                    logger.debug(s)                                                                 #
+                    #################################################################################
         except:
             ei = sys.exc_info()
             logger.error("  error occured: " + str(ei[0]) + ": " + str(ei[1]))
 
 
     def submit(self):
-        logger.debug("Job " + str(self.__job.id) + " has been submitted.")
+        logger.debug("Job " + self.__getFullJobId() + " has been submitted.")
         self.__startJobListener()
 
 
@@ -321,7 +333,7 @@ class JEMMonitoringServiceHandler(object):
 
 
     def complete(self, cause):
-        logger.debug("Job " + str(self.__job.id) + " has completed. Status: " + cause)
+        logger.debug("Job " + self.__getFullJobId() + " has completed. Status: " + cause)
         self.__stopJobListener()
         if cause != "failed":
             if self.__job.info.monitor.extractLogfiles():
@@ -330,19 +342,19 @@ class JEMMonitoringServiceHandler(object):
                 # the events can be inspected from within Ganga)
                 if JEMloader.fpEnabled:
                     logger.info("Copying the full log into the workspace...")
-                    
+
                     if os.path.exists(self.__job.info.monitor.jmdfile):
                         try:
                             os.system('mv ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.info.monitor.jmdfile + '.bak')
                             os.system('cp ' + self.__job.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile)
                         except:
                             pass
-                        
+
                     logger.info("...done. Inspecting the data now should display the whole available info.")
-                
+
 
     def rollback(self):
-        logger.debug("Job " + str(self.__job.id) + " got rolled back to new.")
+        logger.debug("Job " + self.__getFullJobId() + " got rolled back to new.")
         self.__stopJobListener()
 
 
@@ -457,7 +469,7 @@ class JEMMonitoringServiceHandler(object):
                 s += " | "
             s += "PUBLISER_USE_" + v
 
-        JEMrc['JEMConfig']['PUBLISHER_USE_TYPE'] = s 
+        JEMrc['JEMConfig']['PUBLISHER_USE_TYPE'] = s
 
         #logger.debug("effective JEM configuration now:\n" + pprint.pformat(JEMrc))
 
@@ -483,6 +495,13 @@ class JEMMonitoringServiceHandler(object):
         return thePath
 
 
+    def __getFullJobId(self):
+        jid = str(self.__job.id)
+        if self.__job.master:
+            jid = str(self.__job.master.id) + "." + jid
+        return jid
+
+
     def __isAthenaJob(self):
         # pylint: disable-msg=E1101
         try:
@@ -501,10 +520,10 @@ class JEMMonitoringServiceHandler(object):
             return 0
 
         try:
-            port = WNConfig.PUBLISHER_HTTPS_SERVER.split(":")[1]
-            if int(port) != 0:
+            port = int(WNConfig.PUBLISHER_HTTPS_SERVER.split(":")[1])
+            if port != 0:
                 logger.debug('Using configured port: ' + port)
-                return 0
+                return port
         except:
             pass
 
@@ -539,6 +558,9 @@ class JEMMonitoringServiceHandler(object):
         """
         Start the job listener for live monitoring support
         """
+        if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
+            return
+
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
             return
 
@@ -551,7 +573,8 @@ class JEMMonitoringServiceHandler(object):
             executable = JEMloader.JEM_PACKAGEPATH + os.sep + 'JEMganga' + os.sep + 'LiveMonitoring.py'
             args = [executable, jobID] #, middleware]
             if self.__httpsListenPort != 0:
-                args += [str(self.__httpsListenPort)] 
+                args += [str(self.__httpsListenPort)]
+                self.__job.info.monitor.port = self.__httpsListenPort
 
             try:
                 #logger.debug('Spawning ' + executable + ' ' + str(args))
@@ -583,8 +606,11 @@ class JEMMonitoringServiceHandler(object):
         Kill the job listener of this job
         FIXME
         """
-        self.__job.info.monitor.abortWatch()
+        if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
+            return
         
+        self.__job.info.monitor.abortWatch()
+
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
             return
 

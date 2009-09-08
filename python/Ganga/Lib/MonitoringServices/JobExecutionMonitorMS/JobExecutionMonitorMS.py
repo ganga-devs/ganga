@@ -90,10 +90,12 @@ class JobExecutionMonitorMS(IMonitoringService):
 
 
     def __handleError(self):
-        import sys
+        import sys, traceback
         from Ganga.Utility.logging import getLogger
+        l = getLogger()
         ei = sys.exc_info()
-        getLogger().error(str(ei[0]) + ": " + str(ei[1]))
+        l.error(str(ei[0]) + ": " + str(ei[1]))
+        l.debug(str(traceback.format_tb(ei[2])))        
 
 
     def __getJEMobject(self):
