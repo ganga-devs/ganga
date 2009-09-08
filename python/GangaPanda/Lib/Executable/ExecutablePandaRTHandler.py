@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, sys, pwd, commands, re, shutil, urllib, time, string 
+import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core import BackendError
@@ -114,8 +114,8 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         if not job.splitter:
             from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
             runPandaBrokerage(job)
-        elif job.splitter._name <> 'DQ2JobSplitter':
-            raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter')
+        elif job.splitter._name not in ['DQ2JobSplitter', 'ArgSplitter']:
+            raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter or ArgSplitter')
         
         if job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
