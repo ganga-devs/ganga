@@ -208,8 +208,8 @@ class Registry(object):
     def _read_access(self, obj, sub_obj = None):
         """Obtain read access on a given object.
         sub-obj is the object the read access is actually desired (ignored at the moment)
-        Raise RepositoryError
-        Raise ObjectNotInRegistryError"""
+        Raise RegistryAccessError
+        Raise RegistryKeyError"""
         #logger.debug("_read_access(%s)" % obj)
         if not obj._data:
             if not self._started:
@@ -268,7 +268,7 @@ class Registry(object):
         self.repository._objects = self._objects
         self.repository.startup()
         t1 = time.time()
-        print "Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0)
+        logger.info("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0))
         self._started = True
 
         if self._needs_metadata:

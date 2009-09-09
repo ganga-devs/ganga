@@ -82,7 +82,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def update_index(self,id = None):
         # First locate and load the index files
-        print "updating index..."
+        logger.info("updating index...")
         obj_chunks = [d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
         loaded_obj = 0
         loaded_cache = 0
@@ -124,8 +124,8 @@ class GangaRepositoryLocal(GangaRepository):
                         pass # deleted job
                     except Exception:
                         logger.warning("Failed to load id %i!" % (id))
-        logger.warning("Updated cache: Loaded %i objects, %i cached objects and refreshed %i objects from cache" % (loaded_obj,loaded_cache,reloaded_cache))
-        print "updated index done"
+        logger.info("Updated %s cache: Loaded %i objects, %i cached objects and refreshed %i objects from cache" % (self.registry.name,loaded_obj,loaded_cache,reloaded_cache))
+        logger.info("updated index done")
 
     def add(self, objs, force_ids = None):
         if not force_ids is None: # assume the ids are already locked by Registry

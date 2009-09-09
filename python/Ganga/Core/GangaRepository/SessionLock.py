@@ -5,6 +5,10 @@ import os, time, pickle, errno, threading, fcntl
 from sets import Set
 from Ganga.Core.GangaThread import GangaThread
 
+
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
+
 def open_file_sync_read(fn):
     fobj = file(fn,"r")
     fcntl.lockf(fobj.fileno(),fcntl.LOCK_SH)
@@ -53,7 +57,7 @@ class SessionLock(GangaThread):
                         tstamp, name = s.split(" ",1)
                         dtstamp = ctime - int(tstamp)
                     except ValueError:
-                        print "DEBUG: INVALID SESSION LINE ", s
+                        logger.warning("DEBUG: INVALID SESSION LINE %s" % s)
                         continue
                     if dtstamp < 10 and not name == self.session_name: # kill old sessions
                         current_session_str += s + "\n"
@@ -269,7 +273,7 @@ class SessionLockManager(object):
                 finally:
                     fobj.close()
             except Exception, e: # Pretty much anything can happen on unpickling
-                print e
+                logger.debug("Unpickle error on session lock unpickling: %s" % e)
         return locked_ids
 
     def _setlocked(self):
