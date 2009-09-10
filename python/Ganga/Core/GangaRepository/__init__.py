@@ -4,7 +4,7 @@ Also, a list of all Registries is kept here
 """
 import GangaRepository
 from Ganga.Core import RepositoryError
-from Registry import RegistryKeyError, RegistryLockError
+from Registry import RegistryError, RegistryAccessError, RegistryKeyError, RegistryLockError, ObjectNotInRegistryError
 
 allRegistries = {}
 def addRegistry(registry):

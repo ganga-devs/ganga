@@ -7,6 +7,10 @@
 # Only the corresponding registry may access the methods of a GangaRepository.
 # It should only raise RepositoryErrors and LockingErrors
 
+# there are two "MAGIC" variables in an object: id and status.
+# If a root object has an id field, it will be set to the repository id
+# if a root object has a status field and some load error occurs, it will be set to "incomplete"
+
 from Ganga.Core import GangaException
 from Ganga.Utility.Plugin import PluginManagerError, allPlugins
 from Ganga.Core.InternalServices.Coordinator import disableInternalServices
@@ -21,7 +25,7 @@ from Ganga.GPIDev.Schema import Schema, Version
 class EmptyGangaObject(GangaObject):
     """Empty Ganga Object. Is used to construct incomplete jobs"""
     _schema = Schema(Version(0,0), {})
-    _name   = "Unknown"
+    _name   = "EmptyGangaObject"
     _category = "internal"
     _hidden = 1
 
@@ -31,6 +35,7 @@ class SchemaVersionError(GangaException):
 
 
 class RepositoryError(GangaException):
+    """ This error is raised if there is a fatal error in the repository."""
     def __init__(self,repo,what):
         GangaException.__init__(self,what)
         self.what=what
@@ -44,7 +49,6 @@ class GangaRepository(object):
         It provides an interface for developers of new backends.
         The base class implements a transient Ganga Repository for testing purposes.
     """
-
     def __init__(self, registry):
         """GangaRepository constructor. Initialization should be done in startup()"""
         self.registry = registry
@@ -114,7 +118,7 @@ class GangaRepository(object):
         Locks the specified IDs against modification from other Ganga sessions
         Raise RepositoryError
         Returns True on success, False if one of the ids is already locked by another session
-        Also returns False if one of the ids is associated with a deleted object
+        It is also possible to lock ids that do not have jobs associated to them!
         """
         raise NotImplementedError
 
@@ -141,7 +145,7 @@ class GangaRepository(object):
         self._objects[id] = obj
         obj.__dict__["_registry_id"] = id
         obj.__dict__["_registry_locked"] = False
-        if obj._data and "id" in obj._data.keys():
+        if obj._data and "id" in obj._data.keys(): # MAGIC id
             obj.id = id
         obj._setRegistry(self.registry)
 

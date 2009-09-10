@@ -139,9 +139,7 @@ class VStreamer(object):
 
     def quote(self,x):
         #FIXME: also quote % characters (to allow % operator later)
-        if type(x) == type(''):
-            return escape(repr(x))
-        return x    
+        return escape(repr(x))
 
 
 ################################################################################
@@ -287,7 +285,7 @@ class Loader:
         assert len(self.stack)==1, 'multiple objects inside <root> element'
 
         obj = self.stack[-1]
-        if obj._name == 'Unknown':
+        if obj._name == 'EmptyGangaObject':
             raise Exception('Unable to create root object',self.errors)
 
         return obj,self.errors

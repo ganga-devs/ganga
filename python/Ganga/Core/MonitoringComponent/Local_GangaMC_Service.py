@@ -658,7 +658,7 @@ class JobRegistry_Monitor( GangaThread ):
         # FIXME: this is not thread safe: if the new jobs are added then iteration exception is raised
         for i in self.registry.ids():
             try:
-                j = self.registry[i]
+                j = self.registry(i)
                 if j.status in [ 'submitted', 'running' ]: #, 'completing' ]:
                     j._getWriteAccess()
                     bn = j.backend._name

@@ -16,6 +16,7 @@ from Ganga.Core.GangaRepository.PickleStreamer import to_file as pickle_to_file
 from Ganga.Core.GangaRepository.PickleStreamer import from_file as pickle_from_file
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
+from Ganga.GPIDev.Base.Objects import Node
 
 def safe_save(fn,obj,to_file):
     """Writes a file safely, raises IOError on error"""
@@ -149,7 +150,7 @@ class GangaRepositoryLocal(GangaRepository):
             try:
                 fn = self.get_fn(id)
                 obj = self._objects[id]
-                if obj._name != "Unknown":
+                if obj._name != "EmptyGangaObject":
                     split_cache = None
                     if self.sub_split and self.sub_split in obj._data:
                         split_cache = obj._data[self.sub_split]
@@ -187,6 +188,11 @@ class GangaRepositoryLocal(GangaRepository):
                 fobj = file(fn,"r")
             except IOError, x:
                 if x.errno == errno.ENOENT: 
+                    # remove index so we do not continue working with wrong information
+                    try:
+                        os.unlink(os.path.dirname(fn)+".index")
+                    except OSError:
+                        pass
                     raise KeyError(id)
                 else: 
                     raise RepositoryError(self,"IOError: " + str(x))
@@ -194,7 +200,7 @@ class GangaRepositoryLocal(GangaRepository):
                 must_load = (not id in self._objects) or (self._objects[id]._data is None)
                 tmpobj = None
                 if must_load or (self._load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime):
-                    tmpobj = self.from_file(fobj)[0]
+                    tmpobj, errs = self.from_file(fobj)
                     if self.sub_split:
                         i = 0
                         ld = os.listdir(os.path.dirname(fn))
@@ -205,13 +211,26 @@ class GangaRepositoryLocal(GangaRepository):
                                 sfobj = file(sfn,"r")
                             except IOError, x:
                                 raise RepositoryError(self,"IOError: " + str(x))
-                            l.append(self.from_file(sfobj)[0])
+                            ff = self.from_file(sfobj)
+                            l.append(ff[0])
+                            errs.append(ff[1])
                             i += 1
                         tmpobj._data[self.sub_split] = makeGangaListByRef(l)
-
+                    if len(errs) > 0 and "status" in tmpobj._data: # MAGIC "status" if incomplete
+                        tmpobj._data["status"] = "incomplete"
                     if id in self._objects:
-                        self._objects[id]._data = tmpobj._data
-                        self._objects[id]._index_cache = None
+                        obj = self._objects[id]
+                        obj._data = tmpobj._data
+                        # Fix parent for objects in _data (necessary!)
+                        for n, v in obj._data.items():
+                            if isinstance(v,Node):
+                                v._setParent(obj)
+                            if (isinstance(v,list) or v.__class__.__name__ == "GangaList"):
+                                # set the parent of the list or dictionary (or other iterable) items
+                                for i in v:
+                                    if isinstance(i,Node):
+                                        i._setParent(obj)
+                        obj._index_cache = None
                     else:
                         self._internal_setitem__(id, tmpobj)
                     if self.sub_split:
@@ -222,17 +241,24 @@ class GangaRepositoryLocal(GangaRepository):
                     self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
             except Exception, x:
                 logger.warning("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
+                # remove index so we do not continue working with wrong information
+                try:
+                    os.unlink(os.path.dirname(fn)+".index")
+                except OSError:
+                    pass
                 raise KeyError(id)
                 #self._internal_setitem__(id, EmptyGangaObject())
 
     def delete(self, ids):
         for id in ids:
-            self._internal_del__(id)
+            # First remove the index, so that it is gone if we later have a KeyError
             fn = self.get_fn(id)
             try:
                 os.unlink(os.path.dirname(fn)+".index")
             except OSError:
                 pass
+            self._internal_del__(id)
+
             def rmrf(name):
                 if os.path.isdir(name):
                     for sfn in os.listdir(name):
