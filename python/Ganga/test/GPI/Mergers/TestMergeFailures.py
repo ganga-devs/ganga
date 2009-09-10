@@ -93,7 +93,7 @@ class TestMergeFailures(GangaGPITestCase):
         try:
             jobs(jobID)
             assert False, 'Job should not be found'
-        except  RegistryAccessError:
+        except KeyError:
             pass
         
      

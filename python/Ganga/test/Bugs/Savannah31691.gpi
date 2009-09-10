@@ -14,9 +14,9 @@ except ImportError:
 for i in range( 5 ):
    Job()
 
-assert(len(os.listdir(localDir)) == 5)
 print "Result of 'ls %s' after job submission:" % localDir
 os.system( "ls %s" % localDir )
+assert(len(os.listdir(localDir)) == 5)
 
 # Delete job 0, then try again to list content of local workspace
 print "Result of 'ls %s' after removing job 0:"

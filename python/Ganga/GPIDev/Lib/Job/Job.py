@@ -249,6 +249,8 @@ class Job(GangaObject):
             else:
                 raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"'%(fqid, self.status,newstatus)) 
 
+        self._getWriteAccess()
+
         saved_status = self.status
 
         try:
@@ -579,7 +581,7 @@ class Job(GangaObject):
 
         try:
             logger.info("submitting job %d",self.id)
-            # prevent other sessions from submitting this job concurrently
+            # prevent other sessions from submitting this job concurrently. Also calls _getWriteAccess
             self.status = 'submitting'
             try:
                 self._commit()
@@ -692,6 +694,8 @@ class Job(GangaObject):
             msg = 'cannot remove subjob %s'%self.getFQID('.')
             logger.info(msg)
             raise JobError(msg)
+
+        self._getWriteAccess()
         
         if self.status in ['submitted','running']:
             try:
@@ -711,9 +715,13 @@ class Job(GangaObject):
                 self.backend.remove()
 
             # tell the application that the job was removed
-            self.application.transition_update("removed")
-            for sj in self.subjobs:
-                sj.application.transition_update("removed")
+            try:
+                self.application.transition_update("removed")
+                for sj in self.subjobs:
+                    sj.application.transition_update("removed")
+            except AttributeError:
+                # Some applications do not have transition_update
+                pass
         
         if self._registry:
             self._registry._remove(self,auto_removed=1)
@@ -796,10 +804,11 @@ class Job(GangaObject):
         
     def _kill(self,transition_update):
         '''Private helper. Kill the job. Raise JobError exception on error.
-        '''
+        '''        
         try:
             from Ganga.Core import GangaException
             
+            self._getWriteAccess()
             # make sure nobody writes to the cache during this operation
             #job._registry.cache_writers_mutex.lock()
 
@@ -923,6 +932,8 @@ class Job(GangaObject):
         The options (keyword arguments) are passed onto the specific merger implementation.
         Refer to the specific merger documentation for more information about available options.
         '''
+
+        self._getWriteAccess()
 
         if sum_outputdir is None:
             sum_outputdir = self.outputdir

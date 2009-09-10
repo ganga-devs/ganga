@@ -4,7 +4,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryIndexError
 
 from Ganga.Utility.external.ordereddict import oDict
 
@@ -147,7 +147,7 @@ class RegistrySlice(object):
     def copy(self,keep_going):
         slice = self.__class__("copy of %s" % self.name)
         for id,obj in self.objects.iteritems():
-            obj = _unwrap(obj)
+            #obj = _unwrap(obj)
             copy = obj.clone()
             # If the copied object is not automatically registered,
             # try to register it in the old objects registry
@@ -200,7 +200,7 @@ class RegistrySlice(object):
             try:
                 return self.objects.values()[x]
             except IndexError:
-                raise RegistryKeyError('list index out of range')
+                raise RegistryIndexError('list index out of range')
 
         if type(x) == str:
             ids = []

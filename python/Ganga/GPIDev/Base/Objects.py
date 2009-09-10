@@ -50,8 +50,8 @@ class Node(object):
                 v._setParent(self)
             if (isinstance(v,list) or v.__class__.__name__ == "GangaList") and len(v) > 0:
                 # set the parent of the list or dictionary (or other iterable) items
-                if isinstance(v[0],Node):
-                    for i in v:
+                for i in v:
+                    if isinstance(i,Node):
                         i._setParent(self)
 
         self.__dict__ = dict

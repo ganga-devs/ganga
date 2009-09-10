@@ -859,6 +859,10 @@ default_backends = LCG
 
         # customized display hook -- take advantage of coloured text etc. if possible.
         def _display(obj):
+           if isinstance(obj,type):
+              print
+              print obj
+              return
            if hasattr(obj,'_display'):
               print
               print obj._display(1)
