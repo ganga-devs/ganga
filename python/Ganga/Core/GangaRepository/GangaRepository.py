@@ -31,7 +31,11 @@ class EmptyGangaObject(GangaObject):
 
 # Error raised on schema version error
 class SchemaVersionError(GangaException):
-    pass
+    def __init__(self,what):
+        GangaException.__init__(self,what)
+        self.what=what
+    def __str__(self):
+        return "SchemaVersionError: %s"%self.what
 
 
 class RepositoryError(GangaException):
