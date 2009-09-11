@@ -1,5 +1,5 @@
 from common import *
-
+import time
 
 str_done = markup("done" ,overview_colours["completed"])
 str_run  =  markup("run" ,overview_colours["running"]) 
@@ -49,6 +49,55 @@ class TaskRegistry(Registry):
         for dpv in slice._display_columns:
             c["display:"+dpv] = slice._get_display_value(obj, dpv)
         return c
+
+    def _thread_main(self):
+        """ This is an internal function; the main loop of the background thread """
+        ## Add runtime handlers for all the taskified applications, since now all the backends are loaded
+        from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+        from TaskApplication import handler_map
+        for basename, name in handler_map:
+            for backend in allHandlers.getAllBackends(basename):
+                allHandlers.add(name, backend, allHandlers.get(basename,backend))
+
+        ## Main loop
+        while not self._main_thread.should_stop():
+            ## For each task try to run it
+            for tid in self.ids():
+                try:
+                    if self[tid].status in ["running","running/pause"]:
+                        self[tid]._getWriteAccess()
+                        p = self[tid]
+                    else:
+                        continue
+                except RegistryError:
+                    pass
+                if self._main_thread.should_stop():
+                    break
+                try:
+                    # TODO: Make this user-configurable and add better error message 
+                    if (p.n_status("failed")*100.0/(20+p.n_status("completed")) > 20):
+                        p.pause()
+                        logger.error("Task %s paused - %i jobs have failed while only %i jobs have completed successfully." % (p.name,p.n_status("failed"), p.n_status("completed")))
+                        logger.error("Please investigate the cause of the failing jobs and then remove the previously failed jobs using job.remove()")
+                        logger.error("You can then continue to run this task with tasks(%i).run()" % p.id)
+                        continue
+                    p.submitJobs()
+                except Exception, x:
+                    logger.error("Exception occurred in task monitoring loop: %s\nThe offending task was paused." % x)
+                    p.pause()
+                    self.save()
+            # Sleep interruptible for 10 seconds
+            for i in range(0,100):
+                time.sleep(0.1)
+                if self._main_thread.should_stop():
+                    break
+
+    def startup(self):
+        """ Start a background thread that periodically run()s"""
+        super(TaskRegistry,self).startup()
+        from Ganga.Core.GangaThread import GangaThread
+        self._main_thread = GangaThread(name="GangaTasks", target=self._thread_main)
+        self._main_thread.start()
 
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 
@@ -221,6 +270,8 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
                 ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name, t.status, stat, ""), status_colours[t.status])
             ds += "-"*lenfstring + "\n"
         return ds + "\n"
+
+    _display = __str__
 
     def help(self, short=False):
         """Print a short introduction and 'cheat sheet' for the Ganga Tasks package"""
