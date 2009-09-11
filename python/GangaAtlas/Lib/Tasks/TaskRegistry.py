@@ -30,8 +30,10 @@ config.addOption('tasks_columns_show_empty',
                  ['id','Jobs',str_done],
                  'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
 
+config.addOption('tasks_show_help',True,'change this to False if you do not want to see the help screen if you first type "tasks" in a session')
 
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
+
 
 class TaskRegistry(Registry):
     def getProxy(self):
@@ -244,9 +246,9 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
 
     def __str__(self, short=True):
         """Prints an overview over the currently running tasks"""
-        if not "_help_printed" in dir(self):
+        if config["tasks_show_help"]:
             self.help(short = True)
-            self._help_printed = True
+            config.setUserValue("tasks_show_help",False)
             print "To show this help message again, type 'tasks.help()'."
             print
             print " The following is the output of "+markup("tasks.table()",fgcol("blue"))
