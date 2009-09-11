@@ -459,9 +459,13 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         if app.atlas_environment:
             for var in app.atlas_environment:
-                vars=var.split('=')
-                if len(vars)==2:
-                    environment[vars[0]]=vars[1]
+                try:
+                    vars = re.match("^(\w+)=(.*)",var).group(1)
+                    value = re.match("^(\w+)=(.*)",var).group(2)
+                    environment[vars]=value
+                except:
+                    logger.warning('Athena.atlas_environment variable not correctly configured: %s', var)
+                    pass
 
         if app.atlas_production and app.atlas_release.find('12.')>=0 and app.atlas_project != 'AtlasPoint1':
             temp_atlas_production = re.sub('\.','_',app.atlas_production)
