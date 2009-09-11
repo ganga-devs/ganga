@@ -104,8 +104,7 @@ class JobTime(GangaObject):
     timestamps = {}
     sj_statlist = []
     
-    _schema = Schema(Version(0,0),{ 'request_counter' : SimpleItem(defvalue=0,protected=1,doc="Job timestamp request counter"),
-                                    'timestamps' : SimpleItem(defvalue={},doc="Dictionary containing timestamps for job", summary_print='_timestamps_summary_print'),
+    _schema = Schema(Version(0,0),{'timestamps' : SimpleItem(defvalue={},doc="Dictionary containing timestamps for job", summary_print='_timestamps_summary_print')
                                     })
 
     _category = 'jobtime'
@@ -118,7 +117,6 @@ class JobTime(GangaObject):
                       'backend_final',
                       'completing',
                       'final',
-                      'getOutputFile',
                       'runtime',
                       'waittime',
                       'submissiontime',
@@ -129,13 +127,6 @@ class JobTime(GangaObject):
         super(JobTime, self).__init__()
         self.timestamps = {}
         self.sj_statlist = [] #this makes sure the contents of the list don't get copied when the Job does.
-        
-    def increment(self): ##is this neccesary or even doing anything useful?
-        """Increases integer 'request_counter' by one.
-
-           At present only used by timenow() when it writes to the timestamp. Useful for debugging but not much else.
-        """
-        self.request_counter += 1
 
     def __deepcopy__(self,memo):
         obj = super(JobTime, self).__deepcopy__(memo)
@@ -147,29 +138,6 @@ class JobTime(GangaObject):
         """
         t = datetime.datetime.utcnow()
         self.timestamps['new'] = t 
-        self.increment()
-
-    def getOutputFile(self): ## Is this method worth keeping for the finished product??
-        """Opens output file.
-
-           Will probably be removed before release.
-
-           This method has been very useful for debugging while I was developing JobTime.
-        """       
-        j = self.getJobObject()
-
-        if j.master:
-            logger.debug("Output file does not exist for master job. Use 'j.subjobs(i).getOutputFile().")
-            return None
-            
-        try:
-            p = os.path.join(j.outputdir, '__jobstatus__')
-            f = open(p)
-        except IOError:
-            print 'Error: cannot find file:', p
-            return None
-        else:
-            return f
 
     def timenow(self, status):
         """Updates timestamps as job status changes.
@@ -191,15 +159,19 @@ class JobTime(GangaObject):
                     be_statetime = j.backend.getStateTime(childstatus)
                     if be_statetime != None:
                         if childstatus in backend_final:
-                            self.timestamps["backend_final"] = be_statetime #stamp is WRITTEN # ***
+                            self.timestamps["backend_final"] = be_statetime 
+                            logger.debug("Wrote 'backend_final' to timestamps.")
                         else:
-                            self.timestamps["backend_"+childstatus] = be_statetime #stamp is WRITTEN # ***                   
+                            self.timestamps["backend_"+childstatus] = be_statetime 
+                            logger.debug("Wrote 'backend_%s' to timestamps.", childstatus)
                     if childstatus==status: break
             #ganga stamps
             if status in final:
-                self.timestamps["final"] = t_now #stamp is WRITTEN # ***
+                self.timestamps["final"] = t_now 
+                logger.debug("Wrote 'final' to timestamps.")
             else:
-                self.timestamps[status] = t_now #stamp is WRITTEN # *** ----> should i add debug for actions marked ***
+                self.timestamps[status] = t_now 
+                logger.debug("Wrote '%s' to timestamps.", status)
 
         #subjobs method:
         if j.master: #identifies subjobs               
@@ -224,8 +196,6 @@ class JobTime(GangaObject):
                     else:
                         pass
 
-        self.increment() #Should tell how many times timestamps has been written to# edit: not really - shows how many times timenow() called
-
     def sjStatList_return(self, status):
         list = []
         final = ['backend_final', 'final']
@@ -244,7 +214,7 @@ class JobTime(GangaObject):
             logger.debug("IndexError: ID: %d, Status: '%s', length of list: %d", j.id, status, len(list)) #change this to a more appropriate debug.
             pass
 
-    def display(self, format="%Y/%m/%d %H:%M:%S"):
+    def display(self, format="%Y/%m/%d %H:%M:%S"): ## Justin 10.9.09: I think 'ljust' might be just as good if not better than 'rjust' here:
         """Displays existing timestamps in a table.
 
            Format can be specified by typing a string of the appropriate strftime() behaviour codes as the arguement.
@@ -352,7 +322,7 @@ class JobTime(GangaObject):
                    else:
                        pass
                if subjob >= len(j.subjobs):
-                   logger.info("Index '%s' is out of range. Corresponding subjob does not exist.", str(subjob))
+                   logger.warning("Index '%s' is out of range. Corresponding subjob does not exist.", str(subjob))
                    return None
                
             logger.debug("subjob arguement '%s' has failed to be caught and dealt with.", subjob)
@@ -367,7 +337,7 @@ class JobTime(GangaObject):
         j = self.getJobObject()
         if subjob == 'all':
             #the warning and action taken below are pretty annoying, but I was unsure how to deal with the request to print the details for all n subjobs, which seems unlikely to be made.
-            logger.warning("It is usually unwise to print all subjobs details. Use details() and extract relevant info from dictionary.")
+            logger.warning("It might be unwise to print all subjobs details. Use details() and extract relevant info from dictionary.")
             return None
         pd = self.details(subjob)
         for key in pd.keys():
@@ -1332,17 +1302,20 @@ class Job(GangaObject):
 
         self.status = 'submitting'
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #        #clears old stamps - neccessary?
- #       newstamps = {}
-  #      newstamps['new'] = self.time.timestamps['new']
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#        newstamps = {}
+#        newstamps['new'] = self.time.timestamps['new']
 #
- #       self.time.timestamps.clear()
-  #      self.time.timestamps['new'] = newstamps['new']
+#        self.time.timestamps.clear()
+#        self.time.timestamps['new'] = newstamps['new']
 #
- #       if self.time.timestamps == newstamps:
-  #          logger.debug("'new' timestamp transfer SUCCESSFUL!")
-   #     else:
-    #        logger.debug("'new' timestamp transfer UNSUCCESSFUL!")
+#        if self.time.timestamps == newstamps:
+#            logger.debug("'new' timestamp transfer SUCCESSFUL!")
+#        else:
+#            logger.debug("'new' timestamp transfer UNSUCCESSFUL!")
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         self.time.timenow('submitting') ## << ** 
                

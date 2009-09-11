@@ -178,7 +178,6 @@ class Dirac(IBackend):
         logger.debug("Accessing getStateTime() in diracAPI")
         dirac_cmd = 'result = DiracCommands.timedetails(%d)' % self.id
         result = dirac_ganga_server.execute(dirac_cmd)
-
         return result
                             
     def getOutputSandbox(self,dir=None):

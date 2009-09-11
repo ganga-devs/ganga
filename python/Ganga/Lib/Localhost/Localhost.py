@@ -137,7 +137,7 @@ class Localhost(IBackend):
                 try:
                     t = datetime.datetime(*(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
                 except ValueError:
-                    logger.error("Value error in file: '%s': string does not match required format.", p)
+                    logger.error("Value Error in file: '%s': string does not match required format.", p)
                     return None 
                 return t
 
@@ -152,8 +152,9 @@ class Localhost(IBackend):
             p = os.path.join(j.outputdir, '__jobstatus__')
             logger.debug("Opening output file at: %s", p)
             f = open(p)
+            f.close()
         except IOError:
-            logger.error('unable to open file %s', p) #error
+            logger.error('unable to open file %s', p) 
             return None 
         del f
         r = self.getStateTime('running')
