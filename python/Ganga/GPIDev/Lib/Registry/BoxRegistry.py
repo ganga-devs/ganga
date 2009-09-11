@@ -40,8 +40,9 @@ class BoxRegistry(Registry):
         obj._getWriteAccess()
         nobj._getWriteAccess()
         nobj.name = name
-        self._dirty(nobj)
-        self._dirty(obj)
+        print nobj._registry, obj._registry
+        nobj._setDirty()
+        obj._setDirty()
 
     def _getName(self,obj):
         nobj = self.metadata[self.find(obj)]
@@ -79,8 +80,10 @@ class BoxRegistry(Registry):
         obj = obj.clone()
         nobj = BoxMetadataObject()
         nobj.name = name
-        self._add(obj)
         self.metadata._add(nobj,self.find(obj))
+        self._add(obj)
+        nobj._setDirty()
+        obj._setDirty()
 
     def proxy_rename(self,obj_id,name):
         self._setName(self._get_obj(obj_id), name)
