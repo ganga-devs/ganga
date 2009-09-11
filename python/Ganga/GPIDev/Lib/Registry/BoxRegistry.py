@@ -80,8 +80,8 @@ class BoxRegistry(Registry):
         obj = obj.clone()
         nobj = BoxMetadataObject()
         nobj.name = name
-        self.metadata._add(nobj,self.find(obj))
         self._add(obj)
+        self.metadata._add(nobj,self.find(obj))
         nobj._setDirty()
         obj._setDirty()
 
