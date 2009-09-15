@@ -2000,7 +2000,7 @@ if __name__ == '__main__':
                     output_files.append(output_files_orig[i])
                     renameflag = True
                 except IOError:
-                    raise NameError, "ERROR: problems in output stage-out"
+                    raise NameError, "ERROR: problems in output stage-out. Could not read output file: '%s'" % output_files_orig[i]
                     sys.exit(EC_STAGEOUT)
 
         if len(output_files)==0:
