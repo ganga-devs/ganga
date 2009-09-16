@@ -894,7 +894,9 @@ class Job(GangaObject):
             objects = [self]
         # EBKE changes
         objects = [self._getRoot()]
-        self._getRegistry()._flush(objects)
+        reg = self._getRegistry()
+        if not reg is None:
+            reg._flush(objects)
         
 
     def _attribute_filter__set__(self,n,v):
