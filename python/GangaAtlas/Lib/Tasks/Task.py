@@ -86,7 +86,7 @@ class Task(GangaObject):
         for tf in c.transforms:
             tf.status = "new"
             tf._partition_apps = {} # This is cleared separately since it is not in the schema
-        self._getParent().register(c)
+        #self._getParent().register(c)
         c.check()
         return c
 
@@ -196,6 +196,8 @@ class Task(GangaObject):
             new_status = "new"
         elif "completed" in states:
             new_status = "completed"
+        else:
+            new_status = "new" # no tranforms
         # Handle status changes here:
         if self.status != new_status:
             if new_status == "running/pause":
