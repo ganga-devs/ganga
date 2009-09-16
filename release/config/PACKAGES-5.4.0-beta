@@ -7,7 +7,6 @@ ganga/python/Ganga                                                     Ganga-Bas
 
 #johannes/dan/mark
 ganga/python/GangaAtlas                                                GangaAtlas-XMLMigration-1-0
-ganga/python/GangaAtlas~                                               GangaAtlas-21-19
 
 #rod
 ganga/python/GangaCronus                                               GangaCronus-20-0
@@ -41,7 +40,4 @@ ganga/python/GangaTest                                                 GangaTest
 
 #kuba/hclee
 ganga/python/GangaTutorial                                             GangaTutorial-20-3
-
-#kuba
-ganga/python/Ganga~                                                    Ganga-Base-XMLMigration-1-0
 
