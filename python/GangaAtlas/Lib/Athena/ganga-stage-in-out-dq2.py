@@ -1422,7 +1422,13 @@ if __name__ == '__main__':
                 rc, out = getstatusoutput(cmd)
                 print out
 
-                if (rc!=0):
+                bad_dq2_get = False
+                
+                for f in taglfns:
+                    if not os.path.exists(f):
+                        bad_dq2_get = True
+                        
+                if (rc!=0) or bad_dq2_get:
                     print taglfns
                     os.system("ls -ltr")
                     print "ERROR: error during dq2-get occured"
@@ -1430,14 +1436,8 @@ if __name__ == '__main__':
                     print out
                     if (rc!=0):
                         print "ERROR: error during retry of dq2-get occured"
+                        sys.exit(EC_DQ2GET)
 
-
-            # check that all files are present
-            for f in taglfns:
-                if not os.path.exists(f):
-                    print "ERROR: failed to download " + f
-                    sys.exit(EC_DQ2GET)
-                                    
             tagddmFileMap = {}
             for i in xrange(0,len(taglfns)):
                 tagddmFileMap[taglfns[i]] = tagguids[i]
@@ -2000,7 +2000,7 @@ if __name__ == '__main__':
                     output_files.append(output_files_orig[i])
                     renameflag = True
                 except IOError:
-                    raise NameError, "ERROR: problems in output stage-out. Could not read output file: '%s'" % output_files_orig[i]
+                    raise NameError, "ERROR: problems in output stage-out"
                     sys.exit(EC_STAGEOUT)
 
         if len(output_files)==0:

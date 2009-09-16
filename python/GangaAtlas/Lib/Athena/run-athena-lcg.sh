@@ -717,15 +717,15 @@ if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
 	    ./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
 	fi
     fi
-    retcodelog=`cat retcode.tmp`
+    retcode=`cat retcode.tmp`
     rm -f retcode.tmp
     # Fail over
-    if [ $retcodelog -ne 0 ]; then
+    if [ $retcode -ne 0 ]; then
 	$pybin ./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
-	retcodelog=`cat retcode.tmp`
+	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
     fi
-    if [ $retcodelog -ne 0 ]; then
+    if [ $retcode -ne 0 ]; then
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
 	export PATH=$PATH_ORIG
 	export PYTHONPATH=$PYTHONPATH_ORIG
@@ -738,7 +738,7 @@ if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
 	    fi
 	fi
 	./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
-	retcodelog=`cat retcode.tmp`
+	retcode=`cat retcode.tmp`
 	rm -f retcode.tmp
     fi
 fi
