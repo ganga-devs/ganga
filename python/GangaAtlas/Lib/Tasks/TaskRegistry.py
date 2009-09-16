@@ -255,7 +255,7 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
             short = False
 
         fstring = " %5s | %17s | %30s | %9s | %33s | %5s\n"
-        lenfstring = 98
+        lenfstring = 120
         ds = "\n" + fstring % ("#", "Type", "Name", "State", "%4s: %4s/ %4s/ %4s/ %4s/ %4s" % (
            "Jobs",markup("done",overview_colours["completed"])," "+markup("run",overview_colours["running"]),markup("fail",overview_colours["failed"]),markup("hold",overview_colours["hold"])," "+markup("bad",overview_colours["bad"])), "Float")
         ds += "-"*lenfstring + "\n"
