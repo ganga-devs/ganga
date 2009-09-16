@@ -95,6 +95,7 @@ class AnaTransform(Transform):
       # If no cloud/backend combination is found for complete replicas, 
       # find cloud/backend with maximal number of replicas
       # returns list of tuples sorted by number of sites with replicas: (cloud, backend)
+      clouds = config["cloudPreference"] + TiersOfATLAS.ToACache.dbcloud.keys()
       incomplete_sites = {}
       for c in clouds:
          incomplete_sites[c] = []
@@ -110,10 +111,11 @@ class AnaTransform(Transform):
       using_backend = None
       using_cloud = None
       max_sites = 0
+      result = []
       backends = [be for be in config["backendPreference"] if be in GPI.__dict__]
       for cloud in clouds:
          for backend in backends:
-            sites = [site for site in complete_sites[cloud] if site in allowed_sites[backend]]
+            sites = [site for site in incomplete_sites[cloud] if site in allowed_sites[backend]]
             if len(sites) > 0:
                result.append((len(sites),cloud,backend))
       result.sort()
@@ -180,6 +182,8 @@ class AnaTransform(Transform):
             if len(replicas) > 1:
                raise ApplicationConfigurationError(None, 'Container dataset %s has no complete replica on one site and backend. Please specify individual tid datasets or use t.initializeFromDataset("%s") ' % (ds, ds))
             common_cbl = self.findIncompleteCloudBackend(db_sites, allowed_sites, replicas[0])
+         if common_cbl is None or len(common_cbl) == 0:
+            raise ApplicationConfigurationError(None, 'Container dataset %s has no replica on one site and backend. Please specify individual tid datasets!' % (ds, ds))
 
          using_cloud = common_cbl[0][0]
          using_backend = common_cbl[0][1]
