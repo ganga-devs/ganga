@@ -105,9 +105,11 @@ except ImportError:
     pass
 
 def starttasks():
+    import GangaAtlas.Lib.Tasks
     #from GangaAtlas.Lib.Tasks.TaskRegistry import TaskRegistry
     from Ganga.Core.GangaRepository import addRegistry
     from Ganga.Utility.Config import getConfig
+
     #addRegistry("tasks",TaskRegistry,getConfig("Tasks")["repositoryType"],getConfig("Tasks")["repositoryLocation"])
 
 starttasks()
