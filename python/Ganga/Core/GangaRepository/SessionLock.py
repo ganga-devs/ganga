@@ -85,27 +85,30 @@ class SessionLock(GangaThread):
         while not self.should_stop():
             ## TODO: Check for services active/inactive (treat IOError)
             time.sleep(1)
-            self._intlock.acquire()
             try:
-                file(self.fn,"a+").close() # create if not there
-                fobj = file(self.fn,"r+")
-                fcntl.lockf(fobj.fileno(),fcntl.LOCK_EX)
+                self._intlock.acquire()
                 try:
-                    line = "\n"
-                    while len(line) != 0:
-                        lastpos = fobj.tell()
-                        line = fobj.readline()
-                        if line.strip().endswith(self.session_name):
-                            fobj.seek(lastpos)
-                            fobj.write(str(int(time.time())))
-                            break
-                    if len(line) == 0: # session was not found, append it!
-                        fobj.write("%i %s\n" % (int(time.time()), self.session_name))
-                    fobj.flush()
+                    file(self.fn,"a+").close() # create if not there
+                    fobj = file(self.fn,"r+")
+                    try:
+                        fcntl.lockf(fobj.fileno(),fcntl.LOCK_EX)
+                        line = "\n"
+                        while len(line) != 0:
+                            lastpos = fobj.tell()
+                            line = fobj.readline()
+                            if line.strip().endswith(self.session_name):
+                                fobj.seek(lastpos)
+                                fobj.write(str(int(time.time())))
+                                break
+                        if len(line) == 0: # session was not found, append it!
+                            fobj.write("%i %s\n" % (int(time.time()), self.session_name))
+                        fobj.flush()
+                    finally:
+                        fobj.close() # This removes the fcntl lock!
                 finally:
-                    fobj.close() # This removes the fcntl lock!
-            finally:
-                self._intlock.release()
+                    self._intlock.release()
+            except Exception, x:
+                logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
 
         # Remove session from lockfile
         self._intlock.acquire()
