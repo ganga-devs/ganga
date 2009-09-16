@@ -213,12 +213,12 @@ class GangaRepositoryLocal(GangaRepository):
                                 raise RepositoryError(self,"IOError: " + str(x))
                             ff = self.from_file(sfobj)
                             l.append(ff[0])
-                            errs.append(ff[1])
+                            errs.extend(ff[1])
                             i += 1
                         tmpobj._data[self.sub_split] = makeGangaListByRef(l)
                     if len(errs) > 0 and "status" in tmpobj._data: # MAGIC "status" if incomplete
                         tmpobj._data["status"] = "incomplete"
-                        logger.error("Registry '%s': Could not load parts of object #%i: %s" % (self.registry.name,id,errs[0]))
+                        logger.error("Registry '%s': Could not load parts of object #%i: %s" % (self.registry.name,id,map(str,errs)))
                     if id in self._objects:
                         obj = self._objects[id]
                         obj._data = tmpobj._data
