@@ -229,6 +229,9 @@ class Descriptor(object):
         cs = self._bind_method(obj,self._checkset_name)
         if cs:
             cs(val)
+        filter = self._bind_method(obj, self._filter_name)
+        if filter:
+            val = filter(val)
 
         #LOCKING
         obj._getWriteAccess()
