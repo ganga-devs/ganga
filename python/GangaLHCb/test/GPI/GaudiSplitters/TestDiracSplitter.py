@@ -27,7 +27,7 @@ class TestDiracSplitter(GangaGPITestCase):
         len_files = len(inputdata.files)
         ds = DiracSplitter()
         ds.filesPerJob = 2        
-        result = ds._impl._splitFiles(inputdata)
+        result = ds._impl._splitFiles(inputdata._impl)
         assert len(result) >= 3, 'Unexpected number of subjobs'
 
     def testIgnoreMissing(self):
@@ -45,7 +45,7 @@ class TestDiracSplitter(GangaGPITestCase):
         ds = DiracSplitter()
         ds.ignoremissing = True
         # shouldn't throw exception
-        result = ds._impl._splitFiles(inputdata)
+        result = ds._impl._splitFiles(inputdata._impl)
         print 'result = ', result
         ds.ignoremissing = False
         # should throw exception

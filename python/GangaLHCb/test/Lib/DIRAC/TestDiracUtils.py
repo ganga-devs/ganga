@@ -16,10 +16,4 @@ class TestDiracUtils(GangaGPITestCase):
         assert not result_ok({'OK':False}), 'OK not handled properly'
         assert result_ok({'OK':True}), 'OK not handled properly'
 
-    def test_grid_proxy_ok(self):
-        config.DIRAC.extraProxytime = '0'
-        assert grid_proxy_ok() is None, 'proxy should be valid'
-        config.DIRAC.extraProxytime = '1e10'
-        assert grid_proxy_ok() is not None, 'proxy should not be valid'
-
     #def test_mangle_job_name(self):

@@ -29,7 +29,8 @@ class TestSplitters(GangaGPITestCase):
         job = Job(application=DaVinci())
         job.application._impl.extra = GaudiExtras()
         job.splitter = SplitByFiles(filesPerJob=2)
-        dummy_files = ['f1.dst','f2.dst','f3.dst','f4.dst','f5.dst']
+        dummy_files = ['pfn:f1.dst','pfn:f2.dst','pfn:f3.dst','pfn:f4.dst',
+                       'pfn:f5.dst']
         job.application._impl.extra.inputdata = LHCbDataset(dummy_files)
         subjobs = job.splitter._impl.split(job._impl)
         assert len(subjobs) == 3, 'incorrect number of split jobs'

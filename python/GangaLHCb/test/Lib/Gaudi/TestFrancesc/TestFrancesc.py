@@ -74,7 +74,7 @@ class TestFrancesc(GangaGPITestCase):
     def test_Francesc__master_configure(self):
         job = Job(application=DaVinci())
         dv = job.application
-        job.inputdata = ['dummy1.in','dummy2.in']
+        job.inputdata = ['pfn:dummy1.in','pfn:dummy2.in']
         dv._impl._master_configure()
         assert dv._impl.extra.inputdata == job.inputdata._impl
         # a more complete test requires a properly set up user release area
@@ -82,7 +82,7 @@ class TestFrancesc(GangaGPITestCase):
     def test_Francesc__configure(self):
         job = Job(application=DaVinci())
         dv = job.application
-        job.inputdata = ['dummy1.in','dummy2.in']
+        job.inputdata = ['pfn:dummy1.in','pfn:dummy2.in']
         dv._impl._master_configure()
         dv._impl._configure()
         buffer = dv._impl.extra.input_buffers['data.opts']

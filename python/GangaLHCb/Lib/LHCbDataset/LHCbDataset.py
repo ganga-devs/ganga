@@ -1,158 +1,271 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
+import tempfile
+import fnmatch
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
-from LHCbDataFile import LHCbDataFile
 from LHCbDatasetUtils import *
+from PhysicalFile import *
+from LogicalFile import *
+from OutputData import *
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Lib.Job.Job import Job
 
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-# LHCbDataset is a simple list of files (LFNs)
 class LHCbDataset(Dataset):
 
     schema = {}
     schema['files'] = ComponentItem(category='datafiles',defvalue=[],
                                     sequence=1)
-    docstr = 'The date the last full cache update was run.'
-    schema['cache_date'] = SimpleItem(defvalue='', doc=docstr)
-    docstr = 'True when the cache has never been updated before'
-    schema['new_cache'] = SimpleItem(defvalue=True, doc=docstr , hidden=1)
-    defvaluestr = """TYP='POOL_ROOTTREE' OPT='READ'"""
-    docstr = 'The string that is added after the filename in the options ' + \
-             'to tell Gaudi how to read the data. If reading raw data ' + \
-             '(mdf files) it should be set to "SVC=\'LHCb::MDFSelector\'"'
-    schema['datatype_string'] = SimpleItem(defvalue=defvaluestr, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping system.'
-    schema['depth'] = SimpleItem(defvalue = 1 , doc=docstr)
+    schema['depth'] = SimpleItem(defvalue=0 ,doc=docstr)
     docstr = 'Select an optional XMLCatalogueSlice to the dataset'
     schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
 
-    _schema = Schema(Version(2,4), schema)
+    _schema = Schema(Version(3,0), schema)
     _category = 'datasets'
     _name = "LHCbDataset"
-    _exportmethods = ['updateReplicaCache','__len__','cacheOutOfDate',
-                      'hasLFNs']
+    _exportmethods = ['getReplicas','__len__','__getitem__','replicate',
+                      'hasLFNs','extend','getCatalog','optionsString']
 
     def __init__(self, files=[]):
         super(LHCbDataset, self).__init__()
         self.files = files
 
+    def _auto__init__(self):
+        for f in self.files:
+            if f.name.find('OUTPUTDATA:/') >= 0:
+                msg = 'Can only convert strings that begin w/ PFN: or LFN: ' \
+                      'to data files.'
+                raise GangaException(msg)
+            #f._auto__init__()
+
+    def _attribute_filter__set__(self,n,v):
+        if n == 'files':
+            for f in v: f._auto__init__()
+            return v
+        else: return v
+
     def __len__(self):
         """The number of files in the dataset."""
         result = 0
-        if self.files:
-            result = len(self.files)
+        if self.files: result = len(self.files)
         return result
 
     def __nonzero__(self):
-        """Returns the logical value of a dataset. This is always True, as with
-        an object."""
+        """This is always True, as with an object."""
         return True
 
-    def cacheOutOfDate(self, maximum_cache_age=None):
-        """Checks that the Dataset was updated less than maximum_cache_age
-        minutes ago.
+    def __getitem__(self,i):
+        if type(i) == type(slice(0)):
+            ds = LHCbDataset(files=self.files[i])
+            ds.depth = self.depth
+            ds.XMLCatalogueSlice = self.XMLCatalogueSlice
+            return GPIProxyObjectFactory(ds)
+        else:
+            return GPIProxyObjectFactory(self.files[i])
 
-        If cache_expiry is None, then the value is taken from the LHCb section
-        of the Ganga config. Returns True if the cache is invalid, and False
-        otherwise. Zero or negative values of maximum_age_cache will cause the
-        cache to be invalid."""
-
-        result = True
-        if not self.cache_date:
-            return result
-
-        import time
-        cache_time = time.mktime(time.strptime(self.cache_date))
-        time_now = time.time()
-        #cache time should be in the past
-        time_diff = time_now - cache_time
-
-        if time_diff < 0:
-            logger.warning('The cache_date is in the future and will be '\
-                           'treated as unreliable.')
-            return result
-
-        if maximum_cache_age == None:
-            #get from config
-            maximum_cache_age = getCacheAge()
-
-        if maximum_cache_age <= 0:
-            msg = 'Invalid maximum_cache_age set - %d. This value must ' + \
-                  'be greater than 0'
-            logger.warning(msg, maximum_cache_age)
-            return result
-        
-        if ((time_diff//60) - maximum_cache_age) < 0: result = False
-
-        return result
-
-    def isEmpty(self):
-        return not bool(self.files)
+    def isEmpty(self): return not bool(self.files)
     
-    def updateReplicaCache(self, forceUpdate = False):
-        """Updates the cache of replicas
-
-        If forceUpdate is True then all lfns are updated,
-        otherwise only those that don't contain replica info.
-
-        If we are doing a full update then the cache_date will
-        be updated.
-        """
-
-        #Savannah 40219
-        if not forceUpdate and not self.cacheOutOfDate():
-            return
-
-        lfns=[]
-        for f in self.files:
-            if f.isLFN():
-                #update only if none cached or force
-                if not f.replicas or forceUpdate:
-                    lfns.append(f._stripFileName())
-        
-        result = replicaCache(str(lfns))
-        replicas = result['Value']['Successful']
-        
-        logger.debug('Replica information received is: ' + repr(replicas))
-        for f in self.files:
-            f_name = f._stripFileName()
-            if replicas.has_key(f_name):
-                f.replicas = replicas[f_name].keys()
-
-        if forceUpdate or self.new_cache:
-            #allows the cache to be invalidated
-            import time
-            self.cache_date = time.asctime()
-            self.new_cache = False
+    def getReplicas(self):
+        lfns = self.getLFNs()
+        cmd = 'result = DiracCommands.getReplicas(%s)' % str(lfns)
+        result = get_result(cmd,'LFC query error','Could not get replicas.')
+        return result['Value']['Successful']
 
     def hasLFNs(self):
         for f in self.files:
-            if f.isLFN(): return True
+            if isLFN(f): return True
         return False
 
+    def replicate(self,destSE='',srcSE='',locCache=''):
+        '''Replicate all LFNs to destSE.  For a list of valid SE\'s, type
+        ds.replicate().'''
+        if not destSE:
+            self.files[0].replicate('')
+            return
+        if not self.hasLFNs():
+            raise GangaException('Cannot replicate dataset w/ no LFNs.')
+        for f in self.files:
+            if not isLFN(f): continue
+            f.replicate(destSE,srcSE,locCache)
+
+    def extend(self,files,unique=False):
+        '''Extend the dataset. If unique, then only add files which are not
+        already in the dataset.'''
+        if not hasattr(files,"__getitem__"):
+            raise GangaException('Argument "files" must be a iterable.')
+        names = self.getFileNames()
+        for f in files:
+            f = getDataFile(f)
+            if unique and f.name in names: continue
+            self.files.append(f)
+
+    def getLFNs(self):
+        lfns = []
+        if not self: return lfns
+        for f in self.files:
+            if isLFN(f): lfns.append(f.name)
+        return lfns
+
+    def getPFNs(self):
+        pfns = []
+        if not self: return pfns
+        for f in self.files:
+            if isPFN(f): pfns.append(f.name)
+        return pfns
+
+    def getFileNames(self):
+        return [f.name for f in self.files]
+
+    def getCatalog(self,site=''):
+        if not site: site = getConfig('LHCb')['LocalSite']
+        lfns = self.getLFNs()
+        depth = self.depth
+        tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
+        cmd = 'result = DiracCommands.getInputDataCatalog(%s,%d,"%s","%s")' \
+              % (str(lfns),depth,site,tmp_xml.name)
+        result = get_result(cmd,'LFN->PFN error','XML catalog error.')
+        xml_catalog = tmp_xml.read()
+        tmp_xml.close()
+        return xml_catalog
+
+    def optionsString(self):
+        if not self: return ''
+        s = 'EventSelector.Input = {'
+        dtype_str_default = getConfig('LHCb')['datatype_string_default']
+        dtype_str_patterns = getConfig('LHCb')['datatype_string_patterns']
+        for f in self.files:
+            dtype_str = dtype_str_default
+            for str in dtype_str_patterns:
+                matched = False
+                for pat in dtype_str_patterns[str]:
+                    if fnmatch.fnmatch(f.name,pat):
+                        dtype_str = str
+                        matched = True
+                        break
+                if matched: break
+            s += '\n'
+            if isLFN(f):
+                s += """ \"DATAFILE='LFN:%s' %s\",""" % (f.name, dtype_str)
+            else:
+                s += """ \"DATAFILE='PFN:%s' %s\",""" % (f.name, dtype_str)
+        if s.endswith(","):
+            s = s[:-1]
+            s += """\n};"""
+        return s
+
+    # schema migration stuff (v 5.4.0)
+    class LHCbDatasetSchemaMigration50400(Dataset):
+        schema = {}
+        schema['files'] = ComponentItem(category='datafiles',defvalue=[],
+                                        sequence=1)
+        docstr = 'The date the last full cache update was run.'
+        schema['cache_date'] = SimpleItem(defvalue='', doc=docstr)
+        docstr = 'True when the cache has never been updated before'
+        schema['new_cache'] = SimpleItem(defvalue=True, doc=docstr , hidden=1)
+        defvaluestr = """TYP='POOL_ROOTTREE' OPT='READ'"""
+        docstr = 'The string that is added after the filename in the options '\
+                 'to tell Gaudi how to read the data. If reading raw data ' \
+                 '(mdf files) it should be set to "SVC=\'LHCb::MDFSelector\'"'
+        schema['datatype_string'] = SimpleItem(defvalue=defvaluestr,doc=docstr)
+        docstr = 'Ancestor depth to be queried from the Bookkeeping system.'
+        schema['depth'] = SimpleItem(defvalue=1,doc=docstr)
+        docstr = 'Select an optional XMLCatalogueSlice to the dataset'
+        schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
+
+        _schema = Schema(Version(2,4), schema)
+        _category = 'application_converters'
+        _name = 'LHCbDatasetSchemaMigration50400'
+
+    def getMigrationClass(cls,version):
+        return cls.LHCbDatasetSchemaMigration50400
+    getMigrationClass = classmethod(getMigrationClass)
+
+    def getMigrationObject(cls,obj):
+        version = obj._schema.version
+        old_cls = cls.getMigrationClass(version)
+        if not old_cls: return None #currently, this shouldn't ever happen
+        # determine whether to make LHCbDataset or OutputData
+        has_lfns_or_pfns = False
+        has_output = False
+        for f in obj.files:
+            if strToDataFile(f.name): has_lfns_or_pfns = True
+            else: has_output = True
+        if has_lfns_or_pfns and has_output: return None # don't know what to do
+        if has_lfns_or_pfns:
+            lhcbdataset = LHCbDataset()
+            lhcbdataset.depth = obj.depth
+            lhcbdataset.XMLCatalogueSlice = obj.XMLCatalogueSlice
+            for f in obj.files: lhcbdataset.files.append(strToDataFile(f.name))
+            return lhcbdataset
+        else:
+            outputdata = OutputData()
+            for f in obj.files: outputdata.files.append(f.name)
+            return outputdata
+    getMigrationObject = classmethod(getMigrationObject)
+        
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 
-def string_dataset_shortcut(v,item):
-    if type(v) is type([]):
-        l=[]
-        
-        for i in v:
-            if type(i) is type(''):
-               f=LHCbDataFile()
-               f.name=i
-               l.append(f)
-        ds=LHCbDataset()
-        ds.files=l[:]
-        return ds       
+def string_datafile_shortcut(name,item):
+    if type(name) is not type(''): return None
+    if item is None: # constructor
+        class Dummy:
+            _category = 'datafiles'
+            _schema = Schema(Version(0,0),{'name':SimpleItem(None)})
+            def __init__(self,name=''): self.name = name
+        return Dummy(name=name)
+    else: # something else...require pfn: or lfn:
+        file = strToDataFile(name)
+        if file is None:
+            msg = 'Can only convert strings that begin w/ PFN: or LFN: to '\
+                  'data files.'
+            raise GangaException(msg)
+        return file
     return None
 
-allComponentFilters['datasets']=string_dataset_shortcut
+allComponentFilters['datafiles'] = string_datafile_shortcut
+
+def string_dataset_shortcut(files,item):
+    if type(files) is not type([]): return None
+    if item == Job._schema['inputdata']:
+        ds = LHCbDataset()        
+        for f in files:
+            if type(f) is type(''):
+                file = strToDataFile(f)
+                if file is None:
+                    msg = 'Can only convert strings that begin w/ PFN: or '\
+                          'LFN: to data files.'
+                    raise GangaException(msg)
+                ds.files.append(file)
+            else:
+                ds.files.append(f)
+        ds._auto__init__()
+        return ds               
+    elif item == Job._schema['outputdata']:
+        return OutputData(files=files)
+    else:
+        l = []        
+        for f in files:
+            if type(f) is type(''):
+                file = strToDataFile(f)
+                if file is None:                    
+                    l.append(strToDataFile('PFN:OUTPUTDATA:/'+f))
+                else:
+                    l.append(file)
+            else: l.append(f)
+        ds = LHCbDataset()
+        ds.files = l[:]
+        return ds 
+
+allComponentFilters['datasets'] = string_dataset_shortcut
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
