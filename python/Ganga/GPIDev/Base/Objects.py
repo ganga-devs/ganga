@@ -32,16 +32,18 @@ from Ganga.Utility.util import canLoopOver, isStringLike
     
 class Node(object):
     _parent = None
+    _index_cache = None
 
     def __init__(self, parent):
         self._data= {}
-        self._index_cache = None
         self._setParent(parent)
             
     def __getstate__(self):
         dict = self.__dict__.copy()
         dict['_data'] = dict['_data'].copy()
         dict['_parent'] = None
+        dict['_registry'] = None
+        dict['_index_cache'] = None
         return dict
 
     def __setstate__(self, dict):
