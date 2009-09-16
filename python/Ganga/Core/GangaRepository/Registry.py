@@ -51,7 +51,7 @@ def makeRepository(registry):
     elif registry.type in ["Transient"]:
         return GangaRepository(registry)
     else:
-        raise RegistryError(msg = "Repository %s: Unknown repository type %s" % (registry.name, registry.type))
+        raise RegistryError("Repository %s: Unknown repository type %s" % (registry.name, registry.type))
 
 class Registry(object):
     """Ganga Registry
