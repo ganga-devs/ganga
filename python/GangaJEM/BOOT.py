@@ -14,7 +14,7 @@ def JEMlisteners(jobs = None):
     """
     from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import JobRegistryInterface
     if not jobs or not isinstance(jobs, JobRegistryInterface):
-        return "Usage: JEMstatus(jobs)"
+        return "Usage: JEMlisteners(jobs)"
 
     s = "\nJEM listener status summary\n" \
       + "#" + "fqid".rjust(5) \

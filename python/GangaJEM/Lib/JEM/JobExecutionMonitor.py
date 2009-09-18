@@ -292,6 +292,7 @@ class JobExecutionMonitor(GangaObject):
     _name = 'JobExecutionMonitor'   # GPI-public classname
 
     _exportmethods = ['getStatus', 'getMetrics', 'listExceptions', 'listCommands', 'showException', 'showCommand',\
+                      'peek',\
                       'extractLogfiles', 'getListenerLog', 'watch', 'abortWatch', 'plotMetrics', 'waitForRealStart',\
                       '_getListenerPid', '_getServerPid', '_getServerPort', '_getServerStatus', '_hasUserAppStarted']
 
@@ -416,20 +417,25 @@ class JobExecutionMonitor(GangaObject):
                 orderString = "first "
             else:
                 orderString = "last "
-            s = PrettyStrings.makeHeader("listing exceptions (" + orderString + str(n) + ", skipping " + str(start - 1) + ")")
+            s = ""
             l = self.__seekJMDinfo("EXCEPTION", n, start, ascending)
             z = start
             for data in l:
-                s += "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " : "
+                ss = "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " : "
 
                 if data.has_key("Error"):
-                    s += data["Error"][:48]
+                    ss += data["Error"][:48]
                 else:
-                    s += "unknown error"
+                    ss += "unknown error"
 
-                s += " in " + PrettyStrings.formatLocation(data) + "\n"
-
+                ss += " in " + PrettyStrings.formatLocation(data) + "\n"
+                if ascending:
+                    s += ss
+                else:
+                    s = ss + s
                 z += 1
+
+            s = PrettyStrings.makeHeader("listing exceptions (" + orderString + str(n) + ", skipping " + str(start - 1) + ")") + s
             logger.info(s)
 
 
@@ -448,42 +454,47 @@ class JobExecutionMonitor(GangaObject):
                 orderString = "first "
             else:
                 orderString = "last "
-            s = PrettyStrings.makeHeader("listing commands (" + orderString + str(n) + ", skipping " + str(start - 1) + ")")
+            s = ""
             l = self.__seekJMDinfo("COMMAND", n, start, ascending)
             z = start
             for data in l:
-                s += "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " : "
+                ss = "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " : "
                 if data.has_key("SubType"):
                     if data["SubType"] == "CALL":
-                        s += "call to ".ljust(16)
-                        s += PrettyStrings.formatLocation(data)
+                        ss += "call to ".ljust(16)
+                        ss += PrettyStrings.formatLocation(data)
                     elif data["SubType"] == "RETURN":
-                        s += "return from ".ljust(16)
-                        s += PrettyStrings.formatLocation(data)
+                        ss += "return from ".ljust(16)
+                        ss += PrettyStrings.formatLocation(data)
                     elif data["SubType"] == "BUILTIN":
-                        s += "built-in cmd: ".ljust(16)
+                        ss += "built-in cmd: ".ljust(16)
                         if data.has_key("M1"):
-                            s += PrettyStrings.formatString(data["M1"], 64)
+                            ss += PrettyStrings.formatString(data["M1"], 64)
                         else:
-                            s += "<unknown>"
+                            ss += "<unknown>"
                     elif data["SubType"] == "EXTERNAL":
-                        s += "command: ".ljust(16)
+                        ss += "command: ".ljust(16)
                         if data.has_key("M1"):
-                            s += PrettyStrings.formatString(data["M1"], 64)
+                            ss += PrettyStrings.formatString(data["M1"], 64)
                         else:
-                            s += "<unknown>"
+                            ss += "<unknown>"
                     elif data["SubType"] == "SYNTAX":
-                        s += "script expr: ".ljust(16)
+                        ss += "script expr: ".ljust(16)
                         if data.has_key("M1"):
-                            s += PrettyStrings.formatString(data["M1"], 64)
+                            ss += PrettyStrings.formatString(data["M1"], 64)
                         else:
-                            s += "<unknown>"
+                            ss += "<unknown>"
                     else:
-                        s += "misc event"
+                        ss += "misc event"
                 else:
-                    s += "misc event"
-                s += "\n"
+                    ss += "misc event"
+                ss += "\n"
+                if ascending:
+                    s += ss
+                else:
+                    s = ss + s
                 z += 1
+            s = PrettyStrings.makeHeader("listing commands (" + orderString + str(n) + ", skipping " + str(start - 1) + ")") + s
             logger.info(s)
 
 
@@ -680,6 +691,51 @@ class JobExecutionMonitor(GangaObject):
                 logger.warn("No such command")
 
 
+    def peek(self, n = 20, start = 1, ascending = False, mode="stdout"):
+        """
+        This method peeks into the job's output in almost real-time. Output can
+        be stdout or stderr-output. Note: The peek-option of JEM must be acti-
+        vated, and peeking is not always possible!
+
+        @param n: how many lines to list. default = 20
+        @param start: the list begins at the start-th line. default = 1
+        @param ascending: wether to start at the beginning of the list. default = False
+        @param mode: Chooses what output channel to peek ("stdout" or "stderr"). default = "stdout"
+        """
+        if mode != "stderr" and mode != "stdout":
+            mode = "stdout"
+        if self.__checkStatus():
+            if ascending:
+                orderString = "first "
+            else:
+                orderString = "last "
+
+            if mode == "stdout":
+                ptype = "OUTPEEKLINE"
+            else:
+                ptype = "ERRPEEKLINE"
+
+            s = ""
+
+            l = self.__seekJMDinfo(ptype, n, start, ascending)
+            z = start
+            for data in l:
+                ss = "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " | "
+                if data.has_key("M1"):
+                    ss += PrettyStrings.formatString(data["M1"], 128)
+                ss += "\n"
+
+                if ascending:
+                    s += ss
+                else:
+                    s = ss + s
+
+                z += 1
+
+            s = PrettyStrings.makeHeader("peeking at output (" + orderString + str(n) + " of " + mode + ", skipping " + str(start - 1) + ")") + s
+            logger.info(s)
+
+
     def extractLogfiles(self):
         """
         Extract the stdout.gz and stderr.gz for the user
@@ -866,7 +922,7 @@ class JobExecutionMonitor(GangaObject):
                 if type(job.backend.id) == type([]):
                     logger.debug("Multiple backend ids detected - use the 1st (?)")
                     self.jobID = str(job.backend.id[0])
-                else: 
+                else:
                     self.jobID = str(job.backend.id)
         return self.jobID
 
