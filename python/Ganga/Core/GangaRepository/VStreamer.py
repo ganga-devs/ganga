@@ -5,9 +5,9 @@
 ################################################################################
 
 # dump object (job) to file f (or stdout)
-def to_file(j,f=None):
+def to_file(j,f=None,ignore_subs=''):
     #vstreamer = VStreamer(out=f,selection='subjobs')#FIXME: hardcoded subjobs handling
-    vstreamer = VStreamer(out=f,selection='')
+    vstreamer = VStreamer(out=f,selection=ignore_subs)
     vstreamer.begin_root()
     j.accept(vstreamer)
     vstreamer.end_root()

@@ -18,20 +18,20 @@ from Ganga.Core.GangaRepository.PickleStreamer import from_file as pickle_from_f
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
 
-def safe_save(fn,obj,to_file):
+def safe_save(fn,obj,to_file,ignore_subs=''):
     """Writes a file safely, raises IOError on error"""
     try:
         file(fn)
     except IOError:
         # file does not exist, so make it fast!
         try:
-            to_file(obj, file(fn,"w"))
+            to_file(obj, file(fn,"w"), ignore_subs)
             return
         except IOError, e:
             raise IOError("Could not write file %s (%s)" % (fn,e))
     try:
         tmpfile = open(fn + ".new", "w")
-        to_file(obj, tmpfile)
+        to_file(obj, tmpfile, ignore_subs)
         # Important: Flush, then sync file before renaming!
         tmpfile.flush()
         #os.fsync(tmpfile.fileno())
@@ -164,10 +164,7 @@ class GangaRepositoryLocal(GangaRepository):
                                 if e.errno != errno.EEXIST: 
                                     raise RepositoryError(self,"OSError: " + str(e))
                             safe_save(sfn, split_cache[i], self.to_file)
-                        obj._data[self.sub_split] = []
-                    safe_save(fn, obj, self.to_file)
-                    if split_cache:
-                        obj._data[self.sub_split] = split_cache
+                    safe_save(fn, obj, self.to_file, self.sub_split)
                     try:
                         ifn = os.path.dirname(fn) + ".index"
                         new_idx_cache = self.registry.getIndexCache(obj)
