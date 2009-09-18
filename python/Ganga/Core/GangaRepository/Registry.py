@@ -181,11 +181,14 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryLockError
         Raise ObjectNotInRegistryError"""
-        self._write_access(obj)
-        id = self.find(obj)
         if not auto_removed and "remove" in obj.__dict__:
             obj.remove()
         else:
+            id = self.find(obj)
+            try:
+                self._write_access(obj)
+            except RegistryKeyError:
+                logger.warning("Object #%i was already deleted from registry '%s'!"%(id,self.name))
             logger.debug('deleting the object %d from the registry %s',id,self.name)
             self._lock.acquire()
             try:

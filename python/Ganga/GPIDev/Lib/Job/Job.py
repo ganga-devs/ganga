@@ -15,6 +15,7 @@ logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility.logging import log_user_exception
 
 from Ganga.Core import GangaException
+from Ganga.Core.GangaRepository import RegistryKeyError
 
 class JobStatusError(GangaException):
     def __init__(self,*args):
@@ -695,7 +696,13 @@ class Job(GangaObject):
             logger.info(msg)
             raise JobError(msg)
 
-        self._getWriteAccess()
+        try:
+            self._getWriteAccess()
+        except RegistryKeyError:
+            if self._registry:
+                self._registry._remove(self,auto_removed=1)
+            return 
+            
         
         if self.status in ['submitted','running']:
             try:
