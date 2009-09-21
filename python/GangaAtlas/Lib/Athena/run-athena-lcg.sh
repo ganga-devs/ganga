@@ -168,6 +168,12 @@ fi
 detect_setype
 
 #################################################
+# Set Access Info 
+# Set DQ2_LOCAL_SITE_ID and DQ2_LOCAL_PROTOCOL
+
+access_info
+
+#################################################
 # Fix of broken DCache ROOT access in 12.0.x
 if [ -e libDCache.so ] && [ n$GANGA_SETYPE = n'DCACHE' ] &&  [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] 
 then

@@ -1014,3 +1014,14 @@ athena_compile()
     return $retcode
  
 }
+
+## Unpack access_info pickle
+access_info()
+{
+    if [ -e access_info.pickle ]
+    then
+	export DATASETTYPE=`./access_info.py -t`
+	export DQ2_LOCAL_PROTOCOL=`./access_info.py -p`
+    fi
+
+}

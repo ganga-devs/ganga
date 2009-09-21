@@ -376,7 +376,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
     # Create TURL map
     tUrlMap = {}
     for lfn, surl in guidReplicas.iteritems():
-        if configLOCALPROTOCOL in [ "dcap", 'Xrootd', 'gsidcap' ]:
+        if configLOCALPROTOCOL in [ "dcap", 'gsidcap', 'Xrootd', 'root' ]:
             match = re.search('^[^:]+://([^:/]+):*\d*/', surl)
             try:
                 sURLHost = match.group(1)
@@ -389,9 +389,8 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     pfn = 'gfal:'+surl
                 else:
                     pfn = surl
-                
+
             if configLOCALPROTOCOL == "dcap" and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
-                
                 pfn = re.sub('srm://','dcap://',pfn)
                 # Hack for ccin2p3
                 pfn = re.sub('ccsrm','ccdcapatlas',pfn)
@@ -407,16 +406,17 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     pfn = re.sub('/atlas/users/','//pnfs/sfu.ca/data/atlas/users/',pfn)
                     pfn = re.sub('22125/atlas/','22125//pnfs/sfu.ca/data/atlas/',pfn)
                     
-            elif configLOCALPROTOCOL == "Xrootd":
+            elif configLOCALPROTOCOL in [ "root", "Xrootd" ] and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
                 pfn = re.sub('srm://','root://',pfn)
                 # Hack for ccin2p3
                 pfn = re.sub('ccsrm','ccxroot',pfn)
                 pfn = re.sub('ccdcamli01','ccxroot',pfn)
                 pfn = re.sub(':1094',':1094/',pfn)
 
-            elif configLOCALPROTOCOL == "gsidcap":
+            elif configLOCALPROTOCOL == "gsidcap" and stUrlMap.has_key(sURLHost):
                 pfn = re.sub('srm://','gfal:gsidcap://',pfn)
                 pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
+                pfn = re.sub('gfal:gfal:','gfal:',pfn)
 
         elif (configLOCALPROTOCOL == "rfio" and configSTORAGEROOT == '/castor') \
                  or localsitesrm.find('gla.scotgrid.ac.uk')>-1:
@@ -1241,8 +1241,7 @@ if __name__ == '__main__':
                 if not detsetype:
                     print 'VO_ATLAS_DEFAULT_SE: %s' %os.environ['VO_ATLAS_DEFAULT_SE']
 
-        if os.environ.has_key('VO_ATLAS_DEFAULT_SE') and not os.environ.has_key('DQ2_LOCAL_PROTOCOL'):
-            
+        if os.environ.has_key('VO_ATLAS_DEFAULT_SE') and ( not os.environ.has_key('DQ2_LOCAL_PROTOCOL') or configLOCALPROTOCOL==''):
             cmd = 'lcg-info --list-se --query SE=$VO_ATLAS_DEFAULT_SE --attr Protocol --sed'
             rc, out = commands.getstatusoutput(cmd)
             out2 = out.split('%')

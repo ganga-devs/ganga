@@ -57,6 +57,11 @@ def _loadCESEInfo():
             result['blacklist'] = pickle.load(input)
         except EOFError:
             result['blacklist'] = []
+        try:
+            result['access_info'] = pickle.load(input)
+        except EOFError:
+            result['access_info'] = []
+            
         input.close()
     except Exception:
         logger.error('Cannot read CE-SE association from file.')
@@ -110,6 +115,10 @@ def _downloadCESEInfo():
             result['blacklist'] = pickle.load(input)
         except EOFError:
             result['blacklist'] = []
+        try:
+            result['access_info'] = pickle.load(input)
+        except EOFError:
+            result['access_info'] = []
         input.close()
     except Exception, e:
         logger.error(e)
@@ -120,7 +129,7 @@ def _downloadCESEInfo():
     local.write(data)
     local.close()
     os.chmod(CESEInfoLocal,S_IRUSR | S_IWUSR)
-    
+
     return result
 
 def _refreshCESEInfo():
@@ -336,6 +345,16 @@ def getCloudInfo():
     
     return info
 
+def getAccessInfo(sitename=''):
+    """List prefered input access method of site"""
+
+    _refreshCESEInfo()
+
+    if CESEInfo['access_info'] and CESEInfo['access_info'].has_key(sitename):
+        return CESEInfo['access_info'][sitename]
+    else:
+        return []
+
 class AtlasLCGRequirements(LCGRequirements):
     '''LCG requirements for ATLAS.
 
@@ -359,7 +378,7 @@ class AtlasLCGRequirements(LCGRequirements):
 
     _category = 'LCGRequirements'
     _name = 'AtlasLCGRequirements'
-    _exportmethods = ['list_ce', 'list_se','list_sites','list_clouds', 'list_sites_cloud', 'cloud_from_sites' ]
+    _exportmethods = ['list_ce', 'list_se','list_sites','list_clouds', 'list_sites_cloud', 'cloud_from_sites', 'list_access_info' ]
 
     _cloudNameList = { 'TO' : 'CERN',
                        'IT' : 'ITALYSITES',
@@ -496,3 +515,31 @@ class AtlasLCGRequirements(LCGRequirements):
 
         return output
                                                
+    def list_access_info(self,sitename=''):
+
+        _refreshToACache()
+
+        if self.sites:
+            sitename = self.sites
+
+        if sitename.__class__.__name__ == 'str':
+            try:
+                site_info = ToACache.sites[sitename]
+                alternateName = site_info['alternateName'][-1].upper()
+            except:
+                alternateName = sitename
+            return { alternateName : getAccessInfo(alternateName) }
+        else:
+            info = {} 
+            for site in sitename:
+                try:
+                    site_info = ToACache.sites[site]
+                    alternateName = site_info['alternateName'][-1].upper()
+                except:
+                    alternateName = site
+                info[alternateName] = getAccessInfo(alternateName)
+            return info
+                
+                
+
+            
