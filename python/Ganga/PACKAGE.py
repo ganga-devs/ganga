@@ -92,7 +92,7 @@ def detectPlatform():
 
     # assume INTEL processors (i386, i686,x64), ignore IA64 architecture
     platf4 = { 32: 'slc4_ia32_gcc34', 64: 'slc4_amd64_gcc34'}
-    platf5 = { 32: 'i686-slc5-gcc34-opt', 64: 'x86_64-slc5-gcc34-opt'}
+    platf5 = { 32: 'i686-slc5-gcc43-opt', 64: 'x86_64-slc5-gcc43-opt'}
 
     # for older python versions use some tricks
     import sys
