@@ -21,8 +21,8 @@ _external_packages = {
                      'DQ2_ENDUSER_SETUP' : 'True',
                      'noarch':True 
                      },
-    'panda-client' : { 'version' : '0.1.87', 
-                       'PYTHONPATH':['lib/python2.3/site-packages'],
+    'panda-client' : { 'version' : '0.1.91', 
+                       'PYTHONPATH':['lib/python2.5/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
                        'noarch':True
