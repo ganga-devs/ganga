@@ -111,10 +111,6 @@ class JEMMonitoringServiceHandler(object):
             logger.debug("Job Execution Monitor is disabled or failed to initialize")
             return
 
-        if self.__job.info.monitor.realtime:
-            # try to find a free listening port for the HTTPSServer
-            self.__httpsListenPort = self.__tryFindFreeListeningPort()
-
 
     def prepare(self, subjobconfig):
         """
@@ -231,12 +227,26 @@ class JEMMonitoringServiceHandler(object):
         jemOutputBox += [WNConfig.COMPLETE_LOG]
 
         ####################################################
-        # apply to JEM-enabled subjobs
+        # listener-port-handling
 
         import sys
 
-        #import pprint
-        #pp = pprint.PrettyPrinter(width=40)
+        if self.__job.info.monitor.realtime:
+            try:
+                logger.debug("Let's see if we have a predefined port for the HTTPS listener...")
+                h,p = WNConfig.PUBLISHER_HTTPS_SERVER.split(":")
+                self.__httpsListenPort = int(p)
+                logger.debug("...yes! It's %d." % self.__httpsListenPort)
+            except:
+                logger.debug("...it doesn't seem so. (" + str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]) + ")")
+                self.__httpsListenPort = 0
+
+            if self.__httpsListenPort == 0:
+                # try to find a free listening port for the HTTPSServer
+                self.__httpsListenPort = self.__tryFindFreeListeningPort()
+
+        ####################################################
+        # apply to JEM-enabled subjobs
 
         try:
             for i, config in enumerate(subjobconfig):
