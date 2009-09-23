@@ -22,7 +22,7 @@
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
-_gangaVersion = "$Name: not supported by cvs2svn $"
+_gangaVersion = "$Name: Ganga-SVN $"
 
 import re
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!

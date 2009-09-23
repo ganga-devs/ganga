@@ -6,6 +6,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from LHCbDataFile import LHCbDataFile
 from LHCbDatasetUtils import *
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -35,7 +36,7 @@ class LHCbDataset(Dataset):
     _category = 'datasets'
     _name = "LHCbDataset"
     _exportmethods = ['updateReplicaCache','__len__','cacheOutOfDate',
-                      'hasLFNs']
+                      'hasLFNs','replicate','__getitem__','extend']
 
     def __init__(self, files=[]):
         super(LHCbDataset, self).__init__()
@@ -53,6 +54,22 @@ class LHCbDataset(Dataset):
         an object."""
         return True
 
+    def __getitem__(self,i):
+        if type(i) == type(slice(0)):
+            ds = LHCbDataset(files=self.files[i])
+            ds.datatype_string = self.datatype_string
+            ds.depth = self.depth
+            ds.cache_date = self.cache_date
+            ds.XMLCatalogueSlice = self.XMLCatalogueSlice
+            return GPIProxyObjectFactory(ds)
+        else:
+            return GPIProxyObjectFactory(self.files[i])
+
+    def _getFileNames(self):
+        names = []
+        for f in self.files: names.append(f.name)
+        return names
+        
     def cacheOutOfDate(self, maximum_cache_age=None):
         """Checks that the Dataset was updated less than maximum_cache_age
         minutes ago.
@@ -135,6 +152,34 @@ class LHCbDataset(Dataset):
             if f.isLFN(): return True
         return False
 
+    def replicate(self,destSE='',srcSE='',locCache=''):
+        '''Replicate all LFNs to destSE.  For a list of valid SE\'s, type
+        ds.replicate().'''
+        if not destSE:
+            self.files[0].replicate('')
+            return
+        if not self.hasLFNs():
+            raise GangaException('Cannot replicate dataset w/ no LFNs.')
+        for f in self.files:
+            if not f.isLFN(): continue
+            f.replicate(destSE,srcSE,locCache)
+
+    def extend(self,files,unique=False):
+        '''Extend the dataset. If unique, then only add files which are not
+        already in the dataset.'''        
+        if not hasattr(files,"__getitem__"):
+            raise GangaException('Argument "files" must be a iterable.')
+        names = self._getFileNames()
+        for f in files:
+            if type(f) is type(''):
+                if unique and f in names: continue
+                self.files.append(LHCbDataFile(name=f))
+            else:
+                if unique and f.name in names: continue
+                fcopy = LHCbDataFile(name=f.name)
+                fcopy.replicas = f.replicas
+                self.files.append(fcopy)
+        
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
@@ -145,9 +190,9 @@ def string_dataset_shortcut(v,item):
         
         for i in v:
             if type(i) is type(''):
-               f=LHCbDataFile()
-               f.name=i
-               l.append(f)
+                f=LHCbDataFile()
+                f.name=i
+                l.append(f)
         ds=LHCbDataset()
         ds.files=l[:]
         return ds       

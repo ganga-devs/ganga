@@ -300,6 +300,14 @@ class TagCommand:
         print
         print 'A global tag %(tag)s has been created in the SVN!'%CONFIG
 
+class SetVerCommand:
+    "SETVER: Mark relevant files with the release version number."
+
+    def do(self):
+	toolcmd('ganga-set-version %(tag)s'%CONFIG)
+        print
+        print ''
+
 class ReleaseCommand:
     "RELEASE: make a release based on a previously created GLOBAL TAG and create the distribution kits"
 
@@ -522,7 +530,7 @@ def _setlib():
 
 _setlib()
 
-commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, CommitConfigFilesCommand, PretestCommand, TestReportCommand, TagCommand, ReleaseCommand, PrepareNextRelease, QuitCommand]
+commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, CommitConfigFilesCommand, PretestCommand, TestReportCommand, TagCommand, SetVerCommand, ReleaseCommand, PrepareNextRelease, QuitCommand]
 
 ShowConfig().do()
 

@@ -80,13 +80,17 @@ class MSGMS(IMonitoringService):
         return msg
 
     def getJobInfo(self): # more detailed message
-        if self.job_info.master is None:
+        if self.job_info.master is None: # no master job; this job is not splitjob
             ganga_job_id = str(self.job_info.id)
-        else:
+            ganga_job_uuid = self.job_info.info.uuid
+            ganga_master_uuid = 0 
+        else: # there is a master job; we are in a subjob
             ganga_job_id = str(self.job_info.master.id) + '.' + str(self.job_info.id)
+            ganga_job_uuid = self.job_info.info.uuid
+            ganga_master_uuid = self.job_info.master.info.uuid
 
-        return { 'ganga_job_uuid' : self.ganga_job_uuid
-               , 'ganga_job_master_uuid' : 0
+        return { 'ganga_job_uuid' : ganga_job_uuid
+               , 'ganga_master_uuid' : ganga_master_uuid 
                , 'ganga_user_repository' : getConfig('Configuration')['user']
                                            + '@' + getConfig('System')['GANGA_HOSTNAME']
                                            + ':' + getConfig('Configuration')['gangadir']
@@ -163,13 +167,15 @@ class MSGMS(IMonitoringService):
         #    if self.job_info.id == 0: sendJobSubmitted( msg ) #len(self.job_info.master.subjobs) -> number of subjobs
 
         # send 'submitted' message from all jobs
-        if self.job_info.master is None:
-            pass
-        else:
+        if self.job_info.master is not None:
             if self.job_info.id == 0:
                 masterjob_msg = self.getJobInfo()
+                masterjob_msg['event'] = 'submitted'
                 masterjob_msg['subjobs'] = len(self.job_info.master.subjobs)
                 masterjob_msg['ganga_job_id'] = str(masterjob_msg['ganga_job_id']).split('.')[0]
+                # override ganga_job_uuid as the message 'from the master' is really sent from the subjob
+                masterjob_msg['ganga_job_uuid'] = masterjob_msg['ganga_master_uuid']
+                masterjob_msg['ganga_master_uuid'] = 0
                 sendJobSubmitted( masterjob_msg )
 
         #1. send job submitted message with more detailed info

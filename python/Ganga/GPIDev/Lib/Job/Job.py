@@ -631,6 +631,7 @@ class Job(GangaObject):
                     registry = self._getRegistry()
                     registry.repository.registerJobs(self.subjobs, self)
                     for j in self.subjobs:
+                        j.info.uuid = Ganga.Utility.guid.uuid()
                         j._setRegistry(registry)
                         j.status='new'
                         j._init_workspace()                        

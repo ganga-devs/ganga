@@ -79,6 +79,10 @@ def detectPlatform():
 
     Comments about current implementations:
 
+    SLC5 platform is detected using platform module.
+
+    If it's not SLC5 then:
+
     We assume that 64 bit python implies the slc4, amd64 system.
     We assume that 32 bit python implies the slc4, ia32 system.
 
@@ -86,8 +90,9 @@ def detectPlatform():
     
     """
 
-    # assume INTEL processors (i386, i686), ignore IA64 architecture
-    platforms = { 32: 'slc4_ia32_gcc34', 64: 'slc4_amd64_gcc34'}
+    # assume INTEL processors (i386, i686,x64), ignore IA64 architecture
+    platf4 = { 32: 'slc4_ia32_gcc34', 64: 'slc4_amd64_gcc34'}
+    platf5 = { 32: 'i686-slc5-gcc43-opt', 64: 'x86_64-slc5-gcc43-opt'}
 
     # for older python versions use some tricks
     import sys
@@ -97,7 +102,20 @@ def detectPlatform():
     else:
         arch = 32
 
-    return platforms[arch]
+    platfstring = platf4
+    
+    try:
+        import platform
+        import re
+        c = re.compile('\S+-redhat-(?P<ver>\S+)-\S+')
+        r = c.match(platform.platform())
+        print r.groups()
+        if r and r.group('ver').split('.')[0] == '5':
+            platfstring = platf5
+    except ImportError:
+        pass
+
+    return platfstring[arch]
 
 
 # guess defaults if not defined

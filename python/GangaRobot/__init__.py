@@ -80,3 +80,4 @@ def _initconfig():
 
 def loadPlugins(config={}):
     _initconfig()
+# SVN 
