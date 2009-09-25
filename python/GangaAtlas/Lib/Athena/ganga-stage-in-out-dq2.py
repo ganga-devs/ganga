@@ -1507,7 +1507,7 @@ if __name__ == '__main__':
                 
                 if (rc!=0):
                     print "ERROR: error during CollListFileGUID. Restoring original environment variables and retrying...."                    
-                    cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd
+                    cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP_ATH ; export PATH=$PATH_BACKUP_ATH; export PYTHONPATH=$PYTHONPATH_BACKUP_ATH ; ' + cmd
                     print "Calling " + cmd
                     rc, out = getstatusoutput(cmd)
                     print out
