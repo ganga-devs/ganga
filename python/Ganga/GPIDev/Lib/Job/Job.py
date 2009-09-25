@@ -608,6 +608,7 @@ class Job(GangaObject):
             self.updateStatus('submitting')
 
             try:
+                #NOTE: this commit is redundant if updateStatus() is used on the line above
                 self._commit()
             except Exception,x:
                 msg = 'cannot commit the job %s, submission aborted'%self.id
@@ -662,7 +663,7 @@ class Job(GangaObject):
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
             self.info.increment()
             self.updateStatus('submitted') # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
-            self._commit() # make sure that the status change goes to the repository
+            self._commit() # make sure that the status change goes to the repository, NOTE: this commit is redundant if updateStatus() is used on the line above
 
             return 1
         except Exception,x:
