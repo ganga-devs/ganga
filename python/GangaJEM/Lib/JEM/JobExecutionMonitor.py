@@ -923,7 +923,8 @@ class JobExecutionMonitor(GangaObject):
                 logger.debug("Detected localhost-backend; created jobID \"" + self.jobID + "\"")
             else:
                 if type(job.backend.id) == type([]):
-                    logger.debug("Multiple backend ids detected ('" + str(job.backend.id) + "') - use the 1st (?)")
+                    if len(job.backend.id) > 1:
+                        logger.debug("Multiple backend ids detected: " + str(job.backend.id) + " - I'll just use the 1st... (?)")
                     self.jobID = str(job.backend.id[0])
                 else:
                     self.jobID = str(job.backend.id)

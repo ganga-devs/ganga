@@ -31,7 +31,7 @@ passing the callbacks to here.
     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
     OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import os, sys, re, socket, getpass
+import os, sys, re, socket, getpass, time
 
 from Ganga.Utility.logging import getLogger, logging
 from Ganga.Utility.Config import getConfig
@@ -92,6 +92,7 @@ class JEMMonitoringServiceHandler(object):
         """
         self.__job = job
         self.__httpsListenPort = 0
+        self.__monitoredSubjobs = []
 
 
     def submitting(self):
@@ -99,19 +100,7 @@ class JEMMonitoringServiceHandler(object):
         This method is called by Job() via IMonitoringService when the job is about to be
         submitted / started.
         """
-        # dont react on subjobs...
-        if self.__job.master:
-            return
-
-        logger.debug("Job " + str(self.__job.id) + " is being submitted.")
-
-        if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
-            logger.debug("Job " + str(self.__job.id) + " has no JobExecutionMonitor-instance set.")
-            return
-
-        if not JEMloader.INITIALIZED:
-            logger.debug("Job Execution Monitor is disabled or failed to initialize")
-            return
+        pass # at the moment, everything is done in prepare()... TBD
 
 
     def prepare(self, subjobconfig):
@@ -247,10 +236,13 @@ class JEMMonitoringServiceHandler(object):
         ####################################################
         # apply to JEM-enabled subjobs
 
+        self.__monitoredSubjobs = []
         try:
             for i, config in enumerate(subjobconfig):
                 if (i == 0) or (i % jemconfig['JEM_MONITOR_SUBJOBS_FREQ'] == 0):
-                    logger.debug("Enabling JEM realtime monitoring for job " + self.__getFullJobId() + ". Config:" + str(i))
+                    logger.debug("Enabling JEM realtime monitoring for job #" + self.__getFullJobId() + "." + str(i))
+
+                    self.__monitoredSubjobs += [i]
 
                     # as we're replacing the executable with our wrapper script, the executable has to be
                     # seperately put into the input sandbox!
@@ -297,7 +289,7 @@ class JEMMonitoringServiceHandler(object):
                     config.processValues()
 
                     ## DEBUG OUTPUT #################################################################
-                    s =  ""                                                                         #
+                    s =  "Config for #" + self.__getFullJobId() + "." + str(i) + ":"                #
                     s += "\n    exe = " + str(config.exe)                                           #
                     s += "\n   args = " + str(config.args)                                          #
                                                                                                     #
@@ -322,14 +314,46 @@ class JEMMonitoringServiceHandler(object):
                     s += "\n          ]"                                                            #
                     logger.debug(s)                                                                 #
                     #################################################################################
+            logger.debug("Monitored subjobs: " + str(self.__monitoredSubjobs))
         except:
             ei = sys.exc_info()
             logger.error("  error occured: " + str(ei[0]) + ": " + str(ei[1]))
 
 
     def submit(self):
-        logger.debug("Job " + self.__getFullJobId() + " has been submitted.")
-        self.__startJobListener()
+        # no action for subjobs...
+        if self.__job.master:
+            return
+
+        if self.__job.subjobs and len(self.__job.subjobs) > 0:
+            # HACK: If we are a split job, we have to wait for the subjobs to be assigned
+            #       their backend-id (JobID) before we can start the Job-Listener process
+            from Ganga.Core.GangaThread import GangaThread
+            class WaitForJobIDsThread(GangaThread):
+                def __init__(self, job, callback):
+                    GangaThread.__init__(self, name='wait_for_jobID_thread')
+                    self.__job = job
+                    self.__callback = callback
+                    self.setDaemon(True)
+        
+                def run(self):
+                    logger.debug("started thread waiting for subjob-ids of job #" + str(self.__job.id))
+                    while not self.should_stop():
+                        if self.__job.subjobs[0].backend.id != "":
+                            # yay!
+                            logger.debug("Job " + str(self.__job.id) + " has been submitted.")
+                            self.__callback()
+                            break
+                        else:
+                            time.sleep(0.25)
+                    logger.debug("thread waiting for subjob-ids of job #" + str(self.__job.id) + " exits")
+                    self.unregister()
+            
+            self.__waitForJobIDsThread = WaitForJobIDsThread(self.__job, self.__startJobListener)
+            self.__waitForJobIDsThread.start()
+        else:
+            logger.debug("Job " + self.__getFullJobId() + " has been submitted.")
+            self.__startJobListener()
 
 
     def user_app_start(self):
@@ -342,6 +366,10 @@ class JEMMonitoringServiceHandler(object):
 
 
     def complete(self, cause):
+        # no action for subjobs...
+        if self.__job.master:
+            return
+
         logger.debug("Job " + self.__getFullJobId() + " has completed. Status: " + cause)
         self.__stopJobListener()
         if cause != "failed":
@@ -561,18 +589,36 @@ class JEMMonitoringServiceHandler(object):
 
         try:
             jobID = self.__job.info.monitor.getJobID()
-            logger.debug('Trying to launch JEM realtime monitoring listener process')
-            logger.debug('   for job with id "%s"' % jobID)
+            
+            # debug output ##############################################################
+            logger.debug('Trying to launch JEM realtime monitoring listener process')   #
+                                                                                        #
+            s = '  for job with id "%s"' % jobID                                       #
+            if self.__job.subjobs and len(self.__job.subjobs) > 0:                      #
+                s += ' (%d subjobs)' % len(self.__job.subjobs)                          #
+            logger.debug(s)                                                             #
+                                                                                        #
+            for i, sj in enumerate(self.__job.subjobs):                                 #
+                s = "  * subjob %d: backend id %s" % (i, str(sj.backend.id))            #
+                if i in self.__monitoredSubjobs:                                        #
+                    s += " [M]"                                                         #
+                logger.debug(s)                                                         #
+            #############################################################################
 
             # the job listener executable now lies in a subdir of the JEM package path.
             executable = JEMloader.JEM_PACKAGEPATH + os.sep + 'JEMganga' + os.sep + 'LiveMonitoring.py'
-            args = [executable, jobID] #, middleware]
+            args = [executable]
             if self.__httpsListenPort != 0:
-                args += [str(self.__httpsListenPort)]
+                args += ["--https-port", str(self.__httpsListenPort)]
                 self.__job.info.monitor.port = self.__httpsListenPort
+            args += [jobID]
+            
+            # further job IDs (subjob IDs)
+            for i, sj in enumerate(self.__job.subjobs):
+                if i in self.__monitoredSubjobs:
+                    args += [str(sj.backend.id)]
 
             try:
-                #logger.debug('Spawning ' + executable + ' ' + str(args))
                 self.__job.info.monitor.pid = os.spawnve(os.P_NOWAIT, executable, args, os.environ)
                 self.__job.info.monitor.jmdfile = WNConfig.LOG_DIR + os.sep + Utils.escapeJobID(jobID) + os.sep + UIConfig.PUBLISHER_JMD_FILE
             except Exception, r:
@@ -586,6 +632,7 @@ class JEMMonitoringServiceHandler(object):
 
             logger.info('JEM realtime monitoring listener started.')
             logger.debug('Listener process: PID %s' % self.__job.info.monitor.pid)
+            logger.debug('Listener arguments: ' + str(args))
             logger.debug('Logfiles: %s' % WNConfig.LOG_DIR + os.sep + Utils.escapeJobID(jobID))
 
             # start a watcher thread for this job.
