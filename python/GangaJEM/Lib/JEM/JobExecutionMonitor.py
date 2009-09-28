@@ -35,7 +35,7 @@ if __name__ == '__main__':
     print "Error: This module is not meant to be launched from the command line"
     sys.exit(1)
 
-import os, os.path, getpass, signal, stat, time, re, socket, threading, pprint, select
+import os, os.path, getpass, signal, stat, time, re, socket, pprint, select
 
 import PrettyStrings
 
@@ -46,6 +46,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Lib.File import File
 from Ganga.Utility.logging import getLogger, logging
 from Ganga.Utility.Config import makeConfig, getConfig, ConfigError
+from Ganga.Core.GangaThread import GangaThread
 
 
 ########################################################################################################################
@@ -286,7 +287,7 @@ class JobExecutionMonitor(GangaObject):
         'userAppRunning'         : SimpleItem(hidden=True, defvalue=False, protected=1, copyable=0,\
                                               doc='Has the user application on the WN started running yet?'),
         'watcherThread'          : SimpleItem(hidden=True, defvalue=None, protected=1, copyable=0, transient=1,\
-                                              typelist=['type(None)', 'JEMWatcherThread'],\
+                                              typelist=['type(None)', 'JEMWatcherThread'], load_default=0, optional=1,\
                                               doc='Internal watcher thread handle')
     })
 
@@ -1300,10 +1301,9 @@ class JobExecutionMonitor(GangaObject):
     ####################################################################################################################
     ### private types
 
-    class JEMWatcherThread(threading.Thread):
+    class JEMWatcherThread(GangaThread):
         def __init__(self, jemObject, jobID, gangaID, jmdfile):
-            threading.Thread.__init__(self)
-            self.stopThread = False
+            GangaThread.__init__(self, name='JEM watcher thread for job #' + str(gangaID))
             self.jemObject = jemObject
             self.gangaID = gangaID
             self.jmdfile = jmdfile
@@ -1311,9 +1311,12 @@ class JobExecutionMonitor(GangaObject):
             self.gotData = False
             self.setDaemon(True)
 
+        def __deepcopy__(self, memento):
+            return None # te he he!
+
         def run(self):
             logger.debug("started watcher thread for job " + str(self.gangaID))
-            while not self.stopThread:
+            while not self.should_stop():
                 if not self.gotData:
                     time.sleep(1)
                     try:
@@ -1328,7 +1331,4 @@ class JobExecutionMonitor(GangaObject):
                     self.jemObject.onWatcherThink()
 
             logger.debug("watcher thread of job " + str(self.gangaID) + " exits")
-
-        def stop(self):
-            self.stopThread = True
-
+            self.unregister()

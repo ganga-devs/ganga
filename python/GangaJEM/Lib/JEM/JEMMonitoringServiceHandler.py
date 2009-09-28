@@ -106,7 +106,7 @@ class JEMMonitoringServiceHandler(object):
         logger.debug("Job " + str(self.__job.id) + " is being submitted.")
 
         if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
-            logger.warning("Job " + str(self.__job.id) + " has no JobExecutionMonitor-instance")
+            logger.debug("Job " + str(self.__job.id) + " has no JobExecutionMonitor-instance set.")
             return
 
         if not JEMloader.INITIALIZED:
@@ -123,7 +123,7 @@ class JEMMonitoringServiceHandler(object):
         logger.debug("Job " + self.__getFullJobId() + " is being prepared.")
 
         if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
-            logger.warning("Job " + self.__getFullJobId() + " has no JobExecutionMonitor-instance")
+            logger.debug("Job " + self.__getFullJobId() + " has no JobExecutionMonitor-instance set.")
             return
 
         if not JEMloader.INITIALIZED:
