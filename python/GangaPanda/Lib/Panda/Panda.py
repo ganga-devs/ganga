@@ -134,13 +134,11 @@ def runPandaBrokerage(job):
                     if not libdslocation or site == libdslocation:
                         tmpSites.append(site)
     
-        print tmpSites 
         newTmpSites = []
         for site in tmpSites:
             if site not in job.backend.requirements.excluded_sites:
                 newTmpSites.append(site)
         tmpSites=newTmpSites
-        print tmpSites 
  
         if not tmpSites: 
             raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" % (job.backend.requirements.cloud,dataset,job.backend.libds))

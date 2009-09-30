@@ -143,6 +143,35 @@ get_remote_proxy () {
     voms-proxy-info -all
 }
 
+fix_gcc_issue_sl5 () {
+
+    # fix SL5 gcc/g++ problem - need to use version 3.4
+    RHREL=`cat /etc/redhat-release`
+    SC51=`echo $RHREL | grep -c 'Scientific Linux CERN SLC release 5'`
+    SC52=`echo $RHREL | grep -c 'Scientific Linux SL release 5'`
+
+    if [ $SC51 -gt 0 ] || [ $SC52 -gt 0 ]; then 
+        gcc34_path=`which gcc34`
+
+        if [ $? -eq 0 ]; then
+            if [ ! -d comp ]; then
+                mkdir comp
+            fi
+            ln -sf $gcc34_path comp/gcc
+        fi
+
+        gpp34_path=`which g++34`
+        if [ $? -eq 0 ]; then
+            if [ ! -d comp ]; then
+                mkdir comp
+            fi
+            ln -sf $gpp34_path comp/g++
+        fi
+
+        export PATH=$PWD/comp:$PATH
+    fi
+}
+
 ## function for fixing g2c/gcc issues on SLC3/SLC4 against
 ## ATLAS release 11, 12, 13 
 fix_gcc_issue () {
@@ -369,6 +398,12 @@ stage_inputs () {
 	    LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
 	    PATH_BACKUP=$PATH
 	    PYTHONPATH_BACKUP=$PYTHONPATH
+	    
+            # store athena env in case TAG needs it
+            export LD_LIBRARY_PATH_BACKUP_ATH=$LD_LIBRARY_PATH_BACKUP
+            export PATH_BACKUP_ATH=$PATH_BACKUP
+            export PYTHONPATH_BACKUP_ATH=$PYTHONPATH_BACKUP
+
 	    export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
 	    export PATH=$MY_PATH_ORG:$PATH_BACKUP
 	    export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
@@ -984,4 +1019,15 @@ athena_compile()
 
     return $retcode
  
+}
+
+## Unpack access_info pickle
+access_info()
+{
+    if [ -e access_info.pickle ]
+    then
+	export DATASETTYPE=`./access_info.py -t`
+	export DQ2_LOCAL_PROTOCOL=`./access_info.py -p`
+    fi
+
 }

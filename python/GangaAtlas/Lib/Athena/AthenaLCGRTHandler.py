@@ -459,9 +459,13 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         if app.atlas_environment:
             for var in app.atlas_environment:
-                vars=var.split('=')
-                if len(vars)==2:
-                    environment[vars[0]]=vars[1]
+                try:
+                    vars = re.match("^(\w+)=(.*)",var).group(1)
+                    value = re.match("^(\w+)=(.*)",var).group(2)
+                    environment[vars]=value
+                except:
+                    logger.warning('Athena.atlas_environment variable not correctly configured: %s', var)
+                    pass
 
         if app.atlas_production and app.atlas_release.find('12.')>=0 and app.atlas_project != 'AtlasPoint1':
             temp_atlas_production = re.sub('\.','_',app.atlas_production)
@@ -566,7 +570,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             requirements.software = ['VO-atlas-production-%s' % app.atlas_release ]
 
         #       add software requirement of dq2clients
-        if job.inputdata and job.inputdata.type in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease:
+        if job.inputdata and job.inputdata.type in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease or configDQ2['USE_ACCESS_INFO']:
             try:
                 # override the default one if the dq2client_version is presented 
                 # in the job backend's requirements object
@@ -586,6 +590,22 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             except:
                 logger.warning('Problems with the atlas_dbrelease configuration')
 
+
+        # Fill AtlasLCGRequirements access mode 
+        if configDQ2['USE_ACCESS_INFO']:
+            logger.warning("config['DQ2']['USE_ACCESS_INFO']=True - You are using the improved worker node input access method - make sure you are using at least athena version 15.0.0 or the latest FileStager tag !" )
+            import pickle, StringIO
+            #if job.backend.requirements.sites:
+            info = job.backend.requirements.list_access_info()
+            fileHandle = StringIO.StringIO()
+            pickle.dump(info,fileHandle)
+            fileHandle.seek(-1)
+            lines = fileHandle.read()
+            inputbox.append(FileBuffer( 'access_info.pickle', lines))
+            _append_files(inputbox, 'access_info.py')
+            if not 'make_filestager_joption.py' in [ os.path.basename(file.name) for file in inputbox ]:
+                _append_files(inputbox,'make_filestager_joption.py','dm_util.py','fs-copy.py')
+
 #       jobscript
 
         exe = os.path.join(__directory__,'run-athena-lcg.sh')
@@ -599,9 +619,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         ]
 
         ## retrieve the FileStager log
-        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type in ['FILE_STAGER']:
+        if configDQ2['USE_ACCESS_INFO'] or (job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type in ['FILE_STAGER']):
             outputbox += ['FileStager.out', 'FileStager.err']
-
+            
         if job.outputsandbox: outputbox += job.outputsandbox
 
         return LCGJobConfig(File(exe),inputbox,[],outputbox,environment,[],requirements) 

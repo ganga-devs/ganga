@@ -1,7 +1,7 @@
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Condor.py,v 1.8 2009-04-02 17:52:24 karl Exp $
+# $Id: Condor.py,v 1.8 2009/04/02 17:52:24 karl Exp $
 ###############################################################################
 # File: Condor.py
 # Author: K. Harrison
@@ -49,12 +49,16 @@
 #
 #               In script to be run on worker node, print warning if unable
 #               to find startup script pointed to by BASH_ENV
+#
+# KH - 090809 : Changed logic for updating job status to final value -
+#               Condor log file is now searched to check whether job
+#               is marked as "aborted" or "terminated"
 
 """Module containing class for handling job submission to Condor backend"""
 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "02 April 2009"
-__version__ = "2.4"
+__date__    = "09 August 2009"
+__version__ = "2.5"
 
 from CondorRequirements import CondorRequirements
 
@@ -486,24 +490,40 @@ class Condor( IBackend ):
                   jobDict[ id ].backend.actualCE = host
             jobDict[ id ].backend.cputime = cputime
          else:
-            printStatus = True
             jobDict[ id ].backend.status = ""
             outDir = jobDict[ id ].getOutputWorkspace().getPath()
-            stdoutPath = "".join( [ outDir, "stdout" ] )
-            jobStatus = "failed"
-            if os.path.isfile( stdoutPath ):
-              stdout = open( stdoutPath )
-              lineList = stdout.readlines()
-              stdout.close()
-              try:
-                exitLine = lineList[ -1 ]
-                exitCode = exitLine.strip().split()[ -1 ]
-              except IndexError:
-                exitCode = -1
-              if 0 == int( exitCode ):
-                jobStatus = "completed"
+            condorLogPath = "".join( [ outDir, "condorLog" ] )
+            checkExit = True
+            if os.path.isfile( condorLogPath ):
+              checkExit = False
+              condorLog = open( condorLogPath )
+              lineList = condorLog.readlines()
+              condorLog.close()
+              for line in lineList:
+                if -1 != line.find( "terminated" ):
+                  checkExit = True
+                  break 
+                if -1 != line.find( "aborted" ):
+                  checkExit = True
+                  break 
 
-            jobDict[ id ].updateStatus( jobStatus )
+            if checkExit:
+              printStatus = True
+              stdoutPath = "".join( [ outDir, "stdout" ] )
+              jobStatus = "failed"
+              if os.path.isfile( stdoutPath ):
+                stdout = open( stdoutPath )
+                lineList = stdout.readlines()
+                stdout.close()
+                try:
+                  exitLine = lineList[ -1 ]
+                  exitCode = exitLine.strip().split()[ -1 ]
+                except IndexError:
+                  exitCode = -1
+                if 0 == int( exitCode ):
+                  jobStatus = "completed"
+
+              jobDict[ id ].updateStatus( jobStatus )
 
          if printStatus:
             if jobDict[ id ].backend.actualCE:

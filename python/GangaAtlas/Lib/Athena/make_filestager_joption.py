@@ -90,8 +90,16 @@ if (io_type in ['FILE_STAGER']):
     # define the default gridcopy protocol
     my_protocol = 'lcgcp'
 
+    # check if DQ2_LOCAL_PROTOCOL is given: use the given protocol forcely
+    if os.environ.has_key('DQ2_LOCAL_PROTOCOL') and os.environ['DQ2_LOCAL_PROTOCOL']:
+        my_protocol = os.environ['DQ2_LOCAL_PROTOCOL']
+
+        # just to convert the protocol name into FileStager convention
+        if my_protocol in ['lcg-cp']:
+            my_protocol = 'lcgcp'
+
     # try to detect the available protocol if io_mode is 'local'
-    if io_mode in [ 'local' ]:
+    elif io_mode in [ 'local' ]:
         # determin the supported transfer protocols of the given SE
         protocols = dm_util.get_transfer_protocols(srm_endpt_info['se_host'])
         print >> sys.stdout, 'detected transfer protocols: %s' % repr(protocols)

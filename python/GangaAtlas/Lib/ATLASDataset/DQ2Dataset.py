@@ -1277,6 +1277,8 @@ config.addOption('USE_STAGEOUT_SUBSCRIPTION', False, 'Allow DQ2 subscription to 
 
 config.addOption('usertag','user09','user tag for a given data taking period')
 
+config.addOption('USE_ACCESS_INFO', False, 'Use automatic best choice of input dataset access mode provided by AtlasLCGRequirements.')
+
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
    

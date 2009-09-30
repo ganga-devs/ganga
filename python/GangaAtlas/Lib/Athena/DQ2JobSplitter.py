@@ -125,7 +125,7 @@ class DQ2JobSplitter(ISplitter):
                             info = job.backend.requirements.cloud_from_sites(locations[key])
 
                             for all_site in info:
-                                if not info[all_site] in avail_clouds[key]:
+                                if not info[all_site] in avail_clouds[key] and not info[all_site] in ['US', 'NG']:
                                     avail_clouds[key].append(info[all_site])
 
                         # perform logical AND to find a cloud that has all data

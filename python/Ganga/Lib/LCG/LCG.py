@@ -2,7 +2,7 @@ import LCG
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCG.py,v 1.40 2009-07-20 14:23:21 hclee Exp $
+# $Id: LCG.py,v 1.39 2009-07-16 10:39:27 hclee Exp $
 ###############################################################################
 #
 # LCG backend
@@ -17,6 +17,7 @@ import time
 import errno
 import socket
 import math
+import tempfile
 from types import *
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
@@ -113,7 +114,7 @@ class LCG(IBackend):
         'parent_id'           : SimpleItem(defvalue='',protected=1,copyable=0,hidden=1,doc='Middleware job identifier for its parent job'),
         'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
         'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
-        'middleware'          : SimpleItem(defvalue='GLITE',protected=0,copyable=1,doc='Middleware type',checkset='__checkset_middleware__'),
+        'middleware'          : SimpleItem(defvalue='EDG',protected=0,copyable=1,doc='Middleware type',checkset='__checkset_middleware__'),
         'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
         'exitcode_lcg'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
         'reason'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status'),
@@ -126,7 +127,7 @@ class LCG(IBackend):
 
     _category = 'backends'
     _name =  'LCG'
-    _exportmethods = ['check_proxy', 'loginfo', 'inspect']
+    _exportmethods = ['check_proxy', 'loginfo', 'inspect', 'match']
 
     _GUIPrefs = [ { 'attribute' : 'CE', 'widget' : 'String' },
                   { 'attribute' : 'jobtype', 'widget' : 'String_Choice', 'choices' : ['Normal', 'MPICH'] },
@@ -181,7 +182,7 @@ class LCG(IBackend):
 
         re_token = re.compile('^token:(.*):(.*)$')
 
-        self.sandboxcache.vo = grids[self.middleware.upper()].get_proxy().voname()
+        self.sandboxcache.vo = config['VirtualOrganisation']
         self.sandboxcache.middleware = self.middleware.upper()
         self.sandboxcache.timeout    = config['SandboxTransferTimeout']
 
@@ -416,7 +417,7 @@ class LCG(IBackend):
         mt  = self.middleware.upper()
 
         logger.warning('submitting %d subjobs ... it may take a while' % len(node_jdls))
-      
+        
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
 
@@ -442,10 +443,12 @@ class LCG(IBackend):
 
             def __make_collection_jdl__(self,nodeJDLFiles=[], offset=0):
                 '''Compose the collection JDL for the master job'''
-      
+   
+                nodes = ',\n'.join(map(lambda x:'[file = "%s";]' % x, nodeJDLFiles))
+   
                 jdl = {
                     'Type'  : 'collection',
-                    'VirtualOrganisation'  : grids[mt].get_proxy().voname(),
+                    'VirtualOrganisation'  : config['VirtualOrganisation'],
                     'Nodes' : ''
                 }
    
@@ -773,7 +776,117 @@ class LCG(IBackend):
             #return info 
         else:
             logger.debug('Getting logging info of job %s failed.' % job.getFQID('.'))
-            return None 
+            return None
+
+    def match(self):
+        '''Match the job against available grid resources'''
+
+        ## - grabe the existing __jdlfile__ for failed/completed jobs
+        ## - simulate the job preparation procedure (for jobs never been submitted)
+        ## - subjobs from job splitter are not created (as its not essential for match-making)
+        ## - create a temporary JDL file for match making
+        ## - call job list match
+        ## - clean up the job's inputdir
+
+        job = self.getJobObject()
+
+        ## check job status
+        if job.status not in ['new','submitted','failed','completed']:
+            msg = 'only jobs in \'new\', \'failed\', \'submitted\' or \'completed\' state can do match'
+            logger.warning(msg)
+            return
+
+        from Ganga.Core import ApplicationConfigurationError, JobManagerError, IncompleteJobSubmissionError
+
+        doPrepareEmulation = False
+
+        matches = []
+
+        mt = self.middleware.upper()
+
+        ## catch the files that are already in inputdir
+        existing_files = os.listdir(job.inputdir)
+
+        app = job.application
+
+        # select the runtime handler
+        from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+        try:
+            rtHandler = allHandlers.get(app._name,'LCG')()
+        except KeyError:
+            msg = 'runtime handler not found for application=%s and backend=%s'%(app._name,'LCG')
+            logger.warning(msg)
+            return
+
+        try:
+            logger.info('matching job %d' % job.id)
+
+            jdlpath = ''
+
+            ## try to pick up the created jdlfile in a failed job
+            if job.status in ['submitted','failed','completed']:
+
+                logger.debug('picking up existing JDL')
+
+                ## looking for existing jdl file
+                if job.master:  ## this is a subjob, take the __jdlfile__ in the job's dir
+                    jdlpath = os.path.join(job.inputdir,'__jdlfile__')
+                else:
+                    if len(job.subjobs) > 0: ## there are subjobs
+                        jdlpath = os.path.join(job.subjobs[0].inputdir, '__jdlfile__')
+                    else:
+                        jdlpath = os.path.join(job.inputdir,'__jdlfile__')
+
+            if not os.path.exists( jdlpath ):
+                jdlpath = ''
+
+            ## simulate the job preparation procedure
+            if not jdlpath:
+
+                logger.debug('emulating the job preparation procedure to create JDL')
+
+                doPrepareEmulation = True
+
+                appmasterconfig = app.master_configure()[1] # FIXME: obsoleted "modified" flag
+
+                ## here we don't do job splitting - presuming the JDL for non-splitted job is the same as the splitted jobs
+                rjobs = [job]
+
+                # configure the application of each subjob
+                appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
+
+                # prepare the master job with the runtime handler
+                jobmasterconfig = rtHandler.master_prepare(app,appmasterconfig)
+
+                # prepare the subjobs with the runtime handler
+                jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
+
+                # prepare masterjob's inputsandbox
+                master_input_sandbox = self.master_prepare(jobmasterconfig)
+
+                # prepare JDL
+                jdlpath = self.preparejob(jobsubconfig[0], master_input_sandbox)
+
+            logger.debug('JDL used for match-making: %s' % jdlpath)
+
+            # If GLITE, tell it whether to enable perusal
+            if mt=="GLITE":
+                grids[mt].perusable=self.perusable
+
+            matches = grids[mt].list_match(jdlpath, ce=self.CE)
+
+        except Exception, x:
+            logger.warning('job match failed: %s', str(x) )
+
+        ## clean up the job's inputdir
+        if doPrepareEmulation:
+            logger.debug('clean up job inputdir')
+            files = os.listdir(job.inputdir)
+            for f in files:
+                if f not in existing_files:
+                    os.remove( os.path.join(job.inputdir, f) )
+
+        return matches
 
     def submit(self,subjobconfig,master_job_sandbox):
         '''Submit the job to the grid'''
@@ -1429,11 +1542,10 @@ sys.exit(0)
             output_sandbox += [Sandbox.OUTPUT_TARBALL_NAME]
 
         ## compose LCG JDL
-        myvoname = grids[self.middleware.upper()].get_proxy().voname()
         jdl = {
-            'VirtualOrganisation' : myvoname,
+            'VirtualOrganisation' : config['VirtualOrganisation'],
             'Executable' : os.path.basename(scriptPath),
-            'Environment': {'GANGA_LCG_VO': myvoname, 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
+            'Environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
             'StdOutput' : 'stdout',
             'StdError' : 'stderr',
             'InputSandbox' : input_sandbox,
@@ -1816,7 +1928,7 @@ def __getVOFromConfigVO__(file):
 # configuration preprocessor : avoid VO switching
 def __avoidVOSwitch__(opt,val):
 
-    if not opt in ['ConfigVO']:
+    if not opt in ['VirtualOrganisation','ConfigVO']:
         # bypass everything irrelevant to the VO 
         return val
     elif opt == 'ConfigVO' and val == '':
@@ -1826,15 +1938,14 @@ def __avoidVOSwitch__(opt,val):
         # try to get current value of VO
         if config['ConfigVO']:
             vo_1 = __getVOFromConfigVO__(config['ConfigVO'])
-        elif grids['GLITE']:
-            vo_1 = grids['GLITE'].get_proxy().voname()
-        elif grids['EDG']:
-            vo_1 = grids['EDG'].get_proxy().voname()
         else:
-            vo_1 = ''
+            vo_1 = config['VirtualOrganisation']
 
         # get the VO that the user trying to switch to
-        vo_2 = __getVOFromConfigVO__(val)
+        if opt == 'ConfigVO':
+            vo_2 = __getVOFromConfigVO__(val)
+        else:
+            vo_2 = val
  
         # if the new VO is not the same as the existing one, raise ConfigError
         if vo_2 != vo_1:
@@ -1911,19 +2022,19 @@ config = makeConfig('LCG','LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')
 
 # set default values for the configuration parameters
-config.addOption('EDG_ENABLE',False,'enables/disables the support of the EDG middleware')
+config.addOption('EDG_ENABLE',True,'enables/disables the support of the EDG middleware')
 
 config.addOption('EDG_SETUP', '/afs/cern.ch/project/gd/LCG-share/current/etc/profile.d/grid_env.sh', \
                  'sets the LCG-UI environment setup script for the EDG middleware', \
                  filter=Ganga.Utility.Config.expandvars)
 
-config.addOption('GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
+config.addOption('GLITE_ENABLE', False, 'Enables/disables the support of the GLITE middleware')
 
 config.addOption('GLITE_SETUP', '/afs/cern.ch/project/gd/LCG-share/current/etc/profile.d/grid_env.sh', \
                  'sets the LCG-UI environment setup script for the GLITE middleware', \
                  filter=Ganga.Utility.Config.expandvars)
 
-#config.addOption('VirtualOrganisation','dteam','sets the name of the grid virtual organisation')
+config.addOption('VirtualOrganisation','dteam','sets the name of the grid virtual organisation')
 
 config.addOption('ConfigVO','','sets the VO-specific LCG-UI configuration script for the EDG resource broker', \
                  filter=Ganga.Utility.Config.expandvars)
@@ -1988,10 +2099,6 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 # $Log: not supported by cvs2svn $
-# Revision 1.39  2009/07/16 10:39:27  hclee
-# bugfix for https://savannah.cern.ch/bugs/?50048
-#  - RetryCount and ShallowRetryCount to 0 is now included in JDL
-#
 # Revision 1.38  2009/07/15 08:23:29  hclee
 # add resource match-making as an option before doing real job submission to WMS.
 #  - this option can be activated by setting config.LCG.MatchBeforeSubmit = True

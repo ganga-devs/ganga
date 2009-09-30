@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, sys, pwd, commands, re, shutil, urllib, time, string 
+import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -17,6 +17,7 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
 from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibFileSpecFromLibDS
+from Ganga.Core import BackendError
 
 # PandaTools
 from pandatools import Client
@@ -77,6 +78,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         else:
             self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,username,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
             self.library = '%s.lib.tgz' % self.libDataset
+            try:
+                Client.addDataset(self.libDataset,False)
+            except exceptions.SystemExit:
+                raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDataset,sys.exc_info()[0],sys.exc_info()[1]))
+
 
         # validate application
         if not app.atlas_release:
@@ -100,15 +106,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         # validate inputdata
         if job.inputdata:
-            if job.inputdata._name <> 'DQ2Dataset':
+            if job.inputdata._name == 'DQ2Dataset':
+                logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            else: 
                 raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
         else:
-            raise ApplicationConfigurationError(None,'Panda backend requires inputdata=DQ2Dataset()')
-        if not job.inputdata.dataset:
-            raise ApplicationConfigurationError(None,'You did not set DQ2Dataset().dataset')
-#        if len(job.inputdata.dataset) > 1:
-#            raise ApplicationConfigurationError(None,'Multiple input datasets not supported. Use a container dataset.')
-        logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            logger.info('Proceeding without an input dataset.')
 
         # validate outputdata
         today = time.strftime("%Y%m%d",time.localtime())
@@ -125,6 +128,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             logger.info('outputdata.datasetname must start with %s.%s.ganga. Prepending it for you.'%(usertag,username))
             job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
         logger.info('Output dataset %s',job.outputdata.datasetname)
+        try:
+            Client.addDataset(job.outputdata.datasetname,False)
+        except exceptions.SystemExit:
+            raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
 
         # handle different atlas_exetypes
         self.job_options = ''
@@ -214,8 +221,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.indexFiles   = 0
         self.indexCavern  = 0
         self.indexMin     = 0
+        self.indexBHalo   = 0
         self.indexBHaloA  = 0
         self.indexBHaloC  = 0
+        self.indexBGas    = 0
         self.indexBGasH   = 0
         self.indexBGasC   = 0
         self.indexBGasO   = 0
@@ -233,9 +242,22 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.indexStream2 = 0
         self.indexStreamG = 0
         self.indexBS      = 0
+        self.indexSelBS   = 0
         self.indexMeta    = 0
+        self.indexMS      = 0
 
         return jspec
+
+    # get maximum index
+    def getIndex(list,pattern):
+        maxIndex = 0
+        for item in list:
+            match = re.match(pattern,item)
+            if match != None:
+                tmpIndex = int(match.group(1))
+                if maxIndex < tmpIndex:
+                    maxIndex = tmpIndex
+        return maxIndex
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         '''prepare the subjob specific configuration'''
@@ -321,18 +343,19 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.addFile(flib)
 
 #       input files FIXME: many more input types
-        for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
-            finp = FileSpec()
-            finp.lfn            = lfn
-            finp.GUID           = guid
-#            finp.fsize =
-#            finp.md5sum =
-            finp.dataset        = job.inputdata.dataset[0]
-            finp.prodDBlock     = job.inputdata.dataset[0]
-            finp.dispatchDBlock = job.inputdata.dataset[0]
-            finp.type           = 'input'
-            finp.status         = 'ready'
-            jspec.addFile(finp)
+        if job.inputdata:
+            for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
+                finp = FileSpec()
+                finp.lfn            = lfn
+                finp.GUID           = guid
+                #            finp.fsize =
+                #            finp.md5sum =
+                finp.dataset        = job.inputdata.dataset[0]
+                finp.prodDBlock     = job.inputdata.dataset[0]
+                finp.dispatchDBlock = job.inputdata.dataset[0]
+                finp.type           = 'input'
+                finp.status         = 'ready'
+                jspec.addFile(finp)
 
 #       output files
         outMap = {}
@@ -497,6 +520,20 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(fout)
             outMap['BS'] = fout.lfn
 
+        if self.runConfig.output and self.runConfig.output.outSelBS:
+            self.indexSelBS += 1
+            fout = FileSpec()
+            fout.dataset           = job.outputdata.datasetname
+            fout.lfn               = '%s.%s._%05d.data' % (job.outputdata.datasetname,self.runConfig.output.outSelBS,self.indexSelBS)
+            fout.type              = 'output'
+            fout.destinationDBlock = jspec.destinationDBlock
+            fout.destinationSE     = jspec.destinationSE
+            jspec.addFile(fout)
+            outMap['BS'] = fout.lfn
+            if not 'IROOT' in outMap:  # this is not a typo!
+                outMap['IROOT'] = []
+            outMap['IROOT'].append(('%s.*.data' % self.runConfig.output.outSelBS,fout.lfn))
+
         if self.runConfig.output and self.runConfig.output.outStreamG:
             self.indexStreamG += 1
             for name in self.runConfig.output.outStreamG:
@@ -511,7 +548,77 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     outMap['StreamG'] = []
                 outMap['StreamG'].append((name,fout.lfn))
         
-        #FIXME: if options.outMeta != []:
+        if self.runConfig.output and self.runConfig.output.outMeta:
+            iMeta = 0
+            self.indexMeta += 1
+            for sName,sAsso in self.runConfig.output.outMeta:
+                foundLFN = ''
+                if sAsso == 'None':
+                    # non-associated metadata
+                    fout = FileSpec()
+                    fout.lfn  = '%s.META%s._%05d.root' % (job.outputdata.datasetname,iMeta,self.indexMeta)
+                    fout.type = 'output'
+                    fout.dataset = job.outputdata.datasetname
+                    fout.destinationDBlock = jspec.destinationDBlock
+                    fout.destinationSE = jspec.destinationSE
+                    jspec.addFile(fout)
+                    iMeta += 1
+                    foundLFN = fout.lfn
+                elif outMap.has_key(sAsso):
+                    # Stream1,2
+                    foundLFN = outMap[sAsso]
+                elif sAsso in ['StreamRDO','StreamESD','StreamAOD']:
+                    # RDO,ESD,AOD
+                    stKey = re.sub('^Stream','',sAsso)
+                    if outMap.has_key(stKey):
+                        foundLFN = outMap[stKey]
+                else:
+                    # general stream
+                    if outMap.has_key('StreamG'):
+                        for tmpStName,tmpLFN in outMap['StreamG']:
+                            if tmpStName == sAsso:
+                                foundLFN = tmpLFN
+                if foundLFN != '':
+                    if not outMap.has_key('Meta'):
+                        outMap['Meta'] = []
+                    outMap['Meta'].append((sName,foundLFN))
+
+        if self.runConfig.output and self.runConfig.output.outMS:
+            self.indexMS += 1
+            for sName,sAsso in self.runConfig.output.outMS:
+                fout = FileSpec()
+                fout.lfn  = '%s.%s._%05d.pool.root' % (job.outputdata.datasetname,sName,self.indexMS)
+                fout.type = 'output'
+                fout.dataset = job.outputdata.datasetname
+                fout.destinationDBlock = jspec.destinationDBlock
+                fout.destinationSE = jspec.destinationSE
+                jspec.addFile(fout)
+                if not outMap.has_key('IROOT'):
+                    outMap['IROOT'] = []
+                outMap['IROOT'].append((sAsso,fout.lfn))
+
+        if self.runConfig.output and self.runConfig.output.outUserData:
+            for sAsso in self.runConfig.output.outUserData:
+                # look for associated LFN
+                foundLFN = ''
+                if outMap.has_key(sAsso):
+                    # Stream1,2
+                    foundLFN = outMap[sAsso]
+                elif sAsso in ['StreamRDO','StreamESD','StreamAOD']:
+                    # RDO,ESD,AOD
+                    stKey = re.sub('^Stream','',sAsso)
+                    if outMap.has_key(stKey):
+                        foundLFN = outMap[stKey]
+                else:
+                    # general stream
+                    if outMap.has_key('StreamG'):
+                        for tmpStName,tmpLFN in outMap['StreamG']:
+                            if tmpStName == sAsso:
+                                foundLFN = tmpLFN
+                if foundLFN != '':
+                    if not outMap.has_key('UserData'):
+                        outMap['UserData'] = []
+                    outMap['UserData'].append(foundLFN)
 
 #       log files
 
@@ -551,7 +658,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(file)
             # set DBRelease parameter
             param += '--dbrFile %s ' % file.lfn
-        param += '-i "%s" ' % job.inputdata.names
+        if job.inputdata:    
+            param += '-i "%s" ' % job.inputdata.names
+        else:
+            param += '-i "[]" '
         param += '-m "[]" ' #%minList FIXME
         param += '-n "[]" ' #%cavList FIXME
         #FIXME

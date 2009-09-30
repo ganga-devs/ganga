@@ -26,10 +26,30 @@ class IMonitoringService:
         Called by: job wrapper. """
         return self.event('end',{'exitcode':exitcode})
 
+    def prepare(self,**opts):
+        """Preparation of a job.
+        Called by: ganga client. """
+        return self.event('prepare',{'job':self.job_info})
+
+    def submitting(self,**opts):
+        """Just before the submission of a job.
+        Called by: ganga client. """
+        return self.event('submitting',{'job':self.job_info})
+        
     def submit(self,**opts):
         """Submission of a job.
         Called by: ganga client. """
         return self.event('submit',{'job':self.job_info})
+
+    def complete(self,**opts):
+        """Completion of a job (successful or failed).
+        Called by: ganga client. """
+        return self.event('complete',{'job':self.job_info})
+
+    def rollback(self,**opts):
+        """Rollback of a job to new state (caused by error during submittage).
+        Called by: ganga client. """
+        return self.event('rollback',{'job':self.job_info})
 
     def getSandboxModules(self):
         """ Get the list of module dependencies of this monitoring module.
