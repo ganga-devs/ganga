@@ -73,8 +73,13 @@ if JEMloader.INITIALIZED:
 ########################################################################################################################
 class JEMMonitoringServiceHandler(object):
 
-    _freeportfinder = FreePortFinder()
+    _freeportfinder = None
     _instances = {}
+
+    try:
+        _freeportfinder = FreePortFinder()
+    except:
+        pass
 
     def getInstance(job):
         if not job in JEMMonitoringServiceHandler._instances:
@@ -366,28 +371,43 @@ class JEMMonitoringServiceHandler(object):
 
 
     def complete(self, cause):
-        # no action for subjobs...
-        if self.__job.master:
+        if self.__job.master: # subjobs
             return
+        else:
+            # main job
+            logger.debug("Job " + self.__getFullJobId() + " has completed. Status: " + cause)
+            self.__stopJobListener()
+            if cause != "failed":
+                if self.__job.info.monitor.extractLogfiles():
+                    # now that the job has finished and the logiles have been extracted,
+                    # we copy the full JMD log (if present) into our workspace (so all
+                    # the events can be inspected from within Ganga)
+                    if JEMloader.fpEnabled:
+                        logger.info("Copying the full log into the workspace...")
+    
+                        if os.path.exists(self.__job.info.monitor.jmdfile):
+                            try:
+                                os.system('mv ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.info.monitor.jmdfile + '.bak')
+                                try:
+                                    os.system('cp ' + self.__job.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile)
+                                    logger.debug("  OK, log of main job #" + str(self.__job.id) + " has been copied.")
+                                except:
+                                    # revert...
+                                    os.system('mv ' + self.__job.info.monitor.jmdfile + '.bak ' + self.__job.info.monitor.jmdfile)
+                            except:
+                                pass
 
-        logger.debug("Job " + self.__getFullJobId() + " has completed. Status: " + cause)
-        self.__stopJobListener()
-        if cause != "failed":
-            if self.__job.info.monitor.extractLogfiles():
-                # now that the job has finished and the logiles have been extracted,
-                # we copy the full JMD log (if present) into our workspace (so all
-                # the events can be inspected from within Ganga)
-                if JEMloader.fpEnabled:
-                    logger.info("Copying the full log into the workspace...")
-
-                    if os.path.exists(self.__job.info.monitor.jmdfile):
-                        try:
-                            os.system('mv ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.info.monitor.jmdfile + '.bak')
-                            os.system('cp ' + self.__job.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile)
-                        except:
-                            pass
-
-                    logger.info("...done. Inspecting the data now should display the whole available info.")
+                        logger.debug("  (now trying to copy the subjobs' logs)")
+                        
+                        for sj in self.__job.subjobs:
+                            if os.path.exists(sj.outputdir + "JEM_MON.jmd"):
+                                try:
+                                    os.system('cp ' + sj.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile + ".subjob." + str(sj.id))
+                                    logger.debug("  OK, log of subjob #" + str(self.__job.id) + "." + str(sj.id) + " has been copied.")
+                                except:
+                                    pass
+    
+                        logger.info("...done. Inspecting the data now should display the whole available info.")
 
 
     def rollback(self):
@@ -564,14 +584,15 @@ class JEMMonitoringServiceHandler(object):
         except:
             pass
 
-        logger.debug("Attempting to find a free listening port...")
-        try:
-            port = JEMMonitoringServiceHandler._freeportfinder.tryFindFreeListeningPort(retries)
-            if port:
-                logger.debug('Found free port: %d' % port)
-                return port
-        except:
-            pass
+        if JEMMonitoringServiceHandler._freeportfinder:
+            logger.debug("Attempting to find a free listening port...")
+            try:
+                port = JEMMonitoringServiceHandler._freeportfinder.tryFindFreeListeningPort(retries)
+                if port:
+                    logger.debug('Found free port: %d' % port)
+                    return port
+            except:
+                pass
 
         logger.warn('Cannot find a free port for the JEM listener process.')
         return 0

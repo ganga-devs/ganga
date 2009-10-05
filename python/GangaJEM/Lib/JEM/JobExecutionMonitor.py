@@ -294,10 +294,12 @@ class JobExecutionMonitor(GangaObject):
     _category = 'monitor'           # allow insertion into Job.JobInfo object
     _name = 'JobExecutionMonitor'   # GPI-public classname
 
-    _exportmethods = ['getStatus', 'getMetrics', 'listExceptions', 'listCommands', 'showException', 'showCommand',\
-                      'peek',\
-                      'extractLogfiles', 'getListenerLog', 'watch', 'abortWatch', 'plotMetrics', 'waitForRealStart',\
-                      '_getListenerPid', '_getServerPid', '_getServerPort', '_getServerStatus', '_hasUserAppStarted']
+    # methods accessible from GPI
+    _exportmethods = ['getStatus', 'getMetrics', 'plotMetrics', 'listExceptions', 'listCommands',\
+                      'showException', 'showCommand', 'peek', 'getListenerLog', 'waitForRealStart',\
+                      'watch', 'abortWatch', 'extractLogfiles',\
+                      '_getListenerPid', '_getServerPid', '_getServerPort', '_getServerStatus',\
+                      '_hasUserAppStarted', '_getTransmissionStats']
 
 
     ####################################################################################################################
@@ -320,6 +322,10 @@ class JobExecutionMonitor(GangaObject):
 
     def _hasUserAppStarted(self):
         return self.userAppRunning
+
+
+    def _getTransmissionStats(self):
+        return self.__transmissionStats()
 
 
     def getStatus(self):
@@ -737,6 +743,8 @@ class JobExecutionMonitor(GangaObject):
 
             s = PrettyStrings.makeHeader("peeking at output (" + orderString + str(n) + " of " + mode + ", skipping " + str(start - 1) + ")") + s
             logger.info(s)
+        else:
+            logger.info("no status information received yet")
 
 
     def extractLogfiles(self):
@@ -748,12 +756,23 @@ class JobExecutionMonitor(GangaObject):
         job = self.getJobObject()
         path = job.getOutputWorkspace().getPath() # pylint: disable-msg=E1101
 
+        extractedSome = False
+
         if self.__decompressTar(path):
-            logger.info("Monitoring data has been extracted, ready for peek()-ing.")
-            return True
+            logger.info("Monitoring data of job #" + str(job.id) + " has been extracted, ready for peek()-ing.")
+            extractedSome = True
         else:
-            logger.warning("Monitoring data couldn't be extracted")
-            return False
+            logger.info("Monitoring data of job #" + str(job.id) + " couldn't be extracted - this need not be an error (e.g. for split jobs this is normal)")
+        
+        for sj in job.subjobs:
+            path = sj.getOutputWorkspace().getPath()
+            if self.__decompressTar(path):
+                logger.info("Monitoring data of job #" + str(job.id) + "." + str(sj.id) + " has been extracted")
+            else:
+                logger.info("Monitoring data of job #" + str(job.id) + "." + str(sj.id) + " couldn't be extracted")
+            extractedSome = True
+
+        return extractedSome
 
 
     def getListenerLog(self):
@@ -767,12 +786,7 @@ class JobExecutionMonitor(GangaObject):
         jobID = self.getJobID() # pylint: disable-msg=E1101
         logDir = JEMConfig.MON_LOG_DIR + os.sep + Utils.escapeJobID(jobID)
         try:
-            fd = open(logDir + os.sep + "JEMganga-Listener.log", "r")
-            s = ""
-            for line in fd.readlines():
-                s += line
-            fd.close()
-            logger.info("\n" + s)
+            os.system("less " + logDir + os.sep + "JEMganga-Listener.log")
         except:
             logger.info("No live monitor log available")
             logger.debug("cause: " + str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
@@ -1282,6 +1296,48 @@ class JobExecutionMonitor(GangaObject):
             pass
 
         return jmdlines
+
+
+    def __transmissionStats(self):
+        fd = ropen(self.jmdfile)
+        stats = {"Tb": 0, "Tc": 0, "Rc": 0, "Ec": 0, "Pc": 0, "Cc": 0}
+        
+        while 1:
+            try:
+                line = fd.readline()
+                ll = len(line)
+                if ll == 0:
+                    break
+                elif ll == 1:
+                    continue
+
+                stats["Tb"] += ll
+                stats["Tc"] += 1
+
+                line = self.__parseJMDline(line)
+                
+                if line.has_key("Type"):
+                    if line["Type"] == "RESOURCE":
+                        stats["Rc"] += 1
+                    elif line["Type"] == "EXCEPTION":
+                        stats["Ec"] += 1
+                    elif line["Type"][3:] == "PEEKLINE":
+                        stats["Pc"] += 1
+                    else:
+                        stats["Cc"] += 1
+            except StopIteration:
+                break
+
+        try:
+            fd.close()
+        except:
+            pass
+
+        # in case the watcher thread didn't notice...
+        if stats["Tc"] > 0 and not self.userAppRunning:
+            self.onBegunToReceiveMonitoringData()
+
+        return stats
 
 
     def __decompressTar(self, logfilePath):
