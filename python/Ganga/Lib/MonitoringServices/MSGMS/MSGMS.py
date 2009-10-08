@@ -174,8 +174,7 @@ class MSGMS(IMonitoringService):
                 masterjob_msg['subjobs'] = len(self.job_info.master.subjobs)
                 masterjob_msg['ganga_job_id'] = str(masterjob_msg['ganga_job_id']).split('.')[0]
                 # override ganga_job_uuid as the message 'from the master' is really sent from the subjob
-                masterjob_msg['ganga_job_uuid'] = masterjob_msg['ganga_master_uuid']
-                masterjob_msg['ganga_master_uuid'] = 0
+                masterjob_msg['ganga_job_uuid'] = 0
                 sendJobSubmitted( masterjob_msg )
 
         #1. send job submitted message with more detailed info
