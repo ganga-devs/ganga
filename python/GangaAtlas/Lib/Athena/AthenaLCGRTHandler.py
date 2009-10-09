@@ -91,7 +91,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified. Failure in job %s.%s. Dataset %s' %(job._getRoot().id, job.id, job.inputdata.dataset)  )
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
-                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER' ]:
+                    if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER' ]:
                         job.inputdata.type ='DQ2_LOCAL'
                     if not job.inputdata.datatype in ['DATA', 'MC', 'MuonCalibStream']:
                         job.inputdata.datatype ='MC'
@@ -107,7 +107,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     input_files = ATLASDataset.get_filenames(app)
 
                 elif job.inputdata._name == 'DQ2Dataset':
-                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER' ]:
+                    if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER' ]:
                         job.inputdata.type ='DQ2_LOCAL'
                     if not job.inputdata.datatype in ['DATA', 'MC', 'MuonCalibStream']:
                         job.inputdata.datatype ='MC'
@@ -570,7 +570,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             requirements.software = ['VO-atlas-production-%s' % app.atlas_release ]
 
         #       add software requirement of dq2clients
-        if job.inputdata and job.inputdata.type in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease or configDQ2['USE_ACCESS_INFO']:
+        if job.inputdata and job.inputdata.type in [ 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease or configDQ2['USE_ACCESS_INFO']:
             try:
                 # override the default one if the dq2client_version is presented 
                 # in the job backend's requirements object
