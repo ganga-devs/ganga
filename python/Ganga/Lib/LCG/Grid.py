@@ -688,7 +688,8 @@ class Grid(object):
                 text += 'Nodes = %s;\n' % value
 
             elif key in ['PerusalFileEnable', 'AllowZippedISB']:
-                text += 'PerusalFileEnable = %s;\n' % value                
+                text += '%s = %s;\n' % (key, value)
+
             elif key in ['DataRequirements']:
                 text += 'DataRequirements = { %s };\n' % value
             else:
