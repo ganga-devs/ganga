@@ -136,7 +136,6 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         if len(app.sites)==0 and app.se_name and app.se_name != "none":
             selectedSites=app.se_name.split(" ")
 
-
         # This comes last: using surviving sites from matching process.
         if len(selectedSites)==0:
             try:
@@ -475,12 +474,12 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
 
 allHandlers.add('AthenaMC','LCG',AthenaMCLCGRTHandler)
-allHandlers.add('AthenaMC','Local',AthenaMCLCGRTHandler)
-allHandlers.add('AthenaMC','LSF',AthenaMCLCGRTHandler)
+#allHandlers.add('AthenaMC','Local',AthenaMCLCGRTHandler)
+#allHandlers.add('AthenaMC','LSF',AthenaMCLCGRTHandler)
 allHandlers.add('AthenaMC','Condor',AthenaMCLCGRTHandler)
-allHandlers.add('AthenaMC','Cronus',AthenaMCLCGRTHandler)
+#allHandlers.add('AthenaMC','Cronus',AthenaMCLCGRTHandler)
 allHandlers.add('AthenaMC','NG',AthenaMCLCGRTHandler)
-allHandlers.add('AthenaMC','PBS',AthenaMCLCGRTHandler)
+#allHandlers.add('AthenaMC','PBS',AthenaMCLCGRTHandler)
 
 
 config = getConfig('AthenaMC')

@@ -2,7 +2,7 @@ from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 
 from types import DictionaryType
 from time import time, sleep
-import stomputil 
+import stomputil
 
 # create the configuration options for MSGMS
 from Ganga.Utility.Config import makeConfig, getConfig
@@ -20,22 +20,27 @@ def deny_modification(name,x):
 config.attachUserHandler(deny_modification,None)
                            
 
-try:
-    from Ganga.Core.GangaThread import GangaThread as Thread
-except ImportError:
-    pass
-from threading import Thread
-
 from Ganga.Utility.logging import getLogger
 publisher = None
 
 def send(dst, msg): # enqueue the msg in msg_q for the connection thread to consume and send
     global publisher
     if publisher is None:
-        publisher = stomputil.createPublisher(Thread, config['server'], config['port'], username=config['username'],
-            password=config['password'], logger=getLogger('MSGMSErrorLog'))
+        # use GangaThread class on client or Thread class otherwise
+        try:
+            from Ganga.Core.GangaThread import GangaThread as Thread
+            managed_thread = True
+        except ImportError:
+            from threading import Thread
+            managed_thread = False
+        # create and start publisher
+        publisher = stomputil.createPublisher(Thread, config['server'], config['port'], config['username'],
+            config['password'], getLogger('MSGMSErrorLog'))
         publisher.start()
-    publisher.send((dst, msg)) 
+        # add exit handler if not GangaThread
+        if not managed_thread:
+            publisher.addExitHandler()
+    publisher.send(dst, repr(msg)) 
 
 def sendJobStatusChange(msg):
     send(config['message_destination'], msg)
@@ -108,6 +113,7 @@ class MSGMS(IMonitoringService):
     def getSandboxModules(self):
         import Ganga.Lib.MonitoringServices.MSGMS
         import Ganga.Lib.MonitoringServices.MSGMS.MSGMS
+        import stomp
         return [
             Ganga,
             Ganga.Lib,
@@ -132,14 +138,17 @@ class MSGMS(IMonitoringService):
             Ganga.Core,
             Ganga.Core.exceptions,
             Ganga.Core.exceptions.GangaException,
+            stomp,
+            stomp.cli,
+            stomp.exception,
+            stomp.listener,
+            stomp.stomp,
+            stomp.utils,
             stomputil,
-            stomputil.stompwrapper,
-            stomputil.stomp
+            stomputil.publisher,
             ] + IMonitoringService.getSandboxModules(self)
 
     def start(self, **opts): # same as with stop
-        import atexit
-        atexit.register(sleep, 5)
         message = self.getMessage()
         message['event'] = 'running'
         sendJobStatusChange( message )
@@ -174,7 +183,8 @@ class MSGMS(IMonitoringService):
                 masterjob_msg['subjobs'] = len(self.job_info.master.subjobs)
                 masterjob_msg['ganga_job_id'] = str(masterjob_msg['ganga_job_id']).split('.')[0]
                 # override ganga_job_uuid as the message 'from the master' is really sent from the subjob
-                masterjob_msg['ganga_job_uuid'] = 0
+                masterjob_msg['ganga_job_uuid'] = masterjob_msg['ganga_master_uuid']
+                masterjob_msg['ganga_master_uuid'] = 0
                 sendJobSubmitted( masterjob_msg )
 
         #1. send job submitted message with more detailed info

@@ -96,6 +96,13 @@ if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ] || [ ! -z `echo $ATLAS_RELEASE | gr
 fi
 
 ################################################
+# fix g2c/gcc issues against SLC5
+fix_gcc_issue_sl5
+
+g++ --version
+gcc --version
+
+################################################
 # setup ATLAS software
 
 retcode=0
@@ -109,6 +116,14 @@ rm -f retcode.tmp
 if [ -e $VO_ATLAS_SW_DIR/LCGutils/latest/setup.sh ]
 then
     source $VO_ATLAS_SW_DIR/LCGutils/latest/setup.sh
+fi
+
+################################################
+# Setup the local ATLAS patches and environment variables
+# for Frontier/Squid
+if [ -e $VO_ATLAS_SW_DIR/local/setup.sh ]
+then
+    source $VO_ATLAS_SW_DIR/local/setup.sh
 fi
 
 get_files PDGTABLE.MeV
@@ -151,6 +166,12 @@ else
 fi
 
 detect_setype
+
+#################################################
+# Set Access Info 
+# Set DQ2_LOCAL_SITE_ID and DQ2_LOCAL_PROTOCOL
+
+access_info
 
 #################################################
 # Fix of broken DCache ROOT access in 12.0.x
@@ -710,15 +731,15 @@ if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
 	    ./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
 	fi
     fi
-    retcode=`cat retcode.tmp`
+    retcodelog=`cat retcode.tmp`
     rm -f retcode.tmp
     # Fail over
-    if [ $retcode -ne 0 ]; then
+    if [ $retcodelog -ne 0 ]; then
 	$pybin ./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
-	retcode=`cat retcode.tmp`
+	retcodelog=`cat retcode.tmp`
 	rm -f retcode.tmp
     fi
-    if [ $retcode -ne 0 ]; then
+    if [ $retcodelog -ne 0 ]; then
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
 	export PATH=$PATH_ORIG
 	export PYTHONPATH=$PYTHONPATH_ORIG
@@ -731,7 +752,7 @@ if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
 	    fi
 	fi
 	./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
-	retcode=`cat retcode.tmp`
+	retcodelog=`cat retcode.tmp`
 	rm -f retcode.tmp
     fi
 fi

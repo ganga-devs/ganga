@@ -32,13 +32,13 @@ import Ganga.Utility.guid
 class JobInfo(GangaObject):
     ''' Additional job information.
         Partially implemented
-    '''    
-    _schema = Schema(Version(0,0),
-                     { 'submit_counter' : 
-                       SimpleItem(defvalue=0,protected=1,doc="job submition/resubmission counter"),
-                       'uuid' :
-                           SimpleItem(defvalue='',protected=1,doc='globally unique job identifier')
-                      })
+    '''
+    _schema = Schema(Version(0,1),{
+                                   'submit_counter' : SimpleItem(defvalue=0,protected=1,doc="job submission/resubmission counter"),
+                                   'monitor' : ComponentItem('monitor',defvalue=None,load_default=0,optional=1,doc="job monitor instance"),
+                                   'uuid' : SimpleItem(defvalue='',protected=1,doc='globally unique job identifier')
+                                    })
+
     _category = 'jobinfos'
     _name = 'JobInfo'
     
@@ -182,28 +182,28 @@ class Job(GangaObject):
                 assert(not s.state in self)
                 self[s.state] = s
     
-    status_graph = {'new' : Transitions(State('submitting','j.submit()'),
+    status_graph = {'new' : Transitions(State('submitting','j.submit()',hook='monitorSubmitting_hook'),
                                         State('removed','j.remove()')),
                     'submitting' : Transitions(State('new','submission failed',hook='rollbackToNewState'),
                                                State('submitted',hook='monitorSubmitted_hook'),
                                                State('unknown','forced remove OR remote jobmgr error'),
-                                               State('failed','manually forced or keep_on_failed=True')),
+                                               State('failed','manually forced or keep_on_failed=True',hook='monitorKilledOrFailed_hook')),
                     'submitted' : Transitions(State('running'),
-                                              State('killed','j.kill()'),
+                                              State('killed','j.kill()',hook='monitorKilledOrFailed_hook'),
                                               State('unknown','forced remove'),
-                                              State('failed', 'j.fail(force=1)'),
+                                              State('failed', 'j.fail(force=1)',hook='monitorKilledOrFailed_hook'),
                                               State('completing','job output already in outputdir',hook='postprocess_hook'),
                                               State('completed',hook='postprocess_hook'),
                                               State('submitting','j.resubmit(force=1)')),
                     'running' : Transitions(State('completing'),
                                             State('completed','job output already in outputdir',hook='postprocess_hook'),
-                                            State('failed','backend reported failure OR j.fail(force=1)'),
-                                            State('killed','j.kill()',),
+                                            State('failed','backend reported failure OR j.fail(force=1)',hook='monitorKilledOrFailed_hook'),
+                                            State('killed','j.kill()',hook='monitorKilledOrFailed_hook'),
                                             State('unknown','forced remove'),
                                             State('submitting','j.resubmit(force=1)'),
                                             State('submitted','j.resubmit(force=1)')),
                     'completing' : Transitions(State('completed',hook='postprocess_hook'),
-                                               State('failed','postprocessing error OR j.fail(force=1)'),
+                                               State('failed','postprocessing error OR j.fail(force=1)',hook='monitorKilledOrFailed_hook'),
                                                State('unknown','forced remove'),
                                                State('submitting','j.resubmit(force=1)'),
                                                State('submitted','j.resubmit(force=1)')),
@@ -315,15 +315,27 @@ class Job(GangaObject):
         import Ganga.GPIDev.MonitoringServices
         return Ganga.GPIDev.MonitoringServices.getMonitoringObject(self)
         
-    def monitorSubmitted_hook(self):
-        """Send monitoring information (e.g. Dashboard) at the time of job submission """
-        import Ganga.GPIDev.MonitoringServices
-        self.getMonitoringService().submit()
+    def monitorPrepare_hook(self, subjobconfig):
+        """Let monitoring services work with the subjobconfig after it's prepared"""
+        self.getMonitoringService().prepare(subjobconfig=subjobconfig)
 
-        #logger.debug('monitorSubmitted_hook: %s',str(x))
+    def monitorSubmitting_hook(self):
+        """Let monitoring services perform actions at job submission"""
+        self.getMonitoringService().submitting()
+
+    def monitorSubmitted_hook(self):
+        """Send monitoring information (e.g. Dashboard) at the time of job submission"""
+        self.getMonitoringService().submit()
     
     def postprocess_hook(self):
         self.application.postprocess()
+        self.getMonitoringService().complete(cause="finished")
+        
+    def monitorKilledOrFailed_hook(self):
+        self.getMonitoringService().complete(cause="failed")
+
+    def monitorRollbackToNew_hook(self):
+        self.getMonitoringService().rollback()
 
     def _auto__init__(self,registry=None):
         if registry is None:
@@ -591,9 +603,12 @@ class Job(GangaObject):
 
         try:
             logger.info("submitting job %d",self.id)
+            
             # prevent other sessions from submitting this job concurrently
-            self.status = 'submitting'
+            self.updateStatus('submitting')
+
             try:
+                #NOTE: this commit is redundant if updateStatus() is used on the line above
                 self._commit()
             except Exception,x:
                 msg = 'cannot commit the job %s, submission aborted'%self.id
@@ -637,6 +652,9 @@ class Job(GangaObject):
             # prepare the subjobs with the runtime handler
             jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
 
+            # notify monitoring-services
+            self.monitorPrepare_hook(jobsubconfig) 
+
             # submit the job
             try:
                 if not self.backend.master_submit(rjobs,jobsubconfig,jobmasterconfig):
@@ -644,8 +662,8 @@ class Job(GangaObject):
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
             self.info.increment()
-            self.status = 'submitted' # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
-            self._commit() # make sure that the status change goes to the repository
+            self.updateStatus('submitted') # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
+            self._commit() # make sure that the status change goes to the repository, NOTE: this commit is redundant if updateStatus() is used on the line above
 
             return 1
         except Exception,x:
@@ -669,6 +687,10 @@ class Job(GangaObject):
         This method is used as a hook for submitting->new transition
         @see updateJobStatus() 
         '''
+        
+        # notify monitoring-services
+        self.monitorRollbackToNew_hook()
+
         self.getInputWorkspace().remove(preserve_top=True)
         self.getOutputWorkspace().remove(preserve_top=True)
         #notify subjobs
@@ -1010,7 +1032,10 @@ class JobTemplate(Job):
 
 #
 #
-# $Log: not supported by cvs2svn $
+# $Log: Job.py,v $
+# Revision 1.10  2009/02/24 14:59:34  moscicki
+# when removing jobs which are in the "incomplete" or "unknown" status, do not trigger callbacks on application and backend -> they may be missing!
+#
 # Revision 1.12  2009/05/20 12:35:40  moscicki
 # debug directory (https://savannah.cern.ch/bugs/?50305)
 #

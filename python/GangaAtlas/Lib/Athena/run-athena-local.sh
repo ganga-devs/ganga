@@ -140,6 +140,14 @@ else
    timecmd=time
 fi
 
+################################################
+# Setup the local ATLAS patches and environment variables
+# for Frontier/Squid
+if [ -e $VO_ATLAS_SW_DIR/local/setup.sh ]
+then
+    source $VO_ATLAS_SW_DIR/local/setup.sh
+fi
+
 # run athena
  
 get_files PDGTABLE.MeV   

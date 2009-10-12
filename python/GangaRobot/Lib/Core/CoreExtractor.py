@@ -89,6 +89,10 @@ class CoreExtractor(BaseExtractor):
         corenode.addnode('application', typename(job.application))
         corenode.addnode('backend', typename(job.backend))
         backendid = None
+        statusInfo = None
+        if hasattr(job.backend,'statusInfo'):
+            statusInfo = job.backend.statusInfo
+        corenode.addnode('minor-status',statusInfo)
         if hasattr(job.backend, 'id'):
             backendid = job.backend.id 
         corenode.addnode('backend-id', backendid)

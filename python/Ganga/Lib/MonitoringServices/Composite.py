@@ -119,7 +119,34 @@ class CompositeMonitoringService(IMonitoringService):
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed to *stop*: %s" % (monClass, e))               
       return ret
+
+   def prepare(self,**opts):
+      """Preparation of a job.
+      Called by: ganga client. """
       
+      ret = {}
+      for monService in self.monMonServices:
+         try:
+            monClass = str(monService.__class__)
+            ret[monClass] = monService.prepare(**opts)
+         except Exception,e:
+            #discard errors in initialization of monitoring services
+            self._log(level="warning",msg="%s monitoring service failed in job *prepare*" % monClass)               
+      return ret
+
+   def submitting(self,**opts):
+      """Submission of a job.
+      Called by: ganga client. """
+      
+      ret = {}
+      for monService in self.monMonServices:
+         try:
+            monClass = str(monService.__class__)
+            ret[monClass] = monService.submitting(**opts)
+         except Exception,e:
+            #discard errors in initialization of monitoring services
+            self._log(level="warning",msg="%s monitoring service failed in job *submitting*" % monClass)               
+      return ret
 
    def submit(self,**opts):
       """Submission of a job.
@@ -136,7 +163,35 @@ class CompositeMonitoringService(IMonitoringService):
             from Ganga.Utility.logging import log_user_exception
             log_user_exception(self.logger)
       return ret
+
+   def complete(self,**opts):
+      """Completion of a job (successful or failed).
+      Called by: ganga client. """
       
+      ret = {}
+      for monService in self.monMonServices:
+         try:
+            monClass = str(monService.__class__)
+            ret[monClass] = monService.complete(**opts)
+         except Exception,e:
+            #discard errors in initialization of monitoring services
+            self._log(level="warning",msg="%s monitoring service failed in job *complete*" % monClass)               
+      return ret
+
+   def rollback(self,**opts):
+      """Completion of a job (successful or failed).
+      Called by: ganga client. """
+      
+      ret = {}
+      for monService in self.monMonServices:
+         try:
+            monClass = str(monService.__class__)
+            ret[monClass] = monService.rollback(**opts)
+         except Exception,e:
+            #discard errors in initialization of monitoring services
+            self._log(level="warning",msg="%s monitoring service failed in job *complete*" % monClass)               
+      return ret
+
    def getSandboxModules(self):
       """ Get the list of module dependencies of this monitoring module.
       Called by: ganga client.

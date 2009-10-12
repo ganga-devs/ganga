@@ -73,7 +73,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
-                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
+                    if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
                         job.inputdata.type ='DQ2_LOCAL'
        
             else:
@@ -87,7 +87,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     input_files = ATLASDataset.get_filenames(app)
 
                 elif job.inputdata._name == 'DQ2Dataset':
-                    if not job.inputdata.type in ['DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
+                    if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
                         job.inputdata.type ='DQ2_LOCAL'
 
                     contents = job.inputdata.get_contents()

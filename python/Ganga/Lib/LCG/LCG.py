@@ -2024,13 +2024,13 @@ config = makeConfig('LCG','LCG/gLite/EGEE configuration parameters')
 # set default values for the configuration parameters
 config.addOption('EDG_ENABLE',True,'enables/disables the support of the EDG middleware')
 
-config.addOption('EDG_SETUP', '/afs/cern.ch/project/gd/LCG-share/current/etc/profile.d/grid_env.sh', \
+config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh', \
                  'sets the LCG-UI environment setup script for the EDG middleware', \
                  filter=Ganga.Utility.Config.expandvars)
 
 config.addOption('GLITE_ENABLE', False, 'Enables/disables the support of the GLITE middleware')
 
-config.addOption('GLITE_SETUP', '/afs/cern.ch/project/gd/LCG-share/current/etc/profile.d/grid_env.sh', \
+config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh', \
                  'sets the LCG-UI environment setup script for the GLITE middleware', \
                  filter=Ganga.Utility.Config.expandvars)
 

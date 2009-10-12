@@ -376,7 +376,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
     # Create TURL map
     tUrlMap = {}
     for lfn, surl in guidReplicas.iteritems():
-        if configLOCALPROTOCOL in [ "dcap", 'Xrootd', 'gsidcap' ]:
+        if configLOCALPROTOCOL in [ "dcap", 'gsidcap', 'Xrootd', 'root' ]:
             match = re.search('^[^:]+://([^:/]+):*\d*/', surl)
             try:
                 sURLHost = match.group(1)
@@ -389,9 +389,8 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     pfn = 'gfal:'+surl
                 else:
                     pfn = surl
-                
+
             if configLOCALPROTOCOL == "dcap" and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
-                
                 pfn = re.sub('srm://','dcap://',pfn)
                 # Hack for ccin2p3
                 pfn = re.sub('ccsrm','ccdcapatlas',pfn)
@@ -407,16 +406,17 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     pfn = re.sub('/atlas/users/','//pnfs/sfu.ca/data/atlas/users/',pfn)
                     pfn = re.sub('22125/atlas/','22125//pnfs/sfu.ca/data/atlas/',pfn)
                     
-            elif configLOCALPROTOCOL == "Xrootd":
+            elif configLOCALPROTOCOL in [ "root", "Xrootd" ] and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
                 pfn = re.sub('srm://','root://',pfn)
                 # Hack for ccin2p3
                 pfn = re.sub('ccsrm','ccxroot',pfn)
                 pfn = re.sub('ccdcamli01','ccxroot',pfn)
                 pfn = re.sub(':1094',':1094/',pfn)
 
-            elif configLOCALPROTOCOL == "gsidcap":
+            elif configLOCALPROTOCOL == "gsidcap" and stUrlMap.has_key(sURLHost):
                 pfn = re.sub('srm://','gfal:gsidcap://',pfn)
                 pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
+                pfn = re.sub('gfal:gfal:','gfal:',pfn)
 
         elif (configLOCALPROTOCOL == "rfio" and configSTORAGEROOT == '/castor') \
                  or localsitesrm.find('gla.scotgrid.ac.uk')>-1:
@@ -425,9 +425,9 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             # remove redundant /
             pfn = re.sub('^//','/',pfn)
             pfn = "rfio:" + pfn
-        elif (( configLOCALPROTOCOL == "rfio" and ( configSTORAGEROOT == '/dpm' )) \
-               or ( configLOCALPROTOCOL == "file" and \
-                    (('se03.esc.qmul.ac.uk' in defaultSE) or 'storm-fe.cr.cnaf.infn.it' in defaultSE))):
+        elif ( configLOCALPROTOCOL == "rfio" and ( configSTORAGEROOT == '/dpm' )) \
+                 or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE) \
+                 or ( configLOCALPROTOCOL == "file" and 'se03.esc.qmul.ac.uk' in defaultSE):
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
             # check which version of lcg-utils we're on
@@ -1241,8 +1241,7 @@ if __name__ == '__main__':
                 if not detsetype:
                     print 'VO_ATLAS_DEFAULT_SE: %s' %os.environ['VO_ATLAS_DEFAULT_SE']
 
-        if os.environ.has_key('VO_ATLAS_DEFAULT_SE') and not os.environ.has_key('DQ2_LOCAL_PROTOCOL'):
-            
+        if os.environ.has_key('VO_ATLAS_DEFAULT_SE') and ( not os.environ.has_key('DQ2_LOCAL_PROTOCOL') or configLOCALPROTOCOL==''):
             cmd = 'lcg-info --list-se --query SE=$VO_ATLAS_DEFAULT_SE --attr Protocol --sed'
             rc, out = commands.getstatusoutput(cmd)
             out2 = out.split('%')
@@ -1259,7 +1258,7 @@ if __name__ == '__main__':
                         configSTORAGEROOT = '/dpm'
                     else:
                         configSTORAGEROOT = '/castor'
-                elif 'dcap' in prot:
+                elif 'dcap' in prot or 'gsidcap' in prot:
                     configLOCALPROTOCOL = 'dcap'
                     configSTORAGEROOT = '/pnfs'
                     configLOCALPREFIX = 'dcap:'
@@ -1422,20 +1421,22 @@ if __name__ == '__main__':
                 rc, out = getstatusoutput(cmd)
                 print out
 
-                bad_dq2_get = False
-                
-                for f in flist:
-                    if not os.path.exists(f):
-                        bad_dq2_get = True
-                        
-                if (rc!=0) or bad_dq2_get:
+                if (rc!=0):
+                    print taglfns
+                    os.system("ls -ltr")
                     print "ERROR: error during dq2-get occured"
                     rc, out = getstatusoutput('export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP ; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd)
                     print out
                     if (rc!=0):
                         print "ERROR: error during retry of dq2-get occured"
-                        sys.exit(EC_DQ2GET)
 
+
+            # check that all files are present
+            for f in taglfns:
+                if not os.path.exists(f):
+                    print "ERROR: failed to download " + f
+                    sys.exit(EC_DQ2GET)
+                                    
             tagddmFileMap = {}
             for i in xrange(0,len(taglfns)):
                 tagddmFileMap[taglfns[i]] = tagguids[i]
@@ -1506,7 +1507,7 @@ if __name__ == '__main__':
                 
                 if (rc!=0):
                     print "ERROR: error during CollListFileGUID. Restoring original environment variables and retrying...."                    
-                    cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd
+                    cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP_ATH ; export PATH=$PATH_BACKUP_ATH; export PYTHONPATH=$PYTHONPATH_BACKUP_ATH ; ' + cmd
                     print "Calling " + cmd
                     rc, out = getstatusoutput(cmd)
                     print out
@@ -1551,10 +1552,13 @@ if __name__ == '__main__':
                     
                     # store useful stuff
                     files = dq.listFilesInDataset(name)
-                    out_aod_files.append( files[0][aod_guid]['lfn'] )
-                    out_aod_guids.append( aod_guid )
-                    if not name in out_aod_datasets:
-                        out_aod_datasets.append(name)
+                    if files[0].has_key(aod_guid):
+                        out_aod_files.append( files[0][aod_guid]['lfn'] )
+                        out_aod_guids.append( aod_guid )
+                        if not name in out_aod_datasets:
+                            out_aod_datasets.append(name)
+                    else:
+                        print "ERROR: Could not match input aod_guid '%s' with any files from dataset '%s'." % (aod_guid, name)
 
             print "---------------------------------------------"
             print "Setting DATASETNAME to " + ':'.join( out_aod_datasets )
@@ -1995,7 +1999,7 @@ if __name__ == '__main__':
                     output_files.append(output_files_orig[i])
                     renameflag = True
                 except IOError:
-                    raise NameError, "ERROR: problems in output stage-out"
+                    raise NameError, "ERROR: problems in output stage-out. Could not read output file: '%s'" % output_files_orig[i]
                     sys.exit(EC_STAGEOUT)
 
         if len(output_files)==0:

@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, sys, pwd, commands, re, shutil, urllib, time, string 
+import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -17,6 +17,7 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
 from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibFileSpecFromLibDS
+from Ganga.Core import BackendError
 
 # PandaTools
 from pandatools import Client
@@ -77,6 +78,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         else:
             self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,username,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
             self.library = '%s.lib.tgz' % self.libDataset
+            try:
+                Client.addDataset(self.libDataset,False)
+            except exceptions.SystemExit:
+                raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDataset,sys.exc_info()[0],sys.exc_info()[1]))
+
 
         # validate application
         if not app.atlas_release:
@@ -100,15 +106,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         # validate inputdata
         if job.inputdata:
-            if job.inputdata._name <> 'DQ2Dataset':
+            if job.inputdata._name == 'DQ2Dataset':
+                logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            else: 
                 raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
         else:
-            raise ApplicationConfigurationError(None,'Panda backend requires inputdata=DQ2Dataset()')
-        if not job.inputdata.dataset:
-            raise ApplicationConfigurationError(None,'You did not set DQ2Dataset().dataset')
-#        if len(job.inputdata.dataset) > 1:
-#            raise ApplicationConfigurationError(None,'Multiple input datasets not supported. Use a container dataset.')
-        logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            logger.info('Proceeding without an input dataset.')
 
         # validate outputdata
         today = time.strftime("%Y%m%d",time.localtime())
@@ -125,6 +128,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             logger.info('outputdata.datasetname must start with %s.%s.ganga. Prepending it for you.'%(usertag,username))
             job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
         logger.info('Output dataset %s',job.outputdata.datasetname)
+        try:
+            Client.addDataset(job.outputdata.datasetname,False)
+        except exceptions.SystemExit:
+            raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
 
         # handle different atlas_exetypes
         self.job_options = ''
@@ -336,18 +343,19 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.addFile(flib)
 
 #       input files FIXME: many more input types
-        for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
-            finp = FileSpec()
-            finp.lfn            = lfn
-            finp.GUID           = guid
-#            finp.fsize =
-#            finp.md5sum =
-            finp.dataset        = job.inputdata.dataset[0]
-            finp.prodDBlock     = job.inputdata.dataset[0]
-            finp.dispatchDBlock = job.inputdata.dataset[0]
-            finp.type           = 'input'
-            finp.status         = 'ready'
-            jspec.addFile(finp)
+        if job.inputdata:
+            for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
+                finp = FileSpec()
+                finp.lfn            = lfn
+                finp.GUID           = guid
+                #            finp.fsize =
+                #            finp.md5sum =
+                finp.dataset        = job.inputdata.dataset[0]
+                finp.prodDBlock     = job.inputdata.dataset[0]
+                finp.dispatchDBlock = job.inputdata.dataset[0]
+                finp.type           = 'input'
+                finp.status         = 'ready'
+                jspec.addFile(finp)
 
 #       output files
         outMap = {}
@@ -650,7 +658,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(file)
             # set DBRelease parameter
             param += '--dbrFile %s ' % file.lfn
-        param += '-i "%s" ' % job.inputdata.names
+        if job.inputdata:    
+            param += '-i "%s" ' % job.inputdata.names
+        else:
+            param += '-i "[]" '
         param += '-m "[]" ' #%minList FIXME
         param += '-n "[]" ' #%cavList FIXME
         #FIXME

@@ -11,7 +11,6 @@ shift $#
 
 
 
-
 if [ -z "$BACKEND" ]; then
     echo "Error, backend was not transmitted properly, aborting"
     exit 15
@@ -253,8 +252,6 @@ if [ ! -s "output_data" ]; then
     exit 128
 fi
 
-
 echo "returning transform exit code $trfstatus"
-
 # disabling this as it results in a waste of CPU resources for returning a failure on harmless error messages from the transform.
 #exit $trfstatus

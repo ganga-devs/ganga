@@ -318,7 +318,7 @@ class DQ2Dataset(Dataset):
                   { 'attribute' : 'exclude_pattern', 'widget' : 'String_List' },
                   { 'attribute' : 'number_of_files', 'widget' : 'String' },
                   { 'attribute' : 'guids',           'widget' : 'String_List' },
-                  { 'attribute' : 'type',            'widget' : 'String_Choice', 'choices':['DQ2_LOCAL', 'DQ2_COPY', 'TAG', 'LFC', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_DOWNLOAD' ]},
+                  { 'attribute' : 'type',            'widget' : 'String_Choice', 'choices':['DQ2_LOCAL', 'DQ2_COPY', 'TAG', 'LFC', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]},
                   { 'attribute' : 'failover',        'widget' : 'Bool' },
                   { 'attribute' : 'datatype',        'widget' : 'String_Choice', 'choices':['DATA', 'MC', 'MuonCalibStream' ]},
                   { 'attribute' : 'accessprotocol',  'widget' : 'String' },
@@ -1276,6 +1276,8 @@ config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_SCRATCHDISK', 'CERN
 config.addOption('USE_STAGEOUT_SUBSCRIPTION', False, 'Allow DQ2 subscription to aggregate DQ2OutputDataset output on a storage element instead of using remote lcg-cr' )
 
 config.addOption('usertag','user09','user tag for a given data taking period')
+
+config.addOption('USE_ACCESS_INFO', False, 'Use automatic best choice of input dataset access mode provided by AtlasLCGRequirements.')
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
