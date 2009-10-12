@@ -1,0 +1,147 @@
+#============================================================================
+# Created    : 2009-08-10
+# Maintainer : Ulrik Egede
+#============================================================================
+package           GangaPolicy
+
+cmtpath_pattern \
+   macro <project>_install_python "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_python} ; \
+    path_prepend PYTHONPATH ${GANGA_install_python}
+
+cmtpath_pattern \
+   macro <project>_install_scripts "" \
+         GANGA_without_installarea "<path>/scripts" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/scripts"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\scripts" ; \
+   path_remove  PATH ${GANGA_install_scripts} ; \
+   path_prepend PATH ${GANGA_install_scripts}
+
+#########################################################################
+# PYTHONPATH numpy
+
+set NUMPYVERSION 1.3.0
+
+cmtpath_pattern \
+   macro <project>_install_numpy "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/numpy/$(NUMPYVERSION)/$(CMTCONFIG)/lib/python$(Python_config_version_twodigit)/site-packages"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\numpy\$(NUMPYVERSION)\$(CMTCONFIG)\lib\python$(Python_config_version_twodigit)\site-packages" ; \
+    path_remove  PYTHONPATH ${GANGA_install_numpy} ; \
+    path_prepend PYTHONPATH ${GANGA_install_numpy}
+
+#########################################################################
+# PYTHONPATH matplotlib
+set MATPLOTLIBVERSION 0.99
+
+cmtpath_pattern \
+   macro <project>_install_matplotlib "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/matplotlib/$(MATPLOTLIBVERSION)/$(CMTCONFIG)/lib/python$(Python_config_version_twodigit)/site-packages"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\matplotlib\$(MATPLOTLIBVERSION)\$(CMTCONFIG)\lib\python$(Python_config_version_twodigit)\site-packages" ; \
+    path_remove  PYTHONPATH ${GANGA_install_matplotlib} ; \
+    path_prepend PYTHONPATH ${GANGA_install_matplotlib}
+
+#########################################################################
+# PYTHONPATH pycrypto
+set PYCRYPTOVERSION 2.0.1
+
+cmtpath_pattern \
+   macro <project>_install_pycrypto "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/pycrypto/$(PYCRYPTOVERSION)/$(CMTCONFIG)/lib/python$(Python_config_version_twodigit)/site-packages"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\pycrypto\$(PYCRYPTOVERSION)\$(CMTCONFIG)\lib\python$(Python_config_version_twodigit)\site-packages" ; \
+    path_remove  PYTHONPATH ${GANGA_install_pycrypto} ; \
+    path_prepend PYTHONPATH ${GANGA_install_pycrypto}
+
+
+
+#########################################################################
+# PYTHONPATH figleaf
+
+set FIGLEAFVERSION 0.6
+
+cmtpath_pattern \
+   macro <project>_install_figleaf "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/figleaf/$(FIGLEAFVERSION)/noarch"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\figleaf\$(FIGLEAFVERSION)\noarch" ; \
+    path_remove  PYTHONPATH ${GANGA_install_figleaf} ; \
+    path_prepend PYTHONPATH ${GANGA_install_figleaf}
+
+#########################################################################
+# PYTHONPATH ApMon
+
+set APMONVERSION 2.2.11
+
+cmtpath_pattern \
+   macro <project>_install_ApMon "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/ApMon/$(APMONVERSION)/noarch/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\ApMon\$(APMONVERSION)\noarch\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_ApMon} ; \
+    path_prepend PYTHONPATH ${GANGA_install_ApMon}
+
+#########################################################################
+# PYTHONPATH PYTF
+
+set PYTFVERSION 1.5
+
+cmtpath_pattern \
+   macro <project>_install_PYTF "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/PYTF/$(PYTFVERSION)/noarch"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\PYTF\$(PYTFVERSION)\noarch" ; \
+    path_remove  PYTHONPATH ${GANGA_install_PYTF} ; \
+    path_prepend PYTHONPATH ${GANGA_install_PYTF} ; \
+    path_remove  PYTF_TOP_DIR ${GANGA_install_PYTF} ; \
+    path_prepend PYTF_TOP_DIR ${GANGA_install_PYTF}
+
+
+
+#########################################################################
+# PYTHONPATH stomputil
+
+set STOMPUTILVERSION 1.0
+
+cmtpath_pattern \
+   macro <project>_install_stomputil "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/stomputil/$(STOMPUTILVERSION)/noarch/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\stomputil\$(STOMPUTILVERSION)\noarch\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_stomputil} ; \
+    path_prepend PYTHONPATH ${GANGA_install_stomputil}
+
+#########################################################################
+# PYTHONPATH paramiko
+
+set PARAMIKOVERSION 1.7.3
+
+cmtpath_pattern \
+   macro <project>_install_paramiko "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/paramiko/$(PARAMIKOVERSION)/noarch/lib/python2.5/site-packages"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\paramiko\$(PARAMIKOVERSION)\noarch\python\lib\python2.5\site-packages" ; \
+    path_remove  PYTHONPATH ${GANGA_install_paramiko} ; \
+    path_prepend PYTHONPATH ${GANGA_install_paramiko}
+
+########################################################################
+# Path cleaner
+macro strip_script_gangapolicy "$(GANGAPOLICYROOT)/scripts/StripPath" WIN32 "$(GANGAPOLICYROOT)\scripts\StripPath"
+
+cmtpath_pattern \
+    setup_script $(strip_script_gangapolicy) ;
+

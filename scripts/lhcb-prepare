@@ -1,0 +1,244 @@
+#!/usr/bin/env python
+
+from sys import argv, stdout
+from os import pathsep, listdir, environ, fdopen, symlink
+from os.path import exists, realpath, join, expanduser, isdir, islink
+from optparse import OptionParser, OptionValueError
+from tempfile import mkstemp
+import re
+from subprocess import call
+import shutil
+from os import makedirs,mkdir
+
+class InstallLHCbError(Exception):
+    """Exception class for InstallLHCb"""
+    pass
+
+class InstallLHCb:
+    """Take a Ganga release and put it into the format of an LHCb release"""
+    def __init__(self,options):
+        self.options = options
+
+    def _locations(self):
+        """Identify exact locations for source and destanation"""
+
+        ver = self.options.version
+        source = self.options.source
+        pTag     = re.compile(r'.+/(\S+)$')
+        mTag = pTag.match(ver)
+        pRelease = re.compile(r'Ganga-(\d+)-(\d+)-(\d+)$')
+        mRelease = pRelease.match(ver)
+
+        if ver == 'head':
+            self.versionLHCb = 'head'
+            self.URL = join(source,"trunk","ganga")
+        elif mTag:
+            if len(self.options.name)>0:
+                self.versionLHCb = self.options.name
+            else:
+                self.versionLHCb = mTag.group(1)
+            self.URL = join(source,ver)
+        elif mRelease:
+            versionlist = [int(s) for s in mRelease.groups()]
+            self.versionLHCb = "v%d%2.2dr%d" % tuple(versionlist)
+            self.URL = join(source,"tags",ver)
+        else:
+            raise InstallLHCbError(
+                "Could not identify SVN location for input version %s" % ver)
+        
+        print "SVN checkout from         : %s" % self.URL
+        print "LHCb release will be named: %s" % self.versionLHCb
+
+    def _checkInstallDir(self):
+        topdir = join(expanduser(self.options.destination),"GANGA")
+        if not (isdir(topdir) or islink(topdir)):
+            try:
+                makedirs(topdir)
+            except:
+                raise InstallLHCbError(
+                    "There was a problem creating the directory %s" % topdir)
+
+        self.destination = join(topdir,"GANGA_"+self.versionLHCb)
+        try:
+            mkdir(self.destination)
+        except OSError:
+            raise InstallLHCbError(
+                "Failed to create directory %s. " % self.destination + \
+                    "If it is already present you need to delete it first.")
+        print "Release will be placed in : %s" % self.destination
+
+    def _getProject(self):
+        """Check out the CMT structure for the Ganga CMT Project"""
+        command = "svn export --quiet --force " + self.options.project + \
+            "/GANGA/GANGA_v " + self.destination
+
+        print "Checking out project"
+        retcode = call(command,shell=True)
+        if retcode:
+            raise InstallLHCbError(
+                "Problem checking out the Ganga CMT project using the " + \
+                    "command\n %s" % command)
+
+        sysdir = join(self.destination,"GangaSys","cmt")
+        if not isdir(sysdir):
+            raise InstallLHCbError(
+                "Can't find the directory %s. Check your options" % sysdir)
+
+        f=open(join(sysdir,"version.cmt"), 'w')
+        f.write(self.versionLHCb+"\n")
+        f.close()
+        
+
+        
+    def _getGanga(self):
+        """Check out Ganga itself from the repository"""
+        mkdir(join(self.destination,"install"))
+        gangadir = join(self.destination,"install","ganga")
+        print "Checking out Ganga"
+        command = "svn " + self.svncheckout + " --quiet " + self.URL + \
+            " " + gangadir
+        retcode = call(command,shell=True)
+        if retcode:
+            raise InstallLHCbError(
+                "Problem checking out Ganga from the repository using the " + \
+                    "command\n %s" % command)
+                
+        checkdir = join(gangadir,"python")
+        if not isdir(checkdir):
+            raise InstallLHCbError(
+                "Can't find the directory %s. Check your options" % checkdir)
+        
+        if not self.options.developer:
+            shutil.rmtree(join(gangadir,"doc"))
+
+    def _getExternals(self):
+        """Copy the required externals into the CMT project"""
+        externals_noarch = [['ApMon','2.2.11'],
+                            ['figleaf', '0.6'],
+                            ['paramiko', '1.7.3'],
+                            ['PYTF','1.5'],
+                            ['stomputil','1.0']]
+        externals_arch = [['matplotlib','0.99.0'],
+                          ['numpy','1.3.0'],
+                          ['pycrypto','2.0.1']]
+        archs = ['slc4_amd64_gcc34','slc4_ia32_gcc34','x86_64-slc5-gcc43-opt']
+        
+        s = self.options.external
+        d = join(self.destination,"external")
+        mkdir(d)
+        if self.options.developer:
+            unixcommand = 'ln -s '
+        else:
+            unixcommand = 'cp -r '
+        for package in externals_noarch:
+            print "Copying ",package
+            makedirs(join(d,package[0],package[1]))
+            command = unixcommand+join(s,package[0],package[1],'noarch')+" "+ \
+                join(d,package[0],package[1],'noarch')
+            rc = call(command, shell=True)
+
+        for package in externals_arch:
+            p = join(d,package[0],package[1])
+            makedirs(p)
+            for a in archs:
+                print "Copying ",package,a
+                command = unixcommand + join(s,package[0],package[1],a) + " " + p
+                rc = call(command, shell=True)
+    
+        
+    def prepare(self):
+        self._locations()
+
+        if self.options.developer:
+            self.svncheckout = 'checkout'
+        else:
+            self.svncheckout = 'export'
+
+        self._checkInstallDir()
+        
+    def checkout(self):
+        self._getProject()
+        self._getGanga()
+        self._getExternals()
+
+
+    def process(self):
+        symlink('../../external', 
+                join(self.destination, "InstallArea", "python", "external"))
+
+    def cleanup(self):
+        pass
+
+    def install(self):
+        self.prepare()
+        self.checkout()
+        self.process()
+        self.cleanup()
+
+if __name__ == '__main__':
+
+    import os,sys
+    
+    usage = """usage: %prog [options] version
+
+The version should be given in the form of a tag name like "Ganga-5-3-2". If
+"head" is used instead, the trunk will be checked out. If a relative path like 
+"branches/MyDevelopment" is used, it will be used as the relative path inside 
+the SVN repository."""
+    parser = OptionParser(usage=usage)
+
+
+    parser.add_option("-s", "--source", dest="source",
+                      default = 'svn+ssh://svn.cern.ch/reps/ganga',
+                      help="URL for where to pick up Ganga code from" + \
+                          "[default: %default]", 
+                      metavar="URL")
+
+    parser.add_option("-p", "--project", dest="project",
+                      default = 'svn+ssh://svn.cern.ch/reps/ganga/branches/Ganga-LHCbSetupProject/external/LHCbSetupProject',
+                      help="Full URL from where to pick up project template" + \
+                          "[default: %default]", 
+                      metavar="URL")
+
+    parser.add_option("-d", "--destination", dest="destination",
+                      default = '~/cmtuser',
+                      help="Save LHCb formatted release in DIR" + \
+                          "[default: %default]", metavar="DIR")
+
+    parser.add_option("-e", "--external", dest="external",
+                      default = '/afs/cern.ch/sw/ganga/external',
+                      help="Location of Ganga external area [default: %default]",
+                      metavar="DIR")
+
+    parser.add_option("-x", "--developer", action="store_true", 
+                      dest="developer", default=False,
+                      help="Create as developer by including SVN files and " + \
+                          "only creating soft-links in external area. " + \
+                          "Subsequently this can't be made into an LHCb " + \
+                          "release. [default: %default]")
+
+    parser.add_option("-n", "--name", dest="name",
+                      default = '',
+                      help="NAME of the checked out LHCb release. If " + \
+                          "option not given, name will be determined " + \
+                          "from version name. Only has an effect when" + \
+                          "a branch is checked out.",
+                      metavar="NAME")
+
+    options, args = parser.parse_args()
+
+    if len(args) != 1:
+        print "%s takes exactly one default value.\n" % parser.get_prog_name()
+        parser.print_help()
+        sys.exit(0)
+
+    options.version=args[0]
+
+    installer = InstallLHCb(options)
+    try:
+        installer.install()
+    except InstallLHCbError, detail:
+        print "Error in installation:\n%s\n" % detail
+        parser.print_help()
+
+
