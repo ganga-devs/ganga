@@ -21,7 +21,7 @@ class TestDiracScript(GangaGPITestCase):
     def test_DiracInputData_write(self):
         ds = LHCbDataset(['LFN:/some/file.dst'])
         ds.depth = 66
-        did = DiracInputData(ds)
+        did = DiracInputData(ds._impl)
         s = did.write()
         assert s.find('/some/file.dst') >= 0, 'data not added properly'
         assert s.find('66') >= 0, 'depth not added properly'

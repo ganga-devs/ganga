@@ -131,6 +131,26 @@ class DiracCommands:
     def getReplicas(files): return DiracCommands.dirac.getReplicas(files)
     getReplicas = staticmethod(getReplicas)
 
+    def addFile(lfn,file,diracSE):
+        return DiracCommands.dirac.addFile(lfn,file,diracSE)
+    addFile = staticmethod(addFile)
+
+    def getFile(lfn,dir):
+        result = DiracCommands.dirac.getFile(lfn)
+        if not result or not result.get('OK',False): return result
+        f = result['Value']['Successful'][lfn]
+        fname = f.split('/')[-1]
+        fdir = f.split('/')[0:-2]
+        new_f = os.path.join(dir,fname)
+        os.system('mv -f %s %s' % (f,new_f))
+        os.system('rmdir %s' % fdir)
+        result['Value'] = new_f
+        return result
+    getFile = staticmethod(getFile)
+
+    def removeFile(lfn): return DiracCommands.dirac.removeFile(lfn)
+    removeFile = staticmethod(removeFile)
+
     def replicateFile(lfn,destSE,srcSE,locCache):
         return DiracCommands.dirac.replicateFile(lfn,destSE,srcSE,locCache)
     replicateFile = staticmethod(replicateFile)
@@ -138,6 +158,9 @@ class DiracCommands:
     def removeReplica(lfn,sE):
         return DiracCommands.dirac.removeReplica(lfn,sE)
     removeReplica = staticmethod(removeReplica)
+
+    def getMetadata(lfn): return DiracCommands.dirac.getMetadata(lfn)
+    getMetadata = staticmethod(getMetadata)
 
     def bookkeepingGUI(file):
         return os.system('dirac-bookkeeping-gui %s' % file)

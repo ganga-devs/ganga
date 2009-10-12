@@ -88,7 +88,7 @@ def string_datafile_shortcut(v,item):
         return f
     return None
 
-allComponentFilters['datafiles']=string_datafile_shortcut
+#allComponentFilters['datafiles']=string_datafile_shortcut
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
  

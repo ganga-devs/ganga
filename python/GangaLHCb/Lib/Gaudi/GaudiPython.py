@@ -79,7 +79,7 @@ class GaudiPython(Francesc):
         script += "importOptions('data.opts')\n"
         script += "execfile(\'%s\')\n" % name
         self.extra.input_buffers['gaudipython-wrapper.py'] = script
-        outsb = collect_lhcb_filelist(self.getJobObject().outputsandbox)
+        outsb = self.getJobObject().outputsandbox
         self.extra.outputsandbox = unique(outsb)
         return (None,self.extra)
             

@@ -58,10 +58,8 @@ def simple_split(files_per_job, inputs):
     
     def create_subdataset(data_inputs,iter_begin,iter_end):
         dataset = LHCbDataset()
-        dataset.datatype_string = data_inputs.datatype_string
         dataset.depth = data_inputs.depth
         dataset.files = data_inputs.files[iter_begin:iter_end]
-        dataset.cache_date = data_inputs.cache_date
         return dataset
 
     result = []
@@ -113,7 +111,6 @@ class SplitByFiles(ISplitter):
         if hasattr(job.application,'extra'):
             inputdata = job.application.extra.inputdata
         inputs = LHCbDataset()
-        inputs.datatype_string = inputdata.datatype_string
         inputs.depth = inputdata.depth
         if int(self.maxFiles) == -1:
             inputs.files = inputdata.files[:]
@@ -127,26 +124,10 @@ class SplitByFiles(ISplitter):
         dataset_files = {}
         for i in inputdata.files: dataset_files[i.name] = i
         datasetlist = self._splitFiles(inputs)
-        cache_date = inputdata.cache_date
-        if cache_date:
-            _time = time.mktime(time.strptime(cache_date))
-        else:
-            _time = time.time()*2
-        _timeUpdate = False
 
         for dataset in datasetlist:
             subjobs.append(create_gaudi_subjob(job,dataset))
-            #copy the replicas back up the tree
-            for f in dataset.files:
-                dataset_files[f.name].replicas = f.replicas
-            if dataset.cache_date:
-                cache_time = time.mktime(time.strptime(dataset.cache_date))
-                if cache_time < _time:
-                    _time = cache_time
-                    _timeUpdate = True
-        if _timeUpdate:
-            t = time.localtime(_time)
-            inputdata.cache_date = time.asctime(t)
+                
         return subjobs
     
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

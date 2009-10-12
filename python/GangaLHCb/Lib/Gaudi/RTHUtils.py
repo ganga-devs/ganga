@@ -19,23 +19,6 @@ def jobid_as_string(job):
   else: jstr=str(job.id)
   return jstr
 
-def gen_catalog(dataset,site):
-  lfns = collect_lfn_filelist(dataset)
-  depth = dataset.depth
-  tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
-  cmd = 'result = DiracCommands.getInputDataCatalog(%s,%d,"%s","%s")' \
-        % (str(lfns),depth,site,tmp_xml.name)
-  result = Dirac.execAPI(cmd)
-  xml_catalog = tmp_xml.read()
-  if not result_ok(result) or not xml_catalog:    
-    msg = "Error getting PFN's from LFN's"
-    if result.get('Message',''): msg += ': %s\n' % result['Message']
-    logger.error(msg)
-    raise ApplicationConfigurationError(None,'XML catalog build error!')
-
-  tmp_xml.close()
-  return xml_catalog
-
 def get_master_input_sandbox(job,extra):
     sandbox = job.inputsandbox[:]
     sandbox += extra.master_input_files[:]
@@ -69,7 +52,7 @@ def create_runscript(app,outputdata,job):
   jstr = jobid_as_string(job)
   appname = app.get_gaudi_appname()
   script =  "#!/usr/bin/env python\n\nimport os,sys\n\n"
-  script += 'data_output = %s\n' % outputdata
+  script += 'data_output = %s\n' % outputdata.files
   script += 'xml_cat = \'%s\'\n' % 'catalog.xml'
   script += 'data_opts = \'data.opts\'\n'
   script += 'opts = \'%s\'\n' % opts

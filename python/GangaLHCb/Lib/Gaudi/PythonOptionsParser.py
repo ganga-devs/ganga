@@ -7,8 +7,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 import Ganga.Utility.logging
 from Ganga.Utility.util import unique
 import Ganga.Utility.Config 
-from GangaLHCb.Lib.LHCbDataset import LHCbDataset, LHCbDataFile
-from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import collect_lhcb_filelist
+from GangaLHCb.Lib.LHCbDataset import *
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 
@@ -133,23 +132,16 @@ class PythonOptionsParser:
         except KeyError, e:
             logger.debug('No inputdata has been defined in the options file.')
 
-        splitFiles = []
-        dtype_str = ''
+        files = []
         for d in data:
             p1 = d.find('DATAFILE=') + len('DATAFILE=')    
             quote = d[p1]
             p2 = d.find(quote,p1+1)
             f = d[p1+1:p2]
-            splitFiles.append(f)
-            dtype_str = d.replace('DATAFILE=%s%s%s' % (quote,f,quote),'')
-            dtype_str = dtype_str.strip()
-        lb = LHCbDataset()
-        lb.datatype_string = dtype_str
-        for f in splitFiles:
-            d = LHCbDataFile()
-            d.name = f
-            lb.files.append(d)
-        return lb
+            files.append(f)
+            #dtype_str = d.replace('DATAFILE=%s%s%s' % (quote,f,quote),'')
+            #dtype_str = dtype_str.strip()
+        return string_dataset_shortcut(files,None)
 
     def get_output_files( self):        
         '''Collects and organizes filenames that the job outputs'''
@@ -193,7 +185,8 @@ class PythonOptionsParser:
     def get_output(self, job):
         '''Builds lists of output files and output data.'''
 
-        outputdata = collect_lhcb_filelist(job.outputdata)
+        outputdata = []
+        if job.outputdata: outputdata = job.outputdata.files
         outsandbox = [f for f in job.outputsandbox]
 
         # if user put any files in both, remove them from the sandbox

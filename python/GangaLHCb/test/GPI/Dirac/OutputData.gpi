@@ -49,4 +49,4 @@ assert(file_contains(output_file,'This is a test'))
 lfns = jscript.backend.getOutputDataLFNs()
 assert len(lfns) == 1, 'We only expect one LFN'
 print 'lfns',lfns
-assert basename(lfns[0]) == 'output.txt', 'Check the LFN is as expected'
+assert basename(lfns[0].name) == 'output.txt', 'Check the LFN is as expected'
