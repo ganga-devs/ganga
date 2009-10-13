@@ -318,7 +318,7 @@ class DQ2Dataset(Dataset):
                   { 'attribute' : 'exclude_pattern', 'widget' : 'String_List' },
                   { 'attribute' : 'number_of_files', 'widget' : 'String' },
                   { 'attribute' : 'guids',           'widget' : 'String_List' },
-                  { 'attribute' : 'type',            'widget' : 'String_Choice', 'choices':['DQ2_LOCAL', 'DQ2_COPY', 'TAG', 'LFC', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]},
+                  { 'attribute' : 'type',            'widget' : 'String_Choice', 'choices':['DQ2_LOCAL', 'DQ2_COPY', 'TAG', 'LFC', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_DOWNLOAD' ]},
                   { 'attribute' : 'failover',        'widget' : 'Bool' },
                   { 'attribute' : 'datatype',        'widget' : 'String_Choice', 'choices':['DATA', 'MC', 'MuonCalibStream' ]},
                   { 'attribute' : 'accessprotocol',  'widget' : 'String' },
