@@ -8,9 +8,8 @@
 """
 
 external_packages = {
-   'pyqt' : { 'version' : '3.17.3_python2.5', 'PYTHONPATH' : 'lib/python2.5/site-packages', 'LD_LIBRARY_PATH' : 'lib' },
-   'Python' : { 'version' : '2.5', 'LD_LIBRARY_PATH' : 'lib', 'PATH' : 'bin' },
-   'sip': { 'version' : '4.7.7_python2.5', 'PYTHONPATH' : 'lib/python/2.5/site-packages', 'PATH' : 'bin' }
+   'pyqt' : { 'version' : '3.18.1_python2.5', 'PYTHONPATH' : 'lib/python2.5/site-packages', 'LD_LIBRARY_PATH' : 'lib' },
+   'Python' : { 'version' : '2.5', 'LD_LIBRARY_PATH' : 'lib', 'PATH' : 'bin' }
 }
 
 from Ganga.Utility.Setup import PackageSetup
