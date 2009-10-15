@@ -73,9 +73,6 @@ ganga/python/GangaPlotter                                              GangaPlot
 #ulrik
 ganga/python/GangaRobot                                                GangaRobot-20-4
 
-#marcello
-ganga/python/GangaSFrame                                               GangaSFrame-1-0
-
 #kuba
 ganga/python/GangaTest                                                 GangaTest-21-2
 
