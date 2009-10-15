@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: SFrameARA.py,v 1.2 2008-11-24 16:12:50 mbarison Exp $
+# $Id: SFrameARA.py,v 1.2 2008/11/24 16:12:50 mbarison Exp $
 ################################################################################
 import os, socket, pwd, commands, re, string
 
@@ -26,6 +26,7 @@ class SFrameARA(IApplication):
         'atlas_production'       : SimpleItem(defvalue='',doc='ATLAS Production Software Release'),
         'atlas_project'          : SimpleItem(defvalue='',doc='ATLAS Project Name'),
         'atlas_release'          : SimpleItem(defvalue='',doc='ATLAS Software Release'),
+        'atlas_dbrelease'        : SimpleItem(defvalue='',doc='ATLAS DBRelease DQ2 dataset and DQ2Release tar file'),
         'exclude_package'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Packages to exclude from user area requirements file'),
         'env'                    : SimpleItem(defvalue={},doc='Environment'),
         'group_area'             : FileItem(doc='A tar file of the group area'),
@@ -34,6 +35,7 @@ class SFrameARA(IApplication):
         'options'                : SimpleItem(defvalue='',doc='Additional Athena options'),
         'sframe_archive'         : FileItem(doc='A tar file of the SFrame libraries'),
         'sframe_dir'             : FileItem(defvalue=File(os.environ['HOME']+'/SFrame'),doc="The directory containing the SFrame lib/ and bin/ directories"),
+        'trf_parameter'          : SimpleItem(defvalue={},typelist=["dict","str"], doc='Parameters for transformations'),
         'exclude_list'    : SimpleItem(defvalue=[ "CVS", "obj", "*~", "*.root",
                                                   "*.ps", "*.so", "*.d", "*.rootmap", "*.pyc",
                                                   "*._Dict.*", "*.o", "python" ],
@@ -42,6 +44,7 @@ class SFrameARA(IApplication):
         'user_setupfile'         : FileItem(doc='User setup script for special setup'),
         'xml_options'            : FileItem(doc='A XML File specifying the SFrame options.'),
         'user_email' : SimpleItem(defvalue='', doc='email for job status notifications'),
+        'recex_type'             : SimpleItem(defvalue = '',doc='Set to RDO, ESD or AOD to enable RecExCommon type jobs of appropriate type'),
         } )
     
     _category = 'applications'
@@ -82,7 +85,7 @@ class SFrameARA(IApplication):
 
         self.syncConfig(masterClean = False)
 
-        self.AthenaSlave.prepare(athena_compile)  
+        self.AthenaSlave.prepare_old(athena_compile)  
         self.syncConfig(athenaClean = False)
 
         self.SFrameSlave.prepare(sframe_compile)
@@ -181,7 +184,10 @@ class SFrameARA(IApplication):
 config = makeConfig('SFrameARA','SFrameARA configuration parameters')
 logger = getLogger('SFrameARA')
 
-#$Log: not supported by cvs2svn $
+#$Log: SFrameARA.py,v $
+#Revision 1.2  2008/11/24 16:12:50  mbarison
+#*** empty log message ***
+#
 #Revision 1.1  2008/11/19 15:43:01  mbarison
 #first version
 #
