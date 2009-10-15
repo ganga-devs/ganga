@@ -1,0 +1,43 @@
+**************************************************************************************************************
+5.4.0 (2009/10/15)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/JobExecutionMonitor
+--------------------------------------------------------------------------------------------------------------
+Part of the Job Execution Monitor
+This is the initial release of GangaJEM. The JobExecutionMonitorMS is a
+IMonitoringService-implementation needed by GangaJEM.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+Part of the Job Execution Monitor
+This is the initial release of GangaJEM, using the external package JEM v0.2.5. More information can
+be found within Ganga (if GangaJEM is loaded) by typing 'help(JobExecutionMonitor)', and on the
+Ganga TWIKI pages at https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaJEM .
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+This release marks the move of Ganga into the standard LHCb software scheme.  I.e. you will now need
+to do "SetupProject Ganga" instead of "GangaEnv" and can install Ganga using "install_project".  
+
+Apart from this, there are many performance enhancements in this release for LHCb.  The start-up
+time should be much less at all sites.  In fact, w/ an empty repository on lxplus the start-up time
+is about 1.5 seconds.  In the near future (current plans are for 5.5.0), Ganga will be implementing
+a new job repository that will perform "lazy loading".  Tests on this repository have shown that
+this reduces the time at start up for job repository loading down to an insignificant amount even
+for *very* large repositories.  Combined w/ the enhancements for LHCb in this release, Ganga-LHCb
+users (regardless of repository size) will soon be able to start up Ganga in just a few seconds (and
+should be able to now if their repository isn't too big).
+
+The LHCbDataset/LHCbDataFile classes have also been significantly modified.  The LHCbDataFile class
+has been replaced by 2 classes: PhysicalFile and LogicalFile.  The PhysicalFile class should be used
+for PFN's and also provides the ability to upload files to Grid storage.  The LogicalFile class
+should be used for LFN's and provides the ability to download the file, replicate it, get its
+replicas and/or metadata, etc.  See the class documentation for further details.
+
+**************************************************************************************************************
