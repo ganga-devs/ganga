@@ -31,7 +31,7 @@ ganga/python/Ganga/Lib/Mergers                                         Ganga-Mer
 ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard                Ganga-ARDADashboard-20-5
 
 #muenchen
-ganga/python/Ganga/Lib/MonitoringServices/JobExecutionMonitor          Ganga-JobExecutionMonitor-1-0
+ganga/python/Ganga/Lib/MonitoringServices/JobExecutionMonitorMS        Ganga-JobExecutionMonitor-1-0
 
 #lostman (M.Wos)
 ganga/python/Ganga/Lib/MonitoringServices/MSGMS                        Ganga-MSGMS-1-1
