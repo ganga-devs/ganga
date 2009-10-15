@@ -3,7 +3,7 @@
 
 
 --------------------------------------------------------------------------------------------------------------
-ganga/python/Ganga/Lib/MonitoringServices/JobExecutionMonitor
+ganga/python/Ganga/Lib/MonitoringServices/JobExecutionMonitorMS
 --------------------------------------------------------------------------------------------------------------
 Part of the Job Execution Monitor
 This is the initial release of GangaJEM. The JobExecutionMonitorMS is a
