@@ -123,7 +123,7 @@ class InstallLHCb:
                           ['pycrypto','2.0.1']]
         archs = ['slc4_amd64_gcc34','slc4_ia32_gcc34','x86_64-slc5-gcc43-opt']
         
-        s = self.options.external
+        s = join(self.options.area,"external")
         d = join(self.destination,"external")
         mkdir(d)
         if self.options.developer:
@@ -194,23 +194,30 @@ the SVN repository."""
                           "[default: %default]", 
                       metavar="URL")
 
-    parser.add_option("-p", "--project", dest="project",
-                      default = 'svn+ssh://svn.cern.ch/reps/ganga/branches/Ganga-LHCbSetupProject/external/LHCbSetupProject',
-                      help="Full URL from where to pick up project template" + \
-                          "[default: %default]", 
+    parser.add_option("-p", "--pre-release",  action="store_true",
+                      dest="prerelease", default=False,
+                      help="Treat as a pre-release " + \
+                          "[default: %default]")
+
+    parser.add_option("-P", "--project", dest="project",
+                      default = 'svn+ssh://svn.cern.ch/reps/ganga/trunk/external/LHCbSetupProject',
+                      help="Full URL from where to pick up project " + \
+                          "template [default: %default]", 
                       metavar="URL")
 
     parser.add_option("-d", "--destination", dest="destination",
                       default = '~/cmtuser',
-                      help="Save LHCb formatted release in DIR" + \
+                      help="Save LHCb formatted release in DIR " + \
                           "[default: %default]", metavar="DIR")
 
-    parser.add_option("-e", "--external", dest="external",
-                      default = '/afs/cern.ch/sw/ganga/external',
-                      help="Location of Ganga external area [default: %default]",
+    parser.add_option("-s", "--software-area", dest="area",
+                      default = '/afs/cern.ch/sw/ganga',
+                      help="Location of Ganga installation area as used " + \
+                          "for external packages and pre-releases. " + \
+                          "[default: %default]",
                       metavar="DIR")
 
-    parser.add_option("-x", "--developer", action="store_true", 
+    parser.add_option("-x", "--developer", action="store_true",
                       dest="developer", default=False,
                       help="Create as developer by including SVN files and " + \
                           "only creating soft-links in external area. " + \
