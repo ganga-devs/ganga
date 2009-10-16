@@ -289,6 +289,7 @@ class DQ2Dataset(Dataset):
 
     _schema = Schema(Version(1,0), {
         'dataset'            : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="Dataset Name(s)" ),
+        'tag_info'          : SimpleItem(defvalue = {}, doc = 'TAG information used to split the job'),
         'tagdataset'         : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc = 'Tag Dataset Name'),
         'use_aodesd_backnav' : SimpleItem(defvalue = False, doc = 'Use AOD to ESD Backnavigation'),
         'names'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to use for processing'),
@@ -296,7 +297,7 @@ class DQ2Dataset(Dataset):
         'exclude_pattern'    : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical file name pattern to exclude from processing'),
         'number_of_files'    : SimpleItem(defvalue = 0, doc = 'Number of files. '),
         'guids'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'GUID of Logical File Names'),
-        'type'               : SimpleItem(defvalue = '', doc = 'Dataset access on worker node: DQ2_LOCAL (default), DQ2_COPY, TAG, LFC, TNT_LOCAL, TNT_DOWNLOAD'),
+        'type'               : SimpleItem(defvalue = '', doc = 'Dataset access on worker node: DQ2_LOCAL (default), DQ2_COPY, LFC'),
         'failover'           : SimpleItem(defvalue = False, doc = 'Use DQ2_COPY automatically if DQ2_LOCAL fails'),
         'datatype'           : SimpleItem(defvalue = '', doc = 'Data type: DATA, MC or MuonCalibStream'),
         'accessprotocol'     : SimpleItem(defvalue = '', doc = 'Accessprotocol to use on worker node, e.g. Xrootd'),
@@ -318,7 +319,7 @@ class DQ2Dataset(Dataset):
                   { 'attribute' : 'exclude_pattern', 'widget' : 'String_List' },
                   { 'attribute' : 'number_of_files', 'widget' : 'String' },
                   { 'attribute' : 'guids',           'widget' : 'String_List' },
-                  { 'attribute' : 'type',            'widget' : 'String_Choice', 'choices':['DQ2_LOCAL', 'DQ2_COPY', 'TAG', 'LFC', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]},
+                  { 'attribute' : 'type',            'widget' : 'String_Choice', 'choices':['DQ2_LOCAL', 'DQ2_COPY', 'LFC']},
                   { 'attribute' : 'failover',        'widget' : 'Bool' },
                   { 'attribute' : 'datatype',        'widget' : 'String_Choice', 'choices':['DATA', 'MC', 'MuonCalibStream' ]},
                   { 'attribute' : 'accessprotocol',  'widget' : 'String' },
