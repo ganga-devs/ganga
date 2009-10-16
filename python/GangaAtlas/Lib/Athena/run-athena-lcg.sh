@@ -80,13 +80,14 @@ fi
 cmt_setup
 
 ################################################
-# check for GangaTnt subcollection and rename
-ls | grep 'sub_collection_*' > tmp
-if [ $? -eq 0 ]
+# check for TAG subcollections and store the file list
+ls | grep '\.subcoll\.' > tag_file_list
+echo "Created TAG list:"
+more tag_file_list
+
+if [ `cat tag_file_list | wc -l` -le 0 ]
 then
-mv sub_collection_* tag.pool.root
-tar -c tag.pool.root > tag.tar
-gzip tag.tar
+    rm tag_file_list
 fi
 
 ################################################
