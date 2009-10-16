@@ -10,6 +10,18 @@ from subprocess import call
 import shutil
 from os import makedirs,mkdir
 
+
+def _versiondecode(s,p = re.compile(r'^.*v(\d+)r(\d+)p*(\d*)')):
+    """Translate an LHCb version vXrYpZ into a tuple (X,Y,Z)"""
+    m = p.match(s)
+    if m:
+        if m.group(3)=='':
+            return (int(m.group(1)),int(m.group(2)),0)
+        else:
+            return (int(m.group(1)),int(m.group(2)),int(m.group(3)))
+    return None
+
+
 class InstallLHCbError(Exception):
     """Exception class for InstallLHCb"""
     pass
@@ -19,6 +31,7 @@ class InstallLHCb:
     def __init__(self,options):
         self.options = options
 
+
     def _locations(self):
         """Identify exact locations for source and destanation"""
 
@@ -26,27 +39,36 @@ class InstallLHCb:
         source = self.options.source
         pTag     = re.compile(r'.+/(\S+)$')
         mTag = pTag.match(ver)
+        vLHCb = _versiondecode(ver)
+        versiontuple = (vLHCb[0]/100,vLHCb[0]-(vLHCb[0]/100)*100,vLHCb[1])
         pRelease = re.compile(r'Ganga-(\d+)-(\d+)-(\d+)$')
         mRelease = pRelease.match(ver)
 
         if ver == 'head':
             self.versionLHCb = 'head'
-            self.URL = join(source,"trunk","ganga")
+            self.versionGanga = 'head'
+            self.sourcelocation = join(source,"trunk","ganga")
         elif mTag:
             if len(self.options.name)>0:
                 self.versionLHCb = self.options.name
             else:
                 self.versionLHCb = mTag.group(1)
-            self.URL = join(source,ver)
-        elif mRelease:
-            versionlist = [int(s) for s in mRelease.groups()]
-            self.versionLHCb = "v%d%2.2dr%d" % tuple(versionlist)
-            self.URL = join(source,"tags",ver)
+            self.versionGanga=ver
+            self.sourcelocation = join(source,ver)
+        elif versiontuple:
+            self.versionLHCb = ver
+            self.versionGanga = "Ganga-%d-%d-%d" % versiontuple
+            if self.options.prerelease:
+                self.sourcelocation = join(self.options.area,
+                                           "install",
+                                           "%d.%d.%d-pre"% versiontuple)
+            else:
+                self.sourcelocation = join(source,"tags", self.versionGanga)
         else:
             raise InstallLHCbError(
                 "Could not identify SVN location for input version %s" % ver)
         
-        print "SVN checkout from         : %s" % self.URL
+        print "SVN checkout from         : %s" % self.sourcelocation
         print "LHCb release will be named: %s" % self.versionLHCb
 
     def _checkInstallDir(self):
@@ -69,10 +91,33 @@ class InstallLHCb:
 
     def _getProject(self):
         """Check out the CMT structure for the Ganga CMT Project"""
-        command = "svn export --quiet --force " + self.options.project + \
+
+
+        # Find the location in SVN
+        taglocation = None
+        tagdir = self.options.source + '/tags/private/LHCbSetupProject'
+        fh, fname = mkstemp()
+        command = "svn list " + tagdir
+        retcode = call(command,shell=True,stdout=fh)
+        f = open(fname)
+        taglist=sorted(f.readlines(),key=_versiondecode)
+        taglist.reverse()
+        gangaver = _versiondecode(self.versionLHCb)
+        for d in taglist:
+            vsort=_versiondecode(d)
+            if vsort and vsort <= gangaver:
+                taglocation = join(tagdir,d.rstrip())
+                break
+        
+        if not taglocation:
+            raise InstallLHCbError(
+                "Failed to find correct tag for LHCbSetupProject. " + \
+                    "Looked in %s and found nothing" % tagdir)
+
+        command = "svn export --quiet --force " + taglocation + \
             "/GANGA/GANGA_v " + self.destination
 
-        print "Checking out project"
+        print "Checking out project from %s"  % taglocation
         retcode = call(command,shell=True)
         if retcode:
             raise InstallLHCbError(
@@ -95,8 +140,13 @@ class InstallLHCb:
         mkdir(join(self.destination,"install"))
         gangadir = join(self.destination,"install","ganga")
         print "Checking out Ganga"
-        command = "svn " + self.svncheckout + " --quiet " + self.URL + \
-            " " + gangadir
+        if self.options.prerelease:
+            command = "mkdir %s && cp -r %s %s" % \
+                (gangadir, join(self.sourcelocation,"*") , 
+                 gangadir)
+        else:
+            command = "svn " + self.svncheckout + " --quiet " + self.sourcelocation + \
+                " " + gangadir
         retcode = call(command,shell=True)
         if retcode:
             raise InstallLHCbError(
@@ -172,8 +222,8 @@ class InstallLHCb:
     def install(self):
         self.prepare()
         self.checkout()
-        self.process()
-        self.cleanup()
+#        self.process()
+#        self.cleanup()
 
 if __name__ == '__main__':
 
@@ -181,7 +231,7 @@ if __name__ == '__main__':
     
     usage = """usage: %prog [options] version
 
-The version should be given in the form of a tag name like "Ganga-5-3-2". If
+The version should be given in the form of an LHCb version name like "v504r0". If
 "head" is used instead, the trunk will be checked out. If a relative path like 
 "branches/MyDevelopment" is used, it will be used as the relative path inside 
 the SVN repository."""
@@ -199,18 +249,12 @@ the SVN repository."""
                       help="Treat as a pre-release " + \
                           "[default: %default]")
 
-    parser.add_option("-P", "--project", dest="project",
-                      default = 'svn+ssh://svn.cern.ch/reps/ganga/trunk/external/LHCbSetupProject',
-                      help="Full URL from where to pick up project " + \
-                          "template [default: %default]", 
-                      metavar="URL")
-
     parser.add_option("-d", "--destination", dest="destination",
                       default = '~/cmtuser',
                       help="Save LHCb formatted release in DIR " + \
                           "[default: %default]", metavar="DIR")
 
-    parser.add_option("-s", "--software-area", dest="area",
+    parser.add_option("-S", "--software-area", dest="area",
                       default = '/afs/cern.ch/sw/ganga',
                       help="Location of Ganga installation area as used " + \
                           "for external packages and pre-releases. " + \
@@ -246,6 +290,6 @@ the SVN repository."""
         installer.install()
     except InstallLHCbError, detail:
         print "Error in installation:\n%s\n" % detail
-        parser.print_help()
+        print "Run with option --help to see syntax."
 
 
