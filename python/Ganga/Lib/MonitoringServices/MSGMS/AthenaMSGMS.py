@@ -14,13 +14,13 @@ class AthenaMSGMS(MSGMS):
 
 
     def stop(self, exitcode, **opts):
-        exit_status = "finished"
-#        if exitcode == 0:
-#            exit_status = "finished"
-#        else:
-#            exit_status = "failed"
+        exit_status = None
+        if exitcode == 0:
+            exit_status = "finished"
+        else:
+            exit_status = "failed"
 
-        message = MSGMS.getMessage(self)
+        message = self.getMessage()
         message['event'] = exit_status
         try:
             f = open('stats.pickle','r')
@@ -32,6 +32,7 @@ class AthenaMSGMS(MSGMS):
         except:
             pass
 
+        from Ganga.Lib.MonitoringServices.MSGMS import sendJobStatusChange
         sendJobStatusChange( message )
 
 
