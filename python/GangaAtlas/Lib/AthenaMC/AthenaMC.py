@@ -26,6 +26,8 @@ from Ganga.GPIDev.Credentials import GridProxy
 
 from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import matchFile, expandList
 
+from Ganga.GPIDev.Lib.File import *
+
 
 
 class AthenaMC(IApplication):
@@ -58,11 +60,12 @@ class AthenaMC(IApplication):
         'siteroot' : SimpleItem(defvalue='',doc='location of experiment software area for non-grid backends.',typelist=["str"]),
         'cmtsite' : SimpleItem(defvalue='',doc='flag to use kit or cern AFS installation. Set to CERN for the latter, leave unset otherwise.',typelist=["str"]),
         'dryrun' : SimpleItem(defvalue=False,doc='flag to not do stagein/stageout, for testing.',typelist=["bool"]),
+        'transflags'  : SimpleItem(defvalue='',doc='optional flags for the transform run, like --ignoreunknown',typelist=["str"])
         })
     
     _category = 'applications'
     _name = 'AthenaMC'
-    _exportmethods = ['prepare', 'postprocess']
+    _exportmethods = ['prepare', 'postprocess','diagnostic']
     _GUIPrefs= [ { 'attribute' : 'mode', 'widget' : 'String_Choice', 'choices' : ['evgen','simul','recon','template']}, { 'attribute' : 'verbosity', 'widget' : 'String_Choice', 'choices' : ['ALL','VERBOSE','DEBUG','INFO','WARNING','ERROR','FATAL']}]
 
     dbrelease=""
@@ -85,26 +88,164 @@ class AthenaMC(IApplication):
            logger.warning("Job %s returned non-zero transformation code %s. Please check stdout.gz with job.peek('stdout.gz')" % (str(job.id),trfretcode))
        
        if job.outputdata:
-           if job.subjobs: # master job is the only one to have subjobs...
-               logger.info("entering Master job completion thread")
-               stats = [s.status for s in job.subjobs]
-               logger.info("subjob status: %s" % str(stats))
-               nattempt=0
-               while "completing" in stats:
-                   time.sleep(20)
-                   nattempt+=1
-                   if nattempt==3:
-                       logger.warning("Master job completing while at least one subjob is still completing. Delaying master job completion until all subjobs have left the 'completing' state. Please abort by hand if this is the result of job.force_status('completed')")
-                   stats = [s.status for s in job.subjobs]
-                   
-               logger.info("All subjobs are done, now running fill() for master job")
            job.outputdata.fill()
               
+    def diagnostic(self):
+       """Collect output information to help understanding why a job or subjob have failed in first place."""
+       from Ganga.GPIDev.Lib.Job import Job
+       job = self._getParent()
+       logger.info("Welcome to the diagnostic() tool of AthenaMC. This is a prototype aimed to identify the causes of a job failure and therefore is not 100 % reliable...")
+       if job.backend._name!="LCG":
+           logger.error("diagnostic() is only available for the LCG() backend")
+           return
+       if job.subjobs:
+           jobs=job.subjobs
+       else:
+           jobs=[job]
+
+       for job in jobs:
+           pfn = job.outputdir + "stdout.gz"
+           if job.status=='completed' and os.path.exists(pfn) and len(job.outputdata.expected_output)== len(job.outputdata.actual_output):
+               # job is OK as far as we are concerned.
+               continue
+           if job.status=='running' or job.status=='submitted' or job.status=='new' or job.status=="killed":
+               # job has not finished (or even started) to run...
+               continue
+           
+           logger.info("processing job %s" % str(job.id))
+           if not os.path.exists(pfn):
+               logger.warning("Could not find logfile, will check grid status")
+               if job.status=='failed' :
+                   reason=job.backend.reason
+                   logger.warning("job failure reason: %s" % str(reason))
+                   continue
+               if job.status=="completing":
+                   logger.warning("Job stuck in status='completing'. Please run job.force_status('completed')")
+                   continue
+               if job.status=='completed':
+                   logger.warning("logfile was not downloaded. Since the job was qualified as 'completed', the rest of the output was collected. Please check the output files to be sure they are OK")
+                   continue
+           # now greping the stdout file.
+           inputerror=commands.getoutput("zgrep -e 'Missing LFN' %s " % pfn)
+           trfretcode=commands.getoutput("zgrep -e 'returning transform exit code' %s | awk '{print $NF}'" % pfn) 
+           trferror=commands.getoutput("zgrep -e 'ErrorCategory=' %s " % pfn)
+           outputerror=commands.getoutput("zgrep -e 'Output data missing' %s" %pfn)
+           if inputerror:
+               logger.warning("Input data uploading failed: %s" % inputerror)
+               continue
+           if (trfretcode and trfretcode !="0" ) or trferror:
+               logger.warning("crash during execution, error code:%s , reason: %s" % (trfretcode,trferror))
+               continue
+           if outputerror:
+               logger.warning("output data failed to be saved, check job.outputdata.actual_output and job.outputdata.expected_output")
+               continue
+           if job.status=='completed' and len(job.outputdata.expected_output)!= len(job.outputdata.actual_output):
+               missingFile=""
+               for file in job.outputdata.expected_output:
+                   for contents in job.outputdata.actual_output:
+#                       print file, contents
+                       missingFile=file
+                       if file in contents:
+                           missingFile=""
+                           break
+                   if missingFile:
+                       logger.warning("Missing output file: %s. Please check logfile for details." % missingFile)
+               continue
+           if job.status=="completing":
+                   logger.warning("Job stuck in status='completing'. Please run job.force_status('completed')")
+                   continue
+           logger.error("Could not determine what went wrong. Please seek assistance with the support mailing list hn-atlas-dist-analysis-help@cern.ch, and provide the logfile %s" % pfn )
+       return
+   
     def prepare(self):
         """Prepare each job/subjob from the user area"""
-        # will call backend related method in RTHandler.py
-        # can call configure(), then master_configure()
-        pass
+        from pandatools import AthenaUtils
+        # get Athena versions
+        rc, out = AthenaUtils.getAthenaVer()
+        # failed
+        if not rc:
+            raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+        self.userarea = out['workArea']
+         # save current dir
+        currentDir = os.path.realpath(os.getcwd())
+        # get run directory
+        # remove special characters                    
+        sString=re.sub('[\+]','.', self.userarea)
+        runDir = re.sub('^%s' % sString, '', currentDir)
+        if runDir == currentDir:
+            raise ApplicationConfigurationError(None, 'You need to run panda_prepare in a directory under %s' % self.userarea)
+        elif runDir == '':
+            runDir = '.'
+        elif runDir.startswith('/'):
+            runDir = runDir[1:]
+        runDir = runDir+'/'
+        self.user_area_rundir=runDir
+        logger.info('Found Working Directory %s' % self.userarea)
+        logger.info('Using run directory: %s' % self.user_area_rundir)
+        # tmpDir
+        if os.environ.has_key('TMPDIR'):
+            tmpDir = os.environ['TMPDIR']
+        else:
+            cn = os.path.basename( os.path.expanduser( "~" ) )
+            tmpDir = os.path.realpath('/tmp/' + cn )
+
+        if not os.access(tmpDir,os.W_OK):    
+            os.makedirs(tmpDir)
+            
+        savedir=os.getcwd()
+       # archive sources
+        verbose = False
+        archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, tmpDir, verbose)
+        logger.info('Creating %s ...'% archiveFullName )
+        # Add InstallArea
+        nobuild = True
+        AthenaUtils.archiveInstallArea(self.userarea, "", archiveName, archiveFullName, tmpDir, nobuild, verbose)
+        logger.info('Adding InstallArea to %s ...'% archiveFullName )
+        # Create and add requirements file
+        filename = os.path.join(tmpDir,'requirements' )
+        req = file(filename,'w')
+        req.write('# generated by GANGA\nuse AtlasPolicy AtlasPolicy-*\n')
+        user_excludes=['']
+        
+        os.chdir(self.userarea)
+        out = commands.getoutput('find . -name cmt' )
+        os.chdir(savedir)
+        re_package1 = re.compile('^\./(.+)/([^/]+)/cmt$')
+        re_package2 = re.compile('^\./(.+)/cmt$')
+
+        for line in out.split():
+            match1=re_package1.match(line)
+            if match1:
+                req.write('use %s %s-* %s\n' %  (match1.group(2), match1.group(2), match1.group(1)))
+                user_excludes += ["%s/%s" % (match1.group(1),match1.group(2))]
+                user_excludes += ["InstallArea/*/%s" % match1.group(2)]
+
+            if re_package2:
+                match2=re_package2.match(line)
+                if match2 and not match1:
+                    req.write('use %s %s-*\n' %  (match2.group(1), match2.group(1) ))
+                    user_excludes += ["%s" % match2.group(1)]
+                    user_excludes += ["InstallArea/*/%s" % match2.group(1)]
+                    
+        req.close()
+        os.chdir(savedir)
+        fname = os.path.split(filename)[1]
+        logger.info('Adding requirements to %s ...'% archiveFullName )
+
+        out = commands.getoutput('pushd . && cd %s && tar -rh %s -f %s && popd' % (tmpDir, fname, archiveFullName))
+        os.unlink(filename)
+        # compress
+        rc, out = commands.getstatusoutput('gzip %s' % archiveFullName)
+        archiveName += '.gz'
+        archiveFullName += '.gz'
+        if rc != 0:
+            logger.error(out)
+            
+        self.user_area.name = archiveFullName
+        os.chdir(savedir)
+        
+        return
+
 
     def getPartitionList(self):
         """ Calculates the list of partitions that should be processed by this application. 
@@ -433,6 +574,8 @@ class AthenaMC(IApplication):
                 self.outputfiles[filetype]=self.fileprefixes[filetype]+"._%5.5d.pool.root" % outpartition
             # add the final lfn to the expected output list
             if self.outputfiles[filetype].upper() != "NONE":
+                if filetype=="LOG" and "LOG" not in job._getRoot().outputdata.outrootfiles:
+                    continue
                 logger.debug("adding %s to list of expected output" % self.outputfiles[filetype])
                 job.outputdata.expected_output.append(self.outputfiles[filetype])
 
@@ -446,6 +589,8 @@ class AthenaMC(IApplication):
                 self.outputpaths[type]=self.outputpaths[type]+"/"
         expected_datasets=""
         for filetype in self.outputpaths.keys():
+            if filetype=="LOG" and "LOG" not in job._getRoot().outputdata.outrootfiles:
+                continue
             dataset=string.replace(self.outputpaths[filetype],"/",".")
             if dataset[0]==".": dataset=dataset[1:]
             if dataset[-1]==".": dataset=dataset[:-1]
@@ -555,6 +700,8 @@ class AthenaMC(IApplication):
        self.runNumber=""
        self.subjobsOutfiles={}
        self.evgen_job_option_filename=""
+       self.user_area=File(name='')
+       self.user_area_rundir=""
        
        job = self._getRoot()
        # basic checks

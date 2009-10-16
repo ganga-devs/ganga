@@ -52,11 +52,11 @@ outsite=""
 class AthenaMCPandaRTHandler(IRuntimeHandler):
     """Athena MC Panda Runtime Handler"""
     # only filling a list of preformatted job specs. 
-
-#    dsetmap,sitemap={},{}
-#    userprefix=""
-
     
+    #    dsetmap,sitemap={},{}
+    #    userprefix=""
+
+    firstPass=True;
     def master_prepare(self,app,appmasterconfig):
 
         job = app._getParent()
@@ -189,7 +189,6 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
  
         job = app._getParent()
         logger.debug('AthenaMCPandaRTHandler prepare called for %s', job.getFQID('.'))
-
         try:
             assert self.outsite
         except:
@@ -295,10 +294,13 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             fout = FileSpec()
             dset=string.replace(app.outputpaths[outtype],"/",".")
             dset=dset[1:-1]
-            try:
-                Client.addDataset(dset,False)
-            except:
-                raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % dset)
+            if self.firstPass:
+                # dataset registration must be done only once.
+                try:
+                    Client.addDataset(dset,False)
+                except:
+                    raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % dset)
+                self.firstPass=False
                 
             fout.dataset=dset
             fout.lfn=pandaOutfiles[outtype]

@@ -26,8 +26,9 @@ from Ganga.Utility.GridShell import getShell
 
 _refreshToACache()
 gridshell = getShell("EDG")
+_writeTokens=["SCRATCHDISK","LOCALGROUPDISK"] # have to include LOCALGROUPDISK because direct subscription does not work.
 
-
+_subscriptionTokens=[]
 
 def getLFCmap():
     lfcstrings,lfccloud={},{}
@@ -52,48 +53,6 @@ def getLFCmap():
             else:
                 lfcstrings[loctag]=lfccloud[cloud]
     return lfcstrings
-
-def getLRCdata(site,lfn):
-    lrc=""
-    if site in ToACache.LRCHTTP.keys():
-        lrc=ToACache.LRCHTTP[site][0]
-        logger.debug("is from primary site: %s %s " % (site,lrc))
-    else:
-        for cloud, localids in ToACache.topology.iteritems():
-            if site in localids and cloud in ToACache.LRCHTTP.keys():
-                lrc=ToACache.LRCHTTP[cloud][0]
-                logger.debug("is from secondary site: %s %s %s" % (site,cloud,lrc))
-               
-        
-
-    if not lrc:
-        return ""
-    url=lrc + 'lrc/PoolFileCatalog'
-    data = {'lfns':lfn}
-    (status,out) = getcurl(url,data)
-    # print status,out
-    if status==0 and out != "\x00":
-        lines=string.split(out,"\n")
-        for line in lines:
-            if string.find(line,"<pfn")>-1:
-                imin=string.find(line,'name="')+6
-                imax=string.find(line,'"/>')
-                return line[imin:imax]
-                
-def getcurl(url,data):
-    datastr=""
-    for key in data.keys():
-        datastr+=' --data "%s"' % urllib.urlencode({key:data[key]})
-    cmd='curl --user-agent "dqcurl" --silent --insecure --get %s  %s ' % (datastr,url)
-    #print cmd
-    status,out= commands.getstatusoutput(cmd)
-    try:
-        tmpout = urllib.unquote_plus(out)
-        out = eval(tmpout)
-    except:
-        pass
-    return status,out
-
 
 
 def checkpath(path,prefix):
@@ -850,7 +809,7 @@ class AthenaMCOutputDatasets(Dataset):
     _category = 'datasets'
     _name = 'AthenaMCOutputDatasets'
 
-    _exportmethods = [ 'prep_data', 'getDQ2Locations', 'getSEs', 'create_dataset','fill','retrieve','recover' ]
+    _exportmethods = [ 'prep_data', 'getDQ2Locations', 'getSEs', 'create_dataset','fill','retrieve','recover','validate' ]
 
     def __init__(self):
         super(AthenaMCOutputDatasets, self).__init__()
@@ -986,32 +945,23 @@ class AthenaMCOutputDatasets(Dataset):
                 
         else:
             selsite=se_name
-            allowed_tokens=["LOCALGROUPDISK","SCRATCHDISK"]
-            if string.find(_usertag,"group")>-1 :
-                token=username.upper()
-                allowed_tokens=[token]
-            #print allowed_tokens,se_name
-            #allowed_tokens=["SCRATCHDISK"]
             makeSites=[]
             forbiddenSE="true"
-            for token in allowed_tokens:
+            for token in _writeTokens:
                 if token in se_name:
                     forbiddenSE="false"
             #print se_name, forbiddenSE
             if forbiddenSE=="true" :
                 #print app.sites
                 selsite=""
-                #                logger.warning("Space token proposed for output: %s is forbidden for writing. Attempting to find alternative space token in the same site."% se_name)
-                #logger.warning("Output data from jobs processing must go to SCRATCHDISK. Once finalized (master job completed), the output datasets can be subscribed to their final destination using dq2-register-subscription or dq2-register-subscription-container")
                 logger.warning("Detected forbidden output space token in input: %s. Changing to SCRATCHDISK" % se_name) 
                 imax=se_name.find("_")
                 sitename=se_name[:imax]
                 
                 # build all possible alternative, check that they are in DQ2 site list.
-                for token in allowed_tokens:
+                for token in _writeTokens:
                     makeSites.append(sitename+"_"+token)
-                    #                makeSites.append(sitename+"_LOCALGROUPDISK")
-                    #                makeSites.append(sitename+"_USERDISK") # now retired and read-only. Not suitable for output then.
+
                 for site in makeSites:
                     if site in sites:
                         selsite=site
@@ -1052,29 +1002,7 @@ class AthenaMCOutputDatasets(Dataset):
                     return result
         return result
         
-        
-    def getDatasets(name,version=0):
-        '''Get Datasets from DQ2'''
-        url = self.baseURLDQ2 + 'ws_repository/dataset'
-        data = { 'dsn' : name, 'version' : version }
-        status, out = getcurl(url,data)
-        if status:
-            logger.error('%d, %s', status, out)
-            logger.error('Could not retrieve datasets %s',name)
-            return None
 
-        datasets = []
-        for lfn,idMap in out.iteritems():
-            # check format
-            if idMap.has_key('vuids') and len(idMap['vuids'])>0:
-                temp = [ lfn, idMap['vuids'][0]]
-                datasets.append(temp)
-                continue
-            # wrong format
-            logger.error('%d, %s', status, out)
-            logger.error("ERROR : could not parse HTTP response for %s", name)
-    
-        return datasets
 
     def checkDataset(self,dataset):
         """check that dataset is not already frozen, and if yes, then create a new instance with an extra suffix (vX) """
@@ -1262,7 +1190,7 @@ class AthenaMCOutputDatasets(Dataset):
                 self.register_dataset_location(dataset,siteID)
             self.register_file_in_dataset(dataset,[lfn],[guid], [size],[adler32])
         return datasets
-    def recover(self,freeze="yes"):
+    def recover(self,freeze="no"):
         from Ganga.GPIDev.Lib.Job import Job
         from GangaAtlas.Lib.ATLASDataset import filecheck
         job = self._getParent()
@@ -1382,82 +1310,8 @@ class AthenaMCOutputDatasets(Dataset):
                     if dset not in self.store_datasets:
                         self.store_datasets.append(dset)
             logger.info("list of datasets: %s" % str(self.store_datasets))
-            for dset in self.store_datasets:
-                try:
-                    dq2_lock.acquire()
-                    frozen=dq2.getMetaDataAttribute(dset,["frozendate"])
-                    if frozen.values()[0]!="None":
-                        logger.info("Dataset %s is already frozen, skipping" % dset)
-                    else:
-                        logger.info("proceeding with freezing the dataset %s" % dset)
-                        try:
-                            dq2.freezeDataset(dset)
-                        except:
-                            logger.error("Error in freezing the dataset %s. Please use job.outputdata.recover(). " % dset)
-                            pass
-                finally:
-                    dq2_lock.release()
-
-                    
-                imax=string.find(dset,".jid")
-                containername=dset[:imax]+"/"
-                logger.debug("attempting to create container %s from %s" % (containername,dset))
-                try:
-                    dq2_lock.acquire()
-                    dsetlist = dq2.listDatasets('%s' % containername)
-                finally:
-                    dq2_lock.release()
-                logger.debug("found %s" % str(dsetlist))
-                if len(dsetlist)==0:
-                    logger.info("creating container: %s", containername)
-                    try:
-                        dq2_lock.acquire()
-                        containerClient.create(containername)
-                    finally:
-                        dq2_lock.release()
-                # should check that dset is not already registered in containername
-                # at this point, one should have a container. Updating dsetlist with contents of container:
-                try:
-                    dq2_lock.acquire()
-                    dsetlist = dq2.listDatasetsInContainer('%s' % containername)
-                finally:
-                    dq2_lock.release()
-                
-                if dset in dsetlist:
-                    logger.warning("dataset %s already registered in container %s, skipping" % (dset,containername))
-                if len(dsetlist)==0 or dset not in dsetlist:
-                    try:
-                        containerClient.register(containername,[dset])
-                    except:
-                        logger.error("Error registering the dataset %s in its container %s. Please discard if this job was resubmitted." % (dset,containername))
-                        pass
-
-                # if app.se_name is set and dset has more than one locations, then subscribe dset to app.se_name to aggregate the dataset to the intended location
-                if job.application.se_name and job.application.se_name!="none":
-                    locations={}
-                    try:
-                        dq2_lock.acquire()
-                        locations=dq2.listDatasetReplicas(dset)
-                        datasetinfo = dq2.listDatasets(dset)
-                    finally:
-                        dq2_lock.release()
-                    if not datasetinfo or not locations:
-                        break
-                    datasetvuid = datasetinfo[dset]['vuids'][0]
-                    sitelist=locations[datasetvuid][1] + locations[datasetvuid][0]
-                    seNames=job.application.se_name.split(" ")
-                    subscribedSite=seNames[0]
-                    if subscribedSite not in sitelist or len(sitelist)>1:
-                        if subscribedSite not in sitelist:
-                            logger.warning("location declared in application.se_name different from existing locations of %s. Subscribing dataset to requested location: %s" % (dset,subscribedSite))
-                        elif len(sitelist)>1:
-                            logger.warning("Found more than one location for output dataset, will start subscription to aggregate data to %s. Locations are: %s" % (subscribedSite,str(sitelist)))
-                        try:
-                            dq2_lock.acquire()
-                            dq2.registerDatasetSubscription(dset,subscribedSite)
-                        finally:
-                            dq2_lock.release()
-                        
+            logger.warning("Master job is now completed, but created datasets are still opened and left on a temporary space token.")
+            logger.warning("Please run job.outputdata.validate() to close the datasets and associate them to their physics container.")
             
 #       Output files in the sandbox 
         outputsandboxfiles = job.outputsandbox
@@ -1476,6 +1330,174 @@ class AthenaMCOutputDatasets(Dataset):
         
         logger.error("Nothing to download")
         return
+    
+    def validate(self,freeze="yes",subscribeTo=[],force="false",subscribedDatasets=["all"]):
+        """validate(freeze='yes',subscribeTo=['site1','site2',...],force='false',subscribedDatasets=['all'])
+        Possible options:
+        1) job.outputdata.validate() as is will just freeze your output datasets and add them to the relevant container.
+        2) job.outputdata.validate(subscribeTo=['site1','site2',...]) will subscribe all the output datasets of job to site1 and site2 (after checking that you are allowed to write into site1 and site2).
+        3) job.outputdata.validate(subscribedDatasets=['dataset1','dataset3'],subscribeTo=['site1','site2']) will subscribe only dataset1 and dataset3 to site1 and site2. This is useful to screen out unwanted datasets (like NTUP or LOG)
+        4) force='yes' should be used when one wants to force freeze datasets from a master job which is never going to finish (subjobs stuck in completing/running/submitted states)
+        """
+        from Ganga.GPIDev.Lib.Job import Job
+        from GangaAtlas.Lib.ATLASDataset import filecheck
+        job = self._getParent()
+        if job.master:
+            logger.error("validate() can only be called from the master job")
+            return
+        # check master and subjobs status. Refuse cowardly to validate the dataset if force left to false.
+        if job.subjobs:
+            stats = [s.status for s in job.subjobs]
+        else:
+            stats=[job.status]
+        logger.debug("job(s) status: %s" % str(stats))
+        if "completing" in stats or "running" in stats or "submitted" in stats:
+            logger.error("Found that some job or subjobs are not completed!")
+            if force=="false":
+                logger.warning("Refusing cowardly to validate incomplete datasets")
+                return
+            
+        # validate() works on all backends, since it only does ddm stuff .
+        # first, collect datasets from subjobs. if no subjobs, then self.store_datasets is already set from fill()
+        
+        for subjob in job.subjobs:
+            dsets=subjob.outputdata.store_datasets
+            for dset in dsets:
+                if dset not in self.store_datasets:
+                    self.store_datasets.append(dset)
+            
+        logger.info("list of datasets: %s" % str(self.store_datasets))                
+        if freeze=="yes":
+            # freeze output dataset, create container if needed then add to container.
+            for dset in self.store_datasets:
+                self.freeze_dataset(dset)
+
+        # subscribe output data if requested.
+        if len(subscribeTo)==0 or len(subscribedDatasets)==0:
+            logger.info("No subscription requested. Finishing now")
+            return
+##        else:
+##            logger.error("Direct DQ2 subscriptions are not working at the moment. Please use the web interface: http://panda.cern.ch:25880/server/pandamon/query?mode=reqsubs0")
+##            return
+        
+        # check subscribeTo contents.
+        allowed_Sites=self.checkSites(subscribeTo)
+        if len(allowed_Sites)==0:
+            logger.error("No allowed sites to subscribe to. Please check your proxy rights and the requested space tokens")
+            return
+        # check that subscribedDatasets are all frozen
+        if subscribedDatasets[0]=="all":
+            subscribedDatasets=self.store_datasets
+        subDatasets=self.checkFrozen(subscribedDatasets)
+        if len(subDatasets)==0:
+            logger.error("None of the requested datasets are frozen. Aborting")
+            return
+
+        for dset in subDatasets:
+            locations={}
+            try:
+                dq2_lock.acquire()
+                locations=dq2.listDatasetReplicas(dset)
+                datasetinfo = dq2.listDatasets(dset)
+            finally:
+                dq2_lock.release()
+            if not datasetinfo or not locations:
+                break
+            datasetvuid = datasetinfo[dset]['vuids'][0]
+            sitelist=locations[datasetvuid][1] + locations[datasetvuid][0]
+
+            for site in allowed_Sites:
+                if site in sitelist:
+                    continue
+                logger.warning("Subscribing %s to %s" % (dset, site))
+                try:
+                    dq2_lock.acquire()
+                    dq2.registerDatasetSubscription(dset,site)
+                finally:
+                    dq2_lock.release()            
+        return
+
+    def freeze_dataset(self,dset):
+        testdset=self.checkFrozen([dset])
+        if len(testdset)==0:
+            logger.info("proceeding with freezing the dataset %s" % dset)
+            try:
+                dq2_lock.acquire()
+                dq2.freezeDataset(dset)
+            finally:
+                dq2_lock.release()
+        # Once frozen, the dataset can be added to a container.
+        imax=string.find(dset,".jid")
+        containername=dset[:imax]+"/"
+        logger.info("attempting to create container %s from %s" % (containername,dset))
+        dsetlist=[]
+        try:
+            dq2_lock.acquire()
+            dsetlist = dq2.listDatasets('%s' % containername)
+        finally:
+            dq2_lock.release()
+        logger.debug("found %s" % str(dsetlist))
+        if len(dsetlist)==0:
+            logger.debug("creating container: %s", containername)
+            try:
+                dq2_lock.acquire()
+                containerClient.create(containername)
+            finally:
+                dq2_lock.release()
+        # at this point, one should have a container. Updating dsetlist with contents of container:
+        try:
+            dq2_lock.acquire()
+            dsetlist = dq2.listDatasetsInContainer('%s' % containername)
+        finally:
+            dq2_lock.release()
+                
+        if dset in dsetlist:
+            logger.warning("dataset %s already registered in container %s, skipping" % (dset,containername))
+        if len(dsetlist)==0 or dset not in dsetlist:
+            try:
+                containerClient.register(containername,[dset])
+            except:
+                logger.error("Error registering the dataset %s in its container %s. Please discard if this job was resubmitted." % (dset,containername))
+                pass
+        return
+
+    def checkFrozen(self,subscribedDatasets):
+        result=[]
+        for dset in subscribedDatasets:
+            try:
+                dq2_lock.acquire()
+                frozen=dq2.getMetaDataAttribute(dset,["frozendate"])
+                if frozen.values()[0]!="None":
+                    logger.info("Dataset %s is frozen" % dset)
+                    result.append(dset)
+            finally:
+                dq2_lock.release()
+        return result
+
+    def checkSites(self,siteList):
+        # check tokens from siteList, compare with allowed tokens.
+        print _subscriptionTokens
+        checkTokens=_subscriptionTokens
+        result=[]
+        cloud=""
+        cloudSites=[]
+        for token in checkTokens:
+            if "LOCALGROUPDISK" in token:
+                imin=token.find("_")+1
+                cloud=token[imin:]
+                index=checkTokens.index(token)
+                checkTokens[index]="LOCALGROUPDISK"
+                cloudSites=getSites(ToACache.dbcloud[cloud.upper()])
+        for site in siteList:
+            for token in checkTokens:
+                print site, token
+                if token in site and token!="LOCALGROUPDISK":
+                    result.append(site)
+                    continue
+                if len(cloudSites)>0 and site in cloudSites and token in site:
+                    result.append(site)
+            
+        return result
 
 ###### migration class #############################################################
 class AthenaMCInputDatasetsMigration12(AthenaMCInputDatasets):
@@ -1582,19 +1604,29 @@ proxy = GridProxy()
 username = proxy.identity()
 
 if proxy.init_opts:
-    proxyrole=proxy.init_opts
+    proxytag=proxy.init_opts
     #print "found proxy role:",proxyrole
-    imin=string.find(proxyrole,"atlas/")
-    imax=string.rfind(proxyrole,"/")
+    imin=string.find(proxytag,"atlas/")
+    imax=string.rfind(proxytag,"/")
+    imin2=string.find(proxytag,"Role=")
+    role,group="",""
     if imin>-1:
-        role=proxyrole[imin+6:]
+        group=proxytag[imin+6:]
     if imax-imin>6:
-        role=proxyrole[imin+6:imax]
-    if string.find(role,"phys")>-1 or string.find(role,"perf") >-1 or string.find(role,"trig") >-1:
-        logger.warning("Detected physics/performance group: %s in .gangarc, using this for dataset naming and storage" % role)
-        username=role
+        group=proxytag[imin+6:imax]
+    if imin2>-1:
+        role=proxytag[imin2+5:]
+        
+    if string.find(group,"phys")>-1 or string.find(group,"perf") >-1 or string.find(group,"trig") >-1 and role=="production":
+        logger.warning("Detected physics/performance group: %s with production role in .gangarc, using this group for dataset naming and storage" % role)
+        username=group
+        _subscriptionTokens.append(group.upper())
         _usertag=_usertag.replace("user","group")
-    logger.info("user data for data management: group: %s, username: %s" % (_usertag,username))
+        logger.info("user data for data management: group: %s, username: %s" % (_usertag,username))
+    elif len(group)==2:
+        # need to handle clouds as well, for localgroupdisk...
+        _subscriptionTokens.append("LOCALGROUPDISK_"+group.upper())
+
 
         
 

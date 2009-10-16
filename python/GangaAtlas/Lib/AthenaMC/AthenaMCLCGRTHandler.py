@@ -105,10 +105,19 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
        
         environment={'T_LCG_GFAL_INFOSYS' :'atlas-bdii.cern.ch:2170'}
+
+        trfopts=app.transflags
+        # need to parse them to be able to pass them in an environment variable
+        trfopts=trfopts.replace(" ","/W")
+        trfopts=trfopts.replace("-","/F")
+        
+        trflags=trfopts
         if app.mode !="template":
             trflags="/Ft"
             if app.verbosity:
                 trflags+="/W/Fl/W%s" % app.verbosity
+        
+        if trflags:
             environment["TRFLAGS"]=trflags
 
         # setting output site from input data if any.
@@ -259,6 +268,12 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         elif app.evgen_job_option:
             self.evgen_job_option = app.evgen_job_option
             
+        # user area:
+        if app.user_area and app.user_area.name: 
+            inputbox.append(File(app.user_area.name))
+            environment['USER_AREA']=os.path.basename(app.user_area.name)
+
+
         if (job.inputsandbox):
             for file in job.inputsandbox:
                 inputbox += [ file ]
@@ -359,17 +374,22 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             excludedSites=requirements.excluded_sites
             goodsites=[]
             for checksite in allsites:
+                selsite=True
                 for site in excludedSites:
                     imax=site.find("_")
                     shortSite=site[:imax]
-                    if shortSite not in checksite and checksite not in goodsites:
-                        goodsites.append(checksite)
+                    if shortSite in checksite:
+                        print "site is excluded, skipping ", checksite
+                        selsite=False
+                        break
+                if selsite and checksite not in goodsites:
+                    goodsites.append(checksite)
+#            print len(allsites),len(goodsites)
             if len(goodsites)>0:
                 allsites=goodsites
-            requirements.sites=allsites
-
+            job.backend.requirements.sites=allsites
             logger.debug("Relaxing job to data policy to job to cloud. Selected cloud is %s" % cloud)
- 
+
         logger.debug("master job submit?")
         
         if job.backend._name=="LCG" or job.backend._name=="Cronus" or job.backend._name=="Condor" or job.backend._name=="NG":
@@ -422,6 +442,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
         outfilelist=""
         for type in app.outputpaths.keys():
+            if type=="LOG" and "LOG" not in job.outputdata.outrootfiles:
+                # logfiles are no longer saved in DQ2 datasets unless they are explicitly named in the outrootfiles dictionnary
+                continue
             outfilelist+=app.outputpaths[type]+app.subjobsOutfiles[job.id][type]+" "
 
         environment["OUTPUTFILES"]=outfilelist
@@ -453,7 +476,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             logger.debug("submission to %s" % job.backend._name)
             #       prepare job requirements
             requirements = jobmasterconfig.requirements
-
+ 
             if "INPUTTURLS" in environment:
                 logger.debug(environment["INPUTTURLS"])
                 if string.find(environment["INPUTTURLS"],"file:")>=0:
@@ -474,12 +497,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
 
 allHandlers.add('AthenaMC','LCG',AthenaMCLCGRTHandler)
-#allHandlers.add('AthenaMC','Local',AthenaMCLCGRTHandler)
-#allHandlers.add('AthenaMC','LSF',AthenaMCLCGRTHandler)
 allHandlers.add('AthenaMC','Condor',AthenaMCLCGRTHandler)
-#allHandlers.add('AthenaMC','Cronus',AthenaMCLCGRTHandler)
 allHandlers.add('AthenaMC','NG',AthenaMCLCGRTHandler)
-#allHandlers.add('AthenaMC','PBS',AthenaMCLCGRTHandler)
 
 
 config = getConfig('AthenaMC')

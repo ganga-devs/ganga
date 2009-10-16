@@ -46,14 +46,9 @@ stageInLCG(){
     SITES=$@
     dq2get=`which dq2-get`
     py32=`which python32`
-    py25=`which python2.5`
-
     echo "test python #3"
     echo $py32
-    echo $py25
     which python
-    python -V
-    python32 -V  
  
     matchDB=`echo $LFNS | grep DBRelease`
     echo "test matching",$LFNS,$matchDB,$newDB_location
@@ -77,8 +72,6 @@ stageInLCG(){
 #        SITES=$newSITES
 #    done
 
-#    python -V
-#    python2.5 -V
     
     SITES=" null $SITES"
     for site in $SITES; do
@@ -210,7 +203,7 @@ bash --version
 if [ -z "$DQ2_HOME" -o -z "$DQ2_LOCAL_SITE_ID" ]; then
     echo "Setting up DQ2 tools"
     source ${VO_ATLAS_SW_DIR}/ddm/latest/setup.sh
-    echo "site's SE is $DQ2_LOCAL_SITE_ID"
+    echo "site's DQ2 ID is $DQ2_LOCAL_SITE_ID"
 fi
 # main loop
 
