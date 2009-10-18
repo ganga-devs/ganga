@@ -22,15 +22,24 @@ class AthenaMSGMS(MSGMS):
 
         message = self.getMessage()
         message['event'] = exit_status
+        import os
+        message['uat09.ls'] = os.listdir('.')
+        message['uat09.env'] = os.environ
         try:
             f = open('stats.pickle','r')
             stats = pickle.load(f)
             f.close()
-            for (k,v) in stats:
-                message['uat09.'+k]=v
-            message['uat09.stats'] = stats
+            message['uat09.Athena.stats'] = stats
         except:
             pass
+        for x in ('input_files','input_guids','athena_options','output_files'):
+            try:
+                f = open(x,'r')
+                y = ','.join([l.strip() for l in f])
+                f.close()
+                message['uat09.Athena.%s'%x] = y
+            except:
+                pass
 
         from Ganga.Lib.MonitoringServices.MSGMS import sendJobStatusChange
         sendJobStatusChange( message )
