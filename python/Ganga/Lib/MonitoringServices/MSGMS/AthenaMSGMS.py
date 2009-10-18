@@ -32,7 +32,7 @@ class AthenaMSGMS(MSGMS):
             message['uat09.Athena.stats'] = stats
         except:
             pass
-        for x in ('input_files','input_guids','athena_options','output_files'):
+        for x in ('input_files','input_guids','athena_options','output_files','output_data','output_guids','output_location'):
             try:
                 f = open(x,'r')
                 y = ','.join([l.strip() for l in f])
