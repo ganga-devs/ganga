@@ -13,6 +13,8 @@ o+="\n"+ " Output Dataset Object    : "+c("t.analysis.outputdata")
 o+="\n"+ " Files processed per job  : "+c("t.analysis.files_per_job = 10")
 o+="\n"
 o+="\n"+ markup("Procedure to do a usual analysis:", fgcol("red"))
+o+="\n"+ "config.Tasks.merged_files_per_job = 1 # default files per job for merged datasets"
+o+="\n"+ "config.Tasks.recon_files_per_job = 10 # default files per job for recon (non-merged) datasets"
 o+="\n"+ "t = AnaTask()"
 o+="\n"+ 't.name = "FirstAnalysis"'
 o+="\n"+ "t.analysis.outputdata.outputdata  = ['nTuple.root' ]"
@@ -96,13 +98,17 @@ class AnaTask(Task):
          tid_list.extend(tid_datasets)
 
       new_tfs = []
+
       for tid in tid_list:
          tf = trf.clone()
          tf.name = ".".join(tid.split(".")[1:3])
+
          if "merge" in tid:
             tf.files_per_job = config["merged_files_per_job"]
+            logger.warning("Files per job for %s set to %i - use 'config.Tasks.merged_files_per_job = 42' to change this value!" % (tid,tf.files_per_job))
          else:
             tf.files_per_job = config["recon_files_per_job"]
+            logger.warning("Files per job for %s set to %i - use 'config.Tasks.recon_files_per_job = 42' to change this value!" % (tid,tf.files_per_job))
          tf.inputdata.dataset=tid
          stid = tid.split(".")
          if len(stid) > 1:
