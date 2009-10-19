@@ -2,7 +2,7 @@
 
 from sys import argv, stdout
 from os import pathsep, listdir, environ, fdopen, symlink
-from os.path import exists, realpath, join, expanduser, isdir, islink
+from os.path import exists, realpath, join, expanduser, isdir, islink, dirname
 from optparse import OptionParser, OptionValueError
 from tempfile import mkstemp
 import re
@@ -163,16 +163,13 @@ class InstallLHCb:
 
     def _getExternals(self):
         """Copy the required externals into the CMT project"""
-        externals_noarch = [['ApMon','2.2.11'],
-                            ['figleaf', '0.6'],
-                            ['paramiko', '1.7.3'],
-                            ['PYTF','1.5'],
-                            ['stomputil','1.0']]
-        externals_arch = [['matplotlib','0.99.0'],
-                          ['numpy','1.3.0'],
-                          ['pycrypto','2.0.1']]
-        archs = ['slc4_amd64_gcc34','slc4_ia32_gcc34','x86_64-slc5-gcc43-opt']
+
+        # Read list of external names and versions
+        fname = join(self.destination,'GangaPolicy','scripts',
+                     'ganga-externals.py')
+        execfile(fname)
         
+        # Copy software into Project Area
         s = join(self.options.area,"external")
         d = join(self.destination,"external")
         mkdir(d)
@@ -195,7 +192,18 @@ class InstallLHCb:
                 command = unixcommand + join(s,package[0],package[1],a) + " " + p
                 rc = call(command, shell=True)
     
-        
+        # Add correct version numbers to requirement file of GangaPolicy
+        policyDir = join(self.destination,'GangaPolicy','cmt')
+        freq = open(join(policyDir,'requirements'),'w')
+        for package in externals_noarch:
+            freq.write('set %s %s\n' % (package[0],package[1]))
+        for package in externals_arch:
+            freq.write('set %s %s\n' % (package[0],package[1]))
+        ftemplate = open(join(policyDir,'requirements_template'),'r')
+        for line in ftemplate.readlines():
+            freq.write(line)
+        freq.close()
+
     def prepare(self):
         self._locations()
 
@@ -222,8 +230,8 @@ class InstallLHCb:
     def install(self):
         self.prepare()
         self.checkout()
-#        self.process()
-#        self.cleanup()
+        self.process()
+        self.cleanup()
 
 if __name__ == '__main__':
 
