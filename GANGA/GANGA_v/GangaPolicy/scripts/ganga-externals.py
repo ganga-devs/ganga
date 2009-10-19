@@ -2,7 +2,7 @@
 ## the lhcb-prepare script
 
 # These are the external packages with only Python code.
-def ganga-externals_noarch():
+def ganga_externals_noarch():
     return [['ApMon','2.2.11'],
             ['figleaf', '0.6'],
             ['paramiko', '1.7.3'],
@@ -11,7 +11,7 @@ def ganga-externals_noarch():
 
 
 # These are the packages with architecture dependent code.
-def ganga-externals_arch():
+def ganga_externals_arch():
     return [['matplotlib','0.99.0'],
             ['numpy','1.3.0'],
             ['pycrypto','2.0.1']], \
