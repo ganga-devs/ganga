@@ -203,6 +203,7 @@ class InstallLHCb:
         for line in ftemplate.readlines():
             freq.write(line)
         freq.close()
+        ftemplate.close()
 
     def prepare(self):
         self._locations()
