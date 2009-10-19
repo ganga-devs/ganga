@@ -7,7 +7,13 @@ from Ganga.GPIDev.Base import GangaObject
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class OutputData(GangaObject):
+    '''Class for handling outputdata for LHCb jobs.
 
+    Example Usage:
+    od = OutputData(["file.1","file.2"])
+    od[0] # "file.1"
+    [...etc...]
+    '''
     schema = {}
     schema['files'] = SimpleItem(defvalue=[],typelist=['str'],sequence=1)
     _schema = Schema(Version(1,0), schema)
@@ -38,6 +44,7 @@ class OutputData(GangaObject):
         return True
 
     def __getitem__(self,i):
+        '''Proivdes scripting (e.g. od[2] returns the 3rd file name) '''
         if type(i) == type(slice(0)):
             return GPIProxyObjectFactory(OutputData(files=self.files[i]))
         else:

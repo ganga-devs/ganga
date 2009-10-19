@@ -286,7 +286,7 @@ class Dirac(IBackend):
             if result[i][3] == 'completed':
                 j.updateStatus('completing')
                 ok = j.backend._getOutputSandbox(dirac_monitoring_server)
-                if ok:
+                if ok and j.outputdata:
                     j.backend._getOutputDataLFNs(dirac_monitoring_server,True)
                 if not ok: j.updateStatus('failed')
                 else: j.updateStatus('completed')

@@ -35,8 +35,16 @@ def strip_filename(name):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class LogicalFile(GangaObject):
+    '''Class for handling logical files (i.e. LFNs)
 
-    _schema = Schema(Version(1,0),{'name':SimpleItem(defvalue='',doc='LFN.')})
+    Example Usage:
+    lfn = LogicalFile("/some/lfn.file")
+    lfn.download("/some/path") # downloads the LFN to dir "/some/path"
+    lfn.getReplicas() # returns all replicas of LFN
+    lfn.replicate("CERN-USER") # replicate LFN on SE "CERN-USER"
+    [...etc...]
+    '''
+    _schema = Schema(Version(1,0),{'name':SimpleItem(defvalue='',doc='LFN')})
     _category='datafiles'
     _name='LogicalFile'
     _exportmethods = ['replicate','download','remove','removeReplica',
@@ -53,6 +61,7 @@ class LogicalFile(GangaObject):
         return strip_filename(v)
             
     def getReplicas(self):
+        'Returns replicas for the LFN.'
         cmd = 'result = DiracCommands.getReplicas("%s")' % self.name
         result = get_result(cmd,'LFC query error','Could not get replicas.')
         replicas = result['Value']['Successful']
@@ -60,6 +69,7 @@ class LogicalFile(GangaObject):
         return []
               
     def download(self,dir='.'):
+        'Downloads the LFN to dir (default is current directory).'
         dir = expandfilename(dir)
         dir = os.path.abspath(dir)
         cmd = 'result = DiracCommands.getFile("%s","%s")' % (self.name,dir)
@@ -67,7 +77,8 @@ class LogicalFile(GangaObject):
         from PhysicalFile import PhysicalFile
         return GPIProxyObjectFactory(PhysicalFile(name=result['Value']))
 
-    def remove(self): 
+    def remove(self):
+        'Removes the LFN (and all replicas) from the LFC.'
         cmd = 'result = DiracCommands.removeFile("%s")' % self.name
         return get_result(cmd,'Problem during remove','Could not rm file.')
 
@@ -87,11 +98,13 @@ class LogicalFile(GangaObject):
         return get_result(cmd,'Replication error','Error replicating file.')
 
     def removeReplica(self,diracSE):
+        'Removes replica of LFN from diracSE.'
         cmd = 'result = DiracCommands.removeReplica("%s","%s")' % \
               (self.name,diracSE)
         return get_result(cmd,'Error removing replica','Replica rm error.')
 
     def getMetadata(self):
+        'Returns the metadata for the LFN (e.g. creation time, etc.).'
         cmd = 'result = DiracCommands.getMetadata("%s")' % self.name
         result = get_result(cmd,'Error w/ metadata','Could not get metadata.')
         metadata = result['Value']['Successful']

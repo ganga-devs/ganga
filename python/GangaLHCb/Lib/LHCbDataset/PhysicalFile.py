@@ -26,8 +26,14 @@ def full_expand_filename(name):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class PhysicalFile(GangaObject):
+ '''Class for handling physical files (i.e. PFNs)
 
-    _schema = Schema(Version(1,0),{'name':SimpleItem(defvalue='',doc='PFN.')})
+    Example Usage:
+    pfn = PhysicalFile("/some/pfn.file")
+    pfn.upload("/some/lfn.file","CERN-USER") # upload the PFN to LFC
+    [...etc...]
+    '''
+    _schema = Schema(Version(1,0),{'name':SimpleItem(defvalue='',doc='PFN')})
     _category='datafiles'
     _name='PhysicalFile'
     _exportmethods = ['upload']
@@ -35,7 +41,7 @@ class PhysicalFile(GangaObject):
     def __init__(self,name=''):        
         super(PhysicalFile,self).__init__()
         self.name = full_expand_filename(name)
-        
+         
     def _auto__init__(self):        
         if self.name: self.name = full_expand_filename(self.name)
 
@@ -43,6 +49,7 @@ class PhysicalFile(GangaObject):
         return full_expand_filename(v)
         
     def upload(self,lfn,diracSE):
+        'Upload PFN to LFC on SE "diracSE" w/ LFN "lfn".' 
         from LogicalFile import get_result
         cmd = 'result = DiracCommands.addFile("%s","%s","%s")' % \
               (lfn,self.name,diracSE)

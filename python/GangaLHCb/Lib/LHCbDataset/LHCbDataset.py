@@ -19,13 +19,26 @@ logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class LHCbDataset(Dataset):
+    '''Class for handling LHCb data sets (i.e. inputdata for LHCb jobs).
 
+    Example Usage:
+    ds = LHCbDataset(["lfn:/some/lfn.file","pfn:/some/pfn.file"])
+    ds[0] # LogicalFile("/some/lfn.file") - see LogicalFile docs for usage
+    ds[1] # PhysicalFile("/some/pfn.file")- see PhysicalFile docs for usage
+    len(ds) # 2 (number of files)
+    ds.getReplicas() # returns replicas for *all* files in the data set
+    ds.replicate("CERN-USER") # replicate *all* LFNs to "CERN-USER" SE
+    ds.getCatalog() # returns XML catalog slice
+    ds.optionsString() # returns Gaudi-sytle options 
+    [...etc...]
+    '''
     schema = {}
+    docstr = 'List of PhysicalFile and LogicalFile objects'
     schema['files'] = ComponentItem(category='datafiles',defvalue=[],
-                                    sequence=1)
-    docstr = 'Ancestor depth to be queried from the Bookkeeping system.'
+                                    sequence=1,doc=docstr)
+    docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0 ,doc=docstr)
-    docstr = 'Select an optional XMLCatalogueSlice to the dataset'
+    docstr = 'Not fully implemented yet'
     schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
 
     _schema = Schema(Version(3,0), schema)
@@ -63,6 +76,7 @@ class LHCbDataset(Dataset):
         return True
 
     def __getitem__(self,i):
+        '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
         if type(i) == type(slice(0)):
             ds = LHCbDataset(files=self.files[i])
             ds.depth = self.depth
@@ -74,12 +88,14 @@ class LHCbDataset(Dataset):
     def isEmpty(self): return not bool(self.files)
     
     def getReplicas(self):
+        'Returns the replicas for all files in the dataset.'
         lfns = self.getLFNs()
         cmd = 'result = DiracCommands.getReplicas(%s)' % str(lfns)
         result = get_result(cmd,'LFC query error','Could not get replicas.')
         return result['Value']['Successful']
 
     def hasLFNs(self):
+        'Returns True is the dataset has LFNs and False otherwise.'
         for f in self.files:
             if isLFN(f): return True
         return False
@@ -88,7 +104,7 @@ class LHCbDataset(Dataset):
         '''Replicate all LFNs to destSE.  For a list of valid SE\'s, type
         ds.replicate().'''
         if not destSE:
-            self.files[0].replicate('')
+            LogicalFile().replicate('')
             return
         if not self.hasLFNs():
             raise GangaException('Cannot replicate dataset w/ no LFNs.')
@@ -108,6 +124,7 @@ class LHCbDataset(Dataset):
             self.files.append(f)
 
     def getLFNs(self):
+        'Returns a list of all LFNs (by name) stored in the dataset.'
         lfns = []
         if not self: return lfns
         for f in self.files:
@@ -115,6 +132,7 @@ class LHCbDataset(Dataset):
         return lfns
 
     def getPFNs(self):
+        'Returns a list of all PFNs (by name) stored in the dataset.'
         pfns = []
         if not self: return pfns
         for f in self.files:
@@ -122,9 +140,12 @@ class LHCbDataset(Dataset):
         return pfns
 
     def getFileNames(self):
+        'Returns a list of the names of all files stored in the dataset.'
         return [f.name for f in self.files]
 
     def getCatalog(self,site=''):
+        '''Generates an XML catalog from the dataset (returns the XML string).
+        Note: site defaults to config.LHCb.LocalSite'''
         if not site: site = getConfig('LHCb')['LocalSite']
         lfns = self.getLFNs()
         depth = self.depth
@@ -137,6 +158,7 @@ class LHCbDataset(Dataset):
         return xml_catalog
 
     def optionsString(self):
+        'Returns the Gaudi-style options string for the dataset.'
         if not self: return ''
         s = 'EventSelector.Input = {'
         dtype_str_default = getConfig('LHCb')['datatype_string_default']
