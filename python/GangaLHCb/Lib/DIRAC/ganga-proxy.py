@@ -10,7 +10,7 @@ import shutil
 
 option = sys.argv[1]
 argv = sys.argv[2:]
-commands = {'init':'lhcb-proxy-init','info':'lhcb-proxy-info',
+commands = {'init':'lhcb-proxy-init','info':'dirac-proxy-info',
             'destroy':'grid-proxy-destroy'}
 
 if not os.environ.has_key("GANGADIRACENVIRONMENT"):
