@@ -13,7 +13,7 @@ from Ganga.Utility.Setup import PackageSetup
 
 
 _external_packages = { 
-    'DQ2Clients' : { 'version' : '0.1.29',
+    'DQ2Clients' : { 'version' : '0.1.31',
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
                      'PYTHONPATH' : ['usr/lib/python2.3/site-packages/','external/mysqldb32/'],
@@ -21,7 +21,7 @@ _external_packages = {
                      'DQ2_ENDUSER_SETUP' : 'True',
                      'noarch':True 
                      },
-    'panda-client' : { 'version' : '0.1.91', 
+    'panda-client' : { 'version' : '0.1.94', 
                        'PYTHONPATH':['lib/python2.5/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
