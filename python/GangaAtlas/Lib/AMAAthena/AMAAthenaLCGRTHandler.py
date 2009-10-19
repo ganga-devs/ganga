@@ -118,6 +118,9 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
         ## add ama_athena-utility.sh into inputbox
         inputbox += [ File( os.path.join(os.path.dirname(__file__), 'ama_athena-utility.sh') ) ]
 
+        ## add ama_getstats.py into inputbox
+        inputbox += [ File( os.path.join(os.path.dirname(__file__), 'ama_getstats.py') ) ]
+
         ## add AMADriver configuration files into inputbox 
         inputbox += [ app.driver_config.config_file ]
         inputbox += app.driver_config.include_file

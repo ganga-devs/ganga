@@ -240,6 +240,7 @@ fi
 
 #################################################
 # collecting runtime statistics
-./getstats.py
+chmod +x ama_getstats.py
+./ama_getstats.py
 
 exit 0

@@ -24,16 +24,28 @@ check_lcg_env() {
 }
 
 ## function for printing WN env. info 
-print_ext_wn_info () {
-    echo "== resource limitation =="
-    ulimit -a
-    echo "===="
-    echo 
+#print_ext_wn_info () {
+#    echo "== resource limitation =="
+#    ulimit -a
+#    echo "===="
+#    echo 
+#
+#    echo "== memory information =="
+#    cat /proc/meminfo 
+#    echo "===="
+#    echo 
+#}
 
-    echo "== memory information =="
-    cat /proc/meminfo 
-    echo "===="
-    echo 
+# get some machine infos
+print_ext_wn_info() {
+    DATE=`date +'%D %T'`
+    MACH=`uname -srm`
+    MHZ=`cat /proc/cpuinfo | grep -i 'cpu mhz' | tail -1 | cut -d':' -f2 | tr -s ' ' `
+    MODEL=`cat /proc/cpuinfo | grep -i 'model name' | tail -1 | cut -d':' -f2 | tr -s ' '`
+    CACHE=`cat /proc/cpuinfo | grep -i 'cache size' | tail -1 | cut -d':' -f2 | tr -s ' '`
+    MEMORY=`cat /proc/meminfo | grep -i memtotal | cut -d':' -f2 | tr -s ' '`
+    HNAME=`hostname -f`
+    echo "### node info:   $DATE , $MHZ , $MODEL , $MEMORY , $CACHE , $MACH , $HNAME"
 }
 
 ## function for getting network traffic
