@@ -168,6 +168,8 @@ class InstallLHCb:
         fname = join(self.destination,'GangaPolicy','scripts',
                      'ganga-externals.py')
         execfile(fname)
+        externals_noarch = ganga-externals_noarch()
+        externals_arch, archs = ganga-externals_arch()
         
         # Copy software into Project Area
         s = join(self.options.area,"external")
