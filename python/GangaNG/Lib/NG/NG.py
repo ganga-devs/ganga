@@ -384,6 +384,18 @@ class Grid:
 
         return
 
+    def check_giisesfile(self):
+        ''' Check if giises.txt exists, if not write it '''
+        ''' (Yes, this is a hack... To get around strange usage of ngsub...) '''
+
+        if os.path.exists('giises.txt'):
+          return
+
+        gf = open("giises.txt","w")
+        gf.write("ldap://atlasgiis.nbi.dk:2135/o=grid/mds-vo-name=Atlas\nldap://arcgiis.titan.uio.no:2135/o=grid/mds-vo-name=Atlas \n")
+        gf.close()
+            
+
     def ls_gridfile(self,gridfile):
         ''' Check if grid file exists'''
 
@@ -397,6 +409,9 @@ class Grid:
             
     def submit(self,xrslpath,ce=None,rejectedcl=None,timeout=20):
         '''Submit a XRSL file to NG'''
+
+        # Make sure we have a giises-file available
+        self.check_giisesfile()
 
         cmd = 'ngsub -G giises.txt -t %s ' % str(timeout)
 
@@ -437,6 +452,11 @@ class Grid:
     def native_master_submit(self,xrslpath,ce=None,rejectedcl=None, timeout = 20):
         '''Native bulk submission supported by GLITE middleware.'''
         # Bulk sumission is supported in NG, but the XRSL files need some care.
+
+
+        # Make sure we have a giises-file available
+        self.check_giisesfile()
+
 
         cmd = 'ngsub -G giises.txt -t %s ' % str(timeout)
         
