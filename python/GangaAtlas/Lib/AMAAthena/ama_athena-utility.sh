@@ -36,6 +36,22 @@ print_ext_wn_info () {
     echo 
 }
 
+## function for getting network traffic
+get_net_rx() {
+
+    export NET_RX_BYTE=0
+
+    ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
+    if [ -z $ETH ]; then 
+        ETH='eth0'
+    fi
+
+    NET_RX_BYTE=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+    if [ -z $NET_RX_BYTE ]; then 
+	    NET_RX_BYTE=`/usr/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+    fi
+}
+
 ## function for fixing dCache/DPM/Castor libraries
 load_special_dm_libraries() {
     #################################################

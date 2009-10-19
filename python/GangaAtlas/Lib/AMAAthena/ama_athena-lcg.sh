@@ -201,7 +201,17 @@ else
     GANGATIME3=`date +'%s'`
 
     prepare_athena
+
+    ## network RX status
+    get_net_rx
+	echo NET_ETH_RX_PREATHENA=$NET_RX_BYTE
+
+    ## run athena process 
     ama_run_athena $ATHENA_OPTIONS AMAConfigFile.py input.py
+
+    ## network RX status
+    get_net_rx
+    echo NET_ETH_RX_AFTERATHENA=$NET_RX_BYTE
 fi
 
 if [ $? -ne 0 ]; then
@@ -227,5 +237,9 @@ if [ $? -ne 0 ]; then
     echo "Output stage error" 1>&2
     exit $EC_STAGEOUT_ERROR
 fi
+
+#################################################
+# collecting runtime statistics
+./getstats.py
 
 exit 0
