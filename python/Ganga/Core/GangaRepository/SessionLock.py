@@ -28,7 +28,7 @@ except ImportError:
     logger = Logger() 
 
 
-session_expiration_timeout = 5 # seconds
+session_expiration_timeout = 8 # seconds
 
 def mkdir(dn):
     try:
@@ -46,12 +46,18 @@ class SessionLock(GangaThread):
 
     def __init__(self, dir, session_name, name):
         GangaThread.__init__(self, name='LockUpdater.%s' % name)
-        self.sdir = os.path.join(os.path.realpath(dir),"sessions")
-        self.ldir = os.path.join(os.path.realpath(dir),"locks")
+        realpath = os.path.realpath(dir)
+        self.sdir = os.path.join(realpath,"sessions")
+        self.ldir = os.path.join(realpath,"locks")
         mkdir(self.sdir)
         mkdir(self.ldir)
         self.fn = os.path.join(self.sdir, session_name)
-        self._sessions = [] # list of other open sessions
+        self.afs = (realpath[:4] == "/afs")
+        self.locked = Set()
+        if self.afs:
+            self.afslockfn = os.path.join(self.ldir,"afslock")
+            file(self.afslockfn,"w").close() # create file
+            self.afslockfd = os.open(os.afslockfn,os.O_RDWR)            
         self.create()
 
     def create(self):
@@ -61,39 +67,89 @@ class SessionLock(GangaThread):
         except OSError, x:
             raise RepositoryError("Error on file access - session file: %s" % x)
 
+    def afs_global_lock(self):
+        fcntl.flock(self.afslockfd,fcntl.LOCK_EX)
+
+    def afs_global_unlock(self):
+        fcntl.flock(self.afslockfd,fcntl.LOCK_UN)
+
     def acquire(self,name):
+        if self.afs:
+            return self.acquire_afs(name)
+        else:
+            return self.acquire_nonafs(name)
+
+    def acquire_afs(self,name):
+        if name in self.locked:
+            return True
+        self.afs_global_lock()
+        try:
+            sessions = os.listdir(self.sdir)
+            for session in sessions:
+                if name in file(os.path.join(self.sdir,session),"r").readlines():
+                    return False
+            f = file(self.fn,"w")
+            f.writelines("\n".join(self.locked))
+            f.close()
+            return True
+        finally:
+            self.afs_global_unlock()
+
+    def acquire_nonafs(self,name):
         lfn = os.path.join(self.ldir,name)
         try:
             os.symlink(self.fn,lfn)
             return True
         except OSError:
-            if not os.path.exists(lfn): # Someone else has a valid lock
-                # Now there is a broken link - this is somewhat uncomfortable, since
-                # we now have to avoid race conditions between two sessions.
-                # The solution is to use a dot-lock and only remove+recreate the symlink
-                # if the link is still broken after the dot-lock succeeds
-                # If this dot-lock stays there, we have a big problem. Therefore make sure it gets unlinked!
-                try:
-                    fd = os.open(lfn+".lock", os.O_EXCL | os.O_CREAT | os.O_NONBLOCK)
-                    try:
-                        if not os.path.exists(lfn): # Recheck that this link is still invalid
-                            os.unlink(lfn)
-                            os.symlink(self.fn,lfn)
-                    finally:
-                        os.close(fd)
-                        os.unlink(lfn+".lock")
-                except OSError: # did not get the dot-lock :(
-                    pass
-                # ... someone else has the lock 
-            elif os.readlink(lfn) == self.fn:
+            pass
+        try:
+            if os.path.islink(lfn) and os.path.realpath(lfn) == self.fn:
                 return True # uh, this is already our lock...
+        except OSError:
+            return False # ok, this has gone south, just try again if you really want...
+        if os.path.exists(lfn): # Someone else has a valid lock
             return False
+
+        # Now there is a broken link - this is somewhat uncomfortable, since
+        # we now have to avoid race conditions between two sessions.
+        # The solution is to use a dot-lock and only remove+recreate the symlink
+        # if the link is still broken after the dot-lock succeeds
+        # If this dot-lock stays there, we have a big problem. Therefore make sure it gets unlinked!
+        try:
+            fd = os.open(lfn+".lock", os.O_EXCL | os.O_CREAT | os.O_NONBLOCK)
+            try:
+                if not os.path.exists(lfn): # Recheck that this link is still invalid
+                    os.unlink(lfn)
+                    os.symlink(self.fn,lfn)
+            finally:
+                os.close(fd)
+                os.unlink(lfn+".lock")
+        except OSError: # did not get the dot-lock :(
+            pass
+        # ... someone else has the lock 
+        return False
 
     def acquire_block(self,name):
         while not self.acquire(name):
             time.sleep(0.01)
 
     def release(self,name):
+        if self.afs:
+            self.release_afs(name)
+        else:
+            self.release_nonafs(name)
+
+    def release_afs(self,name):
+        self.afs_global_lock()
+        try:
+            self.locked.remove(name)
+            f = file(self.fn,"w")
+            f.writelines("\n".join(self.locked))
+            f.close()
+        finally:
+            self.afs_global_unlock()
+
+    def release_nonafs(self,name):
         try:
             if os.readlink(os.path.join(self.ldir,name)) == self.fn:
                 os.unlink(os.path.join(self.ldir,name))
@@ -118,14 +174,18 @@ class SessionLock(GangaThread):
                     for sf in os.listdir(self.sdir):
                         if now - os.stat(os.path.join(self.sdir,sf)).st_ctime > session_expiration_timeout:
                             os.unlink(os.path.join(self.sdir,sf))
-                except OSError:
-                    pass # nothing really important, another process deleted the session before we did.
+                except OSError, x:
+                    # nothing really important, another process deleted the session before we did.
+                    logger.warning("Unimportant OSError in loop: %s" % x)
             except Exception, x:
                 logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
 
         # Remove session file
         try:
             os.unlink(self.fn)
+            # close AFS lock file
+            if self.afs:
+                os.close(self.afslockfd)
         except OSError, x:
             logger.warning("Session file was deleted externally or removal failed: %s" % (x))
         self.unregister()
