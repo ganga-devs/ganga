@@ -58,7 +58,26 @@ cmtpath_pattern \
     path_remove  PYTHONPATH ${GANGA_install_pycrypto} ; \
     path_prepend PYTHONPATH ${GANGA_install_pycrypto}
 
+#########################################################################
+# PYTHONPATH pyqt
 
+cmtpath_pattern \
+   macro <project>_install_pyqt "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/pyqt/$(pyqt)/$(CMTCONFIG)/lib/python$(Python_config_version_twodigit)/site-packages"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\pyqt\$(pyqt)\$(CMTCONFIG)\lib\python$(Python_config_version_twodigit)\site-packages" ; \
+    path_remove  PYTHONPATH ${GANGA_install_pyqt} ; \
+    path_prepend PYTHONPATH ${GANGA_install_pyqt}
+
+cmtpath_pattern \
+   macro <project>_so_pyqt "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/pyqt/$(pyqt)/$(CMTCONFIG)/lib"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\pyqt\$(pyqt)\$(CMTCONFIG)\lib" ; \
+    path_remove  LD_LIBRARY_PATH ${GANGA_so_pyqt} ; \
+    path_prepend LD_LIBRARY_PATH ${GANGA_so_pyqt}
 
 #########################################################################
 # PYTHONPATH figleaf
