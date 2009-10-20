@@ -7,9 +7,9 @@
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 """
 external_packages = {
-   'matplotlib' : {'version' : '0.91.2', 'PYTHONPATH':'lib/python2.3/site-packages'},
-   'numpy'      : {'version' : '1.0.4', 'PYTHONPATH':'lib/python2.3/site-packages', 'PATH' : 'bin'},
-   'pyqt'       : {'version' : '3.13_python234', 'PYTHONPATH':'lib/python2.3.4/site-packages', 'LD_LIBRARY_PATH' :'lib'}
+   'matplotlib' : {'version' : '0.99.0', 'PYTHONPATH':'lib/python2.5/site-packages'},
+   'numpy'      : {'version' : '1.3.0', 'PYTHONPATH':'lib/python2.5/site-packages', 'PATH' : 'bin'},
+   'pyqt'       : {'version' : '3.17.3_python2.5', 'PYTHONPATH':'lib/python2.5/site-packages', 'LD_LIBRARY_PATH' :'lib'}
    }
 
 from Ganga.Utility.Setup import PackageSetup
