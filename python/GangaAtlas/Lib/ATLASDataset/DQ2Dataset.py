@@ -842,7 +842,7 @@ class DQ2OutputDataset(Dataset):
     _schema = Schema(Version(1,0), {
         'outputdata'     : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc='Output files to be returned via SE'), 
         'output'         : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, protected=1, doc = 'Output information automatically filled by the job'),
-        'datasetname'    : SimpleItem(defvalue='', doc='Name of the DQ2 output dataset automatically filled by the job'),
+        'datasetname'    : SimpleItem(defvalue='', copyable=0, doc='Name of the DQ2 output dataset automatically filled by the job'),
         'datasetList'    : SimpleItem(defvalue = [], typelist=['str'],  sequence = 1,protected=1, doc='List of DQ2 output datasets automatically filled by the AthenaMC job'),
         'location'       : SimpleItem(defvalue='',doc='SE output path location'),
         'local_location' : SimpleItem(defvalue='',doc='Local output path location'),
