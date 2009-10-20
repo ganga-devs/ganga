@@ -26,7 +26,7 @@ def full_expand_filename(name):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class PhysicalFile(GangaObject):
- '''Class for handling physical files (i.e. PFNs)
+    '''Class for handling physical files (i.e. PFNs)
 
     Example Usage:
     pfn = PhysicalFile("/some/pfn.file")
