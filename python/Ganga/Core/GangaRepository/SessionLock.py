@@ -1,25 +1,41 @@
 # This file is a bit of a mess at the moment.
 # It encapsulates fcntl-based locking that works on NFS, AFS and locally.
-
-import os, time, pickle, errno, threading, fcntl
+import os, time, pickle, errno, threading, fcntl, random
 from sets import Set
-from Ganga.Core.GangaThread import GangaThread
+
+try:
+    from Ganga.Core.GangaThread import GangaThread
+    from Ganga.Core.GangaRepository import RepositoryError
+    import Ganga.Utility.logging
+    logger = Ganga.Utility.logging.getLogger()
+except ImportError:
+    from threading import Thread
+    class GangaThread(Thread):
+        def __init__(self,name):
+            self.name = name
+            super(GangaThread,self).__init__()
+        def should_stop(self):
+            return False
+
+    class Logger:
+        def warning(self,msg):
+            print msg
+        def debug(self,msg):
+            print msg
+
+    class RepositoryError(Exception):
+        pass
+    logger = Logger() 
 
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+session_expiration_timeout = 5 # seconds
 
-def open_file_sync_read(fn):
-    fobj = file(fn,"r")
-    fcntl.lockf(fobj.fileno(),fcntl.LOCK_SH)
-    return fobj
-
-def open_file_sync_write(fn):
-    fobj = file(fn,"a+")
-    fcntl.lockf(fobj.fileno(),fcntl.LOCK_EX)
-    fobj.seek(0)
-    fobj.truncate()
-    return fobj
+def mkdir(dn):
+    try:
+        os.makedirs(dn)
+    except OSError, x:
+        if x.errno != errno.EEXIST:
+            raise RepositoryError("OSError on directory create: %s" % x)
 
 class SessionLock(GangaThread):
     """ Thread that keeps a global lock file that synchronizes
@@ -28,106 +44,94 @@ class SessionLock(GangaThread):
     across clients, even if a global lock file is used!
     TODO: On OSError it should shutdown the repository!"""
 
-    def __init__(self, fn, session_name, name):
+    def __init__(self, dir, session_name, name):
         GangaThread.__init__(self, name='LockUpdater.%s' % name)
-        self.fn = fn
-        self.dir = os.path.dirname(fn)
-        self.session_name = session_name
+        self.sdir = os.path.join(os.path.realpath(dir),"sessions")
+        self.ldir = os.path.join(os.path.realpath(dir),"locks")
+        mkdir(self.sdir)
+        mkdir(self.ldir)
+        self.fn = os.path.join(self.sdir, session_name)
+        self._sessions = [] # list of other open sessions
+        self.create()
 
-        self._intlock = threading.RLock()
-        self._fobj = None
-        self._sessions = []
-
-
-    def acquire(self):
-        self._intlock.acquire()
+    def create(self):
         try:
-            file(self.fn,"a+").close() # create if not there
-            self._fobj = file(self.fn,"r+")
-            fcntl.lockf(self._fobj.fileno(),fcntl.LOCK_EX)
-            try:
-                ctime = int(time.time())
-                sessions = [l.strip() for l in self._fobj.readlines()]
-                current_sessions = []
-                current_session_str = ""
-                for s in sessions:
-                    if len(s) == 0:
-                        continue
+            fd = os.open(self.fn, os.O_EXCL | os.O_CREAT)
+            os.close(fd)
+        except OSError, x:
+            raise RepositoryError("Error on file access - session file: %s" % x)
+
+    def acquire(self,name):
+        lfn = os.path.join(self.ldir,name)
+        try:
+            os.symlink(self.fn,lfn)
+            return True
+        except OSError:
+            if not os.path.exists(lfn): # Someone else has a valid lock
+                # Now there is a broken link - this is somewhat uncomfortable, since
+                # we now have to avoid race conditions between two sessions.
+                # The solution is to use a dot-lock and only remove+recreate the symlink
+                # if the link is still broken after the dot-lock succeeds
+                # If this dot-lock stays there, we have a big problem. Therefore make sure it gets unlinked!
+                try:
+                    fd = os.open(lfn+".lock", os.O_EXCL | os.O_CREAT | os.O_NONBLOCK)
                     try:
-                        tstamp, name = s.split(" ",1)
-                        dtstamp = ctime - int(tstamp)
-                    except ValueError:
-                        logger.warning("DEBUG: INVALID SESSION LINE %s" % s)
-                        continue
-                    if dtstamp < 10 and not name == self.session_name: # kill old sessions
-                        current_session_str += s + "\n"
-                        current_sessions.append(name)
-                current_session_str += "%i %s\n" % (ctime, self.session_name)
-                self._fobj.seek(0)
-                self._fobj.truncate()
-                self._fobj.write(current_session_str)
-                self._fobj.flush()
-                self._sessions = current_sessions
-            except Exception:
-                self._fobj.close() # This removes the fcntl lock!
-                raise
-        except Exception:
-            self._intlock.release()
-            raise
+                        if not os.path.exists(lfn): # Recheck that this link is still invalid
+                            os.unlink(lfn)
+                            os.symlink(self.fn,lfn)
+                    finally:
+                        os.close(fd)
+                        os.unlink(lfn+".lock")
+                except OSError: # did not get the dot-lock :(
+                    pass
+                # ... someone else has the lock 
+            elif os.readlink(lfn) == self.fn:
+                return True # uh, this is already our lock...
+            return False
 
-    def release(self):
+    def acquire_block(self,name):
+        while not self.acquire(name):
+            time.sleep(0.01)
+
+    def release(self,name):
         try:
-            self._fobj.close()
-        finally:
-            self._intlock.release()
-
+            if os.readlink(os.path.join(self.ldir,name)) == self.fn:
+                os.unlink(os.path.join(self.ldir,name))
+                return True
+        except IOError:
+            pass
+        return False
+        
     def run(self):
         while not self.should_stop():
-            ## TODO: Check for services active/inactive (treat IOError)
-            time.sleep(1)
+            ## TODO: Check for services active/inactive
+            time.sleep(1+random.random())
             try:
-                self._intlock.acquire()
+                if not os.path.exists(self.fn):
+                    self.create()
+                    logger.warning("Session file was deleted externally! Locks may be lost!")
+                else:
+                    os.utime(self.fn,None)
+                # Clear expired session files
                 try:
-                    file(self.fn,"a+").close() # create if not there
-                    fobj = file(self.fn,"r+")
-                    try:
-                        fcntl.lockf(fobj.fileno(),fcntl.LOCK_EX)
-                        line = "\n"
-                        while len(line) != 0:
-                            lastpos = fobj.tell()
-                            line = fobj.readline()
-                            if line.strip().endswith(self.session_name):
-                                fobj.seek(lastpos)
-                                fobj.write(str(int(time.time())))
-                                break
-                        if len(line) == 0: # session was not found, append it!
-                            fobj.write("%i %s\n" % (int(time.time()), self.session_name))
-                        fobj.flush()
-                    finally:
-                        fobj.close() # This removes the fcntl lock!
-                finally:
-                    self._intlock.release()
+                    now = os.stat(self.fn).st_ctime
+                    for sf in os.listdir(self.sdir):
+                        if now - os.stat(os.path.join(self.sdir,sf)).st_ctime > session_expiration_timeout:
+                            os.unlink(os.path.join(self.sdir,sf))
+                except OSError:
+                    pass # nothing really important, another process deleted the session before we did.
             except Exception, x:
                 logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
 
-        # Remove session from lockfile
-        self._intlock.acquire()
+        # Remove session file
         try:
-            file(self.fn,"a+").close() # create if not there
-            fobj = file(self.fn,"r+")
-            fcntl.lockf(fobj.fileno(),fcntl.LOCK_EX)
-            try:
-                lines = [l for l in fobj.readlines() if not l.endswith(self.session_name+"\n")]
-                fobj.truncate(0)
-                fobj.writelines(lines)
-                fobj.flush()
-            finally:
-                fobj.close() # This removes the fcntl lock!
-        finally:
-            self._intlock.release()
+            os.unlink(self.fn)
+        except OSError, x:
+            logger.warning("Session file was deleted externally or removal failed: %s" % (x))
         self.unregister()
 
 class SessionLockManager(object):
+
     def __init__(self,root_dir,name):
         """ Synchronizes several Ganga processes accessing the same repository
         Uses fcntl to provide locking.
@@ -139,46 +143,51 @@ class SessionLockManager(object):
         self.foreign_ids = []
         self.root = root_dir
         self.name = name
-        self.session_dir = os.path.join(self.root,"session")
+
+        mkdir(self.root)
+
+        self.cntfn = os.path.join(self.root, "count")
+        if not os.path.exists(self.cntfn):
+            try:
+                fd = os.open(self.cntfn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
+                os.write(fd,"0")
+                os.close(fd)
+            except OSError, x:
+                if x.errno != errno.EEXIST:
+                    raise RepositoryError("OSError on count file create: %s" % x)
+
         # Use the hostname (os.uname()[1])  and the current time in ms to construct the session filename.
         # TODO: Perhaps put the username here?
-        session_name = os.uname()[1]+"."+str(int(time.time()*1000))+".sessionlock"
-        self.session_fn = os.path.join(self.session_dir, session_name)
-        self.cntfn = os.path.join(self.root, "cnt")
-
-        try:
-            os.makedirs(self.session_dir)
-        except OSError, x:
-            if x.errno != errno.EEXIST:
-                self._handle_error(x) # usually raises RepositoryError
-        
-        self._lock = SessionLock(os.path.join(self.session_dir, "lock"), session_name, self.name)
-        self._setlocked() # creates session lock file
-        self._lock.start()
-        self._lock.acquire()
-        self._lock.release()
+        session_name = os.uname()[1]+"."+str(int(time.time()*1000))+".session"
+        self.sessionlock = SessionLock(self.root, session_name, self.name)
+        self.sessionlock.start()
         
     def make_new_ids(self,n):
         """ make_new_ids(n) --> list of ids
         Generate n consecutive new job ids.
         Raise RepositoryError"""
-        self._lock.acquire()
+        ids = []
+        self.sessionlock.acquire_block("counter")
         try:
             try:
-                cnt = self._getcnt()
-                ids = range(cnt,cnt+n)
-                cnt += n
-                pickle.dump(cnt,file(self.cntfn,'w'))
-                self.locked_ids.union_update(Set(ids))
-                self._setlocked()
-                return ids
+                cnt = int(file(self.cntfn).readlines()[0])
+                nl = 0
+                while nl < n:
+                    if self.sessionlock.acquire(str(cnt)):
+                        ids.append(cnt)    
+                        cnt += 1
+                        nl += 1
+                fd = os.open(self.cntfn, os.O_EXCL | os.O_TRUNC | os.O_SYNC | os.O_WRONLY)
+                os.write(fd,str(cnt))
+                os.close(fd)
             except OSError, x:
-                self._handle_error(x) # usually raises RepositoryError
+                raise RepositoryError("Error on file access: %s" % x)
             except IOError, x:
-                self._handle_error(x) # usually raises RepositoryError
+                raise RepositoryError("Error on file access: %s" % x)
         finally:
-            self._lock.release()
-
+            self.sessionlock.release("counter")
+        self.locked_ids.union_update(Set(ids))
+        return ids
 
     def lock_ids(self,ids):
         """ lock_ids(n) --> list of successfully locked ids
@@ -192,104 +201,50 @@ class SessionLockManager(object):
                 already_locked_ids.add(i)
             else:
                 ids_to_lock.add(i)
-        if len(ids_to_lock) == 0:
-            return list(already_locked_ids)
-        self._lock.acquire()
-        try:
-            try:
-                locked_ids = self._getlocked()
-                self.foreign_ids = list(locked_ids)
-                lockable_ids = ids_to_lock.difference(locked_ids)
-                self.locked_ids.union_update(lockable_ids)
-                self._setlocked()
-            except OSError, x:
-                self._handle_error(x) # usually raises RepositoryError
-            except IOError, x:
-                self._handle_error(x) # usually raises RepositoryError
-        finally:
-            self._lock.release()
-        return list(already_locked_ids.union(lockable_ids))
+        for id in ids_to_lock:
+            if self.sessionlock.acquire(str(id)):
+                already_locked_ids.add(id)
+                self.locked_ids.add(id)
+        return list(already_locked_ids)
 
     def release_ids(self,ids):
         """release_ids(ids) --> list of successfully released ids
         Raise RepositoryError"""
-        self._lock.acquire()
-        try:
-            try:
-                ids = Set(ids)
-                locked_ids = self._getlocked()
-                unlocked_ids = ids.intersection(self.locked_ids)
-                self.locked_ids.difference_update(unlocked_ids)
-                self._setlocked()
-            except OSError, x:
-                self._handle_error(x) # usually raises RepositoryError
-            except IOError, x:
-                self._handle_error(x) # usually raises RepositoryError
-        finally:
-            self._lock.release()
+        ids = Set(ids)
+        unlocked_ids = ids.intersection(self.locked_ids)
+        self.locked_ids.difference_update(unlocked_ids)
+        for id in unlocked_ids:
+            self.sessionlock.release(str(id))
         return list(unlocked_ids)
 
-    def sanity(self):
-        self._lock.acquire()
-        try:
-            locked_ids = self._getlocked()
-            for id in self.locked_ids:
-                assert not id in locked_ids
-            for id in locked_ids:
-                assert not id in self.locked_ids
-        finally:
-            self._lock.release()
+    def check(self):
+        for id in self.locked_ids:
+            if not os.readlink(os.path.join(self.sessionlock.ldir,str(id))) == self.sessionlock.fn:
+                print "ID ", id, " NOT LOCKED by ", self.sessionlock.fn, " but by ", os.readlink(os.path.join(self.sessionlock.ldir,str(id))), "!!!!!!"
+                assert False
 
-    def _handle_error(self, x):
-        """ Handle the given error, shutdown services if it is fatal"""
-        # TODO: Shutdown services
-        raise RepositoryError("Error on file access: %s" % x)
-
-    def _getcnt(self):
-        """ _getcnt() --> int
-        Returns the current counter; the session must be locked
-        Raise OSError
-        """
-        try:
-            fobj = open_file_sync_read(self.cntfn)
-            try:
-                return pickle.load(fobj)
-            finally:
-                fobj.close()
-        except IOError,x:
-            import errno
-            if x.errno == errno.ENOENT:
-                return 0
-            else:
-                raise OSError(x)
-        
-    def _getlocked(self):
-        """ _getlocked() --> Set()
-        Returns the currently locked ids from _other_ sessions
-        Raise OSError"""
-        locked_ids = Set()
-        for s in self._lock._sessions:
-            try:
-                fobj = open_file_sync_read(os.path.join(self.session_dir,s))
-                try:
-                    locked_ids.union_update(pickle.load(fobj))
-                finally:
-                    fobj.close()
-            except Exception, e: # Pretty much anything can happen on unpickling
-                logger.debug("Unpickle error on session lock unpickling: %s" % e)
-        return locked_ids
-
-    def _setlocked(self):
-        """Write the currently locked jobs to the session file."""
-        f = open_file_sync_write(self.session_fn)
-        pickle.dump(self.locked_ids,f)
-        f.close()
-       
-import random
-if __name__ == "__main__":
+def test1():
     slm = SessionLockManager("locktest","tester")
     while True:
         print "lock  ---", slm.lock_ids(random.sample(xrange(1000),3))
         print "unlock---", slm.release_ids(random.sample(xrange(1000),3))
-        slm.sanity()
+        slm.check()
+
+def test2():
+    slm = SessionLockManager("locktest","tester")
+    while True:
+        n = random.randint(1,9)
+        print "get %i ids ---"%n, slm.make_new_ids(n)
+        slm.check()
+
+import random
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) == 1:
+        print "Usage: python SessionLock.py {1|2}"
+        sys.exit(-1)
+    if sys.argv[1] == "1":
+        test1()
+    elif sys.argv[1] == "2":
+        test2()
 
