@@ -427,7 +427,9 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             pfn = "rfio:" + pfn
         elif ( configLOCALPROTOCOL == "rfio" and ( configSTORAGEROOT == '/dpm' )) \
                  or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE) \
-                 or ( configLOCALPROTOCOL == "file" and 'se03.esc.qmul.ac.uk' in defaultSE):
+                 or ( configLOCALPROTOCOL == "file" and 'se03.esc.qmul.ac.uk' in defaultSE) \
+                 or ( configLOCALPROTOCOL == "file" and 't2cmcondor.mi.infn.it' in defaultSE): 
+
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
             # check which version of lcg-utils we're on
