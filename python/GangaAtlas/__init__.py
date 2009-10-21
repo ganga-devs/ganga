@@ -13,7 +13,7 @@ def loadPlugins( config = {} ):
    import Lib.Tnt
    import Lib.AtlasLCGRequirements
    import Lib.Tasks
-
+   import Lib.TagPrepare
    
    return None
 
