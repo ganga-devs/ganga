@@ -203,7 +203,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 if not usertag.startswith('group'):
                     usertag = 'group' + time.strftime('%Y')[2:]
                 if job.outputdata.groupname:
-                    username = groupname
+                    username = job.outputdata.groupname
             
             if job.outputdata.datasetname:
                 # new datasetname during job resubmission
