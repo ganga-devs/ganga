@@ -42,93 +42,173 @@ def mkdir(dn):
         if x.errno != errno.EEXIST:
             raise RepositoryError("OSError on directory create: %s" % x)
 
-class SessionLock(GangaThread):
+class SessionLockManager(GangaThread):
     """ Thread that keeps a global lock file that synchronizes
     ID access across Ganga sessions.
     WARNING: On NFS files that are not locked will not be synchoronized
     across clients, even if a global lock file is used!
     TODO: On OSError it should shutdown the repository!"""
 
-    def __init__(self, dir, name):
+    def __init__(self, root, name):
         GangaThread.__init__(self, name='LockUpdater.%s' % name)
-        realpath = os.path.realpath(dir)
+        mkdir(root)
+        realpath = os.path.realpath(root)
         # Use the hostname (os.uname()[1])  and the current time in ms to construct the session filename.
         # TODO: Perhaps put the username here?
         session_name = os.uname()[1]+"."+str(int(time.time()*1000))+".session"
         self.sdir = os.path.join(realpath,"sessions")
-        self.ldir = os.path.join(realpath,"locks")
         self.fn = os.path.join(self.sdir, session_name)
         self.cntfn = os.path.join(realpath,"cnt")
 
         self.afs = (realpath[:4] == "/afs")
         self.locked = Set()
         self.count = 0
-        self.create()
+        self.setup()
+        self.start()
 
-    def create(self):
+    def setup(self):
         mkdir(self.sdir)
-        mkdir(self.ldir)
-        lockfn = os.path.join(self.sdir,"global_lock")
-        file(lockfn,"w").close() # create file
-        self.lockfd = os.open(lockfn,os.O_RDWR)
-        if not os.path.exists(self.cntfn):
+        # setup global lock
+
+        self.global_lock_setup()
+        self.global_lock_acquire()
+        try:
+            # setup counter file if it does not exist, read it if it does
+            if not os.path.exists(self.cntfn):
+                try:
+                    fd = os.open(self.cntfn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
+                    os.write(fd,"0")
+                    os.close(fd)
+                except OSError, x:
+                    if x.errno != errno.EEXIST:
+                        raise RepositoryError("OSError on count file create: %s" % x)
+            self.count = max(self.count,self.cnt_read())
+            self.cnt_write()
+            # Setup session file
             try:
-                fd = os.open(self.cntfn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
-                os.write(fd,"0")
+                fd = os.open(self.fn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
+                os.write(fd,pickle.dumps(Set()))
                 os.close(fd)
             except OSError, x:
-                if x.errno != errno.EEXIST:
-                    raise RepositoryError("OSError on count file create: %s" % x)
-        else:
-            f = file(self.cntfn)
-            try:
-                self.count = max(self.count,int(f.readline()))
-            except ValueError:
-                pass
-            f.close()
-        try:
-            fd = os.open(self.fn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
-            os.write(fd,pickle.dumps(Set()))
-            os.close(fd)
-        except OSError, x:
-            raise RepositoryError("Error on file access - session file: %s" % x)
+                raise RepositoryError("Error on file access - session file: %s" % x)
+            self.session_write()
+        finally:
+            self.global_lock_release()
 
-    def global_lock(self):
+    # Global lock function
+    def global_lock_setup(self):
+        lockfn = os.path.join(self.sdir,"global_lock")
+        file(lockfn,"w").close() # create file (does not interfere with existing sessions)
+        self.lockfd = os.open(lockfn,os.O_RDWR)
+
+    def global_lock_acquire(self):
         fcntl.lockf(self.lockfd,fcntl.LOCK_EX)
 
-    def global_unlock(self):
+    def global_lock_release(self):
         fcntl.lockf(self.lockfd,fcntl.LOCK_UN)
 
-    def acquire_next(self,n):
-        self.global_lock()
+    # Session read-write functions
+    def session_read(self,fn):
+        """ Reads a session file and returns a set of IDs locked by that session.
+            The global lock MUST be held for this function to work, although on NFS additional
+            locking is done
+            Raises RepositoryError if severe access problems occur (corruption otherwise!) """
+        try:
+            fd = os.open(fn, os.O_RDONLY) # This can fail (thats OK, file deleted in the meantime)
+            try:
+                if not self.afs: # additional locking for NFS
+                    fcntl.lockf(fd,fcntl.LOCK_SH)
+                try:
+                    return pickle.loads(os.read(fd,104857600)) # read up to 100 MB (that is more than enough...)
+                except Exception, x:
+                    logger.warning("corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)."% (fn, x.__class__.__name__, x))
+            finally:
+                if not self.afs: # additional locking for NFS
+                    fcntl.lockf(fd,fcntl.LOCK_UN)
+                os.close(fd)
+        except OSError, x:
+            if x.errno != errno.EEXIST:
+                raise RepositoryError("Error on session file access '%s': %s" % (fn,x))
+        return Set()
+
+    def session_write(self):
+        """ Writes the locked set to the session file. 
+            The global lock MUST be held for this function to work, although on NFS additional
+            locking is done
+            Raises RepositoryError if session file is inaccessible """
+        try:
+            # If this fails, we want to shutdown the repository (corruption possible)
+            fd = os.open(self.fn,os.O_WRONLY)
+            if not self.afs:
+                fcntl.lockf(fd,fcntl.LOCK_EX)
+            os.write(fd,pickle.dumps(self.locked))
+            if not self.afs:
+                fcntl.lockf(fd,fcntl.LOCK_UN)
+            os.close(fd)
+        except OSError, x:
+            if x.errno != errno.EEXIST:
+                raise RepositoryError("Error on session file access '%s': %s" % (self.fn,x))
+            else:
+                raise RepositoryError("Own session file not found! Possibly deleted by another ganga session - the system clocks on computers running Ganga must be synchronized!")
+
+    # counter read-write functions
+    def cnt_read(self):
+        """ Tries to read the counter file.
+            Raises ValueError (invalid contents)
+            Raises IOError (no access/does not exist)"""
+        fd = os.open(self.cntfn, os.O_RDONLY)
+        try:
+            if not self.afs: # additional locking for NFS
+                fcntl.lockf(fd,fcntl.LOCK_SH)
+            return int(os.read(fd,100)) # 100 bytes should be enough for any ID
+        finally:
+            if not self.afs: # additional locking for NFS
+                fcntl.lockf(fd,fcntl.LOCK_UN)
+            os.close(fd)
+
+    def cnt_write(self):
+        """ Writes the counter to the counter file. 
+            The global lock MUST be held for this function to work correctly
+            Raises OSError if count file is inaccessible """
+        try:
+            # If this fails, we want to shutdown the repository (corruption possible)
+            fd = os.open(self.cntfn,os.O_WRONLY)
+            if not self.afs:
+                fcntl.lockf(fd,fcntl.LOCK_EX)
+            os.write(fd,str(self.count))
+            if not self.afs:
+                fcntl.lockf(fd,fcntl.LOCK_UN)
+            os.close(fd)
+        except OSError, x:
+            if x.errno != errno.EEXIST:
+                raise RepositoryError("Error on count file access: %s" % (x))
+            else:
+                raise RepositoryError("Count file not found! Repository was modified externally")
+
+    # "User" functions
+    def make_new_ids(self,n):
+        """ Locks the next n available ids and returns them as a list """
+        self.global_lock_acquire()
         try:
             # Actualize count
-            f = file(self.cntfn)
             try:
-                newcount = int(f.readline())
+                newcount = self.cnt_read()
             except ValueError:
                 logger.warning("Corrupt job counter! Trying to recover...")
                 newcount = self.count
-            f.close()
             assert newcount >= self.count
             ids = range(newcount,newcount+n)
             self.locked.update(ids)
             self.count = newcount+n
-            f = file(self.cntfn,"w")
-            f.write(str(self.count))
-            f.close()
-            fd = os.open(self.fn,os.O_WRONLY)
-            fcntl.lockf(fd,fcntl.LOCK_EX) # ONLY FOR NFS
-            os.write(fd,pickle.dumps(self.locked))
-            fcntl.lockf(fd,fcntl.LOCK_UN) # ONLY FOR NFS
-            os.close(fd)
-            return ids
+            self.cnt_write()
+            self.session_write()
+            return list(ids)
         finally:
-            self.global_unlock()
+            self.global_lock_release()
 
-    def acquire(self,ids):
+    def lock_ids(self,ids):
         ids = Set(ids)
-        self.global_lock()
+        self.global_lock_acquire()
         try:
             sessions = [sn for sn in os.listdir(self.sdir) if sn.endswith(".session")]
             slocked = Set()
@@ -136,52 +216,32 @@ class SessionLock(GangaThread):
                 sf = os.path.join(self.sdir,session)
                 if sf == self.fn:
                     continue
-                fd = -1
-                if not self.afs:
-                    fd = os.open(sf, os.O_RDONLY)
-                    fcntl.lockf(fd,fcntl.LOCK_SH) # ONLY NFS
                 try:
-                    slocked.update(pickle.load(file(sf)))
+                    slocked.update(self.session_read(sf))
                 except Exception:
                     logger.warning("Corrupt session file - ignoring it: '%s'"% sf)
-                if not self.afs and fd > 0:
-                    fcntl.lockf(fd,fcntl.LOCK_UN) # ONLY NFS
-                    os.close(fd)
             ids.difference_update(slocked)
             self.locked.update(ids)
-            fd = os.open(self.fn,os.O_WRONLY)
-            fcntl.lockf(fd,fcntl.LOCK_EX) # ONLY FOR NFS
-            os.write(fd,pickle.dumps(self.locked))
-            fcntl.lockf(fd,fcntl.LOCK_UN) # ONLY FOR NFS
-            os.close(fd)
-            return ids
+            self.session_write()
+            return list(ids)
         finally:
-            self.global_unlock()
+            self.global_lock_release()
 
-    def acquire_block(self,name):
-        while not self.acquire(name):
-            time.sleep(0.01)
-
-    def release(self,ids):
-        self.global_lock()
+    def release_ids(self,ids):
+        self.global_lock_acquire()
         try:
             self.locked.difference_update(ids)
-            fd = os.open(self.fn,os.O_WRONLY)
-            fcntl.lockf(fd,fcntl.LOCK_EX) # ONLY FOR NFS
-            os.write(fd,pickle.dumps(self.locked))
-            fcntl.lockf(fd,fcntl.LOCK_UN) # ONLY FOR NFS
-            os.close(fd)
-            return ids
+            self.session_write()
+            return list(ids)
         finally:
-            self.global_unlock()
+            self.global_lock_release()
 
     def run(self):
         while not self.should_stop():
             ## TODO: Check for services active/inactive
             try:
                 if not os.path.exists(self.fn):
-                    self.create()
-                    logger.warning("Session file was deleted externally! Locks may be lost!")
+                    raise RepositoryError("Own session file not found! Possibly deleted by another ganga session - the system clocks on computers running Ganga must be synchronized!")
                 else:
                     os.utime(self.fn,None)
                 # Clear expired session files
@@ -199,66 +259,33 @@ class SessionLock(GangaThread):
                 logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
             time.sleep(1+random.random())
 
-        # Remove session file
+        # On shutdown remove session file
         try:
             os.unlink(self.fn)
-            # close AFS lock file
-            os.close(self.lockfd)
         except OSError, x:
             logger.warning("Session file was deleted externally or removal failed: %s" % (x))
         self.unregister()
 
-class SessionLockManager(object):
-
-    def __init__(self,root_dir,name):
-        """ Synchronizes several Ganga processes accessing the same repository
-        Uses fcntl to provide locking.
-        This means that NO other part/thread/etc. of ganga should do ANY operations
-        on these files as the locks will be lost!
-        Raise RepositoryError"""
-        self.root = root_dir
-        self.name = name
-        mkdir(self.root)
-        self.sessionlock = SessionLock(self.root, self.name)
-        self.sessionlock.start()
-        
-    def make_new_ids(self,n):
-        """ make_new_ids(n) --> list of ids
-        Generate n consecutive new job ids.
-        Raise RepositoryError"""
-        return list(self.sessionlock.acquire_next(n))
-
-    def lock_ids(self,ids):
-        """ lock_ids(n) --> list of successfully locked ids
-        Tries to lock the given ids, returning only the successfully locked ids
-        Raise RepositoryError"""
-        return list(self.sessionlock.acquire(ids))
-
-    def release_ids(self,ids):
-        """release_ids(ids) --> list of successfully released ids
-        Raise RepositoryError"""
-        return list(self.sessionlock.release(ids))
-
     def check(self):
-        self.sessionlock.global_lock()
+        self.global_lock_acquire()
         try:
-            f = file(self.sessionlock.cntfn)
+            f = file(self.cntfn)
             newcount = int(f.readline())
             f.close()
-            assert newcount >= self.sessionlock.count
-            sessions = os.listdir(self.sessionlock.sdir)
+            assert newcount >= self.count
+            sessions = os.listdir(self.sdir)
             prevnames = Set()
             for session in sessions:
                 if not session.endswith(".session"):
                     continue
                 try:
-                    sf = os.path.join(self.sessionlock.sdir,session)
+                    sf = os.path.join(self.sdir,session)
                     fd = -1
-                    if not self.sessionlock.afs:
+                    if not self.afs:
                         fd = os.open(sf, os.O_RDONLY)
                         fcntl.lockf(fd,fcntl.LOCK_SH) # ONLY NFS
                     names = pickle.load(file(sf))
-                    if not self.sessionlock.afs and fd > 0:
+                    if not self.afs and fd > 0:
                         fcntl.lockf(fd,fcntl.LOCK_UN) # ONLY NFS
                         os.close(fd)
                 except Exception, x:
@@ -270,7 +297,7 @@ class SessionLockManager(object):
                 prevnames.union_update(names)
 
         finally:
-            self.sessionlock.global_unlock()
+            self.global_lock_release()
 
 def test1():
     slm = SessionLockManager("locktest","tester")
