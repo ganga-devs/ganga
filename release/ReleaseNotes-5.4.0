@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.4.0 (2009/10/20)
+5.4.0 (2009/10/21)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -9,6 +9,12 @@ migrated to stomputil2.0
 
 new environment variable - GANGA_NEVER_REEXEC - prevents reexec if one ganga session is calling
 another one (as it is the case in the testing framework for example)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard
+--------------------------------------------------------------------------------------------------------------
+Fix for https://savannah.cern.ch/bugs/?57112
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -41,6 +47,7 @@ https://twiki.cern.ch/twiki/bin/view/Atlas/FullGangaAtlasTutorial
 * Disable DQ2_DOWNLOAD
 * Add MSGMS for Athena/LCG to Atlas.ini
 * Change Milano access algorithm
+* Fix for groupname problem
 
 AthenaMC:
 ---------
