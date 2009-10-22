@@ -219,6 +219,14 @@ if [ $? -ne 0 ]; then
     exit $EC_ATHENA_RUNTIME_ERROR
 fi
 
+#################################################
+# pack ama summary directory
+ama_pack_summary_dir
+
+if [ $? -ne 0 ]; then
+    echo "Cannot pack AMA summary directory" 1>&2
+    exit $EC_AMA_SUMMARY_TAR_ERROR
+fi
 
 GANGATIME4=`date +'%s'`
 #################################################

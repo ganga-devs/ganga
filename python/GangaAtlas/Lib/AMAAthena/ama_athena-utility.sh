@@ -226,6 +226,19 @@ EOFF
     return $retcode
 }
 
+# pack the summary directory after the athena process
+ama_pack_summary_dir() {
+
+    retcode=0
+
+    if [ ! -z $AMA_SUMMARY_TARBALL ]; then
+        tar cvzf $AMA_SUMMARY_TARBALL summary/
+        retcode=$?
+    fi
+
+    return $retcode
+}
+
 # run athena
 ama_run_athena () {
 
