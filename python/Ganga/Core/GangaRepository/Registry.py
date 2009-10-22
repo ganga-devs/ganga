@@ -277,12 +277,14 @@ class Registry(object):
         if not obj._registry_locked:
             self._lock.acquire()
             try:
-                if not self.repository.lock([self.find(obj)]):
-                    raise RegistryLockError("Could not lock '%s' object #%i!" % (self.name,self.find(obj)))
                 try:
-                    self.repository.load([self.find(obj)])
-                except KeyError:
-                    raise RegistryKeyError("The object #%i in registry '%s' was deleted or cannot be loaded." % (self.find(obj),self.name))
+                    if not self.repository.lock([self.find(obj)]):
+                        raise RegistryLockError("Could not lock '%s' object #%i!" % (self.name,self.find(obj)))
+                finally: # try to load even if lock fails
+                    try:
+                        self.repository.load([self.find(obj)])
+                    except KeyError:
+                        raise RegistryKeyError("The object #%i in registry '%s' was deleted or cannot be loaded." % (self.find(obj),self.name))
                 obj._registry_locked = True
             finally:
                 self._lock.release()
