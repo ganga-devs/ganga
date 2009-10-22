@@ -347,6 +347,8 @@ class Registry(object):
             except Exception, x:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, x)
             self._started = False
+            for obj in self._objects:
+                obj._registry_locked = False # locks are not guaranteed to survive repository shutdown
             self.repository.shutdown()
         finally:
             self._lock.release()
