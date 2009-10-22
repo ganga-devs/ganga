@@ -74,7 +74,6 @@ class SessionLockManager(GangaThread):
         self.afs = (realpath[:4] == "/afs")
         self.locked = Set()
         self.count = minimum_count
-        self.startup()
     
     def startup(self):
         mkdir(self.sdir)
@@ -113,6 +112,7 @@ class SessionLockManager(GangaThread):
 
     def shutdown(self):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
+        self.locked = Set()
         self.stop()
 
     # Global lock function
@@ -158,7 +158,7 @@ class SessionLockManager(GangaThread):
                     fcntl.lockf(fd,fcntl.LOCK_UN)
                 os.close(fd)
         except OSError, x:
-            if x.errno != errno.EEXIST:
+            if x.errno != errno.ENOENT:
                 raise RepositoryError("Error on session file access '%s': %s" % (fn,x))
         return Set()
 
@@ -177,7 +177,7 @@ class SessionLockManager(GangaThread):
                 fcntl.lockf(fd,fcntl.LOCK_UN)
             os.close(fd)
         except OSError, x:
-            if x.errno != errno.EEXIST:
+            if x.errno != errno.ENOENT:
                 raise RepositoryError("Error on session file access '%s': %s" % (self.fn,x))
             else:
                 raise RepositoryError("Own session file not found! Possibly deleted by another ganga session - the system clocks on computers running Ganga must be synchronized!")
@@ -202,7 +202,7 @@ class SessionLockManager(GangaThread):
                     fcntl.lockf(fd,fcntl.LOCK_UN)
                 os.close(fd)
         except OSError, x:
-            if x.errno != errno.EEXIST:
+            if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "OSError on count file '%s' read: %s" % (self.cntfn, x))
             else:
                 raise # This can be a recoverable error, depending on where it occurs
@@ -223,7 +223,7 @@ class SessionLockManager(GangaThread):
                 fcntl.lockf(fd,fcntl.LOCK_UN)
             os.close(fd)
         except OSError, x:
-            if x.errno != errno.EEXIST:
+            if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "OSError on count file '%s' write: %s" % (self.cntfn, x))
             else:
                 raise RepositoryError(self.repo, "Count file '%s' not found! Repository was modified externally!" % (self.cntfn))
@@ -291,7 +291,7 @@ class SessionLockManager(GangaThread):
                     try:
                         os.utime(self.fn,None)
                     except OSError, x:
-                        if x.errno != errno.EEXIST:
+                        if x.errno != errno.ENOENT:
                             raise RepositoryError("Session file timestamp could not be updated! Locks will be lost!")
                         else:
                             raise RepositoryError("Own session file not found! Possibly deleted by another ganga session - the system clocks on computers running Ganga must be synchronized!")
