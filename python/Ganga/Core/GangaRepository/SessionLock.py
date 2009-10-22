@@ -37,13 +37,7 @@ except ImportError:
 
 session_expiration_timeout = 8 # seconds
 
-def mkdir(dn):
-    """Make sure the given directory exists"""
-    try:
-        os.makedirs(dn)
-    except OSError, x:
-        if x.errno != errno.EEXIST:
-            raise RepositoryError("OSError on directory create: %s" % x)
+
 
 class SessionLockManager(GangaThread):
     """ Class with thread that keeps a global lock file that synchronizes
@@ -59,10 +53,18 @@ class SessionLockManager(GangaThread):
     All access to an instance of this class MUST be synchronized!
     Should ONLY raise RepositoryError (if possibly-corrupting errors are found)
     """
+    def mkdir(self,dn):
+        """Make sure the given directory exists"""
+        try:
+            os.makedirs(dn)
+        except OSError, x:
+            if x.errno != errno.EEXIST:
+                raise RepositoryError(self.repo, "OSError on directory create: %s" % x)
+
     def __init__(self, repo, root, name, minimum_count=0):
         GangaThread.__init__(self, name='LockUpdater.%s' % name)
-        mkdir(root)
         self.repo = repo
+        self.mkdir(root)
         realpath = os.path.realpath(root)
         # Use the hostname (os.uname()[1])  and the current time in ms to construct the session filename.
         # TODO: Perhaps put the username here?
@@ -74,9 +76,10 @@ class SessionLockManager(GangaThread):
         self.afs = (realpath[:4] == "/afs")
         self.locked = Set()
         self.count = minimum_count
+
     
     def startup(self):
-        mkdir(self.sdir)
+        self.mkdir(self.sdir)
         # setup global lock
 
         self.global_lock_setup()
@@ -122,21 +125,21 @@ class SessionLockManager(GangaThread):
             file(self.lockfn,"w").close() # create file (does not interfere with existing sessions)
             self.lockfd = os.open(self.lockfn,os.O_RDWR)
         except IOError, x:
-            raise RepositoryError("Could not create lock file '%s': %s" % (self.lockfn, x))
+            raise RepositoryError(self.repo, "Could not create lock file '%s': %s" % (self.lockfn, x))
         except OSError, x:
-            raise RepositoryError("Could not open lock file '%s': %s" % (self.lockfn, x))
+            raise RepositoryError(self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
 
     def global_lock_acquire(self):
         try:
             fcntl.lockf(self.lockfd,fcntl.LOCK_EX)
         except IOError, x:
-            raise RepositoryError("IOError on lock ('%s'): %s" % (self.lockfn, x))
+            raise RepositoryError(self.repo, "IOError on lock ('%s'): %s" % (self.lockfn, x))
             
     def global_lock_release(self):
         try:
             fcntl.lockf(self.lockfd,fcntl.LOCK_UN)
         except IOError, x:
-            raise RepositoryError("IOError on unlock ('%s'): %s" % (self.lockfn, x))
+            raise RepositoryError(self.repo, "IOError on unlock ('%s'): %s" % (self.lockfn, x))
 
     # Session read-write functions
     def session_read(self,fn):
@@ -159,7 +162,7 @@ class SessionLockManager(GangaThread):
                 os.close(fd)
         except OSError, x:
             if x.errno != errno.ENOENT:
-                raise RepositoryError("Error on session file access '%s': %s" % (fn,x))
+                raise RepositoryError(self.repo, "Error on session file access '%s': %s" % (fn,x))
         return Set()
 
     def session_write(self):
@@ -178,11 +181,11 @@ class SessionLockManager(GangaThread):
             os.close(fd)
         except OSError, x:
             if x.errno != errno.ENOENT:
-                raise RepositoryError("Error on session file access '%s': %s" % (self.fn,x))
+                raise RepositoryError(self.repo, "Error on session file access '%s': %s" % (self.fn,x))
             else:
-                raise RepositoryError("Own session file not found! Possibly deleted by another ganga session - the system clocks on computers running Ganga must be synchronized!")
+                raise RepositoryError(self.repo, "Own session file not found! Possibly deleted by another ganga session - the system clocks on computers running Ganga must be synchronized!")
         except IOError, x:
-            raise RepositoryError("Error on session file locking '%s': %s" % (self.fn,x))
+            raise RepositoryError(self.repo, "Error on session file locking '%s': %s" % (self.fn,x))
 
     # counter read-write functions
     def cnt_read(self):
@@ -243,9 +246,9 @@ class SessionLockManager(GangaThread):
                 logger.warning("Corrupt job counter (possibly due to crash of another session)! Trying to recover...")
                 newcount = self.count
             except OSError:
-                raise RepositoryError("Job counter deleted! External modification to repository!")
+                raise RepositoryError(self.repo, "Job counter deleted! External modification to repository!")
             if not newcount >= self.count:
-                raise RepositoryError("Counter value decreased - logic error!")
+                raise RepositoryError(self.repo, "Counter value decreased - logic error!")
             ids = range(newcount,newcount+n)
             self.locked.update(ids)
             self.count = newcount+n
@@ -292,9 +295,9 @@ class SessionLockManager(GangaThread):
                         os.utime(self.fn,None)
                     except OSError, x:
                         if x.errno != errno.ENOENT:
-                            raise RepositoryError("Session file timestamp could not be updated! Locks will be lost!")
+                            raise RepositoryError(self.repo, "Session file timestamp could not be updated! Locks will be lost!")
                         else:
-                            raise RepositoryError("Own session file not found! Possibly deleted by another ganga session - the system clocks on computers running Ganga must be synchronized!")
+                            raise RepositoryError(self.repo, "Own session file not found! Possibly deleted by another ganga session - the system clocks on computers running Ganga must be synchronized!")
                     # Clear expired session files
                     try:
                         now = os.stat(self.fn).st_ctime
