@@ -126,9 +126,9 @@ if __name__ == '__main__':
                         pass
 
                 ## get event information from AMAEventCounter 
-                if line.find('AMAEventCounter::finalize(Before) processed')>-1:
+                if line.find('AMAEventCounter::finalize')>-1:
                     try:
-                        itotalevents = int(re.match('.* processed (\-?\d+) events.*',line).group(1))
+                        itotalevents = int(re.match('AMAEventCounter::finalize\((AllEvents|Before)\) processed (\-?\d+) events.*',line).group(2))
                         jtotalevents = int(itotalevents)
                     except:
                         pass
