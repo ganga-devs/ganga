@@ -785,7 +785,7 @@ class Athena(IApplication):
         extraFiles = self.files_lcg_ng()
         for ifile in extraFiles:
             filename = os.path.split(ifile)[1]
-            out = commands.getoutput('pushd . && cd %s && tar -rh %s -f %s && popd' % (tmpDir, filename, archiveFullName))
+            out = commands.getoutput('pushd . && cd %s && tar -f %s -rh %s && popd' % (tmpDir, archiveFullName, filename))
             os.unlink(ifile)
 
         # compress
