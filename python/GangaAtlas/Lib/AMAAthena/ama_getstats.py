@@ -125,6 +125,14 @@ if __name__ == '__main__':
                     except:
                         pass
 
+                ## get event information from AMAEventCounter 
+                if line.find('AMAEventCounter::finalize(Before) processed')>-1:
+                    try:
+                        itotalevents = int(re.match('.* processed (\-?\d+) events.*',line).group(1))
+                        jtotalevents = int(itotalevents)
+                    except:
+                        pass
+
                 if line.find('cObj_DataHeader...')>-1:
                     numfiles2 = numfiles2 + int(re.match('.* #=(.*)',line).group(1))
 
