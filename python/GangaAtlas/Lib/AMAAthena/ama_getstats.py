@@ -134,7 +134,7 @@ if __name__ == '__main__':
                 ## get number of event files from TStageManager
                 if line.find('TStageManager::print() : Successfully staged')>-1:
                     try:
-                        numfiles3 = int(re.match('.* \: Successfully staged (\d+) mb over (\d+) files\.',line).group(2))
+                        numfiles3 = int(re.match('.* \: Successfully staged (\-?\d+) mb over (\d+) files\.',line).group(2))
 
                         ## add 1 to numfiles3 to make it compatible with the originall getstats.py from Athena module
                         ## it will be substracted in making the final report 
