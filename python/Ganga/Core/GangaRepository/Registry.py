@@ -62,7 +62,6 @@ class Registry(object):
         """Registry constructor, giving public name and documentation"""
         self.name = name
         self.doc = doc
-        self._objects = {}
         self._started = False
         self.dirty_flush_counter = dirty_flush_counter
         self.dirty_objs = {}
@@ -164,9 +163,10 @@ class Registry(object):
             else:
                 if not self.repository.lock([force_index]):
                     raise RegistryLockError("Could not lock '%s' id #%i for a new object!" % (self.name,force_index))
-                ids = self.repository.add([obj],[force_index])
+                ids = self.repository.add([obj],[force_index]) # raises exception if len(ids) < 1
             obj._registry_locked = True
             self.repository.flush(ids)
+            return ids[0]
         finally:
             self._lock.release()
 
@@ -188,7 +188,8 @@ class Registry(object):
             try:
                 self._write_access(obj)
             except RegistryKeyError:
-                logger.warning("Object #%i was already deleted from registry '%s'!"%(id,self.name))
+                logger.warning("double delete: Object #%i is not present in registry '%s'!"%(id,self.name))
+                return
             logger.debug('deleting the object %d from the registry %s',id,self.name)
             self._lock.acquire()
             try:
@@ -252,13 +253,14 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryKeyError"""
         #logger.debug("_read_access(%s)" % obj)
-        if not obj._data:
+        if not obj._data or obj._registry_refresh:
             if not self._started:
                 raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect."%(self.find(obj),self.name))
             try:
                 self._lock.acquire()
                 try:
                     self.repository.load([self.find(obj)])
+                    obj._registry_refresh = False
                 finally:
                     self._lock.release()
             except KeyError:
@@ -283,6 +285,7 @@ class Registry(object):
                 finally: # try to load even if lock fails
                     try:
                         self.repository.load([self.find(obj)])
+                        obj._registry_refresh = False
                     except KeyError:
                         raise RegistryKeyError("The object #%i in registry '%s' was deleted or cannot be loaded." % (self.find(obj),self.name))
                 obj._registry_locked = True
@@ -319,7 +322,7 @@ class Registry(object):
         """Connect the repository to the registry. Called from Repository_runtime.py"""
         t0 = time.time()
         self.repository = makeRepository(self)
-        self.repository._objects = self._objects
+        self._objects = self.repository.objects
         self.repository.startup()
         t1 = time.time()
         logger.info("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0))
@@ -347,7 +350,7 @@ class Registry(object):
             except Exception, x:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, x)
             self._started = False
-            for obj in self._objects:
+            for obj in self._objects.values():
                 obj._registry_locked = False # locks are not guaranteed to survive repository shutdown
             self.repository.shutdown()
         finally:

@@ -164,7 +164,7 @@ def enableInternalServices():
         return
     #startup the registries
     from Ganga.Runtime import Repository_runtime
-    Repository_runtime.startup()
+    Repository_runtime.bootstrap()
                     
     log.debug("Enabling the internal services")
     # reenable the monitoring loop if *autostart* is set

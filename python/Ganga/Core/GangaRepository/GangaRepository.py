@@ -11,12 +11,15 @@
 # If a root object has an id field, it will be set to the repository id
 # if a root object has a status field and some load error occurs, it will be set to "incomplete"
 
-from Ganga.Core import GangaException
-from Ganga.Utility.Plugin import PluginManagerError, allPlugins
-from Ganga.Core.InternalServices.Coordinator import disableInternalServices
-
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
+
+
+
+from Ganga.Utility.Plugin import PluginManagerError, allPlugins
+from Ganga.Core.InternalServices.Coordinator import disableInternalServices
+from Ganga.Core import GangaException
+
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
@@ -29,6 +32,8 @@ class EmptyGangaObject(GangaObject):
     _category = "internal"
     _hidden = 1
 
+
+
 # Error raised on schema version error
 class SchemaVersionError(GangaException):
     def __init__(self,what):
@@ -36,7 +41,6 @@ class SchemaVersionError(GangaException):
         self.what=what
     def __str__(self):
         return "SchemaVersionError: %s"%self.what
-
 
 class RepositoryError(GangaException):
     """ This error is raised if there is a fatal error in the repository."""
@@ -56,6 +60,7 @@ class GangaRepository(object):
     def __init__(self, registry):
         """GangaRepository constructor. Initialization should be done in startup()"""
         self.registry = registry
+        self.objects = {}
 
 ## Functions that should be overridden and implemented by derived classes.
     def startup(self):
@@ -137,28 +142,32 @@ class GangaRepository(object):
         """Internal helper: adds an empty GangaObject of the given class to the repository.
         Raise RepositoryError
         Raise PluginManagerError if the class name is not found"""
+        reload(Ganga.Utility.Plugin)
+        from Ganga.Utility.Plugin import PluginManagerError, allPlugins
         cls = allPlugins.find(category, classname)
         obj  = super(cls, cls).__new__(cls)
         obj._proxyObject = None
         obj._data = None
+
         self._internal_setitem__(id,obj)
         return obj
 
     def _internal_setitem__(self, id, obj):
         """ Internal function for repository classes to add items to the repository."""
-        self._objects[id] = obj
+        self.objects[id] = obj
         obj.__dict__["_registry_id"] = id
         obj.__dict__["_registry_locked"] = False
+        obj.__dict__["_registry_refresh"] = False
         if obj._data and "id" in obj._data.keys(): # MAGIC id
             obj.id = id
         obj._setRegistry(self.registry)
 
     def _internal_del__(self, id):
         """ Internal function for repository classes to delete items to the repository."""
-        self._objects[id]._setRegistry(None)
-        del self._objects[id].__dict__["_registry_id"]
-        del self._objects[id].__dict__["_registry_locked"]
-        del self._objects[id]
+        self.objects[id]._setRegistry(None)
+        del self.objects[id].__dict__["_registry_id"]
+        del self.objects[id].__dict__["_registry_locked"]
+        del self.objects[id]
 
 
 class GangaRepositoryTransient(object):

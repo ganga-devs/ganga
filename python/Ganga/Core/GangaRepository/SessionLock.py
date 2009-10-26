@@ -68,7 +68,7 @@ class SessionLockManager(GangaThread):
         realpath = os.path.realpath(root)
         # Use the hostname (os.uname()[1])  and the current time in ms to construct the session filename.
         # TODO: Perhaps put the username here?
-        session_name = os.uname()[1]+"."+str(int(time.time()*1000))+".session"
+        session_name = ".".join([os.uname()[1],str(int(time.time()*1000)),str(os.getpid()),"session"])
         self.sdir = os.path.join(realpath,"sessions")
         self.fn = os.path.join(self.sdir, session_name)
         self.cntfn = os.path.join(realpath,"cnt")
@@ -117,6 +117,7 @@ class SessionLockManager(GangaThread):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
         self.locked = Set()
         self.stop()
+        self.join()
 
     # Global lock function
     def global_lock_setup(self):
@@ -199,7 +200,7 @@ class SessionLockManager(GangaThread):
             try:
                 if not self.afs: # additional locking for NFS
                     fcntl.lockf(fd,fcntl.LOCK_SH)
-                return int(os.read(fd,100)) # 100 bytes should be enough for any ID. Can raise ValueErrorr
+                return int(os.read(fd,100).split("\n")[0]) # 100 bytes should be enough for any ID. Can raise ValueErrorr
             finally:
                 if not self.afs: # additional locking for NFS
                     fcntl.lockf(fd,fcntl.LOCK_UN)
@@ -221,7 +222,7 @@ class SessionLockManager(GangaThread):
             fd = os.open(self.cntfn,os.O_WRONLY)
             if not self.afs:
                 fcntl.lockf(fd,fcntl.LOCK_EX)
-            os.write(fd,str(self.count))
+            os.write(fd,str(self.count)+"\n")
             if not self.afs:
                 fcntl.lockf(fd,fcntl.LOCK_UN)
             os.close(fd)
@@ -264,6 +265,9 @@ class SessionLockManager(GangaThread):
         try:
             try:
                 sessions = [sn for sn in os.listdir(self.sdir) if sn.endswith(".session")]
+            except OSError, x:
+                raise RepositoryError(self.repo, "Could not list session directory '%s'!" % (self.sdir))
+                
             slocked = Set()
             for session in sessions:
                 sf = os.path.join(self.sdir,session)
