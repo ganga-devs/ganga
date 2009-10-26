@@ -32,7 +32,7 @@ config.addOption('tasks_columns_show_empty',
 
 config.addOption('tasks_show_help',True,'change this to False if you do not want to see the help screen if you first type "tasks" in a session')
 
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
 
 
 class TaskRegistry(Registry):
