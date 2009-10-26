@@ -38,6 +38,7 @@ config.addOption( 'assignedPriorityRun', 1000, 'assignedPriorityRun' )
 config.addOption( 'processingType', 'ganga', 'processingType' )
 config.addOption( 'enableDownloadLogs', False , 'enableDownloadLogs' )  
 config.addOption( 'trustIS', True , 'Trust the Information System' )  
+config.addOption( 'serverMaxJobs', 2000 , 'Maximum number of subjobs to send to the Panda server' )  
 
 def queueToAllowedSites(queue):
     try:
@@ -288,8 +289,8 @@ class Panda(IBackend):
         else:
             jobspecs = subjobspecs
 
-        if len(jobspecs) > 2000:
-            raise BackendError('Panda','Cannot submit %d subjobs. Server limits to 2000.' % len(jobspecs))
+        if len(jobspecs) > config['serverMaxJobs']:
+            raise BackendError('Panda','Cannot submit %d subjobs. Server limits to %d.' % (len(jobspecs),config['serverMaxJobs']))
 
         verbose = logger.isEnabledFor(10)
         status, jobids = Client.submitJobs(jobspecs,verbose)
@@ -299,6 +300,9 @@ class Panda(IBackend):
         if "NULL" in [jobid[0] for jobid in jobids]:
             logger.error('Panda could not assign job id to some jobs. Dataset name too long?')
             return False
+
+        njobs = len(jobids)
+
         if buildjobspec:
             job.backend.buildjob = PandaBuildJob() 
             job.backend.buildjob.id = jobids[0][0]
@@ -308,6 +312,9 @@ class Panda(IBackend):
             subjob.backend.id = jobid[0]
             subjob.backend.url = 'http://panda.cern.ch?job=%d'%jobid[0]
             subjob.updateStatus('submitted')
+
+        if njobs < len(jobspecs):
+            logger.error('Panda server accepted only %d of your %d jobs. Confirm serverMaxJobs=%d is correct.'%(njobs,len(jobspecs),config['serverMaxJobs']))
 
         return True
 
