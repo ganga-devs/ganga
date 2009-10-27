@@ -1914,9 +1914,10 @@ class NG(IBackend):
       xrslList = [
          "&" 
          "(* XRSL File created by Ganga *)",
-         "(* %s" % ( time.strftime( "%c" ) ) + " *)",
-         "(queue!=atlas-t1-repro)",
-         "(queue!=atlas-t1-reprocessing)"]
+         "(* %s" % ( time.strftime( "%c" ) ) + " *)"]
+         # Removed for ganga 5.4.0, 091027, per Andrejs request
+         #"(queue!=atlas-t1-repro)",
+         #"(queue!=atlas-t1-reprocessing)"]
       for key, value in xrslDict.iteritems():
          xrslList.append( "(%s = %s)" % ( key, value ) )
       ## User requiremants   
