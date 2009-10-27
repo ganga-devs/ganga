@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.4.0 (2009/10/21)
+5.4.0 (2009/10/27)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -48,6 +48,8 @@ https://twiki.cern.ch/twiki/bin/view/Atlas/FullGangaAtlasTutorial
 * Add MSGMS for Athena/LCG to Atlas.ini
 * Change Milano access algorithm
 * Fix for groupname problem
+* Fix bug 57480: change order of tar options in prepare()
+* 
 
 AthenaMC:
 ---------
@@ -142,6 +144,17 @@ AMAAthena
   Athena module
 * introduce the AMA specific getstats script for collecting 
   application.stats
+* enhance the event number parsing
+* add alternative way to get number of processed events: parse 
+  message from AMAEventCounter
+* fix message parser to get number of staged files to WN
+* remove useless imports of python modules
+* enhance the handler for uploading AMAAthena output files to a 
+  grid storage
+  - tar up the "summary" directory in which AMA stores ntuples 
+    and histograms
+  - specify the summary tarball in DQ2OutputDataset 	
+* add new AMAAthena runtime handler for Panda backend
 
 Tasks:
 -----
@@ -193,12 +206,17 @@ replicas and/or metadata, etc.  See the class documentation for further details.
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaNG
 --------------------------------------------------------------------------------------------------------------
-Added proper giises.txt handling, and removed some spurious calls to proxy info.
+- Fixed problem with the two co-existing lfc path conventions
+- Removed banning of t1-repro queues
+- Made arcgiis list brokering work (make giises.txt available in present dir.)
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaPanda
 --------------------------------------------------------------------------------------------------------------
+added config.serverMaxJobs which defaults to 2000. Useful if Panda server increases the number of jobs 
+allowed per submission.
+
 externals:
 ----------
 * Upgrade to panda-client 0.1.94
