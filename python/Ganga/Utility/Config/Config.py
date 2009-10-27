@@ -105,11 +105,17 @@ class ConfigError(GangaException):
 # for example, do not do here: from Ganga.Utility.logging import logger
 # use getLogger() function defined below:
 
+logger_cache = None
+
 def getLogger():
+    global logger_cache
+    if not logger_cache is None:
+        return logger_cache
+
     # for the configuration of the logging package itself (in the initial phases) the logging may be disabled
     try:
         import  Ganga.Utility.logging
-        logger = Ganga.Utility.logging.getLogger()
+        logger_cache = Ganga.Utility.logging.getLogger()
     except AttributeError:
         # in such a case we return a mock proxy object which ignore all calls such as logger.info()...
         class X:
@@ -117,8 +123,8 @@ def getLogger():
                 def f(*args,**kwds):
                     pass
                 return f
-        logger = X()
-    return logger
+        logger_cache = X()
+    return logger_cache
 
 # All configuration units
 allConfigs = {}
@@ -652,7 +658,7 @@ def transform_PATH_option(name,new_value,current_value):
     For other variables just return the new_value.
     """
 
-    logger = getLogger()
+
   
     PATH_ITEM = '_PATH'
     if name[-len(PATH_ITEM):] == PATH_ITEM:
