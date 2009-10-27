@@ -42,7 +42,7 @@ from dq2.common.DQException import *
 from dq2.info import TiersOfATLAS
 
 #import LFCTools
-from dq2.filecatalog.lfc.lfcconventions import to_native_lfn
+from dq2.filecatalog.lfc.lfcconventions import to_native_lfn as dq2_to_native_lfn
 #from dq2.filecatalog.lfc.LFCFileCatalog import LFCFileCatalogException
 from GangaNG.Lib.NG.LFCTools import *
 from GangaNG.Lib.NG.NGStatTools import testNGStatTools
@@ -122,7 +122,7 @@ def getGangaLFN(dataset,fname):
 
   return lfn
 
-def getLFCurl(dataset,file):
+def getLFCurl(dataset,file,use_dq2_version = False):
   """ user datasets are registered under to_natie_lfn convention
   One can use the same procerure for getting the lfn both for production datasets
   as for user datasets.
@@ -130,7 +130,10 @@ def getLFCurl(dataset,file):
 
   ds = dataset.split('.')[0]
 
-  return 'lfc://lfc1.ndgf.org/' + to_native_lfn(dataset,file)
+  if use_dq2_version:
+    return 'lfc://lfc1.ndgf.org/' + dq2_to_native_lfn(dataset,file)
+  else:
+    return 'lfc://lfc1.ndgf.org/' + to_native_lfn(dataset,file)
 
 def getTiersOfATLASCache():
     """Download TiersOfATLASCache.py"""
@@ -1645,6 +1648,9 @@ class NG(IBackend):
           ds_tid = getTidDatasetnames(job.inputdata.dataset)
           # Check for availability on DQ2? Avoids submitting jobs where dataset is empty
           lfnlist=[]
+
+          # I'm removing this check_availability for now - not really needed, needs re-implementing in different form
+          """
           if self.check_availability:
             remove_flist=[]
             remove_glist=[]
@@ -1675,15 +1681,25 @@ class NG(IBackend):
                 job.inputdata.guids.remove(g)
 
           else:
-            for f in range(len(job.inputdata.names)):
-              if len(ds_tid) > 1:
-                lfn_ds = matchLFNtoDataset(ds_tid,job.inputdata.names[f], job.application.atlas_release)
-                lfn = getLFCurl(lfn_ds,job.inputdata.names[f])
-                lfnlist += [lfn]
-              else:
-                lfn = getLFCurl(ds_tid[0],job.inputdata.names[f])
-                lfnlist += [lfn]
+          """
+          for f in range(len(job.inputdata.names)):
+            
+            # Get the dataset name first
+            if len(ds_tid) > 1:
+              lfn_ds = matchLFNtoDataset(ds_tid,job.inputdata.names[f], job.application.atlas_release)
+            else:
+              lfn_ds = ds_tid[0]
+
+            # Get an lfn url, using the old method (defined in LFCTools.py)
+            lfn = getLFCurl(lfn_ds,job.inputdata.names[f], False)
+
+            # Check if this path exists - if not, get another lfc url using the new method
+            rc = grids[self.middleware.upper()].check_dq2_file_avaiability(lfn,self.id)
+            if rc:
+              lfn = getLFCurl(lfn_ds,job.inputdata.names[f], True)
               
+            lfnlist += [lfn]
+
           # number of input files
           arguments += [len(job.inputdata.names)]
 
