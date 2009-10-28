@@ -238,6 +238,16 @@ class JEMMonitoringServiceHandler(object):
                 # try to find a free listening port for the HTTPSServer
                 self.__httpsListenPort = self.__tryFindFreeListeningPort()
 
+        def getPath(executable):
+            paths = os.environ['PATH'].split(os.pathsep)
+            if os.path.isfile(executable):
+                return None
+            else:
+                for p in paths:
+                    f = os.path.join(p, executable)
+                    if os.path.isfile(f):
+                        return p
+
         ####################################################
         # apply to JEM-enabled subjobs
 
@@ -249,9 +259,24 @@ class JEMMonitoringServiceHandler(object):
 
                     self.__monitoredSubjobs += [i]
 
-                    # as we're replacing the executable with our wrapper script, the executable has to be
-                    # seperately put into the input sandbox!
-                    config.inputbox += [config.exe]
+                    # as we're replacing the executable with our wrapper script, the executable probably
+                    # has to be seperately put into the input sandbox - let's check if it is located in
+                    # /bin, /usr/bin, /sbin or /usr/sbin first, because in that cases, we don't have to
+                    # provide it ourselves...
+                    addToBox = True
+                    if isinstance(config.exe, File):
+                        config.exe = config.exe.getPathInSandbox()
+                    p = getPath(config.exe)
+                    if p:
+                        if (p[:4] == os.sep + "bin") or (p[:5] == os.sep + "sbin") \
+                        or (p[:8] == os.sep + "usr" + os.sep + "bin") \
+                        or (p[:9] == os.sep + "usr" + os.sep + "sbin"):
+                            addToBox = False
+
+                    if addToBox:
+                        if type(config.exe) == type(""):
+                            config.exe = File(config.exe)
+                        config.inputbox += [config.exe]
 
                     # now add JEMs files to the boxes...
                     config.inputbox += jemInputBox
@@ -291,7 +316,19 @@ class JEMMonitoringServiceHandler(object):
                         config.env["JEM_UI_LISTEN_PORT"] = str(self.__httpsListenPort)
 
                     # commit all changes we did to the subjobconfig
-                    config.processValues()
+                    try:
+                        config.processValues()
+                    except:
+                        import traceback
+                        ei = sys.exc_info()
+                        logger.error("  error occured while preparing: " + str(ei[0]) + ": " + str(ei[1]))
+                        logger.debug("  trace:\n" + "".join(traceback.format_tb(ei[2])))
+
+                        # this may fail if the executable is no user script, but just some
+                        # usually available command like 'echo'. So, just ignore the failure
+                        # (if the config.exe *is* a user app, and still the addition fails,
+                        #  the job won't run at all - this should be easily debug-able...)
+                        logger.debug("config object:\n" + str(config))
 
                     ## DEBUG OUTPUT #################################################################
                     s =  "Config for #" + self.__getFullJobId() + "." + str(i) + ":"                #
@@ -321,8 +358,11 @@ class JEMMonitoringServiceHandler(object):
                     #################################################################################
             logger.debug("Monitored subjobs: " + str(self.__monitoredSubjobs))
         except:
+            import traceback
             ei = sys.exc_info()
-            logger.error("  error occured: " + str(ei[0]) + ": " + str(ei[1]))
+            logger.error("  error occured while preparing: " + str(ei[0]) + ": " + str(ei[1]))
+            logger.debug("  trace:\n" + "".join(traceback.format_tb(ei[2])))
+            
 
 
     def submit(self):

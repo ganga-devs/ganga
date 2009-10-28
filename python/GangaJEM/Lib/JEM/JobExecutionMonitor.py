@@ -259,6 +259,12 @@ class JobExecutionMonitor(GangaObject):
         'help(JobExecutionMonitor.getStatus)'.
 
 
+    Furthermore, you can get an overview of running JEM listener instances by typing
+    
+        'JEMlisteners(jobs)'     (exactly like this, incl. the 'jobs'; this is a DEBUG feature!)
+        
+
+
     NOTE: This is an ALPHA version of JEM. If you have any comments, suggestions or encounter a
           bug, please don't hesitate to give feedback! Visit our webpage for contact information.
 
@@ -286,6 +292,8 @@ class JobExecutionMonitor(GangaObject):
                                               doc='Path to jmd logfile'),
         'userAppRunning'         : SimpleItem(hidden=True, defvalue=False, protected=1, copyable=0,\
                                               doc='Has the user application on the WN started running yet?'),
+        'userAppExited'          : SimpleItem(hidden=True, defvalue=False, protected=1, copyable=0,\
+                                              doc='Has the user application on the WN finished yet?'),
         'watcherThread'          : SimpleItem(hidden=True, defvalue=None, protected=1, copyable=0, transient=1,\
                                               typelist=['type(None)', 'JEMWatcherThread'], load_default=0, optional=1,\
                                               doc='Internal watcher thread handle')
@@ -299,7 +307,7 @@ class JobExecutionMonitor(GangaObject):
                       'showException', 'showCommand', 'peek', 'getListenerLog', 'waitForRealStart',\
                       'watch', 'abortWatch', 'extractLogfiles',\
                       '_getListenerPid', '_getServerPid', '_getServerPort', '_getServerStatus',\
-                      '_hasUserAppStarted', '_getTransmissionStats']
+                      '_hasUserAppStarted', '_hasUserAppExited', '_getTransmissionStats']
 
 
     ####################################################################################################################
@@ -324,6 +332,10 @@ class JobExecutionMonitor(GangaObject):
         return self.userAppRunning
 
 
+    def _hasUserAppExited(self):
+        return self.userAppExited
+
+
     def _getTransmissionStats(self):
         return self.__transmissionStats()
 
@@ -343,6 +355,7 @@ class JobExecutionMonitor(GangaObject):
                 if l[0].has_key("Status"):
                     if l[0]["Status"] == "FINISHED":
                         appstate = "Finished"
+                        self.userAppExited = True
 
             # look for the last RESOURCE message; if found, extract the WN-name
             l = self.__seekJMDinfo("RESOURCE", 1, 1)
@@ -916,12 +929,15 @@ class JobExecutionMonitor(GangaObject):
         """
         job = self.getJobObject()
 
+        logger.debug("onWatcherThink!")
+
         try:
             jobGangaID = str(job.id) # pylint: disable-msg=E1101
 
             l = self.__seekJMDinfo("JOBSTATE", 1, 1) # pylint: disable-msg=W0212
             if len(l) and len(l[0]):
                 if l[0]["Status"] == "FINISHED":
+                    self.userAppExited = True
                     jemlogger.info("User application of job " + str(jobGangaID) +\
                                    " seems to have finished! Now waiting for the middleware...")
                     self.watcherThread.stop()
@@ -1373,19 +1389,24 @@ class JobExecutionMonitor(GangaObject):
 
         def run(self):
             logger.debug("started watcher thread for job " + str(self.gangaID))
+            z = 0
             while not self.should_stop():
+                time.sleep(0.1)
+                z += 1
                 if not self.gotData:
-                    time.sleep(1)
-                    try:
-                        info = os.stat(self.jmdfile)
-                        if info.st_size > 0:
-                            self.gotData = True
-                            self.jemObject.onBegunToReceiveMonitoringData()
-                    except:
-                        pass
+                    if z >= 10:
+                        z = 0
+                        try:
+                            info = os.stat(self.jmdfile)
+                            if info.st_size > 0:
+                                self.gotData = True
+                                self.jemObject.onBegunToReceiveMonitoringData()
+                        except:
+                            pass
                 else:
-                    time.sleep(5)
-                    self.jemObject.onWatcherThink()
+                    if z >= 50:
+                        z = 0
+                        self.jemObject.onWatcherThink()
 
             logger.debug("watcher thread of job " + str(self.gangaID) + " exits")
             self.unregister()

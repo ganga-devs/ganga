@@ -74,11 +74,16 @@ try:
     # if no JEM user config exists, create a default one
     userpath = os.path.expanduser("~/.JEMrc")
     if not os.path.exists(userpath):
-        print " _______________________________________________________________"
-        print "  JEM (the Job Execution Monitor) is loaded for the first time."
-        print "  A new user config file with default values will be created."
-        print "  Please check and customize these settings _before_ using JEM!"
-        print
+        print """\
+ _______________________________________________________________
+ 
+  JEM (the Job Execution Monitor) is loaded for the first time.
+  A new user config file with default values will be created.
+  Please check and customize these settings _before_ using JEM!
+
+  This newly created config file can be found at $(HOME)/.JEMrc
+ _______________________________________________________________
+"""
 
         hostname = "localhost"
         try:

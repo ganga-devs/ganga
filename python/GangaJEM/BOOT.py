@@ -1,7 +1,7 @@
 import os, sys
 
 
-def JEMSetVerbose():
+def JEMsetVerbose():
     from Ganga.Utility import logging
     logging.getLogger("Ganga.Lib.MonitoringServices.JobExecutionMonitorMS").setLevel(10)
     logging.getLogger("GangaJEM.Lib.JEM").setLevel(10)
@@ -32,10 +32,16 @@ def JEMlisteners(jobs = None):
       + " " + "CMD".rjust(6) \
       + "\n"
 
+    from GangaJEM.Lib.JEM.JobExecutionMonitor import JobExecutionMonitor
     for j in jobs:
+        if not j.info.monitor or j.info.monitor.__class__.__name__ != "JobExecutionMonitor":
+            continue
+
         sta = j.status
         ssta = j.info.monitor._getServerStatus()
         hasstarted = j.info.monitor._hasUserAppStarted()
+        hasexited = j.info.monitor._hasUserAppExited()
+
         if sta == "submitted":
             if ssta == "error":
                 s += "\033[0;31m"
@@ -58,8 +64,11 @@ def JEMlisteners(jobs = None):
             s += "\033[m"
             continue
 
+        if hasexited:
+            sta = "app done"
+
         rs = "  "
-        if hasstarted:
+        if hasstarted and not hasexited:
             rs = " *"
 
         s += "#% 5d %s %s % 6d % 6d % 7d %s" % (
@@ -90,4 +99,4 @@ def JEMlisteners(jobs = None):
 
 from Ganga.Runtime.GPIexport import exportToGPI
 exportToGPI('JEMlisteners', JEMlisteners, 'Functions')
-exportToGPI('JEMSetVerbose', JEMSetVerbose, 'Functions')
+exportToGPI('JEMsetVerbose', JEMsetVerbose, 'Functions')
