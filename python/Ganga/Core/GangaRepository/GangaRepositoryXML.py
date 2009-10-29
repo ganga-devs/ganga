@@ -3,7 +3,7 @@
 # * lazy loading
 # * locking
 
-from GangaRepository import *
+from GangaRepository import GangaRepository, PluginManagerError, EmptyGangaObject, RepositoryError, InaccessibleObjectError
 from Ganga.Utility.Config import getConfig
 import os, os.path, fcntl, time, errno
 
@@ -14,6 +14,9 @@ logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core.GangaRepository.PickleStreamer import to_file as pickle_to_file
 from Ganga.Core.GangaRepository.PickleStreamer import from_file as pickle_from_file
+            
+from Ganga.Core.GangaRepository.VStreamer import to_file as xml_to_file
+from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
@@ -59,13 +62,13 @@ class GangaRepositoryLocal(GangaRepository):
         self.root = os.path.join(self.registry.location,"6.0",self.registry.name)
 
     def startup(self):
-        """ Starts an repository and reads in a directory structure."""
+        """ Starts an repository and reads in a directory structure.
+        Raise RepositoryError"""
         self._load_timestamp = {}
         self._cache_load_timestamp = {}
         if "XML" in self.registry.type:
-            from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
-            self.to_file = to_file
-            self.from_file = from_file
+            self.to_file = xml_to_file
+            self.from_file = xml_from_file
         elif "Pickle" in self.registry.type:
             self.to_file = pickle_to_file
             self.from_file = pickle_from_file
@@ -73,10 +76,12 @@ class GangaRepositoryLocal(GangaRepository):
             raise RepositoryError(self.repo, "Unknown Repository type: %s"%self.registry.type)
         self.sessionlock = SessionLockManager(self, self.root, self.registry.type+"."+self.registry.name)
         self.sessionlock.startup()
-        self.update_index()
+        # Load the list of files, this time be verbose and print out a summary of errors
+        self.update_index(verbose = True)
 
     def shutdown(self):
-        """Shutdown the repository. Flushing is done by the Registry"""
+        """Shutdown the repository. Flushing is done by the Registry
+        Raise RepositoryError"""
         self.sessionlock.shutdown()
 
     def get_fn(self,id):
@@ -90,7 +95,9 @@ class GangaRepositoryLocal(GangaRepository):
     def index_load(self,id): 
         """ load the index file for this object if necessary
             Loads if never loaded or timestamp changed. Creates object if necessary/
-            Raise IOError on access or unpickling error"""
+            Raise IOError on access or unpickling error 
+            Raise OSError on stat error
+            Raise PluginManagerError if the class name is not found"""
         logger.debug("Loading index %i" % id)
         fn = self.get_idxfn(id)
         if self._cache_load_timestamp.get(id,0) != os.stat(fn).st_ctime: # index timestamp changed
@@ -103,7 +110,7 @@ class GangaRepositoryLocal(GangaRepository):
                 if id in self.objects:
                     obj = self.objects[id]
                     if obj._data:
-                        obj._registry_refresh = True
+                        obj.__dict__["_registry_refresh"] = True
                 else:
                     obj = self._make_empty_object_(id,cat,cls)
                 obj._index_cache = cache
@@ -133,6 +140,9 @@ class GangaRepositoryLocal(GangaRepository):
         pass
 
     def get_index_listing(self):
+        """Get dictionary of possible objects in the Repository: True means index is present,
+            False if not present
+        Raise RepositoryError"""
         try:
             obj_chunks = [d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
         except OSError:
@@ -143,25 +153,26 @@ class GangaRepositoryLocal(GangaRepository):
                 listing = os.listdir(os.path.join(self.root,c))
             except OSError:
                 raise RepositoryError(self, "Could not list repository '%s'!" % (os.path.join(self.root,c)))
-            indices = [int(l[:-6]) for l in listing if l.endswith(".index") and l[:-6].isdigit()]
             objs.update([(int(l),False) for l in listing if l.isdigit()])
-            for id in indices:
-                if id in objs:
-                    objs[id] = True
-                else:
-                    try:
-                        os.unlink(self.get_idxfn(id))
-                    except OSError:
-                        pass
+            for l in listing:
+                if l.endswith(".index") and l[:-6].isdigit():
+                    id = int(l[:-6])
+                    if id in objs:
+                        objs[id] = True
+                    else:
+                        try:
+                            os.unlink(self.get_idxfn(id))
+                        except OSError:
+                            pass
         return objs
 
-    def update_index(self,id = None):
+    def update_index(self,id = None,verbose=False):
+        """ Update the list of available objects
+        Raise RepositoryError"""
         # First locate and load the index files
         logger.info("updating index...")
         objs = self.get_index_listing()
-        loaded_obj = 0
-        loaded_cache = 0
-        reloaded_cache = 0
+        summary = []
         for id, idx in objs.iteritems():
             # Locked IDs can be ignored
             if id in self.sessionlock.locked:
@@ -171,22 +182,34 @@ class GangaRepositoryLocal(GangaRepository):
                 self.index_load(id) # if this succeeds, all is well and we are done
                 continue
             except IOError, x:
-                logger.debug("Failed to load index %i: %s" % (id,x)) # Probably should be DEBUG
+                logger.debug("IOError: Failed to load index %i: %s" % (id,x))
             except OSError, x:
-                logger.debug("Failed to load index %i: %s" % (id,x)) # Probably should be DEBUG
-
+                logger.debug("OSError: Failed to load index %i: %s" % (id,x))
+            except PluginManagerError, x:
+                logger.debug("PluginManagerError: Failed to load index %i: %s" % (id,x)) # Probably should be DEBUG
+                summary.append((id,x)) # This is a FATAL error - do not try to load the main file, it will fail as well
+                continue
             if not id in self.objects: # this is bad - no index but object not loaded yet! Try to load it!
                 try:
                     self.load([id])
                 except KeyError:
                     pass # deleted job
-                except Exception:
-                    logger.warning("Failed to load id %i!" % (id))
-
-        #logger.info("Updated %s cache: Loaded %i objects, %i cached objects and refreshed %i objects from cache" % (self.registry.name,loaded_obj,loaded_cache,reloaded_cache))
+                except Exception, x:
+                    logger.debug("Failed to load id %i: %s %s" % (id, x.__class__.__name__, x))
+                    summary.append((id,x))
+        if verbose and len(summary) > 0:
+            cnt = {}
+            examples = {}
+            for id,x in summary:
+                cnt[x.__class__.__name__] = cnt.get(x.__class__.__name__,0) + 1
+                examples[x.__class__.__name__] = str(x)
+            for exc,n in cnt.items():
+                logger.error("Registry '%s': Failed to load %i jobs due to '%s' (%s)" % (self.registry.name, n, exc, examples[exc]))
         logger.info("updated index done")
 
     def add(self, objs, force_ids = None):
+        """ Add the given objects to the repository, forcing the IDs if told to.
+        Raise RepositoryError"""
         if not force_ids is None: # assume the ids are already locked by Registry
             if not len(objs) == len(force_ids):
                 raise RepositoryError(self, "Internal Error: add with different number of objects and force_ids!")
@@ -199,7 +222,7 @@ class GangaRepositoryLocal(GangaRepository):
                 os.makedirs(os.path.dirname(fn))
             except OSError, e:
                 if e.errno != errno.EEXIST: 
-                    raise RepositoryError(self,"OSError: " + str(e))
+                    raise RepositoryError(self,"OSError on mkdir: %s" % (str(e)))
             self._internal_setitem__(ids[i], objs[i])
         return ids
 
@@ -225,9 +248,9 @@ class GangaRepositoryLocal(GangaRepository):
                     safe_save(fn, obj, self.to_file, self.sub_split)
                     self.index_write(id)
             except OSError, x:
-                raise RepositoryError(self,"OSError: " + str(x))
+                raise RepositoryError(self,"OSError on flushing id '%i': %s" % (id,str(x)))
             except IOError, x:
-                raise RepositoryError(self,"IOError: " + str(x))
+                raise RepositoryError(self,"IOError on flushing id '%i': %s" % (id,str(x)))
 
     def load(self, ids):
         for id in ids:
@@ -267,9 +290,11 @@ class GangaRepositoryLocal(GangaRepository):
                             errs.extend(ff[1])
                             i += 1
                         tmpobj._data[self.sub_split] = makeGangaListByRef(l)
-                    if len(errs) > 0 and "status" in tmpobj._data: # MAGIC "status" if incomplete
-                        tmpobj._data["status"] = "incomplete"
-                        logger.error("Registry '%s': Could not load parts of object #%i: %s" % (self.registry.name,id,map(str,errs)))
+                    if len(errs) > 0:
+                        raise errs[0]
+                    #if len(errs) > 0 and "status" in tmpobj._data: # MAGIC "status" if incomplete
+                    #    tmpobj._data["status"] = "incomplete"
+                    #    logger.error("Registry '%s': Could not load parts of object #%i: %s" % (self.registry.name,id,map(str,errs)))
                     if id in self.objects:
                         obj = self.objects[id]
                         obj._data = tmpobj._data
@@ -293,14 +318,14 @@ class GangaRepositoryLocal(GangaRepository):
             except RepositoryError:
                 raise
             except Exception, x:
-                logger.warning("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
+                logger.debug("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
                 # remove index so we do not continue working with wrong information
                 try:
                     os.unlink(os.path.dirname(fn)+".index")
                 except OSError:
                     pass
-                raise KeyError(id)
-                #self._internal_setitem__(id, EmptyGangaObject())
+                #self._internal_setitem__(id, EmptyGangaObject()) // NO NO NO! BREAKS EVERYTHING HORRIBLY!
+                raise InaccessibleObjectError(self,id,x)
 
     def delete(self, ids):
         for id in ids:

@@ -4,15 +4,26 @@
 # $Id: VStreamer.py,v 1.1.2.2 2009-07-14 09:20:22 ebke Exp $
 ################################################################################
 
-# dump object (job) to file f (or stdout)
+# dump object (job) to file f (or stdout) while ignoring the attribute 'ignore_subs'
 def to_file(j,f=None,ignore_subs=''):
-    #vstreamer = VStreamer(out=f,selection='subjobs')#FIXME: hardcoded subjobs handling
     vstreamer = VStreamer(out=f,selection=ignore_subs)
     vstreamer.begin_root()
     j.accept(vstreamer)
     vstreamer.end_root()
 
+# Faster, but experimental version of to_file without accept()
+#def to_file(j,f=None,ignore_subs=''):
+#    f.write("<root>" + fastXML(j,' ',ignore_subs=ignore_subs) + "</root>\n")
+
 # load object (job) from file f
+# if len(errors) > 0 the object was not loaded correctly.
+# Typical exceptions are:
+# * SchemaVersionError (incompatible schema version)
+# * PluginManagerError (necessary plugin not loaded)
+# * IOError (problem on file reading)
+# * AssertionError (corruption: multiple objects in <root>...</root>
+# * Exception (probably corrupted data problem)
+
 def from_file(f):
     ###logger.debug('----------------------------')
     ###logger.debug('Parsing file: %s',f.name)
@@ -31,14 +42,34 @@ def escape(s):
 def unescape(s):
     return xml.sax.saxutils.unescape(s)
 
-
-from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef as makeGangaListByRef
+from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 
 # config_scope is namespace used for evaluating simple objects (e.g. File) 
 from Ganga.Utility.Config import config_scope
 
-#def makeGangaList(l):
-#    return l[:]
+# An experimental, fast way to print a tree of Ganga Objects to file
+# Unused at the moment
+def fastXML(obj,indent='',ignore_subs=''):
+    if hasattr(obj,"__iter__") and not hasattr(obj,"iteritems"):
+        s = "\n%s<sequence>\n" % (indent)
+        for so in obj:
+            s += "%s%s\n" % (indent,fastXML(so,indent+' '))
+        s += "%s</sequence>" % (indent)
+        return s
+    elif hasattr(obj,'_data'):
+        v = obj._schema.version
+        s = '\n%s<class name="%s" version="%i.%i" category="%s">\n' % (indent, obj._name, v.major, v.minor, obj._category)
+        for k,o in obj._data.iteritems():
+            if k != ignore_subs:
+                try:
+                    if not obj._schema[k]._meta["transient"]:
+                        s += '%s <attribute name="%s">%s</attribute>\n' % (indent,k,fastXML(o,indent+'  ',ignore_subs))
+                except KeyError:
+                    pass
+        s += '%s</class>' % (indent)
+        return s
+    else:
+        return "<value>%s</value>" % (escape(repr(obj)))
 
 ################################################################################
 # A visitor to print the object tree into XML.
@@ -50,7 +81,6 @@ class VStreamer(object):
     # e.g. 'subjobs' - will not print subjobs
     def __init__(self,out=None,selection=''):
         self.level = 0
-        self.nocomma = 1
         self.selection = selection
         if out:
             self.out = out
@@ -71,13 +101,15 @@ class VStreamer(object):
         self.level += 1
         s = node._schema
         print >> self.out,self.indent(),'<class name="%s" version="%d.%d" category="%s">'%(s.name,s.version.major,s.version.minor,s.category)
-        self.nocomma = 1
-        self.empty_body = 1
         
     def nodeEnd(self,node):
         print >> self.out,self.indent(),'</class>'
         self.level -= 1
         return
+
+    def print_value(self,x):
+        #FIXME: also quote % characters (to allow % operator later)
+        print >> self.out,'<value>%s</value>' % escape(repr(x))
     
     def showAttribute( self, node, name ):
         return not node._schema.getItem(name)['transient'] and name!=self.selection 
@@ -87,11 +119,6 @@ class VStreamer(object):
             self.level+=1
             print >> self.out, self.indent(),
             print >> self.out, '<attribute name="%s">'%name,
-
-            def print_value(v):
-                #print 'value',quote(v)
-                print >> self.out,'<value>%s</value>'%self.quote(v),
-                
             if sequence:
                 self.level+=1
                 print >> self.out
@@ -99,7 +126,7 @@ class VStreamer(object):
                 for v in value:
                     self.level+=1
                     print >> self.out, self.indent(),
-                    print_value(v)
+                    self.print_value(v)
                     print >> self.out
                     self.level-=1
                 print >> self.out, self.indent(), '</sequence>'
@@ -107,7 +134,7 @@ class VStreamer(object):
                 print >> self.out, self.indent(), '</attribute>'
             else:
                 self.level+=1
-                print_value(value)
+                self.print_value(value)
                 self.level-=1
                 print >> self.out,'</attribute>'
             self.level-=1
@@ -122,7 +149,6 @@ class VStreamer(object):
     
     def componentAttribute(self,node,name,subnode,sequence):
         if self.showAttribute( node, name ):
-            self.empty_body = 0
             self.level+=1
             print >> self.out, self.indent(), '<attribute name="%s">'%name
             if sequence:
@@ -137,9 +163,8 @@ class VStreamer(object):
             print >> self.out,self.indent(), '</attribute>'
             self.level-=1 
 
-    def quote(self,x):
-        #FIXME: also quote % characters (to allow % operator later)
-        return escape(repr(x))
+
+
 
 
 ################################################################################
@@ -282,12 +307,9 @@ class Loader:
 
         p.Parse(s)
 
-        assert len(self.stack)==1, 'multiple objects inside <root> element'
+        if len(self.stack)!=1:
+            self.errors.append(AssertionError('multiple objects inside <root> element'))
 
         obj = self.stack[-1]
-        if obj._name == 'EmptyGangaObject':
-            raise Exception('Unable to create root object',self.errors)
-
         return obj,self.errors
-
 

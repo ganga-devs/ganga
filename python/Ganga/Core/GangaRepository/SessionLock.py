@@ -37,8 +37,6 @@ except ImportError:
 
 session_expiration_timeout = 8 # seconds
 
-
-
 class SessionLockManager(GangaThread):
     """ Class with thread that keeps a global lock file that synchronizes
     ID and counter access across Ganga sessions.

@@ -14,25 +14,20 @@
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-
-
 from Ganga.Utility.Plugin import PluginManagerError, allPlugins
 from Ganga.Core.InternalServices.Coordinator import disableInternalServices
 from Ganga.Core import GangaException
 
-
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 
-# Empty Ganga Object. This should never be saved back to file.
+# Empty Ganga Object. This must never be saved back to file.
 class EmptyGangaObject(GangaObject):
     """Empty Ganga Object. Is used to construct incomplete jobs"""
     _schema = Schema(Version(0,0), {})
     _name   = "EmptyGangaObject"
     _category = "internal"
     _hidden = 1
-
-
 
 # Error raised on schema version error
 class SchemaVersionError(GangaException):
@@ -41,6 +36,15 @@ class SchemaVersionError(GangaException):
         self.what=what
     def __str__(self):
         return "SchemaVersionError: %s"%self.what
+
+class InaccessibleObjectError(GangaException):
+    def __init__(self,repo,id,orig):
+        GangaException.__init__(self,"Inaccessible Object")
+        self.repo=repo
+        self.id=id
+        self.orig=orig
+    def __str__(self):
+        return "Repository '%s' object #%s is not accessible because of an %s: %s"%(self.repo.registry.name,self.id,self.orig.__class__.__name__, str(self.orig))
 
 class RepositoryError(GangaException):
     """ This error is raised if there is a fatal error in the repository."""
@@ -57,7 +61,7 @@ class GangaRepository(object):
         It provides an interface for developers of new backends.
         The base class implements a transient Ganga Repository for testing purposes.
     """
-    def __init__(self, registry):
+    def __init__(self, registry, locking = True):
         """GangaRepository constructor. Initialization should be done in startup()"""
         self.registry = registry
         self.objects = {}
@@ -75,6 +79,7 @@ class GangaRepository(object):
         Read the index containing the given ID (or all indices if id is None).
         Create objects as needed , and set the _index_cache for all objects 
         that are not fully loaded.
+        If an error occurs on loading an object, an EmptyGangaObject should be created.
         Raise RepositoryError
         """
         raise NotImplementedError
@@ -91,6 +96,7 @@ class GangaRepository(object):
         Add the given objects to the repository and return their IDs 
         After successfully determining the id call _internal_setitem__(id,obj)
         for each id/object pair.
+        WARNING: If forcing the IDs, no locking is done here!
         Raise RepositoryError
         """
         raise NotImplementedError
@@ -138,12 +144,11 @@ class GangaRepository(object):
         """
         pass
 
+# Internal helper functions for derived classed
     def _make_empty_object_(self, id, category, classname):
         """Internal helper: adds an empty GangaObject of the given class to the repository.
         Raise RepositoryError
         Raise PluginManagerError if the class name is not found"""
-        reload(Ganga.Utility.Plugin)
-        from Ganga.Utility.Plugin import PluginManagerError, allPlugins
         cls = allPlugins.find(category, classname)
         obj  = super(cls, cls).__new__(cls)
         obj._proxyObject = None
@@ -153,17 +158,18 @@ class GangaRepository(object):
         return obj
 
     def _internal_setitem__(self, id, obj):
-        """ Internal function for repository classes to add items to the repository."""
+        """ Internal function for repository classes to add items to the repository.
+        Should not raise any Exceptions
+        """
         self.objects[id] = obj
         obj.__dict__["_registry_id"] = id
         obj.__dict__["_registry_locked"] = False
-        obj.__dict__["_registry_refresh"] = False
         if obj._data and "id" in obj._data.keys(): # MAGIC id
             obj.id = id
         obj._setRegistry(self.registry)
 
     def _internal_del__(self, id):
-        """ Internal function for repository classes to delete items to the repository."""
+        """ Internal function for repository classes to (logically) delete items to the repository."""
         self.objects[id]._setRegistry(None)
         del self.objects[id].__dict__["_registry_id"]
         del self.objects[id].__dict__["_registry_locked"]
