@@ -8,6 +8,7 @@ define_ama_exitcode() {
     export EC_STAGEIN_ERROR=106
     export EC_STAGEOUT_ERROR=107
     export EC_MAKEOPT_ERROR=108
+    export EC_AMA_SUMMARY_TAR_ERROR=109
 }
 
 ## function for checking/restoring LCG runtime libraries
