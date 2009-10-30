@@ -1365,6 +1365,8 @@ class AthenaMCOutputDatasets(Dataset):
             for dset in dsets:
                 if dset not in self.store_datasets:
                     self.store_datasets.append(dset)
+        if len(self.store_datasets)==0: # Panda jobs leave this field unfilled.
+            self.store_datasets=string.split(self.output_dataset,",")
             
         logger.info("list of datasets: %s" % str(self.store_datasets))                
         if freeze=="yes":
