@@ -162,6 +162,7 @@ GANGA_ENABLED = True
                   "visit http://www.grid.uni-wuppertal.de/grid/jem for more information"
                 ]
         print Utils.getLogo(lines)
+        print
 
         logger.debug("Using JEM from: " + JEM_PACKAGEPATH)
 

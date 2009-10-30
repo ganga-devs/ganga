@@ -264,8 +264,10 @@ class JEMMonitoringServiceHandler(object):
                     # /bin, /usr/bin, /sbin or /usr/sbin first, because in that cases, we don't have to
                     # provide it ourselves...
                     addToBox = True
+                    sbPath = "."
                     if isinstance(config.exe, File):
-                        config.exe = config.exe.getPathInSandbox()
+                        sbPath = config.exe.subdir
+                        config.exe = config.exe.name
                     p = getPath(config.exe)
                     if p:
                         if (p[:4] == os.sep + "bin") or (p[:5] == os.sep + "sbin") \
@@ -275,7 +277,7 @@ class JEMMonitoringServiceHandler(object):
 
                     if addToBox:
                         if type(config.exe) == type(""):
-                            config.exe = File(config.exe)
+                            config.exe = File(config.exe, sbPath)
                         config.inputbox += [config.exe]
 
                     # now add JEMs files to the boxes...
@@ -412,6 +414,8 @@ class JEMMonitoringServiceHandler(object):
 
     def complete(self, cause):
         if self.__job.master: # subjobs
+            return
+        elif not self.__job.info.monitor or self.__job.info.monitor.__class__.__name__ != "JobExecutionMonitor":
             return
         else:
             # main job
@@ -578,7 +582,15 @@ class JEMMonitoringServiceHandler(object):
         """
         Write JEM settings from a dictionary to a .JEMrc file (in the temp-directory). Return its path.
         """
-        thePath = os.sep + "tmp" + os.sep + "JEMtmp" + os.sep + str(os.getuid()) + os.sep + ".JEMrc"
+        thePath = os.sep + "tmp" + os.sep + "JEMtmp"  
+        if not os.path.exists(thePath):
+            os.mkdir(thePath)
+            
+        thePath += os.sep + str(os.getuid())
+        if not os.path.exists(thePath):
+            os.mkdir(thePath)
+            
+        thePath += os.sep + ".JEMrc"
         fd = open(thePath, "w")
 
         for section,settings in theJEMrcSettings.items():
@@ -650,6 +662,7 @@ class JEMMonitoringServiceHandler(object):
 
         try:
             jobID = self.__job.info.monitor.getJobID()
+            escapedJobID = Utils.escapeJobID(jobID)
             
             # debug output ##############################################################
             logger.debug('Trying to launch JEM realtime monitoring listener process')   #
@@ -681,7 +694,7 @@ class JEMMonitoringServiceHandler(object):
 
             try:
                 self.__job.info.monitor.pid = os.spawnve(os.P_NOWAIT, executable, args, os.environ)
-                self.__job.info.monitor.jmdfile = WNConfig.LOG_DIR + os.sep + Utils.escapeJobID(jobID) + os.sep + UIConfig.PUBLISHER_JMD_FILE
+                self.__job.info.monitor.jmdfile = WNConfig.LOG_DIR + os.sep + escapedJobID + os.sep + UIConfig.PUBLISHER_JMD_FILE
             except Exception, r:
                 logger.error('Could not start job listener process.')
                 logger.error('The Job with the id %s will start without monitoring.' % jobID)
@@ -694,7 +707,7 @@ class JEMMonitoringServiceHandler(object):
             logger.info('JEM realtime monitoring listener started.')
             logger.debug('Listener process: PID %s' % self.__job.info.monitor.pid)
             logger.debug('Listener arguments: ' + str(args))
-            logger.debug('Logfiles: %s' % WNConfig.LOG_DIR + os.sep + Utils.escapeJobID(jobID))
+            logger.debug('Logfiles: %s' % WNConfig.LOG_DIR + os.sep + escapedJobID)
 
             # start a watcher thread for this job.
             self.__job.info.monitor.watch(jobID)

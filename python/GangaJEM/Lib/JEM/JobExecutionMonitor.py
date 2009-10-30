@@ -337,7 +337,10 @@ class JobExecutionMonitor(GangaObject):
 
 
     def _getTransmissionStats(self):
-        return self.__transmissionStats()
+        try:
+            return self.__transmissionStats()
+        except:
+            return []
 
 
     def getStatus(self):
