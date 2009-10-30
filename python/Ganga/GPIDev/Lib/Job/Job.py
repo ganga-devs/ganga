@@ -162,12 +162,12 @@ class Job(GangaObject):
         except KeyError:
             oldstat = None
         logger.debug('job %s "%s" setting raw status to "%s"',str(id),str(oldstat),value)
-        import inspect,os
-        frame = inspect.stack()[2]
-        #if not frame[0].f_code.co_name == 'updateStatus' and
-        if frame[0].f_code.co_filename.find('/Ganga/GPIDev/')==-1 and frame[0].f_code.co_filename.find('/Ganga/Core/')==-1:
-            raise AttributeError('cannot modify job.status directly, use job.updateStatus() method instead...')
-        del frame
+        #import inspect,os
+        #frame = inspect.stack()[2]
+        ##if not frame[0].f_code.co_name == 'updateStatus' and
+        #if frame[0].f_code.co_filename.find('/Ganga/GPIDev/')==-1 and frame[0].f_code.co_filename.find('/Ganga/Core/')==-1:
+        #    raise AttributeError('cannot modify job.status directly, use job.updateStatus() method instead...')
+        #del frame
 
     class State:
         def __init__(self,state,transition_comment='',hook=None):
