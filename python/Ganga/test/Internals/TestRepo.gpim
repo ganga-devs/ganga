@@ -64,7 +64,11 @@ class HammerThread(threading.Thread):
         n = min(len(self.repo.objects),self.rng.randint(1,2))
         ids = self.rng.sample(self.repo.objects.keys(),n)
         print >> sys.stderr,  self.id, " load(%s)"%ids
-        self.repo.load(ids)
+        try:
+            self.repo.load(ids)
+        except KeyError:
+            print >> sys.stderr,  self.id, " load(%s) failed - one or more ids were deleted by another thread (if no other thread is running, this is an ERROR!)"%ids
+            return
         for id in ids:
             assert self.repo.objects[id].name
         print >> sys.stderr,  self.id, " load(%s) done"%ids
