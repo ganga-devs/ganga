@@ -1,0 +1,103 @@
+import os, getpass, random, threading, time
+from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
+from Ganga.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal
+from GangaTest.Lib.TestObjects import TestGangaObject
+from Ganga.Core.GangaRepository.Registry import makeRepository, Registry
+
+location = "/tmp/ganga-TestRegistry-Testdir"
+
+# Random actions (synchronized by registry per instance!):
+# * shutdown + startup
+# * update_index (random ID or None, currently only None)
+# * ids = add(objs) (check len(ids) == len(objs), add ids to owned_ids)
+# * delete(ids) (random list from owned_ids, check if they are gone!)
+# * load(ids) (random ids from self._objects.keys())
+# * flush(ids) (random owned ids)
+# * lock(ids) (random ids, if return True put into owned_ids)
+# * unlock(ids) (random owned ids, remove from owned_ids)
+
+class HammerThread(threading.Thread):
+    def __init__(self,id,reg):
+        self.id = id
+        self.reg = reg
+        self.rng = random.Random()
+        self.owned_ids = []
+        self.done = False
+        super(HammerThread,self).__init__()
+
+    def updown(self):
+        print self.id, " shutdown()"
+        self.reg.shutdown()
+        print self.id, " shutdown() done!"
+        print self.id, " startup()"
+        self.reg.startup()
+        print self.id, " startup() done!"
+       
+    def uindex(self):
+        print self.id, " update_index(None)" 
+        self.reg.ids()
+        print self.id, " update_index(None) done!" 
+
+    def add(self):
+        objs = [TestGangaObject("HT%i"%(self.id),2) for i in range(self.rng.randint(1,2))]
+        print self.id, " add(%s)"%objs
+        ids = [self.reg._add(obj) for obj in objs]
+        print self.id, " add(%s) done, ids = %s!"%(objs, ids)
+        assert len(ids) == len(objs)
+        # TODO: Check if objects stay the same
+        self.owned_ids.extend(ids)
+
+    def delete(self):
+        n = min(len(self.owned_ids),self.rng.randint(1,2))
+        ids = self.rng.sample(self.owned_ids,n)
+        print self.id, " delete(%s)"%ids
+        [self.reg._remove(self.reg[id]) for id in ids]
+        for id in ids:
+            assert not id in self.reg._objects
+            self.owned_ids.remove(id)
+        print self.id, " delete(%s) done!"%ids
+
+    def run(self):
+        for i in range(100):
+            self.rng.choice([self.updown, self.uindex, self.add, self.delete])()
+            if not len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys()):
+                print len(self.owned_ids), len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
+                assert (len(self.owned_ids), len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys()))
+            for id in self.owned_ids:
+                assert id in self.reg._objects
+        self.done = True
+
+class TestRegistry(GangaGPITestCase):
+    def testRepo1(self):
+        return TestRepository(1,"LocalXML")
+
+#    def testRepo2(self):
+#        time.sleep(2)
+#        return TestRepository(2,"LocalXML")
+
+class TestRepository(ICheckTest):
+    def __init__(self,id,type):
+        self.id = id
+        self.registry = Registry("TestRepository","TestRegistry")
+        self.registry.type = type
+        self.registry.location = location
+        print id, " startup()"
+        self.registry.startup()
+        print id, " startup() done!"
+        print "RUNNING HAMMERTHREAD ", id
+        self.thread = HammerThread(id,self.registry)
+        self.thread.start()
+
+    def isReadyForCheck(self):
+        return self.thread.done or not self.thread.isAlive()
+
+    def checkTest(self):
+        self.thread.join()
+        assert self.thread.done
+        print self.id, " shutdown()"
+        self.registry.shutdown()
+        print self.id, " shutdown() done!"
+        pass
+
+    def cleanup(self):
+        pass
