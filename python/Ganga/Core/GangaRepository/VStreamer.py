@@ -13,7 +13,10 @@ def to_file(j,f=None,ignore_subs=''):
 
 # Faster, but experimental version of to_file without accept()
 #def to_file(j,f=None,ignore_subs=''):
-#    f.write("<root>" + fastXML(j,' ',ignore_subs=ignore_subs) + "</root>\n")
+#    sl = ["<root>"]
+#    sl.extend(fastXML(j,'   ',ignore_subs=ignore_subs))
+#    sl.append("</root>\n")
+#    f.write("".join(sl))
 
 # load object (job) from file f
 # if len(errors) > 0 the object was not loaded correctly.
@@ -51,25 +54,31 @@ from Ganga.Utility.Config import config_scope
 # Unused at the moment
 def fastXML(obj,indent='',ignore_subs=''):
     if hasattr(obj,"__iter__") and not hasattr(obj,"iteritems"):
-        s = "\n%s<sequence>\n" % (indent)
+        sl = ["\n",indent,"<sequence>","\n"]
         for so in obj:
-            s += "%s%s\n" % (indent,fastXML(so,indent+' '))
-        s += "%s</sequence>" % (indent)
-        return s
+            sl.append(indent)
+            sl.extend(fastXML(so,indent+' ',ignore_subs))
+        sl.append(indent)
+        sl.append("</sequence>")
+        return sl
     elif hasattr(obj,'_data'):
         v = obj._schema.version
-        s = '\n%s<class name="%s" version="%i.%i" category="%s">\n' % (indent, obj._name, v.major, v.minor, obj._category)
+        sl = ['\n',indent,'<class name="%s" version="%i.%i" category="%s">\n' % (obj._name, v.major, v.minor, obj._category)]
         for k,o in obj._data.iteritems():
             if k != ignore_subs:
                 try:
                     if not obj._schema[k]._meta["transient"]:
-                        s += '%s <attribute name="%s">%s</attribute>\n' % (indent,k,fastXML(o,indent+'  ',ignore_subs))
+                        sl.append(indent)
+                        sl.append('<attribute name="%s">' % k)
+                        sl.extend(fastXML(o,indent+'  ',ignore_subs))
+                        sl.append('</attribute>\n')
                 except KeyError:
                     pass
-        s += '%s</class>' % (indent)
-        return s
+        sl.append(indent)
+        sl.append('</class>')
+        return sl
     else:
-        return "<value>%s</value>" % (escape(repr(obj)))
+        return ["<value>",escape(repr(obj)),"</value>"]
 
 ################################################################################
 # A visitor to print the object tree into XML.

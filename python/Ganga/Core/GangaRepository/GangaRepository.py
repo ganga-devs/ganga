@@ -132,8 +132,7 @@ class GangaRepository(object):
         """lock(ids) --> bool
         Locks the specified IDs against modification from other Ganga sessions
         Raise RepositoryError
-        Returns True on success, False if one of the ids is already locked by another session
-        It is also possible to lock ids that do not have jobs associated to them!
+        Returns successfully locked ids
         """
         raise NotImplementedError
 

@@ -161,7 +161,7 @@ class Registry(object):
             if force_index is None:
                 ids = self.repository.add([obj])
             else:
-                if not self.repository.lock([force_index]):
+                if len(self.repository.lock([force_index])) == 0:
                     raise RegistryLockError("Could not lock '%s' id #%i for a new object!" % (self.name,force_index))
                 ids = self.repository.add([obj],[force_index]) # raises exception if len(ids) < 1
             obj._registry_locked = True
@@ -282,7 +282,7 @@ class Registry(object):
             self._lock.acquire()
             try:
                 try:
-                    if not self.repository.lock([self.find(obj)]):
+                    if len(self.repository.lock([self.find(obj)])) == 0:
                         raise RegistryLockError("Could not lock '%s' object #%i!" % (self.name,self.find(obj)))
                 finally: # try to load even if lock fails
                     try:

@@ -270,7 +270,7 @@ class GangaRepositoryLocal(GangaRepository):
             try:
                 must_load = (not id in self.objects) or (self.objects[id]._data is None)
                 tmpobj = None
-                if must_load or (self._load_timestamp[id] != os.fstat(fobj.fileno()).st_ctime):
+                if must_load or (self._load_timestamp.get(id,0) != os.fstat(fobj.fileno()).st_ctime):
                     tmpobj, errs = self.from_file(fobj)
                     if self.sub_split:
                         i = 0
@@ -353,10 +353,7 @@ class GangaRepositoryLocal(GangaRepository):
             rmrf(os.path.dirname(fn))
 
     def lock(self,ids):
-        locked_ids = self.sessionlock.lock_ids(ids)
-        if len(locked_ids) < len(ids):
-            return False
-        return True
+        return self.sessionlock.lock_ids(ids)
 
     def unlock(self,ids):
         released_ids = self.sessionlock.release_ids(ids)
