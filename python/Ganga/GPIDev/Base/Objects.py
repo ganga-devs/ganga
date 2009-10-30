@@ -50,7 +50,7 @@ class Node(object):
         for n, v in dict['_data'].items():
             if isinstance(v,Node):
                 v._setParent(self)
-            if hasattr(v,"__iter__") and not isinstance(v,dict):
+            if hasattr(v,"__iter__") and not hasattr(v,"iteritems"):
                 # set the parent of the list or dictionary (or other iterable) items
                 for i in v:
                     if isinstance(i,Node):

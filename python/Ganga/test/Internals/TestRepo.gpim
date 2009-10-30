@@ -86,7 +86,7 @@ class HammerThread(threading.Thread):
     def check(self):
         print >> sys.stderr,  self.id, " check()"
         self.repo.sessionlock.check()
-        for id in self.repo.objects.keys():
+        for id in self.owned_ids:
             assert self.repo.objects[id].name == "HT%i"%(self.id)
         print >> sys.stderr,  self.id, " check() done"
 
