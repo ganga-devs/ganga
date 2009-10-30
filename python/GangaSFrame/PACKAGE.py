@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: PACKAGE.py,v 1.1 2008-11-19 15:18:35 mbarison Exp $
+# $Id: PACKAGE.py,v 1.1 2008/11/19 15:18:35 mbarison Exp $
 ################################################################################
 
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.

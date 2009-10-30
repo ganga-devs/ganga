@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: SFrameAppLCGRTHandler.py,v 1.4 2009-01-19 10:10:18 mbarison Exp $
+# $Id: SFrameAppLCGRTHandler.py,v 1.4 2009/01/19 10:10:18 mbarison Exp $
 ################################################################################
 
 import os, socket, pwd, commands, re, xml.dom.minidom
@@ -42,15 +42,22 @@ from Ganga.GPIDev.Credentials import GridProxy
 from Ganga.Core.Sandbox import getGangaModulesAsSandboxFiles
 import GangaAtlas.Lib.Athena
 
-__directory__ = getGangaModulesAsSandboxFiles([GangaAtlas.Lib.Athena])[0].name
-__directory__ = __directory__.strip(os.path.basename(__directory__))
 
+__athena_dir__ = getGangaModulesAsSandboxFiles([GangaAtlas.Lib.Athena])[0].name
+__athena_dir__ = __athena_dir__.strip(os.path.basename(__athena_dir__))
+
+__directory__ = os.path.dirname(__file__)
+
+def _append_file_buffer(inputbox,name,array):
+
+    inputbox.append(FileBuffer(name,'\n'.join(array)+'\n'))
+    return
 
 def _append_files(inputbox,*names):
-
     for name in names:
-        inputbox.append(File(os.path.join(__directory__,name)))
-
+        inputbox.append(File(os.path.join(__athena_dir__,name)))
+    return
+        
 class SFrameAppLCGRTHandler(IRuntimeHandler):
     """SFrame Athena-derived LCG Runtime Handler"""
 
@@ -67,7 +74,7 @@ class SFrameAppLCGRTHandler(IRuntimeHandler):
         input_esd_files = []
         input_esd_guids = []
 
-        inputbox = [File(os.path.join(os.path.dirname(__file__),'sframe-utility.sh'))]
+        inputbox = [File(os.path.join(__directory__,'sframe-utility.sh'))]
        
         if job.inputdata:
 
@@ -243,32 +250,20 @@ class SFrameAppLCGRTHandler(IRuntimeHandler):
 
 #       prepare inputsandbox
                 
-        if input_guids:
-            inputbox += [ FileBuffer('input_guids','\n'.join(input_guids)+'\n') ]
-
-        if input_files: 
-            inputbox += [ FileBuffer('input_files','\n'.join(input_files)+'\n') ]
-        if input_tag_guids:
-            inputbox += [ FileBuffer('input_tag_guids','\n'.join(input_tag_guids)+'\n') ]
-
-        if input_tag_files: 
-            inputbox += [ FileBuffer('input_tag_files','\n'.join(input_tag_files)+'\n') ]
-
-        if input_esd_guids:
-            inputbox += [ FileBuffer('input_esd_guids','\n'.join(input_esd_guids)+'\n') ]
-
-        if input_esd_files: 
-            inputbox += [ FileBuffer('input_esd_files','\n'.join(input_esd_files)+'\n') ]
-
+        if input_guids:     _append_file_buffer(inputbox,'input_guids',input_guids)
+        if input_files:     _append_file_buffer(inputbox,'input_files',input_files)
+        if input_tag_guids: _append_file_buffer(inputbox,'input_tag_guids',input_tag_guids)
+        if input_tag_files: _append_file_buffer(inputbox,'input_tag_files',input_tag_files)
+        if input_esd_guids: _append_file_buffer(inputbox,'input_esd_guids',input_esd_guids)
+        if input_esd_files: _append_file_buffer(inputbox,'input_esd_files',input_esd_files)
         if job.outputdata and job.outputdata.outputdata:
-            inputbox += [ FileBuffer('output_files','\n'.join(job.outputdata.outputdata)+'\n') ]
+            _append_file_buffer(inputbox,'output_files',job.outputdata.outputdata)
         elif job.outputdata and not job.outputdata.outputdata:
             raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
 
-
         # stupid timestamping
         import time
-        inputbox += [FileBuffer('timestamps.txt',`time.gmtime()`+'\n')]
+        inputbox.append(FileBuffer('timestamps.txt',`time.gmtime()`+'\n'))
 
 
         exe = os.path.join(os.path.dirname(__file__),'sframe-lcg.sh')
@@ -388,14 +383,14 @@ class SFrameAppLCGRTHandler(IRuntimeHandler):
 
         # sframe archive?
         if app.sframe_archive.name:
-            inputbox += [ File(app.sframe_archive.name)]
+            inputbox.append(File(app.sframe_archive.name))
 
 
-        inputbox += [File(os.path.join(os.path.dirname(__file__),'pool2sframe.py'))]
-        inputbox += [File(os.path.join(os.path.dirname(__file__),'compile_archive.py'))]
+        inputbox.append(File(os.path.join(os.path.dirname(__file__),'pool2sframe.py')))
+        inputbox.append(File(os.path.join(os.path.dirname(__file__),'compile_archive.py')))
         
 
-        inputbox += [app.xml_options]
+        inputbox.append(app.xml_options)
             
 #       prepare environment
 
@@ -454,31 +449,40 @@ class SFrameAppLCGRTHandler(IRuntimeHandler):
                 environment['TAGDATASETNAME']= job.inputdata.tagdataset
 
         # prepare job requirements
-        
+
         if app.atlas_release.find('11.')>=0 or app.atlas_release.find('10.')>=0:
             requirements.software = ['VO-atlas-release-%s' % app.atlas_release ]
         elif app.atlas_release.find('12.0.0')>=0 or app.atlas_release.find('12.0.1')>=0 or app.atlas_release.find('12.0.2')>=0:
             requirements.software = ['VO-atlas-offline-%s' % app.atlas_release ]
-        elif app.atlas_release.find('13.')>=0: # and app.atlas_project!="AtlasPoint1":
-            requirements.software = ['VO-atlas-production-%s' % app.atlas_release ] 
-        #elif app.atlas_release.find('13.')>=0 and app.atlas_project!="AtlasPoint1" and app.atlas_production!='':
-        #    requirements.software = ['VO-atlas-production-%s' % app.atlas_production]
-        #elif app.atlas_release.find('13.')>=0 and app.atlas_project=="AtlasPoint1":
-        #    requirements.software = ['VO-atlas-point1-%s' % app.atlas_production ] 
-        elif app.atlas_release.find('14.')>=0:
-            cmtconfig = 'i686-slc4-gcc34-opt'
-            #if app.atlas_production=='':
-            requirements.software = ['VO-atlas-offline-%s-%s' %(app.atlas_release, cmtconfig )]
-            #else:
-                #if app.atlas_project=="AtlasPoint1":
-                #    requirements.software = ['VO-atlas-point1-%s' %(app.atlas_production)]
-                #elif app.atlas_project=="AtlasTier0":
-                #    requirements.software = ['VO-atlas-tier0-%s' %(app.atlas_production)]
-                #else:
-                #    requirements.software = ['VO-atlas-production-%s-%s' %(app.atlas_production, cmtconfig )]
+        elif app.atlas_release.find('13.')>=0 and app.atlas_project!="AtlasPoint1":
+            requirements.software = ['VO-atlas-production-%s' % app.atlas_release ]
+        elif app.atlas_release.find('13.')>=0 and app.atlas_project!="AtlasPoint1" and app.atlas_production!='':
+            requirements.software = ['VO-atlas-production-%s' % app.atlas_production]
+        elif app.atlas_release.find('13.')>=0 and app.atlas_project=="AtlasPoint1":
+            requirements.software = ['VO-atlas-point1-%s' % app.atlas_production ]
+        elif app.atlas_release.find('14.')>=0 or app.atlas_release.find('15.')>=0:
+            if app.atlas_cmtconfig:
+                cmtconfig = app.atlas_cmtconfig
+            else:
+                cmtconfig = 'i686-slc4-gcc34-opt'
+            if cmtconfig != 'i686-slc4-gcc34-opt':
+                cmtconfig = 'i686-slc4-gcc34-opt'
+            if app.atlas_production=='':
+                requirements.software = ['VO-atlas-offline-%s-%s' %(app.atlas_release, cmtconfig )]
+            else:
+                if app.atlas_project=="AtlasPoint1":
+                    requirements.software = ['VO-atlas-point1-%s' %(app.atlas_production)]
+                elif app.atlas_project=="AtlasTier0":
+                    requirements.software = ['VO-atlas-tier0-%s' %(app.atlas_production)]
+                else:
+                    requirements.software = ['VO-atlas-production-%s-%s' %(app.atlas_production, cmtconfig )]
         else:
             requirements.software = ['VO-atlas-production-%s' % app.atlas_release ]
 
+
+        #logger.warning("Software release: %s" % `requirements.software`)
+
+            
         # put back to see if it works
         job.backend.requirements.software = requirements.software
 
@@ -545,7 +549,10 @@ config = getConfig('SFrameApp')
 configDQ2 = getConfig('DQ2')
 logger = getLogger('SFrameApp')
 
-# $Log: not supported by cvs2svn $
+# $Log: SFrameAppLCGRTHandler.py,v $
+# Revision 1.4  2009/01/19 10:10:18  mbarison
+# using athena utility scripts
+#
 # Revision 1.3  2009/01/09 13:53:35  mbarison
 # added mailspam
 #

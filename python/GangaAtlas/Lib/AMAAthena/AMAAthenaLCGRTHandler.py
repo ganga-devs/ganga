@@ -8,6 +8,7 @@
 # NIKHEF/ATLAS 
 
 import os
+import time
 
 from sets import Set
 
@@ -33,6 +34,18 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
 
         job = app._getParent() # Returns job or subjob object
 
+        ## modify job.outputdata when it's specified
+        summary_tarball = None
+        if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
+            if job.backend._name not in ['LCG','Panda']:
+                raise ApplicationConfigurationError(None, 'DQ2OutputDataset works only with Grid jobs')
+            else:
+                ## compose the ama output name and give it to environment variable of the LCG job
+                ## ps. for Panda job, it's done automatically by pilot
+                if job.backend._name == 'LCG':
+                    summary_tarball = 'ama_summary_%d_%s.tgz' % ( time.time(), job.getFQID('.'))
+                    job.outputdata.outputdata = [summary_tarball]
+
         athena_jc = AthenaLCGRTHandler.prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig)
 
         exe = os.path.join(os.path.dirname(__file__), 'ama_athena-lcg.sh')
@@ -40,6 +53,10 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
         outputbox = athena_jc.outputbox
         environment  = athena_jc.env
         requirements = athena_jc.requirements
+
+        ## add environment variable $AMA_SUMMARY_TARBALL
+        if summary_tarball:
+            environment['AMA_SUMMARY_TARBALL'] = summary_tarball
 
         ## reset the ATHENA_MAX_EVENTS env. variable 
         max_events = -1
@@ -64,7 +81,10 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
 
         environment['AMA_SAMPLE_NAME']=sample_name
         #outputbox += [ 'summary/summary_%s_confFile_%s_nEvts_%s.root' % (sample_name, conf_name, str(max_events) ) ]
-        outputbox += [ 'summary/*.root' ]
+
+        ## if no outputdata is specified, we assume the output files will be shipped back to user with the job
+        if not job.outputdata:
+            outputbox += [ 'summary/*.root' ]
 
         if job.inputdata._name == 'StagerDataset':
             ## needs a valid dataset name 
@@ -117,6 +137,9 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
 
         ## add ama_athena-utility.sh into inputbox
         inputbox += [ File( os.path.join(os.path.dirname(__file__), 'ama_athena-utility.sh') ) ]
+
+        ## add ama_getstats.py into inputbox
+        inputbox += [ File( os.path.join(os.path.dirname(__file__), 'ama_getstats.py') ) ]
 
         ## add AMADriver configuration files into inputbox 
         inputbox += [ app.driver_config.config_file ]

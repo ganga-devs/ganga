@@ -151,7 +151,25 @@ elif [ -e "AtlasTier0" ]; then
     echo "CMTPATH is now $CMTPATH"
     echo "********"
 fi
+if [ ! -z "$USER_AREA" ]; then
+   tar xzf $USER_AREA
+   export CMTPATH=$PWD:$CMTPATH
+   echo '**********************************************************'
+   echo 'CMTPATH = ' $CMTPATH
+   echo 'PYTHONPATH = '$PYTHONPATH
+   echo '**********************************************************'
 
+    cmt config
+    cmt broadcast source setup.sh
+    cmt broadcast cmt config
+    source setup.sh
+
+    echo '**********************************************************'
+    echo 'CMTPATH = ' $CMTPATH
+    echo 'PYTHONPATH = '$PYTHONPATH
+    echo '**********************************************************'
+
+fi
 if [ ! -z "$ATLASDBREL" ]; then
     echo "Setting requested DB release. First looking for local instances"
     DBpath=`dirname $DB_location`

@@ -275,7 +275,7 @@ under certain conditions; type license() for details.
         set_cmdline_config_options(sects=['Logging'])
         
         # we will be reexecutig the process so for the moment just shut up (unless DEBUG was forced with --debug)
-        if self.options.rexec and not os.environ.has_key('GANGA_INTERNAL_PROCREEXEC') and not self.options.generate_config:
+        if self.options.rexec and not os.environ.has_key('GANGA_INTERNAL_PROCREEXEC') and not self.options.generate_config and not os.environ.has_key('GANGA_NEVER_REEXEC'):
             if self.options.force_loglevel != 'DEBUG':
                self.options.force_loglevel = 'CRITICAL'
             pass
@@ -495,7 +495,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             pass
 
         # initialize the environment only if the current ganga process has not been rexeced
-        if not os.environ.has_key('GANGA_INTERNAL_PROCREEXEC'):
+        if not os.environ.has_key('GANGA_INTERNAL_PROCREEXEC') and not os.environ.has_key('GANGA_NEVER_REEXEC'):
             self.logger.debug('initializing runtime environment')
             # update environment of the current process
             for r in allRuntimes.values():
@@ -521,7 +521,8 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             self.logger.debug('skipped the environment initialization -- the processed has been re-execed and setup was done already')
 
         #bugfix 40110
-        del os.environ['GANGA_INTERNAL_PROCREEXEC']
+        if os.environ.has_key('GANGA_INTERNAL_PROCREEXEC'):
+           del os.environ['GANGA_INTERNAL_PROCREEXEC']
         
     # bootstrap all system and user-defined runtime modules
     def bootstrap(self):

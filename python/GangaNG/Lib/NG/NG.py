@@ -42,7 +42,7 @@ from dq2.common.DQException import *
 from dq2.info import TiersOfATLAS
 
 #import LFCTools
-from dq2.filecatalog.lfc.lfcconventions import to_native_lfn
+from dq2.filecatalog.lfc.lfcconventions import to_native_lfn as dq2_to_native_lfn
 #from dq2.filecatalog.lfc.LFCFileCatalog import LFCFileCatalogException
 from GangaNG.Lib.NG.LFCTools import *
 from GangaNG.Lib.NG.NGStatTools import testNGStatTools
@@ -122,7 +122,7 @@ def getGangaLFN(dataset,fname):
 
   return lfn
 
-def getLFCurl(dataset,file):
+def getLFCurl(dataset,file,use_dq2_version = False):
   """ user datasets are registered under to_natie_lfn convention
   One can use the same procerure for getting the lfn both for production datasets
   as for user datasets.
@@ -130,7 +130,10 @@ def getLFCurl(dataset,file):
 
   ds = dataset.split('.')[0]
 
-  return 'lfc://lfc1.ndgf.org/' + to_native_lfn(dataset,file)
+  if use_dq2_version:
+    return 'lfc://lfc1.ndgf.org/' + dq2_to_native_lfn(dataset,file)
+  else:
+    return 'lfc://lfc1.ndgf.org/' + to_native_lfn(dataset,file)
 
 def getTiersOfATLASCache():
     """Download TiersOfATLASCache.py"""
@@ -384,6 +387,18 @@ class Grid:
 
         return
 
+    def check_giisesfile(self):
+        ''' Check if giises.txt exists, if not write it '''
+        ''' (Yes, this is a hack... To get around strange usage of ngsub...) '''
+
+        if os.path.exists('giises.txt'):
+          return
+
+        gf = open("giises.txt","w")
+        gf.write("ldap://atlasgiis.nbi.dk:2135/o=grid/mds-vo-name=Atlas\nldap://arcgiis.titan.uio.no:2135/o=grid/mds-vo-name=Atlas \n")
+        gf.close()
+            
+
     def ls_gridfile(self,gridfile):
         ''' Check if grid file exists'''
 
@@ -397,6 +412,9 @@ class Grid:
             
     def submit(self,xrslpath,ce=None,rejectedcl=None,timeout=20):
         '''Submit a XRSL file to NG'''
+
+        # Make sure we have a giises-file available
+        self.check_giisesfile()
 
         cmd = 'ngsub -G giises.txt -t %s ' % str(timeout)
 
@@ -437,6 +455,11 @@ class Grid:
     def native_master_submit(self,xrslpath,ce=None,rejectedcl=None, timeout = 20):
         '''Native bulk submission supported by GLITE middleware.'''
         # Bulk sumission is supported in NG, but the XRSL files need some care.
+
+
+        # Make sure we have a giises-file available
+        self.check_giisesfile()
+
 
         cmd = 'ngsub -G giises.txt -t %s ' % str(timeout)
         
@@ -1625,6 +1648,9 @@ class NG(IBackend):
           ds_tid = getTidDatasetnames(job.inputdata.dataset)
           # Check for availability on DQ2? Avoids submitting jobs where dataset is empty
           lfnlist=[]
+
+          # I'm removing this check_availability for now - not really needed, needs re-implementing in different form
+          """
           if self.check_availability:
             remove_flist=[]
             remove_glist=[]
@@ -1655,15 +1681,25 @@ class NG(IBackend):
                 job.inputdata.guids.remove(g)
 
           else:
-            for f in range(len(job.inputdata.names)):
-              if len(ds_tid) > 1:
-                lfn_ds = matchLFNtoDataset(ds_tid,job.inputdata.names[f], job.application.atlas_release)
-                lfn = getLFCurl(lfn_ds,job.inputdata.names[f])
-                lfnlist += [lfn]
-              else:
-                lfn = getLFCurl(ds_tid[0],job.inputdata.names[f])
-                lfnlist += [lfn]
+          """
+          for f in range(len(job.inputdata.names)):
+            
+            # Get the dataset name first
+            if len(ds_tid) > 1:
+              lfn_ds = matchLFNtoDataset(ds_tid,job.inputdata.names[f], job.application.atlas_release)
+            else:
+              lfn_ds = ds_tid[0]
+
+            # Get an lfn url, using the old method (defined in LFCTools.py)
+            lfn = getLFCurl(lfn_ds,job.inputdata.names[f], False)
+
+            # Check if this path exists - if not, get another lfc url using the new method
+            rc = grids[self.middleware.upper()].check_dq2_file_avaiability(lfn,self.id)
+            if rc:
+              lfn = getLFCurl(lfn_ds,job.inputdata.names[f], True)
               
+            lfnlist += [lfn]
+
           # number of input files
           arguments += [len(job.inputdata.names)]
 
@@ -1878,9 +1914,10 @@ class NG(IBackend):
       xrslList = [
          "&" 
          "(* XRSL File created by Ganga *)",
-         "(* %s" % ( time.strftime( "%c" ) ) + " *)",
-         "(queue!=atlas-t1-repro)",
-         "(queue!=atlas-t1-reprocessing)"]
+         "(* %s" % ( time.strftime( "%c" ) ) + " *)"]
+         # Removed for ganga 5.4.0, 091027, per Andrejs request
+         #"(queue!=atlas-t1-repro)",
+         #"(queue!=atlas-t1-reprocessing)"]
       for key, value in xrslDict.iteritems():
          xrslList.append( "(%s = %s)" % ( key, value ) )
       ## User requiremants   

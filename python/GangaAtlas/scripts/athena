@@ -398,12 +398,14 @@ elif opt.backend=='ng':
 elif opt.backend=='panda':
     try:
         j.backend = Panda()
-        if opt.cloud: j.backend.cloud = opt.cloud
     except NameError:
         print >>sys.stderr, 'ERROR: Panda backend has not been enabled in the gangarc file'
         sys.exit(100)
     if opt.site: j.backend.site = opt.site
-    if opt.long: j.backend.long = True 
+    if opt.cloud: j.backend.requirements.cloud = opt.cloud
+    if opt.long: j.backend.requirements.long = True 
+    if opt.cputime: j.backend.requirements.cputime = opt.cputime
+    if opt.memory: j.backend.requirements.memory = opt.memory
 else:
     j.backend = Local()
 

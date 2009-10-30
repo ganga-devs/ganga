@@ -8,6 +8,7 @@ define_ama_exitcode() {
     export EC_STAGEIN_ERROR=106
     export EC_STAGEOUT_ERROR=107
     export EC_MAKEOPT_ERROR=108
+    export EC_AMA_SUMMARY_TAR_ERROR=109
 }
 
 ## function for checking/restoring LCG runtime libraries
@@ -24,16 +25,44 @@ check_lcg_env() {
 }
 
 ## function for printing WN env. info 
-print_ext_wn_info () {
-    echo "== resource limitation =="
-    ulimit -a
-    echo "===="
-    echo 
+#print_ext_wn_info () {
+#    echo "== resource limitation =="
+#    ulimit -a
+#    echo "===="
+#    echo 
+#
+#    echo "== memory information =="
+#    cat /proc/meminfo 
+#    echo "===="
+#    echo 
+#}
 
-    echo "== memory information =="
-    cat /proc/meminfo 
-    echo "===="
-    echo 
+# get some machine infos
+print_ext_wn_info() {
+    DATE=`date +'%D %T'`
+    MACH=`uname -srm`
+    MHZ=`cat /proc/cpuinfo | grep -i 'cpu mhz' | tail -1 | cut -d':' -f2 | tr -s ' ' `
+    MODEL=`cat /proc/cpuinfo | grep -i 'model name' | tail -1 | cut -d':' -f2 | tr -s ' '`
+    CACHE=`cat /proc/cpuinfo | grep -i 'cache size' | tail -1 | cut -d':' -f2 | tr -s ' '`
+    MEMORY=`cat /proc/meminfo | grep -i memtotal | cut -d':' -f2 | tr -s ' '`
+    HNAME=`hostname -f`
+    echo "### node info:   $DATE , $MHZ , $MODEL , $MEMORY , $CACHE , $MACH , $HNAME"
+}
+
+## function for getting network traffic
+get_net_rx() {
+
+    export NET_RX_BYTE=0
+
+    ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
+    if [ -z $ETH ]; then 
+        ETH='eth0'
+    fi
+
+    NET_RX_BYTE=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+    if [ -z $NET_RX_BYTE ]; then 
+	    NET_RX_BYTE=`/usr/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+    fi
 }
 
 ## function for fixing dCache/DPM/Castor libraries
@@ -193,6 +222,19 @@ svcMgr = theApp.serviceMgr()
 svcMgr.EventSelector.InputCollections = ic
 EOFF
         fi
+    fi
+
+    return $retcode
+}
+
+# pack the summary directory after the athena process
+ama_pack_summary_dir() {
+
+    retcode=0
+
+    if [ ! -z $AMA_SUMMARY_TARBALL ]; then
+        tar cvzf $AMA_SUMMARY_TARBALL summary/
+        retcode=$?
     fi
 
     return $retcode

@@ -2,6 +2,7 @@
 ''' Splitter for DIRAC jobs. '''
 
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
+from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 import Ganga.Utility.logging
@@ -38,7 +39,7 @@ class DiracSplitter(SplitByFiles):
     def _splitFiles(self, inputs):
         files = []
         for f in inputs.files:
-            if f.isLFN(): files.append(f.name[4:])
+            if isLFN(f): files.append(f.name)
             if self.maxFiles > 0 and len(files) >= self.maxFiles: break
         cmd = 'result = DiracCommands.splitInputData(%s,%d)' \
               % (files,self.filesPerJob)
@@ -65,9 +66,7 @@ class DiracSplitter(SplitByFiles):
         
         for list in split_files:
             dataset = LHCbDataset()
-            dataset.datatype_string = inputs.datatype_string
             dataset.depth = inputs.depth
-            dataset.cache_date = inputs.cache_date
             for file in list:
                 for dfile in inputs.files:
                     if dfile.name.find(file) >= 0:

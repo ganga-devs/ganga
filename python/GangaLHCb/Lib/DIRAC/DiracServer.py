@@ -12,11 +12,12 @@ from socket import *
 from Ganga.GPIDev.Base.Objects import GangaObject
 import Ganga.Utility.logging
 from Ganga.Core import GangaException
+from Ganga.GPIDev.Credentials import getCredential
 import Ganga.Utility.Config
 
 configLHCb = Ganga.Utility.Config.getConfig('LHCb')
 configDirac = Ganga.Utility.Config.getConfig('DIRAC')
-logger = Ganga.Utility.logging.getLogger()
+logger = Ganga.Utility.logging.getLogger() 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -44,6 +45,7 @@ class DiracServer:
         logger.debug('Set DiracServer.path = %s' % self.path)
         self.server_id = random.randrange(0,os.sys.maxint)
         self.show_stdout = None
+        self.proxy = getCredential('GridProxy', '')
 
     def _getPortBlacklist(self):
         '''Obtains a list of ports used by system services. '''
@@ -62,32 +64,25 @@ class DiracServer:
         DiracServer.port_blacklist = blacklist
         logger.debug('DiracServer.port_blacklist = %s' % str(blacklist))
 
-    def _getDiracEnv(self,version=''):
+    def _getDiracEnv(self):
         '''Gets the DIRAC environment.'''
-        if not version and configLHCb['DiracVersion']:
-            version = configLHCb['DiracVersion']
-        print 'Getting DIRAC %s environment (this may take a few ' \
-              'seconds)' % version
-        setup_script = 'SetupProject.sh'
+        if not os.environ.has_key("GANGADIRACENVIRONMENT"):
+            raise GangaException('DIRAC env cache file does not exist.')
+        cache_file = os.environ["GANGADIRACENVIRONMENT"]
+        if not os.path.exists(cache_file):
+            raise GangaException('DIRAC env cache file does not exist.')
         env = {}
-        tmp = tempfile.NamedTemporaryFile(suffix='.txt')
-        cmd = '/usr/bin/env bash -c \"source %s Dirac %s >& /dev/null && '\
-              'printenv > %s\"' % (setup_script,version,tmp.name)
-        rc = Popen([cmd],shell=True).wait()
-        if rc != 0 or not os.path.exists(tmp.name):
-            msg = 'Could not obtain the DIRAC environment.'
-            raise GangaException(msg)
-        count = 0
-        for line in tmp.readlines():
+        count = 0 
+        f = open(cache_file)
+        for line in f.readlines():
             if line.find('DIRAC') >= 0: count += 1
             varval = line.strip().split('=')
             env[varval[0]] = ''.join(varval[1:])
-        tmp.close()
+        f.close()
         if count == 0:
-            msg = 'Could not obtain the DIRAC environment.'
+            msg = 'Error creating DIRAC environment cache file.'
             raise GangaException(msg)
         DiracServer.dirac_env = env
-        logger.debug('DiracServer.dirac_env = %s' % str(env))
 
     def _run(self,port):
         '''Run the server.'''
@@ -202,6 +197,11 @@ class DiracServer:
     def execute(self,cmd,timeout=None):
         '''Sends the command to the server then waits for it to return the
         result.'''
+        if not self.proxy.isValid(): 
+            self.proxy.create()
+            if not self.proxy.isValid():
+                msg = 'Can not execute DIRAC API code w/o a valid grid proxy.'
+                raise GangaException(msg)
         if not self.isActive(): self.connect()
         elif self.show_stdout is not configDirac['ShowDIRACstdout']:
             self.disconnect()

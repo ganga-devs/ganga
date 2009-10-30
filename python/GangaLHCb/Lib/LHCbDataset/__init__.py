@@ -1,2 +1,6 @@
 from LHCbDataset import *
-from LHCbDataFile import *
+from OutputData import *
+from LogicalFile import *
+from PhysicalFile import *
+
+

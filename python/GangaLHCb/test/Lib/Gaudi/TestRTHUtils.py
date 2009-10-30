@@ -15,7 +15,7 @@ class TestRTHUtils(GangaGPITestCase):
         print 'version =', j.application.version
         ok = jobid_as_string(j).rfind(str(j.id)) >= 0
         assert ok, 'job id string should contain the job id number'
-        j.inputdata = ['a','b']
+        j.inputdata = ['pfn:a','pfn:b']
         j.splitter = SplitByFiles(filesPerJob=1)
         j.submit()
         jid = jobid_as_string(j.subjobs[0])
@@ -24,12 +24,6 @@ class TestRTHUtils(GangaGPITestCase):
         ok = jid[len(jid)-1] == '0'
         assert ok, 'subjob id string should end w/ subjob id number'
 
-    def test_gen_catalog(self):
-        site = Ganga.Utility.Config.getConfig('LHCb')['LocalSite']
-        data = LHCbDataset(["LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000001_5.dst"])
-        catalog = gen_catalog(data,site)
-        print 'catalog = ', catalog
-        
     def test_get_master_input_sandbox(self):
         j = Job()
         j.inputsandbox = ['dummy.in']
@@ -74,7 +68,7 @@ class TestRTHUtils(GangaGPITestCase):
         dv = DaVinci()._impl
         gp = GaudiPython()._impl
         j = Job()
-        script = create_runscript(dv,'stuff',j)
+        script = create_runscript(dv,OutputData(),j)
         assert script.find('gaudirun.py') >= 0
-        script = create_runscript(gp,'stuff',j)
+        script = create_runscript(gp,OutputData(),j)
         assert script.find('gaudipython-wrapper.py') >= 0

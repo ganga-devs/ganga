@@ -29,9 +29,9 @@ class RootDiracRTHandler(IRuntimeHandler):
             logger.warning('No value set for config.DIRAC.RootVersions. '\
                            'Ganga will not check validity of ROOT version.')
         else:
-            if not root_versions.has_key(app.version):
+            if not app.version in root_versions:
                 msg = 'Invalid ROOT version: %s.  Valid versions: %s' \
-                      % (app.version, str(root_versions.keys()))
+                      % (app.version, str(root_versions))
                 raise ApplicationConfigurationError(None,msg)
         inputsandbox = app._getParent().inputsandbox[:]
         c = StandardJobConfig('',inputsandbox,[],[],None)
@@ -53,11 +53,9 @@ class RootDiracRTHandler(IRuntimeHandler):
         dirac_script.output_sandbox = j.outputsandbox[:]
 
         if j.inputdata: dirac_script.inputdata = DiracInputData(j.inputdata)
-          
-        if j.outputdata:
-            dirac_script.outputdata = [f.name for f in j.outputdata.files]
-
-        c.script = dirac_script        
+        if j.outputdata: dirac_script.outputdata = j.outputdata
+        c.script = dirac_script
+        
         return c
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

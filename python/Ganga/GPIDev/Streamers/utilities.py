@@ -118,7 +118,7 @@ def gangaObjectFactory(attrDict, migration_class = None):
                     if not old_errors:
                         try:
                             obj = cls.getMigrationObject(old_obj)
-                            assert(isinstance(obj, cls))
+                            #assert(isinstance(obj, cls))
                         except Exception, e:
                             msg += ' Error in object migration: ' + str(e) 
                         else:

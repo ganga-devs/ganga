@@ -9,6 +9,8 @@ from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Core import BackendError
 from DiracUtils import *
 from DiracServer import DiracServer
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 logger = Ganga.Utility.logging.getLogger()
 configLHCb = Ganga.Utility.Config.getConfig('LHCb')
@@ -93,11 +95,6 @@ class Dirac(IBackend):
         self.id = None
         self.actualCE = None
         self.status = None
-        msg = grid_proxy_ok()
-        if msg is not None:
-            logger.error(msg)
-            raise BackendError("Dirac",msg)
-
         global dirac_ganga_server
         dirac_cmd = "execfile('%s')" % self._getDiracScript()
         result = dirac_ganga_server.execute(dirac_cmd)        
@@ -117,7 +114,6 @@ class Dirac(IBackend):
         dirac_script = subjobconfig.script
         dirac_script.name = mangle_job_name(j)
         dirac_script.cpu_time = self.CPUTime
-        dirac_script.site = configDirac['DIRACsite'] 
         dirac_script.dirac_opts = self.diracOpts
 
         sboxname = j.createPackedInputSandbox(subjobconfig.getSandboxFiles())
@@ -139,8 +135,6 @@ class Dirac(IBackend):
         if j.status == 'submitting' or j.status == 'killed':
             logger.warning("Can not reset a job in status '%s'." % j.status)
         else:
-            msg = grid_proxy_ok()
-            if msg is not None: raise BackendError("Dirac",msg)
             j.getOutputWorkspace().remove(preserve_top=True)
             j.updateStatus('submitted')        
             if j.master: j.master.updateMasterJobStatus()
@@ -203,23 +197,42 @@ class Dirac(IBackend):
         if not result_ok(result):
             logger.error('Output download failed: %s' % str(result))
         else: downloaded_files = result.get('Value',[])
-        return downloaded_files
+        ds = LHCbDataset()
+        for f in downloaded_files: ds.files.append(LogicalFile(f))
+        return GPIProxyObjectFactory(ds)
+        
+    def _getOutputDataLFNs(self,server,force_query):
+        j = self.getJobObject()
+        lfns = []
+        fname = j.getOutputWorkspace().getPath() + '/lfns.lst'
+        if not force_query:
+            if os.path.exists(fname):
+                file = open(fname)
+                lfns = file.read().strip().split('\n')
+                file.close()                
+        if not lfns:        
+            if not j.status == 'completed' and not force_query:
+                logger.warning('LFN query will only work for completed jobs')
+                return []
+            cmd = 'result = DiracCommands.getOutputDataLFNs(%d)' % self.id
+            result = server.execute(cmd)
+            if not result_ok(result):
+                logger.warning('LFN query failed: %s' % str(result))
+                return []
+            lfns = result.get('Value',[])
+            file = open(fname,'w')
+            for lfn in lfns: file.write(lfn.replace(' ','')+'\n')
+            file.close()
+        return lfns
 
-    def getOutputDataLFNs(self):
+    def getOutputDataLFNs(self,force_query=False):
         """Get a list of outputdata that has been uploaded by Dirac. Excludes
         the outputsandbox if it is there."""        
-        j = self.getJobObject()
-        if not j.status == 'completed':
-            logger.warning('LFN query will only work for completed jobs')
-            return []
-
         global dirac_ganga_server
-        cmd = 'result = DiracCommands.getOutputDataLFNs(%d)' % self.id
-        result = dirac_ganga_server.execute(cmd)
-        if not result_ok(result):
-            logger.warning('LFN query failed: %s' % str(result))
-
-        return result.get('Value',[])
+        lfns = self._getOutputDataLFNs(dirac_ganga_server,force_query)
+        ds = LHCbDataset()
+        for f in lfns: ds.files.append(LogicalFile(f))
+        return GPIProxyObjectFactory(ds)
 
     def debug(self):
         '''Obtains some (possibly) useful DIRAC debug info. '''
@@ -264,16 +277,19 @@ class Dirac(IBackend):
             return
                 
         for i in range(0,len(jobs)):
-            jobs[i].backend.statusInfo = result[i][0]
-            jobs[i].backend.status = result[i][1]
-            jobs[i].backend.actualCE = result[i][2]
-            if result[i][3] != 'completed' and result[i][3] != jobs[i].status:
-                jobs[i].updateStatus(result[i][3])
+            j = jobs[i]
+            j.backend.statusInfo = result[i][0]
+            j.backend.status = result[i][1]
+            j.backend.actualCE = result[i][2]
+            if result[i][3] != 'completed' and result[i][3] != j.status:
+                j.updateStatus(result[i][3])
             if result[i][3] == 'completed':
-                jobs[i].updateStatus('completing')
-                ok = jobs[i].backend._getOutputSandbox(dirac_monitoring_server)
-                if not ok: jobs[i].updateStatus('failed')
-                else: jobs[i].updateStatus('completed')
+                j.updateStatus('completing')
+                ok = j.backend._getOutputSandbox(dirac_monitoring_server)
+                if ok and j.outputdata:
+                    j.backend._getOutputDataLFNs(dirac_monitoring_server,True)
+                if not ok: j.updateStatus('failed')
+                else: j.updateStatus('completed')
                     
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 

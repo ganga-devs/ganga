@@ -83,6 +83,11 @@ class HammerThread(threading.Thread):
                 assert id in lids
             else:
                 if id in lids:
+                    try:
+                        self.repo.load([id])
+                    except KeyError: # object is deleted
+                        print >> sys.stderr,  self.id, " locked deleted ID (%s)"%id
+                        continue
                     self.repo.objects[id].name = "HT%i"%(self.id)
                     self.owned_ids.append(id)
         print >> sys.stderr,  self.id, " lock(%s) done"%ids

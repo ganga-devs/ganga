@@ -62,6 +62,7 @@ class ARDADashboardLCG(IMonitoringService):
     _logger = None
         
     def __init__(self, job_info):
+        IMonitoringService.__init__(self, job_info)
         
         if type(job_info) is DictionaryType:
             # we are on the worker node. We just need

@@ -38,6 +38,7 @@ del standardSetup
 from Ganga.Core import GangaException
 import sys
 
+
 try:
    # Process options given at command line and in configuration file(s)
    # Perform environment setup and bootstrap
@@ -49,6 +50,8 @@ try:
    Ganga.Runtime._prog.bootstrap()
    # Import GPI and run Ganga
    from Ganga.GPI import *
+   #import cProfile
+   #cProfile.run("Ganga.Runtime._prog.run()","gprof")
    Ganga.Runtime._prog.run()
 except GangaException,x:
    Ganga.Runtime._prog.log(x)

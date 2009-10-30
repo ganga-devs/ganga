@@ -7,9 +7,8 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 print >>sys.stderr
-print >>sys.stderr, 'ATLAS Distributed Analysis Support is provided by the "Distributed Analysis Help" HyperNews forum. You can find the forum at '
-print >>sys.stderr, '    https://hypernews.cern.ch/HyperNews/Atlas/get/distAnalysisHelp.html'
-print >>sys.stderr, 'or you can send an email to hn-atlas-dist-analysis-help@cern.ch'
+print >>sys.stderr, 'For help visit the ATLAS Distributed Analysis Help eGroup:'
+print >>sys.stderr, '  https://groups.cern.ch/group/hn-atlas-dist-analysis-help/'
 print >>sys.stderr
 
 try:

@@ -376,7 +376,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
     # Create TURL map
     tUrlMap = {}
     for lfn, surl in guidReplicas.iteritems():
-        if configLOCALPROTOCOL in [ "dcap", 'Xrootd', 'gsidcap' ]:
+        if configLOCALPROTOCOL in [ "dcap", 'gsidcap', 'Xrootd', 'root' ]:
             match = re.search('^[^:]+://([^:/]+):*\d*/', surl)
             try:
                 sURLHost = match.group(1)
@@ -389,9 +389,8 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     pfn = 'gfal:'+surl
                 else:
                     pfn = surl
-                
+
             if configLOCALPROTOCOL == "dcap" and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
-                
                 pfn = re.sub('srm://','dcap://',pfn)
                 # Hack for ccin2p3
                 pfn = re.sub('ccsrm','ccdcapatlas',pfn)
@@ -407,16 +406,17 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     pfn = re.sub('/atlas/users/','//pnfs/sfu.ca/data/atlas/users/',pfn)
                     pfn = re.sub('22125/atlas/','22125//pnfs/sfu.ca/data/atlas/',pfn)
                     
-            elif configLOCALPROTOCOL == "Xrootd":
+            elif configLOCALPROTOCOL in [ "root", "Xrootd" ] and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
                 pfn = re.sub('srm://','root://',pfn)
                 # Hack for ccin2p3
                 pfn = re.sub('ccsrm','ccxroot',pfn)
                 pfn = re.sub('ccdcamli01','ccxroot',pfn)
                 pfn = re.sub(':1094',':1094/',pfn)
 
-            elif configLOCALPROTOCOL == "gsidcap":
+            elif configLOCALPROTOCOL == "gsidcap" and stUrlMap.has_key(sURLHost):
                 pfn = re.sub('srm://','gfal:gsidcap://',pfn)
                 pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
+                pfn = re.sub('gfal:gfal:','gfal:',pfn)
 
         elif (configLOCALPROTOCOL == "rfio" and configSTORAGEROOT == '/castor') \
                  or localsitesrm.find('gla.scotgrid.ac.uk')>-1:
@@ -427,7 +427,9 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             pfn = "rfio:" + pfn
         elif ( configLOCALPROTOCOL == "rfio" and ( configSTORAGEROOT == '/dpm' )) \
                  or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE) \
-                 or ( configLOCALPROTOCOL == "file" and 'se03.esc.qmul.ac.uk' in defaultSE):
+                 or ( configLOCALPROTOCOL == "file" and 'se03.esc.qmul.ac.uk' in defaultSE) \
+                 or ( configLOCALPROTOCOL == "file" and 't2cmcondor.mi.infn.it' in defaultSE): 
+
             turl = []
             print 'Using lcg-gt for turl retrieval ...'
             # check which version of lcg-utils we're on
@@ -1241,8 +1243,7 @@ if __name__ == '__main__':
                 if not detsetype:
                     print 'VO_ATLAS_DEFAULT_SE: %s' %os.environ['VO_ATLAS_DEFAULT_SE']
 
-        if os.environ.has_key('VO_ATLAS_DEFAULT_SE') and not os.environ.has_key('DQ2_LOCAL_PROTOCOL'):
-            
+        if os.environ.has_key('VO_ATLAS_DEFAULT_SE') and ( not os.environ.has_key('DQ2_LOCAL_PROTOCOL') or configLOCALPROTOCOL==''):
             cmd = 'lcg-info --list-se --query SE=$VO_ATLAS_DEFAULT_SE --attr Protocol --sed'
             rc, out = commands.getstatusoutput(cmd)
             out2 = out.split('%')
@@ -1422,7 +1423,13 @@ if __name__ == '__main__':
                 rc, out = getstatusoutput(cmd)
                 print out
 
-                if (rc!=0):
+                bad_dq2_get = False
+                
+                for f in taglfns:
+                    if not os.path.exists(f):
+                        bad_dq2_get = True
+                        
+                if (rc!=0) or bad_dq2_get:
                     print taglfns
                     os.system("ls -ltr")
                     print "ERROR: error during dq2-get occured"
@@ -1430,13 +1437,7 @@ if __name__ == '__main__':
                     print out
                     if (rc!=0):
                         print "ERROR: error during retry of dq2-get occured"
-
-
-            # check that all files are present
-            for f in taglfns:
-                if not os.path.exists(f):
-                    print "ERROR: failed to download " + f
-                    sys.exit(EC_DQ2GET)
+                        sys.exit(EC_DQ2GET)
                                     
             tagddmFileMap = {}
             for i in xrange(0,len(taglfns)):
@@ -1508,7 +1509,7 @@ if __name__ == '__main__':
                 
                 if (rc!=0):
                     print "ERROR: error during CollListFileGUID. Restoring original environment variables and retrying...."                    
-                    cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd
+                    cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP_ATH ; export PATH=$PATH_BACKUP_ATH; export PYTHONPATH=$PYTHONPATH_BACKUP_ATH ; ' + cmd
                     print "Calling " + cmd
                     rc, out = getstatusoutput(cmd)
                     print out
@@ -1602,34 +1603,22 @@ if __name__ == '__main__':
     if datasettype!='DQ2_OUT':
 
         # TAG file in sandbox (TNT) ###########################################################
-        if os.access('./tag.tar.gz',os.R_OK):
+        if os.access('./tag_file_list',os.R_OK):
 
-            print "TAG file found in input sandbox. Using this as input..."
-            cmd = 'tar xvzf tag.tar.gz'
-            rc, out = getstatusoutput(cmd)
-            if (rc!=0):
-                print "ERROR: error during extraction of tag.tar.gz"
-                print out
-                sys.exit(EC_UNSPEC)
-
-            dir = "."
-            filepat = "\.root"
-            pat = re.compile(filepat)
-            filelist = os.listdir(dir)
+            print "TAG list file found in input sandbox. Using this as input..."
             files = {}
-            for tagfile in filelist:
-                found = re.findall(pat, tagfile)
-                if found:
-                    filename = re.sub('\.root\.\d+$','',tagfile)
-                    if atlas_release_major <= 12:
-                        filename = re.sub('\.root$','',tagfile)
-                    item = {'pfn':filename,'guid':''}
-                    files[tagfile] = item
-    
+            for tag_file in open("./tag_file_list").readlines():
+                filename = tag_file.strip()
+                item = {'pfn':filename,'guid':''}
+                files[filename] = item
+
+            print "Creating JO file with this file list:"
+            print files
             # make job option file
             _makeJobO(files, tag=True, type=datasettype, version=atlas_release_major, dtype=datatype)
 ##             dir = "."
 ##             filepat = "\.root"
+            
 ##             pat = re.compile(filepat)
 ##             filelist = os.listdir(dir)
 ##             joName = 'input.py'
@@ -1661,20 +1650,44 @@ if __name__ == '__main__':
 
         # Sort out datasets, create PFC and input.py #####################################
         # Get datasetnames
+        new_datasetnames = []
         try:
             datasetnames = os.environ['DATASETNAME'].split(":")
+
+            # add additional files to the poolfilecatalog:
+            if os.access('add_files', os.R_OK):
+                print "old datasetnames:"
+                print datasetnames
+                new_datasetnames = [ line.strip().split(':')[0] for line in file('add_files') ]
+                for new_datasetname in new_datasetnames:
+                    if not new_datasetname in datasetnames:
+                        datasetnames.append(new_datasetname)
+                print "new datasetnames:"
+                print datasetnames
+                
         except:
             raise NameError, "ERROR: DATASETNAME not defined"
             sys.exit(EC_Configuration)
 
         # Read input_files 
         lfns = []
+        add_lfns = []
         if input:
             lfns = [ line.strip() for line in file(input) ]
         else:
             for line in file('input_files'):
                 print "****   " + line
             lfns = [ line.strip() for line in file('input_files') ]
+            
+            # add additional files to the poolfilecatalog:
+            if os.access('add_files', os.R_OK):
+                print "Old lfns:"
+                print lfns
+                add_lfns = [ line.strip().split(':')[1] for line in file('add_files') ]
+                lfns = lfns + add_lfns
+                print "New lfns:"
+                print lfns
+
 
         # Get rid of trailing numbers in filenames in LFC datasets
         for datasetname in datasetnames:
@@ -1692,11 +1705,21 @@ if __name__ == '__main__':
 
         # Get guids from input_guids
         guids = []
+        add_guids = []
         if inputguid:
             guids = [ line.strip() for line in file(inputguid) ]
         else:
             guids = [ line.strip() for line in file('input_guids') ]
-
+            
+            # add additional files to the poolfilecatalog:
+            if os.access('add_files', os.R_OK):
+                print "Old guids:"
+                print guids
+                add_guids = [ line.strip().split(':')[2] for line in file('add_files') ]
+                guids = guids + add_guids
+                print "New guids:"
+                print guids
+                                                                            
         # Check if ESD backnavigation files are there
         lfns_esd = []
         guids_esd = []
@@ -1931,16 +1954,24 @@ if __name__ == '__main__':
         # make PoolFileCatalog
         _makePoolFileCatalog(files)
 
-        # make jobO
-        if not os.access('./tag.tar.gz',os.R_OK) and (datasettype == 'DQ2_LOCAL'):
-            tag = False
+        # make jobO if not already done so (e.g. for local TAG files)
+        if not os.access('./tag_file_list',os.R_OK) and (datasettype == 'DQ2_LOCAL'):
+
             # Remove ESD files
             if lfns_esd:
                 for lfn in lfns_esd:
                     if lfn in files.keys():
                         files.pop(lfn)
 
-            _makeJobO(files, version=atlas_release_major, dtype=datatype)
+            # remove any tag-referenced files (not the tag files themselves
+            tag_flag = False
+            if add_lfns:
+                tag_flag = True
+                for lfn in add_lfns:
+                    if lfn in files.keys():
+                        files.pop(lfn)
+                        
+            _makeJobO(files, tag=tag_flag, version=atlas_release_major, dtype=datatype)
 
         if len(files)>0:
             returnvalue=0

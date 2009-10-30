@@ -15,7 +15,7 @@ class TestGaudiPython(GangaGPITestCase):
     def testLocal(self):
         
         j = Job(application=GaudiPython(), backend=Local())
-        j.application.version = configDaVinci['version']
+        #j.application.version = configDaVinci['version']
         j.submit()
 
         assert j.application.script != [],\
@@ -24,21 +24,21 @@ class TestGaudiPython(GangaGPITestCase):
         assert sleep_until_completed(j,600)
 
         fname = join(j.outputdir,'stdout')
-
+        print 'file =', open(fname).read()
         executionstring = 'Application Manager Configured successfully'
         assert file_contains(fname,executionstring),\
                'stdout should contain string: ' + executionstring
 
     def testDirac(self):
         gp = GaudiPython(platform=config['AllowedPlatforms'][0])
-        gp.version = configDaVinci['version']
+        #gp.version = configDaVinci['version']
         j = Job(application=gp, backend=Dirac())
         j.submit()
         j.remove()
         
     def testScripts(self):
         gp = GaudiPython()
-        gp.version = configDaVinci['version']
+        #gp.version = configDaVinci['version']
         dir = tempfile.mkdtemp()
         name1 = join(dir,'script1.py')
         name2 = join(dir,'script2.py')
@@ -51,6 +51,7 @@ class TestGaudiPython(GangaGPITestCase):
 
         
         fname = join(j.outputdir,'stdout')
+        print 'file =', open(fname).read()
         assert file_contains(fname,'ABC'), 'First script file not executed'
         assert file_contains(fname,'DEF'),\
                'Inclusion of second script not working'
@@ -59,7 +60,7 @@ class TestGaudiPython(GangaGPITestCase):
 
     def testAutomaticList(self):
         gp = GaudiPython()
-        gp.version = configDaVinci['version']        
+        #gp.version = configDaVinci['version']        
         dir = tempfile.mkdtemp()
         name1 = join(dir,'script1.py')
 
@@ -73,7 +74,7 @@ class TestGaudiPython(GangaGPITestCase):
     def testInvalidPlatform(self):
         gp = GaudiPython()
         gp.platform='FooBar'
-        gp.version = configDaVinci['version']
+        #gp.version = configDaVinci['version']
         j = Job(application=gp,backend=Dirac())
 
         try:
@@ -88,7 +89,7 @@ class TestGaudiPython(GangaGPITestCase):
 
     def testSplit(self):
         gp = GaudiPython()
-        gp.version = configDaVinci['version']
+        #gp.version = configDaVinci['version']
         j = Job(application=gp, backend=Local())
         prefix='LFN:/lhcb/production/DC06/v1r0/00002069/DST/0000'
         j.inputdata = LHCbDataset([
@@ -101,5 +102,6 @@ class TestGaudiPython(GangaGPITestCase):
         executionstring = 'Application Manager Stopped successfully'
         for js in j.subjobs:
             fname = join(js.outputdir,'stdout')
+            print 'file =', open(fname).read()
             assert file_contains(fname,executionstring),\
                    'stdout should contain string: ' + executionstring

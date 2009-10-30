@@ -119,9 +119,8 @@ class Gaudi(Francesc):
                 self.extra.inputdata = inputdata
         
         self.extra.outputsandbox,outputdata = parser.get_output(job)
-        outputdata = self.extra.outputdata + outputdata
-        self.extra.outputdata = unique(outputdata)
-        
+        self.extra.outputdata.files += outputdata
+        self.extra.outputdata.files = unique(self.extra.outputdata.files)
         return (inputs, self.extra) # return (changed, extra)
 
     def configure(self,master_appconfig):

@@ -6,9 +6,7 @@
 # AMAAthena Job Handler
 #
 # NIKHEF/ATLAS
-# 
-
-import os, re, commands, string
+#
 
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.logging import getLogger

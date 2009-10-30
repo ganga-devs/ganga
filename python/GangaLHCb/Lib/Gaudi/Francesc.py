@@ -9,7 +9,7 @@ from GangaLHCb.Lib.Gaudi.CMTscript import parse_master_package
 import Ganga.Utility.logging
 from Ganga.Utility.files import expandfilename, fullpath
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
+from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from GaudiUtils import *
 from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
@@ -177,12 +177,8 @@ class Francesc(IApplication):
         self._getshell()
         
         job=self.getJobObject()                
-        if job.inputdata:
-            self.extra.inputdata = job.inputdata
-            self.extra.inputdata.datatype_string=job.inputdata.datatype_string
-
-        if job.outputdata:
-            self.extra.outputdata = collect_lhcb_filelist(job.outputdata)
+        if job.inputdata: self.extra.inputdata = job.inputdata
+        if job.outputdata: self.extra.outputdata = job.outputdata
                         
         if not self.user_release_area: return
 
@@ -198,7 +194,7 @@ class Francesc(IApplication):
             self.extra.master_input_files += input_files
 
     def _configure(self):
-        data_str = dataset_to_options_string(self.extra.inputdata)
+        data_str = self.extra.inputdata.optionsString()
         self.extra.input_buffers['data.opts'] += data_str
         
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -215,7 +211,7 @@ class GaudiExtras:
         self.input_files = []
         self.inputdata = LHCbDataset()
         self.outputsandbox = []
-        self.outputdata = []
+        self.outputdata = OutputData()
         self.input_buffers['data.opts'] = ''
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

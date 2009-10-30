@@ -22,8 +22,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
     def master_prepare(self,app,extra):
 
         if extra.inputdata and extra.inputdata.hasLFNs():
-            site = Ganga.Utility.Config.getConfig('LHCb')['LocalSite']
-            xml_catalog_str = gen_catalog(extra.inputdata, site)
+            xml_catalog_str = extra.inputdata.getCatalog()
             extra.master_input_buffers['catalog.xml'] = xml_catalog_str
             
         sandbox = get_master_input_sandbox(app.getJobObject(),extra)
@@ -37,8 +36,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
 
         sandbox = get_input_sandbox(extra)
         outdata = extra.outputdata
-        if not outdata:
-            outdata = collect_lhcb_filelist(app.getJobObject().outputdata)
+        if not outdata: outdata = app.getJobObject().outputdata
         script = create_runscript(app,outdata,app.getJobObject())
 
         return StandardJobConfig(FileBuffer('gaudiscript.py',script,

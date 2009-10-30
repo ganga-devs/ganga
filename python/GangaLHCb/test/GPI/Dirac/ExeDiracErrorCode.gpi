@@ -31,9 +31,10 @@ print j
 from GangaTest.Framework.utils import sleep_until_completed, file_contains
 sleep_until_completed(j)
 # this is not working in DIRAC at the moment
-#assert j.status == 'failed', 'Job should fail'
+assert j.status == 'failed', 'Job should fail'
+j.backend.getOutputSandbox() # this doesn't happen automatically if failed 
 fileName = os.path.join(j.outputdir,'std.out')
-#file = open(os.path.join(j.outputdir,'stdout'),'r')
-#print file.read()
-#file.close()
+file = open(fileName,'r')
+print file.read()
+file.close()
 assert file_contains(fileName, 'status 45'), 'Exit code should be returned from DIRAC'

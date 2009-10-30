@@ -48,11 +48,9 @@ class ExeDiracRTHandler(IRuntimeHandler):
         dirac_script.output_sandbox = j.outputsandbox[:]
 
         if j.inputdata: dirac_script.inputdata = DiracInputData(j.inputdata)
-          
-        if j.outputdata:
-            dirac_script.outputdata = [f.name for f in j.outputdata.files]
-
-        c.script = dirac_script        
+        if j.outputdata: dirac_script.outputdata = j.outputdata
+        c.script = dirac_script
+        
         return c
 
     def _create_exe_script(self,app):

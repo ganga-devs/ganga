@@ -35,10 +35,8 @@ class DiracInputData:
         self.data = data
 
     def write(self):
-        data = []
+        data = self.data.getLFNs()
         contents = ''
-        for f in self.data.files:
-            if f.isLFN(): data.append(f.name[4:])
         if len(data) > 0:
             contents += 'j.setInputData(%s)\n' % str(data)
             if hasattr(self.data,'depth'):
@@ -103,7 +101,6 @@ class DiracScript:
 
     def __init__(self):
         self.cpu_time = None
-        self.site = None
         self.input_sandbox = None
         self.output_sandbox = None
         self.exe = None
@@ -121,15 +118,14 @@ class DiracScript:
         contents += '\n# default commands added by ganga\n'
         if self.name: contents += 'j.setName("%s")\n' % self.name
         if self.cpu_time: contents += 'j.setCPUTime(%d)\n' % self.cpu_time
-        if self.site: contents += 'j.setDestination("%s")\n' % self.site
         if self.input_sandbox:
             contents += "j.setInputSandbox(%s)\n" % str(self.input_sandbox)
         if self.output_sandbox:
             contents += "j.setOutputSandbox(%s)\n" % str(self.output_sandbox)
         if self.exe: contents += self.exe.write()
         if self.inputdata: contents += self.inputdata.write()
-        if self.outputdata:
-            contents += 'j.setOutputData(%s)\n' % str(self.outputdata)
+        if self.outputdata and self.outputdata.files:
+            contents += 'j.setOutputData(%s)\n' % str(self.outputdata.files)
         if self.platform:
             whitelist = config['AllowedPlatforms']
             if self.platform in whitelist:

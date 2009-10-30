@@ -99,6 +99,52 @@ class DQ2JobSplitter(ISplitter):
         if job.backend._name <> 'LCG' and job.backend._name <> 'Panda' and job.backend._name <> 'NG':
             raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, Panda or NG backend')
 
+        # before we do anything, check for tag info for this dataset
+        additional_datasets = {}
+        local_tag = False
+        grid_tag = False
+        if job.inputdata.tag_info:
+
+            logger.warning('TAG information present - overwriting previous DQ2Dataset definitions')
+
+            job.inputdata.names = []
+            job.inputdata.dataset = []
+            
+            # assemble the tag datasets to split over
+            for tag_file in job.inputdata.tag_info:
+
+                if job.inputdata.tag_info[tag_file]['dataset'] != '' and job.inputdata.tag_info[tag_file]['path'] == '':
+                    grid_tag = True
+                    job.inputdata.names.append( tag_file )
+
+                    if not job.inputdata.tag_info[tag_file]['dataset'] in job.inputdata.dataset:
+                        job.inputdata.dataset.append(job.inputdata.tag_info[tag_file]['dataset'])
+
+                    # add to additional datasets list
+                    for tag_ref in job.inputdata.tag_info[tag_file]['refs']:
+                        if not additional_datasets.has_key(job.inputdata.tag_info[tag_file]['dataset']):
+                            additional_datasets[job.inputdata.tag_info[tag_file]['dataset']] = []
+
+                        if not tag_ref[1] in additional_datasets[job.inputdata.tag_info[tag_file]['dataset']]:
+                            additional_datasets[job.inputdata.tag_info[tag_file]['dataset']].append(tag_ref[1])
+                elif job.inputdata.tag_info[tag_file]['path'] != '' and job.inputdata.tag_info[tag_file]['dataset'] == '':
+                    local_tag = True
+                    if len(job.inputdata.tag_info[tag_file]['refs']) > 1:
+                        raise ApplicationConfigurationError(None,'Problems with TAG entry for %s. Mulitple references for local TAG file.' % tag_file)
+
+                    job.inputdata.names.append( job.inputdata.tag_info[tag_file]['refs'][0][0] )
+                    
+                    if not job.inputdata.tag_info[tag_file]['refs'][0][1] in job.inputdata.dataset:
+                        job.inputdata.dataset.append(job.inputdata.tag_info[tag_file]['refs'][0][1])
+                    
+                else:
+                    raise ApplicationConfigurationError(None,'Problems with TAG entry for %s' % tag_file)
+                
+            if grid_tag and local_tag:
+                raise ApplicationConfigurationError(None,'Problems with TAG info - both grid and local TAG files selected.')
+                    
+                    
+        # now carry on as before
         orig_numfiles = self.numfiles
         orig_numsubjobs = self.numsubjobs
 
@@ -125,7 +171,7 @@ class DQ2JobSplitter(ISplitter):
                             info = job.backend.requirements.cloud_from_sites(locations[key])
 
                             for all_site in info:
-                                if not info[all_site] in avail_clouds[key]:
+                                if not info[all_site] in avail_clouds[key] and not info[all_site] in ['US', 'NG']:
                                     avail_clouds[key].append(info[all_site])
 
                         # perform logical AND to find a cloud that has all data
@@ -174,7 +220,7 @@ class DQ2JobSplitter(ISplitter):
                             newsites.append(site)
                     allowed_sites = newsites
                 # Check atlas_dbrelease
-                if job.application.atlas_dbrelease:
+                if job.application._name != 'TagPrepare' and job.application.atlas_dbrelease:
                     try:
                         db_dataset = job.application.atlas_dbrelease.split(':')[0]
                     except:
@@ -197,6 +243,42 @@ class DQ2JobSplitter(ISplitter):
                             if TiersOfATLAS.getSiteProperty(sitename,'alternateName') in dq2alternatenames and not sitename in db_allowed_sites:
                                 db_allowed_sites.append(sitename)
                     allowed_sites = db_allowed_sites
+                # Check for additional datasets
+                if len(additional_datasets) > 0:
+                    from dq2.clientapi.DQ2 import DQ2
+                    from dq2.info import TiersOfATLAS
+                    dq2=DQ2()
+                    add_locations_all = []
+
+                    additional_datasets_all = []
+                    
+                    for tag_dataset in additional_datasets:
+                        for add_dataset in additional_datasets[tag_dataset]:
+                            if not add_dataset in additional_datasets_all:
+                                additional_datasets_all.append(add_dataset)
+                            
+                    for add_dataset in additional_datasets_all:
+                        if len(add_locations_all) == 0:
+                            add_locations_all = dq2.listDatasetReplicas(add_dataset).values()[0][1]
+                        else:
+                            add_locations = dq2.listDatasetReplicas(add_dataset).values()[0][1]
+                            
+                            for add_location in add_locations_all:
+                                if not add_location in add_locations:
+                                    add_locations_all.remove(add_location)
+                                    
+                    add_allowed_sites=[]
+                    dq2alternatenames=[]
+                    for site in allowed_sites:
+                        if site in add_locations_all:
+                            add_allowed_sites.append(site)
+                            dq2alternatenames.append(TiersOfATLAS.getSiteProperty(site,'alternateName'))
+                    for sitename in TiersOfATLAS.getAllSources():
+                        if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
+                            if TiersOfATLAS.getSiteProperty(sitename,'alternateName') in dq2alternatenames and not sitename in add_allowed_sites:
+                                add_allowed_sites.append(sitename)
+                    allowed_sites = add_allowed_sites
+
                 # Check if site is online:
                 newsites = []
                 for asite in allowed_sites:
@@ -345,6 +427,17 @@ class DQ2JobSplitter(ISplitter):
                         j.backend.requirements.sites = sites.split(':')
                     j.inputsandbox  = job.inputsandbox
                     j.outputsandbox = job.outputsandbox 
+
+                    j.inputdata.tag_info = {}
+                    if job.inputdata.tag_info:
+                        if grid_tag:
+                            for tag_file in j.inputdata.names:
+                                j.inputdata.tag_info[tag_file] = job.inputdata.tag_info[tag_file]
+
+                        if local_tag:
+                            for tag_file in job.inputdata.tag_info:
+                                if job.inputdata.tag_info[tag_file]['refs'][0][0] in j.inputdata.names:
+                                    j.inputdata.tag_info[tag_file]  = job.inputdata.tag_info[tag_file]
 
                     subjobs.append(j)
 

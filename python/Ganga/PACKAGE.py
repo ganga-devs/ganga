@@ -22,6 +22,7 @@ _defaultMinHexVersion = 0x20200f0
 # The default values will be guessed but you may override them here
 _defaultPlatform = None #'slc3_gcc323'
 _defaultExternalHome = None
+_defaultExternalHome = "/afs/cern.ch/sw/ganga/external/"
 
 # The dictionary of external  packages is used by the release/download
 # system to handle the installation  tarballs. Make sure that all your
@@ -63,7 +64,7 @@ _externalPackages = {
                  'syspath':'lib/python2.3/site-packages'},
    'pycrypto' : {'version' : '2.0.1',
                  'syspath':'lib/python2.3/site-packages'},
-   'stomputil' : {'version' : '1.0',
+   'stomputil' : {'version' : '2.0',
                   'noarch': True,
                   'syspath' : 'python'} 
    }
@@ -79,6 +80,10 @@ def detectPlatform():
 
     Comments about current implementations:
 
+    SLC5 platform is detected using platform module.
+
+    If it's not SLC5 then:
+
     We assume that 64 bit python implies the slc4, amd64 system.
     We assume that 32 bit python implies the slc4, ia32 system.
 
@@ -86,8 +91,9 @@ def detectPlatform():
     
     """
 
-    # assume INTEL processors (i386, i686), ignore IA64 architecture
-    platforms = { 32: 'slc4_ia32_gcc34', 64: 'slc4_amd64_gcc34'}
+    # assume INTEL processors (i386, i686,x64), ignore IA64 architecture
+    platf4 = { 32: 'slc4_ia32_gcc34', 64: 'slc4_amd64_gcc34'}
+    platf5 = { 32: 'i686-slc5-gcc43-opt', 64: 'x86_64-slc5-gcc43-opt'}
 
     # for older python versions use some tricks
     import sys
@@ -97,7 +103,19 @@ def detectPlatform():
     else:
         arch = 32
 
-    return platforms[arch]
+    platfstring = platf4
+    
+    try:
+        import platform
+        import re
+        c = re.compile('\S+-redhat-(?P<ver>\S+)-\S+')
+        r = c.match(platform.platform())
+        if r and r.group('ver').split('.')[0] == '5':
+            platfstring = platf5
+    except ImportError:
+        pass
+
+    return platfstring[arch]
 
 
 # guess defaults if not defined

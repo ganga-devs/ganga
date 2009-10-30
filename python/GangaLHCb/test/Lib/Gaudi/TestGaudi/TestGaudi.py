@@ -25,7 +25,7 @@ class TestGaudi(GangaGPITestCase):
     def test_Gaudi_master_configure(self):
         job = Job(application=Gauss(optsfile='./Gauss-Job.py'))
         gauss = job.application
-        job.inputdata = ['dummy1.in','dummy2.in']
+        job.inputdata = ['pfn:dummy1.in','pfn:dummy2.in']
         job.outputdata = ['Gauss.sim']
         job.outputsandbox = ['GaussHistos.root','GaussMonitor.root']
         inputs,extra = gauss._impl.master_configure()
@@ -34,7 +34,7 @@ class TestGaudi(GangaGPITestCase):
         ok = extra.outputsandbox.count('GaussHistos.root') > 0 and \
              extra.outputsandbox.count('GaussMonitor.root') > 0
         assert ok, 'outputsandbox error'
-        assert extra.outputdata.count('Gauss.sim') > 0, 'outputdata error'
+        assert extra.outputdata.files.count('Gauss.sim') > 0,'outputdata error'
         assert extra.master_input_buffers['options.pkl'] is not None
 
     # this method currently does nothing

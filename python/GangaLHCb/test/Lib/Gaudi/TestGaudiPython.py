@@ -10,7 +10,7 @@ class TestGaudiPython(GangaGPITestCase):
         gp = job.application
         gp._impl._auto__init__()
         gp.script = [File('dummy.script')]
-        job.inputdata = ['dummy1.in','dummy2.in']               
+        job.inputdata = ['pfn:dummy1.in','pfn:dummy2.in']               
         self.gp = gp._impl
         self.gp.master_configure()
         self.job = job

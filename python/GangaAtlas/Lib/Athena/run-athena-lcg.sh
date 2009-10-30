@@ -80,13 +80,14 @@ fi
 cmt_setup
 
 ################################################
-# check for GangaTnt subcollection and rename
-ls | grep 'sub_collection_*' > tmp
-if [ $? -eq 0 ]
+# check for TAG subcollections and store the file list
+ls | grep '\.subcoll\.' > tag_file_list
+echo "Created TAG list:"
+more tag_file_list
+
+if [ `cat tag_file_list | wc -l` -le 0 ]
 then
-mv sub_collection_* tag.pool.root
-tar -c tag.pool.root > tag.tar
-gzip tag.tar
+    rm tag_file_list
 fi
 
 ################################################
@@ -116,6 +117,14 @@ rm -f retcode.tmp
 if [ -e $VO_ATLAS_SW_DIR/LCGutils/latest/setup.sh ]
 then
     source $VO_ATLAS_SW_DIR/LCGutils/latest/setup.sh
+fi
+
+################################################
+# Setup the local ATLAS patches and environment variables
+# for Frontier/Squid
+if [ -e $VO_ATLAS_SW_DIR/local/setup.sh ]
+then
+    source $VO_ATLAS_SW_DIR/local/setup.sh
 fi
 
 get_files PDGTABLE.MeV
@@ -158,6 +167,12 @@ else
 fi
 
 detect_setype
+
+#################################################
+# Set Access Info 
+# Set DQ2_LOCAL_SITE_ID and DQ2_LOCAL_PROTOCOL
+
+access_info
 
 #################################################
 # Fix of broken DCache ROOT access in 12.0.x

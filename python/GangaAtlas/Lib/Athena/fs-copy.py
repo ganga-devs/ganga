@@ -238,7 +238,7 @@ if __name__ == '__main__':
 
                 ## for DPM/Castor
                 elif protocol in [ 'rfio' ]:
-                    cmd = 'rfcp %s %s' % (src_turl, dest_fpath)
+                    cmd = 'rfcp \'%s\' %s' % (src_turl, dest_fpath)
 
                 ## for Storm/Luster
                 elif protocol in [ 'file' ]:
