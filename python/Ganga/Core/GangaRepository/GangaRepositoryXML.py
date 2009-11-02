@@ -61,11 +61,13 @@ class GangaRepositoryLocal(GangaRepository):
         self.sub_split = "subjobs"
         self.root = os.path.join(self.registry.location,"6.0",self.registry.name)
 
+
     def startup(self):
         """ Starts an repository and reads in a directory structure.
         Raise RepositoryError"""
         self._load_timestamp = {}
         self._cache_load_timestamp = {}
+        self.known_bad_ids = []
         if "XML" in self.registry.type:
             self.to_file = xml_to_file
             self.from_file = xml_from_file
@@ -78,6 +80,7 @@ class GangaRepositoryLocal(GangaRepository):
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary of errors
         self.update_index(verbose = True)
+
 
     def shutdown(self):
         """Shutdown the repository. Flushing is done by the Registry
@@ -98,7 +101,7 @@ class GangaRepositoryLocal(GangaRepository):
             Raise IOError on access or unpickling error 
             Raise OSError on stat error
             Raise PluginManagerError if the class name is not found"""
-        logger.debug("Loading index %i" % id)
+        logger.debug("Loading index %s" % id)
         fn = self.get_idxfn(id)
         if self._cache_load_timestamp.get(id,0) != os.stat(fn).st_ctime: # index timestamp changed
             fobj = file(fn)
@@ -194,17 +197,20 @@ class GangaRepositoryLocal(GangaRepository):
                     self.load([id])
                 except KeyError:
                     pass # deleted job
-                except Exception, x:
-                    logger.debug("Failed to load id %i: %s %s" % (id, x.__class__.__name__, x))
-                    summary.append((id,x))
-        if verbose and len(summary) > 0:
+                except InaccessibleObjectError, x:
+                    logger.debug("Failed to load id %i: %s %s" % (id, x.orig.__class__.__name__, x.orig))
+                    summary.append((id,x.orig))
+        if len(summary) > 0:
             cnt = {}
             examples = {}
             for id,x in summary:
-                cnt[x.__class__.__name__] = cnt.get(x.__class__.__name__,0) + 1
+                if id in self.known_bad_ids:
+                    continue
+                cnt[x.__class__.__name__] = cnt.get(x.__class__.__name__,[]) + [str(id)]
                 examples[x.__class__.__name__] = str(x)
-            for exc,n in cnt.items():
-                logger.error("Registry '%s': Failed to load %i jobs due to '%s' (%s)" % (self.registry.name, n, exc, examples[exc]))
+                self.known_bad_ids.append(id)
+            for exc,ids in cnt.items():
+                logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
         logger.info("updated index done")
 
     def add(self, objs, force_ids = None):

@@ -2,6 +2,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
+from GangaRepository import InaccessibleObjectError
 
 import time, threading
 
@@ -265,6 +266,8 @@ class Registry(object):
                     self.repository.load([id])
                 except KeyError:
                     raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id,self.name))
+                except InaccessibleObjectError, x:
+                    raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id,self.name,str(x)))
             finally:
                 self._lock.release()
 
@@ -292,6 +295,8 @@ class Registry(object):
                         self.repository.load([id])
                     except KeyError:
                         raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id,self.name))
+                    except InaccessibleObjectError, x:
+                        raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id,self.name,str(x)))
                 obj._registry_locked = True
             finally:
                 self._lock.release()
