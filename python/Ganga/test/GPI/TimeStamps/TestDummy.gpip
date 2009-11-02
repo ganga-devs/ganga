@@ -1,0 +1,23 @@
+import datetime
+
+import os
+import os.path
+from tempfile import mktemp
+from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
+from GangaTest.Framework.utils import file_contains, is_job_finished, \
+     write_file
+
+class TestDummy(GangaGPITestCase):
+
+    def test_pass(self):
+        j = Job()
+        return check(j)
+
+class check(ICheckTest):
+
+    def isReadyForCheck(self):
+        return True
+
+    def checkTest(self):
+        pass
+    

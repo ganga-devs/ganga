@@ -1,0 +1,346 @@
+import datetime
+
+import os
+import os.path
+from tempfile import mktemp
+from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
+from GangaTest.Framework.utils import file_contains, is_job_finished, \
+     write_file
+
+#Methods
+
+def singlejob():
+	j = Job(backend='Dirac')
+	j.backend.CPUTime=60
+	return j
+
+def splitjob():
+	j = Job(backend='Dirac', splitter='ArgSplitter')
+	j.backend.CPUTime=60
+	j.splitter.args=[[],[],[]]
+	return j
+
+def durations(j):
+	assert type(j.time.submissiontime()) == datetime.timedelta
+	assert type(j.time.waittime()) == datetime.timedelta
+	assert type(j.time.runtime()) == datetime.timedelta
+
+def sj_durations(j):
+	for sjs in j.subjobs:
+		assert type(sjs.time.submissiontime()) == datetime.timedelta 
+		assert type(sjs.time.waittime()) == datetime.timedelta
+		assert type(sjs.time.runtime()) == datetime.timedelta
+
+def greater_than(j1, j2):
+	assert j2.time.new() - j1.time.new() > datetime.timedelta(0,0,0), "j2 'new' is not more recent than j1 'new'"
+
+def sj_greater_than(j1, j2):
+	for i in range(0,len(j2.subjobs)):
+		for j in range(0,len(j1.subjobs)):
+			assert j2.subjobs(i).time.new() > j1.subjobs(j).time.new()
+
+def statetime1(j):
+	assert type(j.time.new()) == datetime.datetime
+	assert type(j.time.submitting()) == datetime.datetime
+	assert type(j.time.timestamps['resubmitted']) == datetime.datetime
+	assert type(j.time.backend_running()) == datetime.datetime
+	assert type(j.time.backend_final()) == datetime.datetime
+	assert type(j.time.final()) == datetime.datetime
+
+def statetime2(j):
+	assert type(j.time.new()) == datetime.datetime
+	assert type(j.time.submitting()) == datetime.datetime
+	assert type(j.time.submitted()) == datetime.datetime
+	assert type(j.time.backend_running()) == datetime.datetime
+	assert type(j.time.final()) == datetime.datetime
+	
+
+def sj_stamp_order1(j, status):
+	sj_stamplist = []
+	for sjs in j.subjobs:
+		sj_stamplist.append(sjs.time.timestamps[status])
+	sj_stamplist.sort()
+	assert j.time.timestamps[status] == sj_stamplist[0]
+
+def sj_stamp_order2(j, status):
+	sj_stamplist = []
+	for sjs in j.subjobs:
+		sj_stamplist.append(sjs.time.timestamps[status])
+	sj_stamplist.sort()
+	assert j.time.timestamps[status] == sj_stamplist[-1]
+
+#Tests
+
+class TestDirac(GangaGPITestCase):
+
+	def test_1a_basictimestamps(self):
+		j = singlejob()		
+		assert 'new' in j.time.timestamps
+		assert type(j.time.new()) == datetime.datetime
+		j.submit()
+		return check_1a_basictimestamps(j)
+
+	def test_1b_basictimestamps(self):
+		j = splitjob()
+		assert 'new' in j.time.timestamps
+		assert type(j.time.new()) == datetime.datetime
+		j.submit()
+		return check_1b_basictimestamps(j)
+
+	def test_2a_dration(self):
+		j = singlejob()
+		assert j.time.submissiontime() == None
+		assert j.time.runtime() == None
+		assert j.time.waittime() == None
+		j.submit()
+		return check_2a_duration(j)
+		
+	def test_2b_dration(self):
+		j = splitjob()
+		assert j.time.submissiontime() == None
+		assert j.time.runtime() == None
+		assert j.time.waittime() == None
+		j.submit()
+		return check_2b_duration(j)
+
+	def test_3a_copy(self):
+		j1 = singlejob()
+		assert 'new' in j1.time.timestamps.keys()
+		assert type(j1.time.new()) == datetime.datetime
+		j2 = j1.copy()
+		assert 'new' in j2.time.timestamps.keys()
+		assert type(j2.time.new()) == datetime.datetime
+		return check_3a_copy(j1, j2)
+
+	def test_3b_copy(self):
+		j1 = splitjob()
+		assert 'new' in j1.time.timestamps.keys()
+		assert type(j1.time.new()) == datetime.datetime
+		j2 = j1.copy()
+		assert 'new' in j2.time.timestamps.keys()
+		assert type(j2.time.new()) == datetime.datetime
+		return check_3b_copy(j1, j2)
+
+	def test_4a_statetime(self): #job 2/6
+		j = singlejob()
+		j.submit()
+		j.kill()
+		j.resubmit()
+		return check_4a_statetime(j) 
+
+	def test_4b_statetime(self):#job 3/6
+		j = singlejob()
+		j.submit()
+		j.force_status('failed')
+		return check_4b_statetime(j) 
+
+	def test_4c_statetime(self):#job 5/6
+		j = splitjob()
+		j.submit()
+		j.kill()
+		j.resubmit()
+		return check_4c_statetime(j)
+
+	def test_4d_statetime(self):#job 6/6
+		j = splitjob()
+		j.submit()		
+		j.force_status('failed')
+		return check_4b_statetime(j)
+
+	def test_5a_details(self):
+		j = singlejob()
+		j.submit()
+		return check_5a_details(j)
+
+	def test_5b_details(self):
+		j = splitjob()
+		j.submit()
+		return check_5b_details(j)
+
+	def test_6_sjstamporder(self):
+		j = splitjob()
+		j.submit()
+		return check_6_sjstamporder(j)
+
+	def test_7_new_sjnotoverwrite(self):
+		j = splitjob()
+		j.submit()
+		return check_7_new_sjnotoverwrite(j)
+				
+
+#Check
+
+class check_1a_basictimestamps(ICheckTest):
+
+    def isReadyForCheck(self):
+        return is_job_finished(self.j)
+
+    def checkTest(self):
+        assert 'submitting' in self.j.time.timestamps
+	assert type(self.j.time.submitting()) == datetime.datetime
+
+	assert 'submitted' in self.j.time.timestamps
+	assert type(self.j.time.submitted()) == datetime.datetime
+
+	assert 'backend_running' in self.j.time.timestamps
+	assert type(self.j.time.backend_running()) == datetime.datetime
+
+	assert 'backend_final' in self.j.time.timestamps
+	assert type(self.j.time.backend_final()) == datetime.datetime
+
+	assert 'final' in self.j.time.timestamps
+	assert type(self.j.time.final()) == datetime.datetime
+
+class check_1b_basictimestamps(ICheckTest):
+
+    def isReadyForCheck(self):
+        return is_job_finished(self.j)
+
+    def checkTest(self):
+	assert 'submitting' in self.j.time.timestamps
+	assert type(self.j.time.submitting()) == datetime.datetime
+
+	assert 'submitted' in self.j.time.timestamps
+	assert type(self.j.time.submitted()) == datetime.datetime
+
+	assert 'backend_running' in self.j.time.timestamps
+	assert type(self.j.time.backend_running()) == datetime.datetime
+
+	assert 'backend_final' in self.j.time.timestamps
+	assert type(self.j.time.backend_final()) == datetime.datetime
+
+	assert 'final' in self.j.time.timestamps
+	assert type(self.j.time.final()) == datetime.datetime
+
+	for sjs in self.j.subjobs:
+    		assert 'submitted' in sjs.time.timestamps
+    		assert type(sjs.time.submitted()) == datetime.datetime
+
+    		assert 'backend_running' in sjs.time.timestamps
+    		assert type(sjs.time.backend_running()) == datetime.datetime
+
+    		assert 'backend_final' in sjs.time.timestamps
+    		assert type(sjs.time.backend_final()) == datetime.datetime
+
+    		assert 'final' in sjs.time.timestamps
+    		assert type(sjs.time.final()) == datetime.datetime
+
+class check_2a_duration(ICheckTest):
+	
+	def isReadyForCheck(self):
+		return is_job_finished(self.j)
+
+	def checkTest(self):
+		durations(self.j)
+
+class check_2b_duration(ICheckTest):
+	
+	def isReadyForCheck(self):
+		return is_job_finished(self.j)
+
+	def checkTest(self):
+		durations(self.j)
+		sj_durations(self.j)
+
+class check_3a_copy(ICheckTest):
+
+	def __init__(self, j1, j2):
+		self.j1 = j1
+		self.j2 = j2
+
+	def isReadyForCheck(self):
+		return is_job_finished(self.j2)
+
+	def checkTest(self):
+		greater_than(self.j1, self.j2)
+		
+	
+class check_3b_copy(ICheckTest):
+
+	def __init__(self, j1, j2):
+		self.j1 = j1
+		self.j2 = j2
+
+	def isReadyForCheck(self):
+		return is_job_finished(self.j2)
+
+	def checkTest(self):
+		greater_than(self.j1, self.j2)
+		sj_greater_than(self.j1, self.j2)
+
+class check_4a_statetime(ICheckTest):
+	
+	def isReadyForCheck(self):
+		return is_job_finished(self.j)
+
+	def checkTest(self):
+		statetime1(self.j)
+		
+
+class check_4b_statetime(ICheckTest):
+	
+	def isReadyForCheck(self):
+		return is_job_finished(self.j)
+
+	def checkTest(self):
+		statetime2(self.j)
+		
+
+
+class check_4c_statetime(ICheckTest):
+	
+	def isReadyForCheck(self):
+		return is_job_finished(self.j)
+
+	def checkTest(self):
+		statetime1(self.j)
+		
+
+class check_4d_statetime(ICheckTest):
+	
+	def isReadyForCheck(self):
+		return is_job_finished(self.j)
+
+	def checkTest(self):
+		statetime2(self.j)
+	       		
+
+class check_5a_details(ICheckTest):
+	
+	def isReadyForCheck(self):
+		return is_job_finished(self.j)
+
+	def checkTest(self):
+		assert type(self.j.time.details()) == dict
+
+class check_5b_details(ICheckTest):
+	
+	def isReadyForCheck(self):
+		return is_job_finished(self.j)
+
+	def checkTest(self):
+		assert type(self.j.time.details()) != dict		
+		for i in range(0,len(self.j.subjobs)):
+			assert type(self.j.time.details(i)) == dict
+
+class check_6_sjstamporder(ICheckTest):
+	
+	def isReadyForCheck(self):
+		return is_job_finished(self.j)
+
+	def checkTest(self):
+		status_list1 = ['submitted', 'backend_running']
+		status_list2 = ['backend_final', 'final']
+		for status in status_list1:
+			sj_stamp_order1(self.j, status)
+		for status in status_list2:
+			sj_stamp_order2(self.j, status)	
+			
+class check_7_new_sjnotoverwrite(ICheckTest):
+	
+	def isReadyForCheck(self):
+		return is_job_finished(self.j)
+
+	def checkTest(self):
+		for sjs in self.j.subjobs:
+			assert sjs.time.new() > self.j.time.new()

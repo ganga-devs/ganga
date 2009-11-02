@@ -705,7 +705,7 @@ will  be automatically  converted to  {\tt File}  objects. So  the two
 lines below are equivalent:
 
 \begin{verbatim}
-j.inputsandbox = [File(extra_file')]
+j.inputsandbox = [File('extra_file')]
 j.inputsandbox = ['extra_file']
 \end{verbatim}
 
@@ -728,6 +728,113 @@ The {\tt b.dat} file will be copied (if exists) as well as all files which match
 
 
 \section{Job manipulation}
+
+\subsection{Timestamps}
+
+Changes in the Job's status are timestamped, and stored in a dictionary as python datetime objects.If you are not familiar with datetime objects the following URL will be helpful: seeurl{http://docs.python.org/library/datetime.html}{}
+
+The default stamps created are:
+
+\begin{itemize}
+\item new
+\item submitting
+\item submitted
+\item backend\_running
+\item backend\_final
+\item completing
+\item final
+\end{itemize}
+
+These are displayed in a table when the JobTime object is displayed:
+
+\begin{verbatim}
+In [4]:j.time
+Out[4]: JobTime (
+ request_counter = 5 ,
+ timestamps = '
+         Time (UTC)   Status
+- - - - - - - - - - - - - - - - - - - - -
+2009/08/05 13:13:04 - new
+2009/08/05 13:13:06 - submitting
+2009/08/05 13:13:24 - submitted
+2009/08/05 13:14:14 - backend_running
+2009/08/05 13:14:24 - backend_completing
+2009/08/05 13:14:25 - backend_final
+2009/08/05 13:14:28 - completing
+2009/08/05 13:14:31 - final
+'
+ )
+\end{verbatim}
+
+They can also be accessed and manipulated using various supported methods.
+
+\paragraph{Methods} 
+
+
+There are general functionalities of the timestamps methods:
+
+\begin{itemize}
+\item Access to individual datetime objects from the timestamps dictionary
+\item Calculation of duration between two timestamps
+\item Access to a list or dictionary of details of timing information about the job
+\end{itemize}
+
+\subparagraph{Access} 
+
+Access to the timestamps can be gained directly through the dictionary, e.g.:
+
+\begin{verbatim}
+In [5]:j.time.timestamps['new']
+Out[5]: 2009-08-05 13:13:04.034246
+\end{verbatim}
+
+And user defined stamps can be written/read to/from the dictionary:
+
+\begin{verbatim}
+In [7]:j.time.timestamps['right_now'] = datetime.utcnow()
+
+In [8]:j.time.timestamps['right_now']
+Out[8]: 2009-08-06 08:57:51.176512
+\end{verbatim}
+
+Access can also be gained using methods with names corresponding to the default stamps above:
+
+\begin{verbatim}
+In [9]:j.time.new()
+Out[9]: 2009-08-05 13:13:04.034246
+\end{verbatim}
+
+\subparagraph{duration} 
+
+There are three duration methods provided:
+
+\begin{description}
+  \item[submissiontime()] \hfill \\
+  Calculated as the duration between 'submitting' and 'submitted'
+  \item[waittime()] \hfill \\
+  Calculated as the duration between 'submitted' and 'backend\_running'
+  \item[runtime()] \hfill \\
+  Calculated as the duration between 'backend\_running' and 'backend\_completed'\ldots
+\end{description}
+
+These durations are returned as timedelta objects. With access to the dictionary of timestamps, the duration of any interval can be calculated:
+
+\begin{verbatim}
+In [10]:j.time.runtime()
+Out[10]: 0:00:11
+
+In [11]:j.time.timestamps['final'] - j.time.timestamps['submitting']
+Out[11]: 0:01:24.905958
+\end{verbatim}
+
+\subparagraph{Details} 
+
+The details of the timing information supplied by the backend can be obtained using the details() function. Depending on the backend being used, this method reads files or extracts details from an object within the backend, and returns it in a dictionary.
+
+\begin{verbatim}
+In [12]:j.time.details()
+Out[12]: {'START': datetime.datetime(2009, 8, 10, 13, 10, 22), 'STOP': datetime.datetime(2009, 8, 10, 13, 10, 32)}
+\end{verbatim}
 
 \subsection{Copying jobs}
 You may use an existing job object to create a new job. The first non-named
@@ -1690,7 +1797,7 @@ and you can create an empty  one by running \texttt{ganga -g}. A small
 section of a default configuration file is shown below.
 
 \begin{verbatim}
-# Ganga configuration file ($Name: Ganga-SVN $). DO NOT remove this line.
+# Ganga configuration file ($Name: not supported by cvs2svn $). DO NOT remove this line.
 #
 :
 :

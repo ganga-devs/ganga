@@ -1,0 +1,59 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+j = Job()
+
+j.splitter='ArgSplitter'
+
+j.splitter.args=[[],[],[]]
+
+j.submit()
+
+assert sleep_until_completed(j,500)
+
+#submitted:
+
+sj_stamplist = []
+
+for sjs in j.subjobs:
+        sj_stamplist.append(sjs.time.timestamps['submitted'])
+
+sj_stamplist.sort()
+
+assert j.time.timestamps['submitted'] == sj_stamplist[0]
+
+#backend_running:
+
+sj_stamplist = []
+
+for sjs in j.subjobs:
+        sj_stamplist.append(sjs.time.timestamps['backend_running'])
+
+sj_stamplist.sort()
+
+assert j.time.timestamps['backend_running'] == sj_stamplist[0]
+
+#backend_final:
+
+sj_stamplist = []
+
+for sjs in j.subjobs:
+        sj_stamplist.append(sjs.time.timestamps['backend_final'])
+
+sj_stamplist.sort()
+
+assert j.time.timestamps['backend_final'] == sj_stamplist[len(sj_stamplist)-1]
+
+#final:
+
+sj_stamplist = []
+
+for sjs in j.subjobs:
+        sj_stamplist.append(sjs.time.timestamps['final'])
+
+sj_stamplist.sort()
+
+assert j.time.timestamps['final'] == sj_stamplist[len(sj_stamplist)-1]
+
+#end
+
+print "test6_sjstamporder_local passed."

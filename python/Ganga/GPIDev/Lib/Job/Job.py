@@ -50,6 +50,8 @@ class JobInfo(GangaObject):
     def increment(self):
         self.submit_counter += 1
 
+from JobTime import JobTime
+
 class Job(GangaObject):
     '''Job is an interface for submision, killing and querying the jobs :-).
 
@@ -111,6 +113,7 @@ class Job(GangaObject):
     _schema = Schema(Version(1,6),{ 'inputsandbox' : FileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,doc="list of File objects shipped to the worker node "),
                                     'outputsandbox' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of filenames or patterns shipped from the worker node"),
                                     'info':ComponentItem('jobinfos',defvalue=None,doc='JobInfo '),
+                                    'time':ComponentItem('jobtime', defvalue=None,protected=1,doc='provides timestamps for status transitions'),
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
                                     'id' : SimpleItem('',protected=1,comparable=0,doc='unique Ganga job identifier generated automatically'),
@@ -146,6 +149,7 @@ class Job(GangaObject):
     # TODO: usage of **kwds may be envisaged at this level to optimize the overriding of values, this must be reviewed
     def __init__(self):
         super(Job, self).__init__()
+        self.time.newjob() #<-----------NEW: timestamp method
 
     def _readonly(self):
         return self.status != 'new'
@@ -261,6 +265,13 @@ class Job(GangaObject):
             if transition_update:
                 #we call this even if there was a hook
                 newstatus = self.transition_update(newstatus)       
+
+            if self.status != newstatus:
+                self.time.timenow(str(newstatus))
+                logger.debug("timenow('%s') called.", self.status)
+            else:
+                logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", self.status, newstatus)
+
             self.status = newstatus # move to the new state AFTER hooks are called
             self._commit()
         except Exception,x:
@@ -597,6 +608,8 @@ class Job(GangaObject):
             # prevent other sessions from submitting this job concurrently. Also calls _getWriteAccess
             self.updateStatus('submitting')
 
+            self.time.timenow('submitting')# writing to stamps is safer than updating status with untested type #self.updateStatus('submitting') #Justin 12/8/09
+
             try:
                 #NOTE: this commit is redundant if updateStatus() is used on the line above
                 self._commit()
@@ -652,6 +665,12 @@ class Job(GangaObject):
             try:
                 if not self.backend.master_submit(rjobs,jobsubconfig,jobmasterconfig):
                     raise JobManagerError('error during submit')
+
+                #FIXME: possibly should go to the default implementation of IBackend.master_submit
+                if self.subjobs:
+                    for jobs in self.subjobs:
+                        jobs.time.timenow('submitting') ### <-- this might be an inadequate place at which to timestamp submitting for subjobs
+
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
             self.info.increment()
@@ -849,7 +868,19 @@ class Job(GangaObject):
             try:
                 if self.backend.master_kill():
                     self.updateStatus('killed',transition_update=transition_update)
+
+                    ############
+                    # added as part of typestamp prototype by Justin
+                    j = self.getJobObject()
+                    if j.subjobs:
+                        for jobs in j.subjobs:
+                            if jobs.status not in ['failed', 'killed', 'completed']: ## added this 10/8/2009 - now only kills subjobs which aren't finished.
+                                jobs.updateStatus('killed',transition_update=transition_update)
+                    #
+                    ############
+
                     self._commit()
+
                     return True
                 else:
                     msg = "backend.master_kill() returned False"
@@ -882,6 +913,25 @@ class Job(GangaObject):
 
         self.status = 'submitting'
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#        #clears old stamps - neccessary?
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#        newstamps = {}
+#        newstamps['new'] = self.time.timestamps['new']
+#
+#        self.time.timestamps.clear()
+#        self.time.timestamps['new'] = newstamps['new']
+#
+#        if self.time.timestamps == newstamps:
+#            logger.debug("'new' timestamp transfer SUCCESSFUL!")
+#        else:
+#            logger.debug("'new' timestamp transfer UNSUCCESSFUL!")
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        self.time.timenow('submitting') ## << ** 
+
+
         try:
             self._commit()
         except Exception,x:
@@ -898,6 +948,12 @@ class Job(GangaObject):
             if not rjobs:
                 rjobs = [self]
 
+
+            if rjobs:
+                for sjs in rjobs:
+                    sjs.time.timenow('submitting') ## writes submitting timestamp for subjobs. 
+
+
             try:
                 if not self.backend.master_resubmit(rjobs):
                     raise JobManagerError('error during submit')
@@ -905,6 +961,13 @@ class Job(GangaObject):
                 logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s',fqid,x)
                 
             self.info.increment()
+
+            if self.subjobs: 
+                for sjs in self.subjobs:
+                    sjs.time.timenow('resubmitted') 
+            else:                
+                self.time.timenow('resubmitted') 
+
             self.status = 'submitted' # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
             self._commit() # make sure that the status change goes to the repository
         except GangaException,x:
