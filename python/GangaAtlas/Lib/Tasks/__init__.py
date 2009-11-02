@@ -4,7 +4,6 @@
 
 from Ganga.Core.GangaRepository import addRegistry
 from TaskRegistry import TaskRegistry
-print "Adding TaskRegistry"
 addRegistry(TaskRegistry("tasks", "Tasks Registry"))
 
 ## Tasks
