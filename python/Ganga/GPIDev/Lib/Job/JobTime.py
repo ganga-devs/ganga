@@ -2,6 +2,9 @@ import os
 import datetime
 import time
 
+from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Schema import *
+
 import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['datetime'] = datetime
         
