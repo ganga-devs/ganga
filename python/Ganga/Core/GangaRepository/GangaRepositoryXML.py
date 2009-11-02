@@ -261,6 +261,7 @@ class GangaRepositoryLocal(GangaRepository):
                 if x.errno == errno.ENOENT: 
                     # remove index so we do not continue working with wrong information
                     try:
+                        self._internal_del__(id) # remove internal representation
                         os.unlink(os.path.dirname(fn)+".index")
                     except OSError:
                         pass

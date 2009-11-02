@@ -258,15 +258,16 @@ class Registry(object):
             assert not "_registry_refresh" in obj.__dict__
             if not self._started:
                 raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect."%(self.find(obj),self.name))
+            self._lock.acquire()
             try:
-                self._lock.acquire()
+                id = self.find(obj)
                 try:
+                    self.repository.load([id])
+                except KeyError:
+                    raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id,self.name))
+            finally:
+                self._lock.release()
 
-                    self.repository.load([self.find(obj)])
-                finally:
-                    self._lock.release()
-            except KeyError:
-                raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (self.find(obj),self.name))
         
 
     def _write_access(self, obj):
@@ -281,15 +282,16 @@ class Registry(object):
         if not obj._registry_locked:
             self._lock.acquire()
             try:
+                id = self.find(obj)
                 try:
                     if len(self.repository.lock([self.find(obj)])) == 0:
                         raise RegistryLockError("Could not lock '%s' object #%i!" % (self.name,self.find(obj)))
                 finally: # try to load even if lock fails
                     try:
                         obj.__dict__.pop("_registry_refresh",None)
-                        self.repository.load([self.find(obj)])
+                        self.repository.load([id])
                     except KeyError:
-                        raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (self.find(obj),self.name))
+                        raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id,self.name))
                 obj._registry_locked = True
             finally:
                 self._lock.release()

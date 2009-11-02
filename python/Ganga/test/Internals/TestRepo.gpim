@@ -4,8 +4,12 @@ from Ganga.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal
 from GangaTest.Lib.TestObjects import TestGangaObject
 from Ganga.Core.GangaRepository.Registry import makeRepository, Registry
 
-location = "/tmp/ganga-TestRepo-Testdir"
-
+#location = "/tmp/ganga-TestRepo-Testdir"
+import Ganga.Utility.Config
+config = Ganga.Utility.Config.getConfig('Configuration')
+from Ganga.Runtime.Repository_runtime import getLocalRoot
+location = getLocalRoot()
+type = config['repositorytype']
 
 class FakeRegistry(object):
     def __init__(self,name):
@@ -51,6 +55,7 @@ class HammerThread(threading.Thread):
         print >> sys.stderr,  self.id, " shutdown()"
         self.repo.shutdown()
         print >> sys.stderr,  self.id, " shutdown() done!"
+        self.owned_ids = [] # locks lapse on shutdown!!!
         print >> sys.stderr,  self.id, " startup()"
         self.repo.startup()
         print >> sys.stderr,  self.id, " startup() done!"
@@ -131,11 +136,11 @@ class HammerThread(threading.Thread):
             choices = []
             choices.extend([self.updown]*1)
             choices.extend([self.uindex]*2)
-            choices.extend([self.add]*10)
-            choices.extend([self.delete]*7)
-            choices.extend([self.load]*2)
-            choices.extend([self.lock]*2)
-            choices.extend([self.check]*2)
+            choices.extend([self.add]*20)
+            choices.extend([self.delete]*15)
+            choices.extend([self.load]*5)
+            choices.extend([self.lock]*5)
+            choices.extend([self.check]*5)
             choices.extend([self.flush]*2)
             self.rng.choice(choices)()
             if not len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys()):
@@ -149,20 +154,20 @@ class TestRepo(MultipassTest):
     def __init__(self): MultipassTest.__init__(self,2)
 
     def pass1(self):
-        t = TestRepository(1,"LocalXML")
+        t = TestRepository(1)
         while not t.isReadyForCheck():
             pass
         return t.checkTest()
 
     def pass2(self):
-        t = TestRepository(1,"LocalXML")
+        t = TestRepository(1)
         while not t.isReadyForCheck():
             pass
         return t.checkTest()
 
 class TestRepository(ICheckTest):
 
-    def __init__(self,id,type):
+    def __init__(self,id):
         self.id = id
         fr = FakeRegistry("TestRegistry")
         fr.type = type
