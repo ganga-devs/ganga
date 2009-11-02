@@ -300,7 +300,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
                     Client.addDataset(dset,False)
                 except:
                     raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % dset)
-        self.firstPass=False
+            self.firstPass=False
                 
             fout.dataset=dset
             fout.lfn=pandaOutfiles[outtype]
