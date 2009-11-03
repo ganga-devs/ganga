@@ -38,7 +38,7 @@ config.addOption( 'assignedPriorityRun', 1000, 'assignedPriorityRun' )
 config.addOption( 'processingType', 'ganga', 'processingType' )
 config.addOption( 'enableDownloadLogs', False , 'enableDownloadLogs' )  
 config.addOption( 'trustIS', True , 'Trust the Information System' )  
-config.addOption( 'serverMaxJobs', 2000 , 'Maximum number of subjobs to send to the Panda server' )  
+config.addOption( 'serverMaxJobs', 5000 , 'Maximum number of subjobs to send to the Panda server' )  
 
 def queueToAllowedSites(queue):
     try:
