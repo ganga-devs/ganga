@@ -156,7 +156,7 @@ class GangaRepositoryLocal(GangaRepository):
                 listing = os.listdir(os.path.join(self.root,c))
             except OSError:
                 raise RepositoryError(self, "Could not list repository '%s'!" % (os.path.join(self.root,c)))
-            objs.update([(int(l),False) for l in listing if l.isdigit()])
+            objs.update(dict([(int(l),False) for l in listing if l.isdigit()]))
             for l in listing:
                 if l.endswith(".index") and l[:-6].isdigit():
                     id = int(l[:-6])
