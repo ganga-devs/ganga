@@ -5,11 +5,25 @@ class IMonitoringService:
     The event() method is retained for backwards compatibility and other methods by default use it.
     However it will be removed in the future.
     """
-    def __init__(self, job_info):
-        """ Initialize the monitoring service. If the monitoring service is created in ganga client then the job_info is the original job object. If the monitoring service is created on the worker node then the job_info is the result of a call to the getJobInfo() method.
+
+    def __init__(self, job_info, config_info=None):
+        """Initialize the monitoring service.
+        
+        If the monitoring service is created in the Ganga client then job_info
+        is the original job object, and config_info is the original config\
+        object returned by getConfig().
+        
+        If the monitoring service is created on the worker node then job_info is
+        the return value of getJobInfo(), and config_info is the return value of
+        getConfig().getEffectiveOptions(), i.e. a dictionary.
+        
+        In order to support existing monitoring classes, which do not use
+        config_info, if getConfig() returns None, the constructor is called with
+        only the job_info argument.
         """
         self.job_info = job_info
-        
+        self.config_info = config_info
+    
     def start(self, **opts):
         """Application is about to start on the worker node.
         Called by: job wrapper.
@@ -74,8 +88,7 @@ class IMonitoringService:
                 ]
         Note, that it should be possible to import all parent modules without side effects (so without importing automatically their other children).
         """
-        import Ganga.GPIDev.Adapters.IMonitoringService
-
+        import Ganga.GPIDev.Adapters
         return [ Ganga, Ganga.GPIDev, Ganga.GPIDev.Adapters, Ganga.GPIDev.Adapters.IMonitoringService ]
 
     def getJobInfo(self):
@@ -88,10 +101,33 @@ class IMonitoringService:
 
         return None
 
+    def getConfig():
+        """Return the config object for this class.
+        
+        By default this method returns None. If it is overridden to
+        return a Config object then the configuration is made available
+        consistently in the Ganga client and on the worker node via the instance
+        variable config_info. See __init__().
+        
+        For example, in your IMonitoringService implementation you could add::
+            def getConfig():
+                from Ganga.Utility import Config
+                return Config.getConfig("MyMS")
+            getConfig = staticmethod(getConfig)
+
+        N.B. this is a static method.
+        """
+        return None
+    getConfig = staticmethod(getConfig)
+
     def getWrapperScriptConstructorText(self):
         """ Return a line of python source code which creates the instance of the monitoring service object to be used in the job wrapper script. This method should not be overriden.
         """
-        text =  "def createMonitoringObject(): from %s import %s; return %s(%s)\n" % (self._mod_name,self.__class__.__name__,self.__class__.__name__,self.getJobInfo())
+        config = self.__class__.getConfig()
+        if config is None:
+            text = "def createMonitoringObject(): from %s import %s; return %s(%s)\n" % (self._mod_name,self.__class__.__name__,self.__class__.__name__,self.getJobInfo())
+        else:
+            text = "def createMonitoringObject(): from %s import %s; return %s(%s, %s)\n" % (self._mod_name,self.__class__.__name__,self.__class__.__name__,self.getJobInfo(),config.getEffectiveOptions())
 
         return text
 
