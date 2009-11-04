@@ -70,7 +70,22 @@ class RegistrySlice(object):
         #    ids.append(j.id)
         #self.do_select(callback,minid,maxid)
         #return ids
-
+    
+    def clean(self,confirm=False,force=False):
+        """Cleans the repository only if this slice represents the repository
+        Returns True on success and False on failure"""
+        if not hasattr(self.objects,"clean"):
+            logger.error("'clean' only works on whole registries, e.g. 'jobs.clean()'. Use remove() to delete job slices")
+            return False
+        if not confirm:
+            logger.warning("You are about to irreversibly delete the WHOLE '%s' registry, without properly cleaning up individual jobs." % (self.objects.name))
+            if force:
+                logger.warning("You will also cause any other Ganga sessions accessing this repository to shut down their operations")
+                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True,force=True)" % (self.objects.name,self.objects.name))
+            else:
+                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True)" % (self.objects.name,self.objects.name))
+            return False
+        return self.objects.clean(force)
 
     def select(self,minid=None,maxid=None,**attrs):
         import repr

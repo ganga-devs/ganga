@@ -10,6 +10,11 @@ class RegistrySliceProxy(object):
         """
         return self._impl.ids(minid,maxid)
 
+    def clean(self,confirm=False,force=False):
+        """ Cleans this registry completely.
+        Returns True on success, False on failure"""
+        return self._impl.clean(confirm,force)
+
     def __iter__(self):
         """ Looping. Example:
         for j in jobs:

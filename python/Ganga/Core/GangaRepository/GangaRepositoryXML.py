@@ -367,3 +367,22 @@ class GangaRepositoryLocal(GangaRepository):
         if len(released_ids) < len(ids):
             logger.error("The write locks of some objects could not be released!")
 
+    def get_lock_session(self,id): 
+        """get_lock_session(id)
+        Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
+        Returns None on failure
+        """
+        return self.sessionlock.get_lock_session(id)
+
+    def get_other_sessions(self): 
+        """get_session_list()
+        Tries to determine the other sessions that are active and returns an informative string for each of them.
+        """
+        return self.sessionlock.get_other_sessions()
+
+    def reap_locks(self):
+        """reap_locks() --> True/False
+        Remotely clear all foreign locks from the session.
+        WARNING: This is not nice.
+        Returns True on success, False on error."""
+        return self.sessionlock.reap_locks()

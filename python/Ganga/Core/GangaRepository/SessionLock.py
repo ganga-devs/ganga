@@ -17,6 +17,7 @@ try:
     import Ganga.Utility.logging
     logger = Ganga.Utility.logging.getLogger()
 except ImportError:
+    print "IMPORT ERROR SHOULD NOT OCCUR IN PRODUCTION CODE!!!!!!!!!!!!!!!!!!!!!!"
     from threading import Thread
     class GangaThread(Thread):
         def __init__(self,name):
@@ -115,7 +116,10 @@ class SessionLockManager(GangaThread):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
         self.locked = Set()
         self.stop()
-        self.join()
+        try:
+            self.join()
+        except AssertionError:
+            pass
 
     # Global lock function
     def global_lock_setup(self):
@@ -299,7 +303,7 @@ class SessionLockManager(GangaThread):
                         if x.errno != errno.ENOENT:
                             raise RepositoryError(self.repo, "Session file timestamp could not be updated! Locks will be lost!")
                         else:
-                            raise RepositoryError(self.repo, "Own session file not found! Possibly deleted by another ganga session - the system clocks on computers running Ganga must be synchronized!")
+                            raise RepositoryError(self.repo, "Own session file not found! Possibly deleted by another ganga session. If this was unintentional: check if the system clocks on computers running Ganga are synchronized!")
                     # Clear expired session files
                     try:
                         now = os.stat(self.fn).st_ctime
@@ -312,7 +316,7 @@ class SessionLockManager(GangaThread):
                         # nothing really important, another process deleted the session before we did.
                         logger.warning("Unimportant OSError in loop: %s" % x)
                 except RepositoryError:
-                    raise
+                    break
                 except Exception, x:
                     logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
                 time.sleep(1+random.random())
@@ -356,6 +360,66 @@ class SessionLockManager(GangaThread):
 
         finally:
             self.global_lock_release()
+
+
+    def get_lock_session(self,id): 
+        """get_lock_session(id)
+        Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
+        Returns None on failure
+        """
+        self.global_lock_acquire()
+        try:
+            sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session")]
+            for session in sessions:
+                try:
+                    sf = os.path.join(self.sdir,session)
+                    fd = -1
+                    if not self.afs:
+                        fd = os.open(sf, os.O_RDONLY)
+                        fcntl.lockf(fd,fcntl.LOCK_SH) # ONLY NFS
+                    names = pickle.load(file(sf))
+                    if not self.afs and fd > 0:
+                        fcntl.lockf(fd,fcntl.LOCK_UN) # ONLY NFS
+                        os.close(fd)
+                    if id in names:
+                        return self.session_to_info(session[:-8])
+                except Exception, x:
+                    continue
+        finally:
+            self.global_lock_release()
+
+    def get_other_sessions(self): 
+        """get_session_list()
+        Tries to determine the other sessions that are active and returns an informative string for each of them.
+        """
+        self.global_lock_acquire()
+        try:
+            sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir,s) == self.fn]
+            return [self.session_to_info(session) for session in sessions]
+        finally:
+            self.global_lock_release()
+
+    def reap_locks(self):
+        """reap_locks() --> True/False
+        Remotely clear all foreign locks from the session.
+        WARNING: This is not nice.
+        Returns True on success, False on error."""
+        failed = False
+        self.global_lock_acquire()
+        try:
+            sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir,s) == self.fn]
+            for session in sessions:
+                try:
+                    sf = os.path.join(self.sdir,session)
+                    os.unlink(sf)
+                except OSError,x:
+                    failed = True
+            return failed
+        finally:
+            self.global_lock_release()
+
+    def session_to_info(self,session):
+        return session
 
 def test1():
     slm = SessionLockManager("locktest","tester")

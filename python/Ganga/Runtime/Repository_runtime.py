@@ -10,8 +10,7 @@ logger = getLogger()
 
 import os.path
 from Ganga.Utility.files import expandfilename
-from Ganga.Core.exceptions import RepositoryError
-from Ganga.Core.GangaRepository import getRegistries
+from Ganga.Core.GangaRepository import getRegistries, RepositoryError
 
 def requiresAfsToken():
     from Ganga.Utility.files import fullpath
@@ -80,6 +79,7 @@ def shutdown():
     logger.debug("registry shutdown")
     for registry in getRegistries():
         if not registry.name in started_registries: continue
+        started_registries.remove(registry.name) # in case this is called repeatedly, only call shutdown once
         registry.shutdown() # flush and release locks
-        started_registries.remove(registry.name)
+
 

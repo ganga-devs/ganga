@@ -92,7 +92,7 @@ class Registry(object):
 
     def ids(self):
         """ Returns the list of ids of this registry """
-        if time.time() > self._update_index_timer + self.update_index_time:
+        if self._started and time.time() > self._update_index_timer + self.update_index_time:
             self._lock.acquire()
             try:
                 self.repository.update_index()
@@ -106,7 +106,7 @@ class Registry(object):
     def items(self):
         """ Return the items (ID,obj) in this registry. 
         Recommended access for iteration, since accessing by ID can fail if the ID iterator is old"""
-        if time.time() > self._update_index_timer + self.update_index_time:
+        if self._started and time.time() > self._update_index_timer + self.update_index_time:
             self._lock.acquire()
             try:
                 self.repository.update_index()
@@ -139,15 +139,29 @@ class Registry(object):
         except AttributeError:
             raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % obj)
         except AssertionError:
+            raise ObjectNotInRegistryError("Object %s is a duplicated version of the one in this registry!" % obj)
+        except KeyError:
             raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % obj)
 
-    def clean(self):
-        """Tries to delete all elements of the registry (that it can lock)"""
-        for obj in self.values():
-            try:
-                self._remove(obj)
-            except Exception, x:
-                logger.error("Error while removing object #%i: %s" % (self.find(obj), x))
+    def clean(self,force=False):
+        """Deletes all elements of the registry, if no other sessions are present.
+        if force == True it removes them regardless of other sessions.
+        Returns True on success, False on failure."""
+        if not self._started:
+            raise RegistryAccessError("Cannot clean a disconnected repository!")
+        self._lock.acquire()
+        try:
+            if not force:
+                other_sessions = self.repository.get_other_sessions()
+                if len(other_sessions) > 0:
+                    logger.error("The following other sessions are active and have blocked the clearing of the repository: \n * %s" % ("\n * ".join(other_sessions)))
+                    return False
+            self.repository.reap_locks()
+            self.repository.delete(self._objects.keys())
+            self.dirty_objs = {}
+            self.dirty_hits = 0
+        finally:
+            self._lock.release()
 
 # Methods that can be called by derived classes or Ganga-internal classes like Job
 # if the dirty objects list is modified, the methods must be locked by self._lock
@@ -157,6 +171,8 @@ class Registry(object):
         """ Add an object to the registry and assigns an ID to it. 
         use force_index to set the index (for example for metadata). This overwrites existing objects!
         Raises RepositoryError"""
+        if not self._started:
+            raise RegistryAccessError("Cannot add objects to a disconnected repository!")
         self._lock.acquire()
         try:
             if force_index is None:
@@ -182,6 +198,8 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryLockError
         Raise ObjectNotInRegistryError"""
+        if not self._started:
+            raise RegistryAccessError("Cannot remove objects from a disconnected repository!")
         if not auto_removed and "remove" in obj.__dict__:
             obj.remove()
         else:
@@ -255,10 +273,10 @@ class Registry(object):
         Raise RegistryKeyError"""
         #logger.debug("_read_access(%s)" % obj)
         if not obj._data or "_registry_refresh" in obj.__dict__:
-            obj.__dict__.pop("_registry_refresh",None)
-            assert not "_registry_refresh" in obj.__dict__
             if not self._started:
                 raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect."%(self.find(obj),self.name))
+            obj.__dict__.pop("_registry_refresh",None)
+            assert not "_registry_refresh" in obj.__dict__
             self._lock.acquire()
             try:
                 id = self.find(obj)
@@ -365,3 +383,14 @@ class Registry(object):
         finally:
             self._lock.release()
 
+    def info(self):
+        """Returns an informative string onFlush and disconnect the repository. Called from Repository_runtime.py """
+        self._lock.acquire()
+        try:
+            other_sessions = self.repository.get_other_sessions()
+            s = "Registry '%s': %i objects"
+            if len(other_sessions) > 0:
+                s += ", %i other concurrent sessions:\n * %s" % (self.name, len(self._objects), len(other_sessions), "\n * ".join(other_sessions))
+            return s
+        finally:
+            self._lock.release()

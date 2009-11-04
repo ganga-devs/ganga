@@ -49,12 +49,12 @@ class InaccessibleObjectError(GangaException):
 class RepositoryError(GangaException):
     """ This error is raised if there is a fatal error in the repository."""
     def __init__(self,repo,what):
-        GangaException.__init__(self,what)
         self.what=what
         self.repository = repo
         logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
         logger.error('If you believe the problem has been solved type "reactivate()" to re-enable ')
         disableInternalServices()
+        GangaException.__init__(self,what)
 
 class GangaRepository(object):
     """ GangaRepository is the base class for repository backend implementations.
@@ -142,6 +142,27 @@ class GangaRepository(object):
         EXPERIMENTAL - does not have to be implemented.
         """
         pass
+
+# Optional but suggested functions
+    def get_lock_session(self,id): 
+        """get_lock_session(id)
+        Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
+        Returns None on failure
+        """
+        return None
+
+    def get_other_sessions(self): 
+        """get_session_list()
+        Tries to determine the other sessions that are active and returns an informative string for each of them.
+        """
+        return []
+
+    def reap_locks(self):
+        """reap_locks() --> True/False
+        Remotely clear all foreign locks from the session.
+        WARNING: This is not nice.
+        Returns True on success, False on error."""
+        return False
 
 # Internal helper functions for derived classed
     def _make_empty_object_(self, id, category, classname):
