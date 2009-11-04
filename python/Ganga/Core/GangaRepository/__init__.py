@@ -3,7 +3,7 @@ Provides Persistency and the base class for all Registries
 Also, a list of all Registries is kept here
 """
 import GangaRepository
-from Ganga.Core import RepositoryError
+from GangaRepository import RepositoryError
 from Registry import RegistryError, RegistryAccessError, RegistryKeyError, RegistryLockError, ObjectNotInRegistryError
 
 allRegistries = {}
