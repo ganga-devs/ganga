@@ -160,15 +160,14 @@ class Francesc(IApplication):
         """Build the code in the release area the application object points
         to. The actual command executed is "cmt broadcast make <argument>"
         after the proper configuration has taken place."""
-        command = '###CMT### config \n ###CMT### broadcast ###CMT### make ' \
-                  + argument
+        command = '###CMT### broadcast cmt make ' + argument
         CMTscript.CMTscript(self,command)
 
     def cmt(self, command):
         """Execute a cmt command in the cmt user area pointed to by the
         application. Will execute the command "cmt <command>" after the
         proper configuration. Do not include the word "cmt" yourself."""
-        command = '###CMT### config \n ###CMT### '+command
+        command = '###CMT### ' + command
         CMTscript.CMTscript(self,command)
 
     def _master_configure(self):

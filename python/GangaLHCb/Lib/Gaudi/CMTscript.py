@@ -11,6 +11,7 @@ import tempfile
 import shutil
 from Ganga.Utility.Shell import Shell
 import Ganga.Utility.logging
+from GaudiUtils import available_packs
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -47,26 +48,14 @@ def CMTscript(app,command=''):
          app       - The Gaudi application object to take information from
          command   - String [default ''] The cmt command to execute.
    """
-   cmtroot = os.getenv('CMTROOT')
-   cmtbin  = os.getenv('CMTBIN')
    cmtcmd  = 'cmt'
-   if cmtbin and cmtroot :
-      cmtcmd = cmtroot + os.sep + cmtbin + os.sep + 'cmt'
-
    warnings.filterwarnings('ignore', 'tempnam', RuntimeWarning)
-   tmppath   = tempfile.mktemp()
-   tmpcmtdir = os.path.join(tmppath,'cmttemp','v1','cmt')
-   reqfname  = os.path.join(tmpcmtdir,'requirements')
-
    appname = app.get_gaudi_appname()
-   if not os.path.exists(tmpcmtdir):
-      os.makedirs(tmpcmtdir) 
-   reqfile = open(reqfname,'w')
-   reqfile.write('use '+appname+' '+app.version+' '+app.package+'\n')
+   packname = app.package
+   use = ''
    if app.masterpackage:
       (pack, alg, ver) = parse_master_package(app.masterpackage)
-      reqfile.write('use '+alg+' '+ver+' '+pack+'\n')
-   reqfile.close()
+      use = '--use "%s %s %s"' % (alg,ver,pack)
 
    ura = app.user_release_area
    if not ura:
@@ -74,29 +63,26 @@ def CMTscript(app,command=''):
       if expanded == "$User_release_area": ura = ""
       else: ura = expanded.split(os.pathsep)[0]
       
-   cmtoption = '-pack=cmttemp -version=v1 -path='+ tmppath
+   cmtoption = '-pack=%s/%s' % (packname,appname)
 
    # generate shell script
    script='#!/bin/sh\n'
    script+='unalias -a\n'
-   script+='unset CMTPROJECTPATH\n'
    script+='export CMTCONFIG='+str(app.platform)+'\n' 
    script+='export User_release_area='+str(ura)+'\n'
+   script+='unset CMTPROJECTPATH\n'
    script+='. setenvProject.sh '
    setupProjectOptions = ''
    if app.setupProjectOptions: setupProjectOptions = app.setupProjectOptions
-   script+= '%s %s %s\n' % (setupProjectOptions,appname,app.version)
-   script+='[ x$CMTPATH == x ] || cd ' + str(app.user_release_area) + '\n'
-   script+='pwd\n'
+   script+= '%s %s %s %s\n' % (use,setupProjectOptions,appname,app.version)
    command=command.replace('###CMT###',cmtcmd + ' ' + cmtoption)
    logger.debug('Will execute the command: '+command)
-
    script += command + '\n'
-
    logger.debug('The full script for execution:\n'+script)
 
    # write file
    try:
+      tmppath = tempfile.mkdtemp()
       fn = os.path.join(tmppath, 'cmtcommand_script')
       file1 = open(fn, 'w')
    except Exception, e:
@@ -110,12 +96,9 @@ def CMTscript(app,command=''):
 
    # make file executable
    os.chmod(fn, 0777)
-
    shell = Shell()  
    rc=shell.system(fn)
-
-   if os.path.exists(tmppath) :
-      shutil.rmtree(tmppath)
+   if os.path.exists(tmppath): shutil.rmtree(tmppath)
 
    return True
 
