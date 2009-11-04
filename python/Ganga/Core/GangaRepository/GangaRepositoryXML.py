@@ -173,7 +173,7 @@ class GangaRepositoryLocal(GangaRepository):
         """ Update the list of available objects
         Raise RepositoryError"""
         # First locate and load the index files
-        logger.info("updating index...")
+        logger.debug("updating index...")
         objs = self.get_index_listing()
         summary = []
         for id, idx in objs.iteritems():
@@ -211,7 +211,7 @@ class GangaRepositoryLocal(GangaRepository):
                 self.known_bad_ids.append(id)
             for exc,ids in cnt.items():
                 logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
-        logger.info("updated index done")
+        logger.debug("updated index done")
 
     def add(self, objs, force_ids = None):
         """ Add the given objects to the repository, forcing the IDs if told to.
