@@ -72,6 +72,31 @@ Type help() or help('index') for online help.
 
 This is free software (GPL), and you are welcome to redistribute it
 under certain conditions; type license() for details.
+
+
+****************************************************************************
+THIS IS A XML REPOSITORY PROTOTYPE - UNTESTED, UNSTABLE, MAY LOOSE YOUR JOBS
+****************************************************************************
+
+SOME DEFAULTS HAVE BEEN CHANGED TEMPORARILY FOR TESTING
+
+~/gangadir-TMP-5.0
+~/.gangarc-TMP-5.0
+
+If you want to automatically migrate your existing jobs then
+update the ~/.gangarc-TMP-5.0 file to point to your existing 
+~/gangadir directory. Your old jobs will still be usable with
+production releases 4.4.x and should not be affected in any way.
+New jobs created in this 5.5.0 beta release will not be available
+if you go back to 4.4.x.
+
+WARNING: for absolute safety make sure to do a backup of your current 
+~/gangadir directory before you start playing with this beta release!
+
+****************************************************************
+THIS IS A BETA RELEASE FOR TESTING - YOU HAVE BEEN WARNED !!!
+****************************************************************
+
 """ % _gangaVersion
         else:
             self.hello_string = hello_string
@@ -80,7 +105,7 @@ under certain conditions; type license() for details.
         self.interactive = True
 
         import os.path
-        self.default_config_file = os.path.expanduser('~/.gangarc')
+        self.default_config_file = os.path.expanduser('~/.gangarc-TMP-5.0')
 
         # this is a TEMPORARY hack to enable some GUI-specific parts of the core such as monitoring
         # replaced by self.options.GUI
@@ -187,7 +212,7 @@ under certain conditions; type license() for details.
             shutil.copy(os.path.join(os.path.dirname(_gangaPythonPath),'templates',configtemplate),where)
             print >> sys.stderr, 'Created standard config file',where
             
-        gangadir = os.path.expanduser('~/gangadir')
+        gangadir = os.path.expanduser('~/gangadir-TMP-5.0')
         if not os.path.exists(gangadir) \
            and not os.path.exists(self.default_config_file) \
            and not self.options.config_file_set_explicitly:
@@ -364,8 +389,8 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
 
         config.addOption('TextShell','IPython',""" The type of the interactive shell: IPython (cooler) or Console (limited)""")
         config.addOption('StartupGPI','','block of GPI commands executed at startup')
-        config.addOption('gangadir',Ganga.Utility.Config.expandvars(None,'~/gangadir'),'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.',filter=Ganga.Utility.Config.expandvars)
-        config.addOption('repositorytype','LocalAMGA','Type of the repository.',examples='LocalAMGA,RemoteAMGA,LocalXML')
+        config.addOption('gangadir',Ganga.Utility.Config.expandvars(None,'~/gangadir-TMP-5.0'),'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.',filter=Ganga.Utility.Config.expandvars)
+        config.addOption('repositorytype','LocalXML','Type of the repository.',examples='LocalXML')
         config.addOption('workspacetype','LocalFilesystem','Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
 
         config.addOption('user','','User name. The same person may have different roles (user names) and still use the same gangadir. Unless explicitly set this option defaults to the real user name.')
