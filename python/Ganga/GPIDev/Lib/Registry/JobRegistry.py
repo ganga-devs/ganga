@@ -84,7 +84,7 @@ class JobRegistrySlice(RegistrySlice):
                 raise RegistryKeyError('Job id=%d not found'%id)
         elif t is tuple:
             ids = id
-        elif t is list:
+        elif t is str:
             ids = id.split(".")
         else:
             raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
