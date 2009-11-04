@@ -53,6 +53,20 @@ def safe_save(fn,obj,to_file,ignore_subs=''):
     except OSError, e:
         raise IOError("Error on moving file %s.new (%s) " % (fn,e))
 
+def rmrf(name):
+    if os.path.isdir(name):
+        for sfn in os.listdir(name):
+            rmrf(os.path.join(name,sfn))
+        try:
+            os.removedirs(name)
+        except OSError:
+            pass
+    else:
+        try:
+            os.unlink(name)
+        except OSError:
+            pass
+
 class GangaRepositoryLocal(GangaRepository):
     """GangaRepository Local"""
 
@@ -348,19 +362,7 @@ class GangaRepositoryLocal(GangaRepository):
                 pass
             self._internal_del__(id)
 
-            def rmrf(name):
-                if os.path.isdir(name):
-                    for sfn in os.listdir(name):
-                        rmrf(os.path.join(name,sfn))
-                    try:
-                        os.removedirs(name)
-                    except OSError:
-                        pass
-                else:
-                    try:
-                        os.unlink(name)
-                    except OSError:
-                        pass
+
             rmrf(os.path.dirname(fn))
 
     def lock(self,ids):
@@ -390,3 +392,12 @@ class GangaRepositoryLocal(GangaRepository):
         WARNING: This is not nice.
         Returns True on success, False on error."""
         return self.sessionlock.reap_locks()
+
+    def clean(self):
+        """clean() --> True/False
+        Clear EVERYTHING in this repository, counter, all jobs, etc.
+        WARNING: This is not nice."""
+        self.shutdown()
+        rmrf(self.root)
+        self.startup()
+        

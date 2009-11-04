@@ -160,6 +160,7 @@ class Registry(object):
             self.repository.delete(self._objects.keys())
             self.dirty_objs = {}
             self.dirty_hits = 0
+            self.repository.clean()
         finally:
             self._lock.release()
 

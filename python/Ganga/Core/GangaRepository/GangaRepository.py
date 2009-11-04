@@ -143,6 +143,13 @@ class GangaRepository(object):
         """
         pass
 
+    def clean(self):
+        """clear() --> None
+        Remove the Repository completely (rm -rf) and set it up again.
+        Very violent. Use with caution.
+        """
+        pass
+
 # Optional but suggested functions
     def get_lock_session(self,id): 
         """get_lock_session(id)
