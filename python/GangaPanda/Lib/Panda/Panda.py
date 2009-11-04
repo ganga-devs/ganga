@@ -355,25 +355,38 @@ class Panda(IBackend):
             raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
 
         retryJobs = [] # jspecs
+        retrySite    = None
+        retryElement = None
+        retryDestSE  = None
         resubmittedJobs = [] # ganga jobs
         for job in jspecs:
             if job.jobStatus == 'failed':
                 oldID = job.PandaID
+                # unify sitename
+                if retrySite == None:
+                    retrySite = job.computingSite
+                    retryElement = job.computingElement
+                    retryDestSE = job.destinationSE
                 # reset
                 job.jobStatus = None
                 job.commandToPilot = None
                 job.startTime = None
                 job.endTime = None
                 job.attemptNr = 1+job.attemptNr
+                for attr in job._attributes:
+                    if attr.endswith('ErrorCode') or attr.endswith('ErrorDiag'):
+                        setattr(job,attr,None)
                 job.transExitCode = None
-                job.pilotErrorCode = None
-                job.exeErrorCode = None
-                job.ddmErrorCode = None
-                job.taskBufferErrorCode = None
+                job.computingSite = retrySite
+                job.computingElement = retryElement
                 job.dispatchDBlock = None
+                job.jobExecutionID = job.jobDefinitionID
                 for file in job.Files:
                     file.rowID = None
-                    if file.type in ('output','log'):
+                    if file.type == 'input':
+                        file.status = 'ready'
+                    elif file.type in ('output','log'):
+                        file.destinationSE = retryDestSE
                         file.destinationDBlock=file.dataset
                         # add attempt nr
                         oldName  = file.lfn
@@ -382,10 +395,6 @@ class Panda(IBackend):
                         newName  = file.lfn
                         # modify jobParameters
                         job.jobParameters = re.sub("'%s'" % oldName ,"'%s'" % newName, job.jobParameters)
-                    elif file.type == 'input' and re.search('\.lib\.tgz',file.lfn)==None:
-                        # reset dispatchDBlock
-                        if file.status != 'ready':
-                            file.dispatchDBlock = None
                 retryJobs.append(job)
                 resubmittedJobs.append(jobIDs[oldID])
             elif job.jobStatus == 'finished':
@@ -406,7 +415,9 @@ class Panda(IBackend):
        
         for job, newJobID in zip(resubmittedJobs,newJobIDs):
             job.backend.id = newJobID[0]
+            job.backend.url = 'http://panda.cern.ch?job=%d'%newJobID[0]
             job.backend.status = None
+            job.backend.jobSpec = {}
             job.updateStatus('submitted')
 
         logger.info('Resubmission successful')
