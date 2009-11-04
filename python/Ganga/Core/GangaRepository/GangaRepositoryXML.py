@@ -230,6 +230,10 @@ class GangaRepositoryLocal(GangaRepository):
                 if e.errno != errno.EEXIST: 
                     raise RepositoryError(self,"OSError on mkdir: %s" % (str(e)))
             self._internal_setitem__(ids[i], objs[i])
+            # Set subjobs dirty - they will not be flushed if they are not.
+            if self.sub_split and self.sub_split in objs[i]._data:
+                for j in range(len(objs[i]._data[self.sub_split])):
+                    objs[i]._data[self.sub_split][j]._dirty = True
         return ids
 
     def flush(self, ids):
