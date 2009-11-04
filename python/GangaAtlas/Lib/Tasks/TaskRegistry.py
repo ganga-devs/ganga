@@ -72,7 +72,7 @@ class TaskRegistry(Registry):
                     else:
                         continue
                 except RegistryError:
-                    pass
+                    continue
                 if self._main_thread.should_stop():
                     break
                 try:
