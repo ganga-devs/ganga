@@ -36,7 +36,7 @@ ganga/python/GangaPlotter                                              GangaPlot
 ganga/python/GangaRobot                                                GangaRobot-20-4
 
 #kuba
-ganga/python/GangaTest                                                 GangaTest-21-2
+ganga/python/GangaTest                                                 GangaTest-XMLMigration-1-0
 
 #kuba/hclee
 ganga/python/GangaTutorial                                             GangaTutorial-20-3
