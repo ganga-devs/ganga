@@ -131,7 +131,7 @@ class LHCbDataset(Dataset):
             if isLFN(f): lfns.append(f.name)
         return lfns
 
-    def getPFNs(self):
+    def getPFNs(self): 
         'Returns a list of all PFNs (by name) stored in the dataset.'
         pfns = []
         if not self: return pfns
