@@ -27,7 +27,9 @@ class LHCbDataFile(GangaObject):
     def __init__(self,name=''):        
         super(LHCbDataFile,self).__init__()
         self.name = name
-        logger.warning("LHCbDataFile is depricated!")
+        logger.warning("LHCbDataFile is depricated! It has been replaced by "\
+                       "LogicalFile and PhysicalFile (see documentation for "\
+                       "help).")
                 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
