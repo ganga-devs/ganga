@@ -161,7 +161,7 @@ class DQ2JobSplitter(ISplitter):
                 elif job.backend.requirements.cloud:
 
                     # to a check for the 'ALL' cloud option and if given, reduce the selection
-                    if job.backend.requirements.cloud == 'ALL' and not job.backend.requirements.sites and job.outputdata._name == 'DQ2OutputDataset':
+                    if job.backend.requirements.cloud == 'ALL' and not job.backend.requirements.sites and job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
                         logger.warning('DQ2OutputDataset being used with \'ALL\' cloud option. Restricting to a single cloud. Note this may not allow all data to be analysed.')
 
                         avail_clouds = {}
