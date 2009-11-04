@@ -13,7 +13,7 @@ def _initconfig():
         config.addOption('port', 6163, 'The port to connect to')
         config.addOption('username', '', '') 
         config.addOption('password', '', '') 
-        config.addOption('message_destination', '/topic/ganga.status', '')
+        config.addOption('message_destination', '/queue/ganga.status', '')
         # prevent modification during the interactive ganga session
         def deny_modification(name,x):
             raise Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
