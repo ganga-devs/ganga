@@ -2,8 +2,7 @@ from AMAAthena import *
 from AMADriverConfig import *
 from AMAAthenaLocalRTHandler import *
 from AMAAthenaLCGRTHandler import *
-from StagerJobSplitter import *
-from StagerDataset import *
+from AMAAthenaPandaRTHandler import *
 from SimpleStagerBroker import *
 
 ## introduce new DQ2 configuration variable
