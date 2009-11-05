@@ -16,7 +16,7 @@
 \def\gauss {\textsc{Gauss}\xspace}
 \def\grid {\textsc{Grid}\xspace}
 \def\majorv {5}
-\def\minorv {1.2}
+\def\minorv {4.0}
 \def\totalv {\majorv.\minorv}
 \def\release{\ganga-\totalv}
 
@@ -476,12 +476,12 @@ will be lost.
 \end{notice}
 
 For \gaudi jobs (e.g. \davinci, \gauss, etc.), all files created by 
-\texttt{NTupleSvc}, \textit{EvtTupleSvc}, \texttt{HistogramPersistencySvc}, 
+\texttt{NTupleSvc}, \texttt{EvtTupleSvc}, \texttt{HistogramPersistencySvc}, 
 \texttt{MicroDSTStream},
 \texttt{GaussTape}, \texttt{DigiWriter} and \texttt{DstWriter} are 
 automatically collected and added to either the output data or sandbox.
 The default behavior is to place all files created by 
-\texttt{NTupleSvc}, \textit{EvtTupleSvc}, \texttt{HistogramPersistencySvc} and
+\texttt{NTupleSvc}, \texttt{EvtTupleSvc}, \texttt{HistogramPersistencySvc} and
 \texttt{MicroDSTStream} into the output sandbox and all files created by 
 \texttt{GaussTape}, \texttt{DigiWriter} and \texttt{DstWriter} into the 
 output data. Users can tailor this to fit their needs by modifying the
