@@ -499,6 +499,7 @@ class StagerDataset(DQ2Dataset):
         'exclude_names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to exclude from processing', hidden=1),
         'number_of_files' : SimpleItem(defvalue = 0, doc = 'Number of files. ', hidden=1),
         'type'       : SimpleItem(defvalue = 'DQ2',  doc = 'Dataset type: DQ2 (refer to a DQ2 dataset), CASTOR/DPM (refer to a castor/dpm path) or LOCAL (refer to a local directory)', hidden=0),
+        'xrootd_access': SimpleItem(defvalue = False,  doc = 'Sets to True for staging the dataset files via xrootd protocol.', hidden=0),
         'datatype'   : SimpleItem(defvalue = '', doc = 'Data type: DATA, MC or MuonCalibStream', hidden=0),
         'accessprotocol'       : SimpleItem(defvalue = '', doc = 'Accessprotocol to use on worker node, e.g. Xrootd', hidden=1),
         'match_ce_all' : SimpleItem(defvalue = False, doc = 'Match complete and incomplete sources of dataset to CE during job submission', hidden=1),
@@ -891,8 +892,36 @@ class StagerDataset(DQ2Dataset):
             f.write('FLAGS: GridCopy=1\n')
             if not self.names:
                 self.names = self.get_surls().values().sort()
-            for fpath in self.names:
-                f.write('gridcopy://%s\n' % fpath)
+
+            if self.xrootd_access:
+
+                def __get_stage_host__(setype):
+                    stage_host = ''
+                    env_key = ''
+                    try:
+                        if setype in ['CASTOR']:
+                            env_key = 'STAGE_HOST'
+                        elif setype in ['DPM']:
+                            env_key = 'DPM_HOST'
+                        stage_host = os.environ[env_key]
+                    except KeyError:
+                        logger.warning('$%s not defined. xrootd_access disabled.' % env_key)
+                    return stage_host
+
+                ## try to resolve the xrootd host
+                ##  - for CASTOR, it's the env. variable $STAGE_HOST
+                ##  - for DPM, it's the env. variable $DPM_HOST (to be confirmed)
+                stage_host = __get_stage_host__(self.type)
+
+                if not stage_host:
+                    self.xrootd_access = False
+
+            if self.xrootd_access and stage_host:  
+                for fpath in self.names:
+                    f.write('gridcopy://root://%s/%s\n' % (stage_host, fpath))
+            else:
+                for fpath in self.names:
+                    f.write('gridcopy://%s\n' % fpath)
 
         elif self.type in ['LOCAL']:
             ## work through underlying directories to get '*.root*' files
@@ -923,6 +952,10 @@ class StagerDataset(DQ2Dataset):
         copy_cmd = 'wrapper_lcg-cp'
         if self.type in ['CASTOR','DPM']:
             copy_cmd = 'rfcp'
+
+            if self.xrootd_access:
+                copy_cmd = 'xrdcp'
+
         elif self.type in ['LOCAL']:
             copy_cmd = 'cp'
 
