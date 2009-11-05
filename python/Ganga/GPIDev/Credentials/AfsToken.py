@@ -1,14 +1,12 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: AfsToken.py,v 1.4 2009-03-18 18:28:15 karl Exp $
+# $Id: AfsToken.py,v 1.4 2009/03/18 18:28:15 karl Exp $
 ################################################################################
 #
 # File: AfsToken.py
 # Author: K. Harrison
 # Created: 060608
-#
-# 18/03/2009 MWS: Added the 'log' option to isValid
 #
 # 06/07/2006 KH:  Changed to Ganga.Utility.Shell for shell commands
 #
@@ -78,13 +76,19 @@
 # 02/07/2008 KH: Update to use requiresAfsToken() function of
 #                Ganga.Runtime.Repository_runtime to determine 
 #                whether Ganga repository is on AFS
-
+#
+# 18/03/2009 MWS: Added the 'log' option to isValid()
+#
+#
+# 18/03/2009 MWS: Added the 'force_check' argument to timeleft()
+#                 and timeleftInMHS()
+#
 
 """Module defining class for creating, querying and renewing AFS token"""
                                                                                 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "02 July 2008"
-__version__ = "1.15"
+__date__    = "05 November 2009"
+__version__ = "1.16"
 
 import os
 import time
@@ -220,8 +224,8 @@ class AfsToken ( ICredential ):
 
       return available
 
-   def isValid( self, validity = "", log = False ):
-      return ICredential.isValid( self, validity, log )
+   def isValid( self, validity = "", log = False, force_check = False ):
+      return ICredential.isValid( self, validity, log, force_check )
 
    def location( self ):
       """
@@ -232,10 +236,10 @@ class AfsToken ( ICredential ):
    def renew( self, validity = "", maxTry = 0, minValidity = "", check = True ):
       return ICredential.renew( self, validity, maxTry, minValidity, check )
 
-   def timeleft( self, units = "hh:mm:ss" ):
-      return ICredential.timeleft( self, units )
+   def timeleft( self, units = "hh:mm:ss", force_check = False ):
+      return ICredential.timeleft( self, units, force_check = force_check )
 
-   def timeleftInHMS( self ):
+   def timeleftInHMS( self, force_check = False ):
 
       localTuple = time.localtime()
       status, output, message = self.shell.cmd1( self.command.info )
