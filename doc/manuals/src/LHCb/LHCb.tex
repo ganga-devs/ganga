@@ -120,7 +120,7 @@ Out[2]: DaVinci (
  masterpackage = None ,
  platform = 'slc4_ia32_gcc34' ,
  version = 'v19r13' ,
- lhcb_release_area = '/afs/cern.ch/lhcb/software/releases' ,
+ setupProjectOptions = '',
  user_release_area = '/afs/cern.ch/user/u/uegede/cmtuser' ,
  optsfile = []
  )
@@ -171,8 +171,7 @@ j.application.getpack('Phys/DaVinci \davinciv')
 \item[masterpackage] The package where your top level requirements file is
   read from. Can be written either as a path \texttt{Tutorial/Analysis/v6r0}
   or in a \texttt{CMT} style notation \texttt{Analysis v6r0 Tutorial}.
-\item[lhcb_release_area] The location of the \lhcb releases. As an example
-  this can be changed to point to the \texttt{DEV} area.
+\item[setupProjectOptions] Extra options to be passed onto the SetupProject command used for configuring the environment.
 \item[platform] The architecture (like 32bit versus 64 bit) that will be used
   to run your job. If you change this you have to make sure your own DLLs are
   complied for the correct architecture as well. The best way to make sure
@@ -283,26 +282,13 @@ commands it will affect all jobs where the application points to this area.
 For the more experience users of \gaudi, there is also the possibility to use
 \gaudipython. In this mode of working you are in control of loading shared
 libraries, importing modules and executing the event loop yourself. The
-\gaudipython application handler allows you to work like this. The parameters
-the \gaudipython handler takes are:
-\begin{description}
-\item[project] The \texttt{project} used for configuring the environment. By
-  default it is using \texttt{Davinci}.
-\item[version] The version of the project used for configuring the
-  environment. By default using the latest available.
-\item[script] The script that is executed. You can either give a single script
-  or a list of scripts. If a list the first will be executed and it is your
-  own responsibility to include the others in the first script.
-\end{description}
+\gaudipython application handler allows you to work like this. 
+Type \texttt{help(GaudiPython)} for information on this application.
+
+\begin{notice}
 If you have shared libraries to include, it is your own responsibility to
 enter them into the input sandbox.
-
-You can also define the data the job should run over as \texttt{inputdata} in
-the same way as for \gaudi jobs specified below. This inputdata will be
-defined in the \python session before control is handed to your script (so do
-not overwrite it with your own \texttt{EventSelector} statement in the
-script).
-
+\end{notice}
 
 \subsection{\root jobs}
 \label{sec:ROOT}
@@ -355,6 +341,12 @@ restarted you can use the \texttt{reset} method on the \texttt{Dirac} backend.
 
 \section{Input and Output}
 \label{sec:InOut}
+
+\subsection{Data Files}
+Data files are handled by the \texttt{PhysicalFile} and \texttt{LogicalFile} classes.  
+Using these classes, it's possible to download/upload files to the LFC, replicate 
+files to different grid SE's, etc.  Type \texttt{help(PhysicalFile)} and 
+\texttt{help(LogicalFile)} for more info. 
 
 \subsection{Input sandbox}
 \label{sec:Inputsandbox}
@@ -484,12 +476,12 @@ will be lost.
 \end{notice}
 
 For \gaudi jobs (e.g. \davinci, \gauss, etc.), all files created by 
-\texttt{NTupleSvc}, \texttt{HistogramPersistencySvc}, 
+\texttt{NTupleSvc}, \textit{EvtTupleSvc}, \texttt{HistogramPersistencySvc}, 
 \texttt{MicroDSTStream},
 \texttt{GaussTape}, \texttt{DigiWriter} and \texttt{DstWriter} are 
 automatically collected and added to either the output data or sandbox.
 The default behavior is to place all files created by 
-\texttt{NTupleSvc}, \texttt{HistogramPersistencySvc} and
+\texttt{NTupleSvc}, \textit{EvtTupleSvc}, \texttt{HistogramPersistencySvc} and
 \texttt{MicroDSTStream} into the output sandbox and all files created by 
 \texttt{GaussTape}, \texttt{DigiWriter} and \texttt{DstWriter} into the 
 output data. Users can tailor this to fit their needs by modifying the
@@ -500,13 +492,13 @@ section of your \texttt{.gangarc} file.
 \begin{verbatim}
 
 # This is the default setting
-#outputsandbox_types = ['NTupleSvc', 'HistogramPersistencySvc', 'MicroDSTStream']
+#outputsandbox_types = ['NTupleSvc', 'HistogramPersistencySvc', 'MicroDSTStream', 'EvtTupleSvc']
 
 # Changing it to this would move MicroDST's to output data (note the removal of the leading # character)
-outputsandbox_types = ['NTupleSvc', 'HistogramPersistencySvc']
+outputsandbox_types = ['NTupleSvc', 'HistogramPersistencySvc', 'EvtTupleSvc']
 
 # And this would add Gauss files to the sandbox
-outputsandbox_types = ['NTupleSvc', 'HistogramPersistencySvc', 'MicroDSTStream','GaussTape']
+outputsandbox_types = ['NTupleSvc', 'HistogramPersistencySvc', 'MicroDSTStream', 'EvtTupleSvc', 'GaussTape']
 
 \end{verbatim}
 
