@@ -24,4 +24,7 @@ class PandaRequirements(GangaObject):
         super(PandaRequirements,self).__init__()
         from pandatools import PsubUtils
         self.cloud = PsubUtils.getCloudUsingFQAN(None,False)
-        
+        if not self.cloud:
+            import random
+            from pandatools import Client
+            self.cloud = random.choice(Client.PandaClouds.keys())
