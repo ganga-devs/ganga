@@ -6,25 +6,24 @@
 ###############################################################################
 # A DQ2 dataset
 
-import sys, os, os.path, re, urllib, commands, imp, threading, time
+import os
+import os.path
+import re
+import socket
 from tempfile import mkstemp
 
-from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
-from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
+from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.files import expandfilename
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
 from Ganga.Lib.LCG import ElapsedTimeProfiler
 
 from dq2.info import TiersOfATLAS
-from dq2.info.TiersOfATLAS import ToACache
 from dq2.clientapi.DQ2 import DQ2
 from dq2.common.DQException import * 
 
-from threading import Thread, Lock
 from Ganga.Core.GangaThread import GangaThread
 from Queue import Queue, Empty
 
@@ -152,75 +151,6 @@ def urisplit(uri):
    #if not path: path = None
    return (scheme, authority, path, query, fragment)
 
-
-
-def find(dirs, pattern):
-    """
-    finds files within the given directories. Only the filename matching the 
-    given pattern will be returned.
-    """
-
-    fpaths = []
-    re_pat = re.compile(pattern)
-
-    def __file_picker__(re_pat, dirname, names):
-        for n in names:
-            fpath = os.path.join(dirname,n)
-            if re_pat.match(n):
-                fpaths.append(fpath)
-            else:
-                logger.debug('ignore file: %s' % fpath)
-
-    for dir in dirs:
-        absdir = os.path.abspath( os.path.expandvars( os.path.expanduser(dir) ) )
-        if not os.path.isdir(absdir):
-            logger.warning('dir. not exist: %s' % absdir)
-        else:
-            os.path.walk(absdir, __file_picker__, arg=re_pat)
-
-    return fpaths
-
-def get_castor_files(self, dirs, pattern):
-    '''Lists castor files in the given castor directory''' 
-    fpaths = []
-
-    re_pat = re.compile(pattern)
-
-    re_dir = re.compile('^d[r|w|x|-]*$')
-
-    def __is_dir__(fpath, fpath_mode):
-        logger.debug('%s is a dir' % fpath)
-        return re_dir.match(fpath_mode)
-
-    def __file_picker__(re_pat, dirname):
-
-        cmd = 'rfdir %s | awk \'{print $1,$NF}\'' % dirname
-
-
-        for n in names:
-            fpath = os.path.join(dirname,n)
-            if re_pat.match(n):
-                fpaths.append(fpath)
-            else:
-                logger.debug('ignore file: %s' % fpath)
-
-    return fpaths
-
-def urisplit(uri):
-   """
-   Basic URI Parser according to STD66 aka RFC3986
-
-   >>> urisplit("scheme://authority/path?query#fragment")
-   ('scheme', 'authority', 'path', 'query', 'fragment') 
-
-   """
-   # regex straight from STD 66 section B
-   regex = '^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'
-   p = re.match(regex, uri).groups()
-   scheme, authority, path, query, fragment = p[1], p[3], p[4], p[6], p[8]
-   #if not path: path = None
-   return (scheme, authority, path, query, fragment)
-
 def get_srm_endpoint(site):
     '''
     Gets the SRM endpoint of a site registered in TiersOfATLAS. 
@@ -297,7 +227,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
     # set to use a proper LFC_HOST 
     os.putenv('LFC_HOST', lfc_host)
 
-    def _resolveDummy(_pfns):
+    def __resolve_dummy__(_pfns):
         '''resolving the dummy PFNs based on SE hostname'''
         _pfns_dummy = {}
         for _guid in _pfns.keys():
@@ -305,9 +235,9 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
             _replicas.sort()
             seCache  = None
             pfnCache = None
-            id = -1
+            #id = -1
             for _pfn in _replicas:
-                id += 1 
+            #    id += 1
                 _se = urisplit(_pfn)[1]
                 if _se != seCache:
                     seCache  = _se
@@ -375,7 +305,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
         t.join()
 
     if dummyOnly:
-        pfns = _resolveDummy(pfns) 
+        pfns = __resolve_dummy__(pfns)
 
     # roll back to the original LFC_HOST setup in the environment
     if lfc_backup:
@@ -484,7 +414,15 @@ def resolve_file_locations(dataset, sites=None, cloud=None, token='ATLASDATADISK
     for t in threads:
         t.join()
 
-    return replicas    
+    return replicas
+
+class StagerDatasetConfigError(ConfigError):
+    '''An exception object for stager dataset configuration'''
+    def __init__(self,what):
+        ConfigError.__init__(self, what)
+        
+    def __str__(self):
+        return "StagerDatasetConfigError: %s "%(self.what)
 
 class StagerDataset(DQ2Dataset):
     '''A customized DQ2 Dataset for AMA Stager'''
@@ -817,11 +755,24 @@ class StagerDataset(DQ2Dataset):
          
             srm_host = get_srm_host(ddmSiteName)
             lfc_host = get_lfc_host(ddmSiteName)
+            cli_host = socket.getfqdn()
          
             if not srm_host or (not lfc_host):
-                logger.error('site information not found in ToA: %s' % ddmSiteName)
-         
-            logger.debug('SRM Host: %s' % srm_host) 
+                raise StagerDatasetConfigError('site information not found in ToA: %s' % ddmSiteName)
+
+            # try to make a protection if srm_host and cli_host are not in the same domain
+            # 1. determin the domainname patter by pasing "cli_host": the hostname of the Ganga client
+            # 2. do a pattern matching on srm_host.
+            # 3. if the matching on step 2 failed, srm_host and cli_host are not
+            #    in the same domain (by protection) this should be failed
+            cli_host_info = cli_host.split('.', 1)
+            re_cli_domain = re.compile( '.*%s.*' % cli_host_info[-1] )
+
+            if not re_cli_domain.match( srm_host ):
+                raise StagerDatasetConfigError('SE (%s) not in the same domain as this client (%s)'% (srm_host, cli_host) )
+
+            logger.debug('CLI Host: %s' % cli_host)
+            logger.debug('SRM Host: %s' % srm_host)
             logger.debug('LFC Host: %s' % lfc_host)
          
             if guidRefill:
