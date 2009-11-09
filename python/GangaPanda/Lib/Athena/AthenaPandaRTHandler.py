@@ -19,13 +19,9 @@ from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
 from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibFileSpecFromLibDS
 from Ganga.Core import BackendError
 
-# PandaTools
-from pandatools import Client
-from pandatools import AthenaUtils
-from taskbuffer.JobSpec import JobSpec
-from taskbuffer.FileSpec import FileSpec
-
 def getDBDatasets(jobO,trf,dbrelease):
+    from pandatools import Client
+
     # get DB datasets
     dbrFiles  = {}
     dbrDsList = []
@@ -64,6 +60,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
     def master_prepare(self,app,appconfig):
         '''Prepare the master job'''
+
+        from pandatools import Client
+        from pandatools import AthenaUtils
+        from taskbuffer.JobSpec import JobSpec
+        from taskbuffer.FileSpec import FileSpec
+
 
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
@@ -261,6 +263,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         '''prepare the subjob specific configuration'''
+
+        from pandatools import Client
+        from taskbuffer.JobSpec import JobSpec
+        from taskbuffer.FileSpec import FileSpec
+
  
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler prepare called for %s', job.getFQID('.'))
