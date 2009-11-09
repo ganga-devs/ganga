@@ -18,16 +18,14 @@ from Ganga.GPIDev.Lib.File import *
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-# PandaTools
-from pandatools import Client
-from taskbuffer.JobSpec import JobSpec
-from taskbuffer.FileSpec import FileSpec
-
 class ExecutablePandaRTHandler(IRuntimeHandler):
     '''Executable Panda Runtime Handler'''
 
     def master_prepare(self,app,appconfig):
         '''Prepare the master job'''
+
+        from pandatools import Client
+
         job = app._getParent()
         logger.debug('ExecutablePandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
@@ -128,6 +126,10 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         '''prepare the subjob specific configuration'''
  
+        from pandatools import Client
+        from taskbuffer.JobSpec import JobSpec
+        from taskbuffer.FileSpec import FileSpec
+
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler prepare called for %s', job.getFQID('.'))
 
