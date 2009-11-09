@@ -80,12 +80,15 @@
 #
 # 15/10/2009 MWS: Added cache for proxy information
 #
+#
+# 09/11/2009 MWS: Added check that proxy is valid before updating cache
+#                 (addToProxyCache() method)
 
 """Module defining class for creating, querying and renewing Grid proxy"""
                                                                                 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "05 November 2009"
-__version__ = "1.19"
+__date__    = "09 November 2009"
+__version__ = "1.20"
 
 import os
 import re
@@ -362,7 +365,7 @@ class GridProxy ( ICredential ):
          status, output, message = self.shell.cmd1\
             ( cmd = infoCommand, allowed_exit = range( 1000 ) )
 
-         _infoCache[ opt ] = [ output, time.time() ]
+         self.addToProxyCache( status, output, opt )
          
       if not output:
          output = ""
@@ -380,7 +383,6 @@ class GridProxy ( ICredential ):
       return ICredential.timeleft( self, units, force_check )
 
    def timeleftInHMS( self, force_check = False ):
-
       info_refresh = self.timeInSeconds( self.info_refresh_time )
       if ( not force_check ) and ( _infoCache.has_key( "timeleftInHMS" ) ) and \
          ( _infoCache[ "timeleftInHMS" ][ 1 ] > \
@@ -396,7 +398,8 @@ class GridProxy ( ICredential ):
             infoList.append( "%s %s" % ( optName, optVal ) )
          status, output, message = self.shell.cmd1\
          ( cmd = " ".join( infoList ), allowed_exit = range( 1000 ) )
-         _infoCache['timeleftInHMS'] = [output, time.time()]
+
+         self.addToProxyCache( status, output, "timeleftInHMS" )
       
       timeRemaining = "00:00:00"
 
@@ -405,12 +408,16 @@ class GridProxy ( ICredential ):
             logger.warning( "Command '" + self.command.info + "' not found" )
             logger.warning( "Unable to obtain information on Grid proxy" )
             timeRemaining = ""
-
+            if _infoCache.has_key( "timeleftInHMS" ):
+               del _infoCache[ "timeleftInHMS" ]
+            
       if timeRemaining:
          lineList = output.split( "\n" )
          for line in lineList:
             if ( 1 + line.find( "Couldn't find a valid proxy" ) ):
                timeRemaining = "-1"
+               if _infoCache.has_key('timeleftInHMS'):
+                  del _infoCache['timeleftInHMS']               
                break
             elif ( 1 + line.find( "timeleft" ) ):
                elementList = line.split()
@@ -448,19 +455,23 @@ class GridProxy ( ICredential ):
             status, output, message = self.shell.cmd1( cmd = infoCommand, \
                allowed_exit = range( 1000 ), capture_stderr = True )
 
+            self.addToProxyCache( status, output, "voname" )
+
          else:
             output = ""
 
-         _infoCache['voname'] = [output, time.time()]
-
       if not output:
          output = ""
+         if _infoCache.has_key( "voname" ):
+            del _infoCache[ "voname" ]
 
       output = output.strip()
 
       for error in [ "VOMS extension not found", "unrecognized option" ]:
          if output.find( error ) != -1:
             output = ""
+            if _infoCache.has_key('voname'):
+               del _infoCache['voname']
             break
 
     # Check for reasonable output (single-word VO)
@@ -469,6 +480,27 @@ class GridProxy ( ICredential ):
 
       return output
 
+   def addToProxyCache( self, status, output, opt ):
+      """
+      Test the result of grid proxy call
+      and add to the cache if all OK
+
+      status - the status output
+      output - the output text
+      opt - opt to add
+      """
+      
+      if ( not status ) and ( output ):
+         error = False
+         for line in output.split('\n'):
+            if ( 1 + line.find( "Couldn't find a valid proxy" ) ):
+               error = True
+
+         if not error:
+            _infoCache[ opt ] = [ output, time.time() ]
+
+      return None
+
   # Add documentation strings from base class
    for method in [ create, destroy, isAvailable, isValid, location, \
       renew, timeleft, timeleftInHMS ]:
@@ -476,3 +508,4 @@ class GridProxy ( ICredential ):
          baseMethod = getattr( ICredential, method.__name__ )
          setattr( method, "__doc__",\
             baseMethod.__doc__.replace( "credential", "Grid Proxy" ) )
+
