@@ -20,13 +20,7 @@ from Ganga.Utility.Shell import Shell
 from Ganga.Utility.Config import makeConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
-# Panda Client
-from pandatools import Client
-from taskbuffer.JobSpec import JobSpec
-from taskbuffer.FileSpec import FileSpec
-
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
-
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
 
 logger = getLogger()
@@ -41,6 +35,7 @@ config.addOption( 'trustIS', True , 'Trust the Information System' )
 config.addOption( 'serverMaxJobs', 5000 , 'Maximum number of subjobs to send to the Panda server' )  
 
 def queueToAllowedSites(queue):
+    from pandatools import Client
     try:
         ddm = Client.PandaSites[queue]['ddm']
     except KeyError:
@@ -86,11 +81,13 @@ def queueToAllowedSites(queue):
     return allowed_allowed_sites
 
 def runPandaBrokerage(job):
+    from pandatools import Client
+
     # get locations when site==AUTO
-        
     if job.backend.site == "AUTO":
         libdslocation = []
         if job.backend.libds:
+            # TODO: fix the cloud here
             try:
                 libdslocation = Client.getLocations(job.backend.libds,[],job.backend.requirements.cloud,False,False)
             except exceptions.SystemExit:
@@ -174,6 +171,8 @@ def runPandaBrokerage(job):
 
 
 def uploadSources(path,sources):
+    from pandatools import Client
+
     logger.info('Uploading source tarball %s in %s to Panda...'%(sources,path))
     try:
         cwd = os.getcwd()
@@ -188,6 +187,9 @@ def uploadSources(path,sources):
         raise BackendError('Panda','Exception while uploading archive: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
 
 def getLibFileSpecFromLibDS(libDS):
+    from pandatools import Client
+    from taskbuffer.FileSpec import FileSpec
+
     # query files in lib dataset to reuse libraries
     logger.info("query files in %s" % libDS)
     tmpList = Client.queryFilesInDataset(libDS,False)
@@ -271,6 +273,7 @@ class Panda(IBackend):
     def master_submit(self,rjobs,subjobspecs,buildjobspec):
         '''Submit jobs'''
  
+        from pandatools import Client
         from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
@@ -320,7 +323,9 @@ class Panda(IBackend):
 
     def master_kill(self):
         '''Kill jobs'''  
-                                                                                                            
+
+        from pandatools import Client
+
         job = self.getJobObject()
         logger.debug('Killing job %s' % job.getFQID('.'))
 
@@ -340,11 +345,12 @@ class Panda(IBackend):
         if status:
              logger.error('Failed killing job (status = %d)',status)
              return False
-                                                                                                              
         return True
 
     def master_resubmit(self,jobs):
         '''Resubmit failed subjobs'''
+        from pandatools import Client
+
         jobIDs = {}
         for job in jobs: 
             jobIDs[job.backend.id] = job
@@ -425,6 +431,7 @@ class Panda(IBackend):
 
     def master_updateMonitoringInformation(jobs):
         '''Monitor jobs'''       
+        from pandatools import Client
 
         active_status = [ None, 'defined', 'unknown', 'assigned', 'waiting', 'activated', 'sent', 'starting', 'running', 'holding', 'transferring' ]
 
@@ -469,15 +476,8 @@ class Panda(IBackend):
 
                         logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
                         job.backend.status = status.jobStatus
-
-#                        if status.computingElement != 'NULL':
-#                            job.backend.CE = status.computingElement
-#                        else:
-#                            job.backend.CE = None
-
                         job.backend.exitcode = str(status.transExitCode)
                         job.backend.piloterrorcode = str(status.pilotErrorCode)
-
                         job.backend.reason = ''
                         for k in job.backend.jobSpec.keys():
                             if k.endswith('ErrorDiag') and job.backend.jobSpec[k]!='NULL':
@@ -535,6 +535,7 @@ class Panda(IBackend):
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
     def list_sites(self):
+        from pandatools import Client
         sites=Client.PandaSites.keys()
         sites.sort()
         return sites
