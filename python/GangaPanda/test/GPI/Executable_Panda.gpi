@@ -1,4 +1,5 @@
 from GangaTest.Framework.utils import sleep_until_completed
+import commands
 config['TestingFramework']['timeout']=3600
 j = Job()
 j.outputdata=DQ2OutputDataset()
