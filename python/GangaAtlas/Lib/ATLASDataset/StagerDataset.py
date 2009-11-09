@@ -4,7 +4,7 @@
 #
 # $Id: StagerDataset.py,v 1.6 2009-03-26 20:33:11 hclee Exp $
 ###############################################################################
-# A DQ2 dataset
+# ATLAS input dataset plugin for using Athena/FileStager with local/batch jobs
 
 import os
 import os.path
@@ -425,7 +425,35 @@ class StagerDatasetConfigError(ConfigError):
         return "StagerDatasetConfigError: %s "%(self.what)
 
 class StagerDataset(DQ2Dataset):
-    '''A customized DQ2 Dataset for AMA Stager'''
+    '''Input dataset specification for using Athena/FileStager module to get input files for analysis.
+
+    Usage:
+
+      - work with DQ2 dataset given a DQ2 dataset 'user.RichardHawkings.0108175.topmix_Muon.AOD.v4':
+
+        In [n]: j.inputdata = StagerDataset()
+        In [n]: j.inputdata.type = 'DQ2'
+        In [n]: j.inputdata.dataset += [ 'user.RichardHawkings.0108175.topmix_Muon.AOD.v4' ]
+
+        Please note that 'DQ2' type works only when the current Ganga client is in the same domain as the SE
+        associated with the DDM site defined by 'config.DQ2.DQ2_LOCAL_SITE_ID'.
+
+      - work with CASTOR/DPM given a directory '/castor/cern.ch/grid/atlas/atlasgroupdisk/phys-top/dq2/user/RichardHawkings/user.RichardHawkings.0108175.topmix_Muon.AOD.v4' in CASTOR/DPM name space:
+
+        In [n]: j.inputdata = StagerDataset()
+        In [n]: j.inputdata.type = 'CASTOR'
+        In [n]: j.inputdata.dataset += ['/castor/cern.ch/grid/atlas/atlasgroupdisk/phys-top/dq2/user/RichardHawkings/user.RichardHawkings.0108175.topmix_Muon.AOD.v4']
+
+      - work with files in a given directory '/home/data/user.RichardHawkings.0108175.topmix_Muon.AOD.v4' on local disk:
+
+        In [n]: j.inputdata = StagerDataset()
+        In [n]: j.inputdata.type = 'LOCAL'
+        In [n]: j.inputdata.dataset += ['/home/data/user.RichardHawkings.0108175.topmix_Muon.AOD.v4']
+
+      For reading files from CASTOR/DPM, one can also ask FileStager to use Xrootd protocol to copy the file (thus then "xrdcp" is used instead of "rfcp"):
+
+        In [n]: j.inputdata.xrootd_access = True
+    '''
 
     _schema = Schema(Version(1,1), {
         'dataset': SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc='Dataset Name(s) or a root path in which the dataset files are located'),
@@ -746,7 +774,11 @@ class StagerDataset(DQ2Dataset):
 
     def get_surls(self, ddmSiteName=None, guidRefill=True):
         '''Gets a list of physical files located at certain site.
-           Using DQ2_LOCAL_SITE_ID if site name is not specified explicitely.'''
+           Using DQ2_LOCAL_SITE_ID if site name is not specified explicitely.
+
+           If the domain of the SE associated with the "ddmSiteName" is not matching the
+           domain of the current Ganga client, an StagerDatasetConfigError exception is thrown.
+           This is a protection to avoid local jobs to do lcg-cp across domains.'''
 
         pfns = {}
         if self.type in ['DQ2']:
