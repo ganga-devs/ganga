@@ -143,8 +143,8 @@ class GangaRepositoryLocal(GangaRepository):
             ifn = self.get_idxfn(id)
             new_idx_cache = self.registry.getIndexCache(obj)
             if new_idx_cache != obj._index_cache or not os.path.exists(ifn):
-                pickle_to_file((obj._category,obj._name,obj._index_cache),file(ifn,"w"))
                 obj._index_cache = new_idx_cache
+                pickle_to_file((obj._category,obj._name,obj._index_cache),file(ifn,"w"))
         except IOError, x:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn,x.__class__.__name__,x))
 
@@ -332,6 +332,16 @@ class GangaRepositoryLocal(GangaRepository):
                                 for i in v:
                                     if isinstance(i,Node):
                                         i._setParent(obj)
+                        # Check if index cache; if loaded; was valid:
+                        if obj._index_cache:
+                            new_idx_cache = self.registry.getIndexCache(obj)
+                            if new_idx_cache != obj._index_cache:
+                                # index is wrong! Try to get read access - then we can fix this 
+                                if len(self.lock([id])) != 0:
+                                    self.index_write(id)
+                                    self.unlock([id])
+                                    logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, id))
+                                # if we cannot lock this, the inconsistency is most likely the result of another ganga process modifying the repo
                         obj._index_cache = None
                     else:
                         self._internal_setitem__(id, tmpobj)
