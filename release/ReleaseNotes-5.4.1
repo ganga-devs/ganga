@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.4.1 (2009/11/6)
+5.4.1 (2009/11/12)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -13,6 +13,13 @@ implementations. See IMonitoringService constructor and getConfig() static metho
 ganga/python/Ganga/GPIDev/Credentials
 --------------------------------------------------------------------------------------------------------------
 * Added caching of credential information
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* bugfix in LCGOutputDownloader: avoid downloading job's output sandbox when it is removed/killed by
+user
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -96,8 +103,10 @@ replicas and/or metadata, etc.  See the class documentation for further details.
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaPanda
 --------------------------------------------------------------------------------------------------------------
-Server now accepts 5000 jobs
-Fixed resubmit command
-Default cloud is no longer 'US' -- instead the default is the user's local cloud.
+* Delay loading panda Client libs until backend is used. This should speed up the Ganga starting time.
+* Set the default cloud to the user's local cloud. If it cannot be detected a random cloud is 
+selected.
+* Panda server now accepts 5000 jobs per submission.
+* Fixed resubmit command to mark input files as 'ready'
 
 **************************************************************************************************************
