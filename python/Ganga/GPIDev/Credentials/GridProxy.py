@@ -83,12 +83,15 @@
 #
 # 09/11/2009 MWS: Added check that proxy is valid before updating cache
 #                 (addToProxyCache() method)
+#
+# 12/11/2009 MWS: Added additional checks that cached information
+#                 is consistent with available proxy
 
 """Module defining class for creating, querying and renewing Grid proxy"""
                                                                                 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "09 November 2009"
-__version__ = "1.20"
+__date__    = "12 November 2009"
+__version__ = "1.21"
 
 import os
 import re
@@ -354,12 +357,9 @@ class GridProxy ( ICredential ):
       """
 
       # use cached version of this command call if possible
-      info_refresh = self.timeInSeconds( self.info_refresh_time )
-
-      if ( not force_check ) and ( _infoCache.has_key( opt ) ) \
-         and ( _infoCache[ opt ][ 1 ] > ( time.time() - info_refresh ) ):
-         output = _infoCache[ opt ][ 0 ]
-      else:
+      output = self.getProxyCacheValue( opt )
+      
+      if ( force_check ) or ( output == "" ):
          self.chooseCommandSet()
          infoCommand = " ".join( [ self.command.info, opt ] )
          status, output, message = self.shell.cmd1\
@@ -383,13 +383,12 @@ class GridProxy ( ICredential ):
       return ICredential.timeleft( self, units, force_check )
 
    def timeleftInHMS( self, force_check = False ):
-      info_refresh = self.timeInSeconds( self.info_refresh_time )
-      if ( not force_check ) and ( _infoCache.has_key( "timeleftInHMS" ) ) and \
-         ( _infoCache[ "timeleftInHMS" ][ 1 ] > \
-         ( time.time() - info_refresh ) ):
-         output = _infoCache[ "timeleftInHMS" ][ 0 ]
-         status = 0
-      else:
+      global _infoCache
+
+      output = self.getProxyCacheValue( "timeleftInHMS" )
+      status = 0
+
+      if ( force_check ) or ( output == "" ):
          # should really use the 'info' method
          self.chooseCommandSet()
          infoList = [ self.command.info ]
@@ -436,11 +435,10 @@ class GridProxy ( ICredential ):
       Return value: Name of virtual organisation where this can be determined
       (voms proxy), or empty string otherwise (globus proxy)
       """
-      info_refresh = self.timeInSeconds( self.info_refresh_time )
-      if ( not force_check ) and ( _infoCache.has_key( "voname" ) ) and \
-         ( _infoCache[ "voname" ][ 1 ] > ( time.time() - info_refresh ) ):
-         output = _infoCache[ "voname" ][ 0 ]
-      else:
+      global _infoCache
+      output = self.getProxyCacheValue( "voname" )
+
+      if ( force_check ) or ( output == "" ):
          self.chooseCommandSet()
          infoCommand = ""
 
@@ -474,9 +472,51 @@ class GridProxy ( ICredential ):
                del _infoCache['voname']
             break
 
-    # Check for reasonable output (single-word VO)
+      # Check for reasonable output (single-word VO)
       if len( output.split() ) != 1:
          output = self.voms
+
+      return output
+
+   def getProxyCacheValue( self, opt ):
+      """
+      Check the proxy cache for the required key. Make sure the proxy
+      file is older than the last check.
+      
+      opt - the key to check for
+      """
+
+      global _infoCache
+
+      info_refresh = self.timeInSeconds( self.info_refresh_time )
+      output = ''
+      path = ''
+
+      # check when the grid proxy was created
+      if not _infoCache.has_key( '-path' ) or ( _infoCache[ '-path' ][ 1 ] < ( time.time() - info_refresh ) ):
+         self.chooseCommandSet()
+         infoCommand = " ".join( [ self.command.info, '-path' ] )
+         status, output, message = self.shell.cmd1\
+                                   ( cmd = infoCommand, allowed_exit = range( 1000 ) )
+
+         if not status:
+            path = output
+            self.addToProxyCache( status, output, '-path')
+
+      else:
+         path = _infoCache[ '-path' ][0]
+
+      path = path.strip()
+      if not os.path.exists(path):
+         # blank the cache as the proxy isn't there
+         _infoCache = {}
+         return ''
+
+      # we're OK to use the cache
+      if _infoCache.has_key( opt ) and ( _infoCache[ opt ][ 1 ] > ( time.time() - info_refresh ) ) and ( _infoCache[ opt ][ 1 ] > os.path.getmtime(path) ):
+         output = _infoCache[ opt ][ 0 ]
+      else:
+         output = ""
 
       return output
 
@@ -501,7 +541,7 @@ class GridProxy ( ICredential ):
 
       return None
 
-  # Add documentation strings from base class
+   # Add documentation strings from base class
    for method in [ create, destroy, isAvailable, isValid, location, \
       renew, timeleft, timeleftInHMS ]:
       if hasattr( ICredential, method.__name__ ):
