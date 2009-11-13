@@ -8,8 +8,10 @@ import Ganga.Utility.logging
 from Ganga.Utility.util import unique
 import Ganga.Utility.Config 
 from GangaLHCb.Lib.LHCbDataset import *
+#from GangaLHCb.Lib.LHCbDataset import *
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -132,16 +134,18 @@ class PythonOptionsParser:
         except KeyError, e:
             logger.debug('No inputdata has been defined in the options file.')
 
-        files = []
+        ds = LHCbDataset()
         for d in data:
             p1 = d.find('DATAFILE=') + len('DATAFILE=')    
             quote = d[p1]
             p2 = d.find(quote,p1+1)
             f = d[p1+1:p2]
-            files.append(f)
+            file = strToDataFile(f)
+            if file is None: file = PhysicalFile(name=f)            
+            ds.files.append(file)
             #dtype_str = d.replace('DATAFILE=%s%s%s' % (quote,f,quote),'')
             #dtype_str = dtype_str.strip()
-        return string_dataset_shortcut(files,None)
+        return GPIProxyObjectFactory(ds)
 
     def get_output_files( self):        
         '''Collects and organizes filenames that the job outputs'''
