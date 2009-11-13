@@ -232,9 +232,11 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if not job.outputdata.dataset_exists(output_datasetname):
                 if job._getRoot().subjobs:
                     if job.id==0:
-                        job.outputdata.create_dataset(output_datasetname)
+                        #job.outputdata.create_dataset(output_datasetname)
+                        pass
                 else:
-                    job.outputdata.create_dataset(output_datasetname)
+                    #job.outputdata.create_dataset(output_datasetname)
+                    pass
                 if output_location and configDQ2['USE_STAGEOUT_SUBSCRIPTION']:
                     job.outputdata.create_subscription(output_datasetname, output_location)    
                 
