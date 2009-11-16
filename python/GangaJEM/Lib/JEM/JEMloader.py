@@ -159,7 +159,7 @@ GANGA_ENABLED = True
                       + Utils.colored("E", 32) + "xecution " + Utils.colored("M", 32) + "onitor) v" + str(JEM_VERSION) + " loaded ",
                   "type 'help(JobExecutionMonitor)' for usage instructions",
                   "this is still an " + Utils.colored("alpha", 31) + " version of JEM - please give feedback!",
-                  "visit http://www.grid.uni-wuppertal.de/grid/jem for more information"
+                  "visit https://svn.grid.uni-wuppertal.de/trac/JEM for more information"
                 ]
         print Utils.getLogo(lines)
         print

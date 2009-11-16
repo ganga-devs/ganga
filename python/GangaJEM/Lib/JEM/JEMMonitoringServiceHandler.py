@@ -667,7 +667,7 @@ class JEMMonitoringServiceHandler(object):
             # debug output ##############################################################
             logger.debug('Trying to launch JEM realtime monitoring listener process')   #
                                                                                         #
-            s = '  for job with id "%s"' % jobID                                       #
+            s = '  for job with id "%s"' % jobID                                        #
             if self.__job.subjobs and len(self.__job.subjobs) > 0:                      #
                 s += ' (%d subjobs)' % len(self.__job.subjobs)                          #
             logger.debug(s)                                                             #

@@ -932,8 +932,6 @@ class JobExecutionMonitor(GangaObject):
         """
         job = self.getJobObject()
 
-        logger.debug("onWatcherThink!")
-
         try:
             jobGangaID = str(job.id) # pylint: disable-msg=E1101
 
@@ -941,11 +939,13 @@ class JobExecutionMonitor(GangaObject):
             if len(l) and len(l[0]):
                 if l[0]["Status"] == "FINISHED":
                     self.userAppExited = True
-                    jemlogger.info("User application of job " + str(jobGangaID) +\
-                                   " seems to have finished! Now waiting for the middleware...")
-                    self.watcherThread.stop()
         except:
             pass
+        
+        if self.userAppExited:
+            jemlogger.info("User application of job " + str(jobGangaID) +\
+                           " seems to have finished! Now waiting for the middleware...")
+            self.watcherThread.stop()
 
 
     def getJobID(self):
