@@ -206,7 +206,7 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("PluginManagerError: Failed to load index %i: %s" % (id,x)) # Probably should be DEBUG
                 summary.append((id,x)) # This is a FATAL error - do not try to load the main file, it will fail as well
                 continue
-            if not id in self.objects: # this is bad - no index but object not loaded yet! Try to load it!
+            if not id in self.objects: # this is bad - no or corrupted index but object not loaded yet! Try to load it!
                 try:
                     self.load([id])
                 except KeyError:
@@ -214,6 +214,10 @@ class GangaRepositoryLocal(GangaRepository):
                 except InaccessibleObjectError, x:
                     logger.debug("Failed to load id %i: %s %s" % (id, x.orig.__class__.__name__, x.orig))
                     summary.append((id,x.orig))
+                # Write out a new index if the file can be locked
+                if len(self.lock([id])) != 0:
+                    self.index_write(id)
+                    self.unlock([id])
         if len(summary) > 0:
             cnt = {}
             examples = {}
