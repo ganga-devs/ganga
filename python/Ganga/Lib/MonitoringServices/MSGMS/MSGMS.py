@@ -24,6 +24,17 @@ def _initconfig():
 _initconfig()
 
 
+# singleton publisher
+_publisher = None
+def _get_publisher(server, port, username, password):
+    #FIXME: this assumes server/port/username/password cannot change and caches a singleton publisher
+    global _publisher
+    if _publisher is None:
+        _publisher = MSGUtil.createPublisher(server,port,username,password)
+        _publisher.start()
+    return _publisher
+
+
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 class MSGMS(IMonitoringService):
     """GangaMon Monitoring Service based on MSG.
@@ -37,7 +48,6 @@ class MSGMS(IMonitoringService):
     def __init__(self, job_info, config_info):
         """Construct the GangaMon monitoring service."""
         IMonitoringService.__init__(self, job_info, config_info)
-        self._publisher = None
 
     def getConfig():
         """Return MSGMS Config object."""
@@ -93,18 +103,16 @@ class MSGMS(IMonitoringService):
 
     def send(self, message):
         """Send the message to the configured destination."""
-        # initialize _publisher if None
-        if self._publisher is None:
-            self._publisher = MSGUtil.createPublisher(
+        # get publisher
+        p = _get_publisher(
                 self.config_info['server'],
                 self.config_info['port'],
                 self.config_info['username'], 
                 self.config_info['password'],
-                )
-            self._publisher.start()
+            )
         # send message
         headers = {'persistent':'true'}
-        self._publisher.send(self.config_info['message_destination'], repr(message), headers)
+        p.send(self.config_info['message_destination'], repr(message), headers)
 
     def submit(self, **opts): # called on client, so job_info is Job object
         """Log submit event on client."""
