@@ -107,6 +107,9 @@ class DiracCommands:
             dirac_status = job_status.get('Status',None)
             dirac_site = job_status.get('Site',None)
             ganga_status = statusmapping.get(dirac_status,None)
+            if ganga_status is None:
+                ganga_status = 'failed'
+                dirac_status = 'Unknown: No status for Job'
             status_list.append([minor_status,dirac_status,dirac_site,
                                 ganga_status])
             

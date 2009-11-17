@@ -148,8 +148,8 @@ class Dirac(IBackend):
             raise BackendError('Dirac','Could not kill job: %s' % str(result))
         return result['OK']
 
-    def peek(self):
-        """Peek at the output of a job"""
+    def peek(self,filename=None,command=None):
+        """Peek at the output of a job (Note: filename/command are ignored)."""
         global dirac_ganga_server
         dirac_cmd = 'result = DiracCommands.peek(%d)' % self.id
         result = dirac_ganga_server.execute(dirac_cmd)

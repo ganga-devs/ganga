@@ -118,10 +118,12 @@ class LHCbDataset(Dataset):
         if not hasattr(files,"__getitem__"):
             raise GangaException('Argument "files" must be a iterable.')
         names = self.getFileNames()
+        files = [f for f in files] # just in case they extend w/ self
         for f in files:
-            f = getDataFile(f)
-            if unique and f.name in names: continue
-            self.files.append(f)
+            file = getDataFile(f)
+            if file is None: file = f
+            if unique and file.name in names: continue
+            self.files.append(file)
 
     def getLFNs(self):
         'Returns a list of all LFNs (by name) stored in the dataset.'
