@@ -943,8 +943,8 @@ class JobExecutionMonitor(GangaObject):
             pass
         
         if self.userAppExited:
-            jemlogger.info("User application of job " + str(jobGangaID) +\
-                           " seems to have finished! Now waiting for the middleware...")
+            logger.info("User application of job " + str(jobGangaID) +\
+                        " seems to have finished! Now waiting for the middleware...")
             self.watcherThread.stop()
 
 
@@ -1112,7 +1112,7 @@ class JobExecutionMonitor(GangaObject):
         pid = str(self.pid)
         job = self.getJobObject()
         jobID = self.getJobID() # pylint: disable-msg=E1101
-        logDir = JEMConfig.MON_LOG_DIR + os.sep + jobID # FIXME
+        logDir = JEMConfig.MON_LOG_DIR + os.sep + Utils.escapeJobID(jobID)
 
         # check the job state
         if job.status not in ['running','submitted']: # pylint: disable-msg=E1101
@@ -1232,7 +1232,7 @@ class JobExecutionMonitor(GangaObject):
         # prepare for grep
         job = self.getJobObject()
         jobID = self.getJobID()
-        logDir = JEMConfig.MON_LOG_DIR + os.sep + jobID
+        logDir = JEMConfig.MON_LOG_DIR + os.sep + Utils.escapeJobID(jobID)
 
         # dont delete the width parameter, otherwise the grep command will fail due to line length...
         cmd = "ps --width 1000 -eo user,pid,ppid,command | grep " + getpass.getuser() + " | awk '{ print $1, $2, $3, $4,$5,$6,$7,$8,$9 }'"

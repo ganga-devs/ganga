@@ -582,13 +582,9 @@ class JEMMonitoringServiceHandler(object):
         """
         Write JEM settings from a dictionary to a .JEMrc file (in the temp-directory). Return its path.
         """
-        thePath = os.sep + "tmp" + os.sep + "JEMtmp"  
+        thePath = JEMConfig.MON_LOG_DIR  
         if not os.path.exists(thePath):
-            os.mkdir(thePath)
-            
-        thePath += os.sep + str(os.getuid())
-        if not os.path.exists(thePath):
-            os.mkdir(thePath)
+            os.makedirs(thePath)
             
         thePath += os.sep + ".JEMrc"
         fd = open(thePath, "w")
@@ -766,7 +762,7 @@ class JEMMonitoringServiceHandler(object):
 
         # prepare for grep
         jobID = self.__job.info.monitor.getJobID() # pylint: disable-msg=E1101
-        logDir = JEMConfig.MON_LOG_DIR + os.sep + jobID
+        logDir = JEMConfig.MON_LOG_DIR + os.sep + Utils.escapeJobID(jobID)
 
         # dont delete the width parameter, otherwise the grep command will fail due to line length...
         cmd = "ps --width 1000 -eo user,pid,ppid,command | grep " + getpass.getuser() + " | awk '{ print $1, $2, $3, $4,$5,$6,$7,$8,$9 }'"
