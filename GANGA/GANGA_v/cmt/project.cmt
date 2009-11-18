@@ -3,7 +3,7 @@ project GANGA
 #use LHCBGRID LHCBGRID_v1r*
 #use LCGCMT LCGCMT_56
 
-use DIRAC DIRAC_v4r19p8
+use DIRAC DIRAC_v4r20
 
 build_strategy	with_installarea
 setup_strategy	root
