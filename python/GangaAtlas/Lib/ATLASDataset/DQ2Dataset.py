@@ -22,7 +22,6 @@ from dq2.content.DQContentException import DQInvalidFileMetadataException
 from dq2.common.client.DQClientException import DQInternalServerException
 from dq2.common.dao.DQDaoException import DQDaoException
 from dq2.info.TiersOfATLASValidator import is_site
-from dq2.repository.DQRepositoryException import DQFrozenDatasetException
 
 _refreshToACache()
 
@@ -1016,8 +1015,8 @@ class DQ2OutputDataset(Dataset):
             dq2_lock.acquire()
             try:
                 ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum) 
-            except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFrozenDatasetException), Value:
-                logger.warning('Warning, some files already in dataset or dataset is frozen: %s', Value)
+            except (DQInvalidFileMetadataException, DQInvalidRequestException), Value:
+                logger.warning('Warning, some files already in dataset: %s', Value)
                 pass
         finally:
             dq2_lock.release()
@@ -1065,6 +1064,7 @@ class DQ2OutputDataset(Dataset):
                         
                     finally:
                         dq2_lock.release()
+
                         
             self.register_file_in_dataset(dataset,[lfn],[guid],[size],[adler32])
 
@@ -1080,7 +1080,7 @@ class DQ2OutputDataset(Dataset):
 #       Determine local output path to store files
         if job.outputdata.local_location:
             outputlocation = expandfilename(job.outputdata.local_location)
-        elif job.outputdata.location and (job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']):
+        elif job.outputdata.location and ((job.backend._name == 'Local') or (job.backend._name == 'LSF') or (job.backend._name == 'PBS') or (job.backend._name == 'SGE')):
             outputlocation = expandfilename(job.outputdata.location)
         else:
             try:
@@ -1095,7 +1095,7 @@ class DQ2OutputDataset(Dataset):
 #       Search output_guid files from LCG jobs in outputsandbox
         jobguids = []
 
-        if job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']:
+        if (job.backend._name == 'LCG' ) or (job.backend._name == 'Local') or (job.backend._name == 'LSF') or (job.backend._name == 'PBS') or (job.backend._name == 'SGE'):
             pfn = job.outputdir + "output_guids"
             fsize = filecheck(pfn)
             if (fsize>0):
@@ -1125,7 +1125,7 @@ class DQ2OutputDataset(Dataset):
                 
                 #  Register DQ2 location
                 # FMB: protection against empty strings
-                if self.datasetname and not (job.application._name in ['Athena'] and job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']): 
+                if self.datasetname : 
                     self.register_dataset_location(self.datasetname, self.location)
                     
             pfn = job.outputdir + "output_data"
@@ -1135,18 +1135,12 @@ class DQ2OutputDataset(Dataset):
                 for line in f.readlines():
                     self.output.append( line.strip() )
                 f.close()
-
-            # Extract new dataset name and fill it into repository
-            for outputInfo in self.output:
-                datasetnameTemp = outputInfo.split(',')[0]
-                datasetnameComp = self.datasetname + '.' + self.location
-                match = re.search(datasetnameComp, datasetnameTemp)
-                if match:
-                    logger.debug('Changed outputdata.dataset from %s to %s', self.datasetname, datasetnameTemp)
-                    self.datasetname = datasetnameTemp
-
+                    
 #       Local host execution
-        if (job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']): 
+        if (job.backend._name == 'Local' or \
+            job.backend._name == 'LSF' or \
+            job.backend._name == 'PBS' or \
+            job.backend._name == 'SGE'):
             for file in outputfiles:
                 pfn = outputlocation+"/"+file
                 fsize = filecheck(pfn)
@@ -1165,64 +1159,14 @@ class DQ2OutputDataset(Dataset):
         if not job.master and job.subjobs:
             self.location = []
             self.output = []
-            self.allDatasets = []
             for subjob in job.subjobs:
                 self.output+=subjob.outputdata.output
                 self.datasetname=subjob.outputdata.datasetname
                 self.location.append(subjob.outputdata.location)
-                if not subjob.outputdata.datasetname in self.allDatasets:
-                    for outputInfo in subjob.outputdata.output:
-                        datasetnameTemp = outputInfo.split(',')[0]
-                        if not datasetnameTemp in self.allDatasets:
-                            self.allDatasets.append(datasetnameTemp)
-
-            if (job.application._name in ['Athena'] and job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']): 
-                # Create output container
-                containerName = self.datasetname+'/'
-                try:
-                    dq2_lock.acquire()
-                    try:
-                        dq2.registerContainer(containerName)
-                    except:
-                        pass
-                finally:
-                    dq2_lock.release()
-                try:
-                    dq2_lock.acquire()
-                    for dataset in self.allDatasets:
-                        try:
-                            dq2.freezeDataset(dataset)
-                        except DQFrozenDatasetException:
-                            pass
-                finally:
-                    dq2_lock.release()
-                try:
-                    dq2_lock.acquire()
-                    dq2.registerDatasetsInContainer(containerName, self.allDatasets)
-                finally:
-                    dq2_lock.release()
-
-                self.datasetname = containerName
         else:
             # AthenaMC: register dataset location and insert file in dataset only within subjobs (so that if one subjob fails, the master job fails, but the dataset is saved...). Master job completion does not do anything...
-            if not (job.application._name in ['Athena'] and job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']): 
-                self.register_datasets_details(self.datasetname,self.output)
-            elif not job.master and not job.subjobs:
-                self.allDatasets = [ ]
-                for outputInfo in self.output:
-                    datasetnameTemp = outputInfo.split(',')[0]
-                    if not datasetnameTemp in self.allDatasets:
-                        self.allDatasets.append(datasetnameTemp)
-                for datasetnameFreeze in self.allDatasets:
-                    try:
-                        dq2_lock.acquire()
-                        try:
-                            dq2.freezeDataset(datasetnameFreeze)
-                        except DQFrozenDatasetException:
-                            pass
-                    finally:
-                        dq2_lock.release()
-                
+            self.register_datasets_details(self.datasetname,self.output)
+            
 
     def retrieve(self, type=None, name=None, **options ):
         """Retrieve files listed in outputdata and registered in output from
@@ -1325,6 +1269,7 @@ try:
     config.addOption('DQ2_URL_SERVER_SSL', os.environ['DQ2_URL_SERVER_SSL'], 'FIXME')
 except KeyError:
     config.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
+
 
 config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK', 'T2ATLASSCRATCHDISK', 'T2ATLASLOCALGROUPDISK' ] , 'Allowed space tokens names of DQ2OutputDataset output' )
 

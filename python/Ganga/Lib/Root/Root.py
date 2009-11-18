@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Root.py,v 1.4 2008-09-12 08:08:58 wreece Exp $
+# $Id: Root.py,v 1.3 2008-09-01 05:17:25 wreece Exp $
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
@@ -631,7 +631,6 @@ def defaultScript():
       cout << "Hello World from ROOT" << endl;
       cout << "Load Path : " << gSystem->GetDynamicPath() << endl;
       gSystem->Load("libTree");
-      gSystem->Exit(0);
     }
     """)
     f.close()
@@ -666,10 +665,6 @@ if __name__ == '__main__':
 
     m = Main()
     m.run()
-    
-    import sys
-    sys.exit(0)
-    
     """)
     finally:
         f.close()
