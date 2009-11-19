@@ -1,0 +1,22 @@
+# Submit two jobs to two different TeraGrid resources
+# Works out of the box as long as you have a valid grid-proxy
+
+my_jobs = []
+
+j1 = Job()
+j1.backend = SAGA()
+j1.application.exe = "/bin/cat"
+j1.application.args = ['/proc/cpuinfo']
+
+j1.backend.remote_job_service = "gram://gatekeeper.ranger.tacc.teragrid.org"
+j1.backend.remote_filesystem  = "gsiftp://gridftp.ranger.tacc.teragrid.org:2811///share/home/00988/tg802352/"
+my_jobs.append(j1)
+
+j2 = Job(j1)
+j2.backend.remote_job_service = "gram://queenbee.loni-lsu.teragrid.org"
+j2.backend.remote_filesystem  = "gsiftp://queenbee.loni-lsu.teragrid.org:2811//home/oweidner/"
+my_jobs.append(j2)
+
+# submit all jobs in the array
+for job in my_jobs:
+    job.submit()
