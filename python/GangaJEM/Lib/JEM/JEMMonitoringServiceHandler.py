@@ -140,6 +140,7 @@ class JEMMonitoringServiceHandler(object):
         submitExecutable = File(executablePath)
 
         def locateJemLib():
+            #logger.debug("JEMConfig.UI_SUBMIT_PACKAGE = " + JEMConfig.UI_SUBMIT_PACKAGE)
             if not os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE):
                 if os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE + '.gz'):
                     return '.gz'
@@ -162,6 +163,7 @@ class JEMMonitoringServiceHandler(object):
                 logger.warn('Failed to prepare JEM library package. Disabled JEM monitoring.')
                 self.__job.info.monitor.enabled = False
                 return
+
         # (re)pack JEM library (if needed)
         elif jemconfig['JEM_REPACK']:
             logger.debug("Repacking JEM library")
@@ -195,11 +197,10 @@ class JEMMonitoringServiceHandler(object):
             localConfigPath = os.path.expanduser("~") + os.path.sep + ".JEMrc"
             if not os.path.isfile(localConfigPath):
                 # ...if that also doesn't exist, we'll just create a new one and warn the user.
-                logger.warn("Didn't find local configuration file .JEMrc in "
+                logger.debug("Didn't find local configuration file .JEMrc in "
                                + os.path.realpath("." + os.path.sep + ".JEMrc") + " or "
                                + os.path.expanduser("~") + os.path.sep + ".JEMrc")
-                logger.warn("JEM will run with the default settings set up by the site administrator."
-                               + " In most cases, this means no realtime monitoring data will be available.")
+                logger.debug("JEM will run with the default settings set up by the site administrator.")
 
         # if a .JEMrc was found, load its settings in our dict.
         if os.path.isfile(localConfigPath):
@@ -255,7 +256,7 @@ class JEMMonitoringServiceHandler(object):
         try:
             for i, config in enumerate(subjobconfig):
                 if (i == 0) or (i % jemconfig['JEM_MONITOR_SUBJOBS_FREQ'] == 0):
-                    logger.debug("Enabling JEM realtime monitoring for job #" + self.__getFullJobId() + "." + str(i))
+                    logger.debug("Enabling JEM monitoring for job #" + self.__getFullJobId() + "." + str(i))
 
                     self.__monitoredSubjobs += [i]
 
@@ -371,7 +372,7 @@ class JEMMonitoringServiceHandler(object):
         # no action for subjobs...
         if self.__job.master:
             return
-
+        
         if self.__job.subjobs and len(self.__job.subjobs) > 0:
             # HACK: If we are a split job, we have to wait for the subjobs to be assigned
             #       their backend-id (JobID) before we can start the Job-Listener process
@@ -432,14 +433,14 @@ class JEMMonitoringServiceHandler(object):
                         if os.path.exists(self.__job.info.monitor.jmdfile):
                             try:
                                 os.system('mv ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.info.monitor.jmdfile + '.bak')
-                                try:
-                                    os.system('cp ' + self.__job.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile)
-                                    logger.debug("  OK, log of main job #" + str(self.__job.id) + " has been copied.")
-                                except:
-                                    # revert...
-                                    os.system('mv ' + self.__job.info.monitor.jmdfile + '.bak ' + self.__job.info.monitor.jmdfile)
                             except:
                                 pass
+
+                        try:
+                            os.system('cp ' + self.__job.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile)
+                            logger.debug("  OK, log of main job #" + str(self.__job.id) + " has been copied.")
+                        except:
+                            pass
 
                         logger.debug("  (now trying to copy the subjobs' logs)")
                         
@@ -467,7 +468,6 @@ class JEMMonitoringServiceHandler(object):
         """
         theJEMrcSettings = {}
         theSection = ""
-        #logger.debug("opening " + path + " for reading.")
         fd = open(path, "r")
         for line in fd:
             if len(line) == 0:
@@ -475,7 +475,6 @@ class JEMMonitoringServiceHandler(object):
             m = re.search('^\[(.*)\]', line)        # this is a new section!
             if m != None:
                 theSection = m.group(0).strip(" []\t")
-                #logger.debug("  found section: [" + theSection + "]")
                 if not theJEMrcSettings.has_key(theSection):
                     theJEMrcSettings[theSection] = {}
             else:
@@ -487,12 +486,10 @@ class JEMMonitoringServiceHandler(object):
                         continue
                     if theJEMrcSettings[theSection].has_key(k):
                         logger.warning("Duplicate JEM setting '" + k + "' in " + path)
-                    #logger.debug("    found: '" + k + "' = '" + v + "'")
                     theJEMrcSettings[theSection][k] = v
                 except:
-                    #logger.debug("    __readJEMrc catched " + str(sys.exc_info()[0]) + " (" + str(sys.exc_info()[1]) + ")")
+                    logger.debug("    __readJEMrc catched " + str(sys.exc_info()[0]) + " (" + str(sys.exc_info()[1]) + ")")
                     pass
-        #logger.debug("read JEM configuration:\n" + pprint.pformat(theJEMrcSettings))
         return theJEMrcSettings
 
 
@@ -543,19 +540,24 @@ class JEMMonitoringServiceHandler(object):
             JEMrc['JEMConfig'] = {}
         if not JEMrc.has_key('JEMuiConfig'):
             JEMrc['JEMuiConfig'] = {}
+        if not JEMrc.has_key('JEMSysConfig'):
+            JEMrc['JEMSysConfig'] = {}
 
+        ### always enable GANGA mode
+        JEMrc['JEMSysConfig']['GANGA_ENABLED'] = True
+        
         ### loglevels
         JEMrc['JEMConfig']['WRAPPER_BASH_PUBLISHER_LEVEL'] = monitor.advanced.bash_loglevel
         JEMrc['JEMConfig']['WRAPPER_PYTHON_PUBLISHER_LEVEL'] = monitor.advanced.python_loglevel
 
+        ### hostname to transmit data to
+        if not JEMrc['JEMConfig'].has_key('PUBLISHER_HTTPS_SERVER'):
+            from socket import gethostname
+            JEMrc['JEMConfig']['PUBLISHER_HTTPS_SERVER'] = "'" + gethostname() + "'"
+
         ### valves
         valves = self.__buildValvesDict(JEMrc)
-
-        gangaConfiguredValves = []
-        try:
-            gangaConfiguredValves = self.getJobObject().backend.monitoring.advanced.valves
-        except:
-            pass
+        gangaConfiguredValves = monitor.advanced.valves
 
         if gangaConfiguredValves != []:
             valves = gangaConfiguredValves
@@ -566,16 +568,27 @@ class JEMMonitoringServiceHandler(object):
 
         s = ""
         for v in valves:
+            # FIXME - - - - - - - - - - - - - - - -
+            if v == "HTTPS":
+                JEMloader.httpsPubEnabled = True
+            elif v == "RGMA":
+                JEMloader.rgmaPubEnabled = True
+            elif v == "TCP":
+                JEMloader.tcpPubEnabled = True
+            elif v == "FS":
+                JEMloader.fpEnabled = True
+            # - - - - - - - - - - - - - - - - - - -
+
             if s != "":
                 s += " | "
-            s += "PUBLISER_USE_" + v
+            s += "PUBLISHER_USE_" + v
 
         JEMrc['JEMConfig']['PUBLISHER_USE_TYPE'] = s
 
-        #logger.debug("effective JEM configuration now:\n" + pprint.pformat(JEMrc))
+        import pprint
+        logger.debug("effective JEM configuration now:\n" + pprint.pformat(JEMrc))
 
         ### done
-        #jemconfig['JEM_LOGFILE_MAXSIZE']
 
 
     def __writeJEMrc(self, theJEMrcSettings):
@@ -653,13 +666,15 @@ class JEMMonitoringServiceHandler(object):
         if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
             return
 
+        jobID = self.__job.info.monitor.getJobID()
+        escapedJobID = Utils.escapeJobID(jobID)
+
+        self.__job.info.monitor.jmdfile = WNConfig.LOG_DIR + os.sep + escapedJobID + os.sep + UIConfig.PUBLISHER_JMD_FILE
+
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
             return
 
         try:
-            jobID = self.__job.info.monitor.getJobID()
-            escapedJobID = Utils.escapeJobID(jobID)
-            
             # debug output ##############################################################
             logger.debug('Trying to launch JEM realtime monitoring listener process')   #
                                                                                         #
@@ -690,7 +705,10 @@ class JEMMonitoringServiceHandler(object):
 
             try:
                 self.__job.info.monitor.pid = os.spawnve(os.P_NOWAIT, executable, args, os.environ)
-                self.__job.info.monitor.jmdfile = WNConfig.LOG_DIR + os.sep + escapedJobID + os.sep + UIConfig.PUBLISHER_JMD_FILE
+                
+                # moved this to every job, even if realtime=False, because
+                # maybe we'll get the data later via the sandbox! (see above)
+                #self.__job.info.monitor.jmdfile = WNConfig.LOG_DIR + os.sep + escapedJobID + os.sep + UIConfig.PUBLISHER_JMD_FILE
             except Exception, r:
                 logger.error('Could not start job listener process.')
                 logger.error('The Job with the id %s will start without monitoring.' % jobID)

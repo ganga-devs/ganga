@@ -71,9 +71,9 @@ jemconfig.addOption('JEM_PYTHON_LOGLEVEL', 2,
                     'Verbosity of JEMs python script monitor. Caution: Read JEMs documentation before changing this!')
 jemconfig.addOption('JEM_REPACK', False,
                     'Wether to repack the JEM library before each job submission. This is useful mostly for developers.')
-jemconfig.addOption('JEM_MONITOR_SUBJOBS_FREQ', 100,
+jemconfig.addOption('JEM_MONITOR_SUBJOBS_FREQ', 10000,
                     'Enable JEM monitoring only for every N-th subjob of a splitjob.')
-jemconfig.addOption('JEM_DEFAULT_VALVES', [],
+jemconfig.addOption('JEM_DEFAULT_VALVES', ['HTTPS','FS'],
                     'The default communication valve(s) to use for new jobs. If left empty and not overridden, use JEMs configuration (and/or .JEMrc).')
 
 #####################################################################################################################################################
@@ -312,36 +312,6 @@ class JobExecutionMonitor(GangaObject):
 
     ####################################################################################################################
     ### public interface (methods exported via _exportmethods)
-    def _getListenerPid(self):
-        return self.pid
-
-
-    def _getServerPid(self):
-        return self.__getServerPid()
-
-
-    def _getServerPort(self):
-        return self.port
-
-
-    def _getServerStatus(self):
-        return self.__checkStatus(True)
-
-
-    def _hasUserAppStarted(self):
-        return self.userAppRunning
-
-
-    def _hasUserAppExited(self):
-        return self.userAppExited
-
-
-    def _getTransmissionStats(self):
-        try:
-            return self.__transmissionStats()
-        except:
-            return []
-
 
     def getStatus(self):
         """
@@ -912,6 +882,40 @@ class JobExecutionMonitor(GangaObject):
 
 
     ####################################################################################################################
+    ### methods that are exported to GPI, but usually not called by the user...
+
+    def _getListenerPid(self):
+        return self.pid
+
+
+    def _getServerPid(self):
+        return self.__getServerPid()
+
+
+    def _getServerPort(self):
+        return self.port
+
+
+    def _getServerStatus(self):
+        return self.__checkStatus(True)
+
+
+    def _hasUserAppStarted(self):
+        return self.userAppRunning
+
+
+    def _hasUserAppExited(self):
+        return self.userAppExited
+
+
+    def _getTransmissionStats(self):
+        try:
+            return self.__transmissionStats()
+        except:
+            return []
+
+
+    ####################################################################################################################
     ### methods not exported to GPI
 
     def onBegunToReceiveMonitoringData(self):
@@ -977,7 +981,7 @@ class JobExecutionMonitor(GangaObject):
         """
         Checks JEM's overall health.
         Returns True if JEM is enabled and working correctly. Otherwise
-        returns False. Can utters a warning or error message, for example
+        returns False. Can utter a warning or error message, for example
         for the following reasons:
 
         - JEM is disabled globally
@@ -986,6 +990,8 @@ class JobExecutionMonitor(GangaObject):
         - the realtime listener process can't be found / is inactive
           (note: this is normal for finished jobs!)
         """
+        j = self.getJobObject() # pylint: disable-msg=E1101
+
         if not JEMloader.INITIALIZED:
             if onlyReport:
                 return "disabled"
@@ -996,21 +1002,24 @@ class JobExecutionMonitor(GangaObject):
                 return "disabled"
             logger.info("Monitoring is disabled for this job. No monitoring data is available.")
             return False
-        if not self.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
-            if onlyReport:
-                return "disabled"
-            logger.info("Realtime monitoring is disabled. Monitoring data will only be available in the output sandbox.")
-            return False
-        if self.pid == -1:
-            if self.getJobObject().status == 'new': # pylint: disable-msg=E1101
+
+        if j.status not in ('completed', 'failed', 'killed', 'removed'):
+            if not self.realtime or not jemconfig['JEM_ENABLE_REALTIME']:
                 if onlyReport:
-                    return "not yet started"
-                logger.info("Job has not been submitted yet. No monitoring data is available.")
-            else:
-                if onlyReport:
-                    return "error"
-                logger.info("No monitoring process started (check configuration). No monitoring data is available.")
-            return False
+                    return "disabled"
+                logger.info("Realtime monitoring is disabled. Monitoring data will only be available in the output sandbox.")
+                return False
+            if self.pid == -1:
+                if self.getJobObject().status == 'new': # pylint: disable-msg=E1101
+                    if onlyReport:
+                        return "not yet started"
+                    logger.info("Job has not been submitted yet. No monitoring data is available.")
+                else:
+                    if onlyReport:
+                        return "error"
+                    logger.info("No monitoring process started (check configuration). No monitoring data is available.")
+                return False
+
         if not os.path.exists(self.jmdfile):
             if onlyReport:
                 return "waiting"
