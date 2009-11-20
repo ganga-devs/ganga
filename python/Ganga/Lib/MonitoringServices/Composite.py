@@ -170,7 +170,7 @@ class CompositeMonitoringService(IMonitoringService):
       return ret
 
    def complete(self,**opts):
-      """Completion of a job (successful or failed).
+      """Completion of a job.
       Called by: ganga client. """
       
       ret = {}
@@ -183,8 +183,36 @@ class CompositeMonitoringService(IMonitoringService):
             self._log(level="warning",msg="%s monitoring service failed in job *complete*" % monClass)               
       return ret
 
+   def fail(self,**opts):
+      """Failure of a job.
+      Called by: ganga client. """
+      
+      ret = {}
+      for monService in self.monMonServices:
+         try:
+            monClass = str(monService.__class__)
+            ret[monClass] = monService.fail(**opts)
+         except Exception,e:
+            #discard errors in initialization of monitoring services
+            self._log(level="warning",msg="%s monitoring service failed in job *fail*" % monClass)               
+      return ret
+
+   def kill(self,**opts):
+      """Killing of a job.
+      Called by: ganga client. """
+      
+      ret = {}
+      for monService in self.monMonServices:
+         try:
+            monClass = str(monService.__class__)
+            ret[monClass] = monService.kill(**opts)
+         except Exception,e:
+            #discard errors in initialization of monitoring services
+            self._log(level="warning",msg="%s monitoring service failed in job *kill*" % monClass)               
+      return ret
+
    def rollback(self,**opts):
-      """Completion of a job (successful or failed).
+      """Rollback of a job to new state (caused by error during submission).
       Called by: ganga client. """
       
       ret = {}
@@ -194,7 +222,7 @@ class CompositeMonitoringService(IMonitoringService):
             ret[monClass] = monService.rollback(**opts)
          except Exception,e:
             #discard errors in initialization of monitoring services
-            self._log(level="warning",msg="%s monitoring service failed in job *complete*" % monClass)               
+            self._log(level="warning",msg="%s monitoring service failed in job *rollback*" % monClass)               
       return ret
 
    def getSandboxModules(self):
