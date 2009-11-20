@@ -66,7 +66,21 @@ class JobExecutionMonitorMS(IMonitoringService):
 
     def complete(self,**opts):
         try:
-            self.__getJEMobject().complete(opts['cause'])
+            self.__getJEMobject().complete('finished')
+        except:
+            self.__handleError()
+
+
+    def fail(self,**opts):
+        try:
+            self.__getJEMobject().complete('failed')
+        except:
+            self.__handleError()
+
+
+    def kill(self,**opts):
+        try:
+            self.__getJEMobject().complete('failed')
         except:
             self.__handleError()
 
