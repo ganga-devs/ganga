@@ -209,15 +209,16 @@ class GangaRepositoryLocal(GangaRepository):
             if not id in self.objects: # this is bad - no or corrupted index but object not loaded yet! Try to load it!
                 try:
                     self.load([id])
+                    # Write out a new index if the file can be locked
+                    if len(self.lock([id])) != 0:
+                        self.index_write(id)
+                        self.unlock([id])
                 except KeyError:
                     pass # deleted job
                 except InaccessibleObjectError, x:
                     logger.debug("Failed to load id %i: %s %s" % (id, x.orig.__class__.__name__, x.orig))
                     summary.append((id,x.orig))
-                # Write out a new index if the file can be locked
-                if len(self.lock([id])) != 0:
-                    self.index_write(id)
-                    self.unlock([id])
+
         if len(summary) > 0:
             cnt = {}
             examples = {}
