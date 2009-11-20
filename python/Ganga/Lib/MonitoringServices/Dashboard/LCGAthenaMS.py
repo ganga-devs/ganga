@@ -31,7 +31,15 @@ class LCGAthenaMS(LCGMS):
     #----- event call-backs -----
 
     def submit(self, **opts):
+        """Log submit event on client."""
         LCGMS.submit(self, **opts)
+        j = self.job_info # called on client, so job_info is Job object
+        if j.master is None:
+            # create message (Ganga running)
+            message = self._cl_task_meta_message()
+            # send
+            self._send(self.config_info['destination_task_meta'], message)
+        
 
     def stop(self, exitcode, **opts):
         LCGMS.stop(self, exitcode, **opts)
@@ -42,17 +50,19 @@ class LCGAthenaMS(LCGMS):
         j = self.job_info # called on client, so job_info is Job object
         msg = {
             'TASKNAME': LCGUtil.cl_task_name(j),
-            'TASKTYPE': 'analysis', #TODO: this needs to be configurable. other values are hammercloud etc.
+            'TASKTYPE': cl_task_type(self.config_info), # e.g. analysis, production, hammercloud etc.
             'OWNERDN': LCGUtil.cl_ownerdn(),
             'JSTOOL': 'Ganga', # e.g. Ganga, Panda
             'JSTOOLUI': cl_jstoolui(), # hostname of client
             'SUBMISSIONTYPE': 'direct',
             'APPLICATION': cl_application(j), # e.g. Athena
             'APPLICATIONVERSION': cl_application_version(j), # e.g. 15.5.1
-            'INPUTDATASET': None, # e.g. fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10
-            'OUTPUTDATASET': None,# e.g. user09.DavidTuckett.ganga.387.20091119 (csv if list)
-            'OUTPUTSE': None, # ?
-            'TARGET': None, # e.g. CLOUD_xxx, SITE_xxx, SE_xxx, CE_xxx (csv if list)
+            'INPUTDATASET': cl_input_dataset(j), # e.g. fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10
+            'OUTPUTDATASET': cl_output_dataset(j),# e.g. user09.DavidTuckett.ganga.387.20091119
+            'OUTPUTSE': None, # Unknown
+            'TARGET': None, # Unknown
+            'REPORTER': 'ToolUI',
+            'REPORTTIME': CommonUtil.utcnow(),
             '___fqid' : j.fqid,
             }
         return msg
@@ -67,6 +77,8 @@ class LCGAthenaMS(LCGMS):
             'PILOT': None,
             'PILOTNAME': None,
             'NEVENTSREQUESTED': None,
+            'REPORTER': 'ToolUI',
+            'REPORTTIME': CommonUtil.utcnow(),
             '___fqid' : j.fqid,
             }
         return msg
@@ -81,6 +93,8 @@ class LCGAthenaMS(LCGMS):
             'NEVENTSPROCESSED': None,
             'CPU': None,
             'WALLCLOCK': None,
+            'REPORTER': 'JobWN',
+            'REPORTTIME': CommonUtil.utcnow(),
             '___fqid' : ji['fqid'],
             }
         return msg
@@ -90,7 +104,11 @@ class LCGAthenaMS(LCGMS):
 #TODO: add error handling code in following methods
 #TODO: move to appropriate XxxUtil modules
 
-def cl_jstoolui(job):
+def cl_task_type(config):
+    """Build task_type. Only run on client."""
+    return config['task_type']
+
+def cl_jstoolui():
     """Build jstoolui. Only run on client."""
     return CommonUtil.hostname()
 
@@ -100,5 +118,23 @@ def cl_application(job):
 
 def cl_application_version(job):
     """Build application_version. Only run on client."""
-    return CommonUtil.strip_to_none(job.application.atlas_release)
+    if job.application.atlas_production:
+        application_version = job.application.atlas_production
+    else:
+        application_version = job.application.atlas_release
+    return CommonUtil.strip_to_none(application_version)
 
+def cl_input_dataset(job):
+    """Build input_dataset. Only run on client."""
+    datasetcsv = ','.join(job.inputdata.dataset)
+    return CommonUtil.strip_to_none(datasetcsv)
+
+def cl_output_dataset(job):
+    """Build output_dataset. Only run on client."""
+    datasets = []
+    for j in job.subjobs:
+        dataset = j.outputdata.datasetname
+        if dataset and dataset not in datasets:
+            datasets.append(dataset)
+    datasetcsv = ','.join(datasets)
+    return CommonUtil.strip_to_none(datasetcsv)

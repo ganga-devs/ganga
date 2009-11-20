@@ -69,7 +69,7 @@ class LCGMS(DashboardMS):
             self._log('debug', 'Not sending redundant message on submit without grid_job_id for job %s.' % j.fqid)
             return
         # send
-        self._send(message)
+        self._send(self.config_info['destination_job_status'], message)
 
     def start(self, **opts):
         """Log start event on worker node."""
@@ -78,7 +78,7 @@ class LCGMS(DashboardMS):
         # create message (Ganga running)
         message = self._wn_job_status_message('running', 'Ganga', CommonUtil.utcnow())
         # send
-        self._send(message)
+        self._send(self.config_info['destination_job_status'], message)
 
     def progress(self, **opts):
         ji = self.job_info # called on worker node, so job_info is dictionary
@@ -97,7 +97,7 @@ class LCGMS(DashboardMS):
         message['JOBEXITCODE'] = exitcode
         message['JOBEXITREASON'] = None #TODO: how can we know this?
         # send
-        self._send(message)
+        self._send(self.config_info['destination_job_status'], message)
 
     def complete(self, **opts):
         """Log complete event on client."""
@@ -112,7 +112,7 @@ class LCGMS(DashboardMS):
         message['GRIDEXITCODE'] = LCGUtil.cl_grid_exit_code(j)
         message['GRIDEXITREASON'] = LCGUtil.cl_grid_exit_reason(j)
         # send
-        self._send(message)
+        self._send(self.config_info['destination_job_status'], message)
 
     def fail(self, **opts):
         """Log fail event on client."""
@@ -127,7 +127,7 @@ class LCGMS(DashboardMS):
         message['GRIDEXITCODE'] = LCGUtil.cl_grid_exit_code(j)
         message['GRIDEXITREASON'] = LCGUtil.cl_grid_exit_reason(j)
         # send
-        self._send(message)
+        self._send(self.config_info['destination_job_status'], message)
 
     def kill(self, **opts):
         """Log kill event on client."""
@@ -140,7 +140,7 @@ class LCGMS(DashboardMS):
         # create message (LB Cancelled)
         message = self._cl_job_status_message('Cancelled', 'LB', None)
         # send
-        self._send(message)
+        self._send(self.config_info['destination_job_status'], message)
 
     def rollback(self, **opts):
         j = self.job_info # called on client, so job_info is Job object

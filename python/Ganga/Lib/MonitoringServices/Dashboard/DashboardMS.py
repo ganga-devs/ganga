@@ -24,7 +24,9 @@ def _initconfig():
         config.addOption('port', 6163, 'The MSG server port.')
         config.addOption('user', '', '')
         config.addOption('password', '', '')
-        config.addOption('destination', '/topic/grid.usage.jobStatusTest', 'The MSG destination (topic or queue).')
+        config.addOption('destination_job_status', '/topic/grid.usage.jobStatusTest', 'The MSG destination (topic or queue) for job status messages.')
+        config.addOption('destination_task_meta', '/topic/grid.usage.taskMetaTest', 'The MSG destination (topic or queue) for task meta messages.')
+        config.addOption('task_type', 'analysis', 'The type of task. e.g. analysis, production, hammercloud,...')
         # prevent modification during the interactive ganga session
         def deny_modification(name, value):
             raise Config.ConfigError('Cannot modify [DashboardMS] settings (attempted %s=%s)' % (name, value))
@@ -86,7 +88,7 @@ class DashboardMS(IMonitoringService.IMonitoringService):
             Ganga.Lib.MonitoringServices.Dashboard.FormatUtil,
             ] + MSGUtil.getSandboxModules()
 
-    def _send(self, message):
+    def _send(self, destination, message):
         """Send the message to the configured destination."""
         # get publisher
         p = _get_publisher(
@@ -98,7 +100,7 @@ class DashboardMS(IMonitoringService.IMonitoringService):
         # send message
         headers = {'persistent':'true'}
         wlcg_msg = FormatUtil.dictToWlcg(message)
-        p.send(self.config_info['destination'], wlcg_msg, headers)
+        p.send(destination, wlcg_msg, headers)
 
     def _log(self, level='info', message=''):
         """Log message to logger on client or stderr on worker node."""
