@@ -54,6 +54,7 @@ def dictToWlcg(msg):
 
 
 if __name__ == '__main__':
+    # test code
     import datetime
     msg = {
         'a':1,
