@@ -87,7 +87,6 @@ class TaskRegistry(Registry):
                 except Exception, x:
                     logger.error("Exception occurred in task monitoring loop: %s\nThe offending task was paused." % x)
                     p.pause()
-                    self.save()
             # Sleep interruptible for 10 seconds
             for i in range(0,100):
                 time.sleep(0.1)
