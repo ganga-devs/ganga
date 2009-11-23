@@ -35,14 +35,21 @@ class LCGAthenaMS(LCGMS):
         LCGMS.submit(self, **opts)
         j = self.job_info # called on client, so job_info is Job object
         if j.master is None:
-            # create message (Ganga running)
+            # create message (task meta)
             message = self._cl_task_meta_message()
             # send
             self._send(self.config_info['destination_task_meta'], message)
         
 
     def stop(self, exitcode, **opts):
+        """Log stop event on client."""
         LCGMS.stop(self, exitcode, **opts)
+        ji = self.job_info # called on worker node, so job_info is dictionary
+        # create message (job processing attributes)
+        message = self._wn_job_processing_attributes_message()
+        # send
+        self._send(self.config_info['destination_job_processing_attributes'], message)
+        
 
     #----- message builders -----
 
@@ -85,16 +92,17 @@ class LCGAthenaMS(LCGMS):
 
     def _wn_job_processing_attributes_message(self):
         ji = self.job_info # called on worker node, so job_info is dictionary
+        athena_stats = wn_load_athena_stats()
         msg = {
-            'TASKNAME': ji['TASKNAME'],
-            'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'],
-            'UNIQUEJOBID': ji['UNIQUEJOBID'],
+            'CPU': athena_stats.get('systemtime'),
             'GRIDJOBID': LCGUtil.wn_grid_job_id(),
-            'NEVENTSPROCESSED': None,
-            'CPU': None,
-            'WALLCLOCK': None,
+            'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'],
+            'NEVENTSPROCESSED': athena_stats.get('totalevents'),
             'REPORTER': 'JobWN',
             'REPORTTIME': CommonUtil.utcnow(),
+            'TASKNAME': ji['TASKNAME'],
+            'UNIQUEJOBID': ji['UNIQUEJOBID'],
+            'WALLCLOCK': athena_stats.get('wallclock'),
             '___fqid' : ji['fqid'],
             }
         return msg
@@ -145,3 +153,24 @@ def cl_target(job):
 def cl_task_type(config):
     """Build task_type. Only run on client."""
     return config['task_type']
+
+#----- worker node meta-data builders ----- 
+
+def wn_load_athena_stats():
+    """Load Athena stats. Only run on worker node.
+    
+    If the Athena stats.pickle file cannot be read then an empty dictionary is
+    returned.
+    """
+    import cPickle as pickle
+    try:
+        f = open('stats.pickle','r')
+        try:
+            stats = pickle.load(f)
+        finally:
+            f.close()
+    except:
+        stats = {}
+    return stats
+    
+    
