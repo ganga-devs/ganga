@@ -210,7 +210,7 @@ class Transform(GangaObject):
 
       # Check if we know the occurring application...
       if not app.id in self._app_partition:
-         logger.warning("%s was contacted by an unknown application %i.", self.fqn(), self._getParent().id, app.id)
+         logger.warning("%s was contacted by an unknown application %i.", self.fqn(), app.id)
          return
       # Silently ignore message if the application is already removed
       if app.id in self._app_status and self._app_status[app.id] == "removed":
