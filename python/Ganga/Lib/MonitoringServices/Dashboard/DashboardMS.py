@@ -26,6 +26,7 @@ def _initconfig():
         config.addOption('password', '', '')
         config.addOption('destination_job_status', '/topic/grid.usage.jobStatusTest', 'The MSG destination (topic or queue) for job status messages.')
         config.addOption('destination_job_processing_attributes', '/topic/grid.usage.jobProcessingAttributesTest', 'The MSG destination (topic or queue) for job processing attributes messages.')
+        config.addOption('destination_job_meta', '/topic/grid.usage.jobMetaTest', 'The MSG destination (topic or queue) for job meta messages.')
         config.addOption('destination_task_meta', '/topic/grid.usage.taskMetaTest', 'The MSG destination (topic or queue) for task meta messages.')
         config.addOption('task_type', 'analysis', 'The type of task. e.g. analysis, production, hammercloud,...')
         # prevent modification during the interactive ganga session

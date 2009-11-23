@@ -67,9 +67,9 @@ class LCGMS(DashboardMS):
             # LCG.master_bulk_updateMonitoringInformation() which results in two
             # submit messages being sent, one without a grid_job_id.
             self._log('debug', 'Not sending redundant message on submit without grid_job_id for job %s.' % j.fqid)
-            return
-        # send
-        self._send(self.config_info['destination_job_status'], message)
+        else:
+            # send
+            self._send(self.config_info['destination_job_status'], message)
 
     def start(self, **opts):
         """Log start event on worker node."""

@@ -39,6 +39,17 @@ class LCGAthenaMS(LCGMS):
             message = self._cl_task_meta_message()
             # send
             self._send(self.config_info['destination_task_meta'], message)
+        if not j.subjobs:
+            # create message (job meta attributes)
+            message = self._cl_job_meta_message()
+            if message['GRIDJOBID'] is None:
+                # This is to handle the temporary workaround in
+                # LCG.master_bulk_updateMonitoringInformation() which results in two
+                # submit messages being sent, one without a grid_job_id.
+                self._log('debug', 'Not sending redundant message on submit without grid_job_id for job %s.' % j.fqid)
+            else:
+                # send
+                self._send(self.config_info['destination_job_meta'], message)
         
 
     def stop(self, exitcode, **opts):
@@ -77,15 +88,15 @@ class LCGAthenaMS(LCGMS):
     def _cl_job_meta_message(self):
         j = self.job_info # called on client, so job_info is Job object
         msg = {
-            'TASKNAME': LCGUtil.cl_task_name(j),
-            'JOB_ID_INSIDE_THE_TASK': LCGUtil.cl_job_id_inside_the_task(j),
-            'UNIQUEJOBID': LCGUtil.cl_unique_job_id(j),
             'GRIDJOBID': LCGUtil.cl_grid_job_id(j),
-            'PILOT': None,
+            'JOB_ID_INSIDE_THE_TASK': LCGUtil.cl_job_id_inside_the_task(j),
+            'NEVENTSREQUESTED': cl_nevents_requested(j),
+            'PILOT': 0, # 0 = not pilot, 1 = pilot
             'PILOTNAME': None,
-            'NEVENTSREQUESTED': None,
             'REPORTER': 'ToolUI',
             'REPORTTIME': CommonUtil.utcnow(),
+            'TASKNAME': LCGUtil.cl_task_name(j),
+            'UNIQUEJOBID': LCGUtil.cl_unique_job_id(j),
             '___fqid' : j.fqid,
             }
         return msg
@@ -94,14 +105,16 @@ class LCGAthenaMS(LCGMS):
         ji = self.job_info # called on worker node, so job_info is dictionary
         athena_stats = wn_load_athena_stats()
         msg = {
-            'CPU': athena_stats.get('systemtime'),
             'GRIDJOBID': LCGUtil.wn_grid_job_id(),
             'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'],
             'NEVENTSPROCESSED': athena_stats.get('totalevents'),
+            'NFILESPROCESSED': athena_stats.get('numfiles'),
             'REPORTER': 'JobWN',
             'REPORTTIME': CommonUtil.utcnow(),
+            'SYSTEMTIME': athena_stats.get('systemtime'),
             'TASKNAME': ji['TASKNAME'],
             'UNIQUEJOBID': ji['UNIQUEJOBID'],
+            'USERTIME': athena_stats.get('usertime'),
             'WALLCLOCK': athena_stats.get('wallclock'),
             '___fqid' : ji['fqid'],
             }
@@ -132,6 +145,13 @@ def cl_input_dataset(job):
 def cl_jstoolui():
     """Build jstoolui. Only run on client."""
     return CommonUtil.hostname()
+
+def cl_nevents_requested(job):
+    """Build nevents_requested. Only run on client."""
+    max_events = None
+    if job.application.max_events > -1:
+        max_events = job.application.max_events
+    return max_events
 
 def cl_target(job):
     """Build target. Only run on client."""
