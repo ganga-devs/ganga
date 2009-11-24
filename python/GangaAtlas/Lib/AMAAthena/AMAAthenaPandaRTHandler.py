@@ -196,7 +196,7 @@ def get_summary_lfn(job):
     #summary_lfn = 'workDir/%s/summary/summary_%s__nEvts_-1.root' % (re.sub(r'\/$','', job.application.atlas_run_dir),  sample_name)
 
     #summary_lfn = 'ama_summary_%s.tgz' % job.getFQID('_')
-    summary_lfn = 'ama_summary_$PANDAID.tgz'
+    summary_lfn = 'ama_summary.tgz'
 
     #if not flag_tag:
     #    #summary_lfn = 'summary/summary_%s_confFile_%s_nEvts_%s.root' % ( sample_name, conf_name, str(max_events) )
@@ -439,15 +439,22 @@ class AMAAthenaPandaRTHandler(AthenaPandaRTHandler):
 #       output files
         outMap = {}
 
-        self.indexHIST += 1
-        fout = FileSpec()
-        fout.dataset           = job.outputdata.datasetname
-        fout.lfn               = get_summary_lfn(job)
-        fout.type              = 'output'
-        fout.destinationDBlock = jspec.destinationDBlock
-        fout.destinationSE     = jspec.destinationSE
-        jspec.addFile(fout)
-        outMap['UserData'] = fout.lfn.replace('PANDAID','PandaID')
+        my_extOut = self.extOutFile + [ get_summary_lfn(job) ]
+
+        if my_extOut:
+
+            self.indexEXT += 1
+            for idx, name in enumerate( my_extOut ):
+                fout = FileSpec()
+                fout.dataset           = job.outputdata.datasetname
+                fout.lfn               = '%s.EXT%d._%05d.%s' % (job.outputdata.datasetname,idx,self.indexEXT,name)
+                fout.type              = 'output'
+                fout.destinationDBlock = jspec.destinationDBlock
+                fout.destinationSE     = jspec.destinationSE
+                jspec.addFile(fout)
+                if not 'IROOT' in outMap:  # this is not a typo!
+                    outMap['IROOT'] = []
+                outMap['IROOT'].append((name,fout.lfn))
 
         #if self.runConfig.output.outNtuple:
         #    self.indexNT += 1
