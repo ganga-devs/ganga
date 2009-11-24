@@ -15,10 +15,9 @@
 \def\dirac {\textsc{Dirac}\xspace}
 \def\gauss {\textsc{Gauss}\xspace}
 \def\grid {\textsc{Grid}\xspace}
-\def\majorv {5}
-\def\minorv {4.0}
-\def\totalv {\majorv.\minorv}
-\def\release{\ganga-\totalv}
+\def\majorv {v5}
+\def\minorv {04p1}
+\def\totalv {\majorv\minorv}
 
 \def\davinciv {v20r0\xspace}
 \def\tutorialv {v7r4\xspace}
@@ -28,7 +27,7 @@
 
 % At minimum, give your name and an email address.  You can include a
 % snail-mail address if you like.
-\author{Ulrik Egede}
+\author{Ulrik Egede and Mike Williams}
 \authoraddress{U.Egede@imperial.ac.uk}
 
 \begin{document}
@@ -50,7 +49,7 @@ jobs to the \dirac production system and how to select data for analysis in
 
 \begin{seealso}
   An \lhcb specific reference manual is available at 
-  \seeurl{http://ganga.web.cern.ch/ganga/release/4.3.7/reports/html/Manuals/GangaLHCbManual.html}{}
+  \seeurl{http://ganga.web.cern.ch/ganga/release/5.4.1/reports/html/Manuals/GangaLHCbManual.html}{}
   with the exact release you are using substituted into the URL. The text you
   get in the reference manual is identical to the help text you get on the
   command line in \ganga but might be more convenient for reading.
@@ -63,43 +62,72 @@ install anything. However, to take advantage of more disk space available at
 other machines it will often be an advantage to install \ganga at your home
 institute.
 
-To take full advantage of \ganga you will need to have the following things
-installed:
+\begin{seealso}
+The installation of \ganga is done as for any other \lhcb software
+with the instructions to be found at
+\seeurl{https://twiki.cern.ch/twiki/bin/view/LHCb/SoftwareInstallation}{}
+\end{seealso}
+
+As an example to install \ganga version \totalv you would do 
+\begin{verbatim}
+python install_project.py -p Ganga -v v504r1 -b
+\end{verbatim}
+While Ganga in itself does not have any binary code, you need to add
+the \texttt{-b} option to get the binary versions of the dependencies. Note in
+particular that \dirac is now installed automatically.
+
+
+\dirac installs a local copy of the files that validate Grid
+certificates. However, if these files becomes out of date, odd
+behaviour can occur. If you have a local LCG installation that is
+maintained you can make the two environment variables
+\texttt{X509_CERT_DIR} and \texttt{X509_VOMS_DIR} point to the correct
+files. If you have afs available you can also make them point to
+\begin{verbatim}
+X509_CERT_DIR=/afs/cern.ch/project/gd/LCG-share/current/external/etc/grid-security/certificates
+X509_VOMS_DIR=/afs/cern.ch/project/gd/LCG-share/current/external/etc/grid-security/vomsdir
+\end{verbatim}
+
+If you want to make modifications to the configuration of \ganga for
+all local users, you should implement a site configuration file. As an
+example, this might modify options for the local batch system. As the
+site wide options might be different for different \ganga releases,
+there is a directory structure to support this.
 \begin{itemize}
-\item the \lhcb software,
-\item the latest version of the \dirac WMS client,
-\item a \grid user interface,
-\item whatever versions of \root that you might want to use.
+\item Create a directory in some group readable area and modify group
+  login scripts to make the environment variable
+  \texttt{GANGA_SITE_CONFIG_AREA} point to the directory.
+\item Create a subdirectory with a name corresponding to the release,
+  e.g. \texttt{v504r1}.
+\item Any file with extension \texttt{.ini} in this directory will be
+  used for site wide configuration.
 \end{itemize}
-Here we will only deal with the installation of \ganga.
 
-From the \ganga homepage you go to the \textit{User guides} and then to the
-\textit{installation instructions}. Download the \texttt{ganga-install}
-script. Decide which release, $<$rel$>$ and which directory,
-\texttt{$<$installdir$>$}, you want \ganga installed in and execute the
-command
+There is no need to create a new directory and file for every new
+release. If there are no changes, \ganga will simply pick the file
+from the directory corresponding to the most recent release
+beforehand. Take a look at
+\texttt{/afs/cern.ch/sw/ganga/install/config/LHCb} to see how it
+works. Also, as an example, the site configuration file for
+\texttt{Imperial} is shown below. It adds a welcome message, sets
+\texttt{SGE} to be the default batch system and modifies a few options
+related to the batch system.
 \begin{verbatim}
-./ganga-install --prefix <installdir> --extern=GangaLHCb,GangaGUI,GangaPlotter,GangaTutorial,GangaTest <rel>
+[Configuration]
+IgnoreRuntimeWarnings = True
+StartupGPI=print 'Hello from Ganga at Imperial. Please contact Nobody, Nobody@no.spam if you have any problems'
+Batch=SGE
+
+[SGE]
+submit_str = cd %s; qsub -cwd -V %s %s %s %s
+preexecute = os.chdir(os.environ["TMPDIR"])
+        os.environ["PATH"]+=":."
+        os.environ["HOME"]=os.environ["TMPDIR"]
 \end{verbatim}
 
-To get the correct configuration when starting \ganga, copy the two files
-\begin{verbatim}
-/afs/cern.ch/sw/ganga/install/config/GangaLHCbRoot.ini
-/afs/cern.ch/sw/ganga/install/config/GangaLHCb-v5.ini
-\end{verbatim}
-to a local disk and edit the second file to fit with your local
-installation. In particular the location of the \grid user interface might
-need changing. Lines which are not relevant outside CERN should simply be
-deleted.
-
-Before running define the environment variable
-\begin{verbatim}
-GANGA_CONFIG_PATH=<mydir>/GangaLHCbRoot.ini:<mydir>/GangaLHCb-v5.ini:GangaLHCb/LHCb.ini
-\end{verbatim}
-and you can then start \ganga with the command line
-\begin{verbatim}
-<installdir>/install/<rel>/bin/ganga
-\end{verbatim}
+To start \ganga simply in a new shell do \texttt{SetupProject Ganga}
+and then you can start Ganga as many times as you like by just typing
+\texttt{ganga}.
 
 \section{Applications}
 \label{sec:gaudi}
