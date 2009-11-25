@@ -8,9 +8,9 @@
 Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 """
 
-external_packages = { 
+external_packages = {
                      'JEM' : {
-                              'version' : '0.2.5.2',
+                              'version' : '0.2.5.3',
                               'noarch' : True
                               },
 }
@@ -20,9 +20,9 @@ setup = PackageSetup(external_packages)
 
 def standardSetup(setup=setup):
     import Ganga.Utility.Setup
-    
+
     for p in setup.packages:
         setup.prependPath(p,'PYTHONPATH')
         setup.prependPath(p,'PATH')
         setup.prependPath(p,'LD_LIBRARY_PATH')
- 
+

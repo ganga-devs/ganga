@@ -260,9 +260,9 @@ class JobExecutionMonitor(GangaObject):
 
 
     Furthermore, you can get an overview of running JEM listener instances by typing
-    
+
         'JEMlisteners(jobs)'     (exactly like this, incl. the 'jobs'; this is a DEBUG feature!)
-        
+
 
 
     NOTE: This is an ALPHA version of JEM. If you have any comments, suggestions or encounter a
@@ -661,21 +661,21 @@ class JobExecutionMonitor(GangaObject):
                     s += ss
 
                     if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("command", data["M1"])
+                        s += PrettyStrings.formatDatum("command", multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]))
 
                 elif data["SubType"] == "EXTERNAL":
                     s = PrettyStrings.makeHeader("command info")
                     s += ss
 
                     if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("command", data["M1"])
+                        s += PrettyStrings.formatDatum("command", multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]))
 
                 elif data["SubType"] == "SYNTAX":
                     s = PrettyStrings.makeHeader("script expression info")
                     s += ss
 
                     if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("expression", data["M1"])
+                        s += PrettyStrings.formatDatum("expression", multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]))
 
                 else:
                     logger.warn("Unknown type of command")
@@ -717,7 +717,7 @@ class JobExecutionMonitor(GangaObject):
             for data in l:
                 ss = "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " | "
                 if data.has_key("M1"):
-                    ss += PrettyStrings.formatString(data["M1"], 128)
+                    ss += PrettyStrings.formatString(multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]), 128)
                 ss += "\n"
 
                 if ascending:
@@ -749,7 +749,7 @@ class JobExecutionMonitor(GangaObject):
             extractedSome = True
         else:
             logger.info("Monitoring data of job #" + str(job.id) + " couldn't be extracted - this need not be an error (e.g. for split jobs this is normal)")
-        
+
         for sj in job.subjobs:
             path = sj.getOutputWorkspace().getPath()
             if self.__decompressTar(path):
@@ -945,7 +945,7 @@ class JobExecutionMonitor(GangaObject):
                     self.userAppExited = True
         except:
             pass
-        
+
         if self.userAppExited:
             logger.info("User application of job " + str(jobGangaID) +\
                         " seems to have finished! Now waiting for the middleware...")
@@ -1329,7 +1329,7 @@ class JobExecutionMonitor(GangaObject):
     def __transmissionStats(self):
         fd = ropen(self.jmdfile)
         stats = {"Tb": 0, "Tc": 0, "Rc": 0, "Ec": 0, "Pc": 0, "Cc": 0}
-        
+
         while 1:
             try:
                 line = fd.readline()
@@ -1343,7 +1343,7 @@ class JobExecutionMonitor(GangaObject):
                 stats["Tc"] += 1
 
                 line = self.__parseJMDline(line)
-                
+
                 if line.has_key("Type"):
                     if line["Type"] == "RESOURCE":
                         stats["Rc"] += 1

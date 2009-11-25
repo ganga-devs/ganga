@@ -489,7 +489,7 @@ class JEMMonitoringServiceHandler(object):
                     theJEMrcSettings[theSection][k] = v
                 except:
                     logger.debug("    __readJEMrc catched " + str(sys.exc_info()[0]) + " (" + str(sys.exc_info()[1]) + ")")
-                    pass
+                    logger.debug("    for line " + line)
         return theJEMrcSettings
 
 
@@ -553,7 +553,7 @@ class JEMMonitoringServiceHandler(object):
         ### hostname to transmit data to
         if not JEMrc['JEMConfig'].has_key('PUBLISHER_HTTPS_SERVER'):
             from socket import gethostname
-            JEMrc['JEMConfig']['PUBLISHER_HTTPS_SERVER'] = "'" + gethostname() + "'"
+            JEMrc['JEMConfig']['PUBLISHER_HTTPS_SERVER'] = "'"+gethostname()+"'"
 
         ### valves
         valves = self.__buildValvesDict(JEMrc)
