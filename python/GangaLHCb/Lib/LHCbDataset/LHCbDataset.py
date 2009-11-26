@@ -161,7 +161,7 @@ class LHCbDataset(Dataset):
 
     def optionsString(self):
         'Returns the Gaudi-style options string for the dataset.'
-        if not self: return ''
+        if not self or len(self) == 0: return ''
         s = 'EventSelector.Input = {'
         dtype_str_default = getConfig('LHCb')['datatype_string_default']
         dtype_str_patterns = getConfig('LHCb')['datatype_string_patterns']
