@@ -67,7 +67,6 @@ class DashboardMS(IMonitoringService.IMonitoringService):
     def __init__(self, job_info, config_info):
         """Construct the Dashboard Monitoring Service."""
         IMonitoringService.IMonitoringService.__init__(self, job_info, config_info)
-        self._publisher = None
         # try to initialize logger or default to None if on worker node. see log()
         try:
             import Ganga.Utility.logging
