@@ -20,6 +20,7 @@ configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 
 dirac_ganga_server = DiracServer()
 dirac_monitoring_server = DiracServer()
+dirac_monitoring_is_active = True
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 # Dirac class schema
@@ -270,6 +271,15 @@ class Dirac(IBackend):
         dirac_job_ids = []
         for j in jobs: dirac_job_ids.append(j.backend.id)
         global dirac_monitoring_server
+        global dirac_monitoring_is_active
+        if not dirac_monitoring_server.proxy.isValid():
+            if dirac_monitoring_is_active:
+                logger.warning('DIRAC monitoring inactive (no valid proxy '\
+                               'found).')
+            dirac_monitoring_is_active = False
+            return
+        else:
+            dirac_monitoring_is_active = True
         cmd = 'result = DiracCommands.status(%s)' % str(dirac_job_ids)
         result = dirac_monitoring_server.execute(cmd)
         if type(result) != type([]):
