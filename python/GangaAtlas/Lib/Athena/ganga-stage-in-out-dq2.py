@@ -11,21 +11,13 @@ import md5, string
 import xml.dom.minidom
 from dq2.info import TiersOfATLAS 
 from dq2.info.TiersOfATLAS import _refreshToACache, ToACache
+
 from getopt import getopt,GetoptError
 from commands import getstatusoutput
+
 import lfc
-from dq2.common.DQException import DQInvalidRequestException
-from dq2.content.DQContentException import DQInvalidFileMetadataException
-from dq2.location.DQLocationException import DQLocationExistsException
-from dq2.location.DQLocationException import DQLocationExistsException
 
 _refreshToACache()
-
-from threading import Lock
-dq2_lock = Lock()
-
-from dq2.clientapi.DQ2 import DQ2
-dq2=DQ2()
 
 #try:
 #    # ignore Python C API version mismatch
@@ -57,12 +49,12 @@ try:
     baseURLDQ2 = os.environ['DQ2_URL_SERVER']
 except:
     print "ERROR : DQ2_URL_SERVER is not defined"
-    #sys.exit(EC_Configuration)
-try:
-    # local site ID
-    DQ2LOCALSITEID = os.environ['DQ2_LOCAL_SITE_ID']
-except:
-    print "ERROR : DQ2_LOCAL_SITE_ID is not defined"
+    sys.exit(EC_Configuration)
+#try:
+#    # local site ID
+#    DQ2LOCALSITEID = os.environ['DQ2_LOCAL_SITE_ID']
+#except:
+#    print "ERROR : DQ2_LOCAL_SITE_ID is not defined"
 #    sys.exit(EC_Configuration)
 try:
     # local access protocol
@@ -70,12 +62,20 @@ try:
 except:
     configLOCALPROTOCOL = 'rfio'
 try:
+    # root directory of storage
+    configSTORAGEROOT = os.environ['DQ2_STORAGE_ROOT']
+except:
+    if configLOCALPROTOCOL == 'rfio':
+        configSTORAGEROOT = '/castor'
+    elif configLOCALPROTOCOL == 'dcap':
+        configSTORAGEROOT = '/pnfs'
+    else:
+        configSTORAGEROOT = ''
+try:
     # prefix for local access
     configLOCALPREFIX = os.environ['DQ2_LOCAL_PREFIX']
 except:
     configLOCALPREFIX = ''
-
-configSETYPE = 'NULL'
 
 ## setting DQ2_COPY_COMMAND can cause dq2-get 0.1.17 failed 
 ## with an unknown attribute in EndpointTool instance.
@@ -207,13 +207,8 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
     stUrlMap = {}
     fsizeMap  = {}
     md5sumMap = {}
-    usedProtocol = ''
     
     print 'defaultSE: %s' %defaultSE
-
-    protocols = ''
-    for p in configLOCALPROTOCOL:
-        protocols = protocols + ' ' + p 
 
     # lfc_list structure
     stat  = lfc.lfc_filestatg()
@@ -265,18 +260,18 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     except:
                         sURLHost = defaultSE[0]
                     turl = []    
-                    
-                    if not 'gfal' in configLOCALPROTOCOL \
-                       and not stUrlMap.has_key(sURLHost) \
-                       and usedProtocol!='file' \
-                       and not 'ccsrm.in2p3.fr' in defaultSE:
+                    if configLOCALPROTOCOL!='gfal' \
+                           and not stUrlMap.has_key(sURLHost) \
+                           and configLOCALPROTOCOL!='rfio' \
+                           and configLOCALPROTOCOL!='file' \
+                           and not 'ccsrm.in2p3.fr' in defaultSE:
 
                         print 'Using lcg-gt for turl retrieval ...'
                         # check which version of lcg-utils we're on
                         if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
-                            cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + protocols
+                            cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + configLOCALPROTOCOL
                         else:
-                            cmd = "lcg-gt -t 60 " + surl + " " + protocols
+                            cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
                         print cmd
                         try:
                             signal.signal(signal.SIGALRM, ghandler)
@@ -290,22 +285,16 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                                 match = re.search('^[^:]+://([^:/]+:*\d*)/', line)
                                 if match:
                                     turl = line.split()
-                                elif line.startswith('file:'):
-                                    usedProtocol = 'file'
                             signal.alarm(0)
                         except IOError:
                             print 'lcg-gt time out !'
                             pass
                         signal.alarm(0)
 
-                        print turl
                         if turl and turl[0]:
                             match = re.search('^[^:]+://([^:/]+:*\d*)/', turl[0])
                             tURLHost = match.group(1)
                             stUrlMap[sURLHost] = tURLHost
-                            match = re.search('^(\S*)://.*', turl[0])
-                            usedProtocol = match.group(1)
-                            print usedProtocol
                                         
     else:
         print 'LFC single reading...'
@@ -345,15 +334,17 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     except:
                         sURLHost = defaultSE[0]
                     turl = []
-                    if not 'gfal' in configLOCALPROTOCOL \
+                    if configLOCALPROTOCOL!='gfal' \
                            and not stUrlMap.has_key(sURLHost) \
+                           and configLOCALPROTOCOL!='rfio' \
+                           and configLOCALPROTOCOL!='file' \
                            and not 'ccsrm.in2p3.fr' in defaultSE:
                         print 'Using lcg-gt for turl retrieval ...'
                         # check which version of lcg-utils we're on
                         if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
-                            cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + protocols
+                            cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + configLOCALPROTOCOL
                         else:
-                            cmd = "lcg-gt -t 60 " + surl + " " + protocols
+                            cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
                         try:
                             signal.signal(signal.SIGALRM, ghandler)
                             signal.alarm(240)
@@ -366,10 +357,6 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                                 match = re.search('^[^:]+://([^:/]+:*\d*)/', line)
                                 if match:
                                     turl = line.split()
-                                elif line.startswith('file:'):
-                                    usedProtocol = 'file'
-                            else:
-                                print line, err.readline()
                             signal.alarm(0)
                         except IOError:
                             print 'lcg-gt time-out !'
@@ -380,167 +367,117 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                             match = re.search('^[^:]+://([^:/]+:*\d*)/', turl[0])
                             tURLHost = match.group(1)
                             stUrlMap[sURLHost] = tURLHost
-                            match = re.search('^(\S*)://.', turl[0])
-                            usedProtocol = match.group(1)
 
         try:
             lfc.lfc_endsess()
         except NameError:
             pass
 
-    print 'usedProtocol: %s' %usedProtocol
-
     # Create TURL map
     tUrlMap = {}
-
-    # First try RFIO/DPM and FILE 
-    if ( usedProtocol == "rfio" and ( configSETYPE == 'dpm' )) \
-           or ( usedProtocol == "file" ):
-
-        turl = []
-        # Determine of bulk TURL retrieval can be used
-        rc, out = commands.getstatusoutput('which lcg-getturls')
-        if not rc:
-            useBulkTurl = True
-        else:
-            useBulkTurl = False
-
-        surls = ''
-        for s in guidReplicas.values():
-            surls = surls + " " + s
-
-        bulkprotocols = re.sub(' ',',',protocols.strip())
-
-        if useBulkTurl:
-            attempt = 0
-            # Try 3 times
-            while attempt < 3:
-                # Calc timeout
-                timeout = int(60 * 2**attempt)
-                if timeout<60:
-                    timeout = 60
-                cmd = "lcg-getturls --connect-timeout %s --sendreceive-timeout %s --srm-timeout %s --bdii-timeout %s -p %s %s" %(timeout, timeout, timeout, timeout, bulkprotocols, surls)
-                print 'Using lcg-getturls for turl retrieval ...'
-                print cmd
-                rc, out = commands.getstatusoutput(cmd)
-                if not rc:
-                    i = 0
-                    lines = out.split()
-                    for lfn, surl in guidReplicas.iteritems():
-                        tUrlMap[lfn] = lines[i]
-                        i = i + 1 
-                    break
+    for lfn, surl in guidReplicas.iteritems():
+        if configLOCALPROTOCOL in [ "dcap", 'gsidcap', 'Xrootd', 'root' ]:
+            match = re.search('^[^:]+://([^:/]+):*\d*/', surl)
+            try:
+                sURLHost = match.group(1)
+            except:
+                sURLHost = defaultSE[0]
+            if stUrlMap.has_key(sURLHost):
+                pfn = re.sub(sURLHost,stUrlMap[sURLHost],surl)
+            else:
+                if not 'ccsrm.in2p3.fr' in defaultSE:
+                    pfn = 'gfal:'+surl
                 else:
-                    print out
-                    attempt = attempt + 1
-        else:
-            # Single file lcg-gt   
+                    pfn = surl
+
+            if configLOCALPROTOCOL == "dcap" and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
+                pfn = re.sub('srm://','dcap://',pfn)
+                # Hack for ccin2p3
+                pfn = re.sub('ccsrm','ccdcapatlas',pfn)
+
+                # Hack for TRIUMF
+                if 'srm.triumf.ca' in defaultSE:
+                    pfn = re.sub('/atlas/dq2/','//pnfs/triumf.ca/data/atlas/dq2/',pfn)
+                    pfn = re.sub('/atlas/users/','//pnfs/triumf.ca/data/atlas/users/',pfn)
+                    pfn = re.sub('22125/atlas/','22125//pnfs/triumf.ca/data/atlas/',pfn)
+                # Hack for SFU
+                if 'wormhole.westgrid.ca' in defaultSE:
+                    pfn = re.sub('/atlas/dq2/','//pnfs/sfu.ca/data/atlas/dq2/',pfn)
+                    pfn = re.sub('/atlas/users/','//pnfs/sfu.ca/data/atlas/users/',pfn)
+                    pfn = re.sub('22125/atlas/','22125//pnfs/sfu.ca/data/atlas/',pfn)
+                    
+            elif configLOCALPROTOCOL in [ "root", "Xrootd" ] and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
+                pfn = re.sub('srm://','root://',pfn)
+                # Hack for ccin2p3
+                pfn = re.sub('ccsrm','ccxroot',pfn)
+                pfn = re.sub('ccdcamli01','ccxroot',pfn)
+                pfn = re.sub(':1094',':1094/',pfn)
+
+            elif configLOCALPROTOCOL == "gsidcap" and stUrlMap.has_key(sURLHost):
+                pfn = re.sub('srm://','gfal:gsidcap://',pfn)
+                pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
+                pfn = re.sub('gfal:gfal:','gfal:',pfn)
+
+        elif (configLOCALPROTOCOL == "rfio" and configSTORAGEROOT == '/castor') \
+                 or localsitesrm.find('gla.scotgrid.ac.uk')>-1:
+            # remove protocol and host
+            pfn = re.sub('^[^:]+://[^/]+','',surl)
+            # remove redundant /
+            pfn = re.sub('^//','/',pfn)
+            pfn = "rfio:" + pfn
+        elif ( configLOCALPROTOCOL == "rfio" and ( configSTORAGEROOT == '/dpm' )) \
+                 or ( configLOCALPROTOCOL == "file" and 'storm-fe.cr.cnaf.infn.it' in defaultSE) \
+                 or ( configLOCALPROTOCOL == "file" and 'se03.esc.qmul.ac.uk' in defaultSE) \
+                 or ( configLOCALPROTOCOL == "file" and 't2cmcondor.mi.infn.it' in defaultSE): 
+
+            turl = []
             print 'Using lcg-gt for turl retrieval ...'
-            for lfn, surl in guidReplicas.iteritems():                
-                # check which version of lcg-utils we're on
-                if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
-                    cmd = "lcg-gt --connect-timeout %s --sendreceive-timeout %s --srm-timeout %s --bdii-timeout %s " %(timeout, timeout, timeout, timeout) + surl + " " + protocols
-                else:
-                    cmd = "lcg-gt -t %s " %(timeout) + surl + " " + protocols
-                print cmd
-                try:
-                    signal.signal(signal.SIGALRM, ghandler)
-                    signal.alarm(240)
-                    child = popen2.Popen3(cmd,1)
-                    child.tochild.close()
-                    out=child.fromchild
-                    err=child.childerr
-                    line=out.readline()
-                    if line and line.find('rfio://')>=0:
-                        turl = [line.strip()]
-                    elif line and line.find('file://')>=0:
-                        turl = [line.strip()]
-                    else:
-                        print line, err.readline()
-                    signal.alarm(0)
-                except IOError:
-                    print 'lcg-gt time-out !'
-                    pass
+            # check which version of lcg-utils we're on
+            if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + configLOCALPROTOCOL
+            else:
+                cmd = "lcg-gt -t 60 " + surl + " " + configLOCALPROTOCOL
+            print cmd
+            try:
+                signal.signal(signal.SIGALRM, ghandler)
+                signal.alarm(240)
+                child = popen2.Popen3(cmd,1)
+                child.tochild.close()
+                out=child.fromchild
+                err=child.childerr
+                line=out.readline()
+                if line and line.find('rfio://')>=0:
+                    turl = [line.strip()]
+                elif line and line.find('file://')>=0:
+                    turl = [line.strip()]
                 signal.alarm(0)
+            except IOError:
+                print 'lcg-gt time-out !'
+                pass
+            signal.alarm(0)
 
-                if turl and turl[0]:
-                    pfn = turl[0]
-                    break
-                else:
-                    # remove protocol and host
-                    pfn = re.sub('^[^:]+://[^/]+','',surl)
-                    # remove redundant /
-                    pfn = re.sub('^//','/',pfn)
-                    # prepend protocol
-                    pfn = configLOCALPROTOCOL + ":" + pfn
-                attempt = attempt + 1
-
-                tUrlMap[lfn] = pfn
-
-                
-    else:
-        # The other protocols use search and replace
-        if 'ccsrm.in2p3.fr' in defaultSE:
-            usedProtocol = 'dcap'
-        for lfn, surl in guidReplicas.iteritems():
-            if usedProtocol in [ "dcap", 'gsidcap', 'Xrootd', 'root' ]:
-                match = re.search('^[^:]+://([^:/]+):*\d*/', surl)
-                try:
-                    sURLHost = match.group(1)
-                except:
-                    sURLHost = defaultSE[0]
-                if stUrlMap.has_key(sURLHost):
-                    pfn = re.sub(sURLHost,stUrlMap[sURLHost],surl)
-                else:
-                    if not 'ccsrm.in2p3.fr' in defaultSE:
-                        pfn = 'gfal:'+surl
-                    else:
-                        pfn = surl
-
-                if usedProtocol == "dcap" and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
-                    pfn = re.sub('srm://','dcap://',pfn)
-                    # Hack for ccin2p3
-                    pfn = re.sub('ccsrm','ccdcapatlas',pfn)
-
-                    # Hack for TRIUMF
-                    if 'srm.triumf.ca' in defaultSE:
-                        pfn = re.sub('/atlas/dq2/','//pnfs/triumf.ca/data/atlas/dq2/',pfn)
-                        pfn = re.sub('/atlas/users/','//pnfs/triumf.ca/data/atlas/users/',pfn)
-                        pfn = re.sub('22125/atlas/','22125//pnfs/triumf.ca/data/atlas/',pfn)
-                    # Hack for SFU
-                    if 'wormhole.westgrid.ca' in defaultSE:
-                        pfn = re.sub('/atlas/dq2/','//pnfs/sfu.ca/data/atlas/dq2/',pfn)
-                        pfn = re.sub('/atlas/users/','//pnfs/sfu.ca/data/atlas/users/',pfn)
-                        pfn = re.sub('22125/atlas/','22125//pnfs/sfu.ca/data/atlas/',pfn)
-
-                elif usedProtocol in [ "root", "Xrootd" ] and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
-                    pfn = re.sub('srm://','root://',pfn)
-                    # Hack for ccin2p3
-                    pfn = re.sub('ccsrm','ccxroot',pfn)
-                    pfn = re.sub('ccdcamli01','ccxroot',pfn)
-                    pfn = re.sub(':1094',':1094/',pfn)
-
-                elif usedProtocol == "gsidcap" and stUrlMap.has_key(sURLHost):
-                    pfn = re.sub('srm://','gfal:gsidcap://',pfn)
-                    pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
-                    pfn = re.sub('gfal:gfal:','gfal:',pfn)
-
-            elif (usedProtocol == "rfio" and configSETYPE == 'castor'):
-                #\
-                #     or localsitesrm.find('gla.scotgrid.ac.uk')>-1:
+            if turl and turl[0]:
+                pfn = turl[0]
+            else:
                 # remove protocol and host
                 pfn = re.sub('^[^:]+://[^/]+','',surl)
                 # remove redundant /
                 pfn = re.sub('^//','/',pfn)
-                pfn = "rfio:" + pfn
-            elif ( usedProtocol == "rfio" and ( configSETYPE == 'dpm' )) \
-                     or ( usedProtocol == "file" ): 
-                pass
-
-            else:
-                pfn = "gfal:"+surl
-
-            tUrlMap[lfn] = pfn
+                # prepend protocol
+                pfn = configLOCALPROTOCOL + ":" + pfn
+        # file protocol used on Storm/lustre (no lcg-gt)
+        elif configLOCALPROTOCOL == "file":
+            # remove protocol and host
+            pfn = re.sub('^[^:]+://[^/]+','',surl)
+            # remove redundant /
+            pfn = re.sub('^//','/',pfn)
+            # prepend protocol
+            pfn = configLOCALPROTOCOL + "://" + pfn
+        # If all fails use gfal:srm://...
+        else:
+            pfn = "gfal:"+surl
+    
+        tUrlMap[lfn] = pfn
             
     return guidReplicas, tUrlMap, fsizeMap, md5sumMap 
 
@@ -630,7 +567,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
     joName = 'input.py'
     outFile = open(joName,'w')
 
-    if not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
+    if os.environ['RECEXTYPE'] == '':
 
         try:
             if os.environ.has_key('ATHENA_MAX_EVENTS'):
@@ -692,7 +629,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
         outFile.write('"%s",' % filename)
         outFlatFile.write('%s\n' %filename)
         
-    if not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
+    if os.environ['RECEXTYPE'] == '':
         outFile.write(']\n')
     else:
         outFile.write('])\n')
@@ -888,171 +825,22 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
     return guid, size, md5sum
 
 ########################################################################
-def dataset_exists(datasetname, siteID):
-    """Does Dataset already exist and is frozen?"""
 
-    state = -1
+def findsetype(sitesrm):
+    setype= 'NULL'
 
-    try:
-        dq2_lock.acquire()
-        try:
-            datasetinfo = dq2.listDatasets(datasetname)
-        except:
-            datasetinfo = {}
-    finally:
-        dq2_lock.release()
+    if sitesrm.find('castor')>=0:
+        setype = 'CASTOR'
+    elif sitesrm.find('dpm')>=0:
+        setype = 'DPM'
+    elif sitesrm.find('pnfs')>=0:
+        setype = 'DCACHE'
+    elif sitesrm.find('/nfs/')>=0:
+        setype = 'NFS'
+    return setype
 
-    if datasetinfo=={}:
-        print 'Dataset %s is not defined in DQ2 database !' %datasetname
-        return -1
-
-    try:
-        dq2_lock.acquire()
-        try:
-            state = dq2.getMetaDataAttribute(datasetname,['state'])
-            state = state['state']
-        except:
-            print 'Problem retrieving state of dataset %s !' %datasetname
-            return -1
-    finally:
-        dq2_lock.release()
-
-    return state
 
 ########################################################################
-def register_dataset_location(datasetname, siteID):
-    """Register location of dataset into DQ2 database"""
-
-    try:
-        dq2_lock.acquire()
-        try:
-            datasetinfo = dq2.listDatasets(datasetname)
-        except:
-            datasetinfo = {}
-    finally:
-        dq2_lock.release()
-
-    if datasetinfo=={}:
-        print 'Dataset %s is not defined in DQ2 database !' %datasetname
-        return
-
-    try:
-        dq2_lock.acquire()
-        try:
-            locations = dq2.listDatasetReplicas(datasetname)
-        except:
-            print 'Dataset %s not found !' %datasetname
-            return
-    finally:
-        dq2_lock.release()
-
-    try:
-        datasetvuid = datasetinfo[datasetname]['vuids'][0]
-    except KeyError:
-        print 'Dataset %s not found' %datasetname
-        return
-
-    if not locations.has_key(datasetvuid):
-        print 'Dataset %s not found' %datasetname
-        return
-
-    alllocations = locations[datasetvuid][0] + locations[datasetvuid][1]
-
-    try:
-        dq2_lock.acquire()
-        if not siteID in alllocations:
-            dq2.registerDatasetLocation(datasetname, siteID)
-    finally:
-        dq2_lock.release()
-
-    return
-
-########################################################################
-def register_file_in_dataset(datasetname,lfn,guid, size, checksum):
-    """Add file to dataset into DQ2 database"""
-    # Check if dataset really exists
-
-    try:
-        dq2_lock.acquire()
-        content = dq2.listDatasets(datasetname)
-    finally:
-        dq2_lock.release()
-
-    if content=={}:
-        print 'Dataset %s is not defined in DQ2 database !' %datasetname
-        return
-    # Add file to DQ2 dataset
-    ret = []
-    #sizes = []
-    #checksums = []
-    #for i in xrange(len(lfn)):
-    #    sizes.append(None)
-    #    checksums.append(None)
-    
-    try:
-        dq2_lock.acquire()
-        try:
-            ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum) 
-        except (DQInvalidFileMetadataException, DQInvalidRequestException), Value:
-            print 'Warning, some files already in dataset: %s' %Value
-            pass
-    finally:
-        dq2_lock.release()
-
-    return 
-
-########################################################################
-def register_datasets_details(datasets,outdata):
-
-    reglines=[]
-    for line in outdata:
-        try:
-            #[dataset,lfn,guid,siteID]=line.split(",")
-            [dataset,lfn,guid,size,md5sum,siteID]=line.split(",")
-        except ValueError:
-            continue
-        size = long(size)
-        adler32='ad:'+md5sum
-        if len(md5sum)==32:
-            adler32='md5:'+md5sum
-        
-        siteID=siteID.strip() # remove \n from last component
-        regline=dataset+","+siteID
-        if regline in reglines:
-            print "Registration of %s in %s already done, skipping" % (dataset,siteID)
-            #continue
-        else:
-            reglines.append(regline)
-            print "Registering dataset %s in %s" % (dataset,siteID)
-            # use another version of register_dataset_location, as the "secure" one does not allow to keep track of datafiles saved in the fall-back site (CERNCAF)
-            try:
-                dq2_lock.acquire()
-                content = dq2.listDatasets(dataset)
-            finally:
-                dq2_lock.release()
-
-            if content=={}:
-                print 'Dataset %s is not defined in DQ2 database !' %dataset
-                try:
-                    dq2_lock.acquire()
-                    dq2.registerNewDataset(dataset)
-
-                finally:
-                    dq2_lock.release()
-                print 'Dataset %s now registered in DQ2 database !' %dataset   
-            else: 
-                try:
-                    register_dataset_location(dataset, siteID)
-                except:
-                    print "Dataset %s is already registered at location %s" % (dataset, siteID)
-                    
-        register_file_in_dataset(dataset,[lfn],[guid],[size],[adler32])
-
-    return
-        
-
-########################################################################
-
 if __name__ == '__main__':
 
     directory = os.getcwd()
@@ -1111,10 +899,9 @@ if __name__ == '__main__':
     try:
         atlas_release = os.environ['ATLAS_RELEASE']
     except:
-        atlas_release = '15.5.1'
         if not detsetype:
-            print "ERROR : ATLAS_RELEASE not defined, using %s" %(atlas_release)
-
+            print "ERROR : ATLAS_RELEASE not defined, using 12"
+        atlas_release = '12.0.6'
         pass
 
     atlas_release_major = int(atlas_release.split('.')[0])
@@ -1123,9 +910,9 @@ if __name__ == '__main__':
     try:
         datasettype = os.environ['DATASETTYPE']
     except:
-        datasettype = 'DQ2_LOCAL'
         if not detsetype:
-            print "ERROR : DATASETTYPE not defined, using %s" %(datasettype)
+            print "ERROR : DATASETTYPE not defined, using LFC"
+        datasettype = 'LFC'
         pass
 
     # use DQ2_LOCAL as default
@@ -1149,79 +936,199 @@ if __name__ == '__main__':
     except:
         if not detsetype:        
             print "ERROR: Environment variable DQ2_URL_SERVER not set"
-        #sys.exit(EC_Configuration)
+        sys.exit(EC_Configuration)
     try:
         dq2urlserverssl = os.environ['DQ2_URL_SERVER_SSL']
     except:
         if not detsetype:        
             print "ERROR: Environment variable DQ2_URL_SERVER_SSL not set"
-        #sys.exit(EC_Configuration)
+        sys.exit(EC_Configuration)
+
+    # Set default DQ2 environment variables
+    os.environ[ 'DQ2_URL_SERVER' ] = dq2urlserver
+    os.environ[ 'DQ2_URL_SERVER_SSL'] = dq2urlserverssl
+    #os.environ[ 'DQ2_LOCAL_SITE_ID' ] = ''
+    #os.environ[ 'DQ2_LOCAL_PROTOCOL' ] = 'dcap'
+    os.environ[ 'DQ2_STORAGE_ROOT' ] = ''
+    os.environ[ 'DQ2_SRM_HOST' ] = ''
+    os.environ[ 'DQ2_GSIFTP_HOST' ] = ''
+    os.environ[ 'LCG_CATALOG_TYPE' ] = 'lfc'
+    os.environ[ 'DQ2_LFC_HOME' ] = '/grid/atlas'
+    os.environ[ 'DQ2_LOCAL_PREFIX' ] = ''
 
     if datasettype in [ 'DQ2_DOWNLOAD', 'DQ2_LOCAL', 'TAG', 'TAG_REC', 'DQ2_OUT', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
+        # Determine local domainname
+        hostname = None
+        domainname = None
+        lcgcename = ''
 
-        # Determine Hostname and local DQ2 settings        
-        localsiteid = ''
-        siteID = ''
-        cmd =  "grep DQ2_LOCAL_SITE_ID $VO_ATLAS_SW_DIR/ddm/latest/setup.sh |  tr '=' '\n' | tail -1"
-        rc, out = commands.getstatusoutput(cmd)
-        if not rc and not out.startswith('grep'):
-            dq2localsiteid = out
-        else:
-            dq2localsiteid = DQ2LOCALSITEID
+        # test print out
+        if globalVerbose:
+            print '----------'
+            print os.environ
+            print '----------'
+            if os.environ.has_key('EDG_WL_RB_BROKERINFO'):
+                try:
+                    f = open(os.environ['EDG_WL_RB_BROKERINFO'], "r")
+                    lines = f.readlines()
+                    for line in lines:
+                        print line
+                except:
+                    pass
+            if os.environ.has_key('GLITE_WMS_RB_BROKERINFO'):
+                try:
+                    f = open(os.environ['GLITE_WMS_RB_BROKERINFO'], "r")
+                    lines = f.readlines()
+                    for line in lines:
+                        print line
+                except:
+                    pass
 
-        localsiteid = dq2localsiteid
-        siteID = dq2localsiteid
-        outFile = open('dq2localid.txt','w')
-        outFile.write('%s\n' %dq2localsiteid )
-        outFile.close()
+            if os.environ.has_key('GANGA_LCG_CE'):
+                print os.environ['GANGA_LCG_CE']
+            if os.environ.has_key('VO_ATLAS_DEFAULT_SE'):
+                print os.environ['VO_ATLAS_DEFAULT_SE']
+            print socket.gethostbyaddr(socket.gethostname())
+            print '----------'
 
-        # Determine srm and Remove token info
-        localsitesrm = TiersOfATLAS.getSiteProperty(localsiteid,'srm')
-        localsitesrm = re.sub('token:*\w*:','', localsitesrm)
-        localsitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', localsitesrm)
-        
-        # Determine local protocol and SEType
-        configLOCALPROTOCOL = ''
-        configLOCALPREFIX = ''
+        # First choice: EDG_WL_RB_BROKERINFO or GLITE_WMS_RB_BROKERINFO
+        if os.environ.has_key('EDG_WL_RB_BROKERINFO'):
+            try:
+                f = open(os.environ['EDG_WL_RB_BROKERINFO'], "r")
+                lines = f.readlines()
+                for line in lines:
+                    match = re.search('name = "(\S*):2119', line)
+                    if match:
+                        hostname =  [ match.group(1) ]
+            except:
+                pass
 
-        dq2alternatename = TiersOfATLAS.getSiteProperty(localsiteid,'alternateName')
-        for sitename in TiersOfATLAS.getAllSources():
-            if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
-                if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and (TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASMCDISK') or TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASDATADISK') or TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASSCRATCHDISK')) and (TiersOfATLAS.getSiteProperty(sitename,'seinfo')): 
-                    
-                    try:
-                        configLOCALPROTOCOL = TiersOfATLAS.getProtocols(sitename)
-                        configLOCALPREFIX = configLOCALPROTOCOL[0] + ':'
-                        configSETYPE = TiersOfATLAS.getSEType(sitename)
-                    except:
-                        seinfo = TiersOfATLAS.getSiteProperty(sitename, 'seinfo')
-                        if seinfo and 'protocols' in seinfo:
-                            configLOCALPROTOCOL = [p[0] for p in seinfo['protocols']]
-                            configLOCALPREFIX = configLOCALPROTOCOL[0] + ':'
-                            configSETYPE = seinfo['setype']
-                        
+        if os.environ.has_key('GLITE_WMS_RB_BROKERINFO'):
+            try:
+                f = open(os.environ['GLITE_WMS_RB_BROKERINFO'], "r")
+                lines = f.readlines()
+                for line in lines:
+                    match = re.search('name = "(\S*):2119', line)
+                    if match:
+                        hostname =  [ match.group(1) ]
+            except:
+                pass
 
-                    break
+        # Second choice: GANGA_LCG_CE
+        if not hostname and os.environ.has_key('GANGA_LCG_CE'):
+            try:
+                hostname = re.findall('(\S*):2119',os.environ['GANGA_LCG_CE'])
+                lcgcename = re.findall('(\S*):2119',os.environ['GANGA_LCG_CE'])[0]
+                #print hostname, lcgcename
+            except:
+                pass
+
+        # Third choice: VO_ATLAS_DEFAULT_SE
+        if not hostname and os.environ.has_key('VO_ATLAS_DEFAULT_SE'):
+            hostname = os.environ['VO_ATLAS_DEFAULT_SE']
+            if hostname.find('grid.sara.nl')>=0: hostname = ''
+                
+        # Fourth choice: local hostname
+        if not hostname:
+            hostname = socket.gethostbyaddr(socket.gethostname())
+
+        if hostname.__class__.__name__=='list' or hostname.__class__.__name__=='tuple':
+            hostname = hostname[0]
+
+        domainname = re.sub('^[\w\-]+\.','',hostname)
+        if domainname=='gridka.de':
+            domainname = 'fzk.de'
 
         if not detsetype:
-            print 'localsiteid: %s' %(localsiteid)
-            print 'localsitesrm: %s' %(localsitesrm) 
-            print 'configSETYPE: %s' %(configSETYPE)
-            print 'configLOCALPROTOCOL: %s' %(configLOCALPROTOCOL)
-            print 'configLOCALPREFIX: %s' %(configLOCALPREFIX)
-            
-        else:
-            print configSETYPE.upper()
-            sys.exit(0)
+            print 'Hostname: %s, Domainname: %s' % (hostname, domainname)
 
-        # Find LFC Catalog host and set LFC_HOST 
-        lfccat = TiersOfATLAS.getRemoteCatalogs(localsiteid)
-        if lfccat:
-            lfc_host = re.sub('[/:]',' ',lfccat[0]).split()[1]
-        else:
-            lfc_host = ''
-        os.environ[ 'LFC_HOST' ] = lfc_host
-        print 'LFC_HOST: %s' %(lfc_host)
+        sename = ''
+        if os.environ.has_key('VO_ATLAS_DEFAULT_SE'):
+            sename  = os.environ['VO_ATLAS_DEFAULT_SE']                
+        if not detsetype:
+            print 'VO_ATLAS_DEFAULT_SE: %s' %sename
+
+        if sename =='srm.cern.ch':
+            sename = 'srm-atlas.cern.ch'
+
+        # Pre-Identification by domainname
+        dq2localids = [ ]
+        try:
+            celist = TiersOfATLAS.listCEsInCloudByDomain('*'+domainname)
+        except:
+            celist = []
+        for sitename in TiersOfATLAS.getAllSources():
+            # First search for domainname
+            dq2domain = TiersOfATLAS.getSiteProperty(sitename,'domain')
+            if dq2domain and dq2domain.find(domainname)>=0:
+                dq2cename = TiersOfATLAS.getSiteProperty(sitename,'ce')
+                if dq2cename and dq2cename!=['']:
+                    celist = celist + dq2cename
+                dq2localids.append(sitename)  
+            # Second search for srm
+            dq2srm = TiersOfATLAS.getSiteProperty(sitename,'srm')
+            #if dq2srm and dq2srm.startswith('token:'):
+            #    continue
+            if dq2srm and dq2srm.find(sename)>=0:
+                dq2cename = TiersOfATLAS.getSiteProperty(sitename,'ce')
+                if dq2cename and dq2cename!=['']:
+                    celist = celist + dq2cename
+                dq2localids.append(sitename)
+
+        for icelist in celist:
+            dq2localids.append(TiersOfATLAS.getSiteByCE(icelist))
+
+        # Get location list of dataset
+        try:
+            datasetlocation = os.environ['DATASETLOCATION'].split(":")
+        except:
+            print "ERROR : DATASETLOCATION not defined"
+            datasetlocation = []
+            pass
+
+        if not detsetype:
+            print celist
+            print dq2localids
+        # Comparision with SRM name
+        localsiteid = ''
+        localsitesrm = ''
+        for dq2localid in dq2localids:
+            localsitesrm = TiersOfATLAS.getSiteProperty(dq2localid,'srm')
+            #if localsitesrm.startswith('token:'):
+            #    continue
+            if not localsitesrm:
+                continue
+            if localsitesrm.find(sename)>=0:
+                if dq2localid in datasetlocation: 
+                    localsiteid = dq2localid
+                    break
+            
+        if localsiteid=='' and dq2localids:
+            localsiteid = dq2localids[0]
+            localsitesrm = TiersOfATLAS.getSiteProperty(localsiteid,'srm')
+
+        if sename in ['dpm01.grid.sinica.edu.tw']:
+            localsiteid = 'TAIWAN-LCG2_DATADISK'
+
+        if sename in [ 'atlasse.phys.sinica.edu.tw']:
+            localsiteid = 'TW-FTT'
+
+        if sename in ['srmatlas.pic.es', 'srm.pic.es' ]:
+            localsiteid = 'PIC_DATADISK'
+
+        if sename in [ 'srmifae.pic.es' ]:
+            localsiteid = 'IFAE_DATADISK'
+
+        if sename in ['heplnx204.pp.rl.ac.uk' ]:
+            localsiteid = 'UKI-SOUTHGRID-RALPP_DATADISK'
+
+        if not detsetype:
+            print 'localsiteid: %s' % localsiteid
+
+        localsitesrm = TiersOfATLAS.getSiteProperty(localsiteid,'srm')
+        # Remove token info
+        localsitesrm = re.sub('token:*\w*:','', localsitesrm)
+        localsitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', localsitesrm)
 
         # Get location list of dataset
         try:
@@ -1232,12 +1139,240 @@ if __name__ == '__main__':
             datasetlocation = []
             pass
         
+        # Determine local DQ2 configuration variables (gsiftp, dcap, rfio)
+        os.environ[ 'LCG_CATALOG_TYPE' ] = 'lfc'
+        os.environ[ 'DQ2_LFC_HOME' ] = '/grid/atlas'
+
+        # Reset localsite id
+        if not detsetype:
+            print 'localsiteid before getAggName(): %s' % localsiteid
+        # TODO: avoiding  getAggName() is just a workaround; should be tuned
+        if datasettype not in [ 'DQ2_DOWNLOAD', 'TNT_DOWNLOAD']:
+            if not localsiteid.startswith('NIKHEF'):
+                #localsiteid = getAggName(localsiteid)
+                if not detsetype:
+                    print 'localsiteid after getAggName(): %s' % localsiteid
+
+        # Set DQ2_LOCAL_SITE_ID
+        try:
+            siteID = ''
+            cmd =  "grep DQ2_LOCAL_SITE_ID $VO_ATLAS_SW_DIR/ddm/latest/setup.sh |  tr '=' '\n' | tail -1"
+            rc, out = commands.getstatusoutput(cmd)
+            if not rc:
+                dq2localsiteid = out
+            else:
+                dq2localsiteid = localsiteid
+            dq2alternatename = TiersOfATLAS.getSiteProperty(dq2localsiteid,'alternateName')
+            for sitename in datasetlocation:
+                if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
+                    if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename:
+                        siteID = sitename
+                        break
+        except:
+            siteID = localsiteid
+            pass
+
+        outFile = open('dq2localid.txt','w')
+        outFile.write('%s\n' % siteID)
+        outFile.close()
+
+        os.environ[ 'DQ2_LOCAL_SITE_ID' ] = localsiteid
+        if not detsetype:
+            print 'DQ2_LOCAL_SITE_ID: %s' %os.environ[ 'DQ2_LOCAL_SITE_ID' ]
+
+        # Find LFC Catalog host and set LFC_HOST 
+        if localsiteid.startswith('CERN'):
+            localsiteid = 'CERN'
+        lfccat = TiersOfATLAS.getRemoteCatalogs(localsiteid)
+        if lfccat:
+            lfc_host = re.sub('[/:]',' ',lfccat[0]).split()[1]
+        else:
+            lfc_host = ''
+        os.environ[ 'LFC_HOST' ] = lfc_host
+
         if localsitesrm!='':
             defaultSE = _getDefaultStorage(localsitesrm)
+            if localsiteid in [ 'RHUL' ] :
+                defaultSE.append('se1.pp.rhul.ac.uk')
+            elif localsiteid in [ 'CERN', 'CERNPROD' ] :
+                defaultSE.append('srm-atlas.cern.ch')
+            elif localsiteid == 'DESY-HH':
+                defaultSE.append('srm-dcache.desy.de')
+            elif localsiteid in [ 'ASGC', 'ASGCDISK' ] or localsiteid.startswith('TAIWAN-LCG2'):
+                defaultSE.append('srm2.grid.sinica.edu.tw')
+                defaultSE.append('castorsc.grid.sinica.edu.tw')
+                defaultSE.append('srm.grid.sinica.edu.tw')
+            elif localsiteid == 'TW-FTT':
+                defaultSE.append('f-dpm001.grid.sinica.edu.tw')
+            elif localsiteid == 'BEIJING':
+                defaultSE.append('atlasse01.ihep.ac.cn')
+            elif localsiteid in [ 'GRIF-LAL', 'GRIF-SACLAY' ] or localsiteid.startswith('GRIF-LAL') or localsiteid.startswith('GRIF-SACLAY'):
+                defaultSE.append('grid05.lal.in2p3.fr')
+                defaultSE.append('node12.datagrid.cea.fr')
+    
+            #elif localsiteid.startswith('MPPMU'):
+            #    defaultSE.append('lcg-lrz-se.lrz-muenchen.de')
+
         else:
             defaultSE = ''
         
-        print 'defaultSE: %s' %(defaultSE)
+        try:
+            if not detsetype:
+                #print 'DQ2_LOCAL_SITE_ID: %s' %os.environ[ 'DQ2_LOCAL_SITE_ID' ]
+                print 'DQ2_URL_SERVER: %s' %os.environ[ 'DQ2_URL_SERVER' ] 
+                print 'DQ2_URL_SERVER_SSL: %s' %os.environ[ 'DQ2_URL_SERVER_SSL']
+                print 'localsitesrm: %s' %localsitesrm            
+        except:
+            if not detsetype:
+                print 'ERROR: could not set DQ2_LOCAL_SITE_ID'
+            sys.exit(EC_Configuration)
+
+        try:
+            if not detsetype:
+                print 'LFC_HOST: %s' %os.environ[ 'LFC_HOST' ]
+        except:
+            if not detsetype:
+                print 'Error LFC_HOST not defined'
+            pass
+
+        # local access variables
+        if globalVerbose:
+            print 'config old: %s,%s,%s' %(configLOCALPROTOCOL, configSTORAGEROOT,  configLOCALPREFIX)
+
+            if os.environ.has_key('VO_ATLAS_DEFAULT_SE'):
+                if not detsetype:
+                    print 'VO_ATLAS_DEFAULT_SE: %s' %os.environ['VO_ATLAS_DEFAULT_SE']
+
+        if os.environ.has_key('VO_ATLAS_DEFAULT_SE') and ( not os.environ.has_key('DQ2_LOCAL_PROTOCOL') or configLOCALPROTOCOL==''):
+            cmd = 'lcg-info --list-se --query SE=$VO_ATLAS_DEFAULT_SE --attr Protocol --sed'
+            rc, out = commands.getstatusoutput(cmd)
+            out2 = out.split('%')
+            if len(out2)>1:
+                prot = out2[1].split('&')
+                if 'file' in prot:
+                    configLOCALPROTOCOL = 'file'
+                    configSTORAGEROOT = '/storage'
+                    configLOCALPREFIX = 'file:'
+                elif 'rfio' in prot:
+                    configLOCALPROTOCOL = 'rfio'
+                    configLOCALPREFIX = 'rfio:'
+                    if localsitesrm.find('/dpm/')>=0:
+                        configSTORAGEROOT = '/dpm'
+                    else:
+                        configSTORAGEROOT = '/castor'
+                elif 'dcap' in prot or 'gsidcap' in prot:
+                    configLOCALPROTOCOL = 'dcap'
+                    configSTORAGEROOT = '/pnfs'
+                    configLOCALPREFIX = 'dcap:'
+                elif 'gsidcap' in prot:
+                    configLOCALPROTOCOL = 'gsidcap'
+                    configSTORAGEROOT = '/pnfs'
+                    configLOCALPREFIX = 'gsidcap:'
+                else:
+                    configLOCALPROTOCOL = ''
+                    configSTORAGEROOT = '/'
+                    configLOCALPREFIX = ''
+            else:
+                configLOCALPROTOCOL = ''
+                configSTORAGEROOT = '/'
+                configLOCALPREFIX = ''
+            # Hack for SFU, SNIP, UAM
+            if localsiteid in [ 'SFU', 'SINP' ] or localsiteid.startswith('SFU') or localsiteid.startswith('TRIUMF') or localsiteid.startswith('ALBERTA'):  
+                configLOCALPROTOCOL = 'dcap'
+                configSTORAGEROOT = '/pnfs'
+                configLOCALPREFIX = 'dcap:'
+            # Hack for CNAF, IFIC
+            if localsiteid in [ 'CNAF', 'CNAFDISK' ] or localsiteid.startswith('INFN-T1') or localsiteid.startswith('IFIC'):
+                configLOCALPROTOCOL = 'file'
+                configSTORAGEROOT = '/storage'
+                configLOCALPREFIX = 'file:'
+            # if no info is found
+            if configLOCALPROTOCOL == '':
+                if localsitesrm.find('/pnfs/')>=0:
+                    configLOCALPROTOCOL = 'dcap'
+                    configSTORAGEROOT = '/pnfs'
+                    configLOCALPREFIX = 'dcap:'
+                elif localsitesrm.find('/castor/')>=0:
+                    configLOCALPROTOCOL = 'rfio'
+                    configSTORAGEROOT = '/castor'
+                    configLOCALPREFIX = 'rfio:'
+                elif localsitesrm.find('/dpm/')>=0:
+                    configLOCALPROTOCOL = 'rfio'
+                    configSTORAGEROOT = '/dpm'
+                    configLOCALPREFIX = 'rfio:'
+                elif localsitesrm.find('/nfs/')>=0:
+                    configLOCALPROTOCOL = ""
+                    configLOCALPREFIX = ""
+                    configSTORAGEROOT = ""
+                elif localsitesrm.find('/lustre/')>=0 or localsitesrm.find('/storm')>=0:
+                    configLOCALPROTOCOL = 'file'
+                    configSTORAGEROOT = '/storage'
+                    configLOCALPREFIX = 'file:'
+                else:
+                    configLOCALPROTOCOL = ""
+                    configLOCALPREFIX = ""
+                    configSTORAGEROOT = ""
+
+            os.environ['DQ2_LOCAL_PROTOCOL'] = configLOCALPROTOCOL
+            os.environ[ 'DQ2_STORAGE_ROOT' ] = configSTORAGEROOT
+            os.environ[ 'DQ2_LOCAL_PREFIX' ] = configLOCALPREFIX
+
+        if not detsetype:
+            print 'config: %s,%s,%s' %(configLOCALPROTOCOL, configSTORAGEROOT,  configLOCALPREFIX)
+
+    # Determine site SE type
+    if detsetype:
+        setype = 'NULL'
+        if os.environ.has_key('VO_ATLAS_DEFAULT_SE'):
+            sitese=os.environ['VO_ATLAS_DEFAULT_SE']
+        elif detsename!='':
+            sitese=detsename
+        else:
+            if not detsetype:
+                print 'ERROR no SE specified !'
+            sys.exit(4)
+
+        setype = 'NULL'
+
+        # Find TiersOfAtlasCache entry
+        if sitese:
+            for sitename in TiersOfATLAS.getAllSources():
+                dq2srm = TiersOfATLAS.getSiteProperty(sitename,'srm')
+                #if dq2srm and dq2srm.startswith('token:'):
+                #    continue
+                if dq2srm and dq2srm.find(sitese)>=0:
+                    setype = findsetype(dq2srm)
+
+                if dq2srm and setype == 'NULL':
+                    sitesrm_domain = re.sub('^[\w\-]+\.','',dq2srm)
+                    sitese_domain = re.sub('^[\w\-]+\.','',sitese)
+                    if sitesrm_domain.find(sitese_domain)>=0:
+                        setype = findsetype(sitesrm_domain)
+
+        # If not in TiersOfAtlasCache
+        if setype == 'NULL':
+            cmd = 'lcg-info --list-se --query SE=%s --attr Accesspoint --sed 2>/dev/null' %sitese
+            rc, out = commands.getstatusoutput(cmd)
+            out2 = out.split('%')
+            if len(out2)>1:
+                setype = findsetype(out2[1])
+
+        if localsiteid.startswith('ALBERTA'):
+            setype = 'DCACHE'
+        elif localsiteid.startswith('TRIUMF'):
+            setype = 'DCACHE'
+        elif localsiteid.startswith('SFU'):
+            setype = 'DCACHE'
+
+
+        # The setype of NIKHEF and SARA can be detected via ToA query  
+        #if localsiteid.startswith('NIKHEF'):
+        #    setype = 'DPM'
+        #if localsiteid.startswith('SARA'):
+        #    setype = 'DCACHE'
+
+        print setype
+        sys.exit(0)
 
     ######################################################################
     # Start input configuration
@@ -1733,6 +1868,7 @@ if __name__ == '__main__':
             if os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('NIKHEF') or os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('SARA'):
                 localsitesrm = TiersOfATLAS.getSiteProperty('SARA-MATRIX_MCDISK','srm')
                 configLOCALPROTOCOL = 'gsidcap'
+                configSTORAGEROOT = '/pnfs'
                 configLOCALPREFIX = 'gsidcap:'
 
             localsitesrm = re.sub('token:*\w*:','', localsitesrm)
@@ -2133,20 +2269,7 @@ if __name__ == '__main__':
                 sys.exit(EC_STAGEOUT)
             
             # Write output_data
-            i = 1 
-            if not datasetname.endswith(siteID):
-                out_datasetname = "%s.%s" %(datasetname, siteID)
-            else:
-                out_datasetname = datasetname
-            while i>0:
-                state = dataset_exists(out_datasetname, siteID)
-                if state == 2:
-                    out_datasetname = "%s.%s.%s" %(datasetname, siteID, i)
-                    i = i + 1
-                else:
-                    break
-
-            f_data_string = '%s,%s,%s,%s,%s,%s' % (out_datasetname, file, guid, size, md5sum, siteID) 
+            f_data_string = '%s,%s,%s,%s,%s,%s' % (datasetname, file, guid, size, md5sum, siteID) 
             print >>f_data, f_data_string 
 
         f_data.close()
@@ -2155,14 +2278,6 @@ if __name__ == '__main__':
         print >>f2, siteID 
         f2.close()
 
-        # Register all output file details in DQ2
-        f=open("output_data")
-        outputInfo = []
-        for line in f.readlines():
-            outputInfo.append( line.strip() )
-        f.close()
-
-        register_datasets_details(out_datasetname, outputInfo)
 
     sys.exit(returnvalue)
 

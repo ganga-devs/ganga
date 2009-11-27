@@ -211,11 +211,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             if not job.outputdata.dataset_exists(output_datasetname):
                 if job._getRoot().subjobs:
                     if job.id==0:
-                        #job.outputdata.create_dataset(output_datasetname)
-                        pass
+                        job.outputdata.create_dataset(output_datasetname)
                 else:
-                    #job.outputdata.create_dataset(output_datasetname)
-                    pass
+                    job.outputdata.create_dataset(output_datasetname)
             else:
                 if (job._getRoot().subjobs and job.id==0) or not job._getRoot().subjobs:
                     logger.warning("Dataset %s already exists - appending new files to this dataset", output_datasetname)
@@ -492,8 +490,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             
             if job.inputdata.tagdataset:
                 environment['TAGDATASETNAME'] = ':'.join(job.inputdata.tagdataset)
-
-        environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
 
         exe = os.path.join(os.path.dirname(__file__), 'run-athena-local.sh')
 
