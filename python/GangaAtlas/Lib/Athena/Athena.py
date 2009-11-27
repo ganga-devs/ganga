@@ -547,8 +547,8 @@ class Athena(IApplication):
             if job.outputdata:
                 try:
                     job.outputdata.fill()
-                except:
-                    logger.warning('An ERROR occured during job.outputdata.fill() call !')
+                except Exception, Value:
+                    logger.warning('An ERROR occured during job.outputdata.fill() call: %s, %s', Exception, Value)
                     pass
                                    
                 if not job.outputdata.output:

@@ -53,7 +53,7 @@ print_wn_info () {
     echo 
 
     echo "==  disk usage  =="
-    df
+    df .
     echo "===="
     echo 
 }

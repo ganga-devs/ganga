@@ -197,6 +197,8 @@ fi
 
 export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 
+check_voms_proxy
+
 GANGATIME2=`date +'%s'`
 ################################################
 # prepare/staging input data
