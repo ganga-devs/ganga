@@ -74,7 +74,9 @@ cmt_setup () {
     # improve dcap reading speed
     export DCACHE_RAHEAD=TRUE
     #export DCACHE_RA_BUFFER=262144
-  
+    # Switch on private libdcap patch with improved read-ahead buffer algorithm
+    export DC_LOCAL_CACHE_BUFFER=1
+
     if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
         ATLAS_RELEASE_DIR=$VO_ATLAS_SW_DIR/software/$ATLAS_RELEASE
     elif [ n$GANGA_ATHENA_WRAPPER_MODE = n'local' ]; then
