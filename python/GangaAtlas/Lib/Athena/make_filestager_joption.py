@@ -156,7 +156,7 @@ if (io_type in ['FILE_STAGER']):
         evtmax = -1
 
     # produce the job option file for Athena/FileStager module
-    dm_util.make_FileStager_jobOption(pfn_list, gridcopy=True, protocol=my_protocol, maxEvent=evtmax, optionFileName='input.py')
+    dm_util.make_FileStager_jobOption(pfn_list, gridcopy=True, protocol=my_protocol, maxEvent=evtmax, optionFileName='FileStager_jobOption.py')
 
     dq2tracertime.append(time.time())
     outFile = open('dq2tracertimes.txt','w')
