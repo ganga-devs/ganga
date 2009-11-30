@@ -25,6 +25,8 @@ config.addOption('path','','Set to a specific ROOT version. Will override other 
 config.addOption('pythonhome','${location}/../Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
 config.addOption('pythonversion','',"Version number of python used for execution python ROOT script")
 config.addOption('version','5.18.00','Version of ROOT')
+    
+import os
 
 class Root(IApplication):
     """
@@ -452,14 +454,20 @@ def downloadAndUnTar(fileName, url):
     
     status = 0
     cmd = 'tar xzf %s' % fileName
+    
+    from commands import getstatusoutput, getoutput
+
+    #to check whether the folder name  is 'root' or 'ROOT'
+    folderName = getoutput('tar --list --file ROOT*.tar.gz').split('/')[0]
+    
     try:#do this in try as module is only unix
         #commmand approach removes ugly tar error
-        from commands import getstatusoutput
         (status,output) = getstatusoutput(cmd)
     except ImportError:
         import os
         status = os.system(cmd)
-    return status
+    
+    return status, folderName
 
 def setEnvironment(key, value, update=False):
     '''Sets an environment variable. If update=True, it preends it to
@@ -568,12 +576,14 @@ if __name__ == '__main__':
     url = spiURL + fname
     
     print 'Downloading ROOT version %s from %s.' % (version,url)
-    downloadAndUnTar(fname,url)
+    (status, folderName) = downloadAndUnTar(fname,url)
     sys.stdout.flush()
     sys.stderr.flush()
         
     #see HowtoPyroot in the root docs
-    rootsys=join('.','root',version,arch,'root')
+    import os 
+    pwd = os.environ['PWD']
+    rootsys=join(pwd,folderName,version,arch,'root')
     setEnvironment('LD_LIBRARY_PATH',curdir,True)
     setEnvironment('LD_LIBRARY_PATH',join(rootsys,'lib'),True)
     setEnvironment('ROOTSYS',rootsys)
