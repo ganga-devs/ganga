@@ -55,7 +55,7 @@ class DiracRoot:
 
     def write(self):
         app = self.root_app
-        args = ''
+        args = []
         if app.args:
             if app.usepython: args = [str(arg) for arg in app.args]
             else: args = app.args
