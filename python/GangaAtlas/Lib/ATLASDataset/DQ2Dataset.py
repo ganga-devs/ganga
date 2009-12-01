@@ -6,7 +6,7 @@
 ###############################################################################
 # A DQ2 dataset
 
-import sys, os, re, urllib, commands, threading, time, fnmatch
+import sys, os, re, urllib, commands, imp, threading, time, fnmatch
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
@@ -22,6 +22,7 @@ from dq2.content.DQContentException import DQInvalidFileMetadataException
 from dq2.common.client.DQClientException import DQInternalServerException
 from dq2.common.dao.DQDaoException import DQDaoException
 from dq2.info.TiersOfATLASValidator import is_site
+from dq2.repository.DQRepositoryException import DQFrozenDatasetException
 
 _refreshToACache()
 
@@ -964,31 +965,73 @@ class DQ2OutputDataset(Dataset):
                 finally:
                     dq2_lock.release()
                     
-
         return
 
-        
     def register_dataset_location(self, datasetname, siteID):
         """Register location of dataset into DQ2 database"""
+        alllocations = []
 
         try:
             dq2_lock.acquire()
-            content = dq2.listDatasets(datasetname)
+            try:
+                datasetinfo = dq2.listDatasets(datasetname)
+            except:
+                datasetinfo = {}
         finally:
             dq2_lock.release()
 
-        if content=={}:
-            logger.error('Dataset %s is not defined in DQ2 database !',datasetname)
-            return
+        if datasetinfo=={}:
+            logger.error('Dataset %s is not defined in DQ2 database !' , datasetname )
+            return -1
+        
+        try:
+            dq2_lock.acquire()
+            try:
+                locations = dq2.listDatasetReplicas(datasetname)
+            except:
+                locations = {}
+        finally:
+            dq2_lock.release()
+
+        if locations != {}: 
+            try:
+                datasetvuid = datasetinfo[datasetname]['vuids'][0]
+            except KeyError:
+                logger.error('Dataset %s not found', datasetname )
+                return -1
+            if not locations.has_key(datasetvuid):
+                logger.error( 'Dataset %s not found', datasetname )
+                return -1
+            alllocations = locations[datasetvuid][0] + locations[datasetvuid][1]
 
         try:
             dq2_lock.acquire()
-            if dq2.listDatasetReplicas(datasetname)=={}: 
-                dq2.registerDatasetLocation(datasetname, siteID)
+            if not siteID in alllocations:
+                try:
+                    dq2.registerDatasetLocation(datasetname, siteID)
+                except DQInvalidRequestException, Value:
+                    logger.error('Error registering location %s of dataset %s: %s', datasetname, siteID, Value) 
         finally:
             dq2_lock.release()
 
-        return
+        # Verify registration
+        try:
+            dq2_lock.acquire()
+            try:
+                locations = dq2.listDatasetReplicas(datasetname)
+            except:
+                locations = {}
+        finally:
+            dq2_lock.release()
+
+        if locations != {}: 
+            datasetvuid = datasetinfo[datasetname]['vuids'][0]
+            alllocations = locations[datasetvuid][0] + locations[datasetvuid][1]
+        else:
+            alllocations = []
+
+        return alllocations
+
 
     def register_file_in_dataset(self,datasetname,lfn,guid, size, checksum):
         """Add file to dataset into DQ2 database"""
@@ -1015,8 +1058,8 @@ class DQ2OutputDataset(Dataset):
             dq2_lock.acquire()
             try:
                 ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum) 
-            except (DQInvalidFileMetadataException, DQInvalidRequestException), Value:
-                logger.warning('Warning, some files already in dataset: %s', Value)
+            except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFrozenDatasetException), Value:
+                logger.warning('Warning, some files already in dataset or dataset is frozen: %s', Value)
                 pass
         finally:
             dq2_lock.release()
@@ -1064,7 +1107,6 @@ class DQ2OutputDataset(Dataset):
                         
                     finally:
                         dq2_lock.release()
-
                         
             self.register_file_in_dataset(dataset,[lfn],[guid],[size],[adler32])
 
@@ -1077,10 +1119,10 @@ class DQ2OutputDataset(Dataset):
 
         job = self._getParent()
 
-#       Determine local output path to store files
+        # Determine local output path to store files
         if job.outputdata.local_location:
             outputlocation = expandfilename(job.outputdata.local_location)
-        elif job.outputdata.location and ((job.backend._name == 'Local') or (job.backend._name == 'LSF') or (job.backend._name == 'PBS') or (job.backend._name == 'SGE')):
+        elif job.outputdata.location and (job.backend._name in [ 'Local', 'LSF', 'PBS', 'SGE']):
             outputlocation = expandfilename(job.outputdata.location)
         else:
             try:
@@ -1089,13 +1131,13 @@ class DQ2OutputDataset(Dataset):
                 tmpdir = '/tmp/'
             outputlocation = tmpdir
 
-#       Output files on SE
+        # Output files on SE
         outputfiles = job.outputdata.outputdata
         
-#       Search output_guid files from LCG jobs in outputsandbox
+        # Search output_guid files from LCG jobs in outputsandbox
         jobguids = []
 
-        if (job.backend._name == 'LCG' ) or (job.backend._name == 'Local') or (job.backend._name == 'LSF') or (job.backend._name == 'PBS') or (job.backend._name == 'SGE'):
+        if job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']:
             pfn = job.outputdir + "output_guids"
             fsize = filecheck(pfn)
             if (fsize>0):
@@ -1103,7 +1145,7 @@ class DQ2OutputDataset(Dataset):
                 logger.debug('jobguids: %s', jobguids)
                 
             
-#       Get guids from output_guid files
+            # Get guids from output_guid files
             for ijobguids in jobguids: 
                 f = open(ijobguids)
                 templines =  [ line.strip() for line in f ]
@@ -1113,8 +1155,8 @@ class DQ2OutputDataset(Dataset):
                         #self.output = self.output + tempguid
 
                 f.close()
-
-#       Get output_location
+                
+            # Get output_location
             pfn = job.outputdir + "output_location"
             fsize = filecheck(pfn)
             if (fsize>0):
@@ -1125,7 +1167,7 @@ class DQ2OutputDataset(Dataset):
                 
                 #  Register DQ2 location
                 # FMB: protection against empty strings
-                if self.datasetname : 
+                if self.datasetname and not (job.application._name in ['Athena','AthenaTask'] and job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']): 
                     self.register_dataset_location(self.datasetname, self.location)
                     
             pfn = job.outputdir + "output_data"
@@ -1135,19 +1177,32 @@ class DQ2OutputDataset(Dataset):
                 for line in f.readlines():
                     self.output.append( line.strip() )
                 f.close()
-                    
-#       Local host execution
-        if (job.backend._name == 'Local' or \
-            job.backend._name == 'LSF' or \
-            job.backend._name == 'PBS' or \
-            job.backend._name == 'SGE'):
+
+            # Extract new dataset name and fill it into repository
+            for outputInfo in self.output:
+                datasetnameTemp = outputInfo.split(',')[0]
+                try:
+                    datasetnameComp = self.datasetname + '.' + self.location
+                except:
+                    datasetnameComp = self.datasetname + '.' + outputInfo.split(',')[4]
+                match = re.search(datasetnameComp, datasetnameTemp)
+                if match:
+                    logger.debug('Changed outputdata.dataset from %s to %s', self.datasetname, datasetnameTemp)
+                    self.datasetname = datasetnameTemp
+                    # Work around for failing location registration on worker node
+                    out = self.register_dataset_location(self.datasetname, self.location)
+                    if not self.location in out:
+                        logger.error('Error during dataset location registration of %s at %s', self.datasetname, self.location)
+                
+        # Local host execution
+        if (job.backend._name in [ 'Local', 'LSF', 'PBS', 'SGE']): 
             for file in outputfiles:
                 pfn = outputlocation+"/"+file
                 fsize = filecheck(pfn)
                 if (fsize>0):
                     self.output.append(pfn)
 
-#       Output files in the sandbox 
+        # Output files in the sandbox 
         outputsandboxfiles = job.outputsandbox
         for file in outputsandboxfiles:
             pfn = job.outputdir+"/"+file
@@ -1155,18 +1210,80 @@ class DQ2OutputDataset(Dataset):
             if (fsize>0):
                 self.output.append(pfn)
 
-#       Master job finish
+        # Master job finish
         if not job.master and job.subjobs:
             self.location = []
             self.output = []
+            self.allDatasets = []
             for subjob in job.subjobs:
                 self.output+=subjob.outputdata.output
                 self.datasetname=subjob.outputdata.datasetname
                 self.location.append(subjob.outputdata.location)
+                if not subjob.outputdata.datasetname in self.allDatasets:
+                    for outputInfo in subjob.outputdata.output:
+                        datasetnameTemp = outputInfo.split(',')[0]
+                        if not datasetnameTemp in self.allDatasets:
+                            self.allDatasets.append(datasetnameTemp)
+
+            if (job.application._name in ['Athena','AthenaTask'] and job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']): 
+                # Create output container
+                for dataset in self.allDatasets:
+                    for location in self.location:
+                        match = re.search('^(\S*).%s.*'%location, dataset)
+                        if match:
+                            newDatasetname = match.group(1)
+                            break
+
+                containerName = newDatasetname+'/'
+                try:
+                    dq2_lock.acquire()
+                    try:
+                        dq2.registerContainer(containerName)
+                    except:
+                        logger.warning('Problem registering container %s', containerName)
+                        pass
+                finally:
+                    dq2_lock.release()
+                try:
+                    dq2_lock.acquire()
+                    for dataset in self.allDatasets:
+                        try:
+                            dq2.freezeDataset(dataset)
+                        except DQFrozenDatasetException:
+                            pass
+                finally:
+                    dq2_lock.release()
+                try:
+                    dq2_lock.acquire()
+                    try:
+                        dq2.registerDatasetsInContainer(containerName, self.allDatasets)
+                    except:
+                        logger.warning('Problem registering datasets %s in container %s',  self.allDatasets, containerName)
+                        pass
+                finally:
+                    dq2_lock.release()
+
+                self.datasetname = containerName
         else:
             # AthenaMC: register dataset location and insert file in dataset only within subjobs (so that if one subjob fails, the master job fails, but the dataset is saved...). Master job completion does not do anything...
-            self.register_datasets_details(self.datasetname,self.output)
-            
+            if not (job.application._name in ['Athena','AthenaTask'] and job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']): 
+                self.register_datasets_details(self.datasetname,self.output)
+            elif not job.master and not job.subjobs:
+                self.allDatasets = [ ]
+                for outputInfo in self.output:
+                    datasetnameTemp = outputInfo.split(',')[0]
+                    if not datasetnameTemp in self.allDatasets:
+                        self.allDatasets.append(datasetnameTemp)
+                for datasetnameFreeze in self.allDatasets:
+                    try:
+                        dq2_lock.acquire()
+                        try:
+                            dq2.freezeDataset(datasetnameFreeze)
+                        except DQFrozenDatasetException:
+                            pass
+                    finally:
+                        dq2_lock.release()
+                
 
     def retrieve(self, type=None, name=None, **options ):
         """Retrieve files listed in outputdata and registered in output from
@@ -1270,7 +1387,6 @@ try:
 except KeyError:
     config.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
 
-
 config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK', 'T2ATLASSCRATCHDISK', 'T2ATLASLOCALGROUPDISK' ] , 'Allowed space tokens names of DQ2OutputDataset output' )
 
 config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_SCRATCHDISK', 'CERN-PROD_USERTAPE', 'FZK-LCG2_SCRATCHDISK', 'IN2P3-CC_SCRATCHDISK', 'TRIUMF-LCG2_SCRATCHDISK', 'IFAE_SCRATCHDISK', 'NIKHEF-ELPROD_SCRATCHDISK' ], 'Default backup locations of DQ2OutputDataset output' )
@@ -1287,7 +1403,6 @@ baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
 verbose = False
 
 #$Log: not supported by cvs2svn $
-#
 #Revision 1.37  2009/07/20 14:07:03  mslater
 #Fix for bug in retry of dataset consistency check (52066)
 #

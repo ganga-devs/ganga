@@ -53,7 +53,7 @@ print_wn_info () {
     echo 
 
     echo "==  disk usage  =="
-    df
+    df .
     echo "===="
     echo 
 }
@@ -74,7 +74,9 @@ cmt_setup () {
     # improve dcap reading speed
     export DCACHE_RAHEAD=TRUE
     #export DCACHE_RA_BUFFER=262144
-  
+    # Switch on private libdcap patch with improved read-ahead buffer algorithm
+    export DC_LOCAL_CACHE_BUFFER=1
+
     if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
         ATLAS_RELEASE_DIR=$VO_ATLAS_SW_DIR/software/$ATLAS_RELEASE
     elif [ n$GANGA_ATHENA_WRAPPER_MODE = n'local' ]; then
@@ -910,6 +912,17 @@ make_filestager_joption() {
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	fi
+
+        # at this stage, the "FileStager_jobOption.py" and "input.py" should be created.
+        # prepend "FileStager_jobOption.py" to the list of user job options.
+        # "input.py" will be treated later in run_athena.
+        export ATHENA_OPTIONS="FileStager_jobOption.py $ATHENA_OPTIONS"
+
+        if [ -e athena_options ]; then
+            ATHENA_OPTIONS_NEW=`cat athena_options`
+            echo "FileStager_jobOption.py $ATHENA_OPTIONS_NEW" > athena_options
+        fi
+
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
         export PATH=$PATH_BACKUP
         export PYTHONPATH=$PYTHONPATH_BACKUP
