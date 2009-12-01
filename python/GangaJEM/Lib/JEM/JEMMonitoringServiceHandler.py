@@ -365,14 +365,16 @@ class JEMMonitoringServiceHandler(object):
             ei = sys.exc_info()
             logger.error("  error occured while preparing: " + str(ei[0]) + ": " + str(ei[1]))
             logger.debug("  trace:\n" + "".join(traceback.format_tb(ei[2])))
-            
+
 
 
     def submit(self):
+        global Utils
+
         # no action for subjobs...
         if self.__job.master:
             return
-        
+
         if self.__job.subjobs and len(self.__job.subjobs) > 0:
             # HACK: If we are a split job, we have to wait for the subjobs to be assigned
             #       their backend-id (JobID) before we can start the Job-Listener process
@@ -383,7 +385,7 @@ class JEMMonitoringServiceHandler(object):
                     self.__job = job
                     self.__callback = callback
                     self.setDaemon(True)
-        
+
                 def run(self):
                     logger.debug("started thread waiting for subjob-ids of job #" + str(self.__job.id))
                     while not self.should_stop():
@@ -396,7 +398,7 @@ class JEMMonitoringServiceHandler(object):
                             time.sleep(0.25)
                     logger.debug("thread waiting for subjob-ids of job #" + str(self.__job.id) + " exits")
                     self.unregister()
-            
+
             self.__waitForJobIDsThread = WaitForJobIDsThread(self.__job, self.__startJobListener)
             self.__waitForJobIDsThread.start()
         else:
@@ -429,7 +431,7 @@ class JEMMonitoringServiceHandler(object):
                     # the events can be inspected from within Ganga)
                     if JEMloader.fpEnabled:
                         logger.info("Copying the full log into the workspace...")
-    
+
                         if os.path.exists(self.__job.info.monitor.jmdfile):
                             try:
                                 os.system('mv ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.info.monitor.jmdfile + '.bak')
@@ -443,7 +445,7 @@ class JEMMonitoringServiceHandler(object):
                             pass
 
                         logger.debug("  (now trying to copy the subjobs' logs)")
-                        
+
                         for sj in self.__job.subjobs:
                             if os.path.exists(sj.outputdir + "JEM_MON.jmd"):
                                 try:
@@ -451,7 +453,7 @@ class JEMMonitoringServiceHandler(object):
                                     logger.debug("  OK, log of subjob #" + str(self.__job.id) + "." + str(sj.id) + " has been copied.")
                                 except:
                                     pass
-    
+
                         logger.info("...done. Inspecting the data now should display the whole available info.")
 
 
@@ -488,8 +490,9 @@ class JEMMonitoringServiceHandler(object):
                         logger.warning("Duplicate JEM setting '" + k + "' in " + path)
                     theJEMrcSettings[theSection][k] = v
                 except:
-                    logger.debug("    __readJEMrc catched " + str(sys.exc_info()[0]) + " (" + str(sys.exc_info()[1]) + ")")
-                    logger.debug("    for line " + line)
+                    #logger.debug("    __readJEMrc catched " + str(sys.exc_info()[0]) + " (" + str(sys.exc_info()[1]) + ")")
+                    #logger.debug("    for line " + line)
+                    pass
         return theJEMrcSettings
 
 
@@ -545,7 +548,7 @@ class JEMMonitoringServiceHandler(object):
 
         ### always enable GANGA mode
         JEMrc['JEMSysConfig']['GANGA_ENABLED'] = True
-        
+
         ### loglevels
         JEMrc['JEMConfig']['WRAPPER_BASH_PUBLISHER_LEVEL'] = monitor.advanced.bash_loglevel
         JEMrc['JEMConfig']['WRAPPER_PYTHON_PUBLISHER_LEVEL'] = monitor.advanced.python_loglevel
@@ -595,10 +598,10 @@ class JEMMonitoringServiceHandler(object):
         """
         Write JEM settings from a dictionary to a .JEMrc file (in the temp-directory). Return its path.
         """
-        thePath = JEMConfig.MON_LOG_DIR  
+        thePath = JEMConfig.MON_LOG_DIR
         if not os.path.exists(thePath):
             os.makedirs(thePath)
-            
+
         thePath += os.sep + ".JEMrc"
         fd = open(thePath, "w")
 
@@ -697,7 +700,7 @@ class JEMMonitoringServiceHandler(object):
                 args += ["--https-port", str(self.__httpsListenPort)]
                 self.__job.info.monitor.port = self.__httpsListenPort
             args += [jobID]
-            
+
             # further job IDs (subjob IDs)
             for i, sj in enumerate(self.__job.subjobs):
                 if i in self.__monitoredSubjobs:
@@ -705,7 +708,7 @@ class JEMMonitoringServiceHandler(object):
 
             try:
                 self.__job.info.monitor.pid = os.spawnve(os.P_NOWAIT, executable, args, os.environ)
-                
+
                 # moved this to every job, even if realtime=False, because
                 # maybe we'll get the data later via the sandbox! (see above)
                 #self.__job.info.monitor.jmdfile = WNConfig.LOG_DIR + os.sep + escapedJobID + os.sep + UIConfig.PUBLISHER_JMD_FILE
@@ -738,7 +741,7 @@ class JEMMonitoringServiceHandler(object):
         """
         if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
             return
-        
+
         self.__job.info.monitor.abortWatch()
 
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
@@ -756,6 +759,7 @@ class JEMMonitoringServiceHandler(object):
         Get the PIDs of the server-processes for this job
         """
         # not the finest solution, but it works :/
+        servername = ""
         if JEMloader.rgmaPubEnabled:
             servername = JEMConfig.SERVER_RGMA_EXE
         elif JEMloader.httpsPubEnabled:
