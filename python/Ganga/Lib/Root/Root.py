@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Root.py,v 1.4 2008-09-12 08:08:58 wreece Exp $
+# $Id: Root.py,v 1.3 2008-09-01 05:17:25 wreece Exp $
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
@@ -25,8 +25,6 @@ config.addOption('path','','Set to a specific ROOT version. Will override other 
 config.addOption('pythonhome','${location}/../Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
 config.addOption('pythonversion','',"Version number of python used for execution python ROOT script")
 config.addOption('version','5.18.00','Version of ROOT')
-    
-import os
 
 class Root(IApplication):
     """
@@ -454,20 +452,14 @@ def downloadAndUnTar(fileName, url):
     
     status = 0
     cmd = 'tar xzf %s' % fileName
-    
-    from commands import getstatusoutput, getoutput
-
-    #to check whether the folder name  is 'root' or 'ROOT'
-    folderName = getoutput('tar --list --file ROOT*.tar.gz').split('/')[0]
-    
     try:#do this in try as module is only unix
         #commmand approach removes ugly tar error
+        from commands import getstatusoutput
         (status,output) = getstatusoutput(cmd)
     except ImportError:
         import os
         status = os.system(cmd)
-    
-    return status, folderName
+    return status
 
 def setEnvironment(key, value, update=False):
     '''Sets an environment variable. If update=True, it preends it to
@@ -576,14 +568,12 @@ if __name__ == '__main__':
     url = spiURL + fname
     
     print 'Downloading ROOT version %s from %s.' % (version,url)
-    (status, folderName) = downloadAndUnTar(fname,url)
+    downloadAndUnTar(fname,url)
     sys.stdout.flush()
     sys.stderr.flush()
         
     #see HowtoPyroot in the root docs
-    import os 
-    pwd = os.environ['PWD']
-    rootsys=join(pwd,folderName,version,arch,'root')
+    rootsys=join('.','root',version,arch,'root')
     setEnvironment('LD_LIBRARY_PATH',curdir,True)
     setEnvironment('LD_LIBRARY_PATH',join(rootsys,'lib'),True)
     setEnvironment('ROOTSYS',rootsys)
@@ -641,7 +631,6 @@ def defaultScript():
       cout << "Hello World from ROOT" << endl;
       cout << "Load Path : " << gSystem->GetDynamicPath() << endl;
       gSystem->Load("libTree");
-      gSystem->Exit(0);
     }
     """)
     f.close()
@@ -676,10 +665,6 @@ if __name__ == '__main__':
 
     m = Main()
     m.run()
-    
-    import sys
-    sys.exit(0)
-    
     """)
     finally:
         f.close()

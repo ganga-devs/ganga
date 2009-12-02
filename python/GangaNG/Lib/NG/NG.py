@@ -372,14 +372,15 @@ class Grid:
 
     def clean_gridfile(self,gridfile):
         ''' Clean prestaged files in srm'''
-
-        command = '%s/ngls "%s"' % (self.__get_cmd_prefix_hack__(),gridfile)
+        
+        command = self.__get_cmd_prefix_hack__()+'ngls ' + gridfile
         query = commands.getstatusoutput(command)
         
         if query[0] == 0:
-          command = '%s/ngrm "%s"' % (self.__get_cmd_prefix_hack__(),gridfile)
+          cmd = 'ngrm '
+          command = cmd + gridfile
 
-          rc, output, m = self.shell.cmd1(command,allowed_exit=[0,500])
+          rc, output, m = self.shell.cmd1('%s%s ' % (self.__get_cmd_prefix_hack__(),command),allowed_exit=[0,500])
                
           if rc != 0:
             logger.warning(output)
@@ -1895,15 +1896,7 @@ class NG(IBackend):
         baselfc = "lfc://atlaslfc.nordugrid.org//grid/atlas/dq2/ddo/DBRelease"
         dbset = jobconfig.env['DBDATASETNAME']
         dbfn = jobconfig.env['DBFILENAME']
-
-        dbver = dbset.split(".v")[1].strip()
-        dbver_1 = dbver[0:2]
-        dbver_2 = dbver[2:4]
-        
-        if (int(dbver_1)>=7 and int(dbver_2)>4) or (dbver=="07040102"):
-          dblfnpath = "%s/v%s/%s/%s" % (baselfc,dbver,dbset,dbfn)
-        else:
-          dblfnpath = "%s/%s/%s" % (baselfc,dbset,dbfn)
+        dblfnpath = "%s/%s/%s" % (baselfc,dbset,dbfn)
         
         infileString += "(" + dbfn + " " + dblfnpath + ")"
 
