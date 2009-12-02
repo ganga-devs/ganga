@@ -109,7 +109,7 @@ class JobExecutionMonitorMS(IMonitoringService):
         l = getLogger()
         ei = sys.exc_info()
         l.error(str(ei[0]) + ": " + str(ei[1]))
-        l.debug(str(traceback.format_tb(ei[2])))        
+        l.error(str(traceback.format_tb(ei[2])))        
 
 
     def __getJEMobject(self):
