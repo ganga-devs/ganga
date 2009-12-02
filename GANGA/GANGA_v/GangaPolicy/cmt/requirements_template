@@ -143,6 +143,21 @@ cmtpath_pattern \
     path_remove  PYTHONPATH ${GANGA_install_paramiko} ; \
     path_prepend PYTHONPATH ${GANGA_install_paramiko}
 
+#########################################################################
+# PYTHONPATH ipython
+
+cmtpath_pattern \
+   macro <project>_install_ipython "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/ipython/$(ipython)/noarch/lib/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\ipython\$(ipython)\noarch\lib\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_ipython} ; \
+    path_prepend PYTHONPATH ${GANGA_install_ipython}
+
+
+
+
 ########################################################################
 # Path cleaner
 macro strip_script_gangapolicy "$(GANGAPOLICYROOT)/scripts/StripPath" WIN32 "$(GANGAPOLICYROOT)\scripts\StripPath"
