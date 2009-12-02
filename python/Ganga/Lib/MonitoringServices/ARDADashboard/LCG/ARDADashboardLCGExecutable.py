@@ -11,14 +11,14 @@ class ARDADashboardLCGExecutable(ARDADashboardLCG):
     def __init__(self, job_info):
         
         ARDADashboardLCG.__init__(self, job_info)
-        if self.complete == False:
+        if self._complete == False:
             return
         
-        self.complete = False
+        self._complete = False
         if type(job_info) is DictionaryType:
             # we are on the worker node
             try:
-                self.complete = True
+                self._complete = True
             except KeyError,msg:
                 return
         
@@ -26,7 +26,7 @@ class ARDADashboardLCGExecutable(ARDADashboardLCG):
             # we are on the client. We get the info from the job_info
             # (which is a job)
             
-            self.complete = True
+            self._complete = True
 
     def getSandboxModules(self):
         import Ganga.Lib.MonitoringServices.ARDADashboard.LCG
@@ -34,7 +34,7 @@ class ARDADashboardLCGExecutable(ARDADashboardLCG):
         
     def submit(self, **opts):
         
-        if self.complete:
+        if self._complete:
             try:
                 self.dashboard.sendValues(message = {
                    'Application':self.application,

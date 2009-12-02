@@ -1,16 +1,12 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: GridProxy.py,v 1.5 2009-03-25 15:43:35 karl Exp $
+# $Id: GridProxy.py,v 1.5 2009/03/25 15:43:35 karl Exp $
 ################################################################################
 #
 # File: GridProxy.py
 # Author: K. Harrison
 # Created: 060519
-#
-# 18/03/2009 MWS: Added the 'log' option to isValid and method to retrieve
-#                 the full identity as a dictionary. Also, different VO in
-#                 proxy to config invlidates credentials
 #
 # 06/07/2006 KH:  Changed to Ganga.Utility.Shell for shell commands
 #                 Added voms support
@@ -77,15 +73,29 @@
 #
 # 25/03/2009 KH : Correction to GridProxy.voname() to check that one-word
 #                 VO name is returned 
+#
+# 18/03/2009 MWS: Added the 'log' option to isValid
+#                 Added method to retrieve the full identity as a dictionary
+#                 Require consistency between VO in proxy and in configuration
+#
+# 15/10/2009 MWS: Added cache for proxy information
+#
+#
+# 09/11/2009 MWS: Added check that proxy is valid before updating cache
+#                 (addToProxyCache() method)
+#
+# 12/11/2009 MWS: Added additional checks that cached information
+#                 is consistent with available proxy
 
 """Module defining class for creating, querying and renewing Grid proxy"""
                                                                                 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "25 March 2009"
-__version__ = "1.18"
+__date__    = "12 November 2009"
+__version__ = "1.21"
 
 import os
 import re
+import time
 
 from ICredential import ICommandSet
 from ICredential import ICredential
@@ -150,6 +160,9 @@ class VomsCommand( ICommandSet ):
 for commandSet in [ GridCommand, VomsCommand ]:
    registerCommandSet( commandSet )
 
+# global proxy info cache
+_infoCache = {}
+
 class GridProxy ( ICredential ):
    """
    Class for working with Grid proxy
@@ -160,6 +173,8 @@ class GridProxy ( ICredential ):
       "Virtual organisation managment system information" )
    _schema.datadict[ "init_opts" ] = SimpleItem( defvalue = "", doc = \
       "String of options to be passed to command for proxy creation" )
+   _schema.datadict[ "info_refresh_time" ] = SimpleItem( defvalue = "00:15", \
+      doc = "Refresh time of proxy info cache" )
    _name = "GridProxy"
    _hidden = 1
    _enable_config = 1
@@ -236,10 +251,10 @@ class GridProxy ( ICredential ):
       else:
          return False
 
-   def isValid( self, validity = "", log = False ):
+   def isValid( self, validity = "", log = False, force_check = False ):
 
       # Do parent check
-      if not ICredential.isValid( self, validity, log ):
+      if not ICredential.isValid( self, validity, log, force_check ):
          return False
       
       # check vo names
@@ -327,24 +342,31 @@ class GridProxy ( ICredential ):
 
       return id
 
-   def info( self, opt = "" ):
+   def info( self, opt = "", force_check = False ):
       """
       Obtain proxy information
 
       Arguments other than self:
-         opt   - String of options to be used when querying proxy information
-
-         => Help on valid options can be obtained using:
-            info( opt = "-help" )
+         opt         - String of options to be used when querying
+                       proxy information
+                     => Help on valid options can be obtained using:
+                        info( opt = "-help" )
+         force_check - Force credential check, rather than relying on cache
 
       Return value: Output from result of querying proxy
       """
 
-      self.chooseCommandSet()
-      infoCommand = " ".join( [ self.command.info, opt ] )
-      status, output, message = self.shell.cmd1\
-         ( cmd = infoCommand, allowed_exit = range( 1000 ) )
+      # use cached version of this command call if possible
+      output = self.getProxyCacheValue( opt )
+      
+      if ( force_check ) or ( output == "" ):
+         self.chooseCommandSet()
+         infoCommand = " ".join( [ self.command.info, opt ] )
+         status, output, message = self.shell.cmd1\
+            ( cmd = infoCommand, allowed_exit = range( 1000 ) )
 
+         self.addToProxyCache( status, output, opt )
+         
       if not output:
          output = ""
 
@@ -357,19 +379,27 @@ class GridProxy ( ICredential ):
             check = False
       return ICredential.renew( self, validity, maxTry, minValidity, check )
 
-   def timeleft( self, units = "hh:mm:ss" ):
-      return ICredential.timeleft( self, units )
+   def timeleft( self, units = "hh:mm:ss", force_check = False ):
+      return ICredential.timeleft( self, units, force_check )
 
-   def timeleftInHMS( self ):
+   def timeleftInHMS( self, force_check = False ):
+      global _infoCache
 
-      self.chooseCommandSet()
-      infoList = [ self.command.info ]
-      # Append option value pairs
-      for optName, optVal in self.command.infoOpts.iteritems():
-         infoList.append( "%s %s" % ( optName, optVal ) )
-      status, output, message = self.shell.cmd1\
+      output = self.getProxyCacheValue( "timeleftInHMS" )
+      status = 0
+
+      if ( force_check ) or ( output == "" ):
+         # should really use the 'info' method
+         self.chooseCommandSet()
+         infoList = [ self.command.info ]
+         # Append option value pairs
+         for optName, optVal in self.command.infoOpts.iteritems():
+            infoList.append( "%s %s" % ( optName, optVal ) )
+         status, output, message = self.shell.cmd1\
          ( cmd = " ".join( infoList ), allowed_exit = range( 1000 ) )
 
+         self.addToProxyCache( status, output, "timeleftInHMS" )
+      
       timeRemaining = "00:00:00"
 
       if status:
@@ -377,12 +407,16 @@ class GridProxy ( ICredential ):
             logger.warning( "Command '" + self.command.info + "' not found" )
             logger.warning( "Unable to obtain information on Grid proxy" )
             timeRemaining = ""
-
+            if _infoCache.has_key( "timeleftInHMS" ):
+               del _infoCache[ "timeleftInHMS" ]
+            
       if timeRemaining:
          lineList = output.split( "\n" )
          for line in lineList:
             if ( 1 + line.find( "Couldn't find a valid proxy" ) ):
                timeRemaining = "-1"
+               if _infoCache.has_key('timeleftInHMS'):
+                  del _infoCache['timeleftInHMS']               
                break
             elif ( 1 + line.find( "timeleft" ) ):
                elementList = line.split()
@@ -391,52 +425,127 @@ class GridProxy ( ICredential ):
 
       return timeRemaining
 
-   def voname( self ):
+   def voname( self, force_check = False ):
       """
       Obtain name of virtual organisation from proxy
 
-      No arguments other than self
+      Argument other than self:
+         force_check - Force credential check, rather than relying on cache
 
       Return value: Name of virtual organisation where this can be determined
       (voms proxy), or empty string otherwise (globus proxy)
       """
+      global _infoCache
+      output = self.getProxyCacheValue( "voname" )
 
-      self.chooseCommandSet()
-      infoCommand = ""
+      if ( force_check ) or ( output == "" ):
+         self.chooseCommandSet()
+         infoCommand = ""
 
-      if self.command.info_parameters.has_key( "vo" ):
-         if self.command.info:
-            infoCommand = " ".join\
-               ( [ self.command.info, self.command.info_parameters[ "vo" ] ] )
-      else:
-         infoCommand = self.command.info
+         if self.command.info_parameters.has_key( "vo" ):
+            if self.command.info:
+               infoCommand = " ".join\
+                  ( [ self.command.info, self.command.info_parameters[ "vo" ] ] )
+         else:
+            infoCommand = self.command.info
 
-      if infoCommand:
-         status, output, message = self.shell.cmd1( cmd = infoCommand, \
-            allowed_exit = range( 1000 ), capture_stderr = True )
-      else:
-         output = "" 
+         if infoCommand:
+            status, output, message = self.shell.cmd1( cmd = infoCommand, \
+               allowed_exit = range( 1000 ), capture_stderr = True )
+
+            self.addToProxyCache( status, output, "voname" )
+
+         else:
+            output = ""
 
       if not output:
          output = ""
+         if _infoCache.has_key( "voname" ):
+            del _infoCache[ "voname" ]
 
       output = output.strip()
 
       for error in [ "VOMS extension not found", "unrecognized option" ]:
          if output.find( error ) != -1:
             output = ""
+            if _infoCache.has_key('voname'):
+               del _infoCache['voname']
             break
 
-    # Check for reasonable output (single-word VO)
+      # Check for reasonable output (single-word VO)
       if len( output.split() ) != 1:
          output = self.voms
 
       return output
 
-  # Add documentation strings from base class
+   def getProxyCacheValue( self, opt ):
+      """
+      Check the proxy cache for the required key. Make sure the proxy
+      file is older than the last check.
+      
+      opt - the key to check for
+      """
+
+      global _infoCache
+
+      info_refresh = self.timeInSeconds( self.info_refresh_time )
+      output = ''
+      path = ''
+
+      # check when the grid proxy was created
+      if not _infoCache.has_key( '-path' ) or ( _infoCache[ '-path' ][ 1 ] < ( time.time() - info_refresh ) ):
+         self.chooseCommandSet()
+         infoCommand = " ".join( [ self.command.info, '-path' ] )
+         status, output, message = self.shell.cmd1\
+                                   ( cmd = infoCommand, allowed_exit = range( 1000 ) )
+
+         if not status:
+            path = output
+            self.addToProxyCache( status, output, '-path')
+
+      else:
+         path = _infoCache[ '-path' ][0]
+
+      path = path.strip()
+      if not os.path.exists(path):
+         # blank the cache as the proxy isn't there
+         _infoCache = {}
+         return ''
+
+      # we're OK to use the cache
+      if _infoCache.has_key( opt ) and ( _infoCache[ opt ][ 1 ] > ( time.time() - info_refresh ) ) and ( _infoCache[ opt ][ 1 ] > os.path.getmtime(path) ):
+         output = _infoCache[ opt ][ 0 ]
+      else:
+         output = ""
+
+      return output
+
+   def addToProxyCache( self, status, output, opt ):
+      """
+      Test the result of grid proxy call
+      and add to the cache if all OK
+
+      status - the status output
+      output - the output text
+      opt - opt to add
+      """
+      
+      if ( not status ) and ( output ):
+         error = False
+         for line in output.split('\n'):
+            if ( 1 + line.find( "Couldn't find a valid proxy" ) ):
+               error = True
+
+         if not error:
+            _infoCache[ opt ] = [ output, time.time() ]
+
+      return None
+
+   # Add documentation strings from base class
    for method in [ create, destroy, isAvailable, isValid, location, \
       renew, timeleft, timeleftInHMS ]:
       if hasattr( ICredential, method.__name__ ):
          baseMethod = getattr( ICredential, method.__name__ )
          setattr( method, "__doc__",\
             baseMethod.__doc__.replace( "credential", "Grid Proxy" ) )
+

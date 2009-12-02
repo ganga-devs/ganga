@@ -53,6 +53,12 @@ class LCGOutputDownloadAlgorithm(Algorithm):
         if job.status in ['completing', 'completed', 'failed']:
             return True
 
+        ## it can also happen that the job was killed/removed by user between
+        ## the downloading task was created in queue and being taken by one of
+        ## the downloading thread. Ignore suck kind of cases
+        if job.status in ['removed','killed']:
+            return True
+
         job.updateStatus('completing')
         outw = job.getOutputWorkspace()
 

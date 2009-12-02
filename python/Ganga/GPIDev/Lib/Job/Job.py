@@ -191,23 +191,23 @@ class Job(GangaObject):
                     'submitting' : Transitions(State('new','submission failed',hook='rollbackToNewState'),
                                                State('submitted',hook='monitorSubmitted_hook'),
                                                State('unknown','forced remove OR remote jobmgr error'),
-                                               State('failed','manually forced or keep_on_failed=True',hook='monitorKilledOrFailed_hook')),
+                                               State('failed','manually forced or keep_on_failed=True',hook='monitorFailed_hook')),
                     'submitted' : Transitions(State('running'),
-                                              State('killed','j.kill()',hook='monitorKilledOrFailed_hook'),
+                                              State('killed','j.kill()',hook='monitorKilled_hook'),
                                               State('unknown','forced remove'),
-                                              State('failed', 'j.fail(force=1)',hook='monitorKilledOrFailed_hook'),
+                                              State('failed', 'j.fail(force=1)',hook='monitorFailed_hook'),
                                               State('completing','job output already in outputdir',hook='postprocess_hook'),
                                               State('completed',hook='postprocess_hook'),
                                               State('submitting','j.resubmit(force=1)')),
                     'running' : Transitions(State('completing'),
                                             State('completed','job output already in outputdir',hook='postprocess_hook'),
-                                            State('failed','backend reported failure OR j.fail(force=1)',hook='monitorKilledOrFailed_hook'),
-                                            State('killed','j.kill()',hook='monitorKilledOrFailed_hook'),
+                                            State('failed','backend reported failure OR j.fail(force=1)',hook='monitorFailed_hook'),
+                                            State('killed','j.kill()',hook='monitorKilled_hook'),
                                             State('unknown','forced remove'),
                                             State('submitting','j.resubmit(force=1)'),
                                             State('submitted','j.resubmit(force=1)')),
                     'completing' : Transitions(State('completed',hook='postprocess_hook'),
-                                               State('failed','postprocessing error OR j.fail(force=1)',hook='monitorKilledOrFailed_hook'),
+                                               State('failed','postprocessing error OR j.fail(force=1)',hook='monitorFailed_hook'),
                                                State('unknown','forced remove'),
                                                State('submitting','j.resubmit(force=1)'),
                                                State('submitted','j.resubmit(force=1)')),
@@ -342,10 +342,13 @@ class Job(GangaObject):
     
     def postprocess_hook(self):
         self.application.postprocess()
-        self.getMonitoringService().complete(cause="finished")
+        self.getMonitoringService().complete()
         
-    def monitorKilledOrFailed_hook(self):
-        self.getMonitoringService().complete(cause="failed")
+    def monitorFailed_hook(self):
+        self.getMonitoringService().fail()
+
+    def monitorKilled_hook(self):
+        self.getMonitoringService().kill()
 
     def monitorRollbackToNew_hook(self):
         self.getMonitoringService().rollback()

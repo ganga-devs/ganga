@@ -11,10 +11,10 @@ class ARDADashboardLCGAthena(ARDADashboardLCG):
     def __init__(self, job_info):
         
         ARDADashboardLCG.__init__(self, job_info)
-        if self.complete == False:
+        if self._complete == False:
             return
         
-        self.complete = False
+        self._complete = False
         if type(job_info) is DictionaryType:
             # we are on the worker node
             try:
@@ -22,7 +22,7 @@ class ARDADashboardLCGAthena(ARDADashboardLCG):
                 self.applicationVersion = job_info['applicationVersion']
                 self.dataset = job_info['dataset'][0]
                 self.activity = job_info['activity']
-                self.complete = True
+                self._complete = True
             except KeyError,msg:
                 return
         
@@ -54,14 +54,14 @@ class ARDADashboardLCGAthena(ARDADashboardLCG):
             except IndexError:
                 self.dataset = 'unknown'
             
-            self.complete = True
+            self._complete = True
 
     def getSandboxModules(self):
         import Ganga.Lib.MonitoringServices.ARDADashboard.LCG
         return ARDADashboardLCG.getSandboxModules(self) + [Ganga.Lib.MonitoringServices.ARDADashboard.LCG.ARDADashboardLCGAthena]
     
     def getJobInfo(self):
-        if self.complete:
+        if self._complete:
             job_info = ARDADashboardLCG.getJobInfo(self)
             job_info['application'] = self.application
             job_info['applicationVersion'] = self.applicationVersion
@@ -75,7 +75,7 @@ class ARDADashboardLCGAthena(ARDADashboardLCG):
     
     def submit(self, **opts):
         
-        if self.complete:
+        if self._complete:
             try:
                 self._logger.debug("sending to the monalisa server")
                 self.dashboard.sendValues(message = {

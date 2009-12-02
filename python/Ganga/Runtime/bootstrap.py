@@ -955,7 +955,7 @@ default_backends = LCG
             from Ganga.Core import GangaException
             ipshell.IP.set_custom_exc((GangaException,),ganga_exc_handler)
             override_credits()
-            ret = ipshell(local_ns=local_ns)
+            ret = ipshell(local_ns=local_ns,global_ns=local_ns) #global_ns: FIX required by ipython 0.8.4+
         elif shell == 'GUI':
            override_credits()
            import GangaGUI.Ganga_GUI

@@ -57,7 +57,7 @@ class ARDADashboardLCG(IMonitoringService):
     gridCertificate = None
     VO = None
     taskPrefix = 'ganga'
-    complete = False
+    _complete = False
     
     _logger = None
         
@@ -74,7 +74,7 @@ class ARDADashboardLCG(IMonitoringService):
                 self.gridBackend = job_info['gridBackend']
                 self.gridCertificate = job_info['gridCertificate']
                 self.VO = job_info['VO']
-                self.complete = True
+                self._complete = True
             except KeyError,msg:
                 # too bad, we will not monitor the job         
                 return
@@ -83,7 +83,7 @@ class ARDADashboardLCG(IMonitoringService):
             if self.gridJobId == 'unknown':
                 self.gridJobId = safe_getenv('GLITE_WL_JOBID')
                 if self.gridJobId == 'unknown':
-                    self.complete = False
+                    self._complete = False
 
             
         else:
@@ -160,7 +160,7 @@ class ARDADashboardLCG(IMonitoringService):
                 self._logger.debug('normal: grid job ID is None')
             
             self._logger.debug('job is complete')
-            self.complete = True        
+            self._complete = True        
         
         # we can now initialize the dashboard communication thing
         if self.gridJobId is not None:
@@ -175,7 +175,7 @@ class ARDADashboardLCG(IMonitoringService):
         
         # the method which returns useful info to have on the WN. We send basically
         # everything, just in case.
-        if self.complete:
+        if self._complete:
             dict = {
                 'gangaJobId':self.gangaJobId,
                 'gangaTaskId':self.gangaTaskId,
@@ -218,7 +218,7 @@ class ARDADashboardLCG(IMonitoringService):
     def start(self, **opts):
         # we are in principle in the WN. We need the CE (we try both possibilities)
         printInfo("monitor start event")
-        if self.complete:
+        if self._complete:
             hostqueue = get_output(['edg-brokerinfo getCE','glite-brokerinfo getCE'])
             
             if hostqueue == 'unknown':
@@ -236,7 +236,7 @@ class ARDADashboardLCG(IMonitoringService):
         return
     
     def stop(self,exitcode,**opts):
-        if self.complete:
+        if self._complete:
             if type(exitcode) is IntType:
                 self.dashboard.publish(JobExitCode=exitcode)
         

@@ -103,6 +103,8 @@ def getMonitoringObject(job):
    """   
    #read from configuration
    names = [ name.strip() for name in findMonitoringClassesName(job).split(',') if name.strip() ]   
-   #get classes
-   monClasses = [ getMonitoringClass(name) for name in names]   
-   return CompositeMonitoringService(monClasses,job)
+   #get classes, jobs and configs
+   monClasses = [ getMonitoringClass(name) for name in names]
+   jobs = [job]*len(monClasses)
+   configs = [ monClass.getConfig() for monClass in monClasses]   
+   return CompositeMonitoringService(monClasses,jobs,configs)

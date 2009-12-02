@@ -1,15 +1,12 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ICredential.py,v 1.6 2009-05-20 13:40:22 moscicki Exp $
+# $Id: ICredential.py,v 1.6 2009/05/20 13:40:22 moscicki Exp $
 ################################################################################
 #
 # File: ICredential.py
 # Author: K. Harrison
 # Created: 060607
-#
-# 18/03/2009 MWS: Added the 'log' option to isValid and shifted the expire
-#                 message here
 #
 # 06/07/2006 KH:  Changed to Ganga.Utility.Shell for shell commands
 #                 Redefined create and renew methods
@@ -50,14 +47,20 @@
 # 17/12/2007 KH:  Added function registerCommandSet for registering plugins
 #                 of category "credential_commands"
 #
-# 13 03/2008 KH:  Update for change in configuration system
+# 13/03/2008 KH:  Update for change in configuration system
 #                 (use "defaults_" instead of "_Properties")
+#
+# 18/03/2009 MWS: Added the 'log' option to isValid and shifted the expire
+#                 message here
+#
+# 15/10/2009 MWS: Added possibility to force new check of credentials,
+#                 rather than relying on cache
 
 """Module defining interface class for working with credentials"""
                                                                                 
 __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "20 May 2008"
-__version__ = "1.10"
+__date__    = "05 November 2009"
+__version__ = "1.11"
 
 import os, threading, time, tempfile
 
@@ -358,17 +361,19 @@ class ICredential( GangaObject ):
       return True
 
 
-   def isValid( self, validity = "", log = False ):
+   def isValid( self, validity = "", log = False, force_check = False ):
 
       """
       Check validity
 
-      Argument other than self:
-         validity - Minimum time for which credential should be valid,
-                    specified as string of format "hh:mm"
-                    [ Defaults to valud of self.minValidity ]
+      Arguments other than self:
+         validity    - Minimum time for which credential should be valid,
+                       specified as string of format "hh:mm"
+                       [ Defaults to valud of self.minValidity ]
 
-         log      - Print loggin messages if invalid
+         log         - Print logger messages if credential not valid 
+
+         force_check - Force credential check, rather than relying on cache
 
       Return value: True if credential is valid for required time, False
       otherwise.
@@ -379,7 +384,7 @@ class ICredential( GangaObject ):
       if not validity:
          validity = self.minValidity
       validityInSeconds = self.timeInSeconds( validity )
-      timeleft = self.timeleft()
+      timeleft = self.timeleft( force_check = force_check )
 
       if not timeleft:
          valid = False
@@ -389,7 +394,7 @@ class ICredential( GangaObject ):
             valid = False
 
       if not valid and log:
-         _tl = self.timeleft()
+         _tl = self.timeleft( force_check = force_check )
          if _tl == "-1" or _tl == "0:00:00":
             _expiryStatement = "has expired!"
          else:
@@ -475,12 +480,14 @@ class ICredential( GangaObject ):
 
       return totalTime
 
-   def timeleft( self, units = "hh:mm:ss" ):
+   def timeleft( self, units = "hh:mm:ss", force_check = False ):
       """
       Check time for which credential is valid.
 
-      Argument other than self:
-         units - String specifying units in which time is returned
+      Arguments other than self:
+         units       - String specifying units in which time is returned
+
+         force_check - Force credential check, rather than relying on cache
 
       Allowed values for units are:
          "hours"              - time returned as in hours
@@ -494,7 +501,7 @@ class ICredential( GangaObject ):
          is unavailable
       """
 
-      timeRemaining = self.timeleftInHMS()
+      timeRemaining = self.timeleftInHMS( force_check = force_check )
       if timeRemaining not in [ "", "-1" ]:
          if units in [ "hours", "minutes", "seconds" ]:
             timeleftInSeconds = self.timeInSeconds( timeRemaining )
@@ -507,11 +514,12 @@ class ICredential( GangaObject ):
 
       return timeRemaining
 
-   def timeleftInHMS( self ):
+   def timeleftInHMS( self, force_check = False ):
       """
       Determine remaining validity of credential in hours, minutes and seconds
 
-      No arguments other than self
+      Argument other than self:
+         force_check - Force credential check, rather than relying on cache
 
       Return value: String giving credential validity, or empty string
          if command for querying credential validity is unavailable

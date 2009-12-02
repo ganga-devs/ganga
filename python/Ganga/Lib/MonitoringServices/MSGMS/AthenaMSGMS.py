@@ -1,27 +1,27 @@
-from Ganga.Lib.MonitoringServices.MSGMS import MSGMS
+from Ganga.Lib.MonitoringServices.MSGMS.MSGMS import MSGMS
 import cPickle as pickle
+
+# TODO: move this into GangaAtlas
 
 class AthenaMSGMS(MSGMS):
 
-    def __init__(self,job_info):
-        MSGMS.__init__(self, job_info)
+    def __init__(self, job_info, config_info):
+        MSGMS.__init__(self, job_info, config_info)
 
     def getSandboxModules(self):
-        import Ganga.Lib.MonitoringServices.MSGMS.AthenaMSGMS
+        import Ganga.Lib.MonitoringServices.MSGMS
         return [
             Ganga.Lib.MonitoringServices.MSGMS.AthenaMSGMS,
             ] + MSGMS.getSandboxModules(self)
 
-
     def stop(self, exitcode, **opts):
-        exit_status = None
+        # create message as in MSGMS
         if exitcode == 0:
-            exit_status = "finished"
+            event = "finished"
         else:
-            exit_status = "failed"
-
-        message = self.getMessage()
-        message['event'] = exit_status
+            event = "failed"
+        message = self.getMessage(event)
+        # add UAT09 properties to message
         import os
         message['uat09.ls'] = os.listdir('.')
         message['uat09.env'] = os.environ
@@ -40,8 +40,7 @@ class AthenaMSGMS(MSGMS):
                 message['uat09.Athena.%s'%x] = y
             except:
                 pass
-
-        from Ganga.Lib.MonitoringServices.MSGMS import sendJobStatusChange
-        sendJobStatusChange( message )
+        # send message
+        self.send(message)
 
 
