@@ -284,7 +284,7 @@ class JobExecutionMonitor(GangaObject):
                                                  doc='Advanced configuration'),
         'jobID'                  : SimpleItem(hidden=True, defvalue=None, protected=1, copyable=0, transient=1,\
                                               typelist=['type(None)', 'type(str)'], doc='Real backend-jobID (or generated)'),
-        'pid'                    : SimpleItem(hidden=True, defvalue=-1, protected=1, copyable=0,\
+        'pid'                    : SimpleItem(hidden=True, defvalue=0, protected=1, copyable=0,\
                                               doc='Process id of the job listener'),
         'port'                   : SimpleItem(hidden=True, defvalue=0, protected=1, copyable=0,\
                                               doc='Port number of the job listeners HTTPS server'),
@@ -1009,7 +1009,7 @@ class JobExecutionMonitor(GangaObject):
                     return "disabled"
                 logger.info("Realtime monitoring is disabled. Monitoring data will only be available in the output sandbox.")
                 return False
-            if self.pid == -1:
+            if self.pid == 0:
                 if self.getJobObject().status == 'new': # pylint: disable-msg=E1101
                     if onlyReport:
                         return "not yet started"

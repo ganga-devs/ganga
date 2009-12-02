@@ -716,7 +716,7 @@ class JEMMonitoringServiceHandler(object):
                 logger.error('Could not start job listener process.')
                 logger.error('The Job with the id %s will start without monitoring.' % jobID)
                 logger.error('Error cause: %s.' % str(r))
-                if self.pid > -1:
+                if self.pid > 0:
                     self.__stopJobListener()
                 self.__job.info.monitor.enabled = False # pylint: disable-msg=E1101
                 return
@@ -747,7 +747,7 @@ class JEMMonitoringServiceHandler(object):
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
             return
 
-        if self.__job.info.monitor.pid != -1:
+        if self.__job.info.monitor.pid != 0:
             theServer = self.__checkServer()
             for pid in theServer:
                 self.__killprocess(pid)
