@@ -9,7 +9,7 @@ set GANGA_SITE_CONFIG_AREA "$(GANGA_SITE_CONFIG_AREA)"  CERN "/afs/cern.ch/sw/ga
 
 set GANGA_NEVER_REEXEC 1
 
-use pyqt     v* LCG_Interfaces
+# use pyqt     v* LCG_Interfaces
 use pyxml    v* LCG_Interfaces
 use ROOT     v* LCG_Interfaces
 
@@ -17,5 +17,5 @@ use ROOT     v* LCG_Interfaces
 # use ipython  v* LCG_Interfaces
 
 
-macro        pyqt_config_version                 3.17.3
-macro        Qt_config_version                   3.3.8
+# macro        pyqt_config_version                 3.17.3
+# macro        Qt_config_version                   3.3.8
