@@ -1083,7 +1083,7 @@ class JobExecutionMonitor(GangaObject):
 
 
     def __getServerPid(self):
-        pid = str(self.pid)
+        pid = str(self.pid) # pylint: disable-msg=E1101
         job = self.getJobObject()
         jobID = self.getJobID() # pylint: disable-msg=E1101
 
@@ -1096,19 +1096,22 @@ class JobExecutionMonitor(GangaObject):
 
         # Check if all processes are running
         if not pid in pids:
+            if pid != "0":
+                logger.debug("in __getServerPid: pid not in pids (%s not in %s)" % (str(pid), str(pids)))
             return 0
         else:
             z = pids.index(pid)
             if cmds[z].find("[python] <defunct>") != -1:
+                logger.debug("in __getServerPid: server command status includes <defunct>")
                 return 0
             else:
                 for z,p in enumerate(ppids):
                     if p == pid:
-                        if JEMloader.httpsPubEnabled and cmds[z].find("HTTPSServer") != -1 and cmds[z].find("<defunct>") == -1:
+                        # okay, well, let's assume SOME server is OK, and not rely on the *PubEnabled vars
+                        # (this breaks anyway, because there might be no .JEMrc...)
+                        if (cmds[z].find("HTTPSServer") != -1 or cmds[z].find("RGMAServer") != -1) and cmds[z].find("[python] <defunct>") == -1:
                             return int(pids[z])
-                        if JEMloader.rgmaPubEnabled and cmds[z].find("RGMAServer") != -1 and cmds[z].find("<defunct>") == -1:
-                            return int(pids[z])
-
+                logger.debug("in __getServerPid: server commands didn't include HTTPSServer or RGMAServer, or did include <defunct>")
                 return 0
 
 
@@ -1118,7 +1121,7 @@ class JobExecutionMonitor(GangaObject):
         """
 
         # not the finest solution, but it works and is quite fast!
-        pid = str(self.pid)
+        pid = str(self.pid) # pylint: disable-msg=E1101
         job = self.getJobObject()
         jobID = self.getJobID() # pylint: disable-msg=E1101
         logDir = JEMConfig.MON_LOG_DIR + os.sep + Utils.escapeJobID(jobID)
@@ -1203,7 +1206,9 @@ class JobExecutionMonitor(GangaObject):
             else:
                 for z,p in enumerate(ppids):
                     if p == pid:
-                        if JEMloader.httpsPubEnabled and cmds[z].find("HTTPSServer") != -1:
+                        # same thing here. we won't rely on the *PubEnabled vars. We really should do this
+                        # rather with env vars or something...
+                        if cmds[z].find("HTTPSServer") != -1:
                             if cmds[z].find("<defunct>") == -1:
                                 if onlyReport:
                                     return "OK"
@@ -1212,7 +1217,7 @@ class JobExecutionMonitor(GangaObject):
                                 if onlyReport:
                                     return "error"
                                 break
-                        if JEMloader.rgmaPubEnabled and cmds[z].find("RGMAServer") != -1:
+                        if cmds[z].find("RGMAServer") != -1:
                             if cmds[z].find("<defunct>") == -1:
                                 if onlyReport:
                                     return "OK"
@@ -1228,6 +1233,8 @@ class JobExecutionMonitor(GangaObject):
                 elif JEMloader.httpsPubEnabled:
                     if not onlyReport:
                         logger.warning("The HTTPS Server seems to be down. No new data will be received (Displayed data may be outdated).")
+                else:
+                    logger.warning("JEM's data listener seems to be down. No new data will be received (Displayed data may be outdated).")
         if onlyReport:
             return "unknown"
         return True

@@ -256,7 +256,7 @@ class JEMMonitoringServiceHandler(object):
         try:
             for i, config in enumerate(subjobconfig):
                 if (i == 0) or (i % jemconfig['JEM_MONITOR_SUBJOBS_FREQ'] == 0):
-                    logger.debug("Enabling JEM monitoring for job #" + self.__getFullJobId() + "." + str(i))
+                    logger.info("Enabling JEM monitoring for job #" + self.__getFullJobId() + "." + str(i))
 
                     self.__monitoredSubjobs += [i]
 
@@ -369,7 +369,7 @@ class JEMMonitoringServiceHandler(object):
 
 
     def submit(self):
-        global Utils
+        global Utils, WNConfig, UIConfig, JEMloader
 
         # no action for subjobs...
         if self.__job.master:
@@ -589,7 +589,7 @@ class JEMMonitoringServiceHandler(object):
         JEMrc['JEMConfig']['PUBLISHER_USE_TYPE'] = s
 
         import pprint
-        logger.debug("effective JEM configuration now:\n" + pprint.pformat(JEMrc))
+        logger.debug("effective JEM user configuration now:\n" + pprint.pformat(JEMrc))
 
         ### done
 
@@ -721,7 +721,7 @@ class JEMMonitoringServiceHandler(object):
                 self.__job.info.monitor.enabled = False # pylint: disable-msg=E1101
                 return
 
-            logger.info('JEM realtime monitoring listener started.')
+            logger.info('The JEM realtime monitoring listener has been started for job ' + str(jobID) + '.')
             logger.debug('Listener process: PID %s' % self.__job.info.monitor.pid)
             logger.debug('Listener arguments: ' + str(args))
             logger.debug('Logfiles: %s' % WNConfig.LOG_DIR + os.sep + escapedJobID)
