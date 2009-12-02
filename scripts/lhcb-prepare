@@ -81,12 +81,19 @@ class InstallLHCb:
                     "There was a problem creating the directory %s" % topdir)
 
         self.destination = join(topdir,"GANGA_"+self.versionLHCb)
-        try:
-            mkdir(self.destination)
-        except OSError:
-            raise InstallLHCbError(
-                "Failed to create directory %s. " % self.destination + \
-                    "If it is already present you need to delete it first.")
+        if isdir(self.destination) or islink(self.destination):
+            if len(os.listdir(self.destination))>0:
+                raise InstallLHCbError(
+                    "Failed to install into %s. " % self.destination + \
+                        "Directory is not empty. Either delete whole directory first or empty it.")
+            
+        else:
+            try:
+                mkdir(self.destination)
+            except OSError:
+                raise InstallLHCbError(
+                    "Failed to create directory %s. " % self.destination + \
+                        "If it is already present you need to delete it first.")
         print "Release will be placed in : %s" % self.destination
 
     def _getProject(self):
