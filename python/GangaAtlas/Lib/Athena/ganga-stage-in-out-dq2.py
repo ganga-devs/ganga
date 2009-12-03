@@ -1990,7 +1990,7 @@ if __name__ == '__main__':
         # Find close backup locations
         close_backup_locations = []
         for sitename in TiersOfATLAS.getCloseSites(siteID):
-            if TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasscratchdisk')>0:
+            if TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasscratchdisk')>0 and sitename.find('SCRATCHDISK')>0: 
                 close_backup_locations.append( sitename )
 
         # Compile stage out SE sequence 
