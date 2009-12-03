@@ -172,6 +172,8 @@ class DQ2JobSplitter(ISplitter):
 
                             for all_site in info:
                                 if not info[all_site] in avail_clouds[key] and not info[all_site] in ['US', 'NG']:
+                                    if info[all_site] == 'T0':
+                                        info[all_site] = 'CERN'                     
                                     avail_clouds[key].append(info[all_site])
 
                         # perform logical AND to find a cloud that has all data
