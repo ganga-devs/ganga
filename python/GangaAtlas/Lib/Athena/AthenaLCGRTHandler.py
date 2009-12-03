@@ -73,6 +73,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         input_tag_guids = []
         input_esd_files = []
         input_esd_guids = []
+        add_files = []
        
         if job.inputdata:
 
@@ -91,6 +92,13 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified. Failure in job %s.%s. Dataset %s' %(job._getRoot().id, job.id, job.inputdata.dataset)  )
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
+
+                    if job.inputdata.tag_info:
+                        # add additional file info for tags
+                        for tag_file in job.inputdata.tag_info:
+                            for ref in job.inputdata.tag_info[tag_file]['refs']:
+                                add_files.append( ref[1] + ':' + ref[0] + ':' + ref[2] )
+                    
                     if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER' ]:
                         job.inputdata.type ='DQ2_LOCAL'
                     if not job.inputdata.datatype in ['DATA', 'MC', 'MuonCalibStream']:
@@ -263,10 +271,16 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         inputbox = [File(os.path.join(__directory__,'athena-utility.sh')) ]
         if input_guids:     _append_file_buffer(inputbox,'input_guids',input_guids)
         if input_files:     _append_file_buffer(inputbox,'input_files',input_files)
+        if add_files:     _append_file_buffer(inputbox,'add_files',add_files)
         if input_tag_guids: _append_file_buffer(inputbox,'input_tag_guids',input_tag_guids)
         if input_tag_files: _append_file_buffer(inputbox,'input_tag_files',input_tag_files)
         if input_esd_guids: _append_file_buffer(inputbox,'input_esd_guids',input_esd_guids)
         if input_esd_files: _append_file_buffer(inputbox,'input_esd_files',input_esd_files)
+
+        for tag_file in job.inputdata.tag_info:
+            if job.inputdata.tag_info[tag_file]['path'] != '':
+                inputbox.append( File( os.path.join( job.inputdata.tag_info[tag_file]['path'], tag_file) ) )
+                
         if job.outputdata and job.outputdata.outputdata:
             _append_file_buffer(inputbox,'output_files',job.outputdata.outputdata)
         elif job.outputdata and not job.outputdata.outputdata:
