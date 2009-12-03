@@ -390,6 +390,12 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             pass
 
     print 'usedProtocol: %s' %usedProtocol
+    if usedProtocol=='':
+        try:
+            usedProtocol = configLOCALPROTOCOL[0]
+        except:
+            pass
+        print 'usedProtocol: %s' %usedProtocol
 
     # Create TURL map
     tUrlMap = {}
@@ -420,7 +426,10 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                 timeout = int(60 * 2**attempt)
                 if timeout<60:
                     timeout = 60
-                cmd = "lcg-getturls --connect-timeout %s --sendreceive-timeout %s --srm-timeout %s --bdii-timeout %s -p %s %s" %(timeout, timeout, timeout, timeout, bulkprotocols, surls)
+                if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                    cmd = "lcg-getturls --connect-timeout %s --sendreceive-timeout %s --srm-timeout %s --bdii-timeout %s -p %s %s" %(timeout, timeout, timeout, timeout, bulkprotocols, surls)
+                else:
+                    cmd = "lcg-getturls -t %s -p %s %s" %(timeout, bulkprotocols, surls)
                 print 'Using lcg-getturls for turl retrieval ...'
                 print cmd
                 rc, out = commands.getstatusoutput(cmd)
@@ -1981,7 +1990,7 @@ if __name__ == '__main__':
         # Find close backup locations
         close_backup_locations = []
         for sitename in TiersOfATLAS.getCloseSites(siteID):
-            if TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasscratchdisk')>0:
+            if TiersOfATLAS.getSiteProperty(sitename,'domain').find('atlasscratchdisk')>0 and sitename.find('SCRATCHDISK')>0: 
                 close_backup_locations.append( sitename )
 
         # Compile stage out SE sequence 

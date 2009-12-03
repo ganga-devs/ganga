@@ -249,6 +249,18 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if input_esd_files: 
             inputbox += [ FileBuffer('input_esd_files','\n'.join(input_esd_files)+'\n') ]
 
+        ## create and add sample files for FileStager
+        if job.inputdata and job.inputdata._name == 'StagerDataset':
+            if not job.inputdata.dataset:
+                raise ApplicationConfigurationError(None,'dataset name not specified in job.inputdata')
+            grid_sample_file = os.path.join(job.inputdir,'grid_sample.list')
+            job.inputdata.make_sample_file(sampleName='MySample', filepath=grid_sample_file)
+            inputbox += [ job.inputdata.grid_sample_file ]
+
+            input_py_file = os.path.join(job.inputdir,'input.py')
+            job.inputdata.make_input_option_file(filepath=input_py_file, max_events=app.max_events)
+            inputbox += [ File(input_py_file) ]
+
         if job.outputdata and job.outputdata.outputdata:
             inputbox += [ FileBuffer('output_files','\n'.join(job.outputdata.outputdata)+'\n') ]
         elif job.outputdata and not job.outputdata.outputdata:
@@ -428,6 +440,24 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             if (app.max_events != -999) and (app.max_events > -2):
                 environment['ATHENA_MAX_EVENTS'] = str(app.max_events)
 
+        if job.inputdata and job.inputdata._name == 'StagerDataset':
+
+            if job.inputdata.type not in ['LOCAL']:
+
+                try:
+                    proxy = os.environ['X509_USER_PROXY']
+                except KeyError:
+                    proxy = '/tmp/x509up_u%s' % os.getuid()
+
+                REMOTE_PROXY = '%s:%s' % (socket.getfqdn(),proxy)
+                environment['REMOTE_PROXY'] = REMOTE_PROXY
+
+                try:
+                    environment['GANGA_GLITE_UI']=configLCG['GLITE_SETUP']
+                except:
+                    pass
+
+                
         if job.inputdata and job.inputdata._name == 'DQ2Dataset':
             if job.inputdata.dataset:
                 datasetname = job.inputdata.dataset
