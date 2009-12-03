@@ -250,7 +250,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             inputbox += [ FileBuffer('input_esd_files','\n'.join(input_esd_files)+'\n') ]
 
         ## create and add sample files for FileStager
-        if job.inputdata._name == 'StagerDataset':
+        if job.inputdata and job.inputdata._name == 'StagerDataset':
             if not job.inputdata.dataset:
                 raise ApplicationConfigurationError(None,'dataset name not specified in job.inputdata')
             grid_sample_file = os.path.join(job.inputdir,'grid_sample.list')
