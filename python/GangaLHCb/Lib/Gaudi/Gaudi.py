@@ -10,6 +10,7 @@ from GaudiRunTimeHandler import *
 from PythonOptionsParser import PythonOptionsParser
 from Francesc import *
 from Ganga.Utility.util import unique
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -198,7 +199,7 @@ class Gaudi(Francesc):
                   'files and extraopts.'
             raise ApplicationConfigurationError(None,msg)
 
-        return parser.get_input_data()
+        return GPIProxyObjectFactory(parser.get_input_data())
    
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

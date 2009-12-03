@@ -11,7 +11,6 @@ from GangaLHCb.Lib.LHCbDataset import *
 #from GangaLHCb.Lib.LHCbDataset import *
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -145,7 +144,7 @@ class PythonOptionsParser:
             ds.files.append(file)
             #dtype_str = d.replace('DATAFILE=%s%s%s' % (quote,f,quote),'')
             #dtype_str = dtype_str.strip()
-        return GPIProxyObjectFactory(ds)
+        return ds
 
     def get_output_files( self):        
         '''Collects and organizes filenames that the job outputs'''
