@@ -643,7 +643,6 @@ if user_env != None:
       environment[env_var] = user_env[env_var]
 
 j.outputsandbox = output_sandbox
-j.application = Executable ( exe = appexec, args = appargs, env = environment )
 j.backend = back_end
 
 # Unpack the input sandboxes
@@ -652,12 +651,14 @@ shutil.move(os.path.expanduser(ganga_dir + "/__master_input_sbx__" + code), j.in
 
 # Add the files in the sandbox to the job
 inputsbx = []
+fullsbxlist = []
 try:
    tar = tarfile.open(j.inputdir+"/__master_input_sbx__")
    filelist = tar.getnames()
    print filelist
    
    for f in filelist:
+      fullsbxlist.append( f )
       inputsbx.append( j.inputdir + "/" + f )
 
 except:
@@ -668,10 +669,19 @@ try:
    filelist = tar.getnames()
 
    for f in filelist:
+      fullsbxlist.append( f )
       inputsbx.append( j.inputdir + "/" + f )
 
 except:
    print "Unable to open subjob input sandbox"
+
+# sort out the path of the exe
+if appexec in fullsbxlist:
+   j.application = Executable ( exe = File(os.path.join(j.inputdir, appexec)), args = appargs, env = environment )
+   print "Script found: %s" % appexec
+else:
+   j.application = Executable ( exe = appexec, args = appargs, env = environment )
+
    
 j.inputsandbox = inputsbx
 
