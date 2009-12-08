@@ -482,6 +482,8 @@ class Panda(IBackend):
                         for k in job.backend.jobSpec.keys():
                             if k.endswith('ErrorDiag') and job.backend.jobSpec[k]!='NULL':
                                 job.backend.reason = job.backend.reason + str(job.backend.jobSpec[k])
+                        #if job.backend.jobSpec['transExitCode'] != 'NULL':
+                        job.backend.reason = 'transExitCode: %s'%job.backend.jobSpec['transExitCode']
 
                         if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
                             job.updateStatus('submitted')
