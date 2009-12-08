@@ -121,10 +121,6 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
         ## resetting essential env. variables
         my_env = os.environ
 
-        my_env['LD_LIBRARY_PATH'] = ''
-        my_env['PATH'] = ''
-        my_env['PYTHONPATH'] = ''
-
         if my_env.has_key('LD_LIBRARY_PATH_ORIG'):
             my_env['LD_LIBRARY_PATH'] = my_env['LD_LIBRARY_PATH_ORIG']
 
