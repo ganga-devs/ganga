@@ -277,9 +277,10 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         if input_esd_guids: _append_file_buffer(inputbox,'input_esd_guids',input_esd_guids)
         if input_esd_files: _append_file_buffer(inputbox,'input_esd_files',input_esd_files)
 
-        for tag_file in job.inputdata.tag_info:
-            if job.inputdata.tag_info[tag_file]['path'] != '':
-                inputbox.append( File( os.path.join( job.inputdata.tag_info[tag_file]['path'], tag_file) ) )
+        if job.inputdata._name == 'DQ2Dataset':
+            for tag_file in job.inputdata.tag_info:
+                if job.inputdata.tag_info[tag_file]['path'] != '':
+                    inputbox.append( File( os.path.join( job.inputdata.tag_info[tag_file]['path'], tag_file) ) )
                 
         if job.outputdata and job.outputdata.outputdata:
             _append_file_buffer(inputbox,'output_files',job.outputdata.outputdata)

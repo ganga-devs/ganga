@@ -183,7 +183,7 @@ class AnaTransform(Transform):
                raise ApplicationConfigurationError(None, 'Container dataset %s has no complete replica on one site and backend. Please specify individual tid datasets or use t.initializeFromDataset("%s") ' % (ds, ds))
             common_cbl = self.findIncompleteCloudBackend(db_sites, allowed_sites, replicas[0])
          if common_cbl is None or len(common_cbl) == 0:
-            raise ApplicationConfigurationError(None, 'Container dataset %s has no replica on one site and backend. Please specify individual tid datasets!' % (ds, ds))
+            raise ApplicationConfigurationError(None, 'Container dataset %s has no replica on one site and backend. Please specify individual tid datasets!' % (ds))
 
          using_cloud = common_cbl[0][0]
          using_backend = common_cbl[0][1]
