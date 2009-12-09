@@ -12,12 +12,15 @@ import re
 import socket
 from tempfile import mkstemp
 
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
+from GangaAtlas.Lib.Athena import dm_util
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
+from GangaAtlas.Lib.AMAAthena.AMAAthenaCommon import *
 from Ganga.Lib.LCG import ElapsedTimeProfiler
 
 from dq2.info import TiersOfATLAS
@@ -34,34 +37,6 @@ try:
     import subprocess
 except ImportError:
     pass
-
-## system command executor with subprocess
-def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
-
-    import os
-    import subprocess
-
-    exitcode = -999
-
-    mystdout = ''
-    mystderr = ''
-
-    try:
-
-        ## resetting essential env. variables
-        my_env = os.environ
-
-        child = subprocess.Popen(cmd, cwd=wdir, env=my_env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        (mystdout, mystderr) = child.communicate()
-
-        exitcode = child.returncode
-
-    finally:
-        pass
-
-    return (exitcode, mystdout, mystderr)
-
 
 def find(dirs, pattern):
     """
@@ -136,227 +111,6 @@ def list_castor_files(dirs, pattern):
 
     return fpaths
 
-def urisplit(uri):
-   """
-   Basic URI Parser according to STD66 aka RFC3986
-
-   >>> urisplit("scheme://authority/path?query#fragment")
-   ('scheme', 'authority', 'path', 'query', 'fragment') 
-
-   """
-   # regex straight from STD 66 section B
-   regex = '^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'
-   p = re.match(regex, uri).groups()
-   scheme, authority, path, query, fragment = p[1], p[3], p[4], p[6], p[8]
-   #if not path: path = None
-   return (scheme, authority, path, query, fragment)
-
-def get_srm_endpoint(site):
-    '''
-    Gets the SRM endpoint of a site registered in TiersOfATLAS. 
-    '''
-
-    srm_endpoint_info = {'token':None, 'endpt':None}
-    re_srm2 = re.compile('^token:(.*):(srm:\/\/.*)\s*$')
-
-    tmp = TiersOfATLAS.getSiteProperty(site,'srm')
-    if tmp:
-        srm_endpoint_info['endpt'] = tmp
-
-    mat = re_srm2.match(tmp)
-    if mat:
-        srm_endpoint_info['token'] = mat.group(1)
-        srm_endpoint_info['endpt'] = mat.group(2)
-
-    return srm_endpoint_info
-
-def get_srm_host(site):
-    '''
-    Gets the SRM hostname of the given site. 
-    '''
-    srm_endpoint_info = get_srm_endpoint(site)
-    
-    authority = urisplit(srm_endpoint_info['endpt'])[1]
-    
-    return authority.split(':')[0]
-
-def get_lfc_host(site):
-    '''
-    Gets the LFC host of a site registered in TiersOfATLAS.
-    '''
-
-    lfc_url = TiersOfATLAS.getLocalCatalog(site)
-    if lfc_url:
-        return lfc_url.split('/')[2][:-1]
-    else:
-        return None
-
-def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
-    '''getting pfns corresponding to the given list of files represented
-       by guids). If dummyOnly, then only the pfns doublely copied on the 
-       the same SE are presented (determinated by SE hostname parsed from
-       the PFNs).'''
-
-    logger.info('resolving physical locations of replicas')
-
-    try:
-        import lfcthr
-    except ImportError:
-        logger.error('unable to load LFC python module. Please check LCG UI environment.')
-        return {}
-
-    pfns = {}
-
-    # divide guids into chunks if the list is too large
-    chunk_size = 1000
-    num_chunks = len(guids) / chunk_size
-    if len(guids) % chunk_size > 0:
-        num_chunks += 1
-
-    chunk_offsets = []
-    for i in range(num_chunks):
-        chunk_offsets.append(i*chunk_size)
-
-    # backup the current LFC_HOST
-    lfc_backup = None
-    try:
-        lfc_backup = os.environ['LFC_HOST'] 
-    except:
-        pass
-
-    # set to use a proper LFC_HOST 
-    os.putenv('LFC_HOST', lfc_host)
-
-    def __resolve_dummy__(_pfns):
-        '''resolving the dummy PFNs based on SE hostname'''
-        _pfns_dummy = {}
-        for _guid in _pfns.keys():
-            _replicas = _pfns[_guid]
-            _replicas.sort()
-            seCache  = None
-            pfnCache = None
-            #id = -1
-            for _pfn in _replicas:
-            #    id += 1
-                _se = urisplit(_pfn)[1]
-                if _se != seCache:
-                    seCache  = _se
-                    pfnCache = _pfn
-                else:
-                    # keep the dummy PFN
-                    if not _pfns_dummy.has_key(_guid):
-                        _pfns_dummy[_guid] = [pfnCache]
-                    _pfns_dummy[_guid].append(_pfn)
-        return _pfns_dummy
-
-    ## setup worker queue for LFC queries
-    wq = Queue(len(chunk_offsets))
-    for offset in chunk_offsets:
-        wq.put(offset)
-
-    mylock = Lock()
-    def worker(id):
-        # try to connect to LFC
-        if lfcthr.lfc_startsess('', '') == 0:
-            while not wq.empty():
-                try:
-                    idx_beg = wq.get(block=True, timeout=1)
-                    idx_end = idx_beg + chunk_size
-                    if idx_end > len(guids):
-                        idx_end = len(guids)
-
-                    logger.debug('worker id: %d on GUID chunk: %d-%d' % (id, idx_beg, idx_end))
-
-                    result, list1 = lfcthr.lfc_getreplicas(guids[idx_beg:idx_end],"")
-                 
-                    if len(list1) > 0:
-                        ## fill up global pfns dictionary
-                        mylock.acquire()
-                        for s in list1:
-                            if s != None:
-                                if s.sfn:
-                                    if not pfns.has_key(s.guid):
-                                        pfns[s.guid] = []
-                                    pfns[s.guid].append(s.sfn)
-                        mylock.release()
-                except Empty:
-                    pass
-            # close the LFC session
-            lfcthr.lfc_endsess()
-        else:
-            logger.error('cannot connect to LFC')
-
-    # initialize lfcthr
-    lfcthr.init()
-
-    # prepare and run the query threads
-    profiler = ElapsedTimeProfiler(logger=logger)
-    profiler.start()
-    threads = []
-    for i in range(nthread):
-        t = GangaThread(name='stager_ds_w_%d' % i, target=worker, kwargs={'id': i})
-#        t.setDaemon(False)
-        threads.append(t)
-
-    for t in threads:
-        t.start()
-
-    for t in threads:
-        t.join()
-
-    if dummyOnly:
-        pfns = __resolve_dummy__(pfns)
-
-    # roll back to the original LFC_HOST setup in the environment
-    if lfc_backup:
-        os.putenv('LFC_HOST', lfc_host)
-
-    profiler.check( 'resolving %d files' % (len(guids)) )
-
-    return pfns
-
-def get_srmv2_sites(cloud=None, token=None, debug=False):
-    '''
-    Gets a list of SRMV2 enabled DDM sites in a given cloud.
-
-    if token is given, only the site with the specific token type
-    will be selected.
-    '''
-
-    srmv2_sites = []
-
-    ## a better way of getting all sites within a cloud
-    ## however, it seems there is a bug in DQ2 API so it  
-    ## always returns an empty site list. 
-    # all_sites   = TiersOfATLAS.getSitesInCloud(cloud)
-
-    ## a bit of hack with non-public DQ2 API interface
-    cache = TiersOfATLAS.ToACache
-    
-    all_sites = []
-    if not cloud:
-        all_sites = TiersOfATLAS.getAllDestinationSites()
-    else:
-        if cloud == 'T0':
-            return ['CERNPROD']
-        if cloud not in cache.dbcloud:
-            return []
-        all_sites = TiersOfATLAS.getSites(cache.dbcloud[cloud])
-
-    for site in all_sites:
-        srm = TiersOfATLAS.getSiteProperty(site,'srm')
-
-        # presuming the srm endpoint looks like:
-        #   token:ATLASDATADISK:srm://grid-cert-03.roma1.infn.it ...
-        if srm is not None and srm.find('token') != -1:
-            if token:
-                if srm.split(':')[1] == token:
-                    srmv2_sites.append(site)
-            else: 
-                srmv2_sites.append(site)
-    
-    return srmv2_sites
-
 def resolve_file_locations(dataset, sites=None, cloud=None, token='ATLASDATADISK', debug=False):
     '''
     Summarize the locations of files (in terms of sitename) of a dataset.
@@ -366,7 +120,7 @@ def resolve_file_locations(dataset, sites=None, cloud=None, token='ATLASDATADISK
 
     if not sites:
         logger.debug('resolving sites with token: %s' % token)
-        sites = get_srmv2_sites(cloud, token=token, debug=debug)
+        sites = dm_util.get_srmv2_sites(cloud, token=token, debug=debug)
 
     logger.debug('checking replicas at sites: %s' % str(sites))
 
@@ -458,12 +212,11 @@ class StagerDataset(DQ2Dataset):
     _schema = Schema(Version(1,1), {
         'dataset': SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc='Dataset Name(s) or a root path in which the dataset files are located'),
         'guids'      : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc='GUID of Logical File Names'),
-
         'tagdataset' : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, hidden=1, doc = 'Tag Dataset Name'),
         'use_aodesd_backnav' : SimpleItem(defvalue = False, doc = 'Use AOD to ESD Backnavigation',hidden=1),
         'names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to use for processing', hidden=0),
-        'exclude_names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to exclude from processing', hidden=1),
-        'number_of_files' : SimpleItem(defvalue = 0, doc = 'Number of files. ', hidden=1),
+        'exclude_names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, copyable=0, doc = 'Logical File Names to exclude from processing', hidden=1),
+        'number_of_files' : SimpleItem(defvalue = 0, doc = 'Number of files. ', copyable=0, hidden=1),
         'type'       : SimpleItem(defvalue = 'DQ2',  doc = 'Dataset type: DQ2 (refer to a DQ2 dataset), CASTOR/DPM (refer to a castor/dpm path) or LOCAL (refer to a local directory)', hidden=0),
         'xrootd_access': SimpleItem(defvalue = False,  doc = 'Sets to True for staging the dataset files via xrootd protocol.', hidden=0),
         'datatype'   : SimpleItem(defvalue = '', doc = 'Data type: DATA, MC or MuonCalibStream', hidden=0),
@@ -476,7 +229,7 @@ class StagerDataset(DQ2Dataset):
 
     _category = 'datasets'
     _name = 'StagerDataset'
-    _exportmethods = [ 'list_datasets', 'list_contents', 'get_surls', 'get_locations', 'get_file_locations', 'make_input_option_file', 'get_complete_files_replicas', 'make_sample_file' ]
+    _exportmethods = [ 'list_datasets', 'list_contents', 'get_surls', 'get_locations', 'get_file_locations', 'make_input_option_file', 'get_complete_files_replicas', 'make_FileStager_jobOptions' ]
 
     _GUIPrefs = [ { 'attribute' : 'dataset',     'widget' : 'String_List' }]
 
@@ -785,8 +538,8 @@ class StagerDataset(DQ2Dataset):
             if ddmSiteName is None:
                 ddmSiteName = config['DQ2_LOCAL_SITE_ID']
          
-            srm_host = get_srm_host(ddmSiteName)
-            lfc_host = get_lfc_host(ddmSiteName)
+            srm_host = dm_util.get_srm_host(ddmSiteName)
+            lfc_host = dm_util.get_lfc_host(ddmSiteName)
             cli_host = socket.getfqdn()
          
             if not srm_host or (not lfc_host):
@@ -816,7 +569,7 @@ class StagerDataset(DQ2Dataset):
             for guid in self.guids:
                 my_guids.append(guid)
          
-            pfns_all = get_pfns(lfc_host, my_guids)
+            pfns_all, cksum_all = dm_util.get_pfns(lfc_host, my_guids)
          
             for guid in self.guids:
                 try:
@@ -844,37 +597,40 @@ class StagerDataset(DQ2Dataset):
 
         return pfns
 
-    def make_sample_file(self, sampleName='MySample', ddmSiteName=None, filepath=None):
-        '''Generates a grid sample file containing a list of SURLs of the dataset contents'''   
-  
-        # prepare for the  
-        if not filepath:
-            sfx      = '.sample'
-            pfx      = '%s_' % sampleName 
-            tmpf     = mkstemp(suffix=sfx, prefix=pfx)
-            filepath = tmpf[1]
+    def resolve_FileStager_Configurations(self, ddmSiteName=None):
+        '''Resolves the PFNs into FileStager TURLs, e.g. srm://... -> gridcopy://srm://...'''
 
-        # write out the sample file
-        f = open(filepath,'w')
-        f.write('TITLE: %s\n' % sampleName)
+        turls        = []
+        gridcopy     = False
+        fs_cp_cmd    = ''
+        fs_cp_args   = []
+        fs_of_prefix = 'file:'
 
         if self.type in ['', 'DQ2']:
-            f.write('FLAGS: GridCopy=1\n')
 
             if not self.names:
-                pfns = self.get_surls(guidRefill=False, ddmSiteName=ddmSiteName)
+
+                guidRefill = False
+
+                if not self.guids:
+                    guidRefill = True
+                
+                pfns = self.get_surls(guidRefill=guidRefill, ddmSiteName=ddmSiteName)
+
                 self.guids = pfns.keys()
                 self.guids.sort()
                 for guid in self.guids:
                     self.names.append( pfns[guid] )
 
+            gridcopy  = True
+            fs_cp_cmd = './fs-copy.py'
             for fpath in self.names:
-                f.write('gridcopy://%s\n' % fpath)
+                turls.append( '%s' % fpath )
 
         elif self.type in ['CASTOR','DPM']:
-            f.write('FLAGS: GridCopy=1\n')
+            
             if not self.names:
-                self.names = self.get_surls().values().sort()
+                self.names = self.get_surls().values()
 
             if self.xrootd_access:
 
@@ -899,116 +655,71 @@ class StagerDataset(DQ2Dataset):
                 if not stage_host:
                     self.xrootd_access = False
 
-            if self.xrootd_access and stage_host:  
+            if self.xrootd_access and stage_host:
+
+                gridcopy     = True
+                fs_cp_cmd    = 'xrdcp'
+                fs_of_prefix = ''
                 for fpath in self.names:
-                    f.write('gridcopy://root://%s/%s\n' % (stage_host, fpath))
+                    turls.append( 'root://%s/%s' % (stage_host, fpath) )
             else:
+
+                gridcopy     = True
+                fs_cp_cmd    = 'rfcp'
+                fs_of_prefix = ''
                 for fpath in self.names:
-                    f.write('gridcopy://%s\n' % fpath)
+                    turls.append( '%s' % fpath )
 
         elif self.type in ['LOCAL']:
+
+            gridcopy     = False
+            fs_cp_cmd    = 'cp'
+            fs_of_prefix = ''
+
             ## work through underlying directories to get '*.root*' files
-            f.write('FLAGS: GridCopy=0\n')
             if not self.names:
-                self.names = self.get_surls().values().sort()
+                self.names = self.get_surls().values()
+                
             for fpath in self.names:
-                f.write('%s\n' % fpath)
+                turls.append( '%s' % fpath )
 
-        f.close()
+        return (turls, gridcopy, fs_cp_cmd, fs_cp_args, fs_of_prefix)
 
-        logger.debug('set grid_sample_file:%s' % filepath)
-        self.grid_sample_file = File(filepath)
 
-        return filepath
+    def make_FileStager_jobOptions(self, job=None, wdir=None, max_events=-1):
+        '''makes FileStager job options and input collection job options'''
 
-    def make_input_option_file(self, job=None, filepath=None, max_events=-1):
+        (turls, gridcopy, cp_cmd, cp_args, of_prefix) = self.resolve_FileStager_Configurations()
 
-        # determing the filepath of the input option file 
+        jo_name = 'FileStager_jobOption.py'
+        ic_name = 'input.py'
+
+        # determing the filepath of the input option file
+        #  - if job object is given, store the job options in job's inputdir
+        #  - else takes the wdir argument
+        #  - else creates a temporary directory
         if job:
-            filepath   = os.path.join(job.inputdir,'input.py')
-        elif not filepath:
-            sfx      = '.py'
-            pfx      = 'input_'
-            tmpf     = mkstemp(suffix=sfx, prefix=pfx)
-            filepath = tmpf[1]
-
-        copy_cmd = 'wrapper_lcg-cp'
-        if self.type in ['CASTOR','DPM']:
-            copy_cmd = 'rfcp'
-
-            if self.xrootd_access:
-                copy_cmd = 'xrdcp'
-
-        elif self.type in ['LOCAL']:
-            copy_cmd = 'cp'
-
-        out_file_prefix = 'file:'
-        if self.type in ['CASTOR','DPM','LOCAL']:
-            out_file_prefix = ''
-
-        input_option = '''
-try:
-    if not SampleFile:
-        SampleFile = 'grid_sample.list'
-except NameError:
-    SampleFile = 'grid_sample.list'
-
-# input with FileStager
-from FileStager.FileStagerTool import FileStagerTool
-stagetool = FileStagerTool(sampleFile=SampleFile)
-stagetool.CpCommand   = '%s'
-stagetool.CpArguments = []
-stagetool.OutfilePrefix = '%s'
-
-## get Reference to existing Athena job
-from FileStager.FileStagerConf import FileStagerAlg
-from AthenaCommon.AlgSequence import AlgSequence
-
-thejob = AlgSequence()
-
-if stagetool.DoStaging():
-    thejob += FileStagerAlg('FileStager')
-    thejob.FileStager.InputCollections = stagetool.GetSampleList()
-    #thejob.FileStager.PipeLength = 2
-    thejob.FileStager.VerboseStager = True
-    thejob.FileStager.BaseTmpdir    = stagetool.GetTmpdir()
-    thejob.FileStager.InfilePrefix  = stagetool.InfilePrefix
-    thejob.FileStager.OutfilePrefix = stagetool.OutfilePrefix
-    thejob.FileStager.CpCommand     = stagetool.CpCommand 
-    thejob.FileStager.CpArguments   = stagetool.CpArguments
-    thejob.FileStager.FirstFileAlreadyStaged = stagetool.StageFirstFile
-    thejob.FileStager.StoreStatistics = False
-
-## set input collections
-if stagetool.DoStaging():
-    ic = stagetool.GetStageCollections()
-else:
-    ic = stagetool.GetSampleList()
-
-theApp.EvtMax = %d
-
-## get a handle on the ServiceManager
-svcMgr = theApp.serviceMgr()
-''' % (copy_cmd, out_file_prefix, max_events)
-
-        if self.datatype in ['MuonCalibStream']:
-           input_option += '''
-svcMgr.MuonCalibStreamFileInputSvc.InputFiles = ic
-'''
+            wdir = job.inputdir
         else:
-           input_option += '''  
-svcMgr.EventSelector.InputCollections = ic
-'''
-        f = open(filepath, 'w')
-        f.write(input_option)
-        f.close()
+            if not wdir:
+                wdir = tempfile.mkdtemp()
 
-        if job:
-            job.inputsandbox += [ File(filepath) ]
+        jo_path  = os.path.join( wdir, jo_name )
+        ic_path  = os.path.join( wdir, ic_name )
 
-        logger.debug('input option file generated:%s' % filepath)
+        if ( dm_util.make_FileStager_jobOption(turls, gridcopy=gridcopy, fs_cp_cmd=cp_cmd, fs_cp_args=cp_args, fs_of_prefix=of_prefix, maxEvent=max_events, ic_jo_path=ic_path, fs_jo_path=jo_path) ):
 
-        return filepath
+            if not os.path.exists( jo_path ):
+                raise ApplicatonConfigurationError(None, 'job option files for FileStager not found: %s' % jo_path)
+
+            if not os.path.exists( ic_path ):
+                raise ApplicatonConfigurationError(None, 'job option files for FileStager not found: %s' % ic_path)
+
+        else:
+            raise ApplicatonConfigurationError(None, 'Unable to find/generate job option files for FileStager.')
+
+        return (jo_path, ic_path)
+
 
 logger = getLogger()
 config = getConfig('DQ2')

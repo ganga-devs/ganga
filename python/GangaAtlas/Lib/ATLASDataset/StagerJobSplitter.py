@@ -16,6 +16,8 @@ from Ganga.Lib.Mergers import RootMerger
 
 from Ganga.Utility.logging import getLogger
 
+from GangaAtlas.Lib.AMAAthena.AMAAthenaCommon import *
+
 logger = getLogger()
 
 class StagerJobSplitter(ISplitter):
@@ -28,9 +30,7 @@ class StagerJobSplitter(ISplitter):
         'scheme'   : SimpleItem(defvalue='local', doc='The job splitting scheme: \'local\', \'lcg\'', hidden=1),
     })
 
-    _GUIPrefs = [ { 'attribute' : 'numfiles', 'widget' : 'Int' },
-                  { 'attribute' : 'scheme'  , 'widget' : 'String_Choice', 'choices' : [ 'local', 'lcg' ]} ]
-    
+    _GUIPrefs = [ { 'attribute' : 'numfiles', 'widget' : 'Int' } ]
     
     def __make_subjob__(self, mj, guids, names, sjob_evnts=-1, sites=None):
         
@@ -44,10 +44,10 @@ class StagerJobSplitter(ISplitter):
         j.name            = mj.name
         j.inputdata       = mj.inputdata
 
-        if j.inputdata._name in ['','DQ2']:
+        if j.inputdata.type in ['','DQ2']:
             j.inputdata.guids = guids
         j.inputdata.names = names
-        
+
         j.outputdata    = mj.outputdata
         j.application   = mj.application
         if sjob_evnts != -1:
@@ -60,7 +60,7 @@ class StagerJobSplitter(ISplitter):
         
         j.inputsandbox  = mj.inputsandbox
         j.outputsandbox = mj.outputsandbox
-          
+
         return j
 
     def split(self,job):
@@ -92,8 +92,6 @@ class StagerJobSplitter(ISplitter):
 
         myguids.sort()
 
-        print myguids
-
         mynames = []
         for guid in myguids:
             mynames.append( pfns[guid] )
@@ -113,44 +111,11 @@ class StagerJobSplitter(ISplitter):
             for i in xrange(0,nrjob):
                 subjobs.append( self.__make_subjob__(job, myguids[i*self.numfiles:(i+1)*self.numfiles], mynames[i*self.numfiles:(i+1)*self.numfiles], sjob_evnts) )
 
-        ## split scheme for grid jobs
-        ## N.B. a smarter splitting scheme based on data location is needed
-        #if self.scheme.lower() == 'lcg':
-        #
-        #    # resolving file locations
-        #    f_locations = job.input.get_file_locations()
-        #    
-        #    # generate white list from user's requirements
-        #    wlist = []
-        #    
-        #    try:       
-        #        wlist += get_srmv2_sites(cloud=job.backend.requirements.cloud)
-        #    except AttributeError:
-        #        pass
-        #    
-        #    try:
-        #        wlist += job.backend.requirements.sites
-        #    except AttributeError:
-        #        pass
-        #    
-        #    ## remove redundant sites from while list
-        #    wlist = list( Set(wlist) )
-        #    
-        #    # generate while list from dynamic information
-        #    
-        #    # make job brokering plan according to the file locations
-        #    broker = SimpleStagerBroker(f_locations)         
-        #    jobInfo = broker.doBroker(nrjobs)
-        #    
-        #    for jinfo in jobInfo:
-        #        subjobs.append( self.__make_subjob__(job, jinfo.files, sjob_evnts, jinfo.sites) )
 
         ## setup up the corresponding merger for output auto-merging
         if job.application._name in ['AMAAthena']:
             conf_name   = os.path.basename(job.application.driver_config.config_file.name)
-            sample_name = 'mySample'
-            if job.name:
-                sample_name = job.name
+            sample_name = get_sample_name(job)
          
             if (not job.merger) or (job.merger._name <> 'RootMerger'):
                 logger.debug('enforce job to use RootMerger')
