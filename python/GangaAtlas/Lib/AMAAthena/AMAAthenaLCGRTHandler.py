@@ -17,6 +17,7 @@ from Ganga.GPIDev.Lib.File import *
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from GangaAtlas.Lib.Athena.AthenaLCGRTHandler import *
+from GangaAtlas.Lib.AMAAthena.AMAAthenaCommon import *
 
 # the config file may have a section
 # aboout monitoring
@@ -43,7 +44,7 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
                 ## compose the ama output name and give it to environment variable of the LCG job
                 ## ps. for Panda job, it's done automatically by pilot
                 if job.backend._name == 'LCG':
-                    summary_tarball = 'ama_summary_%d_%s.tgz' % ( time.time(), job.getFQID('.'))
+                    summary_tarball = get_summary_lfn(job)
                     job.outputdata.outputdata = [summary_tarball]
 
         athena_jc = AthenaLCGRTHandler.prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig)
@@ -66,36 +67,11 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
                 max_events = str(max_events)
             environment['ATHENA_MAX_EVENTS'] = max_events
 
-        ## AMAAthena specific setup 
-        conf_name = os.path.basename(app.driver_config.config_file.name)
-        environment['AMA_DRIVER_CONF'] = conf_name
-
-        if app.driver_flags:
-            environment['AMA_FLAG_LIST'] = ':'.join( app.driver_flags.split() )
-
-        environment['AMA_LOG_LEVEL'] = app.log_level 
-
-        sample_name = 'mySample'
-        if job.name:
-            sample_name = job.name
-
-        environment['AMA_SAMPLE_NAME']=sample_name
-        #outputbox += [ 'summary/summary_%s_confFile_%s_nEvts_%s.root' % (sample_name, conf_name, str(max_events) ) ]
-
         ## if no outputdata is specified, we assume the output files will be shipped back to user with the job
         if not job.outputdata:
             outputbox += [ 'summary/*.root' ]
 
-        if job.inputdata._name == 'StagerDataset':
-            ## needs a valid dataset name 
-            if not job.inputdata.dataset:
-                raise ApplicationConfigurationError(None,'dataset name not specified in job.inputdata')
-            
-            ## StagerDataset support on LCG is under construction
-            if job.backend._name in ['LCG', 'NG']:
-                raise ApplicationConfigurationError(None,'StagerDataset doesn\'t support grid jobs. Please use DQ2Dataset with "FILE_STAGER" type.')
-
-        elif job.inputdata._name == 'DQ2Dataset':
+        if job.inputdata._name == 'DQ2Dataset':
 
             if job.inputdata.type in ['DQ2_COPY']:
                 raise ApplicationConfigurationError(None,'AMAAthena doesn\'t support "DQ2_COPY" type of DQ2Dataset')
@@ -121,11 +97,8 @@ class AMAAthenaLCGRTHandler(AthenaLCGRTHandler):
 
         job = app._getParent() # Returns job or subjob object
 
-        ## always refill the master job's inputdata with the up-to-date GUID list
-        ## N.B. job.master returns the job's master job if it has one, if not, the
-        ##      job itself is the master job.
-        if (not job.master) and (job.inputdata._name == 'StagerDataset'):
-            job.inputdata.fill_guids()
+        if job.inputdata._name != 'DQ2Dataset':
+            raise ApplicationConfigurationError(None,'j.inputdata should be DQ2Dataset')
 
         athena_jc = AthenaLCGRTHandler.master_prepare(self, app, appconfig)
 

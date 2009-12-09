@@ -96,72 +96,9 @@ load_special_dm_libraries() {
 
 
 # generate additional AMA job option files
-#  - AMAConfigFile.py
-#  - input.py if not presented
 ama_make_options () {
 
     retcode=0
-
-    # make AMAConfigFile
-    if [ ! -f AMAConfigFile.py ]; then
-        cat - >AMAConfigFile.py <<EOF
-from AMAAthena.AMAAthenaConf import *
-from AMAAthena.AMAUtilsTool import AMAUtilsTool
-from AthenaCommon.AlgSequence import AlgSequence
-
-## get algorithm sequence
-thejob = AlgSequence()
-
-## get number of the max. events from environment
-EvtMax = -1
-if os.environ.has_key('ATHENA_MAX_EVENTS'):
-    EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
-
-## set number of the max. events in Athena
-theApp.EvtMax = EvtMax
-
-## get AMA driver flag from environment
-FlagList = ""
-if os.environ.has_key('AMA_FLAG_LIST'):
-    FlagList = ' '.join( os.environ['AMA_FLAG_LIST'].split(':') )
-
-## get AMA driver config/sample file from environment
-ConfigFile = os.environ['AMA_DRIVER_CONF']
-SampleName = os.environ['AMA_SAMPLE_NAME']
-
-## load AMA driver
-amatool = AMAUtilsTool(ConfigFile)
-try:
-    ## for new AMAUtilsTool
-    amatool.CreateJobOptions(ConfigFile, outputfile='AMADriver_jobOptions.py', flags=FlagList.split())
-    if os.path.exists('AMADriver_jobOptions.py'):
-        include( 'AMADriver_jobOptions.py' )
-    else:
-        raise IOError( 'Job options for AMADriver not created properly: AMADriver_jobOptions.py' )
-except AttributeError:
-    ## fail-over for the old-fashion AMAUtilsTool
-    bml,eml,ReaderMap,ModuleList = amatool.ListModules()
-
-    print "Now adding AMA driver: Driver"
-    thejob += AMADriverAlg('Driver')
-    thejob.Driver.EvtMax     = EvtMax
-    thejob.Driver.ConfigFile = ConfigFile
-    thejob.Driver.SampleName = SampleName
-    thejob.Driver.FlagList   = FlagList
-
-    ## load AMA reader
-    for key in ReaderMap.keys():
-        if (len(ReaderMap[key])==1):
-            print "Now adding AMA reader: %s" % (key)
-            reader = AMAReaderAlg(key)
-            reader.ContainerList = ReaderMap[key]
-            thejob += reader
-
-    for mod in ModuleList:
-        print "Now adding AMA module: %s" % (mod)
-        thejob += AMAModuleAlg(mod)
-EOF
-    fi
 
     # make input.py if not yet presented
     if [ ! -f input.py ]; then
