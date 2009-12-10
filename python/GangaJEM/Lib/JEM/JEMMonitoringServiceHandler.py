@@ -35,7 +35,7 @@ import os, sys, re, socket, getpass, time
 
 from Ganga.Utility.logging import getLogger, logging
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import File, FileBuffer
 from GangaJEM.Lib.JEM import JobExecutionMonitor
 
 ########################################################################################################################
@@ -346,6 +346,8 @@ class JEMMonitoringServiceHandler(object):
                                                                                                     #
                     s += "\n inp-sb = ["                                                            #
                     for z,ii in enumerate(config.inputbox):                                         #
+                        if isinstance(ii, FileBuffer):                                              #
+                            ii = ii.subdir + os.sep + ii.name                                       #
                         s += "\n            '" + str(ii) + "'"                                      #
                         if z < len(config.inputbox)-1:                                              #
                             s += ","                                                                #
