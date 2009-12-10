@@ -19,8 +19,9 @@ import Ganga.Utility.external.ARDAMDClient.mdinterface as mdinterface
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
-from Ganga.Utility.Config import getConfig, makeConfig, ConfigError, Caching
+from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
 
+from Ganga.Utility import Caching
 
 from Ganga.GPIDev.Credentials import GridProxy
 gridProxy = GridProxy()
