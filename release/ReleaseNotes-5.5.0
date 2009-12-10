@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.0 (2009/11/4)
+5.5.0 (2009/12/10)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -11,11 +11,29 @@ temporarily renamed ~/gangadir-TMP-5.0 and ~/.gangarc-TMP-5.0
 
 changes in job.clean() interface
 
+merged from trunk at the time of 5.4.2 release.
+
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
-declared by Kuba on behalf of J.Ebke
+* Sync trunk with XMLMigration branch - GangaAtlas-21-37 
+* Add Caching code
+AMAAthena:
+* new workflow for setting/preparing AMAAthena application:
+  - specify framework-level AMA job option files by setting flags,
+    e.g. j.application.job_option_flags = ['DATA', 'TRIG']
+  - convert AMA configuration into user-level job options on the
+    client side
+* add necessary changes for adopting the revised StagerDataset
+* add necessary changes to adopt the revised StagerDataset
+* rewriting the StagerDataset workflow:
+  - using the same code made for DQ2Dataset(type='FILE_STAGER')
+  - adding the workaround to work with inputFilePeeker
+* include AMAAthenaTask application in the new DQ2OutputDataset workflow
+* adopts the common subroutines: filestager_setup and frontier_setup
+* introduce two common subroutines: filestager_setup and frontier_setup
+* bugfix in the function for making external system call
 
 
 --------------------------------------------------------------------------------------------------------------
