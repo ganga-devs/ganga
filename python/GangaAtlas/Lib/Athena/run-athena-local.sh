@@ -100,7 +100,17 @@ export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 ################################################
 # state the inputs
 
-stage_inputs 
+stage_inputs
+
+################################################
+# setup filestager environment
+if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
+    filestager_setup
+
+    echo "===== FileStager_jobOption.py beg. ====="
+    cat FileStager_jobOption.py
+    echo "===== FileStager_jobOption.py end. ====="
+fi
 
 ################################################
 # create the input.py file
@@ -143,10 +153,7 @@ fi
 ################################################
 # Setup the local ATLAS patches and environment variables
 # for Frontier/Squid
-if [ -e $VO_ATLAS_SW_DIR/local/setup.sh ]
-then
-    source $VO_ATLAS_SW_DIR/local/setup.sh
-fi
+frontier_setup
 
 # run athena
  

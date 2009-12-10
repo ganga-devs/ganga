@@ -58,6 +58,21 @@ print_wn_info () {
     echo 
 }
 
+## function for setting up file stager environment
+filestager_setup() {
+
+    if [ -e $PWD/fs-copy.py ]; then
+        chmod +x $PWD/fs-copy.py
+    fi
+}
+
+## function for setting up frontier configurations properly
+frontier_setup() {
+    if [ -e $VO_ATLAS_SW_DIR/local/setup.sh ]; then
+        source $VO_ATLAS_SW_DIR/local/setup.sh
+    fi
+}
+
 ## function for setting up CMT environment
 cmt_setup () {
 

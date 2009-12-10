@@ -10,7 +10,6 @@
 # ATHENA_OPTIONS    ... Options to run Athena
 # ATHENA_MAX_EVENTS ... Limit the events to be processed by Athena
 # OUTPUT_LOCATION   ... Place to store the results
-# LCG_SETUP         ... LCG UI setup script
 #
 # ATLAS/NIKHEF - Hurng-Chun.Lee@cern.ch
 
@@ -29,8 +28,11 @@ define_ama_exitcode
 
 ################################################
 ## setup grid environment 
-if [ -f $LCG_SETUP ]; then
-    . $LCG_SETUP
+################################################
+# setup grid environment
+if [ ! -z $GANGA_GLITE_UI ]
+then
+    source $GANGA_GLITE_UI
 fi
 
 ################################################
@@ -88,7 +90,7 @@ fi
 #get_pybin
 
 ################################################
-# prepare/staging input data
+## in the case that FileStager not used
 if [ n$DATASETTYPE != n'FILE_STAGER' ]; then
     stage_inputs
 
@@ -97,35 +99,30 @@ if [ n$DATASETTYPE != n'FILE_STAGER' ]; then
         exit $EC_STAGEIN_ERROR
     fi
 else
-    make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
-fi
- 
-################################################
-## create configuration job option
-ama_make_options
 
-ls -lt
+    filestager_setup
+
+    echo "===== FileStager_jobOption.py beg. ====="
+    cat FileStager_jobOption.py
+    echo "===== FileStager_jobOption.py end. ====="
+fi
 
 #################################################
-# run athena with different DATASETTYPE
-if [ n$DATASETTYPE == n'DQ2_COPY' ]; then
-    ## !TO BE CHECKED! the DQ2_COPY mode can cause the summary root file incorrect.
-    ## !TO BE CHECKED! the output merging mechanism in the copy-run loop needs to be checked.
-    ama_run_athena_with_dq2_copy
-else
-    ## at this point, input.py should be properly created; otherwise, something wrong
-    if [ ! -f input.py ]; then
-        echo "input.py not created" 1>&2
-        exit $EC_MAKEOPT_ERROR
-    fi
-
-    echo "===== input.py beg. ====="
-    cat input.py
-    echo "===== input.py end. ====="
-
-    prepare_athena
-    ama_run_athena $ATHENA_OPTIONS AMAConfigFile.py input.py
+# run athena
+## at this point, input.py should be properly created; otherwise, something wrong
+if [ ! -f input.py ]; then
+    echo "input.py not created" 1>&2
+    exit $EC_MAKEOPT_ERROR
 fi
+
+echo "===== input.py beg. ====="
+cat input.py
+echo "===== input.py end. ====="
+
+frontier_setup
+
+prepare_athena
+ama_run_athena $ATHENA_OPTIONS input.py
 
 if [ $? -ne 0 ]; then
     echo "Athena runtime error" 1>&2

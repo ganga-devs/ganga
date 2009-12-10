@@ -1,4 +1,5 @@
 from AMAAthena import *
+from AMAAthenaCommon import *
 from AMADriverConfig import *
 from AMAAthenaLocalRTHandler import *
 from AMAAthenaLCGRTHandler import *

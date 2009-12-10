@@ -14,7 +14,7 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from GangaAtlas.Lib.Tasks.Transform import Transform
 from GangaAtlas.Lib.Tasks.AnaTransform import AnaTransform
-from GangaAtlas.Lib.Tasks.TaskApplication import taskify
+from GangaAtlas.Lib.Tasks.TaskApplication import taskify, AnaTaskSplitterJob
 from GangaAtlas.Lib.AMAAthena.AMAAthena import AMAAthena
 
 AMAAthenaTask = taskify(AMAAthena,"AMAAthenaTask")
@@ -94,7 +94,8 @@ class AMAAthenaTransform(AnaTransform):
         j.name = "T%i.TF%i.P%i" % (task.id, id, partitions[0])
 
         if len(partitions) > 1:
-            j.splitter = AMAAthenaTaskSplitterJob()
+            #j.splitter = AMAAthenaTaskSplitterJob()
+            j.splitter = AnaTaskSplitterJob()
             j.splitter.subjobs = partitions
         j.inputdata = self.partitions_data[partitions[0]-1]
         if self.partitions_sites:

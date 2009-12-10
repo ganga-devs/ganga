@@ -140,10 +140,6 @@ else
     make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 fi
 
-#################################################
-## create AMA-specific internal option files
-ama_make_options
-
 ls -lt
 
 ################################################
@@ -184,13 +180,16 @@ else
     fi
 
     if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
+
+        filestager_setup
+
         if [ ! -f FileStager_jobOption.py ]; then
             echo "FileStager_jobOption.py not created" 1>&2
             exit $EC_MAKEOPT_ERROR
         else
-            echo "===== FileStager_jobOption.py beg. =====
+            echo "===== FileStager_jobOption.py beg. ====="
             cat FileStager_jobOption.py
-            echo "===== FileStager_jobOption.py end. =====
+            echo "===== FileStager_jobOption.py end. ====="
         fi
     fi
 
@@ -211,6 +210,8 @@ else
 
     GANGATIME3=`date +'%s'`
 
+    frontier_setup
+
     prepare_athena
 
     ## network RX status
@@ -219,7 +220,7 @@ else
     echo NET_ETH_RX_PREATHENA=$NET_RX_BYTE
 
     ## run athena process 
-    ama_run_athena $ATHENA_OPTIONS AMAConfigFile.py input.py
+    ama_run_athena $ATHENA_OPTIONS input.py
 
     if [ $? -ne 0 ]; then
         echo "Athena runtime error" 1>&2

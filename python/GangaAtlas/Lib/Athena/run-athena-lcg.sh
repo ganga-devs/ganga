@@ -122,10 +122,7 @@ fi
 ################################################
 # Setup the local ATLAS patches and environment variables
 # for Frontier/Squid
-if [ -e $VO_ATLAS_SW_DIR/local/setup.sh ]
-then
-    source $VO_ATLAS_SW_DIR/local/setup.sh
-fi
+frontier_setup
 
 get_files PDGTABLE.MeV
 
@@ -205,6 +202,9 @@ GANGATIME2=`date +'%s'`
 if [ $retcode -eq 0 ] && [ -e input_files ]
 then
     if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
+
+        filestager_setup
+
         make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 	echo 'input.txt start ----------'
 	cat input.txt
