@@ -3,10 +3,10 @@
 #kuba
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Base-XMLMigration-1-4
+ganga/python/Ganga                                                     Ganga-Base-XMLMigration-1-5
 
 #johannes/dan/mark
-ganga/python/GangaAtlas                                                GangaAtlas-XMLMigration-1-1
+ganga/python/GangaAtlas                                                GangaAtlas-XMLMigration-1-7
 
 #rod
 ganga/python/GangaCronus                                               GangaCronus-20-0
@@ -21,13 +21,13 @@ ganga/python/GangaGUI/LHCB_BKDB_browser                                GangaGUI-
 ganga/python/GangaKISTI                                                GangaKISTI-1-1
 
 #will/ulrik
-ganga/python/GangaLHCb                                                 GangaLHCb-21-12
+ganga/python/GangaLHCb                                                 GangaLHCb-22-12
 
 #pajchel/bsamset
 ganga/python/GangaNG                                                   GangaNG-20-28
 
 #dan/johannes
-ganga/python/GangaPanda                                                GangaPanda-21-13
+ganga/python/GangaPanda                                                GangaPanda-21-19
 
 #hclee
 ganga/python/GangaPlotter                                              GangaPlotter-20-2
