@@ -46,6 +46,7 @@ class StagerJobSplitter(ISplitter):
 
         if j.inputdata.type in ['','DQ2']:
             j.inputdata.guids = guids
+
         j.inputdata.names = names
 
         j.outputdata    = mj.outputdata
