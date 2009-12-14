@@ -18,7 +18,7 @@ symbolic links encountered in the path."""
             resolved = _resolve_link(component)
             if resolved is None:
                 # Infinite loop -- return original component + rest of the path
-                return os.path.abspath(join(*([component] + bits[i:])))
+                return os.path.abspath(os.path.join(*([component] + bits[i:])))
             else:
                 newpath = os.path.join(*([resolved] + bits[i:]))
                 return realpath(newpath)
