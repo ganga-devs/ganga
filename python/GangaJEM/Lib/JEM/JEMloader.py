@@ -44,15 +44,10 @@ logger = getLogger()
 #logger.setLevel(logging.DEBUG)
 #-----------------------------------------------------------------------------------------------------------------------
 
-# vars to access from other GangaJEM modules (FIXME)
+# status vars to access from other GangaJEM modules
 INITIALIZED = False
 JEM_PACKAGEPATH = None
-rgmaPubEnabled = False
-httpsPubEnabled = False
-tcpPubEnabled = False
-httpsExternal = False
-fpEnabled = False
-
+#-----------------------------------------------------------------------------------------------------------------------
 
 ## try to load the Job Execution Monitor (JEM) for runtime job monitoring data.
 try:

@@ -1089,8 +1089,6 @@ class JobExecutionMonitor(GangaObject):
 
         if job.status not in ['running','submitted']: # pylint: disable-msg=E1101
             return 0
-        if JEMloader.httpsPubEnabled and JEMloader.httpsExternal:
-            return 0
 
         pids, ppids, cmds = self.__getChildProcesses()
 
@@ -1107,9 +1105,9 @@ class JobExecutionMonitor(GangaObject):
             else:
                 for z,p in enumerate(ppids):
                     if p == pid:
-                        # okay, well, let's assume SOME server is OK, and not rely on the *PubEnabled vars
-                        # (this breaks anyway, because there might be no .JEMrc...)
-                        if (cmds[z].find("HTTPSServer") != -1 or cmds[z].find("RGMAServer") != -1) and cmds[z].find("[python] <defunct>") == -1:
+                        # okay, well, let's assume SOME server is OK...
+                        if (cmds[z].find("HTTPSServer") != -1 or cmds[z].find("RGMAServer") != -1)\
+                           and cmds[z].find("[python] <defunct>") == -1:
                             return int(pids[z])
                 logger.debug("in __getServerPid: server commands didn't include HTTPSServer or RGMAServer, or did include <defunct>")
                 return 0
@@ -1133,58 +1131,35 @@ class JobExecutionMonitor(GangaObject):
             logger.info("Job execution finished. No new data will be received.")
             return True
 
-        if JEMloader.httpsPubEnabled and JEMloader.httpsExternal:
-            if onlyReport:
-                return "inactive (ext)"
-            return True
-
         # check if RGMA/HTTPS started correctly
         stdoutFileName = logDir + os.sep + 'stdout.log'
         if os.path.exists(stdoutFileName):
             fd = open(stdoutFileName,'r')
             stdout = fd.read()
 
-            if JEMloader.rgmaPubEnabled:
-                # try to find some strings to check if rgma is active
-                if stdout.find('Can not create server process R-GMA') != -1:
-                    if onlyReport:
-                        return "error"
-                    logger.error('Failed to start R-GMA server. Monitoring is not active!')
-                    return False
-                if stdout.find('R-GMA package not found') != -1:
-                    if onlyReport:
-                        return "error"
-                    logger.error('Failed to start R-GMA server. Monitoring is not active!')
-                    return False
-                if stdout.find("consumer has not started!") != -1:
-                    if onlyReport:
-                        return "error"
-                    logger.error('Failed to start R-GMA server. Monitoring is not active!')
-                    return False
-            elif JEMloader.httpsPubEnabled:
-                # try to find some strings to check if https is active
-                if stdout.find('Can not create server process HTTPS') != -1:
-                    if onlyReport:
-                        return "error"
-                    logger.error('Failed to start HTTPS server. Monitoring is not active!')
-                    return False
-                if stdout.find("consumer has not started!") != -1:
-                    if onlyReport:
-                        return "error"
-                    logger.error('Failed to start HTTPS server. Monitoring is not active!')
-                    return False
-            elif JEMloader.tcpPubEnabled:
-                # try to find some strings to check if TCP is active
-                if stdout.find('Can not create server process TCP') != -1:
-                    if onlyReport:
-                        return "error"
-                    logger.error('Failed to start TCP server. Monitoring is not active!')
-                    return False
-                if stdout.find("consumer has not started!") != -1:
-                    if onlyReport:
-                        return "error"
-                    logger.error('Failed to start TCP server. Monitoring is not active!')
-                    return False
+            rgma = True
+            https = True
+            tcp = True
+
+            # try to find some strings to check if rgma is active
+            if stdout.find('Can not create server process R-GMA') != -1:
+                rgma = False
+            if stdout.find('R-GMA package not found') != -1:
+                rgma = False
+
+            # try to find some strings to check if https is active
+            if stdout.find('Can not create server process HTTPS') != -1:
+                https = False
+
+            # try to find some strings to check if TCP is active
+            if stdout.find('Can not create server process TCP') != -1:
+                tcp = False
+
+            if not (rgma or https or tcp):
+                if onlyReport:
+                    return "error"
+                logger.error('Failed to start JEMs listening server(s). Monitoring is not active.')
+                return False
 
         pids, ppids, cmds = self.__getChildProcesses()
 
@@ -1206,8 +1181,6 @@ class JobExecutionMonitor(GangaObject):
             else:
                 for z,p in enumerate(ppids):
                     if p == pid:
-                        # same thing here. we won't rely on the *PubEnabled vars. We really should do this
-                        # rather with env vars or something...
                         if cmds[z].find("HTTPSServer") != -1:
                             if cmds[z].find("<defunct>") == -1:
                                 if onlyReport:
@@ -1226,15 +1199,7 @@ class JobExecutionMonitor(GangaObject):
                                 if onlyReport:
                                     return "error"
                                 break
-
-                if JEMloader.rgmaPubEnabled:
-                    if not onlyReport:
-                        logger.warning("The RGMA Server seems to be down. No new data will be received (Displayed data may be outdated).")
-                elif JEMloader.httpsPubEnabled:
-                    if not onlyReport:
-                        logger.warning("The HTTPS Server seems to be down. No new data will be received (Displayed data may be outdated).")
-                else:
-                    logger.warning("JEM's data listener seems to be down. No new data will be received (Displayed data may be outdated).")
+                logger.warning("JEM's data listener seems to be down. No new data will be received (Displayed data may be outdated).")
         if onlyReport:
             return "unknown"
         return True

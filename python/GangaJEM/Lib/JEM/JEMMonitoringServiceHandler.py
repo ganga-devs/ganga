@@ -431,31 +431,35 @@ class JEMMonitoringServiceHandler(object):
                     # now that the job has finished and the logiles have been extracted,
                     # we copy the full JMD log (if present) into our workspace (so all
                     # the events can be inspected from within Ganga)
-                    if JEMloader.fpEnabled:
-                        logger.info("Copying the full log into the workspace...")
+                    copiedStuff = False
 
-                        if os.path.exists(self.__job.info.monitor.jmdfile):
-                            try:
-                                os.system('mv ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.info.monitor.jmdfile + '.bak')
-                            except:
-                                pass
-
+                    if os.path.exists(self.__job.info.monitor.jmdfile):
                         try:
-                            os.system('cp ' + self.__job.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile)
-                            logger.debug("  OK, log of main job #" + str(self.__job.id) + " has been copied.")
+                            os.system('mv ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.info.monitor.jmdfile + '.bak')
                         except:
                             pass
 
-                        logger.debug("  (now trying to copy the subjobs' logs)")
+                    try:
+                        if os.path.exists(self.__job.outputdir + "JEM_MON.jmd"):
+                            logger.info("Copying the full log into the workspace...")
+                            os.system('cp ' + self.__job.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile)
+                            copiedStuff = True
+                            logger.debug("  OK, log of main job #" + str(self.__job.id) + " has been copied.")
+                    except:
+                        pass
 
-                        for sj in self.__job.subjobs:
-                            if os.path.exists(sj.outputdir + "JEM_MON.jmd"):
-                                try:
-                                    os.system('cp ' + sj.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile + ".subjob." + str(sj.id))
-                                    logger.debug("  OK, log of subjob #" + str(self.__job.id) + "." + str(sj.id) + " has been copied.")
-                                except:
-                                    pass
+                    logger.debug("  (now trying to copy the subjobs' logs)")
 
+                    for sj in self.__job.subjobs:
+                        if os.path.exists(sj.outputdir + "JEM_MON.jmd"):
+                            try:
+                                os.system('cp ' + sj.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile + ".subjob." + str(sj.id))
+                                logger.debug("  OK, log of subjob #" + str(self.__job.id) + "." + str(sj.id) + " has been copied.")
+                                copiedStuff = True
+                            except:
+                                pass
+
+                    if copiedStuff:
                         logger.info("...done. Inspecting the data now should display the whole available info.")
 
 
@@ -573,17 +577,6 @@ class JEMMonitoringServiceHandler(object):
 
         s = ""
         for v in valves:
-            # FIXME - - - - - - - - - - - - - - - -
-            if v == "HTTPS":
-                JEMloader.httpsPubEnabled = True
-            elif v == "RGMA":
-                JEMloader.rgmaPubEnabled = True
-            elif v == "TCP":
-                JEMloader.tcpPubEnabled = True
-            elif v == "FS":
-                JEMloader.fpEnabled = True
-            # - - - - - - - - - - - - - - - - - - -
-
             if s != "":
                 s += " | "
             s += "PUBLISHER_USE_" + v
@@ -760,21 +753,13 @@ class JEMMonitoringServiceHandler(object):
         """
         Get the PIDs of the server-processes for this job
         """
-        # not the finest solution, but it works :/
-        servername = ""
-        if JEMloader.rgmaPubEnabled:
-            servername = JEMConfig.SERVER_RGMA_EXE
-        elif JEMloader.httpsPubEnabled:
-            if JEMloader.httpsExternal:
-                return []
-            servername = JEMConfig.SERVER_HTTPS_EXE
-        elif JEMloader.tcpPubEnabled:
-            servername = JEMConfig.SERVER_TCP_EXE
-
         serverpids = []
         pids,ppids,cmds = self.__getChildProcesses()
         for z,p in enumerate(pids):
-            if ppids[z] == str(self.__job.info.monitor.pid) and cmds[z].find(servername) != -1:
+            if ppids[z] == str(self.__job.info.monitor.pid) and (\
+                   cmds[z].find(JEMConfig.SERVER_RGMA_EXE) != -1\
+                or cmds[z].find(JEMConfig.SERVER_HTTPS_EXE) != -1\
+                or cmds[z].find(JEMConfig.SERVER_TCP_EXE) != -1):
                 serverpids += [p]
         return serverpids
 
