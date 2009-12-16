@@ -700,7 +700,17 @@ run_athena () {
 		then
 		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 	    else
-		$timecmd athena.py input.py $ATHENA_OPTIONS evtmax.py; echo $? > retcode.tmp
+
+		if [ n$DATASETTYPE == n'FILE_STAGER' ]; 
+		    then
+		    FILESTAGER_JOS=`echo $ATHENA_OPTIONS | { read first next; echo $first ;}`
+		    PARENT_JOS=`echo $ATHENA_OPTIONS | { read first next; echo $next ;}`
+		else
+		    FILESTAGER_JOS=''
+ 		    PARENT_JOS=$ATHENA_OPTIONS" evtmax.py"
+ 		fi
+ 		
+		$timecmd athena.py $FILESTAGER_JOS input.py $PARENT_JOS; echo $? > retcode.tmp
 	    fi
 
 	    retcode=`cat retcode.tmp`

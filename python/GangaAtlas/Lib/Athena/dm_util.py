@@ -467,6 +467,16 @@ else:
 
 #svcMgr.EventSelector.SkipBadFiles = True
 
+  if not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
+    svcMgr = theApp.serviceMgr()
+    svcMgr.EventSelector.InputCollections = ic
+  else:
+    print "Using RECEXTYPE in FILE_STAGER"
+    from AthenaCommon.AthenaCommonFlags import athenaCommonFlags
+    athenaCommonFlags.Pool###RECEXTYPE###Input.set_Value_and_Lock( ic )
+    athenaCommonFlags.FilesInput.set_Value_and_Lock( ic )
+    athenaCommonFlags.EvtMax.set_Value_and_Lock(###MAXEVENT###)
+ 
 ## override the event number
 theApp.EvtMax = ###MAXEVENT###
 """
@@ -482,6 +492,10 @@ theApp.EvtMax = ###MAXEVENT###
     jOptionFS = jOptionFS.replace('###FSOUTPUTPREFIX###', repr(fs_of_prefix))
     jOptionFS = jOptionFS.replace('###SAMPLELIST###', repr(pfns))
     jOptionFS = jOptionFS.replace('###GRIDCOPYPROTOCOL###', repr(protocol))
+    if os.environ.has_key('RECEXTYPE'):
+        jOptionInput = jOptionInput.replace('###RECEXTYPE###', os.environ['RECEXTYPE'])
+    else:
+        jOptionInput = jOptionInput.replace('###RECEXTYPE###', 'ESD')
     f = open( fs_jo_path, 'w' )
     f.write(jOptionFS)
     f.close()

@@ -671,8 +671,8 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
     else:
         # Write input for RecExCommon jobs
         outFile.write('from AthenaCommon.AthenaCommonFlags import athenaCommonFlags\n')
-        outFile.write('athenaCommonFlags.Pool%sInput.set_Value_and_Lock([' %
-                      os.environ['RECEXTYPE'])
+        outFile.write('ganga_input_files = [')
+
         try:
             if os.environ.has_key('ATHENA_MAX_EVENTS'):
                 evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
@@ -705,7 +705,11 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
     if not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
         outFile.write(']\n')
     else:
-        outFile.write('])\n')
+        outFile.write(']\n')
+        outFile.write('athenaCommonFlags.Pool%sInput.set_Value_and_Lock(ganga_input_files)' %
+                      os.environ['RECEXTYPE'])
+        outFile.write('athenaCommonFlags.FilesInput.set_Value_and_Lock(ganga_input_files')
+        outFile.write('athenaCommonFlags.EvtMax.set_Value_and_Lock(%d)' % evtmax)
 
     # close
     outFile.close()
