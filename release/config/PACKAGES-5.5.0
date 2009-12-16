@@ -6,7 +6,7 @@ ganga/doc                                                              Ganga-doc
 ganga/python/Ganga                                                     Ganga-Base-XMLMigration-1-5
 
 #johannes/dan/mark
-ganga/python/GangaAtlas                                                GangaAtlas-XMLMigration-1-8
+ganga/python/GangaAtlas                                                GangaAtlas-XMLMigration-1-9
 
 #rod
 ganga/python/GangaCronus                                               GangaCronus-20-0
@@ -21,7 +21,7 @@ ganga/python/GangaGUI/LHCB_BKDB_browser                                GangaGUI-
 ganga/python/GangaKISTI                                                GangaKISTI-1-1
 
 #will/ulrik
-ganga/python/GangaLHCb                                                 GangaLHCb-22-12
+ganga/python/GangaLHCb                                                 GangaLHCb-22-13
 
 #pajchel/bsamset
 ganga/python/GangaNG                                                   GangaNG-20-28
