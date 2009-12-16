@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.0 (2009/12/11)
+5.5.0 (2009/12/16)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -18,7 +18,13 @@ merged from trunk at the time of 5.4.2 release.
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 * Sync trunk with XMLMigration branch - GangaAtlas-21-37 
-* Add Caching code
+
+Athena:
+* Add Caching code - DQ2JobSplitter DQ2 calls are now cache for 
+  submission speed-up
+* Fix for better support of inputFilePeeker/AutoConfiguration 
+  in the FILE_STAGER input mode on LCG backend
+
 AMAAthena:
 * new workflow for setting/preparing AMAAthena application:
   - specify framework-level AMA job option files by setting flags,
@@ -40,6 +46,12 @@ AMAAthena:
 ganga/python/GangaGUI
 --------------------------------------------------------------------------------------------------------------
 Update pyqt library
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Special tag for 5.5.0 beta release.
 
 
 --------------------------------------------------------------------------------------------------------------
