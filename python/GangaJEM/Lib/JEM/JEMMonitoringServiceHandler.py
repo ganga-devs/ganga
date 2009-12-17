@@ -105,6 +105,10 @@ class JEMMonitoringServiceHandler(object):
         This method is called by Job() via IMonitoringService when the job is about to be
         submitted / started.
         """
+        if not JEMloader.INITIALIZED:
+            logger.debug("Job Execution Monitor is disabled or failed to initialize")
+            return
+
         pass # at the moment, everything is done in prepare()... TBD
 
 
@@ -114,14 +118,14 @@ class JEMMonitoringServiceHandler(object):
         pared by the runtime handler. We can add files to the sandboxes here and change
         the executable to JEMs Workernode-script.
         """
+        if not JEMloader.INITIALIZED:
+            logger.debug("Job Execution Monitor is disabled or failed to initialize")
+            return
+        
         logger.debug("Job " + self.__getFullJobId() + " is being prepared.")
 
         if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
             logger.debug("Job " + self.__getFullJobId() + " has no JobExecutionMonitor-instance set.")
-            return
-
-        if not JEMloader.INITIALIZED:
-            logger.debug("Job Execution Monitor is disabled or failed to initialize")
             return
 
         jemInputBox = []
@@ -371,7 +375,13 @@ class JEMMonitoringServiceHandler(object):
 
 
     def submit(self):
-        global Utils, WNConfig, UIConfig, JEMloader
+        """
+        This method is called by Job() via IMonitoringService when the job has been
+        submitted.
+        """
+        if not JEMloader.INITIALIZED:
+            logger.debug("Job Execution Monitor is disabled or failed to initialize")
+            return
 
         # no action for subjobs...
         if self.__job.master:
@@ -413,11 +423,19 @@ class JEMMonitoringServiceHandler(object):
         This hook is called by the watcher thread as soon as the first data is received
         for this job.
         """
+        if not JEMloader.INITIALIZED:
+            logger.debug("Job Execution Monitor is disabled or failed to initialize")
+            return
+
         self.__userAppRunning = True
         logger.info("Begun to receive monitoring data for job " + str(self.__job.id))
 
 
     def complete(self, cause):
+        if not JEMloader.INITIALIZED:
+            logger.debug("Job Execution Monitor is disabled or failed to initialize")
+            return
+
         if self.__job.master: # subjobs
             return
         elif not self.__job.info.monitor or self.__job.info.monitor.__class__.__name__ != "JobExecutionMonitor":
@@ -464,6 +482,10 @@ class JEMMonitoringServiceHandler(object):
 
 
     def rollback(self):
+        if not JEMloader.INITIALIZED:
+            logger.debug("Job Execution Monitor is disabled or failed to initialize")
+            return
+
         logger.debug("Job " + self.__getFullJobId() + " got rolled back to new.")
         self.__stopJobListener()
 
