@@ -305,7 +305,7 @@ class JobExecutionMonitor(GangaObject):
     # methods accessible from GPI
     _exportmethods = ['getStatus', 'getMetrics', 'plotMetrics', 'listExceptions', 'listCommands',\
                       'showException', 'showCommand', 'peek', 'getListenerLog', 'waitForRealStart',\
-                      'watch', 'abortWatch', 'extractLogfiles',\
+                      'livePeek', 'watch', 'abortWatch', 'extractLogfiles',\
                       '_getListenerPid', '_getServerPid', '_getServerPort', '_getServerStatus',\
                       '_hasUserAppStarted', '_hasUserAppExited', '_getTransmissionStats']
 
@@ -731,6 +731,50 @@ class JobExecutionMonitor(GangaObject):
             logger.info(s)
         else:
             logger.info("no status information received yet")
+
+
+    def livePeek(self):
+        def keyPressed():
+            return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
+
+        print "Live peeking into the job's stdout/stderr. Press any key (and then wait for up to 5 seconds) to abort."
+        if not self.__checkStatus():
+            print "Note: No status information was received yet. Waiting for the user app to start..."
+            try:
+                time.sleep(5)
+                while not self.__checkStatus():
+                    if keyPressed():
+                        logger.info("Aborted live-peek.")
+                        return
+                    time.sleep(5)
+            except:
+                pass
+            
+        if not self.userAppRunning:
+            while not self.userAppRunning:
+                if keyPressed():
+                    logger.info("Aborted live-peek.")
+                    return
+                time.sleep(0.5)
+        
+        print "Live peek starts!"
+        history = []
+        while not keyPressed():
+            l = self.__seekJMDinfo("OUTPEEKLINE", 40, 0, False)
+            s = ""
+            for data in l:
+                if not data.has_key("ExactTS") or not data.has_key("M1"):
+                    continue
+                if not data["ExactTS"]+data["M1"] in history:
+                    ss = PrettyStrings.formatTime(data) + " | "
+                    ss += PrettyStrings.formatString(multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]), 128)
+                    ss += "\n"
+                    s = ss + s
+                    history.append(data["ExactTS"]+data["M1"])
+            if len(s) > 0:
+                print s.strip()
+            time.sleep(0.5)
+
 
 
     def extractLogfiles(self):
