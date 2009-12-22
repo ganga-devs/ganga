@@ -414,6 +414,68 @@ EOF
     
     cat input.py
     
+# create preJobO.py
+    cat - >preJobO.py <<EOF
+ic = []
+if os.path.exists('input_files'):
+    for lfn in file('input_files'):
+        name = os.path.basename(lfn.strip())
+        pfn = os.path.join(os.getcwd(),name)
+        if (os.path.exists(pfn) and (os.stat(pfn).st_size>0)):
+            print 'Input: %s' % name
+            ic.append('%s' % name)
+        elif (os.path.exists(lfn.strip()) and (os.stat(lfn.strip()).st_size>0)):
+            print 'Input: %s' % lfn.strip()
+            ic.append('%s' % lfn.strip())
+
+    try:
+        from EventSelectorAthenaPool.EventSelectorAthenaPoolConf import EventSelectorAthenaPool
+        orig_ESAP__getattribute =  EventSelectorAthenaPool.__getattribute__
+
+        def _dummy(self,attr):
+            if attr == 'InputCollections':
+                return ic
+            else:
+                return orig_ESAP__getattribute(self,attr)
+
+        EventSelectorAthenaPool.__getattribute__ = _dummy
+        print 'Overwrite InputCollections'
+        print EventSelectorAthenaPool.InputCollections
+    except:
+        try:
+            EventSelectorAthenaPool.__getattribute__ = orig_ESAP__getattribute
+        except:
+            pass
+
+    try:
+        import AthenaCommon.AthenaCommonFlags
+
+        def _dummyFilesInput(*argv):
+            return ic
+
+        AthenaCommon.AthenaCommonFlags.FilesInput.__call__ = _dummyFilesInput
+    except:
+        pass
+
+    try:
+        import AthenaCommon.AthenaCommonFlags
+
+        def _dummyGet_Value(*argv):
+            return ic
+
+        for tmpAttr in dir (AthenaCommon.AthenaCommonFlags):
+            import re
+            if re.search('^(Pool|BS).*Input$',tmpAttr) != None:
+                try:
+                    getattr(AthenaCommon.AthenaCommonFlags,tmpAttr).get_Value = _dummyGet_Value
+                except:
+                    pass
+    except:
+        pass
+
+EOF
+
+
     if [ -e PoolFileCatalog.xml ]
 	then
 	rm PoolFileCatalog.xml
@@ -614,7 +676,7 @@ site - please contact Ganga support mailing list.'
 	    
 	    if [ n$ATLAS_EXETYPE == n'ATHENA' ]
 		then 
-		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		$timecmd athena.py preJobO.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    elif [ n$ATLAS_EXETYPE == n'PYARA' ]
@@ -647,7 +709,7 @@ site - please contact Ganga support mailing list.'
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    else
-		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		$timecmd athena.py preJobO.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    fi

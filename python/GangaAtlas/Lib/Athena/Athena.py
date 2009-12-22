@@ -303,12 +303,12 @@ class Athena(IApplication):
         from Ganga.GPIDev.Lib.Job import Job
         job = self.getJobObject()
 
-        if job.backend.__class__.__name__ in [ 'Panda' ]:
+        if job.backend._name in [ 'Panda' ]:
             self.stats = job.backend.get_stats()
             return
 
         # Collect stats from LCG backend stats.pickle file
-        if job.backend.__class__.__name__ in [ 'LCG' ]:
+        if job.backend._name in [ 'LCG', 'Local', 'SGE', 'LSF', 'PBS' ]:
             import pickle
             fileName =  os.path.join(job.outputdir + "stats.pickle")
             if "stats.pickle" in os.listdir(job.outputdir):  
@@ -343,7 +343,7 @@ class Athena(IApplication):
             pass
 
         # Return for LCG backend since stats.pickle is used
-        if job.backend.__class__.__name__ in [ 'LCG' ]:
+        if job.backend._name in [ 'LCG', 'Local', 'SGE', 'LSF', 'PBS' ]:
             return
 
         # Compress NG stdout.txt
@@ -524,7 +524,7 @@ class Athena(IApplication):
             logger.warning('ERROR in Athena.collectStats - logfiles too large to be unpacked.')
             pass
 
-        if job.backend.__class__.__name__ in [ 'NG' ]:
+        if job.backend._name in [ 'NG' ]:
             if self.stats.has_key('gangatime1'):
                 self.stats['starttime'] = self.stats['gangatime1'] 
             if self.stats.has_key('gangatime5'):
@@ -543,7 +543,7 @@ class Athena(IApplication):
         and fill output variable"""
         from Ganga.GPIDev.Lib.Job import Job
         job = self.getJobObject()
-        if not job.backend.__class__.__name__ in [ 'NG', 'Panda' ]:
+        if not job.backend._name in [ 'NG', 'Panda' ]:
             if job.outputdata:
                 try:
                     job.outputdata.fill()
@@ -554,7 +554,7 @@ class Athena(IApplication):
                 if not job.outputdata.output:
                     job.updateStatus('failed')
         # collect athena job statistics
-        if self.collect_stats and job.backend.__class__.__name__ in [ 'LCG', 'NG', 'Panda' ]:
+        if self.collect_stats and job.backend._name in [ 'LCG', 'NG', 'Panda', 'Local', 'SGE', 'LSF', 'PBS' ]:
             self.collectStats()
         # collect statistics for master job   
         if not job.master and job.subjobs:

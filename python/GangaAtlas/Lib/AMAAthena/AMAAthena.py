@@ -99,7 +99,7 @@ class AMAAthena(Athena):
         except Exception, e:
             # if prepare failed, re-set the job option file field
             self.option_file = []
-            raise ApplicationConfigurationError('Failed to prepare Athena: %s' % e)
+            raise ApplicationConfigurationError(None,'Failed to prepare Athena: %s' % e)
 
         return
 

@@ -624,10 +624,61 @@ def _makePoolFileCatalog(files):
     # write trailer
     outFile.write(trailer)
     outFile.close()
-    
+
+########################################################################
+# prepending jobOptions
+def _preJobO(inputFileList = [] ):
+
+    return """
+try:
+    from EventSelectorAthenaPool.EventSelectorAthenaPoolConf import EventSelectorAthenaPool
+    orig_ESAP__getattribute =  EventSelectorAthenaPool.__getattribute__
+
+    def _dummy(self,attr):
+        if attr == 'InputCollections':
+            return %(inputFileList)s 
+        else:
+            return orig_ESAP__getattribute(self,attr)
+
+    EventSelectorAthenaPool.__getattribute__ = _dummy
+    print 'Overwrite InputCollections'
+    print EventSelectorAthenaPool.InputCollections
+except:
+    try:
+        EventSelectorAthenaPool.__getattribute__ = orig_ESAP__getattribute
+    except:
+        pass
+      
+try:
+    import AthenaCommon.AthenaCommonFlags
+
+    def _dummyFilesInput(*argv):
+        return %(inputFileList)s 
+
+    AthenaCommon.AthenaCommonFlags.FilesInput.__call__ = _dummyFilesInput
+except:
+    pass
+
+try:
+    import AthenaCommon.AthenaCommonFlags
+
+    def _dummyGet_Value(*argv):
+        return %(inputFileList)s 
+
+    for tmpAttr in dir (AthenaCommon.AthenaCommonFlags):
+        import re
+        if re.search('^(Pool|BS).*Input$',tmpAttr) != None:
+            try:
+                getattr(AthenaCommon.AthenaCommonFlags,tmpAttr).get_Value = _dummyGet_Value
+            except:
+                pass
+except:
+    pass
+""" % { 'inputFileList' : inputFileList }
+
 ########################################################################
 # make job option file
-def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
+def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJobO=False):
     if version >= 13:
         versionString='ServiceMgr.'
     else:
@@ -640,6 +691,26 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
     joName = 'input.py'
     outFile = open(joName,'w')
 
+    if usePrependJobO:
+        joName = 'preJobO.py'
+        outFilePre = open(joName,'w')
+        inputFileList = []
+        for lfn in lfns:
+            if (configSETYPE == 'dpm'):
+                surl = files[lfn]['surl']
+                # remove protocol and host
+                pfn = re.sub('^gfal:','',surl)
+                pfn = re.sub('^[^:]+://[^/]+','',pfn)
+                # remove redundant /
+                pfn = re.sub('^//','/',pfn)
+                pfn = "rfio:" + pfn
+                inputFileList.append(pfn)
+            else:
+                inputFileList.append(files[lfn]['pfn'])
+        preJobO = _preJobO(inputFileList)
+        outFilePre.write(preJobO)
+        outFilePre.close()
+
     if not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
 
         try:
@@ -650,6 +721,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
         except:
             evtmax = -1
         outFile.write('theApp.EvtMax = %d\n' %evtmax)
+
         if dtype == 'DATA':
             outFile.write('%sByteStreamInputSvc.FullFileName = ['%versionString)
         elif dtype == 'MC':
@@ -670,6 +742,8 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
 
     else:
         # Write input for RecExCommon jobs
+        outFile.write('from AthenaCommon.AppMgr import ServiceMgr\n')
+        outFile.write('from AthenaCommon.AppMgr import ServiceMgr as svcMgr\n')
         outFile.write('from AthenaCommon.AthenaCommonFlags import athenaCommonFlags\n')
         outFile.write('ganga_input_files = [')
 
@@ -706,10 +780,10 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC'):
         outFile.write(']\n')
     else:
         outFile.write(']\n')
-        outFile.write('athenaCommonFlags.Pool%sInput.set_Value_and_Lock(ganga_input_files)' %
+        outFile.write('athenaCommonFlags.Pool%sInput.set_Value_and_Lock(ganga_input_files)\n' %
                       os.environ['RECEXTYPE'])
-        outFile.write('athenaCommonFlags.FilesInput.set_Value_and_Lock(ganga_input_files')
-        outFile.write('athenaCommonFlags.EvtMax.set_Value_and_Lock(%d)' % evtmax)
+        outFile.write('athenaCommonFlags.FilesInput.set_Value_and_Lock(ganga_input_files)\n')
+        outFile.write('athenaCommonFlags.EvtMax.set_Value_and_Lock(%d)\n' % evtmax)
 
     # close
     outFile.close()
@@ -1243,6 +1317,7 @@ if __name__ == '__main__':
 
         if not detsetype:
             print 'localsiteid: %s' %(localsiteid)
+            print 'DQ2_LOCAL_SITE_ID: %s' %(localsiteid)
             print 'localsitesrm: %s' %(localsitesrm) 
             print 'configSETYPE: %s' %(configSETYPE)
             print 'configLOCALPROTOCOL: %s' %(configLOCALPROTOCOL)
@@ -1845,9 +1920,10 @@ if __name__ == '__main__':
                     continue
             # get PFN
             pfn = dirPfnMap[lfn]
-                                    
+            surl = sUrlMap[lfn]
+            
             # append
-            item = {'pfn':pfn,'guid':guid}
+            item = {'pfn':pfn, 'guid':guid, 'surl':surl}
             files[lfn] = item
 
         if globalVerbose:
@@ -1872,8 +1948,26 @@ if __name__ == '__main__':
                 for lfn in add_lfns:
                     if lfn in files.keys():
                         files.pop(lfn)
-                        
-            _makeJobO(files, tag=tag_flag, version=atlas_release_major, dtype=datatype)
+
+            # Configure prependJobO for AutoConfiguration and InputFilePeeker
+            prependJobO = False
+            if os.environ.has_key('ATHENA_OPTIONS'):
+                joboptions = os.environ['ATHENA_OPTIONS'].split(' ')
+                for jfile in joboptions:
+                    try:
+                        inFile = open(jfile,'r')
+                        # scan jobOptions for AutoConfiguration and InputFilePeeker
+                        allLines = inFile.readlines()
+                        for line in allLines:
+                            if line.find("InputFilePeeker")>0 or line.find("AutoConfiguration")>0:
+                                prependJobO = True
+                                break
+                    
+                    except:
+                        pass
+
+            print 'prependJobO = %s ' %prependJobO
+            _makeJobO(files, tag=tag_flag, version=atlas_release_major, dtype=datatype, usePrependJobO = prependJobO)
 
         if len(files)>0:
             returnvalue=0

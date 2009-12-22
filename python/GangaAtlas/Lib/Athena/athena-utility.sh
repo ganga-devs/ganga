@@ -91,6 +91,9 @@ cmt_setup () {
     #export DCACHE_RA_BUFFER=262144
     # Switch on private libdcap patch with improved read-ahead buffer algorithm
     export DC_LOCAL_CACHE_BUFFER=1
+    if [ n$DQ2_LOCAL_SITE_ID == n'LRZ-LMU_DATADISK' ] && [ n$DATASETTYPE == n'DQ2_LOCAL' ]; then  
+	export DCACHE_CLIENT_ACTIVE=1
+    fi
 
     if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
         ATLAS_RELEASE_DIR=$VO_ATLAS_SW_DIR/software/$ATLAS_RELEASE
@@ -334,9 +337,9 @@ get_pybin () {
 detect_setype () {
 
     # given the library/binaray/python paths for data copy commands
-    MY_LD_LIBRARY_PATH_ORG=$1
-    MY_PATH_ORG=$2
-    MY_PYTHONPATH_ORG=$3
+    MY_LD_LIBRARY_PATH_ORIG=$1
+    MY_PATH_ORIG=$2
+    MY_PYTHONPATH_ORIG=$3
 
     if [ -e ganga-stage-in-out-dq2.py ]; then
 
@@ -345,9 +348,9 @@ detect_setype () {
         LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
         PATH_BACKUP=$PATH
         PYTHONPATH_BACKUP=$PYTHONPATH
-        export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
-        export PATH=$MY_PATH_ORG:$PATH_BACKUP
-        export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
+        export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORIG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
+        export PATH=$MY_PATH_ORIG:$PATH_BACKUP
+        export PYTHONPATH=$MY_PYTHONPATH_ORIG:$PYTHONPATH_BACKUP
 
         # Remove lib64/python from PYTHONPATH
 	dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
@@ -392,9 +395,9 @@ detect_setype () {
 stage_inputs () {
 
     # given the library/binaray/python paths for data copy commands
-    MY_LD_LIBRARY_PATH_ORG=$1
-    MY_PATH_ORG=$2
-    MY_PYTHONPATH_ORG=$3
+    MY_LD_LIBRARY_PATH_ORIG=$1
+    MY_PATH_ORIG=$2
+    MY_PYTHONPATH_ORIG=$3
 
     # Unpack dq2info.tar.gz
     if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
@@ -421,9 +424,9 @@ stage_inputs () {
             export PATH_BACKUP_ATH=$PATH_BACKUP
             export PYTHONPATH_BACKUP_ATH=$PYTHONPATH_BACKUP
 
-	    export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
-	    export PATH=$MY_PATH_ORG:$PATH_BACKUP
-	    export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
+	    export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORIG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
+	    export PATH=$MY_PATH_ORIG:$PATH_BACKUP
+	    export PYTHONPATH=$MY_PYTHONPATH_ORIG:$PYTHONPATH_BACKUP
 
             # Remove lib64/python from PYTHONPATH
 	    dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
@@ -435,14 +438,14 @@ stage_inputs () {
 		if [ -e /usr/bin32/python ]; then
 		    /usr/bin32/python ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 		else
-		    ./ganga-stage-in-out-dq2.py -v; echo $? > retcode.tmp
+		    ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 		fi
 	    fi
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
             # Fail over
 	    if [ $retcode -ne 0 ]; then
-		$pybin ./ganga-stage-in-out-dq2.py -v; echo $? > retcode.tmp
+		$pybin ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    fi
@@ -458,7 +461,7 @@ stage_inputs () {
 			tar xzf dq2info.tar.gz
 		    fi
 		fi
-		./ganga-stage-in-out-dq2.py -v; echo $? > retcode.tmp
+		./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    fi
@@ -503,9 +506,9 @@ stage_inputs () {
 stage_outputs () {
 
     # given the library/binaray/python paths for data copy commands
-    MY_LD_LIBRARY_PATH_ORG=$1
-    MY_PATH_ORG=$2
-    MY_PYTHONPATH_ORG=$3
+    MY_LD_LIBRARY_PATH_ORIG=$1
+    MY_PATH_ORIG=$2
+    MY_PYTHONPATH_ORIG=$3
 
     if [ $retcode -eq 0 ]
     then
@@ -517,9 +520,9 @@ stage_outputs () {
             LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
             PATH_BACKUP=$PATH
             PYTHONPATH_BACKUP=$PYTHONPATH
-            export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
-            export PATH=$MY_PATH_ORG:$PATH_BACKUP
-            export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
+            export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORIG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
+            export PATH=$MY_PATH_ORIG:$PATH_BACKUP
+            export PYTHONPATH=$MY_PYTHONPATH_ORIG:$PYTHONPATH_BACKUP
 
             # Remove lib64/python from PYTHONPATH
 	    dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
@@ -592,9 +595,9 @@ stage_outputs () {
                 LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
                 PATH_BACKUP=$PATH
                 PYTHONPATH_BACKUP=$PYTHONPATH
-                export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:/opt/globus/lib:$LD_LIBRARY_PATH_BACKUP
-                export PATH=$MY_PATH_ORG:$PATH_BACKUP
-                export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
+                export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORIG:/opt/globus/lib:$LD_LIBRARY_PATH_BACKUP
+                export PATH=$MY_PATH_ORIG:$PATH_BACKUP
+                export PYTHONPATH=$MY_PYTHONPATH_ORIG:$PYTHONPATH_BACKUP
 
                 ## copy and register files with 3 trials
                 cat output_files | while read filespec; do
@@ -698,7 +701,14 @@ run_athena () {
 
 	    if [ n$RECEXTYPE == n'' ]
 		then
-		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		if [ -f preJobO.py ]; then
+		    echo 'prepJobO.py start ---------'
+		    cat preJobO.py 
+		    echo 'prepJobO.py end --------'
+		    $timecmd athena.py preJobO.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		else
+		    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		fi
 	    else
 
 		if [ n$DATASETTYPE == n'FILE_STAGER' ]; 
@@ -828,7 +838,14 @@ EOF
 	else
 	    if [ n$RECEXTYPE == n'' ]
 		then
-		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		if [ -f preJobO.py ]; then
+		    echo 'prepJobO.py start ---------'
+		    cat preJobO.py 
+		    echo 'prepJobO.py end --------'
+		    $timecmd athena.py preJobO.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		else
+		    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		fi
 	    else
 		$timecmd athena.py input.py $ATHENA_OPTIONS evtmax.py; echo $? > retcode.tmp
 	    fi
@@ -890,9 +907,9 @@ prepend_filestager_joption() {
 make_filestager_joption() {
 
     # given the library/binaray/python paths for data copy commands
-    MY_LD_LIBRARY_PATH_ORG=$1
-    MY_PATH_ORG=$2
-    MY_PYTHONPATH_ORG=$3
+    MY_LD_LIBRARY_PATH_ORIG=$1
+    MY_PATH_ORIG=$2
+    MY_PYTHONPATH_ORIG=$3
 
     # setting up the filestager copy wrapper with retry mechanism
     if [ -f fs-copy.py ]; then
@@ -905,9 +922,9 @@ make_filestager_joption() {
         LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
         PATH_BACKUP=$PATH
         PYTHONPATH_BACKUP=$PYTHONPATH
-        export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
-        export PATH=$MY_PATH_ORG:$PATH_BACKUP
-        export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
+        export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORIG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
+        export PATH=$MY_PATH_ORIG:$PATH_BACKUP
+        export PYTHONPATH=$MY_PYTHONPATH_ORIG:$PYTHONPATH_BACKUP
 
         # Remove lib64/python from PYTHONPATH
         #dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
@@ -931,22 +948,22 @@ make_filestager_joption() {
             retcode=`cat retcode.tmp`
             rm -f retcode.tmp
         fi
-	if [ $retcode -ne 0 ]; then
-	    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
-	    export PATH=$PATH_ORIG
-	    export PYTHONPATH=$PYTHONPATH_ORIG
-	    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
-		then
-		source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
-	    else
-		if [ -e dq2info.tar.gz ]; then
-		    tar xzf dq2info.tar.gz
-		fi
-	    fi
+
+        if [ $retcode -ne 0 ]; then
+            export LD_LIBRARY_PATH=$MY_LD_LIBRARY_PATH_ORIG
+            export PATH=$MY_PATH_ORIG
+            export PYTHONPATH=$MY_PYTHONPATH_ORIG
+            if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]; then
+                source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+            else
+                if [ -e dq2info.tar.gz ]; then
+                    tar xzf dq2info.tar.gz
+                fi
+            fi
             ./make_filestager_joption.py; echo $? > retcode.tmp
-	    retcode=`cat retcode.tmp`
-	    rm -f retcode.tmp
-	fi
+            retcode=`cat retcode.tmp`
+            rm -f retcode.tmp
+        fi
 
         # at this stage, the "FileStager_jobOption.py" and "input.py" should be created.
         # prepend "FileStager_jobOption.py" to the list of user job options.
@@ -959,6 +976,124 @@ make_filestager_joption() {
     fi
 
     return 0
+}
+
+## function for downloading/overriding the DBRelease
+download_dbrelease() {
+
+    retcode=0
+
+    # given the library/binaray/python paths for data copy commands
+    MY_LD_LIBRARY_PATH_ORIG=$1
+    MY_PATH_ORIG=$2
+    MY_PYTHONPATH_ORIG=$3
+
+    if [ ! -z $ATLAS_DBRELEASE ] && [ ! -z $ATLAS_DBFILE ]
+    then
+        # Setup new dq2- tools
+        if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+            then
+            source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+        else
+            echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
+            echo '1'>retcode.tmp
+        fi
+
+        # Set DQ2_LOCAL_SITE_ID to db dataset location
+        if [ -e db_dq2localid.py ]; then
+            export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
+            chmod +x db_dq2localid.py
+
+            if [ ! -z $python32bin ]; then
+                $python32bin ./db_dq2localid.py; echo $? > retcode.tmp
+            else
+                if [ -e /usr/bin32/python ]; then
+                    /usr/bin32/python ./db_dq2localid.py; echo $? > retcode.tmp
+                else
+                    ./db_dq2localid.py; echo $? > retcode.tmp
+                fi
+            fi
+
+            retcode=`cat retcode.tmp`
+            rm -f retcode.tmp
+            if [ $retcode -ne 0 ]; then
+                $pybin ./db_dq2localid.py; echo $? > retcode.tmp
+                retcode=`cat retcode.tmp`
+                rm -f retcode.tmp
+            fi
+            export DQ2_LOCAL_SITE_ID=`cat db_dq2localid.txt`
+        fi
+
+        if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]; then
+            for ((i=1;i<=3;i+=1)); do
+                echo Copying $ATLAS_DBFILE, attempt $i of 3
+                dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
+                if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]; then
+                    mv $ATLAS_DBRELEASE/* .
+                    echo successfully retrieved $ATLAS_DBFILE
+                    tar xzf $ATLAS_DBFILE
+                    cd DBRelease/current/
+                    python setup.py | grep = | sed -e 's/^/export /' > dbsetup.sh
+                    source dbsetup.sh
+                    cd ../../
+                    break
+                else
+                    echo 'ERROR: dq2-get of DBRELEASE failed !'
+                    echo 'Retry with changed environment'
+
+                    LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+                    PATH_BACKUP=$PATH
+                    PYTHONPATH_BACKUP=$PYTHONPATH
+
+                    export LD_LIBRARY_PATH=$MY_LD_LIBRARY_PATH_ORIG
+                    export PATH=$MY_PATH_ORIG
+                    export PYTHONPATH=$MY_PYTHONPATH_ORIG
+
+                    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]; then
+                        source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+                    fi
+
+                    dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
+                    if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]; then
+                        mv $ATLAS_DBRELEASE/* .
+                        echo successfully retrieved $ATLAS_DBFILE
+                        tar xzf $ATLAS_DBFILE
+                        cd DBRelease/current/
+                        python setup.py | grep = | sed -e 's/^/export /' > dbsetup.sh
+                        source dbsetup.sh
+                        cd ../../
+                        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+                        export PATH=$PATH_BACKUP
+                        export PYTHONPATH=$PYTHONPATH_BACKUP
+                        break
+                    else
+                        echo 'ERROR: dq2-get of $ATLAS_DBRELEASE failed !'
+                        echo '1'>retcode.tmp
+                    fi
+
+                    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+                    export PATH=$PATH_BACKUP
+                    export PYTHONPATH=$PYTHONPATH_BACKUP
+                fi
+            done
+        else
+            echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
+            echo '1'>retcode.tmp
+        fi
+
+        # Set DQ2_LOCAL_SITE_ID to dataset location
+        if [ -e dq2localid.txt ]
+            then
+            export DQ2_LOCAL_SITE_ID=`cat dq2localid.txt`
+            export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
+        fi
+    fi
+
+    if [ -e retcode.tmp ]; then
+        retcode=`cat retcode.tmp`
+    fi
+
+    return $retcode
 }
 
 ## function for setting up athena runtime environment, no compilation

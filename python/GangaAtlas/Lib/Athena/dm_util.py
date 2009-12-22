@@ -450,6 +450,53 @@ if stagetool.DoStaging():
   FileStagerInputCollection = stagetool.GetStageCollections()
 else:
   FileStagerInputCollection = stagetool.GetSampleList()
+
+### Prepend AutoConfiguration (JE) #############################
+try:
+  from EventSelectorAthenaPool.EventSelectorAthenaPoolConf import EventSelectorAthenaPool
+  orig_ESAP__getattribute =  EventSelectorAthenaPool.__getattribute__
+
+  def _dummy(self,attr):
+    if attr == 'InputCollections':
+      return FileStagerInputCollection
+    else:
+      return orig_ESAP__getattribute(self,attr)
+
+  EventSelectorAthenaPool.__getattribute__ = _dummy
+  print 'Overwrite InputCollections'
+  print EventSelectorAthenaPool.InputCollections
+except:
+  try:
+    EventSelectorAthenaPool.__getattribute__ = orig_ESAP__getattribute
+  except:
+    pass
+   
+try:
+  import AthenaCommon.AthenaCommonFlags
+
+  def _dummyFilesInput(*argv):
+    return FileStagerInputCollection
+
+  AthenaCommon.AthenaCommonFlags.FilesInput.__call__ = _dummyFilesInput
+except:
+  pass
+
+try:
+  import AthenaCommon.AthenaCommonFlags
+
+  def _dummyGet_Value(*argv):
+    return FileStagerInputCollection
+
+  for tmpAttr in dir (AthenaCommon.AthenaCommonFlags):
+    import re
+    if re.search('^(Pool|BS).*Input$',tmpAttr) != None:
+      try:
+        getattr(AthenaCommon.AthenaCommonFlags,tmpAttr).get_Value = _dummyGet_Value
+      except:
+        pass
+except:
+  pass
+
 """
 
     jOptionInput = """
@@ -458,25 +505,49 @@ ic = []
 if FileStagerInputCollection:
     ic = FileStagerInputCollection
 
+## assume we're dealing with AODs, else ESDs
+    poolESDInput = False
+    if len(ic)>0:
+        if ic[0].find('ESD')>0: poolESDInput = True
+
 ## get a handle on the ServiceManager
 if os.environ.has_key('DATASETDATATYPE') and os.environ['DATASETDATATYPE']=='MuonCalibStream':
-  svcMgr.MuonCalibStreamFileInputSvc.InputFiles = ic
+    svcMgr.MuonCalibStreamFileInputSvc.InputFiles = ic
+
+elif not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
+    ## default: EventSelector
+    try:
+        svcMgr = theApp.serviceMgr()
+        svcMgr.EventSelector.InputCollections = ic
+        #svcMgr.EventSelector.SkipBadFiles = True
+    except Exception,inst:
+        pass
+
+    ## else: athenaCommonFlags
+    if not poolESDInput:
+        try:
+            ## the Input AOD File(s)
+            from AthenaCommon.AthenaCommonFlags import athenaCommonFlags
+            athenaCommonFlags.FilesInput = ic
+        except Exception,inst:
+            pass
+    else:
+        try:
+            ## the Input ESD File(s)
+            from AthenaCommon.AthenaCommonFlags import athenaCommonFlags
+            athenaCommonFlags.FilesInput = ic
+        except Exception,inst:
+            pass
 else:
-  svcMgr = theApp.serviceMgr()
-  svcMgr.EventSelector.InputCollections = ic
+    try:
+        print "Using RECEXTYPE in FILE_STAGER"
+        from AthenaCommon.AthenaCommonFlags import athenaCommonFlags
+        athenaCommonFlags.Pool###RECEXTYPE###Input.set_Value_and_Lock( ic )
+        athenaCommonFlags.FilesInput.set_Value_and_Lock( ic )
+        athenaCommonFlags.EvtMax.set_Value_and_Lock(###MAXEVENT###)
+    except:
+        pass
 
-#svcMgr.EventSelector.SkipBadFiles = True
-
-  if not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
-    svcMgr = theApp.serviceMgr()
-    svcMgr.EventSelector.InputCollections = ic
-  else:
-    print "Using RECEXTYPE in FILE_STAGER"
-    from AthenaCommon.AthenaCommonFlags import athenaCommonFlags
-    athenaCommonFlags.Pool###RECEXTYPE###Input.set_Value_and_Lock( ic )
-    athenaCommonFlags.FilesInput.set_Value_and_Lock( ic )
-    athenaCommonFlags.EvtMax.set_Value_and_Lock(###MAXEVENT###)
- 
 ## override the event number
 theApp.EvtMax = ###MAXEVENT###
 """
