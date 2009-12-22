@@ -396,6 +396,14 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             else:
                 _append_files(inputbox,'ganga-stagein.py')
 
+        ## insert more scripts to inputsandbox for FileStager
+        #if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type in ['FILE_STAGER']:
+        #    _append_files(inputbox,'make_filestager_joption.py','dm_util.py','fs-copy.py')
+
+        if not 'getstats.py' in [ os.path.basename(file.name) for file in inputbox ]:
+            _append_files(inputbox, 'getstats.py')
+
+            
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             if not job.outputdata.location:
                 raise ApplicationConfigurationError(None,'j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
@@ -430,7 +438,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             'ATLAS_SOFTWARE' : atlas_software,
             'ATHENA_USERSETUPFILE' : athena_usersetupfile,
             'ATLAS_PROJECT' : app.atlas_project,
-            'ATLAS_EXETYPE' : app.atlas_exetype
+            'ATLAS_EXETYPE' : app.atlas_exetype,
+            'GANGA_VERSION' : configSystem['GANGA_VERSION']
         }
 
         environment['DCACHE_RA_BUFFER'] = str(config['DCACHE_RA_BUFFER'])
@@ -524,6 +533,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         outputbox.append( outputGUIDs )
         outputbox.append( outputLOCATION )
         outputbox.append( outputDATA )
+        outputbox.append('stats.pickle')
         if (job.outputsandbox):
             for file in job.outputsandbox:
                 outputbox += [ file ]
@@ -568,6 +578,7 @@ allHandlers.add('Athena', 'Remote'  , AthenaRemoteRTHandler)
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
 configLCG = getConfig('LCG')
+configSystem = getConfig('System')
 logger = getLogger()
 
 

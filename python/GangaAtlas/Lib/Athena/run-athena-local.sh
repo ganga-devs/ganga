@@ -13,6 +13,7 @@
 
 retcode=0
 
+GANGATIME1=`date +'%s'`
 ################################################
 # set the wrapper type
 export GANGA_ATHENA_WRAPPER_MODE='local'
@@ -96,20 +97,24 @@ fi
 
 export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
 
-
+GANGATIME2=`date +'%s'`
 ################################################
 # state the inputs
 
-stage_inputs
+stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 
-################################################
-# setup filestager environment
 if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
-    filestager_setup
 
+    filestager_setup
+    
+    #make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
     echo "===== FileStager_jobOption.py beg. ====="
     cat FileStager_jobOption.py
     echo "===== FileStager_jobOption.py end. ====="
+
+    #echo 'input.txt start ----------'
+    #cat input.txt
+    #echo 'input.txt end ----------'
 fi
 
 ################################################
@@ -159,6 +164,7 @@ frontier_setup
  
 get_files PDGTABLE.MeV   
 
+GANGATIME3=`date +'%s'`
 ################################################
 # run athena
 if [ $retcode -eq 0 ]
@@ -167,12 +173,23 @@ then
     run_athena $ATHENA_OPTIONS input.py
 fi
 
+GANGATIME4=`date +'%s'`
 ################################################
 # store output
 if [ $retcode -eq 0 ]
 then
     stage_outputs
 fi
+
+GANGATIME5=`date +'%s'`
+
+echo "GANGATIME1=$GANGATIME1"
+echo "GANGATIME2=$GANGATIME2"
+echo "GANGATIME3=$GANGATIME3"
+echo "GANGATIME4=$GANGATIME4"
+echo "GANGATIME5=$GANGATIME5"
+
+./getstats.py
 
 exit $retcode
 

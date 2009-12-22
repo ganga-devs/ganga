@@ -91,6 +91,9 @@ cmt_setup () {
     #export DCACHE_RA_BUFFER=262144
     # Switch on private libdcap patch with improved read-ahead buffer algorithm
     export DC_LOCAL_CACHE_BUFFER=1
+    if [ n$DQ2_LOCAL_SITE_ID == n'LRZ-LMU_DATADISK' ] && [ n$DATASETTYPE == n'DQ2_LOCAL' ]; then  
+	export DCACHE_CLIENT_ACTIVE=1
+    fi
 
     if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
         ATLAS_RELEASE_DIR=$VO_ATLAS_SW_DIR/software/$ATLAS_RELEASE
@@ -435,14 +438,14 @@ stage_inputs () {
 		if [ -e /usr/bin32/python ]; then
 		    /usr/bin32/python ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 		else
-		    ./ganga-stage-in-out-dq2.py -v; echo $? > retcode.tmp
+		    ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 		fi
 	    fi
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
             # Fail over
 	    if [ $retcode -ne 0 ]; then
-		$pybin ./ganga-stage-in-out-dq2.py -v; echo $? > retcode.tmp
+		$pybin ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    fi
@@ -458,7 +461,7 @@ stage_inputs () {
 			tar xzf dq2info.tar.gz
 		    fi
 		fi
-		./ganga-stage-in-out-dq2.py -v; echo $? > retcode.tmp
+		./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    fi
@@ -698,7 +701,14 @@ run_athena () {
 
 	    if [ n$RECEXTYPE == n'' ]
 		then
-		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		if [ -f preJobO.py ]; then
+		    echo 'prepJobO.py start ---------'
+		    cat preJobO.py 
+		    echo 'prepJobO.py end --------'
+		    $timecmd athena.py preJobO.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		else
+		    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		fi
 	    else
 
 		if [ n$DATASETTYPE == n'FILE_STAGER' ]; 
@@ -828,7 +838,14 @@ EOF
 	else
 	    if [ n$RECEXTYPE == n'' ]
 		then
-		$timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		if [ -f preJobO.py ]; then
+		    echo 'prepJobO.py start ---------'
+		    cat preJobO.py 
+		    echo 'prepJobO.py end --------'
+		    $timecmd athena.py preJobO.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		else
+		    $timecmd athena.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
+		fi
 	    else
 		$timecmd athena.py input.py $ATHENA_OPTIONS evtmax.py; echo $? > retcode.tmp
 	    fi
