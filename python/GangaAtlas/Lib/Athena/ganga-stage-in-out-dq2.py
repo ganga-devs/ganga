@@ -627,7 +627,7 @@ def _makePoolFileCatalog(files):
 
 ########################################################################
 # prepending jobOptions
-def _preJobO(inputFileList = [] ):
+def _preJobO(inputFileList = [], inputFileListPeeker = [] ):
 
     return """
 try:
@@ -653,7 +653,7 @@ try:
     import AthenaCommon.AthenaCommonFlags
 
     def _dummyFilesInput(*argv):
-        return %(inputFileList)s 
+        return %(inputFileListPeeker)s 
 
     AthenaCommon.AthenaCommonFlags.FilesInput.__call__ = _dummyFilesInput
 except:
@@ -663,7 +663,7 @@ try:
     import AthenaCommon.AthenaCommonFlags
 
     def _dummyGet_Value(*argv):
-        return %(inputFileList)s 
+        return %(inputFileListPeeker)s 
 
     for tmpAttr in dir (AthenaCommon.AthenaCommonFlags):
         import re
@@ -674,7 +674,7 @@ try:
                 pass
 except:
     pass
-""" % { 'inputFileList' : inputFileList }
+""" % { 'inputFileList' : inputFileList, 'inputFileListPeeker' : inputFileListPeeker }
 
 ########################################################################
 # make job option file
@@ -695,6 +695,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         joName = 'preJobO.py'
         outFilePre = open(joName,'w')
         inputFileList = []
+        inputFileListPeeker = []
         for lfn in lfns:
             if (configSETYPE == 'dpm'):
                 surl = files[lfn]['surl']
@@ -704,10 +705,12 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
                 # remove redundant /
                 pfn = re.sub('^//','/',pfn)
                 pfn = "rfio:" + pfn
-                inputFileList.append(pfn)
+                inputFileListPeeker.append(pfn)
+                inputFileList.append(files[lfn]['pfn'])
             else:
                 inputFileList.append(files[lfn]['pfn'])
-        preJobO = _preJobO(inputFileList)
+                inputFileListPeeker.append(files[lfn]['pfn'])
+        preJobO = _preJobO(inputFileList, inputFileListPeeker)
         outFilePre.write(preJobO)
         outFilePre.close()
 
