@@ -134,8 +134,8 @@ class DiracCommands:
     def getReplicas(files): return DiracCommands.dirac.getReplicas(files)
     getReplicas = staticmethod(getReplicas)
 
-    def addFile(lfn,file,diracSE):
-        return DiracCommands.dirac.addFile(lfn,file,diracSE)
+    def addFile(lfn,file,diracSE,guid):
+        return DiracCommands.dirac.addFile(lfn,file,diracSE,guid)
     addFile = staticmethod(addFile)
 
     def getFile(lfn,dir):
