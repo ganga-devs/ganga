@@ -93,6 +93,7 @@ class Gaudi(Francesc):
         optsfiles = [fileitem.name for fileitem in self.optsfile]
         try:
             parser = PythonOptionsParser(optsfiles,self.extraopts,self.shell)
+            self.parser = parser
         except ApplicationConfigurationError, e:
             debug_dir = job.getDebugWorkspace().getPath()
             f = open(debug_dir + '/gaudirun.stdout','w')
