@@ -48,11 +48,15 @@ class PhysicalFile(GangaObject):
     def _attribute_filter__set__(self,n,v):
         return full_expand_filename(v)
         
-    def upload(self,lfn,diracSE):
+    def upload(self,lfn,diracSE,guid=None):
         'Upload PFN to LFC on SE "diracSE" w/ LFN "lfn".' 
         from LogicalFile import get_result
-        cmd = 'result = DiracCommands.addFile("%s","%s","%s")' % \
-              (lfn,self.name,diracSE)
+        if guid is None:
+            cmd = 'result = DiracCommands.addFile("%s","%s","%s",None)' % \
+                  (lfn,self.name,diracSE)
+        else:
+            cmd = 'result = DiracCommands.addFile("%s","%s","%s","%s")' % \
+                  (lfn,self.name,diracSE,guid)
         result = get_result(cmd,'Problem w/ upload','Error uploading file.')
         from LogicalFile import LogicalFile
         return GPIProxyObjectFactory(LogicalFile(name=lfn))
