@@ -1953,21 +1953,21 @@ if __name__ == '__main__':
                         files.pop(lfn)
 
             # Configure prependJobO for AutoConfiguration and InputFilePeeker
-            prependJobO = False
-            if os.environ.has_key('ATHENA_OPTIONS'):
-                joboptions = os.environ['ATHENA_OPTIONS'].split(' ')
-                for jfile in joboptions:
-                    try:
-                        inFile = open(jfile,'r')
-                        # scan jobOptions for AutoConfiguration and InputFilePeeker
-                        allLines = inFile.readlines()
-                        for line in allLines:
-                            if line.find("InputFilePeeker")>0 or line.find("AutoConfiguration")>0:
-                                prependJobO = True
-                                break
-                    
-                    except:
-                        pass
+            prependJobO = True
+            #if os.environ.has_key('ATHENA_OPTIONS'):
+            #    joboptions = os.environ['ATHENA_OPTIONS'].split(' ')
+            #    for jfile in joboptions:
+            #        try:
+            #            inFile = open(jfile,'r')
+            #            # scan jobOptions for AutoConfiguration and InputFilePeeker
+            #            allLines = inFile.readlines()
+            #            for line in allLines:
+            #                if line.find("InputFilePeeker")>0 or line.find("AutoConfiguration")>0 or line.find("RecExCommon/")>0:
+            #                    prependJobO = True
+            #                    break
+            #        
+            #        except:
+            #            pass
 
             print 'prependJobO = %s ' %prependJobO
             _makeJobO(files, tag=tag_flag, version=atlas_release_major, dtype=datatype, usePrependJobO = prependJobO)
