@@ -689,7 +689,11 @@ class JEMMonitoringServiceHandler(object):
         jobID = self.__job.info.monitor.getJobID()
         escapedJobID = Utils.escapeJobID(jobID)
 
-        self.__job.info.monitor.jmdfile = WNConfig.LOG_DIR + os.sep + escapedJobID + os.sep + UIConfig.PUBLISHER_JMD_FILE
+        jmdDir = WNConfig.LOG_DIR + os.sep + escapedJobID
+        if not os.path.exists(jmdDir):
+            os.makedirs(jmdDir, 0600)
+
+        self.__job.info.monitor.jmdfile = jmdDir + os.sep + UIConfig.PUBLISHER_JMD_FILE
 
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
             return
