@@ -506,9 +506,9 @@ if FileStagerInputCollection:
     ic = FileStagerInputCollection
 
 ## assume we're dealing with AODs, else ESDs
-    poolESDInput = False
-    if len(ic)>0:
-        if ic[0].find('ESD')>0: poolESDInput = True
+poolESDInput = False
+if len(ic)>0:
+    if ic[0].find('ESD')>0: poolESDInput = True
 
 ## get a handle on the ServiceManager
 if os.environ.has_key('DATASETDATATYPE') and os.environ['DATASETDATATYPE']=='MuonCalibStream':
