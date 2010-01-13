@@ -3,10 +3,10 @@
 #kuba
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Base-XMLMigration-1-5
+ganga/python/Ganga                                                     Ganga-Base-XMLMigration-1-7
 
 #johannes/dan/mark
-ganga/python/GangaAtlas                                                GangaAtlas-XMLMigration-1-9
+ganga/python/GangaAtlas                                                GangaAtlas-XMLMigration-1-11
 
 #rod
 ganga/python/GangaCronus                                               GangaCronus-20-0
