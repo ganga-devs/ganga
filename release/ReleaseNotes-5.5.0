@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.0 (2009/12/16)
+5.5.0 (2010/1/13)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -12,6 +12,7 @@ temporarily renamed ~/gangadir-TMP-5.0 and ~/.gangarc-TMP-5.0
 changes in job.clean() interface
 
 merged from trunk at the time of 5.4.2 release.
+merged from trunk at the time of 5.4.4-pre (including MSG usage monitoring)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -24,6 +25,16 @@ Athena:
   submission speed-up
 * Fix for better support of inputFilePeeker/AutoConfiguration 
   in the FILE_STAGER input mode on LCG backend
+* Local, Batch backends: Enable job statistics in Athena.stats field
+* Local, Batch backends: Fix DQ2 output dataset creation workflow
+* Local, Batch backends: Fix setting of config.DQ2.DQ2_LOCAL_SITE_ID
+* Updates for InputFilePeeker/AutoConfiguration in
+  Athena/LCG/Local/Batch:
+  - search jobOptions if InputFilePeeker/AutoConfiguration is configured
+  - use preJobO.py and prepend it to jobOptions
+  - automatically works for DQ2_LOCAL, FILE_STAGER and DQ2_COPY
+  - Work-around for rfio at DPM sites: uses short TURL since Athena
+    bug (http://savannah.cern.ch/bugs/?59253) is not solved yet.
 
 AMAAthena:
 * new workflow for setting/preparing AMAAthena application:
