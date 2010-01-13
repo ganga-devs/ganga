@@ -172,9 +172,9 @@ class Task(GangaObject):
                 if int(stid[-2]) == self.id:
                     if j.subjobs and not only_master_jobs:
                         for sj in j.subjobs:
-                            jobslice.jobs[sj.fqid] = stripProxy(sj)
+                            jobslice.objects[sj.fqid] = stripProxy(sj)
                     else:
-                        jobslice.jobs[j.fqid] = stripProxy(j)
+                        jobslice.objects[j.fqid] = stripProxy(j)
             except Exception, x:
                 print x
                 pass
