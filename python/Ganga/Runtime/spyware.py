@@ -28,14 +28,14 @@ def ganga_started(session_type):
 
     if config['UsageMonitoringMSG']:
         import Ganga.Lib.MonitoringServices.MSGMS as MSGMS
-        print MSGMS,dir(MSGMS)
+        #print MSGMS,dir(MSGMS)
         msg_config = getConfig('MSGMS')
         p = MSGMS.get_publisher(msg_config['server'],
                                            msg_config['port'],
                                            msg_config['username'], 
                                            msg_config['password'])
 
-        print msg_config['server'],msg_config['port'],msg_config['username'], msg_config['password']
+        #print msg_config['server'],msg_config['port'],msg_config['username'], msg_config['password']
 
         headers = {'persistent':'true'}
         p.send("/queue/ganga.usage",repr(usage_message),headers)
