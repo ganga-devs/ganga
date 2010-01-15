@@ -100,7 +100,7 @@ class DashboardMS(IMonitoringService.IMonitoringService):
             )
         # send message
         headers = {'persistent':'true'}
-        wlcg_msg = FormatUtil.dictToWlcg(message)
+        wlcg_msg = FormatUtil.dictToWlcg(message, include_microseconds=False)
         p.send(destination, wlcg_msg, headers)
 
     def _log(self, level='info', message=''):
