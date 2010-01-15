@@ -462,7 +462,7 @@ class DQ2Dataset(Dataset):
                 if contents_size.has_key(guid):
                     try:
                         sumfilesize += contents_size[guid]
-                        allcontentsSize.append(guid, lfn, contents_size[guid])
+                        allcontentsSize.append((guid, lfn, contents_size[guid]))
                     except:
                         pass
             # Sum up dataset filesize per dataset:
@@ -474,7 +474,7 @@ class DQ2Dataset(Dataset):
                     if contents_size.has_key(guid):
                         try:
                             sumfilesizeDataset += contents_size[guid]
-                            contentsSize.append(guid, lfn, contents_size[guid])
+                            contentsSize.append((guid, lfn, contents_size[guid]))
                         except:
                             pass
                 diffcontentsNew[dataset] = (contents, sumfilesizeDataset)
