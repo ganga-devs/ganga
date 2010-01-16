@@ -302,14 +302,16 @@ class DQ2JobSplitter(ISplitter):
         
         logger.debug('allowed_sites = %s ', allowed_sites)
 
-        contents_temp = job.inputdata.get_contents(overlap=False, filesize=True)
+        contents_temp = job.inputdata.get_contents(overlap=False, size=True)
         contents = {}
-        datasetSizes = {}
         datasetLength = {}
+        allfiles = 0
         for dataset, content in contents_temp.iteritems():
-            contents[dataset] = content[0]
-            datasetSizes[dataset] = content[1]
+            contents[dataset] = content
             datasetLength[dataset] = len(contents[dataset])
+            allfiles += datasetLength[dataset]
+            logger.info('Dataset %s contains %d files'%(dataset,datasetLength[dataset]))
+        logger.info('Total num files to process is %d'%allfiles)
 
         siteinfos = {}
         allcontents = {}
@@ -335,10 +337,6 @@ class DQ2JobSplitter(ISplitter):
 
         subjobs = []
         totalfiles = 0
-        allfiles = 0
-        # Count total number of files
-        for dataset, info in allcontents.iteritems():
-            allfiles = allfiles + len(info)
         
         for dataset, siteinfo in siteinfos.iteritems():
             
@@ -348,6 +346,7 @@ class DQ2JobSplitter(ISplitter):
                 self.numfiles = 1
 
             for sites, guids in siteinfo.iteritems():
+                # at these sites process these guids belonging to dataset
 
                 if self.numfiles <= 0: 
                     self.numfiles = 1
@@ -378,50 +377,50 @@ class DQ2JobSplitter(ISplitter):
                 if nrfiles > len(guids):
                     nrfiles = len(guids)
 
-                totalsize = datasetSizes[dataset] * len(guids) / datasetLength[dataset]
-
+                max_subjob_filesize = 0
                 # Restriction based on the maximum dataset filesize
-                if self.filesize > 0 or job.backend._name in [ 'NG', 'Panda']:
-                    warn = False
-                    maxsize = self.filesize
+                if self.filesize > 0:
+                    max_subjob_filesize = self.filesize*1024*1024
+                elif job.backend._name == 'NG' and (self.filesize < 1 or config['MaxFileSizeNGDQ2JobSplitter'] < self.filesize):
+                    max_subjob_filesize = config['MaxFileSizeNGDQ2JobSplitter']*1024*1024
+                elif job.backend._name == 'Panda' and (self.filesize < 1 or config['MaxFileSizePandaDQ2JobSplitter'] < self.filesize):
+                    max_subjob_filesize = config['MaxFileSizePandaDQ2JobSplitter']*1024*1024
 
-                    if job.backend._name == 'NG' and (maxsize < 1 or config['MaxFileSizeNGDQ2JobSplitter'] < maxsize):
-                        maxsize = config['MaxFileSizeNGDQ2JobSplitter']
-                    elif job.backend._name == 'Panda' and (maxsize < 1 or config['MaxFileSizePandaDQ2JobSplitter'] < maxsize):
-                        maxsize = config['MaxFileSizePandaDQ2JobSplitter']
-                    elif job.backend._name == 'LCG':
-                        nrjob = 1
-                        nrfiles = len(guids)
+                # sort the guids by name order
+                names = [allcontent[g][0] for g in guids]
+                namesAndGuids = zip(names,guids)
+                namesAndGuids.sort()
+                names,guids = zip(*namesAndGuids)
 
-                    logger.warning('You are using DQ2JobSplitter.filesize or the backend used supports only a maximum dataset size of %s MB per subjob - job splitting has been adjusted accordingly.', maxsize)
-
-                    subjobsize = totalsize / nrjob / (1024*1024)
-                    while subjobsize > maxsize and nrfiles > 1:
-                        warn = True
-                        nrfiles = nrfiles - 1
-                        if nrfiles < 1:
-                            nrfiles = 1
-
-                        nrjob = int(math.ceil(len(guids)/float(nrfiles)))
-                        nrfiles = int(math.ceil(len(guids)/float(nrjob)))
-                        subjobsize = totalsize / nrjob / (1024*1024)
-                    if warn:
-                        logger.warning('Maximum data size per subjob (%d MB) reached - creating more subjobs.'%maxsize)
-                    if subjobsize > maxsize:
-                        logger.warning('Failed to split job on filesize constraint. Subjob size %d MB > requested size %d MB'%(subjobsize,maxsize))
-
-                for i in xrange(0,nrjob):
-
+                # now assign the files to subjobs
+                max_subjob_numfiles = nrfiles
+                logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob subject to a limit of %d Bytes per subjob.'%(nrjob,max_subjob_numfiles,max_subjob_filesize))
+                remaining_guids = list(guids)
+                while remaining_guids and len(subjobs)<config['MaxJobsDQ2JobSplitter']:
+                    num_remaining_guids = len(remaining_guids)
                     j = Job()
-
                     j.name = job.name
-
-                    j.inputdata       = job.inputdata
+                    j.inputdata = DQ2Dataset()
                     j.inputdata.dataset = dataset
-                    j.inputdata.guids = guids[i*nrfiles:(i+1)*nrfiles]
-                    j.inputdata.names = [ allcontent[guid] for guid in j.inputdata.guids ]
+                    j.inputdata.sizes = []
+                    while remaining_guids and len(j.inputdata.guids)<max_subjob_numfiles and sum(j.inputdata.sizes)<max_subjob_filesize:
+                        for next_guid in remaining_guids:
+                            if sum(j.inputdata.sizes)+allcontent[next_guid][1] < max_subjob_filesize:
+                                remaining_guids.remove(next_guid)
+                                j.inputdata.guids.append(next_guid)
+                                j.inputdata.names.append(allcontent[next_guid][0])
+                                j.inputdata.sizes.append(allcontent[next_guid][1])
+                                break
+                        else:
+                            break
+                        
                     j.inputdata.number_of_files = len(j.inputdata.guids)
-
+                    if num_remaining_guids == len(remaining_guids):
+                        logger.warning('Filesize constraint blocked the assignment of %d files having guids: %s'%(len(remaining_guids),remaining_guids))
+                        break
+                    #print j.inputdata.names
+                    #print j.inputdata.sizes
+                    #print sum(j.inputdata.sizes)
                     j.outputdata    = job.outputdata
                     j.application   = job.application
                     j.backend       = job.backend
@@ -440,15 +439,16 @@ class DQ2JobSplitter(ISplitter):
                             for tag_file in job.inputdata.tag_info:
                                 if job.inputdata.tag_info[tag_file]['refs'][0][0] in j.inputdata.names:
                                     j.inputdata.tag_info[tag_file]  = job.inputdata.tag_info[tag_file]
-
+                    
                     subjobs.append(j)
 
                     totalfiles = totalfiles + len(j.inputdata.guids) 
-                    
+
 
         if not subjobs:
             logger.error('DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')
 
+        logger.info('Total files assigned to subjobs is %d'%totalfiles)
         if not totalfiles == allfiles:
             logger.error('DQ2JobSplitter was only able to assign %s out of %s files to the subjobs ! Please check your job configuration if this is intended and possibly change to a different cloud or choose different sites!', totalfiles, allfiles)
 
@@ -456,6 +456,6 @@ class DQ2JobSplitter(ISplitter):
     
 config = getConfig('Athena')
 config.addOption('MaxJobsDQ2JobSplitter', 1000, 'Maximum number of allowed subjobs of DQ2JobSplitter')
-config.addOption('MaxFileSizeNGDQ2JobSplitter', 5000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the NG backend (im MB)')
-config.addOption('MaxFileSizePandaDQ2JobSplitter', 10000, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (im MB)')
+config.addOption('MaxFileSizeNGDQ2JobSplitter', 14336, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the NG backend (in MB)')
+config.addOption('MaxFileSizePandaDQ2JobSplitter', 14336, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (in MB)')
 config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_MCDISK', 'NDGF-T1_PRODDISK', 'NDGF-T1_SCRATCHDISK' ], 'Allowed space tokens/sites for DQ2JobSplitter on NG backend' )
