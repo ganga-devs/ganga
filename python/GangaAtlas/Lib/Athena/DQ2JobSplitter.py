@@ -5,7 +5,7 @@
 ###############################################################################
 # Athena DQ2JobSplitter
 
-import math, socket
+import math, socket, operator
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -305,13 +305,17 @@ class DQ2JobSplitter(ISplitter):
         contents_temp = job.inputdata.get_contents(overlap=False, size=True)
         contents = {}
         datasetLength = {}
+        datasetFilesize = {}
         allfiles = 0
+        allsizes = 0
         for dataset, content in contents_temp.iteritems():
             contents[dataset] = content
             datasetLength[dataset] = len(contents[dataset])
             allfiles += datasetLength[dataset]
-            logger.info('Dataset %s contains %d files'%(dataset,datasetLength[dataset]))
-        logger.info('Total num files to process is %d'%allfiles)
+            datasetFilesize[dataset] = reduce(operator.add, map(lambda x: x[1][1],content))
+            allsizes += datasetFilesize[dataset]
+            logger.info('Dataset %s contains %d files in %d bytes'%(dataset,datasetLength[dataset],datasetFilesize[dataset]))
+        logger.info('Total num files=%d, total file size=%d bytes'%(allfiles,allsizes))
 
         siteinfos = {}
         allcontents = {}
