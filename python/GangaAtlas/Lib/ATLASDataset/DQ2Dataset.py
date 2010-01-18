@@ -136,7 +136,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
             return []
 
         alllocations = locations[datasetvuid][0] + locations[datasetvuid][1]
-        logger.warning('Dataset %s has %s locations', dataset, len(alllocations))
+        logger.info('Dataset %s has %s locations', dataset, len(alllocations))
 
         try:
             dq2_lock.acquire()
@@ -462,7 +462,7 @@ class DQ2Dataset(Dataset):
                 if contents_size.has_key(guid):
                     try:
                         sumfilesize += contents_size[guid]
-                        allcontentsSize.append(guid, lfn, contents_size[guid])
+                        allcontentsSize.append((guid, (lfn, contents_size[guid])))
                     except:
                         pass
             # Sum up dataset filesize per dataset:
@@ -474,7 +474,7 @@ class DQ2Dataset(Dataset):
                     if contents_size.has_key(guid):
                         try:
                             sumfilesizeDataset += contents_size[guid]
-                            contentsSize.append(guid, lfn, contents_size[guid])
+                            contentsSize.append((guid, (lfn, contents_size[guid])))
                         except:
                             pass
                 diffcontentsNew[dataset] = (contents, sumfilesizeDataset)

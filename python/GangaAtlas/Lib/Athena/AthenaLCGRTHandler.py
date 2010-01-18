@@ -572,7 +572,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 cmtconfig = app.atlas_cmtconfig
             else:
                 cmtconfig = 'i686-slc4-gcc34-opt'
-            if cmtconfig != 'i686-slc4-gcc34-opt':
+            if not cmtconfig in [ 'i686-slc4-gcc34-opt', 'i686-slc5-gcc43-opt' ]:
                 cmtconfig = 'i686-slc4-gcc34-opt'
             if app.atlas_production=='':
                 requirements.software = ['VO-atlas-offline-%s-%s' %(app.atlas_release, cmtconfig )]
