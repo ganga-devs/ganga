@@ -160,8 +160,7 @@ class Francesc(IApplication):
         """Build the code in the release area the application object points
         to. The actual command executed is "cmt broadcast make <argument>"
         after the proper configuration has taken place."""
-        command = '###CMT### broadcast -global -select=%s cmt make ' \
-                  % self.user_release_area + argument
+        command = '###CMT### broadcast cmt make ' + argument
         CMTscript.CMTscript(self,command)
 
     def cmt(self, command):

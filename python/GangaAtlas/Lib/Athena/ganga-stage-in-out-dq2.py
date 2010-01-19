@@ -19,7 +19,6 @@ from dq2.content.DQContentException import DQInvalidFileMetadataException
 from dq2.location.DQLocationException import DQLocationExistsException
 from dq2.location.DQLocationException import DQLocationExistsException
 from dq2.content.DQContentException import DQFileExistsInDatasetException
-from dq2.repository.DQRepositoryException import DQDatasetExistsException
 
 _refreshToACache()
 
@@ -1146,7 +1145,7 @@ def register_datasets_details(datasets,outdata):
                     dq2_lock.acquire()
                     try:
                         datasetinfo = dq2.registerNewDataset(dataset)
-                    except (DQDatasetExistsException,Exception), Value:
+                    except Exception, Value:
                         print 'Error registering new dataset %s: %s' %(dataset,Value)
                 finally:
                     dq2_lock.release()

@@ -580,8 +580,7 @@ class StagerDataset(DQ2Dataset):
                     logger.warning('replica of guid:%s not found at %s' % (guid, ddmSiteName))
 
         elif self.type in ['DPM','CASTOR']:
-            #fpaths = list_castor_files(dirs=self.dataset, pattern='.*\.root.*')
-            fpaths = list_castor_files(dirs=self.dataset, pattern='.*')
+            fpaths = list_castor_files(dirs=self.dataset, pattern='.*\.root.*')
             fpaths.sort()
             id = 0
             for fpath in fpaths:
@@ -589,8 +588,7 @@ class StagerDataset(DQ2Dataset):
                 id += 1
             
         elif self.type in ['LOCAL']:
-            #fpaths = find(dirs=self.dataset, pattern='.*\.root.*')
-            fpaths = find(dirs=self.dataset, pattern='.*')
+            fpaths = find(dirs=self.dataset, pattern='.*\.root.*')
             fpaths.sort()
             id = 0
             for fpath in fpaths:
