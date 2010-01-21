@@ -123,12 +123,8 @@ cmt_setup () {
 	    else
 		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=AtlasOffline,$ATLAS_RELEASE,32
 	    fi
-	if    
-
-
-
+	fi    
     fi
-
 
     # print relevant env. variables for debug 
     echo "CMT setup:"
