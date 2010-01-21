@@ -112,8 +112,19 @@ cmt_setup () {
         else
             source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=AtlasOffline,$ATLAS_RELEASE
         fi
-    fi
 
+	# check if 64 bit was made and correct it
+	if [ n$CMTCONFIG == n'x86_64-slc5-gcc43-opt'  ]; then 
+
+	    if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
+		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_PRODUCTION,$ATLAS_PROJECT,32
+	    elif [ ! -z $ATLAS_PROJECT ]; then
+		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_RELEASE,$ATLAS_PROJECT,32
+	    else
+		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=AtlasOffline,$ATLAS_RELEASE,32
+	    fi
+	fi    
+    fi
 
     # print relevant env. variables for debug 
     echo "CMT setup:"
@@ -315,7 +326,9 @@ get_pybin () {
         echo "get_pybin not implemented"
     fi
 
-    if ( [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] ); then
+    if ( [ ! -z `echo $CMTCONFIG | grep slc5` ] ); then
+	export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/*/bin/python | grep slc5 | head -1)
+    elif ( [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] ); then
         export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/*/bin/python | head -1)
     else
         export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/slc3_ia32_gcc323/bin/python | head -1)
@@ -719,7 +732,7 @@ run_athena () {
 		    FILESTAGER_JOS=''
  		    PARENT_JOS=$ATHENA_OPTIONS" evtmax.py"
  		fi
- 		
+
 		$timecmd athena.py $FILESTAGER_JOS input.py $PARENT_JOS; echo $? > retcode.tmp
 	    fi
 
