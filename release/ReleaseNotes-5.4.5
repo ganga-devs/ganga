@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.4.5 (2010/1/20)
+5.4.5 (2010/1/22)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ Athena:
   - More clear logging messages about how many files are in the 
     input datasets and which files could not be assigned, if any. 
   - Add overall dataset size to info log
-* Fix cmtconfig SL5 problem in Athena/LCG
+* Fix SL5 cmtconfig and setup problem in Athena/LCG
 * Fix return value of DQ2Dataset.get_content(size=True)
 * Add missing DQDatasetExistsException exception in 
   ganga-stage-in-out-dq2.py
@@ -39,5 +39,12 @@ AMAAthena:
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 A few small features added.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Send cmtConfig from local environment. Jobs processing athena >= 15.6.3 need to be submitted from 
+slc5.
 
 **************************************************************************************************************
