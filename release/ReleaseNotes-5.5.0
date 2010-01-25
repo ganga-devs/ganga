@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.0 (2010/1/13)
+5.5.0 (2010/1/25)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -18,39 +18,14 @@ merged from trunk at the time of 5.4.4-pre (including MSG usage monitoring)
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
-* Sync trunk with XMLMigration branch - GangaAtlas-21-37 
+* Sync trunk with XMLMigration branch - GangaAtlas-21-42 - Ganga 5.4.5
 
 Athena:
 * Add Caching code - DQ2JobSplitter DQ2 calls are now cache for 
   submission speed-up
-* Fix for better support of inputFilePeeker/AutoConfiguration 
-  in the FILE_STAGER input mode on LCG backend
-* Local, Batch backends: Enable job statistics in Athena.stats field
-* Local, Batch backends: Fix DQ2 output dataset creation workflow
-* Local, Batch backends: Fix setting of config.DQ2.DQ2_LOCAL_SITE_ID
-* Updates for InputFilePeeker/AutoConfiguration in
-  Athena/LCG/Local/Batch:
-  - search jobOptions if InputFilePeeker/AutoConfiguration is configured
-  - use preJobO.py and prepend it to jobOptions
-  - automatically works for DQ2_LOCAL, FILE_STAGER and DQ2_COPY
-  - Work-around for rfio at DPM sites: uses short TURL since Athena
-    bug (http://savannah.cern.ch/bugs/?59253) is not solved yet.
 
-AMAAthena:
-* new workflow for setting/preparing AMAAthena application:
-  - specify framework-level AMA job option files by setting flags,
-    e.g. j.application.job_option_flags = ['DATA', 'TRIG']
-  - convert AMA configuration into user-level job options on the
-    client side
-* add necessary changes for adopting the revised StagerDataset
-* add necessary changes to adopt the revised StagerDataset
-* rewriting the StagerDataset workflow:
-  - using the same code made for DQ2Dataset(type='FILE_STAGER')
-  - adding the workaround to work with inputFilePeeker
-* include AMAAthenaTask application in the new DQ2OutputDataset workflow
-* adopts the common subroutines: filestager_setup and frontier_setup
-* introduce two common subroutines: filestager_setup and frontier_setup
-* bugfix in the function for making external system call
+externals:
+* Update to DQ2Clients 0.1.32
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -63,6 +38,13 @@ Update pyqt library
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 Special tag for 5.5.0 beta release.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Send cmtConfig from local environment. Jobs processing athena >= 15.6.3 need to be submitted from 
+slc5.
 
 
 --------------------------------------------------------------------------------------------------------------
