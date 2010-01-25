@@ -10,7 +10,7 @@ set GANGA_SITE_CONFIG_AREA "$(GANGA_SITE_CONFIG_AREA)"  CERN "/afs/cern.ch/sw/ga
 set GANGA_NEVER_REEXEC 1
 
 # use pyqt     v* LCG_Interfaces
-use pyxml    v* LCG_Interfaces
+# use pyxml    v* LCG_Interfaces
 use ROOT     v* LCG_Interfaces
 
 # Revert to IPython from Ganga external area
