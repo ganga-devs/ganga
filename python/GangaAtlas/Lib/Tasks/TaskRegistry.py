@@ -104,7 +104,7 @@ class TaskRegistry(Registry):
         configuration = getConfig('Configuration')
         try:
             fn = os.path.join(configuration["gangadir"],"tasks.xml")
-            if not os.path.exists(fn + ".converted.to.XML.6.0"):
+            if os.path.exists(fn) and not os.path.exists(fn + ".converted.to.XML.6.0"):
                 from GangaAtlas.Lib.Tasks.TaskList import TaskList
                 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
                 from Ganga.Core.GangaRepository.VStreamer import from_file
