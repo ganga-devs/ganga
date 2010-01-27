@@ -307,7 +307,12 @@ class Registry(object):
                 id = self.find(obj)
                 try:
                     if len(self.repository.lock([self.find(obj)])) == 0:
-                        raise RegistryLockError("Could not lock '%s' object #%i!" % (self.name,self.find(obj)))
+                        errstr = "Could not lock '%s' object #%i!" % (self.name,self.find(obj))
+                        try:
+                            errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(self.find(obj))
+                        except Exception:
+                            pass
+                        raise RegistryLockError(errstr)
                 finally: # try to load even if lock fails
                     try:
                         obj.__dict__.pop("_registry_refresh",None)
