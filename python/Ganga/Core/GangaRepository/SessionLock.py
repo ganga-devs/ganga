@@ -252,6 +252,8 @@ class SessionLockManager(GangaThread):
                 raise RepositoryError(self.repo, "Job counter deleted! External modification to repository!")
             if not newcount >= self.count:
                 raise RepositoryError(self.repo, "Counter value decreased - logic error!")
+            if self.locked and max(self.locked) >= newcount: # someone used force_ids (for example old repository imports)
+                newcount = max(self.locked) + 1
             ids = range(newcount,newcount+n)
             self.locked.update(ids)
             self.count = newcount+n

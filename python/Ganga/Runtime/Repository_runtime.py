@@ -78,7 +78,11 @@ def bootstrap():
         if registry.name in oldJobs:
             for j in oldJobs[registry.name]:
                 j._index_cache = None
-                registry._add(j)
+                if not j.id in registry:
+                    registry._add(j, force_index = j.id)
+                else:
+                    logger.warning("Import Collision at id %i, appending job to the end...", j.id)
+                    registry._add(j)
     import atexit
     atexit.register(shutdown)
     return retval
