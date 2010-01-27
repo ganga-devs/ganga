@@ -27,10 +27,13 @@ def getLocalRoot():
 
 def getOldJobs():
     salvaged_jobs = {'jobs':[],'templates':[]}
-    from Ganga.Core.JobRepository.ARDA import repositoryFactory
-    for name in names:
-        path = os.path.join(basepath,"LocalAMGA")
-        if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
+    basepath = os.path.join(expandfilename(config['gangadir']),'repository',config['user'])
+    names = ['jobs','templates']
+
+    path = os.path.join(basepath,"LocalAMGA")
+    if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
+        from Ganga.Core.JobRepository.ARDA import repositoryFactory
+        for name in names:
             try:
                 rep = repositoryFactory(subpath = name)
                 co_jobs = rep.checkoutJobs({})
@@ -44,8 +47,6 @@ def getOldJobs():
                 raise
 
     from Ganga.Core.JobRepositoryXML import factory, version
-    names = ['jobs','templates']
-    basepath = os.path.join(expandfilename(config['gangadir']),'repository',config['user'])
     for name in names:
         path = os.path.join(basepath,"LocalXML",version,name)
         if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
