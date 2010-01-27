@@ -131,7 +131,7 @@ class TaskRegistry(Registry):
                     logger.info("No old tasks found...")
                 file(fn+".converted.to.XML.6.0","w").close()
         except Exception,x:
-            logger.error("Could not load old Tasks repository:" % x)
+            logger.error("Could not load old Tasks repository: %s" % x)
 
         from Ganga.Core.GangaThread import GangaThread
         self._main_thread = GangaThread(name="GangaTasks", target=self._thread_main)
