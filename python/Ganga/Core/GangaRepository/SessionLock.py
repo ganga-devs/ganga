@@ -310,13 +310,13 @@ class SessionLockManager(GangaThread):
                     try:
                         now = os.stat(self.fn).st_ctime
                         for sf in os.listdir(self.sdir):
-                            if not sf.endswith(".session"):
+                            if not sf.endswith(".session") or os.path.join(self.sdir,sf) == self.fn:
                                 continue
                             if now - os.stat(os.path.join(self.sdir,sf)).st_ctime > session_expiration_timeout:
                                 os.unlink(os.path.join(self.sdir,sf))
                     except OSError, x:
                         # nothing really important, another process deleted the session before we did.
-                        logger.warning("Unimportant OSError in loop: %s" % x)
+                        logger.info("Unimportant OSError in loop: %s" % x)
                 except RepositoryError:
                     break
                 except Exception, x:
