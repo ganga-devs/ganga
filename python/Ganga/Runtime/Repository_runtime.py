@@ -27,6 +27,22 @@ def getLocalRoot():
 
 def getOldJobs():
     salvaged_jobs = {'jobs':[],'templates':[]}
+    from Ganga.Core.JobRepository.ARDA import repositoryFactory
+    for name in names:
+        path = os.path.join(basepath,"LocalAMGA")
+        if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
+            try:
+                rep = repositoryFactory(subpath = name)
+                co_jobs = rep.checkoutJobs({})
+                salvaged_jobs[name].extend(co_jobs)
+                file(os.path.join(path,"converted.to.XML.6.0"),"w").close()
+                rep.releaseAllLocks()
+                if len(co_jobs) > 0:
+                    logger.warning("Converted %i jobs from old AMGA repository" % len(co_jobs))
+            except Exception,x:
+                logger.error("Could not load old AMGA repository:" % x)
+                raise
+
     from Ganga.Core.JobRepositoryXML import factory, version
     names = ['jobs','templates']
     basepath = os.path.join(expandfilename(config['gangadir']),'repository',config['user'])
@@ -35,25 +51,16 @@ def getOldJobs():
         if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
             try:
                 rep = factory(dir = path)
-                salvaged_jobs[name].extend(rep.checkoutJobs({}))
+                co_jobs = rep.checkoutJobs({})
+                salvaged_jobs[name].extend(co_jobs)
                 file(os.path.join(path,"converted.to.XML.6.0"),"w").close()
                 rep.releaseAllLocks()
+                if len(co_jobs) > 0:
+                    logger.warning("Converted %i jobs from old XML repository" % len(co_jobs))
             except Exception,x:
                 logger.error("Could not load old XML repository:" % x)
                 raise
-                
-    from Ganga.Core.JobRepository.ARDA import repositoryFactory
-    for name in names:
-        path = os.path.join(basepath,"LocalAMGA")
-        if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
-            try:
-                rep = repositoryFactory(subpath = name)
-                salvaged_jobs[name].extend(rep.checkoutJobs({}))
-                file(os.path.join(path,"converted.to.XML.6.0"),"w").close()
-                rep.releaseAllLocks()
-            except Exception,x:
-                logger.error("Could not load old AMGA repository:" % x)
-                raise
+
     return salvaged_jobs
 
 started_registries = []
