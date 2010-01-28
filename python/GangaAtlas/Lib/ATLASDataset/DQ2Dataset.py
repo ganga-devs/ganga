@@ -857,7 +857,7 @@ class DQ2OutputDataset(Dataset):
     _category = 'datasets'
     _name = 'DQ2OutputDataset'
 
-    _exportmethods = [ 'retrieve', 'fill', 'create_dataset','create_datasets', 'dataset_exists', 'get_locations', 'create_subscription' ]
+    _exportmethods = [ 'retrieve', 'fill', 'create_dataset','create_datasets', 'dataset_exists', 'get_locations', 'create_subscription', 'clean_duplicates_in_dataset' ]
 
     _GUIPrefs = [ { 'attribute' : 'outputdata',     'widget' : 'String_List' },
                   { 'attribute' : 'output',         'widget' : 'String_List' },
@@ -873,6 +873,101 @@ class DQ2OutputDataset(Dataset):
     
     def __init__(self):
         super(DQ2OutputDataset, self).__init__()
+
+    def clean_duplicates_in_dataset(self, datasetname = None):
+        """Clean duplicate filesfrom dataset if e.g. shallow retry count occured"""
+
+        trashFiles = []
+        if not datasetname:
+            datasetname = self.datasetname
+
+        logger.warning('Checking for file dulipates in %s...' %datasetname)
+        
+        # Get filenames from repository (actually finished jobs) 
+        filenames = []
+        outputInfo = self.output
+        for file in outputInfo:
+            filenames.append(file.split(',')[1])
+
+        # Get filenames from dataset
+        contents = []
+        try:
+            dq2_lock.acquire()
+            try:
+                contents = dq2.listFilesInDataset(datasetname)
+            except:
+                contents = ({},'')
+                pass
+        finally:
+            dq2_lock.release()
+
+        if contents:
+            contents = contents[0]
+
+        # Convert 0.3 output to 0.2 style
+        contents_new = {}
+        for guid, info in contents.iteritems():
+            contents_new[ info['lfn'] ] = guid 
+
+        # Loop over all files in dataset
+        for filename in contents_new.keys():
+            if not filename in filenames:
+                trashFiles.append(filename)
+
+        # Determine dataset location
+        try:
+            dq2_lock.acquire()
+            try:
+                location = dq2.listDatasetReplicas(datasetname).values()[0][1][0]
+            except:
+                location = datasetname.split('.')[-1]
+                pass
+        finally:
+            dq2_lock.release()
+
+        if not isDQ2SRMSite(location):
+            logger.error('clean_duplicates_in_dataset failed since %s in no proper DQ2 location', location) 
+            return
+
+        # Create trash dataset
+        trashFilesInfo = []
+        trashFilesGuids = []
+        for trashFile in trashFiles:
+            guid = contents_new[trashFile]
+            trashFilesGuids.append(guid)
+            infoLine = trashDatasetname + ',' + trashFile + ',' + guid + ',' + contents[guid]['filesize']  +  ',' + contents[guid]['checksum'] + ',' +  location
+            trashFilesInfo.append(infoLine)
+
+        if trashFiles:
+            trashDatasetname = datasetname + '.trash'
+            logger.warning('Removing file duplicates from %s outputdataset: %s', datasetname, trashFiles )
+            self.create_dataset(trashDatasetName)
+            self.register_datasets_details( trashDatasetname, trashFilesInfo)
+            logger.warning('Duplicate files are now in dataset: %s', trashDataset)
+            # Delete duplicate files from original dataset
+            try:
+                dq2_lock.acquire()
+                try:
+                    dq2.deleteFilesFromDataset(datasetname, trashFilesGuids)
+                except:
+                    logger.error('Failure during removal of duplicates from dataset %s', datasetname)
+                    pass
+            finally:
+                dq2_lock.release()
+
+            # Delete trash dataset
+            if config['DELETE_DUPLICATES_DATASET']:
+                try:
+                    dq2_lock.acquire()
+                    try:
+                        dq2.deleteDatasetReplicas(trashDatasetname, location)                    
+                    except:
+                        logger.error('Failure during removal of duplicates dataset %s', trashDatasetname)
+                        pass
+                finally:                                                        
+                    dq2_lock.release()
+
+        return
 
     def dataset_exists(self, datasetname = None):
         """Check if dataset already exists"""
@@ -1225,16 +1320,20 @@ class DQ2OutputDataset(Dataset):
                             datasetnameTemp = outputInfo.split(',')[0]
                             if not datasetnameTemp in self.allDatasets:
                                 self.allDatasets.append(datasetnameTemp)
-
+                                
             if (job.application._name in ['Athena','AthenaTask', 'AMAAthena', 'AMAAthenaTask'] and job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']):
-                # Create output container
                 for dataset in self.allDatasets:
+                    # Clean dataset from duplicates on LCG backend
+                    if config['CHECK_OUTPUT_DUPLICATES'] and job.backend._name in [ 'LCG' ]:
+                        self.clean_duplicates_in_dataset(dataset)
+                    # output container name
                     for location in self.location:
                         match = re.search('^(\S*).%s.*'%location, dataset)
                         if match:
                             newDatasetname = match.group(1)
                             break
-
+                        
+                # Create output container
                 containerName = newDatasetname+'/'
                 try:
                     dq2_lock.acquire()
@@ -1397,6 +1496,9 @@ config.addOption('USE_STAGEOUT_SUBSCRIPTION', False, 'Allow DQ2 subscription to 
 config.addOption('usertag','user09','user tag for a given data taking period')
 
 config.addOption('USE_ACCESS_INFO', False, 'Use automatic best choice of input dataset access mode provided by AtlasLCGRequirements.')
+
+config.addOption('CHECK_OUTPUT_DUPLICATES', False, 'Check for duplicate files in DQ2OutputDataset in LCG backend - this could possibly happen by ShallowRetry of glite WMS. A duplicates dataset is created')
+config.addOption('DELETE_DUPLICATES_DATASET', False, 'If CHECK_OUTPUT_DUPLICATES=True is used, duplicates dataset can be automatically deleted by setting this flag to True.')
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
