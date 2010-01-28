@@ -36,7 +36,7 @@ except ImportError:
         pass
     logger = Logger() 
 
-session_expiration_timeout = 8 # seconds
+session_expiration_timeout = 20 # seconds
 
 class SessionLockManager(GangaThread):
     """ Class with thread that keeps a global lock file that synchronizes
@@ -300,6 +300,7 @@ class SessionLockManager(GangaThread):
                 ## TODO: Check for services active/inactive
                 try:
                     try:
+                        now = os.stat(self.fn).st_ctime
                         os.utime(self.fn,None)
                     except OSError, x:
                         if x.errno != errno.ENOENT:
@@ -308,11 +309,12 @@ class SessionLockManager(GangaThread):
                             raise RepositoryError(self.repo, "Own session file not found! Possibly deleted by another ganga session. If this was unintentional: check if the system clocks on computers running Ganga are synchronized!")
                     # Clear expired session files
                     try:
-                        now = os.stat(self.fn).st_ctime
                         for sf in os.listdir(self.sdir):
                             if not sf.endswith(".session") or os.path.join(self.sdir,sf) == self.fn:
                                 continue
-                            if now - os.stat(os.path.join(self.sdir,sf)).st_ctime > session_expiration_timeout:
+                            mtm = os.stat(os.path.join(self.sdir,sf)).st_ctime
+                            if now - mtm  > session_expiration_timeout:
+                                logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (os.path.join(self.sdir,sf), now - mtm))
                                 os.unlink(os.path.join(self.sdir,sf))
                     except OSError, x:
                         # nothing really important, another process deleted the session before we did.
