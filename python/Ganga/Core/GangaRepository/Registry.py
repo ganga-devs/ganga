@@ -310,7 +310,8 @@ class Registry(object):
                         errstr = "Could not lock '%s' object #%i!" % (self.name,self.find(obj))
                         try:
                             errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(self.find(obj))
-                        except Exception:
+                        except Exception, x:
+                            print x
                             pass
                         raise RegistryLockError(errstr)
                 finally: # try to load even if lock fails
@@ -389,14 +390,19 @@ class Registry(object):
         finally:
             self._lock.release()
 
-    def info(self):
+    def info(self,full=False):
         """Returns an informative string onFlush and disconnect the repository. Called from Repository_runtime.py """
         self._lock.acquire()
         try:
-            other_sessions = self.repository.get_other_sessions()
-            s = "Registry '%s': %i objects"
-            if len(other_sessions) > 0:
-                s += ", %i other concurrent sessions:\n * %s" % (self.name, len(self._objects), len(other_sessions), "\n * ".join(other_sessions))
+            s = "registry '%s': %i objects" % (self.name, len(self._objects))
+            if full:
+                other_sessions = self.repository.get_other_sessions()
+                if len(other_sessions) > 0:
+                    s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
             return s
         finally:
             self._lock.release()
+
+    def get_other_sessions(self):
+        return self.repository.get_other_sessions()
+

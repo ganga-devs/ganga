@@ -37,8 +37,76 @@ except ImportError:
     logger = Logger() 
 
 session_expiration_timeout = 20 # seconds
+session_lock_refresher = None
 
-class SessionLockManager(GangaThread):
+class SessionLockRefresher(GangaThread):
+    def __init__(self,session_name,sdir,fn, repo):
+        GangaThread.__init__(self, name='SessionLockRefresher')
+        self.session_name = session_name
+        self.sdir = sdir
+        self.fn = fn
+        self.repos = [repo]
+        
+
+    def run(self):
+        try:
+            while not self.should_stop():
+                ## TODO: Check for services active/inactive
+                try:
+                    try:
+                        oldnow = os.stat(self.fn).st_ctime
+                        os.utime(self.fn,None)
+                        now = os.stat(self.fn).st_ctime
+                        #print "%s: Delta is %i seconds" % (time.time(), now - oldnow)
+                    except OSError, x:
+                        if x.errno != errno.ENOENT:
+                            raise RepositoryError(self.repos[0], "Session file timestamp could not be updated! Locks will be lost!")
+                        else:
+                            raise RepositoryError(self.repos[0], "Own session file not found! Possibly deleted by another ganga session. If this was unintentional: check if the system clocks on computers running Ganga are synchronized!")
+                    # Clear expired session files
+                    try:
+                        # Make list of sessions that are "alive"
+                        ls_sdir = os.listdir(self.sdir)
+                        session_files = [f for f in ls_sdir if f.endswith(".session")]
+                        lock_files = [f for f in ls_sdir if f.endswith(".locks")]
+                        for sf in session_files:
+                            if os.path.join(self.sdir,sf) == self.fn:
+                                continue
+                            mtm = os.stat(os.path.join(self.sdir,sf)).st_ctime
+                            #print "%s: session %s delta is %s seconds" % (time.time(), sf, now - mtm)
+                            if now - mtm  > session_expiration_timeout:
+                                logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
+                                os.unlink(os.path.join(self.sdir,sf))
+                                session_files.remove(sf)
+                        # remove all lock files that do not belong to sessions that are alive
+                        for f in lock_files:
+                            if not f.endswith(".session"):
+                                asf = f.split(".session")[0] + ".session"
+                                if not asf in session_files:
+                                    #logger.warning("Removing dead file %s" % (f))
+                                    os.unlink(os.path.join(self.sdir,f))
+                    except OSError, x:
+                        # nothing really important, another process deleted the session before we did.
+                        logger.info("Unimportant OSError in loop: %s" % x)
+                except RepositoryError:
+                    break
+                except Exception, x:
+                    logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
+                time.sleep(1+random.random())
+        finally:
+            # On shutdown remove session file
+            try:
+                os.unlink(self.fn)
+            except OSError, x:
+                logger.warning("Session file was deleted already or removal failed: %s" % (x))
+            self.unregister()
+            global session_lock_refresher
+            session_lock_refresher = None
+
+    def addRepo(self,repo):
+        self.repos.append(repo)
+
+class SessionLockManager(object):
     """ Class with thread that keeps a global lock file that synchronizes
     ID and counter access across Ganga sessions.
     DEVELOPER WARNING: On NFS, files that are not locked with lockf (NOT flock) will 
@@ -61,20 +129,28 @@ class SessionLockManager(GangaThread):
                 raise RepositoryError(self.repo, "OSError on directory create: %s" % x)
 
     def __init__(self, repo, root, name, minimum_count=0):
-        GangaThread.__init__(self, name='LockUpdater.%s' % name)
+
         self.repo = repo
         self.mkdir(root)
         realpath = os.path.realpath(root)
         # Use the hostname (os.uname()[1])  and the current time in ms to construct the session filename.
         # TODO: Perhaps put the username here?
-        session_name = ".".join([os.uname()[1],str(int(time.time()*1000)),str(os.getpid()),"session"])
+        global session_lock_refresher
+        if session_lock_refresher is None:
+            session_name = ".".join([os.uname()[1],str(int(time.time()*1000)),str(os.getpid()),"session"])
+        else:
+            session_name = session_lock_refresher.session_name
+
         self.sdir = os.path.join(realpath,"sessions")
-        self.fn = os.path.join(self.sdir, session_name)
-        self.cntfn = os.path.join(realpath,"cnt")
+        self.gfn = os.path.join(self.sdir, session_name)
+        self.fn = os.path.join(self.sdir, session_name+"."+name+".locks")
+        self.cntfn = os.path.join(realpath,name,"cnt")
 
         self.afs = (realpath[:4] == "/afs")
         self.locked = Set()
         self.count = minimum_count
+        self.session_name = session_name
+        self.name = name
 
     
     def startup(self):
@@ -107,19 +183,33 @@ class SessionLockManager(GangaThread):
                 os.close(fd)
             except OSError, x:
                 raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.fn,x))
+            global session_lock_refresher
+            if session_lock_refresher is None:
+                try:
+                    os.close(os.open(self.gfn, os.O_EXCL | os.O_CREAT | os.O_WRONLY))    
+                except OSError, x:
+                    raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.gfn,x))
+                session_lock_refresher = SessionLockRefresher(self.session_name, self.sdir, self.gfn, self.repo)
+                session_lock_refresher.start()
+            else:
+                session_lock_refresher.addRepo(self.repo)
             self.session_write()
         finally:
             self.global_lock_release()
-        self.start()
+
 
     def shutdown(self):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
         self.locked = Set()
-        self.stop()
-        try:
-            self.join()
-        except AssertionError:
-            pass
+        global session_lock_refresher
+        if not session_lock_refresher is None:
+            session_lock_refresher.stop()
+            try:
+                session_lock_refresher.join()
+            except AssertionError:
+                pass
+            except AttributeError:
+                pass
 
     # Global lock function
     def global_lock_setup(self):
@@ -268,7 +358,7 @@ class SessionLockManager(GangaThread):
         self.global_lock_acquire()
         try:
             try:
-                sessions = [sn for sn in os.listdir(self.sdir) if sn.endswith(".session")]
+                sessions = [sn for sn in os.listdir(self.sdir) if sn.endswith(self.name+".locks")]
             except OSError, x:
                 raise RepositoryError(self.repo, "Could not list session directory '%s'!" % (self.sdir))
                 
@@ -294,43 +384,7 @@ class SessionLockManager(GangaThread):
         finally:
             self.global_lock_release()
 
-    def run(self):
-        try:
-            while not self.should_stop():
-                ## TODO: Check for services active/inactive
-                try:
-                    try:
-                        now = os.stat(self.fn).st_ctime
-                        os.utime(self.fn,None)
-                    except OSError, x:
-                        if x.errno != errno.ENOENT:
-                            raise RepositoryError(self.repo, "Session file timestamp could not be updated! Locks will be lost!")
-                        else:
-                            raise RepositoryError(self.repo, "Own session file not found! Possibly deleted by another ganga session. If this was unintentional: check if the system clocks on computers running Ganga are synchronized!")
-                    # Clear expired session files
-                    try:
-                        for sf in os.listdir(self.sdir):
-                            if not sf.endswith(".session") or os.path.join(self.sdir,sf) == self.fn:
-                                continue
-                            mtm = os.stat(os.path.join(self.sdir,sf)).st_ctime
-                            if now - mtm  > session_expiration_timeout:
-                                logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (os.path.join(self.sdir,sf), now - mtm))
-                                os.unlink(os.path.join(self.sdir,sf))
-                    except OSError, x:
-                        # nothing really important, another process deleted the session before we did.
-                        logger.info("Unimportant OSError in loop: %s" % x)
-                except RepositoryError:
-                    break
-                except Exception, x:
-                    logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
-                time.sleep(1+random.random())
-        finally:
-            # On shutdown remove session file
-            try:
-                os.unlink(self.fn)
-            except OSError, x:
-                logger.warning("Session file was deleted already or removal failed: %s" % (x))
-            self.unregister()
+
 
     def check(self):
         self.global_lock_acquire()
@@ -342,7 +396,7 @@ class SessionLockManager(GangaThread):
             sessions = os.listdir(self.sdir)
             prevnames = Set()
             for session in sessions:
-                if not session.endswith(".session"):
+                if not session.endswith(self.name+".locks"):
                     continue
                 try:
                     sf = os.path.join(self.sdir,session)
@@ -373,7 +427,7 @@ class SessionLockManager(GangaThread):
         """
         self.global_lock_acquire()
         try:
-            sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session")]
+            sessions = [s for s in os.listdir(self.sdir) if s.endswith(self.name+".locks")]
             for session in sessions:
                 try:
                     sf = os.path.join(self.sdir,session)
@@ -386,7 +440,7 @@ class SessionLockManager(GangaThread):
                         fcntl.lockf(fd,fcntl.LOCK_UN) # ONLY NFS
                         os.close(fd)
                     if id in names:
-                        return self.session_to_info(session[:-8])
+                        return self.session_to_info(session)
                 except Exception, x:
                     continue
         finally:
@@ -398,7 +452,7 @@ class SessionLockManager(GangaThread):
         """
         self.global_lock_acquire()
         try:
-            sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir,s) == self.fn]
+            sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir,s) == self.gfn]
             return [self.session_to_info(session) for session in sessions]
         finally:
             self.global_lock_release()
@@ -411,7 +465,7 @@ class SessionLockManager(GangaThread):
         failed = False
         self.global_lock_acquire()
         try:
-            sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir,s) == self.fn]
+            sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir,s) == self.gfn]
             for session in sessions:
                 try:
                     sf = os.path.join(self.sdir,session)
@@ -423,7 +477,11 @@ class SessionLockManager(GangaThread):
             self.global_lock_release()
 
     def session_to_info(self,session):
-        return session
+        si = session.split(".")
+        try:
+            return "%s (pid %s) sice %s" % (".".join(si[:-3]),si[-2],time.ctime(int(si[-3])/1000))
+        except Exception:
+            return session
 
 def test1():
     slm = SessionLockManager("locktest","tester")
