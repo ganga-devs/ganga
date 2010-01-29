@@ -31,10 +31,6 @@ from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import extractFileNumber, matchFil
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-# PandaTools
-from pandatools import Client
-from taskbuffer.JobSpec import JobSpec
-from taskbuffer.FileSpec import FileSpec
 #import AthenaUtils
 
 
@@ -58,6 +54,11 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
 
     firstPass=True;
     def master_prepare(self,app,appmasterconfig):
+
+        # PandaTools
+        from pandatools import Client
+        from taskbuffer.JobSpec import JobSpec
+        from taskbuffer.FileSpec import FileSpec
 
         job = app._getParent()
         logger.debug('AthenaMCPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
@@ -187,6 +188,11 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         '''prepare the subjob specific configuration'''
  
+        # PandaTools
+        from pandatools import Client
+        from taskbuffer.JobSpec import JobSpec
+        from taskbuffer.FileSpec import FileSpec
+
         job = app._getParent()
         logger.debug('AthenaMCPandaRTHandler prepare called for %s', job.getFQID('.'))
         try:

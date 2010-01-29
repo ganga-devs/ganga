@@ -30,12 +30,12 @@ class PandaPilot(IApplication):
 config = getConfig('defaults_PandaPilot') #_Properties
 config.options['exe'].type = type(None)
 
-from pandatools import Client
-
 def queueToCE(queue):
+    from pandatools import Client
     return Client.PandaSites[queue]['queue']+'-'+Client.PandaSites[queue]['localqueue']
 
 def queueToDDM(queue):
+    from pandatools import Client
     return Client.PandaSites[queue]['ddm']
 
 class LCGRTHandler(IRuntimeHandler):

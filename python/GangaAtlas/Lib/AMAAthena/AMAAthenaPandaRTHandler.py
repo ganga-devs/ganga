@@ -29,11 +29,6 @@ from GangaPanda.Lib.Athena.AthenaPandaRTHandler import AthenaPandaRTHandler
 
 from GangaAtlas.Lib.AMAAthena.AMAAthenaCommon import *
 
-# PandaTools
-from pandatools import Client
-from taskbuffer.JobSpec import JobSpec
-from taskbuffer.FileSpec import FileSpec
-
 def fake():
     import os
     for k,v in os.environ.items():
@@ -158,6 +153,11 @@ class AMAAthenaPandaRTHandler(AthenaPandaRTHandler):
     def master_prepare(self,app,appconfig):
         '''Prepare the master job'''
 
+        # PandaTools
+        from pandatools import Client
+        from taskbuffer.JobSpec import JobSpec
+        from taskbuffer.FileSpec import FileSpec
+
         jspec = None
 
         ## add additional job option files and configuration files into the tarball
@@ -177,6 +177,11 @@ class AMAAthenaPandaRTHandler(AthenaPandaRTHandler):
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         '''prepare the subjob specific configuration'''
+
+        # PandaTools
+        from pandatools import Client
+        from taskbuffer.JobSpec import JobSpec
+        from taskbuffer.FileSpec import FileSpec
 
         job = app._getParent()
         logger.debug('AMAAthenaPandaRTHandler prepare called for %s', job.getFQID('.'))
