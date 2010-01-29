@@ -556,17 +556,18 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['TAGDATASETNAME'] = ':'.join(job.inputdata.tagdataset)
 
 #       prepare job requirements
+        requirementsSoftware = []
         
         if app.atlas_release.find('11.')>=0 or app.atlas_release.find('10.')>=0:
-            requirements.software = ['VO-atlas-release-%s' % app.atlas_release ]
+            requirementsSoftware = ['VO-atlas-release-%s' % app.atlas_release ]
         elif app.atlas_release.find('12.0.0')>=0 or app.atlas_release.find('12.0.1')>=0 or app.atlas_release.find('12.0.2')>=0:
-            requirements.software = ['VO-atlas-offline-%s' % app.atlas_release ]
+            requirementsSoftware = ['VO-atlas-offline-%s' % app.atlas_release ]
         elif app.atlas_release.find('13.')>=0 and app.atlas_project!="AtlasPoint1":
-            requirements.software = ['VO-atlas-production-%s' % app.atlas_release ] 
+            requirementsSoftware = ['VO-atlas-production-%s' % app.atlas_release ] 
         elif app.atlas_release.find('13.')>=0 and app.atlas_project!="AtlasPoint1" and app.atlas_production!='':
-            requirements.software = ['VO-atlas-production-%s' % app.atlas_production]
+            requirementsSoftware = ['VO-atlas-production-%s' % app.atlas_production]
         elif app.atlas_release.find('13.')>=0 and app.atlas_project=="AtlasPoint1":
-            requirements.software = ['VO-atlas-point1-%s' % app.atlas_production ] 
+            requirementsSoftware = ['VO-atlas-point1-%s' % app.atlas_production ] 
         elif app.atlas_release.find('14.')>=0 or app.atlas_release.find('15.')>=0:
             if app.atlas_cmtconfig:
                 cmtconfig = app.atlas_cmtconfig
@@ -575,16 +576,24 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if not cmtconfig in [ 'i686-slc4-gcc34-opt', 'i686-slc5-gcc43-opt' ]:
                 cmtconfig = 'i686-slc4-gcc34-opt'
             if app.atlas_production=='':
-                requirements.software = ['VO-atlas-offline-%s-%s' %(app.atlas_release, cmtconfig )]
+                requirementsSoftware = ['VO-atlas-offline-%s-%s' %(app.atlas_release, cmtconfig )]
             else:
                 if app.atlas_project=="AtlasPoint1":
-                    requirements.software = ['VO-atlas-point1-%s' %(app.atlas_production)]
+                    requirementsSoftware = ['VO-atlas-point1-%s' %(app.atlas_production)]
                 elif app.atlas_project=="AtlasTier0":
-                    requirements.software = ['VO-atlas-tier0-%s' %(app.atlas_production)]
+                    requirementsSoftware = ['VO-atlas-tier0-%s' %(app.atlas_production)]
                 else:
-                    requirements.software = ['VO-atlas-production-%s-%s' %(app.atlas_production, cmtconfig )]
+                    requirementsSoftware = ['VO-atlas-production-%s-%s' %(app.atlas_production, cmtconfig )]
         else:
-            requirements.software = ['VO-atlas-production-%s' % app.atlas_release ]
+            requirementsSoftware = ['VO-atlas-production-%s' % app.atlas_release ]
+
+        releaseBlacklist = job.backend.requirements.list_release_blacklist()     
+        if requirementsSoftware and  requirementsSoftware[0] in releaseBlacklist:
+            logger.error('The athena release %s you are using has been centrally black-listed !', requirementsSoftware[0])
+            logger.error('Please try to upgrade to a newer version or ask for help and advice on the distributed analysis help list !')
+            requirements.software = requirementsSoftware
+        else:
+            requirements.software = requirementsSoftware
 
         #       add software requirement of dq2clients
         if job.inputdata and job.inputdata.type in [ 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease or configDQ2['USE_ACCESS_INFO']:

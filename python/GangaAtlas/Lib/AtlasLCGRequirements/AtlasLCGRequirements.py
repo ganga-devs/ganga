@@ -61,6 +61,10 @@ def _loadCESEInfo():
             result['access_info'] = pickle.load(input)
         except EOFError:
             result['access_info'] = []
+        try:
+            result['blacklist_release_info'] = pickle.load(input)
+        except EOFError:
+            result['blacklist_release_info'] = []
             
         input.close()
     except Exception:
@@ -119,6 +123,10 @@ def _downloadCESEInfo():
             result['access_info'] = pickle.load(input)
         except EOFError:
             result['access_info'] = []
+        try:
+            result['blacklist_release_info'] = pickle.load(input)
+        except EOFError:
+            result['blacklist_release_info'] = []
         input.close()
     except Exception, e:
         logger.error(e)
@@ -355,6 +363,16 @@ def getAccessInfo(sitename=''):
     else:
         return []
 
+def getReleaseBlacklistInfo():
+    """List release blacklist"""
+
+    _refreshCESEInfo()
+
+    if CESEInfo['blacklist_release_info']:
+        return CESEInfo['blacklist_release_info']
+    else:
+        return []
+
 class AtlasLCGRequirements(LCGRequirements):
     '''LCG requirements for ATLAS.
 
@@ -378,7 +396,7 @@ class AtlasLCGRequirements(LCGRequirements):
 
     _category = 'LCGRequirements'
     _name = 'AtlasLCGRequirements'
-    _exportmethods = ['list_ce', 'list_se','list_sites','list_clouds', 'list_sites_cloud', 'cloud_from_sites', 'list_access_info' ]
+    _exportmethods = ['list_ce', 'list_se','list_sites','list_clouds', 'list_sites_cloud', 'cloud_from_sites', 'list_access_info', 'list_release_blacklist' ]
 
     _cloudNameList = { 'TO' : 'CERN',
                        'IT' : 'ITALYSITES',
@@ -540,6 +558,6 @@ class AtlasLCGRequirements(LCGRequirements):
                 info[alternateName] = getAccessInfo(alternateName)
             return info
                 
-                
-
+    def list_release_blacklist(self):
+        return getReleaseBlacklistInfo()
             
