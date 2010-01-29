@@ -403,6 +403,8 @@ class Registry(object):
         finally:
             self._lock.release()
 
-    def get_other_sessions(self):
-        return self.repository.get_other_sessions()
+    def print_other_sessions(self):
+        other_sessions = self.repository.get_other_sessions()
+        if len(other_sessions) > 0:
+            logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
 

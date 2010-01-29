@@ -36,7 +36,7 @@ except ImportError:
         pass
     logger = Logger() 
 
-session_expiration_timeout = 20 # seconds
+session_expiration_timeout = 40 # seconds
 session_lock_refresher = None
 
 class SessionLockRefresher(GangaThread):

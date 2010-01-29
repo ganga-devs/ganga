@@ -73,10 +73,9 @@ def bootstrap():
         registry.type = config["repositorytype"]
         registry.location = getLocalRoot()
         registry.startup()
+        logger.info("started " + registry.info(full=False))
         if registry.name == "jobs":
-            logger.warning("started " + registry.info(full=True))
-        else:
-            logger.warning("started " + registry.info(full=False))
+            registry.print_other_sessions()
         started_registries.append(registry.name)
         retval.append((registry.name, registry.getProxy(), registry.doc))
         if registry.name in oldJobs:
