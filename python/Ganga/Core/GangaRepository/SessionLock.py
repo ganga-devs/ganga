@@ -60,7 +60,7 @@ class SessionLockRefresher(GangaThread):
                         #print "%s: Delta is %i seconds" % (time.time(), now - oldnow)
                     except OSError, x:
                         if x.errno != errno.ENOENT:
-                            raise RepositoryError(self.repos[0], "Session file timestamp could not be updated! Locks will be lost!")
+                            logger.debug("Session file timestamp could not be updated! Locks could be lost!")
                         else:
                             raise RepositoryError(self.repos[0], "Own session file not found! Possibly deleted by another ganga session. If this was unintentional: check if the system clocks on computers running Ganga are synchronized!")
                     # Clear expired session files
