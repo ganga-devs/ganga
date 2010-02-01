@@ -57,6 +57,8 @@ class SessionLockRefresher(GangaThread):
                         oldnow = os.stat(self.fn).st_ctime
                         os.utime(self.fn,None)
                         now = os.stat(self.fn).st_ctime
+                        #if now - oldnow  > session_expiration_timeout/2:
+                        #    logger.warning("%s: This session can only update its session file every %s seconds - this can cause problems with other sessions!" % (time.time(), now - oldnow))
                         #print "%s: Delta is %i seconds" % (time.time(), now - oldnow)
                     except OSError, x:
                         if x.errno != errno.ENOENT:
@@ -78,6 +80,8 @@ class SessionLockRefresher(GangaThread):
                                 logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
                                 os.unlink(os.path.join(self.sdir,sf))
                                 session_files.remove(sf)
+                            #elif now - mtm  > session_expiration_timeout/2:
+                            #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))
                         # remove all lock files that do not belong to sessions that are alive
                         for f in lock_files:
                             if not f.endswith(".session"):
@@ -151,12 +155,16 @@ class SessionLockManager(object):
         self.count = minimum_count
         self.session_name = session_name
         self.name = name
+        self.realpath = realpath
+
 
     
     def startup(self):
-        self.mkdir(self.sdir)
-        # setup global lock
+        # Ensure directories exist
+        self.mkdir(os.path.join(self.realpath,"sessions"))
+        self.mkdir(os.path.join(self.realpath,self.name))
 
+        # setup global lock
         self.global_lock_setup()
         self.global_lock_acquire()
         try:
@@ -203,8 +211,8 @@ class SessionLockManager(object):
         self.locked = Set()
         global session_lock_refresher
         if not session_lock_refresher is None:
-            session_lock_refresher.stop()
             try:
+                session_lock_refresher.stop()
                 session_lock_refresher.join()
             except AssertionError:
                 pass
