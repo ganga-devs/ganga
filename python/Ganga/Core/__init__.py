@@ -75,7 +75,7 @@ def bootstrap(reg, interactive_session):
                (t_last>0 and time.time()-t_last > config['forced_shutdown_prompt_time'])):
                 msg = """Job status update or output download still in progress (shutdown not completed after %d seconds).
 %d background thread(s) still running: %s.
-Do you want to force the exit (y/[n])""" % (t_total, len(critical_thread_ids), critical_thread_ids) 
+Do you want to force the exit (y/[n])? """ % (t_total, len(critical_thread_ids), critical_thread_ids) 
                 resp = raw_input(msg) 
                 t_last = time.time()
                 return resp.lower() != 'y'
