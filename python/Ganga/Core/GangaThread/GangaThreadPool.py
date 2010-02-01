@@ -49,39 +49,73 @@ class GangaThreadPool:
             pass
 
     def shutdown(self, should_wait_cb = None):
+        """Shutdown the Ganga session.
+        
+        @param should_wait_cb: A callback function with the following signature
+            should_wait_cb(total_time, critical_thread_ids, non_critical_thread_ids)
+            where
+                total_time is the time in seconds since shutdown started
+                critical_thread_ids is a list of alive critical thread names
+                non_critical_thread_ids is a list of alive non-critical threads names.
+            and
+                return value is evaluated as a boolean. 
+        
+        A shutdown thread is started that calls stop() on each GangaThread and
+        waits for them all to die. A loop waits for the shutdown thread to
+        die, periodically calling the should_wait_cb function to ask if it
+        should continue to wait or shutdown anyway.
+        
+        """
 
-        logger.debug('shuting down GangaThreadPool with timeout %d sec' % self.SHUTDOWN_TIMEOUT)
+        logger.debug('shutting down GangaThreadPool with timeout %d sec' % self.SHUTDOWN_TIMEOUT)
         
         ## run shutdown thread in background
         import threading
-        t = threading.Thread(target=self.__do_shutdown__, name='GANGA_Update_Thread_shutdown')
-        t.setDaemon(True)
-        t.start()
+        shutdown_thread = threading.Thread(target=self.__do_shutdown__, name='GANGA_Update_Thread_shutdown')
+        shutdown_thread.setDaemon(True)
+        shutdown_thread.start()
 
         t_start = time.time()
 
         ## wait for the background shutdown thread to finish
-        while t.isAlive():
+        while shutdown_thread.isAlive():
             logger.debug('Waiting for max %d seconds for threads to finish'%self.SHUTDOWN_TIMEOUT)
             logger.debug('There are %d alive background threads'%self.__cnt_alive_threads__())
-            t.join(self.SHUTDOWN_TIMEOUT)
+            shutdown_thread.join(self.SHUTDOWN_TIMEOUT)
 
-            if t.isAlive():
+            if shutdown_thread.isAlive():
+                # if should_wait_cb callback exists then ask if we should wait
                 if should_wait_cb:
-                    if not should_wait_cb(time.time()-t_start):
+                    total_time = time.time()-t_start
+                    critical_thread_ids = self.__alive_critical_thread_ids()
+                    non_critical_thread_ids = self.__alive_non_critical_thread_ids()
+                    if not should_wait_cb(total_time, critical_thread_ids, non_critical_thread_ids):
                         logger.debug('GangaThreadPool shutdown anyway after %d sec.' % (time.time()-t_start))
                         break
-
             else:
                 logger.debug('GangaThreadPool shutdown properly')
 
-        unfinished_threads = [t for t in self.__threads if t.isAlive()]
-        if unfinished_threads:
-            logger.warning('Shutdown forced. There are %d background threads still running: %s',len(unfinished_threads),[t.getName() for t in unfinished_threads])
+        # log warning message if critical thread still alive
+        critical_thread_ids = self.__alive_critical_thread_ids()
+        if critical_thread_ids:
+            logger.warning('Shutdown forced. %d background thread(s) still running: %s', len(critical_thread_ids), critical_thread_ids)
+
+        # log debug message if critical thread still alive
+        non_critical_thread_ids = self.__alive_non_critical_thread_ids()
+        if non_critical_thread_ids:
+            logger.debug('Shutdown forced. %d non-critical background thread(s) still running: %s', len(non_critical_thread_ids), non_critical_thread_ids)
 
         ## set singleton instance to None
         self._instance = None
         self.__threads = []
+
+    def __alive_critical_thread_ids(self):
+        """Return a list of alive critical thread names."""
+        return [t.getName() for t in self.__threads if t.isAlive() and t.isCritical()]
+
+    def __alive_non_critical_thread_ids(self):
+        """Return a list of alive non-critical thread names."""
+        return [t.getName() for t in self.__threads if t.isAlive() and not t.isCritical()]
 
     def __do_shutdown__(self):
 
