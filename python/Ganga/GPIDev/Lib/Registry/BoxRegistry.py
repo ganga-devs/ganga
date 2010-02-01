@@ -33,14 +33,13 @@ class BoxMetadataObject(GangaObject):
     _enable_plugin = True
     _hidden = 1
 
-from Ganga.Core.GangaRepository.Registry import Registry
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError
 class BoxRegistry(Registry):
     def _setName(self,obj,name):
         nobj = self.metadata[self.find(obj)]
         obj._getWriteAccess()
         nobj._getWriteAccess()
         nobj.name = name
-        print nobj._registry, obj._registry
         nobj._setDirty()
         obj._setDirty()
 
@@ -127,6 +126,21 @@ class BoxRegistrySlice(RegistrySlice):
     def _getColour(self,obj):
         return self.status_colours.get(obj._category,self.fx.normal)
 
+    def __getitem__(self,id):
+        if isinstance(id,str):
+            matches = []
+            for o in self.objects:
+                if o._getRegistry()._getName(o) == id:
+                    return o
+                    matches.append(o)
+            if len(matches) == 1:
+                return matches[0]
+            elif len(matches) > 1:
+                raise RegistryKeyError("Multiple objects with name '%s' found in the box - use IDs!" % id) 
+            else:
+                raise RegistryKeyError("No object with name '%s' found in the box!" % id)
+        else:
+            return super(BoxRegistrySlice,self).__getitem__(id)
 
 
 from RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap

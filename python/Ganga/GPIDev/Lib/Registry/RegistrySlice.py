@@ -4,7 +4,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryIndexError
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryIndexError, RegistryAccessError
 
 from Ganga.Utility.external.ordereddict import oDict
 

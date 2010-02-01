@@ -129,6 +129,9 @@ class Registry(object):
         """ Return the objects in this registry, in order of ID.
         Besides items() this is also recommended for iteration."""
         return [it[1] for it in self.items()]
+
+    def __iter__(self):
+        return iter(self.values())
     
     def find(self, obj):
         """Returns the id of the given object in this registry, or 
