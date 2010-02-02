@@ -31,9 +31,9 @@ def bootstrap(reg, interactive_session):
 
     config.addOption('forced_shutdown_policy','session_type','If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')
 
-    config.addOption('forced_shutdown_timeout',60,"Timeout in seconds for forced Ganga shutdown.")
+    config.addOption('forced_shutdown_timeout',60,"Timeout in seconds for forced Ganga shutdown in batch mode.")
     config.addOption('forced_shutdown_prompt_time',10,"User will get the prompt every N seconds, as specified by this parameter.")
-    config.addOption('forced_shutdown_first_prompt_time',5,"User will get the FIRST prompt after N seconds, as specified by this parameter.")
+    config.addOption('forced_shutdown_first_prompt_time',5,"User will get the FIRST prompt after N seconds, as specified by this parameter. This parameter also defines the time that Ganga will wait before shutting down, if there are only non-critical threads alive, in both interactive and batch mode.")
 
     from Ganga.Utility.logging import getLogger
 
@@ -63,24 +63,50 @@ def bootstrap(reg, interactive_session):
     #register the MC shutdown hook
     import atexit
 
-    def should_wait_interactive_cb(t_total):
+    def should_wait_interactive_cb(t_total, critical_thread_ids, non_critical_thread_ids):
         global t_last
         if t_last is None:
             t_last = -time.time()
-        if (t_last<0 and time.time()+t_last > config['forced_shutdown_first_prompt_time']) or \
-           (t_last>0 and time.time()-t_last > config['forced_shutdown_prompt_time']):
-            resp = raw_input("Job status update or output download still in progress (shutdown not completed after %d seconds). \n Do you want to force the exit (y/[n])"%t_total) 
-
-            t_last = time.time()
-            return resp.lower() != 'y'
+        # if there are critical threads then prompt user or wait depending on configuration 
+        if critical_thread_ids:
+            if ((t_last<0 and time.time()+t_last > config['forced_shutdown_first_prompt_time']) or 
+               (t_last>0 and time.time()-t_last > config['forced_shutdown_prompt_time'])):
+                msg = """Job status update or output download still in progress (shutdown not completed after %d seconds).
+%d background thread(s) still running: %s.
+Do you want to force the exit (y/[n])? """ % (t_total, len(critical_thread_ids), critical_thread_ids) 
+                resp = raw_input(msg) 
+                t_last = time.time()
+                return resp.lower() != 'y'
+            else:
+                return True
+        # if there are non-critical threads then wait or shutdown depending on configuration
+        elif non_critical_thread_ids:
+            if t_total < config['forced_shutdown_first_prompt_time']:
+                return True
+            else:
+                return False
+        # if there are no threads then shutdown
         else:
-            return True
-
-    def should_wait_batch_cb(t_total):
-        if t_total > config['forced_shutdown_timeout']:
-            logger.warning('Shutdown was forced after waiting for %d seconds for background activities to finish (monitoring, output download, etc). This may result in some jobs being corrupted.',t_total)
             return False
-        return True
+
+    def should_wait_batch_cb(t_total, critical_thread_ids, non_critical_thread_ids):
+        print t_total, critical_thread_ids, non_critical_thread_ids
+        # if there are critical threads then wait or shutdown depending on configuration
+        if critical_thread_ids:
+            if t_total < config['forced_shutdown_timeout']:
+                return True
+            else:
+                logger.warning('Shutdown was forced after waiting for %d seconds for background activities to finish (monitoring, output download, etc). This may result in some jobs being corrupted.',t_total)
+                return False
+        # if there are non-critical threads then wait or shutdown depending on configuration
+        elif non_critical_thread_ids:
+            if t_total < config['forced_shutdown_first_prompt_time']:
+                return True
+            else:
+                return False
+        # if there are no threads then shutdown
+        else:
+            return False
 
     #register the exit function with the highest priority (==0)    
     #atexit.register((0,monitoring_component.stop), fail_cb=mc_fail_cb,max_retries=config['max_shutdown_retries'])
