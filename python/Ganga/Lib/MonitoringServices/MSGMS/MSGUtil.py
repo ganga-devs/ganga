@@ -5,6 +5,24 @@ will very likely be copied to the sandbox on the worker node.
 """
 
 
+# default stomp.py logging to CRITICAL
+try:
+    import logging
+    import Ganga.Utility.Config as Config
+    config = Config.getConfig('Logging')
+    try:
+        # test if stomp.py logging is already set
+        config['stomp.py']
+    except Config.ConfigError:
+        # set stomp.py logger to CRITICAL
+        logging.getLogger('stomp.py').setLevel(logging.CRITICAL)
+        # add stomp.py option to Logging configuration
+        config.addOption('stomp.py', 'CRITICAL', 'logger for stomp.py external package')
+except:
+    # if we are on the worker node, this will fail. so continue quietly
+    pass
+
+
 #Sandbox modules required for MSG
 def getSandboxModules():
     """Return the list of sandbox modules required for MSG monitoring services."""
