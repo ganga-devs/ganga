@@ -63,8 +63,11 @@ def createPublisher(server, port, user='', password='', logger=None, idle_timeou
     # create and start _publisher
     import stomputil
     publisher = stomputil.createPublisher(Thread, server, port, user, password, logger, idle_timeout)
-    # add exit handler if not GangaThread
-    if not managed_thread:
+    if managed_thread:
+        # set GangaThread as non-critical
+        publisher.setCritical(False)
+    else:
+        # add exit handler if not GangaThread
         publisher.addExitHandler(exit_timeout)
     return publisher
 
