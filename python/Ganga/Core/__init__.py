@@ -90,7 +90,6 @@ Do you want to force the exit (y/[n])? """ % (t_total, len(critical_thread_ids),
             return False
 
     def should_wait_batch_cb(t_total, critical_thread_ids, non_critical_thread_ids):
-        print t_total, critical_thread_ids, non_critical_thread_ids
         # if there are critical threads then wait or shutdown depending on configuration
         if critical_thread_ids:
             if t_total < config['forced_shutdown_timeout']:
