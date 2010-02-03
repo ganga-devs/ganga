@@ -94,14 +94,16 @@ try:
             tcpPubEnabled = WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_TCP
             httpsPubEnabled = (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_HTTPS) \
                               or (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_FSHYBRID)
+            stompPubEnabled = (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_STOMP)
             httpsExternal = WNConfig.HTTPS_SERVER_EXTERNAL
     
             enabledPublisherCount = 0
             if rgmaPubEnabled:  enabledPublisherCount += 1
             if tcpPubEnabled:   enabledPublisherCount += 1
             if httpsPubEnabled: enabledPublisherCount += 1
+            if stompPubEnabled: enabledPublisherCount += 1
             if enabledPublisherCount != 1:
-                initError = 'Exactly one of [RGMA publisher, TCP publisher, HTTPS publisher, FS-Hybrid-publisher] must be activated. Please check PUBLISHER_USE_TYPE in JEMConfig.'
+                initError = 'Exactly one of [RGMA publisher, TCP publisher, HTTPS publisher, FS-Hybrid-publisher, STOMP publisher] must be activated. Please check PUBLISHER_USE_TYPE in JEMConfig.'
 
     if initError == None:
         lines = [
