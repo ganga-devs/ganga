@@ -349,7 +349,9 @@ class SessionLockManager(object):
             except OSError:
                 raise RepositoryError(self.repo, "Job counter deleted! External modification to repository!")
             if not newcount >= self.count:
-                raise RepositoryError(self.repo, "Counter value decreased - logic error!")
+                #raise RepositoryError(self.repo, "Counter value decreased - logic error!")
+                logger.warning("Internal counter increased - probably the count file was deleted.")
+                newcount = self.count
             if self.locked and max(self.locked) >= newcount: # someone used force_ids (for example old repository imports)
                 newcount = max(self.locked) + 1
             ids = range(newcount,newcount+n)

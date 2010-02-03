@@ -191,6 +191,9 @@ class GangaRepositoryLocal(GangaRepository):
         objs = self.get_index_listing()
         summary = []
         for id, idx in objs.iteritems():
+            # Make sure we do not overwrite older jobs if someone deleted the count file
+            if id > self.sessionlock.count:
+                self.sessionlock.count = id + 1
             # Locked IDs can be ignored
             if id in self.sessionlock.locked:
                 continue
