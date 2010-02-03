@@ -41,7 +41,7 @@ session_lock_refresher = None
 
 class SessionLockRefresher(GangaThread):
     def __init__(self,session_name,sdir,fn, repo):
-        GangaThread.__init__(self, name='SessionLockRefresher')
+        GangaThread.__init__(self, name='SessionLockRefresher', critical=False)
         self.session_name = session_name
         self.sdir = sdir
         self.fn = fn
