@@ -98,6 +98,7 @@ class JEMMonitoringServiceHandler(object):
         self.__job = job
         self.__httpsListenPort = 0
         self.__monitoredSubjobs = []
+        self.__JEMrc = None
 
 
     def submitting(self):
@@ -232,7 +233,9 @@ class JEMMonitoringServiceHandler(object):
 
         import sys
 
-        if self.__job.info.monitor.realtime:
+        if self.__job.info.monitor.realtime and \
+            (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_HTTPS or \
+             WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_FSHYBRID):
             try:
                 h,p = WNConfig.PUBLISHER_HTTPS_SERVER.split(":")
                 self.__httpsListenPort = int(p)
@@ -518,8 +521,6 @@ class JEMMonitoringServiceHandler(object):
                         logger.warning("Duplicate JEM setting '" + k + "' in " + path)
                     theJEMrcSettings[theSection][k] = v
                 except:
-                    #logger.debug("    __readJEMrc catched " + str(sys.exc_info()[0]) + " (" + str(sys.exc_info()[1]) + ")")
-                    #logger.debug("    for line " + line)
                     pass
         return theJEMrcSettings
 
@@ -542,23 +543,45 @@ class JEMMonitoringServiceHandler(object):
         else:
             try:
                 valvesVal = WNConfig.PUBLISHER_USE_TYPE
-                if valvesVal & PUBLISHER_USE_DEVNULL:
+                if valvesVal & WNConfig.PUBLISHER_USE_DEVNULL:
                     valves += ["DEVNULL"]
-                if valvesVal & PUBLISHER_USE_RGMA:
+                if valvesVal & WNConfig.PUBLISHER_USE_RGMA:
                     valves += ["RGMA"]
-                if valvesVal & PUBLISHER_USE_MONALISA:
+                if valvesVal & WNConfig.PUBLISHER_USE_MONALISA:
                     valves += ["MONALISA"]
-                if valvesVal & PUBLISHER_USE_TCP:
+                if valvesVal & WNConfig.PUBLISHER_USE_TCP:
                     valves += ["TCP"]
-                if valvesVal & PUBLISHER_USE_FS:
+                if valvesVal & WNConfig.PUBLISHER_USE_FS:
                     valves += ["FS"]
-                if valvesVal & PUBLISHER_USE_HTTPS:
+                if valvesVal & WNConfig.PUBLISHER_USE_HTTPS:
                     valves += ["HTTPS"]
-                if valvesVal & PUBLISHER_USE_FSHYBRID:
+                if valvesVal & WNConfig.PUBLISHER_USE_STOMP:
+                    valves += ["STOMP"]
+                if valvesVal & WNConfig.PUBLISHER_USE_FSHYBRID:
                     valves += ["FSHYBRID"]
             except:
                 pass
         return valves
+
+
+    def __getActiveValves(self, JEMrc):
+        valves = self.__buildValvesDict(JEMrc)
+        gangaConfiguredValves = self.__job.info.monitor.advanced.valves
+
+        if gangaConfiguredValves != []:
+            valves = gangaConfiguredValves
+
+        if jemconfig['JEM_ENABLE_REALTIME'] == False: # disable valves if no realtime transfer is wanted
+            for v in ("HTTPS", "FSHYBRID", "TCP", "RGMA", "MONALISA", "STOMP"):
+                if v in valves: valves.remove(v)
+        return valves
+
+
+    def __getCombinedValvesCode(self, valves):
+        code = 0
+        for v in valves:
+            exec("code |= WNConfig.PUBLISHER_USE_" + v)
+        return code
 
 
     def __modifyJEMrcSettings(self, JEMrc):
@@ -587,15 +610,7 @@ class JEMMonitoringServiceHandler(object):
             JEMrc['JEMConfig']['PUBLISHER_HTTPS_SERVER'] = "'"+gethostname()+"'"
 
         ### valves
-        valves = self.__buildValvesDict(JEMrc)
-        gangaConfiguredValves = monitor.advanced.valves
-
-        if gangaConfiguredValves != []:
-            valves = gangaConfiguredValves
-
-        if jemconfig['JEM_ENABLE_REALTIME'] == False: # disable valves if no realtime transfer is wanted
-            for v in ("HTTPS", "FSHYBRID", "TCP", "RGMA", "MONALISA"):
-                if v in valves: valves.remove(v)
+        valves = self.__getActiveValves(JEMrc)
 
         s = ""
         for v in valves:
@@ -617,7 +632,7 @@ class JEMMonitoringServiceHandler(object):
         """
         thePath = JEMConfig.MON_LOG_DIR
         if not os.path.exists(thePath):
-            os.makedirs(thePath)
+            os.makedirs(thePath, 0700)
 
         thePath += os.sep + ".JEMrc"
         fd = open(thePath, "w")
@@ -628,8 +643,9 @@ class JEMMonitoringServiceHandler(object):
                 fd.write(k + "=" + str(v) + "\n")
         fd.close()
 
-        logger.debug("Wrote modified user JEM settings to " + thePath)
+        self.__JEMrc = theJEMrcSettings
 
+        logger.debug("Wrote modified user JEM settings to " + thePath)
         return thePath
 
 
@@ -691,7 +707,7 @@ class JEMMonitoringServiceHandler(object):
 
         jmdDir = WNConfig.LOG_DIR + os.sep + escapedJobID
         if not os.path.exists(jmdDir):
-            os.makedirs(jmdDir, 0600)
+            os.makedirs(jmdDir, 0700)
 
         self.__job.info.monitor.jmdfile = jmdDir + os.sep + UIConfig.PUBLISHER_JMD_FILE
 
@@ -726,6 +742,11 @@ class JEMMonitoringServiceHandler(object):
             for i, sj in enumerate(self.__job.subjobs):
                 if i in self.__monitoredSubjobs:
                     args += [str(sj.backend.id)]
+
+            # determine valve(s)
+            if self.__JEMrc != None:
+                valves = self.__getActiveValves(self.__JEMrc)
+                args += ["--valves", str(self.__getCombinedValvesCode(valves))]
 
             try:
                 self.__job.info.monitor.pid = os.spawnve(os.P_NOWAIT, executable, args, os.environ)
@@ -785,7 +806,8 @@ class JEMMonitoringServiceHandler(object):
             if ppids[z] == str(self.__job.info.monitor.pid) and (\
                    cmds[z].find(JEMConfig.SERVER_RGMA_EXE) != -1\
                 or cmds[z].find(JEMConfig.SERVER_HTTPS_EXE) != -1\
-                or cmds[z].find(JEMConfig.SERVER_TCP_EXE) != -1):
+                or cmds[z].find(JEMConfig.SERVER_TCP_EXE) != -1\
+                or cmds[z].find(JEMConfig.SERVER_STOMP_EXE) != -1):
                 serverpids += [p]
         return serverpids
 
@@ -804,7 +826,7 @@ class JEMMonitoringServiceHandler(object):
 
         # save results to tmp file
         if not os.path.exists(logDir):
-            os.makedirs(logDir)
+            os.makedirs(logDir, 0700)
         tmpFile = logDir + os.sep + "tmpServerActiveCheck"
         os.system(cmd + " > " + tmpFile)
         fd = open(tmpFile,'r')

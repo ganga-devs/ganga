@@ -65,15 +65,15 @@ jemconfig.addOption('JEM_ENABLE_REALTIME', True,
                     "Set this to 'False' to globally disable realtime monitoring. Monitoring data will only be available in each job's output sandbox.")
 jemconfig.addOption('JEM_ENABLE_CTRACE', False,
                     "Set this to 'False' to globally disable c/c++ module tracing.")
-jemconfig.addOption('JEM_BASH_LOGLEVEL', 2,
+jemconfig.addOption('JEM_BASH_LOGLEVEL', 0,
                     'Verbosity of JEMs bash script monitor. Caution: Read JEMs documentation before changing this!')
-jemconfig.addOption('JEM_PYTHON_LOGLEVEL', 2,
+jemconfig.addOption('JEM_PYTHON_LOGLEVEL', 0,
                     'Verbosity of JEMs python script monitor. Caution: Read JEMs documentation before changing this!')
 jemconfig.addOption('JEM_REPACK', False,
                     'Wether to repack the JEM library before each job submission. This is useful mostly for developers.')
 jemconfig.addOption('JEM_MONITOR_SUBJOBS_FREQ', 10000,
                     'Enable JEM monitoring only for every N-th subjob of a splitjob.')
-jemconfig.addOption('JEM_DEFAULT_VALVES', ['HTTPS','FS'],
+jemconfig.addOption('JEM_DEFAULT_VALVES', ['STOMP','FS'],
                     'The default communication valve(s) to use for new jobs. If left empty and not overridden, use JEMs configuration (and/or .JEMrc).')
 
 #####################################################################################################################################################
@@ -131,7 +131,7 @@ class JEMAdvancedOptions(GangaObject):
                                                   configuration (and/or .JEMrc). The value of this option is \
                                                   a list of strings, each specifying a valve to be used. \
                                                   Currently, possible valves are: "FS", "RGMA", "HTTPS", \
-                                                  "FSHYBRID"'),
+                                                  "STOMP", "FSHYBRID"'),
         'bash_loglevel'         : SimpleItem(defvalue=jemconfig['JEM_BASH_LOGLEVEL'],\
                                              doc='Verbosity of JEMs bash script monitor. Caution: Read JEMs \
                                                   documentation before changing this!'),
@@ -1150,7 +1150,7 @@ class JobExecutionMonitor(GangaObject):
                 for z,p in enumerate(ppids):
                     if p == pid:
                         # okay, well, let's assume SOME server is OK...
-                        if (cmds[z].find("HTTPSServer") != -1 or cmds[z].find("RGMAServer") != -1)\
+                        if (cmds[z].find("HTTPSServer") != -1 or cmds[z].find("RGMAServer") != -1 or cmds[z].find("StompServer") != -1)\
                            and cmds[z].find("[python] <defunct>") == -1:
                             return int(pids[z])
                 logger.debug("in __getServerPid: server commands didn't include HTTPSServer or RGMAServer, or did include <defunct>")
@@ -1184,6 +1184,7 @@ class JobExecutionMonitor(GangaObject):
             rgma = True
             https = True
             tcp = True
+            stomp = True
 
             # try to find some strings to check if rgma is active
             if stdout.find('Can not create server process R-GMA') != -1:
@@ -1199,7 +1200,11 @@ class JobExecutionMonitor(GangaObject):
             if stdout.find('Can not create server process TCP') != -1:
                 tcp = False
 
-            if not (rgma or https or tcp):
+            # try to find some strings to check if TCP is active
+            if stdout.find('Can not create server process STOMP') != -1:
+                stomp = False
+
+            if not (rgma or https or tcp or stomp):
                 if onlyReport:
                     return "error"
                 logger.error('Failed to start JEMs listening server(s). Monitoring is not active.')
@@ -1235,6 +1240,15 @@ class JobExecutionMonitor(GangaObject):
                                     return "error"
                                 break
                         if cmds[z].find("RGMAServer") != -1:
+                            if cmds[z].find("<defunct>") == -1:
+                                if onlyReport:
+                                    return "OK"
+                                return True
+                            else:
+                                if onlyReport:
+                                    return "error"
+                                break
+                        if cmds[z].find("StompServer") != -1:
                             if cmds[z].find("<defunct>") == -1:
                                 if onlyReport:
                                     return "OK"
