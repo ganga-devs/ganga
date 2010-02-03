@@ -64,7 +64,9 @@ class SessionLockRefresher(GangaThread):
                         if x.errno != errno.ENOENT:
                             logger.debug("Session file timestamp could not be updated! Locks could be lost!")
                         else:
-                            raise RepositoryError(self.repos[0], "Own session file not found! Possibly deleted by another ganga session. If this was unintentional: check if the system clocks on computers running Ganga are synchronized!")
+                            raise RepositoryError(self.repos[0], "Own session file not found! Possibly deleted by another ganga session.\n\
+                                    Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
+                                    On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.")
                     # Clear expired session files
                     try:
                         # Make list of sessions that are "alive"
@@ -102,7 +104,7 @@ class SessionLockRefresher(GangaThread):
             try:
                 os.unlink(self.fn)
             except OSError, x:
-                logger.warning("Session file was deleted already or removal failed: %s" % (x))
+                logger.debug("Session file was deleted already or removal failed: %s" % (x))
             self.unregister()
             global session_lock_refresher
             session_lock_refresher = None

@@ -52,7 +52,7 @@ class RepositoryError(GangaException):
         self.what=what
         self.repository = repo
         logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
-        logger.error('If you believe the problem has been solved type "reactivate()" to re-enable ')
+        logger.error('If you believe the problem has been solved, type "reactivate()" to re-enable ')
         disableInternalServices()
         GangaException.__init__(self,what)
 
