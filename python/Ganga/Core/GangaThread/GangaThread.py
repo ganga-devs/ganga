@@ -20,9 +20,18 @@ class GangaThread(Thread):
             tpool.addServiceThread(self)
 
     def isCritical(self):
+        """Return critical flag.
+        
+        @return: Boolean critical flag.
+        """
         return self.__critical
 
     def setCritical(self, critical):
+        """Set critical flag, which can be used for example in shutdown
+        algorithms. See Ganga/Core/__init__.py for example.
+        
+        @param critical: Boolean critical flag.
+        """
         self.__critical = critical
 
     def should_stop(self):
