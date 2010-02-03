@@ -148,14 +148,6 @@ class GangaRepositoryLocal(GangaRepository):
         except IOError, x:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn,x.__class__.__name__,x))
 
-    def data_load(self,id):
-        """ (re)load the data for this object from the repository """
-        pass
-
-    def data_write(self,id):
-        """ write (flush) given data to the repository. (must be locked) """
-        pass
-
     def get_index_listing(self):
         """Get dictionary of possible objects in the Repository: True means index is present,
             False if not present
@@ -179,6 +171,7 @@ class GangaRepositoryLocal(GangaRepository):
                     else:
                         try:
                             os.unlink(self.get_idxfn(id))
+                            logger.warning("Deleted index file without data file: %s" % self.get_idxfn(id))
                         except OSError:
                             pass
         return objs
