@@ -103,7 +103,7 @@ class DQ2JobSplitter(ISplitter):
 
         #AMIDataset
         if job.inputdata._name == 'AMIDataset':
-            job.inputdata.dataset = job.inputdata.search(pattern = job.inputdata.logicalDatasetName)
+            job.inputdata.dataset = job.inputdata.search()
 
         # before we do anything, check for tag info for this dataset
         additional_datasets = {}

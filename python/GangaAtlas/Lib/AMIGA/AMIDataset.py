@@ -10,13 +10,82 @@ from Ganga.GPIDev.Schema.Schema import SimpleItem
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
 
-
 logger = getLogger()
+config = makeConfig('AMIDataset','AMI dataset')
+config.addOption('MaxNumOfFiles', 100, 'Maximum number of files in a given dataset patterns')
+config.addOption('MaxNumOfDatasets', 20, 'Maximum number of datasets in a given dataset patterns')
+
 try:
     from pyAMI.pyAMI import AMI as AMIClient
 except ImportError:
     logger.warning("AMI not properly set up. You will not be able to access AMI from this ganga session.")
     pass
+
+def get_metadata(dataset = '', file_name = ''):
+    
+    try: 
+        amiclient = AMIClient()
+    except:
+        logger.warning("Couldn't instantiate AMI client.  AMI not set up ?")
+
+    argument = []
+    argument.append("GetDatasetInfo")
+    if dataset:
+        argument.append("logicalDatasetName=" + dataset)
+    else:
+        argument.append("logicalFileName=" + file_name)
+
+    #Dictionary which contain all metadata info about a dataset or file
+    metadata = {}       
+
+    try:
+        result =  amiclient.execute(argument)
+        resultDict = result.getDict()
+        resultByRow = resultDict['Element_Info']
+        for rows, ids in resultByRow.iteritems():
+            for metaid, id in ids.iteritems():
+                metadata[str(metaid)] = str(id)
+
+    except Exception, msg:
+        logger.warning("Couldn't get metadata from AMI due to %s" % msg)
+
+    return metadata     
+
+
+def get_file_metadata(dataset='', all=False):
+    
+    try: 
+        amiclient = AMIClient()
+    except:
+        logger.warning("Couldn't instantiate AMI client.  AMI not set up ?")
+
+    argument = []
+    argument.append("ListFiles")
+    argument.append("logicalDatasetName=" + dataset)
+    
+    #Metatdata from all the files from a datset
+    info = []
+
+    try:
+        result =  amiclient.execute(argument)
+        resultDict = result.getDict()
+        resultByRow = resultDict['Element_Info']
+        for rows, ids in resultByRow.iteritems():
+            if all:
+                file_metadata = get_metadata(file_name = ids['LFN'])
+            else:
+                file_metadata = {}
+            for id,val in ids.iteritems():
+                file_metadata[id]  = val 
+            
+            info.append(file_metadata)
+    
+    except Exception, msg:
+        logger.warning("Couldn't get metadata from AMI due to %s" % msg)
+
+    return info 
+
+
 
 
 class AMIDataset(DQ2Dataset):
@@ -36,7 +105,7 @@ class AMIDataset(DQ2Dataset):
     _schema.datadict['provenance'] = SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Dataset provenance chain')
 
 
-    _exportmethods = ['search','fill_provenance']
+    _exportmethods = ['search','fill_provenance', 'get_datasets_metadata', 'get_files_metadata']
 
 
     def __init__(self):
@@ -114,32 +183,31 @@ class AMIDataset(DQ2Dataset):
                     for dataset in datasetList:
                         prov.append("%s/" % dataset.strip())
 
-    def search(self, pattern='', maxresults = 2,extraargs = []):
+    def search(self, pattern='', maxresults = 2, extraargs = []):
         
         if not self.amiclient:
             self._initami()
 
-        if pattern=='':
-            pattern=self.dataset[0]
-
-        
-        pattern = pattern.replace("/","")    
-        pattern = pattern.replace('*','%')
-            
-        limit="0,%d" % maxresults
-
         argument=[]
-        argument.append("SearchQuery")
-        argument.append("entity=" + self.entity)
-        
-        argument.append("glite=SELECT logicalDatasetName WHERE amiStatus='" + self.amiStatus +"' AND logicalDatasetName like '" + pattern +"' LIMIT "+limit)
-        
-        argument.append("project=" + self.project)
-        argument.append("processingStep=" + self.processingStep)
-        argument.append("mode=defaultField")
-        argument.extend(extraargs)
         dsetList = []
-    
+        
+        if self.logicalDatasetName:
+            pattern=self.logicalDatasetName
+            
+            pattern = pattern.replace("/","")    
+            pattern = pattern.replace('*','%')
+            limit="0,%d" % maxresults
+
+            argument.append("SearchQuery")
+            argument.append("entity=" + self.entity)
+
+            argument.append("glite=SELECT logicalDatasetName WHERE amiStatus='" + self.amiStatus +"' AND logicalDatasetName like '" + pattern +"' LIMIT "+limit)
+
+            argument.append("project=" + self.project)
+            argument.append("processingStep=" + self.processingStep)
+            argument.append("mode=defaultField")
+            argument.extend(extraargs)
+        
         try:
             result = self.amiclient.execute(argument)
             resultDict= result.getDict()
@@ -150,3 +218,23 @@ class AMIDataset(DQ2Dataset):
             print msg
 
         return dsetList
+
+    def get_datasets_metadata(self):
+        datasets = self.search()
+        metadata = []
+
+        for dataset in datasets:
+            tmp = get_metadata(dataset = dataset)
+            metadata.append(tmp)
+
+        return metadata
+    
+    def get_files_metadata(self, all=False):
+        datasets = self.search()
+        metadata = []
+
+        for dataset in datasets:
+            tmp = get_file_metadata(dataset=dataset, all=all)
+            metadata =  metadata + tmp
+
+        return metadata
