@@ -77,21 +77,33 @@ under certain conditions; type license() for details.
 ****************************************************************************
 THIS IS A XML REPOSITORY PROTOTYPE - UNTESTED, UNSTABLE, MAY LOOSE YOUR JOBS
 ****************************************************************************
+In Ganga 5.5.0 a new version of the Ganga XML Repository (v6.0) is
+introduced. Its main features are enhanced reliability, concurrent
+access from several ganga sessions, and the introduction of a Ganga
+"box", where any Ganga object can be saved.
 
-SOME DEFAULTS HAVE BEEN CHANGED TEMPORARILY FOR TESTING
+On the first startup of 5.5.0, old AMGA and XML repositories as well as
+GangaTasks from the same gangadir will be automatically imported. The
+old repositories and tasks will not be touched, only a file
+"converted.to.XML.6.0" will be created in
+<gangadir>/repository/Name/LocalAMGA or respectively LocalXML/jobs,
+LocalXML/templates or <gangadir>/tasks.xml.converted.to.XML.6.0.
 
-~/gangadir-TMP-5.0
-~/.gangarc-TMP-5.0
+To repeat the import process from scratch, just delete these files
+together with the new repository <gangadir>/repository/Name/LocalXML/6.0
 
-If you want to automatically migrate your existing jobs then
-update the ~/.gangarc-TMP-5.0 file to point to your existing 
-~/gangadir directory. Your old jobs will still be usable with
-production releases 4.4.x and should not be affected in any way.
-New jobs created in this 5.5.0 beta release will not be available
-if you go back to 4.4.x.
+The new repository may use much more disk space than the old AMGA
+repository, and some more space than the old XML repository. This does
+however only affect <gangadir>/repository, and not the usually much
+larger workspace directory <gangadir>/workspace.
 
-WARNING: for absolute safety make sure to do a backup of your current 
-~/gangadir directory before you start playing with this beta release!
+When you are happy with the conversion and completely sure you do not
+want to revert to a previous release you can delete the old repository
+and tasks located in
+
+<gangadir>/repository/Name/LocalAMGA
+<gangadir>/repository/Name/LocalXML/5.0
+<gangadir>/tasks.xml
 
 ****************************************************************
 THIS IS A BETA RELEASE FOR TESTING - YOU HAVE BEEN WARNED !!!
@@ -105,7 +117,7 @@ THIS IS A BETA RELEASE FOR TESTING - YOU HAVE BEEN WARNED !!!
         self.interactive = True
 
         import os.path
-        self.default_config_file = os.path.expanduser('~/.gangarc-TMP-5.0')
+        self.default_config_file = os.path.expanduser('~/.gangarc')
 
         # this is a TEMPORARY hack to enable some GUI-specific parts of the core such as monitoring
         # replaced by self.options.GUI
@@ -212,7 +224,7 @@ THIS IS A BETA RELEASE FOR TESTING - YOU HAVE BEEN WARNED !!!
             shutil.copy(os.path.join(os.path.dirname(_gangaPythonPath),'templates',configtemplate),where)
             print >> sys.stderr, 'Created standard config file',where
             
-        gangadir = os.path.expanduser('~/gangadir-TMP-5.0')
+        gangadir = os.path.expanduser('~/gangadir')
         if not os.path.exists(gangadir) \
            and not os.path.exists(self.default_config_file) \
            and not self.options.config_file_set_explicitly:
@@ -389,7 +401,7 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
 
         config.addOption('TextShell','IPython',""" The type of the interactive shell: IPython (cooler) or Console (limited)""")
         config.addOption('StartupGPI','','block of GPI commands executed at startup')
-        config.addOption('gangadir',Ganga.Utility.Config.expandvars(None,'~/gangadir-TMP-5.0'),'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.',filter=Ganga.Utility.Config.expandvars)
+        config.addOption('gangadir',Ganga.Utility.Config.expandvars(None,'~/gangadir'),'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.',filter=Ganga.Utility.Config.expandvars)
         config.addOption('repositorytype','LocalXML','Type of the repository.',examples='LocalXML')
         config.addOption('workspacetype','LocalFilesystem','Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
 
