@@ -109,9 +109,8 @@ try:
         lines = [
                   Utils.colored("JEM", 32) + " (the " + Utils.colored("J", 32) + "ob " \
                       + Utils.colored("E", 32) + "xecution " + Utils.colored("M", 32) + "onitor) v" + str(JEM_VERSION) + " loaded ",
-                  "type 'help(JobExecutionMonitor)' for usage instructions",
-                  "this is still an " + Utils.colored("alpha", 31) + " version of JEM - please give feedback!",
-                  "visit https://svn.grid.uni-wuppertal.de/trac/JEM for more information"
+                  "for more infos visit: https://twiki.cern.ch/twiki/bin/view/Atlas/GangaJEM",
+                  "or type 'help(JobExecutionMonitor)' for usage instructions",
                 ]
         print Utils.getLogo(lines)
         print
