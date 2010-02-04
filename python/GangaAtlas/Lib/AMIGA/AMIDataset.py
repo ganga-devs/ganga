@@ -100,7 +100,7 @@ class AMIDataset(DQ2Dataset):
     _schema.datadict['processingStep'] = SimpleItem(defvalue = 'Atlas_Production', doc = '')
     _schema.datadict['amiStatus'] = SimpleItem(defvalue = 'VALID', doc = '')
     _schema.datadict['entity'] = SimpleItem(defvalue = 'dataset', doc = '')
-    _schema.datadict['amiclient'] = SimpleItem(defvalue = 0, hidden=1, doc="AMI client" )
+    _schema.datadict['amiclient'] = SimpleItem(defvalue = 0, transient=1, hidden=1, doc="AMI client" )
     _schema.datadict['metadata'] = SimpleItem(defvalue = {}, doc="Metadata" )
     _schema.datadict['provenance'] = SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Dataset provenance chain')
 
