@@ -7,10 +7,12 @@ N.B. This code is under development and should not generally be used or relied u
 """
 
 DETAILS_DATA_KEY = 'detailsData'
-def dictToWlcg(msg):
+def dictToWlcg(msg, include_microseconds=True):
     """Converts the given dictionary to WLCG message format.
     
     @param msg: A dictionary of key value pairs.
+    @param include_microseconds: If microseconds should be included in the date
+    format, default True.
     
     The keys and values are converted to strings using str() with the following
     exceptions:
@@ -20,7 +22,8 @@ def dictToWlcg(msg):
       - if value is None, then it is converted to an empty string.
       - if value is an instance of datetime.datetime, and it is naive (i.e. it
         contains no timezone info), then it is assumed to be UTC and converted
-        to the WLCG date format.
+        to the WLCG date format. i.e. YYYY-MM-DDTHH:MM:SS.mmmmmmZ or
+        YYYY-MM-DDTHH:MM:SSZ if include_microseconds is False.
         
     Apart from detailsData, which is by definition the final entry, the entries
     are sorted according to natural ordering.
@@ -29,7 +32,7 @@ def dictToWlcg(msg):
       - WLCG message format.
         https://twiki.cern.ch/twiki/bin/view/LCG/GridMonitoringProbeSpecification#Message_Formats
       - WLCG date format.
-        https://twiki.cern.ch/twiki/bin/view/LCG/GridMonitoringProbeSpecification#Message_Formats
+        https://twiki.cern.ch/twiki/bin/view/LCG/GridMonitoringProbeSpecification#Date_Formats
     
     """
     import datetime
@@ -38,6 +41,9 @@ def dictToWlcg(msg):
         if k != DETAILS_DATA_KEY:
             # if v is UTC datetime then format in WLCG DateFormat 
             if isinstance(v, datetime.datetime) and v.tzinfo is None:
+                # remove microseconds
+                if not include_microseconds:
+                    v = v.replace(microsecond=0)
                 v = '%sZ' % v.isoformat()
             if v is None:
                 v = ''
@@ -64,6 +70,9 @@ if __name__ == '__main__':
         'detailsData': ['line 1', 'line 2']
         }
     wlcg = dictToWlcg(msg)
+    print wlcg
+    print
+    wlcg = dictToWlcg(msg, include_microseconds=False)
     print wlcg
 
     
