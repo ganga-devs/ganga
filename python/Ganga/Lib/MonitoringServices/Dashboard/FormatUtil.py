@@ -32,7 +32,7 @@ def dictToWlcg(msg, include_microseconds=True):
       - WLCG message format.
         https://twiki.cern.ch/twiki/bin/view/LCG/GridMonitoringProbeSpecification#Message_Formats
       - WLCG date format.
-        https://twiki.cern.ch/twiki/bin/view/LCG/GridMonitoringProbeSpecification#Message_Formats
+        https://twiki.cern.ch/twiki/bin/view/LCG/GridMonitoringProbeSpecification#Date_Formats
     
     """
     import datetime
