@@ -211,15 +211,10 @@ class SessionLockManager(object):
     def shutdown(self):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
         self.locked = Set()
-        global session_lock_refresher
-        if not session_lock_refresher is None:
-            try:
-                session_lock_refresher.stop()
-                session_lock_refresher.join()
-            except AssertionError:
-                pass
-            except AttributeError:
-                pass
+        try:
+            os.unlink(self.fn)
+        except OSError, x:
+            logger.debug("Session file '%s' was deleted already or removal failed: %s" % (self.fn,x))
 
     # Global lock function
     def global_lock_setup(self):
@@ -286,7 +281,9 @@ class SessionLockManager(object):
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "Error on session file access '%s': %s" % (self.fn,x))
             else:
-                raise RepositoryError(self.repo, "Own session file not found! Possibly deleted by another ganga session - the system clocks on computers running Ganga must be synchronized!")
+                raise RepositoryError(self.repo, "Own session file not found! Possibly deleted by another ganga session.\n\
+                                    Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
+                                    On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.")
         except IOError, x:
             raise RepositoryError(self.repo, "Error on session file locking '%s': %s" % (self.fn,x))
 
@@ -484,7 +481,7 @@ class SessionLockManager(object):
                     os.unlink(sf)
                 except OSError,x:
                     failed = True
-            return failed
+            return not failed
         finally:
             self.global_lock_release()
 
