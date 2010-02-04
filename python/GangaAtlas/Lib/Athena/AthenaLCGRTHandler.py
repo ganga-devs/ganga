@@ -589,8 +589,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         releaseBlacklist = job.backend.requirements.list_release_blacklist()     
         if requirementsSoftware and  requirementsSoftware[0] in releaseBlacklist:
-            logger.error('The athena release %s you are using has been centrally black-listed !', requirementsSoftware[0])
-            logger.error('Please try to upgrade to a newer version or ask for help and advice on the distributed analysis help list !')
+            logger.error('The athena release %s you are using is not recommended for distributed analysis !', requirementsSoftware[0])
+            logger.error('For details, please have a look at https://twiki.cern.ch/twiki/bin/view/Atlas/DAGangaFAQ#Athena_Versions_Issues or ask for help and advice on the distributed analysis help list !')
             requirements.software = requirementsSoftware
         else:
             requirements.software = requirementsSoftware
