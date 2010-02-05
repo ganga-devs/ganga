@@ -93,11 +93,15 @@ class DQ2JobSplitter(ISplitter):
 
         logger.debug('DQ2JobSplitter called')
 
-        if job.inputdata._name <> 'DQ2Dataset':
-            raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset as input')
+        if job.inputdata._name <> 'DQ2Dataset'  and job.inputdata._name <> 'AMIDataset':
+            raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset or AMIDataset as input')
 
         if job.backend._name <> 'LCG' and job.backend._name <> 'Panda' and job.backend._name <> 'NG':
             raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, Panda or NG backend')
+
+        #AMIDataset
+        if job.inputdata._name == 'AMIDataset':
+            job.inputdata.dataset = job.inputdata.search()
 
         # before we do anything, check for tag info for this dataset
         additional_datasets = {}
