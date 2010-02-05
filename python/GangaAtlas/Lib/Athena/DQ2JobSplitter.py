@@ -156,8 +156,9 @@ class DQ2JobSplitter(ISplitter):
 
         if self.numfiles <= 0: 
             self.numfiles = 1
-
-        cache_get_locations = Caching.FunctionCache(job.inputdata.get_locations, job.inputdata.dataset)
+        
+        dset_names = str(job.inputdata.dataset)
+        cache_get_locations = Caching.FunctionCache(job.inputdata.get_locations, dset_names)
         locations = cache_get_locations(overlap=False)
 #       locations = job.inputdata.get_locations(overlap=False)
         
@@ -310,7 +311,7 @@ class DQ2JobSplitter(ISplitter):
         
         logger.debug('allowed_sites = %s ', allowed_sites)
 
-        cache_get_contents = Caching.FunctionCache(job.inputdata.get_contents, job.inputdata.dataset)
+        cache_get_contents = Caching.FunctionCache(job.inputdata.get_contents, dset_names)
         contents_temp = cache_get_contents(overlap=False, size=True)
 
         contents = {}
