@@ -23,7 +23,12 @@ class PandaRequirements(GangaObject):
     def __init__(self):
         super(PandaRequirements,self).__init__()
         from pandatools import PsubUtils
+        import sys
+        sys.stdout = open('/dev/null','w')
+        sys.stderr = open('/dev/null','w')
         self.cloud = PsubUtils.getCloudUsingFQAN(None,False)
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
         if not self.cloud:
             import random
             from pandatools import Client

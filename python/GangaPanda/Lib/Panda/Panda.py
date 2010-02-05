@@ -260,7 +260,8 @@ class Panda(IBackend):
         'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
         'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code (transExitCode)'),
         'piloterrorcode': SimpleItem(defvalue='',protected=1,copyable=0,doc='Pilot Error Code'),
-        'reason'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Error Code Diagnostics')
+        'reason'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Error Code Diagnostics'),
+        'accessmode'    : SimpleItem(defvalue='',protected=0,copyable=1,hidden=1,doc='EXPERT ONLY')
     })
 
     _category = 'backends'
