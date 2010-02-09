@@ -298,11 +298,17 @@ class RegistrySlice(object):
                 width = self._display_columns_width.get(item,default_width)
                 if obj._data is None and hasattr(obj,"_index_cache") and not obj._index_cache is None:
                     try:
-                        vals.append(str(obj._index_cache["display:"+item])[0:width])
+                        if item == "fqid":
+                            vals.append(str(obj._index_cache["display:"+item]))
+                        else:
+                            vals.append(str(obj._index_cache["display:"+item])[0:width])
                         continue
                     except KeyError:
                         pass
-                vals.append(self._get_display_value(obj,item)[0:width])
+                if item == "fqid":
+                    vals.append(self._get_display_value(obj,item))
+                else:
+                    vals.append(self._get_display_value(obj,item)[0:width])
             ds += markup(format % tuple(vals), colour)
         return ds
 
