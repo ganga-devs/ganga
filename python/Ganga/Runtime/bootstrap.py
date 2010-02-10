@@ -74,9 +74,10 @@ This is free software (GPL), and you are welcome to redistribute it
 under certain conditions; type license() for details.
 
 
-****************************************************************************
-THIS IS A XML REPOSITORY PROTOTYPE - UNTESTED, UNSTABLE, MAY LOOSE YOUR JOBS
-****************************************************************************
+-------------------------------------
+THIS IS A NEW MAJOR RELEASE OF GANGA
+-------------------------------------
+
 In Ganga 5.5.0 a new version of the Ganga XML Repository (v6.0) is
 introduced. Its main features are enhanced reliability, concurrent
 access from several ganga sessions, and the introduction of a Ganga
@@ -105,10 +106,9 @@ and tasks located in
 <gangadir>/repository/Name/LocalXML/5.0
 <gangadir>/tasks.xml
 
-****************************************************************
-THIS IS A BETA RELEASE FOR TESTING - YOU HAVE BEEN WARNED !!!
-****************************************************************
-
+-------------------------------------
+THIS IS A NEW MAJOR RELEASE OF GANGA
+-------------------------------------
 """ % _gangaVersion
         else:
             self.hello_string = hello_string
