@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.0 (2010/2/5)
+5.5.0 (2010/2/10)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -36,6 +36,7 @@ Athena:
   release warning in AthenaLCGRTHandler.py for Athena/LCG
 * move pandatools.Client import into functions that use it. This 
   prevents ganga startup blockage if the panda server is down.
+* Fix PhysicsAnalysis submission tag
 
 *NEW*: AMIDataset:
 A new dataset based on Atlas metadata  has been added into Ganga. 
