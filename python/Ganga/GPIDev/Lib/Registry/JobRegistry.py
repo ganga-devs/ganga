@@ -11,7 +11,7 @@ config.addOption('jobs_columns',
                  'list of job attributes to be printed in separate columns')
 
 config.addOption('jobs_columns_width',
-                 {'fqid': 5, 'status':10, 'name':10, 'subjobs':8, 'application':15, 'backend':15, 'backend.actualCE':45},
+                 {'fqid': 8, 'status':10, 'name':10, 'subjobs':8, 'application':15, 'backend':15, 'backend.actualCE':45},
                  'width of each column')
 
 config.addOption('jobs_columns_functions',
