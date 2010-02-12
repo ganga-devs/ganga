@@ -590,6 +590,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     requirementsSoftware = ['VO-atlas-point1-%s' %(app.atlas_production)]
                 elif app.atlas_project=="AtlasTier0":
                     requirementsSoftware = ['VO-atlas-tier0-%s' %(app.atlas_production)]
+                elif app.atlas_project=="AtlasProduction":
+                    requirementsSoftware = ['VO-atlas-production-%s-%s' %(app.atlas_production, cmtconfig )]
                 else:
                     requirementsSoftware = ['VO-atlas-%s-%s-%s' %(app.atlas_project.lower(), app.atlas_production, cmtconfig )]
         else:
