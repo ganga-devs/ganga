@@ -397,7 +397,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
 
         # Expand Athena jobOptions
-        athena_options = ' '.join([os.path.basename(opt_file.name) for opt_file in app.option_file])
+        athena_options = ' '.join([os.path.basename(opt_file.name) for opt_file in app.option_file])2
         #if app.options: athena_options = ' -c ' + app.options + ' ' + athena_options
         if app.options:
             athena_options = app.options + ' ' + athena_options
@@ -408,7 +408,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         inputbox = [ File(opt_file.name) for opt_file in app.option_file ]
         inputbox.append( File(os.path.join(__directory__,'athena-utility.sh')) )
 
-        if job.inputdata and job.inputdata._name == "AMIDataset":
+        if job.inputdata and job.inputdata._name == "AMIDataset" and job.inputdata.goodRunListXML.name != '':
             inputbox.append( File( job.inputdata.goodRunListXML.name ) )
     
         if job.inputdata and job.inputdata._name == 'ATLASDataset':

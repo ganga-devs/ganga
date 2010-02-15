@@ -1778,6 +1778,7 @@ if __name__ == '__main__':
                         files.pop(lfn)
 
             # remove any tag-referenced files (not the tag files themselves
+            tag_flag=False
             if os.environ.has_key('TAG_TYPE'):
                 
                 if add_lfns:

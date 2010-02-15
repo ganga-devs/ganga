@@ -195,7 +195,7 @@ class AMIDataset(DQ2Dataset):
         argument=[]
         dsetList = []
         
-        if self.goodRunListXML != None:
+        if self.goodRunListXML.name != '':
 
             # open the GRL
             if os.path.exists( self.goodRunListXML.name ):
