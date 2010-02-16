@@ -204,7 +204,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
         if matchURL:
             jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
-        jspec.cmtConfig         = app.atlas_cmtconfig
+        jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
 
         fout = FileSpec()
         fout.lfn  = self.library
@@ -266,6 +266,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         '''prepare the subjob specific configuration'''
 
         from pandatools import Client
+        from pandatools import AthenaUtils
         from taskbuffer.JobSpec import JobSpec
         from taskbuffer.FileSpec import FileSpec
 
@@ -330,7 +331,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.minRamCount = job.backend.requirements.memory
         if job.backend.requirements.cputime != -1:
             jspec.maxCpuCount = job.backend.requirements.cputime
-        jspec.cmtConfig         = app.atlas_cmtconfig
+        jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
 
 #       library (source files)
         if not job.backend.libds:
