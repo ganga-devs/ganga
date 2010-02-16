@@ -87,7 +87,6 @@ def runPandaBrokerage(job):
     if job.backend.site == "AUTO":
         libdslocation = []
         if job.backend.libds:
-            # TODO: fix the cloud here
             try:
                 libdslocation = Client.getLocations(job.backend.libds,[],job.backend.requirements.cloud,False,False)
             except exceptions.SystemExit:
@@ -96,6 +95,10 @@ def runPandaBrokerage(job):
                 raise ApplicationConfigurationError(None,'Could not locate libDS %s'%job.backend.libds)
             else:
                 libdslocation = libdslocation.values()[0]
+                try:
+                    job.backend.requirements.cloud = Client.PandaSites[libdslocation[0]]['cloud']
+                except:
+                    raise BackendError('Panda','Could not map libds site %s to a cloud'%libdslocation)
 
         tmpSites = []
         dataset = ''
