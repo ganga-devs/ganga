@@ -143,9 +143,19 @@ def runPandaBrokerage(job):
         
         tag = ''
         try:
-            tag = 'Atlas-%s' % job.application.atlas_release
+            if job.application.atlas_production=='':
+                tag = 'Atlas-%s' % job.application.atlas_release
+            else:
+                tag = '%s-%s' % (job.application.atlas_project,job.application.atlas_production)
         except:
-            pass
+            # application is probably AthenaMC
+            try:
+                if len(job.application.atlas_release.split('.')) == 3:
+                    tag = 'Atlas-%s' % job.application.atlas_release
+                else:
+                    tag = 'AtlasProduction-%s' % job.application.atlas_release
+            except:
+                logger.warning("Could not determine athena tag for Panda brokering")
         try:
             status,out = Client.runBrokerage(tmpSites,tag,verbose=False,trustIS=config['trustIS'])
         except exceptions.SystemExit:
