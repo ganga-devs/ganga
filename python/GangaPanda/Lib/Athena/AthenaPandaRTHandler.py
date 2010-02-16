@@ -317,12 +317,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         else:
             jspec.prodDBlock    = 'NULL'
         jspec.destinationDBlock = job.outputdata.datasetname
-        if job.outputdata.location:
-            if not job._getRoot().subjobs or job.id == 0:
-                logger.warning('You have specified outputdata.location. Note that Panda may not support writing to a user-defined output location.')
-            jspec.destinationSE = job.outputdata.location
-        else:
-            jspec.destinationSE = site
+        if job.outputdata.location and (not job._getRoot().subjobs or job.id == 0):
+            logger.warning('User defined output locations not supported. Use DaTRI: https://twiki.cern.ch/twiki/bin/view/Atlas/DataTransferRequestInterface')
+#            jspec.destinationSE = job.outputdata.location
+        jspec.destinationSE     = site
         jspec.prodSourceLabel   = configPanda['prodSourceLabelRun']
         jspec.processingType    = configPanda['processingType']
         jspec.assignedPriority  = configPanda['assignedPriorityRun']
