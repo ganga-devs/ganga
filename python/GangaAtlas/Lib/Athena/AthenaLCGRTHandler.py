@@ -397,7 +397,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
 
         # Expand Athena jobOptions
-        athena_options = ' '.join([os.path.basename(opt_file.name) for opt_file in app.option_file])2
+        athena_options = ' '.join([os.path.basename(opt_file.name) for opt_file in app.option_file])
         #if app.options: athena_options = ' -c ' + app.options + ' ' + athena_options
         if app.options:
             athena_options = app.options + ' ' + athena_options
