@@ -1,3 +1,4 @@
+bg
 def getEnvironment(c):
     import PACKAGE
     PACKAGE.standardSetup()

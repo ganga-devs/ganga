@@ -486,6 +486,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     environment['GANGA_GLITE_UI']=configLCG['GLITE_SETUP']
                 except:
                     pass
+
                 
         if job.inputdata and job.inputdata._name == 'DQ2Dataset':
             if job.inputdata.dataset:

@@ -1,0 +1,50 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+import datetime
+
+#single job
+
+j = Job()
+
+assert j.time.submissiontime() == None
+assert j.time.runtime() == None
+assert j.time.waittime() == None
+
+j.submit()
+
+assert sleep_until_completed(j,300)
+assert type(j.time.submissiontime()) == datetime.timedelta
+assert type(j.time.waittime()) == datetime.timedelta
+assert type(j.time.runtime()) == datetime.timedelta
+
+#subjobs
+
+j = Job()
+
+j.splitter='ArgSplitter'
+j.splitter.args=[[],[],[]]
+
+assert j.time.submissiontime() == None
+assert j.time.runtime() == None
+assert j.time.waittime() == None
+
+j.submit()
+
+assert sleep_until_completed(j,300)
+
+print j.status
+
+assert type(j.time.submissiontime()) == datetime.timedelta
+assert type(j.time.waittime()) == datetime.timedelta
+assert type(j.time.runtime()) == datetime.timedelta
+
+
+
+for sjs in j.subjobs:
+    assert type(sjs.time.submissiontime()) == datetime.timedelta #submitting does not appear in subjobs currently.
+    assert type(sjs.time.waittime()) == datetime.timedelta
+    assert type(sjs.time.runtime()) == datetime.timedelta
+
+#end
+
+print "test2_duration_local passed."

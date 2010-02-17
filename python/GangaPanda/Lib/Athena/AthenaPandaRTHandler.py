@@ -714,8 +714,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if app.atlas_exetype in ['PYARA','ARES','ROOT']:
             param += '--trf '
             param += '--ara '
-        if job.backend.accessmode == 'FILE_STAGER':
-            param += '--accessmode=filestager'
  
         jspec.jobParameters = param
         

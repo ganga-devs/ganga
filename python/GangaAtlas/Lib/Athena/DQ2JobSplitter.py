@@ -21,6 +21,8 @@ from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
 from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
 
+from Ganga.Utility import Caching
+
 from Ganga.GPIDev.Credentials import GridProxy
 gridProxy = GridProxy()
 
@@ -154,8 +156,11 @@ class DQ2JobSplitter(ISplitter):
 
         if self.numfiles <= 0: 
             self.numfiles = 1
-
-        locations = job.inputdata.get_locations(overlap=False)
+        
+        dset_names = str(job.inputdata.dataset)
+        cache_get_locations = Caching.FunctionCache(job.inputdata.get_locations, dset_names)
+        locations = cache_get_locations(overlap=False)
+#       locations = job.inputdata.get_locations(overlap=False)
         
         allowed_sites = []
         if job.backend._name == 'LCG':
@@ -306,7 +311,9 @@ class DQ2JobSplitter(ISplitter):
         
         logger.debug('allowed_sites = %s ', allowed_sites)
 
-        contents_temp = job.inputdata.get_contents(overlap=False, size=True)
+        cache_get_contents = Caching.FunctionCache(job.inputdata.get_contents, dset_names)
+        contents_temp = cache_get_contents(overlap=False, size=True)
+
         contents = {}
         datasetLength = {}
         datasetFilesize = {}
@@ -335,7 +342,9 @@ class DQ2JobSplitter(ISplitter):
                 else:
                     udays = 10000
                 if locations and locations.has_key(dataset):
-                    siteinfo = dq2_siteinfo( dataset, allowed_sites, locations[dataset], udays )
+                    cache_dq2_siteinfo = Caching.FunctionCache(dq2_siteinfo, dataset)
+                    siteinfo = cache_dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays)
+                    #siteinfo = dq2_siteinfo( dataset, allowed_sites, locations[dataset], udays )
                 else:
                     siteinfo = {}
             siteinfos[dataset]=siteinfo

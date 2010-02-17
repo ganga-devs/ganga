@@ -84,9 +84,9 @@ def export( item = None, filename = "", mode = "w" ):
    elif type( item ) is types.TupleType:
       isIterable = True
    else:
-      if hasattr( item, "_impl" ):
-         if hasattr( item._impl, "repository" ):
-            isIterable = True
+      from Ganga.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy
+      if isinstance(item, RegistrySliceProxy):
+         isIterable = True
 
    if isIterable:
       objectList = item

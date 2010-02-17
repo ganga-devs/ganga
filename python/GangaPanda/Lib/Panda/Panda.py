@@ -247,7 +247,7 @@ class Panda(IBackend):
     '''Panda backend: submission to the PanDA workload management system
     '''
 
-    _schema = Schema(Version(2,2), {
+    _schema = Schema(Version(2,1), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'requirements'  : ComponentItem('PandaRequirements',doc='Requirements for the resource selection'),
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
@@ -260,8 +260,7 @@ class Panda(IBackend):
         'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
         'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code (transExitCode)'),
         'piloterrorcode': SimpleItem(defvalue='',protected=1,copyable=0,doc='Pilot Error Code'),
-        'reason'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Error Code Diagnostics'),
-        'accessmode'    : SimpleItem(defvalue='',protected=0,copyable=1,doc='EXPERT ONLY')
+        'reason'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Error Code Diagnostics')
     })
 
     _category = 'backends'

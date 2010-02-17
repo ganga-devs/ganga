@@ -1,7 +1,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Proxy.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
+# $Id: Proxy.py,v 1.2.4.3 2009-07-10 11:29:27 ebke Exp $
 ################################################################################
 
 import Ganga.Utility.logging
@@ -93,9 +93,7 @@ class ProxyDataDescriptor(object):
             
             # convert implementation object to GPI value according to the static method defined in the implementation object
             def object2value(v):
-                # None is allowed as a value of a component object so it is a special-case 
-                if v is None: return None
-                else: return v._object_filter__get__(v)
+                return None
             
             vv = object2value(v)
             if vv is None:
@@ -109,10 +107,7 @@ class ProxyDataDescriptor(object):
         # apply attribute conversion
         def disguiseAttribute(v):
             #FIXME: this is obsoleted method
-            v = obj._impl._attribute_filter__get__(self._name,v)
-
             from Ganga.GPIDev.Base import GangaObject
-            
             if isinstance(v,GangaObject):
                 return GPIProxyObjectFactory(v)
             return v
@@ -144,7 +139,7 @@ class ProxyDataDescriptor(object):
         if item['protected']:
             raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified'%(self._name,))
         if obj._impl._readonly():
-            raise ReadOnlyObjectError('object %s is readonly and attribute "%s" cannot be modified now'%(repr(obj),self._name))
+            raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj),self._name))
 
         # apply attribute conversion
         def stripAttribute(v):
@@ -185,12 +180,6 @@ class ProxyDataDescriptor(object):
         self._check_type(obj,val)
         setattr(obj._impl, self._name, val)
 
-        #FIXME: save the object to persistent storage if applicable
-        root = obj._impl._getRoot()
-        root._setDirty(1)
-        #registry = root._getRegistry()
-        #if registry:
-        #    registry.save(root)
 
 class ProxyMethodDescriptor(object):
     def __init__(self, name, internal_name):
@@ -342,6 +331,18 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.2.4.2  2009/07/08 15:39:15  ebke
+# removed object_filter__get__
+#
+# Revision 1.2.4.1  2009/07/08 11:18:21  ebke
+# Initial commit of all - mostly small - modifications due to the new GangaRepository.
+# No interface visible to the user is changed
+#
+# Revision 1.2  2008/09/09 14:37:16  moscicki
+# bugfix #40220: Ensure that default values satisfy the declared types in the schema
+#
+# factored out type checking into schema module, fixed a number of wrongly declared schema items in the core
+#
 # Revision 1.1  2008/07/17 16:40:52  moscicki
 # migration of 5.0.2 to HEAD
 #

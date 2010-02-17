@@ -21,9 +21,10 @@ o+="\n"+ markup("Procedure to do a usual production:", fgcol("red"))
 o+="\n"+ "t = MCTask()"
 o+="\n"+ 't.name = "MyFirstTask"'
 o+="\n"+ 't.evgen.application.evgen_job_option = "CSC.005145.PythiaZmumu.py" # or "path/to/my_evgen_job_option.py"'
+o+="\n"+ 't.evgen.application.transform_script = "csc_evgen08_trf.py"'
 o+="\n"+ "t.total_events = 1000"
 o+="\n"+ 't.setParameter(run_number="5145", production_name="MyProd-01", process_name="PythiaZmumu")'
-o+="\n"+ 't.setParameter(atlas_release="14.2.24.1", se_name="FZK-LCG2_USERDISK")'
+o+="\n"+ 't.setParameter(atlas_release="14.2.24.1", se_name="FZK-LCG2_SCRATCHDISK")'
 o+="\n"+ 't.setParameter(triggerConfig="DEFAULT", geometryTag="ATLAS-GEO-05-00-00")'
 o+="\n"+ "t.float = 10"
 o+="\n"+ "t.info() # Check here if settings are correct"

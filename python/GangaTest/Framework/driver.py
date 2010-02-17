@@ -324,10 +324,10 @@ def cleanup():
 
         logger.info('performing "hard" cleanup')
 
-        if hasattr(jobs._impl,'resetAll'):
-                jobs._impl.resetAll()
-        if hasattr(templates._impl,'resetAll'):
-                templates._impl.resetAll()
+        if hasattr(jobs,'clean'):
+                jobs.clean(confirm=True, force=True)
+        if hasattr(templates,'clean'):
+                templates.clean(confirm=True, force=True)
 
 def read_file(filename):
         f = open(filename)

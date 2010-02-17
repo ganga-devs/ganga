@@ -3,8 +3,7 @@ from common import *
 from sets import Set
 from TaskApplication import ExecutableTask, taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
-from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import JobRegistryInterface
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 
 class Transform(GangaObject):
    _schema = Schema(Version(1,0), {
@@ -150,7 +149,7 @@ class Transform(GangaObject):
          sname = "tasks(%i).transforms[%i].getJobs()"%(task.id,id)
       else:
          sname = "tasks(%i).transforms[%i].getPartitionJobs(%s)"%(task.id,id,partition)
-      jobslice = JobRegistryInstanceInterface(sname)
+      jobslice = JobRegistrySlice(sname)
       def addjob(j):
          if partition is None or self._app_partition[j.application.id] == partition:
             jobslice.jobs[j.fqid] = stripProxy(j)
@@ -167,7 +166,7 @@ class Transform(GangaObject):
          except Exception, x:
             print x
             pass
-      return JobRegistryInterface(jobslice)
+      return JobRegistrySliceProxy(jobslice)
 
    def setFailed(self, partition):
       """ Tells Tasks that all Applications that have executed this partition have actually failed."""
@@ -211,7 +210,7 @@ class Transform(GangaObject):
 
       # Check if we know the occurring application...
       if not app.id in self._app_partition:
-         logger.warning("%s was contacted by an unknown application %i.", self.fqn(), self._getParent().id, app.id)
+         logger.warning("%s was contacted by an unknown application %i.", self.fqn(), app.id)
          return
       # Silently ignore message if the application is already removed
       if app.id in self._app_status and self._app_status[app.id] == "removed":

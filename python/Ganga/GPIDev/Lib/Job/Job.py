@@ -15,6 +15,7 @@ logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility.logging import log_user_exception
 
 from Ganga.Core import GangaException
+from Ganga.Core.GangaRepository import RegistryKeyError
 
 class JobStatusError(GangaException):
     def __init__(self,*args):
@@ -48,6 +49,8 @@ class JobInfo(GangaObject):
 
     def increment(self):
         self.submit_counter += 1
+
+from JobTime import JobTime
 
 class Job(GangaObject):
     '''Job is an interface for submision, killing and querying the jobs :-).
@@ -110,6 +113,7 @@ class Job(GangaObject):
     _schema = Schema(Version(1,6),{ 'inputsandbox' : FileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,doc="list of File objects shipped to the worker node "),
                                     'outputsandbox' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of filenames or patterns shipped from the worker node"),
                                     'info':ComponentItem('jobinfos',defvalue=None,doc='JobInfo '),
+                                    'time':ComponentItem('jobtime', defvalue=None,protected=1,doc='provides timestamps for status transitions'),
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
                                     'id' : SimpleItem('',protected=1,comparable=0,doc='unique Ganga job identifier generated automatically'),
@@ -132,7 +136,7 @@ class Job(GangaObject):
     _name = 'Job'
     _exportmethods = ['submit','remove','kill', 'resubmit', 'peek','fail', 'force_status' ]
 
-    default_registry = 'native_jobs'
+    default_registry = 'jobs'
 
     # preferences for the GUI...
     _GUIPrefs = [ { 'attribute' : 'id' },
@@ -145,7 +149,7 @@ class Job(GangaObject):
     # TODO: usage of **kwds may be envisaged at this level to optimize the overriding of values, this must be reviewed
     def __init__(self):
         super(Job, self).__init__()
-        self._setRegistry(None)
+        self.time.newjob() #<-----------NEW: timestamp method
 
     def _readonly(self):
         return self.status != 'new'
@@ -162,12 +166,12 @@ class Job(GangaObject):
         except KeyError:
             oldstat = None
         logger.debug('job %s "%s" setting raw status to "%s"',str(id),str(oldstat),value)
-        import inspect,os
-        frame = inspect.stack()[2]
-        #if not frame[0].f_code.co_name == 'updateStatus' and
-        if frame[0].f_code.co_filename.find('/Ganga/GPIDev/')==-1 and frame[0].f_code.co_filename.find('/Ganga/Core/')==-1:
-            raise AttributeError('cannot modify job.status directly, use job.updateStatus() method instead...')
-        del frame
+        #import inspect,os
+        #frame = inspect.stack()[2]
+        ##if not frame[0].f_code.co_name == 'updateStatus' and
+        #if frame[0].f_code.co_filename.find('/Ganga/GPIDev/')==-1 and frame[0].f_code.co_filename.find('/Ganga/Core/')==-1:
+        #    raise AttributeError('cannot modify job.status directly, use job.updateStatus() method instead...')
+        #del frame
 
     class State:
         def __init__(self,state,transition_comment='',hook=None):
@@ -250,6 +254,8 @@ class Job(GangaObject):
             else:
                 raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"'%(fqid, self.status,newstatus)) 
 
+        self._getWriteAccess()
+
         saved_status = self.status
 
         try:
@@ -259,6 +265,13 @@ class Job(GangaObject):
             if transition_update:
                 #we call this even if there was a hook
                 newstatus = self.transition_update(newstatus)       
+
+            if self.status != newstatus:
+                self.time.timenow(str(newstatus))
+                logger.debug("timenow('%s') called.", self.status)
+            else:
+                logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", self.status, newstatus)
+
             self.status = newstatus # move to the new state AFTER hooks are called
             self._commit()
         except Exception,x:
@@ -342,17 +355,16 @@ class Job(GangaObject):
 
     def _auto__init__(self,registry=None):
         if registry is None:
-            from Ganga.GPIDev.Lib.JobRegistry import JobRegistryDev
-            registry = JobRegistryDev.allJobRegistries[self.default_registry]
+            from Ganga.Core.GangaRepository import getRegistry
+            registry = getRegistry(self.default_registry)
 
         self.info.uuid = Ganga.Utility.guid.uuid()
 
         # register the job (it will also commit it)
         # job gets its id now
-        #self._setRegistry(registry)
         registry._add(self)
         self._init_workspace()
-        self._setDirty(1)
+        self._setDirty()
 
         
     def _init_workspace(self):
@@ -427,16 +439,6 @@ class Job(GangaObject):
     def getDebugWorkspace(self,create=True):
         return self.getWorkspace('DebugWorkspace',create=create)
     
-    def _setRegistry(self, registry):
-        #print "Setting registry for ",self.getFQID('.')
-        self._registry = registry
-        # set the registry in the subjobs as well (bugfix 23737)
-        for s in self.subjobs:
-            s._setRegistry(registry)
-
-    def _getRegistry(self):
-        return self._registry
-
     def __getstate__(self):
         dict = super(Job, self).__getstate__()
         #FIXME: dict['_data']['id'] = 0 # -> replaced by 'copyable' mechanism in base class
@@ -606,9 +608,10 @@ class Job(GangaObject):
 
         try:
             logger.info("submitting job %d",self.id)
-            
-            # prevent other sessions from submitting this job concurrently
+            # prevent other sessions from submitting this job concurrently. Also calls _getWriteAccess
             self.updateStatus('submitting')
+
+            self.time.timenow('submitting')# writing to stamps is safer than updating status with untested type #self.updateStatus('submitting') #Justin 12/8/09
 
             try:
                 #NOTE: this commit is redundant if updateStatus() is used on the line above
@@ -631,17 +634,20 @@ class Job(GangaObject):
                     #import sys
                     #subjobs[0].printTree(sys.stdout)
 
+                    # EBKE changes
+                    i = 0
                     self.subjobs = subjobs
-                    registry = self._getRegistry()
-                    registry.repository.registerJobs(self.subjobs, self)
                     for j in self.subjobs:
                         j.info.uuid = Ganga.Utility.guid.uuid()
-                        j._setRegistry(registry)
                         j.status='new'
-                        j._init_workspace()                        
+                        j.id = i
+                        i += 1
+
+                    for j in self.subjobs:
+                        j._init_workspace()
 
                     rjobs = self.subjobs
-                    self._commit(self.subjobs)
+                    self._commit()
                 else:
                     rjobs = [self]
 
@@ -662,6 +668,12 @@ class Job(GangaObject):
             try:
                 if not self.backend.master_submit(rjobs,jobsubconfig,jobmasterconfig):
                     raise JobManagerError('error during submit')
+
+                #FIXME: possibly should go to the default implementation of IBackend.master_submit
+                if self.subjobs:
+                    for jobs in self.subjobs:
+                        jobs.time.timenow('submitting') ### <-- this might be an inadequate place at which to timestamp submitting for subjobs
+
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
             self.info.increment()
@@ -700,14 +712,9 @@ class Job(GangaObject):
         for sj in self.subjobs:
             sj.application.transition_update("removed")
         #delete subjobs
-        try:
-            rep = self._getRegistry().repository
-            rep.deleteJobs(map(lambda sj: tuple(sj.getFQID()), self.subjobs))#FIXME: convert to tuple because ARDA JobRepository checks if is tuple
-            #FIXME: this should be fixed when the new function to update to new status in repository is available
-        except Exception, x:
-            logger.error('Cannot delete subjobs of the job %d while reverting to the previous state (%s)', self.id, str(x))
-        else:                                                                         
-            self.subjobs = []
+        self.subjobs = []
+        self._commit()
+
     
     def remove(self,force=False):
         '''Remove the job.
@@ -731,6 +738,14 @@ class Job(GangaObject):
             msg = 'cannot remove subjob %s'%self.getFQID('.')
             logger.info(msg)
             raise JobError(msg)
+
+        try:
+            self._getWriteAccess()
+        except RegistryKeyError:
+            if self._registry:
+                self._registry._remove(self,auto_removed=1)
+            return 
+            
         
         if self.status in ['submitted','running']:
             try:
@@ -750,14 +765,18 @@ class Job(GangaObject):
                 self.backend.remove()
 
             # tell the application that the job was removed
-            self.application.transition_update("removed")
-            for sj in self.subjobs:
-                sj.application.transition_update("removed")
+            try:
+                self.application.transition_update("removed")
+                for sj in self.subjobs:
+                    sj.application.transition_update("removed")
+            except AttributeError:
+                # Some applications do not have transition_update
+                pass
         
         if self._registry:
-            self._registry._remove_by_object(self,auto_removed=1)
+            self._registry._remove(self,auto_removed=1)
 
-        self._data['status'] = 'removed'
+        self.status = 'removed'
 
         if not template:
             # remove the corresponding workspace files
@@ -835,10 +854,11 @@ class Job(GangaObject):
         
     def _kill(self,transition_update):
         '''Private helper. Kill the job. Raise JobError exception on error.
-        '''
+        '''        
         try:
             from Ganga.Core import GangaException
             
+            self._getWriteAccess()
             # make sure nobody writes to the cache during this operation
             #job._registry.cache_writers_mutex.lock()
 
@@ -851,7 +871,19 @@ class Job(GangaObject):
             try:
                 if self.backend.master_kill():
                     self.updateStatus('killed',transition_update=transition_update)
+
+                    ############
+                    # added as part of typestamp prototype by Justin
+                    j = self.getJobObject()
+                    if j.subjobs:
+                        for jobs in j.subjobs:
+                            if jobs.status not in ['failed', 'killed', 'completed']: ## added this 10/8/2009 - now only kills subjobs which aren't finished.
+                                jobs.updateStatus('killed',transition_update=transition_update)
+                    #
+                    ############
+
                     self._commit()
+
                     return True
                 else:
                     msg = "backend.master_kill() returned False"
@@ -884,6 +916,25 @@ class Job(GangaObject):
 
         self.status = 'submitting'
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#        #clears old stamps - neccessary?
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#        newstamps = {}
+#        newstamps['new'] = self.time.timestamps['new']
+#
+#        self.time.timestamps.clear()
+#        self.time.timestamps['new'] = newstamps['new']
+#
+#        if self.time.timestamps == newstamps:
+#            logger.debug("'new' timestamp transfer SUCCESSFUL!")
+#        else:
+#            logger.debug("'new' timestamp transfer UNSUCCESSFUL!")
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        self.time.timenow('submitting') ## << ** 
+
+
         try:
             self._commit()
         except Exception,x:
@@ -900,6 +951,12 @@ class Job(GangaObject):
             if not rjobs:
                 rjobs = [self]
 
+
+            if rjobs:
+                for sjs in rjobs:
+                    sjs.time.timenow('submitting') ## writes submitting timestamp for subjobs. 
+
+
             try:
                 if not self.backend.master_resubmit(rjobs):
                     raise JobManagerError('error during submit')
@@ -907,6 +964,13 @@ class Job(GangaObject):
                 logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s',fqid,x)
                 
             self.info.increment()
+
+            if self.subjobs: 
+                for sjs in self.subjobs:
+                    sjs.time.timenow('resubmitted') 
+            else:                
+                self.time.timenow('resubmitted') 
+
             self.status = 'submitted' # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
             self._commit() # make sure that the status change goes to the repository
         except GangaException,x:
@@ -922,7 +986,11 @@ class Job(GangaObject):
 
         if objects is None:
             objects = [self]
-        self._getRegistry()._flush(objects)
+        # EBKE changes
+        objects = [self._getRoot()]
+        reg = self._getRegistry()
+        if not reg is None:
+            reg._flush(objects)
         
 
     def _attribute_filter__set__(self,n,v):
@@ -961,6 +1029,8 @@ class Job(GangaObject):
         Refer to the specific merger documentation for more information about available options.
         '''
 
+        self._getWriteAccess()
+
         if sum_outputdir is None:
             sum_outputdir = self.outputdir
 
@@ -977,11 +1047,10 @@ class Job(GangaObject):
             raise
             
     def _subjobs_proxy(self):
-        from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
-        from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import _wrap
-        subjobs = JobRegistryInstanceInterface('jobs(%d).subjobs'%self.id)
+        from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
+        subjobs = JobRegistrySlice('jobs(%d).subjobs'%self.id)
         for j in self.subjobs:
-            subjobs.jobs[j.id] = j
+            subjobs.objects[j.id] = j
         #print 'return slice',subjobs
         return _wrap(subjobs)
 
@@ -1011,10 +1080,11 @@ class JobTemplate(Job):
 
     _schema = Job._schema.inherit_copy()
     
-    default_registry = 'native_templates'
+    default_registry = 'templates'
     
     def __init__(self):
         super(JobTemplate, self).__init__()
+        self.status = "template"
 
     def _readonly(self):
         return 0
@@ -1038,6 +1108,29 @@ class JobTemplate(Job):
 # $Log: Job.py,v $
 # Revision 1.10  2009/02/24 14:59:34  moscicki
 # when removing jobs which are in the "incomplete" or "unknown" status, do not trigger callbacks on application and backend -> they may be missing!
+#
+# Revision 1.12.2.5  2009/07/14 15:09:37  ebke
+# Missed fix
+#
+# Revision 1.12.2.4  2009/07/13 22:10:52  ebke
+# Update for the new GangaRepository:
+# * Moved dict interface from Repository to Registry
+# * Clearly specified Exceptions to be raised by Repository
+# * proper exception handling in Registry
+# * moved _writable to _getWriteAccess, introduce _getReadAccess
+# * clarified locking, logic in Registry, less in Repository
+# * index reading support in XML (no writing, though..)
+# * general index reading on registry.keys()
+#
+# Revision 1.12.2.3  2009/07/10 13:30:06  ebke
+# Fixed _commit not commiting the root object
+#
+# Revision 1.12.2.2  2009/07/10 11:30:34  ebke
+# Remove reference to _data in status in preparation for lazy loading
+#
+# Revision 1.12.2.1  2009/07/08 11:18:21  ebke
+# Initial commit of all - mostly small - modifications due to the new GangaRepository.
+# No interface visible to the user is changed
 #
 # Revision 1.12  2009/05/20 12:35:40  moscicki
 # debug directory (https://savannah.cern.ch/bugs/?50305)

@@ -390,7 +390,7 @@ class AtlasLCGRequirements(LCGRequirements):
         'other'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Other Requirements'),
         'sites'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names'),
         'excluded_sites'  : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names to be excluded'),
-        'cloud'           : SimpleItem(defvalue = 'ALL', doc='ATLAS cloud name: CERN, IT, ES, FR, UK, DE, NL, TW, CA, US, NG'),
+        'cloud'           : SimpleItem(defvalue = '', doc='ATLAS cloud name: CERN, IT, ES, FR, UK, DE, NL, TW, CA, US, NG'),
         'os'              : SimpleItem(defvalue ='', doc='Operation Systems')
     })
 

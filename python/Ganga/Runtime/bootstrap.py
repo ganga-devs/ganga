@@ -18,7 +18,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: bootstrap.py,v 1.16 2009-07-28 10:21:24 moscicki Exp $
 ################################################################################
 
 # store Ganga version based on CVS sticky tag for this file
@@ -73,6 +72,43 @@ Type help() or help('index') for online help.
 
 This is free software (GPL), and you are welcome to redistribute it
 under certain conditions; type license() for details.
+
+
+-------------------------------------
+THIS IS A NEW MAJOR RELEASE OF GANGA
+-------------------------------------
+
+In Ganga 5.5.0 a new version of the Ganga XML Repository (v6.0) is
+introduced. Its main features are enhanced reliability, concurrent
+access from several ganga sessions, and the introduction of a Ganga
+"box", where any Ganga object can be saved.
+
+On the first startup of 5.5.0, old AMGA and XML repositories as well as
+GangaTasks from the same gangadir will be automatically imported. The
+old repositories and tasks will not be touched, only a file
+"converted.to.XML.6.0" will be created in
+<gangadir>/repository/Name/LocalAMGA or respectively LocalXML/jobs,
+LocalXML/templates or <gangadir>/tasks.xml.converted.to.XML.6.0.
+
+To repeat the import process from scratch, just delete these files
+together with the new repository <gangadir>/repository/Name/LocalXML/6.0
+
+The new repository may use much more disk space than the old AMGA
+repository, and some more space than the old XML repository. This does
+however only affect <gangadir>/repository, and not the usually much
+larger workspace directory <gangadir>/workspace.
+
+When you are happy with the conversion and completely sure you do not
+want to revert to a previous release you can delete the old repository
+and tasks located in
+
+<gangadir>/repository/Name/LocalAMGA
+<gangadir>/repository/Name/LocalXML/5.0
+<gangadir>/tasks.xml
+
+-------------------------------------
+THIS IS A NEW MAJOR RELEASE OF GANGA
+-------------------------------------
 """ % _gangaVersion
         else:
             self.hello_string = hello_string
@@ -366,7 +402,7 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         config.addOption('TextShell','IPython',""" The type of the interactive shell: IPython (cooler) or Console (limited)""")
         config.addOption('StartupGPI','','block of GPI commands executed at startup')
         config.addOption('gangadir',Ganga.Utility.Config.expandvars(None,'~/gangadir'),'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.',filter=Ganga.Utility.Config.expandvars)
-        config.addOption('repositorytype','LocalAMGA','Type of the repository.',examples='LocalAMGA,RemoteAMGA,LocalXML')
+        config.addOption('repositorytype','LocalXML','Type of the repository.',examples='LocalXML')
         config.addOption('workspacetype','LocalFilesystem','Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
 
         config.addOption('user','','User name. The same person may have different roles (user names) and still use the same gangadir. Unless explicitly set this option defaults to the real user name.')
@@ -702,21 +738,23 @@ default_backends = LCG
                 self.logger.error('problems with bootstrapping %s -- ignored',n)
         
         # bootstrap runtime modules
+        import Ganga.GPIDev.Lib.Registry
+        from Ganga.GPIDev.Lib.JobTree import JobTree,TreeError
 
         # boostrap the repositories and connect to them
         for n,k,d in Repository_runtime.bootstrap():
             # make all repository proxies visible in GPI
             exportToGPI(n,k,'Objects',d)
+       
+        # JobTree 
+        from Ganga.Core.GangaRepository import getRegistry
+        jobtree = GPIProxyObjectFactory(getRegistry("jobs").getJobTree())
+        exportToGPI('jobtree',jobtree,'Objects','Logical tree view of the jobs')
+        exportToGPI('TreeError',TreeError,'Exceptions')
 
         # bootstrap the workspace
         import Workspace_runtime
         Workspace_runtime.bootstrap()
-
-        from Ganga.GPIDev.Lib.JobTree import JobTree #,TreeError
-        from Ganga.GPIDev.Lib.JobTree.JobTree import TreeError #FIXME: 
-        jobtree = JobTree._proxyClass()
-        exportToGPI('jobtree',jobtree,'Objects','Logical tree view of the jobs')
-        exportToGPI('TreeError',TreeError,'Exceptions')
 
         # migration repository
         #from Ganga.Utility.migrate41to42 import JobCheckForV41, JobConvertToV42
@@ -859,6 +897,10 @@ default_backends = LCG
 
         # customized display hook -- take advantage of coloured text etc. if possible.
         def _display(obj):
+           if isinstance(obj,type):
+              print
+              print obj
+              return
            if hasattr(obj,'_display'):
               print
               print obj._display(1)
@@ -951,6 +993,13 @@ default_backends = LCG
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.11.4.1  2009/07/08 11:18:21  ebke
+# Initial commit of all - mostly small - modifications due to the new GangaRepository.
+# No interface visible to the user is changed
+#
+# Revision 1.11  2009/04/28 13:37:12  kubam
+# simplified handling of logging filters
+#
 # Revision 1.15  2009/07/20 14:13:44  moscicki
 # workaround for wierd OSX execv behaviour (from Ole Weidner)
 #

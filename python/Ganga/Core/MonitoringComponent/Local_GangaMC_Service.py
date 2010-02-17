@@ -1,6 +1,7 @@
 import Queue, threading, time
 
 from Ganga.Core.GangaThread import GangaThread
+from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
 
 try:
    import sets
@@ -655,11 +656,18 @@ class JobRegistry_Monitor( GangaThread ):
     def __defaultActiveBackendsFunc( self ):
         active_backends = {}
         # FIXME: this is not thread safe: if the new jobs are added then iteration exception is raised
-        for j in self.registry:
-            if j.status in [ 'submitted', 'running' ]: #, 'completing' ]:
-                bn = j.backend._name
-                active_backends.setdefault( bn, [] )
-                active_backends[ bn ].append( j )
+        for i in self.registry.ids():
+            try:
+                j = self.registry(i)
+                if j.status in [ 'submitted', 'running' ]: #, 'completing' ]:
+                    j._getWriteAccess()
+                    bn = j.backend._name
+                    active_backends.setdefault( bn, [] )
+                    active_backends[ bn ].append( j )
+            except RegistryKeyError, x:
+                pass # the job was removed
+            except RegistryLockError, x:
+                pass # the job was removed
         return active_backends
 
     def makeUpdateJobStatusFunction( self, makeActiveBackendsFunc = None ):

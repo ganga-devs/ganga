@@ -12,6 +12,9 @@ logger = Ganga.Utility.logging.getLogger()
 
 import os
 
+import datetime
+import time
+
 class IBackend(GangaObject):
     """
     Base class for all backend objects.
@@ -257,6 +260,17 @@ class IBackend(GangaObject):
         """When the job is removed then this backend method is called.
         The primary use-case is the Remote (ssh) backend. """
         pass
+
+    def getStateTime(self, status):
+        """Get the timestamps for the job's transitions into the 'running' and 'completed' states.
+        """
+        return None
+
+    def timedetails(self):
+        """Returns all available backend specific timestamps.
+        """
+        pass
+    
 
     def master_updateMonitoringInformation(jobs):
         

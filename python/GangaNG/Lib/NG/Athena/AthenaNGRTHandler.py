@@ -272,8 +272,7 @@ class AthenaNGRTHandler(IRuntimeHandler):
             else:
                 jobid = "%d" % job.id
 
-            #username = job.backend.getidentity(True)
-            username = self.identity
+            username = job.backend.getidentity(True)
 
             # Extract username from certificate 
             #username=""
@@ -435,8 +434,6 @@ class AthenaNGRTHandler(IRuntimeHandler):
         
         job = app._getParent() # Returns job or subjob object
         logger.debug("AthenaNGRTHandler master_prepare called, %s", job.id )
-
-        self.identity = job.backend.getidentity(True)
 
         # Get DQ2Dataset content 
         #if job.inputdata and job.inputdata._name == 'DQ2Dataset':

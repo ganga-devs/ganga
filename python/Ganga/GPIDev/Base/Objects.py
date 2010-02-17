@@ -1,8 +1,17 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Objects.py,v 1.5 2009-05-20 13:40:22 moscicki Exp $
+# $Id: Objects.py,v 1.5.2.10 2009-07-24 13:35:53 ebke Exp $
 ################################################################################
+# NOTE: Make sure that _data and __dict__ of any GangaObject are only referenced
+# here - this is necessary for write locking and lazy loading!
+# IN THIS FILE:
+# * Make sure every time _data or __dict__ is accessed that _data is not None. If yes, do:
+#    obj._getReadAccess()
+# * Make sure every write access is preceded with:
+#    obj._getWriteAccess()
+#   and followed by
+#    obj._setDirty()
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=1)
@@ -22,6 +31,9 @@ from Ganga.Utility.util import canLoopOver, isStringLike
 
     
 class Node(object):
+    _parent = None
+    _index_cache = None
+
     def __init__(self, parent):
         self._data= {}
         self._setParent(parent)
@@ -29,20 +41,21 @@ class Node(object):
     def __getstate__(self):
         dict = self.__dict__.copy()
         dict['_data'] = dict['_data'].copy()
-        dict['_data']['parent'] = None
+        dict['_parent'] = None
+        dict['_registry'] = None
+        dict['_index_cache'] = None
         return dict
 
     def __setstate__(self, dict):
-        def setParent(v):
-            if isinstance(v, Node):
-                v._setParent(self)
-
         for n, v in dict['_data'].items():
-            setParent(v)
-            # set the parent of the list or dictionary (or other iterable) items
-            if not isStringLike(v) and canLoopOver(v):
+            if isinstance(v,Node):
+                v._setParent(self)
+            if hasattr(v,"__iter__") and not hasattr(v,"iteritems"):
+                # set the parent of the list or dictionary (or other iterable) items
                 for i in v:
-                    setParent(i)
+                    if isinstance(i,Node):
+                        i._setParent(self)
+
         self.__dict__ = dict
 
     def __copy__(self, memo = None):
@@ -62,15 +75,22 @@ class Node(object):
         return obj
 
     def _getParent(self):
-        return self._data['parent']
+        return self._parent
+        #if "_data" in self.__dict__ and not self._data is None:
+        #    return self._data['parent']
+        #return None
 
     def _setParent(self, parent):
-        self._data['parent'] = parent
+        self._parent = parent
+        #if not self._data is None:
+        #    self._data['parent'] = parent
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
     # cond is an optional function which may cut the search path: when it returns True, then the parent is returned as root
     def _getRoot(self,cond=None):
+        if self._parent is None:
+            return self
         root = None
         obj  = self
         while not obj is None:
@@ -80,7 +100,7 @@ class Node(object):
             obj = obj._getParent()
         return root
 
-    # accept a visitor pattern
+    # accept a visitor pattern 
     def accept(self,visitor):
         visitor.nodeBegin(self)
 
@@ -102,7 +122,7 @@ class Node(object):
 
     # clone self and return a properly initialized object
     def clone(self):
-        return copy.deepcopy(self)    
+        return copy.deepcopy(self)
 
     # copy all the properties recursively from the srcobj
     # if schema of self and srcobj are not compatible raises a ValueError
@@ -193,7 +213,12 @@ class Descriptor(object):
             if g:
                 result = g()
             else:
-                result = obj._data[self._name]
+                #LAZYLOADING
+                if obj._data is None and not obj._index_cache is None and self._name in obj._index_cache:
+                    result = obj._index_cache[self._name]
+                else:
+                    obj._getReadAccess()
+                    result = obj._data[self._name]
             
             return result
 
@@ -207,6 +232,9 @@ class Descriptor(object):
         filter = self._bind_method(obj, self._filter_name)
         if filter:
             val = filter(val)
+
+        #LOCKING
+        obj._getWriteAccess()
         
         #self._check_getter()
             
@@ -253,6 +281,9 @@ class Descriptor(object):
                 val = makeGangaList(val, parent = obj)
 
         obj._data[self._name] = val
+
+        obj._setDirty()
+
             
     def __delete__(self, obj):
         #self._check_getter()
@@ -336,6 +367,7 @@ class GangaObject(Node):
     __metaclass__ = ObjectMetaclass
     _schema       = None # obligatory, specified in the derived classes
     _proxyClass   = None # created automatically
+    _registry     = None # automatically set for Root objects
     _exportmethods= [] # optional, specified in the derived classes
 
     # by default classes are not hidden, config generation and plugin registration is enabled
@@ -364,12 +396,14 @@ class GangaObject(Node):
 
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__
+        self._getReadAccess()
         dict = super(GangaObject, self).__getstate__()
         dict['_proxyObject'] = None
         dict['_dirty'] = 0
         return dict
 
     def __setstate__(self, dict):
+        self._getWriteAccess()
         super(GangaObject, self).__setstate__(dict)
         self._setParent(None)
         self._proxyObject = None
@@ -377,11 +411,36 @@ class GangaObject(Node):
 
     # on the deepcopy reset all non-copyable properties as defined in the schema
     def __deepcopy__(self, memo = None):
+        self._getReadAccess()
         c = super(GangaObject,self).__deepcopy__(memo)
         for name,item in self._schema.allItems():
             if not item['copyable']:
                 setattr(c,name,self._schema.getDefaultValue(name))
         return c
+
+    def accept(self, visitor):
+        self._getReadAccess()
+        super(GangaObject, self).accept(visitor)
+
+    def _getWriteAccess(self):
+        """ tries to get write access to the object.
+        Raise LockingError (or so) on fail """
+        root = self._getRoot()
+        reg = root._getRegistry()
+        if reg is not None:
+            reg._write_access(root)
+
+    def _getReadAccess(self):
+        """ makes sure the objects _data is there and the object itself has a recent state.
+        Raise RepositoryError"""
+        root = self._getRoot()
+        reg = root._getRegistry()
+        if reg is not None:
+            reg._read_access(root,self)
+            #print "excepting because of access to ", self._name
+            #import traceback
+            #traceback.print_stack()
+            #raise Exception(self._name)
 
     # define when the object is read-only (for example a job is read-only in the states other than new)
     def _readonly(self):
@@ -391,6 +450,11 @@ class GangaObject(Node):
         else:
             return r._readonly()
 
+    # set the registry for this object (assumes this object is a root object)
+    def _setRegistry(self, registry):
+        assert self._getParent() is None
+        self._registry = registry
+
     # get the registry for the object by getting the registry associated with the root object (if any)
     def _getRegistry(self):
         r = self._getRoot()
@@ -399,14 +463,22 @@ class GangaObject(Node):
         except AttributeError:
             return None
 
+    def _getRegistryID(self):
+        try:
+            return self._registry.find(self)
+        except AttributeError:
+            return None
+
+
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
-    def _setDirty(self,dirty):
-        self._dirty = dirty
-        root = self._getRoot()
-        reg = root._getRegistry()
-        if dirty and reg is not None:
-            reg._dirty(root)
+    def _setDirty(self, dummy=1):
+        self._dirty = True
+        parent = self._getParent()
+        if parent is not None:
+            parent._setDirty()
+        if self._registry is not None:
+            self._registry._dirty(self)
 
     # post __init__ hook automatically called by GPI Proxy __init__
     def _auto__init__(self):
@@ -452,14 +524,6 @@ class GangaObject(Node):
     def _attribute_filter__set__(self,name,v):
         return v
 
-    #### OBSOLETE #####
-    # FIXME: these functions are dangerous to use and probably should dissapear in the next ganga releases
-    def _object_filter__get__(self,obj):
-        return None
-    def _attribute_filter__get__(self,name,v):
-        return v
-    #### OBSOLETE #####
-
 # define the default component object filter:
 # obj.x = "Y"   <=> obj.x = Y()
  
@@ -487,6 +551,52 @@ allComponentFilters.setDefault(string_type_shortcut_filter)
 #
 #
 # $Log: not supported by cvs2svn $
+# Revision 1.5.2.9  2009/07/14 14:44:17  ebke
+# * several bugfixes
+# * changed indexing for XML/Pickle
+# * introduce index update minimal time of 20 seconds (reduces lag for typing 'jobs')
+# * subjob splitting and individual flushing for XML/Pickle
+#
+# Revision 1.5.2.8  2009/07/13 22:10:53  ebke
+# Update for the new GangaRepository:
+# * Moved dict interface from Repository to Registry
+# * Clearly specified Exceptions to be raised by Repository
+# * proper exception handling in Registry
+# * moved _writable to _getWriteAccess, introduce _getReadAccess
+# * clarified locking, logic in Registry, less in Repository
+# * index reading support in XML (no writing, though..)
+# * general index reading on registry.keys()
+#
+# Revision 1.5.2.7  2009/07/10 12:14:10  ebke
+# Fixed wrong sequence in __set__: only dirty _after_ writing!
+#
+# Revision 1.5.2.6  2009/07/10 11:33:06  ebke
+# Preparations and fixes for lazy loading
+#
+# Revision 1.5.2.5  2009/07/08 15:27:50  ebke
+# Removed load speed bottleneck for pickle - reduced __setstate__ time by factor 3.
+#
+# Revision 1.5.2.4  2009/07/08 12:51:52  ebke
+# Fixes some bugs introduced in the latest version
+#
+# Revision 1.5.2.3  2009/07/08 12:36:54  ebke
+# Simplified _writable
+#
+# Revision 1.5.2.2  2009/07/08 11:18:21  ebke
+# Initial commit of all - mostly small - modifications due to the new GangaRepository.
+# No interface visible to the user is changed
+#
+# Revision 1.5.2.1  2009/06/04 12:00:37  moscicki
+# *** empty log message ***
+#
+# Revision 1.5  2009/05/20 13:40:22  moscicki
+# added filter property for GangaObjects
+#
+# added Utility.Config.expandgangasystemvars() filter which expands @{VAR} in strings, where VAR is a configuration option defined in the System section
+# Usage example: specify @{GANGA_PYTHONPATH} in the configuration file to make pathnames relative to the location of Ganga release; specify @{GANGA_VERSION} to expand to current Ganga version. etc.
+#
+# modified credentials package (ICommandSet) to use the expandgangasystemvars() filter.
+#
 # Revision 1.4  2009/04/27 09:22:56  moscicki
 # fix #29745: use __mro__ rather than first-generation of base classes
 #

@@ -1,6 +1,5 @@
 from common import *
-from Ganga.GPIDev.Lib.JobRegistry.JobRegistryDev import JobRegistryInstanceInterface
-from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import JobRegistryInterface
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 
 ########################################################################
 
@@ -22,13 +21,20 @@ class Task(GangaObject):
                 'check', 'run', 'pause', 'remove', # Operations
                 'overview', 'info', 'n_all', 'n_status', 'help', 'getJobs' # Info
                 ]
+    
+    default_registry = "tasks"
 
 ## Special methods:  
-    def __init__(self):
-        super(Task,self).__init__()
-        GPI.tasks._impl.register(self)
+    def _auto__init__(self,registry=None):
+        if registry is None:
+            from Ganga.Core.GangaRepository import getRegistry
+            registry = getRegistry(self.default_registry)
+        # register the job (it will also commit it)
+        # job gets its id now
+        registry._add(self)
         self.initialize()
         self.startup()
+        self._setDirty()
 
     def initialize(self):
         pass
@@ -72,7 +78,7 @@ class Task(GangaObject):
                         j.remove()
                 except Exception, x:
                     pass
-        self._getParent().tasks.remove(self)
+        self._getRegistry()._remove(self)
         logger.info("Task #%s deleted" % self.id)
 
     def clone(self):
@@ -80,7 +86,7 @@ class Task(GangaObject):
         for tf in c.transforms:
             tf.status = "new"
             tf._partition_apps = {} # This is cleared separately since it is not in the schema
-        self._getParent().register(c)
+        #self._getParent().register(c)
         c.check()
         return c
 
@@ -159,20 +165,20 @@ class Task(GangaObject):
 
     def getJobs(self, only_master_jobs=True):
         """ Get the job slice of all jobs that process this task """
-        jobslice = JobRegistryInstanceInterface("tasks(%i).getJobs(only_master_jobs=%s)"%(self.id, only_master_jobs))
+        jobslice = JobRegistrySlice("tasks(%i).getJobs(only_master_jobs=%s)"%(self.id, only_master_jobs))
         for j in GPI.jobs:
             try:
                 stid = j.application.tasks_id.split(":")
                 if int(stid[-2]) == self.id:
                     if j.subjobs and not only_master_jobs:
                         for sj in j.subjobs:
-                            jobslice.jobs[sj.fqid] = stripProxy(sj)
+                            jobslice.objects[sj.fqid] = stripProxy(sj)
                     else:
-                        jobslice.jobs[j.fqid] = stripProxy(j)
+                        jobslice.objects[j.fqid] = stripProxy(j)
             except Exception, x:
                 print x
                 pass
-        return JobRegistryInterface(jobslice)
+        return JobRegistrySliceProxy(jobslice)
 
 ## Internal methods
     def updateStatus(self):
@@ -190,6 +196,8 @@ class Task(GangaObject):
             new_status = "new"
         elif "completed" in states:
             new_status = "completed"
+        else:
+            new_status = "new" # no tranforms
         # Handle status changes here:
         if self.status != new_status:
             if new_status == "running/pause":
