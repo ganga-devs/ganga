@@ -614,7 +614,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             except AttributeError:
                 pass
             if dq2client_version:
-                requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
+                #requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
                 environment['DQ2_CLIENT_VERSION'] = dq2client_version
 
         if app.atlas_dbrelease:
