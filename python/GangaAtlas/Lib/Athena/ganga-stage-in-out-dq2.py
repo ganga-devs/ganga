@@ -413,37 +413,50 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
         else:
             useBulkTurl = False
 
+        # Create surl list and split it up in chunks of 50 surls    
         surls = ''
+        surlList = []
+        isurl = 0
+        
         for s in guidReplicas.values():
+            isurl = isurl + 1
             surls = surls + " " + s
+            if (isurl % 50) == 0 :
+                surlList.append(surls)
+                surls = ''
+
+        if not surls == '':
+            surlList.append(surls)
 
         bulkprotocols = re.sub(' ',',',protocols.strip())
 
         if useBulkTurl:
-            attempt = 0
-            # Try 3 times
-            while attempt < 3:
-                # Calc timeout
-                timeout = int(60 * 2**attempt)
-                if timeout<60:
-                    timeout = 60
-                if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
-                    cmd = "lcg-getturls --connect-timeout %s --sendreceive-timeout %s --srm-timeout %s --bdii-timeout %s -p %s %s" %(timeout, timeout, timeout, timeout, bulkprotocols, surls)
-                else:
-                    cmd = "lcg-getturls -t %s -p %s %s" %(timeout, bulkprotocols, surls)
-                print 'Using lcg-getturls for turl retrieval ...'
-                print cmd
-                rc, out = commands.getstatusoutput(cmd)
-                if not rc:
-                    i = 0
-                    lines = out.split()
-                    for lfn, surl in guidReplicas.iteritems():
-                        tUrlMap[lfn] = lines[i]
-                        i = i + 1 
-                    break
-                else:
-                    print out
-                    attempt = attempt + 1
+            lines = []
+            for surls in surlList:             
+                attempt = 0
+                # Try 3 times
+                while attempt < 3:
+                    # Calc timeout
+                    timeout = int(60 * 2**attempt)
+                    if timeout<60:
+                        timeout = 60
+                    if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                        cmd = "lcg-getturls --connect-timeout %s --sendreceive-timeout %s --srm-timeout %s --bdii-timeout %s -p %s %s" %(timeout, timeout, timeout, timeout, bulkprotocols, surls)
+                    else:
+                        cmd = "lcg-getturls -t %s -p %s %s" %(timeout, bulkprotocols, surls)
+                    print 'Using lcg-getturls for turl retrieval ...'
+                    print cmd
+                    rc, out = commands.getstatusoutput(cmd)
+                    if not rc:
+                        lines = lines + out.split()
+                        break
+                    else:
+                        print out
+                        attempt = attempt + 1
+            i = 0
+            for lfn, surl in guidReplicas.iteritems():
+                tUrlMap[lfn] = lines[i]
+                i = i + 1 
         else:
             # Single file lcg-gt   
             print 'Using lcg-gt for turl retrieval ...'
