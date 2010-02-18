@@ -334,6 +334,11 @@ get_pybin () {
         export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/slc3_ia32_gcc323/bin/python | head -1)
     fi
 
+    dum=`echo $pybin | sed 's/bin\/python$/bin/g'`
+    export pypath=$dum
+    dum=`echo $pybin | sed 's/bin\/python$/lib/g'`
+    export pyldpath=$dum
+
     # Determine python32 executable location 
 
     which python32; echo $? > retcode.tmp
@@ -753,6 +758,9 @@ run_athena () {
 	    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ] 
 		then
 		source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh 
+		export PATH=$pypath:$PATH
+		export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
+
                 # Set DQ2_LOCAL_SITE_ID to db dataset location
 		if [ -e db_dq2localid.py ]
 		    then
@@ -782,6 +790,9 @@ run_athena () {
 			    then
 			    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
 			fi
+			export PATH=$pypath:$PATH
+			export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
+
 			dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
 			if [ -e $DBDATASETNAME/$DBFILENAME ]
 			    then
@@ -1011,6 +1022,8 @@ download_dbrelease() {
             echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
             echo '1'>retcode.tmp
         fi
+	export PATH=$pypath:$PATH
+	export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
 
         # Set DQ2_LOCAL_SITE_ID to db dataset location
         if [ -e db_dq2localid.py ]; then
@@ -1065,6 +1078,8 @@ download_dbrelease() {
                     if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]; then
                         source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
                     fi
+		    export PATH=$pypath:$PATH
+		    export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
 
                     dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
                     if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]; then
