@@ -191,7 +191,24 @@ class AMIDataset(DQ2Dataset):
         argument=[]
         dsetList = []
         
-        if self.logicalDatasetName:
+        if self.goodRunListXML.name != '':
+
+            # open the GRL
+            if os.path.exists( self.goodRunListXML.name ):
+                logger.warning("Good Run List '%s' file selected" % self.goodRunListXML.name)
+                grl_text = open( self.goodRunListXML.name ).read()
+            else:
+                logger.error('Could not read Good Run List XML file')
+                return []
+            
+            argument=[]
+            argument.append("GetGoodDatasetList")
+            argument.append("prodStep=merge")
+            #argument.append("dataType=%s" % self.dataType)
+            argument.append("goodRunList=%s" % grl_text)
+            argument.append("logicalDatasetName=%s" % self.logicalDatasetName)
+                   
+        elif self.logicalDatasetName:
             pattern=self.logicalDatasetName
             
             pattern = pattern.replace("/","")    

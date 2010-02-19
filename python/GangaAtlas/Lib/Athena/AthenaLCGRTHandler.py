@@ -402,7 +402,10 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         inputbox = [ File(opt_file.name) for opt_file in app.option_file ]
         inputbox.append( File(os.path.join(__directory__,'athena-utility.sh')) )
-            
+
+        if job.inputdata and job.inputdata._name == "AMIDataset" and job.inputdata.goodRunListXML.name != '':
+            inputbox.append( File( job.inputdata.goodRunListXML.name ) )
+    
         if job.inputdata and job.inputdata._name == 'ATLASDataset':
             if job.inputdata.lfc:
                 _append_files(inputbox,'ganga-stagein-lfc.py')
@@ -606,7 +609,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             except AttributeError:
                 pass
             if dq2client_version:
-                requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
+                #requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
                 environment['DQ2_CLIENT_VERSION'] = dq2client_version
 
         if app.atlas_dbrelease:

@@ -259,7 +259,9 @@ then
         echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
         echo '1'>retcode.tmp
     fi
-
+    export PATH=$pypath:$PATH
+    export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
+	
     # Set DQ2_LOCAL_SITE_ID to db dataset location
     if [ -e db_dq2localid.py ]
         then
@@ -313,6 +315,9 @@ then
 		    then
 		    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
 		fi
+		export PATH=$pypath:$PATH
+		export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
+	
 		dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
 		if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]
 		    then
@@ -352,19 +357,19 @@ fi
 
 ################################################
 # Make a local copy of requested geomDB if none already available
-if [ ! -e geomDB ]; then
- mkdir geomDB
- cd geomDB
- get_files -data geomDB/larHV_sqlite
- get_files -data geomDB/geomDB_sqlite
- cd ..
-fi
-if [ ! -e sqlite200 ]; then
- mkdir sqlite200
- cd sqlite200
- get_files -data sqlite200/ALLP200.db
- cd ..
-fi
+#if [ ! -e geomDB ]; then
+# mkdir geomDB
+# cd geomDB
+# get_files -data geomDB/larHV_sqlite
+# get_files -data geomDB/geomDB_sqlite
+# cd ..
+#fi
+#if [ ! -e sqlite200 ]; then
+# mkdir sqlite200
+# cd sqlite200
+# get_files -data sqlite200/ALLP200.db
+# cd ..
+#fi
 
 ls -rtla
 
@@ -489,6 +494,9 @@ EOF
 	echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
 	echo '1'>retcode.tmp
     fi
+    export PATH=$pypath:$PATH
+    export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
+	
     # Set DQ2_LOCAL_SITE_ID to dataset location
     if [ -e dq2localid.txt ]
 	then
@@ -562,6 +570,9 @@ EOF
 		    then
 		    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
 		fi
+		export PATH=$pypath:$PATH
+		export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
+	
 		dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$DBFILENAME $DBDATASETNAME;  echo $? > retcode.tmp
 		if [ -e $DBDATASETNAME/$DBFILENAME ]
 		    then
@@ -631,6 +642,9 @@ EOF
 			then
 			source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
 		    fi
+		    export PATH=$pypath:$PATH
+		    export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
+	
 		    dq2-get --client-id=ganga -d --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
 
 		    if [ -e $DATASETNAME/$file ]

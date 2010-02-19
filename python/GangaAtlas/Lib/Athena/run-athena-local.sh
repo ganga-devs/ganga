@@ -29,16 +29,16 @@ PATH_ORIG=$PATH
 PYTHONPATH_ORIG=$PYTHONPATH
 
 ################################################
-# setup CMT 
-cmt_setup
-
-################################################
 # Setup glite UI 
 TEST_CMD=`which voms-proxy-init 2>/dev/null`
 if [ ! -z $GANGA_GLITE_UI ] && [ -z $TEST_CMD ] 
 then
     source $GANGA_GLITE_UI
 fi
+
+################################################
+# setup CMT 
+cmt_setup
 
 ################################################
 # get some machine infos
