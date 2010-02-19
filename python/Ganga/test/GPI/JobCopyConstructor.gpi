@@ -1,8 +1,0 @@
-j = Job()
-j2 = j.copy()
-j3 = Job(j)
-
-assert(j == j2)
-assert(j2 == j3)
-
-
