@@ -1,0 +1,32 @@
+from GangaTest.Framework.utils import sleep_until_state
+
+# check if stdout and stderr exists or not, flag indicates if files are required to exist or not
+import os
+def check(exists_flag):
+    for fn in ['stdout','stderr']:
+        fn = os.path.join(j.outputdir,fn)
+        file_exists = os.path.exists(fn)
+        if (exists_flag and not file_exists):
+            print 'file %s should exist but it does not' % fn
+            assert(0)
+        if not exists_flag and file_exists:
+            print 'file %s should not exists but it does' % fn
+            assert(0)
+
+j = Job()
+j.application.exe='bash'
+j.application.args=['-c', 'for i in `seq 1 30`; do echo $i; sleep 1; done']
+j.backend=Local()
+
+j.submit()
+
+check(False)
+
+sleep_until_state(j,5,'running')
+
+j.kill()
+
+check(True)
+
+
+    

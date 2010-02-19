@@ -1,0 +1,74 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+import datetime
+
+##Local:
+
+j = Job()
+
+assert 'new' in j.time.timestamps
+
+assert type(j.time.new()) == datetime.datetime
+
+j.submit()
+
+assert sleep_until_completed(j,300)
+
+assert 'submitting' in j.time.timestamps
+assert type(j.time.submitting()) == datetime.datetime
+
+assert 'submitted' in j.time.timestamps
+assert type(j.time.submitted()) == datetime.datetime
+
+assert 'backend_running' in j.time.timestamps
+assert type(j.time.backend_running()) == datetime.datetime
+
+assert 'backend_final' in j.time.timestamps
+assert type(j.time.backend_final()) == datetime.datetime
+
+assert 'final' in j.time.timestamps
+assert type(j.time.final()) == datetime.datetime
+
+# /w subjobs
+
+j = Job()
+
+j.splitter='ArgSplitter'
+j.splitter.args=[[],[],[]]
+
+j.submit()
+
+assert sleep_until_completed(j,300)
+
+assert 'submitting' in j.time.timestamps
+assert type(j.time.submitting()) == datetime.datetime
+
+assert 'submitted' in j.time.timestamps
+assert type(j.time.submitted()) == datetime.datetime
+
+assert 'backend_running' in j.time.timestamps
+assert type(j.time.backend_running()) == datetime.datetime
+
+assert 'backend_final' in j.time.timestamps
+assert type(j.time.backend_final()) == datetime.datetime
+
+assert 'final' in j.time.timestamps
+assert type(j.time.final()) == datetime.datetime
+
+for sjs in j.subjobs:
+    assert 'submitted' in sjs.time.timestamps
+    assert type(sjs.time.submitted()) == datetime.datetime
+
+    assert 'backend_running' in sjs.time.timestamps
+    assert type(sjs.time.backend_running()) == datetime.datetime
+
+    assert 'backend_final' in sjs.time.timestamps
+    assert type(sjs.time.backend_final()) == datetime.datetime
+
+    assert 'final' in sjs.time.timestamps
+    assert type(sjs.time.final()) == datetime.datetime
+
+#end
+print "test1_basictimestamps_local passed."
+
+

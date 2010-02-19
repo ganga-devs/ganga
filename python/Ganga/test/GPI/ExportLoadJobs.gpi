@@ -1,0 +1,33 @@
+import os
+testfile=".GangaPersistencyTest.py"
+
+# Create and export a job
+j1 = Job( name = "job1" )
+export( j1, testfile )
+
+# Create and export another job, appending to the existing file
+j2 = Job( name = "job2" )
+export( j2, testfile, "a" )
+
+# Create and export job for Executable application,
+# where exe has multi-line name,appending to the existing file
+
+j3 = Job( application = Executable() )
+j3.application.exe = "\n".join( [ "name with 'single quotes'",\
+   '"double quotes"', "and new lines" ] )
+export( j3, testfile, "a" )
+
+# Determine number of jobs in registry
+nJob = len( jobs )
+
+# Load jobs from file
+objectList = load( testfile )
+
+# Perform checks
+assert( len( objectList ) == 3 )
+assert( j1.name == objectList[ 0 ].name )
+assert( j2.name == objectList[ 1 ].name )
+assert( j3.application.exe == objectList[ 2 ].application.exe )
+assert( nJob + 3 == len( jobs ) )
+
+os.remove( testfile )
