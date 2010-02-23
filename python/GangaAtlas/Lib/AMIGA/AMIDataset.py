@@ -7,8 +7,11 @@
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
 from Ganga.GPIDev.Schema.Schema import SimpleItem
+from Ganga.GPIDev.Schema.Schema import FileItem
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
+
+import os
 
 logger = getLogger()
 config = makeConfig('AMIDataset','AMI dataset')
@@ -103,6 +106,7 @@ class AMIDataset(DQ2Dataset):
     _schema.datadict['amiclient'] = SimpleItem(defvalue = 0, transient=1, hidden=1, doc="AMI client" )
     _schema.datadict['metadata'] = SimpleItem(defvalue = {}, doc="Metadata" )
     _schema.datadict['provenance'] = SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Dataset provenance chain')
+    _schema.datadict['goodRunListXML'] = FileItem(doc = 'GoodRunList XML file to search on')
 
 
     _exportmethods = ['search','fill_provenance', 'get_datasets_metadata', 'get_files_metadata']
@@ -224,13 +228,26 @@ class AMIDataset(DQ2Dataset):
             argument.append("processingStep=" + self.processingStep)
             argument.append("mode=defaultField")
             argument.extend(extraargs)
+        else:
+            logger.error("AMI search not set up correctly. No datasetname or good runs list supplied.")
+            return []
         
         try:
             result = self.amiclient.execute(argument)
-            resultDict= result.getDict()
-            resultByRow = resultDict['Element_Info']
-            for row, vals in resultByRow.iteritems():
-                dsetList.append(str(vals['logicalDatasetName']))
+            if argument[0] == "GetGoodDatasetList":
+                # GRL has different output
+                res_text = result.output()
+                dsetList = []
+                for ln in res_text.split('\n'):
+                    if ln.find("logicalDatasetName") != -1:
+                        # add to the dataset list - assume a container...
+                        dsetList.append(ln.split('=')[1].strip() + "/")
+            else:
+                resultDict= result.getDict()
+                resultByRow = resultDict['Element_Info']
+                for row, vals in resultByRow.iteritems():
+                    dsetList.append(str(vals['logicalDatasetName']))
+                    
         except Exception, msg:
             print msg
 

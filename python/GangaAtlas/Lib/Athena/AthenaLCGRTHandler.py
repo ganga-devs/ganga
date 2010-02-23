@@ -338,6 +338,12 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                  environment['DQ2_LOCAL_PROTOCOL'] = job.inputdata.accessprotocol
             if job.inputsandbox: inputbox += job.inputsandbox   
 
+        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.tag_info:
+            if job.inputdata.tag_info[job.inputdata.tag_info.keys()[0] ]['dataset'] != '' and job.inputdata.tag_info[tag_file]['path'] == '':
+                environment['TAG_TYPE'] = 'DQ2'
+            else:
+                environment['TAG_TYPE'] = 'LOCAL'                
+
         # Fix DATASETNAME env variable for DQ2_COPY mode
         if job.inputdata and job.inputdata._name == 'DQ2Dataset' and (job.inputdata.type=='DQ2_LOCAL' or job.inputdata.type=='DQ2_COPY' or job.inputdata.type=='FILE_STAGER'):
             if job.inputdata.dataset:

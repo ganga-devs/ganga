@@ -988,7 +988,35 @@ class Athena(IApplication):
                 if job.inputdata.tagdataset and not job.inputdata.tagdataset_exists():
                     raise ApplicationConfigurationError(None,'DQ2 tag dataset %s does not exist.' % job.inputdata.tagdataset)
 
+        # check grid/local class match up
+        if job.backend._name in ['LCG', 'Panda', 'NG']:
+            # check splitter
+            if job.splitter and not job.splitter._name in ['DQ2JobSplitter']:
+                raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
+            
+            # Check that only DQ2Datasets/AMIDatasets are used on the grid        
+            if job.inputdata and not job.inputdata._name in ['DQ2Dataset', 'AMIDataset']:
+                raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.inputdata._name, job.backend._name) )
+ 
+            # Check that only DQ2OutputDatasets are used on the grid
+            if job.outputdata and not job.outputdata._name in ['DQ2OutputDataset']:
+                raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.outputdata._name, job.backend._name))
+ 
+        else:
+ 
+            # check splitter
+            if job.splitter and not job.splitter._name in ['AthenaSplitterJob']:
+                raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
+             
+            # Check that only ATLASLocalDataset are used locally       
+            if job.inputdata and not job.inputdata._name in ['ATLASLocalDataset']:
+                raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.inputdata._name, job.backend._name) )
+ 
+            # Check that only ATLASOutputDataset are used locally
+            if job.outputdata and not job.outputdata._name in ['ATLASOutputDataset']:
+                raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.outputdata._name, job.backend._name))
 
+             
         # check recex options
         if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
             raise ApplicationConfigurationError(None, 'RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
