@@ -265,6 +265,23 @@ class Dirac(IBackend):
             print 'Pilot Info: %s/pilot_%d/std.out.'%(debug_dir,self.id)
         else:
             print result.get('Message','')
+
+    def getStateTime(self, status):
+        """Returns the timestamps for 'running' or 'completed' by extracting their equivalent timestamps from the
+        loggingInfo."""
+        global dirac_monitoring_server
+        logger.debug("Accessing getStateTime() in diracAPI")
+        dirac_cmd = "result = DiracCommands.getStateTime(%d,\'%s\')" % (self.id, status)
+        result = dirac_monitoring_server.execute(dirac_cmd)
+        return result
+     
+    def timedetails(self):
+        """Prints contents of the loggingInfo from the Dirac API."""
+        global dirac_ganga_server
+        logger.debug("Accessing getStateTime() in diracAPI")
+        dirac_cmd = 'result = DiracCommands.timedetails(%d)' % self.id
+        result = dirac_ganga_server.execute(dirac_cmd)
+        return result
                 
     def updateMonitoringInformation(jobs):
         """Check the status of jobs and retrieve output sandboxes"""
