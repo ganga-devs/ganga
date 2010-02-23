@@ -1361,6 +1361,10 @@ if __name__ == '__main__':
                 print "ERROR : DATASETLOCATION not defined"
             datasetlocation = []
             pass
+
+        for sitename in datasetlocation:
+            if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename:
+                print 'INPUT DQ2_LOCAL_SITE_ID: %s' %(sitename)
         
         if localsitesrm!='':
             defaultSE = _getDefaultStorage(localsitesrm)

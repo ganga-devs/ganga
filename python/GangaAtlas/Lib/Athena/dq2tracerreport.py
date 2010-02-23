@@ -66,7 +66,7 @@ if __name__ == '__main__':
     filepat = '"PFN:(.+)"'
     selectorpat = 'ServiceMgr.EventSelector.InputCollections = \[(.+),\]'
     selectorpat2 = 'mySampleList = \[(.+)\]'
-    sitepat = 'DQ2_LOCAL_SITE_ID: (.+)'
+    sitepat = 'INPUT DQ2_LOCAL_SITE_ID: (.+)'
     datasetnamepat = '^DATASETNAME=(.+)'
     
     input_files = []
@@ -100,7 +100,8 @@ if __name__ == '__main__':
             match = re.search(sitepat, line)       
             if match:
                 siteid = match.group(1)
-
+                print siteid
+                
             match = re.search(datasetnamepat, line)       
             if match:
                 datasetname = match.group(1)
