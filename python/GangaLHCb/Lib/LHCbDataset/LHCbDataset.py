@@ -38,7 +38,7 @@ class LHCbDataset(Dataset):
                                     sequence=1,doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0 ,doc=docstr)
-    docstr = 'Not fully implemented yet'
+    docstr = 'Use contents of file rather than generating catalog.'
     schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
 
     _schema = Schema(Version(3,0), schema)
@@ -147,7 +147,14 @@ class LHCbDataset(Dataset):
 
     def getCatalog(self,site=''):
         '''Generates an XML catalog from the dataset (returns the XML string).
-        Note: site defaults to config.LHCb.LocalSite'''
+        Note: site defaults to config.LHCb.LocalSite
+        Note: If the XMLCatalogueSlice attribute is set, then it returns
+              what is written there.'''
+        if self.XMLCatalogueSlice.name:
+            f = open(self.XMLCatalogueSlice.name)
+            xml_catalog = f.read()
+            f.close()
+            return xml_catalog
         if not site: site = getConfig('LHCb')['LocalSite']
         lfns = self.getLFNs()
         depth = self.depth
@@ -159,10 +166,12 @@ class LHCbDataset(Dataset):
         tmp_xml.close()
         return xml_catalog
 
-    def optionsString(self):
-        'Returns the Gaudi-style options string for the dataset.'
+    def optionsString(self,file=None):
+        'Returns the Gaudi-style options string for the dataset (if file' \
+        ' is given, output is written there).'
         if not self or len(self) == 0: return ''
-        s = 'EventSelector.Input = {'
+        s = '\nfrom Gaudi.Configuration import * \n'
+        s += 'EventSelector().Input = ['
         dtype_str_default = getConfig('LHCb')['datatype_string_default']
         dtype_str_patterns = getConfig('LHCb')['datatype_string_patterns']
         for f in self.files:
@@ -182,8 +191,12 @@ class LHCbDataset(Dataset):
                 s += """ \"DATAFILE='PFN:%s' %s\",""" % (f.name, dtype_str)
         if s.endswith(","):
             s = s[:-1]
-            s += """\n};"""
-        return s
+            s += """\n]"""
+        if(file):
+            f = open(file,'w')
+            f.write(s)
+            f.close()
+        else: return s
 
     # schema migration stuff (v 5.4.0)
     class LHCbDatasetSchemaMigration50400(Dataset):

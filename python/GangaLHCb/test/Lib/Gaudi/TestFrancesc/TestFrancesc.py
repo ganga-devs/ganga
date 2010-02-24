@@ -85,7 +85,7 @@ class TestFrancesc(GangaGPITestCase):
         job.inputdata = ['pfn:dummy1.in','pfn:dummy2.in']
         dv._impl._master_configure()
         dv._impl._configure()
-        buffer = dv._impl.extra.input_buffers['data.opts']
+        buffer = dv._impl.extra.input_buffers['data.py']
         assert buffer.rfind('dummy1.in') >= 0 and \
                buffer.rfind('dummy2.in') >= 0
 

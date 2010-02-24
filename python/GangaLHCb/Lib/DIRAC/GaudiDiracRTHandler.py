@@ -42,10 +42,9 @@ class GaudiDiracRTHandler(IRuntimeHandler):
         return c
 
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        
-        cat_opts = '\nFileCatalog.Catalogs += ' \
-                   '{ "xmlcatalog_file:pool_xml_catalog.xml" };\n'
-        app.extra.input_buffers['data.opts'] += cat_opts
+        cat_opts = '\nFileCatalog().Catalogs = ' \
+                   '["xmlcatalog_file:pool_xml_catalog.xml"]\n'
+        app.extra.input_buffers['data.py'] += cat_opts
 
         script = self._create_gaudi_script(app)
         sandbox = get_input_sandbox(app.extra)
@@ -71,7 +70,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
         '''Creates the script that will be executed by DIRAC job. '''
         commandline = "'python ./gaudipython-wrapper.py'"
         if is_gaudi_child(app):
-            commandline = "'gaudirun.py options.pkl data.opts'"
+            commandline = "'gaudirun.py options.pkl data.py'"
         logger.debug('Command line: %s: ', commandline)
         wrapper = gaudi_dirac_wrapper(commandline)
         j = app.getJobObject()

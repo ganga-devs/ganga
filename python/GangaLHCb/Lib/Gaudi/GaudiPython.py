@@ -76,7 +76,7 @@ class GaudiPython(Francesc):
         script =  "from Gaudi.Configuration import *\n"
         if self.args:
             script += 'import sys\nsys.argv += %s\n' % str(self.args)
-        script += "importOptions('data.opts')\n"
+        script += "importOptions('data.py')\n"
         script += "execfile(\'%s\')\n" % name
         self.extra.input_buffers['gaudipython-wrapper.py'] = script
         outsb = self.getJobObject().outputsandbox

@@ -54,7 +54,7 @@ def create_runscript(app,outputdata,job):
   script =  "#!/usr/bin/env python\n\nimport os,sys\n\n"
   script += 'data_output = %s\n' % outputdata.files
   script += 'xml_cat = \'%s\'\n' % 'catalog.xml'
-  script += 'data_opts = \'data.opts\'\n'
+  script += 'data_opts = \'data.py\'\n'
   script += 'opts = \'%s\'\n' % opts
   script += 'project_opts = \'%s\'\n' % app.setupProjectOptions
   script += 'app = \'%s\'\n' % appname
@@ -108,7 +108,7 @@ os.environ['PYTHONPATH'] = '%s/python:%s' % (os.getcwd(),
   if which is 'GaudiPython':
     script += 'cmdline = \"python ./gaudipython-wrapper.py\"\n'
   else:
-    script += 'cmdline = \"%s/scripts/gaudirun.py %s data.opts\" % '
+    script += 'cmdline = \"%s/scripts/gaudirun.py %s data.py\" % '
     script += "(os.environ['GAUDIROOT'],opts)\n"
 
   script += """

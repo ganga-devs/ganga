@@ -36,18 +36,18 @@ class TestSplitters(GangaGPITestCase):
         assert len(subjobs) == 3, 'incorrect number of split jobs'
         for i in range(0,3): subjobs[i].application.configure(None)
         # job 0
-        dataopts = subjobs[0].application.extra.input_buffers['data.opts']
+        dataopts = subjobs[0].application.extra.input_buffers['data.py']
         ok = dataopts.rfind('f1.dst') >= 0 and dataopts.rfind('f2.dst') >= 0 \
              and len(subjobs[0].application.extra.inputdata) == 2
         print len(subjobs[0].application.extra.inputdata)
         assert ok, 'problem w/ subjob 0 input data'
         # job 1
-        dataopts = subjobs[1].application.extra.input_buffers['data.opts']
+        dataopts = subjobs[1].application.extra.input_buffers['data.py']
         ok = dataopts.rfind('f3.dst') >= 0 and dataopts.rfind('f4.dst') >= 0 \
              and len(subjobs[1].application.extra.inputdata) == 2
         assert ok, 'problem w/ subjob 1 input data'
         # job 2
-        dataopts = subjobs[2].application.extra.input_buffers['data.opts']
+        dataopts = subjobs[2].application.extra.input_buffers['data.py']
         ok = dataopts.rfind('f5.dst') >= 0 and \
              len(subjobs[2].application.extra.inputdata) == 1
         assert ok, 'problem w/ subjob 2 input data'
@@ -60,7 +60,7 @@ class TestSplitters(GangaGPITestCase):
         subjobs = splitter._impl.split(job._impl)
         assert len(subjobs) == 3, 'incorrect number of subjobs'
         for i in range(0,3):
-            dataopts = subjobs[i].application.extra.input_buffers['data.opts']
+            dataopts = subjobs[i].application.extra.input_buffers['data.py']
             ok = dataopts.rfind(splitter.optsArray[i]) >= 0
             assert ok, 'subjob %d dataopts not properly assigned' % i
 
@@ -72,7 +72,7 @@ class TestSplitters(GangaGPITestCase):
         subjobs = gsplit._impl.split(job._impl)
         assert len(subjobs) == 3, 'incorrect # of jobs'
         for n in range(1,4):
-            str = subjobs[n-1].application.extra.input_buffers['data.opts'] 
+            str = subjobs[n-1].application.extra.input_buffers['data.py'] 
             ok = str.rfind('FirstEventNumber = %d' % n)
             assert ok, 'problem w/ 1st event seed'
 

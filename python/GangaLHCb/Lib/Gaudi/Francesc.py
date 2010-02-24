@@ -195,7 +195,7 @@ class Francesc(IApplication):
 
     def _configure(self):
         data_str = self.extra.inputdata.optionsString()
-        self.extra.input_buffers['data.opts'] += data_str
+        self.extra.input_buffers['data.py'] += data_str
         
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -212,6 +212,6 @@ class GaudiExtras:
         self.inputdata = LHCbDataset()
         self.outputsandbox = []
         self.outputdata = OutputData()
-        self.input_buffers['data.opts'] = ''
+        self.input_buffers['data.py'] = ''
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

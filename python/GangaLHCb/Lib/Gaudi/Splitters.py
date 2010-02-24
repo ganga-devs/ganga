@@ -150,7 +150,7 @@ class OptionsFileSplitter(ISplitter):
         subjobs=[]
         for i in self.optsArray:
             j = create_gaudi_subjob(job, job.inputdata)
-            j.application.extra.input_buffers['data.opts'] += i
+            j.application.extra.input_buffers['data.py'] += i
             subjobs.append(j)
         return subjobs
 
@@ -178,12 +178,13 @@ class GaussSplitter(ISplitter):
         for i in range(self.numberOfJobs):
             j = create_gaudi_subjob(job, job.inputdata)
             first = i*self.eventsPerJob + 1
-            opts = 'ApplicationMgr.EvtMax = %d;\n' % self.eventsPerJob
-            opts += 'GaussGen.FirstEventNumber = %d;\n' % first
-            # for when we move to .py only option files
-            #opts = 'ApplicationMgr(EvtMax=%d)\n' % self.eventsPerJob
-            #opts += 'GenInit(\"GaussGen\").FirstEventNumber = %d\n' % first
-            j.application.extra.input_buffers['data.opts'] += opts
+            opts = 'from Gaudi.Configuration import * \n'
+            opts += 'from Configurables import GenInit \n'
+            #opts += 'ApplicationMgr().EvtMax = %d\n' % self.eventsPerJob
+            opts += 'from Configurables import LHCbApp\n'
+            opts += 'LHCbApp().EvtMax = %d\n' % self.eventsPerJob
+            opts += 'GenInit("GaussGen").FirstEventNumber = %d\n' % first
+            j.application.extra.input_buffers['data.py'] += opts
             logger.debug("Creating job %d w/ FirstEventNumber = %d"%(i,first))
             subjobs.append(j)
         return subjobs

@@ -31,8 +31,8 @@ class GaudiRunTimeHandler(IRuntimeHandler):
     def prepare(self,app,extra,appmasterconfig,jobmasterconfig):
 
         if extra.inputdata and extra.inputdata.hasLFNs():
-            s='\nFileCatalog.Catalogs += { "xmlcatalog_file:catalog.xml" };\n'
-            extra.input_buffers['data.opts'] += s
+            s='\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
+            extra.input_buffers['data.py'] += s
 
         sandbox = get_input_sandbox(extra)
         outdata = extra.outputdata
