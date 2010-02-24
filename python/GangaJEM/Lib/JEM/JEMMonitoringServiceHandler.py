@@ -632,7 +632,7 @@ class JEMMonitoringServiceHandler(object):
         """
         thePath = JEMConfig.MON_LOG_DIR
         if not os.path.exists(thePath):
-            os.makedirs(thePath, 0700)
+            os.makedirs(thePath, 0777)  # argh! must be world-writable!
 
         thePath += os.sep + ".JEMrc"
         fd = open(thePath, "w")
@@ -707,7 +707,7 @@ class JEMMonitoringServiceHandler(object):
 
         jmdDir = WNConfig.LOG_DIR + os.sep + escapedJobID
         if not os.path.exists(jmdDir):
-            os.makedirs(jmdDir, 0700)
+            os.makedirs(jmdDir, 0777)
 
         self.__job.info.monitor.jmdfile = jmdDir + os.sep + UIConfig.PUBLISHER_JMD_FILE
 
@@ -826,7 +826,7 @@ class JEMMonitoringServiceHandler(object):
 
         # save results to tmp file
         if not os.path.exists(logDir):
-            os.makedirs(logDir, 0700)
+            os.makedirs(logDir, 0777)
         tmpFile = logDir + os.sep + "tmpServerActiveCheck"
         os.system(cmd + " > " + tmpFile)
         fd = open(tmpFile,'r')

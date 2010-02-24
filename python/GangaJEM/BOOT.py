@@ -12,8 +12,7 @@ def JEMlisteners(jobs = None):
     Debug method: For all currently running jobs, show if JEM is enabled,
     if yes: show JEM-listener PID, https-Server status, and port (if applicable).
     """
-    from Ganga.GPIDev.Lib.JobRegistry.JobRegistry import JobRegistryInterface
-    if not jobs or not isinstance(jobs, JobRegistryInterface):
+    if not jobs:
         return "Usage: JEMlisteners(jobs)"
 
     s = "\nJEM listener status summary\n" \

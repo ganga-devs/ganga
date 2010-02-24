@@ -1278,7 +1278,7 @@ class JobExecutionMonitor(GangaObject):
 
         # save results to tmp file
         if not os.path.exists(logDir):
-            os.makedirs(logDir)
+            os.makedirs(logDir, 0777)
         tmpFile = logDir + os.sep + "tmpServerActiveCheck"
         os.system(cmd + " > " + tmpFile)
         fd = open(tmpFile,'r')
