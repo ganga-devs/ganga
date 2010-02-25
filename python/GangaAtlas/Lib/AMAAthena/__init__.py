@@ -3,8 +3,7 @@ from AMAAthenaCommon import *
 from AMADriverConfig import *
 from AMAAthenaLocalRTHandler import *
 from AMAAthenaLCGRTHandler import *
-from StagerJobSplitter import *
-from StagerDataset import *
+from AMAAthenaPandaRTHandler import *
 from AMAAthenaTask import *
 from SimpleStagerBroker import *
 
