@@ -385,7 +385,7 @@ class GangaObject(Node):
         # IMPORTANT: if you add instance attributes like in the line below
         # make sure to update the __getstate__ method as well
         self._proxyObject  = None # use cache to help preserve proxy objects identity in GPI
-        self._dirty = 0 # dirty flag is true if the object has been modified locally and its contents is out-of-sync with its repository
+        self._dirty = False # dirty flag is true if the object has been modified locally and its contents is out-of-sync with its repository
         
         super(GangaObject, self).__init__(None)
         for attr, item in self._schema.allItems():
@@ -399,7 +399,7 @@ class GangaObject(Node):
         self._getReadAccess()
         dict = super(GangaObject, self).__getstate__()
         dict['_proxyObject'] = None
-        dict['_dirty'] = 0
+        dict['_dirty'] = False
         return dict
 
     def __setstate__(self, dict):
@@ -407,7 +407,7 @@ class GangaObject(Node):
         super(GangaObject, self).__setstate__(dict)
         self._setParent(None)
         self._proxyObject = None
-        self._dirty = 0
+        self._dirty = False
 
     # on the deepcopy reset all non-copyable properties as defined in the schema
     def __deepcopy__(self, memo = None):
@@ -479,6 +479,9 @@ class GangaObject(Node):
             parent._setDirty()
         if self._registry is not None:
             self._registry._dirty(self)
+
+    def _setFlushed(self):
+        self._dirty = False
 
     # post __init__ hook automatically called by GPI Proxy __init__
     def _auto__init__(self):

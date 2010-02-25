@@ -270,8 +270,10 @@ class GangaRepositoryLocal(GangaRepository):
                                 if e.errno != errno.EEXIST: 
                                     raise RepositoryError(self,"OSError: " + str(e))
                             safe_save(sfn, split_cache[i], self.to_file)
+                            split_cache[i]._setFlushed()
                     safe_save(fn, obj, self.to_file, self.sub_split)
                     self.index_write(id)
+                    obj._setFlushed()
             except OSError, x:
                 raise RepositoryError(self,"OSError on flushing id '%i': %s" % (id,str(x)))
             except IOError, x:
