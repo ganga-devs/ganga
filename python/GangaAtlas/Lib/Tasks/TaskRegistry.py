@@ -61,6 +61,15 @@ class TaskRegistry(Registry):
             for backend in allHandlers.getAllBackends(basename):
                 allHandlers.add(name, backend, allHandlers.get(basename,backend))
 
+
+        from Ganga.Core.GangaRepository import getRegistry
+        while not getRegistry("jobs")._started:
+            time.sleep(1)
+        
+        # setup the tasks
+        for tid in self.ids():
+            self[tid].startup()
+
         ## Main loop
         while not self._main_thread.should_stop():
             ## For each task try to run it
@@ -132,6 +141,8 @@ class TaskRegistry(Registry):
                 file(fn+".converted.to.XML.6.0","w").close()
         except Exception,x:
             logger.error("Could not load old Tasks repository: %s" % x)
+
+
 
         from Ganga.Core.GangaThread import GangaThread
         self._main_thread = GangaThread(name="GangaTasks", target=self._thread_main)

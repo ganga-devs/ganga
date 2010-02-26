@@ -32,7 +32,7 @@ class Transform(GangaObject):
                     ]
 
 #   _app_status = {}
-   _partition_apps = {}
+   _partition_apps = None
 
    # possible partition status values:
    # ignored, hold, ready, running, completed, attempted, failed, bad
@@ -42,6 +42,7 @@ class Transform(GangaObject):
       super(Transform,self).__init__()
       self.initialize()
       self.startup()
+      self._partition_apps = {}
 
    def _readonly(self):
       """A transform is read-only if the status is not new."""
@@ -61,13 +62,21 @@ class Transform(GangaObject):
       self._partition_apps = {}
       for (app, partition) in self._app_partition.iteritems():
          if partition in self._partition_apps:
-            self._partition_apps[partition].append(app)
+            if not app in self._partition_apps[partition]:
+                self._partition_apps[partition].append(app)
          else:
             self._partition_apps[partition] = [app]
 
    def fix(self):
       """This function fixes inconsistencies in application status"""
       ## Create the reverse map _partition_apps from _app_partition 
+      self._partition_apps = {}
+      for (app, partition) in self._app_partition.iteritems():
+         if partition in self._partition_apps:
+            if not app in self._partition_apps[partition]:
+                self._partition_apps[partition].append(app)
+         else:
+            self._partition_apps[partition] = [app]
       self._app_status = {}
       # Make sure that no partitions are kept "running" from previous sessions
       clist = self._partition_status.keys()
@@ -87,6 +96,7 @@ class Transform(GangaObject):
                   app.getTransform()._impl.setAppStatus(app,app._getParent().status)
             except AttributeError, e:
                logger.error("%s",e)
+
 
 ## Public methods
    def run(self, check=True):
