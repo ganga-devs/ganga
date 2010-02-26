@@ -1316,8 +1316,14 @@ if __name__ == '__main__':
         dq2alternatename = TiersOfATLAS.getSiteProperty(localsiteid,'alternateName')
         for sitename in TiersOfATLAS.getAllSources():
             if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
-                if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and (TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASMCDISK') or TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASDATADISK') or TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASSCRATCHDISK')) and (TiersOfATLAS.getSiteProperty(sitename,'seinfo')): 
-                    
+                if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename and \
+                (TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASMCDISK') or \
+                 TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASDATADISK') or \
+                 TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:ATLASSCRATCHDISK') or \
+                 TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:T2ATLASMCDISK') or \
+                 TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:T2ATLASDATADISK') or \
+                 TiersOfATLAS.getSiteProperty(sitename,'srm').startswith('token:T2ATLASSCRATCHDISK')) and \
+                 (TiersOfATLAS.getSiteProperty(sitename,'seinfo')): 
                     try:
                         configLOCALPROTOCOL = TiersOfATLAS.getProtocols(sitename)
                         configLOCALPREFIX = configLOCALPROTOCOL[0] + ':'
