@@ -1370,7 +1370,7 @@ if __name__ == '__main__':
 
         for sitename in datasetlocation:
             if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename:
-                print 'INPUT DQ2_LOCAL_SITE_ID: %s' %(sitename)
+                print 'detected DQ2_LOCAL_SITE_ID: %s' %(sitename)
         
         if localsitesrm!='':
             defaultSE = _getDefaultStorage(localsitesrm)

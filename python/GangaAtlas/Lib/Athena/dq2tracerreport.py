@@ -66,7 +66,7 @@ if __name__ == '__main__':
     filepat = '"PFN:(.+)"'
     selectorpat = 'ServiceMgr.EventSelector.InputCollections = \[(.+),\]'
     selectorpat2 = 'mySampleList = \[(.+)\]'
-    sitepat = 'INPUT DQ2_LOCAL_SITE_ID: (.+)'
+    sitepat = 'detected DQ2_LOCAL_SITE_ID: (.+)'
     datasetnamepat = '^DATASETNAME=(.+)'
     
     input_files = []
