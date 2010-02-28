@@ -85,6 +85,8 @@ get_lcg_util
 # Unpack dq2info.tar.gz
 if [ -e dq2info.tar.gz ]; then
     tar xzf dq2info.tar.gz
+    export PYTHONPATH=$PWD:$PYTHONPATH
+    export DQ2_HOME=$PWD/opt/dq2
 fi
 detect_setype
 

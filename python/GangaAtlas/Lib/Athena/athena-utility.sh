@@ -398,6 +398,8 @@ detect_setype () {
 	    else
 		if [ -e dq2info.tar.gz ]; then
 		    tar xzf dq2info.tar.gz
+		    export PYTHONPATH=$PWD:$PYTHONPATH
+		    export DQ2_HOME=$PWD/opt/dq2
 		fi
 	    fi
 	    export GANGA_SETYPE=`./ganga-stage-in-out-dq2.py --setype`
@@ -424,6 +426,8 @@ stage_inputs () {
     else
 	if [ -e dq2info.tar.gz ]; then
 	    tar xzf dq2info.tar.gz
+	    export PYTHONPATH=$PWD:$PYTHONPATH
+	    export DQ2_HOME=$PWD/opt/dq2
 	fi
     fi
 
@@ -477,6 +481,8 @@ stage_inputs () {
 		else
 		    if [ -e dq2info.tar.gz ]; then
 			tar xzf dq2info.tar.gz
+			export PYTHONPATH=$PWD:$PYTHONPATH
+			export DQ2_HOME=$PWD/opt/dq2
 		    fi
 		fi
 		./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
@@ -574,6 +580,8 @@ stage_outputs () {
 		else
 		    if [ -e dq2info.tar.gz ]; then
 			tar xzf dq2info.tar.gz
+			export PYTHONPATH=$PWD:$PYTHONPATH
+			export DQ2_HOME=$PWD/opt/dq2
 		    fi
 		fi
                 ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
@@ -909,6 +917,8 @@ EOF
 		else
 		    if [ -e dq2info.tar.gz ]; then
 			tar xzf dq2info.tar.gz
+			export PYTHONPATH=$PWD:$PYTHONPATH
+			export DQ2_HOME=$PWD/opt/dq2
 		    fi
 		fi
 		./dq2tracerreport.py
@@ -982,6 +992,8 @@ make_filestager_joption() {
             else
                 if [ -e dq2info.tar.gz ]; then
                     tar xzf dq2info.tar.gz
+		    export PYTHONPATH=$PWD:$PYTHONPATH
+		    export DQ2_HOME=$PWD/opt/dq2
                 fi
             fi
             ./make_filestager_joption.py; echo $? > retcode.tmp
