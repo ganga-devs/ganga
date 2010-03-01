@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.1 (2010/2/26)
+5.5.1 (2010/3/1)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -12,13 +12,13 @@ Fixed subjobs not being marked as "clean" after flushing
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 Athena:
-* Add pypath and pyldpath in front of dq2-get calls in 
+* Add pypath and pyldpath in front of dq2-get calls in
   run-athena-lcg.sh and athena-utility.sh
 * Split lcg-getturls call in chunks of 50 for DPM sites
   in ganga-stage-in-out-dq2.py
-* Remove DQ2Clients requirements in AthenaLCGRTHandler.py
+* Remove DQ2Clients requirments in AthenaLCGRTHandler.py
 * Remove sqlite DB download in run-athena-lcg.sh
-* Update requirements to 0.1.32 of DQ2Clients 
+* Update requirments to 0.1.32 of DQ2Clients
 * Set user10 tag in Atlas.ini
 * Change order of glite UI and athena setup in
   run-athena-local.sh
@@ -26,13 +26,19 @@ Athena:
 * Removed bad combinations of grid/local options
 * Made 'ALL' the default for the cloud in LCG
 * Fixed TAG bug - now TAG files are downloaded on the WN
-* Fix DQ2 tracer sitename reporting
+* Fix bug #63513: Ganga/Athena/LCG reporting incorrect sites
+  to DQ2 Tracer Framework is fixed now
+* Fix bug #62416: The Local and Batch execution of Athena
+  without prior DQ2 setup works fine again
+* Update to more stable libdcap.so
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaJEM
 --------------------------------------------------------------------------------------------------------------
 * removed GangaJEM startup banner
+* fixed path access right problems
+* changed default logging directory
 
 
 --------------------------------------------------------------------------------------------------------------
