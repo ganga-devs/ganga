@@ -2018,6 +2018,9 @@ def __postConfigHandler__(opt,val):
 
 # global variables
 logger = getLogger()
+
+logger.debug('LCG module initialization: begin')
+
 config = makeConfig('LCG','LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')
 
@@ -2097,6 +2100,8 @@ if config['EDG_ENABLE']:
     if grids['EDG'].shell:
         config.setSessionValue('DefaultLFC', grids['EDG'].shell.env['LFC_HOST'])
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
+
+logger.debug('LCG module initialization: end')
 
 # $Log: not supported by cvs2svn $
 # Revision 1.38  2009/07/15 08:23:29  hclee
