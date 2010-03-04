@@ -5,7 +5,7 @@
 ################################################################################
                                                                                                               
 
-import os, sys, time, commands, re, tempfile, exceptions
+import os, sys, time, commands, re, tempfile, exceptions, urllib
 import cPickle as pickle
 
 from Ganga.GPIDev.Base import GangaObject
@@ -17,7 +17,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core import FileWorkspace
 from Ganga.Utility.Shell import Shell
-from Ganga.Utility.Config import makeConfig, ConfigError
+from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
 from Ganga.Utility.logging import getLogger
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
@@ -244,10 +244,11 @@ def getLibFileSpecFromLibDS(libDS):
 
 
 class PandaBuildJob(GangaObject):
-    _schema = Schema(Version(2,0), {
+    _schema = Schema(Version(2,1), {
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=0,copyable=0,doc='Panda Job id'),
         'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=0,doc='Panda Job status'),
-        'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec')
+        'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
+        'url'           : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Web URL for monitoring the job.')
     })
 
     _category = 'PandaBuildJob'
@@ -309,6 +310,10 @@ class Panda(IBackend):
         if len(jobspecs) > config['serverMaxJobs']:
             raise BackendError('Panda','Cannot submit %d subjobs. Server limits to %d.' % (len(jobspecs),config['serverMaxJobs']))
 
+        configSys = getConfig('System')
+        for js in jobspecs:
+            js.lockedby = configSys['GANGA_VERSION']
+
         verbose = logger.isEnabledFor(10)
         status, jobids = Client.submitJobs(jobspecs,verbose)
         if status:
@@ -323,11 +328,12 @@ class Panda(IBackend):
         if buildjobspec:
             job.backend.buildjob = PandaBuildJob() 
             job.backend.buildjob.id = jobids[0][0]
+            job.backend.buildjob.url = 'http://panda.cern.ch/?job=%d'%jobids[0][0]
             del jobids[0]
 
         for subjob, jobid in zip(rjobs,jobids):
             subjob.backend.id = jobid[0]
-            subjob.backend.url = 'http://panda.cern.ch?job=%d'%jobid[0]
+            subjob.backend.url = 'http://panda.cern.ch/?job=%d'%jobid[0]
             subjob.updateStatus('submitted')
 
         if njobs < len(jobspecs):
@@ -541,6 +547,10 @@ class Panda(IBackend):
                             job.updateStatus('failed')
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
+
+                        #un = job.backend.buildjob.jobSpec['prodUserID'].split('/CN=')[-2]
+                        #jdid = job.backend.buildjob.jobSpec['jobDefinitionID']
+                        #job.backend.url = 'http://panda.cern.ch/?job=*&jobDefinitionID=%s&user=%s'%(jdid,un)
                 else:
                     logger.warning('Unexpected Panda ID %s',status.PandaID)
 
