@@ -124,7 +124,7 @@ class LCGSandboxCache(GridSandboxCache):
                 if self.cacheObj.se != None:
                     cmd  = cmd + ' -d %s' % self.cacheObj.se
                 if self.cacheObj.se_type == 'srmv2' and self.cacheObj.srm_token:
-                    cmd = cmd + ' -T srmv2 -s %s' % self.cacheObj.srm_token
+                    cmd = cmd + ' -D srmv2 -s %s' % self.cacheObj.srm_token
           
                 ## specify the physical location
                 cmd = cmd + ' -P %s/ganga.%s/%s' % ( self.cacheObj.se_rpath, self.dirname, fname )
