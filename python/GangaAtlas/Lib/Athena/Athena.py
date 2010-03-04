@@ -769,6 +769,7 @@ class Athena(IApplication):
 
         # set extFile
         AthenaUtils.setExtFile(self.append_to_user_area)
+        AthenaUtils.setExcludeFile(','.join(self.exclude_from_user_area))
 
         # archive sources
         verbose = False
