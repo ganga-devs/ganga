@@ -42,20 +42,7 @@ class Grid(object):
         if not self.shell:
             logger.warning('LCG-%s UI has not been configured. The plugin has been disabled.' % self.middleware)
             return
-        else:
-
-            lfc_host = None
-
-            if self.shell.env.has_key('LFC_HOST'):
-                lfc_host = self.shell.env['LFC_HOST']
-
-            if not lfc_host:
-                lfc_host = self.__get_default_lfc__()
-
-            if lfc_host:
-                self.shell.env['LFC_HOST'] = lfc_host
-                logger.debug('set LFC_HOST of %s UI to %s.' % (self.middleware,lfc_host))
-
+        
 #       create credential for this Grid object
         self.active = self.check_proxy()
 
@@ -166,6 +153,18 @@ class Grid(object):
         else:
             logger.debug('voms of credential: %s' % self.credential.voms)
             return self.credential.voms
+
+    def __get_lfc_host__(self):
+        '''Gets the LFC_HOST: from current shell or querying BDII on demand'''
+        lfc_host = None
+
+        if self.shell.env.has_key('LFC_HOST'):
+            lfc_host = self.shell.env['LFC_HOST']
+
+        if not lfc_host:
+            lfc_host = self.__get_default_lfc__()
+
+        return lfc_host
 
     def __get_default_lfc__(self):
         '''Gets the default lfc host from lcg-infosites'''
