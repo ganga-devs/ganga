@@ -671,9 +671,6 @@ class Athena(IApplication):
 
         logger.warning('New prepare() method has been called. The old prepare method is called now prepare_old()')
 
-        if self.exclude_from_user_area:
-            logger.warning('Athena.exclude_from_user_area does not work with new prepare() ! Some files are removed by default from the user_area.')
-
         opt_athena_compile = options.get('athena_compile')
         if opt_athena_compile:
             self.athena_compile = opt_athena_compile  
