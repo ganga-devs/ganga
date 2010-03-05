@@ -98,7 +98,11 @@ fi
 
 ################################################
 # fix g2c/gcc issues against SLC5
-fix_gcc_issue_sl5
+
+if [ n$CMTCONFIG != n'i686-slc5-gcc43-opt'  ]; then 
+
+    fix_gcc_issue_sl5
+fi
 
 g++ --version
 gcc --version
@@ -797,12 +801,15 @@ echo "GANGATIME5=$GANGATIME5"
 
 #################################################
 # Store log files in DQ2 if required
+#if [ z$GANGA_LOG_HANDLER == z"DQ2" ] || [ z$GANGA_LOG_HANDLER == z"WMS" ]
 if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
     then
     
     LOGNAME=${OUTPUT_DATASETNAME}_${OUTPUT_JOBID}.log.tgz
     echo "Storing logfiles as "$LOGNAME" in dq2 dataset..."
-    tar czhf $LOGNAME stdout stderr
+    mkdir tarball
+    cp stdout stderr tarball/
+    tar czhf $LOGNAME tarball/
     echo $LOGNAME > logfile
     DATASETTYPE=DQ2_OUT
     if [ ! -z $python32bin ]; then
@@ -833,6 +840,8 @@ if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
 	else
 	    if [ -e dq2info.tar.gz ]; then
 		tar xzf dq2info.tar.gz
+		export PYTHONPATH=$PWD:$PYTHONPATH
+		export DQ2_HOME=$PWD/opt/dq2
 	    fi
 	fi
 	./ganga-stage-in-out-dq2.py --output=logfile; echo $? > retcode.tmp
