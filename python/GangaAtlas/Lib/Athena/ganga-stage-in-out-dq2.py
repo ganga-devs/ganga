@@ -1097,6 +1097,7 @@ def register_file_in_dataset(datasetname,lfn,guid, size, checksum):
     """Add file to dataset into DQ2 database"""
     # Check if dataset really exists
 
+    val = -1
     try:
         dq2_lock.acquire()
         content = dq2.listDatasets(datasetname)
@@ -1112,13 +1113,14 @@ def register_file_in_dataset(datasetname,lfn,guid, size, checksum):
         dq2_lock.acquire()
         try:
             ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum) 
+            val = 0
         except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFileExistsInDatasetException), Value:
             print 'Warning, some files already in dataset: %s' %Value
             pass
     finally:
         dq2_lock.release()
 
-    return 
+    return val
 
 ########################################################################
 def register_datasets_details(datasets,outdata):
@@ -1138,11 +1140,11 @@ def register_datasets_details(datasets,outdata):
         siteID=siteID.strip() # remove \n from last component
         regline=dataset+","+siteID
         if regline in reglines:
-            print "Registration of %s in %s already done, skipping" % (dataset,siteID)
+            print "Attempting to register of %s in %s already done, skipping" % (dataset,siteID)
             #continue
         else:
             reglines.append(regline)
-            print "Registering dataset %s in %s" % (dataset,siteID)
+            print "Attempting to register dataset %s in %s" % (dataset,siteID)
             # use another version of register_dataset_location, as the "secure" one does not allow to keep track of datafiles saved in the fall-back site (CERNCAF)
             try:
                 dq2_lock.acquire()
@@ -1168,18 +1170,77 @@ def register_datasets_details(datasets,outdata):
             # Register dataset location 
             attempt = 0
             while attempt < 3:
-                time.sleep(30)
                 location = register_dataset_location(dataset, siteID)
                 if siteID in location:
                     break
                 else:
                     attempt = attempt + 1
-                
-        register_file_in_dataset(dataset,[lfn],[guid],[size],[adler32])
+                    time.sleep(30)
+
+        attempt = 0
+        ret = 0
+        while attempt < 3:     
+            ret = register_file_in_dataset(dataset,[lfn],[guid],[size],[adler32])
+            if ret==0:
+                attempt = 3
+            else:
+                attempt = attempt + 1
+                time.sleep(30)
 
     return
-        
+########################################################################
+def register_datasets_in_container(container, dataset):
+    """Register dataset in container"""
 
+    if not container.endswith('/'):
+        containerName = container+'/'
+
+    # Check if container already exists
+    containerinfo = {}
+    try:
+        dq2_lock.acquire()
+        try:
+            containerinfo = dq2.listDatasets(containerName)
+        except:
+            containerinfo = {}
+    finally:
+        dq2_lock.release()
+
+    if containerinfo!={}:
+        print 'Container %s is already defined in DQ2 database' %containerName
+
+    # Create output container
+    attempt = 0
+    while containerinfo=={} and attempt < 3:
+        try:
+            dq2_lock.acquire()
+            try:
+                dq2.registerContainer(containerName)
+                print 'Registered container %s' %containerName
+                attempt = 3
+            except:
+                print 'Problem registering container %s - might already exist ?' %containerName
+                attempt = attempt + 1
+                time.sleep(30)
+        finally:
+            dq2_lock.release()   
+    # Register dataset in container
+    attempt = 0
+    while attempt < 3:
+        try:
+            dq2_lock.acquire()
+            try:
+                dq2.registerDatasetsInContainer(containerName, [ dataset ])
+                attempt = 3
+            except:
+                print 'Problem registering dataset %s in container %s' %(dataset, containerName)
+                attempt = attempt + 1
+                time.sleep(30)
+        finally:
+            dq2_lock.release()
+
+    return
+       
 ########################################################################
 
 if __name__ == '__main__':
@@ -2161,6 +2222,8 @@ if __name__ == '__main__':
         f.close()
 
         register_datasets_details(out_datasetname, outputInfo)
+
+        register_datasets_in_container(datasetname, out_datasetname)
 
     sys.exit(returnvalue)
 

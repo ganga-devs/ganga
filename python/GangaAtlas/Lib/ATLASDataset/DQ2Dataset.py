@@ -1335,15 +1335,15 @@ class DQ2OutputDataset(Dataset):
                         
                 # Create output container
                 containerName = newDatasetname+'/'
-                try:
-                    dq2_lock.acquire()
-                    try:
-                        dq2.registerContainer(containerName)
-                    except:
-                        logger.warning('Problem registering container %s', containerName)
-                        pass
-                finally:
-                    dq2_lock.release()
+                #try:
+                #    dq2_lock.acquire()
+                #    try:
+                #        dq2.registerContainer(containerName)
+                #    except:
+                #        logger.warning('Problem registering container %s', containerName)
+                #        pass
+                #finally:
+                #    dq2_lock.release()
                 try:
                     dq2_lock.acquire()
                     for dataset in self.allDatasets:
@@ -1353,15 +1353,15 @@ class DQ2OutputDataset(Dataset):
                             pass
                 finally:
                     dq2_lock.release()
-                try:
-                    dq2_lock.acquire()
-                    try:
-                        dq2.registerDatasetsInContainer(containerName, self.allDatasets)
-                    except:
-                        logger.warning('Problem registering datasets %s in container %s',  self.allDatasets, containerName)
-                        pass
-                finally:
-                    dq2_lock.release()
+                #try:
+                #    dq2_lock.acquire()
+                #    try:
+                #        dq2.registerDatasetsInContainer(containerName, self.allDatasets)
+                #    except:
+                #        logger.warning('Problem registering datasets %s in container %s',  self.allDatasets, containerName)
+                #        pass
+                #finally:
+                #    dq2_lock.release()
 
                 self.datasetname = containerName
         else:
