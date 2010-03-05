@@ -104,13 +104,18 @@ g++ --version
 gcc --version
 
 ################################################
-# setup ATLAS software
+# setup ATLAS software and compile user codes
 
 retcode=0
 
 athena_setup; echo $? > retcode.tmp
 retcode=`cat retcode.tmp`
 rm -f retcode.tmp
+
+if [ $retcode -ne 0 ]; then
+    echo "Athena setup/compilation error." 1>&2
+    exit $retcode
+fi
 
 ################################################
 # Special setup for CNAF
