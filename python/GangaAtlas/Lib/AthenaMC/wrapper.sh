@@ -52,14 +52,24 @@ then
 	export INPUTTURLS=$INPUTTURLS_NEW	
     fi
 fi
-if [ -e inputlfcs.conf ] 
+if [ -e inputdsets.conf ] 
 then
-    INPUTSITES_NEW=`cat inputlfcs.conf`
-    if [ ! "$INPUTSITES_NEW" = "$INPUTSITES" ]
+    INPUTDATASETS_NEW=`cat inputdsets.conf`
+    if [ ! "$INPUTDATASETS_NEW" = "$INPUTDATASETS" ]
     then
-	export INPUTSITES=$INPUTSITES_NEW	
+	export INPUTDATASETS=$INPUTDATASETS_NEW	
     fi
 fi
+
+#if [ -e inputsites.conf ] 
+#then
+#    INPUTSITES_NEW=`cat inputsites.conf`
+#    if [ ! "$INPUTSITES_NEW" = "$INPUTSITES" ]
+#    then
+#	export INPUTSITES=$INPUTSITES_NEW	
+#    fi
+#fi
+
 # output data
 if [ -e outputfiles.conf ] 
 then
@@ -120,12 +130,6 @@ if [ ! -z "$DRYRUN" ]; then
 fi
 
 
-echo "test python #1"
-which python
-which python32
-python -V
-python32 -V
-
 # 13.0.30 turnaround: saving local LCG setup as 13.0.30 breaks LCg tools with useless, obsolete stuff shipped in.
 export LD_LIBRARY_PATH_SAVE=$LD_LIBRARY_PATH
 export PATH_SAVE=$PATH
@@ -135,13 +139,6 @@ export PYTHONPATH_SAVE=$PYTHONPATH
 # set up the release
 echo "## source $T_HOMEDIR/setup-release.sh"
 source $T_HOMEDIR/setup-release.sh
-
-echo "test python #2"
-which python
-which python32
-python -V
-python32 -V
-printenv
 
 export LD_LIBRARY_PATH_SAVE2=$LD_LIBRARY_PATH
 export PATH_SAVE2=$PATH
@@ -165,11 +162,7 @@ fi
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_SAVE2
 export PATH=$PATH_SAVE2
 export PYTHONPATH=$PYTHONPATH_SAVE2
-echo "test python #4"
-which python
-which python32
-python -V
-python32 -V
+
 echo $PYTHONPATH
 echo $PATH
 echo $LD_LIBRARY_PATH

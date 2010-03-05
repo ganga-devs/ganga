@@ -223,14 +223,15 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         # setting environment["BACKEND"]
         # Local, Condor become "batch". LSF becomes "batch" unless the inputdata is on castor (in this case, it becomes "castor")
         environment["BACKEND"]=job.backend._name
+        environment["BACKEND_DATA"]=app.backend_inputdata
         if job.backend._name=="LSF" and len(app.turls.values())>0:
             turl=app.turls.values()[0]
             if string.find(turl,"castor")>-1:
-                environment["BACKEND"]="castor"
+                environment["BACKEND_DATA"]="castor"
             else:
-                environment["BACKEND"]="batch"
+                environment["BACKEND_DATA"]="batch"
         if job.backend._name in ["Local","Condor","PBS"]:
-            environment["BACKEND"]="batch"
+            environment["BACKEND_DATA"]="batch"
             environment["SITEROOT"]=os.environ["SITEROOT"]
             environment["CMTSITE"]=os.environ["CMTSITE"]
 
@@ -297,7 +298,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             
         #       prepare job requirements
             
-        if hasattr(job.backend,'requirements') and hasattr(job.backend.requirements,'sites') and hasattr(job.backend.requirements,'software') and hasattr(job.backend.requirements,'other') and hasattr(job.backend.requirements,'dq2client_version'):
+        if hasattr(job.backend,'requirements') and hasattr(job.backend.requirements,'sites') and hasattr(job.backend.requirements,'software') and hasattr(job.backend.requirements,'other') :
             requirements=job.backend.requirements
         else:
             requirements = AtlasLCGRequirements()
@@ -323,18 +324,18 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
         if app.transform_archive and string.find(app.transform_archive,"AtlasTier0")>-1:
             requirements.software=['VO-atlas-tier0-%s' % app.prod_release]
-        extraConfig=getConfig('defaults_AtlasLCGRequirements')
-        if  'dq2client_version' in extraConfig:
-            dq2client_version = extraConfig['dq2client_version']
+##        extraConfig=getConfig('defaults_AtlasLCGRequirements')
+##        if  'dq2client_version' in extraConfig:
+##            dq2client_version = extraConfig['dq2client_version']
 
-        if job.backend.requirements.dq2client_version:
-            dq2client_version = job.backend.requirements.dq2client_version
-        try:
-            assert dq2client_version!=""
-        except:
-            raise  ApplicationConfigurationError(None,"Please give a value to dq2client_version in job.backend.requirements.")
+##        if job.backend.requirements.dq2client_version:
+##            dq2client_version = job.backend.requirements.dq2client_version
+##        try:
+##            assert dq2client_version!=""
+##        except:
+##            raise  ApplicationConfigurationError(None,"Please give a value to dq2client_version in job.backend.requirements.")
         
-        requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
+#        requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
 #        requirements.other+=['RegExp("VO-atlas-dq2clients",other.GlueHostApplicationSoftwareRunTimeEnvironment)']
 
         # controlled relaxation for simple cases: one single input dataset, less than 200 subjobs. In this case, the subjobs can be submitted to the whole cloud.
@@ -379,7 +380,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
                     imax=site.find("_")
                     shortSite=site[:imax]
                     if shortSite in checksite:
-                        print "site is excluded, skipping ", checksite
+                      #  print "site is excluded, skipping ", checksite
                         selsite=False
                         break
                 if selsite and checksite not in goodsites:
@@ -409,30 +410,36 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         environment={}
         environment=jobmasterconfig.env.copy()
         environment["INPUTDATASETS"]=""
-        environment["INPUTSITES"]=""
         environment["INPUTFILES"]=""
+        environment["INPUTTURLS"]=""
 
         alllfns=app.inputfiles+app.cavernfiles+app.mbfiles+app.dbfiles
+        guids=app.turls
+        guids.update(app.cavern_turls)
+        guids.update(app.minbias_turls)
+        guids.update(app.dbturls)
+        
         infilenr=0
         for infile in alllfns:
             environment["INPUTFILES"]+="lfn[%d]='%s';" %(infilenr,infile)
             environment["INPUTDATASETS"]+="dset[%d]='%s';"%(infilenr,app.dsetmap[infile])
-            insites=app.sitemap[infile]
-            # compare with environment["OUTSITE"] and reorder if needed.
-            newinsites=self.sortSites(insites,environment["OUTSITE"])
-            environment["INPUTSITES"]+="site[%d]='%s';"%(infilenr,newinsites)
+##            insites=app.sitemap[infile]
+##            # compare with environment["OUTSITE"] and reorder if needed.
+##            newinsites=self.sortSites(insites,environment["OUTSITE"])
+##            environment["INPUTSITES"]+="site[%d]='%s';"%(infilenr,newinsites)
+            environment["INPUTTURLS"]+="turl[%d]='%s';"%(infilenr,guids[infile])
+            
             infilenr += 1
 
 
-                
-        logger.debug("%s %s %s" % (str(environment["INPUTDATASETS"]),str(environment["INPUTSITES"]),str(environment["INPUTFILES"])))
+        logger.debug("%s %s %s" % (str(environment["INPUTDATASETS"]),str(environment["INPUTTURLS"]),str(environment["INPUTFILES"])))
         
         if environment["INPUTDATASETS"] :
             # Work around for glite WMS spaced environement variable problem
-            inputbox += [ FileBuffer('inputturls.conf',environment['INPUTDATASETS']+'\n') ]
-        if environment["INPUTSITES"] :
+            inputbox += [ FileBuffer('inputdsets.conf',environment['INPUTDATASETS']+'\n') ]
+        if environment["INPUTTURLS"] :
             # Work around for glite WMS spaced environement variable problem
-            inputbox += [ FileBuffer('inputlfcs.conf',environment['INPUTSITES']+'\n') ]
+            inputbox += [ FileBuffer('inputturls.conf',environment['INPUTTURLS']+'\n') ]
         if environment["INPUTFILES"] :
             # Work around for glite WMS spaced environement variable problem
             inputbox += [ FileBuffer('inputfiles.conf',environment['INPUTFILES']+'\n') ]
@@ -472,7 +479,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 #       output sandbox
         outputbox =jobmasterconfig.outputbox
 
-        if job.backend._name=="LCG" or job.backend._name=="Cronus" or job.backend._name=="Condor" or job.backend._name=="NG":
+        if job.backend._name=="LCG" or job.backend._name=="Cronus" or job.backend._name=="Condor" or job.backend._name=="NG" or job.backend._name=="SGE":
             logger.debug("submission to %s" % job.backend._name)
             #       prepare job requirements
             requirements = jobmasterconfig.requirements

@@ -12,7 +12,8 @@ from Ganga.GPIDev.Schema import *
 from Ganga.Utility.files import expandfilename
 
 from dq2.common.DQException import *
-from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites
+from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites, getLocalCatalog, whichCloud
+
 from dq2.repository.DQRepositoryException import DQUnknownDatasetException
 from dq2.location.DQLocationException import DQLocationExistsException
 from dq2.common.DQException import DQInvalidRequestException
@@ -267,9 +268,8 @@ class AthenaMCInputDatasets(Dataset):
                          numbers.append(lastnumber + i - lastpart)
             return numbers
 
-    def get_dataset(self, app, backend):
+    def get_dataset(self, app,backend):
         '''seek dataset informations and returns (hopefully) a formatted set of information for all processing jobs (turls, catalog servers, dataset location for each lfn). Called by master_submit'''
-
 
         # first of all, check that _usertag is set properly:
         try:
@@ -416,8 +416,10 @@ class AthenaMCInputDatasets(Dataset):
         '''Reduce input siteList to loosely match the contents of siteShortList'''
         result=[]
         for site in siteList:
+ #           print "finding match for", site, siteShortList
             selsite=self.matchSite(site,siteShortList)
             if selsite:
+#                print "got match, keeping", selsite,siteShortList
                 result.append(selsite)
         return result
     
@@ -656,20 +658,21 @@ class AthenaMCInputDatasets(Dataset):
                 if site not in allSites:
                     allSites.append(site)
             datasetType="incomplete"
-            # promote site with most complete set
-            selSites=[]
-            max=0
-            for sources in allSites:
-                data=dq2.listFileReplicas(sources,dset)
-                if "found" not in data[0]:
-                    continue
-                if data[0]["found"]>max:
-                    logger.info("Found %d files in %s" % (data[0]["found"],sources))
-                    selSites.insert(0,sources)
-                    max=data[0]["found"]
-                else:
-                    selSites.append(sources)
-            allSites=selSites
+## F.M.B: listFileReplicas does not work on incomplete dataset. Commenting out the following as it is not going to work.
+##            # promote site with most complete set
+##            selSites=[]
+##            max=0
+##            for sources in allSites:
+##                data=dq2.listFileReplicas(sources,dset)
+##                if "found" not in data[0]:
+##                    continue
+##                if data[0]["found"]>max:
+##                    logger.info("Found %d files in %s" % (data[0]["found"],sources))
+##                    selSites.insert(0,sources)
+##                    max=data[0]["found"]
+##                else:
+##                    selSites.append(sources)
+##            allSites=selSites
         try:
             assert len(allSites)>0
         except:
@@ -699,7 +702,8 @@ class AthenaMCInputDatasets(Dataset):
 
         allSites=selectedSites
 
-        self.lfcs[dsetname]=""
+        self.lfcs[dsetname]=self.getLFCs(allSites)
+        
         self.sites=allSites # collecting all sites from now on, doing the selection externally.
                 
         # Now filling up self.turls...
@@ -747,7 +751,7 @@ class AthenaMCInputDatasets(Dataset):
             
     def getlocaldata(self,path,matchrange,backend):
         
-        if backend not in ["LSF","Local","PBS"]:
+        if backend not in ["LSF","Local","PBS","SGE"]:
             logger.error("Attempt to use a local file on a job due to be submitted remotely.")
             raise Exception()
         
@@ -790,6 +794,42 @@ class AthenaMCInputDatasets(Dataset):
                     continue
                 numbers.append(num)
                 self.turls[file]="%s:%s/%s "% (prefix,path,file)
+                
+    def getLFCs(self,allSites):
+        result=[]
+        allLFCs={}
+        for cl in ToACache.dbcloud:
+            id=ToACache.dbcloud[cl]
+            l = getLocalCatalog(id)
+            if l:
+                allLFCs[id]=l
+#        print allLFCs
+        for site in allSites:
+            cloud=whichCloud(site)
+ #           print cloud,site
+            if cloud=="USASITES":
+                continue # no lfc in US.
+            lfc=allLFCs[cloud]
+            if lfc not in result:
+                result.append(lfc)        
+        return result
+
+    def whichCloud (site):
+        from dq2.info.TiersOfATLASValidator import is_site
+        is_site(site)
+        for cloudID, eachCloud in ToACache.dbcloud.iteritems():
+            sites = getSites(eachCloud)
+            if site in sites:
+                return cloudID
+            
+        info = { 'CERN' : 'TO', 'CNAF' : 'IT', 'PIC': 'ES', 'LYON': 'FR',
+                     'RAL' : 'UK', 'FZK': 'DE', 'SARA' : 'NL', 'ASGC' : 'TW',
+                     'TRIUMF' : 'CA', 'BNL' : 'US', 'NDGF' : 'NG' }
+        for sitename, cloud in info.iteritems():
+            if site == sitename:
+                return cloud
+                
+        return None
 
 class AthenaMCOutputDatasets(Dataset):
     """AthenaMC Output Dataset class """
@@ -1478,7 +1518,7 @@ class AthenaMCOutputDatasets(Dataset):
 
     def checkSites(self,siteList):
         # check tokens from siteList, compare with allowed tokens.
-        print _subscriptionTokens
+        #print _subscriptionTokens
         checkTokens=_subscriptionTokens
         result=[]
         cloud=""
@@ -1492,7 +1532,7 @@ class AthenaMCOutputDatasets(Dataset):
                 cloudSites=getSites(ToACache.dbcloud[cloud.upper()])
         for site in siteList:
             for token in checkTokens:
-                print site, token
+                #print site, token
                 if token in site and token!="LOCALGROUPDISK":
                     result.append(site)
                     continue

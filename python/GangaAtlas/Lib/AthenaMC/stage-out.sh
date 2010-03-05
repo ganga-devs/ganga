@@ -193,10 +193,10 @@ TESTSE=`echo $T_SE | tr 'A-Z' 'a-z'`
 
 case "$TESTSE" in
     "local")
-    export BACKEND="batch"
+    export BACKEND_DATA="batch"
     ;;
     "castor")
-    export BACKEND="castor"
+    export BACKEND_DATA="castor"
     ;;
     *)
     ;;
@@ -217,7 +217,7 @@ for path in $OUTPUTFILES; do
 	echo "$file is empty, skipping"
 	continue
     fi
-    case "$BACKEND" in
+    case "$BACKEND_DATA" in
 	'LCG')
 	    stageOutLCG $path
 	    ;;

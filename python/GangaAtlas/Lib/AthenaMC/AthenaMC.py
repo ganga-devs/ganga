@@ -537,7 +537,7 @@ class AthenaMC(IApplication):
         for infile in self.dbfiles:
             self.dsetmap[infile]=self.dblfcs.keys()[0]
             #            sitemap[infile]=string.join(self.dbsites," ")
-            self.sitemap[infile]=self.dbsites[0]
+            self.sitemap[infile]=string.join(self.dbsites," ")
         random.shuffle(self.cavernfiles)
         if job.inputdata and len(self.cavernfiles) >0 and job.inputdata.n_cavern_files_job:
             imax=job.inputdata.n_cavern_files_job
@@ -702,6 +702,7 @@ class AthenaMC(IApplication):
        self.evgen_job_option_filename=""
        self.user_area=File(name='')
        self.user_area_rundir=""
+       self.backend_inputdata=""
        
        job = self._getRoot()
        # basic checks
@@ -801,7 +802,8 @@ class AthenaMC(IApplication):
                assert job.inputdata._name == 'AthenaMCInputDatasets'
            except :
                raise ApplicationConfigurationError(None,"job.inputdata must be set to 'AthenaMCInputDatasets'")
-           job.inputdata.get_dataset(self, job.backend._name)
+           self.backend_inputdata=job.backend._name
+           job.inputdata.get_dataset(self, self.backend_inputdata)
            
 ##           print self.turls,self.lfcs,self.sites
 ##           print self.cavern_turls,self.cavern_lfcs,self.cavern_sites

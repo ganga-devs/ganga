@@ -103,11 +103,11 @@ echo "ERROR, T_RELEASE unset"
 exit 4
 fi
 echo $CMTSITE
-
+echo $BACKEND
 export ATLRMAIN=`echo $T_RELEASE | sed -e "s:\..*::" `
 
-if [ ! -z "$CMTSITE" -a "$CMTSITE" != "NONE" ]; then 
-# CERN AFS setup for Cern Local and LSF backends.
+if [ ! -z "$CMTSITE" -a "$BACKEND" != "LCG"  ]; then 
+# CERN AFS setup for Cern Local and LSF backends. Do not use for LCG backend as we are expected to use the kit on the grid.
     do_CERN_setup
 else
     do_KIT_setup

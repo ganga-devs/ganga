@@ -37,18 +37,13 @@ timeout() {
     return 1
 }
 
-stageInLCG(){
-    # args: inputfile, guid and list of potential lfcs.
-    # loop over lfc list, resolve guid into list of replicas, then try each replica until a download is successful, using timeout.
+stageInDQ2(){
     LFNS=$1   
     INPUTDSET=$2
     shift 2;
     SITES=$@
     dq2get=`which dq2-get`
-    py32=`which python32`
-    echo "test python #3"
-    echo $py32
-    which python
+#    py32=`which python32`
  
     matchDB=`echo $LFNS | grep DBRelease`
     echo "test matching",$LFNS,$matchDB,$newDB_location
@@ -60,106 +55,75 @@ stageInLCG(){
 	echo "Error in local dq2 setup, DQ2_LOCAL_SITE_ID not set. Aborting"
         return 12
     fi
-#    LOCALSITE=`echo $DQ2_LOCAL_SITE_ID | sed -e "s:_.*::"`
-#    newSITES=""
-#    for site in $SITES; do
-#	islocal=`echo $site | grep -e $LOCALSITE`
-#        if [ ! -z "$islocal" ]; then
-#           newSITES="$site $newSITES"  # promote local site to the front of the list
-#        else
-#           newSITES="$newSITES $site"  # append all other sites to the back.
-#        fi
-#        SITES=$newSITES
-#    done
 
-    
-    SITES=" null $SITES"
-    for site in $SITES; do
-	siteflag=""
-	if [ $site != "null" ]; then
-	    echo "Attempting getting data from $site"
-	    siteflag="-s $site"
-	else
-	    echo "first attempt to get inputdata. Not specifying the site as dq2-get checks and goes for the local instance first, if available".
+    cmd="$dq2get --client-id=ganga -a -d -D -f $LFNS $INPUTDSET" 
+    echo $cmd
+    $cmd
+    status=$?
+    if [ $status -eq 0 -a -s "$LFNS" ]; then
+       echo "$LFNS downloaded succesfully"
+    else 
+       echo "attempt failed. Trying alternative command line:"
+       # checking presence of atlas python:
+       atlasPythonBin=`ls -d ${VO_ATLAS_SW_DIR}/prod/releases/*/sw/lcg/external/Python/2.5.4/slc4_ia32_gcc34/bin | head -1`
+       if [ ! -z "$atlasPythonBin" ]; then
+          echo "Atlas python2.5 detected, setting it up"
+          export oldPATH=$PATH
+	  export oldLDLBPATH=$LD_LIBRARY_PATH
+	  export PATH=$atlasPythonBin:$PATH
+	  atlasPythonLib=`echo $atlasPythonBin | sed -e "s:bin:lib:"`
+	  export LD_LIBRARY_PATH=$atlasPythonLib:$LD_LIBRARY_PATH
+	  cmd="python "$cmd
+          echo $cmd
+	  $cmd
+          status=$?
+        else
+          echo "Could not find atlas python, aborting."
 	fi
-	cmd="$dq2get --client-id=ganga -a -d $siteflag -D -f $LFNS $INPUTDSET" 
-	echo $cmd
-	$cmd
-	status=$?
-	if [ $status -eq 0 -a -s "$LFNS" ]; then
-	    echo "$LFNS downloaded succesfully"
-	    #mv $INPUTDSET*/* .  # -D flag should make this block irrelevant and trigger an harmless error message
-	    break
-	fi
-	echo "attempt failed. Trying alternative command line:"
-	# checking presence of atlas python if needed:
-	if [ ! -z "$py32" ]; then
-	    cmd="$py32 "$cmd
-	else
-	    atlasPythonBin=`ls -d ${VO_ATLAS_SW_DIR}/prod/releases/*/sw/lcg/external/Python/2.5.4/slc4_ia32_gcc34/bin | head -1`
-	    if [ ! -z "$atlasPythonBin" ]; then
-		echo "Atlas python2.5 detected, setting it up"
-		export oldPATH=$PATH
-		export oldLDLBPATH=$LD_LIBRARY_PATH
-		export PATH=$atlasPythonBin:$PATH
-		atlasPythonLib=`echo $atlasPythonBin | sed -e "s:bin:lib:"`
-		export LD_LIBRARY_PATH=$atlasPythonLib:$LD_LIBRARY_PATH
-	    fi
-	    cmd="python "$cmd
-	fi
-	echo $cmd
-	$cmd
-	status=$?
-	if [ ! -z "$oldPATH" ]; then
-	    # restore defaults
-	    export PATH=$oldPATH
-	    export LD_LIBRARY_PATH=$oldLDLBPATH
-	fi
-	if [ $status -eq 0 -a -s "$LFNS" ]; then
-	    echo "$LFNS downloaded succesfully"
-	    #mv $INPUTDSET*/* .  # -D flag should make this block irrelevant and trigger an harmless error message
-	    break
-	fi
-
-	if [ -e "$LFNS" ]; then
-	    echo "failed attempt detected, removing it"
-	    rm $LFNS # clear the space for next attempt.
-	fi
-    done
+    fi
+    if [ ! -z "$oldPATH" ]; then
+	# restore defaults
+	export PATH=$oldPATH
+	export LD_LIBRARY_PATH=$oldLDLBPATH
+    fi
+    if [ $status -eq 0 -a -s "$LFNS" ]; then
+	echo "$LFNS downloaded succesfully"
+    fi
     ls -l 
-
     if [ ! -s "$LFNS" ]; then
 	echo "Missing LFN: $LFNS"
+	if [ -e "$LFNS" ]; then
+	    echo "empty leftover from failed attempt detected, removing it"
+	    rm $LFNS 
+	fi
 	return 111; # failed to get any replica...
     fi
-
     return 0
-#    GUID=$2
-#    shift 2;
-#    LFCS=$@
-#    for lfc in $LFCS; do
-#	export LFC_HOST=$lfc
-#	turls=`lcg-lr --vo atlas $GUID`
-#	echo "found the following replicas in $lfc: $turls"
-#	for turl in $turls; do
-#	    echo $turl
-#	    timeout 1 800 "lcg-cp -t 600 --vo atlas $turl file:$PWD/$LFN"
-#	    # note to self: timeout value (second arg) should be proportional to requested file size...
-#	    status=$?
-#	    if [ $status -eq 0 ]; then
-#		echo "got file $LFN from $lfc, leaving loop"
-#		return 0;
-#	    fi
-#	       #echo "failed to download $turl, looping to next replica"
-#	    echo "failed to download $turl, trying with srmv2 token:"
-#	    timeout 1 800 "lcg-cp -t 600 -T srmv2 --vo atlas $turl file:$PWD/$LFN"
-#	    if [ $status -eq 0 ]; then
-#		echo "got file $LFN from $lfc, leaving loop"
-#		return 0;
-#	    fi
-#	    echo "failed to download $turl, looping to next replica"
-#	done
-#    done
+}
+
+stageInLCG(){
+    # args: inputfile, guid and list of potential lfcs.
+    # loop over lfc list, resolve guid into list of replicas, then try each replica until a download is successful, using timeout.
+    LFN=$1   
+    GUID=$2
+    lfc=$3
+
+    export LFC_HOST=$lfc
+    turls=`lcg-lr --vo atlas $GUID`
+    if [ -z "$turls" ]; then
+       echo "error: no replicas found for guid: $GUID at LFC $lfc. Aborting" 
+       return 11
+    fi
+    echo "found the following replicas in $lfc: $turls"
+    for turl in $turls; do
+	echo $turl
+	timeout 1 800 "lcg-cp -t 600 -T srmv2 --vo atlas $turl file:$PWD/$LFN"
+	if [ $status -eq 0 ]; then
+           echo "got file $LFN from $lfc, leaving loop"
+	   return 0;
+	fi
+	echo "failed to download $turl, looping to next replica"
+    done
 
 }
 stageInNG(){
@@ -198,7 +162,7 @@ eval $INPUTFILES
 eval $INPUTDATASETS
 eval $INPUTSITES
 echo ${lfn[@]}
-bash --version
+
 ##
 if [ -z "$DQ2_HOME" -o -z "$DQ2_LOCAL_SITE_ID" ]; then
     echo "Setting up DQ2 tools"
@@ -206,27 +170,15 @@ if [ -z "$DQ2_HOME" -o -z "$DQ2_LOCAL_SITE_ID" ]; then
     echo "site's DQ2 ID is $DQ2_LOCAL_SITE_ID"
 fi
 # main loop
-
+echo "LFC is $OUTLFC"
 for ((i=0;i<${#lfn[@]};i++)); do
 #for i in ${!lfn[@]}; do # not everybody is up to date with bash, which is a shame really...
- echo "entry:"$i", lfn is "${lfn[${i}]}", from dataset "${dset[${i}]}" from site "${site[${i}]}
 
  INPUTFILE=${lfn[${i}]}
- if [ -z "$INPUTFILE" ] ; then
-    echo "no lfn found, potential error here..."
-    continue
- fi
-
  INPUTDSET=${dset[${i}]}
- if [ -z "$INPUTDSET" ] ; then
-    echo "no dataset found, potential error here..."
-    continue
- fi
  SITE=${site[${i}]}
- if [ -z "$SITE" ] ; then
-    echo "no site found, potential error here..."
-    continue
- fi
+ TURL=${turl[${i}]}
+ echo "entry: $i , lfn is $INPUTFILE , from dataset $INPUTDSET, site $SITE , TURL is $TURL ."
 
    
  echo "==============================="
@@ -238,9 +190,32 @@ for ((i=0;i<${#lfn[@]};i++)); do
  # now checking the backend
  case "$BACKEND" in
     'LCG')
-#    stageInLCG $INPUTFILE $INPUTTURL ${lfc[${i}]};
-    stageInLCG $INPUTFILE $INPUTDSET $SITE
-    status=$?
+    if [ -z "$INPUTFILE" ]; then
+	echo "input file name missing, Abort"
+	return 12
+    fi
+    status=1
+    if [ ! -z "$INPUTDSET" -a ! -z "$SITE" ]; then
+        echo "Using DQ2 to get input files" 
+	stageInDQ2 $INPUTFILE $INPUTDSET $SITE # uses dq2
+	status=$?
+    else
+       echo "Missing data , cannot use dq2"
+    fi
+    if [ $status -ne 0 ];then
+        if [ ! -z "$DQ2_LOCAL_SITE_ID" ]; then
+	    echo "DQ2 download failed"
+        fi
+        if [ ! -z "$TURL" ]; then
+	    echo "reverting to lcg-cp"
+	    #    stageInLCG $INPUTFILE $GUID ${lfc[${i}]};
+	    stageInLCG $INPUTFILE $TURL $OUTLFC;
+	    status=$?
+        else
+           echo "missing guids, cannot use lcg-cp"
+	fi
+    fi
+
     ;;
     'NG')
     stageInNG;
@@ -249,10 +224,10 @@ for ((i=0;i<${#lfn[@]};i++)); do
     stageInOSG;
     ;;
     'batch')
-    stageInLocal $INPUTFILE `echo $INPUTTURL | cut -d ":" -f 2`;
+    stageInLocal $INPUTFILE `echo $TURL | cut -d ":" -f 2`;
     ;;
     'castor')
-    stageInCastor $INPUTFILE  `echo $INPUTTURL | cut -d ":" -f 2`;
+    stageInCastor $INPUTFILE  `echo $TURL | cut -d ":" -f 2`;
     ;;
     *)
     echo "Error, wrong value for BACKEND: $BACKEND. Must abort";
@@ -266,8 +241,6 @@ if [ $status -ne 0 ];then
    exit $status
 fi
 
-# echo "doing pool insert"
-#    pool_insertFileToCatalog $INPUTFILE
-#    cat PoolFileCatalog.xml 2> /dev/null
+
 
 done
