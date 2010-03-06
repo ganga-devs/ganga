@@ -83,6 +83,7 @@ def queueToAllowedSites(queue):
 def runPandaBrokerage(job):
     from pandatools import Client
 
+    tmpSites = []
     # get locations when site==AUTO
     if job.backend.site == "AUTO":
         libdslocation = []
@@ -100,7 +101,6 @@ def runPandaBrokerage(job):
                 except:
                     raise BackendError('Panda','Could not map libds site %s to a cloud'%libdslocation)
 
-        tmpSites = []
         dataset = ''
         if job.inputdata:
             try:
