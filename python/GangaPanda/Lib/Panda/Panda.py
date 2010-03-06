@@ -140,36 +140,38 @@ def runPandaBrokerage(job):
             if site not in job.backend.requirements.excluded_sites:
                 newTmpSites.append(site)
         tmpSites=newTmpSites
+    else:
+        tmpSites = [job.backend.site]
  
-        if not tmpSites: 
-            raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" % (job.backend.requirements.cloud,dataset,job.backend.libds))
-        
-        tag = ''
+    if not tmpSites: 
+        raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" % (job.backend.requirements.cloud,dataset,job.backend.libds))
+    
+    tag = ''
+    try:
+        if job.application.atlas_production=='':
+            tag = 'Atlas-%s' % job.application.atlas_release
+        else:
+            tag = '%s-%s' % (job.application.atlas_project,job.application.atlas_production)
+    except:
+        # application is probably AthenaMC
         try:
-            if job.application.atlas_production=='':
+            if len(job.application.atlas_release.split('.')) == 3:
                 tag = 'Atlas-%s' % job.application.atlas_release
             else:
-                tag = '%s-%s' % (job.application.atlas_project,job.application.atlas_production)
+                tag = 'AtlasProduction-%s' % job.application.atlas_release
         except:
-            # application is probably AthenaMC
-            try:
-                if len(job.application.atlas_release.split('.')) == 3:
-                    tag = 'Atlas-%s' % job.application.atlas_release
-                else:
-                    tag = 'AtlasProduction-%s' % job.application.atlas_release
-            except:
-                logger.warning("Could not determine athena tag for Panda brokering")
-        try:
-            status,out = Client.runBrokerage(tmpSites,tag,verbose=False,trustIS=config['trustIS'])
-        except exceptions.SystemExit:
-            raise BackendError('Panda','Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
-        if status != 0:
-            raise BackendError('Panda','Non-zero to run brokerage for automatic assignment: %s' % out)
-        if not Client.PandaSites.has_key(out):
-            raise BackendError('Panda','brokerage gave wrong PandaSiteID:%s' % out)
-        # set site
-        job.backend.site = out
-    
+            logger.warning("Could not determine athena tag for Panda brokering")
+    try:
+        status,out = Client.runBrokerage(tmpSites,tag,verbose=False,trustIS=config['trustIS'])
+    except exceptions.SystemExit:
+        raise BackendError('Panda','Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
+    if status != 0:
+        raise BackendError('Panda','Non-zero to run brokerage for automatic assignment: %s' % out)
+    if not Client.PandaSites.has_key(out):
+        raise BackendError('Panda','brokerage gave wrong PandaSiteID:%s' % out)
+    # set site
+    job.backend.site = out
+
     # patch for BNL
     if job.backend.site == "ANALY_BNL":
         job.backend.site = "ANALY_BNL_ATLAS_1"
