@@ -169,6 +169,8 @@ if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 else
     if [ -e dq2info.tar.gz ]; then
 	tar xzf dq2info.tar.gz
+	export PYTHONPATH=$PWD:$PYTHONPATH
+	export DQ2_HOME=$PWD/opt/dq2
     fi
 fi
 
