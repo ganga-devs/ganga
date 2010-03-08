@@ -931,6 +931,39 @@ def getLocalFileMetadata(file):
         
     return size,md5sum
 
+####################################
+def addFileMetadata(guid, fsize= None, checksum = None, csumtype = 'AD' ):
+
+    try:
+        stat = lfc.lfc_filestatg()
+        rc = lfc.lfc_statg("", guid, stat)
+    except:
+        return -1
+
+    if rc != 0:
+        err_num = lfc.cvar.serrno
+        errstr = lfc.sstrerror(err_num)
+        print err_num, errstr
+        return -1
+
+    if fsize:
+        filesize = long(fsize)
+    else:
+        filesize = stat.filesize
+
+    try:
+        rc = lfc.lfc_setfsizeg( guid, filesize, csumtype, checksum)
+    except:
+        return -1
+
+    if rc != 0:
+        err_num = lfc.cvar.serrno
+        errstr = lfc.sstrerror(err_num)
+        print err_num, errstr
+        return -1
+
+    return 0
+
 ########################################################################
 # Save outfile file on SE
 def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, siteID, tokenname=''):
@@ -951,7 +984,7 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
     # check which version of lcg-utils we're on
     if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
         t = timeout / 2
-        cmd = "lcg-cr --connect-timeout %i --sendreceive-timeout %i --srm-timeout %i --bdii-timeout %i" % ( t, t, t, t )
+        cmd = "lcg-cr --connect-timeout %i --sendreceive-timeout %i --srm-timeout %i --bdii-timeout %i " % ( t, t, t, t )
     else:
         cmd = "lcg-cr -t %i" % timeout
     
@@ -989,6 +1022,10 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
 
     # size and md5sum
     size, md5sum = getLocalFileMetadata_adler32(filename)
+
+    ret = addFileMetadata(guid, size, md5sum, 'AD')
+    if ret!=0:
+        print 'Error adding file checksum to LFC'
     
     return guid, size, md5sum
 
