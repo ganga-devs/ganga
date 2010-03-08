@@ -3,26 +3,30 @@ from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from GangaTest.Framework.utils import is_job_finished
 
 srcdir = "/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/"
-srcdir1510 = srcdir + "v1510"
+rcdir1510 = srcdir + "v1510"
+srcdirana = srcdir + "v1565"
+release = '15.6.5'
+release_mc='15.6.5.1'
+datasetana = 'mc09_7TeV.106400.SU4_jimmy_susy.merge.AOD.e496_s624_s633_r1085_r1113/'
 
 class TestAtlas(GangaGPITestCase):
     def testAthenaLocal(self):
         return TestAthenaLocal(srcdir)
 
     def testAthenaDQ2LSF(self):
-        return TestAthenaDQ2LSF(srcdir1510)
+        return TestAthenaDQ2LSF(srcdirana)
 
     def testAthenaLCG(self):
         return TestAthenaLCG(srcdir)
 
     def testAthenaDQ2LCG(self):
-        return TestAthenaDQ2LCG(srcdir1510)
+        return TestAthenaDQ2LCG(srcdirana)
 
     def testAthenaDQ2LCGFileStager(self):
-        return TestAthenaDQ2LCGFileStager(srcdir1510)
+        return TestAthenaDQ2LCGFileStager(srcdirana)
 
     def testAthenaDQ2LCGDQ2COPY(self):
-        return TestAthenaDQ2LCGDQ2COPY(srcdir1510)
+        return TestAthenaDQ2LCGDQ2COPY(srcdirana)
 
     def testAnaTaskBasic(self):
         return TestAnaTaskBasic()
@@ -67,7 +71,7 @@ class TestAnaTaskBasic(ICheckTest):
         t.analysis.application.atlas_release='15.1.0'
         t.analysis.application.max_events=10
         t.analysis.files_per_job = 1
-        t.analysis.inputdata.dataset = "mc08.105200.T1_McAtNlo_Jimmy.merge.AOD.e357_s462_r635_t53_tid064814"
+        t.analysis.inputdata.dataset = datasetana
         t.analysis.outputdata=DQ2OutputDataset()
         t.analysis.setRunlimit(2)
         t.float = 5
@@ -125,15 +129,15 @@ class TestTask(AtlasTest):
 
 class TestAnaTask(TestTask):
     def setup(self):
-        self.joboption = '%s/AnalysisSkeleton_topOptions_v1510.py' % self.tmpdir
+        self.joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
         self.archivefile = '%s/UserAnalysis_v1510.tar.gz' % self.tmpdir
         t = AnaTask()
         t.analysis.application.atlas_release='15.1.0'
         t.analysis.application.option_file=[ self.joboption ]
-        t.analysis.application.user_area = self.archivefile
+        #t.analysis.application.user_area = self.archivefile
         t.analysis.application.max_events=10
         t.analysis.files_per_job = 1
-        t.analysis.inputdata.dataset = "mc08.105200.T1_McAtNlo_Jimmy.merge.AOD.e357_s462_r635_t53_tid064814"
+        t.analysis.inputdata.dataset = datasetana
         t.analysis.outputdata=DQ2OutputDataset()
         t.analysis.setRunlimit(2)
         t.float = 5
@@ -145,8 +149,7 @@ class TestAnaTaskLCG(TestAnaTask):
         TestAnaTask.setup(self)
         be = LCG()
         self.t.setBackend(LCG())
-        self.t.analysis.backend.requirements.cloud='DE'
-        #self.t.analysis.backend.requirements.sites=['IN2P3-CC_MCDISK']
+        self.t.analysis.backend.requirements.cloud='ALL'
         self.t.analysis.outputdata.outputdata=[ 'AnalysisSkeleton.aan.root' ]
         self.t.run()
 
@@ -154,30 +157,30 @@ class TestAnaTaskPanda(TestAnaTask):
     def setup(self):
         TestAnaTask.setup(self)
         self.t.setBackend(Panda())
-        self.t.analysis.backend.requirements.cloud='US'
         self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
-        self.t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808"
+        self.t.analysis.inputdata.dataset = datasetana
         self.t.run()
 
 class TestAnaTaskAuto(TestAnaTask):
     def setup(self):
         TestAnaTask.setup(self)
         self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
-        self.t.analysis.inputdata.dataset = "mc08.107204.singlepart_mu4.recon.AOD.e347_s462_r635_tid060808"
+        self.t.analysis.inputdata.dataset = datasetana
         self.t.run()
 
 class TestAthena(AtlasTest):
     def setup(self):
-        joboption = '%s/AnalysisSkeleton_topOptions_v1510.py' % self.tmpdir
-        archivefile = '%s/UserAnalysis_v1510.tar.gz' % self.tmpdir
+        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
         j = Job()
         j.application=Athena()
-        j.application.atlas_release='15.1.0'
+        j.application.atlas_release=release
+	j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
+        j.application.atlas_run_dir = '.' 
         j.application.option_file=[ joboption ]
-        j.application.user_area=archivefile
+        #j.application.user_area=archivefile
         j.application.max_events=100
         j.inputdata=DQ2Dataset()
-        j.inputdata.dataset='mc08.105200.T1_McAtNlo_Jimmy.merge.AOD.e357_s462_r635_t53_tid064814'
+        j.inputdata.dataset=datasetana
         j.inputdata.type='DQ2_LOCAL'
         j.outputdata=DQ2OutputDataset()
         j.outputdata.outputdata=[ 'AnalysisSkeleton.aan.root' ]
@@ -189,9 +192,7 @@ class TestAthenaDQ2LCG(TestAthena):
     def setup(self):
         TestAthena.setup(self)
         self.j.backend=LCG()
-        #self.j.backend.requirements.sites=['FZK-LCG2_MCDISK']
-        #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
-        self.j.backend.requirements.cloud='DE'
+        self.j.backend.requirements.cloud='ALL'
         self.j.backend.requirements.cputime=1440
         assert(self.j.submit()==True)
 
@@ -199,9 +200,7 @@ class TestAthenaDQ2LCGFileStager(TestAthena):
     def setup(self):
         TestAthena.setup(self)
         self.j.backend=LCG()
-        #self.j.backend.requirements.sites=['FZK-LCG2_MCDISK']
-        #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
-        self.j.backend.requirements.cloud='DE'
+        self.j.backend.requirements.cloud='ALL'
         self.j.inputdata.type = 'FILE_STAGER'
         self.j.backend.requirements.cputime=1440
         assert(self.j.submit()==True)
@@ -210,9 +209,7 @@ class TestAthenaDQ2LCGDQ2COPY(TestAthena):
     def setup(self):
         TestAthena.setup(self)
         self.j.backend=LCG()
-        #self.j.backend.requirements.sites=['FZK-LCG2_MCDISK']
-        #self.j.backend.requirements.sites=['IN2P3-CC_MCDISK']
-        self.j.backend.requirements.cloud='DE'
+        self.j.backend.requirements.cloud='ALL'
         self.j.inputdata.type = 'DQ2_COPY'
         assert(self.j.submit()==True)
 
@@ -231,7 +228,7 @@ class TestAthenaLCG(AtlasTest):
         j = Job()
         j.application=Athena()
         j.application.option_file=[ joboption ]
-        j.application.atlas_release='15.1.0'
+        j.application.atlas_release=release
         j.backend=LCG()
         assert (j.submit()==True)
         self.j = j
@@ -242,7 +239,7 @@ class TestAthenaLocal(AtlasTest):
         j = Job()
         j.application=Athena()
         j.application.option_file=[ joboption ]
-        j.application.atlas_release='15.1.0'
+        j.application.atlas_release=release
         j.backend=Local()
         assert (j.submit()==True)
         self.j = j
@@ -338,7 +335,7 @@ class TestAthenaMCPanda(AtlasTest):
         self.j.application.number_events_job=1
         self.j.application.verbosity = "INFO"
         self.j.backend=Panda()
-        self.j.backend.requirements.cloud = "US"
+        #self.j.backend.requirements.cloud = "US"
         self.j.outputdata=AthenaMCOutputDatasets()
      
 
