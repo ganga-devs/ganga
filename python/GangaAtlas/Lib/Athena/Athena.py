@@ -143,7 +143,7 @@ class AthenaOutputDataset(GangaObject):
 class Athena(IApplication):
     """The main Athena Job Handler"""
 
-    _schema = Schema(Version(2,2), {
+    _schema = Schema(Version(2,3), {
                  'atlas_release'          : SimpleItem(defvalue='',doc='ATLAS Software Release'),
                  'atlas_production'       : SimpleItem(defvalue='',doc='ATLAS Production Software Release'),
                  'atlas_project'          : SimpleItem(defvalue='',doc='ATLAS Project Name'),
@@ -169,7 +169,8 @@ class Athena(IApplication):
                  'exclude_package'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Packages to exclude from user area requirements file'),
                  'stats'                  : SimpleItem(defvalue = {}, doc='Dictionary of stats info'),
                  'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field'),
-                 'recex_type'             : SimpleItem(defvalue = '',doc='Set to RDO, ESD or AOD to enable RecExCommon type jobs of appropriate type')
+                 'recex_type'             : SimpleItem(defvalue = '',doc='Set to RDO, ESD or AOD to enable RecExCommon type jobs of appropriate type'),
+                 'glue_packages'          : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='list of glue packages which cannot be found due to empty i686-slc4-gcc34-opt. e.g., [\'External/AtlasHepMC\',\'External/Lhapdf\']')
               })
                      
     _category = 'applications'
@@ -770,7 +771,7 @@ class Athena(IApplication):
 
         # archive sources
         verbose = False
-        archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, tmpDir, verbose)
+        archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, tmpDir, verbose, self.glue_packages)
         logger.info('Creating %s ...', archiveFullName )
 
         # Add InstallArea
