@@ -121,7 +121,7 @@ class VStreamer(object):
         print >> self.out,'<value>%s</value>' % escape(repr(x))
     
     def showAttribute( self, node, name ):
-        return not node._schema.getItem(name)['transient'] and name!=self.selection 
+        return not node._schema.getItem(name)['transient'] and (self.level > 1 or name!=self.selection)
 
     def simpleAttribute(self,node,name, value,sequence):
         if self.showAttribute( node, name ):
