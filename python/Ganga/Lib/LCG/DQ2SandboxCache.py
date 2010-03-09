@@ -75,7 +75,7 @@ class DQ2SandboxCache(GridSandboxCache):
     '''
 
     dq2_sandbox_cache_schema_datadict.update({
-        'setup'          : SimpleItem(defvalue='/afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/latest/setup.sh', doc='the DQ2 setup script'),
+        'setup'          : SimpleItem(defvalue='/afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/setup.sh', doc='the DQ2 setup script'),
         'local_site_id'  : SimpleItem(defvalue='CERN-PROD_SCRATCHDISK', copyable=1, doc='the DQ2 local site id'),
         'dataset_name'   : SimpleItem(defvalue='', copyable=0, doc='the DQ2 dataset name')
         } )
