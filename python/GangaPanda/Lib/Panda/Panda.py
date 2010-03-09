@@ -164,10 +164,13 @@ def runPandaBrokerage(job):
     try:
         status,out = Client.runBrokerage(tmpSites,tag,verbose=False,trustIS=config['trustIS'])
     except exceptions.SystemExit:
+        job.backend.reason = 'Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1])
         raise BackendError('Panda','Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
     if status != 0:
+        job.backend.reason = 'Non-zero to run brokerage for automatic assignment: %s' % out
         raise BackendError('Panda','Non-zero to run brokerage for automatic assignment: %s' % out)
     if not Client.PandaSites.has_key(out):
+        job.backend.reason = 'brokerage gave wrong PandaSiteID:%s' % out
         raise BackendError('Panda','brokerage gave wrong PandaSiteID:%s' % out)
     # set site
     job.backend.site = out

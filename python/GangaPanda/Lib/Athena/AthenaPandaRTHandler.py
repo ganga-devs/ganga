@@ -70,15 +70,24 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
-        usertag = configDQ2['usertag'] 
-        self.username = gridProxy.identity(safe=True)
-        username = self.username
+        self.usertag = usertag = configDQ2['usertag']
+        self.username = username = gridProxy.identity(safe=True)
+
+        # prepare Group Dataset names
+        if job.outputdata and job.outputdata.isGroupDS==True:
+            self.usertag = usertag = re.sub("user", "group", usertag)
+            if not usertag.startswith('group'):
+                self.usertag = usertag = 'group' + time.strftime('%Y')[2:]
+            if job.outputdata.groupname:
+                self.username = username = job.outputdata.groupname
+
+
         if job.backend.libds:
             self.libDataset = job.backend.libds
             self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
             self.library = self.fileBO.lfn
         else:
-            self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,username,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
+            self.libDataset = '%s.%s.%s_%d.lib._%06d' % (usertag,username,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
             self.library = '%s.lib.tgz' % self.libDataset
             try:
                 Client.addDataset(self.libDataset,False)
@@ -121,14 +130,14 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if job.outputdata._name <> 'DQ2OutputDataset':
                 raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
             if not job.outputdata.datasetname:
-                job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,username,job.id,today)
+                job.outputdata.datasetname = '%s.%s.%d.%s' % (usertag,username,job.id,today)
         else:
             logger.info('Adding missing DQ2OutputDataset')
             job.outputdata = DQ2OutputDataset()
-            job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,username,job.id,today)
-        if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,username)):
-            logger.info('outputdata.datasetname must start with %s.%s.ganga. Prepending it for you.'%(usertag,username))
-            job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
+            job.outputdata.datasetname = '%s.%s.%d.%s' % (usertag,username,job.id,today)
+        if not job.outputdata.datasetname.startswith('%s.%s.'%(usertag,username)):
+            logger.info('outputdata.datasetname must start with %s.%s. Prepending it for you.'%(usertag,username))
+            job.outputdata.datasetname = '%s.%s.'%(usertag,username)+job.outputdata.datasetname
         logger.info('Output dataset %s',job.outputdata.datasetname)
         try:
             Client.addDataset(job.outputdata.datasetname,False)
@@ -298,10 +307,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if not job.outputdata.datasetname:
             raise ApplicationConfigurationError(None,'DQ2OutputDataset has no datasetname')
         
-        usertag = configDQ2['usertag'] 
+        usertag = self.usertag
         username = self.username
-        if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,username)):
-            job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
+        if not job.outputdata.datasetname.startswith('%s.%s.'%(usertag,username)):
+            job.outputdata.datasetname = '%s.%s.'%(usertag,username)+job.outputdata.datasetname
         
         if job.inputdata:
             if len(job.inputdata.dataset) > 1:
