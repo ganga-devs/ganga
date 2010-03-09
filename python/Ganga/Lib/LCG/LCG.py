@@ -188,7 +188,7 @@ class LCG(IBackend):
 
         if self.sandboxcache._name == 'LCGSandboxCache':
             if not self.sandboxcache.lfc_host:
-                self.sandboxcache.lfc_host = grids[self.middleware.upper()].__get_lfc_host__()
+                self.sandboxcache.lfc_host = grids[self.middleware.upper()].shell.env['LFC_HOST']
 
             if not self.sandboxcache.se:
 
@@ -256,18 +256,15 @@ class LCG(IBackend):
         self.__setup_sandboxcache__(job)
 
         uploadedFiles += self.sandboxcache.get_cached_files()
-
-        lfc_host = None
+        
+        ## in general, take the one from the local grid shell environment.
+        lfc_host = grids[self.sandboxcache.middleware.upper()].shell.env['LFC_HOST']
         
         ## for LCGSandboxCache, take the one specified in the sansboxcache object.
         ## the value is exactly the same as the one from the local grid shell env. if
         ## it is not specified exclusively.
         if self.sandboxcache._name == 'LCGSandboxCache':
             lfc_host = self.sandboxcache.lfc_host
-            
-        ## or in general, query it from the Grid object
-        if not lfc_host:
-            lfc_host = grids[self.sandboxcache.middleware.upper()].__get_lfc_host__()
 
         idx['lfc_host'] = lfc_host
 
@@ -1997,7 +1994,7 @@ def __updateGridObjects__(opt,val):
             pass
 
     ## when user changes the 'DefaultLFC', change the env. variable, LFC_HOST, of the cached grid shells
-    if opt == 'DefaultLFC' and val != None:
+    if opt == 'DefaultLFC' and val:
         for mt in grids.keys():
             try:
                 grids[mt].shell.env['LFC_HOST'] = val
@@ -2021,9 +2018,6 @@ def __postConfigHandler__(opt,val):
 
 # global variables
 logger = getLogger()
-
-logger.debug('LCG module initialization: begin')
-
 config = makeConfig('LCG','LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')
 
@@ -2094,17 +2088,15 @@ grids = {'EDG':None,'GLITE':None}
 
 if config['GLITE_ENABLE']:
     grids['GLITE'] = Grid('GLITE')
-#    if grids['GLITE'].shell:
-#        config.setSessionValue('DefaultLFC',grids['GLITE'].shell.env['LFC_HOST'])
+    if grids['GLITE'].shell:
+        config.setSessionValue('DefaultLFC',grids['GLITE'].shell.env['LFC_HOST'])
     config.setSessionValue('GLITE_ENABLE',grids['GLITE'].active)
 
 if config['EDG_ENABLE']:
     grids['EDG'] = Grid('EDG')
-#    if grids['EDG'].shell:
-#        config.setSessionValue('DefaultLFC', grids['EDG'].shell.env['LFC_HOST'])
+    if grids['EDG'].shell:
+        config.setSessionValue('DefaultLFC', grids['EDG'].shell.env['LFC_HOST'])
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
-
-logger.debug('LCG module initialization: end')
 
 # $Log: not supported by cvs2svn $
 # Revision 1.38  2009/07/15 08:23:29  hclee

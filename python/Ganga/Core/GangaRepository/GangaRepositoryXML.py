@@ -247,11 +247,8 @@ class GangaRepositoryLocal(GangaRepository):
             self._internal_setitem__(ids[i], objs[i])
             # Set subjobs dirty - they will not be flushed if they are not.
             if self.sub_split and self.sub_split in objs[i]._data:
-                try:
-                    for j in range(len(objs[i]._data[self.sub_split])):
-                        objs[i]._data[self.sub_split][j]._dirty = True
-                except AttributeError:
-                    pass # this is not a list of Ganga objects
+                for j in range(len(objs[i]._data[self.sub_split])):
+                    objs[i]._data[self.sub_split][j]._dirty = True
         return ids
 
     def flush(self, ids):
@@ -261,8 +258,7 @@ class GangaRepositoryLocal(GangaRepository):
                 obj = self.objects[id]
                 if obj._name != "EmptyGangaObject":
                     split_cache = None
-                    do_sub_split = (not self.sub_split is None) and (self.sub_split in obj._data) and len(obj._data[self.sub_split]) > 0 and hasattr(obj._data[self.sub_split][0],"_dirty")
-                    if do_sub_split:
+                    if self.sub_split and self.sub_split in obj._data:
                         split_cache = obj._data[self.sub_split]
                         for i in range(len(split_cache)):
                             if not split_cache[i]._dirty:
@@ -274,10 +270,8 @@ class GangaRepositoryLocal(GangaRepository):
                                 if e.errno != errno.EEXIST: 
                                     raise RepositoryError(self,"OSError: " + str(e))
                             safe_save(sfn, split_cache[i], self.to_file)
-                            split_cache[i]._setFlushed()                
-                        safe_save(fn, obj, self.to_file, self.sub_split)
-                    else:
-                        safe_save(fn, obj, self.to_file, "")
+                            split_cache[i]._setFlushed()
+                    safe_save(fn, obj, self.to_file, self.sub_split)
                     self.index_write(id)
                     obj._setFlushed()
             except OSError, x:
@@ -306,8 +300,7 @@ class GangaRepositoryLocal(GangaRepository):
                 tmpobj = None
                 if must_load or (self._load_timestamp.get(id,0) != os.fstat(fobj.fileno()).st_ctime):
                     tmpobj, errs = self.from_file(fobj)
-                    do_sub_split = (not self.sub_split is None) and (self.sub_split in tmpobj._data) and len(tmpobj._data[self.sub_split]) == 0
-                    if do_sub_split:
+                    if self.sub_split:
                         i = 0
                         ld = os.listdir(os.path.dirname(fn))
                         l = []
@@ -355,14 +348,10 @@ class GangaRepositoryLocal(GangaRepository):
                         obj._index_cache = None
                     else:
                         self._internal_setitem__(id, tmpobj)
-                    if do_sub_split:
-                        try:
-                            for sobj in self.objects[id]._data[self.sub_split]:
-                                sobj._setParent(self.objects[id])
-                        except AttributeError:
-                            pass # not actually Ganga objects in the sub-split field
+                    if self.sub_split:
+                        for sobj in self.objects[id]._data[self.sub_split]:
+                            sobj._setParent(self.objects[id])
                         self.objects[id]._data[self.sub_split]._setParent(self.objects[id])
-                        
                     self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
             except RepositoryError:
                 raise

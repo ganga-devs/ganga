@@ -42,7 +42,12 @@ class Grid(object):
         if not self.shell:
             logger.warning('LCG-%s UI has not been configured. The plugin has been disabled.' % self.middleware)
             return
-        
+        else:
+            lfc_host = self.__get_default_lfc__()
+            if lfc_host:
+                self.shell.env['LFC_HOST'] = lfc_host
+                logger.debug('set LFC_HOST of %s UI to %s.' % (self.middleware,lfc_host))
+
 #       create credential for this Grid object
         self.active = self.check_proxy()
 
@@ -71,13 +76,10 @@ class Grid(object):
 
         submit_option = ''
 
-        msg = 'use VO defined '
-
-        voms = self.__get_proxy_voname__()
+        msg = 'using the VO defined '
 
         # VO specific WMS options (no longer used by glite-wms-job-submit command)
-        # 1. vo specified in the configuration file
-        if self.config['ConfigVO']:
+        if self.config['ConfigVO']: # 1. vo specified in the configuration file
             if self.middleware == 'EDG':
                 submit_option = '--config-vo %s' % self.config['ConfigVO']
                 if not os.path.exists(self.config['ConfigVO']):
@@ -87,17 +89,15 @@ class Grid(object):
                     msg += 'in %s.' % self.config['ConfigVO']
             else:
                 logger.warning('ConfigVO configuration ignored by %s middleware. Set Config instead.' % self.middleware)
-        # 2. vo attached in the voms proxy
-        elif voms:
-                msg += 'in voms proxy: %s.' % voms
-        # 3. vo is given explicitely
-        elif self.config['VirtualOrganisation']:
+
+        elif self.__get_proxy_voname__(): # 2. vo attached in the voms proxy
+            msg += 'as %s.' % self.__get_proxy_voname__()
+        elif self.config['VirtualOrganisation']: # 3. vo is given explicitely 
             submit_option = '--vo %s' % self.config['VirtualOrganisation']
-            msg += 'in Ganga config: %s.' % self.config['VirtualOrganisation']
-        # 4. no vo information is found
-        else:
+            msg += 'as %s.' % self.config['VirtualOrganisation']
+        else: # 4. no vo information is found
             logger.warning('No Virtual Organisation specified in the configuration. The plugin has been disabeled.')
-            return None
+            return None 
 
         # general WMS options
         # NB. please be aware the config for gLite WMS is NOT compatible with the config for EDG RB
@@ -117,16 +117,7 @@ class Grid(object):
         logfile = None
         if match_log:
             logfile = match_log.group(1)
-        return logfile
-
-    def __clean_gridcmd_log__(self, regxp_logfname, cmd_output):
-
-        logfile = self.__resolve_gridcmd_log_path__(regxp_logfname,cmd_output)
-
-        if logfile and os.path.exists(logfile):
-            os.remove(logfile)
-            
-        return True
+        return logfile 
 
     def __print_gridcmd_log__(self,regxp_logfname,cmd_output):
 
@@ -154,24 +145,10 @@ class Grid(object):
             logger.debug('voms of credential: %s' % self.credential.voms)
             return self.credential.voms
 
-    def __get_lfc_host__(self):
-        '''Gets the LFC_HOST: from current shell or querying BDII on demand'''
-        lfc_host = None
-
-        if self.shell.env.has_key('LFC_HOST'):
-            lfc_host = self.shell.env['LFC_HOST']
-
-        if not lfc_host:
-            lfc_host = self.__get_default_lfc__()
-
-        return lfc_host
-
     def __get_default_lfc__(self):
         '''Gets the default lfc host from lcg-infosites'''
 
         cmd = 'lcg-infosites'
-
-        logger.debug('%s lfc-infosites called ...' % self.middleware)
 
         rc, output, m = self.shell.cmd1('%s --vo %s lfc' % (cmd,self.config['VirtualOrganisation']),allowed_exit=[0,255])
 
@@ -340,15 +317,12 @@ class Grid(object):
             if self.middleware == 'GLITE' and self.perusable:
                 logger.info("Enabling perusal")
                 per_rc, per_out, per_m=self.shell.cmd1("glite-wms-job-perusal --set -f stdout %s" % match.group(1))
-
-            ## remove the glite command log if it exists
-            self.__clean_gridcmd_log__('(.*-job-submit.*\.log)',output)
             return match.group(1)
 
-        else:
-            logger.warning('Job submission failed.')
-            self.__print_gridcmd_log__('(.*-job-submit.*\.log)',output)
-            return
+        logger.warning('Job submission failed.')
+        self.__print_gridcmd_log__('(.*-job-submit.*\.log)',output)
+
+        return
 
     def native_master_cancel(self,jobids):
         '''Native bulk cancellation supported by GLITE middleware.'''
@@ -384,8 +358,6 @@ class Grid(object):
             self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return False
         else:
-            # job cancellation succeeded, try to remove the glite command logfile if it exists
-            self.__clean_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return True
 
     def status(self,jobids,is_collection=False):
@@ -419,7 +391,7 @@ class Grid(object):
         logger.debug('job status command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd), allowed_exit=[0,255])
-        os.remove(idsfile)
+        os.unlink(idsfile)
 
         missing_glite_jids = []
         if rc != 0:
@@ -430,9 +402,6 @@ class Grid(object):
                 logger.debug('jobs removed from WMS: %s' % repr(missing_glite_jids))
             else:
                 self.__print_gridcmd_log__('(.*-job-status.*\.log)',output)
-
-        ## job status query succeeded, try to remove the glite command logfile if it exists
-        self.__clean_gridcmd_log__('(.*-job-status.*\.log)',output)
 
         re_id = re.compile('^\s*Status info for the Job : (https://.*\S)\s*$')
         re_status = re.compile('^\s*Current Status:\s+(.*\S)\s*$')
@@ -539,14 +508,11 @@ class Grid(object):
         logger.debug('job logging info command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),allowed_exit=[0,255])
-        os.remove(idsfile)
 
         if rc != 0:
             self.__print_gridcmd_log__('(.*-logging-info.*\.log)',output)
             return False
         else:
-            # logging-info checking succeeded, try to remove the glite command logfile if it exists
-            self.__clean_gridcmd_log__('(.*-logging-info.*\.log)',output)
             # returns the path to the saved logging info if success  
             return log_output 
 
@@ -580,9 +546,6 @@ class Grid(object):
             logger.warning('Job output fetch failed.')
             self.__print_gridcmd_log__('(.*-output.*\.log)',output)
             return (False, 'cannot fetch job output')
-
-        # job output fetching succeeded, try to remove the glite command logfile if it exists
-        self.__clean_gridcmd_log__('(.*-output.*\.log)',output)
 
         outdir = match.group(1)
 
@@ -661,8 +624,6 @@ class Grid(object):
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),allowed_exit=[0,255])
 
         if rc == 0:
-            # job cancelling succeeded, try to remove the glite command logfile if it exists
-            self.__clean_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return True
         else:
             logger.warning( "Failed to cancel jobs.\n%s" % output )
@@ -691,8 +652,6 @@ class Grid(object):
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),allowed_exit=[0,255])
 
         if rc == 0:
-            # job cancelling succeeded, try to remove the glite command logfile if it exists
-            self.__clean_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return True
         else:
             logger.warning( "Failed to cancel job %s.\n%s" % ( jobid, output ) )
