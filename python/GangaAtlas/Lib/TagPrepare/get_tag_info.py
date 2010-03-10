@@ -11,8 +11,10 @@ if os.environ.has_key('MAXNUMREFS'):
     maxnumrefs = eval(os.environ['MAXNUMREFS'])
     
 stream_ref = 'StreamAOD_ref'
+dataset_type = 'AOD'
 if os.environ.has_key('STREAM_REF'):
     stream_ref = 'Stream'+os.environ['STREAM_REF']+'_ref'
+    dataset_type = os.environ['STREAM_REF']
     
 taginfo = {}
 taglfns = [ line.strip() for line in file('input_files') ]
@@ -95,7 +97,7 @@ else:
                 os.symlink(f, os.path.basename(f) + ".root")
                 
             # split the tag file based on file GUIDs
-            cmd = "CollSplitByGUID -src " + os.path.basename(f) + " RootCollection"
+            cmd = "CollSplitByGUID -src " + os.path.basename(f) + " RootCollection -splitref "+stream_ref
             rc, out = getstatusoutput(cmd)
             if (rc!=0):
                 print out
@@ -150,7 +152,13 @@ for f in taginfo:
             os.system('rm %s' % (f + ".root"))
         continue
                
-    ref_guids = out.split()
+    ref_guids = []
+    for ln in out.split('\n'):
+        try:
+            ref_guids.append(ln.split()[0])
+        except:
+            continue
+
     print "GUIDs referenced by " + f
     print repr(ref_guids)
     if len(ref_guids) == 0:
@@ -201,9 +209,11 @@ for f in taginfo:
                 print "Trying VUID %s for GUID %s... " % (ref_vuid, ref_guid)
                 ref_dataset = dq.repositoryClient.resolveVUID(ref_vuid)
                 ref_name = ref_dataset.get('dsn')
-                if ref_name != '' and len(dq.listDatasetReplicas(ref_name)) != 0:
+                if ref_name != '' and len(dq.listDatasetReplicas(ref_name)) != 0 and ref_name.find("." + dataset_type + ".") != -1:
                     break
-                
+                else:
+                    ref_name = ''
+                    
             except dq2.repository.DQRepositoryException.DQUnknownDatasetException:
                 print "ERROR Finding dataset for vuid for " + ref_vuid
             

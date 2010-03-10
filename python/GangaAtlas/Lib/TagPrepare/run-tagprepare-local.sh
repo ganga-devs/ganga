@@ -122,6 +122,7 @@ export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
 # Remove lib64/python from PYTHONPATH
 dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
 export PYTHONPATH=$dum
+chmod +x get_tag_info.py
 
 if [ ! -z $python32bin ]; then
     $python32bin ./get_tag_info.py; echo $? > retcode.tmp

@@ -235,7 +235,9 @@ class TagPrepareLCGRTHandler(IRuntimeHandler):
             #        raise ApplicationConfigurationError(None,'Job submission failed ! Dataset is incomplete ! Usage of j.inputdata.number_of_files and DQ2JobSplitter is not allowed for incomplete datasets !')
 
         # prepare job requirements
-        cmtconfig = 'i686-slc4-gcc34-opt'
+        cmtconfig = app.atlas_cmtconfig
+        if not cmtconfig in ['i686-slc4-gcc34-opt', 'i686-slc5-gcc43-opt']:
+            cmtconfig = 'i686-slc4-gcc34-opt'
 
         requirements.software = ['VO-atlas-offline-%s-%s' %(app.atlas_release, cmtconfig )]
 
