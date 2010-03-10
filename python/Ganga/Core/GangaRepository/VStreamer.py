@@ -296,7 +296,11 @@ class Loader:
                 obj = self.stack[-1]
                 for attr, item in obj._schema.allItems():
                     if not attr in obj._data:
-                        obj._data[attr] = obj._schema.getDefaultValue(attr)
+                        if item._meta["sequence"] == 1:
+                            obj._data[attr] = makeGangaListByRef(obj._schema.getDefaultValue(attr))
+                        else:
+                            obj._data[attr] = obj._schema.getDefaultValue(attr)
+                    
                 obj.__setstate__(obj.__dict__) # this sets the parent
                 
         def char_data(data):
@@ -320,5 +324,9 @@ class Loader:
             self.errors.append(AssertionError('multiple objects inside <root> element'))
 
         obj = self.stack[-1]
+        # Raise Exception if object is incomplete
+        for attr, item in obj._schema.allItems():
+            if not attr in obj._data:
+                raise AssertionError("incomplete XML file")
         return obj,self.errors
 
