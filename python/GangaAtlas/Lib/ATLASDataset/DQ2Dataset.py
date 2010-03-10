@@ -1277,9 +1277,12 @@ class DQ2OutputDataset(Dataset):
             for outputInfo in self.output:
                 datasetnameTemp = outputInfo.split(',')[0]
                 try:
-                    datasetnameComp = self.datasetname + '.' + self.location
+                    if not datasetnameTemp.endswith('.' + self.location):
+                        datasetnameComp = self.datasetname + '.' + self.location
+                    else:
+                        datasetnameComp = self.datasetname
                 except:
-                    datasetnameComp = self.datasetname + '.' + outputInfo.split(',')[4]
+                    datasetnameComp = self.datasetname + '.' + outputInfo.split(',')[5]
                 match = re.search(datasetnameComp, datasetnameTemp)
                 if match:
                     logger.debug('Changed outputdata.dataset from %s to %s', self.datasetname, datasetnameTemp)
