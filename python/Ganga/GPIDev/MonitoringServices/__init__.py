@@ -81,19 +81,23 @@ def findMonitoringClassesName(job):
    #  - Application/*
    #  - */Backend
    #  - */*
-   # with Application/Backend having precedence
    applicationName = job.application._name
    backendName = job.backend._name
-   
+
+   allclasses = []   
    for configParam in [applicationName + '/' + backendName,
                       applicationName + '/*',
                       '*/' + backendName,
                       '*/*']:
-      classes = _getMonClasses(configParam)
-      if classes:
-         return classes
+      allclasses += _getMonClasses(configParam).split(",")
 
-   return ""
+   # remove double entries
+   uniqueclasses = []
+   for x in allclasses:
+      if len(x) > 0 and x not in uniqueclasses:
+         uniqueclasses += [x]
+
+   return ",".join(uniqueclasses)
 
 def getMonitoringObject(job):   
    """
