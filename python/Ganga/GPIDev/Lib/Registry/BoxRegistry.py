@@ -21,6 +21,13 @@ config.addOption('box_columns_show_empty',
                  ['id'],
                  'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
 
+from Ganga.Core import GangaException
+class BoxTypeError(GangaException,TypeError):
+    def __init__(self,what):
+        GangaException.__init__(self,what)
+        self.what=what
+    def __str__(self):
+        return "BoxTypeError: %s"%self.what
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
@@ -76,6 +83,8 @@ class BoxRegistry(Registry):
 
     def proxy_add(self,obj,name):
         obj = _unwrap(obj)
+        if not isinstance(obj,GangaObject):
+            raise BoxTypeError("The Box can only contain Ganga Objects (i.e. Applications, Datasets or Backends). Check that the object is first in box.add(obj,'name')")
         obj = obj.clone()
         nobj = BoxMetadataObject()
         nobj.name = name
