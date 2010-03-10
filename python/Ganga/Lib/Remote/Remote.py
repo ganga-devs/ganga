@@ -184,6 +184,12 @@ print "***_FINISHED_***"
       if Remote._transportarray != None:
          for t in Remote._transportarray:
             if (t != None) and (t[0] == self.username) and (t[1] == self.host):
+
+               # check for too many retries on the same host
+               if t[2] == None or t[3] == None:
+                  logger.warning("Too many retries for remote host " + self.username + "@" + self.host + ". Restart Ganga to have another go.")
+                  return False
+               
                self._transport = t[2]
                self._sftp = t[3]
                
@@ -258,9 +264,11 @@ print "***_FINISHED_***"
          num_try = num_try + 1
 
       if num_try == 3:
-         logger.error("Could not logon to remote host " + self.username + "@" + self.host)
+         logger.error("Could not logon to remote host " + self.username + "@" + self.host + " after three attempts. Restart Ganga to have another go.")
+         Remote._transportarray = [Remote._transportarray,
+                                   [self.username, self.host, None, None]]
          return False
-         
+               
       return True
 
    def run_remote_script( self, script_name, pre_script ):
