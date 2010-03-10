@@ -36,6 +36,11 @@ then
     source $GANGA_GLITE_UI
 fi
 
+# Save glite UI environment
+LD_LIBRARY_PATH_GLITE=$LD_LIBRARY_PATH
+PATH_GLITE=$PATH
+PYTHONPATH_GLITE=$PYTHONPATH
+
 ################################################
 # setup CMT 
 cmt_setup

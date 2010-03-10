@@ -392,6 +392,11 @@ detect_setype () {
 	    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
 	    export PATH=$PATH_ORIG
 	    export PYTHONPATH=$PYTHONPATH_ORIG
+	    if [ ! -z $PATH_GLITE ]; then
+		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LD_LIBRARY_PATH_GLITE
+		export PATH=$PATH:$PATH_GLITE
+		export PYTHONPATH=$PYTHONPATH:$PYTHONPATH_GLITE
+	    fi
 	    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 		then
 		source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
@@ -475,6 +480,11 @@ stage_inputs () {
 		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
 		export PATH=$PATH_ORIG
 		export PYTHONPATH=$PYTHONPATH_ORIG
+		if [ ! -z $PATH_GLITE ]; then
+		    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LD_LIBRARY_PATH_GLITE
+		    export PATH=$PATH:$PATH_GLITE
+		    export PYTHONPATH=$PYTHONPATH:$PYTHONPATH_GLITE
+		fi
 		if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 		    then
 		    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
@@ -574,6 +584,11 @@ stage_outputs () {
 		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
 		export PATH=$PATH_ORIG
 		export PYTHONPATH=$PYTHONPATH_ORIG
+		if [ ! -z $PATH_GLITE ]; then
+		    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LD_LIBRARY_PATH_GLITE
+		    export PATH=$PATH:$PATH_GLITE
+		    export PYTHONPATH=$PYTHONPATH:$PYTHONPATH_GLITE
+		fi
 		if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 		    then
 		    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
