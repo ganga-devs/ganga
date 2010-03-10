@@ -241,7 +241,7 @@ class AthenaMC(IApplication):
         if rc != 0:
             logger.error(out)
             
-        self.user_area.name = archiveFullName
+        self.userarea = archiveFullName
         os.chdir(savedir)
         
         return
