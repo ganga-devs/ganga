@@ -128,8 +128,10 @@ class GangaThreadPool:
         num_alive_threads = self.__cnt_alive_threads__()
 
         while num_alive_threads > 0:
-            time.sleep(0.3)
+            # fix for bug #62543 https://savannah.cern.ch/bugs/?62543
+            # following 2 lines swapped so that we access no globals between sleep and exit test
             logger.debug('number of alive threads: %d' % num_alive_threads)
+            time.sleep(0.3)
             num_alive_threads = self.__cnt_alive_threads__()
 
     def __cnt_alive_threads__(self):
