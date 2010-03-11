@@ -230,7 +230,7 @@ class PretestCommand:
             #runganga = "cd %(prereldir)s/ganga/python/Ganga/test && %(prereldir)s/ganga/bin/ganga " % CONFIG
 
             runtest = 'rm -rf ~/gangadir_testing && %(prereldir)s/bin/ganga'%CONFIG
-            args = ' --test -o\'[Configuration]RUNTIME_PATH=GangaTest\' -o\'[TestingFramework]ReleaseTesting=True\' -o\'Config=local.ini:localxml.ini\' %s/test 2>&1 | tee %s/%s.out ' % (name,outputdir,name)
+            args = ' --test -o\'[Configuration]RUNTIME_PATH=GangaTest\' -o\'[TestingFramework]ReleaseTesting=True\' -o\'Config=localxml.ini\' %s/test 2>&1 | tee %s/%s.out ' % (name,outputdir,name)
             
             cmd = runtest+args
             print '*'*40
