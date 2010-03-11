@@ -4,10 +4,9 @@ import os
 import time
 import datetime
 import glob
-from DIRAC.Interfaces.API.Dirac import *
-from DIRAC.Interfaces.API.Job import *
-from DIRAC.LHCbSystem.Utilities.AncestorFiles import getAncestorFiles
-from DIRAC.LHCbSystem.Client.LHCbJob import LHCbJob
+from LHCbDIRAC.Interfaces.API.DiracLHCb import *
+from LHCbDIRAC.Interfaces.API.LHCbJob import *
+from LHCbDIRAC.BookkeepingSystem.Client.AncestorFiles import getAncestorFiles
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
