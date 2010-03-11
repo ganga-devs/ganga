@@ -21,12 +21,13 @@ sock.listen(1) # listen for 1 connection
 conn, addr = sock.accept()
 
 # import DIRAC API
-from DIRAC.Interfaces.API.Dirac import *
-from DIRAC.Interfaces.API.Job import *
-from DIRAC.LHCbSystem.Utilities.AncestorFiles import getAncestorFiles
-from DIRAC.LHCbSystem.Client.LHCbJob import LHCbJob
-from DIRAC import gLogger
-from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
+import DIRAC
+#from DIRAC.Interfaces.API.Dirac import *
+#from DIRAC.Interfaces.API.Job import *
+#from DIRAC.LHCbSystem.Utilities.AncestorFiles import getAncestorFiles
+#from DIRAC.LHCbSystem.Client.LHCbJob import LHCbJob
+#from DIRAC import gLogger
+#from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 
 execfile(dirac_cmds)
 
