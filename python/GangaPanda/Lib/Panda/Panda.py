@@ -162,7 +162,7 @@ def runPandaBrokerage(job):
         except:
             logger.warning("Could not determine athena tag for Panda brokering")
     try:
-        status,out = Client.runBrokerage(tmpSites,tag,verbose=False,trustIS=config['trustIS'])
+        status,out = Client.runBrokerage(tmpSites,tag,verbose=False,trustIS=config['trustIS'],processingType=config['processingType'])
     except exceptions.SystemExit:
         job.backend.reason = 'Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1])
         raise BackendError('Panda','Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
