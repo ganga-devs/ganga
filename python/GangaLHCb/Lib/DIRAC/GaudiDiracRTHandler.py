@@ -42,9 +42,10 @@ class GaudiDiracRTHandler(IRuntimeHandler):
         return c
 
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        cat_opts = '\nFileCatalog().Catalogs = ' \
-                   '["xmlcatalog_file:pool_xml_catalog.xml"]\n'
-        app.extra.input_buffers['data.py'] += cat_opts
+        if app.extra.inputdata and app.extra.inputdata.hasLFNs():        
+            cat_opts = '\nFileCatalog().Catalogs = ' \
+                       '["xmlcatalog_file:pool_xml_catalog.xml"]\n'
+            app.extra.input_buffers['data.py'] += cat_opts
 
         script = self._create_gaudi_script(app)
         sandbox = get_input_sandbox(app.extra)

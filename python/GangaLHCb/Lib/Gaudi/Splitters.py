@@ -180,9 +180,9 @@ class GaussSplitter(ISplitter):
             first = i*self.eventsPerJob + 1
             opts = 'from Gaudi.Configuration import * \n'
             opts += 'from Configurables import GenInit \n'
-            #opts += 'ApplicationMgr().EvtMax = %d\n' % self.eventsPerJob
-            opts += 'from Configurables import LHCbApp\n'
-            opts += 'LHCbApp().EvtMax = %d\n' % self.eventsPerJob
+            opts += 'ApplicationMgr().EvtMax = %d\n' % self.eventsPerJob
+            #opts += 'from Configurables import LHCbApp\n'
+            #opts += 'LHCbApp().EvtMax = %d\n' % self.eventsPerJob
             opts += 'GenInit("GaussGen").FirstEventNumber = %d\n' % first
             j.application.extra.input_buffers['data.py'] += opts
             logger.debug("Creating job %d w/ FirstEventNumber = %d"%(i,first))

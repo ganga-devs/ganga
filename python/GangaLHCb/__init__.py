@@ -15,6 +15,8 @@ dscrpt = 'The command to used to create a directory in the locations of \
 configLHCb.addOption('mkdir_cmd','/bin/mkdir',dscrpt)
 dscrpt = 'The command used to copy out data to the `DataOutput` locations'
 configLHCb.addOption('cp_cmd','/bin/cp',dscrpt)
+dscrpt = 'The command used to make a CMT application.'
+configLHCb.addOption('make_cmd','make',dscrpt)
 dscrpt = 'Files from these services will go to the output sandbox (unless \
 overridden by the user in a specific job via the Job.outputdata field). Files \
 from all other known handlers will go to output data (unless overridden by \

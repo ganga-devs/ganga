@@ -63,7 +63,8 @@ def CMTscript(app,command=''):
       if expanded == "$User_release_area": ura = ""
       else: ura = expanded.split(os.pathsep)[0]
       
-   cmtoption = '-pack=%s/%s' % (packname,appname)
+   #cmtoption = '-pack=%s/%s' % (packname,appname)
+   cmtoption = ''
 
    # generate shell script
    script='#!/bin/sh\n'
