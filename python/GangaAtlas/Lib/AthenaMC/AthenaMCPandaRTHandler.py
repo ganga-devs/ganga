@@ -28,7 +28,6 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 #from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
 from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import extractFileNumber, matchFile
 
-
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 #import AthenaUtils
@@ -134,7 +133,34 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             os.chdir(cwd)      
                     
         # Use Panda's brokerage
-
+        if job.inputdata and len(app.sites)>0:
+            # update cloud, use inputdata's
+            from dq2.info.TiersOfATLAS import whichCloud,ToACache
+            inclouds=[]
+            for site in app.sites:
+                cloudSite=whichCloud(app.sites[0])
+                if cloudSite not in inclouds:
+                    inclouds.append(cloudSite)
+            # now converting inclouds content into proper brokering stuff.
+            outclouds=[]
+            for cloudSite in inclouds:
+                for cloudID, eachCloud in ToACache.dbcloud.iteritems():
+                    if cloudSite==eachCloud:
+                        cloud=cloudID
+                        outclouds.append(cloud)
+                        break
+                    
+            print outclouds
+            # finally, matching with user's wishes
+            if len(outclouds)>0:
+                if not job.backend.requirements.cloud: # no user wish, update
+                    job.backend.requirements.cloud=outclouds[0]
+                else:
+                    try:
+                        assert job.backend.requirements.cloud in outclouds
+                    except:
+                        raise ApplicationConfigurationError(None,'Input dataset not available in target cloud %s. Please try any of the following %s' % (job.backend.requirements.cloud, str(outclouds)))
+                                                            
         from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
         runPandaBrokerage(job)
         if job.backend.site == 'AUTO':
@@ -147,7 +173,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         if app.se_name and app.se_name != "none" and not self.outsite:
             self.outsite=app.se_name
 
-        
+       
         #       create build job
         jspec = JobSpec()
         jspec.jobDefinitionID   = job.id
@@ -205,7 +231,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         job.backend.actualCE = self.outsite
         cloud = job._getRoot().backend.requirements.cloud
         job.backend.requirements.cloud = cloud
-     
+        
 
         # now just filling the job from AthenaMC data
         
@@ -300,7 +326,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             fout = FileSpec()
             dset=string.replace(app.outputpaths[outtype],"/",".")
             dset=dset[1:-1]
-            if self.firstPass:
+            if self.firstPass and not app.dryrun:
                 # dataset registration must be done only once.
                 try:
                     Client.addDataset(dset,False)

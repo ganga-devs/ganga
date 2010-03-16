@@ -371,6 +371,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             requirements.cloud=cloud
             # looks like cloud has to be converted in a list of sites anyway, and this is not done in AtlasLCGRequirements.convert()... 
             allsites=requirements.list_sites_cloud()
+            try:
+                assert len(allsites)>0
+            except:
+                raise ApplicationConfigurationError(None,"Could not get any sites from the specified cloud: %s. You will have to specify a target site in job.backend.requirements.sites" % cloud)
             # need to weed out unwanted sites from excluded list
             excludedSites=requirements.excluded_sites
             goodsites=[]
