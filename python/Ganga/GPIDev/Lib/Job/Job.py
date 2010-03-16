@@ -943,7 +943,6 @@ class Job(GangaObject):
             self.status = oldstatus
             raise JobError(msg)
 
-
         self.getDebugWorkspace().remove(preserve_top=True)
 
         try:
@@ -973,6 +972,7 @@ class Job(GangaObject):
 
             self.status = 'submitted' # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
             self._commit() # make sure that the status change goes to the repository
+            self.getOutputWorkspace().remove(preserve_top=True) #bugfix: #31690: Empty the outputdir of the subjob just before resubmitting it
         except GangaException,x:
             logger.warning("failed to resubmit job, %s" % (str(x),))
             logger.warning('reverting job %s to the %s status', fqid, oldstatus )
