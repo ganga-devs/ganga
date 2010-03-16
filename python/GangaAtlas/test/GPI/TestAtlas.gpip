@@ -271,37 +271,40 @@ class TestAthenaMCLCG(AtlasTest):
         j.application=AthenaMC()
         j.application.dryrun = True
         j.application.random_seed='1102362401'
-        j.application.production_name='tutorial'   
+        j.application.production_name='test'   
         j.application.process_name='single_e_Et40'
         j.application.run_number='000001'
         j.application.firstevent=1
         j.application.number_events_job=1
-        j.application.atlas_release='12.0.4.1'
-        j.application.se_name='UKI-SOUTHGRID-CAM-HEP_SCRATCHDISK'
+        j.application.atlas_release='15.6.1.7'
         j.application.verbosity = "INFO"
         j.backend=LCG()
+	j.backend.requirements=AtlasLCGRequirements()
+	j.backend.requirements.cloud='UK'
+        j.backend.requirements.sites=['UKI-SOUTHGRID-CAM-HEP_SCRATCHDISK']
         j.outputdata=AthenaMCOutputDatasets()
         self.j = j
 
 class TestAthenaMCLCG_evgen(TestAthenaMCLCG):
     def setup(self):
         TestAthenaMCLCG.setup(self)
-        self.j.application.evgen_job_option='DC3.007004.singlepart_e_Et40.py'
-        self.j.application.transform_script = "csc_evgen_trf.py"
-        self.j.application.number_events_job=30
+        self.j.application.evgen_job_option='MC9.107004.singlepart_e_Et40.py'
+        self.j.application.transform_script = "Evgen_trf.py"
+        self.j.application.number_events_job=10
+	self.j.application.extraArgs='ecmEnergy=7000'	
         self.j.application.mode='evgen'
         assert (self.j.submit()==True)
 
 class TestAthenaMCLCG_simul(TestAthenaMCLCG):
     def setup(self):
         TestAthenaMCLCG.setup(self)
-        self.j.application.atlas_release='12.0.4'
-        self.j.application.transform_archive='AtlasProduction_12_0_4_1_noarch.tar.gz' #old style submission
+        self.j.application.atlas_release='15.6.1'
+        self.j.application.transform_archive='AtlasProduction_15_6_1_6_noarch.tar.gz' #old style submission
         self.j.application.mode='simul'
         self.j.application.transform_script = "csc_simul_trf.py"
-        self.j.application.geometryTag = 'ATLAS-DC3-05' 
+        self.j.application.geometryTag = 'ATLAS-GEO-08-00-02' 
         self.j.inputdata=AthenaMCInputDatasets()
-        self.j.inputdata.DQ2dataset='user08.fredericbrochu.ganga.datafiles.GangaTests.000001.single_e_Et40.evgen.EVNT'
+        self.j.inputdata.DQ2dataset='user09.fredericbrochu.ganga.prod.100000.Pythia_RPV_UDD_1em6.evgen.EVNT/'
         self.j.inputdata.datasetType='DQ2'
         self.j.inputdata.number_events_file=3
         self.j.splitter=AthenaMCSplitterJob()
@@ -314,7 +317,7 @@ class TestAthenaMCLCG_recon(TestAthenaMCLCG):
         self.j.application.mode='recon'
         self.j.application.transform_script = "csc_reco_trf.py"
         self.j.inputdata=AthenaMCInputDatasets()
-        self.j.inputdata.DQ2dataset='user08.fredericbrochu.ganga.datafiles.GangaTests.000001.single_e_Et40.simul.RDO'
+        self.j.inputdata.DQ2dataset='user09.fredericbrochu.ganga.prod.100000.Pythia_RPV_UDD_1em6.simul.RDO/'
         self.j.inputdata.datasetType='DQ2'
         self.j.inputdata.number_events_file=1
         self.j.splitter=AthenaMCSplitterJob()
@@ -337,6 +340,7 @@ class TestAthenaMCPanda(AtlasTest):
         self.j.backend=Panda()
         #self.j.backend.requirements.cloud = "US"
         self.j.outputdata=AthenaMCOutputDatasets()
+	self.j.application.dryrun = True
      
 
 class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
@@ -354,10 +358,8 @@ class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
 class TestAthenaMCPanda_simul(TestAthenaMCPanda):
     def setup(self):
         TestAthenaMCPanda.setup(self)
-        self.j.application.atlas_release='15.1.0.1'
         self.j.application.mode='simul'
         self.j.application.transform_script = "csc_simul_trf.py"
-        self.j.application.verbosity='INFO'
         self.j.application.geometryTag = 'ATLAS-CSC-05'
         self.j.inputdata=AthenaMCInputDatasets()
         self.j.inputdata.DQ2dataset='user09.JohannesEbke.ganga.tutorial.007004.single_e_Et40.evgen.EVNT.jid000004'
@@ -375,7 +377,7 @@ class TestAthenaMCPanda_recon(TestAthenaMCPanda):
         self.j.application.mode='recon'
         self.j.application.transform_script = "csc_recon_trf.py"
         self.j.inputdata=AthenaMCInputDatasets()
-        self.j.inputdata.DQ2dataset='user08.fredericbrochu.ganga.datafiles.GangaTests.000001.single_e_Et40.simul.RDO'
+        self.j.inputdata.DQ2dataset='user09.MichaelGalanteWilson.109911.Pythia_Marmoset_hz140_sq1000_chi2z900_chi1z100.digit.RDO.e434_s551_d162'
         self.j.inputdata.datasetType='DQ2'
         self.j.inputdata.number_events_file=1
         self.j.outputdata=AthenaMCOutputDatasets()
