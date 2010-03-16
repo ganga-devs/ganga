@@ -55,11 +55,10 @@ class AnaTransform(Transform):
 ## Internal methods
    def checkCompletedApp(self, app):
       j = app._getParent()
-      for f in j.outputdata.output:
-         if "root" in f:
-            return True
-      logger.error("Job %s has not produced %s file, only: %s" % (j.id, "root", j.outputdata.output))
-      return False
+      for odat in j.outputdata.outputdata:
+          if 0==len([f for f in j.outputdata.output if odat in f]):
+              logger.error("Job %s has not produced %s file, only: %s" % (j.id, odat, j.outputdata.output))
+      return True
 
    def findCompleteCloudBackend(self,db_sites,allowed_sites,replicas):
       # Sort complete replicas into clouds
