@@ -954,7 +954,7 @@ class Job(GangaObject):
             if rjobs:
                 for sjs in rjobs:
                     sjs.time.timenow('submitting') ## writes submitting timestamp for subjobs. 
-
+                    sjs.getOutputWorkspace().remove(preserve_top=True) #bugfix: #31690: Empty the outputdir of the subjob just before resubmitting it
 
             try:
                 if not self.backend.master_resubmit(rjobs):
@@ -972,7 +972,6 @@ class Job(GangaObject):
 
             self.status = 'submitted' # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
             self._commit() # make sure that the status change goes to the repository
-            self.getOutputWorkspace().remove(preserve_top=True) #bugfix: #31690: Empty the outputdir of the subjob just before resubmitting it
         except GangaException,x:
             logger.warning("failed to resubmit job, %s" % (str(x),))
             logger.warning('reverting job %s to the %s status', fqid, oldstatus )
