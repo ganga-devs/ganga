@@ -278,7 +278,7 @@ THIS IS A NEW MAJOR RELEASE OF GANGA
            In case of parsing errors, raise ConfigError exception.
            """
            import re
-           mpat = re.compile(r'(\[(?P<section>\S+)\]|)(?P<option>\S+)=(?P<value>.+)')
+           mpat = re.compile(r'(\[(?P<section>\S+)\]|)(?P<option>[a-zA-z0-9._]+)=(?P<value>.+)')
            section = None
 
            opts = []
