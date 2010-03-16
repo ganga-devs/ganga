@@ -398,7 +398,7 @@ class AtlasLCGRequirements(LCGRequirements):
     _name = 'AtlasLCGRequirements'
     _exportmethods = ['list_ce', 'list_se','list_sites','list_clouds', 'list_sites_cloud', 'cloud_from_sites', 'list_access_info', 'list_release_blacklist' ]
 
-    _cloudNameList = { 'TO' : 'CERN',
+    _cloudNameList = { 'T0' : 'CERN',
                        'IT' : 'ITALYSITES',
                        'ES' : 'SPAINSITES',
                        'FR' : 'FRANCESITES',
@@ -464,7 +464,7 @@ class AtlasLCGRequirements(LCGRequirements):
             elif os_name == 'slc4':
                 requirements.append(slc4_req)
             else:
-               raise BackendError('LCG','Job cannot be submitted as unknown OS %s has been requested.',self.os)
+               raise BackendError('LCG','Job cannot be submitted as unknown OS %s has been requested.'%self.os)
             
         return requirements
 
@@ -503,8 +503,11 @@ class AtlasLCGRequirements(LCGRequirements):
             cloud = self._cloudNameList[cloudID]
         except:
             cloud = cloudID
-            
-        return getSites(cloud)
+           
+        sites = getSites(cloud)
+        if sites:
+            return sites
+        raise BackendError('LCG','Could not find any sites for selected cloud %s. Allowed clouds: %s'%(cloud,self._cloudNameList.keys()))
 
     def cloud_from_sites( self, sites = [] ):
         
