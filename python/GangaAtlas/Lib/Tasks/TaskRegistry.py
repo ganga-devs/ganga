@@ -66,9 +66,14 @@ class TaskRegistry(Registry):
         while not getRegistry("jobs")._started:
             time.sleep(1)
         
-        # setup the tasks
+        # setup the tasks - THIS IS INCOMPATIBLE WITH CONCURRENCY
+        # and must go away soon
         for tid in self.ids():
-            self[tid].startup()
+            try:
+                self[tid]._getWriteAccess()
+                self[tid].startup()
+            except RegistryError:
+                continue
 
         ## Main loop
         while not self._main_thread.should_stop():
