@@ -835,7 +835,7 @@ default_backends = LCG
             try:
                 execfile( fileName, local_ns )
             except Exception, x:
-                self.logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(e))
+                self.logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(x))
         # exec StartupGPI code          
         from Ganga.Utility.Config import getConfig      
         config=getConfig('Configuration')       
