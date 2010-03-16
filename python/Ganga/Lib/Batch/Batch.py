@@ -325,6 +325,10 @@ jobid = ###JOBID###
 
 ###PREEXECUTE###
 
+def flush_file(f):
+   f.flush()
+   os.fsync(f.fileno()) #this forces a global flush (cache synchronization on AFS)
+
 statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
 try:
@@ -341,7 +345,7 @@ try:
 except:
   pass
 statusfile.writelines(line)
-statusfile.flush()
+flush_file(statusfile)
 
 import sys
 sys.path.insert(0, ###GANGADIR###)
@@ -369,8 +373,8 @@ syserr2 = os.dup(sys.stderr.fileno())
 
 print >>sys.stdout,"--- GANGA APPLICATION OUTPUT BEGIN ---"
 print >>sys.stderr,"--- GANGA APPLICATION ERROR BEGIN ---"
-sys.stdout.flush()
-sys.stderr.flush()
+flush_file(sys.stdout)
+flush_file(sys.stderr)
 
 sys.stdout=file('./__syslog__','w')
 sys.stderr=sys.stdout
@@ -397,8 +401,8 @@ except Exception,x:
   print 'ERROR: %s'%str(x)
 
 monitor.progress()
-sys.stdout.flush()
-sys.stderr.flush()
+flush_file(sys.stdout)
+flush_file(sys.stderr)
 sys.stdout=sys.__stdout__
 sys.stderr=sys.__stderr__
 print >>sys.stdout,"--- GANGA APPLICATION OUTPUT END ---"
