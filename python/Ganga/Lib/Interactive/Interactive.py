@@ -97,6 +97,13 @@ class Interactive( IBackend ):
       job = self.getJobObject()
 
       scriptpath = self.preparejob( jobconfig, master_input_sandbox )
+      return self._submit(scriptpath)
+
+   def resubmit( self ):
+      return self._submit(self.getJobObject().getInputWorkspace().getPath("__jobscript__"))
+
+   def _submit( self, scriptpath):
+      job = self.getJobObject()
       self.actualCE = util.hostname()
       logger.info('Starting job %d', job.id)
 
@@ -110,6 +117,7 @@ class Interactive( IBackend ):
          pass
 
       return True
+      
 
    def kill( self ):
 
