@@ -18,7 +18,7 @@ o+="\n"+ "config.Tasks.recon_files_per_job = 10 # default files per job for reco
 o+="\n"+ "t = AnaTask()"
 o+="\n"+ 't.name = "FirstAnalysis"'
 o+="\n"+ "t.analysis.outputdata.outputdata  = ['nTuple.root' ]"
-o+="\n"+ 't.analysis.application.exclude_from_user_area=["*.o","*.root*","*.exe", "*.txt"]'
+#o+="\n"+ 't.analysis.application.exclude_from_user_area=["*.o","*.root*","*.exe", "*.txt"]'
 o+="\n"+ "t.analysis.application.option_file = ['./myTopOptions.py' ]"
 o+="\n"+ "t.analysis.application.prepare()"
 o+="\n"+ "t.float = 10"
