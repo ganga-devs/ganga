@@ -127,7 +127,7 @@ class Localhost(IBackend):
             logger.debug("Opening output file at: %s", p)
             f = open(p)
         except IOError:
-            logger.error('unable to open file %s', p)
+            logger.debug('unable to open file %s', p)
             return None 
 
         for l in f.readlines():
@@ -137,7 +137,7 @@ class Localhost(IBackend):
                 try:
                     t = datetime.datetime(*(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
                 except ValueError:
-                    logger.error("Value Error in file: '%s': string does not match required format.", p)
+                    logger.debug("Value Error in file: '%s': string does not match required format.", p)
                     return None 
                 return t
 
