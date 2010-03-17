@@ -290,19 +290,21 @@ class Grid(object):
 
         return matched_ces
 
-    def submit(self, jdlpath, ce=None, doListMatch=False, jdlpathForListMatch=None):
+#    def submit(self, jdlpath, ce=None, doListMatch=False, jdlpathForListMatch=None):
+    def submit(self, jdlpath, ce=None):
         '''Submit a JDL file to LCG'''
 
         ## doing job list match if required 
-        if doListMatch:
-            if not jdlpathForListMatch:
-                jdlpathForListMatch = jdlpath
-
-            matches = self.list_match(jdlpathForListMatch, ce)
-
-            if not matches:
-                logger.warning('no matched resources')
-                return
+#        if doListMatch:
+#            if not jdlpathForListMatch:
+#                jdlpathForListMatch = jdlpath
+#
+#            matches = self.list_match(jdlpathForListMatch, ce)
+#
+#            if not matches:
+#                logger.error('no matched resources')
+#
+#                return
 
         ## doing job submission
         if self.middleware == 'EDG':

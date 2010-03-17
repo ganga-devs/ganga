@@ -309,6 +309,19 @@ class LCG(IBackend):
         job.backend.exitcode_lcg = '' 
         job.backend.flag     = 0
 
+    def __print_no_resource_error__(self, jdl):
+        '''Prints out the error message when no matched resource'''
+
+        logger.error('No matched resource: check/report the JDL below')
+
+        f = open( jdl, 'r')
+        lines = f.readlines()
+        f.close()
+
+        logger.error('=== JDL ===\n' + '\n'.join( map(lambda l:l.strip(), lines) ) )
+
+        return
+
     def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
         '''Submit the master job to the grid'''
 
@@ -592,7 +605,7 @@ class LCG(IBackend):
             mt = self.middleware.upper()
             matches = grids[mt].list_match(node_jdls[-1], ce=self.CE)
             if not matches:
-                logger.error('No matched resource')
+                self.__print_no_resource_error__(node_jdls[-1])
                 return False
 
         profiler.checkAndStart('job list-match elapsed time')
@@ -648,7 +661,7 @@ class LCG(IBackend):
             mt = self.middleware.upper()
             matches = grids[mt].list_match(node_jdls[-1], ce=self.CE)
             if not matches:
-                logger.error('No matched resource')
+                self.__print_no_resource_error__(node_jdls[-1])
                 return False
 
         max_node = config['GliteBulkJobSize']
@@ -908,7 +921,7 @@ class LCG(IBackend):
         if config['MatchBeforeSubmit']:
             matches = grids[mt].list_match(jdlpath, ce=self.CE)
             if not matches:
-                logger.error('No matched resource')
+                self.__print_no_resource_error__(jdlpath)
                 return None
 
         self.id = grids[mt].submit(jdlpath, ce=self.CE)
@@ -928,7 +941,7 @@ class LCG(IBackend):
         if config['MatchBeforeSubmit']:
             matches = grids[mt].list_match(jdlpath, ce=self.CE)
             if not matches:
-                logger.error('No matched resource')
+                self.__print_no_resource_error__(jdlpath)
                 return None
 
         self.id = grids[mt].submit(jdlpath, ce=self.CE)
