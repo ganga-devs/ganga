@@ -60,6 +60,8 @@ class Grid(object):
         # correct version of python
         prefix_hack = "${%s_LOCATION}/bin/" % self.middleware
 
+        # some script-based glite-wms commands (status and logging-info) requires (#/usr/bin/env python2)
+        # which leads to a python conflict problem.
         if not binary:
             prefix_hack = 'python '+prefix_hack
 
@@ -242,9 +244,11 @@ class Grid(object):
 
         if self.middleware == 'EDG':
             cmd = 'edg-job-list-match'
+            exec_bin = False
         else:
             cmd = 'glite-wms-job-list-match -a'
-            
+            exec_bin = True
+
         if not self.active:
             logger.warning('LCG plugin not active.')
             return
@@ -264,7 +268,7 @@ class Grid(object):
 
         logger.debug('job list match command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd), allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd), allowed_exit=[0,255])
 
         for l in output.split('\n'):
             
@@ -302,9 +306,11 @@ class Grid(object):
 
         ## doing job submission
         if self.middleware == 'EDG':
-            cmd = 'edg-job-submit'
+            cmd      = 'edg-job-submit'
+            exec_bin = False
         else:
             cmd = 'glite-wms-job-submit -a'
+            exec_bin = True
 
         if not self.active:
             logger.warning('LCG plugin not active.')
@@ -328,7 +334,7 @@ class Grid(object):
 
         logger.debug('job submit command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
 
         if output: output = "%s" % output.strip()
 
@@ -361,6 +367,7 @@ class Grid(object):
             return False
         else:
             cmd = 'glite-wms-job-cancel'
+            exec_bin = True
       
         if not self.active:
             logger.warning('LCG plugin not active.')
@@ -377,7 +384,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
 
         if rc != 0:
             logger.warning('Job cancellation failed.')
@@ -402,9 +409,11 @@ class Grid(object):
         file(idsfile,'w').write('\n'.join(jobids)+'\n')
 
         if self.middleware == 'EDG':
-            cmd = 'edg-job-status'
+            cmd      = 'edg-job-status'
+            exec_bin = False
         else:
             cmd = 'glite-wms-job-status'
+            exec_bin = False
             if is_collection:
                 cmd = '%s -v 3' % cmd
 
@@ -418,7 +427,7 @@ class Grid(object):
         cmd = '%s --noint -i %s' % (cmd,idsfile)
         logger.debug('job status command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd), allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd), allowed_exit=[0,255])
         os.remove(idsfile)
 
         missing_glite_jids = []
@@ -522,8 +531,10 @@ class Grid(object):
 
         if self.middleware == 'EDG':
             cmd = 'edg-job-get-logging-info -v %d' % verbosity
+            exec_bin = False
         else:
             cmd = 'glite-wms-job-logging-info -v %d' % verbosity
+            exec_bin = False
 
         if not self.active:
             logger.warning('LCG plugin not active.')
@@ -538,7 +549,7 @@ class Grid(object):
 
         logger.debug('job logging info command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
         os.remove(idsfile)
 
         if rc != 0:
@@ -555,8 +566,10 @@ class Grid(object):
 
         if self.middleware == 'EDG':
             cmd = 'edg-job-get-output'
+            exec_bin = False
         else:
             cmd = 'glite-wms-job-output'
+            exec_bin = True
             # general WMS options (somehow used by the glite-wms-job-output command)
             if self.config['Config']:
                 cmd += ' --config %s' % self.config['Config']
@@ -572,7 +585,7 @@ class Grid(object):
 
         logger.debug('job get output command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
 
         match = re.search('directory:\n\s*(\S+)\s*\n',output)
 
@@ -643,8 +656,10 @@ class Grid(object):
         # do the cancellation using a proper LCG command
         if self.middleware == 'EDG':
             cmd = 'edg-job-cancel'
+            exec_bin = False
         else:
             cmd = 'glite-wms-job-cancel'
+            exec_bin = True
 
         if not self.active:
             logger.warning('LCG plugin is not active.')
@@ -658,7 +673,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
 
         if rc == 0:
             # job cancelling succeeded, try to remove the glite command logfile if it exists
@@ -674,8 +689,10 @@ class Grid(object):
 
         if self.middleware == 'EDG':
             cmd = 'edg-job-cancel'
+            exec_bin = False
         else:
             cmd = 'glite-wms-job-cancel'
+            exec_bin = True
 
         if not self.active:
             logger.warning('LCG plugin is not active.')
@@ -688,7 +705,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
 
         if rc == 0:
             # job cancelling succeeded, try to remove the glite command logfile if it exists
