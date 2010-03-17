@@ -4,6 +4,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
+from DiracUtils import *
 from DiracScript import *
 from GangaLHCb.Lib.Gaudi.RTHUtils import *
 from Ganga.GPIDev.Lib.File import FileBuffer, File
@@ -36,7 +37,26 @@ if __name__ == '__main__':
 class GaudiDiracRTHandler(IRuntimeHandler):
     """The runtime handler to run Gaudi jobs on the Dirac backend"""
 
-    def master_prepare(self,app,appconfig):        
+    def master_prepare(self,app,appconfig):
+        # check version
+        result = Dirac.execAPI('result = DiracCommands.getSoftwareVersions()')
+        if not result_ok(result):
+            logger.error('Could not obtain available versions: %s' \
+                         % str(result))
+            logger.error('Version/platform will not be validated.')
+        else:
+            soft_info = result['Value'][app.get_gaudi_appname()]
+            if not app.version in soft_info:
+                versions = []
+                for v in soft_info: versions.append(v)
+                msg = 'Invalid version: %s.  Valid versions: %s' \
+                      % (app.version, str(versions))
+                raise ApplicationConfigurationError(None,msg)
+            platforms = soft_info[app.version]
+            if not app.platform in platforms:
+                msg = 'Invalid platform: %s. Valid platforms: %s' % \
+                      (app.platform,str(platforms))
+                raise ApplicationConfigurationError(None,msg)
         sandbox = get_master_input_sandbox(app.getJobObject(),app.extra) 
         c = StandardJobConfig('',sandbox,[],[],None)
         return c

@@ -121,14 +121,14 @@ class DiracScript:
             contents += 'j.setOutputData(%s,OutputPath="%s")\n' % \
                         (str(self.outputdata.files),self.outputdata.location)
         if self.platform:
-            whitelist = config['AllowedPlatforms']
-            if self.platform in whitelist:
-                contents += "j.setSystemConfig('%s')\n" % self.platform
-            else:
-                msg = "Failed to submit platform %s. Allowed platforms: %s." \
-                      % (self.platform, whitelist)
-                logger.error(msg)
-                raise BackendError("Dirac",msg)
+            #whitelist = config['AllowedPlatforms']
+            #if self.platform in whitelist:
+            contents += "j.setSystemConfig('%s')\n" % self.platform
+            #else:
+            #    msg = "Failed to submit platform %s. Allowed platforms: %s." \
+            #          % (self.platform, whitelist)
+            #    logger.error(msg)
+            #    raise BackendError("Dirac",msg)
         contents += '\n'
         if self.dirac_opts:
             contents += '# diracOpts added by user\n'

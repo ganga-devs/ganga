@@ -223,5 +223,10 @@ class DiracCommands:
         result = DiracCommands.dirac.getRootVersions()
         return result
     getRootVersions = staticmethod(getRootVersions)
+
+    def getSoftwareVersions():
+        result = DiracCommands.dirac.getSoftwareVersions()
+        return result
+    getSoftwareVersions = staticmethod(getSoftwareVersions)
             
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

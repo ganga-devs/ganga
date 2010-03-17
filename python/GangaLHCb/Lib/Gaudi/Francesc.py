@@ -117,8 +117,8 @@ class Francesc(IApplication):
         if self.masterpackage:
             (mpack, malg, mver) = parse_master_package(self.masterpackage)
             useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
-        script +='. SetupProject.sh %s %s %s %s\n'\
-                  % (useflag, opts, appname, ver)
+        cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,appname,ver) 
+        script += '%s \n' % cmd
         fd.write(script)
         fd.flush()
         logger.debug(script)
@@ -126,6 +126,15 @@ class Francesc(IApplication):
         self.shell = Shell(setup=fd.name)
         logger.debug(pprint.pformat(self.shell.env))    
         fd.close()
+        app_ok = False
+        ver_ok = False
+        for var in self.shell.env:
+            if var.find(self.get_gaudi_appname()) >= 0: app_ok = True
+            if self.shell.env[var].find(self.version) >= 0: ver_ok = True
+        if not app_ok or not ver_ok:
+            msg = 'Command "%s" failed to properly setup environment.' % cmd
+            logger.error(msg)
+            raise ApplicationConfigurationError(None,msg)
 
     def getenv(self):
         '''Returns a copy of the environment used to flatten the options, e.g.

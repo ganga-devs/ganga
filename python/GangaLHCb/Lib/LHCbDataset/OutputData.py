@@ -16,6 +16,7 @@ class OutputData(GangaObject):
     '''
     schema = {}
     schema['files'] = SimpleItem(defvalue=[],typelist=['str'],sequence=1)
+    schema['location'] = SimpleItem(defvalue='',typelist=['str'])
     _schema = Schema(Version(1,0), schema)
     _category = 'datasets'
     _name = "OutputData"

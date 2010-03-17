@@ -61,7 +61,8 @@ def create_runscript(app,outputdata,job):
   script += 'app_upper = \'%s\'\n' % appname.upper()
   script += 'version = \'%s\'\n' % app.version
   script += 'package = \'%s\'\n' % app.package
-  script += "job_output_dir = '%s/%s/outputdata'\n"%(config['DataOutput'],jstr)
+  script += "job_output_dir = '%s/%s/%s/outputdata'\n" % \
+            (config['DataOutput'],outputdata.location,jstr)
   script += 'cp = \'%s\'\n' % config['cp_cmd']
   script += 'mkdir = \'%s\'\n' % config['mkdir_cmd']
   

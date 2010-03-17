@@ -36,12 +36,6 @@ defval = {"SVC='LHCb::MDFSelector'" : ['*.raw','*.RAW','*.mdf','*.MDF']}
 configLHCb.addOption('datatype_string_patterns',defval,dscrpt)
  
 # Set default values for the Dirac section.
-dscrpt = 'Valid Root versions used by Dirac.'
-versions = ['5.22.00a','5.14.00f','5.14.00h', '5.14.00i','5.18.00', '5.18.00a',
-            '4.04.02','3.10.02']
-configDirac.addOption('RootVersions',versions,dscrpt)
-configDirac.addOption('AllowedPlatforms',['slc4_ia32_gcc34'],
-                      'Allowed platforms for submission to DIRAC')
 dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
 configDirac.addOption('ShowDIRACstdout',False,dscrpt)
 

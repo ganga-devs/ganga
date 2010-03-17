@@ -5,7 +5,7 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
 from DiracScript import *
-from Dirac import *
+from DiracUtils import *
 import Ganga.Utility.logging
 from Ganga.Core import ApplicationConfigurationError
 
@@ -27,7 +27,7 @@ class RootDiracRTHandler(IRuntimeHandler):
         # check root version
         result = Dirac.execAPI('result = DiracCommands.getRootVersions()')
         if not result_ok(result):
-            logger.error('Could not obtain available ROOT versions: s' \
+            logger.error('Could not obtain available ROOT versions: %s' \
                          % str(result))
             logger.error('ROOT version will not be validated.')
         root_versions = result['Value']        
