@@ -118,7 +118,8 @@ class DiracScript:
         if self.exe: contents += self.exe.write()
         if self.inputdata: contents += self.inputdata.write()
         if self.outputdata and self.outputdata.files:
-            contents += 'j.setOutputData(%s)\n' % str(self.outputdata.files)
+            contents += 'j.setOutputData(%s,OutputPath="%s")\n' % \
+                        (str(self.outputdata.files),self.outputdata.location)
         if self.platform:
             whitelist = config['AllowedPlatforms']
             if self.platform in whitelist:

@@ -5,6 +5,7 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
 from DiracScript import *
+from Dirac import *
 import Ganga.Utility.logging
 from Ganga.Core import ApplicationConfigurationError
 
@@ -24,15 +25,18 @@ class RootDiracRTHandler(IRuntimeHandler):
             msg = 'Script must exist!'
             raise ApplicationConfigurationError(None,msg)
         # check root version
-        root_versions = getConfig('DIRAC')['RootVersions']
-        if not root_versions:
-            logger.warning('No value set for config.DIRAC.RootVersions. '\
-                           'Ganga will not check validity of ROOT version.')
-        else:
-            if not app.version in root_versions:
-                msg = 'Invalid ROOT version: %s.  Valid versions: %s' \
-                      % (app.version, str(root_versions))
-                raise ApplicationConfigurationError(None,msg)
+        result = Dirac.execAPI('result = DiracCommands.getRootVersions()')
+        if not result_ok(result):
+            logger.error('Could not obtain available ROOT versions: s' \
+                         % str(result))
+            logger.error('ROOT version will not be validated.')
+        root_versions = result['Value']        
+        if not app.version in root_versions:
+            versions = []
+            for v in root_versions: versions.append(v)
+            msg = 'Invalid ROOT version: %s.  Valid versions: %s' \
+                  % (app.version, str(versions))
+            raise ApplicationConfigurationError(None,msg)
         inputsandbox = app._getParent().inputsandbox[:]
         c = StandardJobConfig('',inputsandbox,[],[],None)
         return c

@@ -13,7 +13,7 @@ from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 
 class DiracCommands:
 
-    dirac = Dirac()
+    dirac = DiracLHCb()
 
     def kill(id): return DiracCommands.dirac.delete(id)
     kill = staticmethod(kill)
@@ -206,7 +206,6 @@ class DiracCommands:
                 return T
             
         return None
-    
     getStateTime = staticmethod(getStateTime)
 
     def timedetails(id):
@@ -218,7 +217,11 @@ class DiracCommands:
             d[i] = log['Value'][i]
             
         return d
-
     timedetails = staticmethod(timedetails)
+
+    def getRootVersions():
+        result = DiracCommands.dirac.getRootVersions()
+        return result
+    getRootVersions = staticmethod(getRootVersions)
             
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
