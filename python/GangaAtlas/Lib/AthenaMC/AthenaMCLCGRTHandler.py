@@ -319,8 +319,10 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             # no prod release tag before 13.0.X
             if app.atlas_rel < "14.0.0" and app.atlas_rel > "13.0.0":
                 requirements.software=['VO-atlas-production-%s' % app.prod_release]
-            elif app.atlas_rel>= "14.0.0" :
+            elif app.atlas_rel>= "14.0.0" and app.atlas_rel<= "15.6.1":
                 requirements.software=['VO-atlas-production-%s-i686-slc4-gcc34-opt' % app.prod_release]
+            elif app.atlas_rel> "15.6.1":
+                requirements.software=['VO-atlas-production-%s-i686-slc5-gcc43-opt' % app.prod_release]
 
         if app.transform_archive and string.find(app.transform_archive,"AtlasTier0")>-1:
             requirements.software=['VO-atlas-tier0-%s' % app.prod_release]

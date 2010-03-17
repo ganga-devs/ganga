@@ -201,6 +201,10 @@ case "$TESTSE" in
     *)
     ;;
 esac 
+if [ -z "$BACKEND_DATA" ]; then
+   export BACKEND_DATA=$BACKEND
+fi
+
 cat PoolFileCatalog.xml
 for path in $OUTPUTFILES; do
     echo $path
