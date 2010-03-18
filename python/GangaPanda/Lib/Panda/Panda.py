@@ -120,6 +120,9 @@ def runPandaBrokerage(job):
                 raise BackendError('Panda','Error in Client.queryFilesInDataset')
             try:
                 dsLocationMap = Client.getLocations(dataset,fileList,job.backend.requirements.cloud,False,False,expCloud=True)
+                if not dsLocationMap:
+                    logger.info('Dataset not found in cloud %s, searching all clouds...'%job.backend.requirements.cloud)
+                    dsLocationMap = Client.getLocations(dataset,fileList,job.backend.requirements.cloud,False,False,expCloud=False)
             except exceptions.SystemExit:
                 raise BackendError('Panda','Error in Client.getLocations')
             # no location
