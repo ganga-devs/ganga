@@ -424,6 +424,8 @@ class DQ2JobSplitter(ISplitter):
                     j.inputdata = copy.deepcopy(job.inputdata)
                     j.inputdata.dataset = dataset
                     j.inputdata.sizes = []
+                    j.inputdata.guids = []
+                    j.inputdata.names = []
                     while remaining_guids and len(j.inputdata.guids)<max_subjob_numfiles and sum(j.inputdata.sizes)<max_subjob_filesize:
                         for next_guid in remaining_guids:
                             if sum(j.inputdata.sizes)+allcontent[next_guid][1] < max_subjob_filesize:
