@@ -5,7 +5,7 @@
 ###############################################################################
 # Athena DQ2JobSplitter
 
-import math, socket, operator
+import math, socket, operator, copy
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -421,7 +421,7 @@ class DQ2JobSplitter(ISplitter):
                     num_remaining_guids = len(remaining_guids)
                     j = Job()
                     j.name = job.name
-                    j.inputdata = DQ2Dataset()
+                    j.inputdata = copy.deepcopy(job.inputdata)
                     j.inputdata.dataset = dataset
                     j.inputdata.sizes = []
                     while remaining_guids and len(j.inputdata.guids)<max_subjob_numfiles and sum(j.inputdata.sizes)<max_subjob_filesize:
@@ -449,6 +449,9 @@ class DQ2JobSplitter(ISplitter):
                         j.backend.requirements.sites = sites.split(':')
                     j.inputsandbox  = job.inputsandbox
                     j.outputsandbox = job.outputsandbox 
+
+                    # job inputdata type
+                    #j.inputdata.type = job.inputdata.type
 
                     j.inputdata.tag_info = {}
                     if job.inputdata.tag_info:
