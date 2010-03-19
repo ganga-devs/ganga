@@ -133,33 +133,33 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             os.chdir(cwd)      
                     
         # Use Panda's brokerage
-        if job.inputdata and len(app.sites)>0:
-            # update cloud, use inputdata's
-            from dq2.info.TiersOfATLAS import whichCloud,ToACache
-            inclouds=[]
-            for site in app.sites:
-                cloudSite=whichCloud(app.sites[0])
-                if cloudSite not in inclouds:
-                    inclouds.append(cloudSite)
-            # now converting inclouds content into proper brokering stuff.
-            outclouds=[]
-            for cloudSite in inclouds:
-                for cloudID, eachCloud in ToACache.dbcloud.iteritems():
-                    if cloudSite==eachCloud:
-                        cloud=cloudID
-                        outclouds.append(cloud)
-                        break
+##         if job.inputdata and len(app.sites)>0:
+##             # update cloud, use inputdata's
+##             from dq2.info.TiersOfATLAS import whichCloud,ToACache
+##             inclouds=[]
+##             for site in app.sites:
+##                 cloudSite=whichCloud(app.sites[0])
+##                 if cloudSite not in inclouds:
+##                     inclouds.append(cloudSite)
+##             # now converting inclouds content into proper brokering stuff.
+##             outclouds=[]
+##             for cloudSite in inclouds:
+##                 for cloudID, eachCloud in ToACache.dbcloud.iteritems():
+##                     if cloudSite==eachCloud:
+##                         cloud=cloudID
+##                         outclouds.append(cloud)
+##                         break
                     
-            print outclouds
-            # finally, matching with user's wishes
-            if len(outclouds)>0:
-                if not job.backend.requirements.cloud: # no user wish, update
-                    job.backend.requirements.cloud=outclouds[0]
-                else:
-                    try:
-                        assert job.backend.requirements.cloud in outclouds
-                    except:
-                        raise ApplicationConfigurationError(None,'Input dataset not available in target cloud %s. Please try any of the following %s' % (job.backend.requirements.cloud, str(outclouds)))
+##             print outclouds
+##             # finally, matching with user's wishes
+##             if len(outclouds)>0:
+##                 if not job.backend.requirements.cloud: # no user wish, update
+##                     job.backend.requirements.cloud=outclouds[0]
+##                 else:
+##                     try:
+##                         assert job.backend.requirements.cloud in outclouds
+##                     except:
+##                         raise ApplicationConfigurationError(None,'Input dataset not available in target cloud %s. Please try any of the following %s' % (job.backend.requirements.cloud, str(outclouds)))
                                                             
         from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
         runPandaBrokerage(job)
