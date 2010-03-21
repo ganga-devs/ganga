@@ -384,6 +384,12 @@ then
         export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
     fi
 
+    echo '====================='
+    echo "DBRELEASE: $DBRELEASE"
+    echo "DBRELEASE_OVERRIDE: $DBRELEASE_OVERRIDE"
+    env | grep DBRelease
+    echo '====================='
+
 fi
 
 ################################################

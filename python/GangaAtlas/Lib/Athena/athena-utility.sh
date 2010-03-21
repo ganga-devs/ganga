@@ -717,6 +717,12 @@ run_athena () {
         env | grep LFC
 	env | grep DCACHE
 
+	echo '====================='
+	echo "DBRELEASE: $DBRELEASE"
+	echo "DBRELEASE_OVERRIDE: $DBRELEASE_OVERRIDE"
+	env | grep DBRelease
+	echo '====================='
+
 	cat input.py
 
 	export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH:$LD_LIBRARY_PATH_ORIG
