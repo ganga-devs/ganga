@@ -56,6 +56,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
 
         # PandaTools
         from pandatools import Client
+        from pandatools import AthenaUtils
         from taskbuffer.JobSpec import JobSpec
         from taskbuffer.FileSpec import FileSpec
 
@@ -189,6 +190,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         jspec.cloud             = job.backend.requirements.cloud
 #        jspec.jobParameters     = self.args not known yet
         jspec.jobParameters     = '-i %s -o %s' % (sources,self.library)
+        jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_rel)
         
         matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
         if matchURL:
@@ -216,6 +218,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
  
         # PandaTools
         from pandatools import Client
+        from pandatools import AthenaUtils
         from taskbuffer.JobSpec import JobSpec
         from taskbuffer.FileSpec import FileSpec
 
@@ -269,7 +272,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         if job.backend.requirements.memory != -1:
             jspec.minRamCount = job.backend.requirements.memory
         jspec.computingSite     = self.outsite
-
+        jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_rel)
 #       library (source files)
         flib = FileSpec()
         flib.lfn            = self.library
