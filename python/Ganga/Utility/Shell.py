@@ -110,8 +110,8 @@ class Shell:
          logger.warning('exit status [%d] of command %s',rc,cmd)
          logger.warning('full output is in file: %s',soutfile)
          logger.warning('<first %d bytes of output>\n%s',BYTES,file(soutfile).read(BYTES))
-         logger.warning('<end of first 255 bytes of output>')
-           
+         logger.warning('<end of first %d bytes of output>',BYTES)
+         
 #FIXME /bin/sh might have also other error messages                                                                                            
       m = None
       if rc != 0:
