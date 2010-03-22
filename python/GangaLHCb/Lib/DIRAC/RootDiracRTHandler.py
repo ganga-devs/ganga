@@ -25,6 +25,7 @@ class RootDiracRTHandler(IRuntimeHandler):
             msg = 'Script must exist!'
             raise ApplicationConfigurationError(None,msg)
         # check root version
+        from Dirac import Dirac
         result = Dirac.execAPI('result = DiracCommands.getRootVersions()')
         if not result_ok(result):
             logger.error('Could not obtain available ROOT versions: %s' \

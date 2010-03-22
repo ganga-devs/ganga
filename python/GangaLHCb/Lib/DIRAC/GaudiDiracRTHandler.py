@@ -39,6 +39,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
 
     def master_prepare(self,app,appconfig):
         # check version
+        from Dirac import Dirac
         result = Dirac.execAPI('result = DiracCommands.getSoftwareVersions()')
         if not result_ok(result):
             logger.error('Could not obtain available versions: %s' \

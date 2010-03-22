@@ -38,7 +38,7 @@ configLHCb.addOption('datatype_string_patterns',defval,dscrpt)
 # Set default values for the Dirac section.
 dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
 configDirac.addOption('ShowDIRACstdout',False,dscrpt)
-
+configDirac.addOption('AllowedPlatforms',['slc4_ia32_gcc34'],'depricated')
     
 def getEnvironment( config = {} ):
    import sys
