@@ -37,6 +37,7 @@ class InstallLHCb:
 
         ver = self.options.version
         source = self.options.source
+        #if ver != 'head':
         pTag     = re.compile(r'.+/(\S+)$')
         mTag = pTag.match(ver)
         vLHCb = _versiondecode(ver)
