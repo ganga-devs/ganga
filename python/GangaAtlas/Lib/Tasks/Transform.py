@@ -174,7 +174,7 @@ class Transform(GangaObject):
                else:
                   addjob(j)
          except Exception, x:
-            print x
+            #print x
             pass
       return JobRegistrySliceProxy(jobslice)
 

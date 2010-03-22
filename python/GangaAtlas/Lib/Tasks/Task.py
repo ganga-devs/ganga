@@ -176,7 +176,7 @@ class Task(GangaObject):
                     else:
                         jobslice.objects[j.fqid] = stripProxy(j)
             except Exception, x:
-                print x
+                #print x
                 pass
         return JobRegistrySliceProxy(jobslice)
 
