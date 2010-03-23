@@ -711,7 +711,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         inputFileList = []
         inputFileListPeeker = []
         for lfn in lfns:
-            if (configSETYPE == 'dpm'):
+            if (configSETYPE == 'dpm') and files[lfn].has_key('surl'):
                 surl = files[lfn]['surl']
                 # remove protocol and host
                 pfn = re.sub('^gfal:','',surl)
