@@ -276,7 +276,7 @@ class TestAthenaMCLCG(AtlasTest):
         j.application.run_number='000001'
         j.application.firstevent=1
         j.application.number_events_job=1
-        j.application.atlas_release='15.6.1.7'
+        j.application.atlas_release='15.6.3.1'
         j.application.verbosity = "INFO"
         j.backend=LCG()
 	j.backend.requirements=AtlasLCGRequirements()
@@ -298,8 +298,8 @@ class TestAthenaMCLCG_evgen(TestAthenaMCLCG):
 class TestAthenaMCLCG_simul(TestAthenaMCLCG):
     def setup(self):
         TestAthenaMCLCG.setup(self)
-        self.j.application.atlas_release='15.6.1'
-        self.j.application.transform_archive='AtlasProduction_15_6_1_6_noarch.tar.gz' #old style submission
+        self.j.application.atlas_release='15.6.3'
+        self.j.application.transform_archive='AtlasProduction_15_6_3_1_noarch.tar.gz' #old style submission
         self.j.application.mode='simul'
         self.j.application.transform_script = "csc_simul_trf.py"
         self.j.application.geometryTag = 'ATLAS-GEO-08-00-02' 
