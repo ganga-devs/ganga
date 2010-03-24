@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.3 (2010/3/22)
+5.5.3 (2010/3/24)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -25,8 +25,10 @@ def flush_file(f):
 ganga/python/Ganga/Lib/LCG
 --------------------------------------------------------------------------------------------------------------
 * print JDL when no matched resource.
- * fix 32/64 bit mixture issue with glite-wms-job-status and glite-wms-job-logging-info
-(script-based) commands
+* fix 32/64 bit mixture issue with glite-wms-job-status and glite-wms-job-logging-info
+(script-based) commands.
+* add configuration variable (config.LCG.IgnoreGliteScriptHeader) to turn on/off the trick for 32/64
+bit library compatibility issues. Default it's off (i.e without the trick).
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -39,6 +41,7 @@ Athena:
 * make deepcopy of master job's inputdata in creating subjobs
 * Fix bug #64384: list_sites_cloud not allow unknown cloud
 * Send processingType with runBrokerage
+* Fixes for AMI externals and AMIDataset
 
 AthenaMC:
 ---------
@@ -53,6 +56,8 @@ AthenaMC:
   which would remain empty from test job submissions, and enforce 
   the use of input data's location cloud(s) in job submission 
   whenever an input dataset is required.
+* Panda RT Handler: adding cmtConfig support to allow use of either 
+  SL4 and SL5 releases
 
 Tasks:
 ------
@@ -63,10 +68,13 @@ Tasks:
 tests:
 ------
 * Updated the tests with new input datasets, also did some cleanup
+* changed target release for AthenaMCLCG tests as this release is 
+  not available in target test site
 
 externals:
 ----------
-update panda-client 0.2.21
+* update panda-client 0.2.21
+* New externals for AMIDataset: zsi, 4Suite, pyAMI
 
 
 --------------------------------------------------------------------------------------------------------------
