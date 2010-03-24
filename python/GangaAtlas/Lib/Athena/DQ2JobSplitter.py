@@ -421,7 +421,7 @@ class DQ2JobSplitter(ISplitter):
                     num_remaining_guids = len(remaining_guids)
                     j = Job()
                     j.name = job.name
-                    j.inputdata = copy.deepcopy(job.inputdata)
+                    j.inputdata = job.inputdata
                     j.inputdata.dataset = dataset
                     j.inputdata.sizes = []
                     j.inputdata.guids = []
