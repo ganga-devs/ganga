@@ -24,7 +24,7 @@ import copy
 
 import Ganga.GPIDev.Schema as Schema
 
-from Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, isType
+from Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, isType, TypeMismatchError
 
 from Ganga.Utility.logic import implies
 from Ganga.Utility.util import canLoopOver, isStringLike
@@ -128,10 +128,14 @@ class Node(object):
     # if schema of self and srcobj are not compatible raises a ValueError
     # ON FAILURE LEAVES SELF IN INCONSISTENT STATE
     def copyFrom(self,srcobj):
+        # Check if this object is derived from the source object, then the copy will not throw away information
+        if not isinstance(self, srcobj.__class__):
+            raise TypeMismatchError("copyFrom: Cannot copy from %s to %s!" % (srcobj.__class__, self.__class__))
         for name,item in self._schema.allItems():
-            if not srcobj._schema.hasAttribute(name):
-                raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(srcobj._name,self._name))
-            if not item['copyable']:
+            if not self._schema.hasAttribute(name):
+                #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(srcobj._name,self._name))
+                setattr(self,name,self._schema.getDefaultValue(name))
+            elif not item['copyable']:
                 setattr(self,name,self._schema.getDefaultValue(name))
             else:
                 c = copy.deepcopy(getattr(srcobj,name))
@@ -392,7 +396,17 @@ class GangaObject(Node):
             setattr(self, attr, self._schema.getDefaultValue(attr))
             
         # Overwrite default values with any config values specified
-        #self.setPropertiesFromConfig()                
+        #self.setPropertiesFromConfig()
+
+    # construct an object of this type from the arguments. Defaults to copy constructor.
+    def __construct__(self,args):
+        # act as a copy constructor applying the object conversion at the same time (if applicable)
+        if len(args) == 0:
+            return
+        elif len(args) == 1:
+            self.copyFrom(args[0])
+        else:
+            raise TypeError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))        
 
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__
@@ -486,6 +500,8 @@ class GangaObject(Node):
     # post __init__ hook automatically called by GPI Proxy __init__
     def _auto__init__(self):
         pass
+
+
 
     # return True if _name attribute was explicitly defined in the class
     # this means that implicit (inherited) _name attribute has no effect in the derived class

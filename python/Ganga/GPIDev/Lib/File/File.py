@@ -40,6 +40,18 @@ class File(GangaObject):
 
         if not subdir is None:
             self.subdir = subdir
+
+    def __construct__(self,args):
+        if len(args) == 1 and type(args[0]) == type(''):
+            v = args[0]
+            import os.path
+            expanded = expandfilename(v)
+            if not urlprefix.match(expanded): # if it is not already an absolute filename
+                self.name = os.path.abspath(expanded)
+            else: #bugfix #20545 
+                self.name = expanded
+        else:
+            super(File,self).__construct__(args)
         
     def getPathInSandbox(self):
         """return a relative location of a file in a sandbox: subdir/name"""
@@ -85,17 +97,11 @@ import re
 urlprefix=re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
 
 def string_file_shortcut(v,item):
-    import os.path
-
     if type(v) is type(''):
-        f = File()
-        expanded = expandfilename(v)
-        if not urlprefix.match(expanded): # if it is not already an absolute filename
-            f.name = os.path.abspath(expanded)
-        else: #bugfix #20545 
-            f.name = expanded
-        return f
-    return None    
+        # use proxy class to enable all user conversions on the value itself
+        # but return the implementation object (not proxy)
+        return File._proxyClass(v)._impl
+    return None 
         
 allComponentFilters['files'] = string_file_shortcut
 

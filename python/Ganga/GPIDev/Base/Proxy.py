@@ -217,19 +217,13 @@ def GPIProxyClassFactory(name, pluginclass):
     # construct the class on-the-fly using the functions below as methods for the new class
 
     def _init(self,*args,**kwds):
-        if len(args) > 1:
-            logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
+        #if len(args) > 1:
+        #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
 
         # at the object level _impl is a ganga plugin object
         self.__dict__['_impl'] = pluginclass()
+        self._impl.__construct__(map(stripProxy,args))
 
-        if len(args) > 0:
-            # act as a copy constructor applying the object conversion at the same time (if applicable)
-            from Filters import allComponentFilters
-            cfilter = allComponentFilters[pluginclass._category]
-            srcobj = stripComponentObject(args[0],cfilter,None)
-            self._impl.copyFrom(srcobj)
-            
         # initialize all properties from keywords of the constructor
         for k in kwds:
             if self._impl._schema.hasAttribute(k):

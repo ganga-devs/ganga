@@ -3,6 +3,7 @@
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base import GangaObject
+from LHCbDatasetUtils import strToDataFile 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -25,6 +26,22 @@ class OutputData(GangaObject):
     def __init__(self, files=[]):
         super(OutputData, self).__init__()
         self.files = files
+
+    def __construct__(self,args):
+        if len(args) == 1 and type(args[0]) == type([]):
+            files = args[0]
+            l = []
+            for f in files:
+                if type(f) is type(''):
+                    file = strToDataFile(f)
+                    if file is None:
+                        l.append(strToDataFile('PFN:OUTPUTDATA:/'+f))
+                    else:
+                        l.append(file)
+                else: l.append(f)
+            self.files = l
+        else:
+            super(OutputData,self).__construct__(args)
 
     def _auto__init__(self):
         files = []

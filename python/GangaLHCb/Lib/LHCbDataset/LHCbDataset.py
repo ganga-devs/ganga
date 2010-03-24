@@ -51,6 +51,22 @@ class LHCbDataset(Dataset):
         super(LHCbDataset, self).__init__()
         self.files = files
 
+    def __construct__(self,args):
+        if len(args) == 1 and type(args[0]) == type([]):
+            files = args[0]
+            l = []
+            for f in files:
+                if type(f) is type(''):
+                    file = strToDataFile(f)
+                    if file is None:
+                        l.append(strToDataFile('PFN:OUTPUTDATA:/'+f))
+                    else:
+                        l.append(file)
+                else: l.append(f)
+            self.files = l
+        else:
+            super(LHCbDataset,self).__construct__(args)
+
     def _auto__init__(self):
         for f in self.files:
             if f.name.find('OUTPUTDATA:/') >= 0:
@@ -254,20 +270,12 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 
 def string_datafile_shortcut(name,item):
     if type(name) is not type(''): return None
-    if item is None: # constructor
-        class Dummy:
-            _category = 'datafiles'
-            _schema = Schema(Version(0,0),{'name':SimpleItem(None)})
-            def __init__(self,name=''): self.name = name
-        return Dummy(name=name)
-    else: # something else...require pfn: or lfn:
-        file = strToDataFile(name)
-        if file is None:
-            msg = 'Can only convert strings that begin w/ PFN: or LFN: to '\
-                  'data files.'
-            raise GangaException(msg)
-        return file
-    return None
+    file = strToDataFile(name)
+    if file is None:
+        msg = 'Can only convert strings that begin w/ PFN: or LFN: to '\
+              'data files.'
+        raise GangaException(msg)
+    return file
 
 allComponentFilters['datafiles'] = string_datafile_shortcut
 
@@ -289,19 +297,6 @@ def string_dataset_shortcut(files,item):
         return ds               
     elif item == Job._schema['outputdata']:
         return OutputData(files=files)
-    else:
-        l = []        
-        for f in files:
-            if type(f) is type(''):
-                file = strToDataFile(f)
-                if file is None:                    
-                    l.append(strToDataFile('PFN:OUTPUTDATA:/'+f))
-                else:
-                    l.append(file)
-            else: l.append(f)
-        ds = LHCbDataset()
-        ds.files = l[:]
-        return ds 
 
 allComponentFilters['datasets'] = string_dataset_shortcut
 
