@@ -406,7 +406,7 @@ class GangaObject(Node):
         elif len(args) == 1:
             self.copyFrom(args[0])
         else:
-            raise TypeError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))        
+            raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))        
 
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__
