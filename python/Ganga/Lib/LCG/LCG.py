@@ -2097,6 +2097,8 @@ config.addOption('JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are
 
 config.addOption('MatchBeforeSubmit', False, 'sets to True will do resource matching before submitting jobs, jobs without any matched resources will fail the submission')
 
+config.addOption('IgnoreGliteScriptHeader', False, 'sets to True will load script-based glite-wms-* commands forcely with current python, a trick for 32/64 bit compatibility issues.')
+
 #config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
 
 # apply preconfig and postconfig handlers

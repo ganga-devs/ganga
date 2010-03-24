@@ -415,7 +415,11 @@ class Grid(object):
             exec_bin = False
         else:
             cmd = 'glite-wms-job-status'
-            exec_bin = False
+
+            exec_bin = True
+            if self.config['IgnoreGliteScriptHeader']:
+                exec_bin = False
+
             if is_collection:
                 cmd = '%s -v 3' % cmd
 
@@ -536,7 +540,10 @@ class Grid(object):
             exec_bin = False
         else:
             cmd = 'glite-wms-job-logging-info -v %d' % verbosity
-            exec_bin = False
+
+            exec_bin = True
+            if self.config['IgnoreGliteScriptHeader']:
+                exec_bin = False
 
         if not self.active:
             logger.warning('LCG plugin not active.')
