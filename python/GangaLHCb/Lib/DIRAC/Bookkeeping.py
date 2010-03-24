@@ -40,7 +40,8 @@ class Bookkeeping(GangaObject):
             cmd = 'DiracCommands.bookkeepingGUI("%s")' % f
             Dirac.execAPI(cmd)
             l = self._fileToList(f)
-            ds = string_dataset_shortcut(l,None)
+            ds = LHCbDataset()
+            ds.__construct__([l])
             return ds
     
     def _fileToList(self,file):
