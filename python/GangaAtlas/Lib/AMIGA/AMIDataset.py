@@ -15,22 +15,18 @@ import os
 
 logger = getLogger()
 config = makeConfig('AMIDataset','AMI dataset')
-config.addOption('MaxNumOfFiles', 100, 'Maximum number of files in a given dataset patterns')
-config.addOption('MaxNumOfDatasets', 20, 'Maximum number of datasets in a given dataset patterns')
+config.addOption('MaxNumOfFiles', 500, 'Maximum number of files in a given dataset patterns')
+config.addOption('MaxNumOfDatasets', 100, 'Maximum number of datasets in a given dataset patterns')
 
 try:
     from pyAMI.pyAMI import AMI as AMIClient
+    amiclient = AMIClient()
 except ImportError:
     logger.warning("AMI not properly set up. You will not be able to access AMI from this ganga session.")
     pass
 
 def get_metadata(dataset = '', file_name = ''):
     
-    try: 
-        amiclient = AMIClient()
-    except:
-        logger.warning("Couldn't instantiate AMI client.  AMI not set up ?")
-
     argument = []
     argument.append("GetDatasetInfo")
     if dataset:
@@ -57,11 +53,6 @@ def get_metadata(dataset = '', file_name = ''):
 
 def get_file_metadata(dataset='', all=False):
     
-    try: 
-        amiclient = AMIClient()
-    except:
-        logger.warning("Couldn't instantiate AMI client.  AMI not set up ?")
-
     argument = []
     argument.append("ListFiles")
     argument.append("logicalDatasetName=" + dataset)
@@ -103,7 +94,6 @@ class AMIDataset(DQ2Dataset):
     _schema.datadict['processingStep'] = SimpleItem(defvalue = 'Atlas_Production', doc = '')
     _schema.datadict['amiStatus'] = SimpleItem(defvalue = 'VALID', doc = '')
     _schema.datadict['entity'] = SimpleItem(defvalue = 'dataset', doc = '')
-    _schema.datadict['amiclient'] = SimpleItem(defvalue = 0, transient=1, hidden=1, doc="AMI client" )
     _schema.datadict['metadata'] = SimpleItem(defvalue = {}, doc="Metadata" )
     _schema.datadict['provenance'] = SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Dataset provenance chain')
     _schema.datadict['goodRunListXML'] = FileItem(doc = 'GoodRunList XML file to search on')
@@ -114,18 +104,8 @@ class AMIDataset(DQ2Dataset):
 
     def __init__(self):
         super( AMIDataset, self ).__init__()
-        self._initami()
 
-    def _initami(self):
-        try:
-            self.amiclient = AMIClient()
-        except:
-            logger.warning("Coldn't instantiate AMI client. AMI not set up?")
-    
     def fill_provenance(self,extraargs = []):
-
-        if not self.amiclient:
-            self._initami()
 
         dataType=""
         if(len(extraargs)>1 ):
@@ -147,7 +127,7 @@ class AMIDataset(DQ2Dataset):
             argument.append("logicalDatasetName="+ds)
             argument.append('-output=xml')
 
-            result= self.amiclient.execute(argument)
+            result= amiclient.execute(argument)
 
             dom = result.getAMIdom()
             graph = dom.getElementsByTagName('graph')
@@ -189,9 +169,6 @@ class AMIDataset(DQ2Dataset):
 
     def search(self, pattern='', maxresults = 2, extraargs = []):
         
-        if not self.amiclient:
-            self._initami()
-
         argument=[]
         dsetList = []
         
@@ -217,7 +194,7 @@ class AMIDataset(DQ2Dataset):
             
             pattern = pattern.replace("/","")    
             pattern = pattern.replace('*','%')
-            limit="0,%d" % maxresults
+            limit="0,%d" %config['MaxNumOfDatasets']
 
             argument.append("SearchQuery")
             argument.append("entity=" + self.entity)
@@ -233,7 +210,7 @@ class AMIDataset(DQ2Dataset):
             return []
         
         try:
-            result = self.amiclient.execute(argument)
+            result = amiclient.execute(argument)
             if argument[0] == "GetGoodDatasetList":
                 # GRL has different output
                 res_text = result.output()

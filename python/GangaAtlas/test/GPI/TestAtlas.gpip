@@ -7,7 +7,7 @@ rcdir1510 = srcdir + "v1510"
 srcdirana = srcdir + "v1565"
 release = '15.6.5'
 release_mc='15.6.5.1'
-datasetana = 'mc09_7TeV.106400.SU4_jimmy_susy.merge.AOD.e496_s624_s633_r1085_r1113/'
+datasetana = "data09_900GeV.00140541.physics_MinBias.merge.AOD.f175_m27%" 
 
 class TestAtlas(GangaGPITestCase):
     def testAthenaLocal(self):
@@ -60,6 +60,9 @@ class TestAtlas(GangaGPITestCase):
 
     def testAthenaMCPanda_recon(self):
         return TestAthenaMCPanda_recon()
+    
+    def testAMIDataset(self):
+        return TestAMIDataset(srcdirana)
 
 class TestAnaTaskBasic(ICheckTest):
     def __init__(self):
@@ -174,7 +177,7 @@ class TestAthena(AtlasTest):
         j = Job()
         j.application=Athena()
         j.application.atlas_release=release
-	j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
+        j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
         j.application.atlas_run_dir = '.' 
         j.application.option_file=[ joboption ]
         #j.application.user_area=archivefile
@@ -195,6 +198,16 @@ class TestAthenaDQ2LCG(TestAthena):
         self.j.backend.requirements.cloud='ALL'
         self.j.backend.requirements.cputime=1440
         assert(self.j.submit()==True)
+
+class TestAMIDataset(TestAthena):
+    def setup(self):
+        TestAthena.setup(self)
+	self.j.inputdata=AMIDataset()
+	self.j.inputdata.logicalDatasetName=datasetana
+	self.j.backend=LCG()
+	self.j.backend.requirements.cloud='ALL'
+	assert(self.j.submit()==True)
+
 
 class TestAthenaDQ2LCGFileStager(TestAthena):
     def setup(self):
@@ -279,8 +292,8 @@ class TestAthenaMCLCG(AtlasTest):
         j.application.atlas_release='15.6.3.1'
         j.application.verbosity = "INFO"
         j.backend=LCG()
-	j.backend.requirements=AtlasLCGRequirements()
-	j.backend.requirements.cloud='UK'
+        j.backend.requirements=AtlasLCGRequirements()
+        j.backend.requirements.cloud='UK'
         j.backend.requirements.sites=['UKI-SOUTHGRID-CAM-HEP_SCRATCHDISK']
         j.outputdata=AthenaMCOutputDatasets()
         self.j = j

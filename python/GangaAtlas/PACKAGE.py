@@ -9,7 +9,7 @@
 #Change this is you want to use external packages for different platform
 
 import sys, os
-from Ganga.Utility.Setup import PackageSetup
+from Ganga.Utility.Setup import PackageSetup, checkPythonVersion
 
 
 _external_packages = { 
@@ -22,9 +22,21 @@ _external_packages = {
                      'noarch':True 
                      },
     'panda-client' : { 'version' : '0.2.21', 
-                       'PYTHONPATH':['lib/python2.3/site-packages'],
+                       'PYTHONPATH':['lib/python2.5/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
+                       'noarch':True
+                       },
+    'zsi' : { 'version' : '2.1-a1', 
+                       'PYTHONPATH':['lib/python'],
+                       'noarch':True
+                       },
+    '4Suite' : { 'version' : '1.0.2', 
+                 'PYTHONPATH':['lib/python2.4/site-packages'],
+                 'syspath':['lib/python2.4/site-packages']
+                       },
+    'pyAMI' : { 'version' : '3.1.2', 
+                       'PYTHONPATH':['.'],
                        'noarch':True
                        }
 
@@ -33,7 +45,23 @@ _external_packages = {
 
 setup = PackageSetup(_external_packages)
 
+# Default minimum Python version number asked for by Ganga
+_defaultMinVersion = "2.3"
+_defaultMinHexVersion = 0x20300f0
+
 def standardSetup(setup=setup):
+
+    # here we assume that the Ganga has been already prepended to sys.path by the caller
+    if checkPythonVersion(_defaultMinVersion,_defaultMinHexVersion):
+        for name in setup.packages:
+            if name == '4Suite' and sys.hexversion > 0x2050000:
+                # hack the 4Suite path for 2.5
+                setup.packages['4Suite']['PYTHONPATH']  =  [ package.replace('2.4','2.5') for package in setup.packages['4Suite']['PYTHONPATH'] ]
+                setup.packages['4Suite']['syspath']  =  [ package.replace('2.4','2.5') for package in setup.packages['4Suite']['syspath'] ]
+                setup.setSysPath(name)
+    else:
+        sys.exit()
+
     for p in setup.packages:
         setup.prependPath(p,'PYTHONPATH')
         setup.prependPath(p,'LD_LIBRARY_PATH')
@@ -42,3 +70,5 @@ def standardSetup(setup=setup):
         if setup.packages[p].has_key('DQ2_ENDUSER_SETUP'):
             os.environ['DQ2_ENDUSER_SETUP'] = setup.packages[p]['DQ2_ENDUSER_SETUP']
         setup.setPath(p,'PANDA_SYS')
+
+    

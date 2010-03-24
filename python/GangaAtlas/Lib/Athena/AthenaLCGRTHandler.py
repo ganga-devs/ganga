@@ -88,7 +88,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     if not job.inputdata.lfn: raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
                     input_files = job.inputdata.lfn
 
-                elif job.inputdata._name == 'DQ2Dataset':
+                elif job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset':
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified. Failure in job %s.%s. Dataset %s' %(job._getRoot().id, job.id, job.inputdata.dataset)  )
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
@@ -114,7 +114,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 elif job.inputdata._name == 'ATLASDataset':
                     input_files = ATLASDataset.get_filenames(app)
 
-                elif job.inputdata._name == 'DQ2Dataset':
+                elif job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset':
                     if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER' ]:
                         job.inputdata.type ='DQ2_LOCAL'
                     if not job.inputdata.datatype in ['DATA', 'MC', 'MuonCalibStream']:
@@ -345,7 +345,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['TAG_TYPE'] = 'LOCAL'                
 
         # Fix DATASETNAME env variable for DQ2_COPY mode
-        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and (job.inputdata.type=='DQ2_LOCAL' or job.inputdata.type=='DQ2_COPY' or job.inputdata.type=='FILE_STAGER'):
+        if job.inputdata and ( job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset') and (job.inputdata.type=='DQ2_LOCAL' or job.inputdata.type=='DQ2_COPY' or job.inputdata.type=='FILE_STAGER'):
             if job.inputdata.dataset:
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import resolve_container
                 datasets = resolve_container(job.inputdata.dataset)
@@ -428,13 +428,13 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         if app.user_setupfile.name: inputbox.append(File(app.user_setupfile.name))
 
         # CN: added TNTJobSplitter clause  
-        if job.inputdata and job.inputdata._name == 'DQ2Dataset' or (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
+        if job.inputdata and (job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset') or (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
             _append_files(inputbox,'ganga-stage-in-out-dq2.py','dq2_get','dq2info.tar.gz')
             if job.inputdata and job.inputdata.type == 'LFC' and not (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
                 _append_files(inputbox,'dq2_get_old')
 
         ## insert more scripts to inputsandbox for FileStager
-        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type in ['FILE_STAGER']:
+        if job.inputdata and (job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset')  and job.inputdata.type in ['FILE_STAGER']:
             _append_files(inputbox,'make_filestager_joption.py','dm_util.py','fs-copy.py')
             #_append_files(inputbox,'make_filestager_joption.py','dm_util.py')
 
@@ -520,7 +520,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if job.inputdata.lfc:
                 environment['GANGA_LFC_HOST'] = job.inputdata.lfc
         
-        if job.inputdata and job.inputdata._name == 'DQ2Dataset':
+        if job.inputdata and (job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset'):
             if job.inputdata.dataset:
                 datasetname = job.inputdata.dataset
                 environment['DATASETNAME'] = ':'.join(datasetname)
@@ -656,7 +656,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         ]
 
         ## retrieve the FileStager log
-        if configDQ2['USE_ACCESS_INFO'] or (job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type in ['FILE_STAGER']):
+        if configDQ2['USE_ACCESS_INFO'] or (job.inputdata and (job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset') and job.inputdata.type in ['FILE_STAGER']):
             outputbox += ['FileStager.out', 'FileStager.err']
             
         if job.outputsandbox: outputbox += job.outputsandbox
