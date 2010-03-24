@@ -2060,7 +2060,7 @@ if __name__ == '__main__':
         if 'CERN' in temp_locations:
             temp_locations.remove('CERN')
 
-        print temp_locations
+        print 'Unchecked output locations: %s'  %(temp_locations)
         new_locations = []
 
         # Get space token names:
@@ -2070,7 +2070,14 @@ if __name__ == '__main__':
             print "ERROR : DQ2_OUTPUT_SPACE_TOKENS not defined"
             space_token_names = [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK' ]
             pass
-        
+
+        if not 'ATLASSCRATCHDISK' in space_token_names or \
+           not 'T2ATLASSCRATCHDISK' in space_token_names or \
+           not 'ATLASLOCALGROUPDISK' in space_token_names or \
+           not 'T2ATLASLOCALGROUPDISK' in space_token_names: 
+            print "ERROR : DQ2_OUTPUT_SPACE_TOKENS not well defined"
+            print "Adding ['ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK', 'T2ATLASSCRATCHDISK', 'T2ATLASLOCALGROUPDISK']"
+            space_token_names = space_token_names + ['ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK', 'T2ATLASSCRATCHDISK', 'T2ATLASLOCALGROUPDISK']
 
         for ilocation in temp_locations:
             temp_location = ilocation
@@ -2106,7 +2113,7 @@ if __name__ == '__main__':
                 new_locations.append(temp_location)
 
         temp_locations = new_locations
-        print temp_locations
+        print 'Checked output locations: %s'  %(temp_locations)
 
         # Get output lfn
         try:
@@ -2223,7 +2230,7 @@ if __name__ == '__main__':
                     count = count + 1
                     time.sleep(120)
 
-            if siteCount==len(temp_locations):
+            if siteCount==len(temp_locations)-1:
                 print 'ERROR: file not saved to any location ...' 
                 sys.exit(EC_STAGEOUT)
             
