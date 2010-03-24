@@ -18,7 +18,7 @@ class OutputData(GangaObject):
     schema = {}
     schema['files'] = SimpleItem(defvalue=[],typelist=['str'],sequence=1)
     schema['location'] = SimpleItem(defvalue='',typelist=['str'])
-    _schema = Schema(Version(1,0), schema)
+    _schema = Schema(Version(1,1), schema)
     _category = 'datasets'
     _name = "OutputData"
     _exportmethods = ['__len__','__getitem__']
@@ -27,30 +27,12 @@ class OutputData(GangaObject):
         super(OutputData, self).__init__()
         self.files = files
 
-    def __construct__(self,args):
-        if len(args) == 1 and type(args[0]) == type([]):
-            files = args[0]
-            l = []
-            for f in files:
-                if type(f) is type(''):
-                    file = strToDataFile(f)
-                    if file is None:
-                        l.append(strToDataFile('PFN:OUTPUTDATA:/'+f))
-                    else:
-                        l.append(file)
-                else: l.append(f)
-            self.files = l
-        else:
+    def __construct__(self, args):
+        if (len(args) != 1) or (type(args[0]) is not type([])):
             super(OutputData,self).__construct__(args)
-
-    def _auto__init__(self):
-        files = []
-        for f in self.files:
-            if hasattr(f,'name'):
-                files.append(f.name.replace('OUTPUTDATA:/',''))
-            else: files.append(f)
-        self.files = files
-
+        else:    
+            self.files = args[0]
+       
     def __len__(self):
         """The number of files in the dataset."""
         result = 0

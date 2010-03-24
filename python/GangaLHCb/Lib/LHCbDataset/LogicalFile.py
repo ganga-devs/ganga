@@ -54,15 +54,12 @@ class LogicalFile(GangaObject):
         super(LogicalFile,self).__init__()
         self.name = strip_filename(name)
 
-    def __construct__(self,args):
-        if len(args) == 1 and type(args[0]) == '':
-            self.name = args[0] 
-        else:
-            super(LogicalFile,self).__construct__()
-
-    def _auto__init__(self):        
-        if self.name: self.name = strip_filename(self.name)
-
+    def __construct__(self, args):
+        if (len(args) != 1) or (type(args[0]) is not type('')):
+            super(LogicalFile,self).__construct__(args)
+        else:    
+            self.name = strip_filename(args[0])
+            
     def _attribute_filter__set__(self,n,v):
         return strip_filename(v)
             

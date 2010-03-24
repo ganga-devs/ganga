@@ -42,15 +42,12 @@ class PhysicalFile(GangaObject):
         super(PhysicalFile,self).__init__()
         self.name = full_expand_filename(name)
 
-    def __construct__(self,args):
-        if len(args) == 1 and type(args[0]) == '':
-            self.name = args[0] 
-        else:
-            super(PhysicalFile,self).__construct__()
+    def __construct__(self, args):
+        if (len(args) != 1) or (type(args[0]) is not type('')):
+            super(PhysicalFile,self).__construct__(args)
+        else:    
+            self.name = full_expand_filename(args[0])
          
-    def _auto__init__(self):        
-        if self.name: self.name = full_expand_filename(self.name)
-
     def _attribute_filter__set__(self,n,v):
         return full_expand_filename(v)
         

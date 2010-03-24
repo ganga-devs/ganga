@@ -51,36 +51,18 @@ class LHCbDataset(Dataset):
         super(LHCbDataset, self).__init__()
         self.files = files
 
-    def __construct__(self,args):
-        if len(args) == 1 and type(args[0]) == type([]):
-            files = args[0]
-            l = []
-            for f in files:
-                if type(f) is type(''):
-                    file = strToDataFile(f)
-                    if file is None:
-                        l.append(strToDataFile('PFN:OUTPUTDATA:/'+f))
-                    else:
-                        l.append(file)
-                else: l.append(f)
-            self.files = l
-        else:
+    def __construct__(self, args):
+        if (len(args) != 1) or (type(args[0]) is not type([])):
             super(LHCbDataset,self).__construct__(args)
-
-    def _auto__init__(self):
-        for f in self.files:
-            if f.name.find('OUTPUTDATA:/') >= 0:
-                msg = 'Can only convert strings that begin w/ PFN: or LFN: ' \
-                      'to data files.'
-                raise GangaException(msg)
-            #f._auto__init__()
-
-    def _attribute_filter__set__(self,n,v):
-        if n == 'files':
-            for f in v: f._auto__init__()
-            return v
-        else: return v
-
+        else:
+            self.files = []
+            for f in args[0]:
+                if type(f) is type(''):
+                    file = strToDataFile(f,False)
+                    self.files.append(file)
+                else:
+                    self.files.append(f)
+                    
     def __len__(self):
         """The number of files in the dataset."""
         result = 0
@@ -213,56 +195,6 @@ class LHCbDataset(Dataset):
             f.write(s)
             f.close()
         else: return s
-
-    # schema migration stuff (v 5.4.0)
-    class LHCbDatasetSchemaMigration50400(Dataset):
-        schema = {}
-        schema['files'] = ComponentItem(category='datafiles',defvalue=[],
-                                        sequence=1)
-        docstr = 'The date the last full cache update was run.'
-        schema['cache_date'] = SimpleItem(defvalue='', doc=docstr)
-        docstr = 'True when the cache has never been updated before'
-        schema['new_cache'] = SimpleItem(defvalue=True, doc=docstr , hidden=1)
-        defvaluestr = """TYP='POOL_ROOTTREE' OPT='READ'"""
-        docstr = 'The string that is added after the filename in the options '\
-                 'to tell Gaudi how to read the data. If reading raw data ' \
-                 '(mdf files) it should be set to "SVC=\'LHCb::MDFSelector\'"'
-        schema['datatype_string'] = SimpleItem(defvalue=defvaluestr,doc=docstr)
-        docstr = 'Ancestor depth to be queried from the Bookkeeping system.'
-        schema['depth'] = SimpleItem(defvalue=1,doc=docstr)
-        docstr = 'Select an optional XMLCatalogueSlice to the dataset'
-        schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
-
-        _schema = Schema(Version(2,4), schema)
-        _category = 'application_converters'
-        _name = 'LHCbDatasetSchemaMigration50400'
-
-    def getMigrationClass(cls,version):
-        return cls.LHCbDatasetSchemaMigration50400
-    getMigrationClass = classmethod(getMigrationClass)
-
-    def getMigrationObject(cls,obj):
-        version = obj._schema.version
-        old_cls = cls.getMigrationClass(version)
-        if not old_cls: return None #currently, this shouldn't ever happen
-        # determine whether to make LHCbDataset or OutputData
-        has_lfns_or_pfns = False
-        has_output = False
-        for f in obj.files:
-            if strToDataFile(f.name): has_lfns_or_pfns = True
-            else: has_output = True
-        if has_lfns_or_pfns and has_output: return None # don't know what to do
-        if has_lfns_or_pfns:
-            lhcbdataset = LHCbDataset()
-            lhcbdataset.depth = obj.depth
-            lhcbdataset.XMLCatalogueSlice = obj.XMLCatalogueSlice
-            for f in obj.files: lhcbdataset.files.append(strToDataFile(f.name))
-            return lhcbdataset
-        else:
-            outputdata = OutputData()
-            for f in obj.files: outputdata.files.append(f.name)
-            return outputdata
-    getMigrationObject = classmethod(getMigrationObject)
         
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -270,33 +202,24 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 
 def string_datafile_shortcut(name,item):
     if type(name) is not type(''): return None
-    file = strToDataFile(name)
-    if file is None:
-        msg = 'Can only convert strings that begin w/ PFN: or LFN: to '\
-              'data files.'
-        raise GangaException(msg)
-    return file
+    if item is None: return None # used to be c'tor, but shouldn't happen now
+    else: # something else...require pfn: or lfn:
+        file = strToDataFile(name,False)
+        return file
+    return None
 
 allComponentFilters['datafiles'] = string_datafile_shortcut
 
 def string_dataset_shortcut(files,item):
     if type(files) is not type([]): return None
     if item == Job._schema['inputdata']:
-        ds = LHCbDataset()        
-        for f in files:
-            if type(f) is type(''):
-                file = strToDataFile(f)
-                if file is None:
-                    msg = 'Can only convert strings that begin w/ PFN: or '\
-                          'LFN: to data files.'
-                    raise GangaException(msg)
-                ds.files.append(file)
-            else:
-                ds.files.append(f)
-        ds._auto__init__()
+        ds = LHCbDataset()
+        ds.__construct__([files])
         return ds               
     elif item == Job._schema['outputdata']:
         return OutputData(files=files)
+    else:
+        return None # used to be c'tors, but shouldn't happen now
 
 allComponentFilters['datasets'] = string_dataset_shortcut
 
