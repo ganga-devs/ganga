@@ -22,7 +22,7 @@ _external_packages = {
                      'noarch':True 
                      },
     'panda-client' : { 'version' : '0.2.21', 
-                       'PYTHONPATH':['lib/python2.5/site-packages'],
+                       'PYTHONPATH':['lib/python2.3/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
                        'noarch':True
