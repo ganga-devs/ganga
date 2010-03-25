@@ -104,6 +104,9 @@ class JobManagerError(GangaException):
 
 class GangaAttributeError(AttributeError,GangaException):
     def __init__(self,*a,**k): AttributeError.__init__(self,*a,**k)
+
+class GangaValueError(ValueError,GangaException):
+    def __init__(self,*a,**k): ValueError.__init__(self,*a,**k)
     
 class ProtectedAttributeError(GangaAttributeError):
     'Attribute is read-only and may not be modified by the user (for example job.id)'

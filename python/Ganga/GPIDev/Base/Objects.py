@@ -25,6 +25,7 @@ import copy
 import Ganga.GPIDev.Schema as Schema
 
 from Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, isType, TypeMismatchError
+from Ganga.Core import GangaValueError
 
 from Ganga.Utility.logic import implies
 from Ganga.Utility.util import canLoopOver, isStringLike
@@ -130,7 +131,7 @@ class Node(object):
     def copyFrom(self,srcobj):
         # Check if this object is derived from the source object, then the copy will not throw away information
         if not isinstance(self, srcobj.__class__) and not isinstance(srcobj, self.__class__):
-            raise TypeMismatchError("copyFrom: Cannot copy from %s to %s!" % (srcobj.__class__, self.__class__))
+            raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (srcobj.__class__, self.__class__))
         for name,item in self._schema.allItems():
             if not self._schema.hasAttribute(name):
                 #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(srcobj._name,self._name))
