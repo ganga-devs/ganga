@@ -129,7 +129,7 @@ class Node(object):
     # ON FAILURE LEAVES SELF IN INCONSISTENT STATE
     def copyFrom(self,srcobj):
         # Check if this object is derived from the source object, then the copy will not throw away information
-        if not isinstance(self, srcobj.__class__):
+        if not isinstance(self, srcobj.__class__) and not isinstance(srcobj, self.__class__):
             raise TypeMismatchError("copyFrom: Cannot copy from %s to %s!" % (srcobj.__class__, self.__class__))
         for name,item in self._schema.allItems():
             if not self._schema.hasAttribute(name):
