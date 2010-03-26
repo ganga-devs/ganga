@@ -113,6 +113,8 @@ class Francesc(IApplication):
         if self.user_release_area:
             script += 'User_release_area=%s; export User_release_area\n' % \
                       expandfilename(self.user_release_area)
+        if self.platform:    
+            script += 'export CMTCONFIG=%s\n' % self.platform
         useflag = ''
         if self.masterpackage:
             (mpack, malg, mver) = parse_master_package(self.masterpackage)

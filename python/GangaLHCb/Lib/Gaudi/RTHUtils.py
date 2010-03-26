@@ -65,6 +65,8 @@ def create_runscript(app,outputdata,job):
             (config['DataOutput'],outputdata.location,jstr)
   script += 'cp = \'%s\'\n' % config['cp_cmd']
   script += 'mkdir = \'%s\'\n' % config['mkdir_cmd']
+  script += 'platform = \'%s\'\n' % app.platform
+  script += 'import os \n'   
   
   if opts:
     script += """# check that options file exists
@@ -80,8 +82,8 @@ else:
     
 """
 
-  script+="""# check that SetupProject.sh script exists, then execute it    
-import os
+  script+="""# check that SetupProject.sh script exists, then execute it
+os.environ['CMTCONFIG'] = platform  
 f=os.popen('which SetupProject.sh')
 setup_script=f.read()[:-1]
 f.close()
