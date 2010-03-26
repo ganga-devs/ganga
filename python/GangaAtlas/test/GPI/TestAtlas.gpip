@@ -3,7 +3,7 @@ from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from GangaTest.Framework.utils import is_job_finished
 
 srcdir = "/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/"
-rcdir1510 = srcdir + "v1510"
+srcdir1510 = srcdir + "v1510"
 srcdirana = srcdir + "v1565"
 release = '15.6.5'
 release_mc='15.6.5.1'
