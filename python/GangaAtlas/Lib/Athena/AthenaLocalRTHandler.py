@@ -521,6 +521,25 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             
             if job.inputdata.tagdataset:
                 environment['TAGDATASETNAME'] = ':'.join(job.inputdata.tagdataset)
+                
+        if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
+            environment['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
+            environment['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
+            try:
+                environment['X509CERTDIR']=os.environ['X509_CERT_DIR']
+            except KeyError:
+                environment['X509CERTDIR']=''
+            try:
+                proxy = os.environ['X509_USER_PROXY']
+            except KeyError:
+                proxy = '/tmp/x509up_u%s' % os.getuid()
+
+            REMOTE_PROXY = '%s:%s' % (socket.getfqdn(),proxy)
+            environment['REMOTE_PROXY'] = REMOTE_PROXY
+            try:
+                environment['GANGA_GLITE_UI']=configLCG['GLITE_SETUP']
+            except:
+                pass
 
         environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
 
