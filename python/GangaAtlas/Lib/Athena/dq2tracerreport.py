@@ -42,11 +42,11 @@ def fill_report(uuid = None, eventVersion = None, remoteSite=None,
         'filesize': filesize,
         'guid': guid,
         'usr': usr, 
-        'hostname': hostname,
-        'ip': ip,
-        'suspicious': suspicious, 
-        'appid': appid,
-        'usrdn': usrdn 
+        #'hostname': hostname,
+        #'ip': ip,
+        #'suspicious': suspicious, 
+        #'appid': appid,
+        #'usrdn': usrdn 
     }
     
     return report
