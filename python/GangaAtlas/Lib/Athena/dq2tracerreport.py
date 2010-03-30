@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, re, time, md5, commands
+import os, re, time, md5, commands, socket
 from dq2.tracer.client.TracerClient import TracerClient
 from dq2.common import generate_uuid
 
@@ -11,7 +11,8 @@ def fill_report(uuid = None, eventVersion = None, remoteSite=None,
                 relativeStart=None, transferStart=None, validateStart=None,
                 timeEnd=None, duid=None,version=None, dataset=None,
                 protocol=None, filename=None, filesize=None,
-                guid=None, usr=None ):
+                guid=None, usr=None, 
+                hostname=None, ip=None, suspicious=0, appid=None, usrdn=None  ):
     if uuid:
         uuid = uuid.replace('-','')
     if duid:
@@ -40,7 +41,12 @@ def fill_report(uuid = None, eventVersion = None, remoteSite=None,
         'filename': filename,
         'filesize': filesize,
         'guid': guid,
-        'usr': usr
+        'usr': usr, 
+        'hostname': hostname,
+        'ip': ip,
+        'suspicious': suspicious, 
+        'appid': appid,
+        'usrdn': usrdn 
     }
     
     return report
@@ -52,6 +58,7 @@ if __name__ == '__main__':
     print '--------------'
     print 'DQ2 tracer preparation ...'
 
+    usrDN = commands.getstatusoutput('voms-proxy-info -identity')[1]
     # Event uuid
     uuid = generate_uuid()
     # Read LFC and transfer time produced in ganga-stage-in-out-dq2.py
@@ -59,7 +66,7 @@ if __name__ == '__main__':
     tracertimes = [ line.strip() for line in file('dq2tracertimes.txt') ]
     # User hash
     m=md5.new()
-    m.update(commands.getstatusoutput('voms-proxy-info -identity')[1])
+    m.update(usrDN)
     usrhex = m.hexdigest()
 
     numfiles3 = 0
@@ -138,6 +145,10 @@ if __name__ == '__main__':
     if not input_files:
         input_files = input_files_txt
 
+    # Determine new variables
+    hostName = socket.gethostbyaddr(socket.gethostname())[0]
+    ipAddr = socket.gethostbyaddr(socket.gethostname())[2][0]
+
     nreport = 0
     for longfilename in input_files:
         prot = re.findall(protpat, longfilename)
@@ -170,7 +181,12 @@ if __name__ == '__main__':
                              duid = None,
                              filesize = -1,
                              version = 0,
-                             usr = usrhex
+                             usr = usrhex,
+                             hostname = hostName,
+                             ip = ipAddr,
+                             suspicious = 0, 
+                             appid = None,
+                             usrdn = usrDN
                              )
         #print report
         try:
