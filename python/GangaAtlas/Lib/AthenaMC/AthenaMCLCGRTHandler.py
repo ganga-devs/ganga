@@ -312,6 +312,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             requirements.software=['VO-atlas-offline-%s' % app.atlas_rel ]
         elif app.atlas_rel >= "14.0.0":
             requirements.software=['VO-atlas-offline-%s-i686-slc4-gcc34-opt' % app.atlas_rel ]
+        elif app.atlas_rel> "15.6.1":
+            requirements.software=['VO-atlas-offline-%s-i686-slc5-gcc43-opt' % app.atlas_rel ]
         else:
             requirements.software=['VO-atlas-production-%s' % app.atlas_rel ]
         # case of prod_release set
