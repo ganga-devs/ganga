@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions
+import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions, time
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core import BackendError
@@ -30,7 +30,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         logger.debug('ExecutablePandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
 #       Pack inputsandbox
-        inputsandbox = 'inputsandbox.%s.tar' % commands.getoutput('uuidgen') 
+        inputsandbox = 'sources.%s.tar' % commands.getoutput('uuidgen') 
         inpw = job.getInputWorkspace()
         for fname in [f.name for f in job.inputsandbox]:
             fname.rstrip(os.sep)
@@ -165,7 +165,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         jspec = JobSpec()
         jspec.jobDefinitionID   = job._getRoot().id
         jspec.jobName           = commands.getoutput('uuidgen')
-        jspec.transformation    = '%s/runGen-00-00-01' % Client.baseURLSUB
+        jspec.transformation    = '%s/runGen-00-00-02' % Client.baseURLSUB
         if job.inputdata:
             jspec.prodDBlock    = job.inputdata.dataset[0]
         else:
@@ -255,17 +255,18 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             tarnum = 1
             if f.find('*') != -1:
             # archive *
-                outfiles[f] = "outputbox%i.tar.gz" % tarnum
+                outfiles[f] = "outputbox%i.%s.%s.tar.gz" % (tarnum, job.getFQID('.'), time.strftime("%Y%m%d%H%M%S") )
                 tarnum += 1
             else:
-                outfiles[f] = f
-       #     fout = FileSpec()
-       #     fout.lfn = outfiles[f]
-       #     fout.type = 'output'
-       #     fout.dataset           = job.outputdata.datasetname
-       #     fout.destinationDBlock = job.outputdata.datasetname
-       #     fout.destinationSE     = job.backend.site
-       #     jspec.addFile(fout)
+                outfiles[f] = "%s.%s.%s" %(f, job.getFQID('.'), time.strftime("%Y%m%d%H%M%S"))
+
+            fout = FileSpec()
+            fout.lfn = outfiles[f]
+            fout.type = 'output'
+            fout.dataset           = job.outputdata.datasetname
+            fout.destinationDBlock = job.outputdata.datasetname
+            fout.destinationSE     = job.backend.site
+            jspec.addFile(fout)
 
         param += '-o "%s" ' % (outfiles) # must be double quotes, because python prints strings in 'single quotes' 
 
