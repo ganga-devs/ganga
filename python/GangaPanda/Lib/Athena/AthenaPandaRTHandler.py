@@ -336,7 +336,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
 #       output files
         outMap = {}
-        AthenaUtils.convertConfToOutput(self.runConfig,jspec,outMap,job.outputdata.datasetname,self.extOutFile)
+        individualOutDS = False
+        AthenaUtils.convertConfToOutput(self.runConfig,jspec,outMap,individualOutDS,self.extOutFile)
 
 #       log files
 
