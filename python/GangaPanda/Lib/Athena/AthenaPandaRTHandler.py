@@ -339,16 +339,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         individualOutDS = False
         AthenaUtils.convertConfToOutput(self.runConfig,jspec,outMap,individualOutDS,self.extOutFile)
 
-#       log files
-
-        flog = FileSpec()
-        flog.lfn = '%s._$PANDAID.log.tgz' % job.outputdata.datasetname
-        flog.type = 'log'
-        flog.dataset           = job.outputdata.datasetname
-        flog.destinationDBlock = job.outputdata.datasetname
-        flog.destinationSE     = job.backend.site
-        jspec.addFile(flog)
-
 #       job parameters
         param = ''
         # FIXME if not options.nobuild:
