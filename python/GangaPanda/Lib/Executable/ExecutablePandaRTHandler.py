@@ -183,6 +183,9 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         # memory
         if job.backend.requirements.memory != -1:
             jspec.minRamCount = job.backend.requirements.memory
+        # cputime     
+        if job.backend.requirements.cputime != -1:
+            jspec.maxCpuCount = job.backend.requirements.cputime
         jspec.computingSite     = site
 
 #       input files FIXME: many more input types
