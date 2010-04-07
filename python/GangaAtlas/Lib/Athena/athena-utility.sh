@@ -967,6 +967,16 @@ prepend_filestager_joption() {
     fi
 }
 
+## routine for append FileStager_jobOption.py in the Athena job option list
+append_filestager_joption() {
+    export ATHENA_OPTIONS="$ATHENA_OPTIONS FileStager_jobOption.py "
+
+    if [ -e athena_options ]; then
+        ATHENA_OPTIONS_NEW=`cat athena_options`
+        echo "$ATHENA_OPTIONS_NEW FileStager_jobOption.py" > athena_options
+    fi
+}
+
 ## routine for making file stager job option: input.py
 make_filestager_joption() {
 
@@ -1034,7 +1044,12 @@ make_filestager_joption() {
         # at this stage, the "FileStager_jobOption.py" and "input.py" should be created.
         # prepend "FileStager_jobOption.py" to the list of user job options.
         # "input.py" will be treated later in run_athena.
-        prepend_filestager_joption
+        if [ n$ATLAS_EXETYPE == n'PYARA' ] || [ n$ATLAS_EXETYPE == n'ROOT' ] ; then
+            #append_filestager_joption
+	    echo "Not appending/prepending FileStager_jobOptions.py"
+	else 
+            prepend_filestager_joption
+        fi
 
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
         export PATH=$PATH_BACKUP
