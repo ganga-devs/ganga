@@ -162,7 +162,7 @@ class Transform(GangaObject):
       jobslice = JobRegistrySlice(sname)
       def addjob(j):
          if partition is None or self._app_partition[j.application.id] == partition:
-            jobslice.jobs[j.fqid] = stripProxy(j)
+            jobslice.objects[j.fqid] = stripProxy(j)
 
       for j in GPI.jobs:
          try:
