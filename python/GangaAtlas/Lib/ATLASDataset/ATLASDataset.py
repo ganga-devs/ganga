@@ -245,6 +245,23 @@ class ATLASDataset(Dataset):
     get_filenames=staticmethod(get_filenames)
 
 
+class ATLASTier3Dataset(Dataset):
+    """ATLASTier3Dataset is a list of PFNs"""
+    
+    _schema = Schema(Version(1,0), {
+        'names': SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc='List of input file Physical File Names'),
+        })
+    
+    _category = 'datasets'
+    _name = 'ATLASTier3Dataset'
+
+    _exportmethods = []
+
+    _GUIPrefs = [ { 'attribute' : 'names',  'widget' : 'String_List' } ]
+
+    def __init__(self):
+        super(ATLASTier3Dataset, self).__init__()
+
 class ATLASLocalDataset(Dataset):
     """ATLAS Datasets is a list of local files"""
     
