@@ -762,8 +762,14 @@ class Athena(IApplication):
 
         if not os.access(tmpDir,os.W_OK):    
             os.makedirs(tmpDir)
-            
-        self.user_area_path = tmpDir
+
+        # Check if user_area_path exists
+        if self.user_area_path != '':
+            if not os.path.exists(self.user_area_path):
+                logger.warning('user_area_path %s does not exist! Using %s instead.', self.user_area_path, tmpDir )
+                self.user_area_path = tmpDir
+        else:
+            self.user_area_path = tmpDir
         savedir=os.getcwd()
 
         # set extFile
