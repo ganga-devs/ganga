@@ -150,7 +150,7 @@ class Athena(IApplication):
                  'atlas_cmtconfig'        : SimpleItem(defvalue='',doc='ATLAS CMTCONFIG environment variable'),
                  'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT, TRF '),
                  'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
-                 'atlas_dbrelease'        : SimpleItem(defvalue='',doc='ATLAS DBRelease DQ2 dataset and DQ2Release tar file'),
+                 'atlas_dbrelease'        : SimpleItem(defvalue='',doc='ATLAS DBRelease DQ2 dataset and DQ2Release tar file. Use LATEST for most recent.'),
                  'atlas_run_dir'          : SimpleItem(defvalue='', doc='ATLAS run directory'),
                  'atlas_run_config'       : SimpleItem(defvalue={}, doc='ATLAS run configuration'),
                  'atlas_supp_stream'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='suppress some output streams. e.g., [\'ESD\',\'TAG\']'),
@@ -997,7 +997,7 @@ class Athena(IApplication):
         # check grid/local class match up
         if job.backend._name in ['LCG', 'Panda', 'NG']:
             # check splitter
-            if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AnaTaskSplitterJob']:
+            if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AnaTaskSplitterJob', 'ATLASTier3Splitter']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
             
             # Check that only DQ2Datasets/AMIDatasets are used on the grid        
@@ -1025,7 +1025,11 @@ class Athena(IApplication):
         # check recex options
         if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
             raise ApplicationConfigurationError(None, 'RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
-        
+
+        if self.atlas_dbrelease == 'LATEST':       
+            from pandatools import Client
+            self.atlas_dbrelease = Client.getLatestDBRelease(False)
+ 
         return (0,None)
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -1137,6 +1141,67 @@ class AthenaSplitterJob(ISplitter):
             j.outputsandbox=job.outputsandbox
 
             subjobs.append(j)
+        return subjobs
+
+class ATLASTier3Splitter(ISplitter):
+    """Splitter for ATLASTier3Dataset"""
+    
+    _name = "ATLASTier3Splitter"
+    _schema = Schema(Version(1,0), {
+        'numjobs'              : SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
+        'numfiles'             : SimpleItem(defvalue=0,sequence=0, doc="Number of files per subjob")
+        } )
+
+    _GUIPrefs = [ { 'attribute' : 'numjobs',           'widget' : 'Int' },
+                  { 'attribute' : 'numfiles',          'widget' : 'Int' },
+                  ]
+
+    ### Splitting based on numsubjobs
+    def split(self,job):
+        from Ganga.GPIDev.Lib.Job import Job
+        subjobs = []
+        logger.debug("ATLASTier3Splitter split called")
+        
+        if not job.inputdata:
+            raise ApplicationConfigurationError(None, "ATLASTier3Splitter requires ATLASTier3Dataset")
+        if job.inputdata._name != 'ATLASTier3Dataset':
+            raise ApplicationConfigurationError(None, "ATLASTier3Splitter requires ATLASTier3Dataset")
+        if self.numjobs and self.numfiles:
+            raise ApplicationConfigurationError(None, "ATLASTier3Splitter: specify numjobs or numfiles, but not both.")
+        
+        allnames = list(job.inputdata.names)
+
+        # default behaviour is 20 subjobs
+        if not self.numjobs and not self.numfiles:
+            self.numjobs = min(20,len(allnames))
+
+        # limit numfiles and numjobs
+        self.numjobs = min(self.numjobs,len(allnames))
+        self.numfiles = min(self.numfiles,len(allnames))
+
+        # calculate numfiles and numjobs
+        if self.numfiles:
+            (self.numjobs,r) = divmod(len(allnames),self.numfiles)
+            if r: self.numjobs += 1
+        elif self.numjobs:
+            (self.numfiles,r) = divmod(len(allnames),self.numjobs)
+            if r: self.numfiles += 1
+
+        # Do the splitting
+        allnames.reverse()
+        for i in range(self.numjobs):
+            j = Job()
+            j.inputdata=job.inputdata
+            j.inputdata.names=[]
+            while allnames and len(j.inputdata.names) < self.numfiles:
+                j.inputdata.names.append(allnames.pop())
+            j.outputdata = job.outputdata
+            j.application = job.application
+            j.backend = job.backend
+            j.inputsandbox = job.inputsandbox
+            j.outputsandbox = job.outputsandbox
+            subjobs.append(j)
+        
         return subjobs
 
 from Ganga.GPIDev.Adapters.IMerger import IMerger
