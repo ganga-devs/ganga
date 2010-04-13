@@ -118,7 +118,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # validate inputdata
         if job.inputdata:
             if job.inputdata._name == 'DQ2Dataset':
+                self.inputdatatype='DQ2'
                 logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            elif job.inputdata._name == 'ATLASTier3Dataset':
+                self.inputdatatype='Tier3'
+                logger.info('Input dataset is a Tier3 PFN list')
             else: 
                 raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
         else:
@@ -178,11 +182,18 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if tmpName != '':
                 self.extOutFile.append(tmpName)
 
-        # run brokerage here if not splitting
-        if not job.splitter:
-            runPandaBrokerage(job)
-        elif job.splitter._name <> 'DQ2JobSplitter' and job.splitter._name <> 'AnaTaskSplitterJob':
-            raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter')
+        # run brokerage here if not splitting'
+        if self.inputdatatype=='DQ2':
+            if not job.splitter:
+                runPandaBrokerage(job)
+            elif job.splitter._name <> 'DQ2JobSplitter' and job.splitter._name <> 'AnaTaskSplitterJob':
+                raise ApplicationConfigurationError(None,'Splitting with Panda+DQ2Dataset requires DQ2JobSplitter')
+        else: #Tier3
+            if job.splitter and job.splitter._name != 'ATLASTier3Splitter':
+                raise ApplicationConfigurationError(None,'Splitting with Panda+ATLASTier3Dataset requires ATLASTier3Splitter')
+            if job.backend.site == 'AUTO':
+                raise ApplicationConfigurationError(None,'Panda+ATLASTier3Dataset requires a specified backend.site')
+            
         if job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
 
@@ -244,7 +255,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         logger.debug('AthenaPandaRTHandler prepare called for %s', job.getFQID('.'))
 
 #       in case of a simple job get the dataset content, otherwise subjobs are filled by the splitter
-        if job.inputdata and not job._getRoot().subjobs:
+        if job.inputdata and self.inputdatatype=='DQ2' and not job._getRoot().subjobs:
             if not job.inputdata.names:
                 for guid, lfn in job.inputdata.get_contents():
                     job.inputdata.guids.append(guid)
@@ -272,7 +283,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if not job.outputdata.datasetname.startswith('%s.%s.'%(usertag,username)):
             job.outputdata.datasetname = '%s.%s.'%(usertag,username)+job.outputdata.datasetname
         
-        if job.inputdata:
+        if job.inputdata and self.inputdatatype=='DQ2':
             if len(job.inputdata.dataset) > 1:
                 raise ApplicationConfigurationError(None,'Multiple input datasets per subjob not supported. Use a container dataset?')
 
@@ -282,7 +293,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
         jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
         jspec.transformation    = '%s/runAthena-00-00-11' % Client.baseURLSUB
-        if job.inputdata:
+        if job.inputdata and self.inputdatatype=='DQ2':
             jspec.prodDBlock    = job.inputdata.dataset[0]
         else:
             jspec.prodDBlock    = 'NULL'
@@ -320,7 +331,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.addFile(flib)
 
 #       input files FIXME: many more input types
-        if job.inputdata:
+        if job.inputdata and self.inputdatatype=='DQ2':
             for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
                 finp = FileSpec()
                 finp.lfn            = lfn
@@ -415,7 +426,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '--trf '
             param += '--ara '
         if job.backend.accessmode == 'FILE_STAGER':
-            param += '--accessmode=filestager'
+            param += '--accessmode=filestager '
+        if self.inputdatatype == 'Tier3':
+            param += '--givenPFN '
  
         jspec.jobParameters = param
         
