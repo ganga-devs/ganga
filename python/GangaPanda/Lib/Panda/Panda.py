@@ -525,6 +525,8 @@ class Panda(IBackend):
                             job.updateStatus('completed')
                         elif status.jobStatus == 'failed':
                             job.updateStatus('failed')
+                        elif status.jobStatus == 'cancelled':
+                            job.updateStatus('killed')
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
 
@@ -553,6 +555,8 @@ class Panda(IBackend):
                             job.updateStatus('running')
                         elif status.jobStatus == 'failed':
                             job.updateStatus('failed')
+                        elif status.jobStatus == 'cancelled':
+                            job.updateStatus('killed')
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
 
