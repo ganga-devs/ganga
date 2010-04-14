@@ -69,12 +69,16 @@ def findMonitoringClassesName(job):
    def _getMonClasses(option):
      """
      for a given app,backend pair return the monitoring classes or an empty string
-     if it's not defined
+     if it's None or not defined
      """
      try:
-        return mc[option]
+        monClasses = mc[option]
+        # bug #65444: never return None
+        if monClasses:
+            return monClasses
      except (ConfigError,KeyError):
-        return ''
+        pass
+     return ''
      
    # we try config parameters:    
    #  - Application/Backend
