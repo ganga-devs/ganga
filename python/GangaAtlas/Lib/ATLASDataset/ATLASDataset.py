@@ -250,6 +250,7 @@ class ATLASTier3Dataset(Dataset):
     
     _schema = Schema(Version(1,0), {
         'names': SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc='List of input file Physical File Names'),
+        'pfnListFile': FileItem(doc='A text file containing a newline-separated list of Physical File Names'),
         })
     
     _category = 'datasets'
@@ -257,7 +258,9 @@ class ATLASTier3Dataset(Dataset):
 
     _exportmethods = []
 
-    _GUIPrefs = [ { 'attribute' : 'names',  'widget' : 'String_List' } ]
+    _GUIPrefs = [ { 'attribute' : 'names',  'widget' : 'String_List' },
+                  { 'attribute' : 'pfnListFile',  'widget' : 'File' }
+                 ]
 
     def __init__(self):
         super(ATLASTier3Dataset, self).__init__()
