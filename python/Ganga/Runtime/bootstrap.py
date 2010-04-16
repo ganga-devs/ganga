@@ -49,31 +49,8 @@ import sys,time
 #_register = atexit.register
 #atexit.register = register
 
-class GangaProgram:
-    """ High level API to create instances of Ganga programs and configure/run it """
 
-    def __init__(self,hello_string=None,argv=sys.argv):
-        """ make an instance of Ganga program
-        use default hello_string if not specified
-        use sys.argv as arguments if not specified"""
-
-        self.argv = argv[:]
-        
-        #record the start time.Currently we are using this in performance measurements 
-        # see Ganga/test/Performance tests
-        self.start_time = time.time()
-
-        if hello_string is None:
-            self.hello_string = """
-*** Welcome to Ganga ***
-Version: %s
-Documentation and support: http://cern.ch/ganga
-Type help() or help('index') for online help.
-
-This is free software (GPL), and you are welcome to redistribute it
-under certain conditions; type license() for details.
-
-
+TRANSITION_MESSAGE_545 =  """
 -------------------------------------
 THIS IS A NEW MAJOR RELEASE OF GANGA
 -------------------------------------
@@ -109,6 +86,33 @@ and tasks located in
 -------------------------------------
 THIS IS A NEW MAJOR RELEASE OF GANGA
 -------------------------------------
+"""
+
+
+class GangaProgram:
+    """ High level API to create instances of Ganga programs and configure/run it """
+
+    def __init__(self,hello_string=None,argv=sys.argv):
+        """ make an instance of Ganga program
+        use default hello_string if not specified
+        use sys.argv as arguments if not specified"""
+
+        self.argv = argv[:]
+        
+        #record the start time.Currently we are using this in performance measurements 
+        # see Ganga/test/Performance tests
+        self.start_time = time.time()
+
+        if hello_string is None:
+            self.hello_string = """
+*** Welcome to Ganga ***
+Version: %s
+Documentation and support: http://cern.ch/ganga
+Type help() or help('index') for online help.
+
+This is free software (GPL), and you are welcome to redistribute it
+under certain conditions; type license() for details.
+
 """ % _gangaVersion
         else:
             self.hello_string = hello_string
@@ -563,6 +567,13 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         
     # bootstrap all system and user-defined runtime modules
     def bootstrap(self):
+        import Ganga.Utility.Config
+        config = Ganga.Utility.Config.getConfig('Configuration')
+
+        # transition message from 5.4 -> 5.5
+        if not os.path.exists(os.path.join(config['gangadir'],'repository',config['user'],'LocalXML','6.0')):
+           print TRANSITION_MESSAGE_545
+
         from Ganga.Core import GangaException
         from Ganga.Utility.Runtime import allRuntimes
         import Ganga.Utility.logging
@@ -587,7 +598,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                   exportToGPI(n,cls._proxyClass,'Classes')
 
         # set the default value for the plugins
-        import Ganga.Utility.Config
 
         default_plugins_cfg = Ganga.Utility.Config.makeConfig('Plugins','''General control of plugin mechanism.
 Set the default plugin in a given category.
