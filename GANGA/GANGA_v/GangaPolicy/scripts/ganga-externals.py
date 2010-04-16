@@ -7,7 +7,7 @@ externals_noarch = [['ApMon','2.2.11'],
                     ['paramiko', '1.7.3'],
                     ['PYTF','1.5'],
                     ['stomputil','2.0'],
-                    ['ipython', '0.6.13']]
+                    ['ipython', '0.8.4']]
 
 
 # These are the packages with architecture dependent code.
