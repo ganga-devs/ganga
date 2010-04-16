@@ -228,5 +228,10 @@ class DiracCommands:
         result = DiracCommands.dirac.getSoftwareVersions()
         return result
     getSoftwareVersions = staticmethod(getSoftwareVersions)
+
+    def getDataset(path):
+        result = DiracCommands.dirac.bkQueryPath(path)
+        return result
+    getDataset = staticmethod(getDataset)
             
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

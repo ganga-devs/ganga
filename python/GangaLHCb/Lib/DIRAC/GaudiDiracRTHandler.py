@@ -27,7 +27,7 @@ def prependEnv(key, value):
 if __name__ == '__main__':
 
     prependEnv('LD_LIBRARY_PATH', getcwd() + '/lib')
-    prependEnv('PYTHONPATH', getcwd() + '/python')
+    prependEnv('PYTHONPATH', getcwd() + '/InstallArea/python')
         
     sys.exit(system(%s)/256)
   """ % cmdline
@@ -46,18 +46,19 @@ class GaudiDiracRTHandler(IRuntimeHandler):
                          % str(result))
             logger.error('Version/platform will not be validated.')
         else:
-            soft_info = result['Value'][app.get_gaudi_appname()]
-            if not app.version in soft_info:
-                versions = []
-                for v in soft_info: versions.append(v)
-                msg = 'Invalid version: %s.  Valid versions: %s' \
-                      % (app.version, str(versions))
-                raise ApplicationConfigurationError(None,msg)
-            platforms = soft_info[app.version]
-            if not app.platform in platforms:
-                msg = 'Invalid platform: %s. Valid platforms: %s' % \
-                      (app.platform,str(platforms))
-                raise ApplicationConfigurationError(None,msg)
+            if app.get_gaudi_appname() in result['Value']:
+                soft_info = result['Value'][app.get_gaudi_appname()]
+                if not app.version in soft_info:
+                    versions = []
+                    for v in soft_info: versions.append(v)
+                    msg = 'Invalid version: %s.  Valid versions: %s' \
+                          % (app.version, str(versions))
+                    raise ApplicationConfigurationError(None,msg)
+                platforms = soft_info[app.version]
+                if not app.platform in platforms:
+                    msg = 'Invalid platform: %s. Valid platforms: %s' % \
+                          (app.platform,str(platforms))
+                    raise ApplicationConfigurationError(None,msg)
         sandbox = get_master_input_sandbox(app.getJobObject(),app.extra) 
         c = StandardJobConfig('',sandbox,[],[],None)
         return c

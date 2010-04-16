@@ -143,6 +143,7 @@ class Dirac(IBackend):
     def kill(self):
         """ Kill a Dirac jobs"""         
         global dirac_ganga_server
+        if not self.id: return None
         dirac_cmd = 'result = DiracCommands.kill(%d)' % self.id
         result = dirac_ganga_server.execute(dirac_cmd)
         if not result_ok(result):
@@ -267,17 +268,20 @@ class Dirac(IBackend):
             print result.get('Message','')
 
     def getStateTime(self, status):
-        """Returns the timestamps for 'running' or 'completed' by extracting their equivalent timestamps from the
-        loggingInfo."""
+        """Returns the timestamps for 'running' or 'completed' by extracting
+        their equivalent timestamps from the loggingInfo."""
         global dirac_monitoring_server
+        if not self.id: return None
         logger.debug("Accessing getStateTime() in diracAPI")
-        dirac_cmd = "result = DiracCommands.getStateTime(%d,\'%s\')" % (self.id, status)
+        dirac_cmd = "result = DiracCommands.getStateTime(%d,\'%s\')" % \
+                    (self.id, status)
         result = dirac_monitoring_server.execute(dirac_cmd)
         return result
      
     def timedetails(self):
         """Prints contents of the loggingInfo from the Dirac API."""
         global dirac_ganga_server
+        if not self.id: return None
         logger.debug("Accessing getStateTime() in diracAPI")
         dirac_cmd = 'result = DiracCommands.timedetails(%d)' % self.id
         result = dirac_ganga_server.execute(dirac_cmd)

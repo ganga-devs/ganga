@@ -202,9 +202,11 @@ class Francesc(IApplication):
                                           self.shell)
 
         self.extra.master_input_files += [File(f,subdir='lib') for f in dlls]
-        self.extra.master_input_files += [File(f,subdir='python') for f in pys]
+        self.extra.master_input_files += [File(f,subdir='InstallArea/python')\
+                                          for f in pys]
         for dir, files in subpys.iteritems():
-            input_files = [File(f,subdir='python'+os.sep+dir) for f in files]
+            input_files = [File(f,subdir='InstallArea/python'+os.sep+dir) \
+                           for f in files]
             self.extra.master_input_files += input_files
 
     def _configure(self):

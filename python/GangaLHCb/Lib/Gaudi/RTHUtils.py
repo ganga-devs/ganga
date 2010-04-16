@@ -83,6 +83,7 @@ else:
 """
 
   script+="""# check that SetupProject.sh script exists, then execute it
+os.environ['User_release_area'] = ''  
 os.environ['CMTCONFIG'] = platform  
 f=os.popen('which SetupProject.sh')
 setup_script=f.read()[:-1]
@@ -104,8 +105,8 @@ os.environ['LD_LIBRARY_PATH'] = '.:%s/lib:%s\' %(os.getcwd(),
                                                  
 #run
 sys.stdout.flush()
-os.environ['PYTHONPATH'] = '%s/python:%s' % (os.getcwd(),
-                                             os.environ['PYTHONPATH'])
+os.environ['PYTHONPATH'] = '%s/InstallArea/python:%s' % \\
+                            (os.getcwd(), os.environ['PYTHONPATH'])
 
 """
   if which is 'GaudiPython':

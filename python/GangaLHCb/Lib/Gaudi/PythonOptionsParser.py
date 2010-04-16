@@ -218,12 +218,12 @@ class PythonOptionsParser:
         # files in sandbox which match patterns in data -> data
         for f in datalist:
             gaudi_outputdata.append(f)
-            gaudi_outsandbox.remove(f)
+            if f in gaudi_outsandbox: gaudi_outsandbox.remove(f)
         # files in data which match patterns in sandbox but not data -> sandbox
         for f in sandlist:
             if datalist.count(f) == 0 and datadatalist.count(f) == 0:
                 gaudi_outsandbox.append(f)
-                gaudi_outputdata.remove(f)
+                if f in gaudi_outputdata: gaudi_outputdata.remove(f)
 
         outsandbox += gaudi_outsandbox
         outputdata += gaudi_outputdata
