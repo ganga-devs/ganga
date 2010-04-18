@@ -97,7 +97,7 @@ else:
                 os.symlink(f, os.path.basename(f) + ".root")
                 
             # split the tag file based on file GUIDs
-            cmd = "CollSplitByGUID -src " + os.path.basename(f) + " RootCollection -splitref "+stream_ref
+            cmd = "./CollSplitByGUID.exe -src " + os.path.basename(f) + " RootCollection -splitref "+stream_ref
             rc, out = getstatusoutput(cmd)
             if (rc!=0):
                 print out

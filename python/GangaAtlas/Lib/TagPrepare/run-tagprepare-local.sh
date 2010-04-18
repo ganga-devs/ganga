@@ -142,7 +142,7 @@ if [ $retcode -ne 0 ]; then
     rm -f retcode.tmp
 fi
 if [ $retcode -ne 0 ]; then
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+    export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH_ORIG
     export PATH=$PATH_ORIG
     export PYTHONPATH=$PYTHONPATH_ORIG
     ./get_tag_info.py; echo $? > retcode.tmp

@@ -130,6 +130,9 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
         logger.warning("Copying grid proxy to input sandbox for transfer to WN...")
         inputbox = [ ( File(os.path.join(__athdirectory__,'athena-utility.sh')) ),
                      ( File(os.path.join(__directory__,'get_tag_info.py')) ),
+                     ( File(os.path.join(__directory__,'libPOOLCollectionTools.so.cmtref'))),
+                     ( File(os.path.join(__directory__,'libPOOLCollectionTools.so'))),
+                     ( File(os.path.join(__directory__,'CollSplitByGUID.exe'))),
                      ( File(gridProxy.location())) ]
             
         ## insert more scripts to inputsandbox for FileStager
@@ -145,16 +148,18 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
             atlas_software = config['ATLAS_SOFTWARE']
         except ConfigError:
             raise ConfigError('No default location of ATLAS_SOFTWARE specified in the configuration.')
-                                        
-        if app.atlas_release=='':
-            raise ConfigError("j.application.atlas_release='' - No ATLAS release version found by prepare() or specified.")
+
+        # check atlas release
+        atlas_release = '15.6.8'
+        if app.atlas_release != '15.6.8':
+            logger.warning("Atlas release '%s' not supported. Switching to 15.6.8." % app.atlas_release)
 
                                                     
         # prepare environment
         environment={
             'MAXNUMREFS'     : str(app.max_num_refs),
             'STREAM_REF'     : app.stream_ref,
-            'ATLAS_RELEASE'  : app.atlas_release,
+            'ATLAS_RELEASE'  : atlas_release,
             'ATHENA_OPTIONS' : '',
             'ATLAS_SOFTWARE' : atlas_software,
             'ATHENA_USERSETUPFILE' : '',
