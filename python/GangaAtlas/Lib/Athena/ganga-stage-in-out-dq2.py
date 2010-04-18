@@ -20,6 +20,7 @@ from dq2.location.DQLocationException import DQLocationExistsException
 from dq2.location.DQLocationException import DQLocationExistsException
 from dq2.content.DQContentException import DQFileExistsInDatasetException
 from dq2.repository.DQRepositoryException import DQDatasetExistsException
+from dq2.repository.DQRepositoryException import DQUnknownDatasetException
 
 _refreshToACache()
 
@@ -1506,7 +1507,7 @@ if __name__ == '__main__':
                     print "ERROR: Local TAG selected but no local file list."
                     sys.exit(-1)
                     
-            elif os.environ['TAG_TYPE'] == 'DQ2':
+            elif os.environ['TAG_TYPE'] in ['DQ2', 'AUTO']:
                 
                 # get dataset list
                 try:
@@ -1583,6 +1584,114 @@ if __name__ == '__main__':
                         # append
                         item = {'pfn':pfn,'guid':guid}
                         tag_files[lfn] = item
+
+
+                if os.environ['TAG_TYPE'] == 'AUTO':
+
+                    print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                    print "Identifying TAG links"
+                    ref_lkup = {}
+                    new_add_files = {}
+                    
+                    for lfn in tag_files:
+
+                        # create a symbolic link to remove the .root
+                        f = tag_files[lfn]['pfn']
+                        if not os.path.exists( f + ".root"):
+                            print "linking " + f
+                            os.symlink(f, f + ".root")
+
+                        # ----------------------------------------------------
+                        # now run the Collection Utilities if required
+                        # Note: Grabbing both ESD and AOD GUIDs
+                        cmd = "CollListFileGUID -src " + f + " RootCollection -queryopt StreamAOD_ref,StreamESD_ref | grep -E [[:alnum:]]{8}'-'[[:alnum:]]{4}'-'[[:alnum:]]{4}'-'[[:alnum:]]{4}'-'[[:alnum:]]{12} "
+                        rc, out = getstatusoutput(cmd)
+                        print out
+
+                        if (rc!=0):
+                            print "ERROR: error during CollListFileGUID. Retrying..."
+                            cmd = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP_ATH; export PATH=$PATH_BACKUP_ATH; export PYTHONPATH=$PYTHONPATH_BACKUP_ATH; CollListFileGUID -src " + f + " RootCollection -queryopt StreamAOD_ref,StreamESD_ref | grep -E [[:alnum:]]{8}'-'[[:alnum:]]{4}'-'[[:alnum:]]{4}'-'[[:alnum:]]{4}'-'[[:alnum:]]{12} "
+                            rc, out = getstatusoutput(cmd)
+
+                            print out
+                            if (rc!=0):
+                                print "ERROR: error during CollListFileGUID. Giving up..."
+                                sys.exit(-1)
+
+                        # grab the guids referenced by this file
+                        ref_guids = []
+                        for ln in out.split('\n'):
+                            try:
+                                ref_guids.append(ln.split()[0])
+                            except:
+                                continue
+
+                        print "GUIDs referenced by " + f
+                        print repr(ref_guids)
+                        if len(ref_guids) == 0:
+                            print "ERROR: No GUIDs found for " + f
+                            sys.exit(-1)
+
+                        # now find the dataset and file
+                        for ref_guid in ref_guids:
+
+                            print "Getting dataset referenced by GUID %s" % ref_guid
+
+                            ref_name = ''
+                            ref_dataset = ''
+
+                            # check the cache first
+                            for lkup_name in ref_lkup:
+                                if ref_lkup[lkup_name][0].has_key(ref_guid):
+                                    ref_name = ref_lkup[lkup_name][0][ref_guid]['lfn']
+                                    ref_dataset = lkup_name
+                                    new_add_files[ref_dataset].append([ref_name, ref_guid])
+                                    
+                            if ref_name != '' and ref_dataset != '':
+                                continue
+
+                            ref_vuids = dq2.contentClient.queryDatasetsWithFileByGUID(ref_guid)
+                            if len(ref_vuids) == 0:
+                                continue
+
+                            for ref_vuid in ref_vuids:
+
+                                try:
+                                    print "Trying VUID %s for GUID %s... " % (ref_vuid, ref_guid)
+                                    ref_dataset = dq2.repositoryClient.resolveVUID(ref_vuid)
+                                    ref_name = ref_dataset.get('dsn')
+                                    if ref_name != '' and len(dq2.listDatasetReplicas(ref_name)) != 0 and (ref_name.find(".ESD.") != -1 or ref_name.find(".AOD.") != -1):
+                                        break
+                                    else:
+                                        ref_name = ''
+
+                                except DQUnknownDatasetException:
+                                    print "ERROR Finding dataset for vuid for " + ref_vuid
+
+                            if ref_name == '':
+                                continue
+
+                            # store useful stuff
+                            ref_files = dq2.listFilesInDataset(ref_name)
+                            if ref_files[0].has_key(ref_guid):
+
+                                if not new_add_files.has_key(ref_name):
+                                    new_add_files[ref_name] = []
+
+                                new_add_files[ref_name].append([ref_files[0][ref_guid]['lfn'], ref_guid])
+
+                                # cache this dataset in case it's referenced elsewhere...
+                                ref_lkup[ref_name] = ref_files
+
+                    # store the additional files
+                    str = ""
+                    for d in new_add_files:
+                        for f in new_add_files[d]:
+                            str += d + ":" + f[0] + ":" + f[1] + '\n'
+                        
+                    open("add_files", "w").write(str)
+                    print "New add_files:"
+                    print str
 
         # Sort out datasets, create PFC and input.py #####################################
         # Get datasetnames
@@ -1879,7 +1988,18 @@ if __name__ == '__main__':
             # get PFN
             pfn = dirPfnMap[lfn]
             surl = sUrlMap[lfn]
-            
+
+            # change the PFN for TAG-referenced files
+            if os.environ.has_key('TAG_TYPE') and add_lfns:
+                if lfn in add_lfns:
+                    if (configSETYPE == 'dpm'):
+                        # remove protocol and host
+                        pfn = re.sub('^gfal:','',surl)
+                        pfn = re.sub('^[^:]+://[^/]+','',pfn)
+                        # remove redundant /
+                        pfn = re.sub('^//','/',pfn)
+                        pfn = "rfio:" + pfn
+                    
             # append
             item = {'pfn':pfn, 'guid':guid, 'surl':surl}
             files[lfn] = item

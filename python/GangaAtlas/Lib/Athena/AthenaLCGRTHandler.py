@@ -94,12 +94,22 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     input_files = job.inputdata.names
 
                     if job.inputdata.tag_info:
+
+                        # check for conflicts with TAG_LOCAL or TAG_COPY
+                        if job.inputdata.type in ['TAG_LOCAL', 'TAG_COPY']:
+                            raise ApplicationConfigurationError(None, "Cannot provide both tag_info and run as '%s'. Please use one or the other!" % job.inputdata.type)
+                        
+                        # check if FILE_STAGER is used
+                        if job.inputdata.type == 'FILE_STAGER':
+                            logger.warning("TAG jobs currently can't use the FILE_STAGER. Switching to DQ2_COPY instead.")
+                            job.inputdata.type = 'DQ2_COPY'
+                        
                         # add additional file info for tags
                         for tag_file in job.inputdata.tag_info:
                             for ref in job.inputdata.tag_info[tag_file]['refs']:
                                 add_files.append( ref[1] + ':' + ref[0] + ':' + ref[2] )
                     
-                    if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER' ]:
+                    if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER', 'TAG_LOCAL', 'TAG_COPY' ]:
                         job.inputdata.type ='DQ2_LOCAL'
                     if not job.inputdata.datatype in ['DATA', 'MC', 'MuonCalibStream']:
                         job.inputdata.datatype ='MC'
@@ -115,7 +125,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     input_files = ATLASDataset.get_filenames(app)
 
                 elif job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset':
-                    if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER' ]:
+                    if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER', 'TAG_LOCAL', 'TAG_COPY' ]:
                         job.inputdata.type ='DQ2_LOCAL'
                     if not job.inputdata.datatype in ['DATA', 'MC', 'MuonCalibStream']:
                         job.inputdata.datatype ='MC'
@@ -345,7 +355,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['TAG_TYPE'] = 'LOCAL'                
 
         # Fix DATASETNAME env variable for DQ2_COPY mode
-        if job.inputdata and ( job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset') and (job.inputdata.type=='DQ2_LOCAL' or job.inputdata.type=='DQ2_COPY' or job.inputdata.type=='FILE_STAGER'):
+        if job.inputdata and ( job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset') and (job.inputdata.type in ['DQ2_LOCAL', 'DQ2_COPY', 'FILE_STAGER', 'TAG_LOCAL', 'TAG_COPY' ]):
             if job.inputdata.dataset:
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import resolve_container
                 datasets = resolve_container(job.inputdata.dataset)

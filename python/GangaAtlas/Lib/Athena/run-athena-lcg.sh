@@ -76,6 +76,20 @@ then
 fi
 
 ################################################
+# check for TAG options
+if [ n$DATASETTYPE == n'TAG_LOCAL' ];
+then
+    export DATASETTYPE='DQ2_LOCAL'
+    export TAG_TYPE='AUTO'
+fi
+
+if [ n$DATASETTYPE == n'TAG_COPY' ];
+then
+    export DATASETTYPE='DQ2_COPY'
+    export TAG_TYPE='AUTO'
+fi
+
+################################################
 # setup CMT 
 cmt_setup
 
@@ -428,13 +442,14 @@ if [ n$DATASETTYPE = n'DQ2_COPY' ] || ( [ $retcode -ne 0 ] && [ ! -z $DATASETFAI
     cat - >input.py <<EOF
 ic = []
 if os.path.exists('input_files'):
+
     for lfn in file('input_files'):
         name = os.path.basename(lfn.strip())
         pfn = os.path.join(os.getcwd(),name)
         if (os.path.exists(pfn) and (os.stat(pfn).st_size>0)):
             print 'Input: %s' % name
             ic.append('%s' % name)
-        elif (os.path.exists(lfn.strip()) and (os.stat(lfn.strip()).st_size>0)):
+        elif (os.path.exists(lfn.strip()) and (os.stat(lfn.strip()).st_size>0) and not lfn in add_files):
             print 'Input: %s' % lfn.strip()
             ic.append('%s' % lfn.strip())
     EventSelector.InputCollections = ic
@@ -460,6 +475,7 @@ EOF
     cat - >preJobO.py <<EOF
 ic = []
 if os.path.exists('input_files'):
+
     for lfn in file('input_files'):
         name = os.path.basename(lfn.strip())
         pfn = os.path.join(os.getcwd(),name)
@@ -522,7 +538,17 @@ EOF
 	then
 	rm PoolFileCatalog.xml
     fi
-    
+
+    # sort out input files for TAG if required
+    echo "::::::::::::   " $TAG_TYPE
+    if [ n$TAG_TYPE = n'LOCAL' ]
+	then
+	echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+	ls -ltr
+	mv input_files input_files2
+	mv tag_file_list input_files
+    fi
+
     # Setup new dq2- tools
     if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 	then
@@ -633,41 +659,46 @@ EOF
         fi
     fi
 
-    cat input_files | while read filespec
+    # grab all the additional files
+    cat add_files | while read filespec
       do
-      for file in $filespec
-	do
-	
-        # Network traffic
-	NET_ETH_RX_PREATHENA=0
-	ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
-	if [ -z $ETH ] 
-	    then
-	    ETH='eth0'
-	fi
-	NET_ETH_RX_PREATHENA=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
-	if [ -z $NET_ETH_RX_PREATHENA ] 
-	    then
-	    NET_ETH_RX_PREATHENA=`/usr/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
-	fi
-	echo NET_ETH_RX_PREATHENA=$NET_ETH_RX_PREATHENA
+      
+      file=`echo $filespec | cut -d: -f2`
+      ADDDATASETNAME=`echo $filespec | cut -d: -f1`
 
-	echo "Downloading input file $file ..."
+      echo "==============================================="
+      echo $file    $ADDDATASETNAME
+
+      # Network traffic
+      NET_ETH_RX_PREATHENA=0
+      ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
+      if [ -z $ETH ] 
+	  then
+	  ETH='eth0'
+      fi
+      NET_ETH_RX_PREATHENA=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+      if [ -z $NET_ETH_RX_PREATHENA ] 
+	  then
+	  NET_ETH_RX_PREATHENA=`/usr/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+      fi
+      echo NET_ETH_RX_PREATHENA=$NET_ETH_RX_PREATHENA
+      
+      echo "Downloading additional file $file ..."
 	let "I += 1"
         # use dq2-get to download input file
 	if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
 	    then
 	    for ((i=1;i<=3;i+=1)); do
 		echo Copying $file, attempt $i of 3
-		dq2-get --client-id=ganga -d --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
-		if [ -e $DATASETNAME/$file ]
+		dq2-get --client-id=ganga -d --automatic --timeout=300 --files=$file $ADDDATASETNAME;  echo $? > retcode.tmp
+		if [ -e $ADDDATASETNAME/$file ]
 		    then
-		    mv $DATASETNAME/* .
+		    mv $ADDDATASETNAME/* .
 		    echo $file > input.txt
 		    echo successfully retrieved $file
 		    break
 		else
-		    echo 'ERROR: dq2-get of inputfile failed !'
+		    echo 'ERROR: dq2-get of addfile failed !'
 		    echo 'Retry with changed environment'
 		    LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
 		    PATH_BACKUP=$PATH
@@ -682,11 +713,11 @@ EOF
 		    #export PATH=$pypath:$PATH
 		    #export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
 	
-		    dq2-get --client-id=ganga -d --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
+		    dq2-get --client-id=ganga -d --automatic --timeout=300 --files=$file $ADDDATASETNAME;  echo $? > retcode.tmp
 
-		    if [ -e $DATASETNAME/$file ]
+		    if [ -e $ADDDATASETNAME/$file ]
 			then
-			mv $DATASETNAME/* .
+			mv $ADDDATASETNAME/* .
 			echo $file > input.txt
 			echo successfully retrieved $file
 			export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
@@ -694,7 +725,7 @@ EOF
 			export PYTHONPATH=$PYTHONPATH_BACKUP
 			break
 		    else
-			echo 'ERROR: dq2-get of inputfile failed !'
+			echo 'ERROR: dq2-get of addfile failed !'
 			echo '1'>retcode.tmp
 		    fi 
 		    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
@@ -706,6 +737,103 @@ EOF
 	    echo 'ERROR: DQ2Clients with dq2-get are not installed at the 
 site - please contact Ganga support mailing list.'
 	    echo '1'>retcode.tmp
+	fi
+
+	retcode=`cat retcode.tmp`
+	rm -f retcode.tmp
+	ls -rtla
+	
+	if [ $retcode -eq 0 ] && [ -e $file ]
+	    then
+        # Create PoolFileCatalog.xml
+	    pool_insertFileToCatalog $file; echo $? > retcode.tmp
+	    retcode=`cat retcode.tmp`
+	    rm -f retcode.tmp
+	fi
+      done
+
+    cat input_files | while read filespec
+      do
+      for file in $filespec
+	do
+	
+	
+	# check for local files as input due to TAG
+	if [ n$TAG_TYPE != n'LOCAL' ]
+	    then
+
+            # Network traffic
+	    NET_ETH_RX_PREATHENA=0
+	    ETH=`/sbin/ifconfig | grep Ethernet | head -1 | awk '{print $1}'`
+	    if [ -z $ETH ] 
+		then
+		ETH='eth0'
+	    fi
+	    NET_ETH_RX_PREATHENA=`/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+	    if [ -z $NET_ETH_RX_PREATHENA ] 
+		then
+		NET_ETH_RX_PREATHENA=`/usr/sbin/ifconfig $ETH | grep 'RX bytes' | awk '{print $2}' | cut -d : -f 2`
+	    fi
+	    echo NET_ETH_RX_PREATHENA=$NET_ETH_RX_PREATHENA
+	    
+	    echo "Downloading input file $file ..."
+	    let "I += 1"
+            # use dq2-get to download input file
+	    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+		then
+		for ((i=1;i<=3;i+=1)); do
+		    echo Copying $file, attempt $i of 3
+		    dq2-get --client-id=ganga -d --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
+		    if [ -e $DATASETNAME/$file ]
+			then
+			mv $DATASETNAME/* .
+			echo $file > input.txt
+			echo successfully retrieved $file
+			break
+		    else
+			echo 'ERROR: dq2-get of inputfile failed !'
+			echo 'Retry with changed environment'
+			LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+			PATH_BACKUP=$PATH
+			PYTHONPATH_BACKUP=$PYTHONPATH
+			export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
+			export PATH=$PATH_ORIG
+			export PYTHONPATH=$PYTHONPATH_ORIG
+			if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
+			    then
+			    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
+			fi
+		    #export PATH=$pypath:$PATH
+		    #export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
+			
+			dq2-get --client-id=ganga -d --automatic --timeout=300 --files=$file $DATASETNAME;  echo $? > retcode.tmp
+			
+			if [ -e $DATASETNAME/$file ]
+			    then
+			    mv $DATASETNAME/* .
+			    echo $file > input.txt
+			    echo successfully retrieved $file
+			    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+			    export PATH=$PATH_BACKUP
+			    export PYTHONPATH=$PYTHONPATH_BACKUP
+			    break
+			else
+			    echo 'ERROR: dq2-get of inputfile failed !'
+			    echo '1'>retcode.tmp
+			fi 
+			export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
+			export PATH=$PATH_BACKUP
+			export PYTHONPATH=$PYTHONPATH_BACKUP
+		    fi
+		done
+	    else
+		echo 'ERROR: DQ2Clients with dq2-get are not installed at the 
+site - please contact Ganga support mailing list.'
+		echo '1'>retcode.tmp
+	    fi
+
+	else
+	    echo '0'>retcode.tmp
 	fi
 
 	retcode=`cat retcode.tmp`

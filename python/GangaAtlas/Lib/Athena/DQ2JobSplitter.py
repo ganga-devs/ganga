@@ -111,10 +111,20 @@ class DQ2JobSplitter(ISplitter):
         grid_tag = False
         if job.inputdata.tag_info:
 
+            # check for conflicts with TAG_LOCAL or TAG_COPY
+            if job.inputdata.type in ['TAG_LOCAL', 'TAG_COPY']:
+                raise ApplicationConfigurationError(None, "Cannot provide both tag_info and run as '%s'. Please use one or the other!" % job.inputdata.type)
+            
             logger.warning('TAG information present - overwriting previous DQ2Dataset definitions')
 
             job.inputdata.names = []
             job.inputdata.dataset = []
+
+            # check if FILE_STAGER is used
+            if job.inputdata.type == 'FILE_STAGER':
+                logger.warning("TAG jobs currently can't use the FILE_STAGER. Switching to DQ2_COPY instead.")
+                job.inputdata.type = 'DQ2_COPY'
+                
             
             # assemble the tag datasets to split over
             for tag_file in job.inputdata.tag_info:
