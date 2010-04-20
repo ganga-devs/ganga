@@ -1169,7 +1169,7 @@ class ATLASTier3Splitter(ISplitter):
         if self.numjobs and self.numfiles:
             raise ApplicationConfigurationError(None, "ATLASTier3Splitter: specify numjobs or numfiles, but not both.")
        
-        if job.inputdata.pfnListFile:
+        if job.inputdata.pfnListFile.name:
             logger.info('Loading file names from %s'%job.inputdata.pfnListFile.name)
             pfnListFile = open(job.inputdata.pfnListFile.name)
             job.inputdata.names = [name.strip() for name in pfnListFile]
