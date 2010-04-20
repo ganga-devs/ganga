@@ -193,6 +193,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,'Splitting with Panda+ATLASTier3Dataset requires ATLASTier3Splitter')
             if job.backend.site == 'AUTO':
                 raise ApplicationConfigurationError(None,'Panda+ATLASTier3Dataset requires a specified backend.site')
+            job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
             
         if job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
@@ -212,7 +213,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
         jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
         jspec.destinationDBlock = self.libDataset
-        jspec.destinationSE     = job.backend.site
+        if Client.isDQ2free(job.backend.site):
+        #    jspec.destinationDBlock = './%s' % libDsName
+            jspec.destinationSE     = 'local'
+        else:
+            jspec.destinationSE     = job.backend.site
         jspec.prodSourceLabel   = configPanda['prodSourceLabelBuild']
         jspec.processingType    = configPanda['processingType']
         jspec.assignedPriority  = configPanda['assignedPriorityBuild']
@@ -301,7 +306,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.outputdata.location and (not job._getRoot().subjobs or job.id == 0):
             logger.warning('User defined output locations not supported. Use DaTRI: https://twiki.cern.ch/twiki/bin/view/Atlas/DataTransferRequestInterface')
 #            jspec.destinationSE = job.outputdata.location
-        jspec.destinationSE     = site
+        if Client.isDQ2free(job.backend.site):
+            jspec.destinationSE     = 'local'
+        else:
+            jspec.destinationSE     = site
         jspec.prodSourceLabel   = configPanda['prodSourceLabelRun']
         jspec.processingType    = configPanda['processingType']
         jspec.assignedPriority  = configPanda['assignedPriorityRun']
