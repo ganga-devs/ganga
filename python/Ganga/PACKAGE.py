@@ -47,7 +47,7 @@ _externalPackages = {
               'maxHexVersion' : '0x20300f0'}, #maximum Python version number for adding Optik to path
    'ipython': {'version' : '0.8.4',
                'noarch':True,
-               'syspath' : 'lib/python'},
+               'PYTHONPATH' : 'lib/python'},
    'ApMon' : {'version' : '2.2.11', 
               'noarch':True,
               'syspath' : 'python'},
@@ -156,6 +156,8 @@ def standardSetup(setup=setup):
 
 
             setup.setSysPath(name)
+            setup.prependPath(name,'PYTHONPATH')
+            
             # if other PATH variable must be defined, e.g. LD_LIBRARY_PATH, then
             # you should do it this way:
             #setup.prependPath(name,'LD_LIBRARY_PATH')
