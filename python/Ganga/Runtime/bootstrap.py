@@ -282,7 +282,7 @@ under certain conditions; type license() for details.
            In case of parsing errors, raise ConfigError exception.
            """
            import re
-           mpat = re.compile(r'(\[(?P<section>\S+)\]|)(?P<option>[a-zA-z0-9._]+)=(?P<value>.+)')
+           mpat = re.compile(r'(\[(?P<section>\S+)\]|)(?P<option>[a-zA-z0-9._/]+)=(?P<value>.+)')
            section = None
 
            opts = []
