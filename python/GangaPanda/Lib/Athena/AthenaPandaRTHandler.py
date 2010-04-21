@@ -212,11 +212,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
         jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
         jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
-        jspec.destinationDBlock = self.libDataset
         if Client.isDQ2free(job.backend.site):
-        #    jspec.destinationDBlock = './%s' % libDsName
+            jspec.destinationDBlock = '%s/%s' % (job.outputdata.datasetname,self.libDataset)
             jspec.destinationSE     = 'local'
         else:
+            jspec.destinationDBlock = self.libDataset
             jspec.destinationSE     = job.backend.site
         jspec.prodSourceLabel   = configPanda['prodSourceLabelBuild']
         jspec.processingType    = configPanda['processingType']
