@@ -65,7 +65,7 @@ class Registry(object):
         self.doc = doc
         self._started = False
         self.dirty_flush_counter = dirty_flush_counter
-        self.dirty_objs = {}
+        self.dirty_objs = []
         self.dirty_hits = 0
         self.update_index_time = update_index_time 
         self._update_index_timer = 0
@@ -161,7 +161,7 @@ class Registry(object):
                     return False
             self.repository.reap_locks()
             self.repository.delete(self._objects.keys())
-            self.dirty_objs = {}
+            self.dirty_objs = []
             self.dirty_hits = 0
             self.repository.clean()
         finally:
@@ -217,7 +217,7 @@ class Registry(object):
             self._lock.acquire()
             try:
                 if obj in self.dirty_objs:
-                    del self.dirty_objs[obj]
+                    self.dirty_objs.remove(obj)
                 self.repository.delete([id])
                 del obj
             finally:
@@ -234,11 +234,14 @@ class Registry(object):
         self._write_access(obj)
         self._lock.acquire()
         try:
-            self.dirty_objs[obj] = 1
+            if not obj in self.dirty_objs:
+                self.dirty_objs.append(obj)
             self.dirty_hits += 1
             if self.dirty_hits % self.dirty_flush_counter == 0:
                 self._flush()
-            self.dirty_objs[obj] = 1 # HACK for GangaList: there _dirty is called _before_ the object is modified
+            # HACK for GangaList: there _dirty is called _before_ the object is modified
+            if not obj in self.dirty_objs:
+                self.dirty_objs.append(obj)
         finally:
             self._lock.release()
 
@@ -247,7 +250,6 @@ class Registry(object):
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError"""
-        #print self.name, objs, self.dirty_objs
         logger.debug("_flush(%s)" % objs)
         if not self._started:
             raise RegistryAccessError("Cannot flush to a disconnected repository!")
@@ -257,16 +259,17 @@ class Registry(object):
         self._lock.acquire()
         try:
             for obj in objs:
-                self.dirty_objs[obj] = 1
+                if not obj in self.dirty_objs:
+                    self.dirty_objs.append(obj)
             ids = []
-            for obj in self.dirty_objs.keys():
+            for obj in self.dirty_objs:
                 try:
                     ids.append(self.find(obj))
                 except ObjectNotInRegistryError, x:
                     logger.error(x.what)
             logger.debug("repository.flush(%s)" % ids)
             self.repository.flush(ids)
-            self.dirty_objs = {}
+            self.dirty_objs = []
         finally:
             self._lock.release()
 
@@ -344,7 +347,7 @@ class Registry(object):
                 id = self.find(obj)
                 if obj in self.dirty_objs:
                     self.repository.flush([id])
-                    del self.dirty_objs[obj]
+                    self.dirty_objs.remove(obj)
                 obj._registry_locked = False
                 self.repository.unlock([id])
         finally:
