@@ -329,14 +329,20 @@ def flush_file(f):
    f.flush()
    os.fsync(f.fileno()) #this forces a global flush (cache synchronization on AFS)
 
-statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
+def open_file(fname):
+  try:
+    filehandle=file(fname,'w')
+  except IOError,x:
+    print 'ERROR: not able to write a status file: ', fname
+    print 'ERROR: ',x
+    raise
+  return filehandle
 
-try:
-  statusfile=file(statusfilename,'w')
-except IOError,x:
-  print 'ERROR: not able to write a status file: ', statusfilename
-  print 'ERROR: ',x
-  raise
+statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
+heartbeatfilename = os.path.join(sharedoutputpath,'__heartbeat__')
+
+statusfile=open_file(statusfilename)
+heartbeatfile=open_file(heartbeatfilename)
 
 line='START: '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
 try:
@@ -396,7 +402,8 @@ try:
         break
     monitor.progress()
     time.sleep(30)
-    os.utime(statusfilename,None)
+    heartbeatfile.write('.')
+    flush_file(heartbeatfile)
 except Exception,x:
   print 'ERROR: %s'%str(x)
 
@@ -430,6 +437,10 @@ for fn in ['__syslog__']:
 line='EXITCODE: ' + repr(result) + os.linesep
 line+='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
 statusfile.writelines(line)
+
+statusfile.close()
+heartbeatfile.close()
+os.unlink(heartbeatfilename)
 
 sys.exit(result)
 """
@@ -516,6 +527,7 @@ sys.exit(result)
             outw=j.getOutputWorkspace()
 
             statusfile = os.path.join(outw.getPath(),'__jobstatus__')
+            heartbeatfile = os.path.join(outw.getPath(),'__heartbeat__')
             pid,queue,exitcode = get_status(statusfile)
 
             if j.status == 'submitted':
@@ -538,7 +550,7 @@ sys.exit(result)
                         j.updateStatus('failed')
                 else:
                     # Job is still running. Check if alive
-                    time = get_last_alive(statusfile)
+                    time = get_last_alive(heartbeatfile)
                     config = getConfig(j.backend._name)
                     if time>config['timeout']:
                         logger.warning('Job %s has disappeared from the batch system.', str(j.id))
@@ -579,7 +591,7 @@ def filefilter(fn):
 '''
 config.addOption('postexecute', tempstr,"String contains commands executing before submiting job to queue")
 config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
-config.addOption('timeout',300,'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+config.addOption('timeout',600,'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 class LSF(Batch):
     ''' LSF backend - submit jobs to Load Sharing Facility.'''
@@ -626,7 +638,7 @@ os.system("rm -rf /tmp/%s/" %jobnumid)
 '''
 config.addOption('postexecute', tempstr, "String contains commands executing before submiting job to queue")
 config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
-config.addOption('timeout',300,'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+config.addOption('timeout',600,'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 
 class PBS(Batch):
@@ -673,7 +685,7 @@ config.addOption('preexecute', 'os.chdir(os.environ["TMPDIR"])\nos.environ["PATH
                  "String contains commands executing before submiting job to queue")
 config.addOption('postexecute', '', "String contains commands executing before submiting job to queue")
 config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
-config.addOption('timeout',300,'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+config.addOption('timeout',600,'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 
 class SGE(Batch):
