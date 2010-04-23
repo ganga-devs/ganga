@@ -31,6 +31,7 @@ class BoxTypeError(GangaException,TypeError):
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
 class BoxMetadataObject(GangaObject):
     """Internal object to store names"""
@@ -83,6 +84,8 @@ class BoxRegistry(Registry):
 
     def proxy_add(self,obj,name):
         obj = _unwrap(obj)
+        if isinstance(obj,list):
+            obj = makeGangaList(obj)
         if not isinstance(obj,GangaObject):
             raise BoxTypeError("The Box can only contain Ganga Objects (i.e. Applications, Datasets or Backends). Check that the object is first in box.add(obj,'name')")
         obj = obj.clone()
