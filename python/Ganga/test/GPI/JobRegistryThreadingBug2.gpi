@@ -18,7 +18,7 @@ ct.start()
 import time
 start = time.time()
 x=1
-while time.time()<start+120:
+while time.time()<start+100: #assuming 120 seconds timeout
     try:
        for j in jobs:
           for sj in j.subjobs:

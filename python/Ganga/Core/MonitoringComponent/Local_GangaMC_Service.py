@@ -38,6 +38,7 @@ config.addOption( 'LSF' , 20,'Poll rate for LSF backend.')
 config.addOption( 'PBS' , 20,'Poll rate for PBS backend.')
 config.addOption( 'Dirac' , 50,'Poll rate for Dirac backend.')
 config.addOption( 'Panda' , 50,'Poll rate for Panda backend.')
+#config.addOption( 'TestSubmitter', 1, 'Poll rate for TestSubmitter')
 
 #Note: the rate of this callback is actually  MAX(base_poll_rate,callbacks_poll_rate)
 config.addOption( 'creds_poll_rate', 30, "The frequency in seconds for credentials checker")

@@ -43,7 +43,7 @@ def getOldJobs():
                 if len(co_jobs) > 0:
                     logger.warning("Converted %i jobs from old AMGA repository" % len(co_jobs))
             except Exception,x:
-                logger.error("Could not load old AMGA repository:" % x)
+                logger.error("Could not load old AMGA repository: %s" % x)
                 raise
 
     from Ganga.Core.JobRepositoryXML import factory, version
@@ -59,7 +59,7 @@ def getOldJobs():
                 if len(co_jobs) > 0:
                     logger.warning("Converted %i jobs from old XML repository" % len(co_jobs))
             except Exception,x:
-                logger.error("Could not load old XML repository:" % x)
+                logger.error("Could not load old XML repository: %s" % x)
                 raise
 
     return salvaged_jobs

@@ -14,6 +14,17 @@ j3 = Job()
 j3.submit()
 
 
+################
+
+from GangaTest.Framework.utils import sleep_until_completed
+
+for j in [j1,j2,j3]:
+  assert sleep_until_completed(j,timeout=30)
+
+
+################
+# INFO: resetting config will affect alread submitted jobs!
+
 # testing for failures
 
 # specify module instead of the class
@@ -52,8 +63,4 @@ except GangaException,x:
  pass
 
 
-from GangaTest.Framework.utils import sleep_until_completed
 
-for j in [j1,j2,j3]:
-  assert sleep_until_completed(j,timeout=30)
-    

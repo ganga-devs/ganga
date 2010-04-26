@@ -4,7 +4,11 @@ from Ganga.GPIDev.Schema import *
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-from Ganga.Utility.Config import makeConfig
+from Ganga.Utility.Config import makeConfig,getConfig
+
+monconf = getConfig('PollThread')
+monconf.addOption('TestSubmitter',1,'poll rate for test submitter')
+
 
 ## # test configuration properties
 ## test_config = makeConfig('TestConfig','testing stuff')
@@ -50,6 +54,14 @@ class TestSubmitter(IBackend):
         self.tryfail('submit')
         return 1
 
+    def resubmit(self):
+        jobid = self.getJobObject().getFQID('.')
+        logger.info('testing resubmission of job %s',jobid)
+        logger.info('this job will be finished in approx. %d seconds',self.time)
+        self.start_time = time.time()
+        self.tryfail('resubmit')
+        return 1        
+
     def kill(self):
         jobid = self.getJobObject().getFQID('.')
         r = self.remaining()
@@ -62,7 +74,9 @@ class TestSubmitter(IBackend):
         return self.time-(time.time()-self.start_time)        
     
     def updateMonitoringInformation(jobs):
+        logger.info('monitoring jobs=%s',jobs)
         for j in jobs:
+            logger.info('monitoring id=%d',j.id)
             if j.backend.update_delay:
                 logger.info('job %d: updateMonitoringInformation sleeping for %d s'%(j.id,j.backend.update_delay))
                 time.sleep(j.backend.update_delay)

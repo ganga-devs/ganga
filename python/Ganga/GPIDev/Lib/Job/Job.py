@@ -36,8 +36,8 @@ class JobInfo(GangaObject):
     '''
     _schema = Schema(Version(0,1),{
                                    'submit_counter' : SimpleItem(defvalue=0,protected=1,doc="job submission/resubmission counter"),
-                                   'monitor' : ComponentItem('monitor',defvalue=None,load_default=0,optional=1,doc="job monitor instance"),
-                                   'uuid' : SimpleItem(defvalue='',protected=1,doc='globally unique job identifier')
+                                   'monitor' : ComponentItem('monitor',defvalue=None,load_default=0,comparable=0, optional=1,doc="job monitor instance"),
+                                   'uuid' : SimpleItem(defvalue='',protected=1,comparable=0, doc='globally unique job identifier')
                                     })
 
     _category = 'jobinfos'
@@ -113,7 +113,7 @@ class Job(GangaObject):
     _schema = Schema(Version(1,6),{ 'inputsandbox' : FileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,doc="list of File objects shipped to the worker node "),
                                     'outputsandbox' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of filenames or patterns shipped from the worker node"),
                                     'info':ComponentItem('jobinfos',defvalue=None,doc='JobInfo '),
-                                    'time':ComponentItem('jobtime', defvalue=None,protected=1,doc='provides timestamps for status transitions'),
+                                    'time':ComponentItem('jobtime', defvalue=None,protected=1,comparable=0,doc='provides timestamps for status transitions'),
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
                                     'id' : SimpleItem('',protected=1,comparable=0,doc='unique Ganga job identifier generated automatically'),
@@ -803,7 +803,7 @@ class Job(GangaObject):
         raise JobError('fail() method is deprecated, use force_status("failed") instead.')
 
     allowed_force_states = { 'completed' : ['completing'],
-                             'failed' : ["submitting","completing","submitted","running","killed"] }
+                             'failed' : ["submitting","completing","completed","submitted","running","killed"] }
     
     def force_status(self,status,force=False):
         ''' Force job to enter the "failed" or "completed" state. This may be
@@ -825,6 +825,7 @@ class Job(GangaObject):
                 logger.info("%s => %s"%(s,revstates[s].keys()))
             return
             
+        print 'My status',self.status,status
         if self.status == status:
             return
         

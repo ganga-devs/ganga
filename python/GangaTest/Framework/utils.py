@@ -17,7 +17,7 @@ def assert_cannot_kill(j):
     except JobError:
         pass  
 
-def sleep_until_state(j,timeout=None,state='completed', break_states=None,sleep_period=10, verbose=False):
+def sleep_until_state(j,timeout=None,state='completed', break_states=None,sleep_period=1, verbose=False):
     '''
     Wait until the job reaches the specified state
     Returns:
