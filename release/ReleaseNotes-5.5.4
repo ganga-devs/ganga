@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.4 (2010/4/23)
+5.5.4 (2010/4/26)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -10,16 +10,19 @@ Move to a newer ipythyon version: 0.8.4
 Message with long explanation about new repository at statrup now printed only when there is not new 
 repository in gangadir (LocalXML/6.0).
 
-Fixed bug #65444
-Fixed bug #55568
-Fixed bug #65797
+Fixed bug #53822: job.info.uuid : make it "comparable=False"
+Fixed bug #55568: ganga -o option does not accept =
+Fixed bug #65444: config['MonitoringServices']['Athena/LCG']=None breaks job submission
+Fixed bug #65797: Add ability to add GangaList to the box
 
-feedback reporting utility (still for internal testing only).
+added feedback reporting utility (still for internal testing only).
 
 ipython setup: sys.path->PYTHONPATH
 
-added heartbeat to fix an AFS problem: 'touch' is not propagated correctly anymore across multiple AFS 
-clients at CERN
+added heartbeat to fix an AFS problem: 'touch' is not propagated correctly anymore across multiple 
+AFS clients at CERN
+
+fixed several test cases
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -65,5 +68,11 @@ ganga/python/GangaPanda
 - handle 'cancelled' state from panda server, which maps to 'killed' state in ganga. if you build job 
 fails, related subjobs will be cancelled.
 - added beta support for Panda Tier 3 sites (using ATLASTier3Dataset and ATLASTier3Splitter)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+small fixes in the testing framework
 
 **************************************************************************************************************
