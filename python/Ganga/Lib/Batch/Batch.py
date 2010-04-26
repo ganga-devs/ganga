@@ -401,9 +401,9 @@ try:
     if result is not None:
         break
     monitor.progress()
-    time.sleep(30)
     heartbeatfile.write('.')
     flush_file(heartbeatfile)
+    time.sleep(30)
 except Exception,x:
   print 'ERROR: %s'%str(x)
 
@@ -490,7 +490,7 @@ sys.exit(result)
             talive = 0
             try:
                 talive = time.time()-os.path.getmtime(f)
-            except IOError,x:
+            except OSError,x:
                 logger.debug('Problem reading status file: %s (%s)',f,str(x))
                 
             return talive
