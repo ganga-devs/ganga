@@ -1357,7 +1357,7 @@ if __name__ == '__main__':
         pass
 
     # use DQ2_LOCAL as default
-    if not datasettype in [ 'DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'DQ2_OUT', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
+    if not datasettype in [ 'DQ2_DOWNLOAD', 'DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'DQ2_OUT', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'TIER3' ]:
         datasettype = 'DQ2_LOCAL'
 
     # Determine data type
@@ -1712,7 +1712,7 @@ if __name__ == '__main__':
                 
         except:
             raise NameError, "ERROR: DATASETNAME not defined"
-            sys.exit(EC_Configuration)
+            #sys.exit(EC_Configuration)
 
         # Read input_files 
         lfns = []
@@ -1897,7 +1897,7 @@ if __name__ == '__main__':
 
     # DQ2_LOCAL or TAG ######################################################
 
-    if datasettype in [ 'DQ2_LOCAL', 'TAG', 'TAG_REC', 'TNT_LOCAL']:
+    if datasettype in [ 'DQ2_LOCAL', 'TAG', 'TAG_REC', 'TNT_LOCAL', 'TIER3' ]:
 
         if globalVerbose:
             print ddmFileMap
@@ -1905,7 +1905,13 @@ if __name__ == '__main__':
 
         dq2tracertime.append(time.time())
         # get list of files from LFC
-        sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
+        if datasettype == 'TIER3':
+            sUrlMap = ddmFileMap
+            tUrlMap = ddmFileMap
+            fsizeMap = {} 
+            md5sumMap = {} 
+        else:
+            sUrlMap, tUrlMap, fsizeMap, md5sumMap = _getPFNsLFC(ddmFileMap, defaultSE, localsitesrm)
 
         # NIKHEF/SARA special case
         if len(tUrlMap)==0 and (os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('NIKHEF') or os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('SARA')):
@@ -1959,9 +1965,10 @@ if __name__ == '__main__':
             print md5sumMap
         
         # append protocol
-        _appendProtocol(sUrlMap,'gfal')
-        if globalVerbose:
-            print sUrlMap
+        if not datasettype == 'TIER3':
+            _appendProtocol(sUrlMap,'gfal')
+            if globalVerbose:
+                print sUrlMap
 
         # Use GFAL or TURL ?
         if configLOCALPROTOCOL == 'gfal':
@@ -2008,10 +2015,11 @@ if __name__ == '__main__':
             print files
 
         # make PoolFileCatalog
-        _makePoolFileCatalog(files)
+        if not datasettype == 'TIER3':
+            _makePoolFileCatalog(files)
 
         # make jobO if not already done so (e.g. for local TAG files)
-        if datasettype == 'DQ2_LOCAL':
+        if datasettype in [ 'DQ2_LOCAL', 'TIER3']:
 
             # Remove ESD files
             if lfns_esd:
@@ -2055,8 +2063,11 @@ if __name__ == '__main__':
         if len(files)>0:
             returnvalue=0
         else:
-            print 'ERROR: Dataset(s) %s is/are empty at %s' %(datasetnames, localsiteid)
-            returnvalue=EC_QueryFiles
+            if datasettype == 'TIER3':
+                print 'ERROR: Dataset is/are empty' 
+            else:
+                print 'ERROR: Dataset(s) %s is/are empty at %s' %(datasetnames, localsiteid)
+                returnvalue=EC_QueryFiles
 
         dq2tracertime.append(time.time())
         outFile = open('dq2tracertimes.txt','w')

@@ -69,6 +69,13 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     if not job.inputdata.lfn: raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
                     input_files = job.inputdata.lfn
 
+                elif job.inputdata._name == 'ATLASTier3Dataset':
+                    if not job.inputdata.names:
+                        raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
+                    if job.inputdata.names:
+                        input_files = job.inputdata.names
+                        input_files = input_guids
+
                 elif job.inputdata._name == 'DQ2Dataset':
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
                     input_guids = job.inputdata.guids
@@ -85,6 +92,16 @@ class AthenaLocalRTHandler(IRuntimeHandler):
 
                 elif job.inputdata._name == 'ATLASDataset':
                     input_files = ATLASDataset.get_filenames(app)
+
+                elif job.inputdata._name == 'ATLASTier3Dataset':
+                    if job.inputdata.names:
+                        input_files = job.inputdata.names
+                        input_guids = input_files
+                    elif job.inputdata.pfnListFile:
+                        input_files = [ line.strip() for line in file(job.inputdata.pfnListFile.name) ]
+                        input_guids = input_files
+                    else:
+                        raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
 
                 elif job.inputdata._name == 'DQ2Dataset':
                     if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
@@ -338,6 +355,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 datasets = resolve_container(job.inputdata.dataset) 
                 environment['DATASETNAME'] = datasets[0]
 
+        if job.inputdata and job.inputdata._name == 'ATLASTier3Dataset':
+            environment['DATASETTYPE'] = 'TIER3'
+
         # Write trf parameters
         trf_params = ' '
         for key, value in job.application.trf_parameter.iteritems():
@@ -384,7 +404,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
 
         if app.user_setupfile.name: inputbox += [ File(app.user_setupfile.name) ]
         #CN: added extra test for TNTJobSplitter
-        if job.inputdata and job.inputdata._name == 'DQ2Dataset' or (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
+        if job.inputdata and job.inputdata._name in [ 'DQ2Dataset', 'ATLASTier3Dataset'] or (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
             _append_files(inputbox,'ganga-stage-in-out-dq2.py')
             _append_files(inputbox,'dq2_get')
             _append_files(inputbox,'dq2info.tar.gz')

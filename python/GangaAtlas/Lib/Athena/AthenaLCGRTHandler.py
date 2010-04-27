@@ -88,7 +88,14 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     if not job.inputdata.lfn: raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
                     input_files = job.inputdata.lfn
 
-                elif job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset':
+                elif job.inputdata._name == 'ATLASTier3Dataset':
+                    if not job.inputdata.names:
+                        raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
+                    if job.inputdata.names:
+                        input_files = job.inputdata.names
+                        input_guids = input_files
+
+                elif job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset']:
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified. Failure in job %s.%s. Dataset %s' %(job._getRoot().id, job.id, job.inputdata.dataset)  )
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
@@ -124,7 +131,17 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 elif job.inputdata._name == 'ATLASDataset':
                     input_files = ATLASDataset.get_filenames(app)
 
-                elif job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset':
+                elif job.inputdata._name == 'ATLASTier3Dataset':
+                    if job.inputdata.names:
+                        input_files = job.inputdata.names
+                        input_guids = input_files
+                    elif job.inputdata.pfnListFile:
+                        input_files = [ line.strip() for line in file(job.inputdata.pfnListFile.name) ]
+                        input_guids = input_files
+                    else:
+                        raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
+
+                elif job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset']:
                     if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER', 'TAG_LOCAL', 'TAG_COPY' ]:
                         job.inputdata.type ='DQ2_LOCAL'
                     if not job.inputdata.datatype in ['DATA', 'MC', 'MuonCalibStream']:
@@ -355,7 +372,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['TAG_TYPE'] = 'LOCAL'                
 
         # Fix DATASETNAME env variable for DQ2_COPY mode
-        if job.inputdata and ( job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset') and (job.inputdata.type in ['DQ2_LOCAL', 'DQ2_COPY', 'FILE_STAGER', 'TAG_LOCAL', 'TAG_COPY' ]):
+        if job.inputdata and ( job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset']) and (job.inputdata.type in ['DQ2_LOCAL', 'DQ2_COPY', 'FILE_STAGER', 'TAG_LOCAL', 'TAG_COPY' ]):
             if job.inputdata.dataset:
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import resolve_container
                 datasets = resolve_container(job.inputdata.dataset)
@@ -365,6 +382,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 except:
                     printout = 'Job submission failed ! Dataset %s could not be found in DQ2 ! Maybe retry ?' %(datasets[0])
                     raise ApplicationConfigurationError(None,printout )
+
+        if job.inputdata and job.inputdata._name == 'ATLASTier3Dataset':
+            environment['DATASETTYPE'] = 'TIER3'
 
         # Work around for glite WMS spaced environement variable problem
         inputbox.append(FileBuffer('athena_options',environment['ATHENA_OPTIONS']+'\n'))
@@ -438,13 +458,17 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         if app.user_setupfile.name: inputbox.append(File(app.user_setupfile.name))
 
         # CN: added TNTJobSplitter clause  
-        if job.inputdata and (job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset') or (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
+
+        if job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset' ] ) or (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
             _append_files(inputbox,'ganga-stage-in-out-dq2.py','dq2_get','dq2info.tar.gz')
             if job.inputdata and job.inputdata.type == 'LFC' and not (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
                 _append_files(inputbox,'dq2_get_old')
 
+        if job.inputdata and job.inputdata._name ==  'ATLASTier3Dataset':
+            _append_files(inputbox,'ganga-stage-in-out-dq2.py','dq2info.tar.gz')
+
         ## insert more scripts to inputsandbox for FileStager
-        if job.inputdata and (job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset')  and job.inputdata.type in ['FILE_STAGER']:
+        if job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset']) and job.inputdata.type in ['FILE_STAGER']:
             _append_files(inputbox,'make_filestager_joption.py','dm_util.py','fs-copy.py')
             #_append_files(inputbox,'make_filestager_joption.py','dm_util.py')
 
@@ -530,7 +554,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if job.inputdata.lfc:
                 environment['GANGA_LFC_HOST'] = job.inputdata.lfc
         
-        if job.inputdata and (job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset'):
+        if job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset']):
             if job.inputdata.dataset:
                 datasetname = job.inputdata.dataset
                 environment['DATASETNAME'] = ':'.join(datasetname)
@@ -554,7 +578,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 not (job.backend.requirements._name == 'AtlasLCGRequirements' and job.backend.requirements.sites) and
                 not (job.splitter and job.splitter._name == 'DQ2JobSplitter') and
                 not (job.splitter and job.splitter._name == 'TNTJobSplitter') and
-                not (job.splitter and job.splitter._name == 'AnaTaskSplitterJob')):
+                not (job.splitter and job.splitter._name == 'AnaTaskSplitterJob') and
+                not (job.splitter and job.splitter._name == 'ATLASTier3Splitter')):
 
                 raise ApplicationConfigurationError(None,'Job submission failed ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
 
@@ -617,7 +642,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             requirements.software = requirementsSoftware
 
         #       add software requirement of dq2clients
-        if job.inputdata and job.inputdata.type in [ 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease or configDQ2['USE_ACCESS_INFO']:
+        if job.inputdata and job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset' ]  and job.inputdata.type in [ 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease or configDQ2['USE_ACCESS_INFO']:
             try:
                 # override the default one if the dq2client_version is presented 
                 # in the job backend's requirements object
@@ -666,7 +691,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         ]
 
         ## retrieve the FileStager log
-        if configDQ2['USE_ACCESS_INFO'] or (job.inputdata and (job.inputdata._name == 'DQ2Dataset' or job.inputdata._name == 'AMIDataset') and job.inputdata.type in ['FILE_STAGER']):
+        if configDQ2['USE_ACCESS_INFO'] or (job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset']) and job.inputdata.type in ['FILE_STAGER']):
             outputbox += ['FileStager.out', 'FileStager.err']
             
         if job.outputsandbox: outputbox += job.outputsandbox
