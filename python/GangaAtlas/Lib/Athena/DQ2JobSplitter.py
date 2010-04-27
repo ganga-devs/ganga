@@ -207,6 +207,22 @@ class DQ2JobSplitter(ISplitter):
                         db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1]
                     except:
                         raise ApplicationConfigurationError(None,'Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
+
+                    # Update allowed_sites to contain all possible spacetokens of a site
+                    dq2alternatenames = []
+                    allowed_sites_all = []
+                    for site in allowed_sites:
+                        alternatename = TiersOfATLAS.getSiteProperty(site,'alternateName')
+                        if not alternatename in dq2alternatenames:
+                            dq2alternatenames.append(alternatename)
+                        else:
+                            continue
+                        for sitename in TiersOfATLAS.getAllSources():
+                            if TiersOfATLAS.getSiteProperty(sitename,'alternateName') == alternatename and not sitename in allowed_sites_all: 
+                                allowed_sites_all.append(sitename)
+
+                    allowed_sites = allowed_sites_all
+
                     db_allowed_sites=[]
                     dq2alternatenames=[]
                     for site in allowed_sites:
