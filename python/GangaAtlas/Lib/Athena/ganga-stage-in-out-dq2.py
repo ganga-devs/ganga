@@ -1711,8 +1711,11 @@ if __name__ == '__main__':
                 print datasetnames
                 
         except:
-            raise NameError, "ERROR: DATASETNAME not defined"
-            #sys.exit(EC_Configuration)
+            print "DATASETNAME not defined !"
+            if not datasettype == 'TIER3':
+                sys.exit(EC_Configuration)
+            else:
+                datasetnames = []
 
         # Read input_files 
         lfns = []
