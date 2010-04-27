@@ -1029,7 +1029,13 @@ class Athena(IApplication):
         if self.atlas_dbrelease == 'LATEST':       
             from pandatools import Client
             self.atlas_dbrelease = Client.getLatestDBRelease(False)
- 
+
+        if self.atlas_dbrelease: 
+            match = re.search('DBRelease-(.*)\.tar\.gz', self.atlas_dbrelease )
+            if match:
+                dbvers = match.group(1)
+                self.atlas_environment=['DBRELEASE_OVERRIDE=%s'%dbvers] 
+
         return (0,None)
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
