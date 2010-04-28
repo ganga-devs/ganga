@@ -73,7 +73,8 @@ jemconfig.addOption('JEM_REPACK', False,
                     'Wether to repack the JEM library before each job submission. This is useful mostly for developers.')
 jemconfig.addOption('JEM_MONITOR_SUBJOBS_FREQ', 10000,
                     'Enable JEM monitoring only for every N-th subjob of a splitjob.')
-
+jemconfig.addOption('JEM_DEFAULT_VALVES', ['STOMP','FS'],
+                    'The default communication valve(s) to use for new jobs. If left empty and not overridden, use JEMs configuration (and/or .JEMrc).')
 
 #####################################################################################################################################################
 # Global initialisation
@@ -124,8 +125,19 @@ class JEMAdvancedOptions(GangaObject):
     JEM (c)2004-2009 Bergische Universitaet Wuppertal
 
     """
-    _schema = Schema(Version(0,2), {
-        # no options since 0,2
+    _schema = Schema(Version(0,1), {
+        'valves'                : SimpleItem(defvalue=jemconfig['JEM_DEFAULT_VALVES'], sequence=1, typelist=["str"],\
+                                             doc='The communication valve(s) to use. If left empty, use JEMs \
+                                                  configuration (and/or .JEMrc). The value of this option is \
+                                                  a list of strings, each specifying a valve to be used. \
+                                                  Currently, possible valves are: "FS", "RGMA", "HTTPS", \
+                                                  "STOMP", "FSHYBRID"'),
+        'bash_loglevel'         : SimpleItem(defvalue=jemconfig['JEM_BASH_LOGLEVEL'],\
+                                             doc='Verbosity of JEMs bash script monitor. Caution: Read JEMs \
+                                                  documentation before changing this!'),
+        'python_loglevel'       : SimpleItem(defvalue=jemconfig['JEM_PYTHON_LOGLEVEL'],\
+                                             doc='Verbosity of JEMs python script monitor. Caution: Read JEMs \
+                                                  documentation before changing this!'),
     })
 
     _category = 'JEMAdvancedOptions'
@@ -261,17 +273,17 @@ class JobExecutionMonitor(GangaObject):
     JEM (c)2004-2009 Bergische Universitaet Wuppertal
 
     """
-    _schema = Schema(Version(0,2), {
-        'anonymous'              : SimpleItem(hidden=True, defvalue=False, doc='internal anonymize flag'),
-        'enabled'                : SimpleItem(defvalue=True, doc='Enables JEM monitoring for the job'),
-        'realtime'               : SimpleItem(defvalue=False, doc='Enables realtime reception of monitoring data'),
+    _schema = Schema(Version(0,1), {
+        'enabled'                : SimpleItem(defvalue=True,\
+                                              doc='Enables JEM monitoring for the job'),
+        'realtime'               : SimpleItem(defvalue=False,\
+                                              doc='Enables realtime reception of monitoring data'),
         'ctracer'                : ComponentItem('JEMCTraceOptions', summary_print='_summary_print',\
                                                  doc='Configuration of the C/C++ module tracing subsystem'),
         'advanced'               : ComponentItem('JEMAdvancedOptions', summary_print='_summary_print',\
                                                  doc='Advanced configuration'),
         'jobID'                  : SimpleItem(hidden=True, defvalue=None, protected=1, copyable=0, transient=1,\
-                                              typelist=['type(None)', 'type(str)'],\
-                                              doc='Real backend-jobID (or generated)'),
+                                              typelist=['type(None)', 'type(str)'], doc='Real backend-jobID (or generated)'),
         'pid'                    : SimpleItem(hidden=True, defvalue=0, protected=1, copyable=0,\
                                               doc='Process id of the job listener'),
         'port'                   : SimpleItem(hidden=True, defvalue=0, protected=1, copyable=0,\
@@ -297,35 +309,6 @@ class JobExecutionMonitor(GangaObject):
                       '_getListenerPid', '_getServerPid', '_getServerPort', '_getServerStatus',\
                       '_hasUserAppStarted', '_hasUserAppExited', '_getTransmissionStats']
 
-    def __init__(self):
-        GangaObject.__init__(self)
-        
-        p = os.path.expanduser("~/.GangaJEM")
-        if not os.path.exists(p):
-            os.mkdir(p)
-            print "Thank you for trying this beta version of the Job Execution Monitor!"
-            print
-            print "This version brings a major rewrite of JEMs worker node module, featur-"
-            print "ing better performance & stability; not all features have yet been por-"
-            print "ted to this new module, though. Refer to the documentation for more in-"
-            print "formation about this: help('JobExecutionMonitor')"
-            print
-            print "Please note that for statistical purposes, information about all JEM"
-            print "runs is gathered centrally. If you don't wish personalized data (time-"
-            print "stamps, the CEs your jobs get assigned to, the name of the VO, and your"
-            print "grid certificate's subject / your name) to be recorded, please state so:"
-            print
-            answer = None
-            while answer not in ('', 'y','n'):
-                answer = raw_input("  Allow JEM to gather personalized data (y/n)? [y] ")
-            if answer == "n":
-                fd = open(p + "/anonymous", "w")
-                fd.write("yes\n")
-                fd.close()
-                self.anonymous = True
-        else:
-            if os.path.exists(p + "/anonymous"):
-                self.anonymous = True
 
     ####################################################################################################################
     ### public interface (methods exported via _exportmethods)

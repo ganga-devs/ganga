@@ -7,12 +7,13 @@ def JEMsetVerbose():
     logging.getLogger("GangaJEM.Lib.JEM").setLevel(10)
 
 
-def JEMlisteners():
+def JEMlisteners(jobs = None):
     """
     Debug method: For all currently running jobs, show if JEM is enabled,
     if yes: show JEM-listener PID, https-Server status, and port (if applicable).
     """
-    from Ganga.GPI import jobs
+    if not jobs:
+        return "Usage: JEMlisteners(jobs)"
 
     s = "\nJEM listener status summary\n" \
       + "#" + "fqid".rjust(5) \

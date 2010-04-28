@@ -38,7 +38,10 @@ import GangaJEM
 
 #-----------------------------------------------------------------------------------------------------------------------
 from Ganga.Utility.logging import logging, getLogger
-logger = getLogger("GangaJEM.Lib.JEM")
+logger = getLogger()
+
+# uncomment this to make the JEM proxy report the reason for initialization failure verbosely. 
+#logger.setLevel(logging.DEBUG)
 #-----------------------------------------------------------------------------------------------------------------------
 
 # status vars to access from other GangaJEM modules
@@ -52,7 +55,6 @@ try:
     if not os.environ.has_key('JEM_PACKAGEPATH'):
         # if not, find the JEM package in the external packages...
         JEM_PACKAGEPATH = GangaJEM.PACKAGE.setup.getPackagePath('JEM')[0]
-        logger.debug("Got JEM-path from GangaJEM PACKAGE: " + JEM_PACKAGEPATH)
 
         # set the env var to enable JEM to find itself...
         os.environ['JEM_PACKAGEPATH'] = JEM_PACKAGEPATH
@@ -61,7 +63,7 @@ try:
 
     # ...and prepend it to the python-path (priorizing it)
     if not JEM_PACKAGEPATH in sys.path:
-        sys.path = [JEM_PACKAGEPATH] + [JEM_PACKAGEPATH + os.sep + "legacy"] + sys.path
+        sys.path = [JEM_PACKAGEPATH] + sys.path
 
     # import JEM-Ganga-Integration module (that manages the rest of JEMs initialisation)
     initError = None
@@ -79,11 +81,8 @@ try:
         from JEMlib.utils.DictPacker import multiple_replace
         from JEMlib.utils import Utils
         from JEMlib import VERSION as JEM_VERSION
-        
-        # import JEM 0.3 stuff
-        from Common.Config.Config import Config
     except Exception, e:
-        initError = "Wrong JEM_PACKAGEPATH specified. Could not find JEM library. (%s)" % e
+        initError = "Wrong JEM_PACKAGEPATH specified. Could not find JEM library."
     
     if os.path.exists(userpath):
         if initError == None:

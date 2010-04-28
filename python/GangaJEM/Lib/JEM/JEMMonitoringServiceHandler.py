@@ -31,7 +31,7 @@ passing the callbacks to here.
     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
     OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import os, sys, re, socket, signal, getpass, time
+import os, sys, re, socket, getpass, time
 
 from Ganga.Utility.logging import getLogger, logging
 from Ganga.Utility.Config import getConfig
@@ -49,11 +49,9 @@ jemconfig = getConfig("JEM")
 import JEMloader
 import PrettyStrings
 
-# still, INITIALIZED may be overridden by GangaJEM enablement config.
 if not jemconfig['JEM_ENABLE']:
     JEMloader.INITIALIZED = False
 
-# if INITIALIZED, we may import JEMs modules (they are in the pythonpath then)
 if JEMloader.INITIALIZED:
     import JEMlib
 
@@ -84,12 +82,10 @@ class JEMMonitoringServiceHandler(object):
         pass
 
     def getInstance(job):
-        """
-        Create / get MSHandler for a specific job
-        """
         if not job in JEMMonitoringServiceHandler._instances:
             JEMMonitoringServiceHandler._instances[job] = JEMMonitoringServiceHandler(job)
         return JEMMonitoringServiceHandler._instances[job]
+
     getInstance = staticmethod(getInstance)
 
     ################################################################################################
@@ -139,80 +135,142 @@ class JEMMonitoringServiceHandler(object):
         ####################################################
         # INPUT-SANDBOX
 
-        # add JEM's main script to inputsandbox
-        executablePath = os.path.realpath(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py")
+        # add JEM submit script to inputsandbox
+        executablePath = os.path.realpath(JEMloader.JEM_PACKAGEPATH + os.path.sep + JEMConfig.UI_SUBMIT_EXECUTABLE)
         if not os.path.isfile(executablePath):
             logger.warning("Could not find JEM Submit Executable: '%s'. Disabled JEM monitoring." % executablePath)
             self.__job.info.monitor.enabled = False
             return
+
         submitExecutable = File(executablePath)
 
-        # locate packed JEM lib
-        if not os.path.exists(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.library.tgz"):
+        def locateJemLib():
+            #logger.debug("JEMConfig.UI_SUBMIT_PACKAGE = " + JEMConfig.UI_SUBMIT_PACKAGE)
+            if not os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE):
+                if os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE + '.gz'):
+                    return '.gz'
+                elif os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE + '.zip'):
+                    return '.zip'
+                elif os.path.exists(JEMConfig.UI_SUBMIT_PACKAGE + '.bz2'):
+                    return '.bz2'
+                else:
+                    return None
+            else:
+                return ''
+
+        # locate JEM lib (incl. possible archive extension)
+        if locateJemLib() == None:
             logger.info("This seems to be your first job submission with the JobExecutionMonitor enabled.")
             logger.info("Preparing JEM for first-time use...")
             try:
-                os.system(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py --mode Pack >/dev/null")
+                os.system(JEMConfig.UI_SUBMIT_PACKER + " >/dev/null")
             except:
                 logger.warn('Failed to prepare JEM library package. Disabled JEM monitoring.')
                 self.__job.info.monitor.enabled = False
                 return
+
         # (re)pack JEM library (if needed)
         elif jemconfig['JEM_REPACK']:
             logger.debug("Repacking JEM library")
             try:
-                os.system(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py --mode Pack >/dev/null")
+                os.system(JEMConfig.UI_SUBMIT_PACKER + " >/dev/null")
             except:
                 logger.warn('Could not repack JEM library package. JEM library package may be out of date.')
-        # still not available?
-        if not os.path.exists(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.library.tgz"):
+
+        ending = locateJemLib()
+        if ending == None:
             logger.warn('Failed to prepare JEM library package. Disabled JEM monitoring.')
             self.__job.info.monitor.enabled = False
             return
+        JEMConfig.UI_SUBMIT_PACKAGE += ending
 
         # add JEM library to inputbox
-        libraryPath = os.path.realpath(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.library.tgz")
+        libraryPath = os.path.realpath(JEMConfig.UI_SUBMIT_PACKAGE)
         submitLibrary = File(libraryPath)
         jemInputBox += [submitLibrary]
+
+        # add modified .JEMrc
+        # we will try to load the .JEMrc settings in a dict first.
+        # this is the dict:
+        theJEMrcSettings = {}
+        # its format is { "section" => { "key" => "value", ... } }
+
+        # first, look for the .JEMrc in the current path...
+        localConfigPath = os.path.realpath("." + os.path.sep + ".JEMrc")
+        if not os.path.isfile(localConfigPath):
+            # ...if it's not there, look for ~/.JEMrc...
+            localConfigPath = os.path.expanduser("~") + os.path.sep + ".JEMrc"
+            if not os.path.isfile(localConfigPath):
+                # ...if that also doesn't exist, we'll just create a new one and warn the user.
+                logger.debug("Didn't find local configuration file .JEMrc in "
+                               + os.path.realpath("." + os.path.sep + ".JEMrc") + " or "
+                               + os.path.expanduser("~") + os.path.sep + ".JEMrc")
+                logger.debug("JEM will run with the default settings set up by the site administrator.")
+
+        # if a .JEMrc was found, load its settings in our dict.
+        if os.path.isfile(localConfigPath):
+            logger.debug("Read JEM user settings from " + localConfigPath)
+            theJEMrcSettings = self.__readJEMrc(localConfigPath)
+
+        # modify the settings to reflect our Ganga-JEM-settings...
+        self.__modifyJEMrcSettings(theJEMrcSettings)
+
+        # ...write a new .JEMrc in the temp dir...
+        jemRCFile = self.__writeJEMrc(theJEMrcSettings)
+
+        # ...and add it to the input-sandbox
+        submitLocalConfig = File(jemRCFile)
+        jemInputBox += [submitLocalConfig]
 
         ####################################################
         # OUTPUT-SANDBOX
 
         # add files to the output-sandbox
-        jemOutputBox += ["JEM.log", "logdumptrigger.log"]
+        jemOutputBox += [WNConfig.COMPLETE_LOG]
 
         ####################################################
-        # apply to JEM-enabled subjobs
+        # listener-port-handling
+
+        import sys
+
+        if self.__job.info.monitor.realtime and \
+            (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_HTTPS or \
+             WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_FSHYBRID):
+            try:
+                h,p = WNConfig.PUBLISHER_HTTPS_SERVER.split(":")
+                self.__httpsListenPort = int(p)
+            except:
+                self.__httpsListenPort = 0
+
+            if self.__httpsListenPort == 0:
+                # try to find a free listening port for the HTTPSServer
+                self.__httpsListenPort = self.__tryFindFreeListeningPort()
 
         def getPath(executable):
-            """
-            If the given file is found as-is (because the path is included), return None.
-            Else, search the exe in $PATH, and return the path to it if found.
-            """
+            paths = os.environ['PATH'].split(os.pathsep)
             if os.path.isfile(executable):
                 return None
             else:
-                paths = os.environ['PATH'].split(os.pathsep)
                 for p in paths:
                     f = os.path.join(p, executable)
                     if os.path.isfile(f):
                         return p
-            return None
+
+        ####################################################
+        # apply to JEM-enabled subjobs
 
         self.__monitoredSubjobs = []
         try:
             for i, config in enumerate(subjobconfig):
-                # we monitor only every n-th subjob, with n = JEM_MONITOR_SUBJOBS_FREQ.
                 if (i == 0) or (i % jemconfig['JEM_MONITOR_SUBJOBS_FREQ'] == 0):
                     logger.info("Enabling JEM monitoring for job #" + self.__getFullJobId() + "." + str(i))
 
-                    # remember the subjob-ids of all monitored subjobs.
                     self.__monitoredSubjobs += [i]
 
-                    ###---------------------------------------------------------------------------------
                     # as we're replacing the executable with our wrapper script, the executable probably
-                    # has to be seperately put into the input sandbox - let's check if it is located some-
-                    # where only findable via $PATH
+                    # has to be seperately put into the input sandbox - let's check if it is located in
+                    # /bin, /usr/bin, /sbin or /usr/sbin first, because in that cases, we don't have to
+                    # provide it ourselves...
                     addToBox = True
                     sbPath = "."
                     if isinstance(config.exe, File):
@@ -220,65 +278,52 @@ class JEMMonitoringServiceHandler(object):
                         config.exe = config.exe.name
                     p = getPath(config.exe)
                     if p:
-                        logger.debug("not adding '%s' to the input sandbox, as it is taken from $PATH" % repr(config.exe))
-                        addToBox = False
+                        if (p[:4] == os.sep + "bin") or (p[:5] == os.sep + "sbin") \
+                        or (p[:8] == os.sep + "usr" + os.sep + "bin") \
+                        or (p[:9] == os.sep + "usr" + os.sep + "sbin"):
+                            addToBox = False
 
                     if addToBox:
                         if type(config.exe) == type(""):
                             config.exe = File(config.exe, sbPath)
                         config.inputbox += [config.exe]
-                    ###---------------------------------------------------------------------------------
 
                     # now add JEMs files to the boxes...
                     config.inputbox += jemInputBox
                     config.outputbox += jemOutputBox
 
-                    # ...and set the executable to our main WN script, and the original exe to its 1st argument
-                    theArgs = ["--script", '"' + config.getExeString() + ' '.join(config.args) + '"']
+                    # set the executable to our main WN script, and the original exe to its 1st argument
+                    theArgs = [config.getExeString()] + config.args
+
+                    # if we're running at Localhost, inject virtual jobID (d'oh...)
+                    if self.__job.backend.__class__.__name__ == "Localhost":
+                        theArgs = ["--jobid", self.__job.info.monitor.getJobID()] + theArgs
+
                     config.args = theArgs
                     config.exe = submitExecutable
 
-                    # okay, ALL JEM 0.3 config options will be passed by environment for now. Later, we will use JEM
-                    # 0.3 also at UI.
-                    config.env["JEM_Global_mode"] = "WN"
-                    config.env["JEM_Global_debug"] = "True"
-                    config.env["JEM_Global_load_job_id_from"] = "GLITE_WMS_JOBID" # umm. this should be made a bit more flexible :)
-                    config.env["JEM_WN_trigger"] = "DiscardAllTrigger,ApproveAllTrigger,StatisticsTrigger,LogDumpTrigger"
-                    config.env["JEM_WN_valves"] = "StompValve"
-                    config.env["JEM_StompValve_host"] = "mq.pleiades.uni-wuppertal.de"
-                    config.env["JEM_StompValve_port"] = "6163"
-                    config.env["JEM_WN_preprocessor"] = "JEMv2Converter"
-                    config.env["JEM_LogDumpTrigger_dump_shmem"] = "False"
-
-                    if self.__job.info.monitor.anonymous:
-                        logger.debug("Will anonymize spyware information.")
-                        config.env["JEM_WN_anonymize_spy"] = "True"
-
-                    # if we're running at Localhost, inject virtual jobID (d'oh...) - otherwise, we don't know it yet!
-                    if self.__job.backend.__class__.__name__ == "Localhost":
-                        config.env["JEM_Global_job_id"] = self.__job.info.monitor.getJobID()
-
-                    # determine if we are an Athena job
+                    # set additional environment variables needed by JEM
+                    # determine if we are an Athena job...
                     jobIsAthena = self.__isAthenaJob()
 
-                    # configure the C-Tracer
+                    # change job environment
                     if self.__job.info.monitor.ctracer.enabled:
-                        logger.warning("C-Tracer is not available in this version (refer to https://svn.grid.uni-wuppertal.de/trac/JEM for more information)")
-                        
-                    #    if jobIsAthena:  # The run application for Athena jobs always is Python!
-                    #        config.env['JEM_CTRACE_APPS'] = "__find_python__"
-                    #    else:
-                    #        config.env['JEM_CTRACE_APPS'] = self.__job.info.monitor.ctracer.traceApps
-                    #
-                    #    config.env['JEM_CTRACE_MODULES'] = self.__job.info.monitor.ctracer.traceModules
-                    #
-                    #    if config.env['JEM_CTRACE_APPS'] == '' and config.env['JEM_CTRACE_MODULES'] != '':
-                    #        config.env['JEM_CTRACE_APPS'] = config.env['JEM_CTRACE_MODULES']
-                    #else:
-                    #    config.env['JEM_CTRACE_DISABLE'] = "1"
+                        if jobIsAthena:  # The run application for Athena jobs always is Python!
+                            config.env['JEM_CTRACE_APPS'] = "__find_python__"
+                        else:
+                            config.env['JEM_CTRACE_APPS'] = self.__job.info.monitor.ctracer.traceApps
 
-                    # this should not be needed anymore.
-                    #config.env["JEM_UI_USER"] = str(os.getuid())
+                        config.env['JEM_CTRACE_MODULES'] = self.__job.info.monitor.ctracer.traceModules
+
+                        if config.env['JEM_CTRACE_APPS'] == '' and config.env['JEM_CTRACE_MODULES'] != '':
+                            config.env['JEM_CTRACE_APPS'] = config.env['JEM_CTRACE_MODULES']
+                    else:
+                        config.env['JEM_CTRACE_DISABLE'] = "1"
+
+                    config.env["JEM_UI_USER"] = str(os.getuid())
+
+                    if self.__httpsListenPort != 0:
+                        config.env["JEM_UI_LISTEN_PORT"] = str(self.__httpsListenPort)
 
                     # commit all changes we did to the subjobconfig
                     try:
@@ -288,6 +333,12 @@ class JEMMonitoringServiceHandler(object):
                         ei = sys.exc_info()
                         logger.error("  error occured while preparing: " + str(ei[0]) + ": " + str(ei[1]))
                         logger.debug("  trace:\n" + "".join(traceback.format_tb(ei[2])))
+
+                        # this may fail if the executable is no user script, but just some
+                        # usually available command like 'echo'. So, just ignore the failure
+                        # (if the config.exe *is* a user app, and still the addition fails,
+                        #  the job won't run at all - this should be easily debug-able...)
+                        logger.debug("config object:\n" + str(config))
 
                     ## DEBUG OUTPUT #################################################################
                     s =  "Config for #" + self.__getFullJobId() + "." + str(i) + ":"                #
@@ -325,6 +376,7 @@ class JEMMonitoringServiceHandler(object):
             logger.debug("  trace:\n" + "".join(traceback.format_tb(ei[2])))
 
 
+
     def submit(self):
         """
         This method is called by Job() via IMonitoringService when the job has been
@@ -341,28 +393,27 @@ class JEMMonitoringServiceHandler(object):
         if self.__job.subjobs and len(self.__job.subjobs) > 0:
             # HACK: If we are a split job, we have to wait for the subjobs to be assigned
             #       their backend-id (JobID) before we can start the Job-Listener process
-            #       So: Wait in it in an own thread!
-            ###-------------------------------------------------------------------------------------#########
-            from Ganga.Core.GangaThread import GangaThread                                                  #
-            class WaitForJobIDsThread(GangaThread):                                                         #
-                def __init__(self, job, callback):                                                          #
-                    GangaThread.__init__(self, name='wait_for_jobID_thread')                                #
-                    self.__job = job                                                                        #
-                    self.__callback = callback                                                              #
-                    self.setDaemon(True) # don't hang the main thread                                       #
-                                                                                                            #
-                def run(self):                                                                              #
-                    logger.debug("started thread waiting for subjob-ids of job #" + str(self.__job.id))     #
-                    while not self.should_stop():                                                           #
-                        if self.__job.subjobs[0].backend.id != "":                                          #
-                            logger.debug("Job " + str(self.__job.id) + " has been submitted.")              #
-                            self.__callback()                                                               #
-                            break                                                                           #
-                        else:                                                                               #
-                            time.sleep(0.25)    # polling 4 times a sec should suffice...                   #
-                    logger.debug("thread waiting for subjob-ids of job #" + str(self.__job.id) + " exits")  #
-                    self.unregister()                                                                       #
-            ###--------------------------------------------------------------------------------------------##
+            from Ganga.Core.GangaThread import GangaThread
+            class WaitForJobIDsThread(GangaThread):
+                def __init__(self, job, callback):
+                    GangaThread.__init__(self, name='wait_for_jobID_thread')
+                    self.__job = job
+                    self.__callback = callback
+                    self.setDaemon(True)
+
+                def run(self):
+                    logger.debug("started thread waiting for subjob-ids of job #" + str(self.__job.id))
+                    while not self.should_stop():
+                        if self.__job.subjobs[0].backend.id != "":
+                            # yay!
+                            logger.debug("Job " + str(self.__job.id) + " has been submitted.")
+                            self.__callback()
+                            break
+                        else:
+                            time.sleep(0.25)
+                    logger.debug("thread waiting for subjob-ids of job #" + str(self.__job.id) + " exits")
+                    self.unregister()
+
             self.__waitForJobIDsThread = WaitForJobIDsThread(self.__job, self.__startJobListener)
             self.__waitForJobIDsThread.start()
         else:
@@ -404,9 +455,6 @@ class JEMMonitoringServiceHandler(object):
                     copiedStuff = False
 
                     if os.path.exists(self.__job.info.monitor.jmdfile):
-                        if not os.path.exists(self.__job.outputdir + "JEM_MON.jmd"):
-                            logger.info("no log in output sandbox, but live received data is present - copying into output dir")
-                            os.system('cp ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.outputdir + "JEM_MON.jmd")
                         try:
                             os.system('mv ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.info.monitor.jmdfile + '.bak')
                         except:
@@ -435,11 +483,6 @@ class JEMMonitoringServiceHandler(object):
                     if copiedStuff:
                         logger.info("...done. Inspecting the data now should display the whole available info.")
 
-                if not os.path.exists(self.__job.outputdir + "JEM_MON.jmd"):
-                    if os.path.exists(self.__job.info.monitor.jmdfile):
-                        logger.info("no log in output sandbox, but live received data is present - copying into output dir")
-                        os.system('cp ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.outputdir + "JEM_MON.jmd")
-
 
     def rollback(self):
         if not JEMloader.INITIALIZED:
@@ -451,6 +494,160 @@ class JEMMonitoringServiceHandler(object):
 
 
     ################################################################################################
+
+    def __readJEMrc(self, path):
+        """
+        Read JEM settings from a .JEMrc file into a dictionary.
+        """
+        theJEMrcSettings = {}
+        theSection = ""
+        fd = open(path, "r")
+        for line in fd:
+            if len(line) == 0:
+                continue
+            m = re.search('^\[(.*)\]', line)        # this is a new section!
+            if m != None:
+                theSection = m.group(0).strip(" []\t")
+                if not theJEMrcSettings.has_key(theSection):
+                    theJEMrcSettings[theSection] = {}
+            else:
+                try:
+                    k,v = line.strip().split("=", 1)
+                    k = k.strip()
+                    v = v.strip()
+                    if k[0] == "#":        # ignore commented-out settings...
+                        continue
+                    if theJEMrcSettings[theSection].has_key(k):
+                        logger.warning("Duplicate JEM setting '" + k + "' in " + path)
+                    theJEMrcSettings[theSection][k] = v
+                except:
+                    pass
+        return theJEMrcSettings
+
+
+    def __buildValvesDict(self, JEMrc):
+        valves = []
+        if JEMrc['JEMConfig'].has_key('PUBLISHER_USE_TYPE'):
+            valvesStr = JEMrc['JEMConfig']['PUBLISHER_USE_TYPE']
+            try:
+                for v in valvesStr.split("|"):
+                    v = v.strip()
+                    try:
+                        v = v.split("_")[-1]
+                    except:
+                        pass
+                    valves += [v]
+            except:
+                logger.debug("Failed to parse JEM-set valves: " + str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
+                valves = []
+        else:
+            try:
+                valvesVal = WNConfig.PUBLISHER_USE_TYPE
+                if valvesVal & WNConfig.PUBLISHER_USE_DEVNULL:
+                    valves += ["DEVNULL"]
+                if valvesVal & WNConfig.PUBLISHER_USE_RGMA:
+                    valves += ["RGMA"]
+                if valvesVal & WNConfig.PUBLISHER_USE_MONALISA:
+                    valves += ["MONALISA"]
+                if valvesVal & WNConfig.PUBLISHER_USE_TCP:
+                    valves += ["TCP"]
+                if valvesVal & WNConfig.PUBLISHER_USE_FS:
+                    valves += ["FS"]
+                if valvesVal & WNConfig.PUBLISHER_USE_HTTPS:
+                    valves += ["HTTPS"]
+                if valvesVal & WNConfig.PUBLISHER_USE_STOMP:
+                    valves += ["STOMP"]
+                if valvesVal & WNConfig.PUBLISHER_USE_FSHYBRID:
+                    valves += ["FSHYBRID"]
+            except:
+                pass
+        return valves
+
+
+    def __getActiveValves(self, JEMrc):
+        valves = self.__buildValvesDict(JEMrc)
+        gangaConfiguredValves = self.__job.info.monitor.advanced.valves
+
+        if gangaConfiguredValves != []:
+            valves = gangaConfiguredValves
+
+        if jemconfig['JEM_ENABLE_REALTIME'] == False: # disable valves if no realtime transfer is wanted
+            for v in ("HTTPS", "FSHYBRID", "TCP", "RGMA", "MONALISA", "STOMP"):
+                if v in valves: valves.remove(v)
+        return valves
+
+
+    def __getCombinedValvesCode(self, valves):
+        code = 0
+        for v in valves:
+            exec("code |= WNConfig.PUBLISHER_USE_" + v)
+        return code
+
+
+    def __modifyJEMrcSettings(self, JEMrc):
+        """
+        Modify JEM settings passed in a dictionary according to the Ganga JEM configuration.
+        """
+        monitor = self.__job.info.monitor
+
+        if not JEMrc.has_key('JEMConfig'):
+            JEMrc['JEMConfig'] = {}
+        if not JEMrc.has_key('JEMuiConfig'):
+            JEMrc['JEMuiConfig'] = {}
+        if not JEMrc.has_key('JEMSysConfig'):
+            JEMrc['JEMSysConfig'] = {}
+
+        ### always enable GANGA mode
+        JEMrc['JEMSysConfig']['GANGA_ENABLED'] = True
+
+        ### loglevels
+        JEMrc['JEMConfig']['WRAPPER_BASH_PUBLISHER_LEVEL'] = monitor.advanced.bash_loglevel
+        JEMrc['JEMConfig']['WRAPPER_PYTHON_PUBLISHER_LEVEL'] = monitor.advanced.python_loglevel
+
+        ### hostname to transmit data to
+        if not JEMrc['JEMConfig'].has_key('PUBLISHER_HTTPS_SERVER'):
+            from socket import gethostname
+            JEMrc['JEMConfig']['PUBLISHER_HTTPS_SERVER'] = "'"+gethostname()+"'"
+
+        ### valves
+        valves = self.__getActiveValves(JEMrc)
+
+        s = ""
+        for v in valves:
+            if s != "":
+                s += " | "
+            s += "PUBLISHER_USE_" + v
+
+        JEMrc['JEMConfig']['PUBLISHER_USE_TYPE'] = s
+
+        import pprint
+        logger.debug("effective JEM user configuration now:\n" + pprint.pformat(JEMrc))
+
+        ### done
+
+
+    def __writeJEMrc(self, theJEMrcSettings):
+        """
+        Write JEM settings from a dictionary to a .JEMrc file (in the temp-directory). Return its path.
+        """
+        thePath = JEMConfig.MON_LOG_DIR
+        if not os.path.exists(thePath):
+            os.makedirs(thePath, 0777)  # argh! must be world-writable!
+
+        thePath += os.sep + ".JEMrc"
+        fd = open(thePath, "w")
+
+        for section,settings in theJEMrcSettings.items():
+            fd.write("[" + section + "]\n")
+            for k,v in settings.items():
+                fd.write(k + "=" + str(v) + "\n")
+        fd.close()
+
+        self.__JEMrc = theJEMrcSettings
+
+        logger.debug("Wrote modified user JEM settings to " + thePath)
+        return thePath
+
 
     def __getFullJobId(self):
         jid = str(self.__job.id)
@@ -465,6 +662,37 @@ class JEMMonitoringServiceHandler(object):
             return self.__job.application.__class__.__name__ == "Athena"
         except:
             return False
+
+
+    def __tryFindFreeListeningPort(self, retries = 20):
+        """
+        Find a free port by trying to connect to ports 50000..50000+retries
+        """
+
+        if not ((WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_HTTPS) \
+        or (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_FSHYBRID)):
+            return 0
+
+        try:
+            port = int(WNConfig.PUBLISHER_HTTPS_SERVER.split(":")[1])
+            if port != 0:
+                logger.debug('Using configured port: ' + port)
+                return port
+        except:
+            pass
+
+        if JEMMonitoringServiceHandler._freeportfinder:
+            logger.debug("Attempting to find a free listening port...")
+            try:
+                port = JEMMonitoringServiceHandler._freeportfinder.tryFindFreeListeningPort(retries)
+                if port:
+                    logger.debug('Found free port: %d' % port)
+                    return port
+            except:
+                pass
+
+        logger.warn('Cannot find a free port for the JEM listener process.')
+        return 0
 
 
     def __startJobListener(self):
@@ -503,16 +731,29 @@ class JEMMonitoringServiceHandler(object):
             #############################################################################
 
             # the job listener executable now lies in a subdir of the JEM package path.
-            executable = JEMloader.JEM_PACKAGEPATH + os.sep + 'legacy' + os.sep + 'JEMganga' + os.sep + 'LiveMonitoring.py'
-            args = [executable, jobID]
+            executable = JEMloader.JEM_PACKAGEPATH + os.sep + 'JEMganga' + os.sep + 'LiveMonitoring.py'
+            args = [executable]
+            if self.__httpsListenPort != 0:
+                args += ["--https-port", str(self.__httpsListenPort)]
+                self.__job.info.monitor.port = self.__httpsListenPort
+            args += [jobID]
 
             # further job IDs (subjob IDs)
             for i, sj in enumerate(self.__job.subjobs):
                 if i in self.__monitoredSubjobs:
                     args += [str(sj.backend.id)]
 
+            # determine valve(s)
+            if self.__JEMrc != None:
+                valves = self.__getActiveValves(self.__JEMrc)
+                args += ["--valves", str(self.__getCombinedValvesCode(valves))]
+
             try:
                 self.__job.info.monitor.pid = os.spawnve(os.P_NOWAIT, executable, args, os.environ)
+
+                # moved this to every job, even if realtime=False, because
+                # maybe we'll get the data later via the sandbox! (see above)
+                #self.__job.info.monitor.jmdfile = WNConfig.LOG_DIR + os.sep + escapedJobID + os.sep + UIConfig.PUBLISHER_JMD_FILE
             except Exception, r:
                 logger.error('Could not start job listener process.')
                 logger.error('The Job with the id %s will start without monitoring.' % jobID)
@@ -537,55 +778,72 @@ class JEMMonitoringServiceHandler(object):
 
     def __stopJobListener(self):
         """
-        Shutdown the job listener of this job
+        Kill the job listener of this job
+        FIXME
         """
         if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
-            logger.debug('__stopJobListener(): j.info.monitor is no JobExecutionMonitor!')
             return
 
-        logger.debug('__stopJobListener() [pid %s]: aborting watcher thread' % self.__job.info.monitor.pid)
         self.__job.info.monitor.abortWatch()
 
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
-            logger.debug('__stopJobListener() [pid %s]: no realtime...' % self.__job.info.monitor.pid)
             return
 
-        logger.debug('__stopJobListener() [pid %s]: shutting down process.' % self.__job.info.monitor.pid)
-        logger.info("The JEM realtime monitoring listener for job %s exits." % self.__job.info.monitor.getJobID())
         if self.__job.info.monitor.pid != 0:
+            theServer = self.__checkServer()
+            for pid in theServer:
+                self.__killprocess(pid)
             self.__killprocess(self.__job.info.monitor.pid)
+
+
+    def __checkServer(self):
+        """
+        Get the PIDs of the server-processes for this job
+        """
+        serverpids = []
+        pids,ppids,cmds = self.__getChildProcesses()
+        for z,p in enumerate(pids):
+            if ppids[z] == str(self.__job.info.monitor.pid) and (\
+                   cmds[z].find(JEMConfig.SERVER_RGMA_EXE) != -1\
+                or cmds[z].find(JEMConfig.SERVER_HTTPS_EXE) != -1\
+                or cmds[z].find(JEMConfig.SERVER_TCP_EXE) != -1\
+                or cmds[z].find(JEMConfig.SERVER_STOMP_EXE) != -1):
+                serverpids += [p]
+        return serverpids
 
 
     def __getChildProcesses(self):
         """
         Find the child-processes of LiveMonitoring.py (Server, PipePublisher-launched stuff, etc).
         """
-        pids = ppids = cmds = []
 
-        _pid_match = re.compile("(?P<pid>[0-9]{1,5})")
-        for root, dirs, files in os.walk("/proc"):
-            _del = []
-            for d in dirs:
-                try:
-                    m = _pid_match.match(d)
-                except:
-                    m = None
-                if m:
-                    pid = m.group("pid")
-                    fd = open("/proc/%s/stat" % pid, "r")
-                    for l in fd.readlines():
-                        ppid = int(l.split()[3])
-                        if ppid == self.__job.info.monitor.pid:
-                            pids += [int(pid)]
-                            ppids += [ppid]
-                            fd2 = open("/proc/%s/cmdline" % pid, "r")
-                            cmds += [fd2.readline()]
-                            fd2.close()
-                    fd.close()
-                # do not recurse.
-                _del += [d]
-            for d in _del:
-                dirs.remove(d)
+        # prepare for grep
+        jobID = self.__job.info.monitor.getJobID() # pylint: disable-msg=E1101
+        logDir = JEMConfig.MON_LOG_DIR + os.sep + Utils.escapeJobID(jobID)
+
+        # dont delete the width parameter, otherwise the grep command will fail due to line length...
+        cmd = "ps --width 1000 -eo user,pid,ppid,command | grep " + getpass.getuser() + " | awk '{ print $1, $2, $3, $4,$5,$6,$7,$8,$9 }'"
+
+        # save results to tmp file
+        if not os.path.exists(logDir):
+            os.makedirs(logDir, 0777)
+        tmpFile = logDir + os.sep + "tmpServerActiveCheck"
+        os.system(cmd + " > " + tmpFile)
+        fd = open(tmpFile,'r')
+
+        pids = []
+        ppids = []
+        cmds = []
+
+        # read result
+        tmpString = fd.readline()
+        while tmpString:
+            user,pid,ppid,cmd = tmpString.split(" ", 3) # pylint: disable-msg=W0612
+            pids.append(pid)
+            ppids.append(ppid)
+            cmds.append(cmd)
+            tmpString = fd.readline()
+        os.remove(tmpFile)
         return pids, ppids, cmds
 
 
@@ -600,35 +858,36 @@ class JEMMonitoringServiceHandler(object):
             logger.debug("Invalid PID given to __killprocess: " + str(pid))
             return
 
-        def internal_shutdown(thepid):
-            logger.debug('internal_shutdown(%s)' % str(thepid))
-            thepid = int(thepid)
-            try:
-                os.kill(thepid, signal.SIGTERM)
-                time.sleep(0.5)
-                if (os.waitpid(thepid, os.WNOHANG) == (0,0)):
-                    logger.debug('internal_shutdown(%s): -15 did not suffice, killing using -9' % str(thepid))
-                    os.kill(thepid, signal.SIGKILL)
-            except OSError, ose:
-                logger.debug('internal_shutdown(%s): %s' % (str(thepid), str(ose)))
-                if "No such process" in str(ose):
-                    return
-                else:
-                    os.system("kill -9 " + str(thepid) + " 2> /dev/null")
-
         try:
+            # try to terminate gracefully
+            os.kill(pid, signal.SIGTERM)
+
+            # wait for the process to finish
+            time.sleep(2)
+
+            # if the process is still there, KILL it :)
+            # (workaround for python bug, waitpid always raises oserror, so it can not be used here)
+
             # first, look if we got childprocesses to kill first:
             pids,ppids,cmds = self.__getChildProcesses() # pylint: disable-msg=W0612
-            logger.debug('shutting down LM child processes:')
             for z,p in enumerate(pids):
                 if ppids[z] == pid:
-                    internal_shutdown(p)
-                    logger.debug('   %s: %s' % (str(p), cmds[z]))
-            logger.debug('shutting down LM main process (%s)' % str(pid))
-            internal_shutdown(pid)
+                    try:
+                        os.kill(p, signal.SIGKILL)
+                    except OSError, ose:
+                        if str(ose).find("No such process"):
+                            return
+                        else:
+                            os.system("kill -9 " + str(p) + " 2> /dev/null")
+
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except OSError, ose:
+                if str(ose).find("No such process"):
+                    return
+                else:
+                    os.system("kill -9 " + str(pid) + " 2> /dev/null")
         except:
-            ei = sys.exc_info()
-            logger.debug("in __killprocess: " + str(ei[0]) + ": " + str(ei[1]))
             # try to kill process with os call, will always work (or not, if the process doesn't exist...)!
             try:
                 os.system("kill -9 " + str(pid) + " 2> /dev/null")
