@@ -51,9 +51,7 @@ from Ganga.Core.GangaThread import GangaThread
 
 ########################################################################################################################
 # Our logging instance.
-logger = getLogger()
-logger.setLevel(logging.INFO)
-
+logger = getLogger("GangaJEM.Lib.JEM")
 
 ########################################################################################################################
 # JEM global configuration options.
@@ -65,10 +63,6 @@ jemconfig.addOption('JEM_ENABLE_REALTIME', True,
                     "Set this to 'False' to globally disable realtime monitoring. Monitoring data will only be available in each job's output sandbox.")
 jemconfig.addOption('JEM_ENABLE_CTRACE', False,
                     "Set this to 'False' to globally disable c/c++ module tracing.")
-jemconfig.addOption('JEM_BASH_LOGLEVEL', 0,
-                    'Verbosity of JEMs bash script monitor. Caution: Read JEMs documentation before changing this!')
-jemconfig.addOption('JEM_PYTHON_LOGLEVEL', 0,
-                    'Verbosity of JEMs python script monitor. Caution: Read JEMs documentation before changing this!')
 jemconfig.addOption('JEM_REPACK', False,
                     'Wether to repack the JEM library before each job submission. This is useful mostly for developers.')
 jemconfig.addOption('JEM_MONITOR_SUBJOBS_FREQ', 10000,
@@ -91,47 +85,36 @@ if not jemconfig['JEM_ENABLE']:
 # If everything is OK, import the core JEM modules.
 if JEMloader.INITIALIZED:
     try:
+        # LEGACY MODULES
         import JEMlib
-
-        # try to import JEM configs
         from JEMlib.conf import JEMSysConfig as SysConfig
         from JEMui.conf import JEMuiSysConfig as JEMConfig
         from JEMlib.conf import JEMConfig as WNConfig
         from JEMui.conf import JEMuiConfig as UIConfig
-
         from JEMlib.utils.ReverseFileReader import ropen
         from JEMlib.utils.DictPacker import multiple_replace
         from JEMlib.utils import Utils
         from JEMlib.utils import uuid
+
+        from Common.Config import Config as JEM3Config
     except:
         logger.debug("Something went wrong when importing JEMs core modules:")
         logger.debug(str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
         JEMloader.INITIALIZED = False
 
+    try:
+        # this is a HACK to pull all config options off of JEM and create GangaObject-representations of them.
+        from Modes.Ganga import ConfigConverter
+        definition, objlist = ConfigConverter.JEMConfig2GangaObjectSchemas()
+        exec(definition, globals(), locals())
+    except:
+        logger.debug("Failed to inject JEMs config into GangaJEM")
+        ei = sys.exc_info()
+        logger.debug("Reason: " + str(ei[0]) + " - " + str(ei[1]))
+
 
 #####################################################################################################################################################
 #####################################################################################################################################################
-class JEMAdvancedOptions(GangaObject):
-    """JEM - The Job Execution Monitor - advanced configuration.
-
-    This object represents advanced options for JEM. All of this options provide sensible
-    default-values, but may be tweaked for optimization- or debugging purposes.
-
-    Refer to the help() of each option to learn more.
-
-    See also: http://www.grid.uni-wuppertal.de/grid/jem
-
-    JEM (c)2004-2009 Bergische Universitaet Wuppertal
-
-    """
-    _schema = Schema(Version(0,2), {
-        # no options since 0,2
-    })
-
-    _category = 'JEMAdvancedOptions'
-    _name = 'JEMAdvancedOptions'
-
-
 class JEMCTraceOptions(GangaObject):
     """JEM - The Job Execution Monitor - C/C++-Tracer configuration.
 
@@ -223,7 +206,7 @@ class JobExecutionMonitor(GangaObject):
     Since version alpha 0.2.3, JEM includes a C/C++ module tracing subsystem - the ctracer. it is
     configured in an own config subobject, 'ctracer'. The ctracer-config can be accessed with
     "j.info.monitor.ctracer". Type 'help(JEMCTraceOptions)' for more information on setting up and
-    using the ctracer.
+    using the ctracer. NOTE: for version 0.3.0 onwards, this feature is not available yet.
 
     Note that when using splitjobs, by default JEM is enabled only for every 100th subjob to
     prevent monitoring data flooding. You can change this behaviour in .gangarc.
@@ -237,8 +220,9 @@ class JobExecutionMonitor(GangaObject):
     listCommands()               lists the last some commands / calls / returns that happened
     showException()              prints verbose information about an exception
     showCommand()                prints verbose information about a command / call / return
-    peek()                       peeks into the job's stdout/-err streams.
-    extractLogfiles()            extract JEMs logfiles (available after the job finished)
+    peek()                       peeks into the job's stdout/-err streams (like 'tail')
+    livePeek()                   prints the job's stdout as it is created (like 'tail -f')
+    extractLogfiles()            extracts JEMs logfiles (available after the job finished)
     waitForRealStart()           waits until the the user application on the WN has started
                                  (this wait may be aborted by pressing <return>)
 
@@ -249,7 +233,7 @@ class JobExecutionMonitor(GangaObject):
 
     Furthermore, you can get an overview of running JEM listener instances by typing
 
-        'JEMlisteners(jobs)'     (exactly like this, incl. the 'jobs'; this is a DEBUG feature!)
+        'JEMlisteners()'
 
 
 
@@ -299,30 +283,57 @@ class JobExecutionMonitor(GangaObject):
 
     def __init__(self):
         GangaObject.__init__(self)
-        
+
+        def keyPressed():
+            return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
+
         p = os.path.expanduser("~/.GangaJEM")
         if not os.path.exists(p):
             os.mkdir(p)
-            print "Thank you for trying this beta version of the Job Execution Monitor!"
-            print
-            print "This version brings a major rewrite of JEMs worker node module, featur-"
-            print "ing better performance & stability; not all features have yet been por-"
-            print "ted to this new module, though. Refer to the documentation for more in-"
-            print "formation about this: help('JobExecutionMonitor')"
-            print
-            print "Please note that for statistical purposes, information about all JEM"
-            print "runs is gathered centrally. If you don't wish personalized data (time-"
-            print "stamps, the CEs your jobs get assigned to, the name of the VO, and your"
-            print "grid certificate's subject / your name) to be recorded, please state so:"
-            print
-            answer = None
-            while answer not in ('', 'y','n'):
-                answer = raw_input("  Allow JEM to gather personalized data (y/n)? [y] ")
-            if answer == "n":
+
+            timeout = 60
+
+            print "* "
+            print "* Thank you for trying this beta version of the Job Execution Monitor!"
+            print "* "
+            print "* This version brings a major rewrite of JEMs worker node module, featur-"
+            print "* ing better performance & stability; not all features have yet been por-"
+            print "* ted to this new module, though. Refer to the documentation for more in-"
+            print "* formation about this: help('JobExecutionMonitor')"
+            print "* "
+            print "* Please note that for statistical purposes, information about all JEM"
+            print "* runs is gathered centrally. If you don't wish personalized data (time-"
+            print "* stamps, the CEs your jobs get assigned to, the name of the VO, and your"
+            print "* grid certificate's subject / your name) to be recorded, please state so:"
+            print "* "
+            print "*   Allow JEM to gather personalized data?"
+            print "* "
+            print "*   press return to accept, ctrl+c to deny (defaulting to 'yes' in %d sec)" % timeout
+
+            if keyPressed():
+                sys.stdin.readlines()
+            ts = time.time()
+            try:
+                while True: # abort condition is in-loop...
+                    while time.time() - ts < 1.0:
+                        if keyPressed():
+                            sys.stdin.read(1)
+                            timeout = 0
+                            break
+                        time.sleep(0.01)
+                    if timeout == 0:
+                        print "*   ...yes. will gather information about your job runs."
+                        break
+                    timeout = timeout - 1
+                    ts = time.time()
+            except KeyboardInterrupt:
                 fd = open(p + "/anonymous", "w")
                 fd.write("yes\n")
                 fd.close()
                 self.anonymous = True
+                print "*   ...no. statistics about your job runs will be anonymized."
+            except:
+                pass
         else:
             if os.path.exists(p + "/anonymous"):
                 self.anonymous = True
@@ -766,14 +777,14 @@ class JobExecutionMonitor(GangaObject):
                     time.sleep(5)
             except:
                 pass
-            
+
         if not self.userAppRunning:
             while not self.userAppRunning:
                 if keyPressed():
                     logger.info("Aborted live-peek.")
                     return
                 time.sleep(0.5)
-        
+
         print "Live peek starts!"
         history = []
         while not keyPressed():
@@ -1030,10 +1041,16 @@ class JobExecutionMonitor(GangaObject):
 
 
     def _summary_print(self, attribute, verbosity):
+        class Anonymous:
+            def __repr__(self):
+                return "..."
+
         if isinstance(attribute, JEMCTraceOptions):
-            return "CTracer options; access via info.monitor.ctracer"
+            #return "CTracer options; access via info.monitor.ctracer"
+            return Anonymous()
         elif isinstance(attribute, JEMAdvancedOptions):
-            return "advanced options; access via info.monitor.advanced"
+            #return "advanced options; access via info.monitor.advanced"
+            return Anonymous()
 
         return str(attribute)
 

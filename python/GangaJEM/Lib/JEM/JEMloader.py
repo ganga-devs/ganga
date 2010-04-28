@@ -14,21 +14,21 @@ by the stub and inserted into the python-path.
 
         Copyright (c) 2007-2009 University of Wuppertal, Department of physics
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-    software and associated documentation files (the "Software"), to deal in the Software 
-    without restriction, including without limitation the rights to use, copy, modify, merge, 
-    publish, distribute, sublicense, and/or sell copies of the Software, and to permit 
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this
+    software and associated documentation files (the "Software"), to deal in the Software
+    without restriction, including without limitation the rights to use, copy, modify, merge,
+    publish, distribute, sublicense, and/or sell copies of the Software, and to permit
     persons to whom the Software is furnished to do so, subject to the following conditions:
-    
-    The above copyright notice and this permission notice shall be included in all copies 
+
+    The above copyright notice and this permission notice shall be included in all copies
     or substantial portions of the Software.
-    
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-    PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-    OR OTHER DEALINGS IN THE SOFTWARE. 
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+    PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+    OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import os
 import sys
@@ -67,6 +67,8 @@ try:
     initError = None
     userpath = os.path.expanduser("~/.JEMrc")
 
+    os.environ["JEM_Global_mode"] = "Ganga"
+
     try:
         # try to import JEM configs and submit methods
         from JEMlib.conf import JEMSysConfig as SysConfig
@@ -79,17 +81,14 @@ try:
         from JEMlib.utils.DictPacker import multiple_replace
         from JEMlib.utils import Utils
         from JEMlib import VERSION as JEM_VERSION
-        
-        # import JEM 0.3 stuff
-        from Common.Config.Config import Config
     except Exception, e:
         initError = "Wrong JEM_PACKAGEPATH specified. Could not find JEM library. (%s)" % e
-    
+
     if os.path.exists(userpath):
         if initError == None:
             if not SysConfig.GANGA_ENABLED:
                 initError = "Please set the GANGA_ENABLED variable in JEMSysConfig to 'True' to enable JEM support."
-    
+
         if initError == None:
             rgmaPubEnabled = WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_RGMA
             tcpPubEnabled = WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_TCP
@@ -97,7 +96,7 @@ try:
                               or (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_FSHYBRID)
             stompPubEnabled = (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_STOMP)
             httpsExternal = WNConfig.HTTPS_SERVER_EXTERNAL
-    
+
             enabledPublisherCount = 0
             if rgmaPubEnabled:  enabledPublisherCount += 1
             if tcpPubEnabled:   enabledPublisherCount += 1
@@ -116,7 +115,7 @@ try:
             if not fpEnabled:
                 logger.warning("JEM is not correctly configured to include detailled monitoring data in the job's output sandbox.")
                 logger.debug("Configuration hint: Please ensure that PUBLISHER_USE_TYPE contains PUBLISHER_USE_FS in JEMConfig.")
-    
+
             # check if the JEMui side of the story uses the XML publisher
             if not UIConfig.PUBLISHER_OUTPUT_TYPE & JEMConfig.PUBLISHER_OUTPUT_JMD:
                 logger.warning('JEM is not correctly configured to pass data to Ganga.')
@@ -126,10 +125,21 @@ try:
                 else:
                     initError = 'Also, monitoring data isn\'t available in the output sandbox.'
 
+    if initError == None:
+        try:
+            # import JEM 0.3 stuff
+            import JEM as JEMmain
+            runner = JEMmain.setup(logger=getLogger, logprefix="GangaJEM.Lib.JEM", allconfig=True)
+        except:
+            ei = sys.exc_info()
+            initError = "Failed to setup JEMs runtime: " + str(ei[0]) + " - " + str(ei[1])
+            import traceback
+            initError += "\n" + str(traceback.format_tb(ei[2]))
+
     # if some error occured during initialization, disable JEM monitoring.
     if initError != None:
         raise Exception(initError)
-    
+
 
     INITIALIZED = True
 except Exception, err:

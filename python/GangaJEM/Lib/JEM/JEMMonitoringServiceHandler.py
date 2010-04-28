@@ -40,8 +40,8 @@ from GangaJEM.Lib.JEM import JobExecutionMonitor
 
 ########################################################################################################################
 # Our logging instance and configuration
-logger = getLogger()
-logger.setLevel(logging.INFO)
+logger = getLogger("GangaJEM.Lib.JEM")
+
 jemconfig = getConfig("JEM")
 
 # JEMloader is a proxy object trying to load JEMs core modules. If this
@@ -70,6 +70,7 @@ if JEMloader.INITIALIZED:
     from JEMlib.utils import Utils
     from JEMlib import VERSION as JEM_VERSION
 
+    from Modes.Ganga import ConfigConverter
 
 ########################################################################################################################
 ########################################################################################################################
@@ -126,10 +127,12 @@ class JEMMonitoringServiceHandler(object):
         if not JEMloader.INITIALIZED:
             logger.debug("Job Execution Monitor is disabled or failed to initialize")
             return
-        
+
         logger.debug("Job " + self.__getFullJobId() + " is being prepared.")
 
-        if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
+        mo = self.__job.info.monitor
+
+        if not isinstance(mo, JobExecutionMonitor.JobExecutionMonitor):
             logger.debug("Job " + self.__getFullJobId() + " has no JobExecutionMonitor-instance set.")
             return
 
@@ -143,7 +146,7 @@ class JEMMonitoringServiceHandler(object):
         executablePath = os.path.realpath(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py")
         if not os.path.isfile(executablePath):
             logger.warning("Could not find JEM Submit Executable: '%s'. Disabled JEM monitoring." % executablePath)
-            self.__job.info.monitor.enabled = False
+            mo.enabled = False
             return
         submitExecutable = File(executablePath)
 
@@ -155,7 +158,7 @@ class JEMMonitoringServiceHandler(object):
                 os.system(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py --mode Pack >/dev/null")
             except:
                 logger.warn('Failed to prepare JEM library package. Disabled JEM monitoring.')
-                self.__job.info.monitor.enabled = False
+                mo.enabled = False
                 return
         # (re)pack JEM library (if needed)
         elif jemconfig['JEM_REPACK']:
@@ -167,7 +170,7 @@ class JEMMonitoringServiceHandler(object):
         # still not available?
         if not os.path.exists(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.library.tgz"):
             logger.warn('Failed to prepare JEM library package. Disabled JEM monitoring.')
-            self.__job.info.monitor.enabled = False
+            mo.enabled = False
             return
 
         # add JEM library to inputbox
@@ -238,19 +241,17 @@ class JEMMonitoringServiceHandler(object):
                     config.args = theArgs
                     config.exe = submitExecutable
 
+                    # export the data of the GangaObject representing JEMs config into the environment
+                    for k, v in ConfigConverter.GangaObjectInstances2JEMConfigEnvVars(mo.advanced).iteritems():
+                        config.env[k] = str(v)
+                        logger.debug("setting %s to '%s'" % (k, str(v)))
+
                     # okay, ALL JEM 0.3 config options will be passed by environment for now. Later, we will use JEM
                     # 0.3 also at UI.
                     config.env["JEM_Global_mode"] = "WN"
-                    config.env["JEM_Global_debug"] = "True"
                     config.env["JEM_Global_load_job_id_from"] = "GLITE_WMS_JOBID" # umm. this should be made a bit more flexible :)
-                    config.env["JEM_WN_trigger"] = "DiscardAllTrigger,ApproveAllTrigger,StatisticsTrigger,LogDumpTrigger"
-                    config.env["JEM_WN_valves"] = "StompValve"
-                    config.env["JEM_StompValve_host"] = "mq.pleiades.uni-wuppertal.de"
-                    config.env["JEM_StompValve_port"] = "6163"
-                    config.env["JEM_WN_preprocessor"] = "JEMv2Converter"
-                    config.env["JEM_LogDumpTrigger_dump_shmem"] = "False"
 
-                    if self.__job.info.monitor.anonymous:
+                    if mo.anonymous:
                         logger.debug("Will anonymize spyware information.")
                         config.env["JEM_WN_anonymize_spy"] = "True"
 
@@ -262,9 +263,9 @@ class JEMMonitoringServiceHandler(object):
                     jobIsAthena = self.__isAthenaJob()
 
                     # configure the C-Tracer
-                    if self.__job.info.monitor.ctracer.enabled:
+                    if mo.ctracer.enabled:
                         logger.warning("C-Tracer is not available in this version (refer to https://svn.grid.uni-wuppertal.de/trac/JEM for more information)")
-                        
+
                     #    if jobIsAthena:  # The run application for Athena jobs always is Python!
                     #        config.env['JEM_CTRACE_APPS'] = "__find_python__"
                     #    else:
@@ -634,3 +635,4 @@ class JEMMonitoringServiceHandler(object):
                 os.system("kill -9 " + str(pid) + " 2> /dev/null")
             except:
                 return
+
