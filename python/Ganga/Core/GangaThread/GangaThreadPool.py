@@ -119,10 +119,13 @@ class GangaThreadPool:
 
     def __do_shutdown__(self):
 
+        logger.debug('Service threads to shutdown: %s' % list(self.__threads))
+
         ## shutdown each individual threads in the pool
         for t in self.__threads:
             logger.debug('shutting down Thread: %s' % t.getName())
             t.stop()
+            logger.debug('shutdown Thread: %s' % t.getName())
 
         ## counting the number of alive threads
         num_alive_threads = self.__cnt_alive_threads__()
