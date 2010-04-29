@@ -54,6 +54,38 @@ def makeRepository(registry):
     else:
         raise RegistryError("Repository %s: Unknown repository type %s" % (registry.name, registry.type))
 
+class IncompleteObject(object):
+    """ This class represents an object that could not be loaded on startup"""
+    def __init__(self, registry, id):
+        self.registry = registry
+        self.id = id
+    
+    def reload(self):
+        self.registry._lock.acquire()
+        try:
+            self.registry.repository.load([self.id])
+            print "Successfully reloaded '%s' object #%i!" % (self.registry.name,self.id)
+        finally:
+            self.registry._lock.release()
+
+    def remove(self):
+        self.registry._lock.acquire()
+        try:
+            if len(self.registry.repository.lock([self.id])) == 0:
+                errstr = "Could not lock '%s' object #%i!" % (self.registry.name,self.id)
+                try:
+                    errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(self.id)
+                except Exception, x:
+                    print x
+                    pass
+                raise RegistryLockError(errstr)
+            self.registry.repository.delete([self.id])
+        finally:
+            self.registry._lock.release()
+
+    def __repr__(self):
+        return "Incomplete object in '%s', ID %i. Try reload() or remove()." % (self.registry.name,self.id)
+
 class Registry(object):
     """Ganga Registry
     Base class providing a dict-like locked and lazy-loading interface to a Ganga repository
@@ -80,6 +112,8 @@ class Registry(object):
         try:
             return self._objects[id]
         except KeyError:
+            if id in self._incomplete_objects:
+                return IncompleteObject(self, id)
             raise RegistryKeyError("Could not find object #%s" % id)
             
     def __len__(self):
@@ -363,10 +397,7 @@ class Registry(object):
         t0 = time.time()
         self.repository = makeRepository(self)
         self._objects = self.repository.objects
-        self.repository.startup()
-        t1 = time.time()
-        logger.info("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0))
-        self._started = True
+        self._incomplete_objects = self.repository.incomplete_objects
 
         if self._needs_metadata:
             if self.metadata is None:
@@ -375,6 +406,11 @@ class Registry(object):
                 self.metadata.location = self.location
                 self.metadata._parent = self
             self.metadata.startup()
+
+        self.repository.startup()
+        t1 = time.time()
+        logger.info("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0))
+        self._started = True
         
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """

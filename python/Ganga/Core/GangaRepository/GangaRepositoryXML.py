@@ -226,6 +226,7 @@ class GangaRepositoryLocal(GangaRepository):
                 self.known_bad_ids.append(id)
             for exc,ids in cnt.items():
                 logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
+            logger.error("If you want to delete the incomplete objects, you can type 'for i in %s.incomplete_ids(): %s(i).remove()' (press 'Enter' twice)" % (self.registry.name, self.registry.name))
         logger.debug("updated index done")
 
     def add(self, objs, force_ids = None):
@@ -285,9 +286,11 @@ class GangaRepositoryLocal(GangaRepository):
             except IOError, x:
                 raise RepositoryError(self,"IOError on flushing id '%i': %s" % (id,str(x)))
 
-    def load(self, ids):
+    def load(self, ids, load_backup=False):
         for id in ids:
             fn = self.get_fn(id)
+            if load_backup:
+                fn = fn+"~"
             try:
                 fobj = file(fn,"r")
             except IOError, x:
@@ -313,6 +316,8 @@ class GangaRepositoryLocal(GangaRepository):
                         l = []
                         while str(i) in ld:
                             sfn = os.path.join(os.path.dirname(fn),str(i),"data")
+                            if load_backup:
+                                sfn = sfn+"~"
                             try:
                                 sfobj = file(sfn,"r")
                             except IOError, x:
@@ -367,7 +372,21 @@ class GangaRepositoryLocal(GangaRepository):
             except RepositoryError:
                 raise
             except Exception, x:
+                if load_backup:
+                    logger.debug("Could not load backup object #%i: %s %s", id, x.__class__.__name__, x)
+                    return
+
                 logger.debug("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
+                # try loading backup
+                try:
+                    self.load([id],load_backup=True)
+                    logger.warning("Object '%s' #%i loaded from backup file - the last changes may be lost.", self.registry.name, id)
+                    continue
+                except Exception:
+                    pass
+                # add object to incomplete_objects
+                if not id in self.incomplete_objects:
+                    self.incomplete_objects.append(id)
                 # remove index so we do not continue working with wrong information
                 try:
                     os.unlink(os.path.dirname(fn)+".index")
@@ -385,8 +404,6 @@ class GangaRepositoryLocal(GangaRepository):
             except OSError:
                 pass
             self._internal_del__(id)
-
-
             rmrf(os.path.dirname(fn))
 
     def lock(self,ids):

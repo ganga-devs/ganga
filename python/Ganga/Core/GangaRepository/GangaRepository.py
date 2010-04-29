@@ -65,6 +65,7 @@ class GangaRepository(object):
         """GangaRepository constructor. Initialization should be done in startup()"""
         self.registry = registry
         self.objects = {}
+        self.incomplete_objects = []
 
 ## Functions that should be overridden and implemented by derived classes.
     def startup(self):
@@ -188,6 +189,8 @@ class GangaRepository(object):
         """ Internal function for repository classes to add items to the repository.
         Should not raise any Exceptions
         """
+        if id in self.incomplete_objects:
+            self.incomplete_objects.remove(id)
         self.objects[id] = obj
         obj.__dict__["_registry_id"] = id
         obj.__dict__["_registry_locked"] = False
@@ -197,10 +200,13 @@ class GangaRepository(object):
 
     def _internal_del__(self, id):
         """ Internal function for repository classes to (logically) delete items to the repository."""
-        self.objects[id]._setRegistry(None)
-        del self.objects[id].__dict__["_registry_id"]
-        del self.objects[id].__dict__["_registry_locked"]
-        del self.objects[id]
+        if id in self.incomplete_objects:
+            self.incomplete_objects.remove(id)
+        else:
+            self.objects[id]._setRegistry(None)
+            del self.objects[id].__dict__["_registry_id"]
+            del self.objects[id].__dict__["_registry_locked"]
+            del self.objects[id]
 
 
 class GangaRepositoryTransient(object):
