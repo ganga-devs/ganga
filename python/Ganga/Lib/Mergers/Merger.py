@@ -174,23 +174,23 @@ class AbstractMerger(GangaObject):
                 #check if we can keep going
                 if j.status == 'failed' or j.status == 'killed':
                     if ignorefailed:
-                        logger.warning('Job %d has status %s and is being ignored.', j.id, j.status)
+                        logger.warning('Job %s has status %s and is being ignored.', j.fqid, j.status)
                         continue
                     else:
-                        logger.error('Job %d has status %s and so the merge can not continue. '\
-                                     'This can be overridden with the ignorefailed flag.', j.id, j.status)
+                        logger.error('Job %s has status %s and so the merge can not continue. '\
+                                     'This can be overridden with the ignorefailed flag.', j.fqid, j.status)
                         return self.failure
                 else:
-                    logger.error("Job %d is in an unsupported status %s and so the merge can not continue. '\
-                    'Supported statuses are 'completed', 'failed' or 'killed' (if the ignorefailed flag is set).", j.id, j.status)
+                    logger.error("Job %s is in an unsupported status %s and so the merge can not continue. '\
+                    'Supported statuses are 'completed', 'failed' or 'killed' (if the ignorefailed flag is set).", j.fqid, j.status)
                     return self.failure
 
             #run the merge recursively
             if not j.merger and len(j.subjobs):
                 sub_result = self.merge(j.subjobs,outputdir = j.outputdir, ignorefailed = ignorefailed, overwrite = overwrite)
                 if (sub_result == self.failure) and not ignorefailed:
-                    logger.error('The merge of Job %d failed and so the merge can not continue. '\
-                                 'This can be overridden with the ignorefailed flag.', j.id)
+                    logger.error('The merge of Job %s failed and so the merge can not continue. '\
+                                 'This can be overridden with the ignorefailed flag.', j.fqid)
                     return self.failure
             
                 
@@ -198,11 +198,11 @@ class AbstractMerger(GangaObject):
                 p = os.path.join(j.outputdir,f)
                 if not os.path.exists(p):
                     if ignorefailed:
-                        logger.warning('The file %s in Job %d was not found. The file will be ignored.',str(f),j.id)
+                        logger.warning('The file %s in Job %s was not found. The file will be ignored.',str(f),j.fqid)
                         continue
                     else:
-                        logger.error('The file %s in Job %d was not found and so the merge can not continue. '\
-                                     'This can be overridden with the ignorefailed flag.', str(f), j.id)
+                        logger.error('The file %s in Job %s was not found and so the merge can not continue. '\
+                                     'This can be overridden with the ignorefailed flag.', str(f), j.fqid)
                         return self.failure
                 files[f].append(p)
 
