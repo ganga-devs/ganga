@@ -1,4 +1,74 @@
+import mimetypes
+import urllib2
+import httplib
+import string
+import random
+
+
 def report(job=None):
+
+        
+        def random_string (length):
+                return ''.join (random.choice (string.letters) for ii in range (length + 1))
+
+        def encode_multipart_data (files):
+                boundary = random_string (30)
+
+                def get_content_type (filename):
+                        return mimetypes.guess_type (filename)[0] or 'application/octet-stream'
+
+                def encode_file (field_name):
+                        filename = files [field_name]
+                        return ('--' + boundary,
+                                'Content-Disposition: form-data; name="%s"; filename="%s"' % (field_name, filename),
+                                'Content-Type: %s' % get_content_type(filename),
+                                '', open (filename, 'rb').read ())
+        
+                lines = []
+                for name in files:
+                        lines.extend (encode_file (name))
+                lines.extend (('--%s--' % boundary, ''))
+                body = '\r\n'.join (lines)
+
+                headers = {'content-type': 'multipart/form-data; boundary=' + boundary,
+                        'content-length': str (len (body))}
+
+                return body, headers
+   
+
+        def make_upload_file (server):
+
+                def upload_file (path):
+
+                        #print 'Uploading %r to %r' % (path, server)
+
+                        data = {'MAX_FILE_SIZE': '3145728',
+                        'sub': '',
+                        'mode': 'regist'}
+                        files = {'file': path}
+
+                        send_post (server, files)
+
+                return upload_file
+
+        def send_post (url, files):
+                req = urllib2.Request (url)
+                connection = httplib.HTTPConnection (req.get_host ())
+                connection.request ('POST', req.get_selector (),
+                        *encode_multipart_data (files))
+                response = connection.getresponse ()
+
+                #file = open('/home/ivan/result.txt', 'a')
+                #file.write(response.read())
+
+                #print 'Code: %s %s' % (response.status, response.reason)
+
+
+        def run_upload (server, path):
+
+                upload_file = make_upload_file (server)
+                upload_file (path)
+        
 
         def report_inner(job=None):
         
@@ -15,6 +85,7 @@ def report(job=None):
                 ipythonHistoryFileName = "ipythonhistory.txt"
                 gangaLogFileName = "gangalog.txt"
                 repositoryPath = "repository/$usr/LocalXML/6.0/jobs/0xxx"
+                uploadFileServer= "http://127.0.0.1:8000/reports"
 
                 def printDictionary(dictionary):
                         for k,v in dictionary.iteritems():
@@ -96,7 +167,7 @@ def report(job=None):
 
                         import datetime
                         now = datetime.datetime.now()
-                        userInfoDirName = userInfoDirName + now.strftime("%Y-%m-%d %H:%M:%S")
+                        userInfoDirName = userInfoDirName + now.strftime("%Y-%m-%d|%H:%M:%S")
                         fullLogDirName = os.path.join(fullPathTempDir, userInfoDirName) 
         
                         #if report directory exists -> delete it's content(we would like last version of the report)
@@ -234,7 +305,7 @@ def report(job=None):
                         except:
                                 writeErrorLog(str(sys.exc_value))
 
-                resultArchive = '%s.tag.gz' % folderToArchive
+                resultArchive = '%s.tar.gz' % folderToArchive
 
                 try:
                         resultFile = tarfile.TarFile.open(resultArchive, 'w:gz')
@@ -257,14 +328,18 @@ def report(job=None):
                 if(os.path.exists(errorLogPath)):
                         os.remove(errorLogPath)
 
-                #return the path to the archive
-                return resultArchive
+                #return the path to the archive and the path to the upload server
+                return (resultArchive, uploadFileServer)
 
         #call the report function
         try:
-                resultArchive = report_inner(job)
+                resultArchive, uploadFileServer = report_inner(job)
 
-                print 'You can find your user report here : ' + resultArchive
+                run_upload(server=uploadFileServer, path=resultArchive)
+
+                print 'Error report sent to the server'
+
+                #print 'You can find your user report here : ' + resultArchive
 
                 #for now don't send to the server
                 #send the file to the server
@@ -287,7 +362,7 @@ def report(job=None):
                 
         except:
                 pass
-                #raise  
+                #raise   
 
 print 'loaded'
 
