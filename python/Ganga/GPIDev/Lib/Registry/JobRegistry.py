@@ -179,19 +179,6 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         """ Copy all jobs. """
         return JobRegistrySliceProxy(self._impl.copy(keep_going=keep_going))
 
-    def select(self,minid=None,maxid=None,**attrs):
-        """ Select a subset of jobs. Examples:
-        jobs.select(10): select jobs with ids higher or equal to 10;
-        jobs.select(10,20) select jobs with ids in 10,20 range (inclusive);
-        jobs.select(status='new') select all jobs with new status;
-        jobs.select(name='some') select all jobs with some name;
-        jobs.select(application='Executable') select all jobs with Executable application;
-        jobs.select(backend='Local') select all jobs with Local backend.
-        """
-        unwrap_attrs = {}
-        for a in attrs:
-            unwrap_attrs[a] = _unwrap(attrs[a])
-        return JobRegistrySliceProxy(self._impl.select(minid,maxid,**unwrap_attrs))
 
     def __call__(self,x):
         """ Access individual job. Examples:

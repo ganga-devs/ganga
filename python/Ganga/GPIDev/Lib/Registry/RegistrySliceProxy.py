@@ -15,6 +15,12 @@ class RegistrySliceProxy(object):
         Returns True on success, False on failure"""
         return self._impl.clean(confirm,force)
 
+    def incomplete_ids(self):
+        try:
+            return self._impl.objects._incomplete_objects
+        except Exception, x:
+            return []
+
     def __iter__(self):
         """ Looping. Example:
         for j in jobs:
@@ -33,6 +39,20 @@ class RegistrySliceProxy(object):
     
     def __len__(self):
         return self._impl.__len__()
+
+    def select(self,minid=None,maxid=None,**attrs):
+        """ Select a subset of objects. Examples for jobs:
+        jobs.select(10): select jobs with ids higher or equal to 10;
+        jobs.select(10,20) select jobs with ids in 10,20 range (inclusive);
+        jobs.select(status='new') select all jobs with new status;
+        jobs.select(name='some') select all jobs with some name;
+        jobs.select(application='Executable') select all jobs with Executable application;
+        jobs.select(backend='Local') select all jobs with Local backend.
+        """
+        unwrap_attrs = {}
+        for a in attrs:
+            unwrap_attrs[a] = _unwrap(attrs[a])
+        return self.__class__(self._impl.select(minid,maxid,**unwrap_attrs))
 
     def _display(self,interactive=0):
         return self._impl._display(interactive)
