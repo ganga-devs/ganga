@@ -127,34 +127,11 @@ class JobTree(GangaObject):
             ds += "%s\n" %d
             
         jobs = self.getjobs()
-        cnt = len(jobs)
-    
-        fg = Foreground()
-        fx = Effects()
-        bg = Background()
-
-        status_colours = {'new'        : fx.normal,
-                          'submitted'  : fg.orange,
-                          'running'    : fg.green,
-                          'completed'  : fg.blue,
-                          'failed'     : fg.red }
-                    
-        ds += "[Jobs]: %d\n" % cnt
-
-        if cnt > 0:
+        ds += "[Jobs]: %d\n" % len(jobs)
+        if len(jobs) > 0:
             ds += "--------------\n"
-            ds += "ID      status      name        backend \n"
-            
-        for j in jobs:
-            try:
-                colour = status_colours[j.status]
-            except KeyError:
-                colour = fx.normal
-            
-            if hasattr(j.backend, 'actualCE'):
-                ds+= markup("#%-6s %-10s  %-10s  %-10s\n" % (j._impl.getFQID('.'), j.status, j.name, j.backend.actualCE), colour)
-            else:
-                ds+= markup("#%-6s %-10s  %-10s \n" % (j._impl.getFQID('.'), j.status, j.name), colour)
+            ds += jobs._display(interactive)
+
         return ds
     
     def _proxy_display(self, interactive = 1):
@@ -274,10 +251,10 @@ class JobTree(GangaObject):
                 except RegistryKeyError:
                     do_clean = True
                 else:
-                    res.objects[j.id] = _wrap(j)
+                    res.objects[j.id] = j
         if do_clean:
             self.cleanlinks()
-        return res
+        return _wrap(res)
 
     def find(self, id, path = None):
         """For a job with given id tries to find all references in the job tree.
