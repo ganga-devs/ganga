@@ -1,22 +1,26 @@
 from GangaTest.Framework.utils import sleep_until_state,file_contains,failureException
 
+config.LSF.timeout=120
+config.SGE.timeout=120
+config.PBS.timeout=120
+
+
 j = Job(backend=Batch(),application=Executable(exe='sleep',args=['1200']))
 
 j.submit()
 killcmd = config[config.Configuration.Batch]['kill_str']
 
-if not sleep_until_state(j,600,'running',['new','killed','completed','unknown','removed','failed']):
+if not sleep_until_state(j,1200,'running',['new','killed','completed','unknown','removed','failed']):
     if j.status in ['submitted']:
-        raise failureException("Job did not start running within timeout period [10min]")
+        raise failureException("Job did not start running within timeout period [20min]")
     else:
         raise failureException("Some error in the test script. Job is in status %s which does not make sense."% j.status)
 
 import os
 os.system(killcmd%str(j.backend.id))
 
-config[config.Configuration.Batch]['timeout']=120
 
-if not sleep_until_state(j,180,'failed',['new','killed','completed','unknown','removed']):
+if not sleep_until_state(j,300,'failed',['new','killed','completed','unknown','removed']):
     if j.status in ['running']:
         raise failureException("Heartbeat detection did not work or machine clocks are badly skewed")
     else:
