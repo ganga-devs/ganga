@@ -335,11 +335,11 @@ def report(job=None):
         try:
                 resultArchive, uploadFileServer = report_inner(job)
 
-                run_upload(server=uploadFileServer, path=resultArchive)
+                #run_upload(server=uploadFileServer, path=resultArchive)
 
-                print 'Error report sent to the server'
+                #print 'Error report sent to the server'
 
-                #print 'You can find your user report here : ' + resultArchive
+                print 'You can find your user report here : ' + resultArchive
 
                 #for now don't send to the server
                 #send the file to the server
