@@ -150,7 +150,9 @@ class AbstractMerger(GangaObject):
         # special case the passing of a Job object.
         from Ganga.GPIDev.Lib.Job import Job
         if isinstance(jobs,GPIProxyObject) and isinstance(jobs._impl,Job):
-            return self.merge(jobs.subjobs,outputdir = jobs.outputdir, ignorefailed = ignorefailed, overwrite = overwrite)
+            if outputdir is None:
+                outputdir = jobs.outputdir
+            return self.merge(jobs.subjobs,outputdir = outputdir, ignorefailed = ignorefailed, overwrite = overwrite)
 
         if len(jobs) == 0:
             logger.warning('The jobslice given was empty. The merge will not continue.')
@@ -624,7 +626,9 @@ class SmartMerger(GangaObject):
         # special case the passing of a Job object.
         from Ganga.GPIDev.Lib.Job import Job
         if isinstance(jobs,Job):
-            return self.merge(jobs.subjobs,outputdir = jobs.outputdir, ignorefailed = ignorefailed, overwrite = overwrite)
+            if outputdir is None:
+                outputdir = jobs.outputdir
+            return self.merge(jobs.subjobs,outputdir = outputdir, ignorefailed = ignorefailed, overwrite = overwrite)
 
         if len(jobs) == 0:
             logger.warning('The jobslice given was empty. The merge will not continue.')
