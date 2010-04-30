@@ -277,8 +277,16 @@ class GangaRepositoryLocal(GangaRepository):
                             safe_save(sfn, split_cache[i], self.to_file)
                             split_cache[i]._setFlushed()                
                         safe_save(fn, obj, self.to_file, self.sub_split)
+                        # clean files not in subjobs anymore... (bug 64041)
+                        for idn in os.listdir(os.path.dirname(fn)):
+                            if idn.isdigit() and int(idn) >= len(split_cache):
+                                rmrf(os.path.join(os.path.dirname(fn),idn))
                     else:
                         safe_save(fn, obj, self.to_file, "")
+                        # clean files leftover from sub_split
+                        for idn in os.listdir(os.path.dirname(fn)):
+                            if idn.isdigit():
+                                rmrf(os.path.join(os.path.dirname(fn),idn))
                     self.index_write(id)
                     obj._setFlushed()
             except OSError, x:
