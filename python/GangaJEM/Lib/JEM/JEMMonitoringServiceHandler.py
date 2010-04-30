@@ -244,7 +244,6 @@ class JEMMonitoringServiceHandler(object):
                     # export the data of the GangaObject representing JEMs config into the environment
                     for k, v in ConfigConverter.GangaObjectInstances2JEMConfigEnvVars(mo.advanced).iteritems():
                         config.env[k] = str(v)
-                        logger.debug("setting %s to '%s'" % (k, str(v)))
 
                     # okay, ALL JEM 0.3 config options will be passed by environment for now. Later, we will use JEM
                     # 0.3 also at UI.
