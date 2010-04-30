@@ -5,8 +5,9 @@ from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 from TaskApplication import AthenaTask, AnaTaskSplitterJob
 
 
-from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException
-dq2=DQ2()
+from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException 
+from dq2.container.exceptions import DQContainerAlreadyHasDataset
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 
 config.addOption('cloudPreference',[],'list of preferred clouds to choose for AnaTask analysis')
 config.addOption('backendPreference',["LCG","Panda","NG"],'order of preferred backends (LCG, Panda, NG) for AnaTask analysis')
@@ -58,7 +59,49 @@ class AnaTransform(Transform):
       for odat in j.outputdata.outputdata:
           if 0==len([f for f in j.outputdata.output if odat in f]):
               logger.error("Job %s has not produced %s file, only: %s" % (j.id, odat, j.outputdata.output))
+              return False
+      # if this is the first app to complete the partition...
+      if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
+          prefix = ".".join(j.outputdata.datasetname.split(".")[:3])
+          task = self._getParent()
+          datasetname = "%s.task_%i.subtask_%i.%s"%(prefix,task.id,task.transforms.index(self),self.outputdata.datasetname)
+          outputdata = DQ2OutputDataset()
+          try:
+              outputdata.create_dataset(datasetname)
+          except DQDatasetExistsException:
+              pass
+          infos = []
+          for odat in j.outputdata.outputdata:
+              info = [f for f in j.outputdata.output if odat in f][0].split(",")
+              info[0] = datasetname
+              infos.append(",".join(info))
+          outputdata.register_datasets_details(None, infos)
+
+          container = "%s.task_%i.%s/"%(prefix,task.id,self.outputdata.datasetname)
+          # Register Container
+          try:
+              containerinfo = {}
+              dq2_lock.acquire()
+              try:
+                  containerinfo = dq2.listDatasets(container)
+              except:
+                  containerinfo = {}
+              if containerinfo == {}:
+                  try:
+                      dq2.registerContainer(container)
+                      logger.debug('Registered container for Task %i: %s' % (task.id, container))
+                  except Exception, x:
+                      logger.error('Problem registering container for Task %i, %s : %s %s' % (task.id, container,x.__class__, x))
+              try:
+                  dq2.registerDatasetsInContainer(container, [ datasetname ])
+              except DQContainerAlreadyHasDataset:
+                  pass
+              except Exception, x:
+                  logger.error('Problem registering dataset %s in container %s: %s %s' %(datasetname, container, x.__class__, x))
+          finally:
+              dq2_lock.release()
       return True
+
 
    def findCompleteCloudBackend(self,db_sites,allowed_sites,replicas):
       # Sort complete replicas into clouds
