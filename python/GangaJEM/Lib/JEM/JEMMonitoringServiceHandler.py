@@ -182,7 +182,7 @@ class JEMMonitoringServiceHandler(object):
         # OUTPUT-SANDBOX
 
         # add files to the output-sandbox
-        jemOutputBox += ["JEM.log", "logdumptrigger.log"]
+        jemOutputBox += ["JEM_LOG.tgz"]
 
         ####################################################
         # apply to JEM-enabled subjobs
@@ -250,6 +250,12 @@ class JEMMonitoringServiceHandler(object):
                     # 0.3 also at UI.
                     config.env["JEM_Global_mode"] = "WN"
                     config.env["JEM_Global_load_job_id_from"] = "GLITE_WMS_JOBID" # umm. this should be made a bit more flexible :)
+
+                    try:
+                        if mo.advanced.debug:
+                            config.env["JEM_Global_debug"] = "True"
+                    except:
+                        pass
 
                     if mo.anonymous:
                         logger.debug("Will anonymize spyware information.")

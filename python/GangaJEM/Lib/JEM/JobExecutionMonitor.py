@@ -52,6 +52,7 @@ from Ganga.Core.GangaThread import GangaThread
 ########################################################################################################################
 # Our logging instance.
 logger = getLogger("GangaJEM.Lib.JEM")
+outlogger = getLogger("GangaJEM.Lib.JEM.out")
 
 ########################################################################################################################
 # JEM global configuration options.
@@ -379,9 +380,9 @@ class JobExecutionMonitor(GangaObject):
                         es = "more than 5"
                 s += PrettyStrings.formatDatum("exceptions logged", es)
 
-                logger.info(s)
+                outlogger.info(s)
             else:
-                logger.info("no status information received yet")
+                outlogger.info("no status information received yet")
 
 
     def getMetrics(self):
@@ -421,9 +422,9 @@ class JobExecutionMonitor(GangaObject):
                 if l.has_key("FullSys") and len(l["FullSys"]) > 0:
                     s += PrettyStrings.formatDatum("full filesystems", l["FullSys"])
 
-                logger.info(s)
+                outlogger.info(s)
             else:
-                logger.info("no status information received yet")
+                outlogger.info("no status information received yet")
 
 
     def listExceptions(self, n = 5, start = 1, ascending = False):
@@ -459,7 +460,7 @@ class JobExecutionMonitor(GangaObject):
                 z += 1
 
             s = PrettyStrings.makeHeader("listing exceptions (" + orderString + str(n) + ", skipping " + str(start - 1) + ")") + s
-            logger.info(s)
+            outlogger.info(s)
 
 
     def listCommands(self, n = 5, start = 1, ascending = False):
@@ -518,7 +519,7 @@ class JobExecutionMonitor(GangaObject):
                     s = ss + s
                 z += 1
             s = PrettyStrings.makeHeader("listing commands (" + orderString + str(n) + ", skipping " + str(start - 1) + ")") + s
-            logger.info(s)
+            outlogger.info(s)
 
 
     def showException(self, n = 1, ascending = False):
@@ -584,9 +585,9 @@ class JobExecutionMonitor(GangaObject):
                         except:
                             pass
 
-                logger.info(s)
+                outlogger.info(s)
             else:
-                logger.warn("No such exception")
+                outlogger.warn("No such exception")
 
 
     def showCommand(self, n = 1, ascending = False):
@@ -602,7 +603,7 @@ class JobExecutionMonitor(GangaObject):
             if len(l):
                 data = l[0]
                 if not data.has_key("SubType"):
-                    logger.warn("Unknown type of command")
+                    outlogger.warn("Unknown type of command")
                     return
 
                 lang = "UNKNOWN"
@@ -706,12 +707,12 @@ class JobExecutionMonitor(GangaObject):
                         s += PrettyStrings.formatDatum("expression", multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]))
 
                 else:
-                    logger.warn("Unknown type of command")
+                    outlogger.warn("Unknown type of command")
                     return
 
-                logger.info(s)
+                outlogger.info(s)
             else:
-                logger.warn("No such command")
+                outlogger.warn("No such command")
 
 
     def peek(self, n = 20, start = 1, ascending = False, mode="stdout"):
@@ -756,9 +757,9 @@ class JobExecutionMonitor(GangaObject):
                 z += 1
 
             s = PrettyStrings.makeHeader("peeking at output (" + orderString + str(n) + " of " + mode + ", skipping " + str(start - 1) + ")") + s
-            logger.info(s)
+            outlogger.info(s)
         else:
-            logger.info("no status information received yet")
+            outlogger.info("no status information received yet")
 
 
     def livePeek(self):
@@ -846,8 +847,8 @@ class JobExecutionMonitor(GangaObject):
         try:
             os.system("less " + logDir + os.sep + "JEMganga-Listener.log")
         except:
-            logger.info("No live monitor log available")
-            logger.debug("cause: " + str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
+            outlogger.info("No live monitor log available")
+            outlogger.debug("cause: " + str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
 
 
     def plotMetrics(self):
@@ -998,7 +999,7 @@ class JobExecutionMonitor(GangaObject):
         job = self.getJobObject()
         jobGangaID = job.id # pylint: disable-msg=E1101
         self.userAppRunning = True
-        logger.info("Begun to receive monitoring data for job " + str(jobGangaID))
+        outlogger.info("Begun to receive monitoring data for job " + str(jobGangaID))
 
 
     def onWatcherThink(self):
@@ -1019,8 +1020,8 @@ class JobExecutionMonitor(GangaObject):
             pass
 
         if self.userAppExited:
-            logger.info("User application of job " + str(jobGangaID) +\
-                        " seems to have finished! Now waiting for the middleware...")
+            outlogger.info("User application of job " + str(jobGangaID) +\
+                           " seems to have finished! Now waiting for the middleware...")
             self.watcherThread.stop()
 
 
@@ -1073,35 +1074,35 @@ class JobExecutionMonitor(GangaObject):
         if not JEMloader.INITIALIZED:
             if onlyReport:
                 return "disabled"
-            logger.info("Monitoring is globally disabled. No monitoring data is available.")
+            outlogger.info("Monitoring is globally disabled. No monitoring data is available.")
             return False
         if not self.enabled: # pylint: disable-msg=E1101
             if onlyReport:
                 return "disabled"
-            logger.info("Monitoring is disabled for this job. No monitoring data is available.")
+            outlogger.info("Monitoring is disabled for this job. No monitoring data is available.")
             return False
 
         if j.status not in ('completed', 'failed', 'killed', 'removed'):
             if not self.realtime or not jemconfig['JEM_ENABLE_REALTIME']:
                 if onlyReport:
                     return "disabled"
-                logger.info("Realtime monitoring is disabled. Monitoring data will only be available in the output sandbox.")
+                outlogger.info("Realtime monitoring is disabled. Monitoring data will only be available in the output sandbox.")
                 return False
             if self.pid == 0:
                 if self.getJobObject().status == 'new': # pylint: disable-msg=E1101
                     if onlyReport:
                         return "not yet started"
-                    logger.info("Job has not been submitted yet. No monitoring data is available.")
+                    outlogger.info("Job has not been submitted yet. No monitoring data is available.")
                 else:
                     if onlyReport:
                         return "error"
-                    logger.info("No monitoring process started (check configuration). No monitoring data is available.")
+                    outlogger.info("No monitoring process started (check configuration). No monitoring data is available.")
                 return False
 
         if not os.path.exists(self.jmdfile):
             if onlyReport:
                 return "waiting"
-            logger.info("No monitoring data was received yet.")
+            outlogger.info("No monitoring data was received yet.")
             return False
 
         # To potentially utter a warning, we check the Listener status...
@@ -1206,7 +1207,7 @@ class JobExecutionMonitor(GangaObject):
         if job.status not in ['running','submitted']: # pylint: disable-msg=E1101
             if onlyReport:
                 return "finished"
-            logger.info("Job execution finished. No new data will be received.")
+            outlogger.info("Job execution finished. No new data will be received.")
             return True
 
         # check if RGMA/HTTPS started correctly
@@ -1249,7 +1250,8 @@ class JobExecutionMonitor(GangaObject):
         # Check if all processes are running
         if not pid in pids:
             if not onlyReport:
-                logger.warning("The job listener process is not working. No new data will be received (Displayed data may be outdated).")
+                if not self.userAppExited:
+                    outlogger.warn("JEM livemonitor is not running. No new data will be received (Displayed data may be outdated).")
             else:
                 return "error"
             #logger.debug("cause: not in there. pids: " + str(pids))
@@ -1257,7 +1259,8 @@ class JobExecutionMonitor(GangaObject):
             z = pids.index(pid)
             if cmds[z].find("[python] <defunct>") != -1:
                 if not onlyReport:
-                    logger.warning("The job listener process is not working. No new data will be received (Displayed data may be outdated).")
+                    if not self.userAppExited:
+                        outlogger.warn("JEM livemonitor is not running. No new data will be received (Displayed data may be outdated).")
                 else:
                     return "error"
                 #logger.debug("cause: <defunct>. pids: " + str(pids))
@@ -1291,7 +1294,10 @@ class JobExecutionMonitor(GangaObject):
                                 if onlyReport:
                                     return "error"
                                 break
-                logger.warning("JEM's data listener seems to be down. No new data will be received (Displayed data may be outdated).")
+                if not self.userAppExited:
+                    outlogger.warn("JEM livemonitor is not running. No new data will be received (Displayed data may be outdated).")
+                else:
+                    outlogger.info("Job execution on the worker node has finished. No new data will be received.")
         if onlyReport:
             return "unknown"
         return True

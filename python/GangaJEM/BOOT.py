@@ -1,10 +1,9 @@
 import os, sys
 
 
-def JEMsetVerbose():
+def JEMsetLogLevel(level):
     from Ganga.Utility import logging
-    logging.getLogger("Ganga.Lib.MonitoringServices.JobExecutionMonitorMS").setLevel(10)
-    logging.getLogger("GangaJEM.Lib.JEM").setLevel(10)
+    logging.getLogger("GangaJEM.Lib.JEM").setLevel(level)
 
 
 def JEMlisteners():
@@ -97,4 +96,4 @@ def JEMlisteners():
 
 from Ganga.Runtime.GPIexport import exportToGPI
 exportToGPI('JEMlisteners', JEMlisteners, 'Functions')
-exportToGPI('JEMsetVerbose', JEMsetVerbose, 'Functions')
+exportToGPI('JEMsetLogLevel', JEMsetLogLevel, 'Functions')
