@@ -269,7 +269,7 @@ class Panda(IBackend):
     '''Panda backend: submission to the PanDA workload management system
     '''
 
-    _schema = Schema(Version(2,2), {
+    _schema = Schema(Version(2,3), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'requirements'  : ComponentItem('PandaRequirements',doc='Requirements for the resource selection'),
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
@@ -283,7 +283,8 @@ class Panda(IBackend):
         'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code (transExitCode)'),
         'piloterrorcode': SimpleItem(defvalue='',protected=1,copyable=0,doc='Pilot Error Code'),
         'reason'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Error Code Diagnostics'),
-        'accessmode'    : SimpleItem(defvalue='',protected=0,copyable=1,doc='EXPERT ONLY')
+        'accessmode'    : SimpleItem(defvalue='',protected=0,copyable=1,doc='EXPERT ONLY'),
+        'individualOutDS': SimpleItem(defvalue=False,protected=0,copyable=1,doc='Create individual output dataset for each data-type. By default, all output files are added to one output dataset')
     })
 
     _category = 'backends'
@@ -295,7 +296,7 @@ class Panda(IBackend):
 
     def master_submit(self,rjobs,subjobspecs,buildjobspec):
         '''Submit jobs'''
- 
+        
         from pandatools import Client
         from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception

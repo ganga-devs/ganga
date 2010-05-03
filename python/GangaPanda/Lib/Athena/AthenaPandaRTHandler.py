@@ -145,6 +145,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         logger.info('Output dataset %s',job.outputdata.datasetname)
         try:
             Client.addDataset(job.outputdata.datasetname,False)
+            self.indivOutDsList = [job.outputdata.datasetname]
         except exceptions.SystemExit:
             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -355,8 +356,17 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
 #       output files
         outMap = {}
-        individualOutDS = False
-        AthenaUtils.convertConfToOutput(self.runConfig,jspec,outMap,individualOutDS,self.extOutFile)
+        AthenaUtils.convertConfToOutput(self.runConfig,jspec,outMap,job.backend.individualOutDS,self.extOutFile)
+        if job.backend.individualOutDS:
+            for f in jspec.Files:
+                if f.type in ['output','log']:
+                    if not f.dataset in self.indivOutDsList:
+                        try:
+                            logger.info('Creating individualOutDS %s'%f.dataset)
+                            Client.addDataset(f.dataset,False)
+                            self.indivOutDsList.append(f.dataset)
+                        except exceptions.SystemExit:
+                            raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(f.dataset,sys.exc_info()[0],sys.exc_info()[1]))
 
 #       job parameters
         param = ''
@@ -448,9 +458,7 @@ gridProxy = GridProxy()
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Athena','Panda',AthenaPandaRTHandler)
 
-
 from Ganga.Utility.Config import getConfig, ConfigError
-config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
 configPanda = getConfig('Panda')
 
