@@ -28,10 +28,6 @@ PATH_ORIG=$PATH
 PYTHONPATH_ORIG=$PYTHONPATH
 
 ################################################
-# setup CMT 
-cmt_setup
-
-################################################
 # Setup glite UI 
 TEST_CMD=`which voms-proxy-init 2>/dev/null`
 
@@ -44,6 +40,10 @@ if [ -e $PROXY_NAME ]
 then
     export X509_USER_PROXY=$PROXY_NAME
 fi
+
+################################################
+# setup CMT 
+cmt_setup
 
 
 ################################################
