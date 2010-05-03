@@ -540,10 +540,8 @@ EOF
     fi
 
     # sort out input files for TAG if required
-    echo "::::::::::::   " $TAG_TYPE
     if [ n$TAG_TYPE = n'LOCAL' ]
 	then
-	echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 	ls -ltr
 	mv input_files input_files2
 	mv tag_file_list input_files
@@ -898,11 +896,23 @@ site - please contact Ganga support mailing list.'
 	      do
 	      for ofile in $outfiles
 		do
-		mv $ofile ${ofile}.$I
-		echo "${ofile}.$I" >> output_files.copy
+		# check for both original and new output filenames
+		if [ -e $ofile ]
+		    then
+		    mv $ofile ${ofile}.$I
+		    echo "${ofile}.$I" >> output_files.copy
+		else
+		    old_name=`echo $ofile | awk -F"." '{for (i = 7; i <= NF; i++) printf "%s.", $i}'`
+		    old_name=`basename $old_name .`
+		    if [ -e $old_name ]
+			then
+			mv $old_name ${ofile}.$I
+			echo "${ofile}.$I" >> output_files.copy
+		    fi
+		fi
 	      done
 	    done
-	    
+
 	    if [ n$ATHENA_MAX_EVENTS != n'-1' ] && [ n$ATHENA_MAX_EVENTS != n'' ] 
 		then
 		break
