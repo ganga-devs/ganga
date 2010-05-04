@@ -1045,14 +1045,10 @@ class JobExecutionMonitor(GangaObject):
         class Anonymous:
             def __repr__(self):
                 return "..."
-
         if isinstance(attribute, JEMCTraceOptions):
-            #return "CTracer options; access via info.monitor.ctracer"
             return Anonymous()
         elif isinstance(attribute, JEMAdvancedOptions):
-            #return "advanced options; access via info.monitor.advanced"
             return Anonymous()
-
         return str(attribute)
 
 

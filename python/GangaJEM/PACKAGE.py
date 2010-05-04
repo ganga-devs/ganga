@@ -10,7 +10,7 @@ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 
 external_packages = {
                      'JEM' : {
-                              'version' : '0.3.0.0',
+                              'version' : '0.3.0.1',
                               'noarch' : True
                               },
 }

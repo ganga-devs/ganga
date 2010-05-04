@@ -34,8 +34,6 @@ import os
 import sys
 import traceback
 
-import GangaJEM
-
 #-----------------------------------------------------------------------------------------------------------------------
 from Ganga.Utility.logging import logging, getLogger
 logger = getLogger("GangaJEM.Lib.JEM")
@@ -45,6 +43,8 @@ logger = getLogger("GangaJEM.Lib.JEM")
 INITIALIZED = False
 JEM_PACKAGEPATH = None
 #-----------------------------------------------------------------------------------------------------------------------
+
+import GangaJEM
 
 ## try to load the Job Execution Monitor (JEM) for runtime job monitoring data.
 try:
@@ -84,48 +84,8 @@ try:
     except Exception, e:
         initError = "Wrong JEM_PACKAGEPATH specified. Could not find JEM library. (%s)" % e
 
-    if os.path.exists(userpath):
-        if initError == None:
-            if not SysConfig.GANGA_ENABLED:
-                initError = "Please set the GANGA_ENABLED variable in JEMSysConfig to 'True' to enable JEM support."
-
-        if initError == None:
-            rgmaPubEnabled = WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_RGMA
-            tcpPubEnabled = WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_TCP
-            httpsPubEnabled = (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_HTTPS) \
-                              or (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_FSHYBRID)
-            stompPubEnabled = (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_STOMP)
-            httpsExternal = WNConfig.HTTPS_SERVER_EXTERNAL
-
-            enabledPublisherCount = 0
-            if rgmaPubEnabled:  enabledPublisherCount += 1
-            if tcpPubEnabled:   enabledPublisherCount += 1
-            if httpsPubEnabled: enabledPublisherCount += 1
-            if stompPubEnabled: enabledPublisherCount += 1
-            if enabledPublisherCount != 1:
-                initError = 'Exactly one of [RGMA publisher, TCP publisher, HTTPS publisher, FS-Hybrid-publisher, STOMP publisher] must be activated. Please check PUBLISHER_USE_TYPE in JEMConfig.'
-
     if initError == None:
         logger.debug("Using JEM from: " + JEM_PACKAGEPATH)
-
-        if os.path.exists(userpath):
-            # check if file publisher is enabled
-            fpEnabled = (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_FS) \
-                        or (WNConfig.PUBLISHER_USE_TYPE & WNConfig.PUBLISHER_USE_FSHYBRID)
-            if not fpEnabled:
-                logger.warning("JEM is not correctly configured to include detailled monitoring data in the job's output sandbox.")
-                logger.debug("Configuration hint: Please ensure that PUBLISHER_USE_TYPE contains PUBLISHER_USE_FS in JEMConfig.")
-
-            # check if the JEMui side of the story uses the XML publisher
-            if not UIConfig.PUBLISHER_OUTPUT_TYPE & JEMConfig.PUBLISHER_OUTPUT_JMD:
-                logger.warning('JEM is not correctly configured to pass data to Ganga.')
-                logger.debug("Configuration hint: Please ensure that PUBLISHER_OUTPUT_TYPE contains PUBLISHER_OUTPUT_JMD in JEMuiConfig.")
-                if fpEnabled:
-                    logger.warning('JEM realtime monitoring got disabled. However, monitoring data still will be available in the output sandbox.')
-                else:
-                    initError = 'Also, monitoring data isn\'t available in the output sandbox.'
-
-    if initError == None:
         try:
             # import JEM 0.3 stuff
             import JEM as JEMmain
@@ -139,7 +99,6 @@ try:
     # if some error occured during initialization, disable JEM monitoring.
     if initError != None:
         raise Exception(initError)
-
 
     INITIALIZED = True
 except Exception, err:
