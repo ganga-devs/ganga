@@ -149,7 +149,8 @@ class DQ2JobSplitter(ISplitter):
                         raise ApplicationConfigurationError(None,'Problems with TAG entry for %s. Mulitple references for local TAG file.' % tag_file)
 
                     job.inputdata.names.append( job.inputdata.tag_info[tag_file]['refs'][0][0] )
-                    
+                    job.inputdata.guids.append( job.inputdata.tag_info[tag_file]['refs'][0][2] )
+
                     if not job.inputdata.tag_info[tag_file]['refs'][0][1] in job.inputdata.dataset:
                         job.inputdata.dataset.append(job.inputdata.tag_info[tag_file]['refs'][0][1])
                     
