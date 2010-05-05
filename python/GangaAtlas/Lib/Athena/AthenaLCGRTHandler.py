@@ -654,7 +654,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['DQ2_CLIENT_VERSION'] = dq2client_version
 
         if app.atlas_dbrelease:
-            if not app._name == "AthenaTask" and not (job.splitter and job.splitter._name == 'DQ2JobSplitter'):
+            if not app._name == "AthenaTask" and not (job.splitter and (job.splitter._name == 'DQ2JobSplitter' or job.splitter._name == 'ATLASTier3Splitter')):
                 raise ApplicationConfigurationError(None,'Job submission failed ! Please use DQ2JobSplitter if you are using j.application.atlas_dbrelease !')
             try:
                 environment['ATLAS_DBRELEASE'] = app.atlas_dbrelease.split(':')[0]
