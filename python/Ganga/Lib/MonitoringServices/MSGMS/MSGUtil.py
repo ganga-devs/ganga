@@ -47,7 +47,7 @@ def getSandboxModules():
 
 #Ganga-specific createPublisher
 from stomputil.publisher import IDLE_TIMEOUT, EXIT_TIMEOUT
-def createPublisher(server, port, user='', password='', logger=None, idle_timeout=IDLE_TIMEOUT, exit_timeout=EXIT_TIMEOUT):
+def createPublisher(server, port, user='', password='', idle_timeout=IDLE_TIMEOUT, exit_timeout=EXIT_TIMEOUT):
     """Create a new publisher thread which extends GangaThread where available
     (i.e. on the client) or Thread otherwise (i.e. on the worker node).
     
@@ -78,6 +78,12 @@ def createPublisher(server, port, user='', password='', logger=None, idle_timeou
     except ImportError:
         from threading import Thread
         managed_thread = False
+    # use Ganga logger class on client or None otherwise
+    try:
+        import Ganga.Utility.logging
+        logger = Ganga.Utility.logging.getLogger()
+    except ImportError:
+        logger = None
     # create and start _publisher
     import stomputil
     publisher = stomputil.createPublisher(Thread, server, port, user, password, logger, idle_timeout)

@@ -41,7 +41,7 @@ _initconfig()
 
 # singleton publisher
 _publisher = None
-def _get_publisher(server, port, username, password, logger):
+def _get_publisher(server, port, username, password):
     """Return the singleton publisher, lazily instantiating it.
     
     N.B. The configuration enforces that server/port/username/password cannot
@@ -49,7 +49,7 @@ def _get_publisher(server, port, username, password, logger):
     """
     global _publisher
     if _publisher is None:
-        _publisher = MSGUtil.createPublisher(server, port, username, password, logger)
+        _publisher = MSGUtil.createPublisher(server, port, username, password)
         _publisher.start()
     return _publisher
 
@@ -97,7 +97,6 @@ class DashboardMS(IMonitoringService.IMonitoringService):
                 self.config_info['port'],
                 self.config_info['user'], 
                 self.config_info['password'],
-                self._logger,
             )
         # send message
         headers = {'persistent':'true'}
