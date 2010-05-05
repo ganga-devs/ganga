@@ -24,6 +24,8 @@ from dq2.common.dao.DQDaoException import DQDaoException
 from dq2.info.TiersOfATLASValidator import is_site
 from dq2.repository.DQRepositoryException import DQFrozenDatasetException
 
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
+
 _refreshToACache()
 
 def cmpfun(a,b):
@@ -283,6 +285,47 @@ def whichCloud (site):
             return cloud
         
     return None
+
+def dq2outputdatasetname(datasetname, username, jobid, isGroupDS, groupname):
+
+    # Remove apostrophe
+    username = re.sub("'","",username)
+
+    jobdate = time.strftime('%Y%m%d')
+    usertag = config['usertag']
+
+    # prepare Group Dataset names
+    if isGroupDS==True:
+        usertag = re.sub("user", "group", usertag)
+        if not usertag.startswith('group'):
+            usertag = 'group' + time.strftime('%Y')[2:]
+        if groupname:
+            username = groupname
+            
+    if datasetname:
+        # new datasetname during job resubmission
+        pat = re.compile(r'^%s\.%s\.ganga' % (usertag,username))
+        if re.findall(pat,datasetname):
+            if job.outputdata.dataset_exists():
+                output_datasetname = datasetname
+            else:
+                output_datasetname = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
+                        
+            output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
+        else:
+            # append user datasetname for new configuration
+            #if job.outputdata.use_datasetname and job.outputdata.datasetname:
+            #    output_datasetname = job.outputdata.datasetname
+            #else:
+            output_datasetname = '%s.%s.ganga.%s' % (usertag, username, datasetname)
+
+            output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
+    else:
+        # No datasetname is given
+        output_datasetname = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
+        output_lfn = '%s/%s/ganga/%s/' % (usertag, username, output_datasetname)
+
+    return output_datasetname, output_lfn 
 
 
 class DQ2Dataset(Dataset):
@@ -1500,12 +1543,14 @@ config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_SCRATCHDISK', 'CERN
 
 config.addOption('USE_STAGEOUT_SUBSCRIPTION', False, 'Allow DQ2 subscription to aggregate DQ2OutputDataset output on a storage element instead of using remote lcg-cr' )
 
-config.addOption('usertag','user09','user tag for a given data taking period')
+config.addOption('usertag','user10','user tag for a given data taking period')
 
 config.addOption('USE_ACCESS_INFO', False, 'Use automatic best choice of input dataset access mode provided by AtlasLCGRequirements.')
 
 config.addOption('CHECK_OUTPUT_DUPLICATES', False, 'Check for duplicate files in DQ2OutputDataset in LCG backend - this could possibly happen by ShallowRetry of glite WMS. A duplicates dataset is created')
 config.addOption('DELETE_DUPLICATES_DATASET', False, 'If CHECK_OUTPUT_DUPLICATES=True is used, duplicates dataset can be automatically deleted by setting this flag to True.')
+
+config.addOption('USE_NICKNAME_DQ2OUTPUTDATASET', False, 'Use voms nicknames for DQ2OutputDataset.')
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']

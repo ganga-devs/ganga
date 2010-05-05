@@ -25,6 +25,8 @@ from GangaAtlas.Lib.ATLASDataset import ATLASDataset, isDQ2SRMSite, getLocations
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 
 # the config file may have a section
 # aboout monitoring
@@ -223,45 +225,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             else:
                 jobid = "%d" % job.id
 
-            # Extract username from certificate
-            username = self.username
-            # Remove apostrophe
-            username = re.sub("'","",username)
+            # Generate output dataset name
+            output_datasetname, output_lfn = dq2outputdatasetname(job.outputdata.datasetname, self.username, jobid, job.outputdata.isGroupDS, job.outputdata.groupname)
 
-            jobdate = time.strftime('%Y%m%d')
-
-            usertag = configDQ2['usertag']
-
-            # prepare Group Dataset names
-            if job.outputdata.isGroupDS==True:
-                usertag = re.sub("user", "group", usertag)
-                if not usertag.startswith('group'):
-                    usertag = 'group' + time.strftime('%Y')[2:]
-                if job.outputdata.groupname:
-                    username = job.outputdata.groupname
-            
-            if job.outputdata.datasetname:
-                # new datasetname during job resubmission
-                pat = re.compile(r'^%s\.%s\.ganga' % (usertag,username))
-                if re.findall(pat,job.outputdata.datasetname):
-                    if job.outputdata.dataset_exists():
-                        output_datasetname = job.outputdata.datasetname
-                    else:
-                        output_datasetname = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
-                        
-                    output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
-                else:
-                    # append user datasetname for new configuration
-                    #if job.outputdata.use_datasetname and job.outputdata.datasetname:
-                    #    output_datasetname = job.outputdata.datasetname
-                    #else:
-                    output_datasetname = '%s.%s.ganga.%s' % (usertag, username,job.outputdata.datasetname)
-
-                    output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
-            else:
-                # No datasetname is given
-                output_datasetname = '%s.%s.ganga.%s.%s' % (usertag,username,jobid, jobdate)
-                output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
             output_jobid = jid
             job.outputdata.datasetname=output_datasetname
             if not job.outputdata.dataset_exists(output_datasetname):
@@ -415,6 +381,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         logger.debug('AthenaLCGRTHandler master_prepare called: %s', job.id )
 
         self.username = gridProxy.identity(safe=True)
+        nickname = getNickname() 
+        if nickname and configDQ2['USE_NICKNAME_DQ2OUTPUTDATASET']:
+            self.username = nickname
 
         # Check if all sites are in the same cloud
         if job.backend.requirements.sites:
