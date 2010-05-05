@@ -9,6 +9,7 @@ N.B. This code is under development and should not generally be used or relied u
 
 from Ganga.Lib.MonitoringServices.Dashboard import CommonUtil
 from Ganga.Lib.MonitoringServices.Dashboard import LCGUtil
+from Ganga.Lib.MonitoringServices.Dashboard import LCGAthenaUtil
 
 
 from Ganga.Lib.MonitoringServices.Dashboard.LCGMS import LCGMS
@@ -24,6 +25,7 @@ class LCGAthenaMS(LCGMS):
         import Ganga.Lib.MonitoringServices.Dashboard
         return LCGMS.getSandboxModules(self) + [
             Ganga.Lib.MonitoringServices.Dashboard.LCGAthenaMS,
+            Ganga.Lib.MonitoringServices.Dashboard.LCGAthenaUtil,
             ]
 
     #----- event call-backs -----
@@ -70,20 +72,20 @@ class LCGAthenaMS(LCGMS):
     def _cl_task_meta_message(self):
         j = self.job_info # called on client, so job_info is Job object
         msg = {
-            'APPLICATION': cl_application(j), # e.g. ATHENA
-            'APPLICATIONVERSION': cl_application_version(j), # e.g. 15.5.1
-            'INPUTDATASET': cl_input_dataset(j), # e.g. fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10
+            'APPLICATION': LCGAthenaUtil.cl_application(j), # e.g. ATHENA
+            'APPLICATIONVERSION': LCGAthenaUtil.cl_application_version(j), # e.g. 15.5.1
+            'INPUTDATASET': LCGAthenaUtil.cl_input_dataset(j), # e.g. fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10
             'JSTOOL': 'Ganga', # e.g. Ganga, Panda
-            'JSTOOLUI': cl_jstoolui(), # hostname of client. e.g. lxplus246.cern.ch
-            'OUTPUTDATASET': cl_output_dataset(j),# Unknown at submission. e.g. user09.DavidTuckett.ganga.420.20091125.FZK-LCG2_SCRATCHDISK
-            'OUTPUTSE': cl_output_se(j), # Unknown at submission. e.g. FZK-LCG2_SCRATCHDISK
+            'JSTOOLUI': LCGAthenaUtil.cl_jstoolui(), # hostname of client. e.g. lxplus246.cern.ch
+            'OUTPUTDATASET': LCGAthenaUtil.cl_output_dataset(j),# Unknown at submission. e.g. user09.DavidTuckett.ganga.420.20091125.FZK-LCG2_SCRATCHDISK
+            'OUTPUTSE': LCGAthenaUtil.cl_output_se(j), # Unknown at submission. e.g. FZK-LCG2_SCRATCHDISK
             'OWNERDN': LCGUtil.cl_ownerdn(), # Grid certificate. e.g. /DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=dtuckett/CN=671431/CN=David Tuckett/CN=proxy
             'REPORTER': 'ToolUI', # e.g. ToolUI, JobWN
             'REPORTTIME': CommonUtil.utcnow(), # e.g. 2009-11-25T14:59:24.754249Z
             'SUBMISSIONTYPE': 'direct',
-            'TARGET': cl_target(j), # e.g. CE_xxx,SITE_CSCS-LCG2_DATADISK,SITE_DESY-ZN_DATADISK
+            'TARGET': LCGAthenaUtil.cl_target(j), # e.g. CE_xxx,SITE_CSCS-LCG2_DATADISK,SITE_DESY-ZN_DATADISK
             'TASKNAME': LCGUtil.cl_task_name(j), # e.g. ganga_420_dtuckett@lxplus246.cern.ch:/afs/cern.ch/user/d/dtuckett/gangadir/repository/dtuckett/LocalAMGA
-            'TASKTYPE': cl_task_type(self.config_info), # e.g. analysis, production, hammercloud etc.
+            'TASKTYPE': LCGAthenaUtil.cl_task_type(self.config_info), # e.g. analysis, production, hammercloud etc.
             '___fqid' : j.fqid,
             }
         return msg
@@ -93,7 +95,7 @@ class LCGAthenaMS(LCGMS):
         msg = {
             'GRIDJOBID': LCGUtil.cl_grid_job_id(j), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
             'JOB_ID_INSIDE_THE_TASK': LCGUtil.cl_job_id_inside_the_task(j), # subjob id e.g. 0
-            'NEVENTSREQUESTED': cl_nevents_requested(j), # None or non-negative number e.g. 100
+            'NEVENTSREQUESTED': LCGAthenaUtil.cl_nevents_requested(j), # None or non-negative number e.g. 100
             'PILOT': 0, # 0 = not pilot, 1 = pilot
             'PILOTNAME': None,
             'REPORTER': 'ToolUI', # e.g. ToolUI, JobWN
@@ -106,7 +108,7 @@ class LCGAthenaMS(LCGMS):
 
     def _wn_job_processing_attributes_message(self):
         ji = self.job_info # called on worker node, so job_info is dictionary
-        athena_stats = wn_load_athena_stats()
+        athena_stats = LCGAthenaUtil.wn_load_athena_stats()
         msg = {
             'GRIDJOBID': LCGUtil.wn_grid_job_id(), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
             'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'], # subjob id e.g. 0
@@ -123,94 +125,3 @@ class LCGAthenaMS(LCGMS):
             }
         return msg
 
-
-#----- client meta-data builders ----- 
-#TODO: add error handling code in following methods
-#TODO: move to appropriate XxxUtil modules
-
-def cl_application(job):
-    """Build application. Only run on client."""
-    return CommonUtil.strip_to_none(job.application.atlas_exetype)
-
-def cl_application_version(job):
-    """Build application_version. Only run on client."""
-    if job.application.atlas_production:
-        application_version = job.application.atlas_production
-    else:
-        application_version = job.application.atlas_release
-    return CommonUtil.strip_to_none(application_version)
-
-def cl_input_dataset(job):
-    """Build input_dataset. Only run on client."""
-    datasetcsv = ','.join(job.inputdata.dataset)
-    return CommonUtil.strip_to_none(datasetcsv)
-
-def cl_jstoolui():
-    """Build jstoolui. Only run on client."""
-    return CommonUtil.hostname()
-
-def cl_nevents_requested(job):
-    """Build nevents_requested. Only run on client."""
-    max_events = None
-    if job.application.max_events > -1:
-        max_events = job.application.max_events
-    return max_events
-
-def cl_output_dataset(job):
-    """Build output_dataset. Only run on client."""
-    return CommonUtil.strip_to_none(job.outputdata.datasetname)
-
-def cl_output_se(job):
-    """Build output_se. Only run on client."""
-    # job.outputdata.location can be a string or a list
-    if isinstance(job.outputdata.location, list):
-        locations = []
-        for l in job.outputdata.location:
-            if l and l not in locations:
-                locations.append(l)
-        locationcsv = ','.join(locations)
-    else:
-        locationcsv = job.outputdata.location
-    return CommonUtil.strip_to_none(locationcsv)
-
-def cl_target(job):
-    """Build target. Only run on client."""
-    ces = []
-    sites = []
-    targets = []
-    for j in [job] + job.subjobs:
-        ce = j.backend.CE
-        if ce and ce not in ces:
-            ces.append(ce)
-            targets.append('CE_%s' % ce)
-        for site in j.backend.requirements.sites:
-            if site and site not in sites:
-                sites.append(site)
-                targets.append('SITE_%s' % site)
-    targetcsv = ','.join(targets)
-    return CommonUtil.strip_to_none(targetcsv)
-
-def cl_task_type(config):
-    """Build task_type. Only run on client."""
-    return config['task_type']
-
-#----- worker node meta-data builders ----- 
-
-def wn_load_athena_stats():
-    """Load Athena stats. Only run on worker node.
-    
-    If the Athena stats.pickle file cannot be read then an empty dictionary is
-    returned.
-    """
-    import cPickle as pickle
-    try:
-        f = open('stats.pickle','r')
-        try:
-            stats = pickle.load(f)
-        finally:
-            f.close()
-    except:
-        stats = {}
-    return stats
-    
-    

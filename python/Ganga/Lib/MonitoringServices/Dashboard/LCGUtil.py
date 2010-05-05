@@ -48,10 +48,6 @@ def cl_job_id_inside_the_task(job):
         job_id_inside_the_task = job.id
     return job_id_inside_the_task
 
-def cl_job_exit_code(job):
-    """Build job_exit_code. Only run on client."""
-    return CommonUtil.strip_to_none(job.backend.exitcode)
-
 def cl_task_name(job):
     """Build task_name. Only run on client."""
     from Ganga.Utility import Config
@@ -80,7 +76,7 @@ def cl_unique_job_id(job):
     """Build unique_job_id. Only run on client."""
     return job.info.uuid
 
-    
+
 #----- worker node meta-data builders ----- 
 #TODO: add error handling code in following methods
 
@@ -107,3 +103,4 @@ def wn_grid_job_id():
     if not grid_job_id:
         grid_job_id = CommonUtil.env('GLITE_WMS_JOBID')
     return grid_job_id
+

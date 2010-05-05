@@ -109,3 +109,4 @@ class DashboardMS(IMonitoringService.IMonitoringService):
             getattr(self._logger, level)(message)
         else:
             print >>sys.stderr, '[DashboardMS %s] %s' % (level, message)
+

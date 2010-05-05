@@ -53,5 +53,4 @@ def utcnow():
     """Return a UTC datetime with no timezone specified."""
     import datetime
     return datetime.datetime.utcnow()
-    
 

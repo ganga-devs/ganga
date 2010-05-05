@@ -75,4 +75,3 @@ if __name__ == '__main__':
     wlcg = dictToWlcg(msg, include_microseconds=False)
     print wlcg
 
-    
