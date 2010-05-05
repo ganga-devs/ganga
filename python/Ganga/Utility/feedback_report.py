@@ -58,10 +58,13 @@ def report(job=None):
                         *encode_multipart_data (files))
                 response = connection.getresponse ()
 
-                #file = open('/home/ivan/result.txt', 'a')
-                #file.write(response.read())
+                responseResult = response.read()
 
-                #print 'Code: %s %s' % (response.status, response.reason)
+                responseResult = responseResult[responseResult.find("<span id=\"download_path\""):]
+                startIndex = responseResult.find("path:") + 5
+                endIndex = responseResult.find("</span>")
+
+                print 'You can download your error report from here : ' + responseResult[startIndex:endIndex] 
 
 
         def run_upload (server, path):
@@ -203,6 +206,13 @@ def report(job=None):
                         
                                 sys.stdout = inputFile
                                 Ganga.GPIDev.Lib.Config.Config.print_config_file()
+
+                                print
+                                print "#======================================================================="
+                                print "[System]"
+                                print
+                                print "#GANGA_VERSION = %s" % config.System.GANGA_VERSION 
+
                         finally:
                                 sys.stdout = sys.__stdout__
                                 inputFile.close()
@@ -335,11 +345,9 @@ def report(job=None):
         try:
                 resultArchive, uploadFileServer = report_inner(job)
 
-                #run_upload(server=uploadFileServer, path=resultArchive)
+                run_upload(server=uploadFileServer, path=resultArchive)
 
-                #print 'Error report sent to the server'
-
-                print 'You can find your user report here : ' + resultArchive
+                #print 'You can find your user report here : ' + resultArchive
 
                 #for now don't send to the server
                 #send the file to the server
@@ -362,7 +370,7 @@ def report(job=None):
                 
         except:
                 pass
-                #raise   
+                #raise  
 
 print 'loaded'
 
