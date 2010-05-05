@@ -299,7 +299,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
         jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
         jspec.transformation    = '%s/runAthena-00-00-11' % Client.baseURLSUB
-        if job.inputdata and self.inputdatatype=='DQ2':
+        if job.inputdata and self.inputdatatype=='DQ2' and not job.inputdata.tag_info:
             jspec.prodDBlock    = job.inputdata.dataset[0]
         else:
             jspec.prodDBlock    = 'NULL'
@@ -340,7 +340,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.addFile(flib)
 
 #       input files FIXME: many more input types
-        if job.inputdata and self.inputdatatype=='DQ2':
+        if job.inputdata and self.inputdatatype=='DQ2' and not job.inputdata.tag_info:
             for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
                 finp = FileSpec()
                 finp.lfn            = lfn
@@ -396,8 +396,31 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(file)
             # set DBRelease parameter
             param += '--dbrFile %s ' % file.lfn
-        if job.inputdata:    
-            param += '-i "%s" ' % job.inputdata.names
+        if job.inputdata:
+            # check for ELSSI files
+            input_files = job.inputdata.names
+            if job.inputdata.tag_info:
+                tag_file = job.inputdata.tag_info.keys()[0]
+                if job.inputdata.tag_info[tag_file]['path'] != '' and job.inputdata.tag_info[tag_file]['dataset'] == '':
+                    
+                    # set ship input
+                    param += '--shipInput '
+
+                    # set the coll name
+                    if self.runConfig.input.collRefName:
+                        param += '--collRefName %s ' % self.runConfig.input.collRefName
+                        
+                    # sort out the input ELSSI file from the tag_info
+                    input_files = ['.'.join( tag_file.split(".")[:len(tag_file.split("."))-2] )]
+
+                    # get the GUID boundaries
+                    guid_boundaries = []
+                    for tag_file2 in job.inputdata.tag_info:
+                        guid_boundaries.append(job.inputdata.tag_info[tag_file2]['refs'][0][2])
+
+                    param += '--guidBoundary "%s" ' % guid_boundaries
+                    
+            param += '-i "%s" ' % input_files
         else:
             param += '-i "[]" '
         param += '-m "[]" ' #%minList FIXME
