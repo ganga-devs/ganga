@@ -64,7 +64,7 @@ _externalPackages = {
                  'syspath':'lib/python2.3/site-packages'},
    'pycrypto' : {'version' : '2.0.1',
                  'syspath':'lib/python2.3/site-packages'},
-   'stomputil' : {'version' : '2.1',
+   'stomputil' : {'version' : '2.2',
                   'noarch': True,
                   'syspath' : 'python'} 
    }
