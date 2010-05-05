@@ -28,6 +28,9 @@ from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.Utility.files import expandfilename
 
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
+
 __directory__ = os.path.dirname(__file__)
 
 def _append_file_buffer(inputbox,name,array):
