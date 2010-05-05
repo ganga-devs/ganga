@@ -270,8 +270,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             self.evgen_job_option = app.evgen_job_option
             
         # user area:
-        if app.user_area and app.user_area.name: 
-            inputbox.append(File(app.user_area.name))
+        if app.userarea : 
+            inputbox.append(File(app.userarea))
             environment['USER_AREA']=os.path.basename(app.user_area.name)
 
 
