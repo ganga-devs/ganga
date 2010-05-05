@@ -932,18 +932,22 @@ class DQ2OutputDataset(Dataset):
         # Create trash dataset
         trashFilesInfo = []
         trashFilesGuids = []
+        trashDatasetname = datasetname + '.trash'
         for trashFile in trashFiles:
             guid = contents_new[trashFile]
             trashFilesGuids.append(guid)
-            infoLine = trashDatasetname + ',' + trashFile + ',' + guid + ',' + contents[guid]['filesize']  +  ',' + contents[guid]['checksum'] + ',' +  location
+            infoLine = trashDatasetname + ',' + trashFile + ',' + guid + ',' + '%s' %contents[guid]['filesize']  +  ',' + contents[guid]['checksum'].replace('ad:','') + ',' +  location
             trashFilesInfo.append(infoLine)
-
+            
         if trashFiles:
-            trashDatasetname = datasetname + '.trash'
             logger.warning('Removing file duplicates from %s outputdataset: %s', datasetname, trashFiles )
-            self.create_dataset(trashDatasetName)
+            try:
+                self.create_dataset(trashDatasetname)
+            except:
+                logger.warning('Trash dataset %s already exists !', trashDatasetname )
+            
             self.register_datasets_details( trashDatasetname, trashFilesInfo)
-            logger.warning('Duplicate files are now in dataset: %s', trashDataset)
+            logger.warning('Duplicate files are now in dataset: %s', trashDatasetname)
             # Delete duplicate files from original dataset
             try:
                 dq2_lock.acquire()
