@@ -772,26 +772,28 @@ class Athena(IApplication):
             self.user_area_path = tmpDir
         savedir=os.getcwd()
 
+        archiveDir = self.user_area_path
+
         # set extFile
         AthenaUtils.setExtFile(self.append_to_user_area)
         AthenaUtils.setExcludeFile(','.join(self.exclude_from_user_area))
 
         # archive sources
         verbose = False
-        archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, tmpDir, verbose, self.glue_packages)
+        archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages)
         logger.info('Creating %s ...', archiveFullName )
 
         # Add InstallArea
         if not self.athena_compile:
             nobuild = True
-            AthenaUtils.archiveInstallArea(self.userarea, self.grouparea, archiveName, archiveFullName, tmpDir, nobuild, verbose)
+            AthenaUtils.archiveInstallArea(self.userarea, self.grouparea, archiveName, archiveFullName, archiveDir, nobuild, verbose)
             logger.info('Option athena_compile=%s. Adding InstallArea to %s ...', self.athena_compile, archiveFullName )
 
         # Add LCG/NG files
         extraFiles = self.files_lcg_ng()
         for ifile in extraFiles:
             filename = os.path.split(ifile)[1]
-            out = commands.getoutput('pushd . && cd %s && tar -f %s -rh %s && popd' % (tmpDir, archiveFullName, filename))
+            out = commands.getoutput('pushd . && cd %s && tar -f %s -rh %s && popd' % (archiveDir, archiveFullName, filename))
             os.unlink(ifile)
 
         # compress
