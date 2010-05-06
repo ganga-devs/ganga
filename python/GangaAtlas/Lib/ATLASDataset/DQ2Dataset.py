@@ -277,7 +277,7 @@ def whichCloud (site):
         if site in sites:
             return cloudID
 
-    info = { 'CERN' : 'TO', 'CNAF' : 'IT', 'PIC': 'ES', 'LYON': 'FR',
+    info = { 'CERN' : 'T0', 'CNAF' : 'IT', 'PIC': 'ES', 'LYON': 'FR',
              'RAL' : 'UK', 'FZK': 'DE', 'SARA' : 'NL', 'ASGC' : 'TW',
              'TRIUMF' : 'CA', 'BNL' : 'US', 'NDGF' : 'NG' }
     for sitename, cloud in info.iteritems():
