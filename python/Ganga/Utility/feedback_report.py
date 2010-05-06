@@ -1,13 +1,11 @@
-import mimetypes
-import urllib2
-import httplib
-import string
-import random
-
 
 def report(job=None):
+        import mimetypes
+        import urllib2
+        import httplib
+        import string
+        import random
 
-        
         def random_string (length):
                 return ''.join (random.choice (string.letters) for ii in range (length + 1))
 
@@ -88,7 +86,7 @@ def report(job=None):
                 ipythonHistoryFileName = "ipythonhistory.txt"
                 gangaLogFileName = "gangalog.txt"
                 repositoryPath = "repository/$usr/LocalXML/6.0/jobs/0xxx"
-                uploadFileServer= "http://127.0.0.1:8000/errorreports/"
+                uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
 
                 def printDictionary(dictionary):
                         for k,v in dictionary.iteritems():
@@ -328,7 +326,7 @@ def report(job=None):
                         finally:        
                                 resultFile.close()
                 except:
-                        pass
+                        raise #pass
                 
                 #remove temp dir
                 if(os.path.exists(folderToArchive)):
@@ -369,7 +367,7 @@ def report(job=None):
                 #os.remove(resultArchive)
                 
         except:
-                pass
+                raise #pass
                 #raise  
 
 print 'loaded'
