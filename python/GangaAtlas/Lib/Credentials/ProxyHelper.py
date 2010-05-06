@@ -1,6 +1,6 @@
 
 # get nickname
-def getNickname(gridProxy=None):
+def getNickname(gridProxy=None,allowMissingNickname=True):
     import re
     from Ganga.Utility.logging import getLogger
     from Ganga.GPIDev.Credentials import GridProxy
@@ -24,6 +24,9 @@ def getNickname(gridProxy=None):
         wMessage += '      [Member Info] -> [Edit Personal Info]\n\n'
         wMessage += 'Then you can use the new naming convention "user.nickname" '
         wMessage += 'which should be shorter than "userXY.FirstnameLastname".'
-        logger.warning(wMessage)
+        if allowMissingNickname:
+            logger.warning(wMessage)
+        else:
+            logger.error(wMessage)
     return nickName
 
