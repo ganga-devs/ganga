@@ -1257,7 +1257,7 @@ def register_datasets_in_container(container, dataset):
                 print 'Registered container %s' %containerName
                 attempt = 3
             except:
-                print 'Problem registering container %s - might already exist ?' %containerName
+                print 'Problem registering container %s - might already exist ? Please check with dq2-ls containername' %containerName
                 attempt = attempt + 1
                 time.sleep(30)
         finally:
@@ -1271,7 +1271,7 @@ def register_datasets_in_container(container, dataset):
                 dq2.registerDatasetsInContainer(containerName, [ dataset ])
                 attempt = 3
             except:
-                print 'Problem registering dataset %s in container %s' %(dataset, containerName)
+                print 'Problem registering dataset %s in container %s - might already be registered ? Please check with dq2-ls -f datasetname or containername' %(dataset, containerName)
                 attempt = attempt + 1
                 time.sleep(30)
         finally:
