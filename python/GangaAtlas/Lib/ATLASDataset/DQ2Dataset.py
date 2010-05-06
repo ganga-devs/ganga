@@ -1372,6 +1372,7 @@ class DQ2OutputDataset(Dataset):
                                 self.allDatasets.append(datasetnameTemp)
                                 
             if (job.application._name in ['Athena','AthenaTask', 'AMAAthena', 'AMAAthenaTask'] and job.backend._name in [ 'LCG', 'Local', 'LSF', 'PBS', 'SGE']):
+                newDatasetname = job.outputdata.datasetname
                 for dataset in self.allDatasets:
                     # Clean dataset from duplicates on LCG backend
                     if config['CHECK_OUTPUT_DUPLICATES'] and job.backend._name in [ 'LCG' ]:

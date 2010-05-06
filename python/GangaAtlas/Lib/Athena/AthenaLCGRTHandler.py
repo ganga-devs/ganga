@@ -229,7 +229,12 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             output_datasetname, output_lfn = dq2outputdatasetname(job.outputdata.datasetname, self.username, jobid, job.outputdata.isGroupDS, job.outputdata.groupname)
 
             output_jobid = jid
+            # Set subjob datasetname
             job.outputdata.datasetname=output_datasetname
+            # Set master job datasetname
+            if job._getRoot().subjobs:
+                job._getRoot().outputdata.datasetname=output_datasetname
+            # Create output dataset -> moved to the worker node code !
             if not job.outputdata.dataset_exists(output_datasetname):
                 if job._getRoot().subjobs:
                     if job.id==0:
