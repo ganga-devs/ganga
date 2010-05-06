@@ -1278,6 +1278,45 @@ def register_datasets_in_container(container, dataset):
             dq2_lock.release()
 
     return
+########################################################################
+def check_duplicates_in_dataset(datasetname, output_files):
+    """Checks for duplicate output files in outputdataset"""
+    
+    try:
+        dq2_lock.acquire()
+        try:
+            contents = dq2.listFilesInDataset(out_datasetname)
+        except:
+            print 'Problem retrieving content info dataset %s from DQ2! ' %datasetname
+            return
+    finally:
+        dq2_lock.release()
+
+    if not contents:
+        print 'Dataset %s is empty.' %datasetname
+        return
+
+    contents = contents[0]
+    fileNames = []
+
+    for guid, keys in contents.iteritems():
+        fileNames.append(keys['lfn'])
+
+    filePattern = []
+    for fileName in fileNames:
+        for outFile in output_files:
+            patName = '\._(\w+)\.%s$'%outFile
+            match = re.search(patName,fileName)
+            if match:
+                if match.group(0) in filePattern:
+                    print '!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!'
+                    print 'Possible duplicated output file %s in output dataset %s' %(fileName, datasetname)
+                    print 'After all subjobs have finished run j.outputdata.clean_duplicates_in_dataset()'
+                    print '!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!'
+                else:
+                    filePattern.append(match.group(0))
+
+    return
        
 ########################################################################
 
@@ -2402,6 +2441,8 @@ if __name__ == '__main__':
         register_datasets_details(out_datasetname, outputInfo)
 
         register_datasets_in_container(datasetname, out_datasetname)
+
+        check_duplicates_in_dataset(out_datasetname, output_files)
 
     sys.exit(returnvalue)
 
