@@ -745,7 +745,7 @@ class Athena(IApplication):
         supStream = [s.upper() for s in self.atlas_supp_stream]
         shipInput = False
         trf = False
-        if self.atlas_exetype in ['PYARA','ROOT','TRF']:
+        if self.atlas_exetype in ['PYARA','ROOT','TRF','ARES']:
             trf = True
         rc, runConfig = AthenaUtils.extractRunConfig(jobO, supStream, self.atlas_use_AIDA, shipInput, trf)
         self.atlas_run_config = runConfig
