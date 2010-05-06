@@ -165,11 +165,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT']")
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
             if app.atlas_exetype == 'PYARA':
-                self.job_options = "python " + self.job_options
+                self.job_options = '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; python ' + self.job_options
             elif app.atlas_exetype == 'ARES':
-                self.job_options = "athena.py " + self.job_options
+                self.job_options = '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; athena.py ' + self.job_options
             elif app.atlas_exetype == 'ROOT':
-                self.job_options = "root -l " + self.job_options
+                self.job_options = '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; root -l ' + self.job_options
         if self.job_options == '':
             raise ApplicationConfigurationError(None,"No Job Options found!")
         logger.info('Running job options: %s'%self.job_options)
@@ -298,7 +298,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.jobName           = commands.getoutput('uuidgen')  
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
         jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
-        jspec.transformation    = '%s/runAthena-00-00-11' % Client.baseURLSUB
+        if app.atlas_exetype in ['PYARA','ARES','ROOT']:
+            jspec.transformation    = '%s/runGen-00-00-02' % Client.baseURLSUB
+        else:
+            jspec.transformation    = '%s/runAthena-00-00-11' % Client.baseURLSUB
         if job.inputdata and self.inputdatatype=='DQ2' and not job.inputdata.tag_info:
             jspec.prodDBlock    = job.inputdata.dataset[0]
         else:
@@ -374,7 +377,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         param =  '-l %s ' % self.library
         param += '-r %s ' % self.rundirectory
         # set jobO parameter
-        param += '-j "%s" ' % urllib.quote(self.job_options)
+        if app.atlas_exetype in ['PYARA','ARES','ROOT']:
+            param += '-j "" -p "%s" ' % self.job_options
+        else:
+            param += '-j "%s" ' % urllib.quote(self.job_options)
+        if app.atlas_exetype == 'ARES':
+            param += '--useAthenaPackages '
         # DBRelease
         if self.dbrelease != '':
             tmpItems = self.dbrelease.split(':')
@@ -423,14 +431,20 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '-i "%s" ' % input_files
         else:
             param += '-i "[]" '
-        param += '-m "[]" ' #%minList FIXME
-        param += '-n "[]" ' #%cavList FIXME
+        #param += '-m "[]" ' #%minList FIXME
+        #param += '-n "[]" ' #%cavList FIXME
         #FIXME
         #if bhaloList != []:
         #    param += '--beamHalo "%s" ' % bhaloList
         #if bgasList != []:
         #    param += '--beamGas "%s" ' % bgasList
-        param += '-o "%s" ' % outMap
+        if app.atlas_exetype in ['PYARA','ARES','ROOT']:
+            outMapNew={}
+            for x in outMap.values():
+                outMapNew.update(x)
+            param += '-o "%s" ' % outMapNew
+        else:
+            param += '-o "%s" ' % outMap
         if self.runConfig.input and self.runConfig.input.inColl: 
             param += '-c '
         if self.runConfig.input and self.runConfig.input.inBS: 
@@ -463,9 +477,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if matchURL != None:
             param += " --sourceURL %s " % matchURL.group(1)
         # use ARA 
-        if app.atlas_exetype in ['PYARA','ARES','ROOT']:
-            param += '--trf '
-            param += '--ara '
+#        if app.atlas_exetype in ['PYARA','ARES','ROOT']:
+#            param += '--trf '
+#            param += '--ara '
         if job.backend.accessmode == 'FILE_STAGER':
             param += '--accessmode=filestager '
         if self.inputdatatype == 'Tier3':
