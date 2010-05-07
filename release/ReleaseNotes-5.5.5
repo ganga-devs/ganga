@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.5 (2010/5/6)
+5.5.5 (2010/5/7)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -8,6 +8,52 @@ ganga/python/Ganga
 fixed bug #64512: RooMerger() ignored the parameter "outputdir"
 
 upgrade to stomputil 2.2
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Fix for bug #59640 - Athena.user_area_path should be respected now 
+* Fix DQ2OutputDataset.datasetname field is now filled for master job 
+* Added atlas Credentials/ProxyHelper. Main use now is to get the vo 
+  nickname attribute 
+* Add add nickname support for DQ2OutputDataset in Athena/LCG/Local
+  switch on usage with config.DQ2.USE_NICKNAME_DQ2OUTPUTDATASET=True
+* Fix several typos in DQ2OutputDataset.clean_duplicates_in_dataset()
+  automatically use this function in the postprocessing hook of the 
+  master job with config.DQ2.CHECK_OUTPUT_DUPLICATES=True
+* Add duplicate output file checking in Athena/LCG/Local
+* Adding ATLASTier3Dataset and ATLASTier3Splitter capability to LCG 
+  and Local backend 
+* Allow job submission with DQ2JobSplitter for Tier3 jobs with 
+  DBRelease request  
+* Fix choice of site if atlas_dbrelease and single site is configured 
+  and add DBRELEASE_OVERRIDE to job environment if atlas_dbrelease is set
+  (#66251)
+
+Tags:
+-----
+* Fixed a bug for DQ2_COPY+ARA if the output filename isn't specfiied in the JOs
+* Reordered the GLITE setup to before CMT to avoid SLC5/15.6.8+ Athena issues
+* Added the GUID info for TAG splitting
+* Enabled TAG use for the Panda backend
+* Don't parse runConfig for exetype==ARES
+
+AthenaMC:
+---------
+* propagated userarea changes to AthenaMCLCGRTHandler.py Savannah bug#64110, part2
+
+Tasks:
+------
+* Tasks now creates a dataset for each Transform and a container of 
+  these for each Task. There only the files from one successful job 
+  per partion are added, so that there should be no duplicates
+
+externals:
+----------
+* update to panda-client 0.2.33 (fix #66250)
 
 
 --------------------------------------------------------------------------------------------------------------
