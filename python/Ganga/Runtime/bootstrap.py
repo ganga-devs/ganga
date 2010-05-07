@@ -782,6 +782,10 @@ default_backends = LCG
         exportToGPI('config',Ganga.GPIDev.Lib.Config.config,'Objects','access to Ganga configuration')
         exportToGPI('ConfigError',Ganga.GPIDev.Lib.Config.ConfigError,'Exceptions')
 
+        from Ganga.Utility.feedback_report import report
+
+        exportToGPI('report',report,'Functions')
+
         # export all configuration items, new options should not be added after this point
         Ganga.GPIDev.Lib.Config.bootstrap()
         

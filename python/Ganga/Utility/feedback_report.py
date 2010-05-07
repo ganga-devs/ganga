@@ -1,10 +1,15 @@
 
 def report(job=None):
+        """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
         import mimetypes
         import urllib2
         import httplib
         import string
         import random
+        import sys
+
+        from Ganga.GPI import config
+        import Ganga
 
         def random_string (length):
                 return ''.join (random.choice (string.letters) for ii in range (length + 1))
@@ -62,7 +67,11 @@ def report(job=None):
                 startIndex = responseResult.find("path:") + 5
                 endIndex = responseResult.find("</span>")
 
-                print 'You can download your error report from here : ' + responseResult[startIndex:endIndex] 
+                print 'Your error report was uploaded to ganga developers with the following URL. '
+                print 'You may include this URL in your bug report or in the support email to the developers.'
+                print
+                print '***',responseResult[startIndex:endIndex],'***'
+                print
 
 
         def run_upload (server, path):
@@ -369,6 +378,4 @@ def report(job=None):
         except:
                 raise #pass
                 #raise  
-
-print 'loaded'
 
