@@ -336,7 +336,7 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
     else:
         patName = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
         patLfn = '%s/%s/ganga/%s/' % (usertag,username, patName)
-            
+
     # Datasetname exists (configured or resubmission)
     if datasetname:
         # new datasetname during job resubmission
@@ -356,7 +356,10 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
                 logger.warning('Output dataset already exists and is closed/frozen. Overriding to %s', patName)
         else:
             output_datasetname = '%s.%s.%s' % (usertag, username, datasetname)
-            output_lfn = '%s/%s/ganga/%s/' % (usertag, username, output_datasetname)
+            if config['USE_NICKNAME_DQ2OUTPUTDATASET']:
+                output_lfn = '%s/%s/%s/%s/' % (usertag, username, jobdate, output_datasetname)
+            else:
+                output_lfn = '%s/%s/ganga/%s/' % (usertag, username, output_datasetname)
     else:
         # No datasetname is given
         output_datasetname = patName
