@@ -12,7 +12,7 @@ def report(job=None):
         import Ganga
 
         def random_string (length):
-                return ''.join (random.choice (string.letters) for ii in range (length + 1))
+                return ''.join ([random.choice (string.letters) for ii in range (length + 1)])
 
         def encode_multipart_data (files):
                 boundary = random_string (30)
