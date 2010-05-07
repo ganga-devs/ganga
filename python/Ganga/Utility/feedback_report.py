@@ -177,7 +177,7 @@ def report(job=None):
 
                         import datetime
                         now = datetime.datetime.now()
-                        userInfoDirName = userInfoDirName + now.strftime("%Y-%m-%d|%H:%M:%S")
+                        userInfoDirName = userInfoDirName + now.strftime("%Y-%m-%d-%H:%M:%S")
                         fullLogDirName = os.path.join(fullPathTempDir, userInfoDirName) 
         
                         #if report directory exists -> delete it's content(we would like last version of the report)
