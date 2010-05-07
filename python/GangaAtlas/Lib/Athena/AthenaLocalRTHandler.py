@@ -29,7 +29,6 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.Utility.files import expandfilename
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 
 __directory__ = os.path.dirname(__file__)
 
@@ -180,13 +179,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 job.outputdata.location = output_location
 
         if job.outputdata and job.outputdata._name=='DQ2OutputDataset':
-            if job._getRoot().subjobs:
-                jobid = "%d" % (job._getRoot().id)
-            else:
-                jobid = "%d" % job.id
 
-            # Generate output dataset name
-            output_datasetname, output_lfn = dq2outputdatasetname(job.outputdata.datasetname, self.username, jobid, job.outputdata.isGroupDS, job.outputdata.groupname)
+            # output dataset name from master_prepare
+            output_datasetname = self.output_datasetname
+            output_lfn = self.output_lfn
 
             output_jobid = jid
             # Set subjob datasetname
@@ -353,10 +349,13 @@ class AthenaLocalRTHandler(IRuntimeHandler):
 
         logger.debug("AthenaLocalRTHandler master_prepare called, %s", job.id)
 
-        self.username = gridProxy.identity(safe=True)
-        nickname = getNickname() 
-        if nickname and configDQ2['USE_NICKNAME_DQ2OUTPUTDATASET']:
-            self.username = nickname
+        if job._getRoot().subjobs:
+            jobid = "%d" % (job._getRoot().id)
+        else:
+            jobid = "%d" % job.id
+
+        # Generate output dataset name
+        self.output_datasetname, self.output_lfn = dq2outputdatasetname(job.outputdata.datasetname, jobid, job.outputdata.isGroupDS, job.outputdata.groupname)
 
         # Expand Athena jobOptions
         if not app.option_file:
@@ -578,9 +577,6 @@ class AthenaRemoteRTHandler(IRuntimeHandler):
         else:
             rt_handler = AthenaLocalRTHandler()
             return rt_handler.master_prepare(app,appmasterconfig)
-
-from Ganga.GPIDev.Credentials import GridProxy
-gridProxy = GridProxy()
 
 allHandlers.add('Athena', 'Local', AthenaLocalRTHandler)
 allHandlers.add('Athena', 'LSF'  , AthenaLocalRTHandler)

@@ -286,13 +286,40 @@ def whichCloud (site):
         
     return None
 
-def dq2outputdatasetname(datasetname, username, jobid, isGroupDS, groupname):
+def dq2datasetstate(dataset):
+    """Helper function to determine dataset status """
+    if not dataset: return -1
 
-    # Remove apostrophe
-    username = re.sub("'","",username)
+    try:
+        dq2_lock.acquire()
+        try:
+            state = dq2.getState(dataset)
+        except:
+            state = -1
+    finally:
+        dq2_lock.release()
+
+    return state 
+
+def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
 
     jobdate = time.strftime('%Y%m%d')
     usertag = config['usertag']
+
+    # Get DN or nickname
+    username = gridProxy.identity(safe=True)
+    if config['ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET']:
+        nickname = getNickname(allowMissingNickname=True) 
+    else:
+        nickname = getNickname(allowMissingNickname=False) 
+    
+    if nickname and config['USE_NICKNAME_DQ2OUTPUTDATASET']:
+        username = nickname
+        if usertag.endswith('10'):
+            usertag = 'user'
+
+    # Remove apostrophe
+    username = re.sub("'","",username)
 
     # prepare Group Dataset names
     if isGroupDS==True:
@@ -301,29 +328,38 @@ def dq2outputdatasetname(datasetname, username, jobid, isGroupDS, groupname):
             usertag = 'group' + time.strftime('%Y')[2:]
         if groupname:
             username = groupname
+    
+    # Automatic dataset name pattern
+    if config['USE_NICKNAME_DQ2OUTPUTDATASET']:
+        patName = '%s.%s.%s.%s' % (usertag, username, jobdate, jobid)
+        patLfn = '%s/%s/%s/%s/' % (usertag, username, jobdate, patName)
+    else:
+        patName = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
+        patLfn = '%s/%s/ganga/%s/' % (usertag,username, patName)
             
+    # Datasetname exists (configured or resubmission)
     if datasetname:
         # new datasetname during job resubmission
-        pat = re.compile(r'^%s\.%s\.ganga' % (usertag,username))
+        pat = re.compile(r'^%s\.%s\.' % (usertag,username))
         if re.findall(pat,datasetname):
-            if job.outputdata.dataset_exists():
+            datasetState = dq2datasetstate(datasetname)
+            # dataset exists and is open or dataset does not exist
+            if datasetState==0 or datasetState==-1:
                 output_datasetname = datasetname
+                if config['USE_NICKNAME_DQ2OUTPUTDATASET']:
+                    output_lfn = '%s/%s/%s/%s/' % (usertag, username, jobdate, datasetname)
+                else:
+                    output_lfn = '%s/%s/ganga/%s/' % (usertag, username, datasetname)
             else:
-                output_datasetname = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
-                        
-            output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
+                output_datasetname = patName                        
+                output_lfn = patLfn
         else:
-            # append user datasetname for new configuration
-            #if job.outputdata.use_datasetname and job.outputdata.datasetname:
-            #    output_datasetname = job.outputdata.datasetname
-            #else:
-            output_datasetname = '%s.%s.ganga.%s' % (usertag, username, datasetname)
-
-            output_lfn = '%s/%s/ganga/%s/' % (usertag,username,output_datasetname)
+            output_datasetname = '%s.%s.%s' % (usertag, username, datasetname)
+            output_lfn = '%s/%s/ganga/%s/' % (usertag, username, output_datasetname)
     else:
         # No datasetname is given
-        output_datasetname = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
-        output_lfn = '%s/%s/ganga/%s/' % (usertag, username, output_datasetname)
+        output_datasetname = patName
+        output_lfn = patLfn
 
     return output_datasetname, output_lfn 
 
@@ -1526,6 +1562,9 @@ dq2=DQ2()
 from threading import Lock
 dq2_lock = Lock()
 
+from Ganga.GPIDev.Credentials import GridProxy
+gridProxy = GridProxy()
+
 from Ganga.Utility.Config import makeConfig, ConfigError
 config = makeConfig('DQ2', 'DQ2 configuration options')
 
@@ -1552,6 +1591,7 @@ config.addOption('CHECK_OUTPUT_DUPLICATES', False, 'Check for duplicate files in
 config.addOption('DELETE_DUPLICATES_DATASET', False, 'If CHECK_OUTPUT_DUPLICATES=True is used, duplicates dataset can be automatically deleted by setting this flag to True.')
 
 config.addOption('USE_NICKNAME_DQ2OUTPUTDATASET', False, 'Use voms nicknames for DQ2OutputDataset.')
+config.addOption('ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET', True, 'Allow that voms nickname is empty for DQ2OutputDataset name creating.')
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
