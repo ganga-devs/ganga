@@ -353,6 +353,7 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
             else:
                 output_datasetname = patName                        
                 output_lfn = patLfn
+                logger.warning('Output dataset already exists and is closed/frozen. Overriding to %s', patName)
         else:
             output_datasetname = '%s.%s.%s' % (usertag, username, datasetname)
             output_lfn = '%s/%s/ganga/%s/' % (usertag, username, output_datasetname)
