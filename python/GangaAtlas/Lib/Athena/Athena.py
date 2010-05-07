@@ -785,7 +785,9 @@ class Athena(IApplication):
         archiveDir = self.user_area_path
 
         # set extFile
+        AthenaUtils.extFile=[]
         AthenaUtils.setExtFile(self.append_to_user_area)
+        AthenaUtils.excludeFile=[]
         AthenaUtils.setExcludeFile(','.join(self.exclude_from_user_area))
 
         # archive sources
