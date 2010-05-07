@@ -18,6 +18,7 @@ def getNickname(gridProxy=None,allowMissingNickname=True):
                 break
     # check        
     if nickName == '':
+        from Ganga.Core.exceptions import ApplicationConfigurationError
         wMessage =  'Could not get nickname from voms proxy. '
         wMessage += 'Please register nickname to ATLAS VO via\n\n'
         wMessage += '   https://lcg-voms.cern.ch:8443/vo/atlas/vomrs\n'
@@ -27,6 +28,6 @@ def getNickname(gridProxy=None,allowMissingNickname=True):
         if allowMissingNickname:
             logger.warning(wMessage)
         else:
-            logger.error(wMessage)
+            raise ApplicationConfigurationError(None,wMessage)
     return nickName
 
