@@ -7,7 +7,19 @@ ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 fixed bug #64512: RooMerger() ignored the parameter "outputdir"
 
-upgrade to stomputil 2.2
+* report(j) function now available (beta testing), user may easily upload his environment and job 
+details to simplify user support for the ganga team
+
+* Jobs that failed to load can now be deleted using jobs(id).remove()
+ The IDs of such incomplete jobs can be seen by jobs.incomplete_ids()
+* The repository now tries loading the backup file 'data~'
+ if loading from the primary file 'data' fails.
+* added box.select() and tasks.select()
+* fixed and improved jobtree object
+* fixed bug #64041 - resubmission works if submission from script fails
+
+Upgrade to stomputil 2.2: more robust connection management including fix for bug #62543: Exception in 
+thread GANGA_Update_Thread_shutdown.
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -21,6 +33,7 @@ Athena:
   nickname attribute 
 * Add add nickname support for DQ2OutputDataset in Athena/LCG/Local
   switch on usage with config.DQ2.USE_NICKNAME_DQ2OUTPUTDATASET=True
+  and config.DQ2.ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET=True
 * Fix several typos in DQ2OutputDataset.clean_duplicates_in_dataset()
   automatically use this function in the postprocessing hook of the 
   master job with config.DQ2.CHECK_OUTPUT_DUPLICATES=True
@@ -65,5 +78,14 @@ using adapters to convert the data in real time to the 0.2 format. Work has begu
 GangaJEM version fully exploiting the new possibilities; this plugin will be called GangaJEM-2-0
 then (when it's done...)
 - Included last minute fixes (JEM 0.3.0.2)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* The default behavior is now to download the sandbox for failed DIRAC jobs. This can be turned off
+in the .gangarc file using the config.LHCb.failed_sandbox_download option.
+
+* A few minor bug fixes.
 
 **************************************************************************************************************
