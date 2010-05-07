@@ -263,8 +263,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if not job.outputdata:
             job.outputdata = DQ2OutputDataset()
             job.outputdata.datasetname = job._getRoot().outputdata.datasetname
-
-        if not job.outputdata.datasetname:
+        #if not job.outputdata.datasetname:
+        else:
             job.outputdata.datasetname = job._getRoot().outputdata.datasetname
 
         if not job.outputdata.datasetname:
