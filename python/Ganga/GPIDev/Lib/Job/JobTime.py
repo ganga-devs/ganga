@@ -154,7 +154,10 @@ class JobTime(GangaObject):
         j = self.getJobObject()
         for sjs in j.subjobs:
             try:
-                list.append(sjs.time.timestamps[status])
+                if type(sjs.time.timestamps[status]) == datetime.datetime:
+                    list.append(sjs.time.timestamps[status])
+                else:
+                    logger.debug('Attempt to add a non datetime object in the timestamp, job=%d, subjob=%d',j.id,sjs.id)
             except KeyError:
                 logger.debug("Status '%s' not found in timestamps of job %d.%d.", status, sjs.master.id, sjs.id)
         list.sort()
