@@ -285,7 +285,7 @@ if opt.input_dataset:
 
 # outputdata
 
-if opt.outputdata:
+if opt.outputdata or opt.backend == 'panda':
     if opt.outputtype:         
         if opt.outputtype == 'ATLAS':
             j.outputdata = ATLASOutputDataset()
@@ -298,7 +298,8 @@ if opt.outputdata:
         if opt.output_dataset:
              j.outputdata.datasetname = opt.output_dataset
 
-    j.outputdata.outputdata = opt.outputdata.split(':')
+    if opt.outputdata:
+        j.outputdata.outputdata = opt.outputdata.split(':')
     if opt.output_location:
         j.outputdata.location = opt.output_location
     if opt.output_local_location:
