@@ -321,6 +321,9 @@ class Dirac(IBackend):
                     j.backend._getOutputDataLFNs(dirac_monitoring_server,True)
                 if not ok: j.updateStatus('failed')
                 else: j.updateStatus('completed')
+            if result[i][3] == 'failed':
+                if configLHCb['failed_sandbox_download']:
+                    j.backend._getOutputSandbox(dirac_monitoring_server)
                     
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 

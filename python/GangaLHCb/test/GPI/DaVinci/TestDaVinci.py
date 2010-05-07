@@ -7,10 +7,11 @@ class TestDaVinci(GangaGPITestCase):
     def setUp(self):
         ganga_path = os.path.abspath(os.path.dirname(__file__))
         self.path = ganga_path + '/../python/GangaLHCb/test/GPI/DaVinci/'
-        self.input_data = ["LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000001_5.dst",
-               "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000002_5.dst",
-               "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000003_5.dst",
-               "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000004_5.dst"]
+        self.input_data = ['LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000008_1.dst']
+        #self.input_data = ["LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000001_5.dst",
+        #       "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000002_5.dst",
+        #       "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000003_5.dst",
+        #       "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000004_5.dst"]
         
 
     def test_current_opts(self):

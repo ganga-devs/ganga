@@ -229,8 +229,8 @@ class DiracCommands:
         return result
     getSoftwareVersions = staticmethod(getSoftwareVersions)
 
-    def getDataset(path):
-        result = DiracCommands.dirac.bkQueryPath(path)
+    def getDataset(path,dqflag):
+        result = DiracCommands.dirac.bkQueryPath(path,dqflag)
         return result
     getDataset = staticmethod(getDataset)
             

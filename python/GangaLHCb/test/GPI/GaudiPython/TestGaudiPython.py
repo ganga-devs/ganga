@@ -91,10 +91,10 @@ class TestGaudiPython(GangaGPITestCase):
         gp = GaudiPython()
         #gp.version = configDaVinci['version']
         j = Job(application=gp, backend=Local())
-        prefix='LFN:/lhcb/production/DC06/v1r0/00002069/DST/0000'
+        prefix='LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831'
         j.inputdata = LHCbDataset([
-            prefix+'/00002069_00000002_2.dst',
-            prefix+'/00002069_00000004_2.dst'])
+            prefix+'_00000001_1.dst',
+            prefix+'_00000002_1.dst'])
         j.splitter = SplitByFiles()
         j.submit()
         assert sleep_until_completed(j,600)

@@ -16,7 +16,9 @@ class BKQuery(GangaObject):
     schema = {}
     docstr = 'Bookkeeping query path'
     schema['path'] = SimpleItem(defvalue='' ,doc=docstr)
-    _schema = Schema(Version(1,0), schema)
+    docstr = 'Data quality flag.'
+    schema['dqflag'] = SimpleItem(defvalue='All',doc=docstr)
+    _schema = Schema(Version(1,1), schema)
     _category = ''
     _name = "BKQuery"
     _exportmethods = ['getDataset']
@@ -34,7 +36,8 @@ class BKQuery(GangaObject):
     def getDataset(self):
         '''Gets the dataset from the bookkeeping for current path.'''
         if not self.path: return None
-        cmd = 'result = DiracCommands.getDataset("%s")' % self.path
+        cmd = 'result = DiracCommands.getDataset("%s","%s")' \
+              % (self.path,self.dqflag)
         result = get_result(cmd,'BK query error.','BK query error.')
         files = result['Value']
         ds = LHCbDataset()

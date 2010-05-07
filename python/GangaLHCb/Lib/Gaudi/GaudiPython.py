@@ -96,59 +96,14 @@ class GaudiPython(Francesc):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-bschema = GaudiPython._schema.inherit_copy()
-bschema['project']._meta['protected'] = 1
-bschema['project']._meta['hidden'] = 1
-bschema['project']._meta['defvalue'] = 'Bender'
-
-class Bender(GaudiPython):
-    """Bender application.
-
-    Hack to convert Bender into a Ganga application.
-"""
-    _name = 'Bender'
-    _category = 'applications'
-    _schema = bschema.inherit_copy()
-    _exportmethods = ['getenv','getpack', 'make', 'cmt']
-    
-    def _check_inputs(self):
-        """Checks the validity of user's entries for GaudiPython schema"""
-        self._check_gaudi_inputs(self.script,self.project)        
-        if len(self.script)==0:
-            logger.warning("No script defined. Will use a default " \
-                           'script which is probably not what you want.')
-            self.script = [File(os.path.join(
-                os.path.dirname(inspect.getsourcefile(GaudiPython)),
-                'options/BenderExample.py'))]
-        return
-
-    # add the next 4 b/c of bug in exportmethods dealing w/ grandchildren
-    def getenv(self,options=''):
-        return super(Bender,self).getenv()
-
-    def getpack(self,options=''):
-        return super(Bender,self).getpack(options)
-
-    def make(self,argument=''):
-        return super(Bender,self).make(argument)
-
-    def cmt(self,command):
-        return super(Bender,self).cmt(command)
-
-    for method in ['getpack','make','cmt']:
-        setattr(eval(method),"__doc__", getattr(GaudiPython, method).__doc__)
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
 # Associate the correct run-time handlers to GaudiPython for various backends.
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.Gaudi.GaudiRunTimeHandler import GaudiRunTimeHandler
 from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
 
-for app in ['GaudiPython','Bender']:
-    for backend in ['LSF','Interactive','PBS','SGE','Local','Condor']:
-        allHandlers.add(app, backend, GaudiRunTimeHandler)
-    allHandlers.add(app, 'Dirac', GaudiDiracRTHandler)
+for backend in ['LSF','Interactive','PBS','SGE','Local','Condor']:
+    allHandlers.add('GaudiPython', backend, GaudiRunTimeHandler)
+allHandlers.add('GaudiPython', 'Dirac', GaudiDiracRTHandler)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

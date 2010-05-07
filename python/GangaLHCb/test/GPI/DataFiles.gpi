@@ -33,6 +33,7 @@ except:
 #
 # methods
 #
-lfn = LogicalFile("/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000001_5.dst")
+lfn = LogicalFile('/lhcb/MC/MC09/DST/00004831/0000/00004831_00000008_1.dst')
+#lfn = LogicalFile("/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000001_5.dst")
 assert lfn.getReplicas()
 assert lfn.getMetadata()

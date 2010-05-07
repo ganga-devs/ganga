@@ -112,12 +112,29 @@ def get_user_dlls(appname,version,user_release_area,platform,shell):
   project_areas = unique(project_areas)
   py_project_areas = unique(py_project_areas)
 
-  for libpath in project_areas:
+  ld_lib_path = []
+  if shell.env.has_key('LD_LIBRARY_PATH'):
+    ld_lib_path = shell.env['LD_LIBRARY_PATH'].split(':')
+  project_areas_dict = {}
+  for area in project_areas:
+    if area in ld_lib_path:
+      project_areas_dict[area] = ld_lib_path.index(area)
+    else:
+      project_areas_dict[area] = 666
+  from operator import itemgetter
+  sorted_project_areas = []
+  for item in sorted(project_areas_dict.items(),key=itemgetter(1)):
+    sorted_project_areas.append(item[0])
+  
+  lib_names = []  
+  for libpath in sorted_project_areas:
     if os.path.exists(libpath):
       for f in os.listdir(libpath):
+        if lib_names.count(f) > 0: continue
         fpath = os.path.join(libpath,f)
-        if os.path.exists( fpath):
-          libs.append( fpath)
+        if os.path.exists(fpath):
+          lib_names.append(f)
+          libs.append(fpath)
         else:
           logger.warning("File %s in %s does not exist. Skipping...",
                          str(f),str(libpath))

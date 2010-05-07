@@ -34,6 +34,8 @@ dscrpt = 'If a file matches one of these patterns, then the string here '\
          'overrides the datatype_string_default value.'
 defval = {"SVC='LHCb::MDFSelector'" : ['*.raw','*.RAW','*.mdf','*.MDF']}
 configLHCb.addOption('datatype_string_patterns',defval,dscrpt)
+dscrpt = 'Automatically download sandbox for failed jobs?'
+configLHCb.addOption('failed_sandbox_download',True,dscrpt)
  
 # Set default values for the Dirac section.
 dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'

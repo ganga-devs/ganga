@@ -34,20 +34,27 @@ if __name__ == '__main__':
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+gaudiSoftwareVersions = None
+
 class GaudiDiracRTHandler(IRuntimeHandler):
     """The runtime handler to run Gaudi jobs on the Dirac backend"""
 
     def master_prepare(self,app,appconfig):
         # check version
-        from Dirac import Dirac
-        result = Dirac.execAPI('result = DiracCommands.getSoftwareVersions()')
-        if not result_ok(result):
-            logger.error('Could not obtain available versions: %s' \
-                         % str(result))
-            logger.error('Version/platform will not be validated.')
-        else:
-            if app.get_gaudi_appname() in result['Value']:
-                soft_info = result['Value'][app.get_gaudi_appname()]
+        global gaudiSoftwareVersions
+        if not gaudiSoftwareVersions:
+            from Dirac import Dirac
+            result = \
+                   Dirac.execAPI('result=DiracCommands.getSoftwareVersions()')
+            if not result_ok(result):
+                logger.error('Could not obtain available versions: %s' \
+                             % str(result))
+                logger.error('Version/platform will not be validated.')
+            else:
+                gaudiSoftwareVersions = result['Value']
+        if gaudiSoftwareVersions:
+            if app.get_gaudi_appname() in gaudiSoftwareVersions:
+                soft_info = gaudiSoftwareVersions[app.get_gaudi_appname()]
                 if not app.version in soft_info:
                     versions = []
                     for v in soft_info: versions.append(v)
