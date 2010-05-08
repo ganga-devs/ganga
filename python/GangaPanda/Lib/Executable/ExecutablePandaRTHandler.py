@@ -18,6 +18,8 @@ from Ganga.GPIDev.Lib.File import *
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+
 class ExecutablePandaRTHandler(IRuntimeHandler):
     '''Executable Panda Runtime Handler'''
 
@@ -74,22 +76,14 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,'PANDA application supports only DQ2Datasets')
 
 #       output dataset
-        usertag = configDQ2['usertag']
-        self.username = gridProxy.identity(safe=True)
-        username = self.username
-
         if job.outputdata:
             if job.outputdata._name <> 'DQ2OutputDataset':
-                raise ApplicationConfigurationError(None,'PANDA application supports only DQ2OutputDataset')
-            if not job.outputdata.datasetname:
-                job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,username,job.id,time.strftime("%Y%m%d",time.localtime()))
+                raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
         else:
+            logger.info('Adding missing DQ2OutputDataset')
             job.outputdata = DQ2OutputDataset()
-            job.outputdata.datasetname = '%s.%s.ganga.%d.%s' % (usertag,username,job.id,time.strftime("%Y%m%d",time.localtime()))
 
-        if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,username)):
-            logger.info('outputdata.datasetname must start with %s.%s.ganga. Prepending it for you.'%(usertag,username))
-            job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
+        job.outputdata.datasetname,outlfn = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
 
         logger.info('Output dataset %s',job.outputdata.datasetname)
         try:
@@ -150,17 +144,12 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         if not job.outputdata:
             job.outputdata = DQ2OutputDataset()
             job.outputdata.datasetname = job._getRoot().outputdata.datasetname
-
-        if not job.outputdata.datasetname:
+        #if not job.outputdata.datasetname:
+        else:
             job.outputdata.datasetname = job._getRoot().outputdata.datasetname
 
         if not job.outputdata.datasetname:
             raise ApplicationConfigurationError(None,'DQ2OutputDataset has no datasetname')
-
-        usertag = configDQ2['usertag'] 
-        username = self.username
-        if not job.outputdata.datasetname.startswith('%s.%s.ganga.'%(usertag,username)):
-            job.outputdata.datasetname = '%s.%s.ganga.'%(usertag,username)+job.outputdata.datasetname
 
         jspec = JobSpec()
         jspec.jobDefinitionID   = job._getRoot().id
