@@ -355,7 +355,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             jobid = "%d" % job.id
 
         # Generate output dataset name
-        self.output_datasetname, self.output_lfn = dq2outputdatasetname(job.outputdata.datasetname, jobid, job.outputdata.isGroupDS, job.outputdata.groupname)
+        if job.outputdata:
+            self.output_datasetname, self.output_lfn = dq2outputdatasetname(job.outputdata.datasetname, jobid, job.outputdata.isGroupDS, job.outputdata.groupname)
 
         # Expand Athena jobOptions
         if not app.option_file:
