@@ -422,7 +422,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if app.atlas_exetype in ['PYARA','ARES','ROOT']:
             outMapNew={}
             for x in outMap.values():
-                outMapNew.update(x)
+                outMapNew.update(dict(x))
             param += '-o "%s" ' % outMapNew
         else:
             param += '-o "%s" ' % outMap
