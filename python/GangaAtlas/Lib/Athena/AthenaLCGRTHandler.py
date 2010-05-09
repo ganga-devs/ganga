@@ -389,7 +389,15 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         # Generate output dataset name
         if job.outputdata:
-            self.output_datasetname, self.output_lfn = dq2outputdatasetname(job.outputdata.datasetname, jobid, job.outputdata.isGroupDS, job.outputdata.groupname)
+            if job.outputdata._name=='DQ2OutputDataset':
+                dq2_datasetname = job.outputdata.datasetname
+                dq2_isGroupDS = job.outputdata.isGroupDS
+                dq2_groupname = job.outputdata.groupname
+            else:
+                dq2datasetname = ''
+                dq2_isGroupDS = False
+                dq2_groupname = ''
+            self.output_datasetname, self.output_lfn = dq2outputdatasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
 
         # Check if all sites are in the same cloud
         if job.backend.requirements.sites:
