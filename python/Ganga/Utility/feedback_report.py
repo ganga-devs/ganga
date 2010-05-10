@@ -95,8 +95,8 @@ def report(job=None):
                 ipythonHistoryFileName = "ipythonhistory.txt"
                 gangaLogFileName = "gangalog.txt"
                 repositoryPath = "repository/$usr/LocalXML/6.0/jobs/0xxx"
-                #uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
-                uploadFileServer= "http://127.0.0.1:8000/errorreports"
+                uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
+                #uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
                 def printDictionary(dictionary):
                         for k,v in dictionary.iteritems():
