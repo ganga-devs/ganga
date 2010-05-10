@@ -215,11 +215,14 @@ def report(job=None):
                         try:
                         
                                 sys.stdout = inputFile
-                                Ganga.GPIDev.Lib.Config.Config.print_config_file()
 
-                                print
-                                print "#======================================================================="
-                                print "[System]"
+                                #this gets the default values
+                                #Ganga.GPIDev.Lib.Config.Config.print_config_file()
+                                
+                                #this should get the changed values
+                                for c in config:
+                                        print config[c]
+
                                 print
                                 print "#GANGA_VERSION = %s" % config.System.GANGA_VERSION 
 
