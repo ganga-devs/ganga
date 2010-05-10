@@ -95,7 +95,8 @@ def report(job=None):
                 ipythonHistoryFileName = "ipythonhistory.txt"
                 gangaLogFileName = "gangalog.txt"
                 repositoryPath = "repository/$usr/LocalXML/6.0/jobs/0xxx"
-                uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
+                #uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
+                uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
                 def printDictionary(dictionary):
                         for k,v in dictionary.iteritems():
@@ -162,12 +163,14 @@ def report(job=None):
                 import shutil
                 import os
                 import tarfile
+                import tempfile
 
                 userHomeDir = os.getenv("HOME")
+                tempDir = tempfile.mkdtemp()
 
-                errorLogPath = os.path.join(userHomeDir, 'reportErrorLog.txt')
+                errorLogPath = os.path.join(tempDir, 'reportErrorLog.txt')
 
-                fullPathTempDir = os.path.join(userHomeDir, tempDirName)
+                fullPathTempDir = os.path.join(tempDir, tempDirName)
                 fullLogDirName = ''
                 #create temp dir and specific dir for the job/user
 
@@ -346,11 +349,29 @@ def report(job=None):
                         os.remove(errorLogPath)
 
                 #return the path to the archive and the path to the upload server
-                return (resultArchive, uploadFileServer)
+                return (resultArchive, uploadFileServer, tempDir)
+
+        def removeTempFiles(tempDir):
+                import os
+                import shutil
+                
+                #remove temp dir
+                if os.path.exists(tempDir):
+                        shutil.rmtree(tempDir)  
+
+                #remove temp files from django upload-> if the file is bigger than 2.5 mb django internally stores it in tmp file during the upload
+                userTempDir = '/tmp/'
+                
+                for fileName in os.listdir(userTempDir):
+                        if fileName.find('.upload') > -1:
+                                os.remove(os.path.join(userTempDir, fileName)) 
+
+
+        tempDir = ''
 
         #call the report function
         try:
-                resultArchive, uploadFileServer = report_inner(job)
+                resultArchive, uploadFileServer, tempDir = report_inner(job)
 
                 run_upload(server=uploadFileServer, path=resultArchive)
 
@@ -376,6 +397,8 @@ def report(job=None):
                 #os.remove(resultArchive)
                 
         except:
+                removeTempFiles(tempDir)
                 raise #pass
                 #raise  
 
+        removeTempFiles(tempDir)
