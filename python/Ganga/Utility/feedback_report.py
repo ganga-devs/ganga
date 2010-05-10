@@ -237,7 +237,9 @@ def report(job=None):
                 try:
                         ipythonFile = open(os.path.join(userHomeDir, '.ipython/history'), 'r')
                         try:                    
-                                writeStringToFile(os.path.join(fullLogDirName, ipythonHistoryFileName), ipythonFile.read())
+                                lastIPythonCommands = ipythonFile.readlines()[-20:]             
+                                writeStringToFile(os.path.join(fullLogDirName, ipythonHistoryFileName), '\n'.join(lastIPythonCommands))
+                                #writeStringToFile(os.path.join(fullLogDirName, ipythonHistoryFileName), ipythonFile.read())
                         finally:
                                 ipythonFile.close()
                 #except IOError does not catch the exception ???                
