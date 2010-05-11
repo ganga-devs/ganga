@@ -150,7 +150,8 @@ class Task(GangaObject):
         if self.status != "new" and id < len(self.transforms):
             logger.error("You can only insert transforms at the end of the list. Only if a task is new it can be freely modified!")
             return
-        self.transforms.insert(id,tf.copy())
+        #self.transforms.insert(id,tf.copy()) # this would be safer, but breaks user exspectations
+        self.transforms.insert(id,tf) # this means that t.insertTransform(0,t2.transforms[0]) will cause Great Breakage
 
     def appendTransform(self, tf):
         """Append transform"""
