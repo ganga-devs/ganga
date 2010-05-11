@@ -57,7 +57,7 @@ class AnaTransform(Transform):
    def checkCompletedApp(self, app):
       j = app._getParent()
       for odat in j.outputdata.outputdata:
-          if 0==len([f for f in j.outputdata.output if odat in f]):
+          if 0==len([f for f in j.outputdata.output if ".".join(odat.split(".")[:-1]) in f]):
               logger.error("Job %s has not produced %s file, only: %s" % (j.id, odat, j.outputdata.output))
               return False
       # if this is the first app to complete the partition...
