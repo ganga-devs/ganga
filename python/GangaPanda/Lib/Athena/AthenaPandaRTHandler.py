@@ -463,6 +463,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #            param += '--ara '
         if job.backend.accessmode == 'FILE_STAGER':
             param += '--accessmode=filestager '
+        elif job.backend.accessmode == 'DIRECT':
+            param += '--accessmode=direct '
         if self.inputdatatype == 'Tier3':
             param += '--givenPFN '
  
