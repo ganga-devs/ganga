@@ -10,34 +10,31 @@ from GangaTest.Framework.utils import file_contains, is_job_finished, \
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.getConfig('DIRAC')
 
+ganga_path = os.path.abspath(os.path.dirname(__file__))
+pwd = ganga_path + '/../python/GangaLHCb/test/GPI/GaudiPython/'
+module = '%s/DummyBenderModule.py' % pwd
+
 class TestBender(GangaGPITestCase):
 
     def testLocal(self):
+        global module
         j = Job(application=Bender(), backend=Local())
+        j.application.module = module
         j.submit()
-        assert j.application.script != [],\
-               'Submit should assign defaults script file'
         return LocalJob(j)
 
     def testDirac(self):
+        global module
         j = Job(application=Bender(), backend=Dirac())
+        j.application.module = module
         j.application.platform = config['AllowedPlatforms'][0]
         j.submit()
         return DiracJob(j)
 
-    def testScripts(self):
-        dir = tempfile.mkdtemp()
-        name1 = join(dir,'script1.py')
-        name2 = join(dir,'script2.py')
-        write_file(name1,'print "ABC"\nexecfile("script2.py")\n')
-        write_file(name2,'print "DEF"\n')        
-        j = Job(application=Bender(), backend=Local())
-        j.application.script=[name1,name2]
-        j.submit()
-        return ScriptJob(j)
-
     def testSplit(self):
+        global module
         j = Job(application=Bender(), backend=Local())
+        j.application.module = module
         prefix='LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831'
         j.inputdata = LHCbDataset([
             prefix+'_00000001_1.dst',
@@ -58,7 +55,8 @@ class LocalJob(ICheckTest):
         f = open(fname)
         print 'f =', f.read()
         f.close()
-        executionstring = 'Application Manager Configured successfully'
+        #executionstring = 'Application Manager Configured successfully'
+        executionstring = 'num_events: -1'
         assert file_contains(fname,executionstring),\
                'stdout should contain string: ' + executionstring
 
@@ -72,18 +70,6 @@ class DiracJob(ICheckTest):
         self.j.remove()
         pass
 
-class ScriptJob(ICheckTest):
-
-    def isReadyForCheck(self):
-        return is_job_finished(self.j)
-
-    def checkTest(self):
-        fname = join(self.j.outputdir,'stdout')
-        assert file_contains(fname,'ABC'), 'First script file not executed'
-        assert file_contains(fname,'DEF'),\
-               'Inclusion of second script not working'
-        dir = os.path.split(self.j.application.script[0].name)[0]
-        shutil.rmtree(dir)
 
 class SplitJob(ICheckTest):
 
@@ -91,7 +77,8 @@ class SplitJob(ICheckTest):
         return is_job_finished(self.j)
 
     def checkTest(self):
-        executionstring = 'Application Manager Stopped successfully'
+        #executionstring = 'Application Manager Stopped successfully'
+        executionstring = 'num_events: -1'
         for js in self.j.subjobs:
             fname = join(js.outputdir,'stdout')
             assert file_contains(fname,executionstring),\
