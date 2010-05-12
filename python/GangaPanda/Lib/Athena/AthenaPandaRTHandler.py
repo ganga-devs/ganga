@@ -288,13 +288,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         else:
             jspec.prodDBlock    = 'NULL'
         jspec.destinationDBlock = job.outputdata.datasetname
-        if job.outputdata.location and (not job._getRoot().subjobs or job.id == 0):
-            logger.warning('User defined output locations not supported. Use DaTRI: https://twiki.cern.ch/twiki/bin/view/Atlas/DataTransferRequestInterface')
-#            jspec.destinationSE = job.outputdata.location
         if Client.isDQ2free(job.backend.site):
-            jspec.destinationSE     = 'local'
+            jspec.destinationSE = 'local'
+        elif job.outputdata.location:# and (not job._getRoot().subjobs or job.id == 0):
+#            logger.warning('User defined output locations not supported. Use DaTRI: https://twiki.cern.ch/twiki/bin/view/Atlas/DataTransferRequestInterface')
+            jspec.destinationSE = job.outputdata.location
         else:
-            jspec.destinationSE     = site
+            jspec.destinationSE = site
         jspec.prodSourceLabel   = configPanda['prodSourceLabelRun']
         jspec.processingType    = configPanda['processingType']
         jspec.assignedPriority  = configPanda['assignedPriorityRun']
