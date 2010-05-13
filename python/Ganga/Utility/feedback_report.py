@@ -96,7 +96,6 @@ def report(job=None):
                 gangaLogFileName = "gangalog.txt"
                 repositoryPath = "repository/$usr/LocalXML/6.0/jobs/0xxx"
                 uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
-                #uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
                 def printDictionary(dictionary):
                         for k,v in dictionary.iteritems():
@@ -163,14 +162,12 @@ def report(job=None):
                 import shutil
                 import os
                 import tarfile
-                import tempfile
 
                 userHomeDir = os.getenv("HOME")
-                tempDir = tempfile.mkdtemp()
 
-                errorLogPath = os.path.join(tempDir, 'reportErrorLog.txt')
+                errorLogPath = os.path.join(userHomeDir, 'reportErrorLog.txt')
 
-                fullPathTempDir = os.path.join(tempDir, tempDirName)
+                fullPathTempDir = os.path.join(userHomeDir, tempDirName)
                 fullLogDirName = ''
                 #create temp dir and specific dir for the job/user
 
@@ -215,14 +212,11 @@ def report(job=None):
                         try:
                         
                                 sys.stdout = inputFile
+                                Ganga.GPIDev.Lib.Config.Config.print_config_file()
 
-                                #this gets the default values
-                                #Ganga.GPIDev.Lib.Config.Config.print_config_file()
-                                
-                                #this should get the changed values
-                                for c in config:
-                                        print config[c]
-
+                                print
+                                print "#======================================================================="
+                                print "[System]"
                                 print
                                 print "#GANGA_VERSION = %s" % config.System.GANGA_VERSION 
 
@@ -237,9 +231,7 @@ def report(job=None):
                 try:
                         ipythonFile = open(os.path.join(userHomeDir, '.ipython/history'), 'r')
                         try:                    
-                                lastIPythonCommands = ipythonFile.readlines()[-20:]             
-                                writeStringToFile(os.path.join(fullLogDirName, ipythonHistoryFileName), '\n'.join(lastIPythonCommands))
-                                #writeStringToFile(os.path.join(fullLogDirName, ipythonHistoryFileName), ipythonFile.read())
+                                writeStringToFile(os.path.join(fullLogDirName, ipythonHistoryFileName), ipythonFile.read())
                         finally:
                                 ipythonFile.close()
                 #except IOError does not catch the exception ???                
@@ -354,29 +346,11 @@ def report(job=None):
                         os.remove(errorLogPath)
 
                 #return the path to the archive and the path to the upload server
-                return (resultArchive, uploadFileServer, tempDir)
-
-        def removeTempFiles(tempDir):
-                import os
-                import shutil
-                
-                #remove temp dir
-                if os.path.exists(tempDir):
-                        shutil.rmtree(tempDir)  
-
-                #remove temp files from django upload-> if the file is bigger than 2.5 mb django internally stores it in tmp file during the upload
-                userTempDir = '/tmp/'
-                
-                for fileName in os.listdir(userTempDir):
-                        if fileName.find('.upload') > -1:
-                                os.remove(os.path.join(userTempDir, fileName)) 
-
-
-        tempDir = ''
+                return (resultArchive, uploadFileServer)
 
         #call the report function
         try:
-                resultArchive, uploadFileServer, tempDir = report_inner(job)
+                resultArchive, uploadFileServer = report_inner(job)
 
                 run_upload(server=uploadFileServer, path=resultArchive)
 
@@ -402,8 +376,6 @@ def report(job=None):
                 #os.remove(resultArchive)
                 
         except:
-                removeTempFiles(tempDir)
                 raise #pass
                 #raise  
 
-        removeTempFiles(tempDir)
