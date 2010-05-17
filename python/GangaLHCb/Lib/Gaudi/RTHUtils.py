@@ -129,6 +129,9 @@ for f in data_output:
     if cpval != 0:
         print 'WARNING:  Could not copy file %s to %s' % (f,job_output_dir)
         print 'WARNING:  File %s will be lost' % f
+        cmd = 'ls -l %s' % f
+        print 'DEBUG INFO: Performing \"%s\" (check stdout & stderr)' % cmd
+        os.system(cmd)
         sys.stdout.flush()
     # sneaky rm
     os.system('rm -f ' + f)
