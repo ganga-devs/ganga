@@ -94,7 +94,7 @@ class DiracCommands:
                          'Received' : 'submitted',
                          'Running' : 'running',
                          'Staging' : 'submitted',
-                         'Stalled' : 'failed',
+                         'Stalled' : 'running',
                          'Waiting' : 'submitted'}
         
         result = DiracCommands.dirac.status(job_ids)
