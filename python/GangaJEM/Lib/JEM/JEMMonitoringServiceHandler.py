@@ -131,6 +131,7 @@ class JEMMonitoringServiceHandler(object):
         logger.debug("Job " + self.__getFullJobId() + " is being prepared.")
 
         mo = self.__job.info.monitor
+        backend = self.__job.backend.__class__.__name__
 
         if not isinstance(mo, JobExecutionMonitor.JobExecutionMonitor):
             logger.debug("Job " + self.__getFullJobId() + " has no JobExecutionMonitor-instance set.")
@@ -237,7 +238,10 @@ class JEMMonitoringServiceHandler(object):
                     config.outputbox += jemOutputBox
 
                     # ...and set the executable to our main WN script, and the original exe to its 1st argument
-                    theArgs = ["--script", '"' + config.getExeString() + ' '.join(config.args) + '"']
+                    theArgs = ' '.join(config.args)
+                    if theArgs != "":
+                        theArgs = " "+theArgs
+                    theArgs = ["--script", '"' + config.getExeString() + theArgs + '"']
                     config.args = theArgs
                     config.exe = submitExecutable
 
@@ -248,7 +252,17 @@ class JEMMonitoringServiceHandler(object):
                     # okay, ALL JEM 0.3 config options will be passed by environment for now. Later, we will use JEM
                     # 0.3 also at UI.
                     config.env["JEM_Global_mode"] = "WN"
-                    config.env["JEM_Global_load_job_id_from"] = "GLITE_WMS_JOBID" # umm. this should be made a bit more flexible :)
+
+                    if backend == "LCG":
+                        if self.__job.backend.middleware == "GLITE":
+                            config.env["JEM_Global_load_job_id_from"] = "GLITE_WMS_JOBID"
+                        elif self.__job.backend.middleware == "EDG":
+                            config.env["JEM_Global_load_job_id_from"] = "EDG_WMS_JOBID"
+                    elif backend == "Panda":
+                        config.env["JEM_Global_load_job_id_from"] = ""
+
+                    if config.env.has_key("JEM_WN_script") and config.env["JEM_WN_script"] == "":
+                        del(config.env["JEM_WN_script"])
 
                     try:
                         if mo.advanced.debug:
@@ -261,7 +275,7 @@ class JEMMonitoringServiceHandler(object):
                         config.env["JEM_WN_anonymize_spy"] = "True"
 
                     # if we're running at Localhost, inject virtual jobID (d'oh...) - otherwise, we don't know it yet!
-                    if self.__job.backend.__class__.__name__ == "Localhost":
+                    if backend == "Localhost":
                         config.env["JEM_Global_job_id"] = self.__job.info.monitor.getJobID()
 
                     # determine if we are an Athena job
@@ -269,22 +283,15 @@ class JEMMonitoringServiceHandler(object):
 
                     # configure the C-Tracer
                     if mo.ctracer.enabled:
-                        logger.warning("C-Tracer is not available in this version (refer to https://svn.grid.uni-wuppertal.de/trac/JEM for more information)")
+                        logger.warning("The C-Tracer is an experimental feature (refer to https://svn.grid.uni-wuppertal.de/trac/JEM for more information)")
 
-                    #    if jobIsAthena:  # The run application for Athena jobs always is Python!
-                    #        config.env['JEM_CTRACE_APPS'] = "__find_python__"
-                    #    else:
-                    #        config.env['JEM_CTRACE_APPS'] = self.__job.info.monitor.ctracer.traceApps
-                    #
-                    #    config.env['JEM_CTRACE_MODULES'] = self.__job.info.monitor.ctracer.traceModules
-                    #
-                    #    if config.env['JEM_CTRACE_APPS'] == '' and config.env['JEM_CTRACE_MODULES'] != '':
-                    #        config.env['JEM_CTRACE_APPS'] = config.env['JEM_CTRACE_MODULES']
-                    #else:
-                    #    config.env['JEM_CTRACE_DISABLE'] = "1"
-
-                    # this should not be needed anymore.
-                    #config.env["JEM_UI_USER"] = str(os.getuid())
+                        if jobIsAthena:  # The run application for Athena jobs always is Python!
+                            config.env['JEM_CTracer_trace_apps'] = "__find_python__"
+    
+                        if config.env['JEM_CTracer_trace_apps'] == '' and config.env['JEM_CTracer_trace_modules'] != '':
+                            config.env['JEM_CTracer_trace_apps'] = config.env['JEM_CTracer_trace_modules']
+                    else:
+                        config.env['JEM_CTracer_disable'] = "True"
 
                     # commit all changes we did to the subjobconfig
                     try:
@@ -490,6 +497,7 @@ class JEMMonitoringServiceHandler(object):
         self.__job.info.monitor.jmdfile = jmdDir + os.sep + UIConfig.PUBLISHER_JMD_FILE
 
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
+            logger.debug('realtime mode is disabled, not launching listener process')
             return
 
         try:
@@ -510,7 +518,12 @@ class JEMMonitoringServiceHandler(object):
 
             # the job listener executable now lies in a subdir of the JEM package path.
             executable = JEMloader.JEM_PACKAGEPATH + os.sep + 'legacy' + os.sep + 'JEMganga' + os.sep + 'LiveMonitoring.py'
-            args = [executable, jobID]
+            try:
+                stompserver = self.__job.info.monitor.advanced.stompvalve.host
+                stompport = str(self.__job.info.monitor.advanced.stompvalve.port)
+                args = [executable, "--stomp-server", stompserver, "--stomp-port", stompport, jobID]
+            except:
+                args = [executable, jobID]
 
             # further job IDs (subjob IDs)
             for i, sj in enumerate(self.__job.subjobs):
