@@ -5,7 +5,7 @@ from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 from TaskApplication import AthenaTask, AnaTaskSplitterJob
 
 
-from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException 
+from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 
@@ -70,12 +70,15 @@ class AnaTransform(Transform):
               outputdata.create_dataset(datasetname)
           except DQDatasetExistsException:
               pass
-          infos = []
-          for odat in j.outputdata.outputdata:
-              info = [f for f in j.outputdata.output if odat in f][0].split(",")
-              info[0] = datasetname
-              infos.append(",".join(info))
-          outputdata.register_datasets_details(None, infos)
+          try:
+              infos = []
+              for odat in j.outputdata.outputdata:
+                  info = [f for f in j.outputdata.output if odat in f][0].split(",")
+                  info[0] = datasetname
+                  infos.append(",".join(info))
+              outputdata.register_datasets_details(None, infos)
+          except DQFileExistsInDatasetException:
+              pass
 
           container = "%s.task_%i.%s/"%(prefix,task.id,self.outputdata.datasetname)
           # Register Container
