@@ -109,7 +109,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         if not job.splitter:
             from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
             runPandaBrokerage(job)
-        elif job.splitter._name not in ['DQ2JobSplitter', 'ArgSplitter']:
+        elif job.splitter._name not in ['DQ2JobSplitter', 'ArgSplitter', 'ArgSplitterTask']:
             raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter or ArgSplitter')
         
         if job.backend.site == 'AUTO':
