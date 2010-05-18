@@ -41,8 +41,6 @@ class Transform(GangaObject):
    def __init__(self):
       super(Transform,self).__init__()
       self.initialize()
-      self.startup()
-      self._partition_apps = {}
 
    def _readonly(self):
       """A transform is read-only if the status is not new."""
@@ -58,25 +56,44 @@ class Transform(GangaObject):
 
    def startup(self):
       """This function is used to set the status after restarting Ganga"""
-      ## Create the reverse map _partition_apps from _app_partition 
-      self._partition_apps = {}
-      for (app, partition) in self._app_partition.iteritems():
-         if partition in self._partition_apps:
-            if not app in self._partition_apps[partition]:
-                self._partition_apps[partition].append(app)
-         else:
-            self._partition_apps[partition] = [app]
+      # Make sure that no partitions are kept "running" from previous sessions
+      clist = self._partition_status.keys()
+      for c in clist:
+         self.updatePartitionStatus(c)
+      # At this point the applications still need to notify the Transformation of their status
+      # Search jobs for task-supporting applications
+      id = "%i:%i"%(self._getParent().id,self._getParent().transforms.index(self))
+      for j in GPI.jobs:
+         if "tasks_id" in j.application._impl._data:
+            #print "tasks_id of jobid ", j.fqid, j.application._impl._data["tasks_id"], id
+            if j.application._impl._data["tasks_id"].endswith(id):
+                try:
+                   if j.subjobs:
+                      for sj in j.subjobs:
+                         app = sj.application._impl
+                         app.getTransform()._impl.setAppStatus(app,app._getParent().status)
+                   else:
+                      app = j.application._impl
+                      app.getTransform()._impl.setAppStatus(app,app._getParent().status)
+                except AttributeError, e:
+                   logger.error("%s",e)
+      pass
+
+   def getPartitionApps(self):
+      if self._partition_apps is None:
+          ## Create the reverse map _partition_apps from _app_partition 
+          self._partition_apps = {}
+          for (app, partition) in self._app_partition.iteritems():
+             if partition in self._partition_apps:
+                if not app in self._partition_apps[partition]:
+                    self._partition_apps[partition].append(app)
+             else:
+                self._partition_apps[partition] = [app]
+      return self._partition_apps
 
    def fix(self):
       """This function fixes inconsistencies in application status"""
       ## Create the reverse map _partition_apps from _app_partition 
-      self._partition_apps = {}
-      for (app, partition) in self._app_partition.iteritems():
-         if partition in self._partition_apps:
-            if not app in self._partition_apps[partition]:
-                self._partition_apps[partition].append(app)
-         else:
-            self._partition_apps[partition] = [app]
       self._app_status = {}
       # Make sure that no partitions are kept "running" from previous sessions
       clist = self._partition_status.keys()
@@ -84,18 +101,21 @@ class Transform(GangaObject):
          self.updatePartitionStatus(c)
       # At this point the applications still need to notify the Transformation of their status
       # Search jobs for task-supporting applications
+
+      id = "%i:%i"%(self._getParent().id,self._getParent().transforms.index(self))
       for j in GPI.jobs:
          if "tasks_id" in j.application._impl._data:
-            try:
-               if j.subjobs:
-                  for sj in j.subjobs:
-                     app = sj.application._impl
-                     app.getTransform()._impl.setAppStatus(app,app._getParent().status)
-               else:
-                  app = j.application._impl
-                  app.getTransform()._impl.setAppStatus(app,app._getParent().status)
-            except AttributeError, e:
-               logger.error("%s",e)
+            if j.application._impl._data["tasks_id"] == id:
+                try:
+                   if j.subjobs:
+                      for sj in j.subjobs:
+                         app = sj.application._impl
+                         app.getTransform()._impl.setAppStatus(app,app._getParent().status)
+                   else:
+                      app = j.application._impl
+                      app.getTransform()._impl.setAppStatus(app,app._getParent().status)
+                except AttributeError, e:
+                   logger.error("%s",e)
 
 
 ## Public methods
@@ -135,7 +155,7 @@ class Transform(GangaObject):
       cs = self._partition_status.items()
       for (c,s) in cs:
          if s in ["attempted","failed"]:
-            failures = len([1 for app in self._partition_apps[c] if app in self._app_status and self._app_status[app] in ["new","failed"]])
+            failures = len([1 for app in self.getPartitionApps()[c] if app in self._app_status and self._app_status[app] in ["new","failed"]])
             if failures >= newRL:
                self._partition_status[c] = "failed"
             else:
@@ -193,7 +213,8 @@ class Transform(GangaObject):
       """Create Ganga Jobs for the next N partitions that are ready and submit them."""
       next = self.getNextPartitions(n)
       if len(next) == 0:
-         return
+         return 0
+      numjobs = 0
       for j in self.getJobsForPartitions(next):
          j.application._impl.transition_update("submitting")
          try:
@@ -202,6 +223,8 @@ class Transform(GangaObject):
             logger.error("Error on job submission! The current transform will be paused until this problem is fixed.")
             logger.error("type tasks(%i).run() to continue after the problem has been fixed.", self._getParent().id)
             self.pause()
+         numjobs += 1
+      return numjobs
 
    def checkTaskApplication(self,app):
       """warns the user if the application is not compatible """
@@ -219,15 +242,16 @@ class Transform(GangaObject):
          transient: incomplete (->new), unknown, removed"""
 
       # Check if we know the occurring application...
+      if app.id == -1:
+         return
       if not app.id in self._app_partition:
          logger.warning("%s was contacted by an unknown application %i.", self.fqn(), app.id)
          return
-      # Silently ignore message if the application is already removed
-      if app.id in self._app_status and self._app_status[app.id] == "removed":
+      # Silently ignore message if the application is already removed or completed 
+      if app.id in self._app_status and self._app_status[app.id] in ["removed","completed","failed"]:
          return
       # Check the status
       if new_status == "completed" and not self.checkCompletedApp(app):
-         # TODO: make this message only appear once, and not in every Ganga session...
          logger.error("%s app %i failed despite listed as completed!",self.fqn(), app.id)
          new_status = "failed"
       # Save the status
@@ -243,11 +267,11 @@ class Transform(GangaObject):
       ## If the partition has status, and is not in a fixed state, check it!
       if partition in self._partition_status and (not self._partition_status[partition] in ["bad","completed"]):
          ## if we have no applications, we are in "ready" state
-         if not partition in self._partition_apps:
+         if not partition in self.getPartitionApps():
             if self._partition_status[partition] != "hold":
                self._partition_status[partition] = "ready"
          else:
-            status = [self._app_status[app] for app in self._partition_apps[partition] 
+            status = [self._app_status[app] for app in self.getPartitionApps()[partition] 
                if app in self._app_status and not self._app_status[app] in ["removed","killed"]]
             ## Check if we have completed this partition
             if "completed" in status:
@@ -329,10 +353,10 @@ class Transform(GangaObject):
       """ Returns a new application ID and associates this ID with the partition given. """
       id = self._next_app_id
       self._app_partition[id] = partition
-      if partition in self._partition_apps:
-         self._partition_apps[partition].append(id)
+      if partition in self.getPartitionApps():
+         self.getPartitionApps()[partition].append(id)
       else:
-         self._partition_apps[partition] = [id]
+         self.getPartitionApps()[partition] = [id]
       self._next_app_id += 1
       return id
 
@@ -388,8 +412,8 @@ class Transform(GangaObject):
       partitions.sort()
       for c in partitions:
          s = self._partition_status[c]
-         if c in self._partition_apps:
-            failures = len([1 for app in self._partition_apps[c] if app in self._app_status and self._app_status[app] in ["new","failed"]])
+         if c in self.getPartitionApps():
+            failures = len([1 for app in self.getPartitionApps()[c] if app in self._app_status and self._app_status[app] in ["new","failed"]])
             o += markup("%i:%i " % (c, failures), overview_colours[s])
          else:
             o += markup("%i " % c, overview_colours[s])

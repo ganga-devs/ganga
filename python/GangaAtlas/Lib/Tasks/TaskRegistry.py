@@ -86,6 +86,7 @@ class TaskRegistry(Registry):
                     else:
                         continue
                 except RegistryError:
+                    # could not acquire lock
                     continue
                 if self._main_thread.should_stop():
                     break
@@ -97,9 +98,11 @@ class TaskRegistry(Registry):
                         logger.error("Please investigate the cause of the failing jobs and then remove the previously failed jobs using job.remove()")
                         logger.error("You can then continue to run this task with tasks(%i).run()" % p.id)
                         continue
-                    p.submitJobs()
+                    numjobs = p.submitJobs()
+                    if numjobs > 0:
+                        self._flush([p])
                 except Exception, x:
-                    logger.error("Exception occurred in task monitoring loop: %s\nThe offending task was paused." % x)
+                    logger.error("Exception occurred in task monitoring loop: %s %s\nThe offending task was paused." % (x.__class__,x))
                     p.pause()
             # Sleep interruptible for 10 seconds
             for i in range(0,100):

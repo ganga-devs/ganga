@@ -212,12 +212,14 @@ class Task(GangaObject):
 
     def submitJobs(self):
         """Submits as many jobs as necessary to maintain the float. Internal"""
+        numjobs = 0
         for i in range(len(self.transforms)-1,-1,-1):
             tf = self.transforms[i]
             to_run = self.float - self.n_status("running")
             run = (self.resub_limit * self.float >= self.n_status("running"))
             if tf.status == "running" and to_run > 0 and run:
-                tf.submitJobs(to_run)
+                numjobs += tf.submitJobs(to_run)
+        return numjobs
 
     ## Information methods
     def n_all(self):
