@@ -57,6 +57,7 @@ class AnaTransform(Transform):
    def checkCompletedApp(self, app):
       j = app._getParent()
       for odat in j.outputdata.outputdata:
+          # Look out: if this is changed, there is anothher one like it below!
           if 0==len([f for f in j.outputdata.output if ".".join(odat.split(".")[:-1]) in f]):
               logger.error("Job %s has not produced %s file, only: %s" % (j.id, odat, j.outputdata.output))
               return False
@@ -73,7 +74,7 @@ class AnaTransform(Transform):
           try:
               infos = []
               for odat in j.outputdata.outputdata:
-                  info = [f for f in j.outputdata.output if odat in f][0].split(",")
+                  info = [f for f in j.outputdata.output if ".".join(odat.split(".")[:-1]) in f][0].split(",")
                   info[0] = datasetname
                   infos.append(",".join(info))
               outputdata.register_datasets_details(None, infos)
