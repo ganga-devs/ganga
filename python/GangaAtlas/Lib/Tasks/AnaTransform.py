@@ -20,6 +20,8 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 
+from pandatools import Client
+
 def whichCloudExt(site):
    if site.startswith("NDGF"):
       return "NG"
@@ -134,7 +136,10 @@ class AnaTransform(Transform):
          for backend in backends:
             if not backend in allowed_sites.keys(): 
                continue
-            sites = [site for site in complete_sites[cloud] if site in allowed_sites[backend]]
+            if backend == "Panda":
+                sites = [site for site in complete_sites[cloud] if Client.convertDQ2toPandaID(site) in allowed_sites["Panda"]]
+            else:
+                sites = [site for site in complete_sites[cloud] if site in allowed_sites[backend]]
             if len(sites) > 0:
                result.append((cloud,backend))
       return result
@@ -163,7 +168,10 @@ class AnaTransform(Transform):
       backends = [be for be in config["backendPreference"] if be in GPI.__dict__]
       for cloud in clouds:
          for backend in backends:
-            sites = [site for site in incomplete_sites[cloud] if site in allowed_sites[backend]]
+            if backend == "Panda":
+                sites = [site for site in incomplete_sites[cloud] if Client.convertDQ2toPandaID(site) in allowed_sites["Panda"]]
+            else:
+                sites = [site for site in incomplete_sites[cloud] if site in allowed_sites[backend]]
             if len(sites) > 0:
                result.append((len(sites),cloud,backend))
       result.sort()
@@ -210,7 +218,8 @@ class AnaTransform(Transform):
             allowed_sites["LCG"] = GPI.LCG().requirements.list_sites(True,True)
          if "Panda" in backends:
             from pandatools import Client
-            allowed_sites["Panda"] = [site["ddm"] for site in Client.getSiteSpecs()[1].values()]
+            allowed_sites["Panda"] = Client.PandaSites.keys()
+            #allowed_sites["Panda"] = [site["ddm"] for site in Client.getSiteSpecs()[1].values()]
          if "NG" in backends:
             allowed_sites["NG"] = getConfig("Athena")["AllowedSitesNGDQ2JobSplitter"]
          #if "PBS" in backends:
