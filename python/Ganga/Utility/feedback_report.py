@@ -9,6 +9,8 @@ def report(job=None):
         import sys
 
         from Ganga.GPI import config
+        from Ganga.GPI import full_print
+        
         import Ganga
 
         def random_string (length):
