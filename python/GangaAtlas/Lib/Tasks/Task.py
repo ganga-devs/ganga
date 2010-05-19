@@ -164,18 +164,24 @@ class Task(GangaObject):
             return
         del self.transforms[id]
 
-    def getJobs(self, only_master_jobs=True):
+    def getJobs(self, transform=None, partition=None, only_master_jobs=True):
         """ Get the job slice of all jobs that process this task """
-        jobslice = JobRegistrySlice("tasks(%i).getJobs(only_master_jobs=%s)"%(self.id, only_master_jobs))
+        if not partition is None:
+            only_master_jobs = False
+        jobslice = JobRegistrySlice("tasks(%i).getJobs(transform=%s, partition=%s, only_master_jobs=%s)"%(self.id, transform, partition, only_master_jobs))
+        def addjob(j):
+            if transform is None or partition is None or self.transforms[int(transform)]._app_partition[j.application.id] == partition:
+                jobslice.objects[j.fqid] = stripProxy(j)
+
         for j in GPI.jobs:
             try:
                 stid = j.application.tasks_id.split(":")
-                if int(stid[-2]) == self.id:
+                if int(stid[-2]) == self.id and (transform is None or stid[-1] == str(transform)):
                     if j.subjobs and not only_master_jobs:
                         for sj in j.subjobs:
-                            jobslice.objects[sj.fqid] = stripProxy(sj)
+                            addjob(sj)
                     else:
-                        jobslice.objects[j.fqid] = stripProxy(j)
+                        addjob(j)
             except Exception, x:
                 #print x
                 pass
