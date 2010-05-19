@@ -18,7 +18,7 @@ from dq2.info import TiersOfATLAS
 from GangaAtlas.Lib.ATLASDataset import whichCloud
 from Ganga.Core.exceptions import ApplicationConfigurationError
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 
 from pandatools import Client
 
@@ -39,6 +39,9 @@ def stripSites(sites):
    for site in sites:
       newsites[stripSite(site)] = 1
    return newsites.keys()
+
+
+
 
 class AnaTransform(Transform):
    """ Analyzes Events """
@@ -68,8 +71,8 @@ class AnaTransform(Transform):
       # if this is the first app to complete the partition...
       if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
           task = self._getParent()
-          task_container = ".".join(dq2outputdatasetname(False,"task_%s" % task.id, False, None), self.outputdata.datasetname)
-          subtask_dsname = ".".join(dq2outputdatasetname(False,"task_%s" % task.id, False, None), "subtask_%s" % task.transforms.index(self), self.inputdata.datasetname)
+          task_container = ".".join("user",getNickname(),task.creation_date,"task_%s" % task.id, self.outputdata.datasetname)
+          subtask_dsname = ".".join("user",getNickname(),task.creation_date,"task_%s" % task.id, "subtask_%s" % task.transforms.index(self), str(self.inputdata.datasetname))
 
           outputdata = DQ2OutputDataset()
           try:
