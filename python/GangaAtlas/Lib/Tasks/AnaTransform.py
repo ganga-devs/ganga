@@ -18,6 +18,8 @@ from dq2.info import TiersOfATLAS
 from GangaAtlas.Lib.ATLASDataset import whichCloud
 from Ganga.Core.exceptions import ApplicationConfigurationError
 
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+
 def whichCloudExt(site):
    if site.startswith("NDGF"):
       return "NG"
@@ -63,45 +65,45 @@ class AnaTransform(Transform):
               return False
       # if this is the first app to complete the partition...
       if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
-          prefix = ".".join(j.outputdata.datasetname.split(".")[:3])
           task = self._getParent()
-          datasetname = "%s.task_%i.subtask_%i.%s"%(prefix,task.id,task.transforms.index(self),self.outputdata.datasetname)
+          task_container = ".".join(dq2outputdatasetname(False,"task_%s" % task.id, False, None), self.outputdata.datasetname)
+          subtask_dsname = ".".join(dq2outputdatasetname(False,"task_%s" % task.id, False, None), "subtask_%s" % task.transforms.index(self), self.inputdata.datasetname)
+
           outputdata = DQ2OutputDataset()
           try:
-              outputdata.create_dataset(datasetname)
+              outputdata.create_dataset(subtask_dsname)
           except DQDatasetExistsException:
               pass
           try:
               infos = []
               for odat in j.outputdata.outputdata:
                   info = [f for f in j.outputdata.output if ".".join(odat.split(".")[:-1]) in f][0].split(",")
-                  info[0] = datasetname
+                  info[0] = subtask_dsname
                   infos.append(",".join(info))
               outputdata.register_datasets_details(None, infos)
           except DQFileExistsInDatasetException:
               pass
 
-          container = "%s.task_%i.%s/"%(prefix,task.id,self.outputdata.datasetname)
           # Register Container
           try:
               containerinfo = {}
               dq2_lock.acquire()
               try:
-                  containerinfo = dq2.listDatasets(container)
+                  containerinfo = dq2.listDatasets(task_container)
               except:
                   containerinfo = {}
               if containerinfo == {}:
                   try:
-                      dq2.registerContainer(container)
-                      logger.debug('Registered container for Task %i: %s' % (task.id, container))
+                      dq2.registerContainer(task_container)
+                      logger.debug('Registered container for Task %i: %s' % (task.id, task_container))
                   except Exception, x:
-                      logger.error('Problem registering container for Task %i, %s : %s %s' % (task.id, container,x.__class__, x))
+                      logger.error('Problem registering container for Task %i, %s : %s %s' % (task.id, task_container,x.__class__, x))
               try:
-                  dq2.registerDatasetsInContainer(container, [ datasetname ])
+                  dq2.registerDatasetsInContainer(task_container, [ datasetname ])
               except DQContainerAlreadyHasDataset:
                   pass
               except Exception, x:
-                  logger.error('Problem registering dataset %s in container %s: %s %s' %(datasetname, container, x.__class__, x))
+                  logger.error('Problem registering dataset %s in container %s: %s %s' %(datasetname, task_container, x.__class__, x))
           finally:
               dq2_lock.release()
       return True
@@ -176,7 +178,7 @@ class AnaTransform(Transform):
 
          # Get ddm sites of atlas_dbrelease, if present
          db_sites = None
-         if self.application.atlas_dbrelease: 
+         if self.application.atlas_dbrelease and not self.application.atlas_dbrelease == "LATEST": 
             try:
                db_dataset = self.application.atlas_dbrelease.split(':')[0] 
                db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1] 
@@ -279,9 +281,10 @@ class AnaTransform(Transform):
       if self.partitions_sites:
          j.backend.requirements.sites = self.partitions_sites[partitions[0]-1]
       j.outputdata = self.outputdata
-      if j.outputdata.datasetname:
-         today = time.strftime("%Y%m%d",time.localtime())
-         j.outputdata.datasetname = "%s.%i.%s" % (j.outputdata.datasetname, j.id, today)
+      j.outputdata.datasetname = ""
+      #if j.outputdata.datasetname:
+         #today = time.strftime("%Y%m%d",time.localtime())
+         #j.outputdata.datasetname = "%s.%i.%s" % (j.outputdata.datasetname, j.id, today)
       return [j]
 
    def info(self):
