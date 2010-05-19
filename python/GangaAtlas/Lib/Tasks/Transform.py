@@ -406,7 +406,12 @@ class Transform(GangaObject):
 
    def overview(self):
       """ Get an ascii art overview over task status. Can be overridden """
-      o = markup("%s '%s'\n" % (self.__class__.__name__, self.name), status_colours[self.status])
+      task = self._getParent() 
+      if not task is None:
+         id = str(task.transforms.index(self))
+      else:
+         id = "?"
+      o = markup("#%s: %s '%s'\n" % (id, self.__class__.__name__, self.name), status_colours[self.status])
       i = 0
       partitions = self._partition_status.keys()
       partitions.sort()
