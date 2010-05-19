@@ -24,6 +24,7 @@ from Ganga.GPIDev.Credentials import GridProxy
 
 from Ganga.Utility.GridShell import getShell
 
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
 _refreshToACache()
 gridshell = getShell("EDG")
@@ -186,7 +187,13 @@ class AthenaMCInputDatasets(Dataset):
         # Extract username from certificate
         proxy = GridProxy()
         username = proxy.identity()
-
+        if 'ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET' in config and config['ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET']:
+            nickname = getNickname(allowMissingNickname=True)
+        else:
+            nickname = getNickname(allowMissingNickname=False)
+            
+        if nickname and 'USE_NICKNAME_DQ2OUTPUTDATASET' in config and config['USE_NICKNAME_DQ2OUTPUTDATASET']:
+            username = nickname
         #self.initDQ2hashes()
         #logger.debug(self.baseURLDQ2)
 
@@ -273,7 +280,7 @@ class AthenaMCInputDatasets(Dataset):
 
         # first of all, check that _usertag is set properly:
         try:
-            assert _usertag and _usertag!="users"
+            assert _usertag
         except:
             logger.error("config['DQ2']['usertag'] is not set properly! Please exit ganga, do: export GANGA_CONFIG_PATH=GangaAtlas/Atlas.ini and restart ganga")
             raise
@@ -885,7 +892,7 @@ class AthenaMCOutputDatasets(Dataset):
         fileprefixes,outputpaths=self.outrootfiles.copy(),{}
         # first of all, check that _usertag is set properly:
         try:
-            assert _usertag and _usertag!="users"
+            assert _usertag 
         except:
             logger.error("config['DQ2']['usertag'] is not set properly! Please exit ganga, do: export GANGA_CONFIG_PATH=GangaAtlas/Atlas.ini and restart ganga")
             raise
@@ -956,7 +963,7 @@ class AthenaMCOutputDatasets(Dataset):
         
         # first of all, check that _usertag is set properly:
         try:
-            assert _usertag and _usertag!="users"
+            assert _usertag 
         except:
             logger.error("config['DQ2']['usertag'] is not set properly! Please exit ganga, do: export GANGA_CONFIG_PATH=GangaAtlas/Atlas.ini and restart ganga")
             raise
