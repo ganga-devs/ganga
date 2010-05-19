@@ -703,7 +703,7 @@ class AthenaMC(IApplication):
        self.user_area=File(name='')
        self.user_area_rundir=""
        self.backend_inputdata=""
-       
+       self.userarea=""
        job = self._getRoot()
        # basic checks
        try:
