@@ -13,7 +13,7 @@ class Task(GangaObject):
         'status'      : SimpleItem(defvalue='new', protected=1, doc='Status - new, running, pause or completed', typelist=["str"]),
         'float'       : SimpleItem(defvalue=0, copyable=1, doc='Number of Jobs run concurrently', typelist=["int"]),
         'resub_limit' : SimpleItem(defvalue=0.9, copyable=1, doc='Resubmit only if the number of running jobs is less than "resub_limit" times the float. This makes the job table clearer, since more jobs can be submitted as subjobs.', typelist=["float"]),
-        'creation_date': SimpleItem(defvalue="19700101",copyable=0,doc='Creation date of the task (used in dq2 datasets)', typelist=["str"]),
+        'creation_date': SimpleItem(defvalue="19700101",copyable=0,hidden=1,doc='Creation date of the task (used in dq2 datasets)', typelist=["str"]),
         })
 
     _category = 'tasks'
