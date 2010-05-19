@@ -18,6 +18,7 @@ o+="\n"+ "config.Tasks.recon_files_per_job = 10 # default files per job for reco
 o+="\n"+ "t = AnaTask()"
 o+="\n"+ 't.name = "FirstAnalysis"'
 o+="\n"+ "t.analysis.outputdata.outputdata  = ['nTuple.root' ]"
+o+="\n"+ "t.analysis.outputdata.datasetname = 'MyAnalysisR1'"
 #o+="\n"+ 't.analysis.application.exclude_from_user_area=["*.o","*.root*","*.exe", "*.txt"]'
 o+="\n"+ "t.analysis.application.option_file = ['./myTopOptions.py' ]"
 o+="\n"+ "t.analysis.application.prepare()"
@@ -110,13 +111,6 @@ class AnaTask(Task):
             tf.files_per_job = config["recon_files_per_job"]
             logger.warning("Files per job for %s set to %i - use 'config.Tasks.recon_files_per_job = 42' to change this value!" % (tid,tf.files_per_job))
          tf.inputdata.dataset=tid
-         stid = tid.split(".")
-         if len(stid) > 1:
-            tf.outputdata.datasetname = ".".join([tf.outputdata.datasetname,stid[1],"NTUP",stid[-1]])
-         else:
-            tf.outputdata.datasetname = ".".join([tf.outputdata.datasetname,tid,"NTUP"])
-
-         logger.warning("Saving data from %s into %s" % (tid, tf.outputdata.datasetname))
          new_tfs.append(tf)
       self.transforms = new_tfs
       self.initAliases()

@@ -73,8 +73,8 @@ class AnaTransform(Transform):
       # if this is the first app to complete the partition...
       if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
           task = self._getParent()
-          task_container = ".".join("user",getNickname(),task.creation_date,"task_%s" % task.id, self.outputdata.datasetname)
-          subtask_dsname = ".".join("user",getNickname(),task.creation_date,"task_%s" % task.id, "subtask_%s" % task.transforms.index(self), str(self.inputdata.datasetname))
+          task_container = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, task.outputdata.datasetname]) + "/"
+          subtask_dsname = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, "subtask_%s" % task.transforms.index(self), str(self.inputdata.dataset[0].strip("/"))])
 
           outputdata = DQ2OutputDataset()
           try:
@@ -106,11 +106,11 @@ class AnaTransform(Transform):
                   except Exception, x:
                       logger.error('Problem registering container for Task %i, %s : %s %s' % (task.id, task_container,x.__class__, x))
               try:
-                  dq2.registerDatasetsInContainer(task_container, [ datasetname ])
+                  dq2.registerDatasetsInContainer(task_container, [ subtask_dsname ])
               except DQContainerAlreadyHasDataset:
                   pass
               except Exception, x:
-                  logger.error('Problem registering dataset %s in container %s: %s %s' %(datasetname, task_container, x.__class__, x))
+                  logger.error('Problem registering dataset %s in container %s: %s %s' %( subtask_dsname, task_container, x.__class__, x))
           finally:
               dq2_lock.release()
       return True
