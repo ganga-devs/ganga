@@ -73,7 +73,7 @@ class AnaTransform(Transform):
       # if this is the first app to complete the partition...
       if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
           task = self._getParent()
-          task_container = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, task.outputdata.datasetname]) + "/"
+          task_container = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, self.outputdata.datasetname]) + "/"
           subtask_dsname = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, "subtask_%s" % task.transforms.index(self), str(self.inputdata.dataset[0].strip("/"))])
 
           outputdata = DQ2OutputDataset()
