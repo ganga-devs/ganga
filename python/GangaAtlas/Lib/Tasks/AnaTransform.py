@@ -22,6 +22,8 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
 from pandatools import Client
 
+import random
+
 def whichCloudExt(site):
    if site.startswith("NDGF"):
       return "NG"
@@ -117,7 +119,9 @@ class AnaTransform(Transform):
    def findCompleteCloudBackend(self,db_sites,allowed_sites,replicas):
       # Sort complete replicas into clouds
       # returns sorted list of tuples (cloud, backend)
-      clouds = config["cloudPreference"] + TiersOfATLAS.ToACache.dbcloud.keys()
+      addclouds = TiersOfATLAS.ToACache.dbcloud.keys()
+      random.shuffle(addclouds)
+      clouds = config["cloudPreference"] + addclouds
       complete_sites = {}
       for c in clouds:
          complete_sites[c] = []
@@ -151,7 +155,9 @@ class AnaTransform(Transform):
       # If no cloud/backend combination is found for complete replicas, 
       # find cloud/backend with maximal number of replicas
       # returns list of tuples sorted by number of sites with replicas: (cloud, backend)
-      clouds = config["cloudPreference"] + TiersOfATLAS.ToACache.dbcloud.keys()
+      addclouds = TiersOfATLAS.ToACache.dbcloud.keys()
+      random.shuffle(addclouds)
+      clouds = config["cloudPreference"] + addclouds
       incomplete_sites = {}
       for c in clouds:
          incomplete_sites[c] = []
@@ -236,17 +242,23 @@ class AnaTransform(Transform):
                common_cbl = cbl
             else:
                common_cbl = [cb for cb in cbl if cb in common_cbl]
-            
+
+         #print "CLOUD/BACKEND list for COMPLETE replicas: ", common_cbl
+
          # ..and for incomplete replicas
          if common_cbl is None or len(common_cbl) == 0:
             if len(replicas) > 1:
                raise ApplicationConfigurationError(None, 'Container dataset %s has no complete replica on one site and backend. Please specify individual tid datasets or use t.initializeFromDataset("%s") ' % (ds, ds))
             common_cbl = self.findIncompleteCloudBackend(db_sites, allowed_sites, replicas[0])
+            #print "CLOUD/BACKEND list for INCOMPLETE replicas: ", common_cbl
          if common_cbl is None or len(common_cbl) == 0:
             raise ApplicationConfigurationError(None, 'Container dataset %s has no replica on one site and backend. Please specify individual tid datasets!' % (ds))
 
-         using_cloud = common_cbl[0][0]
-         using_backend = common_cbl[0][1]
+
+
+         cb = common_cbl[0]
+         using_cloud = cb[0]
+         using_backend = cb[1]
 
          assert using_cloud, using_backend
 
