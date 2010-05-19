@@ -292,7 +292,6 @@ class TestAthenaMCLCG(AtlasTest):
         j.application.firstevent=1
         j.application.number_events_job=1
         j.application.atlas_release='15.6.3.1'
-        j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
         j.application.verbosity = "INFO"
         j.backend=LCG()
         j.backend.requirements=AtlasLCGRequirements()
