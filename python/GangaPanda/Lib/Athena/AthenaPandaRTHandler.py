@@ -133,6 +133,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             else: 
                 raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
         else:
+            self.inputdatatype=''
             logger.info('Proceeding without an input dataset.')
 
         # handle different atlas_exetypes
