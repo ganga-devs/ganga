@@ -98,6 +98,8 @@ if JEMloader.INITIALIZED:
         from JEMlib.utils import uuid
 
         from Common.Config import Config as JEM3Config
+        from Common.Utils.CoreUtils import unescape_jmd
+        from Common.Utils.Plotter import Plotter
     except:
         logger.debug("Something went wrong when importing JEMs core modules:")
         logger.debug(str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
@@ -329,7 +331,7 @@ class JobExecutionMonitor(GangaObject):
                     ts = time.time()
             except KeyboardInterrupt:
                 fd = open(p + "/anonymous", "w")
-                fd.write("yes\n")
+                fd.write(".\n")
                 fd.close()
                 self.anonymous = True
                 print "*   ...no. statistics about your job runs will be anonymized."
@@ -663,14 +665,14 @@ class JobExecutionMonitor(GangaObject):
                     # local vars
                     ss = None
                     if lang != "PYTHON" and lang != "BASH" and data.has_key("M4"):
-                        ss = multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M4"])
+                        ss = unescape_jmd(data["M4"])
 
                     s += PrettyStrings.formatVarList("scope variables:", ss)
 
                     # arguments
                     ss = None
                     if lang != "PYTHON" and lang != "BASH" and data.has_key("M1"):
-                        ss = multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"])
+                        ss = unescape_jmd(data["M1"])
                     if (lang == "PYTHON" or lang == "BASH") and data.has_key("M1"):
                         ss = data["M1"]
                         if ss[0:2] == "{{" and ss[-2:] == "}}":
@@ -690,21 +692,21 @@ class JobExecutionMonitor(GangaObject):
                     s += ss
 
                     if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("command", multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]))
+                        s += PrettyStrings.formatDatum("command", unescape_jmd(data["M1"]))
 
                 elif data["SubType"] == "EXTERNAL":
                     s = PrettyStrings.makeHeader("command info")
                     s += ss
 
                     if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("command", multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]))
+                        s += PrettyStrings.formatDatum("command", unescape_jmd(data["M1"]))
 
                 elif data["SubType"] == "SYNTAX":
                     s = PrettyStrings.makeHeader("script expression info")
                     s += ss
 
                     if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("expression", multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]))
+                        s += PrettyStrings.formatDatum("expression", unescape_jmd(data["M1"]))
 
                 else:
                     outlogger.warn("Unknown type of command")
@@ -746,7 +748,7 @@ class JobExecutionMonitor(GangaObject):
             for data in l:
                 ss = "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " | "
                 if data.has_key("M1"):
-                    ss += PrettyStrings.formatString(multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]), 128)
+                    ss += PrettyStrings.formatString(unescape_jmd(data["M1"]), 128)
                 ss += "\n"
 
                 if ascending:
@@ -796,7 +798,7 @@ class JobExecutionMonitor(GangaObject):
                     continue
                 if not data["ExactTS"]+data["M1"] in history:
                     ss = PrettyStrings.formatTime(data) + " | "
-                    ss += PrettyStrings.formatString(multiple_replace({"_&1_": "'", "_&2_": "=", "_&3_": ";"}, data["M1"]), 128)
+                    ss += PrettyStrings.formatString(unescape_jmd(data["M1"]), 128)
                     ss += "\n"
                     s = ss + s
                     history.append(data["ExactTS"]+data["M1"])
@@ -865,43 +867,50 @@ class JobExecutionMonitor(GangaObject):
             if data[0].has_key("WN"):
                 t += " on " + data[0]["WN"]
 
-            data1 = [[], []]
-            meta1 = [
-                        {"title": "load"},
-                        {"title": "mem", "axes": "x1y2"}
-                    ]
-            conf1 = {
-                        "xtime": True, "title": t + ": Performance",
-                        "ylabel": "Load (1 min avg)",
-                        "y2label": "Free memory [Mb]",
-                        "yrange": "[0:*]", "y2range": "[0:*]"
-                    }
+            p1 = Plotter("cpumem_stats",
+                         [
+                            {"title": "load"},
+                            {"title": "mem", "axes": "x1y2"}
+                         ],
+                         {
+                            "title": t + ": Performance",
+                            "xtime": True,
+                            "ylabel": "Load (1 min avg)",
+                            "y2label": "Free memory",
+                            "y2bytes": True
+                            #"yrange": "[0:*]",
+                            #"y2range": "[0:*]"
+                         }
+                   )
 
-            data2 = [[],[],[]]
-            meta2 = [
-                        {"title": "working directory"},
-                        {"title": "temp directory"},
-                        {"title": "swap directory"}
-                    ]
-            conf2 = {
-                        "xtime": True, "title": t + ": Disk space",
-                        "ylabel": "Free disk space [Mb]",
-                        "yrange": "[0:*]"
-                    }
+            p2 = Plotter("disk_stats",
+                         [
+                            {"title": "working directory"},
+                            {"title": "temp directory"},
+                            {"title": "swap directory"}
+                         ],
+                         {
+                            "title": t + ": Disk space",
+                            "xtime": True,
+                            "ylabel": "Free disk space",
+                            "ybytes": True
+                            #"yrange": "[0:*]",
+                         }
+                   )
 
             for l in data:
                 try:
-                    data1[0] += [(l["ExactTS"], l["Load"])]
-                    data1[1] += [(l["ExactTS"], l["Mem"])]
-
-                    data2[0] += [(l["ExactTS"], l["Workdir"])]
-                    data2[1] += [(l["ExactTS"], l["Tmp"])]
-                    data2[2] += [(l["ExactTS"], l["Swap"].strip())]
+                    mem = Plotter.make1024(int(l["Mem"]) * 1024)
+                    p1.addSample(l["ExactTS"], [l["Load"], str(mem)])
+                    workdir = Plotter.make1024(int(l["Workdir"]) * 1024)
+                    tmpval  = Plotter.make1024(int(l["Tmp"]) * 1024)
+                    swapval = Plotter.make1024(int(l["Swap"].strip()) * 1024)
+                    p2.addSample(l["ExactTS"], [str(workdir), str(tmpval), str(swapval)])
                 except:
                     pass
 
-            Utils.drawPlots(data1, meta1, conf1)
-            Utils.drawPlots(data2, meta2, conf2)
+            p1.close(launchGnuPlot=True)
+            p2.close(launchGnuPlot=True)
 
 
     def waitForRealStart(self):

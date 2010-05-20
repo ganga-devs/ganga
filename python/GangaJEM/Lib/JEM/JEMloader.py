@@ -37,6 +37,7 @@ import traceback
 #-----------------------------------------------------------------------------------------------------------------------
 from Ganga.Utility.logging import logging, getLogger
 logger = getLogger("GangaJEM.Lib.JEM")
+outlogger = getLogger("GangaJEM.Lib.JEM.out")
 #-----------------------------------------------------------------------------------------------------------------------
 
 # status vars to access from other GangaJEM modules
@@ -104,8 +105,8 @@ try:
     INITIALIZED = True
 except Exception, err:
     if len(err.args) > 0 and err.args[0] == "disabled":
-        logger.info("The Job Execution Monitor is disabled by config.")
+        outlogger.info("The Job Execution Monitor is disabled by config.")
     else:
-        logger.warn("unable to initialize the Job Execution Monitor module - realtime job monitoring will be disabled.")
-        logger.warn("reason: " + ": " + str(sys.exc_info()[1]))
-        logger.debug("trace: " + str(traceback.extract_tb(sys.exc_info()[2])))
+        outlogger.warn("unable to initialize the Job Execution Monitor module - realtime job monitoring will be disabled.")
+        outlogger.warn("reason: " + ": " + str(sys.exc_info()[1]))
+        outlogger.debug("trace: " + str(traceback.extract_tb(sys.exc_info()[2])))

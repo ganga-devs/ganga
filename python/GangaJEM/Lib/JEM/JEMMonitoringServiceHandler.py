@@ -40,7 +40,7 @@ from GangaJEM.Lib.JEM import JobExecutionMonitor
 
 ########################################################################################################################
 # Our logging instance and configuration
-logger = getLogger("GangaJEM.Lib.JEM")
+logger = getLogger("GangaJEM.Lib.JEM.out")
 
 jemconfig = getConfig("JEM")
 
@@ -156,7 +156,7 @@ class JEMMonitoringServiceHandler(object):
             logger.info("This seems to be your first job submission with the JobExecutionMonitor enabled.")
             logger.info("Preparing JEM for first-time use...")
             try:
-                os.system(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py --mode Pack >/dev/null")
+                os.system(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py --mode Packer >/dev/null")
             except:
                 logger.warn('Failed to prepare JEM library package. Disabled JEM monitoring.')
                 mo.enabled = False
@@ -165,7 +165,7 @@ class JEMMonitoringServiceHandler(object):
         elif jemconfig['JEM_REPACK']:
             logger.debug("Repacking JEM library")
             try:
-                os.system(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py --mode Pack >/dev/null")
+                os.system(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py --mode Packer >/dev/null")
             except:
                 logger.warn('Could not repack JEM library package. JEM library package may be out of date.')
         # still not available?
@@ -208,7 +208,7 @@ class JEMMonitoringServiceHandler(object):
             for i, config in enumerate(subjobconfig):
                 # we monitor only every n-th subjob, with n = JEM_MONITOR_SUBJOBS_FREQ.
                 if (i == 0) or (i % jemconfig['JEM_MONITOR_SUBJOBS_FREQ'] == 0):
-                    logger.info("Enabling JEM monitoring for job #" + self.__getFullJobId() + "." + str(i))
+                    logger.info("Enabling JEM monitoring for job " + self.__getFullJobId() + "." + str(i))
 
                     # remember the subjob-ids of all monitored subjobs.
                     self.__monitoredSubjobs += [i]
@@ -257,7 +257,7 @@ class JEMMonitoringServiceHandler(object):
                         if self.__job.backend.middleware == "GLITE":
                             config.env["JEM_Global_load_job_id_from"] = "GLITE_WMS_JOBID"
                         elif self.__job.backend.middleware == "EDG":
-                            config.env["JEM_Global_load_job_id_from"] = "EDG_WMS_JOBID"
+                            config.env["JEM_Global_load_job_id_from"] = "EDG_WL_JOBID"
                     elif backend == "Panda":
                         config.env["JEM_Global_load_job_id_from"] = ""
 
@@ -287,7 +287,7 @@ class JEMMonitoringServiceHandler(object):
 
                         if jobIsAthena:  # The run application for Athena jobs always is Python!
                             config.env['JEM_CTracer_trace_apps'] = "__find_python__"
-    
+
                         if config.env['JEM_CTracer_trace_apps'] == '' and config.env['JEM_CTracer_trace_modules'] != '':
                             config.env['JEM_CTracer_trace_apps'] = config.env['JEM_CTracer_trace_modules']
                     else:
@@ -348,7 +348,7 @@ class JEMMonitoringServiceHandler(object):
             return
 
         # no action for subjobs...
-        if self.__job.master:
+        if self.__job.master != None:
             return
 
         if self.__job.subjobs and len(self.__job.subjobs) > 0:
@@ -401,7 +401,7 @@ class JEMMonitoringServiceHandler(object):
             logger.debug("Job Execution Monitor is disabled or failed to initialize")
             return
 
-        if self.__job.master: # subjobs
+        if self.__job.master != None: # subjobs
             return
         elif not self.__job.info.monitor or self.__job.info.monitor.__class__.__name__ != "JobExecutionMonitor":
             return
@@ -467,7 +467,7 @@ class JEMMonitoringServiceHandler(object):
 
     def __getFullJobId(self):
         jid = str(self.__job.id)
-        if self.__job.master:
+        if self.__job.master != None:
             jid = str(self.__job.master.id) + "." + jid
         return jid
 
@@ -541,7 +541,7 @@ class JEMMonitoringServiceHandler(object):
                 self.__job.info.monitor.enabled = False # pylint: disable-msg=E1101
                 return
 
-            logger.info('The JEM realtime monitoring listener has been started for job ' + str(jobID) + '.')
+            logger.info('The JEM realtime monitoring listener has been started for job ' + str(self.__job.id) + '.')
             logger.debug('Listener process: PID %s' % self.__job.info.monitor.pid)
             logger.debug('Listener arguments: ' + str(args))
             logger.debug('Logfiles: %s' % WNConfig.LOG_DIR + os.sep + escapedJobID)
@@ -562,16 +562,16 @@ class JEMMonitoringServiceHandler(object):
             logger.debug('__stopJobListener(): j.info.monitor is no JobExecutionMonitor!')
             return
 
-        logger.debug('__stopJobListener() [pid %s]: aborting watcher thread' % self.__job.info.monitor.pid)
+        logger.debug('__stopJobListener() [job %s]: aborting watcher thread' % self.__job.id)
         self.__job.info.monitor.abortWatch()
 
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
             logger.debug('__stopJobListener() [pid %s]: no realtime...' % self.__job.info.monitor.pid)
             return
 
-        logger.debug('__stopJobListener() [pid %s]: shutting down process.' % self.__job.info.monitor.pid)
-        logger.info("The JEM realtime monitoring listener for job %s exits." % self.__job.info.monitor.getJobID())
         if self.__job.info.monitor.pid != 0:
+            logger.debug('__stopJobListener() [pid %s]: shutting down process.' % self.__job.info.monitor.pid)
+            logger.info("The JEM realtime monitoring listener for job %s exits." % self.__job.info.monitor.getJobID())
             self.__killprocess(self.__job.info.monitor.pid)
 
 

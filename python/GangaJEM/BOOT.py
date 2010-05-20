@@ -4,6 +4,7 @@ import os, sys
 def JEMsetLogLevel(level):
     from Ganga.Utility import logging
     logging.getLogger("GangaJEM.Lib.JEM").setLevel(level)
+    logging.getLogger("GangaJEM.Lib.JEM.out").setLevel(level)
 
 
 def JEMlisteners():
