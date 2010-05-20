@@ -21,6 +21,8 @@ from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
 
+printed_explanation = False
+
 def safe_save(fn,obj,to_file,ignore_subs=''):
     """Writes a file safely, raises IOError on error"""
     if not os.path.exists(fn):
@@ -226,7 +228,10 @@ class GangaRepositoryLocal(GangaRepository):
                 self.known_bad_ids.append(id)
             for exc,ids in cnt.items():
                 logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
-            logger.error("If you want to delete the incomplete objects, you can type 'for i in %s.incomplete_ids(): %s(i).remove()' (press 'Enter' twice)" % (self.registry.name, self.registry.name))
+            global printed_explanation
+            if not printed_explanation:
+                logger.error("If you want to delete the incomplete objects, you can type 'for i in %s.incomplete_ids(): %s(i).remove()' (press 'Enter' twice)" % (self.registry.name, self.registry.name))
+                printed_explanation = True
         logger.debug("updated index done")
 
     def add(self, objs, force_ids = None):
@@ -382,7 +387,7 @@ class GangaRepositoryLocal(GangaRepository):
             except Exception, x:
                 if load_backup:
                     logger.debug("Could not load backup object #%i: %s %s", id, x.__class__.__name__, x)
-                    return
+                    raise InaccessibleObjectError(self,id,x)
 
                 logger.debug("Could not load object #%i: %s %s", id, x.__class__.__name__, x)
                 # try loading backup
