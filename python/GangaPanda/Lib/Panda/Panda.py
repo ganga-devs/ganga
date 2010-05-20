@@ -526,7 +526,7 @@ class Panda(IBackend):
                             job.updateStatus('completed')
                         elif status.jobStatus == 'failed':
                             job.updateStatus('failed')
-                        elif status.jobStatus == 'cancelled':
+                        elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
                             job.updateStatus('killed')
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
