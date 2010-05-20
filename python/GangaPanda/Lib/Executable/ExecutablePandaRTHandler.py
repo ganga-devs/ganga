@@ -225,11 +225,13 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         param += '-r "%s" ' % self.rundirectory
         #param += '-j "%s" ' % job.application.exe
         if self.inputsandbox:
-            param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && { chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s %s; }" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, job.application.exe, job.application.exe, " ".join(job.application.args))
+            #param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && { chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s %s; }" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, job.application.exe, job.application.exe, " ".join(job.application.args))
+            param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, job.application.exe, job.application.exe)
         else:
-            param += '-j "{ chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s %s; }" ' % (job.application.exe, job.application.exe, " ".join(job.application.args))
-        param += '-p "" '
-        #param += '-p "%s" ' % (" ".join(job.application.args))
+            #param += '-j "{ chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s %s; }" ' % (job.application.exe, job.application.exe, " ".join(job.application.args))
+            param += '-j "chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (job.application.exe, job.application.exe)
+        #param += '-p "" '
+        param += '-p "%s" ' % (" ".join(job.application.args))
 
         if job.inputdata:
             param += '-i "%s" ' % job.inputdata.names
