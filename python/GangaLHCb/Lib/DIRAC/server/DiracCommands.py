@@ -233,5 +233,16 @@ class DiracCommands:
         result = DiracCommands.dirac.bkQueryPath(path,dqflag)
         return result
     getDataset = staticmethod(getDataset)
-            
+
+    # Not sure if there's a way to filter out the ones I want
+    #def getLHCbJobSettings():        
+    #    import inspect
+    #    members = inspect.getmembers(LHCbJob)
+    #    result = []
+    #    for member in members:
+    #        if member[0].find('set') == 0:
+    #            if member[1].__doc__.find('Helper') >= 0:
+    #                result.append(member[0][3:])
+    #    return result
+    #getLHCbJobSettings = staticmethod(getLHCbJobSettings)
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

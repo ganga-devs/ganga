@@ -35,8 +35,6 @@ schema['id'] = SimpleItem(defvalue=None, protected=1, copyable=0,
 docstr = 'The detailed status as reported by the DIRAC WMS'    
 schema['status'] = SimpleItem(defvalue=None, protected=1, copyable=0,
                               typelist=['str','type(None)'],doc=docstr)
-schema['CPUTime'] = SimpleItem(defvalue=86400,
-                               doc='The requested CPU time in seconds')
 schema['actualCE'] = SimpleItem(defvalue=None, protected=1, copyable=0,
                                 typelist=['str','type(None)'],
                                 doc='The location where the job ran')
@@ -44,8 +42,17 @@ docstr = 'Minor status information from Dirac'
 schema['statusInfo'] = SimpleItem(defvalue='', protected=1, copyable=0,
                                   typelist=['str','type(None)'],doc=docstr)
 docstr = 'DIRAC API commands to add the job definition script. Only edit ' \
-         'if you *really* know what you are doing!'
+         'if you *really* know what you are doing'
 schema['diracOpts'] = SimpleItem(defvalue='',doc=docstr)
+docstr = 'Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'
+schema['settings'] = SimpleItem(defvalue={'CPUTime':2*86400},doc=docstr)
+docstr = 'LFNs to be downloaded into the work dir on the grid node. Site '\
+         'matching is *not* performed on these files; they are downloaded.'\
+         'I.e., do not put prod data here'
+types = ['GangaLHCb.Lib.LHCbDataset.LogicalFile.LogicalFile']
+schema['inputSandboxLFNs'] = ComponentItem(category='datafiles',defvalue=[],
+                                           typelist=types,sequence=1,
+                                           doc=docstr)
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class Dirac(IBackend):
@@ -77,9 +84,16 @@ class Dirac(IBackend):
     # Create and submit job to Dirac using default options
     j = Job(application=app,backend=Dirac())
     j.submit()
+
+    # Using the 'settings' attribute
+    j.backend.settings['BannedSites'] = ['LCG.CERN.ch']
+    j.resubmit()
+
+    # settings can be set at any time but are only 'respected' during
+    # submit and resubmit.
     
     """    
-    _schema = Schema(Version(3, 0),schema)
+    _schema = Schema(Version(3, 1),schema)
     _exportmethods = ['getOutputData','getOutputSandbox',
                       'getOutputDataLFNs','peek','reset','debug']
     _packed_input_sandbox = True
@@ -114,18 +128,45 @@ class Dirac(IBackend):
         
         dirac_script = subjobconfig.script
         dirac_script.name = mangle_job_name(j)
-        dirac_script.cpu_time = self.CPUTime
+        dirac_script.settings = self.settings
         dirac_script.dirac_opts = self.diracOpts
 
         sboxname = j.createPackedInputSandbox(subjobconfig.getSandboxFiles())
         script_file = self._getDiracScript()
         dirac_script.input_sandbox = [sboxname[0],master_input_sandbox[0],
                                       script_file]
+        for lfn in self.inputSandboxLFNs:
+            from GangaLHCb.Lib.LHCbDataset.PhysicalFile import PhysicalFile
+            if type(lfn) is PhysicalFile:
+                msg = 'Dirac.inputSandboxLFNs cannot contain a PhysicalFile.'
+                logger.error(msg)
+                raise BackendError('Dirac',msg)            
+            dirac_script.input_sandbox.append('LFN:'+lfn.name)
         dirac_script.write(script_file)
         return self._submit()
  
     def resubmit(self):
         """Resubmit a DIRAC job"""
+        script = self._getDiracScript()
+        cur_script = open(script)
+        tmp_script = open(script + '.tmp','w')
+        skip = False
+        for line in cur_script.readlines():
+            if line.find('<-- user settings') >= 0:
+                skip = True
+                # write new settings
+                tmp_script.write('# <-- user settings \n')
+                for key in self.settings:
+                    value = self.settings[key]
+                    if type(value) == type(''):
+                        tmp_script.write('j.set%s("%s")\n' % (key,value))
+                    else:
+                        tmp_script.write('j.set%s(%s)\n' % (key,str(value)))
+            if line.find('user settings -->') >= 0: skip = False
+            if not skip: tmp_script.write(line)
+        cur_script.close()
+        tmp_script.close()
+        os.system('mv -f %s %s' % (script+'.tmp',script))
         return self._submit()
 
     def reset(self):

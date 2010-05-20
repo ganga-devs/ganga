@@ -93,7 +93,7 @@ class DiracScript:
     '''Collects info for and writes script that creates the DIRAC job.'''
 
     def __init__(self):
-        self.cpu_time = None
+        self.settings = None
         self.input_sandbox = None
         self.output_sandbox = None
         self.exe = None
@@ -110,7 +110,6 @@ class DiracScript:
         contents += 'dirac = Dirac()\n'
         contents += '\n# default commands added by ganga\n'
         if self.name: contents += 'j.setName("%s")\n' % self.name
-        if self.cpu_time: contents += 'j.setCPUTime(%d)\n' % self.cpu_time
         if self.input_sandbox:
             contents += "j.setInputSandbox(%s)\n" % str(self.input_sandbox)
         if self.output_sandbox:
@@ -121,14 +120,17 @@ class DiracScript:
             contents += 'j.setOutputData(%s,OutputPath="%s")\n' % \
                         (str(self.outputdata.files),self.outputdata.location)
         if self.platform:
-            #whitelist = config['AllowedPlatforms']
-            #if self.platform in whitelist:
             contents += "j.setSystemConfig('%s')\n" % self.platform
-            #else:
-            #    msg = "Failed to submit platform %s. Allowed platforms: %s." \
-            #          % (self.platform, whitelist)
-            #    logger.error(msg)
-            #    raise BackendError("Dirac",msg)
+        contents += '\n'
+        if self.settings:            
+            contents += '# <-- user settings \n'
+            for key in self.settings:
+                value = self.settings[key]
+                if type(value) == type(''):
+                    contents += 'j.set%s("%s")\n' % (key,value)
+                else:
+                    contents += 'j.set%s(%s)\n' % (key,str(value))
+            contents += '# user settings -->\n'
         contents += '\n'
         if self.dirac_opts:
             contents += '# diracOpts added by user\n'

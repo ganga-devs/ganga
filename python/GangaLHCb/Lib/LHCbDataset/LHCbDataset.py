@@ -201,10 +201,15 @@ class LHCbDataset(Dataset):
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 
 def string_datafile_shortcut(name,item):
+    from GangaLHCb.Lib.DIRAC.Dirac import Dirac
     if type(name) is not type(''): return None
     if item is None: return None # used to be c'tor, but shouldn't happen now
     else: # something else...require pfn: or lfn:
         file = strToDataFile(name,False)
+        if item is Dirac._schema['inputSandboxLFNs']:
+            if type(file) is PhysicalFile:
+                msg = 'Only LFNs can be placed in Dirac.inputSandboxLFNs!'
+                raise GangaException(msg)
         return file
     return None
 
