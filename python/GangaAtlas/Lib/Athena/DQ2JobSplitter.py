@@ -196,7 +196,7 @@ class DQ2JobSplitter(ISplitter):
                             newsites.append(site)
                     allowed_sites = newsites
                 # Check atlas_dbrelease
-                if job.application._name != 'TagPrepare' and job.application.atlas_dbrelease:
+                if hasattr(job.application,"atlas_dbrelease") and job.application.atlas_dbrelease:
                     try:
                         db_dataset = job.application.atlas_dbrelease.split(':')[0]
                     except:
@@ -397,7 +397,6 @@ class DQ2JobSplitter(ISplitter):
         totalfiles = 0
         
         for dataset, siteinfo in siteinfos.iteritems():
-            
             self.numfiles = orig_numfiles
             self.numsubjobs = orig_numsubjobs
             if self.numfiles <= 0: 
@@ -421,6 +420,9 @@ class DQ2JobSplitter(ISplitter):
 
                 for g in removal:
                     guids.remove(g)
+
+                if len(guids) == 0:
+                    continue
                     
                 nrfiles = self.numfiles
                 nrjob = int(math.ceil(len(guids)/float(nrfiles)))
