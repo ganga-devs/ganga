@@ -627,7 +627,7 @@ class Panda(IBackend):
         # format for outputdata is: dataset,lfn,guid,size,md5sum,siteID\ndataset...
         outputdata = []
         locations = {}
-        for of in [f for f in status.Files if f.type == "output"]:
+        for of in [f for f in status.Files if f.type in ["output","log"]]:
             outputdata.append("%s,%s,%s,%s,%s,%s" % (of.dataset,of.lfn,of.GUID,of.fsize,of.checksum,of.destinationSE))
             locations[of.destinationSE] = 1
         if len(locations.keys()) > 1:
