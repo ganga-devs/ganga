@@ -83,8 +83,8 @@ class AnaTransform(Transform):
               pass
           try:
               infos = []
-              for odat in j.outputdata.outputdata:
-                  info = [f for f in j.outputdata.output if ".".join(odat.split(".")[:-1]) in f][0].split(",")
+              for oinfo in j.outputdata.output:
+                  info = oinfo.split(",")
                   info[0] = subtask_dsname
                   infos.append(",".join(info))
               outputdata.register_datasets_details(None, infos)
