@@ -27,6 +27,8 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         '''Prepare the master job'''
 
         from pandatools import Client
+        from taskbuffer.JobSpec import JobSpec
+        from taskbuffer.FileSpec import FileSpec
 
         job = app._getParent()
         logger.debug('ExecutablePandaRTHandler master_prepare called for %s', job.getFQID('.')) 
@@ -91,6 +93,19 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         except exceptions.SystemExit:
             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
 
+        # handle the libds
+        if job.backend.libds:
+            self.libDataset = job.backend.libds
+            self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
+            self.library = self.fileBO.lfn
+        else:
+            self.libDataset = job.outputdata.datasetname+'.lib'
+            self.library = '%s.tgz' % self.libDataset
+            try:
+                Client.addDataset(self.libDataset,False)
+            except exceptions.SystemExit:
+                raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDataset,sys.exc_info()[0],sys.exc_info()[1]))
+
         # collect extOutFiles
         self.extOutFile = []
         for tmpName in job.outputdata.outputdata:
@@ -115,7 +130,52 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         if job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
 
-        return None
+        # create build job
+        if job.backend.bexec != '':
+            jspec = JobSpec()
+            jspec.jobDefinitionID   = job.id
+            jspec.jobName           = commands.getoutput('uuidgen')
+            jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
+            if Client.isDQ2free(job.backend.site):
+                jspec.destinationDBlock = '%s/%s' % (job.outputdata.datasetname,self.libDataset)
+                jspec.destinationSE     = 'local'
+            else:
+                jspec.destinationDBlock = self.libDataset
+                jspec.destinationSE     = job.backend.site
+            jspec.prodSourceLabel   = configPanda['prodSourceLabelBuild']
+            jspec.processingType    = configPanda['processingType']
+            jspec.assignedPriority  = configPanda['assignedPriorityBuild']
+            jspec.computingSite     = job.backend.site
+            jspec.cloud             = job.backend.requirements.cloud
+            jspec.jobParameters     = '-o %s' % (self.library)
+            if self.inputsandbox:
+                jspec.jobParameters     += ' -i %s' % (self.inputsandbox)
+            else:
+                raise ApplicationConfigurationError(None,'Executable on Panda with build job defined, but inputsandbox is emtpy !')
+            matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
+            if matchURL:
+                jspec.jobParameters += ' --sourceURL %s ' % matchURL.group(1)
+            if job.backend.bexec != '':
+                jspec.jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
+                jspec.jobParameters += ' -r %s ' % '.'
+                
+
+            fout = FileSpec()
+            fout.lfn  = self.library
+            fout.type = 'output'
+            fout.dataset = self.libDataset
+            fout.destinationDBlock = self.libDataset
+            jspec.addFile(fout)
+
+            flog = FileSpec()
+            flog.lfn = '%s.log.tgz' % self.libDataset
+            flog.type = 'log'
+            flog.dataset = self.libDataset
+            flog.destinationDBlock = self.libDataset
+            jspec.addFile(flog)
+            return jspec
+        else:
+            return None
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         '''prepare the subjob specific configuration'''
@@ -166,8 +226,9 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             jspec.destinationSE = job.outputdata.location
         else:
             jspec.destinationSE = site
-        jspec.prodSourceLabel   = 'user'
-        jspec.assignedPriority  = 1000
+        jspec.prodSourceLabel   = configPanda['prodSourceLabelRun']
+        jspec.processingType    = configPanda['processingType']
+        jspec.assignedPriority  = configPanda['assignedPriorityRun']
         jspec.cloud             = cloud
         # memory
         if job.backend.requirements.memory != -1:
@@ -176,6 +237,24 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         if job.backend.requirements.cputime != -1:
             jspec.maxCpuCount = job.backend.requirements.cputime
         jspec.computingSite     = site
+
+#       library (source files)
+        if not job.backend.libds:
+            flib = FileSpec()
+            flib.lfn            = self.library
+            flib.type           = 'input'
+            flib.dataset        = self.libDataset
+            flib.dispatchDBlock = self.libDataset
+        else:
+            flib = FileSpec()
+            flib.lfn            = self.fileBO.lfn
+            flib.GUID           = self.fileBO.GUID
+            flib.type           = 'input'
+            flib.status         = self.fileBO.status
+            flib.dataset        = self.fileBO.destinationDBlock
+            flib.dispatchDBlock = self.fileBO.destinationDBlock
+        if job.backend.bexec != '':
+            jspec.addFile(flib)
 
 #       input files FIXME: many more input types
         if job.inputdata:
@@ -208,7 +287,6 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         flog.destinationSE     = job.backend.site
         jspec.addFile(flog)
 
-
 #       job parameters
         param = ''
 
@@ -219,29 +297,23 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             srcURL = matchURL.group(1)
             param += " --sourceURL %s " % srcURL
 
-        # FIXME if not options.nobuild:
-        # set jobO parameter
-        #param += '-j "%s" ' % urllib.quote(self.job_options)
         param += '-r "%s" ' % self.rundirectory
-        #param += '-j "%s" ' % job.application.exe
-        if self.inputsandbox:
-            #param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && { chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s %s; }" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, job.application.exe, job.application.exe, " ".join(job.application.args))
-            param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, job.application.exe, job.application.exe)
+
+        if job.backend.bexec == '':
+            # FIXME if not options.nobuild:
+            # set jobO parameter
+            if self.inputsandbox:
+                param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, job.application.exe, job.application.exe)
+            else:
+                param += '-j "chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (job.application.exe, job.application.exe)
+            param += '-p "%s" ' % (" ".join(job.application.args))
+
         else:
-            #param += '-j "{ chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s %s; }" ' % (job.application.exe, job.application.exe, " ".join(job.application.args))
-            param += '-j "chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (job.application.exe, job.application.exe)
-        #param += '-p "" '
-        param += '-p "%s" ' % (" ".join(job.application.args))
+            param += '-l %s ' % self.library
+            param += '-j "%s" -p "%s" ' % ( job.application.exe,urllib.quote(" ".join(job.application.args)))
 
         if job.inputdata:
             param += '-i "%s" ' % job.inputdata.names
-
-        # source URL
-        matchURL = re.search("(http.*://[^/]+)/",Client.baseURLSSL)
-        srcURL = ""
-        if matchURL != None:
-            srcURL = matchURL.group(1)
-            param += " --sourceURL %s " % srcURL
 
         # fill outfiles
         outfiles = {}
@@ -264,14 +336,6 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
         param += '-o "%s" ' % (outfiles) # must be double quotes, because python prints strings in 'single quotes' 
 
-
-        # Hack runGen to download...
-        #hs = "myRun-00-00-01"
-        #hack = 'os.system("wget http://www.in4matiker.de/sirius/%s")\\nasys = " ".join(sys.argv[1:]).split("\\\\n")\\nos.system("chmod +x %s; ./%s %%s" %% (asys[0]+" "+asys[-1]))\\nsys.exit(0)\\n' % (hs, hs, hs)
-        #hack = 'os.system("wget %s/cache/%s || wget --no-check-certificate %s/cache/%s")\\nos.system("tar xzvf %s")' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox)
-        #param += "-o $'%s\\n%s' " % (outfiles, hack)
-        #param += "-o '%s' " % (outfiles)
-
         jspec.jobParameters = param
         
         return jspec
@@ -285,6 +349,7 @@ allHandlers.add('Executable','Panda',ExecutablePandaRTHandler)
 from Ganga.Utility.Config import getConfig, ConfigError
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
+configPanda = getConfig('Panda')
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
