@@ -127,6 +127,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if job.inputdata._name == 'DQ2Dataset':
                 self.inputdatatype='DQ2'
                 logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            elif job.inputdata._name == 'AMIDataset':
+                self.inputdatatype='DQ2'
+                job.inputdata.dataset = job.inputdata.search()
+                logger.info('Input dataset(s) %s',job.inputdata.dataset)
             elif job.inputdata._name == 'ATLASTier3Dataset':
                 self.inputdatatype='Tier3'
                 logger.info('Input dataset is a Tier3 PFN list')
