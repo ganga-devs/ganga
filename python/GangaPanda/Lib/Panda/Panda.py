@@ -269,7 +269,7 @@ class Panda(IBackend):
     '''Panda backend: submission to the PanDA workload management system
     '''
 
-    _schema = Schema(Version(2,3), {
+    _schema = Schema(Version(2,4), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'requirements'  : ComponentItem('PandaRequirements',doc='Requirements for the resource selection'),
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
