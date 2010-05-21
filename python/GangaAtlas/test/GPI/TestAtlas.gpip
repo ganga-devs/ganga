@@ -3,7 +3,6 @@ from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from GangaTest.Framework.utils import is_job_finished
 
 srcdir = "/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/"
-srcdir1510 = srcdir + "v1510"
 srcdirana = srcdir + "v1565"
 release = '15.6.5'
 release_mc='15.6.5.1'
@@ -32,13 +31,13 @@ class TestAtlas(GangaGPITestCase):
         return TestAnaTaskBasic()
 
     def testAnaTaskLCG(self):
-        return TestAnaTaskLCG(srcdir1510)
+        return TestAnaTaskLCG(srcdirana)
 
     def testAnaTaskPanda(self):
-        return TestAnaTaskPanda(srcdir1510)
+        return TestAnaTaskPanda(srcdirana)
 
     def testAnaTaskAuto(self):
-        return TestAnaTaskAuto(srcdir1510)
+        return TestAnaTaskAuto(srcdirana)
 
     def testMCTask(self):
         return TestMCTask()
@@ -71,12 +70,12 @@ class TestAnaTaskBasic(ICheckTest):
         return True
     def checkTest(self):
         t = AnaTask()
-        t.analysis.application.atlas_release='15.1.0'
+        t.analysis.application.atlas_release=release
         t.analysis.application.max_events=10
         t.analysis.files_per_job = 1
         t.analysis.inputdata.dataset = datasetana
         t.analysis.outputdata=DQ2OutputDataset()
-        t.analysis.setRunlimit(2)
+        t.analysis.setRunlimit(1)
         t.float = 5
         t.info()
         t.remove(True)
@@ -133,16 +132,17 @@ class TestTask(AtlasTest):
 class TestAnaTask(TestTask):
     def setup(self):
         self.joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
-        self.archivefile = '%s/UserAnalysis_v1510.tar.gz' % self.tmpdir
+        self.archivefile = '%s/EmptyUserArea.tar.gz' % self.tmpdir
         t = AnaTask()
-        t.analysis.application.atlas_release='15.1.0'
+        t.analysis.application.atlas_release=release
+        t.analysis.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
         t.analysis.application.option_file=[ self.joboption ]
         #t.analysis.application.user_area = self.archivefile
         t.analysis.application.max_events=10
         t.analysis.files_per_job = 1
         t.analysis.inputdata.dataset = datasetana
         t.analysis.outputdata=DQ2OutputDataset()
-        t.analysis.setRunlimit(2)
+        t.analysis.setRunlimit(1)
         t.float = 5
         t.info()
         self.t = t
@@ -160,14 +160,16 @@ class TestAnaTaskPanda(TestAnaTask):
     def setup(self):
         TestAnaTask.setup(self)
         self.t.setBackend(Panda())
-        self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
+        #self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
+        self.t.analysis.application.atlas_run_dir = '.'
         self.t.analysis.inputdata.dataset = datasetana
         self.t.run()
 
 class TestAnaTaskAuto(TestAnaTask):
     def setup(self):
         TestAnaTask.setup(self)
-        self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
+        #self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
+        self.t.analysis.application.atlas_run_dir = '.'
         self.t.analysis.inputdata.dataset = datasetana
         self.t.run()
 
