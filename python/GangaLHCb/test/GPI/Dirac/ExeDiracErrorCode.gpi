@@ -23,7 +23,7 @@ e.exe = File(fileName)
 
 j = Job(application = e, backend = Dirac())
 #j.inputsandbox = [fileName]
-j.backend.CPUTime = 600
+j.backend.settings['CPUTime'] = 600
 j.submit()
 
 print j

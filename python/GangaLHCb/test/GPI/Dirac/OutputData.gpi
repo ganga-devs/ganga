@@ -17,7 +17,8 @@ f.write(text)
 f.close()
 """)
 os.chmod(scriptname,0700)
-jscript=Job(name='OutputData',application=Executable(),backend=Dirac(CPUTime=300))
+jscript=Job(name='OutputData',application=Executable(),backend=Dirac())
+jscript.backend.settings['CPUTime'] = 300
 jscript.application.exe = File(scriptname)
 jscript.application.args=[]
 jscript.outputdata=['output.txt']

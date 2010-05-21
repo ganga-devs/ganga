@@ -9,7 +9,8 @@ testname=join(testdir,'input.txt')
 write_file(testname,"This is a test\n")
 
 # Job with a Unix command in
-jcommand=Job(application=Executable(),backend=Dirac(CPUTime=300))
+jcommand=Job(application=Executable(),backend=Dirac())
+jcommand.backend.settings['CPUTime'] = 300
 jcommand.application.args=['input.txt','output.txt']
 jcommand.application.exe='cp'
 jcommand.inputsandbox=[testname]
