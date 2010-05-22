@@ -274,7 +274,7 @@ class TestMCTask(TestTask):
         t.evgen.application.evgen_job_option = "CSC.005145.PythiaZmumu.py"
         t.total_events = 2
         t.setParameter(run_number="5145", production_name="ganga_test", process_name="PythiaZmumu")
-        t.setParameter(atlas_release="14.2.24.1", se_name="LRZ-LMU_SCRATCHDISK")
+        t.setParameter(atlas_release="15.6.3.1", se_name="LRZ-LMU_SCRATCHDISK")
         t.setParameter(triggerConfig="DEFAULT", geometryTag="ATLAS-GEO-05-00-00")
         t.setParameter(verbosity="INFO")
         t.setParameter(number_events_job=1)
@@ -352,7 +352,7 @@ class TestAthenaMCPanda(AtlasTest):
     def setup(self):
         self.j=Job()
         self.j.application=AthenaMC()
-        self.j.application.atlas_release='15.1.0.1'
+        self.j.application.atlas_release='15.6.3.1'
         self.j.application.random_seed='1102362401'
         self.j.application.production_name='tutorial'   
         self.j.application.process_name='single_e_Et40'
@@ -396,11 +396,11 @@ class TestAthenaMCPanda_recon(TestAthenaMCPanda):
     def setup(self):
         TestAthenaMCPanda.setup(self)
         self.j.application.run_number='000001'
-        self.j.application.atlas_release='12.0.4.1'
+        self.j.application.atlas_release='15.6.3.1'
         self.j.application.mode='recon'
-        self.j.application.transform_script = "csc_recon_trf.py"
+        self.j.application.transform_script = "csc_reco_trf.py"
         self.j.inputdata=AthenaMCInputDatasets()
-        self.j.inputdata.DQ2dataset='user09.MichaelGalanteWilson.109911.Pythia_Marmoset_hz140_sq1000_chi2z900_chi1z100.digit.RDO.e434_s551_d162'
+        self.j.inputdata.DQ2dataset='user09.JahredAdelman.mc09_900GeV.105001.pythia_minbias.digit.RDO.e466_s604_s582_d216_ephase_Boff'
         self.j.inputdata.datasetType='DQ2'
         self.j.inputdata.number_events_file=1
         self.j.outputdata=AthenaMCOutputDatasets()
