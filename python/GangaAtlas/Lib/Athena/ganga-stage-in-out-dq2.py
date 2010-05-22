@@ -544,6 +544,9 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     pfn = re.sub('ccsrm','ccxroot',pfn)
                     pfn = re.sub('ccdcamli01','ccxroot',pfn)
                     pfn = re.sub(':1094',':1094/',pfn)
+                    # Hack for LSF CERN
+                    if os.environ.has_key('GANGA_ATHENA_WRAPPER_MODE') and os.environ['GANGA_ATHENA_WRAPPER_MODE']!='' and os.environ['GANGA_ATHENA_WRAPPER_MODE']=='local':
+                        pfn = re.sub('root://castoratlas.cern.ch/castor','root://castoratlas//castor',pfn)
 
                 elif usedProtocol == "gsidcap" and stUrlMap.has_key(sURLHost):
                     pfn = re.sub('srm://','gfal:gsidcap://',pfn)
