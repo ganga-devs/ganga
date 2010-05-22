@@ -3,10 +3,13 @@ from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from GangaTest.Framework.utils import is_job_finished
 
 srcdir = "/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/"
-srcdirana = srcdir + "v1565"
-release = '15.6.5'
+srcdirana = srcdir + "v1569"
+release = '15.6.9'
 release_mc='15.6.5.1'
-datasetana = "data09_900GeV.00140541.physics_MinBias.merge.AOD.f175_m273" 
+datasetana = "data09_900GeV.00140541.physics_MinBias.merge.AOD.r1093_p101_tid118749_00" 
+
+import commands
+outputdatasetname_panda = commands.getoutput('uuidgen')
 
 class TestAtlas(GangaGPITestCase):
     def testAthenaLocal(self):
@@ -137,8 +140,9 @@ class TestAnaTask(TestTask):
         t.analysis.application.atlas_release=release
         t.analysis.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
         t.analysis.application.option_file=[ self.joboption ]
-        #t.analysis.application.user_area = self.archivefile
+        t.analysis.application.user_area = self.archivefile
         t.analysis.application.max_events=10
+	t.analysis.application.atlas_run_config= {'input': {}, 'other': {}, 'output': {'alloutputs': ['AnalysisSkeleton.aan.root'], 'outAANT': [('AANTupleStream', 'AANT')]}} 
         t.analysis.files_per_job = 1
         t.analysis.inputdata.dataset = datasetana
         t.analysis.outputdata=DQ2OutputDataset()
@@ -163,6 +167,7 @@ class TestAnaTaskPanda(TestAnaTask):
         #self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
         self.t.analysis.application.atlas_run_dir = '.'
         self.t.analysis.inputdata.dataset = datasetana
+        self.t.analysis.outputdata.datasetname=outputdatasetname_panda
         self.t.run()
 
 class TestAnaTaskAuto(TestAnaTask):
@@ -171,6 +176,7 @@ class TestAnaTaskAuto(TestAnaTask):
         #self.t.analysis.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
         self.t.analysis.application.atlas_run_dir = '.'
         self.t.analysis.inputdata.dataset = datasetana
+        self.t.analysis.outputdata.outputdata=[ 'AnalysisSkeleton.aan.root' ]
         self.t.run()
 
 class TestAthena(AtlasTest):
