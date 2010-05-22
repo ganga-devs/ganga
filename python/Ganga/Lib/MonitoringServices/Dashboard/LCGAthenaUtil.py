@@ -23,6 +23,7 @@ def cl_application_version(job):
 
 def cl_input_dataset(job):
     """Build input_dataset. Only run on client."""
+    if not job.inputdata: return None
     datasetcsv = ','.join(job.inputdata.dataset)
     return CommonUtil.strip_to_none(datasetcsv)
 
@@ -39,10 +40,12 @@ def cl_nevents_requested(job):
 
 def cl_output_dataset(job):
     """Build output_dataset. Only run on client."""
+    if not job.outputdata: return None
     return CommonUtil.strip_to_none(job.outputdata.datasetname)
 
 def cl_output_se(job):
     """Build output_se. Only run on client."""
+    if not job.outputdata: return None
     # job.outputdata.location can be a string or a list
     if isinstance(job.outputdata.location, list):
         locations = []
