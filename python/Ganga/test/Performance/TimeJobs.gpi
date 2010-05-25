@@ -16,6 +16,12 @@ except IndexError:
     print 'if modify is 1 then the jobs are not only created but also modified'
     print 'if psyco==1 then psyco optimizer is used'
     print 'defaults: bulk_size=100, cnt=1, modify=0, psyco=0'
+except ValueError:
+    print 'usage: time_jobs [bulk_size] [cnt] [modify] [psyco]'
+    print 'performance test: create a bulk_size number of jobs and repeat it cnt times'
+    print 'if modify is 1 then the jobs are not only created but also modified'
+    print 'if psyco==1 then psyco optimizer is used'
+    print 'defaults: bulk_size=100, cnt=1, modify=0, psyco=0'
 
 if psyco:
     try:
