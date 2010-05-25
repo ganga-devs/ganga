@@ -970,8 +970,9 @@ echo "GANGATIME5=$GANGATIME5"
 #if [ z$GANGA_LOG_HANDLER == z"DQ2" ] || [ z$GANGA_LOG_HANDLER == z"WMS" ]
 if [ z$GANGA_LOG_HANDLER == z"DQ2" ]
     then
-    
-    LOGNAME=${OUTPUT_DATASETNAME}_${OUTPUT_JOBID}.log.tgz
+
+    LOGTIME=`date +'%Y%m%d%H%M%S'`
+    LOGNAME=${OUTPUT_DATASETNAME}.${LOGTIME}_${OUTPUT_JOBID}.log.tgz
     echo "Storing logfiles as "$LOGNAME" in dq2 dataset..."
     mkdir tarball
     cp stdout stderr tarball/
