@@ -1,0 +1,88 @@
+from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest, MultipassTest
+
+class RepositorySplitting(MultipassTest):
+    def __init__(self): 
+        MultipassTest.__init__(self,2)
+        self.id = -1
+
+    def pass1(self):
+        t = TestReg1()
+        while not t.isReadyForCheck():
+            pass
+        self.id = t.checkTest()
+
+    def pass2(self):
+        t = TestReg2(self.id)
+        while not t.isReadyForCheck():
+            pass
+        return t.checkTest()
+
+    def pass3(self):
+        t = TestReg3(self.id)
+        while not t.isReadyForCheck():
+            pass
+        return t.checkTest()
+
+LEN = 10
+
+class TestReg1(ICheckTest):
+    def __init__(self):
+        # top level splitting
+        j = Job()
+        j.backend=Local()
+        j.application=Executable()
+        j.splitter=ArgSplitter()
+        j.splitter.args = [['ARGUMENT %d'%i] for i in range(LEN)]
+        j.application.exe='/bin/echo'
+        print j.application.exe
+        self.j = j
+
+    def isReadyForCheck(self):
+        return True
+
+    def checkTest(self):
+        j = self.j
+        assert(not j.subjobs)
+        assert(len(j.subjobs) == 0)
+        j.submit()
+        assert(len(j.subjobs) == LEN)
+        for s in j.subjobs:
+            assert s.master is j
+            assert s.id != None
+            assert s._impl._getParent() is j._impl
+            assert s._impl._getRegistry() == j._impl._getRegistry()
+            
+class TestReg2(ICheckTest):
+    def __init__(self,id):
+        self.id = id
+
+    def isReadyForCheck(self):
+        return True
+
+    def checkTest(self):
+        j = jobs[self.id]
+        assert(len(j.subjobs) == LEN)
+        print 'j.application.exe',j.application.exe
+        assert(j.application.exe == '/bin/echo')
+        # another ci/co check
+        j.subjobs[1]._impl.application.exe = '/bin/ls'
+        j.application._impl.exe = '/bin/pwd'
+
+    def cleanup(self):
+        pass
+
+class TestReg3(ICheckTest):
+    def __init__(self,id):
+        self.id = id
+
+    def isReadyForCheck(self):
+        return True
+
+    def checkTest(self):
+        j = jobs[self.id]
+        assert(j.subjobs[1].application.exe == '/bin/ls')
+        assert(j.application.exe == '/bin/pwd')
+
+    def cleanup(self):
+        pass
+
