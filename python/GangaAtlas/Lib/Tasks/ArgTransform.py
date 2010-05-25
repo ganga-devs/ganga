@@ -17,9 +17,12 @@ class ArgTransform(Transform):
       must not contain GangaObjects, as this corrupts the repository"""
       if isNestedList(value) and containsGangaObjects(value):
          raise TypeMismatchError('Assigning nested lists which contain Ganga GPI Objects is not supported.')
-      self.setPartitionsStatus(range(1,len(value)+1), "ready")
+
+   def check(self):
+      nargs = len(self.args)
+      self.setPartitionsStatus(range(1,nargs+1), "ready")
       if "_partition_status" in self._data:
-         self.setPartitionsLimit(len(value)+1)
+         self.setPartitionsLimit(nargs+1)
 
    def getJobsForPartitions(self, partitions):
       """Create Ganga Jobs for the next N partitions that are ready and submit them."""
