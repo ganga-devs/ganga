@@ -58,7 +58,20 @@ class InstallLHCb:
             self.sourcelocation = join(source,ver)
         elif versiontuple:
             self.versionLHCb = ver
+            ganga_ver = "Ganga-%d-%d-%d" % versiontuple
             self.versionGanga = "Ganga-%d-%d-%d" % versiontuple
+            if ver.find('p') > 0:
+                p = int(ver.split('p')[1])
+                if p > 0:
+                    # see if path exists in SVN
+                    patch_str = 'hotfix%d' % p
+                    cmd = 'svn ls svn+ssh://svn.cern.ch/reps/ganga/tags/'\
+                          '%s-%s' % (ganga_ver,patch_str)
+                    fh, fname = mkstemp()
+                    retcode = call(cmd,shell=True,stdout=fh)
+                    if retcode == 0: # it exists
+                        self.versionGanga = self.versionGanga + '-' + patch_str
+            
             if self.options.prerelease:
                 self.sourcelocation = join(self.options.area,
                                            "install",
