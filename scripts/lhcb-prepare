@@ -76,7 +76,7 @@ class InstallLHCb:
             if self.options.prerelease:
                 dir = "%d.%d.%d-pre"% versiontuple
                 if patch_str:
-                    dir = "%d.%d.%d-%s-pre" % (patch_str,versiontuple)
+                    dir = "%d.%d.%d-%s-pre" % (versiontuple,patch_str)
                 self.sourcelocation = join(self.options.area,"install",dir)
             else:
                 self.sourcelocation = join(source,"tags", self.versionGanga)
