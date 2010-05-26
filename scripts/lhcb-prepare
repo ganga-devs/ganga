@@ -60,6 +60,7 @@ class InstallLHCb:
             self.versionLHCb = ver
             ganga_ver = "Ganga-%d-%d-%d" % versiontuple
             self.versionGanga = "Ganga-%d-%d-%d" % versiontuple
+            patch_str = None
             if ver.find('p') > 0:
                 p = int(ver.split('p')[1])
                 if p > 0:
@@ -73,9 +74,10 @@ class InstallLHCb:
                         self.versionGanga = self.versionGanga + '-' + patch_str
             
             if self.options.prerelease:
-                self.sourcelocation = join(self.options.area,
-                                           "install",
-                                           "%d.%d.%d-pre"% versiontuple)
+                dir = "%d.%d.%d-pre"% versiontuple
+                if patch_str:
+                    dir = "%d.%d.%d-%s-pre" % (patch_str,versiontuple)
+                self.sourcelocation = join(self.options.area,"install",dir)
             else:
                 self.sourcelocation = join(source,"tags", self.versionGanga)
         else:
