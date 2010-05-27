@@ -110,7 +110,7 @@ class DQ2SandboxCache(GridSandboxCache):
         self.logger.debug('DQ2_LOCAL_SITE_ID: %s' % shell.env['DQ2_LOCAL_SITE_ID'])
 
         # check dq2 existence
-        rc,output,m = self.__cmd_retry_loop__(shell, 'source %s; which dq2-put' % self.setup, 1)
+        rc,output,m = self.__cmd_retry_loop__(shell, 'source %s 2>&1 > /dev/null; which dq2-put' % self.setup, 1)
         if (rc != 0) or (not output):
             self.logger.error('dq2 client command not found. Please check DQ2 client installation.')
             return None
@@ -138,7 +138,7 @@ class DQ2SandboxCache(GridSandboxCache):
                 finfo[tmp_fname]['surl'] = ''
 
             # compose dq2-put command
-            cmd = 'source %s; export VOMS_PROXY_INFO_DONT_VERIFY_AC=1; dq2-put -a -d -C ' % (self.setup)
+            cmd = 'source %s 2>&1 > /dev/null; export VOMS_PROXY_INFO_DONT_VERIFY_AC=1; dq2-put -a -d -C ' % (self.setup)
 
             if self.local_site_id:
                 cmd += '-L %s ' % self.local_site_id
