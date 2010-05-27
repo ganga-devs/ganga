@@ -63,12 +63,7 @@ class Grid(object):
         # some script-based glite-wms commands (status and logging-info) requires (#/usr/bin/env python2)
         # which leads to a python conflict problem.
         if not binary:
-            if os.path.exists('/usr/bin/python'):
-                prefix_hack = '/usr/bin/python '+prefix_hack
-            else:
-                prefix_hack = 'python '+prefix_hack
-
-        logger.debug('command prefix: %s' % prefix_hack)
+            prefix_hack = 'python '+prefix_hack
 
         return prefix_hack
 
