@@ -73,35 +73,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
-        if job.outputdata:
-            if job.outputdata._name <> 'DQ2OutputDataset':
-                raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
-        else:
-            logger.info('Adding missing DQ2OutputDataset')
-            job.outputdata = DQ2OutputDataset()
-
-        # handle the output dataset
-        job.outputdata.datasetname,outlfn = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
-        logger.info('Output dataset %s',job.outputdata.datasetname)
-        try:
-            Client.addDataset(job.outputdata.datasetname,False)
-            self.indivOutDsList = [job.outputdata.datasetname]
-        except exceptions.SystemExit:
-            raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
-
-        # handle the libds
-        if job.backend.libds:
-            self.libDataset = job.backend.libds
-            self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
-            self.library = self.fileBO.lfn
-        else:
-            self.libDataset = job.outputdata.datasetname+'.lib'
-            self.library = '%s.tgz' % self.libDataset
-            try:
-                Client.addDataset(self.libDataset,False)
-            except exceptions.SystemExit:
-                raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDataset,sys.exc_info()[0],sys.exc_info()[1]))
-
         # validate application
         if not app.atlas_release:
             raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
@@ -121,24 +92,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             raise ApplicationConfigurationError(None,"Panda backend supports only application.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT']")
         if app.atlas_exetype == 'ATHENA' and not app.user_area.name and not job.backend.libds:
             raise ApplicationConfigurationError(None,'app.user_area.name is null')
-
-        # validate inputdata
-        if job.inputdata:
-            if job.inputdata._name == 'DQ2Dataset':
-                self.inputdatatype='DQ2'
-                logger.info('Input dataset(s) %s',job.inputdata.dataset)
-            elif job.inputdata._name == 'AMIDataset':
-                self.inputdatatype='DQ2'
-                job.inputdata.dataset = job.inputdata.search()
-                logger.info('Input dataset(s) %s',job.inputdata.dataset)
-            elif job.inputdata._name == 'ATLASTier3Dataset':
-                self.inputdatatype='Tier3'
-                logger.info('Input dataset is a Tier3 PFN list')
-            else: 
-                raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
-        else:
-            self.inputdatatype=''
-            logger.info('Proceeding without an input dataset.')
 
         # handle different atlas_exetypes
         self.job_options = ''
@@ -165,14 +118,23 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             raise ApplicationConfigurationError(None,"No Job Options found!")
         logger.info('Running job options: %s'%self.job_options)
 
-        # add extOutFiles
-        self.extOutFile = []
-        for tmpName in job.outputdata.outputdata:
-            if tmpName != '':
-                self.extOutFile.append(tmpName)
-        for tmpName in job.backend.extOutFile:
-            if tmpName != '':
-                self.extOutFile.append(tmpName)
+        # validate inputdata
+        if job.inputdata:
+            if job.inputdata._name == 'DQ2Dataset':
+                self.inputdatatype='DQ2'
+                logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            elif job.inputdata._name == 'AMIDataset':
+                self.inputdatatype='DQ2'
+                job.inputdata.dataset = job.inputdata.search()
+                logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            elif job.inputdata._name == 'ATLASTier3Dataset':
+                self.inputdatatype='Tier3'
+                logger.info('Input dataset is a Tier3 PFN list')
+            else: 
+                raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
+        else:
+            self.inputdatatype='None'
+            logger.info('Proceeding without an input dataset.')
 
         # run brokerage here if not splitting'
         if self.inputdatatype=='DQ2':
@@ -180,7 +142,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 runPandaBrokerage(job)
             elif job.splitter._name <> 'DQ2JobSplitter' and job.splitter._name <> 'AnaTaskSplitterJob':
                 raise ApplicationConfigurationError(None,'Splitting with Panda+DQ2Dataset requires DQ2JobSplitter')
-        else: #Tier3
+        elif self.inputdatatype=='Tier3':
             if job.splitter and job.splitter._name != 'ATLASTier3Splitter':
                 raise ApplicationConfigurationError(None,'Splitting with Panda+ATLASTier3Dataset requires ATLASTier3Splitter')
             if job.backend.site == 'AUTO':
@@ -189,6 +151,47 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             
         if job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
+        
+        # handle the output dataset
+        if job.outputdata:
+            if job.outputdata._name <> 'DQ2OutputDataset':
+                raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
+        else:
+            logger.info('Adding missing DQ2OutputDataset')
+            job.outputdata = DQ2OutputDataset()
+
+        self.outDsLocation = Client.PandaSites[job.backend.site]['ddm']
+
+        job.outputdata.datasetname,outlfn = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
+        try:
+            Client.addDataset(job.outputdata.datasetname,False,location=self.outDsLocation)
+            logger.info('Output dataset %s registered at %s'%(job.outputdata.datasetname,self.outDsLocation))
+            self.indivOutDsList = [job.outputdata.datasetname]
+        except exceptions.SystemExit:
+            raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
+
+        # handle the libds
+        if job.backend.libds:
+            self.libDataset = job.backend.libds
+            self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
+            self.library = self.fileBO.lfn
+        else:
+            self.libDataset = job.outputdata.datasetname+'.lib'
+            self.library = '%s.tgz' % self.libDataset
+            try:
+                Client.addDataset(self.libDataset,False,location=self.outDsLocation)
+                logger.info('Lib dataset %s registered at %s'%(self.libDataset,self.outDsLocation))
+            except exceptions.SystemExit:
+                raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDataset,sys.exc_info()[0],sys.exc_info()[1]))
+
+        # add extOutFiles
+        self.extOutFile = []
+        for tmpName in job.outputdata.outputdata:
+            if tmpName != '':
+                self.extOutFile.append(tmpName)
+        for tmpName in job.backend.extOutFile:
+            if tmpName != '':
+                self.extOutFile.append(tmpName)
 
         # validate dbrelease
         self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
@@ -352,7 +355,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     if not f.dataset in self.indivOutDsList:
                         try:
                             logger.info('Creating individualOutDS %s'%f.dataset)
-                            Client.addDataset(f.dataset,False)
+                            Client.addDataset(f.dataset,False,location=self.outDsLocation)
                             self.indivOutDsList.append(f.dataset)
                         except exceptions.SystemExit:
                             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(f.dataset,sys.exc_info()[0],sys.exc_info()[1]))
