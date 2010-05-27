@@ -157,7 +157,7 @@ class DQ2SandboxCache(GridSandboxCache):
             file_idx = []
             if rc == 0:
                 # compose dq2-ls command
-                cmd = 'source %s; export VOMS_PROXY_INFO_DONT_VERIFY_AC=1; dq2-ls -L %s -f -p %s' % (self.setup, self.local_site_id, self.dataset_name)
+                cmd = 'source %s 2>&1 > /dev/null; export VOMS_PROXY_INFO_DONT_VERIFY_AC=1; dq2-ls -L %s -f -p %s' % (self.setup, self.local_site_id, self.dataset_name)
                 rc,output,m = self.__cmd_retry_loop__(shell, cmd, self.max_try)
 
                 if rc == 0:
