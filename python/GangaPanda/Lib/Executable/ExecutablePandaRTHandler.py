@@ -77,6 +77,16 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             if job.inputdata._name <> 'DQ2Dataset':
                 raise ApplicationConfigurationError(None,'PANDA application supports only DQ2Datasets')
 
+        # run brokerage here if not splitting
+        if not job.splitter:
+            from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
+            runPandaBrokerage(job)
+        elif job.splitter._name not in ['DQ2JobSplitter', 'ArgSplitter', 'ArgSplitterTask']:
+            raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter or ArgSplitter')
+        
+        if job.backend.site == 'AUTO':
+            raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
+
 #       output dataset
         if job.outputdata:
             if job.outputdata._name <> 'DQ2OutputDataset':
@@ -87,9 +97,11 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
         job.outputdata.datasetname,outlfn = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
 
-        logger.info('Output dataset %s',job.outputdata.datasetname)
+        self.outDsLocation = Client.PandaSites[job.backend.site]['ddm']
+
         try:
-            Client.addDataset(job.outputdata.datasetname,False)
+            Client.addDataset(job.outputdata.datasetname,False,location=self.outDsLocation)
+            logger.info('Output dataset %s registered at %s'%(job.outputdata.datasetname,self.outDsLocation))
         except exceptions.SystemExit:
             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -102,7 +114,8 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             self.libDataset = job.outputdata.datasetname+'.lib'
             self.library = '%s.tgz' % self.libDataset
             try:
-                Client.addDataset(self.libDataset,False)
+                Client.addDataset(self.libDataset,False,location=self.outDsLocation)
+                logger.info('Lib dataset %s registered at %s'%(self.libDataset,self.outDsLocation))
             except exceptions.SystemExit:
                 raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDataset,sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -119,16 +132,6 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         for tmpName in job.backend.extOutFile:
             if tmpName != '':
                 self.extOutFile.append(tmpName)
-
-        # run brokerage here if not splitting
-        if not job.splitter:
-            from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
-            runPandaBrokerage(job)
-        elif job.splitter._name not in ['DQ2JobSplitter', 'ArgSplitter', 'ArgSplitterTask']:
-            raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter or ArgSplitter')
-        
-        if job.backend.site == 'AUTO':
-            raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
 
         # create build job
         if job.backend.bexec != '':
