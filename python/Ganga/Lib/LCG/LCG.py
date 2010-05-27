@@ -1,4 +1,3 @@
-import LCG
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -211,9 +210,8 @@ class LCG(IBackend):
 
             ## generate a new dataset name if not given
             if not self.sandboxcache.dataset_name:
-                uname = grids[self.middleware.upper()].credential.identity()
-                uname = re.sub(r'[\s_\-\(\)\=\+\?\*]*', r'', uname)
-                self.sandboxcache.dataset_name = 'user%s.%s.ganga.%s.input' % (time.strftime('%y',time.gmtime()), uname, get_uuid())
+                from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+                self.sandboxcache.dataset_name,unused = dq2outputdatasetname("%s.input"%get_uuid(), 0, False, '')
 
             ## subjobs inherits the dataset name from the master job
             for sj in job.subjobs:
