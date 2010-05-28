@@ -6,13 +6,13 @@ ganga/doc                                                              Ganga-doc
 ganga/python/Ganga                                                     Ganga-Base-30-17
 
 #hclee
-ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-21-11
+ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-21-12
 
 #mark
 ganga/python/Ganga/Lib/Remote                                          GangaRemote-21-0
 
 #johannes/dan/mark
-ganga/python/GangaAtlas                                                GangaAtlas-22-35
+ganga/python/GangaAtlas                                                GangaAtlas-22-36
 
 #rod
 ganga/python/GangaCronus                                               GangaCronus-20-0
