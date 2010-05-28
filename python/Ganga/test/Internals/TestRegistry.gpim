@@ -103,7 +103,7 @@ class HammerThread(threading.Thread):
 
 
     def run(self):
-        for i in range(1000):
+        for i in range(2000):
             choices = []
             choices.extend([self.updown]*1)
             choices.extend([self.uindex]*1)
