@@ -228,7 +228,7 @@ else:
 # inputdata
 
 if opt.input_dataset:
-    print opt.inputtype
+    #print opt.inputtype
     if opt.inputtype:
         if opt.inputtype=='DQ2':
             j.inputdata = DQ2Dataset()
@@ -418,7 +418,7 @@ if opt.inputsandbox:
 if opt.outputsandbox:
     j.outputsandbox = opt.outputsandbox.split(':')        
 
-print j
+#print j
 
 try:
     j.submit()
