@@ -55,6 +55,8 @@ if not jemconfig['JEM_ENABLE']:
 
 # if INITIALIZED, we may import JEMs modules (they are in the pythonpath then)
 if JEMloader.INITIALIZED:
+    #######################################################
+    ## legacy (JEM 0.2) modules; to be refactored
     import JEMlib
 
     # try to import JEM configs and submit methods
@@ -69,7 +71,9 @@ if JEMloader.INITIALIZED:
     from JEMlib.utils.FreePortFinder import FreePortFinder
     from JEMlib.utils import Utils
     from JEMlib import VERSION as JEM_VERSION
+    #######################################################
 
+    # JEM 0.3 modules
     from Modes.Ganga import ConfigConverter
 
 ########################################################################################################################
