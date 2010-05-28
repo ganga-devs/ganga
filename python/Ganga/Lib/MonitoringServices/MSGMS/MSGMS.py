@@ -35,8 +35,6 @@ def _get_publisher(server, port, username, password):
     return _publisher
 
 
-get_publisher = _get_publisher
-
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 class MSGMS(IMonitoringService):
     """GangaMon Monitoring Service based on MSG.

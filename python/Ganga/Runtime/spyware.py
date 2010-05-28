@@ -27,15 +27,15 @@ def ganga_started(session_type):
         monitor.free()
 
     if config['UsageMonitoringMSG']:
-        import Ganga.Lib.MonitoringServices.MSGMS as MSGMS
-        #print MSGMS,dir(MSGMS)
+        from Ganga.Lib.MonitoringServices.MSGMS import MSGUtil
         msg_config = getConfig('MSGMS')
-        p = MSGMS.get_publisher(msg_config['server'],
-                                           msg_config['port'],
-                                           msg_config['username'], 
-                                           msg_config['password'])
-
-        #print msg_config['server'],msg_config['port'],msg_config['username'], msg_config['password']
-
-        headers = {'persistent':'true'}
-        p.send("/queue/ganga.usage",repr(usage_message),headers)
+        p = MSGUtil.createPublisher(
+            msg_config['server'],
+            msg_config['port'],
+            msg_config['username'],
+            msg_config['password'])
+        # start publisher thread and enqueue usage message for sending
+        p.start()
+        p.send("/queue/ganga.usage",repr(usage_message),{'persistent':'true'})
+        # ask publisher thread to stop. it will send queued message anyway.
+        p.stop()
