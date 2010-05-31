@@ -32,7 +32,7 @@
 #
 #     fullpath=shell.wrapper('lcg-cp')
 
-import os, re, tempfile
+import os, re, tempfile, time, signal
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -93,14 +93,39 @@ class Shell:
 
       self.dirname=None
 
-   def cmd(self,cmd,soutfile=None,allowed_exit=[0], capture_stderr=False):
+   def cmd(self,cmd,soutfile=None,allowed_exit=[0], capture_stderr=False,timeout=None):
       "Execute an OS command and captures the stderr and stdout which are returned in a file"
  
       if not soutfile: soutfile=tempfile.mktemp('.out')
          
       logger.debug('Running shell command: %s' % cmd)
       try:
-         rc=os.spawnve(os.P_WAIT,'/bin/sh',['/bin/sh','-c','%s > %s 2>&1' % (cmd,soutfile)],self.env)
+         t0 = time.time()
+         already_killed = False
+         timeout0 = timeout
+         pid = os.spawnve(os.P_NOWAIT,'/bin/sh',['/bin/sh','-c','%s > %s 2>&1' % (cmd,soutfile)],self.env)         
+         while 1:
+            wpid,sts = os.waitpid(pid,os.WNOHANG)
+            if wpid!=0:
+               if os.WIFSIGNALED(sts):
+                  rc = -os.WTERMSIG(sts)
+                  break
+               elif os.WIFEXITED(sts):
+                  rc = os.WEXITSTATUS(sts)
+                  break
+            if timeout and time.time()-t0>timeout:
+               logger.warning('Command interrupted - timeout %ss reached: %s', timeout0,cmd)
+               if already_killed:
+                  sig = signal.SIGKILL
+               else:
+                  sig = signal.SIGTERM
+               logger.debug('killing process %d with signal %d',pid,sig)
+               os.kill(pid,sig)
+               t0=time.time()
+               timeout = 5 # wait just 5 seconds before killing with SIGKILL
+               already_killed = True
+            time.sleep(0.1)            
+
       except OSError, (num,text):
          logger.warning( 'Problem with shell command: %s, %s', num,text)
          rc = 255
@@ -120,10 +145,10 @@ class Shell:
                                                                                                        
       return rc,soutfile,m is None
 
-   def cmd1(self,cmd,allowed_exit=[0],capture_stderr=False):
+   def cmd1(self,cmd,allowed_exit=[0],capture_stderr=False,timeout=None):
        "Executes an OS command and captures the stderr and stdout which are returned as a string"
        
-       rc,outfile,m = self.cmd(cmd,None,allowed_exit)
+       rc,outfile,m = self.cmd(cmd,None,allowed_exit,capture_stderr,timeout)
        output=file(outfile).read()
        os.unlink(outfile)
        
