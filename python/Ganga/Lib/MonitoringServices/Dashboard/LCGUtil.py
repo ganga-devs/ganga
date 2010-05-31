@@ -50,26 +50,10 @@ def cl_job_id_inside_the_task(job):
 
 def cl_task_name(job):
     """Build task_name. Only run on client."""
-    from Ganga.Utility import Config
-    user = Config.getConfig('Configuration')['user']
-    rep_type = Config.getConfig('Configuration')['repositorytype']
-    if 'Local' in rep_type:
-        from Ganga.Runtime import Repository_runtime
-        rep_dir = Repository_runtime.getLocalRoot()
-        rep_hostname = Config.getConfig('System')['GANGA_HOSTNAME']
-        repository = rep_hostname + ':' + rep_dir
-    elif 'Remote' in rep_type:
-        rep_host = Config.getConfig(rep_type +'_Repository')['host']
-        rep_port = Config.getConfig(rep_type +'_Repository')['port']
-        repository = rep_host + ':' + rep_port
-    else:
-        repository = ''
-
-    if job.master is None:
-        task_id = job.id
-    else:
-        task_id = job.master.id
-    task_name = 'ganga_%s_%s@%s' %(task_id, user, repository)
+    # format: ganga:<job.info.uuid>:<job.name>
+    if job.master:
+        job = job.master
+    task_name = 'ganga:%s:%s' % (job.info.uuid, job.name,)
     return task_name
 
 def cl_unique_job_id(job):

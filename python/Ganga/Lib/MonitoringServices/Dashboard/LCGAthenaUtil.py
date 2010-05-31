@@ -59,18 +59,12 @@ def cl_output_se(job):
 
 def cl_target(job):
     """Build target. Only run on client."""
-    ces = []
-    sites = []
     targets = []
-    for j in [job] + job.subjobs:
-        ce = j.backend.CE
-        if ce and ce not in ces:
-            ces.append(ce)
-            targets.append('CE_%s' % ce)
-        for site in j.backend.requirements.sites:
-            if site and site not in sites:
-                sites.append(site)
-                targets.append('SITE_%s' % site)
+    if job.backend.CE:
+        targets.append('CE_%s' % job.backend.CE)
+    for site in job.backend.requirements.sites:
+        if site:
+            targets.append('SITE_%s' % site)
     targetcsv = ','.join(targets)
     return CommonUtil.strip_to_none(targetcsv)
 

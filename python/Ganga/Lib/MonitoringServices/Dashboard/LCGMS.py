@@ -158,7 +158,7 @@ class LCGMS(DashboardMS):
             'STATENAME': status, # e.g. submitted, Done (Success)
             'STATESOURCE': status_source, # e.g. Ganga, LB
             'STATESTARTTIME': status_start_time, # e.g. 2009-11-25T14:32:51.428988Z
-            'TASKNAME': LCGUtil.cl_task_name(j), # e.g. ganga_420_dtuckett@lxplus246.cern.ch:/afs/cern.ch/user/d/dtuckett/gangadir/repository/dtuckett/LocalAMGA
+            'TASKNAME': LCGUtil.cl_task_name(j), # e.g. ganga:6702b50a-8a31-4476-8189-62ea5b8e00b3:TrigStudy
             'UNIQUEJOBID': LCGUtil.cl_unique_job_id(j),  # Ganga uuid e.g. 1c08ff3b-904f-4f77-a481-d6fa765813cb
             '___fqid' : j.fqid,
             }
