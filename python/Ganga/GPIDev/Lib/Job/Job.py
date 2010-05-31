@@ -673,6 +673,8 @@ class Job(GangaObject):
                 if self.subjobs:
                     for jobs in self.subjobs:
                         jobs.time.timenow('submitting') ### <-- this might be an inadequate place at which to timestamp submitting for subjobs
+                        jobs.info.increment()
+                        
 
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
@@ -955,6 +957,7 @@ class Job(GangaObject):
             if rjobs:
                 for sjs in rjobs:
                     sjs.time.timenow('submitting') ## writes submitting timestamp for subjobs. 
+                    sjs.info.increment()
                     sjs.getOutputWorkspace().remove(preserve_top=True) #bugfix: #31690: Empty the outputdir of the subjob just before resubmitting it
 
             try:
