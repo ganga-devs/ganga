@@ -2087,6 +2087,8 @@ config.addOption('GliteBulkJobSize', 50, 'sets the maximum number of nodes (i.e.
 
 config.addOption('SubmissionThread', 10, 'sets the number of concurrent threads for job submission to gLite WMS')
 
+config.addOption('SubmissionTimeout', 300, 'sets the gLite job submission timeout in seconds')
+
 config.addOption('OutputDownloaderThread', 10, 'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
 
 config.addOption('SandboxTransferTimeout', 60, 'sets the transfer timeout of the oversized input sandbox')

@@ -336,7 +336,9 @@ class Grid(object):
 
         logger.debug('job submit command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
+                                                  allowed_exit=[0,255],
+                                                  timeout=self.config['SubmissionTimeout'])
 
         if output: output = "%s" % output.strip()
 
