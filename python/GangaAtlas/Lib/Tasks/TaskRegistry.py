@@ -64,7 +64,16 @@ class TaskRegistry(Registry):
 
         from Ganga.Core.GangaRepository import getRegistry
         while not getRegistry("jobs")._started:
-            time.sleep(1)
+            time.sleep(0.1)
+            if self._main_thread.should_stop():
+                return
+
+        from Ganga.Core import monitoring_component
+        while not monitoring_component.enabled:
+            time.sleep(0.1)
+            if self._main_thread.should_stop():
+                return
+
         
         # setup the tasks - THIS IS INCOMPATIBLE WITH CONCURRENCY
         # and must go away soon
@@ -78,37 +87,40 @@ class TaskRegistry(Registry):
         ## Main loop
         while not self._main_thread.should_stop():
             ## For each task try to run it
-            for tid in self.ids():
-                try:
-                    if self[tid].status in ["running","running/pause"]:
-                        self[tid]._getWriteAccess()
-                        p = self[tid]
-                    else:
+            if monitoring_component.enabled:
+                for tid in self.ids():
+                    try:
+                        if self[tid].status in ["running","running/pause"]:
+                            self[tid]._getWriteAccess()
+                            p = self[tid]
+                        else:
+                            continue
+                    except RegistryError:
+                        # could not acquire lock
                         continue
-                except RegistryError:
-                    # could not acquire lock
-                    continue
-                if self._main_thread.should_stop():
-                    break
-                try:
-                    # TODO: Make this user-configurable and add better error message 
-                    if (p.n_status("failed")*100.0/(20+p.n_status("completed")) > 20):
+                    if self._main_thread.should_stop():
+                        break
+                    try:
+                        # TODO: Make this user-configurable and add better error message 
+                        if (p.n_status("failed")*100.0/(20+p.n_status("completed")) > 20):
+                            p.pause()
+                            logger.error("Task %s paused - %i jobs have failed while only %i jobs have completed successfully." % (p.name,p.n_status("failed"), p.n_status("completed")))
+                            logger.error("Please investigate the cause of the failing jobs and then remove the previously failed jobs using job.remove()")
+                            logger.error("You can then continue to run this task with tasks(%i).run()" % p.id)
+                            continue
+                        numjobs = p.submitJobs()
+                        if numjobs > 0:
+                            self._flush([p])
+                    except Exception, x:
+                        logger.error("Exception occurred in task monitoring loop: %s %s\nThe offending task was paused." % (x.__class__,x))
                         p.pause()
-                        logger.error("Task %s paused - %i jobs have failed while only %i jobs have completed successfully." % (p.name,p.n_status("failed"), p.n_status("completed")))
-                        logger.error("Please investigate the cause of the failing jobs and then remove the previously failed jobs using job.remove()")
-                        logger.error("You can then continue to run this task with tasks(%i).run()" % p.id)
-                        continue
-                    numjobs = p.submitJobs()
-                    if numjobs > 0:
-                        self._flush([p])
-                except Exception, x:
-                    logger.error("Exception occurred in task monitoring loop: %s %s\nThe offending task was paused." % (x.__class__,x))
-                    p.pause()
+                    if self._main_thread.should_stop():
+                        break
             # Sleep interruptible for 10 seconds
             for i in range(0,100):
-                time.sleep(0.1)
                 if self._main_thread.should_stop():
                     break
+                time.sleep(0.1)
 
     def startup(self):
         """ Start a background thread that periodically run()s"""
