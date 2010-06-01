@@ -381,6 +381,9 @@ class Panda(IBackend):
         '''Resubmit failed subjobs'''
         from pandatools import Client
 
+        if self._getParent()._getParent(): # if has a parent then this is a subjob
+            raise BackendError('Panda','Resubmit on subjobs is not supported for Panda backend. \nUse j.resubmit() (i.e. resubmit the master job) and your failed subjobs \nwill be automatically selected and retried.')
+
         jobIDs = {}
         for job in jobs: 
             jobIDs[job.backend.id] = job
