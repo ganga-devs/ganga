@@ -49,11 +49,9 @@ class SessionLockRefresher(GangaThread):
         
 
     def run(self):
-        from Ganga.Core import monitoring_component
+
         try:
             while not self.should_stop():
-
-
                 ## TODO: Check for services active/inactive
                 try:
                     try:
@@ -71,8 +69,10 @@ class SessionLockRefresher(GangaThread):
                                     Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
                                     On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.")
                     # Clear expired session files if monitoring is active
-                    if monitoring_component.enabled:
-                        try:
+
+                    try:
+                        from Ganga.Core import monitoring_component
+                        if not monitoring_component is None and monitoring_component.enabled:
                             # Make list of sessions that are "alive"
                             ls_sdir = os.listdir(self.sdir)
                             session_files = [f for f in ls_sdir if f.endswith(".session")]
@@ -95,9 +95,9 @@ class SessionLockRefresher(GangaThread):
                                     if not asf in session_files:
                                         #logger.warning("Removing dead file %s" % (f))
                                         os.unlink(os.path.join(self.sdir,f))
-                        except OSError, x:
-                            # nothing really important, another process deleted the session before we did.
-                            logger.info("Unimportant OSError in loop: %s" % x)
+                    except OSError, x:
+                        # nothing really important, another process deleted the session before we did.
+                        logger.info("Unimportant OSError in loop: %s" % x)
                 except RepositoryError:
                     break
                 except Exception, x:
