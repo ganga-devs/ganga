@@ -99,14 +99,21 @@ class SplitByFiles(ISplitter):
         'maxFiles' : SimpleItem(defvalue=-1, doc=docstr)})
 
     def _splitFiles(self,inputs):
+        # don't let user use this if they're using the Dirac backend
+        job = None 
+        try:
+            job = self.getJobObject()
+        except:
+            pass
+        if job:
+            if job.backend.__module__.find('Dirac') > 0:
+                msg = 'SplitByFiles should not be used w/ the Dirac backend.'\
+                      ' You probably want the DiracSplitter.'
+                raise SplittingError(msg)
+
         return simple_split(self.filesPerJob,inputs)
 
     def split(self,job):
-        # don't let user use this if they're using the Dirac backend
-        #if job.backend.__module__.find('Dirac') > 0:
-        #    msg = 'SplitByFiles should not be used w/ the Dirac backend.'\
-        #          ' You probably want the DiracSplitter.'
-        #    raise SplittingError(msg)
         if self.filesPerJob < 1:
             logger.error('filesPerJob must be greater than 0.')
             raise SplittingError('filesPerJob < 1 : %d' % self.filesPerJob)

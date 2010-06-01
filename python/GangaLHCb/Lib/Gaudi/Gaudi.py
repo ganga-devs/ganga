@@ -2,6 +2,7 @@
 '''Application handler for Gaudi applications in LHCb.'''
 import os
 import tempfile
+import gzip
 from Ganga.GPIDev.Schema import *
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.logging
@@ -122,12 +123,19 @@ class Gaudi(Francesc):
         self.extra.outputsandbox,outputdata = parser.get_output(job)
         self.extra.outputdata.files += outputdata
         self.extra.outputdata.files = unique(self.extra.outputdata.files)
+
+        # write env into input dir
+        input_dir = job.getInputWorkspace().getPath()
+        file = gzip.GzipFile(input_dir + '/gaudi-env.py.gz','wb')
+        file.write('gaudi_env = %s' % str(self.shell.env))
+        file.close()
+        
         return (inputs, self.extra) # return (changed, extra)
 
     def configure(self,master_appconfig):
         self._configure()
         return (None,self.extra)
-            
+
     def _check_inputs(self):
         """Checks the validity of some of user's entries for Gaudi schema"""
 

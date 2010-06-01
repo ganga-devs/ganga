@@ -2,6 +2,7 @@
 '''Parent for all Gaudi and GaudiPython applications in LHCb.'''
 
 import tempfile
+import gzip
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 import CMTscript
@@ -145,8 +146,20 @@ class Francesc(IApplication):
         
         Note: Editing this does not affect the options processing.
         '''
-        self._getshell()
-        return self.shell.env.copy()
+        try:
+            job = self.getJobObject()
+        except:
+            self._getshell()
+            return self.shell.env.copy()
+        env_file_name = job.getInputWorkspace().getPath() + '/gaudi-env.py.gz'
+        if not os.path.exists(env_file_name):
+            self._getshell()
+            return self.shell.env.copy()
+        else:
+            in_file = gzip.GzipFile(env_file_name,'rb')
+            exec(in_file.read())
+            in_file.close()
+            return gaudi_env
     
     def getpack(self, options=''):
         """Execute a getpack command. If as an example dv is an object of
