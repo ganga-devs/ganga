@@ -957,6 +957,16 @@ GANGATIME4=`date +'%s'`
 # store output
 stage_outputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 
+#################################################
+# print AthSummary.txt
+
+if [ -e AthSummary.txt ] then
+    echo "-------- AthSummay.txt ------------"
+    cat AthSummary.txt
+    echo "-----------------------------------"
+fi
+
+#################################################
 GANGATIME5=`date +'%s'`
 
 echo "GANGATIME1=$GANGATIME1"

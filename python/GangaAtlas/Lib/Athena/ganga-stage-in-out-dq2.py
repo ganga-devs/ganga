@@ -692,6 +692,13 @@ try:
                 pass
 except:
     pass
+
+try:
+    from AthenaServices.SummarySvc import *
+    useAthenaSummarySvc()
+except:
+    pass
+
 """ % { 'inputFileList' : inputFileList, 'inputFileListPeeker' : inputFileListPeeker }
 
 ########################################################################
