@@ -68,12 +68,13 @@ class TaskRegistry(Registry):
             if self._main_thread.should_stop():
                 return
 
-        from Ganga.Core import monitoring_component
-        while not monitoring_component.enabled:
+        while True:
+            from Ganga.Core import monitoring_component
+            if not monitoring_component is None and monitoring_component.enabled:
+                break
             time.sleep(0.1)
             if self._main_thread.should_stop():
                 return
-
         
         # setup the tasks - THIS IS INCOMPATIBLE WITH CONCURRENCY
         # and must go away soon
