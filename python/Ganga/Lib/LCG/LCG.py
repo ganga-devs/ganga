@@ -16,7 +16,7 @@ import time
 import errno
 import socket
 import math
-import tempfile
+#import tempfile
 from types import *
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
