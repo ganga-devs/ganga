@@ -21,6 +21,8 @@ from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
 
+from sets import Set
+
 printed_explanation = False
 
 def safe_save(fn,obj,to_file,ignore_subs=''):
@@ -113,7 +115,8 @@ class GangaRepositoryLocal(GangaRepository):
 
     def index_load(self,id): 
         """ load the index file for this object if necessary
-            Loads if never loaded or timestamp changed. Creates object if necessary/
+            Loads if never loaded or timestamp changed. Creates object if necessary
+            Returns True if this object has been changed, False if not
             Raise IOError on access or unpickling error 
             Raise OSError on stat error
             Raise PluginManagerError if the class name is not found"""
@@ -136,6 +139,8 @@ class GangaRepositoryLocal(GangaRepository):
             finally:
                 fobj.close()
                 self._cache_load_timestamp[id] = os.stat(fn).st_ctime
+            return True
+        return False
 
     def index_write(self,id):
         """ write an index file for this object (must be locked).
@@ -184,8 +189,11 @@ class GangaRepositoryLocal(GangaRepository):
         # First locate and load the index files
         logger.debug("updating index...")
         objs = self.get_index_listing()
+        changed_ids = []
+        deleted_ids = Set(self.objects.keys())
         summary = []
         for id, idx in objs.iteritems():
+            deleted_ids.discard(id)
             # Make sure we do not overwrite older jobs if someone deleted the count file
             if id > self.sessionlock.count:
                 self.sessionlock.count = id + 1
@@ -194,7 +202,8 @@ class GangaRepositoryLocal(GangaRepository):
                 continue
             # Now we treat unlocked IDs
             try:
-                self.index_load(id) # if this succeeds, all is well and we are done
+                if self.index_load(id): # if this succeeds, all is well and we are done
+                    changed_ids.append(id)
                 continue
             except IOError, x:
                 logger.debug("IOError: Failed to load index %i: %s" % (id,x))
@@ -207,16 +216,26 @@ class GangaRepositoryLocal(GangaRepository):
             if not id in self.objects: # this is bad - no or corrupted index but object not loaded yet! Try to load it!
                 try:
                     self.load([id])
+                    changed_ids.append(id)
                     # Write out a new index if the file can be locked
                     if len(self.lock([id])) != 0:
                         self.index_write(id)
                         self.unlock([id])
                 except KeyError:
-                    pass # deleted job
+                    # deleted job
+                    if id in self.objects:
+                        self._internal_del__(id)
+                        changed_ids.append(id)
                 except InaccessibleObjectError, x:
                     logger.debug("Failed to load id %i: %s %s" % (id, x.orig.__class__.__name__, x.orig))
                     summary.append((id,x.orig))
-
+        # Check deleted files:
+        for id in deleted_ids:
+            self._internal_del__(id)
+            changed_ids.append(id)
+        if len(deleted_ids) > 0:
+            logger.warning("Registry '%s': Job %s externally deleted." % (self.registry.name, ",".join(map(str,list(deleted_ids)))))
+            
         if len(summary) > 0:
             cnt = {}
             examples = {}
@@ -233,6 +252,7 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.error("If you want to delete the incomplete objects, you can type 'for i in %s.incomplete_ids(): %s(i).remove()' (press 'Enter' twice)" % (self.registry.name, self.registry.name))
                 printed_explanation = True
         logger.debug("updated index done")
+        return changed_ids
 
     def add(self, objs, force_ids = None):
         """ Add the given objects to the repository, forcing the IDs if told to.

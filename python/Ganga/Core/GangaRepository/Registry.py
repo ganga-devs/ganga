@@ -6,6 +6,8 @@ from GangaRepository import InaccessibleObjectError
 
 import time, threading
 
+from sets import Set
+
 class RegistryError(GangaException):
     def __init__(self,what):
         GangaException.__init__(self,what)
@@ -65,6 +67,8 @@ class IncompleteObject(object):
         try:
             self.registry.repository.load([self.id])
             print "Successfully reloaded '%s' object #%i!" % (self.registry.name,self.id)
+            for d in self.registry.changed_ids.itervalues():
+                d.add(id)
         finally:
             self.registry._lock.release()
 
@@ -80,6 +84,8 @@ class IncompleteObject(object):
                     pass
                 raise RegistryLockError(errstr)
             self.registry.repository.delete([self.id])
+            for d in self.changed_ids.itervalues():
+                d.add(id)
         finally:
             self.registry._lock.release()
 
@@ -104,6 +110,7 @@ class Registry(object):
         self._needs_metadata = False
         self.metadata = None
         self._lock = threading.RLock()
+        self.changed_ids = {}
 
 # Methods intended to be called from ''outside code''
     def __getitem__(self,id):
@@ -129,10 +136,13 @@ class Registry(object):
         if self._started and time.time() > self._update_index_timer + self.update_index_time:
             self._lock.acquire()
             try:
-                self.repository.update_index()
+                changed_ids = self.repository.update_index()
+                for d in self.changed_ids.itervalues():
+                    d.update(changed_ids)
             finally:
                 self._lock.release()
             self._update_index_timer = time.time()
+
         k = self._objects.keys()
         k.sort()
         return k
@@ -143,10 +153,13 @@ class Registry(object):
         if self._started and time.time() > self._update_index_timer + self.update_index_time:
             self._lock.acquire()
             try:
-                self.repository.update_index()
+                changed_ids = self.repository.update_index()
+                for d in self.changed_ids.itervalues():
+                    d.update(changed_ids)
             finally:
                 self._lock.release()
             self._update_index_timer = time.time()
+
         its = self._objects.items()
         its.sort()
         return its
@@ -197,6 +210,7 @@ class Registry(object):
             self.repository.delete(self._objects.keys())
             self.dirty_objs = []
             self.dirty_hits = 0
+            self.changed_ids = {}
             self.repository.clean()
         finally:
             self._lock.release()
@@ -221,6 +235,8 @@ class Registry(object):
                 ids = self.repository.add([obj],[force_index]) # raises exception if len(ids) < 1
             obj._registry_locked = True
             self.repository.flush(ids)
+            for d in self.changed_ids.itervalues():
+                d.update(ids)
             return ids[0]
         finally:
             self._lock.release()
@@ -254,6 +270,8 @@ class Registry(object):
                     self.dirty_objs.remove(obj)
                 self.repository.delete([id])
                 del obj
+                for d in self.changed_ids.itervalues():
+                    d.add(id)
             finally:
                 self._lock.release()
             
@@ -276,6 +294,8 @@ class Registry(object):
             # HACK for GangaList: there _dirty is called _before_ the object is modified
             if not obj in self.dirty_objs:
                 self.dirty_objs.append(obj)
+            for d in self.changed_ids.itervalues():
+                d.add(self.find(obj))
         finally:
             self._lock.release()
 
@@ -327,6 +347,8 @@ class Registry(object):
                     raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id,self.name))
                 except InaccessibleObjectError, x:
                     raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id,self.name,str(x)))
+                for d in self.changed_ids.itervalues():
+                    d.add(id)
             finally:
                 self._lock.release()
 
@@ -362,6 +384,8 @@ class Registry(object):
                         raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id,self.name))
                     except InaccessibleObjectError, x:
                         raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id,self.name,str(x)))
+                    for d in self.changed_ids.itervalues():
+                        d.add(id)
                 obj._registry_locked = True
             finally:
                 self._lock.release()
@@ -387,6 +411,24 @@ class Registry(object):
         finally:
             self._lock.release()
 
+    def pollChangedJobs(self,name):
+        """Returns a list of job ids that changed since the last call of this function.
+        On first invocation returns a list of all ids.
+        "name" should be a unique identifier of the user of this information."""
+
+        self._lock.acquire()
+        try:
+            if self._started and time.time() > self._update_index_timer + self.update_index_time:
+                changed_ids = self.repository.update_index()
+                for d in self.changed_ids.itervalues():
+                    d.update(changed_ids)
+                self._update_index_timer = time.time()
+            res = self.changed_ids.get(name,Set(self.ids()))
+            self.changed_ids[name] = Set()
+            return res
+        finally:
+            self._lock.release()
+
     def getIndexCache(self,obj):
         """Returns a dictionary to be put into obj._index_cache
         This can and should be overwritten by derived Registries to provide more index values."""
@@ -394,23 +436,29 @@ class Registry(object):
 
     def startup(self):
         """Connect the repository to the registry. Called from Repository_runtime.py"""
-        t0 = time.time()
-        self.repository = makeRepository(self)
-        self._objects = self.repository.objects
-        self._incomplete_objects = self.repository.incomplete_objects
+        self._lock.acquire()
+        try:
+            t0 = time.time()
+            self.repository = makeRepository(self)
+            self._objects = self.repository.objects
+            self._incomplete_objects = self.repository.incomplete_objects
 
-        if self._needs_metadata:
-            if self.metadata is None:
-                self.metadata = Registry(self.name+".metadata", "Metadata repository for %s"%self.name, dirty_flush_counter=self.dirty_flush_counter, update_index_time = self.update_index_time)
-                self.metadata.type = self.type
-                self.metadata.location = self.location
-                self.metadata._parent = self
-            self.metadata.startup()
+            if self._needs_metadata:
+                if self.metadata is None:
+                    self.metadata = Registry(self.name+".metadata", "Metadata repository for %s"%self.name, dirty_flush_counter=self.dirty_flush_counter, update_index_time = self.update_index_time)
+                    self.metadata.type = self.type
+                    self.metadata.location = self.location
+                    self.metadata._parent = self
+                self.metadata.startup()
 
-        self.repository.startup()
-        t1 = time.time()
-        logger.info("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0))
-        self._started = True
+            self.repository.startup()
+            # All Ids could have changed
+            self.changed_ids = {}
+            t1 = time.time()
+            logger.info("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0))
+            self._started = True
+        finally:
+            self._lock.release()
         
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """

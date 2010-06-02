@@ -76,11 +76,11 @@ class GangaRepository(object):
         raise NotImplementedError
 
     def update_index(self, id = None):
-        """update_index(id = None) --> None
+        """update_index(id = None) --> iterable of ids
         Read the index containing the given ID (or all indices if id is None).
         Create objects as needed , and set the _index_cache for all objects 
         that are not fully loaded.
-        If an error occurs on loading an object, an EmptyGangaObject should be created.
+        Returns a list of ids of jobs that changed/removed/added
         Raise RepositoryError
         """
         raise NotImplementedError
