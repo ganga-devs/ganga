@@ -191,7 +191,8 @@ fi
 #################################################
 # print AthSummary.txt
 
-if [ -e AthSummary.txt ] then
+if [ -e AthSummary.txt ] 
+    then
     echo "-------- AthSummay.txt ------------"
     cat AthSummary.txt
     echo "-----------------------------------"
