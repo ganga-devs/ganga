@@ -394,7 +394,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 dq2_isGroupDS = job.outputdata.isGroupDS
                 dq2_groupname = job.outputdata.groupname
             else:
-                dq2datasetname = ''
+                dq2_datasetname = ''
                 dq2_isGroupDS = False
                 dq2_groupname = ''
             self.output_datasetname, self.output_lfn = dq2outputdatasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
