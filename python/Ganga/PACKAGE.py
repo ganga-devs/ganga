@@ -45,7 +45,7 @@ _externalPackages = {
               'noarch':True,
               'syspath'       : 'lib/python2.2/site-packages',
               'maxHexVersion' : '0x20300f0'}, #maximum Python version number for adding Optik to path
-   'ipython': {'version' : '0.8.4',
+   'ipython': {'version' : '0.6.13_ganga_patch1',
                'noarch':True,
                'PYTHONPATH' : 'lib/python'},
    'ApMon' : {'version' : '2.2.11', 
