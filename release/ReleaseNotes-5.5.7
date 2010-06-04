@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.7 (2010/6/2)
+5.5.7 (2010/6/4)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -13,6 +13,9 @@ SIGTERM. If after another 5 seconds the
 process still exists, then it is killed with SIGKILL. The semantics is that you can be pretty sure 
 that the process in not alive after cmd() 
 returns.
+
+Reverted to a patched version of ipython 0.6.13, which works with python 2.6. This is a temporary 
+measure until a newer ipython version resolves the globals scoping problem.
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -36,6 +39,7 @@ ganga/python/GangaAtlas
 Athena:
 ------
 * Add AthSummary.txt print-out to job logs
+* Fix bug #68304: Fix typo in AthenaLocalRTHandler and AthenaLCGRTHandler
 
 Tasks:
 -----
