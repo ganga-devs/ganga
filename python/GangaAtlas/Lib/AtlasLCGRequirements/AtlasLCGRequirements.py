@@ -158,7 +158,7 @@ def _refreshCESEInfo():
             logger.info('Reading local copy of CE-SE association file.')
             CESEInfo = _loadCESEInfo()
             if not CESEInfo:
-                logger.warning('CE-SE association file is removed and a new copy will be downloaded.')
+                logger.debug('CE-SE association file is removed and a new copy will be downloaded.')
                 os.unlink(CESEInfoLocal)
     
     retry = 0
@@ -198,13 +198,13 @@ def getSEsForSites(ids):
                 continue
             sitesrm = site_info['srm']
             if sitesrm == '': 
-                logger.warning('Site %s has no srm info in TiersOfATLAS',site)
+                logger.debug('Site %s has no srm info in TiersOfATLAS',site)
                 continue
             sitesrm = re.sub('token:*\w*:','', sitesrm)
             sitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', sitesrm)
             match = re_srm.match(sitesrm)
             if not match:
-                logger.warning('Cannot extract host from %',sitesrm)
+                logger.debug('Cannot extract host from %',sitesrm)
                 continue
             se_dict[match.group(1)] = True
 
@@ -249,25 +249,25 @@ def getCEsForSites(ids, excluded_ids = [] ):
             if site_info.has_key('srm'):
                 sitesrm = site_info['srm']
                 if sitesrm == '': 
-                    logger.warning('Site %s has no srm info in TiersOfATLAS',site)
+                    logger.debug('Site %s has no srm info in TiersOfATLAS',site)
                     continue
                 sitesrm = re.sub('token:*\w*:','', sitesrm)
                 sitesrm = re.sub(':*\d*/srm/managerv2\?SFN=','', sitesrm)
                 match = re_srm.match(sitesrm)
                 if not match:
-                    logger.warning('Cannot extract host from %s',sitesrm)
+                    logger.debug('Cannot extract host from %s',sitesrm)
                 else:
                     try:
                         ces = CESEInfo['se_info'][match.group(1)]['close_ce']
                     except KeyError:
-                        logger.warning('Did not find CE-SE association for %s',match.group(1))
+                        logger.debug('Did not find CE-SE association for %s',match.group(1))
 
             if not ces:
                 try:
                     lcg_site = site_info['alternateName'][-1].upper()
                     ces = CESEInfo['lcg_site_info'][lcg_site]
                 except Exception:
-                    logger.warning('No CE information on site %s. Maybe it failes the SAM test.',site)
+                    logger.debug('No CE information on site %s. Maybe it failes the SAM test.',site)
 
             for ce in ces: 
                 ce_dict[ce] = True
