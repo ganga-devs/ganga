@@ -287,59 +287,70 @@ class JobExecutionMonitor(GangaObject):
     def __init__(self):
         GangaObject.__init__(self)
 
-        def keyPressed():
-            return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
+        try:
+            def keyPressed():
+                return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
 
-        p = os.path.expanduser("~/.GangaJEM")
-        if not os.path.exists(p):
-            os.mkdir(p)
+            p = os.path.expanduser("~/.GangaJEM")
+            if not os.path.exists(p):
+                os.mkdir(p)
 
-            timeout = 60
+                timeout = 60
 
-            print "* "
-            print "* Thank you for trying this beta version of the Job Execution Monitor!"
-            print "* "
-            print "* This version brings a major rewrite of JEMs worker node module, featur-"
-            print "* ing better performance & stability; not all features have yet been por-"
-            print "* ted to this new module, though. Refer to the documentation for more in-"
-            print "* formation about this: help('JobExecutionMonitor')"
-            print "* "
-            print "* Please note that for statistical purposes, information about all JEM"
-            print "* runs is gathered centrally. If you don't wish personalized data (time-"
-            print "* stamps, the CEs your jobs get assigned to, the name of the VO, and your"
-            print "* grid certificate's subject / your name) to be recorded, please state so:"
-            print "* "
-            print "*   Allow JEM to gather personalized data?"
-            print "* "
-            print "*   press return to accept, ctrl+c to deny (defaulting to 'yes' in %d sec)" % timeout
+                print "* "
+                print "* Thank you for trying this beta version of the Job Execution Monitor!"
+                print "* "
+                print "* This version brings a major rewrite of JEMs worker node module, featur-"
+                print "* ing better performance & stability; not all features have yet been por-"
+                print "* ted to this new module, though. Refer to the documentation for more in-"
+                print "* formation about this: help('JobExecutionMonitor')"
+                print "* "
+                print "* We'd like to encourage you to give any feedback you have - positive as"
+                print "* well as negative - about JEM, to help us improve the system. So if you"
+                print "* have anything to comment, don't hesitate to contact us:"
+                print "* "
+                print "*     send an e-mail to: muenchen@physik.uni-wuppertal.de"
+                print "*     visit our homepage https://svn.grid.uni-wuppertal.de/trac/JEM"
+                print "* "
+                print "* Please note that for statistical purposes, information about all JEM"
+                print "* runs is gathered centrally. If you don't wish personalized data (time-"
+                print "* stamps, the CEs your jobs get assigned to, the name of the VO, and your"
+                print "* grid certificate's subject / your name) to be recorded, please state so:"
+                print "* "
+                print "*   Allow JEM to gather personalized data?"
+                print "* "
+                print "*   press return to accept, ctrl+c to deny (defaulting to 'yes' in %d sec)" % timeout
 
-            if keyPressed():
-                sys.stdin.readlines()
-            ts = time.time()
-            try:
-                while True: # abort condition is in-loop...
-                    while time.time() - ts < 1.0:
-                        if keyPressed():
-                            sys.stdin.read(1)
-                            timeout = 0
+                if keyPressed():
+                    sys.stdin.readlines()
+                ts = time.time()
+                try:
+                    while True: # abort condition is in-loop...
+                        while time.time() - ts < 1.0:
+                            if keyPressed():
+                                sys.stdin.read(1)
+                                timeout = 0
+                                break
+                            time.sleep(0.01)
+                        if timeout == 0:
+                            print "*   ...yes. will gather information about your job runs."
                             break
-                        time.sleep(0.01)
-                    if timeout == 0:
-                        print "*   ...yes. will gather information about your job runs."
-                        break
-                    timeout = timeout - 1
-                    ts = time.time()
-            except KeyboardInterrupt:
-                fd = open(p + "/anonymous", "w")
-                fd.write(".\n")
-                fd.close()
-                self.anonymous = True
-                print "*   ...no. statistics about your job runs will be anonymized."
-            except:
-                pass
-        else:
-            if os.path.exists(p + "/anonymous"):
-                self.anonymous = True
+                        timeout = timeout - 1
+                        ts = time.time()
+                except KeyboardInterrupt:
+                    fd = open(p + "/anonymous", "w")
+                    fd.write(".\n")
+                    fd.close()
+                    self.anonymous = True
+                    print "*   ...no. statistics about your job runs will be anonymized."
+                except:
+                    pass
+            else:
+                if os.path.exists(p + "/anonymous"):
+                    self.anonymous = True
+        except:
+            # if our check fails, assume 'yes' (GangaRobot et al).
+            self.anonymous = False
 
     ####################################################################################################################
     ### public interface (methods exported via _exportmethods)
