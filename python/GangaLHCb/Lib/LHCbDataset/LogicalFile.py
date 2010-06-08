@@ -18,7 +18,7 @@ def get_dirac_space_tokens():
 def get_result(cmd,log_msg,except_msg):
     from GangaLHCb.Lib.DIRAC.Dirac import Dirac
     from GangaLHCb.Lib.DIRAC.DiracUtils import result_ok
-    result = Dirac.execAPI(cmd)    
+    result = Dirac.execAPI(cmd)
     if not result_ok(result):
         logger.warning('%s: %s' % (log_msg,str(result)))
         raise GangaException(except_msg)

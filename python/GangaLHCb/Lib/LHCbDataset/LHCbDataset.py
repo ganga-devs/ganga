@@ -106,9 +106,24 @@ class LHCbDataset(Dataset):
             return
         if not self.hasLFNs():
             raise GangaException('Cannot replicate dataset w/ no LFNs.')
+        retry_files = []
         for f in self.files:
             if not isLFN(f): continue
-            f.replicate(destSE,srcSE,locCache)
+            try:
+                result = f.replicate(destSE,srcSE,locCache)
+            except:
+                msg = 'Replication error for file %s (will retry in a bit).'\
+                      % f.name
+                logger.warning(msg)
+                retry_files.append(f)
+        for f in retry_files:
+            print f.name
+            try:
+                result = f.replicate(destSE,srcSE,locCache)
+            except:
+                msg = '2nd replication attempt failed for file %s.' % f.name
+                logger.warning(msg)
+                logger.warning(str(result))
 
     def extend(self,files,unique=False):
         '''Extend the dataset. If unique, then only add files which are not

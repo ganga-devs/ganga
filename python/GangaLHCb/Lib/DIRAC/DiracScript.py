@@ -7,7 +7,7 @@ import Ganga.Utility.logging
 from Ganga.Core import BackendError
 
 logger = Ganga.Utility.logging.getLogger()
-config = Ganga.Utility.Config.getConfig('DIRAC')
+config = Ganga.Utility.Config.getConfig('LHCb')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -117,8 +117,9 @@ class DiracScript:
         if self.exe: contents += self.exe.write()
         if self.inputdata: contents += self.inputdata.write()
         if self.outputdata and self.outputdata.files:
-            contents += 'j.setOutputData(%s,OutputPath="%s")\n' % \
-                        (str(self.outputdata.files),self.outputdata.location)
+            contents += 'j.setOutputData(%s,OutputPath="%s",OutputSE=%s)\n' % \
+                        (str(self.outputdata.files),self.outputdata.location,
+                         config['DiracOutputDataSE'])
         if self.platform:
             contents += "j.setSystemConfig('%s')\n" % self.platform
         contents += '\n'

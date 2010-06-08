@@ -36,6 +36,9 @@ defval = {"SVC='LHCb::MDFSelector'" : ['*.raw','*.RAW','*.mdf','*.MDF']}
 configLHCb.addOption('datatype_string_patterns',defval,dscrpt)
 dscrpt = 'Automatically download sandbox for failed jobs?'
 configLHCb.addOption('failed_sandbox_download',True,dscrpt)
+dscrpt = 'List of SEs where Dirac ouput data should be placed (empty means '\
+         'let DIRAC decide where to put the data).'
+configLHCb.addOption('DiracOutputDataSE',[],dscrpt)
  
 # Set default values for the Dirac section.
 dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
