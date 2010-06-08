@@ -41,7 +41,6 @@ stageInDQ2(){
     LFNS=$1   
     INPUTDSET=$2
     shift 2;
-    SITES=$@
     dq2get=`which dq2-get`
 #    py32=`which python32`
  
@@ -176,9 +175,9 @@ for ((i=0;i<${#lfn[@]};i++)); do
 
  INPUTFILE=${lfn[${i}]}
  INPUTDSET=${dset[${i}]}
- SITE=${site[${i}]}
+# SITE=${site[${i}]}
  TURL=${turl[${i}]}
- echo "entry: $i , lfn is $INPUTFILE , from dataset $INPUTDSET, site $SITE , TURL is $TURL ."
+ echo "entry: $i , lfn is $INPUTFILE , from dataset $INPUTDSET, TURL is $TURL ."
 
    
  echo "==============================="
@@ -195,9 +194,9 @@ for ((i=0;i<${#lfn[@]};i++)); do
 	return 12
     fi
     status=1
-    if [ ! -z "$INPUTDSET" -a ! -z "$SITE" ]; then
+    if [ ! -z "$INPUTDSET" ]; then
         echo "Using DQ2 to get input files" 
-	stageInDQ2 $INPUTFILE $INPUTDSET $SITE # uses dq2
+	stageInDQ2 $INPUTFILE $INPUTDSET # uses dq2
 	status=$?
     else
        echo "Missing data , cannot use dq2"

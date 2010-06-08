@@ -112,7 +112,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         trfopts=trfopts.replace("-","/F")
         
         trflags=trfopts
-        if app.mode !="template":
+        if app.mode =="evgen":
             trflags="/Ft"
             if app.verbosity:
                 trflags+="/W/Fl/W%s" % app.verbosity

@@ -85,8 +85,10 @@ class AthenaMC(IApplication):
        
 
        if trfretcode != "0":
-           logger.warning("Job %s returned non-zero transformation code %s. Please check stdout.gz with job.peek('stdout.gz')" % (str(job.id),trfretcode))
-       
+           if trfretcode:
+               logger.warning("Job %s returned non-zero transformation code: %s . Please check stdout.gz with job.peek('stdout.gz')" % (job.getFQID('.'),trfretcode))
+           else:
+               logger.warning("Job %s returned without transformation return code. It either crashed before starting the transform or was a test job. Please check that application.dryrun was not set to True and check  stdout.gz and stderr.gz with job.peek()" % job.getFQID('.'))
        if job.outputdata:
            job.outputdata.fill()
               

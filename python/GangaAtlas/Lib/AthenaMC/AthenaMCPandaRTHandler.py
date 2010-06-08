@@ -61,7 +61,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         from taskbuffer.FileSpec import FileSpec
 
         job = app._getParent()
-        logger.debug('AthenaMCPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
+        logger.debug('AthenaMCPandaRTHandler master_prepare called for %s', job.getFQID('.'))
         usertag = configDQ2['usertag']
         #usertag='user09'
         self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,gridProxy.identity(),commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
@@ -132,7 +132,9 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,'Uploading archive failed')
         finally:
             os.chdir(cwd)      
-                    
+
+
+
         # Use Panda's brokerage
 ##         if job.inputdata and len(app.sites)>0:
 ##             # update cloud, use inputdata's
@@ -164,9 +166,36 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
                                                             
         from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
         runPandaBrokerage(job)
+
+        
         if job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
-        
+
+        # output dataset preparation and registration
+        try:
+            outDsLocation = Client.PandaSites[job.backend.site]['ddm']
+        except:
+            raise ApplicationConfigurationError(None,"Could not extract output dataset location from job.backend.site value: %s. Aborting" % job.backend.site)
+        if not app.dryrun:
+            for outtype in app.outputpaths.keys():
+                dset=string.replace(app.outputpaths[outtype],"/",".")
+                dset=dset[1:]
+                # dataset registration must be done only once.
+                print "registering output dataset %s at %s" % (dset,outDsLocation)
+                try:
+                    Client.addDataset(dset,False,location=outDsLocation)
+                except:
+                    raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % dset)
+            # extend registration to build job lib dataset:
+            print "registering output dataset %s at %s" % (self.libDataset,outDsLocation)
+
+            try:
+                Client.addDataset(self.libDataset,False,location=outDsLocation)
+            except:
+                raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % self.libDataset)
+
+
+        ###
         cacheVer = "-AtlasProduction_" + str(app.prod_release)
             
         logger.debug("master job submit?")
@@ -224,6 +253,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
 
         job = app._getParent()
         logger.debug('AthenaMCPandaRTHandler prepare called for %s', job.getFQID('.'))
+        
         try:
             assert self.outsite
         except:
@@ -329,14 +359,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             fout = FileSpec()
             dset=string.replace(app.outputpaths[outtype],"/",".")
             dset=dset[1:-1]
-            if self.firstPass and not app.dryrun:
-                # dataset registration must be done only once.
-                try:
-                    Client.addDataset(dset,False)
-                except:
-                    raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % dset)
-            self.firstPass=False
-                
+            print "dataset",dset
             fout.dataset=dset
             fout.lfn=pandaOutfiles[outtype]
             fout.type              = 'output'
@@ -362,7 +385,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         # transform parameters
         # need to update arglist with final output file name...
         newArgs=[]
-        if app.mode != "template":
+        if app.mode == "evgen":
             app.args[3]=app.args[3]+" -t "
             if app.verbosity:
                 app.args[3]=app.args[3]+" -l %s " % app.verbosity
@@ -403,7 +426,11 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         jspec.metadata="--trf \"%s\"" % arglist
 
         #print "SUBJOB DETAILS:",jspec.values()
-
+        if app.dryrun:
+            print "job.application.dryrun activated, printing out job parameters"
+            print jspec
+            return
+        
         return jspec
 
 
