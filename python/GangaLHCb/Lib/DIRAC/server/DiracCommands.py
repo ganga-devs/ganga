@@ -229,8 +229,18 @@ class DiracCommands:
         return result
     getSoftwareVersions = staticmethod(getSoftwareVersions)
 
-    def getDataset(path,dqflag):
-        result = DiracCommands.dirac.bkQueryPath(path,dqflag)
+    def getDataset(path,dqflag,type,start,end,sel):
+        if type is 'Path':
+            result = DiracCommands.dirac.bkQueryPath(path,dqflag)
+        elif type is 'RunsByDate':
+            result = DiracCommands.dirac.bkQueryRunsByDate(path,start,end,
+                                                           dqflag,sel)
+        elif type is 'Run':
+            result = DiracCommands.dirac.bkQueryRun(path,dqflag)
+        elif type is 'Production':
+            result = DiracCommands.dirac.bkQueryProduction(path,dqflag)
+        else:
+            result = {'OK':False,'Message':'Unsupported type!'}
         return result
     getDataset = staticmethod(getDataset)
 
