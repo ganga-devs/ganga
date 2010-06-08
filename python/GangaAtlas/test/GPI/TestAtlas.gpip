@@ -353,29 +353,29 @@ class TestAthenaMCPanda(AtlasTest):
         self.j=Job()
         self.j.application=AthenaMC()
         self.j.application.atlas_release='15.6.3.1'
-        self.j.application.random_seed='1102362401'
-        self.j.application.production_name='tutorial'   
-        self.j.application.process_name='single_e_Et40'
-        self.j.application.run_number='7004'
-        self.j.application.firstevent=1
+	self.j.application.firstevent=1
         self.j.application.number_events_job=1
         self.j.application.verbosity = "INFO"
         self.j.backend=Panda()
         #self.j.backend.requirements.cloud = "US"
         self.j.outputdata=AthenaMCOutputDatasets()
-	self.j.application.dryrun = True
+	self.j.application.dryrun = False 
      
 
 class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
     def setup(self):
         TestAthenaMCPanda.setup(self)
-        #self.j.application.se_name='ANALY_SLAC'
+        self.j.application.random_seed='1'
+        self.j.application.production_name='tutorial'   
+        self.j.application.process_name='single_e_Et40'
+        self.j.application.run_number='7004'
         self.j.application.evgen_job_option='MC8.107004.singlepart_e_Et40.py'
-        self.j.application.transform_script='csc_evgen08_trf.py'
         self.j.application.number_events_job=30
         self.j.application.mode='evgen'
         self.j.application.transform_script = "csc_evgen_trf.py"
         self.j.application.verbosity='INFO'
+	self.j.backend.site="ANALY_SLAC"	
+	self.j.backend.requirements.cloud = "US"
         assert (self.j.submit()==True)
 
 class TestAthenaMCPanda_simul(TestAthenaMCPanda):
@@ -383,7 +383,11 @@ class TestAthenaMCPanda_simul(TestAthenaMCPanda):
         TestAthenaMCPanda.setup(self)
         self.j.application.mode='simul'
         self.j.application.transform_script = "csc_simul_trf.py"
-        self.j.application.geometryTag = 'ATLAS-CSC-05'
+        self.j.application.geometryTag = 'ATLAS-GEO-10-00-00'
+	self.j.application.triggerConfig = 'NONE' 	
+	self.j.application.atlas_release = '15.6.3.10'
+	self.j.application.extraArgs = 'jobConfig=VertexFromCondDB.py,CalHits.py,jobConfig.LooperKiller.py physicsList=QGSP_BERT DBRelease=9.0.1'
+	self.j.application.production_name='testPanda'	
         self.j.inputdata=AthenaMCInputDatasets()
         self.j.inputdata.DQ2dataset='user09.JohannesEbke.ganga.tutorial.007004.single_e_Et40.evgen.EVNT.jid000004'
         self.j.inputdata.datasetType='DQ2'
@@ -395,7 +399,6 @@ class TestAthenaMCPanda_simul(TestAthenaMCPanda):
 class TestAthenaMCPanda_recon(TestAthenaMCPanda):
     def setup(self):
         TestAthenaMCPanda.setup(self)
-        self.j.application.run_number='000001'
         self.j.application.atlas_release='15.6.3.1'
         self.j.application.mode='recon'
         self.j.application.transform_script = "csc_reco_trf.py"
@@ -403,7 +406,6 @@ class TestAthenaMCPanda_recon(TestAthenaMCPanda):
         self.j.inputdata.DQ2dataset='user09.JahredAdelman.mc09_900GeV.105001.pythia_minbias.digit.RDO.e466_s604_s582_d216_ephase_Boff'
         self.j.inputdata.datasetType='DQ2'
         self.j.inputdata.number_events_file=1
-        self.j.outputdata=AthenaMCOutputDatasets()
         self.j.splitter=AthenaMCSplitterJob()
         self.j.splitter.numsubjobs = 3
         assert(self.j.submit()==True)
