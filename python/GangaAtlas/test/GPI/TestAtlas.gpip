@@ -399,11 +399,14 @@ class TestAthenaMCPanda_simul(TestAthenaMCPanda):
 class TestAthenaMCPanda_recon(TestAthenaMCPanda):
     def setup(self):
         TestAthenaMCPanda.setup(self)
-        self.j.application.atlas_release='15.6.3.1'
+        self.j.application.atlas_release='15.6.9.8'
         self.j.application.mode='recon'
-        self.j.application.transform_script = "csc_reco_trf.py"
+        self.j.application.transform_script = "Reco_trf.py"
+	self.j.application.geometryTag = 'ATLAS-GEO-10-00-00'	
+	self.j.application.production_name = 'testPanda'
+	self.j.application.extraArgs = 'RunNumber=105485 autoConfiguration=everything preInclude=RecJobTransforms/SetJetConstants-02-000.py preExec="rec.Commissioning.set_Value_and_Lock(True);InDetFlags.doMinBias.set_Value_and_Lock(False);jobproperties.Beam.energy.set_Value_and_Lock(3500*Units.GeV);muonRecFlags.writeSDOs=True;rec.doDPD=True;InDetFlags.useBeamConstraint.set_Value_and_Lock(True);from CaloRec.CaloCellFlags import jobproperties;jobproperties.CaloCellFlags.doLArDeadOTXCorr.set_Value_and_Lock(False)" postExec="topSequence.TimeOut=7200*Units.s" DBRelease=DBRelease-10.7.1.tar.gz conditionsTag=OFLCOND-DR-BS7T-ANom-15 geometryVersion=ATLAS-GEO-10-00-00 AMITag=r1302 triggerConfig=MCRECO:DB:TRIGGERDBMC:145,73,124 --ignoreerrors=ALL'	
         self.j.inputdata=AthenaMCInputDatasets()
-        self.j.inputdata.DQ2dataset='user09.JahredAdelman.mc09_900GeV.105001.pythia_minbias.digit.RDO.e466_s604_s582_d216_ephase_Boff'
+        self.j.inputdata.DQ2dataset='group09.phys-exotics.mc09_7TeV.105485.Pythia_DYmumu_1500M1750_unfiltered.digit.RDO.e549_s765_s767_d308'
         self.j.inputdata.datasetType='DQ2'
         self.j.inputdata.number_events_file=1
         self.j.splitter=AthenaMCSplitterJob()
