@@ -1492,11 +1492,19 @@ class DQ2OutputDataset(Dataset):
         from Ganga.GPIDev.Lib.Job import Job
         from GangaAtlas.Lib.ATLASDataset import Download
         import os, threading
-        
+
+        subjobDownload = options.get('subjobDownload')
+
         job = self._getParent()
 
+        # Master job finish
+        if not job.master and job.subjobs:
+            masterJob = True
+        else:
+            masterJob = False
+
         # call the subjob retrieve method if available
-        if len(job.subjobs) > 0:
+        if len(job.subjobs) > 0 and subjobDownload:
             for sj in job.subjobs:
                 sj.outputdata.retrieve()
             return
@@ -1540,18 +1548,15 @@ class DQ2OutputDataset(Dataset):
             else:
                 # User job repository location
                 outputlocation = job.outputdir
-            
-            # loop over all filenames
-            filenames = job.outputdata.output
-            for fileinfo in filenames:
-                filename = fileinfo.split(',')[1]
 
+            # Use single download if called from master job
+            if masterJob and not subjobDownload:
                 exe = 'dq2-get --client-id=ganga -L ROAMING -a -d -D '
 
                 if job.backend._name == 'Panda':
-                    cmd = '%s -H %s -f %s %s' %(exe, outputlocation, filename, job.outputdata.datasetname)
+                    cmd = '%s -H %s %s' %(exe, outputlocation, job.outputdata.datasetname)
                 else:
-                    cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, outputlocation, filename, job.outputdata.datasetname)
+                    cmd = '%s -H %s %s' %(exe, outputlocation, job.outputdata.datasetname)
                 
                 logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
 
@@ -1560,6 +1565,27 @@ class DQ2OutputDataset(Dataset):
                 thread.setDaemon(True)
                 thread.start()
                 threads.append(thread)
+            
+            else: # User download per subjob 
+                # loop over all filenames
+                filenames = job.outputdata.output
+                for fileinfo in filenames:
+                    filename = fileinfo.split(',')[1]
+
+                    exe = 'dq2-get --client-id=ganga -L ROAMING -a -d -D '
+
+                    if job.backend._name == 'Panda':
+                        cmd = '%s -H %s -f %s %s' %(exe, outputlocation, filename, job.outputdata.datasetname)
+                    else:
+                        cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, outputlocation, filename, job.outputdata.datasetname)
+                
+                    logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
+
+                    threads=[]
+                    thread = Download.download_dq2(cmd)
+                    thread.setDaemon(True)
+                    thread.start()
+                    threads.append(thread)
                 
             #for thread in threads:
             #    thread.join()
