@@ -926,8 +926,8 @@ class AthenaMCOutputDatasets(Dataset):
                 fileprefixes["ESD"]  = app_prefix + ".recon.ESD"
             if not "AOD" in fileprefixes:
                 fileprefixes["AOD"]  = app_prefix + ".recon.AOD"
-            if not "NTUP" in fileprefixes:
-                fileprefixes["NTUP"] = app_prefix + ".recon.NTUP"
+            #if not "NTUP" in fileprefixes: # rarely use, should be set on demand only
+            #    fileprefixes["NTUP"] = app_prefix + ".recon.NTUP"
 
         if app.version:
             for key in fileprefixes.keys():

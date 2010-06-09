@@ -584,7 +584,8 @@ class AthenaMC(IApplication):
         # map to subjobs.
         self.subjobsOutfiles[job.id]={}
         for type in self.outputfiles.keys():
-            self.subjobsOutfiles[job.id][type]=self.outputfiles[type]
+            if self.outputfiles[type].upper() != "NONE":
+                self.subjobsOutfiles[job.id][type]=self.outputfiles[type]
 
         for type in self.outputfiles.keys():
             if self.outputpaths[type][-1]!="/":
@@ -612,61 +613,110 @@ class AthenaMC(IApplication):
         elif self.mode=='template':
             self.args=self.getTemplateArgs()
 
+
         if self.extraArgs:    
-            #            args.append(self.extraArgs)
-            #        need to scan for $entries...
-            arglist=string.split(self.extraArgs)
-            NewArgstring=""
-            for arg in arglist:
-                key,val=string.split(arg,"=")
-                if key=="DBRelease" and self.dbrelease:
-                    continue # this key must be deleted as a new value must be formed (see next block)
-                imin=string.find(val,"$")
-                imin2=string.find(val,"$out")
-                newval=""
-                if imin>-1:
-                    if string.find(val[imin+1:],"J")>-1:
+            # new parsing method: replace directly keywords by their values.
+            NewArgstring=self.extraArgs+" " ## adding extra space at the end of the string for smooth parsing.
+            keywords=["DBRelease=","=$inputfile","=$J","=$cavern","=$minbias","=$first","=$skip","=$number_events_job"]
+            for filetype in self.outputfiles.keys():
+                keywords.append("=$out"+filetype)
+            for word in keywords:
+                imin=NewArgstring.find(word)
+                if imin<0: continue
+                imax=NewArgstring[imin:].find(" ")+imin
+                #print imin, NewArgstring[imin:imax]
+                if word=="DBRelease=" and self.dbrelease and imin>-1:
+                    dbfile="DBRelease-%s.tar.gz" % self.dbrelease
+                    NewArgstring=NewArgstring.replace(NewArgstring[imin:imax],"DBRelease=%s" % dbfile)
+                    continue
+                if word=="=$J":
+                    while imin>-1:
+                        val=NewArgstring[imin+1:imax]
                         nval=val.replace("$J",str(partition))
                         try:
                             newval=eval(nval)
                             assert newval
                         except AssertionError:
-                            raise ApplicationConfigurationError(None,"error while parsing arguments: %s %d %d" % (val, imin, imin2))
+                            raise ApplicationConfigurationError(None,"error while parsing arguments: %s %d %d" % (val, imin, imax))
+                        NewArgstring=NewArgstring.replace(val,str(newval))
+                        imin=NewArgstring.find(word)
+                        imax=NewArgstring[imin:].find(" ")+imin
+                    continue
+                newval=""
+                if word=="=$inputfile" and self.infileString:
+                    newval=self.infileString
+                elif word=="$=cavern" and self.cavernfile:
+                    newval=self.cavernfile
+                elif word=="=$minbias" and self.minbiasfile:
+                    newval=self.minbiasfile
+                elif word=="=$first" and self.firstevt:
+                    newval=self.firstevt
+                elif word=="=$skip" and self.firstevt:
+                    newval=str(self.firstevt-1)
+                elif word=="=$number_events_job" and self.number_events_job :
+                    newval=str(self.number_events_job)
+                elif word.startswith("=$out") and word[5:] in self.outputfiles:
+                    newval=self.outputfiles[word[5:]]
+                try:
+                    assert newval
+                except AssertionError:
+                    raise ApplicationConfigurationError(None,"Error while parsing arguments: %s" % word)
+                
+                NewArgstring=NewArgstring.replace(word,"="+newval)
+##             #        need to scan for $entries...
+##             arglist=string.split(self.extraArgs)
+##             NewArgstring=""
+##             for arg in arglist:
+##                 key,val=string.split(arg,"=")
+##                 if key=="DBRelease" and self.dbrelease:
+##                     continue # this key must be deleted as a new value must be formed (see next block)
+##                 imin=string.find(val,"$")
+##                 imin2=string.find(val,"$out")
+##                 newval=""
+##                 if imin>-1:
+##                     if string.find(val[imin+1:],"J")>-1:
+##                         nval=val.replace("$J",str(partition))
+##                         try:
+##                             newval=eval(nval)
+##                             assert newval
+##                         except AssertionError:
+##                             raise ApplicationConfigurationError(None,"error while parsing arguments: %s %d %d" % (val, imin, imin2))
                     
-                    if string.find(val[imin+1:],"inputfile")>-1:
-                        newval=self.infileString
-                    if string.find(val[imin+1:],"cavern")>-1:
-                        newval=self.cavernfile
-                    if string.find(val[imin+1:],"minbias")>-1:
-                        newval=self.minbiasfile
-                    if string.find(val[imin+1:],"first")>-1:
-                        newval=str(self.firstevt)
-                    if string.find(val[imin+1:],"skip")>-1:
-                        skip=str(self.firstevt-1)
-                        newval=str(skip)
-                    if string.find(val[imin+1:],"number_events_job")>-1:
-                        newval=str(self.number_events_job)
-                    #if imin2 > -1:
-                     #   print self.outputfiles.keys()
-                    if imin2 > -1 and val[imin2+4:] in self.outputfiles:
-                        newval=self.outputfiles[ val[imin2+4:]]
-                    try:
-                        assert newval
-                    except AssertionError:
-                        raise ApplicationConfigurationError(None,"Error while parsing arguments: %s %d %d" % (val, imin, imin2))
+##                     if string.find(val[imin+1:],"inputfile")>-1:
+##                         newval=self.infileString
+##                     if string.find(val[imin+1:],"cavern")>-1:
+##                         newval=self.cavernfile
+##                     if string.find(val[imin+1:],"minbias")>-1:
+##                         newval=self.minbiasfile
+##                     if string.find(val[imin+1:],"first")>-1:
+##                         newval=str(self.firstevt)
+##                     if string.find(val[imin+1:],"skip")>-1:
+##                         skip=str(self.firstevt-1)
+##                         newval=str(skip)
+##                     if string.find(val[imin+1:],"number_events_job")>-1:
+##                         newval=str(self.number_events_job)
+##                     #if imin2 > -1:
+##                      #   print self.outputfiles.keys()
+##                     if imin2 > -1 and val[imin2+4:] in self.outputfiles:
+##                         newval=self.outputfiles[ val[imin2+4:]]
+##                     try:
+##                         assert newval
+##                     except AssertionError:
+##                         raise ApplicationConfigurationError(None,"Error while parsing arguments: %s %d %d" % (val, imin, imin2))
                         
-                    newarg="%s=%s" % (key,newval)
-                else:
-                    newarg=arg
-                NewArgstring=NewArgstring+newarg+" "
-            if self.dbrelease:
-                dbfile="DBRelease-%s.tar.gz" % self.dbrelease
-                NewArgstring=NewArgstring+"DBRelease=%s " % dbfile
+##                     newarg="%s=%s" % (key,newval)
+##                 else:
+##                     newarg=arg
+##                 NewArgstring=NewArgstring+newarg+" "
+##             if self.dbrelease:
+##                 dbfile="DBRelease-%s.tar.gz" % self.dbrelease
+##                 NewArgstring=NewArgstring+"DBRelease=%s " % dbfile
 
             self.args.append(NewArgstring)
                
         if self.extraIncArgs:
             # incremental arguments: need to add the subjob number.
+            # obsolete now, with the addition of $J in self.extraArgs. Kept for backward compatibility.
             arglist=string.split(self.extraIncArgs)
             NewArgstring=""
             for arg in arglist:
@@ -777,21 +827,36 @@ class AthenaMC(IApplication):
        # checking inputdata
        # handling of dbrelease
 
-       if self.extraArgs:    
-           arglist=string.split(self.extraArgs)
-           for arg in arglist:
-               key,val=string.split(arg,"=")
+       if self.extraArgs:
+           checkArgs=self.extraArgs+" "
+           imin=checkArgs.find("DBRelease=")
+           imax=checkArgs[imin:].find(" ")
+           if imin>=0 and imax>=0:
+               val=checkArgs[imin+10:imin+imax]
                digval=string.replace(val,".","0")
-               imin=val.find("DBRelease-")
-               imax=val.find(".tar.gz")
-               if imin>=0 and imax>=0:
-                   digval=string.replace(val[imin+10:imax],".","0")
-                   val=val[imin+10:imax]
-               if key=="DBRelease" and digval.isdigit():
+               imin2=val.find("DBRelease-")
+               imax2=val.find(".tar.gz")
+               if imin2>=0 and imax2>=0:
+                   digval=string.replace(val[imin2+10:imax2],".","0")
+                   val=val[imin2+10:imax2]
+               if digval.isdigit():
                    self.dbrelease=val
                    if not job.inputdata:
                        job.inputdata=AthenaMCInputDatasets()
-                   break
+##            arglist=string.split(self.extraArgs)
+##            for arg in arglist:
+##                key,val=string.split(arg,"=")
+##                digval=string.replace(val,".","0")
+##                imin=val.find("DBRelease-")
+##                imax=val.find(".tar.gz")
+##                if imin>=0 and imax>=0:
+##                    digval=string.replace(val[imin+10:imax],".","0")
+##                    val=val[imin+10:imax]
+##                if key=="DBRelease" and digval.isdigit():
+##                    self.dbrelease=val
+##                    if not job.inputdata:
+##                        job.inputdata=AthenaMCInputDatasets()
+##                    break
                
        if self.mode !="evgen" and self.mode !="template" and not self.dryrun:
            try:
