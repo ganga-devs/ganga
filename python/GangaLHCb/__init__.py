@@ -39,6 +39,11 @@ configLHCb.addOption('failed_sandbox_download',True,dscrpt)
 dscrpt = 'List of SEs where Dirac ouput data should be placed (empty means '\
          'let DIRAC decide where to put the data).'
 configLHCb.addOption('DiracOutputDataSE',[],dscrpt)
+dscrpt = 'List of sites to ban when a user job has no input data (this is '\
+         'meant to reduce the load on these sites)'
+sites = ['LCG.CERN.ch','LCG.CNAF.it','LCG.GRIDKA.de','LCG.IN2P3.fr',
+         'LCG.NIKHEF.nl','LCG.PIC.es','LCG.RAL.uk','LCG.SARA.nl']
+configLHCb.addOption('noInputDataBannedSites',sites,dscrpt)
  
 # Set default values for the Dirac section.
 dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'

@@ -11,6 +11,7 @@ from DiracUtils import *
 from DiracServer import DiracServer
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.Utility.util import unique
 
 logger = Ganga.Utility.logging.getLogger()
 configLHCb = Ganga.Utility.Config.getConfig('LHCb')
@@ -125,6 +126,18 @@ class Dirac(IBackend):
     def submit(self, subjobconfig, master_input_sandbox):
         """Submit a DIRAC job"""
         j = self.getJobObject()
+
+        if not j.inputdata and not self.settings.has_key('Destination'):
+            t1_sites = configLHCb['noInputDataBannedSites']
+            msg = 'Job has no inputdata (T1 sites will be banned to help '\
+                  'avoid overloading them).'
+            logger.info(msg)
+            if self.settings.has_key('BannedSites'):
+                banned = self.settings['BannedSites']
+                banned.extend(t1_sites)
+                self.settings['BannedSites'] = unique(banned)
+            else:
+                self.settings['BannedSites'] = t1_sites[:]
         
         dirac_script = subjobconfig.script
         dirac_script.name = mangle_job_name(j)
