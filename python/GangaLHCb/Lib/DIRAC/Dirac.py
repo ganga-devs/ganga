@@ -69,8 +69,8 @@ class Dirac(IBackend):
     # instructions on how to configure this.
     app = DaVinci()
 
-    # Create Dirac backend object with CPU time limit of 10 hours
-    b = Dirac(CPUTime=36000)
+    # Create Dirac backend object
+    b = Dirac()
 
     # Create and submit job.
     j = Job(application=app,backend=b)
