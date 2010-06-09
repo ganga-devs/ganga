@@ -303,7 +303,7 @@ def dq2datasetstate(dataset):
 
 def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
 
-    jobdate = time.strftime('%Y%m%d')
+    jobdate = time.strftime('%Y%m%d%H%M%S')
     usertag = config['usertag']
 
     # Get DN or nickname
@@ -926,14 +926,14 @@ class DQ2OutputDataset(Dataset):
     _schema = Schema(Version(1,0), {
         'outputdata'     : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc='Output files to be returned via SE'), 
         'output'         : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, protected=1, doc = 'Output information automatically filled by the job'),
+        'isGroupDS'      : SimpleItem(defvalue = False, doc = 'Use group datasetname prefix'),
+        'groupname'      : SimpleItem(defvalue='', doc='Name of the group to be used if isGroupDS=True'),
         #'datasetname'    : SimpleItem(defvalue='', copyable=0, doc='Name of the DQ2 output dataset automatically filled by the job'),
-        'datasetname'    : SimpleItem(defvalue='', doc='Name of the DQ2 output dataset automatically filled by the job'),
+        'datasetname'    : SimpleItem(defvalue='', filter="checkNameConsistency", doc='Name of the DQ2 output dataset automatically filled by the job'),
         'datasetList'    : SimpleItem(defvalue = [], typelist=['str'],  sequence = 1,protected=1, doc='List of DQ2 output datasets automatically filled by the AthenaMC job'),
         'location'       : SimpleItem(defvalue='',doc='SE output path location'),
         'local_location' : SimpleItem(defvalue='',doc='Local output path location'),
 #        'use_datasetname' : SimpleItem(defvalue = False, doc = 'Use datasetname as it is and do not prepend users.myname.ganga'),
-        'isGroupDS'      : SimpleItem(defvalue = False, doc = 'Use group datasetname prefix'),
-        'groupname'      : SimpleItem(defvalue='', doc='Name of the group to be used if isGroupDS=True'),
         'use_shortfilename' : SimpleItem(defvalue = False, doc = 'Use shorter version of filenames and do not prepend users.myname.ganga')
         })
     
@@ -954,8 +954,18 @@ class DQ2OutputDataset(Dataset):
                   { 'attribute' : 'use_shortfilename',    'widget' : 'Bool' }
                   ]
     
+    nameChecked = False
+    dq2datasetname = ''
+
     def __init__(self):
         super(DQ2OutputDataset, self).__init__()
+
+    def checkNameConsistency(self, datasetname):
+        if datasetname == '':
+            return ''
+        elif datasetname != '':
+            dq2datasetname, output_lfn = dq2outputdatasetname(datasetname, -999 , self.isGroupDS, self.groupname)
+            return dq2datasetname
 
     def clean_duplicates_in_dataset(self, datasetname = None):
         """Clean duplicate filesfrom dataset if e.g. shallow retry count occured"""
