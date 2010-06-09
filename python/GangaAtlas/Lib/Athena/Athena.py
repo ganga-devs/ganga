@@ -1271,7 +1271,12 @@ class AthenaOutputMerger(IMerger):
                         joblist.append(isubjob._impl)
 
         # Determine outputlocation
-        if job.outputdata.local_location:
+        local_location = options.get('local_location')
+        if local_location:
+            outputlocation = expandfilename(local_location)
+            if not outputlocation.endswith(id):
+                outputlocation = os.path.join( outputlocation, id )
+        elif job.outputdata.local_location:
             outputlocation = expandfilename(job.outputdata.local_location)
             if not outputlocation.endswith(id):
                 outputlocation = os.path.join( outputlocation, id )
