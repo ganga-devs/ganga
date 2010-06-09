@@ -117,11 +117,11 @@ class LHCbDataset(Dataset):
                 logger.warning(msg)
                 retry_files.append(f)
         for f in retry_files:
-            print f.name
             try:
                 result = f.replicate(destSE,srcSE,locCache)
             except:
-                msg = '2nd replication attempt failed for file %s.' % f.name
+                msg = '2nd replication attempt failed for file %s.' \
+                      ' (will not retry)' % f.name
                 logger.warning(msg)
                 logger.warning(str(result))
 
