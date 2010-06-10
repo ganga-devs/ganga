@@ -126,6 +126,7 @@ class Remote( IBackend ):
    _sftp = None
    _code = randomString()
    _transportarray = None
+   _key = {}
    
    def __init__( self ):
       super( Remote, self ).__init__()
@@ -159,14 +160,14 @@ print "***_FINISHED_***"
             return False
          
          # send the script
-         script_name = '/__setupscript__%s.py' % self._code
-         self._sftp.open(self.ganga_dir + script_name, 'w').write(script)
+         #script_name = '/__setupscript__%s.py' % self._code
+         #self._sftp.open(self.ganga_dir + script_name, 'w').write(script)
          
          # run the script
-         stdout, stderr = self.run_remote_script( script_name, self.pre_script )
+         #stdout, stderr = self.run_remote_script( script_name, self.pre_script )
          
          # remove the script
-         self._sftp.remove(self.ganga_dir + script_name)
+         #self._sftp.remove(self.ganga_dir + script_name)
          
       return True
          
@@ -227,18 +228,20 @@ print "***_FINISHED_***"
 
             if self.ssh_key != "" and os.path.exists(os.path.expanduser( os.path.expandvars( self.ssh_key ) ) ):
                privatekeyfile = os.path.expanduser( os.path.expandvars( self.ssh_key ) )
-               
-               if self.key_type == "RSA":
-                  password = getpass.getpass('Enter passphrase for key \'%s\': ' % (self.ssh_key))
-                  mykey = paramiko.RSAKey.from_private_key_file(privatekeyfile,password=password )
-               elif self.key_type == "DSS":
-                  password = getpass.getpass('Enter passphrase for key \'%s\': ' % (self.ssh_key))
-                  mykey = paramiko.DSSKey.from_private_key_file(privatekeyfile,password=password )
-               else:
-                  logger.error("Unknown ssh key_type '%s'. Unable to connect." % self.key_type)
-                  return False
+
+               if not Remote._key.has_key(self.ssh_key):
                   
-               self._transport.connect(username = self.username, pkey = mykey)
+                  if self.key_type == "RSA":
+                     password = getpass.getpass('Enter passphrase for key \'%s\': ' % (self.ssh_key))
+                     Remote._key[self.ssh_key] = paramiko.RSAKey.from_private_key_file(privatekeyfile,password=password )
+                  elif self.key_type == "DSS":
+                     password = getpass.getpass('Enter passphrase for key \'%s\': ' % (self.ssh_key))
+                     Remote._key[self.ssh_key] = paramiko.DSSKey.from_private_key_file(privatekeyfile,password=password )
+                  else:
+                     logger.error("Unknown ssh key_type '%s'. Unable to connect." % self.key_type)
+                     return False
+                  
+               self._transport.connect(username = self.username, pkey = Remote._key[self.ssh_key])
             else:
                password = getpass.getpass('Password for %s@%s: ' % (self.username, self.host)) 
                self._transport.connect(username=self.username, password=password)
@@ -260,6 +263,7 @@ print "***_FINISHED_***"
             logger.warning("Error when comunicating with remote host. Retrying...")
             self._transport = None
             self._sftp = None
+            del Remote._key[self.ssh_key]
 
          num_try = num_try + 1
 
