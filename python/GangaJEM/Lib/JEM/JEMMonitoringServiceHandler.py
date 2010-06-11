@@ -297,6 +297,21 @@ class JEMMonitoringServiceHandler(object):
                     else:
                         config.env['JEM_CTracer_disable'] = "True"
 
+                    # add some information about this Ganga session
+                    #config.env['JEM_Ganga_Version'] = 
+                    config.env['JEM_Ganga_job_id'] = self.__getFullJobId() + "." + str(i)
+                    try:
+                        from socket import gethostname
+                        config.env['JEM_Ganga_submit_host'] = gethostname()
+                    except:
+                        pass
+
+                    try:
+                        from os import getlogin
+                        config.env['JEM_Ganga_local_user'] = getlogin()
+                    except:
+                        pass
+
                     # commit all changes we did to the subjobconfig
                     try:
                         config.processValues()
