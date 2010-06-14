@@ -370,7 +370,7 @@ class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
         self.j.application.process_name='single_e_Et40'
         self.j.application.run_number='7004'
         self.j.application.evgen_job_option='MC8.107004.singlepart_e_Et40.py'
-        self.j.application.number_events_job=30
+        self.j.application.number_events_job=3
         self.j.application.mode='evgen'
         self.j.application.transform_script = "csc_evgen_trf.py"
         self.j.application.verbosity='INFO'
@@ -389,7 +389,7 @@ class TestAthenaMCPanda_simul(TestAthenaMCPanda):
 	self.j.application.extraArgs = 'jobConfig=VertexFromCondDB.py,CalHits.py,jobConfig.LooperKiller.py physicsList=QGSP_BERT DBRelease=9.0.1'
 	self.j.application.production_name='testPanda'	
         self.j.inputdata=AthenaMCInputDatasets()
-        self.j.inputdata.DQ2dataset='user09.JohannesEbke.ganga.tutorial.007004.single_e_Et40.evgen.EVNT.jid000004'
+        self.j.inputdata.DQ2dataset='user09.fredericbrochu.ganga.prod.100000.Pythia_RPV_UDD_1em6.evgen.EVNT/'
         self.j.inputdata.datasetType='DQ2'
         self.j.inputdata.number_events_file=30
         self.j.splitter=AthenaMCSplitterJob()
