@@ -76,6 +76,18 @@ class DiracCommands:
 
     getOutputDataLFNs = staticmethod(getOutputDataLFNs)
 
+    def normCPUTime(id):    
+        parameters = DiracCommands.dirac.parameters(id)
+        ncput = None
+        if parameters is not None and parameters.get('OK',False):
+            parameters = parameters['Value']        
+            if parameters.has_key('NormCPUTime(s)'):
+                ncput = parameters['NormCPUTime(s)']
+        return ncput
+
+    normCPUTime = staticmethod(normCPUTime)
+
+
     def submit(djob,mode): return DiracCommands.dirac.submit(djob,mode=mode)
     submit = staticmethod(submit)
 

@@ -39,6 +39,9 @@ schema['status'] = SimpleItem(defvalue=None, protected=1, copyable=0,
 schema['actualCE'] = SimpleItem(defvalue=None, protected=1, copyable=0,
                                 typelist=['str','type(None)'],
                                 doc='The location where the job ran')
+docstr = 'The normalized CPU time reported by the DIRAC WMS'
+schema['normCPUTime'] = SimpleItem(defvalue=None, protected=1, copyable=0,
+                                   typelist=['str','type(None)'], doc=docstr)
 docstr = 'Minor status information from Dirac'
 schema['statusInfo'] = SimpleItem(defvalue='', protected=1, copyable=0,
                                   typelist=['str','type(None)'],doc=docstr)
@@ -94,7 +97,7 @@ class Dirac(IBackend):
     # submit and resubmit.
     
     """    
-    _schema = Schema(Version(3, 1),schema)
+    _schema = Schema(Version(3, 2),schema)
     _exportmethods = ['getOutputData','getOutputSandbox',
                       'getOutputDataLFNs','peek','reset','debug']
     _packed_input_sandbox = True
@@ -366,6 +369,8 @@ class Dirac(IBackend):
             j.backend.statusInfo = result[i][0]
             j.backend.status = result[i][1]
             j.backend.actualCE = result[i][2]
+            cmd = 'result = DiracCommands.normCPUTime(%d)' % j.backend.id
+            j.backend.normCPUTime = dirac_monitoring_server.execute(cmd)
             if result[i][3] != 'completed' and result[i][3] != j.status:
                 j.updateStatus(result[i][3])
             if result[i][3] == 'completed':
