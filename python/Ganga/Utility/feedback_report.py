@@ -378,6 +378,13 @@ def report(job=None):
 
         #call the report function
         try:
+
+                #make typecheck of the param passed
+                if job is not None:
+                        if not isinstance(job,Job):
+                                print "report() function argument should be reference to a job object"
+                                return
+
                 resultArchive, uploadFileServer, tempDir = report_inner(job)
 
                 run_upload(server=uploadFileServer, path=resultArchive)
