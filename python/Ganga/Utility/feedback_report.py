@@ -96,7 +96,7 @@ def report(job=None):
                 userConfigFileName = "userconfig.txt"
                 ipythonHistoryFileName = "ipythonhistory.txt"
                 gangaLogFileName = "gangalog.txt"
-                repositoryPath = "repository/$usr/LocalXML/6.0/jobs/0xxx"
+                repositoryPath = "repository/$usr/LocalXML/6.0/jobs/$thousandsNumxxx"
                 uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
                 #uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
@@ -312,6 +312,7 @@ def report(job=None):
                                 indexFileName = str(job.id) + '.index'
 
                                 repositoryPath = repositoryPath.replace('$usr', os.getenv("USER"))
+                                repositoryPath = repositoryPath.replace('$thousandsNum', str(job.id/1000))
                                 repositoryFullPath = os.path.join(config.Configuration.gangadir, repositoryPath)
                                 indexFileSourcePath = os.path.join(repositoryFullPath, indexFileName)
                                 repositoryFullPath = os.path.join(repositoryFullPath, str(job.id))
