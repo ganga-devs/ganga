@@ -1336,105 +1336,9 @@ sys.exit(0)
             fname = os.path.join(job.outputdir,'_peek.dat')
             #f    = open(fname,'w')
 
-            sh=grids[self.middleware.upper()].shell
-            re, output, m=sh.cmd("glite-wms-job-perusal --get --noint --all -f stdout %s" % self.id, fname)
+            sh = grids[self.middleware.upper()].shell
+            re, output, m = sh.cmd("glite-wms-job-perusal --get --noint --all -f stdout %s" % self.id, fname)
             job.viewFile(fname,cmd)
-        
-            return None
-
-        remoteFile = None
-      
-        ## create new connection if not connection is made
-        checkOctopus = False
-
-        if not self.octopus:
-            s = ''
-            p = ''
-            c = 0L
-            try:
-                s = self.monInfo['octopus_server']
-                p = self.monInfo['octopus_port']
-                c = self.monInfo['channel']
-             
-                self.octopus = Octopus(s, p)
-                self.octopus.join(c)
-             
-                checkOctopus = True 
-
-            except (TypeError,KeyError):
-                logger.warning('Octopus monitoring service not enabled at submission time')
-
-            except ProtocolException, pe:
-                logger.warning('Octopus connection error: %s' % pe.__str__())
-
-        ## do nothing if skipOtcopus is True
-        if not checkOctopus:
-            return None
-      
-        ## detect which remote file is going to be inspected 
-        if not remoteFile:
-            remoteFile = self.monInfo['remotefile']
-
-        ## send reset to octopus server if the remot file is changed 
-        if remoteFile != self.monInfo['remotefile']:
-            self.octopus.reset()
-            self.monInfo['remotefile'] = remoteFile
-            self.octopus.send('set ' + remoteFile + '\n')
-            logger.debug('reset target file for inspection: %s',remoteFile)
-
-        logger.debug('inspecting file: %s',remoteFile)
-
-        ## pick up data from the server 
-        size_picked = 0
-        read_cnt    = 0
-        data = ''
-
-        ## temporary file for storing the picked data
-        ## the given command will be operated on the temporary file
-        #tmpf = tempfile.mktemp('.tmp', '_inspect_%s_' % remoteFile, job.outputdir)
-
-        tmpf = os.path.join(job.outputdir,'_%s_peek.dat' % remoteFile)
-        f    = open(tmpf,'w')
-
-        if not self.octopus.eotFound:
-            try:
-                data = self.octopus.read()
-                read_cnt += 1
-                while len(data) > 0:
-                    logger.debug('read count:%d\tlength of data:%d' % (read_cnt,len(data)))
-                    f.write(data)
-                    size_picked += len(data)
-
-                    data = ''
-                    if not self.octopus.eotFound:
-                        data = self.octopus.read()
-                        read_cnt += 1
-                    else:
-                        logger.debug('end of data read')
-            
-            except socket.error, e:
-                if e[0] != errno.EAGAIN:
-                    logger.warning('socket error: %s' % e)
-
-            except IOError, (e, strerror):
-                logger.warning("I/O error(%s): %s" % (e, strerror))
-        else:
-            logger.debug('end of data read')
-
-        ## close the opened temporary file
-        f.close()
-
-        ## close the octopus connection
-        if self.octopus:
-            self.octopus.close()
-            self.octopus = None
-
-        ## performing the command on the temporary file
-        if size_picked:
-           if not cmd:
-               cmd = ''
-
-           job.viewFile(tmpf,cmd)
 
         return None
 
@@ -1461,11 +1365,13 @@ sys.exit(0)
 
         mon = job.getMonitoringService()
 
-        # catch the monitoring service information of OctopusMS
-        if mon.getJobInfo().has_key('Ganga.Lib.MonitoringServices.Octopus.OctopusMS.OctopusMS'):
-            self.monInfo = mon.getJobInfo()['Ganga.Lib.MonitoringServices.Octopus.OctopusMS.OctopusMS']
-        else:
-            self.monInfo = None
+#        # catch the monitoring service information of OctopusMS
+#        if mon.getJobInfo().has_key('Ganga.Lib.MonitoringServices.Octopus.OctopusMS.OctopusMS'):
+#            self.monInfo = mon.getJobInfo()['Ganga.Lib.MonitoringServices.Octopus.OctopusMS.OctopusMS']
+#        else:
+#            self.monInfo = None
+
+        self.monInfo = None
 
         # set the monitoring file by default to the stdout
         if type(self.monInfo) is type({}):
