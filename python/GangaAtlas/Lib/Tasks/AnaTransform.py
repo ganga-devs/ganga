@@ -195,7 +195,9 @@ class AnaTransform(Transform):
 
          # Get ddm sites of atlas_dbrelease, if present
          db_sites = None
-         if self.application.atlas_dbrelease and not self.application.atlas_dbrelease == "LATEST": 
+         if self.application.atlas_dbrelease == "LATEST":
+            self.application.atlas_dbrelease = Client.getLatestDBRelease(False)
+         if self.application.atlas_dbrelease:
             try:
                db_dataset = self.application.atlas_dbrelease.split(':')[0] 
                db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1] 
