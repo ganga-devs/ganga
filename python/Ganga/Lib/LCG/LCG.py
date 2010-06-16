@@ -1995,6 +1995,8 @@ config.addOption('SubmissionThread', 10, 'sets the number of concurrent threads 
 
 config.addOption('SubmissionTimeout', 300, 'sets the gLite job submission timeout in seconds')
 
+config.addOption('StatusPollingTimeout', 300, 'sets the gLite job status polling timeout in seconds')
+
 config.addOption('OutputDownloaderThread', 10, 'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
 
 config.addOption('SandboxTransferTimeout', 60, 'sets the transfer timeout of the oversized input sandbox')

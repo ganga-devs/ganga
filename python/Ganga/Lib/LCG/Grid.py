@@ -435,7 +435,9 @@ class Grid(object):
         cmd = '%s --noint -i %s' % (cmd,idsfile)
         logger.debug('job status command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd), allowed_exit=[0,255])
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
+                                        allowed_exit=[0,255],
+                                        timeout=self.config['StatusPollingTimeout'])
         os.remove(idsfile)
 
         missing_glite_jids = []
