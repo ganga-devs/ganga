@@ -14,10 +14,10 @@ from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
+from Ganga.Lib.LCG.Utility import *
 
-from Grid import Grid
-
-from LCG import grids
+from Ganga.Lib.LCG.Grid import Grid
+from Ganga.Lib.LCG.LCG import grids
 
 def __cream_resolveOSBList__(job, jdl):
 
@@ -185,9 +185,15 @@ class CREAM(IBackend):
 
         abspath = os.path.abspath(file)
         fsize   = os.path.getsize(abspath)
+
+        print fsize
+        print config['BoundSandboxLimit']
+
         if fsize > config['BoundSandboxLimit']:
 
             md5sum  = get_md5sum(abspath, ignoreGzipTimestamp=True)
+
+            print md5sum
 
             doUpload = True
             for uf in uploadedFiles:
@@ -596,7 +602,6 @@ sys.exit(0)
         sandbox_files.extend(master_job_sandbox)
 
         ## check the input file size and pre-upload larger inputs to the iocache
-        inputs   = {'remote':{},'local':[]}
         lfc_host = ''
 
         input_sandbox_uris  = []
@@ -659,7 +664,7 @@ sys.exit(0)
         input_sandbox  = input_sandbox_uris + [scriptPath]
 
         for isb in input_sandbox:
-            self.logger.debug('ISB URI: %s' % isb)
+            logger.debug('ISB URI: %s' % isb)
 
         ## compose output sandbox to include by default the following files:
         ##  - gzipped stdout (transferred only when the JobLogHandler is WMS)
