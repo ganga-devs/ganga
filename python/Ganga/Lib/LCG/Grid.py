@@ -771,7 +771,7 @@ class Grid(object):
 
         cmd += ' -e %s' % ce.split('/cream')[0]
 
-        mydelid = self.credential.identity()
+        mydelid = '%s_%s' % (self.credential.identity(), get_uuid())
 
         cmd = '%s %s' % (cmd, mydelid)
 
