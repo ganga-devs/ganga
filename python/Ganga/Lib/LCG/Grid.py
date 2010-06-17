@@ -800,7 +800,7 @@ class Grid(object):
         exec_bin = True
 
         if self.proxy_id:
-            cmd = cmd + ' -D %s' % proxy_id
+            cmd = cmd + ' -D %s' % self.proxy_id
         else:
             cmd = cmd + ' -a'
 
