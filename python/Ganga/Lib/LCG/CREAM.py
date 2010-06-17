@@ -96,7 +96,7 @@ class CREAM(IBackend):
         re_token = re.compile('^token:(.*):(.*)$')
 
         self.sandboxcache.vo = config['VirtualOrganisation']
-        self.sandboxcache.middleware = self.middleware.upper()
+        self.sandboxcache.middleware = 'GLITE'
         self.sandboxcache.timeout    = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'LCGSandboxCache':
