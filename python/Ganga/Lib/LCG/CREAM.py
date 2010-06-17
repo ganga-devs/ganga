@@ -620,8 +620,6 @@ sys.exit(0)
                 break
             else:
 
-                input_sandbox_names.append( os.path.basename(f) )
-
                 if idx['lfc_host']:
                     lfc_host = idx['lfc_host']
 
@@ -634,8 +632,11 @@ sys.exit(0)
 
                     input_sandbox_uris.append( idx['remote'][ os.path.basename(f) ] )
 
+                    input_sandbox_names.append( os.path.basename( urlparse(f)[2] ) )
+
                 if idx['local']:
                     input_sandbox_uris += idx['local']
+                    input_sandbox_names.append( os.path.basename(f) )
 
         if not ick:
             logger.error('stop job submission')
