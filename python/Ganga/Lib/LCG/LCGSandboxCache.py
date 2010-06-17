@@ -84,7 +84,7 @@ class LCGSandboxCache(GridSandboxCache):
         self.protocol = 'lcg'
 
     def __setattr__(self, attr, value):
-        if attr == 'se_type' and value not in ['','srmv1','srmv2']:
+        if attr == 'se_type' and value not in ['','srmv1','srmv2','se']:
             raise AttributeError('invalid se_type: %s' % value)
         super(LCGSandboxCache,self).__setattr__(attr, value)
 
@@ -177,7 +177,7 @@ class LCGSandboxCache(GridSandboxCache):
         self.logger.debug('download file to: %s', dest_dir)
 
         # the algorithm of downloading one file to a local directory
-        class MyAlgorithm(Algorithm): 
+        class MyAlgorithm(Algorithm):
 
             def __init__(self, cacheObj):
                 Algorithm.__init__(self)
@@ -191,11 +191,15 @@ class LCGSandboxCache(GridSandboxCache):
                 lfc_host  = file.attributes['lfc_host']
                 fname     = os.path.basename( urlparse(lfn)[2] )
 
-                self.shell.env['LFC_HOST']
+                self.shell.env['LFC_HOST'] = lfc_host
                 self.cacheObj.logger.debug('download file with LFC_HOST: %s', self.shell.env['LFC_HOST'])
 
-                cmd  = 'lcg-cp -t %d --vo %s -T %s ' % (self.cacheObj.timeout, self.cacheObj.vo, self.cacheObj.se_type)
+                cmd  = 'lcg-cp -t %d --vo %s ' % (self.cacheObj.timeout, self.cacheObj.vo)
+                if self.cacheObj.se_type:
+                    cmd += '-T %s ' % self.cacheObj.se_type
                 cmd += '%s file://%s/%s' % (guid, dest_dir, fname)
+
+                self.cacheObj.logger.debug('download file: %s', cmd)
              
                 rc,output,m = self.cacheObj.__cmd_retry_loop__(self.shell, cmd, self.cacheObj.max_try)
              

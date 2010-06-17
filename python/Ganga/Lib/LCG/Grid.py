@@ -12,6 +12,8 @@ from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.GridShell import getShell
 
+from LCGSandboxCache import LCGFileIndex, LCGSandboxCache
+
 # global variables
 logger = getLogger()
 
@@ -290,22 +292,9 @@ class Grid(object):
 
         return matched_ces
 
-#    def submit(self, jdlpath, ce=None, doListMatch=False, jdlpathForListMatch=None):
     def submit(self, jdlpath, ce=None):
         '''Submit a JDL file to LCG'''
-
-        ## doing job list match if required 
-#        if doListMatch:
-#            if not jdlpathForListMatch:
-#                jdlpathForListMatch = jdlpath
-#
-#            matches = self.list_match(jdlpathForListMatch, ce)
-#
-#            if not matches:
-#                logger.error('no matched resources')
-#
-#                return
-
+        
         ## doing job submission
         if self.middleware == 'EDG':
             cmd      = 'edg-job-submit'
@@ -403,11 +392,6 @@ class Grid(object):
         '''Query the status of jobs on the grid'''
 
         if not jobids: return ([],[])
-
-        #do_node_mapping = False
-
-        #if node_map and os.path.exists(node_map):
-        #    do_node_mapping = True
 
         idsfile = tempfile.mktemp('.jids')
         file(idsfile,'w').write('\n'.join(jobids)+'\n')
@@ -728,6 +712,216 @@ class Grid(object):
             logger.warning( "Failed to cancel job %s.\n%s" % ( jobid, output ) )
             self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return False
+
+    def __cream_parse_job_status__(self, log):
+        '''Parsing job status report from CREAM CE status query'''
+
+        jobInfoDict = {}
+
+        re_jid = re.compile('^\s+JobID\=\[(https:\/\/.*[:0-9]?\/CREAM.*)\]$')
+        re_log = re.compile('^\s+(\S+.*\S+)\s+\=\s+\[(.*)\]$')
+
+        re_jts = re.compile('^\s+Job status changes:$')
+        re_ts  = re.compile('^\s+Status\s+\=\s+\[(.*)\]\s+\-\s+\[(.*)\]\s+\(([0-9]+)\)$')
+        re_cmd = re.compile('^\s+Issued Commands:$')
+
+        ## in case of status retrival failed
+        re_jnf = re.compile('^.*job not found.*$')
+
+        jid = None
+
+        for jlog in log.split('******')[1:]:
+
+            for l in jlog.split('\n'):
+                l.strip()
+                
+                m = re_jid.match(l)
+
+                if m:
+                    jid = m.group(1)
+                    jobInfoDict[jid] = {}
+                    continue
+
+                if re_jnf.match(l):
+                    break
+
+                m = re_log.match(l)
+                if m:
+                    att = m.group(1)
+                    val = m.group(2)
+                    jobInfoDict[jid][att] = val
+                    continue
+
+                if re_jts.match(l):
+                    jobInfoDict[jid]['Timestamps'] = {} 
+                    continue
+
+                m = re_ts.match(l)
+                if m:
+                    s = m.group(1)
+                    t = int(m.group(3))
+                    jobInfoDict[jid]['Timestamps'][s] = t
+                    continue
+
+                if re_cmd.match(l):
+                    break
+
+        return jobInfoDict
+
+    def __cream_ui_check__(self):
+        '''checking if CREAM CE environment is set properly'''
+
+        if self.middleware.upper() != 'GLITE':
+            logger.warning('CREAM CE job operation not supported')
+            return False
+
+        if not self.active:
+            logger.warning('LCG plugin not active.')
+            return False
+
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
+            return False
+
+        return True
+
+    def cream_submit(self,jdlpath,ce):
+        '''CREAM CE direct job submission'''
+
+        if not self.__cream_ui_check__():
+            return
+
+        if not ce:
+            logger.warning('No CREAM CE endpoint specified')
+            return
+
+        cmd = 'glite-ce-job-submit -a'
+        exec_bin = True
+
+        cmd = cmd + ' -r %s' % ce
+
+        cmd = '%s --nomsg %s < /dev/null' % (cmd,jdlpath)
+
+        logger.debug('job submit command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
+                                                  allowed_exit=[0,255],
+                                                  timeout=self.config['SubmissionTimeout'])
+
+        if output: output = "%s" % output.strip()
+
+        match = re.search('^(https:\/\/\S+:8443\/[0-9A-Za-z_\.\-]+)$',output)
+
+        if match:
+            logger.debug('job id: %s' % match.group(1))
+            return match.group(1)
+        else:
+            logger.warning('Job submission failed.')
+            return
+
+    def cream_status(self,jobids):
+        '''CREAM CE job status query'''
+        
+        if not self.__cream_ui_check__():
+            return ([],[])
+
+        if not jobids: return ([],[])
+
+        idsfile = tempfile.mktemp('.jids')
+        file(idsfile,'w').write('##CREAMJOBS##\n' + '\n'.join(jobids)+'\n')
+
+        cmd = 'glite-ce-job-status'
+        exec_bin = True
+
+        cmd = '%s -L 2 -n -i %s' % (cmd,idsfile)
+        logger.debug('job status command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
+                                        allowed_exit=[0,255],
+                                        timeout=self.config['StatusPollingTimeout'])
+        jobInfoDict = {}
+        if rc == 0 and output:
+            jobInfoDict = self.__cream_parse_job_status__(output)
+
+        return jobInfoDict
+
+    def cream_cancelMultiple(self, jobids):
+        '''CREAM CE job cancelling'''
+
+        if not self.__cream_ui_check__():
+            return False
+
+        idsfile = tempfile.mktemp('.jids')
+        file(idsfile,'w').write('##CREAMJOBS##\n' + '\n'.join(jobids)+'\n')
+
+        cmd = 'glite-ce-job-cancel'
+        exec_bin = True
+
+        cmd = '%s -n -N -i %s' % (cmd,idsfile)
+
+        logger.debug('job cancel command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
+
+        logger.debug(output)
+        
+        if rc == 0:
+            return True
+        else:
+            return False
+
+    def cream_get_output(self, osbURIList, directory):
+        '''CREAM CE job output retrieval'''
+
+        if not self.__cream_ui_check__():
+            return (False,None)
+
+        gfiles = []
+        for uri in osbURIList:
+            gf = LCGFileIndex()
+            gf.id = uri
+            gf.attributes['local_fpath'] = uri
+            gf.attributes['lfc_host']    = ''
+            gfiles.append(gf)
+
+        cache = LCGSandboxCache()
+        cache.middleware = 'GLITE'
+        cache.vo = self.config['VirtualOrganisation']
+        cache.se_type = 'se'
+        cache.uploaded_files = gfiles
+
+        return cache.download( files=map(lambda x:x.id, gfiles), dest_dir=directory )
+
+    def __unpack_osb_get_exitcode__(self, outputdir):
+        
+        import Ganga.Core.Sandbox as Sandbox
+
+        Sandbox.getPackedOutputSandbox(outputdir, outputdir)
+
+        ## check the application exit code
+        app_exitcode = -1
+        runtime_log  = os.path.join(outputdir, '__jobscript__.log')
+        pat = re.compile(r'.*exit code (\d+).')
+
+        if not os.path.exists(runtime_log):
+            logger.warning('job runtime log not found: %s' % runtime_log)
+            return (False, 'job runtime log not found: %s' % runtime_log)
+
+        f = open(runtime_log, 'r')
+        for line in f.readlines():
+            mat = pat.match(line)
+            if mat:
+                app_exitcode = eval(mat.groups()[0])
+                break
+        f.close()
+
+        ## returns False if the exit code of the real executable is not zero
+        ## the job status of GANGA will be changed to 'failed' if the return value is False
+        if app_exitcode != 0:
+            logger.debug('job\'s executable returns non-zero exit code: %d' % app_exitcode)
+            return (False, app_exitcode)
+        else:
+            return (True, 0)
 
     def expandjdl(items):
         '''Expand jdl items'''
