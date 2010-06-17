@@ -766,6 +766,13 @@ class Grid(object):
     def cream_proxy_delegation(self, ce):
         '''CREAM CE proxy delegation'''
 
+        if not self.__cream_ui_check__():
+            return
+
+        if not ce:
+            logger.warning('No CREAM CE endpoint specified')
+            return
+
         cmd = 'glite-ce-delegate-proxy'
         exec_bin = True
 
