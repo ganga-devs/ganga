@@ -769,7 +769,7 @@ class Grid(object):
         cmd = 'glite-ce-delegate-proxy'
         exec_bin = True
 
-        cmd += ' -r %s' % ce
+        cmd += ' -e %s' % ce
 
         mydelid = self.credential.identity()
 

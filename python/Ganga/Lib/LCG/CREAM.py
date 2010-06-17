@@ -1,5 +1,4 @@
 # CREAM backend
-from LCG.Grid import cream_proxy_delegation
 import os
 import os.path
 import math
