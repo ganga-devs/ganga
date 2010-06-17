@@ -1,4 +1,5 @@
 # CREAM backend
+from LCG.Grid import cream_proxy_delegation
 import os
 import os.path
 import math
@@ -15,6 +16,7 @@ from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Lib.LCG.Utility import *
+from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
 from Ganga.Lib.LCG.Grid import Grid
 from Ganga.Lib.LCG.LCG import grids
@@ -723,6 +725,22 @@ sys.exit(0)
             return False
 
         return grids['GLITE'].cream_cancelMultiple([self.id])
+
+    def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
+        '''Submit the master job to the grid'''
+
+        profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
+        profiler.start()
+
+        ## delegate proxy to CREAM CE
+        if not grids['GLITE'].cream_proxy_delegation(self.CE):
+            logger.warning('proxy delegation to %s failed' % self.CE)
+
+        ick = IBackend.master_submit(self,rjobs,subjobconfigs,masterjobconfig)
+
+        profiler.check('==> master_submit() elapsed time')
+
+        return ick
 
     def submit(self,subjobconfig,master_job_sandbox):
         '''Submit the job to the grid'''

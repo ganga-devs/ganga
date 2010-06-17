@@ -14,6 +14,8 @@ from Ganga.Utility.GridShell import getShell
 
 from LCGSandboxCache import LCGFileIndex, LCGSandboxCache
 
+from Ganga.Lib.LCG.Utility import *
+
 # global variables
 logger = getLogger()
 
@@ -40,6 +42,8 @@ class Grid(object):
 #       check that UI has been set up
 #       start up a shell object specific to the middleware
         self.shell = getShell(self.middleware)
+
+        self.proxy_id = None
 
         if not self.shell:
             logger.warning('LCG-%s UI has not been configured. The plugin has been disabled.' % self.middleware)
@@ -759,7 +763,30 @@ class Grid(object):
 
         return True
 
-    def cream_submit(self,jdlpath,ce):
+    def cream_proxy_delegation(self, ce):
+        '''CREAM CE proxy delegation'''
+
+        cmd = 'glite-ce-delegate-proxy'
+        exec_bin = True
+
+        cmd += ' -r %s' % ce
+
+        mydelid = self.credential.identity()
+
+        cmd = '%s %s' % (cmd, mydelid)
+
+        logger.debug('proxy delegation command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
+                                                  allowed_exit=[0,255],
+                                                  timeout=self.config['SubmissionTimeout'])
+        if rc == 0:
+            self.proxy_id = mydelid
+            return True
+        else:
+            return False
+
+    def cream_submit(self, jdlpath, ce):
         '''CREAM CE direct job submission'''
 
         if not self.__cream_ui_check__():
@@ -769,8 +796,13 @@ class Grid(object):
             logger.warning('No CREAM CE endpoint specified')
             return
 
-        cmd = 'glite-ce-job-submit -a'
+        cmd = 'glite-ce-job-submit'
         exec_bin = True
+
+        if self.proxy_id:
+            cmd = cmd + ' -D %s' % proxy_id
+        else:
+            cmd = cmd + ' -a'
 
         cmd = cmd + ' -r %s' % ce
 
