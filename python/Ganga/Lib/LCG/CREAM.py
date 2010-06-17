@@ -46,7 +46,7 @@ class CREAM(IBackend):
         'CE'                  : SimpleItem(defvalue='',doc='CREAM CE endpoint'),
         'jobtype'             : SimpleItem(defvalue='Normal',doc='Job type: Normal, MPICH'),
         'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
-        'sandboxcache'        : ComponentItem('GridSandboxCache',copyable=1,doc='Interface for handling oversized input sandbox'),
+        'sandboxcache'        : ComponentItem('LCGSandboxCache',copyable=1,doc='Interface for handling oversized input sandbox'),
         'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
         'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
         'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
@@ -89,6 +89,128 @@ class CREAM(IBackend):
         except:
             logger.debug('load default LCGSandboxCAche')
             pass
+
+    def __setup_sandboxcache__(self, job):
+        '''Sets up the sandbox cache object to adopt the runtime configuration of the LCG backend'''
+
+        re_token = re.compile('^token:(.*):(.*)$')
+
+        self.sandboxcache.vo = config['VirtualOrganisation']
+        self.sandboxcache.middleware = self.middleware.upper()
+        self.sandboxcache.timeout    = config['SandboxTransferTimeout']
+
+        if self.sandboxcache._name == 'LCGSandboxCache':
+            if not self.sandboxcache.lfc_host:
+                self.sandboxcache.lfc_host = grids[self.middleware.upper()].__get_lfc_host__()
+
+            if not self.sandboxcache.se:
+
+                token   = ''
+                se_host = config['DefaultSE']
+                m = re_token.match(se_host)
+                if m:
+                    token   = m.group(1)
+                    se_host = m.group(2)
+
+                self.sandboxcache.se = se_host
+
+                if token:
+                    self.sandboxcache.srm_token = token
+
+            if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
+                self.sandboxcache.srm_token = config['DefaultSRMToken']
+
+        elif self.sandboxcache._name == 'DQ2SandboxCache':
+
+            ## generate a new dataset name if not given
+            if not self.sandboxcache.dataset_name:
+                from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+                self.sandboxcache.dataset_name,unused = dq2outputdatasetname("%s.input"%get_uuid(), 0, False, '')
+
+            ## subjobs inherits the dataset name from the master job
+            for sj in job.subjobs:
+                sj.backend.sandboxcache.dataset_name = self.sandboxcache.dataset_name
+
+        return True
+
+    def __check_and_prestage_inputfile__(self, file):
+        '''Checks the given input file size and if it's size is
+           over "BoundSandboxLimit", prestage it to a grid SE.
+
+           The argument is a path of the local file.
+
+           It returns a dictionary containing information to refer to the file:
+
+               idx = {'lfc_host': lfc_host,
+                      'local': [the local file pathes],
+                      'remote': {'fname1': 'remote index1', 'fname2': 'remote index2', ... }
+                     }
+
+           If prestaging failed, None object is returned.
+
+           If the file has been previously uploaded (according to md5sum),
+           the prestaging is ignored and index to the previously uploaded file
+           is returned.
+           '''
+
+        idx = {'lfc_host':'', 'local':[], 'remote':{}}
+
+        job = self.getJobObject()
+
+        ## read-in the previously uploaded files
+        uploadedFiles = []
+
+        ## getting the uploaded file list from the master job
+        if job.master:
+            uploadedFiles += job.master.backend.sandboxcache.get_cached_files()
+
+        ## set and get the $LFC_HOST for uploading oversized sandbox
+        self.__setup_sandboxcache__(job)
+
+        uploadedFiles += self.sandboxcache.get_cached_files()
+
+        lfc_host = None
+
+        ## for LCGSandboxCache, take the one specified in the sansboxcache object.
+        ## the value is exactly the same as the one from the local grid shell env. if
+        ## it is not specified exclusively.
+        if self.sandboxcache._name == 'LCGSandboxCache':
+            lfc_host = self.sandboxcache.lfc_host
+
+        ## or in general, query it from the Grid object
+        if not lfc_host:
+            lfc_host = grids[self.sandboxcache.middleware.upper()].__get_lfc_host__()
+
+        idx['lfc_host'] = lfc_host
+
+        abspath = os.path.abspath(file)
+        fsize   = os.path.getsize(abspath)
+        if fsize > config['BoundSandboxLimit']:
+
+            md5sum  = get_md5sum(abspath, ignoreGzipTimestamp=True)
+
+            doUpload = True
+            for uf in uploadedFiles:
+                if uf.md5sum == md5sum:
+                    # the same file has been uploaded to the iocache
+                    idx['remote'][os.path.basename(file)] = uf.id
+                    doUpload = False
+                    break
+
+            if doUpload:
+
+                logger.warning('The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file,config['BoundSandboxLimit']) )
+
+                if self.sandboxcache.upload( [abspath] ):
+                    remote_sandbox = self.sandboxcache.get_cached_files()[-1]
+                    idx['remote'][remote_sandbox.name] = remote_sandbox.id
+                else:
+                    logger.error('Oversized sandbox not successfully pre-staged')
+                    return None
+        else:
+            idx['local'].append(abspath)
+
+        return idx
 
     def __jobWrapperTemplate__(self):
         '''Create job wrapper'''
@@ -474,8 +596,45 @@ sys.exit(0)
         sandbox_files.extend(master_job_sandbox)
 
         ## check the input file size and pre-upload larger inputs to the iocache
+        inputs   = {'remote':{},'local':[]}
+        lfc_host = ''
 
-        inputs = { 'remote':{}, 'local': map(lambda x:os.path.abspath(x), sandbox_files) }
+        input_sandbox_uris  = []
+        input_sandbox_names = []
+
+        ick = True
+
+        max_prestaged_fsize = 0
+        for f in sandbox_files:
+
+            idx = self.__check_and_prestage_inputfile__(f)
+
+            if not idx:
+                logger.error('input sandbox preparation failed: %s' % f)
+                ick = False
+                break
+            else:
+
+                input_sandbox_names.append( os.path.basename(f) )
+
+                if idx['lfc_host']:
+                    lfc_host = idx['lfc_host']
+
+                if idx['remote']:
+                    abspath = os.path.abspath(f)
+                    fsize   = os.path.getsize(abspath)
+
+                    if fsize > max_prestaged_fsize:
+                        max_prestaged_fsize = fsize
+
+                    input_sandbox_uris.append( idx['remote'][f] )
+
+                if idx['local']:
+                    input_sandbox_uris += idx['local']
+
+        if not ick:
+            logger.error('stop job submission')
+            return None
 
         ## determin the lcg-cp timeout according to the max_prestaged_fsize
         ##  - using the assumption of 1 MB/sec.
@@ -493,11 +652,14 @@ sys.exit(0)
         script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
 
         ## update the job wrapper with the inputsandbox list
-        script = script.replace('###INPUTSANDBOX###',repr({'remote':inputs['remote'],'local':[ os.path.basename(f) for f in inputs['local'] ]}))
+        script = script.replace('###INPUTSANDBOX###',repr({'remote':{}, 'local': input_sandbox_names }))
 
         ## write out the job wrapper and put job wrapper into job's inputsandbox
         scriptPath = inpw.writefile(FileBuffer('__jobscript_%s__' % job.getFQID('.'),script),executable=1)
-        input_sandbox  = inputs['local'] + [scriptPath]
+        input_sandbox  = input_sandbox_uris + [scriptPath]
+
+        for isb in input_sandbox:
+            self.logger.debug('ISB URI: %s' % isb)
 
         ## compose output sandbox to include by default the following files:
         ##  - gzipped stdout (transferred only when the JobLogHandler is WMS)
@@ -660,5 +822,5 @@ config = getConfig('LCG')
 ## add CREAM specific configuration options
 config.addOption('CreamInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
 config.addOption('CreamOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
-config.addOption('CreamPrologue','','sets the prologue script')
-config.addOption('CreamEpilogue','','sets the epilogue script')
+#config.addOption('CreamPrologue','','sets the prologue script')
+#config.addOption('CreamEpilogue','','sets the epilogue script')
