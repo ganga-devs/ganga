@@ -187,14 +187,9 @@ class CREAM(IBackend):
         abspath = os.path.abspath(file)
         fsize   = os.path.getsize(abspath)
 
-        print fsize
-        print config['BoundSandboxLimit']
-
         if fsize > config['BoundSandboxLimit']:
 
             md5sum  = get_md5sum(abspath, ignoreGzipTimestamp=True)
-
-            print md5sum
 
             doUpload = True
             for uf in uploadedFiles:
