@@ -11,11 +11,9 @@ from Ganga.Core import GangaException
 
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Adapters.IBackend import IBackend 
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Utility.Config import makeConfig, getConfig
-from Ganga.Utility.logging import getLogger, log_user_exception
-from Ganga.Utility.util import isStringLike
+from Ganga.GPIDev.Adapters.IBackend import IBackend
+from Ganga.Utility.Config import getConfig
+from Ganga.Utility.logging import getLogger
 
 from Grid import Grid
 
@@ -48,6 +46,7 @@ class CREAM(IBackend):
         'CE'                  : SimpleItem(defvalue='',doc='CREAM CE endpoint'),
         'jobtype'             : SimpleItem(defvalue='Normal',doc='Job type: Normal, MPICH'),
         'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
+        'sandboxcache'        : ComponentItem('GridSandboxCache',copyable=1,doc='Interface for handling oversized input sandbox'),
         'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
         'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
         'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
@@ -66,6 +65,30 @@ class CREAM(IBackend):
     def __init__(self):
         super(CREAM, self).__init__()
 
+        # dynamic requirement object loading
+        try:
+            reqName1  = config['Requirements']
+            reqName   = config['Requirements'].split('.').pop()
+            reqModule = __import__(reqName1, globals(), locals(), [reqName1])
+            reqClass  = vars(reqModule)[reqName]
+            self.requirements = reqClass()
+
+            logger.debug('load %s as LCGRequirements' % reqName)
+        except:
+            logger.debug('load default LCGRequirements')
+            pass
+
+        # dynamic sandbox cache object loading
+        try:
+            scName1  = config['SandboxCache']
+            scName   = config['SandboxCache'].split('.').pop()
+            scModule = __import__(scName1, globals(), locals(), [scName1])
+            scClass  = vars(scModule)[scName]
+            self.sandboxcache = scClass()
+            logger.debug('load %s as SandboxCache' % scName)
+        except:
+            logger.debug('load default LCGSandboxCAche')
+            pass
 
     def __jobWrapperTemplate__(self):
         '''Create job wrapper'''
@@ -586,7 +609,7 @@ sys.exit(0)
                             doStatusUpdate = grids['GLITE'].cream_get_output( osbURIList, job.outputdir )
 
                             if doStatusUpdate:
-                                (ick, app_exitcode)  = grids['GLITE'].__unpack_osb_get_exitcode__(job.outputdir)
+                                (ick, app_exitcode)  = grids['GLITE'].__get_app_exitcode__(job.outputdir)
                                 job.backend.exitcode = app_exitcode
 
                         if not doStatusUpdate:

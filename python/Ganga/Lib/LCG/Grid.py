@@ -613,33 +613,7 @@ class Grid(object):
         else:
             pass
 
-        import Ganga.Core.Sandbox as Sandbox
-        Sandbox.getPackedOutputSandbox(directory,directory)
-
-        ## check the application exit code
-        app_exitcode = -1
-        runtime_log  = os.path.join(directory,'__jobscript__.log')
-        pat = re.compile(r'.*exit code (\d+).')
-
-        if not os.path.exists(runtime_log):
-            logger.warning('job runtime log not found: %s' % runtime_log)
-            return (False, 'job runtime log not found: %s' % runtime_log)
-      
-        f = open(runtime_log,'r')
-        for line in f.readlines():
-            mat = pat.match(line)
-            if mat:
-                app_exitcode = eval(mat.groups()[0])
-                break
-        f.close()
-
-        ## returns False if the exit code of the real executable is not zero
-        ## the job status of GANGA will be changed to 'failed' if the return value is False
-        if app_exitcode != 0:
-            logger.debug('job\'s executable returns non-zero exit code: %d' % app_exitcode)
-            return (False, app_exitcode)
-        else:
-            return (True, 0)
+        return self.__get_app_exitcode__(directory)
 
     def cancelMultiple(self, jobids):
         '''Cancel multiple jobs in one LCG job cancellation call'''
@@ -892,7 +866,7 @@ class Grid(object):
 
         return cache.download( files=map(lambda x:x.id, gfiles), dest_dir=directory )
 
-    def __unpack_osb_get_exitcode__(self, outputdir):
+    def __get_app_exitcode__(self, outputdir):
         
         import Ganga.Core.Sandbox as Sandbox
 
