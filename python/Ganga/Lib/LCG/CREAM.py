@@ -632,7 +632,7 @@ sys.exit(0)
                     if fsize > max_prestaged_fsize:
                         max_prestaged_fsize = fsize
 
-                    input_sandbox_uris.append( idx['remote'][f] )
+                    input_sandbox_uris.append( idx['remote'][ os.path.basename(f) ] )
 
                 if idx['local']:
                     input_sandbox_uris += idx['local']
