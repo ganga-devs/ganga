@@ -19,6 +19,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
 from Ganga.Lib.LCG.Grid import Grid
 from Ganga.Lib.LCG.LCG import grids
+from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
 def __cream_resolveOSBList__(job, jdl):
 
@@ -80,6 +81,8 @@ class CREAM(IBackend):
             pass
 
         # dynamic sandbox cache object loading
+        ## force to use GridftpSandboxCache
+        self.sandboxcache = GridftpSandboxCache()
         try:
             scName1  = config['SandboxCache']
             scName   = config['SandboxCache'].split('.').pop()
@@ -131,6 +134,16 @@ class CREAM(IBackend):
             ## subjobs inherits the dataset name from the master job
             for sj in job.subjobs:
                 sj.backend.sandboxcache.dataset_name = self.sandboxcache.dataset_name
+
+        elif self.sandboxcache._name == 'GridftpSandboxCache':
+                if config['CreamInputSandboxBaseURI']:
+                    self.sandboxcache.baseURI = config['CreamInputSandboxBaseURI']
+                elif self.CE:
+                    ce_host = re.sub(r'\:[0-9]+','',self.CE.split('/cream')[0])
+                    self.sandboxcache.baseURI = 'gsiftp://%s/opt/glite/var/cream_sandbox/%s' % ( ce_host, self.sandboxcache.vo )
+                else:
+                    logger.error('baseURI not available for GridftpSandboxCache')
+                    return False
 
         return True
 
@@ -213,6 +226,109 @@ class CREAM(IBackend):
             idx['local'].append(abspath)
 
         return idx
+
+    def __mt_job_prepare__(self, rjobs, subjobconfigs, masterjobconfig):
+        '''preparing jobs in multiple threads'''
+
+        logger.warning('preparing %d subjobs ... it may take a while' % len(rjobs))
+
+        # prepare the master job (i.e. create shared inputsandbox, etc.)
+        master_input_sandbox=IBackend.master_prepare(self,masterjobconfig)
+
+        ## uploading the master job if it's over the WMS sandbox limitation
+        for f in master_input_sandbox:
+            master_input_idx = self.__check_and_prestage_inputfile__(f)
+
+            if not master_input_idx:
+                logger.error('master input sandbox perparation failed: %s' % f)
+                return None
+
+        # the algorithm for preparing a single bulk job
+        class MyAlgorithm(Algorithm):
+
+            def __init__(self):
+                Algorithm.__init__(self)
+
+            def process(self, sj_info):
+                my_sc = sj_info[0]
+                my_sj = sj_info[1]
+
+                try:
+                    logger.debug("preparing job %s" % my_sj.getFQID('.'))
+                    jdlpath = my_sj.backend.preparejob(my_sc, master_input_sandbox)
+
+                    if (not jdlpath) or (not os.path.exists(jdlpath)):
+                        raise GangaException('job %s not properly prepared' % my_sj.getFQID('.'))
+
+                    self.__appendResult__( my_sj.id, jdlpath )
+                    return True
+                except Exception,x:
+                    log_user_exception()
+                    return False
+
+        mt_data = []
+        for sc,sj in zip(subjobconfigs,rjobs):
+            mt_data.append( [sc, sj] )
+
+        myAlg  = MyAlgorithm()
+        myData = Data(collection=mt_data)
+
+        runner = MTRunner(name='lcg_jprepare', algorithm=myAlg, data=myData, numThread=10)
+        runner.start()
+        runner.join(-1)
+
+        if len(runner.getDoneList()) < len(mt_data):
+            return None
+        else:
+            # return a JDL file dictionary with subjob ids as keys, JDL file paths as values
+            return runner.getResults()
+
+    def __mt_bulk_submit__(self, node_jdls):
+        '''submitting jobs in multiple threads'''
+
+        job = self.getJobObject()
+
+        logger.warning('submitting %d subjobs ... it may take a while' % len(node_jdls))
+
+        # the algorithm for submitting a single bulk job
+        class MyAlgorithm(Algorithm):
+
+            def __init__(self, gridObj, masterInputWorkspace, ce):
+                Algorithm.__init__(self)
+                self.inpw    = masterInputWorkspace
+                self.gridObj = gridObj
+                self.ce      = ce
+
+            def process(self, jdl_info):
+                my_sj_id  = jdl_info[0]
+                my_sj_jdl = jdl_info[1]
+
+                my_sj_jid = self.gridObj.cream_submit(my_sj_jdl, self.ce)
+
+                if not my_sj_jid:
+                    return False
+                else:
+                    self.__appendResult__( my_sj_id, my_sj_jid )
+                    return True
+
+        mt_data = []
+        for id, jdl in node_jdls.items():
+            mt_data.append( (id, jdl) )
+            
+        myAlg  = MyAlgorithm(gridObj=grids['GLITE'],masterInputWorkspace=job.getInputWorkspace(), ce=self.CE)
+        myData = Data(collection=mt_data)
+
+        runner = MTRunner(name='cream_jsubmit', algorithm=myAlg, data=myData, numThread=config['SubmissionThread'])
+        runner.start()
+        runner.join(timeout=-1)
+
+        if len(runner.getDoneList()) < len(mt_data):
+            ## not all bulk jobs are successfully submitted. canceling the submitted jobs on WMS immediately
+            logger.error('some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
+            grids['GLITE'].cancelMultiple( runner.getResults().values() )
+            return None
+        else:
+            return runner.getResults()
 
     def __jobWrapperTemplate__(self):
         '''Create job wrapper'''
@@ -720,18 +836,57 @@ sys.exit(0)
 
         return grids['GLITE'].cream_cancelMultiple([self.id])
 
+    def master_bulk_submit(self, rjobs, subjobconfigs, masterjobconfig):
+        '''submit multiple subjobs in parallel, by default using 10 concurrent threads'''
+
+        assert(implies(rjobs,len(subjobconfigs)==len(rjobs)))
+        
+        # prepare the subjobs, jdl repository before bulk submission
+        node_jdls = self.__mt_job_prepare__(rjobs, subjobconfigs, masterjobconfig)
+        
+        if not node_jdls:
+            logger.error('Some jobs not successfully prepared')
+            return False
+        
+        # set all subjobs to submitting status
+        for sj in rjobs:
+            sj.updateStatus('submitting')
+        
+        node_jids  = self.__mt_bulk_submit__(node_jdls)
+        
+        status = False
+
+        for sj in rjobs:
+            if sj.id in node_jids.keys():
+                sj.backend.id = node_jids[sj.id]
+                sj.backend.actualCE = sj.backend.CE
+                sj.updateStatus('submitted')
+                sj.info.submit_counter += 1
+            else:
+                logger.warning('subjob %s not successfully submitted' % sj.getFQID('.'))
+            
+            status = True
+
+        return status
+
     def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
         '''Submit the master job to the grid'''
 
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
         profiler.start()
 
+        job = self.getJobObject()
+        
         ## delegate proxy to CREAM CE
         if not grids['GLITE'].cream_proxy_delegation(self.CE):
             logger.warning('proxy delegation to %s failed' % self.CE)
 
-        ick = IBackend.master_submit(self,rjobs,subjobconfigs,masterjobconfig)
-
+        ## doing massive job preparation
+        if len(job.subjobs) == 0:
+            ick = IBackend.master_submit(self,rjobs,subjobconfigs,masterjobconfig)
+        else:
+            ick = self.master_bulk_submit(rjobs,subjobconfigs,masterjobconfig)
+        
         profiler.check('==> master_submit() elapsed time')
 
         return ick
@@ -739,14 +894,18 @@ sys.exit(0)
     def submit(self,subjobconfig,master_job_sandbox):
         '''Submit the job to the grid'''
 
+        ick = False
+
         jdlpath = self.preparejob(subjobconfig,master_job_sandbox)
 
-        self.id = grids['GLITE'].cream_submit(jdlpath,self.CE)
+        if jdlpath:
+            self.id = grids['GLITE'].cream_submit(jdlpath,self.CE)
 
-        if self.id:
-            self.actualCE = self.CE
+            if self.id:
+                self.actualCE = self.CE
+                ick = True
 
-        return not self.id is None
+        return ick
 
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
@@ -799,6 +958,9 @@ sys.exit(0)
                         job.backend.status = info['Current Status']
                         if info.has_key('ExitCode'):
                             job.backend.exitcode_cream = info['ExitCode']
+
+                        if info.has_key('FailureReason'):
+                            job.backend.reason = info['FailureReason']
 
                         job.backend.updateGangaJobStatus()
             else:

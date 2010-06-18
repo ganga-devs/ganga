@@ -12,7 +12,7 @@ from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.GridShell import getShell
 
-from LCGSandboxCache import LCGFileIndex, LCGSandboxCache
+from Ganga.Lib.LCG.GridftpSandboxCache import GridftpFileIndex, GridftpSandboxCache
 
 from Ganga.Lib.LCG.Utility import *
 
@@ -891,16 +891,13 @@ class Grid(object):
 
         gfiles = []
         for uri in osbURIList:
-            gf = LCGFileIndex()
+            gf = GridftpFileIndex()
             gf.id = uri
-            gf.attributes['local_fpath'] = uri
-            gf.attributes['lfc_host']    = ''
             gfiles.append(gf)
 
-        cache = LCGSandboxCache()
+        cache = GridftpSandboxCache()
         cache.middleware = 'GLITE'
         cache.vo = self.config['VirtualOrganisation']
-        cache.se_type = 'se'
         cache.uploaded_files = gfiles
 
         return cache.download( files=map(lambda x:x.id, gfiles), dest_dir=directory )
