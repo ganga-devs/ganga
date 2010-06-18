@@ -858,6 +858,31 @@ class Grid(object):
 
         return jobInfoDict
 
+    def cream_purgeMultiple(self, jobids):
+        '''CREAM CE job purging'''
+        
+        if not self.__cream_ui_check__():
+            return False
+
+        idsfile = tempfile.mktemp('.jids')
+        file(idsfile,'w').write('##CREAMJOBS##\n' + '\n'.join(jobids)+'\n')
+
+        cmd = 'glite-ce-job-purge'
+        exec_bin = True
+
+        cmd = '%s -n -N -i %s' % (cmd,idsfile)
+
+        logger.debug('job purge command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
+
+        logger.debug(output)
+
+        if rc == 0:
+            return True
+        else:
+            return False
+
     def cream_cancelMultiple(self, jobids):
         '''CREAM CE job cancelling'''
 

@@ -13,7 +13,7 @@ from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
+from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.Lib.LCG.Utility import *
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
@@ -914,6 +914,8 @@ sys.exit(0)
 
         jobInfoDict = grids['GLITE'].cream_status(jobdict.keys())
 
+        jidListForPurge = []
+
         ## update job information for those available in jobInfoDict
         for id, info in jobInfoDict.items():
 
@@ -951,6 +953,8 @@ sys.exit(0)
                                 (ick, app_exitcode)  = grids['GLITE'].__get_app_exitcode__(job.outputdir)
                                 job.backend.exitcode = app_exitcode
 
+                                jidListForPurge.append( job.backend.id )
+
                         if not doStatusUpdate:
                             logger.error('fail to download job output: %s' % jobdict[id].getFQID('.'))
 
@@ -965,6 +969,10 @@ sys.exit(0)
                         job.backend.updateGangaJobStatus()
             else:
                 logger.warning('fail to retrieve job informaton: %s' % jobdict[id].getFQID('.'))
+
+            ## purging the jobs the output has been fetched locally
+            if jidListForPurge:
+                grids['GLITE'].cream_purgeMultiple(jidListForPurge)
                 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
