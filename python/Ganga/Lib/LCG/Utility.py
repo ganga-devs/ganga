@@ -85,11 +85,11 @@ def get_md5sum(fname, ignoreGzipTimestamp=False):
     ## try to get checksum from it's content. The reason is that
     ## gzip file contains a timestamp in the header, which causes
     ## different md5sum value even the contents are the same.
-    re_gzipfile = re.compile('.*[\.tgz|\.gz].*$')
+    #re_gzipfile = re.compile('.*[\.tgz|\.gz].*$')
 
     f = None
 
-    if ignoreGzipTimestamp and re_gzipfile.match(fname):
+    if ignoreGzipTimestamp and (fname.find('.tgz') > 0 or fname.find('.gz') > 0):
         f = gzip.open(fname,'rb')
     else:
         f = open(fname, 'rb')
