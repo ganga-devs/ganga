@@ -75,14 +75,14 @@ class AnaTask(Task):
          dset = dset.strip()
          try:
             if "*" in dset:
-               logger.error("No wildcards are allowed in dataset specification! Please list your datasets before specifying them here!")
+               logger.error("WARNING: Wildcards may include unexpected datasets in your processing! Please list your datasets before specifying them here!")
             try:
                if dset[-1] == "/":
                   tid_datasets = dq2.listDatasetsInContainer(dset)
                else:
                   tid_datasets = dq2.listDatasetsInContainer(dset+"/")
             except DQUnknownDatasetException:
-               dslist = dq2.listDatasets(dset+"*").keys()
+               dslist = dq2.listDatasets(dset).keys()
                if len(dslist) == 0:
                   logger.error("Dataset %s not found!" % dset)
                   return
