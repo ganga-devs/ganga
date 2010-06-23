@@ -1,4 +1,4 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+ #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """The Ganga backendhandler for the Dirac system."""
 
 import os
@@ -130,7 +130,9 @@ class Dirac(IBackend):
         """Submit a DIRAC job"""
         j = self.getJobObject()
 
-        if not j.inputdata and not self.settings.has_key('Destination'):
+        inputdata = subjobconfig.script.inputdata
+        if (not inputdata or (len(inputdata.data) == 0)) and not \
+               self.settings.has_key('Destination'):
             t1_sites = configLHCb['noInputDataBannedSites']
             msg = 'Job has no inputdata (T1 sites will be banned to help '\
                   'avoid overloading them).'
