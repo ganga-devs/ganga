@@ -134,7 +134,7 @@ class Job(GangaObject):
 
     _category = 'jobs'
     _name = 'Job'
-    _exportmethods = ['submit','remove','kill', 'resubmit', 'peek','fail', 'force_status' ]
+    _exportmethods = ['submit','remove','kill', 'resubmit', 'peek','fail', 'force_status','merge' ]
 
     default_registry = 'jobs'
 
@@ -207,7 +207,7 @@ class Job(GangaObject):
                                             State('submitting','j.resubmit(force=1)'),
                                             State('submitted','j.resubmit(force=1)')),
                     'completing' : Transitions(State('completed',hook='postprocess_hook'),
-                                               State('failed','postprocessing error OR j.fail(force=1)',hook='monitorFailed_hook'),
+                                               State('failed','postprocessing error OR j.fail(force=1)',hook='postprocess_hook_failed'),
                                                State('unknown','forced remove'),
                                                State('submitting','j.resubmit(force=1)'),
                                                State('submitted','j.resubmit(force=1)')),
@@ -339,10 +339,14 @@ class Job(GangaObject):
     def monitorSubmitted_hook(self):
         """Send monitoring information (e.g. Dashboard) at the time of job submission"""
         self.getMonitoringService().submit()
-    
+   
     def postprocess_hook(self):
         self.application.postprocess()
         self.getMonitoringService().complete()
+
+    def postprocess_hook_failed(self):
+        self.application.postprocess()
+        self.getMonitoringService().fail()
         
     def monitorFailed_hook(self):
         self.getMonitoringService().fail()
@@ -581,20 +585,20 @@ class Job(GangaObject):
 
         if keep_going:
             msg = 'job.submit(keep_going=True) is not implemented yet.'
-            logger.warning(msg)
+            logger.error(msg)
             raise JobError(msg)
 
         # can only submit jobs in a 'new' state
         if self.status != 'new':
             msg = "cannot submit job %s which is in '%s' state"%(self.getFQID('.'),self.status)
-            logger.warning(msg)
+            logger.error(msg)
             raise JobError(msg)
 
         assert(self.subjobs == [])
         
         if self.master is not None:
             msg = "Cannot submit subjobs directly."
-            logger.warning(msg)
+            logger.error(msg)
             raise JobError(msg)
 
         # select the runtime handler
@@ -603,7 +607,7 @@ class Job(GangaObject):
             rtHandler = allHandlers.get(self.application._name,self.backend._name)()
         except KeyError,x:
             msg = 'runtime handler not found for application=%s and backend=%s'%(self.application._name,self.backend._name)
-            logger.warning(msg)
+            logger.error(msg)
             raise JobError(msg)
 
         try:
@@ -618,7 +622,7 @@ class Job(GangaObject):
                 self._commit()
             except Exception,x:
                 msg = 'cannot commit the job %s, submission aborted'%self.id
-                logger.warning(msg)
+                logger.error(msg)
                 self.status = 'new'
                 raise JobError(msg)
 
@@ -690,7 +694,7 @@ class Job(GangaObject):
                 self.updateStatus('failed')
             else:
                 # revert to the new status
-                logger.warning('%s ... reverting job %s to the new status', str(x), self.getFQID('.') )
+                logger.error('%s ... reverting job %s to the new status', str(x), self.getFQID('.') )
                 self.updateStatus('new')
                 raise JobError(x)
 
@@ -733,7 +737,12 @@ class Job(GangaObject):
         
         if self.status == 'removed':
             msg = 'job %d already removed'%self.id
-            logger.warning(msg)
+            logger.error(msg)
+            raise JobError(msg)
+
+        if self.status == 'completing':
+            msg = 'job %s is completing (may be downloading output), do force_status("failed") and then remove() again'%self.getFQID('.')
+            logger.error(msg)
             raise JobError(msg)
 
         if self.master:
@@ -847,7 +856,7 @@ class Job(GangaObject):
         try:
             self.updateStatus(status)
         except JobStatusError,x:
-            logger.warning(x)
+            logger.error(x)
             raise x
 
     def kill(self):
@@ -869,7 +878,7 @@ class Job(GangaObject):
             logger.info('killing job %s',fqid)
             if not self.status in ['submitted','running']:
                 msg = "cannot kill job which is in '%s' state. "%self.status
-                logger.warning(msg)
+                logger.error(msg)
                 raise JobError(msg)
             try:
                 if self.backend.master_kill():
@@ -893,7 +902,7 @@ class Job(GangaObject):
                     raise JobError(msg)
             except GangaException,x:
                 msg = "failed to kill job %s: %s"%(fqid,str(x))
-                logger.warning(msg)
+                logger.error(msg)
                 raise JobError(msg)
         finally:
             pass #job._registry.cache_writers_mutex.release()
@@ -912,7 +921,7 @@ class Job(GangaObject):
 
         if not self.status in ['completed','failed','killed']:
             msg = "cannot resubmit job %s which is in '%s' state"%(fqid,self.status)
-            logger.warning(msg)
+            logger.error(msg)
             raise JobError(msg)
 
         oldstatus = self.status
@@ -942,7 +951,7 @@ class Job(GangaObject):
             self._commit()
         except Exception,x:
             msg = 'cannot commit the job %s, resubmission aborted'%fqid
-            logger.warning(msg)
+            logger.error(msg)
             self.status = oldstatus
             raise JobError(msg)
 
@@ -977,7 +986,7 @@ class Job(GangaObject):
             self.status = 'submitted' # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
             self._commit() # make sure that the status change goes to the repository
         except GangaException,x:
-            logger.warning("failed to resubmit job, %s" % (str(x),))
+            logger.error("failed to resubmit job, %s" % (str(x),))
             logger.warning('reverting job %s to the %s status', fqid, oldstatus )
             self.status = oldstatus
             self._commit() #PENDING: what to do if this fails?
