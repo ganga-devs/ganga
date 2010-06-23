@@ -22,6 +22,17 @@ config.addOption('jobs_columns_show_empty',
                  ['fqid'],
                  'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
 
+config.addOption('jobs_status_colours',
+                            { 'new'        : 'fx.normal',
+                              'submitted'  : 'fg.orange',
+                              'running'    : 'fg.green',
+                              'completed'  : 'fg.blue',
+                              'failed'     : 'fg.red'
+                              },
+                            'colours for jobs status')
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()                              
+
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
 
 class JobRegistry(Registry):
@@ -62,11 +73,13 @@ class JobRegistrySlice(RegistrySlice):
         fg = Foreground()
         fx = Effects()
         bg = Background()
-        self.status_colours = { 'new'        : fx.normal,
-                                'submitted'  : fg.orange,
-                                'running'    : fg.green,
-                                'completed'  : fg.blue,
-                                'failed'     : fg.red }
+        try:
+            status_colours = config['jobs_status_colours']
+            self.status_colours = dict( [ (k, eval(v)) for k,v in status_colours.iteritems() ] )
+        except Exception,x:
+            logger.warning('configuration problem with colour specification: "%s"', str(x))
+            status_colours = config.options['jobs_status_colours'].default_value
+            self.status_colours = dict( [ (k, eval(v)) for k,v in status_colours.iteritems() ] )
         self.fx = fx
         self._proxyClass = JobRegistrySliceProxy
 
