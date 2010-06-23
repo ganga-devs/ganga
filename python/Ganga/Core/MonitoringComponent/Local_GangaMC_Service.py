@@ -423,12 +423,13 @@ class JobRegistry_Monitor( GangaThread ):
         self.__sleepCounter = config[ 'base_poll_rate' ]
         
     
-    def runMonitoring( self, steps=1, timeout=60 ):
+    def runMonitoring( self, steps=1, timeout=60, jobs=None ):
         """
         Enable/Run the monitoring loop and wait for the monitoring steps completion.
         Parameters:
           steps:   number of monitoring steps to run
           timeout: how long to wait for monitor steps termination (seconds)
+          jobs: a registry slice to be monitored (None -> all jobs), it may be passed by the user so ._impl is stripped if needed
         Return:
           False, if the loop cannot be started or the timeout occured while waiting for monitoring termination
           True, if the monitoring steps were successfully executed  
@@ -465,6 +466,13 @@ class JobRegistry_Monitor( GangaThread ):
             if self.enabled or self.__isInProgress():
                 log.error("The monitoring loop is already running.")
                 return False
+
+            if jobs:
+               try:
+                  self.registry = jobs._impl
+               except AttributeError:
+                  self.registry = jobs
+
             #enable mon loop
             self.enabled = True
             #set how many steps to run
