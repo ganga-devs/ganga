@@ -5,7 +5,7 @@
 ###############################################################################
 # A DQ2 dataset superclass, with AMI connection and search capability
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset,listDatasets
 from Ganga.GPIDev.Schema.Schema import SimpleItem
 from Ganga.GPIDev.Schema.Schema import FileItem
 from Ganga.Utility.logging import getLogger
@@ -24,6 +24,14 @@ try:
 except ImportError:
     logger.warning("AMI not properly set up. You will not be able to access AMI from this ganga session.")
     pass
+
+def resolve_dataset_name(name = ''):
+    result = listDatasets(name + '*')
+    status = False
+    for dset in result:
+        if dset[0] == name + '/':
+            status = True
+    return status
 
 def get_metadata(dataset = '', file_name = ''):
     
@@ -217,8 +225,12 @@ class AMIDataset(DQ2Dataset):
                 dsetList = []
                 for ln in res_text.split('\n'):
                     if ln.find("logicalDatasetName") != -1:
-                        # add to the dataset list - assume a container...
-                        dsetList.append(ln.split('=')[1].strip() + "/")
+                        # add to the dataset list - check container...
+                        if resolve_dataset_name(ln.split('=')[1].strip()):
+                                dsetList.append(ln.split('=')[1].strip() + "/")
+                        else:
+                                dsetList.append(ln.split('=')[1].strip())
+                                
             else:
                 resultDict= result.getDict()
                 resultByRow = resultDict['Element_Info']
