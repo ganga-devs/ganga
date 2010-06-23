@@ -29,7 +29,7 @@ r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
 if r:
    _gangaVersion = r.group('version')
 else:
-   _gangaVersion = "CVS_HEAD"
+   _gangaVersion = "SVN_TRUNK"
 
 # store a path to Ganga libraries
 
