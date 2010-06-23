@@ -2406,10 +2406,13 @@ if __name__ == '__main__':
                 else:
                     print 'ERROR: file not saved to %s in attempt number %s ...' %(siteID, count)
                     if count == retry:
-                        siteCount = siteCount + 1
-                        print 'ERROR: file not saved to %s - using now %s ...' %(siteID, temp_locations[siteCount] )
-                        count = 0
-
+                        if siteCount<len(temp_locations):
+                            siteCount = siteCount + 1
+                            count = 0
+                            print 'ERROR: file not saved to %s - using now %s ...' %(siteID, temp_locations[siteCount] )
+                        else:
+                            count = retry
+                            
                     count = count + 1
                     time.sleep(120)
 
