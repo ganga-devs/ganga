@@ -145,6 +145,9 @@ under certain conditions; type license() for details.
         parser.add_option("-i", dest="force_interactive", action="store_true",
                           help='enter interactive mode after running script')
 
+        parser.add_option("--webgui", dest="monitoring_server",  action="store_true", default='False',
+                          help='starts web GUI monitoring server')
+
         parser.add_option('--gui',dest="GUI",action='store_true',default=False,help='Run Ganga in the GUI mode.')
                 
         parser.add_option("--config", dest="config_file",action="store", metavar="FILE",
@@ -827,6 +830,10 @@ default_backends = LCG
     # run Ganga in the specified namespace, in principle the namespace should import all names from Ganga.GPI
     # if namespace is not specified then run in __main__
     def run(self,local_ns=None):
+
+        if self.options.monitoring_server == True:
+            from Ganga.Runtime.http_server import start_server
+            start_server()
 
         def override_credits():
            credits._Printer__data += '\n\nGanga: The Ganga Developers (http://cern.ch/ganga)\n'
