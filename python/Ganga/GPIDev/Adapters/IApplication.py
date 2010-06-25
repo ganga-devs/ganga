@@ -112,6 +112,10 @@ class IApplication(GangaObject):
     def postprocess(self):
         """ Postprocessing after the job was completed. By default do nothing."""
         pass
+
+    def postprocess_failed(self):
+        """ Postprocessing after the job was failed. By default do nothing."""
+        pass
     
     def transition_update(self,new_status):
         """

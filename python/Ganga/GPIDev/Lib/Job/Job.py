@@ -345,7 +345,7 @@ class Job(GangaObject):
         self.getMonitoringService().complete()
 
     def postprocess_hook_failed(self):
-        self.application.postprocess()
+        self.application.postprocess_failed()
         self.getMonitoringService().fail()
         
     def monitorFailed_hook(self):
