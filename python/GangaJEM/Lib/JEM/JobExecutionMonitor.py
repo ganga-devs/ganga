@@ -58,11 +58,11 @@ outlogger = getLogger("GangaJEM.Lib.JEM.out")
 # JEM global configuration options.
 jemconfig = makeConfig('JEM', 'Configuration parameters for the Job Execution Monitor')
 
-jemconfig.addOption('JEM_ENABLE', False,
+jemconfig.addOption('JEM_ENABLE', True,
                     "Set this to 'False' to globally disable the JEM monitoring, overriding the monitoring-settings of Job objects.")
 jemconfig.addOption('JEM_ENABLE_REALTIME', True,
                     "Set this to 'False' to globally disable realtime monitoring. Monitoring data will only be available in each job's output sandbox.")
-jemconfig.addOption('JEM_ENABLE_CTRACE', False,
+jemconfig.addOption('JEM_ENABLE_CTRACE', True,
                     "Set this to 'False' to globally disable c/c++ module tracing.")
 jemconfig.addOption('JEM_REPACK', False,
                     'Wether to repack the JEM library before each job submission. This is useful mostly for developers.')
