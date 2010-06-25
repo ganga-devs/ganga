@@ -29,8 +29,8 @@ class CRABApp(IApplication):
     schemadic['cfg_file'] = SimpleItem(defvalue=None,  typelist=['type(None)','str'], doc=comments[0])
     schemadic['force']    = SimpleItem(defvalue=0,     typelist=['int']             , doc=comments[1])
     schemadic['verbose']  = SimpleItem(defvalue=1,     typelist=['int'],              doc=comments[2])
-    schemadic['cfgfile']  = SimpleItem(defvalue=None,  typelist=['type(None)','str'], doc=comments[3])
-    schemadic['workdir']  = SimpleItem(defvalue=None,  typelist=['type(None)','str'], doc=comments[4])
+    schemadic['cfgfile']  = SimpleItem(defvalue=None,  typelist=['type(None)','str'], doc=comments[3], copiable=0, protected=1)
+    schemadic['workdir']  = SimpleItem(defvalue=None,  typelist=['type(None)','str'], doc=comments[4], copiable=0, protected=1)
 
     _schema = Schema(Version(1,0), schemadic)
     _category = 'applications'
@@ -39,7 +39,10 @@ class CRABApp(IApplication):
     def __init__(self):
         super(CRABApp,self).__init__()
 
-    def writeCRABFile(self,job,cfgfile):
+    def writeCRABFile(self,cfgfile):
+
+        job = self.getJobObject()
+
         #Get cfg_file parsed or default template if not possible
         cfp = ConfigFileParser('').getCRABSections()
         if self.cfg_file:
@@ -66,7 +69,7 @@ class CRABApp(IApplication):
 
         #Ensures ui_working_dir is stablished.
         if cfp['USER'].schemadic['ui_working_dir'].__class__.__name__ == 'SimpleItem':
-            cfp['USER'].schemadic['ui_working_dir'] = job.outputdir
+            logger.info('Adding "%s:%s" in "%s" section.'%('ui_working_dir',job.outputdir,'USER'))
             cfile.append('USER','ui_working_dir=%s'%(job.outputdir))
             setattr(job.inputdata,'ui_working_dir',job.outputdir)
 

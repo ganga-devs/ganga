@@ -12,14 +12,13 @@ import os.path
 
 class ConfigFileParser:
 
-    CRAB_SECTIONS = {'CMSSW':CMSSW(),'CRAB':CRAB(),'GRID':GRID(),'USER':USER()}
     filename = None
     
     def __init__(self,filename):
          self.filename = filename
 
     def getCRABSections(self):
-        return self.CRAB_SECTIONS
+        return {'CMSSW':CMSSW(),'CRAB':CRAB(),'GRID':GRID(),'USER':USER()}
 
     def parse(self):
         if not self.filename[-4:] == '.cfg':
@@ -32,6 +31,8 @@ class ConfigFileParser:
         except:
             raise ParserError('Could not open file "%s".'%(filename))
 
+        SECTIONS = self.getCRABsections()
+
         secContainer = None
         for line in file:
  
@@ -40,11 +41,11 @@ class ConfigFileParser:
                 if len(line):
 
                     if line[0] == '[' and line[-1] == ']':
-                        if not line[1:-1] in self.CRAB_SECTIONS.keys(): 
+                        if not line[1:-1] in SECTIONS.keys(): 
                             raise ParserError('Section "%s" is not a valid section.'%(line[1:-1]))
                         if secContainer != None:
-                            self.CRAB_SECTIONS[secContainer.__class__.__name__] = secContainer 
-                        secContainer = self.CRAB_SECTIONS[line[1:-1]]
+                            SECTIONS[secContainer.__class__.__name__] = secContainer 
+                        secContainer = SECTIONS[line[1:-1]]
                 
                     else:
                         if secContainer == None :
@@ -58,5 +59,5 @@ class ConfigFileParser:
                         else: 
                             raise ParserError('Unknown attribute "%s" for section "%s".'%(key,secContainer.__class__.__name__))                    
 
-        self.CRAB_SECTIONS[secContainer.__class__.__name__] = secContainer
-        return self.CRAB_SECTIONS
+        SECTIONS[secContainer.__class__.__name__] = secContainer
+        return SECTIONS

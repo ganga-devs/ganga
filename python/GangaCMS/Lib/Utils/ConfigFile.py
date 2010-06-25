@@ -14,17 +14,6 @@ class ConfigFile:
             sec = self.getsection(section)
             if sec == None:
                 self.sections.append(ConfigSection(section))
-#                print section
-
-
-#        sec = ConfigSection('CRAB')
-#        self.sections.append(sec)
-#        sec = ConfigSection('CMSSW')
-#        self.sections.append(sec)
-#        sec = ConfigSection('USER')
-#        self.sections.append(sec)
-#        sec = ConfigSection('GRID')
-#        self.sections.append(sec)
   
         self.outfile  = open(filename,'w')
 
