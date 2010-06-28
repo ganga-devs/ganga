@@ -5,33 +5,45 @@
 # 08/06/10 @ ubeda
 #
 
-from GangaCMS.Lib.ConfParams import *
-from GangaCMS.Lib.Utils import ParserError
+from GangaCMS_2.Lib.ConfParams import *
+from GangaCMS_2.Lib.Utils import ParserError
+
+from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Schema import *
 
 import os.path
 
-class ConfigFileParser:
 
-    filename = None
+class ConfigFileParser(GangaObject):
+
+    _filename = None
+    _schema =  Schema(Version(0,0), {})
+    _hidden = 1
+    _SECTIONS = None
     
-    def __init__(self,filename):
-         self.filename = filename
+    def __init__(self,filename=None):
+        self._SECTIONS = {'CMSSW':CMSSW(),'CRAB':CRAB(),'GRID':GRID(),'USER':USER()}
+        self._filename = filename
 
-    def getCRABSections(self):
-        return {'CMSSW':CMSSW(),'CRAB':CRAB(),'GRID':GRID(),'USER':USER()}
+    def getFilename(self):
+        return self._filename
+
+    def getSchema(self):
+        return self._SECTIONS
 
     def parse(self):
-        if not self.filename[-4:] == '.cfg':
-            raise ParserError('File "%s" has wrong extension (not .cfg).'%(self.filename))
-        if not os.path.isfile(self.filename):
-            raise ParserError('File "%s" not found.'%(self.filename))
+
+        filename = self.getFilename()
+
+        if not filename[-4:] == '.cfg':
+            raise ParserError('File "%s" has wrong extension (not .cfg).'%(filename))
+        if not os.path.isfile(filename):
+            raise ParserError('File "%s" not found.'%(filename))
         
         try:
-            file = open(self.filename,'r')
+            file = open(filename,'r')
         except:
-            raise ParserError('Could not open file "%s".'%(filename))
-
-        SECTIONS = self.getCRABsections()
+            raise ParserError('Could not open file "%s".'%(filename))      
 
         secContainer = None
         for line in file:
@@ -41,11 +53,11 @@ class ConfigFileParser:
                 if len(line):
 
                     if line[0] == '[' and line[-1] == ']':
-                        if not line[1:-1] in SECTIONS.keys(): 
+                        if not line[1:-1] in self._SECTIONS.keys():
                             raise ParserError('Section "%s" is not a valid section.'%(line[1:-1]))
                         if secContainer != None:
-                            SECTIONS[secContainer.__class__.__name__] = secContainer 
-                        secContainer = SECTIONS[line[1:-1]]
+                            self._SECTIONS[secContainer.__class__.__name__] = secContainer
+                        secContainer = self._SECTIONS[line[1:-1]]
                 
                     else:
                         if secContainer == None :
@@ -54,10 +66,12 @@ class ConfigFileParser:
                             (key,value) = line.replace(' ','').split('=')
                         except ValueError:
                             raise ParserError('Line "%s" badly formatted.'%(line))
-                        if key in secContainer.schemadic:
+                        if key in secContainer.schemadic.keys():
                             secContainer.schemadic[key] = value
                         else: 
                             raise ParserError('Unknown attribute "%s" for section "%s".'%(key,secContainer.__class__.__name__))                    
 
-        SECTIONS[secContainer.__class__.__name__] = secContainer
-        return SECTIONS
+        self._SECTIONS[secContainer.__class__.__name__] = secContainer
+
+        return self._SECTIONS
+

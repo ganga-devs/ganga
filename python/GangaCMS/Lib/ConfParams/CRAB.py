@@ -5,24 +5,31 @@
 # 08/06/10 @ ubeda
 #
 
-from Ganga.GPIDev.Schema import SimpleItem
+from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Schema import *
 
-class CRAB:
+class CRAB(GangaObject):
 
-    comments = []
-    comments.append('http://belforte.home.cern.ch/belforte/misc/test/crab-v2.7.2.html#jobtype__')
-    comments.append('http://belforte.home.cern.ch/belforte/misc/test/crab-v2.7.2.html#server_name') 
-    comments.append('http://belforte.home.cern.ch/belforte/misc/test/crab-v2.7.2.html#use_server')
-    comments.append('--- TO DO ---')
+    _comments = []
+    _comments.append('http://belforte.home.cern.ch/belforte/misc/test/crab-v2.7.2.html#jobtype__')
+    _comments.append('http://belforte.home.cern.ch/belforte/misc/test/crab-v2.7.2.html#server_name') 
+    _comments.append('http://belforte.home.cern.ch/belforte/misc/test/crab-v2.7.2.html#use_server')
+    _comments.append('--- TO DO ---')
 
     schemadic = {}
-    schemadic['jobtype']     = SimpleItem(defvalue=None, typelist=['type(None)','str'], doc=comments[0])
-    schemadic['server_name'] = SimpleItem(defvalue=None, typelist=['type(None)','str'], doc=comments[1])
-    schemadic['use_server']  = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=comments[2])
-    schemadic['scheduler']   = SimpleItem(defvalue=None, typelist=['type(None)','str'], doc=comments[3])
+    schemadic['jobtype']     = SimpleItem(defvalue=None, typelist=['type(None)','str'], doc=_comments[0])
+    schemadic['server_name'] = SimpleItem(defvalue=None, typelist=['type(None)','str'], doc=_comments[1])
+    schemadic['use_server']  = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[2])
+    schemadic['scheduler']   = SimpleItem(defvalue=None, typelist=['type(None)','str'], doc=_comments[3])
 
-    GUIPrefs = [
+    _GUIPrefs = [
                   { 'attribute' : 'jobtype'     , 'widget' : 'String' },
                   { 'attribute' : 'server_name' , 'widget' : 'String' },
                   { 'attribute' : 'use_server'  , 'widget' : 'String' }
                 ]
+
+    _schema =  Schema(Version(0,0), {})
+    _hidden = 1
+
+    #def getSchema(self):
+    #    return self._schemadic

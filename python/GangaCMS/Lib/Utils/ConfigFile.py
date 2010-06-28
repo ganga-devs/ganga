@@ -1,16 +1,21 @@
 from ConfigSection import *
 
-class ConfigFile:
-    """This class creates and edits a configuration file for CRAB"""
-    cfgcmds  = ''
+from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Schema import *
+
+class ConfigFile(GangaObject):
+
     sections = []
     outfile  = None
     
-    CRAB_SECTIONS = ['CRAB','CMSSW','USER','GRID']    
+    _CRAB_SECTIONS = ['CRAB','CMSSW','USER','GRID']    
+
+    _schema =  Schema(Version(0,0), {})
+    _hidden = 1
 
     def __init__(self,filename):
 
-        for section in self.CRAB_SECTIONS:
+        for section in self._CRAB_SECTIONS:
             sec = self.getsection(section)
             if sec == None:
                 self.sections.append(ConfigSection(section))

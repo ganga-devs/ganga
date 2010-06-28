@@ -10,12 +10,15 @@ import datetime
 
 from subprocess import Popen, PIPE
 
+from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Schema import *
+
 logger = getLogger()
 
-class CRABServer:
+class CRABServer(GangaObject):
 
-    def __init__(self):
-        pass
+    _schema =  Schema(Version(0,0), {})
+    _hidden = 1
 
     def _send(self,cmd,type):
 
