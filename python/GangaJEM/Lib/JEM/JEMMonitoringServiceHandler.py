@@ -370,6 +370,11 @@ class JEMMonitoringServiceHandler(object):
         if self.__job.master != None:
             return
 
+        # nicely ask the user to give some feedback.
+        logger.info("The Job Execution Monitor is active for this job.")
+        logger.info("  Please consider providing (positive and/or negative) feedback of your user experience")
+        logger.info("  with GangaJEM - visit https://svn.grid.uni-wuppertal.de/trac/JEM for that. Thanks :)")
+
         if self.__job.subjobs and len(self.__job.subjobs) > 0:
             # HACK: If we are a split job, we have to wait for the subjobs to be assigned
             #       their backend-id (JobID) before we can start the Job-Listener process
