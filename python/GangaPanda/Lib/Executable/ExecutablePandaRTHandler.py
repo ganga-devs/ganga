@@ -36,11 +36,6 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 #       Pack inputsandbox
         inputsandbox = 'sources.%s.tar' % commands.getoutput('uuidgen') 
         inpw = job.getInputWorkspace()
-        # add user script to inputsandbox
-        if hasattr(job.application.exe, "name"):
-            if not job.application.exe in job.inputsandbox:
-                job.inputsandbox.append(job.application.exe)
-            
         for fname in [f.name for f in job.inputsandbox]:
             fname.rstrip(os.sep)
             path = fname[:fname.rfind(os.sep)]
@@ -308,21 +303,17 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         param += '-r "%s" ' % self.rundirectory
 
         if job.backend.bexec == '':
-            exe_name = job.application.exe
-            if hasattr(job.application.exe, "name"):
-                exe_name = os.path.basename(job.application.exe.name)
-
             # FIXME if not options.nobuild:
             # set jobO parameter
             if self.inputsandbox:
-                param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, exe_name, exe_name)
+                param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, job.application.exe, job.application.exe)
             else:
-                param += '-j "chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (exe_name, exe_name)
+                param += '-j "chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (job.application.exe, job.application.exe)
             param += '-p "%s" ' % (" ".join(job.application.args))
 
         else:
             param += '-l %s ' % self.library
-            param += '-j "%s" -p "%s" ' % ( exe_name,urllib.quote(" ".join(job.application.args)))
+            param += '-j "%s" -p "%s" ' % ( job.application.exe,urllib.quote(" ".join(job.application.args)))
 
         if job.inputdata:
             param += '-i "%s" ' % job.inputdata.names
