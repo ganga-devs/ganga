@@ -2271,6 +2271,8 @@ if __name__ == '__main__':
             if lfccat:
                 temp_lfc_host = re.sub('[/:]',' ',lfccat[0]).split()[1]
                 temp_lfc_home = lfccat[0].split(':')[2]
+                if not temp_lfc_home.endswith('dq2/'):
+                    temp_lfc_home = os.path.join(temp_lfc_home, 'dq2/') 
                 temp_srm = TiersOfATLAS.getSiteProperty(temp_location,'srm')
                 if not temp_srm:
                     continue

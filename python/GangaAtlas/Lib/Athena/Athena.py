@@ -743,7 +743,8 @@ class Athena(IApplication):
 
         # extract run configuration
         # run ConfigExtractor for normal jobO
-        logger.info('Extracting athena run configuration ...')
+        logger.info('Extracting athena run configuration ... ')
+        logger.info('This can take a while since the athena autoconfiguration is called in the background to extract the jobOption configuration ... ')
         jobO = ''
         if not self.option_file:
             raise ApplicationConfigurationError(None,'Set option_file before calling prepare()')
