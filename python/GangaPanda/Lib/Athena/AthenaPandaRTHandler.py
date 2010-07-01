@@ -396,7 +396,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.inputdata:
             # check for ELSSI files
             input_files = job.inputdata.names
-            if job.inputdata.tag_info:
+            if self.inputdatatype == 'DQ2' and job.inputdata.tag_info:
                 tag_file = job.inputdata.tag_info.keys()[0]
                 if job.inputdata.tag_info[tag_file]['path'] != '' and job.inputdata.tag_info[tag_file]['dataset'] == '':
                     
