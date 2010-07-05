@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Task Monitoring</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="media/css/base.css" />
+<link rel="stylesheet" type="text/css" href="media/css/overcast/jquery-ui-1.8.custom.css" />
+
+<script type="text/javascript" src="media/lib/jquery-1.4.2.min.js"></script>
+<script type="text/javascript" src="media/lib/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="media/lib/quicksilver.js"></script>
+<script type="text/javascript" src="media/lib/jquery.livesearch.js"></script>
+<script type="text/javascript" src="media/lib/jquery.json-2.1.min.js"></script>
+<script type="text/javascript" src="media/lib/jquery.ba-bbq.min.js"></script>
+<script type="text/javascript" src="media/lib/cache.js"></script>
+<script type="text/javascript" src="media/lib/jquery.base64.js"></script>
+<script type="text/javascript" src="media/lib/jquery-ui-1.8.custom.min.js"></script>
+<script type="text/javascript" src="media/lib/jquery.dataTables.pagination.input.js"></script>
+
+<script type="text/javascript" src="media/scripts/controlsupdate.js"></script>
+<script type="text/javascript" src="media/scripts/events.js"></script>
+<script type="text/javascript" src="media/scripts/controller.js"></script>
+<script type="text/javascript" src="media/scripts/data.js"></script>
+<script type="text/javascript" src="media/scripts/settings.js"></script>
+<script type="text/javascript" src="media/scripts/components/lkfw.searchable.list.js"></script>
+<script type="text/javascript" src="media/scripts/components/lkfw.datatable.js"></script>
+
+<script type="text/javascript" language="javascript">
+$(document).ready( function() {
+    var _cache_max_entries = 10;
+    var _cache_lifetime = 120;
+    _Cache = new Cache(_cache_max_entries, _cache_lifetime);
+    Controller = new Controller();
+    Controller.Init();
+} );
+</script>
+</head>
+
+<body>
+<div id="container">
+    <div id="header">
+        <div id="topBelt"></div>
+        <div id="breadcrumbs">&nbsp;:: <a href="#">lkokosz</a> &raquo; Tasks</div>
+        <div id="logo" class="ui-corner-br"></div>
+        <div id="timeSelect" class="ui-corner-br ui-corner-bl">
+            <p><span class="tLabel_blue">FROM</span> <input id="from" type="text" />&nbsp;&nbsp;&nbsp;<span class="tLabel_blue">TILL</span> <input id="till" type="text" />&nbsp;&nbsp;&nbsp;<span class="tLabel_blue">TIME RANGE</span> <select id="timeRange" title=";)">
+                <option value="" disabled="disabled">Disabled</option>
+                <option value="lastDay" selected="selected">Last Day</option>
+                <option value="last2Days">Last 2 Days</option>
+                <option value="last3Days">Last 3 Days</option>
+                <option value="lastWeek">Last Week</option>
+                <option value="last2Weeks">Last 2 Weeks</option>
+                <option value="lastMonth">Last Month</option>
+            </select></p>
+            <div class="dlabel ui-corner-br">TIME RANGE</div>
+        </div>
+        <div id="userSelect">
+            <table cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="alignRight"><span class="tLabel_white">USER&nbsp;</span></td>
+                    <td><select id="userSelect_dropdown"></select></td>
+                </tr>
+                <tr>
+                    <td class="alignRight"><span class="tLabel_white">REFRESH&nbsp;</span></td>
+                    <td>
+                        <select id="refresh">
+                            <option value="0" selected="selected">Disabled</option>
+			    <option value="10">10 sec</option>
+                            <option value="300">5 min</option>
+                            <option value="600">10 min</option>
+                            <option value="1200">20 min</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="ajaxAnimation"><img src="media/images/loading.gif" /></div>
+        <div id="supportHelp"><a href="#">SUPPORT</a><br /><a href="#">HELP</a></div>
+    </div>
+    <div style="position:fixed; bottom:15px; right:15px; display:inline"><input id="modelCheck" type="button" value="modelCheck" /></div>
+    <div id="content" class="ui-corner-br ui-corner-bl ui-corner-tr ui-corner-tl"></div>
+</div>
+<input type="hidden" id="url-page" value="hash" />
+</body>
+
+</html>
