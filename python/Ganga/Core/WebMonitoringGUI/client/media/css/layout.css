@@ -11,7 +11,7 @@ body { font-family:'Lucida Grande',Verdana,Arial,Helvetica,sans-serif; font-size
 #breadcrumbs a { color:#3383BB; font-weight:bold; }
 #breadcrumbs a:hover { color:#5992bb; }
 
-#logo { position:absolute; top:0px; left:0px; width:215px; height:50px; background-color:#ffffff; background-image:url(../images/cmslrg.png); background-repeat:no-repeat; background-position:5px 5px; border-bottom:1px #27415f solid; border-right:1px #27415f solid; }
+#logo { position:absolute; top:0px; left:0px; width:215px; height:50px; background-color:#ffffff; background-image:url(../images/ganga_logo_72dpi.png); background-repeat:no-repeat; background-position:5px 5px; border-bottom:1px #27415f solid; border-right:1px #27415f solid; }
 
 #timeSelect { position:absolute; top:0px; left:480px; width:520px; height:50px; background-color:#becee0; border:1px #27415f solid; border-top-width:0px; }
 #timeSelect div.dlabel { position:absolute; top:0px; left:0px; border-bottom:1px #27415f solid; border-right:1px #27415f solid; padding-right:5px; padding-left:5px; background-color:#889db5; color:#ffffff; font-weight:bold; }
