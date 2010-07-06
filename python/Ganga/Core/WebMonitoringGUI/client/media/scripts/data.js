@@ -131,8 +131,32 @@ function Data(ajaxAnimation) {
     this.ajax_getData = function(url, params, fSuccess, fFailure) {
         var thisRef = this;
 
-        if (window.location.port) url = this.addPortNumber(url, window.location.port);
+        currentUrl = window.location.toString()
+        portIndex = currentUrl.indexOf('?port=');
+        if (portIndex > -1) {
+            
+            port = ''           
+            isNumber = true;    
+            index = portIndex + 6       
         
+            while(isNumber){
+                char = currentUrl[index];
+                if(char == '0' || char == '1' || char =='2' ||
+                   char == '3' || char == '4' || char =='5' ||
+                   char == '6' || char == '7' || char =='8' || char =='9'){
+                    port = port + currentUrl[index];
+                    index++;
+                }
+                else{
+                    isNumber = false
+                }
+                
+            }
+
+            url = this.addPortNumber(url, port);            
+        }
+
+
         var key = $.base64Encode($.param.querystring(url, params, 2));
         
         var data = _Cache.get(key);
@@ -145,7 +169,7 @@ function Data(ajaxAnimation) {
                 url: url,
                 data: params,
                 dataType: "jsonp",
-		jsonp: 'jsonp_callback',
+                jsonp: 'jsonp_callback',
                 success: function(data) {
                     _Cache.add(key, data);
                     fSuccess(data);

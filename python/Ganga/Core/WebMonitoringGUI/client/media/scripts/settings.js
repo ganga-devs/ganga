@@ -10,7 +10,7 @@
 function Settings() {
     // Users list settings - START
     this.Users = {
-        'dataURL': 'http://localhost:8080/?list=users',
+        'dataURL': 'http://localhost/?list=users',
         'searchLabel': 'Search for user ',
         'translateData': function(dataJSON) {
             var usersList = Array();
@@ -24,7 +24,7 @@ function Settings() {
     
     // User Tasks settings - START
     this.Tasks = {
-        'dataURL': 'http://localhost:8080/?list=jobs',
+        'dataURL': 'http://localhost/?list=jobs',
         'dataURL_params': function(Data) {
             obj = {
                 'usergridname':Data.user,
@@ -52,13 +52,13 @@ function Settings() {
             {"sWidth":"80px"},
             {"sWidth":"110px"},
             {"sWidth":"110px"},
-	    {"sWidth":"110px"},
-	    {"sWidth":"110px"},
+            {"sWidth":"110px"},
+            {"sWidth":"110px"},
             {"sClass":"numericTD","sWidth":"70px"},
             {"sClass":"numericTD","sWidth":"70px"},
             {"sClass":"numericTD","sWidth":"70px"},
             {"sClass":"numericTD","sWidth":"70px"},
-	    {"sClass":"numericTD","sWidth":"70px"},	
+            {"sClass":"numericTD","sWidth":"70px"},     
             null
         ],
         'getDataArray': function(data) {
@@ -80,13 +80,13 @@ function Settings() {
             }
             return tasksArr;
         },*/
-	'translateData': function(dataJSON) {
+        'translateData': function(dataJSON) {
             var tasksArr = Array();
             for (i in dataJSON) {
                 tasksArr.push(Array(
-		    //('<div class="wrapColumn" title="'+dataJSON[i].id+'"><a class="tmIdClick">'+dataJSON[i].id+'</a></div>' || 'default'),	
-		    (dataJSON[i].id),	
-		    ('<a class="">'+dataJSON[i].status+'</a>' || ''),
+                    //('<div class="wrapColumn" title="'+dataJSON[i].id+'"><a class="tmIdClick">'+dataJSON[i].id+'</a></div>' || 'default'),    
+                    (dataJSON[i].id),   
+                    ('<a class="">'+dataJSON[i].status+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].name+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].application+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].backend+'</a>' || ''),
@@ -94,8 +94,8 @@ function Settings() {
                     ('<a class="">'+dataJSON[i].submitted+'</a>' || '0'),
                     ('<a class="noRunnClick">'+dataJSON[i].running+'</a>' || '0'),
                     ('<a class="">'+dataJSON[i].completed+'</a>' || '0'),
-		    ('<a class="noFailClick">'+dataJSON[i].failed+'</a>' || '0'),
-		    ('<a class="">'+dataJSON[i].actualCE+'</a>' || '')
+                    ('<a class="noFailClick">'+dataJSON[i].failed+'</a>' || '0'),
+                    ('<a class="">'+dataJSON[i].actualCE+'</a>' || '')
                 ));
             }
             return tasksArr;
@@ -112,14 +112,14 @@ function Settings() {
                 'noUnknClick':'U'
             };
             Data.uparam = [classTranslate[$(el).find('a').attr('class')]];
-	    Data.tid = Data.mem.tasks.data[aPos[0]].id;	
+            Data.tid = Data.mem.tasks.data[aPos[0]].id; 
         },
     };
     // User Tasks settings - FINISH
     
     // Task Jobs settings - START
     this.Jobs = {
-        'dataURL': 'http://localhost:8080/?list=subjobs',
+        'dataURL': 'http://localhost/?list=subjobs',
         'dataURL_params': function(Data) {
             obj = {
                 'taskmonid':Data.tid,
@@ -150,12 +150,12 @@ function Settings() {
             var tasksArr = Array();
             for (i in dataJSON) {
                 tasksArr.push(Array(
-		    (dataJSON[i].id),	
-		    ('<a class="">'+dataJSON[i].status+'</a>' || ''),
+                    (dataJSON[i].id),   
+                    ('<a class="">'+dataJSON[i].status+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].name+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].application+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].backend+'</a>' || ''),
-		    ('<a class="">'+dataJSON[i].actualCE+'</a>' || '')
+                    ('<a class="">'+dataJSON[i].actualCE+'</a>' || '')
                     /*('<div class="wrapColumn" title="'+dataJSON[i].SchedulerJobId+'">'+dataJSON[i].SchedulerJobId+'</div>' || 'default'),
                     (dataJSON[i].TaskJobId || '0'),
                     (jobStatuses[dataJSON[i].STATUS] ? '<div class="status '+jobStatuses[dataJSON[i].STATUS]+'">'+jobStatuses[dataJSON[i].STATUS]+'</div>' : 'Unknown'),
@@ -166,7 +166,7 @@ function Settings() {
                     (dataJSON[i].submitted || '0'),
                     (dataJSON[i].started || '0'),
                     (dataJSON[i].finished || '0')
-		    */	
+                    */  
                 ));
             }
             return tasksArr;
