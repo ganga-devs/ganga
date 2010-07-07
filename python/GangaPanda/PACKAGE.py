@@ -8,7 +8,7 @@
 """
 
 _external_packages = {
-    'panda-client' : { 'version' : '0.2.51', 
+    'panda-client' : { 'version' : '0.2.60', 
                     'PYTHONPATH':['lib/python2.4/site-packages'],
                     'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                     'PANDA_SYS':'.',
