@@ -155,6 +155,7 @@ allHandlers.add('Executable','Interactive', RTHandler)
 allHandlers.add('Executable','Batch', RTHandler)
 allHandlers.add('Executable','Cronus', RTHandler)
 allHandlers.add('Executable','Remote', LCGRTHandler)
+allHandlers.add('Executable','CREAM', LCGRTHandler)
 
 #
 #
