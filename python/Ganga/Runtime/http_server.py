@@ -8,6 +8,7 @@ import urlparse
 import Ganga.GPI
 from Ganga.GPI import config, jobs
 import time, datetime
+import os
 
 def addQuotes(value):
 
@@ -221,6 +222,13 @@ def getFromDateFromTimeRange(timeRange):
     fromDateTime = datetime.datetime(fromDay.year, fromDay.month, fromDay.day, 0, 0)
     return fromDateTime
 
+def getMonitoringLink(port):
+
+    exeDir = os.getcwd()
+    webMonitoringLink = os.path.join(os.path.dirname(exeDir), 'python', 'Ganga', 'Core', 'WebMonitoringGUI', 'client', 'index.html' )
+
+    return 'file://' + webMonitoringLink + '?port=' + str(port)   
+
 class JobRelatedInfo:
         
     def __init__(self, job_json, time_created):
@@ -254,7 +262,6 @@ class HTTPServerThread(GangaThread):
 
         server, port = getHttpServer()
         server.socket.settimeout(1)
-        print "port : " + str(port)
         reg = getRegistry("jobs") 
 
         """
@@ -286,16 +293,20 @@ class HTTPServerThread(GangaThread):
         fill_jobs_dictionary()  
 
         print 'Web gui monitoring server started successfully'
-        server.serve_forever()
-        """
+        print
+        print 'You can monitor your jobs on the following link: ' + getMonitoringLink(port)
+
+        #server.serve_forever()
+        
         try:
                 while not self.should_stop():
                         server.handle_request()
         finally:
-                print "stopping HTTP server thread"
-                os.remove(tempFilePath)
+                pass
+                #print "stopping HTTP server thread"
+                #os.remove(tempFilePath)
                 #server.server_close()          
-        """     
+             
 
 class GetHandler(BaseHTTPRequestHandler):
         
