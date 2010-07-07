@@ -93,6 +93,23 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if app.atlas_exetype == 'ATHENA' and not app.user_area.name and not job.backend.libds:
             raise ApplicationConfigurationError(None,'app.user_area.name is null')
 
+        # validate inputdata
+        if job.inputdata:
+            if job.inputdata._name == 'DQ2Dataset':
+                self.inputdatatype='DQ2'
+                logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            elif job.inputdata._name == 'AMIDataset':
+                self.inputdatatype='DQ2'
+                job.inputdata.dataset = job.inputdata.search()
+                logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            elif job.inputdata._name == 'ATLASTier3Dataset':
+                self.inputdatatype='Tier3'
+                logger.info('Input dataset is a Tier3 PFN list')
+            else: 
+                raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
+        else:
+            logger.info('Proceeding without an input dataset.')
+
         # handle different atlas_exetypes
         self.job_options = ''
         if app.atlas_exetype == 'TRF':
@@ -443,7 +460,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         #if self.config['shipinput']: 
         #    param += '--shipInput '
         #FIXME options.rndmStream
-        nEventsToSkip = 0
+        nEventsToSkip = app.skip_events
         if app.max_events > 0:
             param += '-f "theApp.EvtMax=%d;EventSelector.SkipEvents=%s" ' % (app.max_events,nEventsToSkip)
         # addPoolFC
