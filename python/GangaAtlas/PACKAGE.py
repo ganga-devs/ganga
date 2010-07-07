@@ -21,24 +21,24 @@ _external_packages = {
                      'DQ2_ENDUSER_SETUP' : 'True',
                      'noarch':True 
                      },
-    'panda-client' : { 'version' : '0.2.51', 
+    'panda-client' : { 'version' : '0.2.60', 
                        'PYTHONPATH':['lib/python2.4/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
                        'noarch':True
                        },
-    'zsi' : { 'version' : '2.1-a1', 
-                       'PYTHONPATH':['lib/python'],
-                       'noarch':True
-                       },
-    '4Suite' : { 'version' : '1.0.2', 
-                 'PYTHONPATH':['lib/python2.4/site-packages'],
-                 'syspath':['lib/python2.4/site-packages']
-                       },
-    'pyAMI' : { 'version' : '3.1.2', 
-                       'PYTHONPATH':['.'],
-                       'noarch':True
-                       }
+#    'zsi' : { 'version' : '2.1-a1', 
+#                       'PYTHONPATH':['lib/python'],
+#                       'noarch':True
+#                       },
+#    '4Suite' : { 'version' : '1.0.2', 
+#                 'PYTHONPATH':['lib/python2.4/site-packages'],
+#                 'syspath':['lib/python2.4/site-packages']
+#                       },
+#    'pyAMI' : { 'version' : '3.1.2', 
+#                       'PYTHONPATH':['.'],
+#                       'noarch':True
+#                       }
 
     }
 
