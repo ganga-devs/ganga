@@ -8,6 +8,7 @@
 # USER_AREA         ... the tar file of the user area (optional)
 # ATHENA_OPTIONS    ... Options to run Athena
 # ATHENA_MAX_EVENTS ... Limit the events to be processed by Athena
+# ATHENA_SKIP_EVENTS ... Skip the events before processed by  Athena
 # OUTPUT_LOCATION   ... Place to store the results
 
 retcode=0
@@ -259,6 +260,10 @@ if os.path.exists('input_files'):
         theApp.EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
     else:
         theApp.EvtMax = -1
+    if os.environ.has_key('ATHENA_SKIP_EVENTS'):
+        ServiceMgr.EventSelector.SkipEvents = int(os.environ['ATHENA_SKIP_EVENTS'])
+    else:
+        ServiceMgr.EventSelector.SkipEvents = 0
 EOF
     fi
 
@@ -267,6 +272,10 @@ else
 cat - >input.py <<EOF
 if os.environ.has_key('ATHENA_MAX_EVENTS'):
    theApp.EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
+if os.environ.has_key('ATHENA_SKIP_EVENTS'):
+    ServiceMgr.EventSelector.SkipEvents = int(os.environ['ATHENA_SKIP_EVENTS'])
+else:
+    ServiceMgr.EventSelector.SkipEvents = 0
 
 EOF
 fi
@@ -457,6 +466,10 @@ if os.path.exists('input_files'):
         theApp.EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
     else:
         theApp.EvtMax = -1
+    if os.environ.has_key('ATHENA_SKIP_EVENTS'):
+        ServiceMgr.EventSelector.SkipEvents = int(os.environ['ATHENA_SKIP_EVENTS'])
+    else:
+        ServiceMgr.EventSelector.SkipEvents = 0
 EOF
     if [ n$DATASETDATATYPE = n'MuonCalibStream' ] 
 	then

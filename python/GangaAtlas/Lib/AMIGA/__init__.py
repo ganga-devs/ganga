@@ -6,4 +6,4 @@ logger = getLogger()
 if sys.hexversion > 0x2040000:
     from AMIDataset import *
 else:
-    logger.warning("AMI not properly set up. Set athena environment for accessing AMI.")
+    logger.warning("AMI not properly set up. Set athena to access AMI from this ganga session.")

@@ -349,7 +349,7 @@ def resolve_dq2_local_site_id(ds_locations, site_domain, se_hostname, force_site
 
     return dq2_local_site_id
 
-def make_FileStager_jobOption(pfns, gridcopy=True, protocol='lcgcp', maxEvent=-1, fs_cp_cmd='', fs_cp_args=[], fs_of_prefix='file:', ic_jo_path='', fs_jo_path=''):
+def make_FileStager_jobOption(pfns, gridcopy=True, protocol='lcgcp', maxEvent=-1, skipEvent = 0, fs_cp_cmd='', fs_cp_args=[], fs_of_prefix='file:', ic_jo_path='', fs_jo_path=''):
     '''
     creates the Athena job option file for FileStager.
 
@@ -357,6 +357,7 @@ def make_FileStager_jobOption(pfns, gridcopy=True, protocol='lcgcp', maxEvent=-1
     @param gridcopy indicates if appending "gridcopy://" in front of each of pfns
     @param protocol indicates the preferred copy protocol
     @param maxEvent specifies the max. number of events
+    @param skipEvent specifies the number of events to skip
     @param fs_cp_cmd specifies the exact copy command to be used by FileStager
     @param fs_cp_args specifies the exact copy command arguments to be used by FileStager
     @param fs_of_prefix specifies the prefix to be added in front of the destination file path in the copy command used by FileStager
@@ -547,11 +548,14 @@ else:
         athenaCommonFlags.Pool###RECEXTYPE###Input.set_Value_and_Lock( ic )
         athenaCommonFlags.FilesInput.set_Value_and_Lock( ic )
         athenaCommonFlags.EvtMax.set_Value_and_Lock(###MAXEVENT###)
+        athenaCommonFlags.SkipEvents.set_Value_and_Lock(###SKIPEVENT###)
     except:
         pass
 
 ## override the event number
 theApp.EvtMax = ###MAXEVENT###
+## override the  number of events to skip
+ServiceMgr.EventSelector.SkipEvents = ###SKIPEVENT###
 """
 
     ick = False
@@ -575,6 +579,7 @@ theApp.EvtMax = ###MAXEVENT###
 
     ## create option file for Inputs
     jOptionInput = jOptionInput.replace('###MAXEVENT###', repr(maxEvent))
+    jOptionInput = jOptionInput.replace('###SKIPEVENT###', repr(skipEvent))
     f = open( ic_jo_path, 'w' )
     f.write(jOptionInput)
     f.close()

@@ -155,6 +155,15 @@ if (io_type in ['FILE_STAGER']):
     except:
         evtmax = -1
 
+    
+    try:
+        if os.environ.has_key('ATHENA_SKIP_EVENTS'):
+                skipevt = int(os.environ['ATHENA_SKIP_EVENTS'])
+        else:
+                skipevt = 0
+    except:
+        skipevt = 0
+
     # produce the job option file for Athena/FileStager module
     fs_cp_cmd  = os.path.join( os.getcwd(), 'fs-copy.py' )
     fs_cp_args = []
@@ -163,7 +172,7 @@ if (io_type in ['FILE_STAGER']):
     ic_jo_path = os.path.join(os.getcwd(), 'input.py')
     fs_jo_path = os.path.join(os.getcwd(), 'FileStager_jobOption.py')
 
-    dm_util.make_FileStager_jobOption(pfn_list, gridcopy=True, protocol=my_protocol, maxEvent=evtmax, fs_cp_cmd=fs_cp_cmd, fs_cp_args=fs_cp_args, fs_of_prefix=fs_of_prefix, ic_jo_path=ic_jo_path, fs_jo_path=fs_jo_path)
+    dm_util.make_FileStager_jobOption(pfn_list, gridcopy=True, protocol=my_protocol, maxEvent=evtmax, skipEvent=skipevt, fs_cp_cmd=fs_cp_cmd, fs_cp_args=fs_cp_args, fs_of_prefix=fs_of_prefix, ic_jo_path=ic_jo_path, fs_jo_path=fs_jo_path)
 
     dq2tracertime.append(time.time())
     outFile = open('dq2tracertimes.txt','w')

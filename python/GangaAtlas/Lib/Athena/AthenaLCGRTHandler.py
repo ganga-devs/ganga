@@ -369,6 +369,11 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         # set RecExCommon options
         environment['RECEXTYPE'] = job.application.recex_type
+
+        # event based splitting:  set max_events and ekip_events
+        if job._getRoot().splitter and job._getRoot().splitter.numevtsperjob > 0 :
+                environment['ATHENA_MAX_EVENTS'] = str(job.application.max_events)
+                environment['ATHENA_SKIP_EVENTS'] = str(job.application.skip_events)
         
 # append a property for monitoring to the jobconfig of subjobs
         lcg_config = LCGJobConfig(File(exe), inputbox, [], outputbox, environment, [], requirements)

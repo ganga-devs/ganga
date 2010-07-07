@@ -80,6 +80,8 @@ class DQ2JobSplitter(ISplitter):
         'update_siteindex'  : SimpleItem(defvalue = True, doc = 'Update siteindex during job submission to get the latest file location distribution.'),
         'use_blacklist'     : SimpleItem(defvalue = True, doc = 'Use black list of sites create by GangaRobot functional tests.'),
         'filesize'          : SimpleItem(defvalue=0, doc = 'Maximum filesize sum per subjob im MB.'),
+        'numevtsperjob'     : SimpleItem(defvalue=0, doc='Number of events per subjob'),
+        'numevtsperfile'    : SimpleItem(defvalue=0,doc='Maximum number of events in a file of input dataset')
     })
 
     _GUIPrefs = [ { 'attribute' : 'numfiles',         'widget' : 'Int' },
@@ -87,7 +89,9 @@ class DQ2JobSplitter(ISplitter):
                   { 'attribute' : 'use_lfc',          'widget' : 'Bool' },
                   { 'attribute' : 'update_siteindex', 'widget' : 'Bool' },
                   { 'attribute' : 'use_blacklist',    'widget' : 'Bool' },
-                  { 'attribute' : 'filesize',         'widget' : 'Int' }
+                  { 'attribute' : 'filesize',         'widget' : 'Int' },
+                  { 'attribute' : 'numevtsperjob',       'widget' : 'Int' },
+                  { 'attribute' : 'numevtsperfile',       'widget' : 'Int' }
                   ]
 
 
@@ -100,6 +104,19 @@ class DQ2JobSplitter(ISplitter):
 
         if job.backend._name <> 'LCG' and job.backend._name <> 'Panda' and job.backend._name <> 'NG':
             raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, Panda or NG backend')
+        
+        if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0):
+            raise ApplicationConfigurationError(None,"Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
+ 
+        if (self.numevtsperjob > 0 and job.inputdata._name <> 'AMIDataset'):
+            raise ApplicationConfigurationError(None,"Event based splitting is supported only for AMIDataset as input dataset type")
+        # split options are mutually exclusive
+        if ( (self.numfiles > 0 or self.numsubjobs > 0) and self.numevtsperjob > 0):
+            raise ApplicationConfigurationError(None,"Split by files (or subjobs) and events can not be defined simultaneously")
+
+        if (job.application.max_events > 0 and self.numevtsperjob > 0):
+            raise ApplicationConfigurationError(None,"Split by maximum events and split by events can not be defined simultaneously")
+        
 
         #AMIDataset
         if job.inputdata._name == 'AMIDataset':
@@ -171,7 +188,6 @@ class DQ2JobSplitter(ISplitter):
         dset_names = str(job.inputdata.dataset)
         cache_get_locations = Caching.FunctionCache(job.inputdata.get_locations, dset_names)
         locations = cache_get_locations(overlap=False)
-#       locations = job.inputdata.get_locations(overlap=False)
         
         allowed_sites = []
         if job.backend._name == 'LCG':
@@ -295,18 +311,30 @@ class DQ2JobSplitter(ISplitter):
         cache_get_contents = Caching.FunctionCache(job.inputdata.get_contents, dset_names)
         contents_temp = cache_get_contents(overlap=False, size=True)
 
+        if self.numevtsperjob > 0:
+            contents_temp = cache_get_contents(overlap=False, event=True)
+        else:
+            contents_temp = cache_get_contents(overlap=False, size=True)
+
         contents = {}
         datasetLength = {}
         datasetFilesize = {}
+        nevents = {}
         allfiles = 0
         allsizes = 0
+        allevents = 0
         for dataset, content in contents_temp.iteritems():
             contents[dataset] = content
             datasetLength[dataset] = len(contents[dataset])
             allfiles += datasetLength[dataset]
             datasetFilesize[dataset] = reduce(operator.add, map(lambda x: x[1][1],content))
             allsizes += datasetFilesize[dataset]
-            logger.info('Dataset %s contains %d files in %d bytes'%(dataset,datasetLength[dataset],datasetFilesize[dataset]))
+            if self.numevtsperjob > 0:
+                nevents[dataset] = reduce(operator.add, map(lambda x: x[1][2],content))
+                allevents += nevents[dataset]
+                logger.info('Dataset %s contains %d events in %d files '%(dataset, nevents[dataset], datasetLength[dataset]))
+            else:
+                logger.info('Dataset %s contains %d files in %d bytes'%(dataset,datasetLength[dataset],datasetFilesize[dataset]))
         logger.info('Total num files=%d, total file size=%d bytes'%(allfiles,allsizes))
 
         # to a check for the 'ALL' cloud option and if given, reduce the selection
@@ -385,7 +413,6 @@ class DQ2JobSplitter(ISplitter):
                 if locations and locations.has_key(dataset):
                     cache_dq2_siteinfo = Caching.FunctionCache(dq2_siteinfo, dataset)
                     siteinfo = cache_dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays)
-                    #siteinfo = dq2_siteinfo( dataset, allowed_sites, locations[dataset], udays )
                 else:
                     siteinfo = {}
             siteinfos[dataset]=siteinfo
@@ -396,7 +423,15 @@ class DQ2JobSplitter(ISplitter):
         subjobs = []
         totalfiles = 0
         
+        #print "%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %("nrjob", "guid", "nevents", "skip_events", "max_events", "unused_evts", "id_lower", "id_upper", "counter")
+
         for dataset, siteinfo in siteinfos.iteritems():
+            counter = 0 ; id_lower = 0;  id_upper = 0; tmpid = 0
+            unused_events = 0; nskip =0; second_loop =0; nevtstoskip = 0;  
+            events_processed = 0;    totalevent = 0; used_events = 0; first_loop = 0
+            left_events = 0; first_iteration = False; last_loop = False; num_of_events = 0;
+            dset_size = 0; nsubjob = 0
+
             self.numfiles = orig_numfiles
             self.numsubjobs = orig_numsubjobs
             if self.numfiles <= 0: 
@@ -424,20 +459,6 @@ class DQ2JobSplitter(ISplitter):
                 if len(guids) == 0:
                     continue
                     
-                nrfiles = self.numfiles
-                nrjob = int(math.ceil(len(guids)/float(nrfiles)))
-                if nrjob > self.numsubjobs and self.numsubjobs!=0:
-                    nrfiles = int(math.ceil(len(guids)/float(self.numsubjobs)))
-                    nrjob = int(math.ceil(len(guids)/float(nrfiles)))
-
-                if nrjob > config['MaxJobsDQ2JobSplitter']:
-                    logger.warning('!!! Number of subjobs %s is larger than maximum allowed of %s - reducing to %s !!!', nrjobs, config['MaxJobsDQ2JobSplitter'], config['MaxJobsDQ2JobSplitter'] )
-                    nrfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
-                    nrjob = int(math.ceil(len(guids)/float(nrfiles)))
-
-                if nrfiles > len(guids):
-                    nrfiles = len(guids)
-
                 max_subjob_filesize = 0
                 # Restriction based on the maximum dataset filesize
                 if self.filesize > 0:
@@ -446,6 +467,39 @@ class DQ2JobSplitter(ISplitter):
                     max_subjob_filesize = config['MaxFileSizeNGDQ2JobSplitter']*1024*1024
                 elif job.backend._name == 'Panda' and (self.filesize < 1 or config['MaxFileSizePandaDQ2JobSplitter'] < self.filesize):
                     max_subjob_filesize = config['MaxFileSizePandaDQ2JobSplitter']*1024*1024
+                else:
+                    max_subjob_filesize = 1180591620717411303424 # 1 zettabyte
+
+                nrfiles = self.numfiles
+                nrjob = int(math.ceil(len(guids)/float(nrfiles)))
+                if nrjob > self.numsubjobs and self.numsubjobs!=0:
+                    nrfiles = int(math.ceil(len(guids)/float(self.numsubjobs)))
+                    nrjob = int(math.ceil(len(guids)/float(nrfiles)))
+                elif self.numevtsperjob > 0:
+                    for g in guids:
+                        totalevent += allcontent[g][2]
+                        dset_size += allcontent[g][1]
+                    nrjob = int(math.ceil(totalevent/float(self.numevtsperjob)))
+                   
+                    # Restriction based on the maximum dataset filesize
+                    filesize_per_event = dset_size/totalevent 
+                    filesize_per_subjob = filesize_per_event * self.numevtsperjob
+                    if filesize_per_subjob > max_subjob_filesize :
+                        events_per_subjob = max_subjob_filesize/filesize_per_event 
+                        self.numevtsperjob = events_per_subjob
+                        nrjob = int(math.ceil(totalevent/float(events_per_subjob)))
+
+                if nrjob > config['MaxJobsDQ2JobSplitter']: 
+                    if self.numevtsperjob > 0:
+                        self.numevtsperjob = int(math.ceil(totalevent/float((config['MaxJobsDQ2JobSplitter'] -1))))
+                        nrjob = int(math.ceil(totalevent/float(self.numevtsperjob)))
+                    else:
+                        logger.warning('!!! Number of subjobs %s is larger than maximum allowed of %s - reducing to %s !!!', nrjobs, config['MaxJobsDQ2JobSplitter'], config['MaxJobsDQ2JobSplitter'] )
+                        nrfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
+                        nrjob = int(math.ceil(len(guids)/float(nrfiles)))
+
+                if nrfiles > len(guids):
+                    nrfiles = len(guids)
 
                 # sort the guids by name order
                 names = [allcontent[g][0] for g in guids]
@@ -455,11 +509,11 @@ class DQ2JobSplitter(ISplitter):
 
                 # now assign the files to subjobs
                 max_subjob_numfiles = nrfiles
-                if max_subjob_filesize:
-                    logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob subject to a limit of %d Bytes per subjob.'%(nrjob,max_subjob_numfiles,max_subjob_filesize))
-                else:
-                    logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob.'%(nrjob,max_subjob_numfiles))
-                    max_subjob_filesize = 1180591620717411303424 # 1 zettabyte
+                if self.numevtsperjob > 0:
+                    logger.info('DQ2JobSplitter will attempt to create %d subjobs using  %d events per subjob subject to a limit of %d Bytes per subjob.' %(nrjob,self.numevtsperjob, max_subjob_filesize))
+                elif max_subjob_filesize and  self.filesize > 0:
+                     logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob subject to a limit of %d Bytes per subjob.'%(nrjob,max_subjob_numfiles,max_subjob_filesize))
+
                 remaining_guids = list(guids)
                 while remaining_guids and len(subjobs)<config['MaxJobsDQ2JobSplitter']:
                     num_remaining_guids = len(remaining_guids)
@@ -470,26 +524,100 @@ class DQ2JobSplitter(ISplitter):
                     j.inputdata.sizes = []
                     j.inputdata.guids = []
                     j.inputdata.names = []
-                    while remaining_guids and len(j.inputdata.guids)<max_subjob_numfiles and sum(j.inputdata.sizes)<max_subjob_filesize:
-                        for next_guid in remaining_guids:
-                            if sum(j.inputdata.sizes)+allcontent[next_guid][1] < max_subjob_filesize:
-                                remaining_guids.remove(next_guid)
-                                j.inputdata.guids.append(next_guid)
-                                j.inputdata.names.append(allcontent[next_guid][0])
-                                j.inputdata.sizes.append(allcontent[next_guid][1])
-                                break
+                    j.application   = job.application
+
+                    if self.numevtsperjob > 0:
+                        if  unused_events == 0:
+                            nevtstoskip = 0
+                            id_lower = id_upper
                         else:
+                            previous_guid = guids[id_lower] 
+                            nevtstoskip = allcontent[previous_guid][2]- left_events
+                        
+                        #add events: first loop 
+                        while (remaining_guids and not last_loop)  and  self.numevtsperjob > unused_events:
+                            next_guid = guids[counter]
+                            unused_events += allcontent[next_guid][2]
+                            if counter < len(guids):
+                                id_upper +=1
+                            if counter < (len(guids) -1) :
+                                remaining_guids.remove(next_guid)
+                            if counter == (len(guids) -1) :
+                                last_loop = True
+                            counter += 1
+                            first_loop = 1
+                        
+                        #use events: second loop
+                        while (self.numevtsperjob <= unused_events) or last_loop:
+                            if nsubjob == 0:
+                                nevtstoskip = 0
+                            elif first_loop != 1:
+                                previous_guid = guids[id_lower] 
+                                nevtstoskip = allcontent[previous_guid][2]- unused_events
+                            first_loop = 0
+                            if (nsubjob != nrjob -1):
+                                unused_events -= self.numevtsperjob
+                                left_events = unused_events
+                            second_loop = 1
+                            num_of_events = self.numevtsperjob
+                            if ( nsubjob == nrjob - 1 ):
+                                last_loop = False
+                                last_guid = guids[counter - 1]
+                                remaining_guids.remove(last_guid)
+                                num_of_events = unused_events
+                                unused_events = 0
                             break
                         
+                        j.inputdata.guids = list(guids[id_lower:id_upper])
+                        j.inputdata.names = [allcontent[g][0] for g in j.inputdata.guids]
+                        j.inputdata.sizes = [allcontent[g][1] for g in j.inputdata.guids]
+                        j.application.skip_events = nevtstoskip
+                        j.application.max_events = num_of_events
+                        events_processed += num_of_events
+                        nsubjob += 1
+
+                        """
+                        #print "%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %("nrjob", "guid", "nevents", "skip_events", "max_events", "unused_evts", "id_lower", "id_upper", "counter")
+                        print "\n%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %( nsubjob, (j.inputdata.names[0])[-18:], allcontent[j.inputdata.guids[0]][2] - j.application.skip_events, j.application.skip_events, j.application.max_events, unused_events, id_lower, id_upper, counter - 1)
+                        
+                        kcnt = 0
+                        kevent = 0
+                        for guid in j.inputdata.guids:
+                            if (kcnt != 0):
+                                print "%10s %20s %10s"  %("", allcontent[guid][0][-18:], allcontent[guid][2]) 
+                                kevent += allcontent[guid][2]
+                            else:
+                                kevent += allcontent[guid][2] - j.application.skip_events
+                            kcnt +=1
+                        if len(j.inputdata.guids) > 1:
+                            print "%10s %20s %10s" %("", "total_events", kevent)
+
+                        """
+                        
+                        #Remove previously added files from the subjobs         
+                        id_lower = id_upper -1
+                    
+                    else:
+                        while remaining_guids and len(j.inputdata.guids)<max_subjob_numfiles and sum(j.inputdata.sizes)<max_subjob_filesize:
+                            for next_guid in remaining_guids:
+                                if sum(j.inputdata.sizes)+allcontent[next_guid][1] < max_subjob_filesize:
+                                    remaining_guids.remove(next_guid)
+                                    j.inputdata.guids.append(next_guid)
+                                    j.inputdata.names.append(allcontent[next_guid][0])
+                                    j.inputdata.sizes.append(allcontent[next_guid][1])
+                                    break
+                            else:
+                                break
+                    
                     j.inputdata.number_of_files = len(j.inputdata.guids)
-                    if num_remaining_guids == len(remaining_guids):
-                        logger.warning('Filesize constraint blocked the assignment of %d files having guids: %s'%(len(remaining_guids),remaining_guids))
-                        break
+                    if (self.numevtsperjob == 0):
+                        if num_remaining_guids == len(remaining_guids):
+                            logger.warning('Filesize constraint blocked the assignment of %d files having guids: %s'%(len(remaining_guids),remaining_guids))
+                            break
                     #print j.inputdata.names
                     #print j.inputdata.sizes
                     #print sum(j.inputdata.sizes)
                     j.outputdata    = job.outputdata
-                    j.application   = job.application
                     j.backend       = job.backend
                     if j.backend._name == 'LCG':
                         j.backend.requirements.sites = sites.split(':')
@@ -517,10 +645,15 @@ class DQ2JobSplitter(ISplitter):
 
         if not subjobs:
             logger.error('DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')
-
-        logger.info('Total files assigned to subjobs is %d'%totalfiles)
-        if not totalfiles == allfiles:
-            logger.error('DQ2JobSplitter was only able to assign %s out of %s files to the subjobs ! Please check your job configuration if this is intended and possibly change to a different cloud or choose different sites!', totalfiles, allfiles)
+        
+        if self.numevtsperjob > 0:
+            logger.info('Total events assigned to subjobs is %d'%events_processed)
+            if not (allevents == events_processed) :
+                logger.error('DQ2JobSplitter was only able to process %s out of %s events to the subjobs ! Please check your job configuration if this is intended and possibly change to a different cloud or choose different sites!' %(events_processed, allevents) )
+        else:
+            logger.info('Total files assigned to subjobs is %d'%totalfiles)
+            if not (totalfiles == allfiles):
+                logger.error('DQ2JobSplitter was only able to assign %s out of %s files to the subjobs ! Please check your job configuration if this is intended and possibly change to a different cloud or choose different sites!', totalfiles, allfiles)
 
         return subjobs
     

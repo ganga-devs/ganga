@@ -64,7 +64,7 @@ def _makeJobO(files,tag):
     joName = 'input.py'
     outFile = open(joName,'w')
     if tag:
-	outFile.write('CollInput = [')
+        outFile.write('CollInput = [')
     else:
         try:
             if os.environ.has_key('ATHENA_MAX_EVENTS'):
@@ -74,7 +74,16 @@ def _makeJobO(files,tag):
         except:
             evtmax = -1
         outFile.write('theApp.EvtMax = %d\n' %evtmax)
-	outFile.write('EventSelector.InputCollections = [')
+        try:
+            if os.environ.has_key('ATHENA_SKIP_EVENTS'):
+                skipevt = int(os.environ['ATHENA_SKIP_EVENTS'])
+            else:
+                skipevt = 0
+        except:
+                skipevt = 0
+        outFile.write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
+
+        outFile.write('EventSelector.InputCollections = [')
     # loop over all files
     for lfn in lfns:
         filename = files[lfn]['pfn']

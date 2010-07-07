@@ -5,7 +5,7 @@
 ###############################################################################
 # A DQ2 dataset superclass, with AMI connection and search capability
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset,listDatasets
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, listDatasets
 from Ganga.GPIDev.Schema.Schema import SimpleItem
 from Ganga.GPIDev.Schema.Schema import FileItem
 from Ganga.Utility.logging import getLogger
@@ -22,7 +22,7 @@ try:
     from pyAMI.pyAMI import AMI as AMIClient
     amiclient = AMIClient()
 except ImportError:
-    logger.warning("AMI not properly set up. You will not be able to access AMI from this ganga session.")
+    logger.warning("AMI not properly set up. Set athena to access AMI from this ganga session.")
     pass
 
 def resolve_dataset_name(name = ''):
@@ -59,13 +59,13 @@ def get_metadata(dataset = '', file_name = ''):
     return metadata     
 
 
-def get_file_metadata(dataset='', all=False):
+def get_file_metadata(dataset='', all=False, numevtsperfile = 0):
     
     argument = []
     argument.append("ListFiles")
     argument.append("logicalDatasetName=" + dataset)
     
-    #Metatdata from all the files from a datset
+    #Metatdata from all the files from a dataset
     info = []
 
     try:
@@ -78,16 +78,23 @@ def get_file_metadata(dataset='', all=False):
             else:
                 file_metadata = {}
             for id,val in ids.iteritems():
-                file_metadata[id]  = val 
+                attr = str(id).lower()
+                if ( (attr == 'filesize' or attr == 'events') and len(val) > 0):
+                    val = int(val)
+                file_metadata[attr]  = val 
             
+            nevents = file_metadata.setdefault('events', 0)
             info.append(file_metadata)
     
     except Exception, msg:
-        logger.warning("Couldn't get metadata from AMI due to %s" % msg)
-
-    return info 
-
-
+        logger.warning("Couldn't get file metadata from AMI due to %s" % msg)
+    
+    content = {}
+    for i in info:
+        guid = str(i.pop('fileguid'))
+        content[guid] = i
+    
+    return content 
 
 
 class AMIDataset(DQ2Dataset):
@@ -107,7 +114,7 @@ class AMIDataset(DQ2Dataset):
     _schema.datadict['goodRunListXML'] = FileItem(doc = 'GoodRunList XML file to search on')
 
 
-    _exportmethods = ['search','fill_provenance', 'get_datasets_metadata', 'get_files_metadata']
+    _exportmethods = ['search','fill_provenance', 'get_datasets_metadata', 'get_files_metadata', 'get_contents']
 
 
     def __init__(self):
@@ -123,7 +130,7 @@ class AMIDataset(DQ2Dataset):
 
         for d in self.dataset:
 
-            print "Filling provenance info for dataset %s..." % d
+            logger.warning("Filling provenance info for dataset %s...", d )
 
             prov = []
             self.provenance.append(prov)
@@ -160,7 +167,7 @@ class AMIDataset(DQ2Dataset):
                         #print level,dictOfLists[level]
                         nFound=nFound+1
             if(nFound==0)and (len(dataType)>0):
-                print "No datasets found of type",dataType
+                logger.warning( "No datasets found of type",dataType)
             else:
                 keys = dictOfLists.keys()
             
@@ -175,7 +182,7 @@ class AMIDataset(DQ2Dataset):
                     for dataset in datasetList:
                         prov.append("%s/" % dataset.strip())
 
-    def search(self, pattern='', maxresults = 2, extraargs = []):
+    def search(self, pattern='', maxresults = config['MaxNumOfDatasets'], extraargs = []):
         
         argument=[]
         dsetList = []
@@ -213,6 +220,7 @@ class AMIDataset(DQ2Dataset):
             argument.append("processingStep=" + self.processingStep)
             argument.append("mode=defaultField")
             argument.extend(extraargs)
+
         else:
             logger.error("AMI search not set up correctly. No datasetname or good runs list supplied.")
             return []
@@ -235,10 +243,14 @@ class AMIDataset(DQ2Dataset):
                 resultDict= result.getDict()
                 resultByRow = resultDict['Element_Info']
                 for row, vals in resultByRow.iteritems():
-                    dsetList.append(str(vals['logicalDatasetName']))
+                    dsName = str(vals['logicalDatasetName'])
+                    # check with DQ2 since AMI doesn't store /
+                    if resolve_dataset_name(dsName):
+                        dsName += '/'
+                    dsetList.append(dsName)
                     
         except Exception, msg:
-            print msg
+            logger.error( msg )
 
         return dsetList
 
@@ -247,6 +259,7 @@ class AMIDataset(DQ2Dataset):
         metadata = []
 
         for dataset in datasets:
+            dataset = dataset.replace("/","")    
             tmp = get_metadata(dataset = dataset)
             metadata.append(tmp)
 
@@ -254,10 +267,12 @@ class AMIDataset(DQ2Dataset):
     
     def get_files_metadata(self, all=False):
         datasets = self.search()
-        metadata = []
+        metadata = {}
 
         for dataset in datasets:
-            tmp = get_file_metadata(dataset=dataset, all=all)
-            metadata =  metadata + tmp
+            dataset = dataset.replace("/","")    
+            job = self._getParent()
+            file_info = get_file_metadata(dataset=dataset, all=all, numevtsperfile = job.splitter.numevtsperfile)
+            metadata.update(file_info)
 
         return metadata

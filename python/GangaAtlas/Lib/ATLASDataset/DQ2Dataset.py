@@ -450,7 +450,7 @@ class DQ2Dataset(Dataset):
 
         return not state is None
     
-    def get_contents(self,backnav=False, overlap=True, filesize=False, size=False):
+    def get_contents(self,backnav=False, overlap=True, filesize=False, size=False, event=False):
         '''Helper function to access dataset content'''
 
         allcontents = []
@@ -458,6 +458,12 @@ class DQ2Dataset(Dataset):
         contents_size = {}
 
         datasets = resolve_container(self.dataset)
+
+        evtsperfile = 0
+        # Get info from AMI for AMIDataset
+        if (self._name == 'AMIDataset'):
+                metadata = self.get_files_metadata()
+                evtsperfile = (self._getParent()).splitter.numevtsperfile
 
         for dataset in datasets:
             if backnav:
@@ -516,6 +522,7 @@ class DQ2Dataset(Dataset):
 
             # Exclude log files
             contents = [ (guid,lfn) for guid, lfn in contents if not lfn.endswith('log.tgz') ]
+
                 
 
             # Process only certain number of files ?
@@ -538,7 +545,8 @@ class DQ2Dataset(Dataset):
         diffcontentsNew = {}
         allcontentsSize = []
         diffcontentsSize = {}
-        if filesize or size:
+        amicontent = {}
+        if filesize or size or event:
             # Sum up all dataset filesizes:
             sumfilesize = 0 
             for guid, lfn in allcontents:
@@ -552,16 +560,30 @@ class DQ2Dataset(Dataset):
             sumfilesizeDatasets = {}
             for dataset, contents in diffcontents.iteritems():
                 contentsSize = []
+                tmpInfo = []
                 sumfilesizeDataset = 0
                 for guid, lfn in contents:
                     if contents_size.has_key(guid):
                         try:
                             sumfilesizeDataset += contents_size[guid]
                             contentsSize.append((guid, (lfn, contents_size[guid])))
+                            if self._name == 'AMIDataset':
+                                nevents = metadata.setdefault(guid,{'events':0, 'lfn':lfn, 'filesize': contents_size[guid]})['events']
+                                if nevents <=  0:
+                                    if evtsperfile > 0:
+                                        metadata[guid]['events'] = evtsperfile
+                                    else:
+                                        logger.warning("Couldn't get number of events  from AMI for dataset %s" %dataset)
+                                        user_input = raw_input("Enter the number of events per file : ")
+                                        evtsperfile = int(user_input)
+                                        metadata[guid]['events'] = evtsperfile
+                                tmpInfo.append((guid, (lfn, contents_size[guid], metadata[guid]['events'])))
+
                         except:
                             pass
                 diffcontentsNew[dataset] = (contents, sumfilesizeDataset)
                 diffcontentsSize[dataset] = contentsSize
+                amicontent[dataset] = tmpInfo
         
         if overlap:
             if filesize:
@@ -575,6 +597,8 @@ class DQ2Dataset(Dataset):
                 return diffcontentsNew
             elif size:
                 return diffcontentsSize
+            elif event:
+                return amicontent 
             else:
                 return diffcontents
 
