@@ -348,6 +348,11 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
         param += '-o "%s" ' % (outfiles) # must be double quotes, because python prints strings in 'single quotes' 
 
+        for file in jspec.Files:
+            if file.type == 'output' and configPanda['chirpconfig']:
+                file.dispatchDBlockToken = configPanda['chirpconfig']
+                logger.debug('chirp file %s',file)
+
         jspec.jobParameters = param
         
         return jspec

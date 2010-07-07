@@ -366,6 +366,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #       output files
         outMap = {}
         AthenaUtils.convertConfToOutput(self.runConfig,jspec,outMap,job.backend.individualOutDS,self.extOutFile)
+        for file in jspec.Files:
+            if file.type == 'output' and configPanda['chirpconfig']:
+                file.dispatchDBlockToken = configPanda['chirpconfig']
+                logger.debug('chirp file %s',file)
+       
         if job.backend.individualOutDS:
             for f in jspec.Files:
                 if f.type in ['output','log']:
