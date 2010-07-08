@@ -23,7 +23,7 @@ def getPackedInputSandbox(tarpath,dest_dir='.'):
 ##      Curent release with os module 
 #               
     if os.system("tar -C %s -xzf %s"%(dest_dir,tgzfile)) != 0:
-        raise Error('cannot upack tarball with InputSandbox')
+        raise Exception('cannot upack tarball %s with InputSandbox'%tgzfile)
 
 #
 ##      Future release with tarfile module      
@@ -46,7 +46,9 @@ def getInputSandbox(src_dir,dest_dir='.'):
       'dest_dir': a destination directory 
     """
     
-    os.system("tar chf - -C %s . | tar xf - -C %s" %(src_dir,dest_dir))
+    cmd = "tar chf - -C %s . | tar xf - -C %s" %(src_dir,dest_dir)
+    if 0 != os.system(cmd)
+        raise Exception("getInputSandbox() failed to execute command: %s"%cmd)
 
 
 def createOutputSandbox(output_patterns,filter,dest_dir):
