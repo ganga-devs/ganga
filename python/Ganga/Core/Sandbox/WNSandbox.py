@@ -47,7 +47,7 @@ def getInputSandbox(src_dir,dest_dir='.'):
     """
     
     cmd = "tar chf - -C %s . | tar xf - -C %s" %(src_dir,dest_dir)
-    if 0 != os.system(cmd)
+    if os.system(cmd) != 0:
         raise Exception("getInputSandbox() failed to execute command: %s"%cmd)
 
 
