@@ -676,14 +676,14 @@ class JobExecutionMonitor(GangaObject):
                     # local vars
                     ss = None
                     if lang != "PYTHON" and lang != "BASH" and data.has_key("M4"):
-                        ss = unescape_jmd(data["M4"])
+                        ss = data["M4"]
 
                     s += PrettyStrings.formatVarList("scope variables:", ss)
 
                     # arguments
                     ss = None
                     if lang != "PYTHON" and lang != "BASH" and data.has_key("M1"):
-                        ss = unescape_jmd(data["M1"])
+                        ss = data["M1"]
                     if (lang == "PYTHON" or lang == "BASH") and data.has_key("M1"):
                         ss = data["M1"]
                         if ss[0:2] == "{{" and ss[-2:] == "}}":
@@ -703,21 +703,21 @@ class JobExecutionMonitor(GangaObject):
                     s += ss
 
                     if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("command", unescape_jmd(data["M1"]))
+                        s += PrettyStrings.formatDatum("command", data["M1"])
 
                 elif data["SubType"] == "EXTERNAL":
                     s = PrettyStrings.makeHeader("command info")
                     s += ss
 
                     if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("command", unescape_jmd(data["M1"]))
+                        s += PrettyStrings.formatDatum("command", data["M1"])
 
                 elif data["SubType"] == "SYNTAX":
                     s = PrettyStrings.makeHeader("script expression info")
                     s += ss
 
                     if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("expression", unescape_jmd(data["M1"]))
+                        s += PrettyStrings.formatDatum("expression", data["M1"])
 
                 else:
                     outlogger.warn("Unknown type of command")
@@ -759,7 +759,7 @@ class JobExecutionMonitor(GangaObject):
             for data in l:
                 ss = "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " | "
                 if data.has_key("M1"):
-                    ss += PrettyStrings.formatString(unescape_jmd(data["M1"]), 128)
+                    ss += PrettyStrings.formatString(data["M1"], 128)
                 ss += "\n"
 
                 if ascending:
@@ -809,7 +809,7 @@ class JobExecutionMonitor(GangaObject):
                     continue
                 if not data["ExactTS"]+data["M1"] in history:
                     ss = PrettyStrings.formatTime(data) + " | "
-                    ss += PrettyStrings.formatString(unescape_jmd(data["M1"]), 128)
+                    ss += PrettyStrings.formatString(data["M1"], 128)
                     ss += "\n"
                     s = ss + s
                     history.append(data["ExactTS"]+data["M1"])
@@ -1362,7 +1362,7 @@ class JobExecutionMonitor(GangaObject):
             for n in nodes:
                 try:
                     k,v = n.split("=")
-                    result[k] = v
+                    result[k] = unescape_jmd(v)
                 except:
                     pass
         except:
