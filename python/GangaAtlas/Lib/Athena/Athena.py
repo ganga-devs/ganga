@@ -1447,6 +1447,8 @@ config.addOption('ATLAS_SOFTWARE', '/afs/cern.ch/project/gd/apps/atlas/slc3/soft
 config.addOption('PRODUCTION_ARCHIVE_BASEURL', 'http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/', 'FIXME')
 config.addOption('ExcludedSites', '' , 'FIXME')
 config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The path in which the cmtsetup magic function will look up the setup.sh for CMT environment setup')
+config.addOption('CMTCONFIG', 'i686-slc5-gcc43-opt', 'Default value to be used as CMTCONFIG environment setup value (LCG/Batch backend)')
+config.addOption('CMTCONFIG_LIST', [ 'i686-slc4-gcc34-opt', 'i686-slc5-gcc43-opt' ], 'Allowed values for CMTCONFIG environment setup value (LCG/Batch backend)')
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 
