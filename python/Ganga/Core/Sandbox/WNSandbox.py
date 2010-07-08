@@ -20,13 +20,13 @@ def getPackedInputSandbox(tarpath,dest_dir='.'):
     tgzfile = tarpath
 
 #
-##	Curent release with os module 
-#        	
+##      Curent release with os module 
+#               
     if os.system("tar -C %s -xzf %s"%(dest_dir,tgzfile)) != 0:
         raise Error('cannot upack tarball with InputSandbox')
 
 #
-##	Future release with tarfile module	
+##      Future release with tarfile module      
 #    
 #    tf = tarfile.open(tgzfile,"r:gz")
 #    
@@ -66,7 +66,7 @@ def createOutputSandbox(output_patterns,filter,dest_dir):
             recursive_copy(f,dest_dir)
         except Exception,x:
             print "ERROR: (job ###JOBID### createOutput )",x
-	
+        
     
 def createPackedOutputSandbox(output_patterns,filter,dest_dir):
     """Get all files matching output patterns except filtered with filter and
@@ -84,15 +84,15 @@ def createPackedOutputSandbox(output_patterns,filter,dest_dir):
     outputlist = multi_glob(output_patterns,filter)
 
 #
-##	Curent release with os module 
-#        	
+##      Curent release with os module 
+#               
     
     if len(outputlist) > 0:
         if os.system("tar czf %s %s"%(tgzfile," ".join(outputlist))) != 0:
             print "ERROR: (job ###JOBID### createPackedOutput ) can't creat tarball" 
 
 #
-##	Future release with tarball module 
+##      Future release with tarball module 
 #
 #        tf = tarfile.open(tgzfile,"w:gz")
 #        tf.dereference=True
