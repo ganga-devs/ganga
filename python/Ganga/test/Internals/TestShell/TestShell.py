@@ -1,5 +1,8 @@
 import time
 
+import Ganga
+from Ganga.GPI import *
+
 s = Ganga.Utility.Shell.Shell()
 
 config.Logging['Ganga.Utility.Shell'] = "DEBUG"
