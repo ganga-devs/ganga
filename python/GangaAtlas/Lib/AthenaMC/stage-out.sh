@@ -62,7 +62,7 @@ stageOutLCG(){
 	echo "Using srmv2 user space token"
 	bstflag="-s $BACKUPTOKEN"
     fi
-    LFN="/grid/atlas/$lcn/$file.$TIMESTAMP.$OUTPUT_JOBID"
+    LFN="/grid/atlas/dq2/$lcn/$file.$TIMESTAMP.$OUTPUT_JOBID"
     # cannot use FClistGUID as the athena setup has been removed. Try something different...
     guid=`FClistGUID $file` # ensure that the guid from the pool catalog is used for the LFC registration
     guidflag="-g $guid"
@@ -78,7 +78,7 @@ stageOutLCG(){
     fi
     echo "TIMEOUT set to $timelim"
 
-    lfc-mkdir -p /grid/atlas/$lcn
+    lfc-mkdir -p /grid/atlas/dq2/$lcn
 
     stageoutcmd="lcg-cr --vo atlas -v $stflag -d $DEST -l $LFN $guidflag file:$PWD/$file"
     timeout 1 $timelim $stageoutcmd
