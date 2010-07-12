@@ -1207,7 +1207,14 @@ runtime_setup () {
         source $SITEROOT/dist/$ATLAS_RELEASE/Control/AthenaRunTime/AthenaRunTime-*/cmt/setup.sh
     elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ]
     then
-        source $SITEROOT/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
+	if [ -z $ATLAS_PROJECT ]
+	then
+	    source $SITEROOT/AtlasOffline/$ATLAS_RELEASE/AtlasOfflineRunTime/cmt/setup.sh
+	elif [ ! -z $ATLAS_PROJECT ]
+	then
+	    source $SITEROOT/${ATLAS_PROJECT}/$ATLAS_PRODUCTION/${ATLAS_PROJECT}RunTime/cmt/setup.sh
+	fi
+
         if [ ! -z $ATLAS_PRODUCTION_ARCHIVE ]
         then
             wget $ATLAS_PRODUCTION_ARCHIVE
