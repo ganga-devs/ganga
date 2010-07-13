@@ -144,6 +144,7 @@ class AnaTransform(Transform):
             if not backend in allowed_sites.keys(): 
                continue
             if backend == "Panda":
+                from pandatools import Client
                 sites = [site for site in complete_sites[cloud] if Client.convertDQ2toPandaID(site) in allowed_sites["Panda"]]
             else:
                 sites = [site for site in complete_sites[cloud] if site in allowed_sites[backend]]
@@ -178,6 +179,7 @@ class AnaTransform(Transform):
       for cloud in clouds:
          for backend in backends:
             if backend == "Panda":
+                from pandatools import Client
                 sites = [site for site in incomplete_sites[cloud] if Client.convertDQ2toPandaID(site) in allowed_sites["Panda"]]
             else:
                 sites = [site for site in incomplete_sites[cloud] if site in allowed_sites[backend]]
@@ -196,6 +198,7 @@ class AnaTransform(Transform):
          # Get ddm sites of atlas_dbrelease, if present
          db_sites = None
          if self.application.atlas_dbrelease == "LATEST":
+            from pandatools import Client
             self.application.atlas_dbrelease = Client.getLatestDBRelease(False)
          if self.application.atlas_dbrelease:
             try:
