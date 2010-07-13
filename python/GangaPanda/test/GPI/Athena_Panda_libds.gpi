@@ -13,20 +13,19 @@ j=Job()
 j.application=Athena()
 j.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run'
 j.application.atlas_run_config = {'input': {}, 'other': {}, 'output': {'outAANT': [('AANTupleStream', 'AANT')]}}
-j.application.atlas_release = '15.0.0'
+j.application.atlas_release = '15.6.9'
 j.application.option_file = [joboption]
 j.inputdata = DQ2Dataset()
-j.inputdata.dataset = ['mc08.105404.SU6_jimmy_susy.merge.AOD.e352_s462_r635_t53_tid068263' ]
+j.inputdata.dataset = ['data10_7TeV.00155634.physics_L1Calo.merge.AOD.f260_m496' ]
 j.inputdata.number_of_files = 1
 j.outputdata = DQ2OutputDataset()
 j.outputdata.datasetname='testing.%s'%commands.getoutput('uuidgen')
 j.splitter = DQ2JobSplitter()
 j.splitter.filesize = 4000
+j.splitter.numsubjobs = 1
 j.backend = Panda()
-j.backend.libds = 'user09.DanielColinVanDerSter.ganga.lxplus226_1240577666.lib._000038'
+j.backend.libds = 'user.dvanders.20100615.666.lib'
 assert(j.submit()==True)
-
-assert sleep_until_completed(j,3600)
 
 # removing all jobs
 j.remove()

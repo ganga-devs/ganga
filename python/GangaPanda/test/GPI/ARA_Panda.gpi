@@ -25,6 +25,7 @@ j.outputdata=DQ2OutputDataset()
 j.outputdata.outputdata=['out1.root' ]
 j.outputdata.datasetname='testing.%s'%commands.getoutput('uuidgen')
 j.splitter=DQ2JobSplitter()
+j.splitter.numsubjobs=1
 j.splitter.filesize=8000
 j.backend=Panda()
 assert(j.submit()==True)
