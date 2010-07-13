@@ -104,6 +104,8 @@ class AnaTaskSplitterJob(ISplitter):
     _category = "splitters"
     _schema = Schema(Version(1,0), {
         'subjobs'           : SimpleItem(defvalue=[],sequence=1, doc="List of subjobs", typelist=["int"]),
+        'numevtsperjob'     : SimpleItem(defvalue=0, doc='Number of events per subjob'),
+        'numevtsperfile'    : SimpleItem(defvalue=0,doc='Maximum number of events in a file of input dataset')
     } )
     def split(self,job):
         from Ganga.GPIDev.Lib.Job import Job
