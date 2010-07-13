@@ -150,7 +150,7 @@ class Athena(IApplication):
                  'atlas_cmtconfig'        : SimpleItem(defvalue='',doc='ATLAS CMTCONFIG environment variable'),
                  'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT, TRF '),
                  'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
-                 'atlas_dbrelease'        : SimpleItem(defvalue='',doc='ATLAS DBRelease DQ2 dataset and DQ2Release tar file. Use LATEST for most recent.'),
+                 'atlas_dbrelease'        : SimpleItem(defvalue='LATEST',doc='ATLAS DBRelease DQ2 dataset and DQ2Release tar file. Use LATEST for most recent.'),
                  'atlas_run_dir'          : SimpleItem(defvalue='', doc='ATLAS run directory'),
                  'atlas_run_config'       : SimpleItem(defvalue={}, doc='ATLAS run configuration'),
                  'atlas_supp_stream'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='suppress some output streams. e.g., [\'ESD\',\'TAG\']'),
