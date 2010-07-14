@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.10 (2010/7/13)
+5.5.10 (2010/7/14)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -45,6 +45,7 @@ Athena:
   +++++++++++++++++++++++++++++++++++++
 * Add config.Athena.CMTCONFIG='i686-slc5-gcc43-opt' as default for LCG and Batch backend
 * athena_utility.sh: Fixed a problem with Athena Production releases and runtime_setup
+* set Athena.atlas_dbrelease default value to 'LATEST'
 
 AthenaMC:
 ---------
@@ -53,6 +54,7 @@ AthenaMC:
 externals:
 ----------
 * Update to panda-client version 0.2.60
+* Add AMI externals: zsi, 4Suite, pyAMI
 
 
 --------------------------------------------------------------------------------------------------------------
