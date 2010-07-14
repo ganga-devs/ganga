@@ -266,7 +266,7 @@ def getMonitoringLink(port):
         
     webMonitoringLink = os.path.join(config['System']['GANGA_PYTHONPATH'], 'Ganga', 'Core', 'WebMonitoringGUI', 'client', 'index.html' )
 
-    return 'file://' + webMonitoringLink + '?port=' + str(port)  + '#user=' + config.Configuration.user 
+    return 'file://' + webMonitoringLink + '?port=' + str(port)  + '#user=' + config.Configuration.user + '&timeRange=lastMonth'
 
 class JobRelatedInfo:
         
