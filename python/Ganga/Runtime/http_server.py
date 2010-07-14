@@ -41,40 +41,46 @@ def get_subjob_JSON(job):
 def get_job_JSON(job):
 
     undefinedAttribute = 'UNDEFINED'            
-
-    try:        
-        result = []
-        result.append("{")  
+    
+    result = []
+    result.append("{")  
         
-        result.append("\"id\": %s," % addQuotes(job.fqid))  
-        result.append("\"status\": %s," % addQuotes(job.status))    
-        result.append("\"name\": %s," % addQuotes(job.name))        
-        result.append("\"application\": %s," % addQuotes(job.application.__class__.__name__))       
-        result.append("\"backend\": %s," % addQuotes(job.backend.__class__.__name__))       
-        result.append("\"subjobs\": %s," % addQuotes(str(len(job.subjobs))))
+    result.append("\"id\": %s," % addQuotes(job.fqid))  
+    result.append("\"status\": %s," % addQuotes(job.status))    
+    result.append("\"name\": %s," % addQuotes(job.name))        
 
-        #test for expandable data   
-        result.append("\"inputdir\": %s," % addQuotes(job.inputdir))        
-        result.append("\"outputdir\": %s," % addQuotes(job.outputdir))
-        result.append("\"uuid\": %s," % addQuotes(job.info.uuid))
+    #test for expandable data   
+    result.append("\"inputdir\": %s," % addQuotes(job.inputdir))        
+    result.append("\"outputdir\": %s," % addQuotes(job.outputdir))
 
+    try:
         result.append("\"submitted\": %s," % addQuotes(str(len(job.subjobs.select(status='submitted')))))   
         result.append("\"running\": %s," % addQuotes(str(len(job.subjobs.select(status='running')))))       
         result.append("\"completed\": %s," % addQuotes(str(len(job.subjobs.select(status='completed')))))   
         result.append("\"failed\": %s," % addQuotes(str(len(job.subjobs.select(status='failed'))))) 
+                
+        result.append("\"application\": %s," % addQuotes(job.application.__class__.__name__))       
+        result.append("\"backend\": %s," % addQuotes(job.backend.__class__.__name__))       
+        result.append("\"subjobs\": %s," % addQuotes(str(len(job.subjobs))))
+        result.append("\"uuid\": %s," % addQuotes(job.info.uuid))
 
         try:
-            result.append("\"actualCE\": %s" % addQuotes(job.backend.actualCE)) 
+            result.append("\"actualCE\": %s," % addQuotes(job.backend.actualCE)) 
         except AttributeError:
-            result.append("\"actualCE\": %s" % addQuotes(undefinedAttribute))   
-
-        result.append("}")  
-
-        return "".join(result)
+            result.append("\"actualCE\": %s," % addQuotes(undefinedAttribute))   
 
     except RegistryKeyError:
+        pass    
         
-        return ""
+    #remove the last , -> else invalid JSON
+    if result[len(result)-1][-1] == ',':
+        last = result[-1]
+        result = result[:-1]
+        result.append(last[:-1])
+
+    result.append("}")  
+
+    return "".join(result)
 
 def get_subjobs_JSON(jobid, fromDate=None, toDate=None):
 
@@ -121,7 +127,13 @@ def get_jobs_JSON(fromDate=None, toDate=None):
 
         timeCreated = jobInfo.getTimeCreated()
         
-        if fromDate is None and toDate is None:
+        if timeCreated is None:
+
+            if fromDate is None and toDate is None:
+                json_jobs_strings.append(jobInfo.getJobJSON())
+                json_jobs_strings.append(",")
+            
+        elif fromDate is None and toDate is None:
 
             json_jobs_strings.append(jobInfo.getJobJSON())
             json_jobs_strings.append(",")
@@ -156,7 +168,11 @@ def update_jobs_dictionary():
         try:
 
             job = jobs(job_id)
-            jobs_dictionary[job_id] = JobRelatedInfo(get_job_JSON(job), job.time.timestamps['new']) 
+
+            try:        
+                jobs_dictionary[job_id] = JobRelatedInfo(get_job_JSON(job), job.time.timestamps['new']) 
+            except RegistryKeyError:
+                jobs_dictionary[job_id] = JobRelatedInfo(get_job_JSON(job), None)       
 
         except RegistryKeyError:
 
@@ -167,7 +183,16 @@ def fill_jobs_dictionary():
 
     for job in jobs:
         try:
-            jobs_dictionary[job.id] = JobRelatedInfo(get_job_JSON(job), job.time.timestamps['new']) 
+            #get the id -> it could cause RegistryKeyError and the code below will not be executed
+            jobid = job.id
+            jobJSON = get_job_JSON(job) 
+
+            try:
+                jobs_dictionary[jobid] = JobRelatedInfo(jobJSON, job.time.timestamps['new']) 
+            except RegistryKeyError:
+                jobs_dictionary[jobid] = JobRelatedInfo(jobJSON, None)
+                print jobJSON
+        
         except RegistryKeyError:
             pass
         
@@ -238,11 +263,10 @@ def getFromDateFromTimeRange(timeRange):
     return fromDateTime
 
 def getMonitoringLink(port):
-
-    #exeDir = os.getcwd()
+        
     webMonitoringLink = os.path.join(config['System']['GANGA_PYTHONPATH'], 'Ganga', 'Core', 'WebMonitoringGUI', 'client', 'index.html' )
 
-    return 'file://' + webMonitoringLink + '?port=' + str(port)   
+    return 'file://' + webMonitoringLink + '?port=' + str(port)  + '#user=' + config.Configuration.user 
 
 class JobRelatedInfo:
         
