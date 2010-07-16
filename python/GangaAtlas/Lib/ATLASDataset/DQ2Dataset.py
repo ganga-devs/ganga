@@ -569,7 +569,7 @@ class DQ2Dataset(Dataset):
                             contentsSize.append((guid, (lfn, contents_size[guid])))
                             if self._name == 'AMIDataset':
                                 nevents = metadata.setdefault(guid,{'events':0, 'lfn':lfn, 'filesize': contents_size[guid]})['events']
-                                if nevents <=  0:
+                                if event and (nevents <=  0):
                                     if evtsperfile > 0:
                                         metadata[guid]['events'] = evtsperfile
                                     else:

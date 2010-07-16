@@ -467,9 +467,9 @@ if os.path.exists('input_files'):
     else:
         theApp.EvtMax = -1
     if os.environ.has_key('ATHENA_SKIP_EVENTS'):
-        ServiceMgr.EventSelector.SkipEvents = int(os.environ['ATHENA_SKIP_EVENTS'])
+        EventSelector.SkipEvents = int(os.environ['ATHENA_SKIP_EVENTS'])
     else:
-        ServiceMgr.EventSelector.SkipEvents = 0
+        EventSelector.SkipEvents = 0
 EOF
     if [ n$DATASETDATATYPE = n'MuonCalibStream' ] 
 	then
