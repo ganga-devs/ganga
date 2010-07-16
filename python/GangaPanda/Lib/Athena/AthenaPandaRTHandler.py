@@ -130,7 +130,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             elif app.atlas_exetype == 'ARES':
                 self.job_options = '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; athena.py ' + self.job_options
             elif app.atlas_exetype == 'ROOT':
-                self.job_options = '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; root -l ' + self.job_options
+                self.job_options = '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; root -b -q ' + self.job_options
         if self.job_options == '':
             raise ApplicationConfigurationError(None,"No Job Options found!")
         logger.info('Running job options: %s'%self.job_options)
