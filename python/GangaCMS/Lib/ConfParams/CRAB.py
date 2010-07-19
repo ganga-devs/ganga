@@ -22,14 +22,6 @@ class CRAB(GangaObject):
     schemadic['use_server']  = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[2])
     schemadic['scheduler']   = SimpleItem(defvalue=None, typelist=['type(None)','str'], doc=_comments[3])
 
-    _GUIPrefs = [
-                  { 'attribute' : 'jobtype'     , 'widget' : 'String' },
-                  { 'attribute' : 'server_name' , 'widget' : 'String' },
-                  { 'attribute' : 'use_server'  , 'widget' : 'String' }
-                ]
 
     _schema =  Schema(Version(0,0), {})
     _hidden = 1
-
-    #def getSchema(self):
-    #    return self._schemadic

@@ -216,16 +216,16 @@ class CRABBackend(IBackend):
                 job.updateStatus('submitted')
             elif not (job.status in ['running'] ):
                 job.updateStatus('running')
-        elif (status == 'C' or status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','submitted']):
+        elif (status == 'C' or status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','submitted','killed']):
             job.updateStatus("submitting")
-        elif (status == 'SU') and not (job.status in ['submitted']):
+        elif (status == 'SU') and not (job.status in ['submitted','killed']):
             job.updateStatus('submitted')
-        elif (status == 'SD') and not (job.status in ['completed']):
+        elif (status == 'SD') and not (job.status in ['completed','killed']):
             logger.info('Retrieving %d.'%(job.id))
             job.backend.parseResults()
             # The job can be done, but failed...
             # So, let's update the status retrieved from the output file.
-        elif (status == 'A') and not (job.status in ['failed']):
+        elif (status == 'A') and not (job.status in ['failed','killed']):
             job.updateStatus('failed')
         elif (status == 'k') and not (job.status in ['killed']):
             job.updateStatus('killed')

@@ -70,39 +70,7 @@ class USER(GangaObject):
     schemadic['dontCheckSpaceLeft']      = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[26])
     schemadic['check_user_remote_dir']   = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[27])
 
-    _GUIPrefs = [
-                  { 'attribute' : 'additional_input_files'  , 'widget' : 'String' },
-                  { 'attribute' : 'script_exe'              , 'widget' : 'String' },
-                  { 'attribute' : 'script_arguments'        , 'widget' : 'String' },
-                  { 'attribute' : 'ui_working_dir'          , 'widget' : 'String' },
-                  { 'attribute' : 'thresholdLevel'          , 'widget' : 'String' },
-                  { 'attribute' : 'eMail'                   , 'widget' : 'String' },
-                  { 'attribute' : 'client'                  , 'widget' : 'String' },
-                  { 'attribute' : 'return_data'             , 'widget' : 'String' },
-                  { 'attribute' : 'outputdir'               , 'widget' : 'String' },
-                  { 'attribute' : 'logdir'                  , 'widget' : 'String' },
-                  { 'attribute' : 'copy_data'               , 'widget' : 'String' },
-                  { 'attribute' : 'storage_element'         , 'widget' : 'String' },
-                  { 'attribute' : 'user_remote_dir'         , 'widget' : 'String' },
-                  { 'attribute' : 'storage_path'            , 'widget' : 'String' },
-                  { 'attribute' : 'storage_pool'            , 'widget' : 'String' },
-                  { 'attribute' : 'storage_port'            , 'widget' : 'String' },
-                  { 'attribute' : 'local_stage_out'         , 'widget' : 'String' },
-                  { 'attribute' : 'publish_data'            , 'widget' : 'String' },
-                  { 'attribute' : 'publish_data_name'       , 'widget' : 'String' },
-                  { 'attribute' : 'dbs_url_for_publication' , 'widget' : 'String' },
-                  { 'attribute' : 'publish_zero_event'      , 'widget' : 'String' },
-                  { 'attribute' : 'srm_version'             , 'widget' : 'String' },
-                  { 'attribute' : 'xml_report'              , 'widget' : 'String' },
-                  { 'attribute' : 'usenamespace'            , 'widget' : 'String' },
-                  { 'attribute' : 'debug_wrapper'           , 'widget' : 'String' },
-                  { 'attribute' : 'deep_debug'              , 'widget' : 'String' },
-                  { 'attribute' : 'dontCheckSpaceLeft'      , 'widget' : 'String' },
-                  { 'attribute' : 'check_user_remote_dir'   , 'widget' : 'String' }
-                ]
 
     _schema =  Schema(Version(0,0), {})
     _hidden = 1
  
-    #def getSchema(self):
-    #    return self._schemadic

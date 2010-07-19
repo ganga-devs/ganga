@@ -65,36 +65,6 @@ class CMSSW(GangaObject):
     schemadic['ignore_edm_output']        = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[24])
     schemadic['use_dbs_1']                = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[24])
 
-    _GUIPrefs = [
-                  { 'attribute' : 'datasetpath'              , 'widget' : 'String' },
-                  { 'attribute' : 'runselection'             , 'widget' : 'String' },
-                  { 'attribute' : 'use_parent'               , 'widget' : 'String' },
-                  { 'attribute' : 'pset'                     , 'widget' : 'String' },
-                  { 'attribute' : 'pycfg_params'             , 'widget' : 'String' },
-                  { 'attribute' : 'lumi_mask'                , 'widget' : 'String' },
-                  { 'attribute' : 'total_number_of_events'   , 'widget' : 'String' },
-                  { 'attribute' : 'events_per_job'           , 'widget' : 'String' },
-                  { 'attribute' : 'total_number_of_lumis'    , 'widget' : 'String' },
-                  { 'attribute' : 'lumis_per_job'            , 'widget' : 'String' },
-                  { 'attribute' : 'number_of_jobs'           , 'widget' : 'String' },
-                  { 'attribute' : 'split_by_run'             , 'widget' : 'String' },
-                  { 'attribute' : 'output_file'              , 'widget' : 'String' },
-                  { 'attribute' : 'skip_TFileService_output' , 'widget' : 'String' },
-                  { 'attribute' : 'get_edm_output'           , 'widget' : 'String' },
-                  { 'attribute' : 'increment_seeds'          , 'widget' : 'String' },
-                  { 'attribute' : 'preserve_seeds'           , 'widget' : 'String' },
-                  { 'attribute' : 'first_lumi'               , 'widget' : 'String' },
-                  { 'attribute' : 'generator'                , 'widget' : 'String' },
-                  { 'attribute' : 'executable'               , 'widget' : 'String' },
-                  { 'attribute' : 'dbs_url'                  , 'widget' : 'String' },
-                  { 'attribute' : 'show_prod'                , 'widget' : 'String' },
-                  { 'attribute' : 'subscribed'               , 'widget' : 'String' },
-                  { 'attribute' : 'no_block_boundary'        , 'widget' : 'String' }
-                ]
 
     _schema =  Schema(Version(0,0), {})
     _hidden = 1
-
-
-    #def getSchema(self):
-    #    return self._schemadic

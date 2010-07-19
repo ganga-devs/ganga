@@ -56,32 +56,6 @@ class GRID(GangaObject):
     schemadic['maxtarballsize']            = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[19])
     schemadic['skipwmsauth']               = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[20])
 
-    _GUIPrefs = [
-                  { 'attribute' : 'rb'                        , 'widget' : 'String' },
-                  { 'attribute' : 'proxy_server'              , 'widget' : 'String' },
-                  { 'attribute' : 'role'                      , 'widget' : 'String' },
-                  { 'attribute' : 'group'                     , 'widget' : 'String' },
-                  { 'attribute' : 'dont_check_proxy'          , 'widget' : 'String' },
-                  { 'attribute' : 'dont_check_myproxy'        , 'widget' : 'String' },
-                  { 'attribute' : 'requirements'              , 'widget' : 'String' },
-                  { 'attribute' : 'additional_jdl_parameters' , 'widget' : 'String' },
-                  { 'attribute' : 'wms_service'               , 'widget' : 'String' },
-                  { 'attribute' : 'max_cpu_time'              , 'widget' : 'String' },
-                  { 'attribute' : 'max_wall_clock_time'       , 'widget' : 'String' },
-                  { 'attribute' : 'ce_black_list'             , 'widget' : 'String' },
-                  { 'attribute' : 'ce_white_list'             , 'widget' : 'String' },
-                  { 'attribute' : 'se_black_list'             , 'widget' : 'String' },
-                  { 'attribute' : 'se_white_list'             , 'widget' : 'String' },
-                  { 'attribute' : 'remove_default_blacklist'  , 'widget' : 'String' },
-                  { 'attribute' : 'virtual_organization'      , 'widget' : 'String' },
-                  { 'attribute' : 'retry_count'               , 'widget' : 'String' },
-                  { 'attribute' : 'shallow_retry_count'       , 'widget' : 'String' },
-                  { 'attribute' : 'maxtarballsize'            , 'widget' : 'String' },
-                  { 'attribute' : 'skipwmsauth'               , 'widget' : 'String' }
-                ]
 
     _schema =  Schema(Version(0,0), {})
     _hidden = 1
-
-    #def getSchema(self):
-    #    return self._schemadic
