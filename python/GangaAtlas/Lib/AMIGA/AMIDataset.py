@@ -130,7 +130,7 @@ class AMIDataset(DQ2Dataset):
 
         for d in self.dataset:
 
-            logger.warning("Filling provenance info for dataset %s...", d )
+            logger.info("Filling provenance info for dataset %s...", d )
 
             prov = []
             self.provenance.append(prov)
@@ -191,7 +191,7 @@ class AMIDataset(DQ2Dataset):
 
             # open the GRL
             if os.path.exists( self.goodRunListXML.name ):
-                logger.warning("Good Run List '%s' file selected" % self.goodRunListXML.name)
+                logger.info("Good Run List '%s' file selected" % self.goodRunListXML.name)
                 grl_text = open( self.goodRunListXML.name ).read()
             else:
                 logger.error('Could not read Good Run List XML file')
