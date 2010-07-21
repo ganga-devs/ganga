@@ -422,13 +422,14 @@ class DQ2JobSplitter(ISplitter):
 
         subjobs = []
         totalfiles = 0
+        events_processed = 0
         
         #print "%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %("nrjob", "guid", "nevents", "skip_events", "max_events", "unused_evts", "id_lower", "id_upper", "counter")
 
         for dataset, siteinfo in siteinfos.iteritems():
             counter = 0 ; id_lower = 0;  id_upper = 0; tmpid = 0
             unused_events = 0; nskip =0; second_loop =0; nevtstoskip = 0;  
-            events_processed = 0;    totalevent = 0; used_events = 0; first_loop = 0
+            totalevent = 0; used_events = 0; first_loop = 0
             left_events = 0; first_iteration = False; last_loop = False; num_of_events = 0;
             dset_size = 0; nsubjob = 0
 

@@ -15,7 +15,7 @@ import os
 
 logger = getLogger()
 config = makeConfig('AMIDataset','AMI dataset')
-config.addOption('MaxNumOfFiles', 500, 'Maximum number of files in a given dataset patterns')
+config.addOption('MaxNumOfFiles', 3000, 'Maximum number of files in a given dataset patterns')
 config.addOption('MaxNumOfDatasets', 100, 'Maximum number of datasets in a given dataset patterns')
 
 try:
@@ -39,9 +39,12 @@ def get_metadata(dataset = '', file_name = ''):
     argument.append("GetDatasetInfo")
     if dataset:
         argument.append("logicalDatasetName=" + dataset)
+        limit="0,%d" %config['MaxNumOfDatasets']
     else:
         argument.append("logicalFileName=" + file_name)
+        limit="0,%d" %config['MaxNumOfFiles']
 
+    argument.append("limit=" + limit)
     #Dictionary which contain all metadata info about a dataset or file
     metadata = {}       
 
@@ -64,6 +67,8 @@ def get_file_metadata(dataset='', all=False, numevtsperfile = 0):
     argument = []
     argument.append("ListFiles")
     argument.append("logicalDatasetName=" + dataset)
+    limit="0,%d" %config['MaxNumOfFiles']
+    argument.append("limit=" + limit)
     
     #Metatdata from all the files from a dataset
     info = []
