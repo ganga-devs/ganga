@@ -33,7 +33,8 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 mc = getConfig('MonitoringServices')
 
 # None by default
-mc.addOption('Athena/LCG', None, 'FIXME')
+mc.addOption('Athena/LCG', 'Ganga.Lib.MonitoringServices.ARDADashboard.LCG.ARDADashboardLCGAthena.ARDADashboardLCGAthena,Ganga.Lib.MonitoringServices.MSGMS.MSGMS,Ganga.Lib.MonitoringServices.Dashboard.LCGAthenaMS.LCGAthenaMS', 'sets job monitoring service for Athena/LCG jobs')
+mc.addOption('Athena/CREAM', 'Ganga.Lib.MonitoringServices.ARDADashboard.LCG.ARDADashboardLCGAthena.ARDADashboardLCGAthena,Ganga.Lib.MonitoringServices.MSGMS.MSGMS,Ganga.Lib.MonitoringServices.Dashboard.LCGAthenaMS.LCGAthenaMS', 'sets job monitoring service for Athena/CREAM jobs')
 mc.addOption('Athena', None, 'FIXME')
 
 __directory__ = os.path.dirname(__file__)
