@@ -312,7 +312,7 @@ class Athena(IApplication):
             return
 
         # Collect stats from LCG backend stats.pickle file
-        if job.backend._name in [ 'LCG', 'Local', 'SGE', 'LSF', 'PBS' ]:
+        if job.backend._name in [ 'LCG', 'CREAM', 'Local', 'SGE', 'LSF', 'PBS' ]:
             import pickle
             fileName =  os.path.join(job.outputdir + "stats.pickle")
             if "stats.pickle" in os.listdir(job.outputdir):  
@@ -347,7 +347,7 @@ class Athena(IApplication):
             pass
 
         # Return for LCG backend since stats.pickle is used
-        if job.backend._name in [ 'LCG', 'Local', 'SGE', 'LSF', 'PBS' ]:
+        if job.backend._name in [ 'LCG', 'CREAM', 'Local', 'SGE', 'LSF', 'PBS' ]:
             return
 
         # Compress NG stdout.txt
@@ -558,7 +558,7 @@ class Athena(IApplication):
                 if not job.outputdata.output:
                     job.updateStatus('failed')
         # collect athena job statistics
-        if self.collect_stats and job.backend._name in [ 'LCG', 'NG', 'Panda', 'Local', 'SGE', 'LSF', 'PBS' ]:
+        if self.collect_stats and job.backend._name in [ 'LCG', 'CREAM', 'NG', 'Panda', 'Local', 'SGE', 'LSF', 'PBS' ]:
             self.collectStats()
         # collect statistics for master job   
         if not job.master and job.subjobs:
@@ -1012,7 +1012,7 @@ class Athena(IApplication):
                     raise ApplicationConfigurationError(None,'DQ2 tag dataset %s does not exist.' % job.inputdata.tagdataset)
 
         # check grid/local class match up
-        if job.backend._name in ['LCG', 'Panda', 'NG']:
+        if job.backend._name in ['LCG', 'CREAM' ,'Panda', 'NG']:
             # check splitter
             if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AnaTaskSplitterJob', 'ATLASTier3Splitter']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )

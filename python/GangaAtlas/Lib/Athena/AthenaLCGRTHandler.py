@@ -687,6 +687,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         return LCGJobConfig(File(exe),inputbox,[],outputbox,environment,[],requirements) 
 
 allHandlers.add('Athena','LCG',AthenaLCGRTHandler)
+allHandlers.add('Athena','CREAM',AthenaLCGRTHandler)
 allHandlers.add('Athena','Condor',AthenaLCGRTHandler)
 allHandlers.add('Athena','Cronus',AthenaLCGRTHandler)
 

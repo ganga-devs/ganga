@@ -102,8 +102,8 @@ class DQ2JobSplitter(ISplitter):
         if job.inputdata._name <> 'DQ2Dataset'  and job.inputdata._name <> 'AMIDataset':
             raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset or AMIDataset as input')
 
-        if job.backend._name <> 'LCG' and job.backend._name <> 'Panda' and job.backend._name <> 'NG':
-            raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, Panda or NG backend')
+        if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] :
+            raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, CREAM, Panda or NG backend')
         
         if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0):
             raise ApplicationConfigurationError(None,"Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
@@ -190,7 +190,7 @@ class DQ2JobSplitter(ISplitter):
         locations = cache_get_locations(overlap=False)
         
         allowed_sites = []
-        if job.backend._name == 'LCG':
+        if job.backend._name in [ 'LCG', 'CREAM' ]:
             if job.backend.requirements._name == 'AtlasLCGRequirements':
                 if job.backend.requirements.sites:
                     allowed_sites = job.backend.requirements.sites
@@ -619,7 +619,7 @@ class DQ2JobSplitter(ISplitter):
                     #print sum(j.inputdata.sizes)
                     j.outputdata    = job.outputdata
                     j.backend       = job.backend
-                    if j.backend._name == 'LCG':
+                    if j.backend._name in [ 'LCG', 'CREAM']:
                         j.backend.requirements.sites = sites.split(':')
                     j.inputsandbox  = job.inputsandbox
                     j.outputsandbox = job.outputsandbox 
