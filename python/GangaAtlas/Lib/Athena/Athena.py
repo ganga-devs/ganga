@@ -1037,7 +1037,11 @@ class Athena(IApplication):
             # Check that only ATLASOutputDataset are used locally
             #if job.outputdata and not job.outputdata._name in ['ATLASOutputDataset']:
             #    raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.outputdata._name, job.backend._name))
-
+ 
+        # Check if DQ2_COPY is set and disable it
+        if job.backend._name in ['LCG', 'CREAM' ]:
+            if job.inputdata and job.inputdata.type == 'DQ2_COPY':
+                raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='DQ2_COPY' is not supported anymore ! Please use a different input access mode." )
              
         # check recex options
         if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
