@@ -72,9 +72,11 @@ p.add_option('--split', '-s', action='store', type='int', dest='numsubjobs', hel
 p.add_option('--splitfiles', action='store', type='int', dest='numfiles_subjob', help='Number of files per subjob, if a job should be splitted.')
 p.add_option('--splitfilesize', action='store', type='int', dest='filesize', help='Maximum filesize sum per subjob im MB, if a job should be splitted.')
 p.add_option('--match_subjobs_files', action='store_const', const='match_subjobs_files', dest='match_subjobs_files', help='Match the number of subjobs to the number of inputfiles"')
+p.add_option('--noblacklist', action='store_true', dest='noblacklist', help='Do not use black list of sites create by GangaRobot functional tests')
 
 # Backends
 p.add_option('--lcg', action='store_const', const='lcg', dest='backend', help='Submit job(s) to LCG Grid')
+p.add_option('--cream', action='store_const', const='cream', dest='backend', help='Submit job(s) to a CREAM CE')
 p.add_option('--ng', action='store_const', const='ng', dest='backend', help='Submit job(s) to NorduGrid')
 p.add_option('--panda', action='store_const', const='panda', dest='backend', help='Submit job(s) to Panda')
 p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
@@ -110,6 +112,7 @@ p.add_option('--group_area', action='store', type='string', dest='group_area', h
 p.add_option('--user_setupfile', action='store', type='string', dest='user_setupfile', help='User setup script for special setup on the grid worker node' )
 p.add_option('--excludepackage', action='store', type='string', dest='excludepackage', help='Pattern of files to exclude from user area requirements files, separated by : , e.g. --excludepackage=MyPackage:YourPackage' )
 p.add_option('--prepare_old', action='store_true', help='Use prepare_old instead of new prepare method' )
+p.add_option('--collectstats', action='store_true', help='Switch to collect application statistics info and store in stats field' )
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -224,6 +227,8 @@ else:
             j.application.prepare_old()
         else:
 	    j.application.prepare()
+if opt.collectstats:
+    j.application.collect_stats=True
 
 # inputdata
 
@@ -314,7 +319,7 @@ if opt.outputdata or opt.backend == 'panda':
 if opt.numsubjobs > 1:
     if (opt.backend == 'lcg' or opt.glite) and not opt.site:
         j.splitter = DQ2JobSplitter()
-    elif (opt.backend in [ 'panda', 'ng' ]):
+    elif (opt.backend in [ 'cream', 'panda', 'ng' ]):
         j.splitter = DQ2JobSplitter()
     else:
         j.splitter = AthenaSplitterJob()
@@ -326,7 +331,7 @@ elif opt.numfiles_subjob>1:
     if (opt.backend == 'lcg' or opt.glite) and not opt.site:
         j.splitter = DQ2JobSplitter()
         j.splitter.numfiles = opt.numfiles_subjob
-    elif (opt.backend in [ 'panda', 'ng' ]):
+    elif (opt.backend in [ 'cream', 'panda', 'ng' ]):
         j.splitter = DQ2JobSplitter()
         j.splitter.numfiles = opt.numfiles_subjob
     else:
@@ -340,7 +345,7 @@ elif opt.filesize>0:
     if (opt.backend == 'lcg' or opt.glite) and not opt.site:
         j.splitter = DQ2JobSplitter()
         j.splitter.filesize = opt.filesize
-    elif (opt.backend in [ 'panda', 'ng' ]):
+    elif (opt.backend in [ 'cream', 'panda', 'ng' ]):
         j.splitter = DQ2JobSplitter()
         j.splitter.filesize = opt.filesize
 
@@ -353,6 +358,10 @@ if opt.match_subjobs_files:
 
     if opt.outputdata:
         j.merger=AthenaOutputMerger()
+
+if opt.noblacklist:
+    if j.splitter and j.splitter.__class__.__name__=='DQ2JobSplitter':
+        j.splitter.use_blacklist=False
 
 # backend
 
@@ -372,10 +381,14 @@ elif opt.backend == 'lcg' or opt.glite:
         j.backend.middleware = 'GLITE'
     elif opt.edg: 
         j.backend.middleware = 'EDG' 
-    if opt.long: j.backend.requirements.cputime = 8 * 60;
-    if opt.cputime: j.backend.requirements.cputime = opt.cputime
-    if opt.walltime: j.backend.requirements.walltime = opt.walltime
-    if opt.memory: j.backend.requirements.memory = opt.memory
+elif opt.backend == 'cream':
+    j.backend = CREAM()
+    if opt.ce: 
+        j.backend.CE = opt.ce 
+    else:
+        print >>sys.stderr, 'ERROR: CREAM backend requires "--ce" to be configured'
+        sys.exit(100)
+        
 elif opt.backend == 'pbs':
     j.backend = PBS()
     if opt.queue: j.backend.queue = opt.queue
@@ -409,6 +422,13 @@ elif opt.backend=='panda':
     if opt.memory: j.backend.requirements.memory = opt.memory
 else:
     j.backend = Local()
+
+# Extra queue parameters
+if opt.backend in [ 'lcg', 'cream' ] or opt.glite:
+    if opt.long: j.backend.requirements.cputime = 8 * 60;
+    if opt.cputime: j.backend.requirements.cputime = opt.cputime
+    if opt.walltime: j.backend.requirements.walltime = opt.walltime
+    if opt.memory: j.backend.requirements.memory = opt.memory
 
 # Inputsandbox
 if opt.inputsandbox:
