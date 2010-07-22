@@ -498,6 +498,12 @@ class DQ2JobSplitter(ISplitter):
                         logger.warning('!!! Number of subjobs %s is larger than maximum allowed of %s - reducing to %s !!!', nrjobs, config['MaxJobsDQ2JobSplitter'], config['MaxJobsDQ2JobSplitter'] )
                         nrfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
                         nrjob = int(math.ceil(len(guids)/float(nrfiles)))
+                        
+                # Restrict number of subjobs is compilation is used
+                if job.backend._name in ['LCG', 'CREAM' ] and job.application.athena_compile==True and  nrjob > config['MaxJobsDQ2JobSplitterLCGCompile']: 
+                    logger.error('!!! The number of allowed subjobs on the %s backend and with athena_compile=True is %s, but DQ2JobSplitter is trying to split into %s subjobs !!!', job.backend._name, config['MaxJobsDQ2JobSplitterLCGCompile'], nrjob )
+                    logger.error('!!! Please pre-compile the code locally and use athena_compile=False in a new job submission if more subjobs are required !!!' )
+                    raise ApplicationConfigurationError(None,'!!! Submission stopped !!!')
 
                 if nrfiles > len(guids):
                     nrfiles = len(guids)
@@ -659,6 +665,7 @@ class DQ2JobSplitter(ISplitter):
     
 config = getConfig('Athena')
 config.addOption('MaxJobsDQ2JobSplitter', 5000, 'Maximum number of allowed subjobs of DQ2JobSplitter')
+config.addOption('MaxJobsDQ2JobSplitterLCGCompile', 500, 'Maximum number of allowed subjobs of DQ2JobSplitter on LCG/Cream with compile option switched on')
 config.addOption('MaxFileSizeNGDQ2JobSplitter', 14336, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the NG backend (in MB)')
 config.addOption('MaxFileSizePandaDQ2JobSplitter', 13336, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (in MB)')
 config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_MCDISK', 'NDGF-T1_PRODDISK', 'NDGF-T1_SCRATCHDISK' ], 'Allowed space tokens/sites for DQ2JobSplitter on NG backend' )
