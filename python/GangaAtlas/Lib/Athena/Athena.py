@@ -1055,7 +1055,7 @@ class Athena(IApplication):
             match = re.search('DBRelease-(.*)\.tar\.gz', self.atlas_dbrelease )
             if match:
                 dbvers = match.group(1)
-                self.atlas_environment=['DBRELEASE_OVERRIDE=%s'%dbvers] 
+                self.atlas_environment+=['DBRELEASE_OVERRIDE=%s'%dbvers] 
 
         return (0,None)
 
