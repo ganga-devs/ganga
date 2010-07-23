@@ -124,7 +124,9 @@ class DiracServer:
             ports_tried += 1
             logger.debug('Attempting to connect to port %d...' % port)
             rc = self._run(port)
-            if rc is not None: continue            
+            if rc is not None:
+                os.system('kill -9 %d >& /dev/null' % self.server.pid)
+                continue            
             self.socket = socket(AF_INET,SOCK_STREAM)
             try:
                 self.socket.connect(('localhost',port))
@@ -169,8 +171,8 @@ class DiracServer:
                 data = self.socket.recv(1024)
                 if(data.find('###RECV-DATA###') >= 0): data = ''
             except error, e:
-                msg = 'Timeout [t>%.1fs] attempting to receive result of ' \
-                      'command: %s' % (self.socket.gettimeout(), cmd)
+                msg = 'Timeout attempting to receive result of command: %s' \
+                      ' (w/ error: %s)'% (cmd,e)
                 logger.error(msg)
                 self.disconnect()
                 raise GangaException('Timeout in Dirac socket connection.')
