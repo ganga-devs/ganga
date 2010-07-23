@@ -175,7 +175,26 @@ if __name__ == '__main__':
                 zfile.close()
 
     except MemoryError:
-        print 'ERROR stdout logfile too large to be parsed.'
+        print 'ERROR stderr logfile too large to be parsed.'
+        pass
+
+    # collect stats from AthSummary.txt
+    try:
+        if 'AthSummary.txt' in os.listdir('.'):  
+            zfile = os.popen('cat '+os.path.join('.','AthSummary.txt' ))
+            for line in zfile:
+                if line.find('Files read:')==0:
+                    stats['numfiles'] = int(re.match('Files read:(.*)',line).group(1))
+                    stats['numfiles2'] = stats['numfiles'] 
+                    stats['numfiles3'] = stats['numfiles'] 
+                if line.find('Events Read:')==0:
+                    stats['totalevents'] = int(re.match('Events Read:(.*)',line).group(1))
+
+            if zfile:        
+                zfile.close()
+
+    except MemoryError:
+        print 'ERROR AthSummary.txt logfile too large to be parsed.'
         pass
 
     print stats

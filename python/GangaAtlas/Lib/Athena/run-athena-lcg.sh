@@ -975,7 +975,7 @@ stage_outputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 
 if [ -e AthSummary.txt ] 
     then
-    echo "-------- AthSummay.txt ------------"
+    echo "-------- AthSummary.txt ------------"
     cat AthSummary.txt
     echo "-----------------------------------"
 fi

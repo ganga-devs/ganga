@@ -113,6 +113,35 @@ if __name__ == '__main__':
             if match:
                 datasetname = match.group(1)
 
+        if zfile:        
+            zfile.close()
+
+    # Read in info from athena summary AthSummary.txt and use this info 
+    athinfo = {}
+    if 'AthSummary.txt' in os.listdir('.'):  
+        readline = False
+        zfile = os.popen('cat '+os.path.join('.','AthSummary.txt' ))
+        for line in zfile:
+            if line.find('Files read:')==0:
+                numfiles3 = int(re.match('Files read:(.*)',line).group(1))
+            if line.find('Exit Status:')==0:
+                readline=True
+                continue
+            try:
+                if readline:
+                    athinfo = eval(line)
+                    readline = False
+            except:
+                pass
+
+        if zfile:        
+            zfile.close()
+
+        try:
+            input_files = athinfo['files']['read'].split(',')
+        except:
+            pass
+
     print '%s out of %s file of dataset %s have been processed.' %(numfiles3, len(input_files_sel), datasetname)
     print 'Number could be wrong for certain input modes!'
     
@@ -188,9 +217,9 @@ if __name__ == '__main__':
                              appid = None,
                              usrdn = usrDN
                              )
-        #print report
+        print report
         try:
-            TracerClient().addReport(report)
+            #TracerClient().addReport(report)
             nreport+=1
         except:
             print 'An Error during TracerClient().addReport(report) occured'
