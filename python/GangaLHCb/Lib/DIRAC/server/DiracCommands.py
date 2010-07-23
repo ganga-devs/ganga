@@ -195,6 +195,7 @@ class DiracCommands:
 
     def getStateTime(id, status):
         log = DiracCommands.dirac.loggingInfo(id)
+        if not log.has_key('Value'): return None
         L = log['Value']
         checkstr = ''
         
