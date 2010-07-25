@@ -180,6 +180,8 @@ then
     run_athena $ATHENA_OPTIONS input.py
 fi
 
+ls -rtla
+
 GANGATIME4=`date +'%s'`
 ################################################
 # store output
