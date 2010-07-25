@@ -528,12 +528,19 @@ stage_inputs () {
 	    else
 		if [ ! -e PoolFileCatalog.xml ]; then
 		    echo "Adding files to PoolFileCatalog.xml"
-		    cat input_files | while read file
-		      do
-		      pool_insertFileToCatalog $file 2>/dev/null; echo $? > retcode.tmp
-		      retcode=`cat retcode.tmp`
-		      rm -f retcode.tmp
-		    done
+
+		    pool_insertFileToCatalog.py `cat input_files` 2>/dev/null; echo $? > retcode.tmp
+		    retcode=`cat retcode.tmp`
+		    rm -f retcode.tmp
+		    if [ $retcode -ne 0 ]
+			then
+			cat input_files | while read file
+			  do
+			  pool_insertFileToCatalog $file 2>/dev/null; echo $? > retcode.tmp
+			  retcode=`cat retcode.tmp`
+			  rm -f retcode.tmp
+			done
+		    fi
 		else
 		    echo "PoolFileCatalog provided. Skipping..."
 		    retcode=0
