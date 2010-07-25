@@ -532,7 +532,7 @@ stage_inputs () {
 		    pool_insertFileToCatalog.py `cat input_files` 2>/dev/null; echo $? > retcode.tmp
 		    retcode=`cat retcode.tmp`
 		    rm -f retcode.tmp
-		    if [ $retcode -ne 0 ]
+		    if [ $retcode -ne 0 ] || [ ! -e PoolFileCatalog.xml ] 
 			then
 			cat input_files | while read file
 			  do
