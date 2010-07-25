@@ -217,7 +217,7 @@ if __name__ == '__main__':
                              appid = None,
                              usrdn = usrDN
                              )
-        print report
+        #print report
         try:
             #TracerClient().addReport(report)
             nreport+=1
