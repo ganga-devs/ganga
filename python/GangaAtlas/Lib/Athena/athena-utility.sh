@@ -70,7 +70,14 @@ filestager_setup() {
 frontier_setup() {
     if [ -e $VO_ATLAS_SW_DIR/local/setup.sh ]; then
         source $VO_ATLAS_SW_DIR/local/setup.sh
+    elif [ n$GANGA_ATHENA_WRAPPER_MODE = n'local' ]; then
+	if [[ $DQ2_LOCAL_SITE_ID == DESY-HH* ]] || [[ $DQ2_LOCAL_SITE_ID == DESY-ZN* ]]; then
+	    if [ -e /afs/naf.desy.de/group/atlas/software/conditions/local/setup.sh ]; then 
+		source /afs/naf.desy.de/group/atlas/software/conditions/local/setup.sh
+	    fi
+	fi
     fi
+
 }
 
 ## function for setting up CMT environment
