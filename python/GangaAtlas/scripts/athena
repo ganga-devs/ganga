@@ -431,7 +431,7 @@ if opt.backend in [ 'lcg', 'cream' ] or opt.glite:
     if opt.walltime: j.backend.requirements.walltime = opt.walltime
     if opt.memory: j.backend.requirements.memory = opt.memory
 
-if opt.backend in ['SGE', 'PBS', 'LSF']:
+if opt.backend in ['sge', 'pbs', 'lsf']:
    if opt.batchextraopts: j.backend.extraopts = opt.batchextraopts
 
 # Inputsandbox
