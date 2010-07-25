@@ -94,6 +94,7 @@ p.add_option('--walltime' , action='store', type='int', dest='walltime', help='S
 p.add_option('--cputime' , action='store', type='int', dest='cputime', help='Specify cputime requirement')
 p.add_option('--memory' , action='store', type='int', dest='memory', help='Specify memory requirement')
 p.add_option('--long', action='store_true', help='Select only long queues')
+p.add_option('--batchextraopts' , action='store', type='string', dest='batchextraopts', help='extra options for batchsystems')
 p.add_option('--check_availability', action='store_true', help='Check for availability of input files on NG' )
 p.add_option('--runtimeenvironment', action='store', type='string', dest='runtimeenvironment', help='Specify the required runtime environment on an NG site' )
 
@@ -429,6 +430,9 @@ if opt.backend in [ 'lcg', 'cream' ] or opt.glite:
     if opt.cputime: j.backend.requirements.cputime = opt.cputime
     if opt.walltime: j.backend.requirements.walltime = opt.walltime
     if opt.memory: j.backend.requirements.memory = opt.memory
+
+if opt.backend in ['SGE', 'PBS', 'LSF']:
+   if opt.batchextraopts: j.backend.extraopts = opt.batchextraopts
 
 # Inputsandbox
 if opt.inputsandbox:
