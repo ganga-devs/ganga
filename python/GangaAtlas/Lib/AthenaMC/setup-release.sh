@@ -95,6 +95,51 @@ function do_KIT_setup(){
 
 }
 
+## function for setting up frontier configurations properly
+frontier_setup() {
+    if [ -e $VO_ATLAS_SW_DIR/local/setup.sh ]; then
+        source $VO_ATLAS_SW_DIR/local/setup.sh
+    elif [ ! -z "$CMTSITE" -a "$BACKEND" != "LCG"  ]; then 
+	if [[ $DQ2_LOCAL_SITE_ID == DESY-HH* ]] || [[ $DQ2_LOCAL_SITE_ID == DESY-ZN* ]]; then
+	    if [ -e /afs/naf.desy.de/group/atlas/software/conditions/local/setup.sh ]; then 
+		source /afs/naf.desy.de/group/atlas/software/conditions/local/setup.sh
+	    fi
+	fi
+    fi
+
+    echo "==  Frontier + ATLAS_POOLCOND_PATH setup  =="
+    if [ -z "$ATLAS_POOLCOND_PATH" ]; then
+	echo 'ATLAS_POOLCOND_PATH env not set'
+	PFCFAILOVER=1
+    elif [ ! -f $ATLAS_POOLCOND_PATH/poolcond/PoolFileCatalog.xml ]; then
+	echo "$ATLAS_POOLCOND_PATH/poolcond/PoolFileCatalog.xml does not exist"
+	PFCFAILOVER=1
+    else
+	echo "ATLAS_POOLCOND_PATH: $ATLAS_POOLCOND_PATH"
+	PFCFAILOVER=0
+    fi
+
+    if [ $PFCFAILOVER -eq 1 ]; then
+	echo 'Failing over to http backup for CD PFC'
+	mkdir poolcond
+	wget --timeout=60 -O poolcond/PoolFileCatalog.xml http://voatlas62.cern.ch/conditions/PoolFileCatalog.xml
+	export ATLAS_POOLCOND_PATH=`pwd`
+	echo "ATLAS_POOLCOND_PATH: $ATLAS_POOLCOND_PATH"
+    fi
+
+
+    if [ -n $FRONTIER_SERVER ]; then
+	echo 'FRONTIER_SERVER : ' $FRONTIER_SERVER
+    else
+	echo 'ERROR: FRONTIER_SERVER not set !' 
+    fi
+    echo "===="
+    echo 
+
+
+}
+
+
 ### MAIN ###################################################################
 
 #### release setup should not depend upon the input archive, but the release number!!!
@@ -112,6 +157,9 @@ if [ ! -z "$CMTSITE" -a "$BACKEND" != "LCG"  ]; then
 else
     do_KIT_setup
 fi
+
+frontier_setup
+
 export JTPATH=""
 if [ ! -z "$isJT" ]; then 
     echo "Using JobTransforms"
