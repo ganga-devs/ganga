@@ -859,6 +859,7 @@ sys.exit(0)
         for sj in rjobs:
             if sj.id in node_jids.keys():
                 sj.backend.id = node_jids[sj.id]
+                sj.backend.CE = self.CE
                 sj.backend.actualCE = sj.backend.CE
                 sj.updateStatus('submitted')
                 sj.info.submit_counter += 1
@@ -876,7 +877,24 @@ sys.exit(0)
         profiler.start()
 
         job = self.getJobObject()
-        
+
+        ## finding CREAM CE endpoint for job submission
+        allowed_celist = []
+        try:
+            allowed_celist = self.requirements.getce()
+            if not self.CE and allowed_celist:
+                self.CE = allowed_celist[0]
+        except:
+            logger.warning('CREAM CE assigment from AtlasCREAMRequirements failed.')
+
+        if self.CE and allowed_celist:
+            if self.CE not in allowed_celist:
+                logger.warning('submission to CE not allowed: %s, use %s instead' % ( self.CE, allowed_celist[0] ) )
+                self.CE = allowed_celist[0]
+
+        if not self.CE:
+            raise GangaException('CREAM CE endpoint not set')
+
         ## delegate proxy to CREAM CE
         if not grids['GLITE'].cream_proxy_delegation(self.CE):
             logger.warning('proxy delegation to %s failed' % self.CE)
