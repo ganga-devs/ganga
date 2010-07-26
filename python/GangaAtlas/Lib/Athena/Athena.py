@@ -817,7 +817,9 @@ class Athena(IApplication):
         archiveFullName += '.gz'
         if rc != 0:
             logger.error(out)
-            
+
+        logger.info('Compressing to %s ...', archiveFullName )
+
         self.user_area.name = archiveFullName
         os.chdir(savedir)
         
