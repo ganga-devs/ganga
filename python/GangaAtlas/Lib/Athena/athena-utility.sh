@@ -536,7 +536,7 @@ stage_inputs () {
 			then
 			cat input_files | while read file
 			  do
-			  pool_insertFileToCatalog $file 2>/dev/null; echo $? > retcode.tmp
+			  pool_insertFileToCatalog.py $file 2>/dev/null; echo $? > retcode.tmp
 			  retcode=`cat retcode.tmp`
 			  rm -f retcode.tmp
 			done
