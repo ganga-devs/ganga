@@ -1453,7 +1453,10 @@ class DQ2OutputDataset(Dataset):
                         self.clean_duplicates_in_dataset(dataset)
                     # output container name
                     for location in self.location:
-                        match = re.search('^(\S*).%s.*'%location, dataset)
+                        if location:
+                            match = re.search('^(\S*).%s.*'%location, dataset)
+                        else:
+                            match = re.search('^(\S*)\..*', dataset)
                         if match:
                             newDatasetname = match.group(1)
                             break
