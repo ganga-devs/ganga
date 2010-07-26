@@ -117,13 +117,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             raise ApplicationConfigurationError(None,"Sorry TRF on Panda backend not yet supported")
         elif app.atlas_exetype == 'ATHENA':
             if job.outputdata.outputdata:
-                raise ApplicationConfigurationError(None,"job.outputdata.outputdata must be empty if atlas_exetype='ATHENA' (outputs are auto-detected)")
+                raise ApplicationConfigurationError(None,"job.outputdata.outputdata must be empty if atlas_exetype='ATHENA' and Panda backend is used (outputs are auto-detected)")
             if app.options:
                 self.job_options += '-c %s ' % app.options
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
         elif app.atlas_exetype in ['PYARA','ARES','ROOT']:
             if not job.outputdata.outputdata:
-                raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT']")
+                raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT'] and Panda backend")
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
             if app.atlas_exetype == 'PYARA':
                 self.job_options = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; python ' + self.job_options
