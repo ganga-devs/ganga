@@ -78,6 +78,36 @@ frontier_setup() {
 	fi
     fi
 
+    echo "==  Frontier + ATLAS_POOLCOND_PATH setup  =="
+    if [ -z "$ATLAS_POOLCOND_PATH" ];then
+	echo 'ATLAS_POOLCOND_PATH env not set'
+	PFCFAILOVER=1
+    elif [ ! -f $ATLAS_POOLCOND_PATH/poolcond/PoolFileCatalog.xml ];then
+	echo "$ATLAS_POOLCOND_PATH/poolcond/PoolFileCatalog.xml does not exist"
+	PFCFAILOVER=1
+    else
+	echo "ATLAS_POOLCOND_PATH: $ATLAS_POOLCOND_PATH"
+	PFCFAILOVER=0
+    fi
+
+    if [ $PFCFAILOVER -eq 1 ];then
+	echo 'Failing over to http backup for CD PFC'
+	mkdir poolcond
+	wget --timeout=60 -O poolcond/PoolFileCatalog.xml http://voatlas62.cern.ch/conditions/PoolFileCatalog.xml
+	export ATLAS_POOLCOND_PATH=`pwd`
+	echo "ATLAS_POOLCOND_PATH: $ATLAS_POOLCOND_PATH"
+    fi
+
+
+    if [ -n $FRONTIER_SERVER ]; then
+	echo 'FRONTIER_SERVER : ' $FRONTIER_SERVER
+    else
+	echo 'ERROR: FRONTIER_SERVER not set !' 
+    fi
+    echo "===="
+    echo 
+
+
 }
 
 ## function for setting up CMT environment
@@ -641,7 +671,19 @@ stage_outputs () {
                 $MKDIR_CMD -p $OUTPUT_LOCATION
                 cat output_files | while read filespec; do
                     for file in $filespec; do
-                      $CP_CMD $file $OUTPUT_LOCATION/$file
+			$CP_CMD $file $OUTPUT_LOCATION/$file; echo $? > retcode.tmp
+			retcode=`cat retcode.tmp`
+			rm -f retcode.tmp
+			if [ $retcode -ne 0 ]; then
+			    sleep 60
+			    $CP_CMD $file $OUTPUT_LOCATION/$file; echo $? > retcode.tmp
+			    retcode=`cat retcode.tmp`
+			    rm -f retcode.tmp
+			    if [ $retcode -ne 0 ]; then
+				echo 'An ERROR during output stage-out occurred'
+				break
+			    fi
+			fi
                     done
                 done
 
