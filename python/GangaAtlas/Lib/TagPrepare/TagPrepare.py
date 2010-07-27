@@ -31,7 +31,7 @@ class TagPrepare(IApplication):
         'atlas_release'          : SimpleItem(defvalue='',doc='ATLAS Software Release'),
         'tag_info'               : SimpleItem(defvalue={},doc='Returned TAG info'),
         'stream_ref'             : SimpleItem(defvalue='AOD',doc='The stream reference to use (AOD, ESD).'),
-        'max_num_refs'           : SimpleItem(defvalue=1,doc='The maximum number of references retrieve per TAG file (defaults to a 1->1 mapping).'),
+        'max_num_refs'           : SimpleItem(defvalue=3,doc='The maximum number of references retrieve per TAG file (defaults to 3).'),
         'atlas_cmtconfig'        : SimpleItem(defvalue='',doc='ATLAS CMTCONFIG environment variable')
               })
                      

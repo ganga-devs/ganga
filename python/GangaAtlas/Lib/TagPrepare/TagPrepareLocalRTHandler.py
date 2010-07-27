@@ -133,6 +133,7 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
                      ( File(os.path.join(__directory__,'libPOOLCollectionTools.so.cmtref'))),
                      ( File(os.path.join(__directory__,'libPOOLCollectionTools.so'))),
                      ( File(os.path.join(__directory__,'CollSplitByGUID.exe'))),
+                     ( File(os.path.join(__directory__,'CollCompressEventInfo.exe'))),
                      ( File(gridProxy.location())) ]
             
         ## insert more scripts to inputsandbox for FileStager
