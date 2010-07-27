@@ -642,8 +642,6 @@ class DQ2JobSplitter(ISplitter):
                                 else:
                                     break
 
-                            else:
-                                break
                     
                     j.inputdata.number_of_files = len(j.inputdata.guids)
                     if (self.numevtsperjob == 0):
