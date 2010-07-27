@@ -1044,7 +1044,7 @@ class Athena(IApplication):
  
         # Check if DQ2_COPY is set and disable it
         if job.backend._name in ['LCG', 'CREAM' ]:
-            if job.inputdata and job.inputdata.type == 'DQ2_COPY':
+            if job.inputdata and job.inputdata.type == 'DQ2_COPY' and not config['ENABLE_DQ2COPY']:
                 raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='DQ2_COPY' is not supported anymore ! Please use a different input access mode." )
              
         # check recex options
@@ -1459,6 +1459,7 @@ config.addOption('CMTCONFIG', 'i686-slc5-gcc43-opt', 'Default value to be used a
 config.addOption('CMTCONFIG_LIST', [ 'i686-slc4-gcc34-opt', 'i686-slc5-gcc43-opt' ], 'Allowed values for CMTCONFIG environment setup value (LCG/Batch backend)')
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
+config.addOption('ENABLE_DQ2COPY', False , 'Enable DQ2_COPY input workflow on LCG backend')
 
 # $Log: not supported by cvs2svn $
 # Revision 1.63  2009/07/02 19:36:23  elmsheus
