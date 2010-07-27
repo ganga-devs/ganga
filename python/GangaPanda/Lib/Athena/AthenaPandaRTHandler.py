@@ -255,6 +255,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         flog.type = 'log'
         flog.dataset = self.libDataset
         flog.destinationDBlock = self.libDataset
+        if configPanda['chirpconfig']:
+            flog.dispatchDBlockToken = configPanda['chirpconfig']
         jspec.addFile(flog)
 
         return jspec
