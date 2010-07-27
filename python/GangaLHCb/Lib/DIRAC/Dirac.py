@@ -131,7 +131,7 @@ class Dirac(IBackend):
         j = self.getJobObject()
 
         inputdata = subjobconfig.script.inputdata
-        if (not inputdata or (len(inputdata.data) == 0)) and not \
+        if (not inputdata or len(inputdata.data) == 0) and not \
                self.settings.has_key('Destination'):
             t1_sites = configLHCb['noInputDataBannedSites']
             msg = 'Job has no inputdata (T1 sites will be banned to help '\
