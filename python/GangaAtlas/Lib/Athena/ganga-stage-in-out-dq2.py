@@ -1566,7 +1566,27 @@ if __name__ == '__main__':
                     tag_files = {}
                     for tag_file in open("./tag_file_list").readlines():
                         filename = tag_file.strip()
-                        item = {'pfn':filename,'guid':''}
+                        if filename[ len(filename)-4:] == '.dat':
+                            # uncompress the data files
+                            print "UNCOMPRESSING TAG FILES..."
+                            cmd = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH ; ./CollInflateEventInfo.exe " + filename
+                            rc, out = getstatusoutput(cmd)
+                            print out
+                            
+                            if (rc!=0):
+                                print "ERROR: error during CollInflateEventInfo.exe. Retrying..."
+                                cmd = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH_BACKUP_ATH; export PATH=$PATH_BACKUP_ATH; export PYTHONPATH=$PYTHONPATH_BACKUP_ATH;./CollInflateEventInfo.exe " + filename
+                                rc, out = getstatusoutput(cmd)
+                                
+                                print out
+                                if (rc!=0):
+                                    print "ERROR: error during CollInflateEventInfo.exe. Giving up..."
+                                    sys.exit(-1)
+
+                            os.system("mv outColl.root %s" % filename+".root")
+                            filename = filename+".root"
+                            
+                        item = {'pfn': filename,'guid':''}
                         tag_files[filename] = item
 
                     print "Creating JO file with this file list:"

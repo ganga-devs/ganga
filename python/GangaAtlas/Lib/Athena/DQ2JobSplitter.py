@@ -162,15 +162,18 @@ class DQ2JobSplitter(ISplitter):
                             additional_datasets[job.inputdata.tag_info[tag_file]['dataset']].append(tag_ref[1])
                 elif job.inputdata.tag_info[tag_file]['path'] != '' and job.inputdata.tag_info[tag_file]['dataset'] == '':
                     local_tag = True
-                    if len(job.inputdata.tag_info[tag_file]['refs']) > 1:
-                        raise ApplicationConfigurationError(None,'Problems with TAG entry for %s. Mulitple references for local TAG file.' % tag_file)
-
-                    job.inputdata.names.append( job.inputdata.tag_info[tag_file]['refs'][0][0] )
-                    job.inputdata.guids.append( job.inputdata.tag_info[tag_file]['refs'][0][2] )
-
                     if not job.inputdata.tag_info[tag_file]['refs'][0][1] in job.inputdata.dataset:
-                        job.inputdata.dataset.append(job.inputdata.tag_info[tag_file]['refs'][0][1])
-                    
+                        job.inputdata.dataset.append(job.inputdata.tag_info[tag_file]['refs'][0][1])      
+
+                    ## add the referenced files and guids and check for multiple datasets per file
+                    ref_dataset = job.inputdata.tag_info[tag_file]['refs'][0][1]
+                    for ref in job.inputdata.tag_info[tag_file]['refs']:
+                        if ref[1] != ref_dataset:
+                            raise ApplicationConfigurationError(None,'Problems with TAG entry for %s. Multiple datasets referenced for local TAG file.' % tag_file)
+
+                        job.inputdata.names.append( ref[0] )
+                        job.inputdata.guids.append( ref[2] )
+
                 else:
                     raise ApplicationConfigurationError(None,'Problems with TAG entry for %s' % tag_file)
                 
@@ -490,6 +493,10 @@ class DQ2JobSplitter(ISplitter):
                         self.numevtsperjob = events_per_subjob
                         nrjob = int(math.ceil(totalevent/float(events_per_subjob)))
 
+                if job.inputdata.tag_info and local_tag and nrjob > len(job.inputdata.tag_info):
+                    nrfiles = int(math.ceil(len(guids)/float(len(job.inputdata.tag_info))))
+                    nrjob = len(job.inputdata.tag_info)
+
                 if nrjob > config['MaxJobsDQ2JobSplitter']: 
                     if self.numevtsperjob > 0:
                         self.numevtsperjob = int(math.ceil(totalevent/float((config['MaxJobsDQ2JobSplitter'] -1))))
@@ -604,20 +611,43 @@ class DQ2JobSplitter(ISplitter):
                         id_lower = id_upper -1
                     
                     else:
-                        while remaining_guids and len(j.inputdata.guids)<max_subjob_numfiles and sum(j.inputdata.sizes)<max_subjob_filesize:
-                            for next_guid in remaining_guids:
-                                if sum(j.inputdata.sizes)+allcontent[next_guid][1] < max_subjob_filesize:
-                                    remaining_guids.remove(next_guid)
-                                    j.inputdata.guids.append(next_guid)
-                                    j.inputdata.names.append(allcontent[next_guid][0])
-                                    j.inputdata.sizes.append(allcontent[next_guid][1])
+                        # change the splitting based on local tag files
+                        if job.inputdata.tag_info and local_tag:
+                            while remaining_tags and len(j.inputdata.guids)<max_subjob_numfiles and sum(j.inputdata.sizes)<max_subjob_filesize:
+                                for next_tag in remaining_tags:
+                                    
+                                    remaining_tags.remove(next_tag)
+                                    
+                                    for ref in job.inputdata.tag_info[next_tag]['refs']:
+
+                                        remaining_guids.remove(ref[2])
+                                        j.inputdata.guids.append(ref[2])
+                                        j.inputdata.names.append(allcontent[ref[2]][0])
+                                        j.inputdata.sizes.append(allcontent[ref[2]][1])
+                                        
                                     break
+                            
+                                else:
+                                    break
+                        else:
+                            # default splitting
+                            while remaining_guids and len(j.inputdata.guids)<max_subjob_numfiles and sum(j.inputdata.sizes)<max_subjob_filesize:
+                                for next_guid in remaining_guids:
+                                    if sum(j.inputdata.sizes)+allcontent[next_guid][1] < max_subjob_filesize:
+                                        remaining_guids.remove(next_guid)
+                                        j.inputdata.guids.append(next_guid)
+                                        j.inputdata.names.append(allcontent[next_guid][0])
+                                        j.inputdata.sizes.append(allcontent[next_guid][1])
+                                        break
+                                else:
+                                    break
+
                             else:
                                 break
                     
                     j.inputdata.number_of_files = len(j.inputdata.guids)
                     if (self.numevtsperjob == 0):
-                        if num_remaining_guids == len(remaining_guids):
+                        if not (job.inputdata.tag_info and local_tag) and num_remaining_guids == len(remaining_guids):
                             logger.warning('Filesize constraint blocked the assignment of %d files having guids: %s'%(len(remaining_guids),remaining_guids))
                             break
                     #print j.inputdata.names

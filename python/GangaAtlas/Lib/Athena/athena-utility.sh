@@ -783,7 +783,10 @@ run_athena () {
 
 	export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH:$LD_LIBRARY_PATH_ORIG
 
+	cat PoolFileCatalog.xml
+
         echo "Running Athena ..."
+
 
 	# Network traffic
 	NET_ETH_RX_PREATHENA=0

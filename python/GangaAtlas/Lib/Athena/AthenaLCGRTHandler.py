@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, pwd, commands, re, string, time
+import os, pwd, commands, re, string, time, sys
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -264,7 +264,13 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         
 #       prepare inputsandbox
 
-        inputbox = [File(os.path.join(__directory__,'athena-utility.sh')) ]
+        #inputbox = [File(os.path.join(__directory__,'athena-utility.sh')) ]
+        __tpdirectory__ = sys.modules['GangaAtlas.Lib.TagPrepare'].__path__[0]
+        inputbox = [ ( File(os.path.join(__directory__,'athena-utility.sh')) ),
+                     ( File(os.path.join(__tpdirectory__,'libPOOLCollectionTools.so.cmtref'))),
+                     ( File(os.path.join(__tpdirectory__,'libPOOLCollectionTools.so'))),
+                     ( File(os.path.join(__tpdirectory__,'CollInflateEventInfo.exe'))),
+                     ( File(os.path.join(__tpdirectory__,'template.root')))]
         if input_guids:     _append_file_buffer(inputbox,'input_guids',input_guids)
         if input_files:     _append_file_buffer(inputbox,'input_files',input_files)
         if add_files:     _append_file_buffer(inputbox,'add_files',add_files)
