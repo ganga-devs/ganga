@@ -1,0 +1,75 @@
+**************************************************************************************************************
+5.5.11 (2010/7/27)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* improve the CREAM CE selection algorithm:
+- option 1: manual j.backend.CE specification
+- option 2: using j.backend.requirements.getce() function if it's available
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Added compression support for large TAG files
+* Enable CREAM backend for Athena application and 
+  introduce AtlasCREAMRequirements - this is for advanced users
+  Use it with e.g.
+  j.backend=CREAM()
+  j.backend.requirements=AtlasCREAMRequirements()
+  j.backend.requirements.sites=['SARA-MATRIX_DATADISK']
+  or
+  j.backend=CREAM()
+  j.backend.CE='creamce.gina.sara.nl:8443/cream-pbs-short'
+* Add improved Frontier + ATLAS_POOLCOND_PATH printout and failover
+  for Local/Batch/LCG/CREAM and Add conditions data setup for NAF SGE
+* Add additional fail-over of AtlasOutputDataset stage-out and 
+  add return code on Local/Batch backend
+* Parse AthSummary.txt in Local/Batch/LCG/CREAM if available for 
+  numevents and input file info
+* Fix bug #70477: datasetname of DQ2OutputDataset had a trailing 
+  site name in rare cases
+* Fix bug #70646: Add additional INFO message during tarball creation
+* Fix bug #70510: atlas_environment was overriden if atlas_dbrelease was 
+  set on job submission
+* Fix bug #62413: Use pool_insertFileToCatalog.py for ATLASLocalDataset
+  and add fail-overs
+
+* Add ls statement at end of Local/Batch job
+* Remove prepare_old warning
+* Add maximum allowed compile jobs on LCG/CREAM via 
+  config.Athena.MaxJobsDQ2JobSplitterLCGCompile
+* Disable DQ2_COPY mode on LCG/CREAM backend
+* Add default montioring hooks for Athena/LCG and Athena/CREAM
+
+AthenaMC:
+---------
+* Add frontier/squid + ATLAS_POOLCOND_PATH setup in
+  setup-release.sh
+
+scripts:
+--------
+* Add options --noblacklist, --collectstats, --batchextraopts, ---cream
+
+externals:
+----------
+* Update to panda-client version 0.2.71
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor features and bug fixes.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Add chirp config to logfile of build job
+* Update to panda-clients 0.2.71
+
+**************************************************************************************************************
