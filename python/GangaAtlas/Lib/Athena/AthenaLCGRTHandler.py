@@ -20,6 +20,7 @@ from Ganga.Utility.logging import getLogger
 
 from Ganga.Lib.LCG import LCGJobConfig
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
+from GangaAtlas.Lib.AtlasLCGRequirements import AtlasCREAMRequirements
 
 from GangaAtlas.Lib.ATLASDataset import ATLASDataset, isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations, whichCloud
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
@@ -537,7 +538,12 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if (app.max_events != -999) and (app.max_events > -2):
                 environment['ATHENA_MAX_EVENTS'] = str(app.max_events)
 
-        requirements = AtlasLCGRequirements()
+        if job.backend.requirements._name == 'AtlasLCGRequirements':
+            requirements = AtlasLCGRequirements()
+        elif job.backend.requirements._name == 'AtlasCREAMRequirements':
+            requirements = AtlasCREAMRequirements()
+        else:
+            requirements = AtlasLCGRequirements()
         
         if job.inputdata and job.inputdata._name == 'ATLASDataset':
             if job.inputdata.lfc:
@@ -564,7 +570,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
             # Raise submission exception
             if (not job.backend.CE and 
-                not (job.backend.requirements._name == 'AtlasLCGRequirements' and job.backend.requirements.sites) and
+                not (job.backend.requirements._name in [ 'AtlasLCGRequirements', 'AtlasCREAMRequirements' ] and job.backend.requirements.sites) and
                 not (job.splitter and job.splitter._name == 'DQ2JobSplitter') and
                 not (job.splitter and job.splitter._name == 'TNTJobSplitter') and
                 not (job.splitter and job.splitter._name == 'AnaTaskSplitterJob') and

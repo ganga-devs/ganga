@@ -65,6 +65,10 @@ def _loadCESEInfo():
             result['blacklist_release_info'] = pickle.load(input)
         except EOFError:
             result['blacklist_release_info'] = []
+        try:
+            result['creamce_info']  = pickle.load(input)
+        except EOFError:
+            result['creamce_info']  = []
             
         input.close()
     except Exception:
@@ -127,6 +131,10 @@ def _downloadCESEInfo():
             result['blacklist_release_info'] = pickle.load(input)
         except EOFError:
             result['blacklist_release_info'] = []
+        try:
+            result['creamce_info']  = pickle.load(input)
+        except EOFError:
+            result['creamce_info']  = []
         input.close()
     except Exception, e:
         logger.error(e)
@@ -210,7 +218,7 @@ def getSEsForSites(ids):
 
     return se_dict.keys()
 
-def getCEsForSites(ids, excluded_ids = [] ):
+def getCEsForSites(ids, excluded_ids = [], CREAM = False, cputime=0 ):
     '''Retrieve the CEs for a site'''
 
     _refreshToACache()
@@ -258,7 +266,18 @@ def getCEsForSites(ids, excluded_ids = [] ):
                     logger.debug('Cannot extract host from %s',sitesrm)
                 else:
                     try:
-                        ces = CESEInfo['se_info'][match.group(1)]['close_ce']
+                        if CREAM:
+                            ces = CESEInfo['se_info'][match.group(1)]['close_creamce']
+                            if cputime > 0:
+                                for ces_tmp in ces:
+                                    cescputime = CESEInfo['creamce_info'][ces_tmp]['cputime']
+                                    if cescputime:
+                                        cescputime = int(cescputime)
+                                    if cputime < cescputime:
+                                        ces = [ ces_tmp ]
+                                        break
+                        else:
+                            ces = CESEInfo['se_info'][match.group(1)]['close_ce']
                     except KeyError:
                         logger.debug('Did not find CE-SE association for %s',match.group(1))
 
@@ -564,3 +583,73 @@ class AtlasLCGRequirements(LCGRequirements):
     def list_release_blacklist(self):
         return getReleaseBlacklistInfo()
             
+
+atlascreamrequirements_schema_datadict = AtlasLCGRequirements._schema.inherit_copy().datadict
+
+class AtlasCREAMRequirements(AtlasLCGRequirements):
+
+    atlascreamrequirements_schema_datadict.update( {
+        'cputime'         : SimpleItem(defvalue=0, typelist=['type(None)','int'], doc='Minimum available CPU time (min)'),
+        } )
+
+    _schema   = Schema(Version(1,2), atlascreamrequirements_schema_datadict)
+    _category = 'LCGRequirements'
+    _name = 'AtlasCREAMRequirements'
+    _exportmethods = ['list_ce', 'list_se','list_sites','list_clouds', 'list_sites_cloud', 'cloud_from_sites', 'list_access_info', 'list_release_blacklist', 'getce' ]
+
+    def __init__(self):
+        super(AtlasCREAMRequirements,self).__init__()
+
+    def merge(self,other):
+        '''Merge requirements objects'''
+      
+        if not other: return self
+      
+        merged = AtlasCREAMRequirements()
+
+        for name in self._schema.datadict.keys():
+            try:
+                attr = getattr(other,name)
+            except AttributeError:
+                attr = None
+            if not attr: attr = getattr(self,name)
+            setattr(merged,name,attr)
+         
+        return merged
+
+    def convert(self):
+        '''Convert the condition in a JDL specification'''
+      
+        requirements = []
+
+        if self.sites:
+            ce_requirement = ' ||\n     '.join([ 'other.GlueCEUniqueID == "%s"' % ce for ce in getCEsForSites(self.sites, self.excluded_sites, CREAM=True)])
+            if not ce_requirement:
+                raise BackendError('CREAM','Job cannot be submitted as no valid site has been specified.')
+            requirements.append('( %s )' % ce_requirement)
+
+        if self.os:
+            os_name = self.os.lower()
+            if os_name == 'slc3':
+                requirements.append(slc3_req)
+            elif os_name == 'slc4':
+                requirements.append(slc4_req)
+            else:
+               raise BackendError('LCG','Job cannot be submitted as unknown OS %s has been requested.'%self.os)
+            
+        return requirements
+
+    def getce(self):
+
+        if self.cputime:
+            mycputime = self.cputime
+        else:
+            mycputime = 0
+        return getCEsForSites(self.sites, self.excluded_sites, CREAM=True, cputime=mycputime )
+
+    def list_ce(self,ids):
+
+        if isinstance(ids,str):
+            ids = ids.split(':')
+
+        return getCEsForSites(ids, CREAM=True)

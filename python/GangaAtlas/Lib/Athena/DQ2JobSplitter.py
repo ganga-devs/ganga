@@ -191,7 +191,7 @@ class DQ2JobSplitter(ISplitter):
         
         allowed_sites = []
         if job.backend._name in [ 'LCG', 'CREAM' ]:
-            if job.backend.requirements._name == 'AtlasLCGRequirements':
+            if job.backend.requirements._name in [ 'AtlasLCGRequirements', 'AtlasCREAMRequirements']:
                 if job.backend.requirements.sites:
                     allowed_sites = job.backend.requirements.sites
                 elif job.backend.requirements.cloud:
