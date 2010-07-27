@@ -386,8 +386,11 @@ elif opt.backend == 'cream':
     j.backend = CREAM()
     if opt.ce: 
         j.backend.CE = opt.ce 
+    elif opt.site: 
+        j.backend.requirements=AtlasCREAMRequirements()
+        j.backend.requirements.sites=opt.site.split(':') 
     else:
-        print >>sys.stderr, 'ERROR: CREAM backend requires "--ce" to be configured'
+        print >>sys.stderr, 'ERROR: CREAM backend requires "--ce" or "--site" to be configured'
         sys.exit(100)
         
 elif opt.backend == 'pbs':
