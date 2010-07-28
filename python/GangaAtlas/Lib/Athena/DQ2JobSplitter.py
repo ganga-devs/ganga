@@ -216,6 +216,16 @@ class DQ2JobSplitter(ISplitter):
                     allowed_sites = newsites
                 # Check atlas_dbrelease
                 if hasattr(job.application,"atlas_dbrelease") and job.application.atlas_dbrelease:
+                    if job.application.atlas_dbrelease == 'LATEST':       
+                        from pandatools import Client
+                        my_atlas_dbrelease = Client.getLatestDBRelease(False)
+                        job.application.atlas_dbrelease = my_atlas_dbrelease
+                        
+                        match = re.search('DBRelease-(.*)\.tar\.gz', my_atlas_dbrelease )
+                        if match:
+                            dbvers = match.group(1)
+                            job.application.atlas_environment+=['DBRELEASE_OVERRIDE=%s'%dbvers] 
+
                     try:
                         db_dataset = job.application.atlas_dbrelease.split(':')[0]
                     except:
