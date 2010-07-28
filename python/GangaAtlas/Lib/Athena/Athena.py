@@ -759,23 +759,31 @@ class Athena(IApplication):
         if not self.option_file:
             raise ApplicationConfigurationError(None,'Set option_file before calling prepare()')
         for opt_file in self.option_file:
-            if not opt_file.exists():
-                raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % opt_file.name)
+            if not self.atlas_exetype in ['EXE']: 
+                if not opt_file.exists():
+                    raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % opt_file.name)
+                else:
+                    jobO = jobO + opt_file.name + " "
             else:
-                jobO = jobO + opt_file.name + " "
+                pass
+
         supStream = [s.upper() for s in self.atlas_supp_stream]
         shipInput = False
         trf = False
-        if self.atlas_exetype in ['PYARA','ROOT','TRF','ARES']:
+        if self.atlas_exetype in ['PYARA','ROOT','TRF','ARES','EXE']:
             trf = True
 
         logger.debug('jobO : ', jobO)
 
-        rc, runConfig = AthenaUtils.extractRunConfig(jobO, supStream, self.atlas_use_AIDA, shipInput, trf)
-        self.atlas_run_config = runConfig
-        logger.info('Detected Athena run configuration: %s',self.atlas_run_config)
-        if not rc:
-            raise ApplicationConfigurationError(None, 'Error in AthenaUtils.extractRunConfig - could not extract Athena configuration!')
+        if not self.atlas_exetype in ['EXE']: 
+            rc, runConfig = AthenaUtils.extractRunConfig(jobO, supStream, self.atlas_use_AIDA, shipInput, trf)
+            self.atlas_run_config = runConfig
+            logger.info('Detected Athena run configuration: %s',self.atlas_run_config)
+            if not rc:
+                raise ApplicationConfigurationError(None, 'Error in AthenaUtils.extractRunConfig - could not extract Athena configuration!')
+        else:
+            self.atlas_run_config = {'input': {}, 'other': {}, 'output': {}}
+            logger.info('Set Athena run configuration to: %s',self.atlas_run_config)
 
         # tmpDir
         if os.environ.has_key('TMPDIR'):
@@ -1013,7 +1021,7 @@ class Athena(IApplication):
                 raise ApplicationConfigurationError(None,'The tar file %s with the group area does not exist.' % self.group_area.name)
        
         for opt_file in self.option_file:
-            if not opt_file.exists():
+            if not self.atlas_exetype in ['EXE'] and not opt_file.exists():
                 raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % opt_file.name)
 
 
