@@ -748,6 +748,14 @@ class Athena(IApplication):
         logger.info('Extracting athena run configuration ... ')
         logger.info('This can take a while since the athena autoconfiguration is called in the background to extract the jobOption configuration ... ')
         jobO = ''
+
+        # Add special options
+        if self.options:
+            if self.options.startswith('-c'):
+                jobO = ' %s ' % self.options
+            else:
+                jobO = ' -c %s ' % self.options
+
         if not self.option_file:
             raise ApplicationConfigurationError(None,'Set option_file before calling prepare()')
         for opt_file in self.option_file:
@@ -760,6 +768,9 @@ class Athena(IApplication):
         trf = False
         if self.atlas_exetype in ['PYARA','ROOT','TRF','ARES']:
             trf = True
+
+        logger.debug('jobO : ', jobO)
+
         rc, runConfig = AthenaUtils.extractRunConfig(jobO, supStream, self.atlas_use_AIDA, shipInput, trf)
         self.atlas_run_config = runConfig
         logger.info('Detected Athena run configuration: %s',self.atlas_run_config)
