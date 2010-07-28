@@ -400,7 +400,7 @@ class Panda(IBackend):
         retryDestSE  = None
         resubmittedJobs = [] # ganga jobs
         for job in jspecs:
-            if job.jobStatus == 'failed':
+            if job.jobStatus in ['failed', 'killed']:
                 oldID = job.PandaID
                 # unify sitename
                 if retrySite == None:
