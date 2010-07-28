@@ -119,7 +119,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if job.outputdata.outputdata:
                 raise ApplicationConfigurationError(None,"job.outputdata.outputdata must be empty if atlas_exetype='ATHENA' and Panda backend is used (outputs are auto-detected)")
             if app.options:
-                self.job_options += '-c %s ' % app.options
+                if app.options.startswith('-c'):
+                    self.job_options += ' %s ' % app.options
+                else:
+                    self.job_options += ' -c %s ' % app.options
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
         elif app.atlas_exetype in ['PYARA','ARES','ROOT']:
             if not job.outputdata.outputdata:
