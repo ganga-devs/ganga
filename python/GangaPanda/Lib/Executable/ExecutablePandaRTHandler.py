@@ -307,8 +307,8 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
         param += '-r "%s" ' % self.rundirectory
 
+        exe_name = job.application.exe
         if job.backend.bexec == '':
-            exe_name = job.application.exe
             if hasattr(job.application.exe, "name"):
                 exe_name = os.path.basename(job.application.exe.name)
 
