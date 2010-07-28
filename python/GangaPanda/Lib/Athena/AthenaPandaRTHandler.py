@@ -88,8 +88,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.cacheVer = ''
         if app.atlas_project and app.atlas_production:
             self.cacheVer = "-" + app.atlas_project + "_" + app.atlas_production
-        if not app.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT']:
-            raise ApplicationConfigurationError(None,"Panda backend supports only application.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT']")
+        if not app.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT','EXE']:
+            raise ApplicationConfigurationError(None,"Panda backend supports only application.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT','EXE']")
         if app.atlas_exetype == 'ATHENA' and not app.user_area.name and not job.backend.libds:
             raise ApplicationConfigurationError(None,'app.user_area.name is null')
 
@@ -124,7 +124,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 else:
                     self.job_options += ' -c %s ' % app.options
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
-        elif app.atlas_exetype in ['PYARA','ARES','ROOT']:
+        elif app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             if not job.outputdata.outputdata:
                 raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT'] and Panda backend")
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
@@ -134,6 +134,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.job_options = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; athena.py ' + self.job_options
             elif app.atlas_exetype == 'ROOT':
                 self.job_options = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; root -b -q ' + self.job_options
+            elif app.atlas_exetype == 'EXE':
+                self.job_options = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; ' + self.job_options
         if self.job_options == '':
             raise ApplicationConfigurationError(None,"No Job Options found!")
         logger.info('Running job options: %s'%self.job_options)
@@ -226,7 +228,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.jobName           = commands.getoutput('uuidgen')
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
         jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
-        jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
+        if job.backend.bexec != '':
+            jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
+        else:
+            jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
         if Client.isDQ2free(job.backend.site):
             jspec.destinationDBlock = '%s/%s' % (job.outputdata.datasetname,self.libDataset)
             jspec.destinationSE     = 'local'
@@ -245,6 +250,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if matchURL:
             jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
         jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
+        if job.backend.bexec != '':
+            jspec.jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
+            jspec.jobParameters += ' -r %s ' % '.'
 
         fout = FileSpec()
         fout.lfn  = self.library
@@ -309,7 +317,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.jobName           = commands.getoutput('uuidgen')  
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
         jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
-        if app.atlas_exetype in ['PYARA','ARES','ROOT']:
+        if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             jspec.transformation    = '%s/runGen-00-00-02' % Client.baseURLSUB
         else:
             jspec.transformation    = '%s/runAthena-00-00-11' % Client.baseURLSUB
@@ -393,7 +401,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         param =  '-l %s ' % self.library
         param += '-r %s ' % self.rundirectory
         # set jobO parameter
-        if app.atlas_exetype in ['PYARA','ARES','ROOT']:
+        if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             param += '-j "" -p "%s" ' % self.job_options
         else:
             param += '-j "%s" ' % urllib.quote(self.job_options)
@@ -454,7 +462,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         #    param += '--beamHalo "%s" ' % bhaloList
         #if bgasList != []:
         #    param += '--beamGas "%s" ' % bgasList
-        if app.atlas_exetype in ['PYARA','ARES','ROOT']:
+        if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             outMapNew={}
             for x in outMap.values():
                 outMapNew.update(dict(x))
