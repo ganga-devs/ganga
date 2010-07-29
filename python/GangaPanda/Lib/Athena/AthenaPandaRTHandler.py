@@ -20,6 +20,7 @@ from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibF
 from Ganga.Core import BackendError
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
 def getDBDatasets(jobO,trf,dbrelease):
@@ -188,6 +189,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         try:
             Client.addDataset(job.outputdata.datasetname,False,location=self.outDsLocation)
             logger.info('Output dataset %s registered at %s'%(job.outputdata.datasetname,self.outDsLocation))
+            dq2_set_dataset_lifetime(job.outputdata.datasetname, self.outDsLocation)
             self.indivOutDsList = [job.outputdata.datasetname]
         except exceptions.SystemExit:
             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
@@ -202,6 +204,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             self.library = '%s.tgz' % self.libDataset
             try:
                 Client.addDataset(self.libDataset,False,location=self.outDsLocation)
+                dq2_set_dataset_lifetime(self.libDataset, self.outDsLocation)
                 logger.info('Lib dataset %s registered at %s'%(self.libDataset,self.outDsLocation))
             except exceptions.SystemExit:
                 raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDataset,sys.exc_info()[0],sys.exc_info()[1]))
@@ -391,6 +394,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                         try:
                             logger.info('Creating individualOutDS %s'%f.dataset)
                             Client.addDataset(f.dataset,False,location=self.outDsLocation)
+                            dq2_set_dataset_lifetime(f.dataset, self.outDsLocation)
                             self.indivOutDsList.append(f.dataset)
                         except exceptions.SystemExit:
                             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(f.dataset,sys.exc_info()[0],sys.exc_info()[1]))
