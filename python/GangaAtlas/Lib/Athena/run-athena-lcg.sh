@@ -439,7 +439,9 @@ GANGATIME3=`date +'%s'`
 if [ $retcode -eq 0 ] && [ n$DATASETTYPE != n'DQ2_COPY' ]
     then 
     prepare_athena
-    run_athena $ATHENA_OPTIONS input.py
+    if [ $retcode -eq 0 ]; then
+	run_athena $ATHENA_OPTIONS input.py
+    fi
 fi
 
 #################################################

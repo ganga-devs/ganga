@@ -29,6 +29,7 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import extractFileNumber, matchFile
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 
 #import AthenaUtils
 
@@ -184,6 +185,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
                 print "registering output dataset %s at %s" % (dset,outDsLocation)
                 try:
                     Client.addDataset(dset,False,location=outDsLocation)
+                    dq2_set_dataset_lifetime(dset, location=outDsLocation)
                 except:
                     raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % dset)
             # extend registration to build job lib dataset:
@@ -191,6 +193,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
 
             try:
                 Client.addDataset(self.libDataset,False,location=outDsLocation)
+                dq2_set_dataset_lifetime(self.libDataset, outDsLocation)
             except:
                 raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % self.libDataset)
 

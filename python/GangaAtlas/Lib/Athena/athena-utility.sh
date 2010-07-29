@@ -746,7 +746,9 @@ prepare_athena () {
         if [ ! -z $OUTPUT_JOBID ] && [ -e ganga-joboption-parse.py ] && [ -e output_files ]
         then
             chmod +x ganga-joboption-parse.py
-            ./ganga-joboption-parse.py
+            ./ganga-joboption-parse.py ; echo $? > retcode.tmp
+	    retcode=`cat retcode.tmp`
+	    rm -f retcode.tmp
         fi
     fi
 

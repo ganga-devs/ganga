@@ -367,6 +367,22 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
 
     return output_datasetname, output_lfn 
 
+def dq2_set_dataset_lifetime(datasetname, location):
+
+    rc = 1
+    if config['OUTPUTDATASET_LIFETIME']:
+        try:
+            dq2_lock.acquire() 
+            try:
+                rc = dq2.setReplicaMetaDataAttribute(datasetname, location, 'lifetime', config['OUTPUTDATASET_LIFETIME'])
+            except:
+                rc = 0
+        finally:
+            dq2_lock.release()
+    else:
+        pass
+
+    return rc
 
 class DQ2Dataset(Dataset):
     '''ATLAS DDM Dataset'''
@@ -942,8 +958,6 @@ class DQ2Dataset(Dataset):
 
         return dq2_list_locations_siteindex(datasets, timeout, days, replicaList)
 
-
-
 class DQ2OutputDataset(Dataset):
     """DQ2 Dataset class for a dataset of output files"""
     
@@ -1429,6 +1443,9 @@ class DQ2OutputDataset(Dataset):
             if (fsize>0):
                 self.output.append(pfn)
 
+        # Set Replica lifteime
+        dq2_set_dataset_lifetime(self.datasetname, self.location)
+
         # Master job finish
         if not job.master and job.subjobs:
             self.location = []
@@ -1659,6 +1676,8 @@ config.addOption('DELETE_DUPLICATES_DATASET', False, 'If CHECK_OUTPUT_DUPLICATES
 
 config.addOption('USE_NICKNAME_DQ2OUTPUTDATASET', True, 'Use voms nicknames for DQ2OutputDataset.')
 config.addOption('ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET', False, 'Allow that voms nickname is empty for DQ2OutputDataset name creating.')
+
+config.addOption('OUTPUTDATASET_LIFETIME', '', 'Maximum lifetime of a DQ2OutputDataset.')
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
