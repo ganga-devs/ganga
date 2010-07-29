@@ -379,7 +379,9 @@ class JobExecutionMonitor(GangaObject):
                 s += PrettyStrings.formatDatum("status (middleware)", str(job.backend.status)) # pylint: disable-msg=E1101
                 s += PrettyStrings.formatDatum("status (user application)", appstate)
                 s += PrettyStrings.formatDatum("job-id", str(job.backend.id)) # pylint: disable-msg=E1101
-                s += PrettyStrings.formatDatum("compute element", str(job.backend.actualCE)) # pylint: disable-msg=E1101
+                try:    # fix #66 (not all backends have the actualCE property! we can silently ignore it here.)
+                    s += PrettyStrings.formatDatum("compute element", str(job.backend.actualCE)) # pylint: disable-msg=E1101
+                except: pass
 
                 if l.has_key("WN"):
                     s += PrettyStrings.formatDatum("worker node", l["WN"])
