@@ -371,10 +371,12 @@ def dq2_set_dataset_lifetime(datasetname, location):
 
     rc = 1
     if config['OUTPUTDATASET_LIFETIME']:
+        mylifetime = config['OUTPUTDATASET_LIFETIME']
+        mylifetime = mylifetime.replace('_',' ')
         try:
             dq2_lock.acquire() 
             try:
-                rc = dq2.setReplicaMetaDataAttribute(datasetname, location, 'lifetime', config['OUTPUTDATASET_LIFETIME'])
+                rc = dq2.setReplicaMetaDataAttribute(datasetname, location, 'lifetime', mylifetime)
             except:
                 rc = 0
         finally:
