@@ -309,7 +309,12 @@ if opt.outputdata or opt.backend == 'panda':
              j.outputdata.datasetname = opt.output_dataset
 
     if opt.outputdata:
-        j.outputdata.outputdata = opt.outputdata.split(':')
+        if opt.outputdata.find(':')>0:
+            j.outputdata.outputdata = opt.outputdata.split(':')
+        elif opt.outputdata.find(',')>0:
+            j.outputdata.outputdata = opt.outputdata.split(',')
+        else:
+            j.outputdata.outputdata = opt.outputdata.split('\n')
     if opt.output_location:
         j.outputdata.location = opt.output_location
     if opt.output_local_location:
