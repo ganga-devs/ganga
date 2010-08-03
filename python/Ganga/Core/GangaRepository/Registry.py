@@ -84,7 +84,7 @@ class IncompleteObject(object):
                     pass
                 raise RegistryLockError(errstr)
             self.registry.repository.delete([self.id])
-            for d in self.changed_ids.itervalues():
+            for d in self.registry.changed_ids.itervalues():
                 d.add(id)
         finally:
             self.registry._lock.release()
