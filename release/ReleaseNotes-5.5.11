@@ -1,5 +1,12 @@
 **************************************************************************************************************
-5.5.11 (2010/7/29)
+5.5.11 (2010/8/3)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Repository fixes.
+Prototype of a web-based GUI: --webgui
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -47,9 +54,11 @@ Athena:
   config.Athena.MaxJobsDQ2JobSplitterLCGCompile
 * Disable DQ2_COPY mode on LCG/CREAM backend
 * Add default montioring hooks for Athena/LCG and Athena/CREAM
-* Apply 150 character output filename limit for Athena Local/LCG/CREAM jobs
+* Apply 180 character output filename limit for Athena Local/LCG/CREAM jobs
 * Add config.DQ2.OUTPUTDATASET_LIFETIME to set the maximum lifetime of a
   DQ2OutputDataset replica
+* Fix pybin mechanism to accidentally pick-up python 2.6 in Athena/LCG/CREAM/Local
+* Allow _ in config.DQ2.OUTPUTDATASET_LIFETIME to be used for spaces, e.g. 5_days 	
 
 AthenaMC:
 ---------
@@ -61,6 +70,8 @@ scripts:
 * Add options --noblacklist, --collectstats, --batchextraopts, --cream
   --bexec
 * Update --atlas_exe
+* Allow , and : for --outputdata
+
 externals:
 ----------
 * Update to panda-client version 0.2.71
