@@ -62,9 +62,9 @@ for output_file in output_files:
         short_pattern = ".%04d%02d%02d%02d%02d%02d%04d._%05d" % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5], rannum,1)
 
 
-    if len(new_output_file)>150:
+    if len(new_output_file)>180:
         print '!!!!!!!!! ERROR - JOB ABORTING !!!!!!!!!!!!!!!!!!!!!!!!!! '
-        print '!!!!!!!!! Output filename lenght is larger than 150 characters!!!!!!!!!!!!!!!!!'
+        print '!!!!!!!!! Output filename lenght is larger than 180 characters!!!!!!!!!!!!!!!!!'
         print '!!!!!!!!! %s is too long !!!!!!!!!!!!!!!!!!!!' % new_output_file
         print '!!!!!!!!! Please use a shorter output dataset name !!!!!!!!!!!!!!!!!!'
         sys.exit(EC_STAGEOUT)
