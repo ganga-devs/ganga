@@ -85,6 +85,10 @@ class AnaTransform(Transform):
               infos = []
               for oinfo in j.outputdata.output:
                   info = oinfo.split(",")
+                  # get master replica from dataset - info not set to SE; but to ANALY_XYZ from panda
+                  info[5] = dq2.getMasterReplicaLocation(info[0])
+                  if info[4][:3] == "ad:":
+                      info[4] = info[4][3:]
                   info[0] = subtask_dsname
                   infos.append(",".join(info))
               outputdata.register_datasets_details(None, infos)
