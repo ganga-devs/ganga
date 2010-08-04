@@ -494,7 +494,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         #    param += '--shipInput '
         #FIXME options.rndmStream
         nEventsToSkip = app.skip_events
-        if app.max_events > 0:
+        if app.atlas_exetype == 'ATHENA' and app.max_events > 0:
             param += '-f "theApp.EvtMax=%d;EventSelector.SkipEvents=%s" ' % (app.max_events,nEventsToSkip)
         # addPoolFC
         #if self.config['addPoolFC'] != "":
