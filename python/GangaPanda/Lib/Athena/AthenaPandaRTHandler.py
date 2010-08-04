@@ -117,6 +117,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             #self.job_options = app.option_file.name + app.trf_parameters
             raise ApplicationConfigurationError(None,"Sorry TRF on Panda backend not yet supported")
         elif app.atlas_exetype == 'ATHENA':
+            
+            if len(app.atlas_environment) > 0:
+                logger.warning("Passing of environment variables to Athena using Panda not supported. Ignoring atlas_environment setting.")
+                
             if job.outputdata.outputdata:
                 raise ApplicationConfigurationError(None,"job.outputdata.outputdata must be empty if atlas_exetype='ATHENA' and Panda backend is used (outputs are auto-detected)")
             if app.options:
@@ -129,14 +133,21 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if not job.outputdata.outputdata:
                 raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT'] and Panda backend")
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
+
+            # sort out environment variables
+            if len(app.atlas_environment) > 0:
+                env_str = ""
+                for env_var in app.atlas_environment:
+                    env_str += "export %s ; " % env_var
+            
             if app.atlas_exetype == 'PYARA':
-                self.job_options = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; python ' + self.job_options
+                self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; python ' + self.job_options
             elif app.atlas_exetype == 'ARES':
-                self.job_options = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; athena.py ' + self.job_options
+                self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; athena.py ' + self.job_options
             elif app.atlas_exetype == 'ROOT':
-                self.job_options = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; root -b -q ' + self.job_options
+                self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; root -b -q ' + self.job_options
             elif app.atlas_exetype == 'EXE':
-                self.job_options = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; ' + self.job_options
+                self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; ' + self.job_options
         if self.job_options == '':
             raise ApplicationConfigurationError(None,"No Job Options found!")
         logger.info('Running job options: %s'%self.job_options)
