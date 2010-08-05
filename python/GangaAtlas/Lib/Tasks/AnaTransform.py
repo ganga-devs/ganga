@@ -20,7 +20,13 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 
-from pandatools import Client
+PandaClient = None
+def getPandaClient():
+    global PandaClient
+    if PandaClient is None:
+        from pandatools import Client
+        PandaClient = Client
+    return PandaClient
 
 import random
 
@@ -41,8 +47,6 @@ def stripSites(sites):
    for site in sites:
       newsites[stripSite(site)] = 1
    return newsites.keys()
-
-
 
 
 class AnaTransform(Transform):
@@ -149,7 +153,7 @@ class AnaTransform(Transform):
                continue
             if backend == "Panda":
                 from pandatools import Client
-                sites = [site for site in complete_sites[cloud] if Client.convertDQ2toPandaID(site) in allowed_sites["Panda"]]
+                sites = [site for site in complete_sites[cloud] if getPandaClient().convertDQ2toPandaID(site) in allowed_sites["Panda"]]
             else:
                 sites = [site for site in complete_sites[cloud] if site in allowed_sites[backend]]
             if len(sites) > 0:
@@ -184,7 +188,7 @@ class AnaTransform(Transform):
          for backend in backends:
             if backend == "Panda":
                 from pandatools import Client
-                sites = [site for site in incomplete_sites[cloud] if Client.convertDQ2toPandaID(site) in allowed_sites["Panda"]]
+                sites = [site for site in incomplete_sites[cloud] if getPandaClient().convertDQ2toPandaID(site) in allowed_sites["Panda"]]
             else:
                 sites = [site for site in incomplete_sites[cloud] if site in allowed_sites[backend]]
             if len(sites) > 0:
@@ -203,7 +207,7 @@ class AnaTransform(Transform):
          db_sites = None
          if self.application.atlas_dbrelease == "LATEST":
             from pandatools import Client
-            self.application.atlas_dbrelease = Client.getLatestDBRelease(False)
+            self.application.atlas_dbrelease = getPandaClient().getLatestDBRelease(False)
          if self.application.atlas_dbrelease:
             try:
                db_dataset = self.application.atlas_dbrelease.split(':')[0] 
@@ -236,7 +240,7 @@ class AnaTransform(Transform):
             allowed_sites["LCG"] = GPI.LCG().requirements.list_sites(True,True)
          if "Panda" in backends:
             from pandatools import Client
-            allowed_sites["Panda"] = Client.PandaSites.keys()
+            allowed_sites["Panda"] = getPandaClient().PandaSites.keys()
             #allowed_sites["Panda"] = [site["ddm"] for site in Client.getSiteSpecs()[1].values()]
          if "NG" in backends:
             allowed_sites["NG"] = getConfig("Athena")["AllowedSitesNGDQ2JobSplitter"]
