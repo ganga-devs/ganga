@@ -365,6 +365,9 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
         output_datasetname = patName
         output_lfn = patLfn
 
+    if len(output_datasetname)>config['OUTPUTDATASET_NAMELENGTH']:
+        logger.warning('DQ2OutputDataset.datasetname = %s is longer than limit of %s characters ! ' %(output_datasetname,config['OUTPUTDATASET_NAMELENGTH'] ))
+
     return output_datasetname, output_lfn 
 
 def dq2_set_dataset_lifetime(datasetname, location):
@@ -1680,6 +1683,8 @@ config.addOption('USE_NICKNAME_DQ2OUTPUTDATASET', True, 'Use voms nicknames for 
 config.addOption('ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET', False, 'Allow that voms nickname is empty for DQ2OutputDataset name creating.')
 
 config.addOption('OUTPUTDATASET_LIFETIME', '', 'Maximum lifetime of a DQ2OutputDataset.')
+config.addOption('OUTPUTDATASET_NAMELENGTH', 131, 'Maximum characters of a DQ2OutputDataset.')
+config.addOption('OUTPUTFILE_NAMELENGTH', 150, 'Maximum characters of a filename in DQ2OutputDataset.')
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']

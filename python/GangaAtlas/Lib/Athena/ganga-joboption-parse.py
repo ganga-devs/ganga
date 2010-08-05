@@ -33,6 +33,14 @@ try:
 except:
     raise "ERROR: GANGA_SHORTFILENAME not defined"
     sys.exit(EC_STAGEOUT)
+
+# Get output jobid
+try:
+    dq2_outputfile_namelength = os.environ['DQ2_OUTPUTFILE_NAMELENGTH']
+except:
+    print "ERROR: DQ2_OUTPUTFILE_NAMELENGTH not defined - using 150 characters"
+    dq2_outputfile_namelength = 150
+
     
 # Read output_files 
 try:
@@ -62,9 +70,9 @@ for output_file in output_files:
         short_pattern = ".%04d%02d%02d%02d%02d%02d%04d._%05d" % (temptime[0],temptime[1],temptime[2],temptime[3],temptime[4],temptime[5], rannum,1)
 
 
-    if len(new_output_file)>180:
+    if len(new_output_file)>dq2_outputfile_namelength:
         print '!!!!!!!!! ERROR - JOB ABORTING !!!!!!!!!!!!!!!!!!!!!!!!!! '
-        print '!!!!!!!!! Output filename lenght is larger than 180 characters!!!!!!!!!!!!!!!!!'
+        print '!!!!!!!!! Output filename length is larger than %s characters!!!!!!!!!!!!!!!!!' %dq2_outputfile_namelength
         print '!!!!!!!!! %s is too long !!!!!!!!!!!!!!!!!!!!' % new_output_file
         print '!!!!!!!!! Please use a shorter output dataset name !!!!!!!!!!!!!!!!!!'
         sys.exit(EC_STAGEOUT)

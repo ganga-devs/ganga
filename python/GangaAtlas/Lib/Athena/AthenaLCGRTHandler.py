@@ -318,6 +318,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             environment['OUTPUT_JOBID'] = output_jobid
             environment['DQ2_URL_SERVER']= configDQ2['DQ2_URL_SERVER']
             environment['DQ2_URL_SERVER_SSL'] = configDQ2['DQ2_URL_SERVER_SSL']
+            environment['DQ2_OUTPUTFILE_NAMELENGTH'] = configDQ2['OUTPUTFILE_NAMELENGTH']
             if job.outputdata.use_shortfilename:
                 environment['GANGA_SHORTFILENAME'] = '1'
             else:
