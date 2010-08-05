@@ -98,6 +98,9 @@ class CRABBackend(IBackend):
                 job.updateStatus('killed')
 
         job.updateMasterJobStatus()        
+
+        server.status(job)
+
         return 1
 
     def parseResults(self):
@@ -125,23 +128,23 @@ class CRABBackend(IBackend):
         else:
             logger.warning("UNKNOWN PARSE STATUS: "+str(status))
 
-        exitcode = ''
-        line = doc.getElementsByTagName("ExitCode")[0]
-        try:       
-            exitcode = line.getAttribute("Value")
-        except:
-            pass
+        #exitcode = ''
+        #line = doc.getElementsByTagName("ExitCode")[0]
+        #try:       
+        #    exitcode = line.getAttribute("Value")
+        #except:
+        #    pass
+        #
+        #job.backend.fjr['ExitCode'] = {'exitcode':exitcode}
 
-        job.backend.fjr['ExitCode'] = exitcode
+        #frameworkerrors = doc.getElementsByTagName("FrameworkError")
 
-        frameworkerrors = doc.getElementsByTagName("FrameworkError")
+        #if not job.backend.fjr.has_key('FrameworkError'):
+        #    job.backend.fjr['FrameworkError'] = {}
 
-        if not job.backend.fjr.has_key('FrameworkError'):
-            job.backend.fjr['FrameworkError'] = {}
-
-        for fwe in frameworkerrors:
-            name = fwe.getAttribute("Type")
-            job.backend.fjr['FrameworkError'][name] = fwe.getAttribute("ExitStatus")
+        #for fwe in frameworkerrors:
+        #    name = fwe.getAttribute("Type")
+        #    job.backend.fjr['FrameworkError'][name] = fwe.getAttribute("ExitStatus")
 
         config = Ganga.Utility.Config.getConfig('Metrics')
         location = config['location']
@@ -156,6 +159,7 @@ class CRABBackend(IBackend):
         if 'report' in SECTIONS:
             SECTIONS.remove('report')
 
+        # Only five sections work here...
         for section in SECTIONS:
 
             if not job.backend.fjr.has_key(section):
@@ -165,11 +169,19 @@ class CRABBackend(IBackend):
             performancesummary = performancereport.getElementsByTagName("PerformanceSummary")
             for pfs in performancesummary:
                 if pfs.getAttribute("Metric") == section:
+#                    METRIC_NAMES = config.options(section)
                     metrics = pfs.getElementsByTagName("Metric")
                     for metric in metrics:
                         name = metric.getAttribute("Name")
                         if config.has_option(section,name):
-                            job.backend.fjr[section][name] = metric.getAttribute("Value")
+                            # Due to the names with minus intead of underscore, we have to do thiw walkarround
+                            # to send them to the DB.
+                            name = config.get(section,name)
+                            if name:
+                                job.backend.fjr[section][name] = metric.getAttribute("Value")
+
+        ## BE CAREFUL WITH NEGATIVE VALUES: eg StageoutTime ##   
+        # more than 1 exitcode?
 
     def checkReport(self,jobDoc):
 
@@ -187,6 +199,8 @@ class CRABBackend(IBackend):
 
         if config.has_section('report'):
             PARAMS += config.items('report')
+        else:
+            logger.warning('No report in metrics')
 
         for n,v in PARAMS:
             if v:
@@ -197,6 +211,7 @@ class CRABBackend(IBackend):
         GANGA_S = ['completed','failed','killed','new','running','submitted','submitting']
         STATUS  = {'A':'submitted, not known to scheduler / aborted anyway',
                    'C':'',
+                   'DA':'done and failed',
                    'E':'ended,output retrieved and DB updated from journal',
                    'K':'killed by user',
                    'R':'submitted,started, the scheduler reports running',
@@ -225,7 +240,7 @@ class CRABBackend(IBackend):
             job.backend.parseResults()
             # The job can be done, but failed...
             # So, let's update the status retrieved from the output file.
-        elif (status == 'A') and not (job.status in ['failed','killed']):
+        elif (status == 'A' or status == 'DA') and not (job.status in ['failed','killed']):
             job.updateStatus('failed')
         elif (status == 'k') and not (job.status in ['killed']):
             job.updateStatus('killed')
