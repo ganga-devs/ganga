@@ -25,6 +25,7 @@ from dq2.info.TiersOfATLASValidator import is_site
 from dq2.repository.DQRepositoryException import DQFrozenDatasetException
 
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 _refreshToACache()
 
@@ -366,7 +367,7 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
         output_lfn = patLfn
 
     if len(output_datasetname)>config['OUTPUTDATASET_NAMELENGTH']:
-        logger.warning('DQ2OutputDataset.datasetname = %s is longer than limit of %s characters ! ' %(output_datasetname,config['OUTPUTDATASET_NAMELENGTH'] ))
+        raise ApplicationConfigurationError(None,'DQ2OutputDataset.datasetname = %s is longer than limit of %s characters ! ' %(output_datasetname,config['OUTPUTDATASET_NAMELENGTH']))
 
     return output_datasetname, output_lfn 
 
