@@ -37,7 +37,7 @@ class ThreadedSubmitter(CoreSubmitter):
             'ThreadedSubmitterMTRunner',
             algorithm=ThreadedSubmitterAlgorithm(), 
             data=Data([(m,jobids) for m in matches]), 
-            numThread=self.getoption('ThreadedSubmitter_numThreads')
+            numThread=int(self.getoption('ThreadedSubmitter_numThreads'))
         )
         runner.start()
         runner.join()
