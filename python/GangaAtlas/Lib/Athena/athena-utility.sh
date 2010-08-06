@@ -1255,6 +1255,12 @@ download_dbrelease() {
         fi
     fi
 
+    echo '====================='
+    echo "DBRELEASE: $DBRELEASE"
+    echo "DBRELEASE_OVERRIDE: $DBRELEASE_OVERRIDE"
+    env | grep DBRelease
+    echo '====================='
+
     if [ -e retcode.tmp ]; then
         retcode=`cat retcode.tmp`
     fi

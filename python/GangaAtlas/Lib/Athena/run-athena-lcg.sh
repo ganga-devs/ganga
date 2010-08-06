@@ -283,137 +283,16 @@ fi
 ################################################
 # Download DBRelease
 
-if [ ! -z $ATLAS_DBRELEASE ] && [ ! -z $ATLAS_DBFILE ]
-then
-    # Setup new dq2- tools
-    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
-        then
-        source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
-    else
-        echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
-        echo '1'>retcode.tmp
-    fi
-    export PATH=$pypath:$PATH
-    export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
-	
-    # Set DQ2_LOCAL_SITE_ID to db dataset location
-    if [ -e db_dq2localid.py ]
-        then
-        export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
-	chmod +x db_dq2localid.py
-	if [ ! -z $python32bin ]; then
-	    $python32bin ./db_dq2localid.py; echo $? > retcode.tmp
-	else
-	    if [ -e /usr/bin32/python ]
-                then
-		/usr/bin32/python ./db_dq2localid.py; echo $? > retcode.tmp
-	    else
-		./db_dq2localid.py; echo $? > retcode.tmp
-	    fi
-	fi
-	retcode=`cat retcode.tmp`
-	rm -f retcode.tmp
-	if [ $retcode -ne 0 ]; then
-	    $pybin ./db_dq2localid.py; echo $? > retcode.tmp
-	    retcode=`cat retcode.tmp`
-	    rm -f retcode.tmp
-	fi
-        export DQ2_LOCAL_SITE_ID=`cat db_dq2localid.txt`
-    fi
+export LD_LIBRARY_PATH_CURRENT=$LD_LIBRARY_PATH
+export PATH_CURRENT=$PATH
+export PYTHONPATH_CURRENT=$PYTHONPATH
 
-    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
-	then
-	for ((i=1;i<=3;i+=1)); do
-	    echo Copying $ATLAS_DBFILE, attempt $i of 3
-	    dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
-	    if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]
-		then
-		mv $ATLAS_DBRELEASE/* .
-		echo successfully retrieved $ATLAS_DBFILE
-		tar xzf $ATLAS_DBFILE
-		cd DBRelease/current/
-		python setup.py | grep = | sed -e 's/^/export /' > dbsetup.sh
-		source dbsetup.sh
-		cd ../../
-		break
-	    else
-		echo 'ERROR: dq2-get of DBRELEASE failed !'
-		echo 'Retry with changed environment'
-		LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
-		PATH_BACKUP=$PATH
-		PYTHONPATH_BACKUP=$PYTHONPATH
-		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
-		export PATH=$PATH_ORIG
-		export PYTHONPATH=$PYTHONPATH_ORIG
-		if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ]
-		    then
-		    source $VO_ATLAS_SW_DIR/ddm/latest/setup.sh
-		fi
-	
-		dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
-		if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]
-		    then
-		    mv $ATLAS_DBRELEASE/* .
-		    echo successfully retrieved $ATLAS_DBFILE
-		    tar xzf $ATLAS_DBFILE
-		    cd DBRelease/current/
-		    python setup.py | grep = | sed -e 's/^/export /' > dbsetup.sh
-		    source dbsetup.sh
-		    cd ../../
-		    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
-		    export PATH=$PATH_BACKUP
-		    export PYTHONPATH=$PYTHONPATH_BACKUP
-		    break
-		else
-		    echo 'ERROR: dq2-get of DBRELEASE failed !'
-		    echo 'Yet another retry with changed environment'
-		    export PATH=$pypath:$PATH
-		    export LD_LIBRARY_PATH=$pyldpath:$LD_LIBRARY_PATH
-	
-		    dq2-get --client-id=ganga -L `cat db_dq2localid.txt` -d --automatic --timeout=300 --files=$ATLAS_DBFILE $ATLAS_DBRELEASE;  echo $? > retcode.tmp
-		    if [ -e $ATLAS_DBRELEASE/$ATLAS_DBFILE ]
-			then
-			mv $ATLAS_DBRELEASE/* .
-			echo successfully retrieved $ATLAS_DBFILE
-			tar xzf $ATLAS_DBFILE
-			cd DBRelease/current/
-			python setup.py | grep = | sed -e 's/^/export /' > dbsetup.sh
-			source dbsetup.sh
-			cd ../../
-			export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
-			export PATH=$PATH_BACKUP
-			export PYTHONPATH=$PYTHONPATH_BACKUP
-			break
-		    else
-			echo 'ERROR: dq2-get of $ATLAS_DBRELEASE failed !'
-			echo '1'>retcode.tmp
+download_dbrelease $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 
-		    fi
-		fi 
-		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
-		export PATH=$PATH_BACKUP
-		export PYTHONPATH=$PYTHONPATH_BACKUP
-	    fi
-	done
-    else
-	echo 'ERROR: DQ2Clients with dq2-get are not installed at the site - please contact Ganga support mailing list.'
-	echo '1'>retcode.tmp
-    fi
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_CURRENT
+export PATH=$PATH_CURRENT
+export PYTHONPATH=$PYTHONPATH_CURRENT
 
-    # Set DQ2_LOCAL_SITE_ID to dataset location
-    if [ -e dq2localid.txt ]
-        then
-        export DQ2_LOCAL_SITE_ID=`cat dq2localid.txt`
-        export DQ2_LOCAL_SITE_ID_BACKUP=$DQ2_LOCAL_SITE_ID
-    fi
-
-    echo '====================='
-    echo "DBRELEASE: $DBRELEASE"
-    echo "DBRELEASE_OVERRIDE: $DBRELEASE_OVERRIDE"
-    env | grep DBRelease
-    echo '====================='
-
-fi
 
 ################################################
 # Make a local copy of requested geomDB if none already available
