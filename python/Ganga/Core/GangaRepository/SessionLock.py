@@ -492,7 +492,7 @@ class SessionLockManager(object):
     def session_to_info(self,session):
         si = session.split(".")
         try:
-            return "%s (pid %s) sice %s" % (".".join(si[:-3]),si[-2],time.ctime(int(si[-3])/1000))
+            return "%s (pid %s) since %s" % (".".join(si[:-3]),si[-2],time.ctime(int(si[-3])/1000))
         except Exception:
             return session
 
