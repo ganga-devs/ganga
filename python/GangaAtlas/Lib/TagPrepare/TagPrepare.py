@@ -21,8 +21,6 @@ from GangaAtlas.Lib.ATLASDataset import filecheck
 
 from Ganga.Lib.Mergers.Merger import *
 
-from pandatools import AthenaUtils
-
 
 class TagPrepare(IApplication):
     """Run a preparation job for TAG analysis"""
