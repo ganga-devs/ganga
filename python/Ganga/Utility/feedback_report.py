@@ -95,6 +95,7 @@ def report(job=None):
                 #non job relevant info - user's info
                 environFileName = "environ.txt"
                 userConfigFileName = "userconfig.txt"
+                defaultConfigFileName = "gangarc.txt"
                 ipythonHistoryFileName = "ipythonhistory.txt"
                 gangaLogFileName = "gangalog.txt"
                 repositoryPath = "repository/$usr/LocalXML/6.0/jobs/$thousandsNumxxx"
@@ -233,6 +234,21 @@ def report(job=None):
                                 sys.stdout = sys.__stdout__
                                 inputFile.close()
                 #except IOError does not catch the exception ???
+                except:
+                        writeErrorLog(str(sys.exc_value))
+
+                #write gangarc - default configuration
+                defaultConfigFullFileName = os.path.join(fullLogDirName, defaultConfigFileName)
+
+                try:
+                        outputFile = open(os.path.join(userHomeDir, '.gangarc'), 'r')
+        
+                        try:
+                                writeStringToFile(defaultConfigFullFileName, outputFile.read())  
+                        finally:
+                                outputFile.close()
+                                        
+                #except IOError does not catch the exception ???                
                 except:
                         writeErrorLog(str(sys.exc_value))
 
