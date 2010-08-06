@@ -538,6 +538,16 @@ class DQ2JobSplitter(ISplitter):
                 elif max_subjob_filesize and  self.filesize > 0:
                      logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob subject to a limit of %d Bytes per subjob.'%(nrjob,max_subjob_numfiles,max_subjob_filesize))
                 remaining_guids = list(guids)
+
+                # sort out the tag files that reference this if required
+                if job.inputdata.tag_info and local_tag:
+                    
+                    remaining_tags = []   # c.f. remaining guids: list of tag files that ref. this dataset
+                    
+                    for tag_file in job.inputdata.tag_info:
+                        if job.inputdata.tag_info[tag_file]['refs'][0][2] in remaining_guids:
+                            remaining_tags.append( tag_file )
+                            
                 while remaining_guids and len(subjobs)<config['MaxJobsDQ2JobSplitter']:
                     num_remaining_guids = len(remaining_guids)
                     j = Job()
