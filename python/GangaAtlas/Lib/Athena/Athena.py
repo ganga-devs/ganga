@@ -24,7 +24,7 @@ from GangaAtlas.Lib.ATLASDataset import filecheck
 
 from Ganga.Lib.Mergers.Merger import *
 
-
+from pandatools import AthenaUtils
 
 def mktemp(extension,name,path):
     """Create a unique file"""
@@ -684,7 +684,6 @@ class Athena(IApplication):
         """Extract Athena job configuration and prepare job for submission"""
 
         logger.debug('New prepare() method has been called. The old prepare method is called now prepare_old()')
-        from pandatools import AthenaUtils
 
         opt_athena_compile = options.get('athena_compile')
         if opt_athena_compile:
