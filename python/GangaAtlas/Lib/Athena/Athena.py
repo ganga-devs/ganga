@@ -1063,7 +1063,7 @@ class Athena(IApplication):
  
         # Check if DQ2_COPY is set and disable it
         if job.backend._name in ['LCG', 'CREAM' ]:
-            if job.inputdata and job.inputdata.type == 'DQ2_COPY' and not config['ENABLE_DQ2COPY']:
+            if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type == 'DQ2_COPY' and not config['ENABLE_DQ2COPY']:
                 raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='DQ2_COPY' is not supported anymore ! Please use a different input access mode." )
              
         # check recex options
