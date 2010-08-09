@@ -88,10 +88,15 @@ try:
     if initError == None:
         logger.debug("Using JEM from: " + JEM_PACKAGEPATH)
         try:
-            getLogger("GangaJEM.Lib.JEM.ScriptLauncher").setLevel(logging.ERROR) # disable warnings in ScriptLauncher
+            # disable warnings to avoid startup-annoyance in Ganga.
+            lvl = logger.level
+            logger.setLevel(logging.ERROR)
+
             # import JEM 0.3 stuff
             import JEM as JEMmain
             runner = JEMmain.setup(logger=getLogger, logprefix="GangaJEM.Lib.JEM", allconfig=True)
+
+            logger.setLevel(lvl)
         except:
             ei = sys.exc_info()
             initError = "Failed to setup JEMs runtime: " + str(ei[0]) + " - " + str(ei[1])
