@@ -77,6 +77,9 @@ def _initconfig():
     config.addOption('FileEmailer_HtmlFile','',
                      'Filename for HTML email body, ${runid} is replaced by current run id')
     config.addOption('ExceptionBehaviour','Fatal','Changes behaviour of robot when exception is thrown. Options are Continue, Break, and Fatal (Default)')
+    config.addOption('ThreadedSubmitter_numThreads',
+                     10,
+                     'Number of concurrent threads to use when using the ThreadedSubmitter')
 
 def loadPlugins(config={}):
     _initconfig()
