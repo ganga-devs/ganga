@@ -1,5 +1,5 @@
 import os
-import md5
+#import md5
 import re
 import sys
 import socket
@@ -12,12 +12,20 @@ from dq2.common.DQException import *
 
 from sets import Set
 
+try:
+    import hashlib
+    md = hashlib.md5()
+except ImportError:
+    # for Python << 2.5
+    import md5
+    md = md5.new()
+
 ## Utility functions ##
 def get_md5sum(fname):
     ''' Calculates the MD5 checksum of a file '''
 
     f = open(fname, 'rb')
-    m = md5.new()
+    m = md.new()
     while True:
         d = f.read(8096)
         if not d:

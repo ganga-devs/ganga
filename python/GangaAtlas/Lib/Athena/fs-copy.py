@@ -11,7 +11,7 @@ import os
 import os.path
 #import shutil
 #import tempfile
-import md5
+#import md5
 import zlib
 import sys
 #import popen2
@@ -20,6 +20,14 @@ import time
 import pickle
 import re
 import getopt
+
+try:
+    import hashlib
+    md = hashlib.md5()
+except ImportError:
+    # for Python << 2.5
+    import md5
+    md = md5.new()
 
 #subprocess.py crashes if python 2.5 is used
 #try to import subprocess from local python installation before an
@@ -34,7 +42,7 @@ def get_md5sum(fname):
     ''' Calculates the MD5 checksum of a file '''
 
     f = open(fname, 'rb')
-    m = md5.new()
+    m = md.new()
     while True:
         d = f.read(8096)
         if not d:

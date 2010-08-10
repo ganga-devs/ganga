@@ -7,7 +7,7 @@
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
 import os, sys, imp, re, time, commands, signal, popen2, socket, urllib
-import md5, string
+import string
 import xml.dom.minidom
 from dq2.info import TiersOfATLAS 
 from dq2.info.TiersOfATLAS import _refreshToACache, ToACache
@@ -21,6 +21,14 @@ from dq2.location.DQLocationException import DQLocationExistsException
 from dq2.content.DQContentException import DQFileExistsInDatasetException
 from dq2.repository.DQRepositoryException import DQDatasetExistsException
 from dq2.repository.DQRepositoryException import DQUnknownDatasetException
+
+try:
+    import hashlib
+    md = hashlib.md5()
+except ImportError:
+    # for Python << 2.5
+    import md5
+    md = md5.new()
 
 _refreshToACache()
 
@@ -942,7 +950,7 @@ def getLocalFileMetadata(file):
     size=os.stat(file)[6]
     # get md5sum
     try:
-        m = md5.new()
+        m = md.new()
         md5sum = hexify(m.digest())
         mf = open(file, 'r')
         for line in mf.readlines():
