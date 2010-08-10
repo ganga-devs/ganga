@@ -74,7 +74,7 @@ if __name__ == '__main__':
     # User hash
     #m=md5.new()
     md.update(usrDN)
-    usrhex = m.hexdigest()
+    usrhex = md.hexdigest()
 
     numfiles3 = 0
     filepat = '"PFN:(.+)"'
