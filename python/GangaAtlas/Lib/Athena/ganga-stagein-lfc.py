@@ -74,14 +74,17 @@ def _makeJobO(files,tag):
         except:
             evtmax = -1
         outFile.write('theApp.EvtMax = %d\n' %evtmax)
+
+        skipevt = 0
         try:
             if os.environ.has_key('ATHENA_SKIP_EVENTS'):
                 skipevt = int(os.environ['ATHENA_SKIP_EVENTS'])
             else:
-                skipevt = 0
+
         except:
                 skipevt = 0
-        outFile.write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
+        if skipevt<>0:
+            outFile.write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
 
         outFile.write('EventSelector.InputCollections = [')
     # loop over all files
