@@ -326,8 +326,8 @@ if opt.outputdata or opt.backend == 'panda':
 
 # splitter
 
-if opt.numsubjobs > 1:
-    if (opt.backend == 'lcg' or opt.glite) and not opt.site:
+if opt.numsubjobs > 0:
+    if (opt.backend == 'lcg' or opt.glite):
         j.splitter = DQ2JobSplitter()
     elif (opt.backend in [ 'cream', 'panda', 'ng' ]):
         j.splitter = DQ2JobSplitter()
@@ -337,8 +337,8 @@ if opt.numsubjobs > 1:
 
     if opt.outputdata:
         j.merger=AthenaOutputMerger()
-elif opt.numfiles_subjob>1:
-    if (opt.backend == 'lcg' or opt.glite) and not opt.site:
+elif opt.numfiles_subjob>0:
+    if (opt.backend == 'lcg' or opt.glite):
         j.splitter = DQ2JobSplitter()
         j.splitter.numfiles = opt.numfiles_subjob
     elif (opt.backend in [ 'cream', 'panda', 'ng' ]):
@@ -352,7 +352,7 @@ elif opt.numfiles_subjob>1:
         j.merger=AthenaOutputMerger()
 
 elif opt.filesize>0:
-    if (opt.backend == 'lcg' or opt.glite) and not opt.site:
+    if (opt.backend == 'lcg' or opt.glite):
         j.splitter = DQ2JobSplitter()
         j.splitter.filesize = opt.filesize
     elif (opt.backend in [ 'cream', 'panda', 'ng' ]):
@@ -456,6 +456,12 @@ if opt.inputsandbox:
 # Outputsandbox
 if opt.outputsandbox:
     j.outputsandbox = opt.outputsandbox.split(':')        
+
+# Remove default DBRelease='LATEST' if no splitter or AthenaSplitterJob is used
+if not j.splitter:
+    j.application.atlas_dbrelease=''
+if j.splitter and j.splitter.__class__.__name__=='AthenaSplitterJob':
+    j.application.atlas_dbrelease=''
 
 #print j
 
