@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 
-import os, re, time, md5, commands, socket
+import os, re, time, commands, socket
 from dq2.tracer.client.TracerClient import TracerClient
 from dq2.common import generate_uuid
 
+try:
+    import hashlib
+    md = hashlib.md5()
+except ImportError:
+    # for Python << 2.5
+    import md5
+    md = md5.new()
 
 ########################################################################
 def fill_report(uuid = None, eventVersion = None, remoteSite=None,
@@ -65,8 +72,8 @@ if __name__ == '__main__':
     # or make-filestager-joboption.py
     tracertimes = [ line.strip() for line in file('dq2tracertimes.txt') ]
     # User hash
-    m=md5.new()
-    m.update(usrDN)
+    #m=md5.new()
+    md.update(usrDN)
     usrhex = m.hexdigest()
 
     numfiles3 = 0
