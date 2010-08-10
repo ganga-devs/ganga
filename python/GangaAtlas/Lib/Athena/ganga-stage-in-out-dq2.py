@@ -950,13 +950,13 @@ def getLocalFileMetadata(file):
     size=os.stat(file)[6]
     # get md5sum
     try:
-        m = md.new()
-        md5sum = hexify(m.digest())
+        #m = md.new()
+        md5sum = hexify(md.digest())
         mf = open(file, 'r')
         for line in mf.readlines():
-            m.update(line)
+            md.update(line)
         mf.close()
-        md5sum=hexify(m.digest())
+        md5sum=hexify(md.digest())
     except MemoryError:
         cmd = 'md5sum %s' % file
         rc, out = commands.getstatusoutput(cmd)

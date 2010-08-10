@@ -42,14 +42,14 @@ def get_md5sum(fname):
     ''' Calculates the MD5 checksum of a file '''
 
     f = open(fname, 'rb')
-    m = md.new()
+    #m = md.new()
     while True:
         d = f.read(8096)
         if not d:
             break
-        m.update(d)
+        md.update(d)
     f.close()
-    return m.hexdigest()
+    return md.hexdigest()
 
 def get_adler32sum(fname):
     ''' Calculate the Adler32 checksum of a file '''
