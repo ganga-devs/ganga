@@ -2,6 +2,9 @@ from common import *
 from Task import Task
 from AnaTransform import AnaTransform
 
+from Ganga.Core.exceptions import ApplicationConfigurationError
+
+
 o = ""
 o+="\n"+ markup(" *** Task for Athena Analysis ***", fgcol("blue"))
 def c(s):
@@ -16,15 +19,15 @@ o+="\n"+ markup("Procedure to do a usual analysis:", fgcol("red"))
 o+="\n"+ "config.Tasks.merged_files_per_job = 1 # default files per job for merged datasets"
 o+="\n"+ "config.Tasks.recon_files_per_job = 10 # default files per job for recon (non-merged) datasets"
 o+="\n"+ "t = AnaTask()"
-o+="\n"+ 't.name = "FirstAnalysis"'
+o+="\n"+ 't.name = "MyAnalysisR1"'
 o+="\n"+ "t.analysis.outputdata.outputdata  = ['nTuple.root' ]"
-o+="\n"+ "t.analysis.outputdata.datasetname = 'MyAnalysisR1'"
+#o+="\n"+ "t.analysis.outputdata.datasetname = 'MyAnalysisR1'"
 #o+="\n"+ 't.analysis.application.exclude_from_user_area=["*.o","*.root*","*.exe", "*.txt"]'
 o+="\n"+ "t.analysis.application.option_file = ['./myTopOptions.py' ]"
 o+="\n"+ "t.analysis.application.prepare()"
 o+="\n"+ "t.float = 10"
 o+="\n"+ 't.initializeFromDatasets(["user08.MyName.ganga.dataset.recon.AOD"])'
-o+="\n"+ "t.info() # Check here if settings are correct"
+o+="\n"+ "#t.info() # Check here if settings are correct"
 o+="\n"+ "t.run()"
 o+="\n"+ "t.overview() # Watch the processing"
 task_help = o
@@ -121,6 +124,9 @@ class AnaTask(Task):
 
    def check(self):
       self.initAliases()
+      if not all(ss.isalnum() for ss in self.name.split(".")):
+         logger.error("Invalid character in task name! Task names are now used for DQ2 datasets; so no spaces, slashes or other special characters are allowed.")
+         raise ApplicationConfigurationError("Invalid Task name!")
       super(AnaTask,self).check()
 
    def initAliases(self):

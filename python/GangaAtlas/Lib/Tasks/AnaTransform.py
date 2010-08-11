@@ -77,9 +77,13 @@ class AnaTransform(Transform):
       # if this is the first app to complete the partition...
       if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
           task = self._getParent()
-          task_container = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, self.outputdata.datasetname]) + "/"
+          task_container = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, task.name]) + "/"
           subtask_dsname = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, "subtask_%s" % task.transforms.index(self), str(self.inputdata.dataset[0].strip("/"))])
-
+          # make sure we keep the name size limit:
+          if len(subtask_dsname) > 120:
+             logger.warning("The name of the outputdataset is too long (%s); it will be truncated to 120 characters" % subtask_dsname)
+             subtask_dsname = subtask_dsname[:120]
+  
           outputdata = DQ2OutputDataset()
           try:
               outputdata.create_dataset(subtask_dsname)
@@ -278,7 +282,7 @@ class AnaTransform(Transform):
          if using_backend == "Panda":
             self.backend = stripProxy(GPI.Panda())
             self.backend.requirements.cloud = using_cloud
-            self.outputdata.outputdata=[]
+
          elif using_backend == "NG":
             self.backend = stripProxy(GPI.NG())
          elif using_backend == "LCG":
@@ -318,6 +322,8 @@ class AnaTransform(Transform):
       if self.partitions_sites:
          j.backend.requirements.sites = self.partitions_sites[partitions[0]-1]
       j.outputdata = self.outputdata
+      if stripProxy(j.backend)._name == "Panda":
+          j.outputdata.outputdata=[]
       j.outputdata.datasetname = ""
       #if j.outputdata.datasetname:
          #today = time.strftime("%Y%m%d",time.localtime())
