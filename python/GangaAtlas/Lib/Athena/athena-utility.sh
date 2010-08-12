@@ -140,7 +140,7 @@ cmt_setup () {
  
     if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]; then
         source $ATLAS_RELEASE_DIR/setup.sh 
-    elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ]; then
+    else 
         #if [ n$ATLAS_PROJECT = n'AtlasPoint1' ]; then
         if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
             source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_PRODUCTION,$ATLAS_PROJECT
@@ -365,7 +365,7 @@ get_pybin () {
 
     if ( [ ! -z `echo $CMTCONFIG | grep slc5` ] ); then
 	export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/*/bin/python | grep slc5 | grep 2.5 |  head -1)
-    elif ( [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] ); then
+    elif ( [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 16.` ] ); then
         export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/*/bin/python | grep 2.5 | head -1)
     elif ( [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] ); then
 	export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/slc3_ia32_gcc323/bin/python | head -1)
@@ -1276,7 +1276,7 @@ runtime_setup () {
     if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
     then
         source $SITEROOT/dist/$ATLAS_RELEASE/Control/AthenaRunTime/AthenaRunTime-*/cmt/setup.sh
-    elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ]
+    elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 16.` ]
     then
 	if [ -z $ATLAS_PROJECT ]
 	then

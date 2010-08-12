@@ -51,7 +51,7 @@ then
   if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
   then
       source $SITEROOT/dist/$ATLAS_RELEASE/AtlasRelease/*/cmt/setup.sh
-  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] ) && ( [ -z $ATLAS_PRODUCTION_ARCHIVE ] )
+  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 16.` ] ) && ( [ -z $ATLAS_PRODUCTION_ARCHIVE ] )
   then
       if [ -z $ATLAS_PROJECT ]
       then

@@ -618,7 +618,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             requirementsSoftware = ['VO-atlas-production-%s' % app.atlas_production]
         elif app.atlas_release.find('13.')>=0 and app.atlas_project=="AtlasPoint1":
             requirementsSoftware = ['VO-atlas-point1-%s' % app.atlas_production ] 
-        elif app.atlas_release.find('14.')>=0 or app.atlas_release.find('15.')>=0:
+        elif app.atlas_release.find('14.')>=0 or app.atlas_release.find('15.')>=0 or app.atlas_release.find('16.')>=0:
             if app.atlas_cmtconfig:
                 cmtconfig = app.atlas_cmtconfig
             else:
