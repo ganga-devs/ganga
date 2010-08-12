@@ -64,9 +64,6 @@ class AnaTask(Task):
       if self.analysis:
          if self.analysis.application.user_area.name:
             trf = stripProxy(self.analysis)
-            if not trf.outputdata.datasetname:
-               logger.error("You have to set t.analysis.outputdata.datasetname to the identifying name of your analysis, for example 'MyDPDProject01'.")
-               return
          else:
             logger.error("Cannot find user_area in Athena application of first transform! Have you run application.prepare()?")
             return

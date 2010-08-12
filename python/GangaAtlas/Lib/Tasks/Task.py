@@ -126,12 +126,15 @@ class Task(GangaObject):
 
     def pause(self):
         """Pause the task - the background thread will not submit new jobs from this task"""
+        float_cache = self.float
+        self.float = 0
         if self.status != "completed":
             for tf in self.transforms:
                 tf.pause()
             self.status = "pause"
         else:
             logger.info("Transform is already completed!")
+        self.float = float_cache
 
     def setBackend(self,backend):
         """Sets the backend on all transforms, except if the backend is None"""
@@ -223,6 +226,8 @@ class Task(GangaObject):
         """Submits as many jobs as necessary to maintain the float. Internal"""
         numjobs = 0
         for i in range(len(self.transforms)-1,-1,-1):
+            if not self.status == "running":
+                break
             tf = self.transforms[i]
             to_run = self.float - self.n_status("running")
             run = (self.resub_limit * self.float >= self.n_status("running"))
