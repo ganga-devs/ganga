@@ -758,7 +758,6 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
             evtmax = -1
         outFile.write('theApp.EvtMax = %d\n' %evtmax)
 
-        skipevt = 0
         try:
             if os.environ.has_key('ATHENA_SKIP_EVENTS'):
                 skipevt = int(os.environ['ATHENA_SKIP_EVENTS'])
@@ -766,8 +765,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
                 skipevt = 0
         except:
             skipevt = 0
-        if skipevt<>0:
-            outFile.write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
+        outFile.write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
 
         if dtype == 'DATA':
             outFile.write('%sByteStreamInputSvc.FullFileName = ['%versionString)
@@ -802,7 +800,6 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         except:
             evtmax = -1
 
-        skipevt = 0
         try:
             if os.environ.has_key('ATHENA_SKIP_EVENTS'):
                 skipevt = int(os.environ['ATHENA_SKIP_EVENTS'])
@@ -816,8 +813,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         else:
             outFileEvtMax = open('evtmax.py','w').write('theApp.EvtMax = %d\n' %evtmax)
 
-        if skipevt<>0:
-            outFileEvtMax = open('evtmax.py','w').write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
+        outFileEvtMax = open('evtmax.py','w').write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
             
     # loop over all files
     flatFile = 'input.txt'

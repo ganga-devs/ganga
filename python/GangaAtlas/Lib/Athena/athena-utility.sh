@@ -783,10 +783,8 @@ run_athena () {
 	env | grep DBRelease
 	echo '====================='
 
-	echo 'input.py start ---------'
 	cat input.py
-	echo 'input.py end --------'
- 
+
 	export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH:$LD_LIBRARY_PATH_ORIG
 
 	cat PoolFileCatalog.xml
@@ -912,9 +910,9 @@ run_athena () {
 		fi
 	    fi
 	    ##
-	    echo 'input.py start ---------'
+	    echo 'input.py start ...'
 	    cat input.py
-	    echo 'input.py end -----------'
+	    echo 'input.py end ...'
 	    ##
 	    cat - >parse_input_files.py <<EOF
 #!/usr/bin/env python

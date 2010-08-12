@@ -261,9 +261,9 @@ if os.path.exists('input_files'):
     else:
         theApp.EvtMax = -1
     if os.environ.has_key('ATHENA_SKIP_EVENTS'):
-        from AthenaCommon.AppMgr import ServiceMgr
         ServiceMgr.EventSelector.SkipEvents = int(os.environ['ATHENA_SKIP_EVENTS'])
-
+    else:
+        ServiceMgr.EventSelector.SkipEvents = 0
 EOF
     fi
 
@@ -273,8 +273,9 @@ cat - >input.py <<EOF
 if os.environ.has_key('ATHENA_MAX_EVENTS'):
    theApp.EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
 if os.environ.has_key('ATHENA_SKIP_EVENTS'):
-    from AthenaCommon.AppMgr import ServiceMgr
     ServiceMgr.EventSelector.SkipEvents = int(os.environ['ATHENA_SKIP_EVENTS'])
+else:
+    ServiceMgr.EventSelector.SkipEvents = 0
 
 EOF
 fi
@@ -347,9 +348,9 @@ if os.path.exists('input_files'):
     else:
         theApp.EvtMax = -1
     if os.environ.has_key('ATHENA_SKIP_EVENTS'):
-        from AthenaCommon.AppMgr import ServiceMgr
         EventSelector.SkipEvents = int(os.environ['ATHENA_SKIP_EVENTS'])
-
+    else:
+        EventSelector.SkipEvents = 0
 EOF
     if [ n$DATASETDATATYPE = n'MuonCalibStream' ] 
 	then

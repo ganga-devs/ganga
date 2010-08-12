@@ -555,10 +555,6 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         if job.inputdata and job.inputdata._name == 'ATLASDataset':
             if job.inputdata.lfc:
                 environment['GANGA_LFC_HOST'] = job.inputdata.lfc
-
-        if 'ganga-stage-in-out-dq2.py' in [ os.path.basename(file.name) for file in inputbox ]:
-            environment['DQ2_URL_SERVER'] = configDQ2['DQ2_URL_SERVER']
-            environment['DQ2_URL_SERVER_SSL'] = configDQ2['DQ2_URL_SERVER_SSL']
         
         if job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset']):
             if job.inputdata.dataset:

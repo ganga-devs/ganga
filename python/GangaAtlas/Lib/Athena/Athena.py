@@ -1173,7 +1173,6 @@ class AthenaSplitterJob(ISplitter):
         # Do the splitting
         for i in range(self.numsubjobs):
             j = Job()
-            j.name = job.name + "_" + str(i)
             j.inputdata=job.inputdata
             if job.inputdata:
                 if job.inputdata._name == 'ATLASDataset':
