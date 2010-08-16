@@ -115,7 +115,6 @@ function Events() {
     };
     
     this.gotoTask_click = function(el) {
-        alert(';)');
         var _Settings = this.Settings.Tasks; // Shortcut
         var aPos = this.tasksTable[0].fnGetPosition(el);
         
