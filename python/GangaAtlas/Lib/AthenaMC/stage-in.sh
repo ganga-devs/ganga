@@ -214,7 +214,10 @@ for ((i=0;i<${#lfn[@]};i++)); do
            echo "missing guids, cannot use lcg-cp"
 	fi
     fi
-
+    if [ $status -ne 0 ]; then
+	echo "Completely failed to download one input file, aborting"
+	exit $status
+    fi
     ;;
     'NG')
     stageInNG;

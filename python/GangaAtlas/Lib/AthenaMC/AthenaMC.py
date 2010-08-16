@@ -645,12 +645,12 @@ class AthenaMC(IApplication):
                 newval=""
                 if word=="=$inputfile" and self.infileString:
                     newval=self.infileString
-                elif word=="$=cavern" and self.cavernfile:
+                elif word=="=$cavern" and self.cavernfile:
                     newval=self.cavernfile
                 elif word=="=$minbias" and self.minbiasfile:
                     newval=self.minbiasfile
                 elif word=="=$first" and self.firstevt:
-                    newval=self.firstevt
+                    newval=str(self.firstevt)
                 elif word=="=$skip" and self.firstevt:
                     newval=str(self.firstevt-1)
                 elif word=="=$number_events_job" and self.number_events_job :

@@ -355,9 +355,11 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             loosematch="false" # specified sites take precedence over cloud.
             
         userCloud=job.backend.requirements.cloud
-        
+        if userCloud=='ALL':
+            userCloud='' # not supporting the AthenaLCGRequirements catch-all
         # By default: job to data, strict: target outsite and nothing else.
         requirements.sites=outsite
+        
         if loosematch=="true" and userCloud :
             logger.debug("Your job qualifies for controlled relaxation of the current job-to-data policy. Now checking that requested cloud matches with input data")
             
@@ -468,7 +470,8 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 
  # setting up job wrapper arguments.       
         args=app.args
-        
+        trfargs=' '.join(app.args[4:])
+        inputbox += [ FileBuffer('trfargs.conf',trfargs+'\n') ]
         jid=""
         if job._getRoot().subjobs:
             jid = job._getRoot().id

@@ -5,10 +5,15 @@ export T_RELEASE="${1}"
 export T_SE="${2}"
 export T_LOGFILE="${3}"
 export T_TRF="$4"
+
+if [ -e trfargs.conf ] ; then
+export T_ARGS=`cat trfargs.conf`
+echo $T_ARGS
+else
 shift 4
 export T_ARGS="$*"
 shift $#
-
+fi
 
 
 if [ -z "$BACKEND" ]; then

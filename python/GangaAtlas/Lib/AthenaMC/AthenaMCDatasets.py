@@ -30,6 +30,7 @@ _refreshToACache()
 gridshell = getShell("EDG")
 _writeTokens=["SCRATCHDISK","LOCALGROUPDISK"] # have to include LOCALGROUPDISK because direct subscription does not work.
 
+
 _subscriptionTokens=[]
 
 def getLFCmap():
@@ -994,14 +995,21 @@ class AthenaMCOutputDatasets(Dataset):
             selsite=se_name
             makeSites=[]
             forbiddenSE="true"
-            for token in _writeTokens:
-                if token in se_name:
-                    forbiddenSE="false"
+            if "LOCALGROUPDISK" in se_name:
+                # check that the user's proxy is compatible with the cloud.
+                print "LOCALGROUPDISK used for output staging, checking authorizations"
+                siteList=self.checkSites(selsite)
+                if len(siteList)==0:
+                    forbiddenSE=="true"
+            else:
+                for token in _writeTokens:
+                    if token in se_name:
+                        forbiddenSE="false"
             #print se_name, forbiddenSE
             if forbiddenSE=="true" :
                 #print app.sites
                 selsite=""
-                logger.warning("Detected forbidden output space token in input: %s. Changing to SCRATCHDISK" % se_name) 
+                logger.warning("Detected forbidden output space token in input: %s. Changing to SCRATCHDISK" % se_name)
                 imax=se_name.find("_")
                 sitename=se_name[:imax]
                 
@@ -1526,7 +1534,7 @@ class AthenaMCOutputDatasets(Dataset):
     def checkSites(self,siteList):
         # check tokens from siteList, compare with allowed tokens.
         #print _subscriptionTokens
-        checkTokens=_subscriptionTokens
+        checkTokens=list(_subscriptionTokens)
         result=[]
         cloud=""
         cloudSites=[]
@@ -1536,7 +1544,9 @@ class AthenaMCOutputDatasets(Dataset):
                 cloud=token[imin:]
                 index=checkTokens.index(token)
                 checkTokens[index]="LOCALGROUPDISK"
+                print cloud.upper(),ToACache.dbcloud[cloud.upper()]
                 cloudSites=getSites(ToACache.dbcloud[cloud.upper()])
+                print "test",cloudSites
         for site in siteList:
             for token in checkTokens:
                 #print site, token
@@ -1648,6 +1658,9 @@ _usertag=configDQ2['usertag']
 baseURLDQ2 = configDQ2['DQ2_URL_SERVER']
 baseURLDQ2SSL = configDQ2['DQ2_URL_SERVER_SSL']
 
+configDQ2.addOption('USE_NICKNAME_DQ2OUTPUTDATASET', True, 'Use voms nicknames for DQ2OutputDataset.')
+configDQ2.addOption('ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET', False, 'Allow that voms nickname is empty for DQ2OutputDataset name creating.')
+
 # Extract username from certificate
 proxy = GridProxy()
 username = proxy.identity()
@@ -1675,7 +1688,6 @@ if proxy.init_opts:
     elif len(group)==2:
         # need to handle clouds as well, for localgroupdisk...
         _subscriptionTokens.append("LOCALGROUPDISK_"+group.upper())
-
 
         
 
