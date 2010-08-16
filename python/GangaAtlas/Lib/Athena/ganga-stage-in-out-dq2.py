@@ -770,14 +770,16 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         if skipevt<>0:
             outFile.write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
 
+        outFile.write('try:\n')
+
         if dtype == 'DATA':
-            outFile.write('%sByteStreamInputSvc.FullFileName = ['%versionString)
+            outFile.write('    %sByteStreamInputSvc.FullFileName = ['%versionString)
         elif dtype == 'MC':
-            outFile.write('%sEventSelector.InputCollections = ['%versionString)
+            outFile.write('    %sEventSelector.InputCollections = ['%versionString)
         elif dtype == 'MuonCalibStream':
-            outFile.write('svcMgr.MuonCalibStreamFileInputSvc.InputFiles = [')
+            outFile.write('    svcMgr.MuonCalibStreamFileInputSvc.InputFiles = [')
         else:
-            outFile.write('%sEventSelector.InputCollections = ['%versionString)
+            outFile.write('    %sEventSelector.InputCollections = ['%versionString)
 
             if tag:
 ##                 if type == 'TAG_REC':
@@ -785,7 +787,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
 ##                         outFile.write('PoolTAGInput = [')
 ##                     else:
 ##                         outFile.write('CollInput = [')
-                outFile.write('%sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
+                outFile.write('    %sEventSelector.CollectionType="ExplicitROOT"\n'%versionString)
             #outFile.write('%sEventSelector.InputCollections = ['%versionString)
 
     else:
@@ -838,6 +840,9 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         
     if not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
         outFile.write(']\n')
+        outFile.write('except:\n')
+        outFile.write('    pass\n')
+
     else:
         outFile.write(']\n')
         outFile.write('athenaCommonFlags.Pool%sInput.set_Value_and_Lock(ganga_input_files)\n' %
