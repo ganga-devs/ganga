@@ -373,6 +373,10 @@ get_pybin () {
 	export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/*/bin/python | grep slc5  |  head -1)
     fi
 
+    # default PYTHON version of Athena
+    dum=`which python`
+    export pybin_alt=$dum
+
     dum=`echo $pybin | sed 's/bin\/python$/bin/g'`
     export pypath=$dum
     dum=`echo $pybin | sed 's/bin\/python$/lib/g'`
@@ -839,7 +843,7 @@ run_athena () {
 	    rm -f retcode.tmp
 	elif [ n$ATLAS_EXETYPE == n'PYARA' ]
 	    then
-	    $timecmd $pybin $ATHENA_OPTIONS ; echo $? > retcode.tmp
+	    $timecmd $pybin_alt $ATHENA_OPTIONS ; echo $? > retcode.tmp
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
 	elif [ n$ATLAS_EXETYPE == n'ROOT' ]
