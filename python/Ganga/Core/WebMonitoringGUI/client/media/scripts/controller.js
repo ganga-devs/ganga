@@ -66,7 +66,7 @@ function Controller() {
                     iDisplayLength: _Settings.iDisplayLength,
                     sPaginationType: "input",
                     bLengthChange: false,
-                    aoColumns: _Settings.aoColumns,
+                    aoColumns: _Settings.aoColumns
                 },
             });
         };
@@ -129,7 +129,7 @@ function Controller() {
                     iDisplayLength: _Settings.iDisplayLength,
                     sPaginationType: "input",
                     bLengthChange: false,
-                    aoColumns: _Settings.aoColumns,
+                    aoColumns: _Settings.aoColumns
                 },
             });
         };
@@ -186,7 +186,7 @@ function Controller() {
             $('#content').lkfw_searchableList({
                 listId: 'users',
                 items: thisRef.Data.mem.users,
-                srchFldLbl: _Settings.searchLabel,
+                srchFldLbl: _Settings.searchLabel
             });
             
             $('#users_0 li').unbind('click').click( function() { thisRef.userListItem_Click(this) });
