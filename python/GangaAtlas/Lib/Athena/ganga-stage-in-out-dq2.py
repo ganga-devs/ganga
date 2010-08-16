@@ -743,7 +743,8 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
             else:
                 inputFileList.append(files[lfn]['pfn'])
                 inputFileListPeeker.append(files[lfn]['pfn'])
-        preJobO = _preJobO(inputFileList, inputFileListPeeker)
+        #preJobO = _preJobO(inputFileList, inputFileListPeeker)
+        preJobO = _preJobO(inputFileListPeeker, inputFileListPeeker)
         outFilePre.write(preJobO)
         outFilePre.close()
 
