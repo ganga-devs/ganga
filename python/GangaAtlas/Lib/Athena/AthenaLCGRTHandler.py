@@ -259,7 +259,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                             
                     logger.debug('Output4: %s,%s',output_location, job.outputdata.location)
 
-        if getConfig('LCG')['JobLogHandler'] == 'DQ2' and job.outputdata._name != 'DQ2OutputDataset':
+        if getConfig('LCG')['JobLogHandler'] == 'DQ2' and (not job.outputdata or (job.outputdata and job.outputdata._name != 'DQ2OutputDataset')):
             raise ApplicationConfigurationError(None,'Staging of log files in DQ2 requested, but DQ2 output dataset not specified.')
         
 #       prepare inputsandbox
