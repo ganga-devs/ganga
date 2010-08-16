@@ -11,22 +11,15 @@
 # Date:   January 2007
 import os
 import os.path
-import sys
 import re
 import tempfile
-import time
-import random
-import md5
 import shutil
 from types import *
 from urlparse import urlparse
 
-from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 
-from Ganga.Utility.Shell import Shell
-from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.GridShell import getShell 
 

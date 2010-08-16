@@ -1,7 +1,6 @@
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
-from Ganga.Utility.Config import getConfig, ConfigError
-from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Config import getConfig
 
 class LCGRequirements(GangaObject):
    '''Helper class to group LCG requirements.

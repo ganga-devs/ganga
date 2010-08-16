@@ -9,31 +9,19 @@
 # ATLAS/ARDA
 #
 # Date:   January 2007
-import os
-import os.path
-import sys
 import re
-import tempfile
-import time
-import random
-import md5
 
 from types import *
-from urlparse import urlparse
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Credentials import getCredential 
 
-from Ganga.Utility.Shell import Shell
-from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import isStringLike
-from Ganga.Utility.GridShell import getShell 
 from Ganga.Lib.LCG.Utility import *
 
-from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Background, Effects
+from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Effects
 
 class GridFileIndex(GangaObject):
 

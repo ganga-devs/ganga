@@ -13,8 +13,6 @@
 import os
 import re
 import time
-import errno
-import socket
 import math
 #import tempfile
 from types import *
