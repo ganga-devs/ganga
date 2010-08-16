@@ -17,8 +17,8 @@ def addQuotes(value):
     return '"' + trimmedValue + '"'
 
 def get_users_JSON():
-        
-    json_users = "{\"basicData\": [[{\"GridName\": \"Someuser\"}]]}"
+
+    json_users = "{\"basicData\": [[{\"GridName\": \"%s\"}]]}" % config.Configuration.user
 
     return json_users
 
