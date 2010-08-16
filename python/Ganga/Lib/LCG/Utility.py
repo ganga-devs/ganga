@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import re
-import md5
 import time
 import random
 import gzip
 from Ganga.Utility.logging import getLogger
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
+from Ganga.Lib.LCG.Compatibility import *
 
 def get_uuid(*args):
     ''' Generates a universally unique ID. '''
@@ -17,7 +17,9 @@ def get_uuid(*args):
         # if we can't get a network address, just imagine one
         a = random.random()*100000000000000000L
     data = str(t)+' '+str(r)+' '+str(a)+' '+str(args)
-    data = md5.md5(data).hexdigest()
+
+    data = get_md5_obj().update( data ).hexdigest()
+        
     return data
 
 def urisplit(uri):
@@ -94,7 +96,8 @@ def get_md5sum(fname, ignoreGzipTimestamp=False):
     else:
         f = open(fname, 'rb')
 
-    m = md5.new()
+    m = get_md5_obj()
+
     while True:
         d = f.read(8096)
         if not d:
