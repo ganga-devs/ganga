@@ -176,7 +176,12 @@ def _refreshCESEInfo():
         CESEInfo = _downloadCESEInfo()
   
     if not CESEInfo:
-        logger.error('CE-SE association could not be read. Jobs cannot be directed to a specific site.')
+        logger.warning('CE-SE association could not be downloaded. Using the old file')
+        CESEInfo = _loadCESEInfo()
+        if not CESEInfo:
+            logger.debug('CE-SE association file is not usable.')
+            os.unlink(CESEInfoLocal)
+
     else:
 #       just warn if the file is older then one day
         if time.time() - CESEInfo['time'] > 3600*24:
