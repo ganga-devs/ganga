@@ -194,12 +194,12 @@ if [ -z "$JTPATH" ]; then
     if [ -e "$T_TRF" ]; then
 	chmod +x $T_TRF
 	echo "./$T_TRF $T_JTFLAGS $T_ARGS"
-	./$T_TRF $T_JTFLAGS $T_ARGS
+	eval ./$T_TRF $T_JTFLAGS $T_ARGS
         retcode=$?
 	echo $retcode > retcode.tmp
     else
 	echo "$T_TRF $T_JTFLAGS $T_ARGS"
-	$T_TRF $T_JTFLAGS $T_ARGS
+	eval $T_TRF $T_JTFLAGS $T_ARGS
         retcode=$?
 	echo $retcode > retcode.tmp
     fi
