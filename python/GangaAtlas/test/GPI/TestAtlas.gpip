@@ -142,7 +142,7 @@ class TestAnaTask(TestTask):
         t.analysis.application.option_file=[ self.joboption ]
         t.analysis.application.user_area = self.archivefile
         t.analysis.application.max_events=10
-	t.analysis.application.atlas_run_config= {'input': {}, 'other': {}, 'output': {'alloutputs': ['AnalysisSkeleton.aan.root'], 'outAANT': [('AANTupleStream', 'AANT')]}} 
+        t.analysis.application.atlas_run_config= {'input': {}, 'other': {}, 'output': {'alloutputs': ['AnalysisSkeleton.aan.root'], 'outAANT': [('AANTupleStream', 'AANT')]}} 
         t.analysis.files_per_job = 1
         t.analysis.inputdata.dataset = datasetana
         t.analysis.outputdata=DQ2OutputDataset()
@@ -210,11 +210,11 @@ class TestAthenaDQ2LCG(TestAthena):
 class TestAMIDataset(TestAthena):
     def setup(self):
         TestAthena.setup(self)
-	self.j.inputdata=AMIDataset()
-	self.j.inputdata.logicalDatasetName=datasetana
-	self.j.backend=LCG()
-	self.j.backend.requirements.cloud='ALL'
-	assert(self.j.submit()==True)
+        self.j.inputdata=AMIDataset()
+        self.j.inputdata.logicalDatasetName=datasetana
+        self.j.backend=LCG()
+        self.j.backend.requirements.cloud='ALL'
+        assert(self.j.submit()==True)
 
 
 class TestAthenaDQ2LCGFileStager(TestAthena):
@@ -237,10 +237,10 @@ class TestAthenaDQ2LCGDQ2COPY(TestAthena):
 class TestAthenaDQ2LSF(TestAthena):
     def setup(self):
         TestAthena.setup(self)
-	self.j.splitter = None
-	self.j.outputdata.location='CERN-PROD_SCRATCHDISK'
+        self.j.splitter = None
+        self.j.outputdata.location='CERN-PROD_SCRATCHDISK'
         self.j.backend=LSF()
-	self.j.backend.queue='1nh'
+        self.j.backend.queue='1nh'
         assert(self.j.submit()==True)
 
 class TestAthenaLCG(AtlasTest):
@@ -314,7 +314,7 @@ class TestAthenaMCLCG_evgen(TestAthenaMCLCG):
         self.j.application.evgen_job_option='MC9.107004.singlepart_e_Et40.py'
         self.j.application.transform_script = "Evgen_trf.py"
         self.j.application.number_events_job=10
-	self.j.application.extraArgs='ecmEnergy=7000'	
+        self.j.application.extraArgs='ecmEnergy=7000'        
         self.j.application.mode='evgen'
         assert (self.j.submit()==True)
 
@@ -353,13 +353,13 @@ class TestAthenaMCPanda(AtlasTest):
         self.j=Job()
         self.j.application=AthenaMC()
         self.j.application.atlas_release='15.6.3.1'
-	self.j.application.firstevent=1
+        self.j.application.firstevent=1
         self.j.application.number_events_job=1
         self.j.application.verbosity = "INFO"
         self.j.backend=Panda()
         #self.j.backend.requirements.cloud = "US"
         self.j.outputdata=AthenaMCOutputDatasets()
-	self.j.application.dryrun = False 
+        self.j.application.dryrun = False 
      
 
 class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
@@ -374,8 +374,8 @@ class TestAthenaMCPanda_evgen(TestAthenaMCPanda):
         self.j.application.mode='evgen'
         self.j.application.transform_script = "csc_evgen_trf.py"
         self.j.application.verbosity='INFO'
-	self.j.backend.site="ANALY_SLAC"	
-	self.j.backend.requirements.cloud = "US"
+        self.j.backend.site="ANALY_SLAC"        
+        self.j.backend.requirements.cloud = "US"
         assert (self.j.submit()==True)
 
 class TestAthenaMCPanda_simul(TestAthenaMCPanda):
@@ -384,10 +384,10 @@ class TestAthenaMCPanda_simul(TestAthenaMCPanda):
         self.j.application.mode='simul'
         self.j.application.transform_script = "csc_simul_trf.py"
         self.j.application.geometryTag = 'ATLAS-GEO-10-00-00'
-	self.j.application.triggerConfig = 'NONE' 	
-	self.j.application.atlas_release = '15.6.3.10'
-	self.j.application.extraArgs = 'jobConfig=VertexFromCondDB.py,CalHits.py,jobConfig.LooperKiller.py physicsList=QGSP_BERT DBRelease=9.0.1'
-	self.j.application.production_name='testPanda'	
+        self.j.application.triggerConfig = 'NONE'         
+        self.j.application.atlas_release = '15.6.3.10'
+        self.j.application.extraArgs = 'jobConfig=VertexFromCondDB.py,CalHits.py,jobConfig.LooperKiller.py physicsList=QGSP_BERT DBRelease=9.0.1'
+        self.j.application.production_name='testPanda'        
         self.j.inputdata=AthenaMCInputDatasets()
         self.j.inputdata.DQ2dataset='user09.fredericbrochu.ganga.prod.100000.Pythia_RPV_UDD_1em6.evgen.EVNT/'
         self.j.inputdata.datasetType='DQ2'
@@ -402,9 +402,9 @@ class TestAthenaMCPanda_recon(TestAthenaMCPanda):
         self.j.application.atlas_release='15.6.9.8'
         self.j.application.mode='recon'
         self.j.application.transform_script = "Reco_trf.py"
-	self.j.application.geometryTag = 'ATLAS-GEO-10-00-00'	
-	self.j.application.production_name = 'testPanda'
-	self.j.application.extraArgs = 'RunNumber=105485 autoConfiguration=everything preInclude=RecJobTransforms/SetJetConstants-02-000.py preExec="rec.Commissioning.set_Value_and_Lock(True);InDetFlags.doMinBias.set_Value_and_Lock(False);jobproperties.Beam.energy.set_Value_and_Lock(3500*Units.GeV);muonRecFlags.writeSDOs=True;rec.doDPD=True;InDetFlags.useBeamConstraint.set_Value_and_Lock(True);from CaloRec.CaloCellFlags import jobproperties;jobproperties.CaloCellFlags.doLArDeadOTXCorr.set_Value_and_Lock(False)" postExec="topSequence.TimeOut=7200*Units.s" DBRelease=DBRelease-10.7.1.tar.gz conditionsTag=OFLCOND-DR-BS7T-ANom-15 geometryVersion=ATLAS-GEO-10-00-00 AMITag=r1302 triggerConfig=MCRECO:DB:TRIGGERDBMC:145,73,124 --ignoreerrors=ALL'	
+        self.j.application.geometryTag = 'ATLAS-GEO-10-00-00'        
+        self.j.application.production_name = 'testPanda'
+        self.j.application.extraArgs = 'RunNumber=105485 autoConfiguration=everything preInclude=RecJobTransforms/SetJetConstants-02-000.py preExec="rec.Commissioning.set_Value_and_Lock(True);InDetFlags.doMinBias.set_Value_and_Lock(False);jobproperties.Beam.energy.set_Value_and_Lock(3500*Units.GeV);muonRecFlags.writeSDOs=True;rec.doDPD=True;InDetFlags.useBeamConstraint.set_Value_and_Lock(True);from CaloRec.CaloCellFlags import jobproperties;jobproperties.CaloCellFlags.doLArDeadOTXCorr.set_Value_and_Lock(False)" postExec="topSequence.TimeOut=7200*Units.s" DBRelease=DBRelease-10.7.1.tar.gz conditionsTag=OFLCOND-DR-BS7T-ANom-15 geometryVersion=ATLAS-GEO-10-00-00 AMITag=r1302 triggerConfig=MCRECO:DB:TRIGGERDBMC:145,73,124 --ignoreerrors=ALL'        
         self.j.inputdata=AthenaMCInputDatasets()
         self.j.inputdata.DQ2dataset='group09.phys-exotics.mc09_7TeV.105485.Pythia_DYmumu_1500M1750_unfiltered.digit.RDO.e549_s765_s767_d308'
         self.j.inputdata.datasetType='DQ2'
