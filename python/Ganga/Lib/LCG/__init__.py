@@ -8,4 +8,4 @@ from DQ2SandboxCache import *
 from GridftpSandboxCache import *
 from ElapsedTimeProfiler import *
 from LCGOutputDownloader import *
-from Compatibility.py import *
+from Compatibility import *
