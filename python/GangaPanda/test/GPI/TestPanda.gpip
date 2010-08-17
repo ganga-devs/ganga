@@ -104,7 +104,7 @@ class TestAthenaPandaNoSplit(PandaTest):
 
 class TestARAPanda(PandaTest):
     def setup(self):
-        joboption = '%s/gangaPandaARAExample_502.py' % self.tmpdir
+        joboption = '%s/gangaARAExample_502.py' % self.tmpdir
         archivefile = '%s/sources.349b1195-3674-4a19-8770-70eb2d0b86bd.tar.gz' % self.tmpdir
         userareapath = self.tmpdir
 
@@ -121,7 +121,7 @@ class TestARAPanda(PandaTest):
         j.inputdata.dataset="mc08.105404.SU6_jimmy_susy.merge.AOD.e352_s462_r635_t53_tid068263"
         j.inputdata.number_of_files=1
         j.outputdata=DQ2OutputDataset()
-        j.outputdata.outputdata=['out1.root' ]
+        j.outputdata.outputdata=['histos.root']
         j.splitter=DQ2JobSplitter()
         j.splitter.numsubjobs=1
         j.splitter.filesize=8000
