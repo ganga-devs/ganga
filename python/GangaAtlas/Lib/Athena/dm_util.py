@@ -508,6 +508,11 @@ try:
 except:
   pass
 
+try:
+  from AthenaServices.SummarySvc import *
+  useAthenaSummarySvc()
+except:
+  pass
 """
 
     jOptionInput = """
