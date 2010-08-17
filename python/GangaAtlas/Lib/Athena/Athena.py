@@ -1283,7 +1283,7 @@ class AthenaOutputMerger(IMerger):
                   {'attribute' : 'ignorefailed', 'widget' : 'Bool'}
                   ]
 
-    def merge(self, sum_outputdir = None, subjobs = None, **options ):
+    def merge(self, subjobs = None, sum_outputdir = None, **options ):
         '''Merge local root tuples of subjobs output'''
 
         import os
