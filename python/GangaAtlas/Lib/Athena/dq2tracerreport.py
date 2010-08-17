@@ -107,7 +107,7 @@ if __name__ == '__main__':
             match = re.search(filepat, line)
             if match:
                 filename = match.group(1)
-                if not filename in input_files:
+                if filename and not filename in input_files:
                     input_files.append(filename)
                     numfiles3 = numfiles3 + 1
                     
@@ -145,7 +145,9 @@ if __name__ == '__main__':
             zfile.close()
 
         try:
-            input_files = athinfo['files']['read'].split(',')
+            dum = athinfo['files']['read']
+            if dum:
+                input_files = dum.split(',')
         except:
             pass
 
@@ -186,6 +188,7 @@ if __name__ == '__main__':
     ipAddr = socket.gethostbyaddr(socket.gethostname())[2][0]
 
     nreport = 0
+
     for longfilename in input_files:
         prot = re.findall(protpat, longfilename)
         if prot:
@@ -198,7 +201,9 @@ if __name__ == '__main__':
             lfn = lfn[0]
             lfn = re.sub('^tcf_','',lfn)
             lfn = re.sub('(__DQ2.*)$','',lfn)
-        
+        else:
+            lfn = longfilename
+
         report = fill_report(uuid = uuid,
                              eventVersion  = ganga_version,
                              remoteSite    = siteid,
