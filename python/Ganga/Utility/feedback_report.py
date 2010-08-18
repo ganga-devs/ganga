@@ -285,7 +285,7 @@ def report(job=None):
                 #import job relevant info
                 if job is not None:
                         #create job folder                      
-                        jobFolder = 'job_%s' % str(job.id)
+                        jobFolder = 'job_%s' % str(job.fqid)
                         fullLogDirName = os.path.join(fullLogDirName, jobFolder)
                         os.mkdir(fullLogDirName)                        
 
@@ -329,7 +329,19 @@ def report(job=None):
                                 indexFileName = str(job.id) + '.index'
 
                                 repositoryPath = repositoryPath.replace('$usr', os.getenv("USER"))
-                                repositoryPath = repositoryPath.replace('$thousandsNum', str(job.id/1000))
+                                
+                                #check if the job is subjob -> different way of forming the path to the repository
+                                is_subjob = job.fqid.find('.') > -1
+
+                                if is_subjob:
+
+                                        jobid, subjobid = job.fqid.split('.')[0], job.fqid.split('.')[1]
+                                        repositoryPath = repositoryPath.replace('$thousandsNum', str(int(jobid)/1000))
+                                        repositoryPath = os.path.join(repositoryPath, jobid)
+
+                                else:   
+                                        repositoryPath = repositoryPath.replace('$thousandsNum', str(job.id/1000))
+
                                 repositoryFullPath = os.path.join(config.Configuration.gangadir, repositoryPath)
                                 indexFileSourcePath = os.path.join(repositoryFullPath, indexFileName)
                                 repositoryFullPath = os.path.join(repositoryFullPath, str(job.id))
@@ -342,9 +354,10 @@ def report(job=None):
                                 #data files are copied but can not be opened -> add .txt to their file names
                                 renameDataFiles(repositoryTargetPath)
 
-                                #copy .index file
-                                indexFileTargetPath = os.path.join(fullLogDirName, 'repository', indexFileName)
-                                shutil.copyfile(indexFileSourcePath, indexFileTargetPath)
+                                if not is_subjob:
+                                        #copy .index file
+                                        indexFileTargetPath = os.path.join(fullLogDirName, 'repository', indexFileName)
+                                        shutil.copyfile(indexFileSourcePath, indexFileTargetPath)
                                 
                         #except OSError, IOError:
                         except:
