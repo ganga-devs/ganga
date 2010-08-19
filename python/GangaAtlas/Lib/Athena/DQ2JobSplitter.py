@@ -73,7 +73,7 @@ class DQ2JobSplitter(ISplitter):
     '''Dataset driven job splitting'''
 
     _name = 'DQ2JobSplitter'
-    _schema = Schema(Version(1,0), {
+    _schema = Schema(Version(1,1), {
         'numfiles'          : SimpleItem(defvalue=0,doc='Number of files per subjob'),
         'numsubjobs'        : SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
         'use_lfc'           : SimpleItem(defvalue = False, doc = 'Use LFC catalog instead of default site catalog/tracker service'),
@@ -81,7 +81,8 @@ class DQ2JobSplitter(ISplitter):
         'use_blacklist'     : SimpleItem(defvalue = True, doc = 'Use black list of sites create by GangaRobot functional tests.'),
         'filesize'          : SimpleItem(defvalue=0, doc = 'Maximum filesize sum per subjob im MB.'),
         'numevtsperjob'     : SimpleItem(defvalue=0, doc='Number of events per subjob'),
-        'numevtsperfile'    : SimpleItem(defvalue=0,doc='Maximum number of events in a file of input dataset')
+        'numevtsperfile'    : SimpleItem(defvalue=0,doc='Maximum number of events in a file of input dataset'),
+        'missing_files'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=1,doc='List of names that could not be assigned to a subjob')
     })
 
     _GUIPrefs = [ { 'attribute' : 'numfiles',         'widget' : 'Int' },
@@ -336,12 +337,14 @@ class DQ2JobSplitter(ISplitter):
         allfiles = 0
         allsizes = 0
         allevents = 0
+        allnames = []
         for dataset, content in contents_temp.iteritems():
             contents[dataset] = content
             datasetLength[dataset] = len(contents[dataset])
             allfiles += datasetLength[dataset]
             datasetFilesize[dataset] = reduce(operator.add, map(lambda x: x[1][1],content))
             allsizes += datasetFilesize[dataset]
+            allnames += map(lambda x: x[1][0],content)
             if self.numevtsperjob > 0:
                 nevents[dataset] = reduce(operator.add, map(lambda x: x[1][2],content))
                 allevents += nevents[dataset]
@@ -536,7 +539,7 @@ class DQ2JobSplitter(ISplitter):
                 if self.numevtsperjob > 0:
                     logger.info('DQ2JobSplitter will attempt to create %d subjobs using  %d events per subjob subject to a limit of %d Bytes per subjob.' %(nrjob,self.numevtsperjob, max_subjob_filesize))
                 elif max_subjob_filesize and  self.filesize > 0:
-                     logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob subject to a limit of %d Bytes per subjob.'%(nrjob,max_subjob_numfiles,max_subjob_filesize))
+                    logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob subject to a limit of %d Bytes per subjob.'%(nrjob,max_subjob_numfiles,max_subjob_filesize))
                 remaining_guids = list(guids)
 
                 # sort out the tag files that reference this if required
@@ -708,6 +711,16 @@ class DQ2JobSplitter(ISplitter):
             logger.info('Total files assigned to subjobs is %d'%totalfiles)
             if not (totalfiles == allfiles):
                 logger.error('DQ2JobSplitter was only able to assign %s out of %s files to the subjobs ! Please check your job configuration if this is intended and possibly change to a different cloud or choose different sites!', totalfiles, allfiles)
+                self.missing_files = []
+                for name in allnames:
+                    found=False
+                    for sj in subjobs:
+                        if name in sj.inputdata.names:
+                            found=True
+                            break
+                    if not found:
+                        self.missing_files.append(name)
+                logger.info('The files not assigned to jobs have been stored in job.splitter.missing_files')
 
         return subjobs
     
