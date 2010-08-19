@@ -1658,8 +1658,10 @@ _usertag=configDQ2['usertag']
 baseURLDQ2 = configDQ2['DQ2_URL_SERVER']
 baseURLDQ2SSL = configDQ2['DQ2_URL_SERVER_SSL']
 
-configDQ2.addOption('USE_NICKNAME_DQ2OUTPUTDATASET', True, 'Use voms nicknames for DQ2OutputDataset.')
-configDQ2.addOption('ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET', False, 'Allow that voms nickname is empty for DQ2OutputDataset name creating.')
+if not 'USE_NICKNAME_DQ2OUTPUTDATASET' in configDQ2:
+    configDQ2.addOption('USE_NICKNAME_DQ2OUTPUTDATASET', True, 'Use voms nicknames for DQ2OutputDataset.')
+if not 'ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET' in configDQ2:
+    configDQ2.addOption('ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET', False, 'Allow that voms nickname is empty for DQ2OutputDataset name creating.')
 
 # Extract username from certificate
 proxy = GridProxy()
