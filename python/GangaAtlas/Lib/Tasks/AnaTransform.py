@@ -315,7 +315,7 @@ class AnaTransform(Transform):
    
    def getJobsForPartitions(self, partitions):
       j = self.createNewJob(partitions[0])
-      if len(partitions) > 1:
+      if len(partitions) >= 1:
           j.splitter = AnaTaskSplitterJob()
           j.splitter.subjobs = partitions
       j.inputdata = self.partitions_data[partitions[0]-1]

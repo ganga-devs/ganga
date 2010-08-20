@@ -5,38 +5,41 @@ from AnaTransform import AnaTransform
 from Ganga.Core.exceptions import ApplicationConfigurationError
 
 
-o = ""
-o+="\n"+ markup(" *** Task for Athena Analysis ***", fgcol("blue"))
+o = [""]
 def c(s):
    return markup(s,fgcol("blue"))
-o+="\n"+ " Analysis Application     : "+c("t.analysis.application")
-o+="\n"+ " Set Dataset              : "+c("t.setDataset('my.dataset')")
-o+="\n"+ " Input Dataset Object     : "+c("t.analysis.inputdata")
-o+="\n"+ " Output Dataset Object    : "+c("t.analysis.outputdata")
-o+="\n"+ " Files processed per job  : "+c("t.analysis.files_per_job = 10")
-o+="\n"
-o+="\n"+ markup("Procedure to do a usual analysis:", fgcol("red"))
-o+="\n"+ "config.Tasks.merged_files_per_job = 1 # default files per job for merged datasets"
-o+="\n"+ "config.Tasks.recon_files_per_job = 10 # default files per job for recon (non-merged) datasets"
-o+="\n"+ "t = AnaTask()"
-o+="\n"+ 't.name = "MyAnalysisR1"'
-o+="\n"+ "t.analysis.outputdata.outputdata  = ['nTuple.root' ]"
-#o+="\n"+ "t.analysis.outputdata.datasetname = 'MyAnalysisR1'"
-#o+="\n"+ 't.analysis.application.exclude_from_user_area=["*.o","*.root*","*.exe", "*.txt"]'
-o+="\n"+ "t.analysis.application.option_file = ['./myTopOptions.py' ]"
-o+="\n"+ "t.analysis.application.prepare()"
-o+="\n"+ "t.float = 10"
-o+="\n"+ 't.initializeFromDatasets(["user08.MyName.ganga.dataset.recon.AOD"])'
-o+="\n"+ "#t.info() # Check here if settings are correct"
-o+="\n"+ "t.run()"
-o+="\n"+ "t.overview() # Watch the processing"
-task_help = o
+o.append(markup(" *** Task for Athena Analysis ***", fgcol("blue")))
+o.append(" Analysis Application     : "+c("t.analysis.application"))
+o.append(" Set Dataset              : "+c("t.setDataset('my.dataset')"))
+o.append(" Input Dataset Object     : "+c("t.analysis.inputdata"))
+o.append(" Output Dataset Object    : "+c("t.analysis.outputdata"))
+o.append(" Files processed per job  : "+c("t.analysis.files_per_job = 10"))
+o.append("")
+o.append(markup("Procedure to do a usual analysis:", fgcol("red")))
+#o.append("config.Tasks.merged_files_per_job = 1 # default files per job for merged datasets")
+#o.append("config.Tasks.recon_files_per_job = 10 # default files per job for recon (non-merged) datasets")
+o.append("t = AnaTask()")
+o.append('t.name = "MyAnalysisR1"')
+o.append("t.analysis.outputdata.outputdata  = ['nTuple.root' ]")
+o.append("t.analysis.application.option_file = ['./myTopOptions.py' ]")
+o.append("t.analysis.application.prepare()")
+o.append("t.float = 10")
+o.append('t.initializeFromDatasets(["user08.MyName.ganga.dataset.recon.AOD"])')
+o.append("#t.info() # Check here if settings are correct")
+o.append("t.run()")
+o.append("t.overview() # Watch the processing")
+o.append("")
+o.append("A container dataset with all outputs will be created as")
+o.append(c("user.YourNickname.<YYYYMMDD>.task_<id>.<task name>/"))
+o.append("Subtask (Transform) outputs will be put into these datasets:")
+o.append(c("user.YourNickname.<YYYYMMDD>.task_<id>.subtask_<nr>.<inputdataset name>"))
+task_help = "\n".join(o)
 
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException
 dq2=DQ2()
 
-config.addOption('merged_files_per_job',1,'default number of files per job in AnaTask if using merged datasets', type=int)
-config.addOption('recon_files_per_job',10,'default number of files per job in AnaTask if using recon datasets', type=int)
+config.addOption('merged_files_per_job',1,'OBSOLETE', type=int)
+config.addOption('recon_files_per_job',10,'OBSOLETE', type=int)
 
 class AnaTask(Task):
    __doc__ = task_help
@@ -104,12 +107,12 @@ class AnaTask(Task):
          tf = trf.clone()
          tf.name = ".".join(tid.split(".")[1:3])
 
-         if "merge" in tid:
-            tf.files_per_job = config["merged_files_per_job"]
-            logger.warning("Files per job for %s set to %i - use 'config.Tasks.merged_files_per_job = 42' to change this value!" % (tid,tf.files_per_job))
-         else:
-            tf.files_per_job = config["recon_files_per_job"]
-            logger.warning("Files per job for %s set to %i - use 'config.Tasks.recon_files_per_job = 42' to change this value!" % (tid,tf.files_per_job))
+         #if "merge" in tid:
+         #   tf.files_per_job = config["merged_files_per_job"]
+         #   logger.warning("Files per job for %s set to %i - use 'config.Tasks.merged_files_per_job = 42' to change this value!" % (tid,tf.files_per_job))
+         #else:
+         #   tf.files_per_job = config["recon_files_per_job"]
+         #   logger.warning("Files per job for %s set to %i - use 'config.Tasks.recon_files_per_job = 42' to change this value!" % (tid,tf.files_per_job))
          tf.inputdata.dataset=tid
          new_tfs.append(tf)
       self.transforms = new_tfs
