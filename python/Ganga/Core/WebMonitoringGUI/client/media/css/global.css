@@ -37,7 +37,15 @@ a { cursor:pointer; }
 
 .wrapColumn { width:350px; white-space: nowrap; overflow:hidden; }
 
-.status { width:100%; color:#ffffff; font-weight:bold; text-align:center }
-.NotCompleted { border:1px #1e4a68 solid; background-color:orange; }
-.Successfull { border:1px #1e4a68 solid; background-color:green; }
-.Failed { border:1px #1e4a68 solid; background-color:red; }
+.status { width:100%; font-weight:bold; text-align:center }
+
+
+.New { border:1px #1e4a68 solid; background-color:cyan; color:black; }
+.Submitting { border:1px #1e4a68 solid; background-color:white; color:gray; }
+.Submitted { border:1px #1e4a68 solid; background-color:blue; color:white; }
+.Running { border:1px #1e4a68 solid; background-color:green; color:black; }
+.Completed,  Completing { border:1px #1e4a68 solid; background-color:darkGreen; color:white; }
+.Killed { border:1px #1e4a68 solid; background-color:red; color:black; }
+.Unknown { border:1px #1e4a68 solid; background-color:gray; color:black; }
+.Incomplete { border:1px #1e4a68 solid; background-color:magenta; color:black; }
+.Failed { border:1px #1e4a68 solid; background-color:red; color:yellow; }
