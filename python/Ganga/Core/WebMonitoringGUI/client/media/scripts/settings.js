@@ -81,12 +81,26 @@ function Settings() {
             return tasksArr;
         },*/
         'translateData': function(dataJSON) {
-            var tasksArr = Array();
+
+            var jobStatuses = {
+                'new':'New',
+		'submitting':'Submitting',
+                'submitted':'Submitted',
+		'running':'Running',
+		'completed':'Completed',
+		'killed':'Killed',
+		'unknown':'Unknown',
+		'incomplete':'Incomplete',
+		'failed':'Failed'
+            };
+
+	    var tasksArr = Array();
             for (i in dataJSON) {
                 tasksArr.push(Array(
                     //('<div class="wrapColumn" title="'+dataJSON[i].id+'"><a class="tmIdClick">'+dataJSON[i].id+'</a></div>' || 'default'),    
                     (dataJSON[i].id),   
-                    ('<a class="">'+dataJSON[i].status+'</a>' || ''),
+                    //('<a class="">'+dataJSON[i].status+'</a>' || ''),
+		    (jobStatuses[dataJSON[i].status] ? '<div class="status '+jobStatuses[dataJSON[i].status]+'">'+dataJSON[i].status+'</div>' : 'Unknown'),	
                     ('<a class="">'+dataJSON[i].name+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].application+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].backend+'</a>' || ''),
@@ -143,15 +157,22 @@ function Settings() {
         },
         'translateData': function(dataJSON) {
             var jobStatuses = {
-                'PR':'NotCompleted',
-                'S':'Successfull',
-                'F':'Failed'
+                'new':'New',
+		'submitting':'Submitting',
+                'submitted':'Submitted',
+		'running':'Running',
+		'completed':'Completed',
+		'killed':'Killed',
+		'unknown':'Unknown',
+		'incomplete':'Incomplete',
+		'failed':'Failed'
             };
             var tasksArr = Array();
             for (i in dataJSON) {
                 tasksArr.push(Array(
                     (dataJSON[i].id),   
-                    ('<a class="">'+dataJSON[i].status+'</a>' || ''),
+                    //('<a class="">'+dataJSON[i].status+'</a>' || ''),
+		    (jobStatuses[dataJSON[i].status] ? '<div class="status '+jobStatuses[dataJSON[i].status]+'">'+dataJSON[i].status+'</div>' : 'Unknown'),	
                     ('<a class="">'+dataJSON[i].name+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].application+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].backend+'</a>' || ''),
