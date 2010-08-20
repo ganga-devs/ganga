@@ -216,6 +216,9 @@ if opt.user_setupfile:
 if opt.maxevt:
     j.application.max_events = int(opt.maxevt)
 
+if opt.atlas_supp_stream:
+    j.application.atlas_supp_stream=opt.atlas_supp_stream.split(':')
+
 if opt.compile:
     j.application.athena_compile=True
     if opt.prepare_old:	
@@ -236,9 +239,6 @@ else:
 	    j.application.prepare()
 if opt.collectstats:
     j.application.collect_stats=True
-
-if opt.atlas_supp_stream:
-    j.application.atlas_supp_stream=opt.atlas_supp_stream.split(':')
 
 # inputdata
 
