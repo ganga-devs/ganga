@@ -131,7 +131,7 @@ function Settings() {
         'iDisplayLength': 25,
         'tblLabels': ['fqid','status','name','application','backend' ,'actualCE'],
         'aoColumns': [
-            {"sWidth":"90px"},
+            {"sWidth":"90px", "sType": "numeric-float" },
             {"sWidth":"90px"},
             {"sWidth":"100px"},
             {"sWidth":"110px"},
