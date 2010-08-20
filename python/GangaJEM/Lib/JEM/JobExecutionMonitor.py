@@ -1,7 +1,8 @@
 """
 This is the main GPI module of the Ganga integration of the JobExecutionMonitor (JEM).
 It defines the GangaObject-derivate JEM uses as an interface for the Ganga-user. She can
-access JEMs methods by j.info.monitor.<method>.
+access JEMs methods by j.info.monitor.<method>. Those calls get delegated into the JEM
+library loaded by the JEMloader object.
 
 @author: Martin Rau, Tim Muenchen
 @date: 04.08.09
@@ -52,7 +53,7 @@ from Ganga.Core.GangaThread import GangaThread
 ########################################################################################################################
 # Our logging instance.
 logger = getLogger("GangaJEM.Lib.JEM")
-outlogger = getLogger("GangaJEM.Lib.JEM.out")
+outlogger = getLogger("GangaJEM.Lib.JEM.info")
 
 ########################################################################################################################
 # JEM global configuration options.
@@ -68,7 +69,6 @@ jemconfig.addOption('JEM_REPACK', False,
                     'Wether to repack the JEM library before each job submission. This is useful mostly for developers.')
 jemconfig.addOption('JEM_MONITOR_SUBJOBS_FREQ', 10000,
                     'Enable JEM monitoring only for every N-th subjob of a splitjob.')
-
 
 #####################################################################################################################################################
 # Global initialisation
@@ -86,24 +86,16 @@ if not jemconfig['JEM_ENABLE']:
 # If everything is OK, import the core JEM modules.
 if JEMloader.INITIALIZED:
     try:
-        # LEGACY MODULES
-        import JEMlib
-        from JEMlib.conf import JEMSysConfig as SysConfig
-        from JEMui.conf import JEMuiSysConfig as JEMConfig
-        from JEMlib.conf import JEMConfig as WNConfig
-        from JEMui.conf import JEMuiConfig as UIConfig
-        from JEMlib.utils.ReverseFileReader import ropen
-        from JEMlib.utils.DictPacker import multiple_replace
-        from JEMlib.utils import Utils
-        from JEMlib.utils import uuid
-
         from Common.Config import Config as JEM3Config
-        from Common.Utils.CoreUtils import unescape_jmd
+        from Common.Utils.CoreUtils import unescape_jmd, log_last_exception
         from Common.Utils.Plotter import Plotter
+        from Common.Utils import Uuid as uuid
     except:
         logger.debug("Something went wrong when importing JEMs core modules:")
         logger.debug(str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
         JEMloader.INITIALIZED = False
+
+    from GangaJEM import library
 
     try:
         # this is a HACK to pull all config options off of JEM and create GangaObject-representations of them.
@@ -111,84 +103,12 @@ if JEMloader.INITIALIZED:
         definition, objlist = ConfigConverter.JEMConfig2GangaObjectSchemas()
         exec(definition, globals(), locals())
     except:
-        logger.debug("Failed to inject JEMs config into GangaJEM")
         ei = sys.exc_info()
+        logger.debug("Failed to inject JEMs config into GangaJEM")
         logger.debug("Reason: " + str(ei[0]) + " - " + str(ei[1]))
 
-
-#####################################################################################################################################################
-#####################################################################################################################################################
-class JEMCTraceOptions(GangaObject):
-    """JEM - The Job Execution Monitor - C/C++-Tracer configuration.
-
-    This object represents the configuration of the C/C++ module tracing subsystem of JEM.
-
-    The ctracer must be seperately enabled; set 'enabled' to True to do this. Also, to use
-    the ctracer, the to-be-traced module(s) must be specified.
-
-    The to-be-traced module(s) must be defined in 'traceModules', whereas the application(s)
-    that load the to-be-traced module(s) must be defined in 'traceApps'. If an executable
-    should be traced, usually the contents of 'traceModules' and 'traceApps' is equal. The
-    values of 'traceModules' and 'traceApps' usually differ if a shared library should be
-    traced. If 'traceApps' is left empty, it is assumed to be equal to 'traceModules'.
-
-    For both 'traceModules' and 'traceApps', several entries can be made, seperated by
-    whitespace, commas or colons. Note that either the relative path from the working
-    directory on the grid worker node, or an absolute path must be specified for the trace-
-    module(s) and -app(s).
-
-    Examples:
-
-    traceModules               traceApps                  behaviour
-    -------------------------------------------------------------------------------------------
-    '/usr/bin/echo'            '/usr/bin/echo'            events in /usr/bin/echo are traced.
-    './myApp'                  './myApp'                  events in ./myApp are traced.
-    './myLib.so'               './myApp'                  events in ./myLib are traced IF it
-                                                          is loaded by ./myApp (in other words,
-                                                          if the RUN executable is myApp, with
-                                                          myLib dynamically linked to it)
-    './libA.so,./libB.so'      '/usr/bin/python'          events in the two user libraries are
-                                                          traced for python scripts loading
-                                                          and using them.
-    -------------------------------------------------------------------------------------------
-
-    Note for ATLAS-related jobs (Athena users):
-    If the job's application is an Athena-instance, the user algorithm's library has to be
-    specified in 'traceModules', but 'traceApps' can be left blank (it is set automatically by
-    JEM to the python interpreter on the worker node running athena.py).
-
-    Example setting for 'traceModules':
-    './work/Control/AthenaExamples/AthExHelloWorld/i686-slc4-gcc34-opt/libAthExHelloWorld.so'
-
-
-    The resolving of symbol values allows you to inspect the user algorithm's memory at each
-    logged step, much like a remote debugger provides. Please be aware that this slows down
-    the application's execution by a large amount. Also, the maximum nesting depth at which
-    struct members are resolved and pointers are followed has a large impact on application
-    performance. You might consider disabling the ctracer for normal job runs and resubmit
-    failing jobs with increasing verbosity (maxStructDepth settings, resolveValues setting)
-    until the issue is resolved.
-
-    See also: http://www.grid.uni-wuppertal.de/grid/jem
-
-    JEM (c)2004-2009 Bergische Universitaet Wuppertal
-
-    """
-    _schema = Schema(Version(0,1), {
-        'enabled'               : SimpleItem(defvalue=False,\
-                                             doc='Enables C/C++ module tracing'),
-        'traceModules'          : SimpleItem(defvalue='',\
-                                             doc='The module(s) to be traced'),
-        'traceApps'             : SimpleItem(defvalue='',\
-                                             doc='The application loading/being the to-be-traced module(s)'),
-        'resolveValues'         : SimpleItem(defvalue=False,\
-                                             doc='Enable resolving of symbol values in the ctracer'),
-        'maxStructDepth'        : SimpleItem(defvalue=2,\
-                                             doc='Max nesting depth to resolve struct members and pointers'),
-    })
-
-    _category = 'JEMCTraceOptions'
-    _name = 'JEMCTraceOptions'
+# set to True to debug
+LOG_STACK_TRACES = True
 
 
 class JobExecutionMonitor(GangaObject):
@@ -206,11 +126,6 @@ class JobExecutionMonitor(GangaObject):
     these options are suffient; please read the documentation of JEM before changing these options.
     Type help(JEMAdvancedOptions) for a detailled description.
 
-    Since version alpha 0.2.3, JEM includes a C/C++ module tracing subsystem - the ctracer. it is
-    configured in an own config subobject, 'ctracer'. The ctracer-config can be accessed with
-    "j.info.monitor.ctracer". Type 'help(JEMCTraceOptions)' for more information on setting up and
-    using the ctracer. NOTE: for version 0.3.0 onwards, this feature is not available yet.
-
     Note that when using splitjobs, by default JEM is enabled only for every 100th subjob to
     prevent monitoring data flooding. You can change this behaviour in .gangarc.
 
@@ -218,7 +133,6 @@ class JobExecutionMonitor(GangaObject):
 
     getStatus()                  prints status information about the monitored job
     getMetrics()                 prints current WN metrics (load, RAM usage, disk space, etc)
-    plotMetrics()                plots the recorded WN metrics using gnuplot (must be installed)
     listExceptions()             lists the last some exceptions that happened
     listCommands()               lists the last some commands / calls / returns that happened
     showException()              prints verbose information about an exception
@@ -234,59 +148,76 @@ class JobExecutionMonitor(GangaObject):
         'help(JobExecutionMonitor.getStatus)'.
 
 
-    Furthermore, you can get an overview of running JEM listener instances by typing
-
-        'JEMlisteners()'
-
-
-
     NOTE: This is an ALPHA version of JEM. If you have any comments, suggestions or encounter a
           bug, please don't hesitate to give feedback! Visit our webpage for contact information.
 
-    See also: http://www.grid.uni-wuppertal.de/grid/jem
+    See also: https://svn.grid.uni-wuppertal.de/trac/JEM
 
-    JEM (c)2004-2009 Bergische Universitaet Wuppertal
+    JEM (c)2004-2010 Bergische Universitaet Wuppertal
 
     """
-    _schema = Schema(Version(0,2), {
+    _schema = Schema(Version(0,307), {
         'anonymous'              : SimpleItem(hidden=True, defvalue=False, doc='internal anonymize flag'),
         'enabled'                : SimpleItem(defvalue=True, doc='Enables JEM monitoring for the job'),
         'realtime'               : SimpleItem(defvalue=False, doc='Enables realtime reception of monitoring data'),
-        'ctracer'                : ComponentItem('JEMCTraceOptions', summary_print='_summary_print',\
-                                                 doc='Configuration of the C/C++ module tracing subsystem'),
         'advanced'               : ComponentItem('JEMAdvancedOptions', summary_print='_summary_print',\
                                                  doc='Advanced configuration'),
         'jobID'                  : SimpleItem(hidden=True, defvalue=None, protected=1, copyable=0, transient=1,\
                                               typelist=['type(None)', 'type(str)'],\
                                               doc='Real backend-jobID (or generated)'),
-        'pid'                    : SimpleItem(hidden=True, defvalue=0, protected=1, copyable=0,\
-                                              doc='Process id of the job listener'),
-        'port'                   : SimpleItem(hidden=True, defvalue=0, protected=1, copyable=0,\
-                                              doc='Port number of the job listeners HTTPS server'),
-        'jmdfile'                : SimpleItem(hidden=True, defvalue='', protected=1, copyable=0,\
-                                              doc='Path to jmd logfile'),
+        'andJobIDs'              : SimpleItem(hidden=True, defvalue=None, protected=1, copyable=0, transient=1,\
+                                              typelist=['type(None)', 'type(str)'],\
+                                              doc='Further backend-jobIDs to monitor (eg. subjobs)'),
         'userAppRunning'         : SimpleItem(hidden=True, defvalue=False, protected=1, copyable=0,\
                                               doc='Has the user application on the WN started running yet?'),
         'userAppExited'          : SimpleItem(hidden=True, defvalue=False, protected=1, copyable=0,\
                                               doc='Has the user application on the WN finished yet?'),
-        'watcherThread'          : SimpleItem(hidden=True, defvalue=None, protected=1, copyable=0, transient=1,\
-                                              typelist=['type(None)', 'JEMWatcherThread'], load_default=0, optional=1,\
-                                              doc='Internal watcher thread handle')
+        # internal transient handlers
+        'ui'                     : SimpleItem(hidden=True, defvalue=None, protected=1, copyable=0, transient=1,\
+                                              typelist=['type(None)', 'UI'], optional=1,\
+                                              doc='Internal UI core reference'),
+        'chunkProcessor'         : SimpleItem(hidden=True, defvalue=None, protected=1, copyable=0, transient=1,\
+                                              typelist=['type(None)', 'GangaChunkProcessor'], optional=1,\
+                                              doc='Internal event processor reference'),
+        # internal identifiers
+        'pid'                    : SimpleItem(hidden=True, defvalue=0, protected=1, copyable=0,\
+                                              doc='Process id of the job listener'),
+        'shmKey'                 : SimpleItem(hidden=True, defvalue=0, protected=1, copyable=0,\
+                                              doc='SharedMemory key of the UI core'),
     })
 
     _category = 'monitor'           # allow insertion into Job.JobInfo object
     _name = 'JobExecutionMonitor'   # GPI-public classname
 
     # methods accessible from GPI
-    _exportmethods = ['getStatus', 'getMetrics', 'plotMetrics', 'listExceptions', 'listCommands',\
-                      'showException', 'showCommand', 'peek', 'getListenerLog', 'waitForRealStart',\
-                      'livePeek', 'watch', 'abortWatch', 'extractLogfiles',\
-                      '_getListenerPid', '_getServerPid', '_getServerPort', '_getServerStatus',\
-                      '_hasUserAppStarted', '_hasUserAppExited', '_getTransmissionStats']
-
+    _exportmethods = [
+                        'getStatus',
+                        'getMetrics',
+                        'plotMetrics',
+                        'listExceptions',
+                        'listCommands',
+                        #'showException',
+                        #'showCommand',
+                        'peek', 'outPeek', 'errPeek',
+                        'livePeek',
+                        'getStatistics',
+                        'getListenerLog',
+                        'waitForRealStart',
+                        'extractLogfiles',
+                        'launchGUI',
+                        '_getListenerPid',
+                        '_getShmKey',
+                        '_ensure_listener_running',
+                        '_shutdown_listener',
+                        '_think',
+                        '_register_processor',
+                        '_deregister_processor',
+                        '_getDebugStatusLine'
+                     ]
+    
+    
     def __init__(self):
         GangaObject.__init__(self)
-
         try:
             def keyPressed():
                 return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
@@ -351,98 +282,45 @@ class JobExecutionMonitor(GangaObject):
         except:
             # if our check fails, assume 'yes' (GangaRobot et al).
             self.anonymous = False
-
+    
+    
     ####################################################################################################################
     ### public interface (methods exported via _exportmethods)
-
+    
+    
     def getStatus(self):
         """
         This method prints basic information about the running job, like its job-id
         and the worker node the job is running on.
         """
-        if self.__checkStatus():
-            s = PrettyStrings.makeHeader("current job status")
-            job = self.getJobObject()
-
-            appstate = "In progress"
-            l = self.__seekJMDinfo("JOBSTATE", 1, 1)
-            if len(l) and l[0]:
-                if l[0].has_key("Status"):
-                    if l[0]["Status"] == "FINISHED":
-                        appstate = "Finished"
-                        self.userAppExited = True
-
-            # look for the last RESOURCE message; if found, extract the WN-name
-            l = self.__seekJMDinfo("RESOURCE", 1, 1)
-            if len(l) and l[0]:
-                l = l[0]
-                s += PrettyStrings.formatDatum("status (middleware)", str(job.backend.status)) # pylint: disable-msg=E1101
-                s += PrettyStrings.formatDatum("status (user application)", appstate)
-                s += PrettyStrings.formatDatum("job-id", str(job.backend.id)) # pylint: disable-msg=E1101
-                try:    # fix #66 (not all backends have the actualCE property! we can silently ignore it here.)
-                    s += PrettyStrings.formatDatum("compute element", str(job.backend.actualCE)) # pylint: disable-msg=E1101
-                except: pass
-
-                if l.has_key("WN"):
-                    s += PrettyStrings.formatDatum("worker node", l["WN"])
-
-                l = self.__seekJMDinfo("EXCEPTION", 6, 1)
-                es = "none"
-                if len(l) > 0:
-                    if len(l) < 6:
-                        es = str(len(l))
-                    else:
-                        es = "more than 5"
-                s += PrettyStrings.formatDatum("exceptions logged", es)
-
-                outlogger.info(s)
-            else:
-                outlogger.info("no status information received yet")
-
-
+        try:
+            outlogger.info(library.getStatus(self.getJobObject()))
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
+    def launchGUI(self):
+        """
+        """
+        try:
+            library.launchGUI(self.getJobObject())
+        except:
+            logger.error("failed to launch the log explorer GUI - please check the availability of QT4 and PyQT4 on this machine, and enable X-forwarding.")
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
     def getMetrics(self):
         """
         This method prints information about system the job runs on, like the CPU usage,
         network traffic, and free disk space
         """
-        if self.__checkStatus():
-            # look for the last RESOURCE message; if found, extract metrics
-            l = self.__seekJMDinfo("RESOURCE", 1, 1)
-            if len(l) and l[0]:
-                l = l[0]
-
-                s = PrettyStrings.makeHeader("worker node system metrics (measured " + PrettyStrings.formatTime(l) + ")")
-
-                if l.has_key("Load"):
-                    s += PrettyStrings.formatDatum("load", l["Load"])
-                if l.has_key("Mem"):
-                    s += PrettyStrings.formatDatum("memory ", l["Mem"])
-
-                s += "network traffic\n"
-                if l.has_key("NetR"):
-                    s += PrettyStrings.formatDatum("    inbound", l["NetR"])
-                if l.has_key("NetT"):
-                    s += PrettyStrings.formatDatum("    outbound", l["NetT"])
-
-                s += "available disk space in\n"
-                if l.has_key("Workdir"):
-                    s += PrettyStrings.formatDatum("    working directory", l["Workdir"])
-                if l.has_key("Tmp"):
-                    s += PrettyStrings.formatDatum("    tmp", l["Tmp"])
-                if l.has_key("Home"):
-                    s += PrettyStrings.formatDatum("    home directory", l["Home"])
-                if l.has_key("Swap"):
-                    s += PrettyStrings.formatDatum("    swap", l["Swap"])
-
-                if l.has_key("FullSys") and len(l["FullSys"]) > 0:
-                    s += PrettyStrings.formatDatum("full filesystems", l["FullSys"])
-
-                outlogger.info(s)
-            else:
-                outlogger.info("no status information received yet")
-
-
-    def listExceptions(self, n = 5, start = 1, ascending = False):
+        try:
+            outlogger.info(library.getMetrics(self.getJobObject()))
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
+    def listExceptions(self, n = 20, start = 1, ascending = False):
         """
         This method lists exceptions happened during the job run. For details about
         an exception, see showException().
@@ -451,34 +329,13 @@ class JobExecutionMonitor(GangaObject):
         @param start: the list begins at the start-th exception. default = 1
         @param ascending: wether to start at the beginning of the list. default = False
         """
-        if self.__checkStatus():
-            if ascending:
-                orderString = "first "
-            else:
-                orderString = "last "
-            s = ""
-            l = self.__seekJMDinfo("EXCEPTION", n, start, ascending)
-            z = start
-            for data in l:
-                ss = "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " : "
-
-                if data.has_key("Error"):
-                    ss += data["Error"][:48]
-                else:
-                    ss += "unknown error"
-
-                ss += " in " + PrettyStrings.formatLocation(data) + "\n"
-                if ascending:
-                    s += ss
-                else:
-                    s = ss + s
-                z += 1
-
-            s = PrettyStrings.makeHeader("listing exceptions (" + orderString + str(n) + ", skipping " + str(start - 1) + ")") + s
-            outlogger.info(s)
-
-
-    def listCommands(self, n = 5, start = 1, ascending = False):
+        try:
+            outlogger.info(library.listExceptions(self.getJobObject(), n, start, ascending))
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
+    def listCommands(self, n = 20, start = 1, ascending = False):
         """
         This method lists commands executed during the job run. For details about
         a command, see showCommand(). Commands can be commands executed in a script,
@@ -488,55 +345,12 @@ class JobExecutionMonitor(GangaObject):
         @param start: the list begins at the start-th command. default = 1
         @param ascending: wether to start at the beginning of the list. default = False
         """
-        if self.__checkStatus():
-            if ascending:
-                orderString = "first "
-            else:
-                orderString = "last "
-            s = ""
-            l = self.__seekJMDinfo("COMMAND", n, start, ascending)
-            z = start
-            for data in l:
-                ss = "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " : "
-                if data.has_key("SubType"):
-                    if data["SubType"] == "CALL":
-                        ss += "call to ".ljust(16)
-                        ss += PrettyStrings.formatLocation(data)
-                    elif data["SubType"] == "RETURN":
-                        ss += "return from ".ljust(16)
-                        ss += PrettyStrings.formatLocation(data)
-                    elif data["SubType"] == "BUILTIN":
-                        ss += "built-in cmd: ".ljust(16)
-                        if data.has_key("M1"):
-                            ss += PrettyStrings.formatString(data["M1"], 64)
-                        else:
-                            ss += "<unknown>"
-                    elif data["SubType"] == "EXTERNAL":
-                        ss += "command: ".ljust(16)
-                        if data.has_key("M1"):
-                            ss += PrettyStrings.formatString(data["M1"], 64)
-                        else:
-                            ss += "<unknown>"
-                    elif data["SubType"] == "SYNTAX":
-                        ss += "script expr: ".ljust(16)
-                        if data.has_key("M1"):
-                            ss += PrettyStrings.formatString(data["M1"], 64)
-                        else:
-                            ss += "<unknown>"
-                    else:
-                        ss += "misc event"
-                else:
-                    ss += "misc event"
-                ss += "\n"
-                if ascending:
-                    s += ss
-                else:
-                    s = ss + s
-                z += 1
-            s = PrettyStrings.makeHeader("listing commands (" + orderString + str(n) + ", skipping " + str(start - 1) + ")") + s
-            outlogger.info(s)
-
-
+        try:
+            outlogger.info(library.listCommands(self.getJobObject(), n, start, ascending))
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
     def showException(self, n = 1, ascending = False):
         """
         This method prints detailled information about an exception that
@@ -545,66 +359,12 @@ class JobExecutionMonitor(GangaObject):
         @param n: The n-th exception is shown. default = 1
         @param ascending: Wether n counts from the beginning of the list. default = False
         """
-        if self.__checkStatus():
-            l = self.__seekJMDinfo("EXCEPTION", 1, n, ascending)
-            if len(l):
-                data = l[0]
-                s = PrettyStrings.makeHeader("exception info")
-                s += PrettyStrings.formatDatum("time", PrettyStrings.formatTime(data))
-
-                if data.has_key("Error"):
-                    s += PrettyStrings.formatDatum("type", data["Error"])
-                else:
-                    s += PrettyStrings.formatDatum("type", "unknown error")
-
-                if data.has_key("Reason"):
-                    s += PrettyStrings.formatDatum("reason / value", data["Reason"])
-
-                if data.has_key("Frame"):
-                    if data["Frame"] == "?" and data.has_key("Lang") and data["Lang"] == "PYTHON":
-                        s += PrettyStrings.formatDatum("frame", "<module>")
-                    else:
-                        s += PrettyStrings.formatDatum("frame", PrettyStrings.formatString(data["Frame"], 128))
-                else:
-                    s += PrettyStrings.formatDatum("frame", "<unknown>")
-
-                if data.has_key("Script"):
-                    s += PrettyStrings.formatDatum("file", data["Script"])
-                else:
-                    s += PrettyStrings.formatDatum("file", "<unknown>")
-
-                if data.has_key("Line"):
-                    s += PrettyStrings.formatDatum("line", data["Line"])
-                else:
-                    s += PrettyStrings.formatDatum("line", "<unknown>")
-
-                if data.has_key("TB") or data.has_key("Code") or data.has_key("Vars"):
-                    s += "\n"
-
-                if data.has_key("TB"):
-                    s += "backtrace:\n"
-                    for ss in data["TB"].split("<br>"):
-                        s += PrettyStrings.formatString(ss, 128) + "\n"
-
-                if data.has_key("Code"):
-                    s += "code vicinity:\n"
-                    for ss in data["Code"].split("<br>"):
-                        s += PrettyStrings.formatString(ss, 128) + "\n"
-
-                if data.has_key("Vars"):
-                    s += "scope variables:\n"
-                    for ss in data["Vars"].split("<br>"):
-                        try:
-                            vname, value = ss.split(": ")
-                            s += PrettyStrings.formatString(vname, 24) + " : " + PrettyStrings.formatString(value, 96) + "\n"
-                        except:
-                            pass
-
-                outlogger.info(s)
-            else:
-                outlogger.warn("No such exception")
-
-
+        try:
+            outlogger.info(library.showException(self.getJobObject(), n, ascending))
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
     def showCommand(self, n = 1, ascending = False):
         """
         This method prints detailled information about a command that
@@ -613,124 +373,13 @@ class JobExecutionMonitor(GangaObject):
         @param n: The n-th command is shown. default = 1
         @param ascending: Wether n counts from the beginning of the list. default = False
         """
-        if self.__checkStatus():
-            l = self.__seekJMDinfo("COMMAND", 1, n, ascending)
-            if len(l):
-                data = l[0]
-                if not data.has_key("SubType"):
-                    outlogger.warn("Unknown type of command")
-                    return
-
-                lang = "UNKNOWN"
-                if data.has_key("Lang"):
-                    lang = data["Lang"]
-
-                ss = PrettyStrings.formatDatum("time", PrettyStrings.formatTime(data))
-
-                if lang != "UNKNOWN":
-                    ss += PrettyStrings.formatDatum("language", lang)
-
-                if data.has_key("Frame"):
-                    if (data["Frame"] == "?" and lang == "PYTHON") or (data["Frame"] == "???" and lang == "BASH"):
-                        ss += PrettyStrings.formatDatum("frame", "<module>")
-                    else:
-                        ss += PrettyStrings.formatDatum("frame", PrettyStrings.formatString(data["Frame"], 128))
-                else:
-                    ss += PrettyStrings.formatDatum("frame", "<unknown>")
-
-                if data.has_key("Script"):
-                    ss += PrettyStrings.formatDatum("file", data["Script"])
-                else:
-                    ss += PrettyStrings.formatDatum("file", "<unknown>")
-
-                if data.has_key("Line"):
-                    ss += PrettyStrings.formatDatum("line", data["Line"])
-                else:
-                    ss += PrettyStrings.formatDatum("line", "<unknown>")
-
-                s = ""
-                if data["SubType"] == "CALL":
-                    s = PrettyStrings.makeHeader("function call info")
-                    s += ss
-
-                    if data.has_key("M2"):
-                        if data["M2"] == "?" and lang == "PYTHON":
-                            s += PrettyStrings.formatDatum("caller", "<module>")
-                        else:
-                            s += PrettyStrings.formatDatum("caller", PrettyStrings.formatString(data["M2"], 128))
-                    else:
-                        s += PrettyStrings.formatDatum("caller", "<unknown>")
-
-                    if data.has_key("M3"):
-                        s += PrettyStrings.formatDatum("caller file", data["M3"].split(":")[0])
-                        value = data["M3"].split(":")
-                        if len(value) > 1:
-                            s += PrettyStrings.formatDatum("caller line", value[1])
-                        else:
-                            if data.has_key("M4") and lang == "PYTHON":
-                                s += PrettyStrings.formatDatum("caller line", data["M4"])
-                            else:
-                                s += PrettyStrings.formatDatum("caller line", "<unknown>")
-                    else:
-                        s += PrettyStrings.formatDatum("caller file", "<unknown>")
-                        s += PrettyStrings.formatDatum("caller line", "<unknown>")
-
-                    # local vars
-                    ss = None
-                    if lang != "PYTHON" and lang != "BASH" and data.has_key("M4"):
-                        ss = data["M4"]
-
-                    s += PrettyStrings.formatVarList("scope variables:", ss)
-
-                    # arguments
-                    ss = None
-                    if lang != "PYTHON" and lang != "BASH" and data.has_key("M1"):
-                        ss = data["M1"]
-                    if (lang == "PYTHON" or lang == "BASH") and data.has_key("M1"):
-                        ss = data["M1"]
-                        if ss[0:2] == "{{" and ss[-2:] == "}}":
-                            ss = ss[1:-1]
-
-                    s += PrettyStrings.formatVarList("call arguments:", ss)
-
-                elif data["SubType"] == "RETURN":
-                    s = PrettyStrings.makeHeader("function return info")
-                    s += ss
-
-                    if lang == "PYTHON" and data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("return value", data["M1"])
-
-                elif data["SubType"] == "BUILTIN":
-                    s = PrettyStrings.makeHeader("builtin command info")
-                    s += ss
-
-                    if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("command", data["M1"])
-
-                elif data["SubType"] == "EXTERNAL":
-                    s = PrettyStrings.makeHeader("command info")
-                    s += ss
-
-                    if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("command", data["M1"])
-
-                elif data["SubType"] == "SYNTAX":
-                    s = PrettyStrings.makeHeader("script expression info")
-                    s += ss
-
-                    if data.has_key("M1"):
-                        s += PrettyStrings.formatDatum("expression", data["M1"])
-
-                else:
-                    outlogger.warn("Unknown type of command")
-                    return
-
-                outlogger.info(s)
-            else:
-                outlogger.warn("No such command")
-
-
-    def peek(self, n = 20, start = 1, ascending = False, mode="stdout"):
+        try:
+            outlogger.info(library.showCommand(self.getJobObject(), n, ascending))
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
+    def peek(self, n = 20, start = 1, ascending = False, with_stdout=True, with_stderr=True):
         """
         This method peeks into the job's output in almost real-time. Output can
         be stdout or stderr-output. Note: The peek-option of JEM must be acti-
@@ -739,88 +388,65 @@ class JobExecutionMonitor(GangaObject):
         @param n: how many lines to list. default = 20
         @param start: the list begins at the start-th line. default = 1
         @param ascending: wether to start at the beginning of the list. default = False
-        @param mode: Chooses what output channel to peek ("stdout" or "stderr"). default = "stdout"
+        @param with_stdout: wether to include stdout-lines
+        @param with_stderr: wether to include stderr-lines
         """
-        if mode != "stderr" and mode != "stdout":
-            mode = "stdout"
-        if self.__checkStatus():
-            if ascending:
-                orderString = "first "
-            else:
-                orderString = "last "
+        try:
+            outlogger.info(library.peek(self.getJobObject(), n, start, ascending, with_stdout, with_stderr))
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
+    def outPeek(self, n = 20, start = 1, ascending = False):
+        """
+        This method peeks into the job's output in almost real-time.
 
-            if mode == "stdout":
-                ptype = "OUTPEEKLINE"
-            else:
-                ptype = "ERRPEEKLINE"
+        @param n: how many lines to list. default = 20
+        @param start: the list begins at the start-th line. default = 1
+        @param ascending: wether to start at the beginning of the list. default = False
+        """
+        try:
+            outlogger.info(library.peek(self.getJobObject(), n, start, ascending, True, False))
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
+    def errPeek(self, n = 20, start = 1, ascending = False):
+        """
+        This method peeks into the job's error-output in almost real-time.
 
-            s = ""
-
-            l = self.__seekJMDinfo(ptype, n, start, ascending)
-            z = start
-            for data in l:
-                ss = "(" + str(z).ljust(5) + ") " + PrettyStrings.formatTime(data) + " | "
-                if data.has_key("M1"):
-                    ss += PrettyStrings.formatString(data["M1"], 128)
-                ss += "\n"
-
-                if ascending:
-                    s += ss
-                else:
-                    s = ss + s
-
-                z += 1
-
-            s = PrettyStrings.makeHeader("peeking at output (" + orderString + str(n) + " of " + mode + ", skipping " + str(start - 1) + ")") + s
-            outlogger.info(s)
-        else:
-            outlogger.info("no status information received yet")
-
-
+        @param n: how many lines to list. default = 20
+        @param start: the list begins at the start-th line. default = 1
+        @param ascending: wether to start at the beginning of the list. default = False
+        """
+        try:
+            outlogger.info(library.peek(self.getJobObject(), n, start, ascending, False, True))
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
+    def getStatistics(self):
+        """
+        This method prints statistics about this job's monitoring data.
+        """
+        try:
+            library._checkAndMaybeImportData(self.getJobObject())
+            for l in self.chunkProcessor.getStatistics():
+                print l
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
     def livePeek(self):
-        def keyPressed():
-            return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
-
-        print "Live peeking into the job's stdout/stderr. Press any key (and then wait for up to 5 seconds) to abort."
-        if not self.__checkStatus():
-            print "Note: No status information was received yet. Waiting for the user app to start..."
-            try:
-                time.sleep(5)
-                while not self.__checkStatus():
-                    if keyPressed():
-                        logger.info("Aborted live-peek.")
-                        return
-                    time.sleep(5)
-            except:
-                pass
-
-        if not self.userAppRunning:
-            while not self.userAppRunning:
-                if keyPressed():
-                    logger.info("Aborted live-peek.")
-                    return
-                time.sleep(0.5)
-
-        print "Live peek starts!"
-        history = []
-        while not keyPressed():
-            l = self.__seekJMDinfo("OUTPEEKLINE", 40, 0, False)
-            s = ""
-            for data in l:
-                if not data.has_key("ExactTS") or not data.has_key("M1"):
-                    continue
-                if not data["ExactTS"]+data["M1"] in history:
-                    ss = PrettyStrings.formatTime(data) + " | "
-                    ss += PrettyStrings.formatString(data["M1"], 128)
-                    ss += "\n"
-                    s = ss + s
-                    history.append(data["ExactTS"]+data["M1"])
-            if len(s) > 0:
-                print s.strip()
-            time.sleep(0.5)
-
-
-
+        """
+        This method provides a "tail -f"-like peek into the job's stdout/stderr.
+        """
+        try:
+            library.livePeek(self)
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
     def extractLogfiles(self):
         """
         Extract the stdout.gz and stderr.gz for the user
@@ -847,8 +473,8 @@ class JobExecutionMonitor(GangaObject):
             extractedSome = True
 
         return extractedSome
-
-
+    
+    
     def getListenerLog(self):
         """
         Display the logfile of JEM's Listener process (for debugging purposes).
@@ -857,196 +483,244 @@ class JobExecutionMonitor(GangaObject):
         """
         # not the finest solution, but it works and is quite fast!
         job = self.getJobObject()
-        jobID = self.getJobID() # pylint: disable-msg=E1101
-        logDir = JEMConfig.MON_LOG_DIR + os.sep + Utils.escapeJobID(jobID)
         try:
-            os.system("less " + logDir + os.sep + "JEMganga-Listener.log")
+            os.system("less -SR " + job.outputdir + os.sep + "JEM.listener.log")
         except:
             outlogger.info("No live monitor log available")
             outlogger.debug("cause: " + str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
-
-
-    def plotMetrics(self):
-        """
-        This method tries to plot the system information data using gnuplot.
-        """
-        if self.__checkStatus():
-            # gather metrics from all RESOURCE messages
-            data = self.__seekJMDinfo("RESOURCE", 0, 0, True)
-            if len(data) == 0:
-                return
-
-            t = "Recorded system metrics"
-            if data[0].has_key("WN"):
-                t += " on " + data[0]["WN"]
-
-            p1 = Plotter("cpumem_stats",
-                         [
-                            {"title": "load"},
-                            {"title": "mem", "axes": "x1y2"}
-                         ],
-                         {
-                            "title": t + ": Performance",
-                            "xtime": True,
-                            "ylabel": "Load (1 min avg)",
-                            "y2label": "Free memory",
-                            "y2bytes": True
-                            #"yrange": "[0:*]",
-                            #"y2range": "[0:*]"
-                         }
-                   )
-
-            p2 = Plotter("disk_stats",
-                         [
-                            {"title": "working directory"},
-                            {"title": "temp directory"},
-                            {"title": "swap directory"}
-                         ],
-                         {
-                            "title": t + ": Disk space",
-                            "xtime": True,
-                            "ylabel": "Free disk space",
-                            "ybytes": True
-                            #"yrange": "[0:*]",
-                         }
-                   )
-
-            for l in data:
-                try:
-                    mem = Plotter.make1024(int(l["Mem"]) * 1024)
-                    p1.addSample(l["ExactTS"], [l["Load"], str(mem)])
-                    workdir = Plotter.make1024(int(l["Workdir"]) * 1024)
-                    tmpval  = Plotter.make1024(int(l["Tmp"]) * 1024)
-                    swapval = Plotter.make1024(int(l["Swap"].strip()) * 1024)
-                    p2.addSample(l["ExactTS"], [str(workdir), str(tmpval), str(swapval)])
-                except:
-                    pass
-
-            p1.close(launchGnuPlot=True)
-            p2.close(launchGnuPlot=True)
-
-
+    
+    
     def waitForRealStart(self):
         """
         This method waits for the user application to start on the WN; it may be aborted
         with <return>.
         """
+        if self.userAppExited:
+            outlogger.info("The user application on worker node already finished running")
+            return
+        
         def keyPressed():
             return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
-
+        
         try:
             print "waiting for user application to start... (to abort just press <return>)"
             while not self.userAppRunning and not keyPressed():
                 time.sleep(0.5)
         except:
             pass
-
-
-    def watch(self, overrideJobId = None):
-        """
-        Start a watcher thread for this job that will inform us automatically when
-        the user application on the worker node has started running. This is called
-        automatically on submit, so you only need to call it by yourself if you
-        quit Ganga during a job run and it hasn't begun running yet when you restar-
-        ted Ganga.
-        """
-        if self.watcherThread:
-            self.abortWatch()
-
-        job = self.getJobObject()
-        gangaID = job.id # pylint: disable-msg=E1101
-        if overrideJobId:
-            jobID = overrideJobId
-        else:
-            jobID = self.getJobID()
-
-        self.watcherThread = self.JEMWatcherThread(self, jobID, gangaID, self.jmdfile)
-        self.watcherThread.start()
-
-
-    def abortWatch(self):
-        """
-        Stop the watcher thread for this job, if any.
-        """
-        try:
-            if self.watcherThread:
-                self.watcherThread.stop()
-                self.watcherThread = None
-        except:
-           pass
-
-
+    
+    
     ####################################################################################################################
     ### methods that are exported to GPI, but usually not called by the user...
-
+    
+    
     def _getListenerPid(self):
+        """
+        Return the PID of the event listener process associated with this job, if any
+        """
         return self.pid
+    
+    
+    def _getShmKey(self):
+        """
+        Return the key of the shared memory segment associated with this job, if any
+        """
+        return str(self.shmKey)
+    
+    
+    def _ensure_listener_running(self):
+        """
+        Check that there is an event listener process associated with this job and that
+        it is running; launch a new one otherwise.
+        """
+        if self.jobID is None:
+            return
+        
+        # at first, assure our event processor runs. if it doesn't exist, it will get created.
+        new_key = self._register_processor()
+        
+        # then, assure the listener runs.
+        def __listener_not_running(self):
+            try:
+                proc_dir = "/proc/%d" % self.pid
+                if not os.path.isdir(proc_dir):
+                    return True
+            except:
+                return True
+            return False
+        
+        if self.pid == 0:
+            logger.info("launching listener for job %d" % self.getJobObject().id)
+            self._start_listener()
+            time.sleep(0.5)
+        elif __listener_not_running(self):
+            logger.warning("listener for job %d seems to be down - relaunching listener" % self.getJobObject().id)
+            self._start_listener()
+            time.sleep(0.5)
+        
+        if __listener_not_running(self):
+            logger.error("failed to launch listener for job %d" % self.getJobObject().id)
+        
+        return new_key
+    
+    
+    def _shutdown_listener(self):
+        """
+        Shutdown the event listener process associated with this job, if any
+        """
+        if self.pid != 0:
+            if self.pid != -1:
+                logger.info("shutting down listener for job %d" % self.getJobObject().id)
+                try:
+                    os.kill(self.pid, signal.SIGTERM)
+                except:
+                    pass
+            self.pid = 0
+    
+    
+    def _register_processor(self, live=True):
+        """
+        Create an event processor for this job
+        """
+        if self.shmKey == 0:
+            self.shmKey = 0x42000000 + (self.getJobObject().id * 0x10000) + os.getuid()
+            logger.debug("no shm key yet for job %d - generated key 0x%08x" % (self.getJobObject().id, self.shmKey))
+        if self.ui is None:
+            try:
+                from Modes.UI.UI import UI
+                self.ui = UI()
+                logger.info("launching event processor for job %d" % self.getJobObject().id)
+                library.setUI(self.getJobObject(), self.ui, live)
+                return self.shmKey
+            except:
+                logger.warn("failed to launch event processor for job %d" % self.getJobObject().id)
+                self.ui = None
+        return 0
+    
+    
+    def _deregister_processor(self):
+        """
+        Remove the event processor for this job
+        """
+        the_key = 0
+        if self.ui is not None:
+            logger.info("shutting down event processor for job %d" % self.getJobObject().id)
+            self.ui.stop()
+            library.setUI(self.getJobObject(), None)
+            self.ui = None
+        # destroy the shmem and sem associated with this job, if present and if no listener is running
+        if self.pid == 0 and self.shmKey != 0:
+            the_key = self.shmKey
+            try:
+                result = os.system("ipcrm -M 0x%08x 2>/dev/null" % self.shmKey)
+                if result == 0:
+                    logger.debug("destroyed shared memory block of job %d's processor" % self.getJobObject().id)
+            except: pass
+            try:
+                result = os.system("ipcrm -S 0x%08x 2>/dev/null" % self.shmKey)
+                if result == 0:
+                    logger.debug("destroyed semaphore of job %d's processor" % self.getJobObject().id)
+            except: pass
+            self.shmKey = 0
+        return the_key
+    
+    
+    def _think(self):
+        """
+        Let the event processor do its job. This is called periodically by the framework.
+        """
+        if self.ui is not None and self.ui.isSetUp():
+            self.ui.think()
+    
+    
+    def _getDebugStatusLine(self):
+        j = self.getJobObject()
+        
+        sta = j.status
+        ssta = "unknown" #j.info.monitor._getServerStatus()
+        hasstarted = self.userAppRunning
+        hasexited = self.userAppExited
+        
+        if sta == "submitted":
+            if ssta == "error":
+                s += "\033[0;31m"
+            elif ssta in ("waiting","disabled","not yet started","unknown"):
+                s += "\033[1;30m"
+            elif hasstarted:
+                s += "\033[1;32m"
+            else:
+                s += "\033[0;33m"
+        elif sta == "running":
+            if ssta == "error":
+                s += "\033[0;31m"
+            elif ssta in ("waiting","disabled","not yet started","unknown"):
+                s += "\033[1;30m"
+            elif hasstarted:
+                s += "\033[1;32m"
+            else:
+                s += "\033[0;32m"
+        else:
+            return ""
 
+        if hasexited:
+            sta = "app done"
 
-    def _getServerPid(self):
-        return self.__getServerPid()
+        rs = "  "
+        if hasstarted and not hasexited:
+            rs = " *"
 
+        s += "#% 5d %s %s % 6d % 6d % 7d %s" % (j.id, sta.rjust(11), rs,\
+                                                self.pid, 0, 0, ssta.rjust(16))
+                                                #j.info.monitor._getServerPid(),\
+                                                #j.info.monitor._getServerPort(),\
 
-    def _getServerPort(self):
-        return self.port
+        ## data transfer statistics ###
+        #stats = j.info.monitor._getTransmissionStats()
+        #if stats != [] and stats["Tc"] != 0:
+            #s += "  % 6d % 10d % 6d % 6d % 6d % 6d" % (
+                                                        #stats["Tc"],
+                                                        #stats["Tb"],
+                                                        #stats["Rc"],
+                                                        #stats["Ec"],
+                                                        #stats["Pc"],
+                                                        #stats["Cc"]
+                                                      #)
+        ####
 
+        s += "\n"
 
-    def _getServerStatus(self):
-        return self.__checkStatus(True)
-
-
-    def _hasUserAppStarted(self):
-        return self.userAppRunning
-
-
-    def _hasUserAppExited(self):
-        return self.userAppExited
-
-
-    def _getTransmissionStats(self):
-        try:
-            return self.__transmissionStats()
-        except:
-            return []
-
-
+    
     ####################################################################################################################
     ### methods not exported to GPI
-
+    
+    
+    def _start_listener(self):
+        try:
+            self.pid = library.launchListener(self.getJobObject(), self.jobID, self.andJobIDs)
+        except:
+            ei = sys.exc_info()
+            logger.debug(str(ei[0]) + " - " + str(ei[1]))
+    
+    
     def onBegunToReceiveMonitoringData(self):
         """
-        This hook is called by the watcher thread as soon as the first data is received
-        for this job.
+        This hook is called as soon as the first data is received for this job.
         """
+        self.userAppRunning = True
         job = self.getJobObject()
         jobGangaID = job.id # pylint: disable-msg=E1101
-        self.userAppRunning = True
-        outlogger.info("Begun to receive monitoring data for job " + str(jobGangaID))
-
-
-    def onWatcherThink(self):
-        """
-        This hook is called by the watcher thread every 5 seconds from the moment the
-        first data is received on.
-        """
+        outlogger.info("Begun to receive monitoring data for job %s" % str(jobGangaID))
+    
+    
+    def onUserAppExited(self):
+        self.userAppExited = True
+        self.userAppRunning = False
         job = self.getJobObject()
-
-        try:
-            jobGangaID = str(job.id) # pylint: disable-msg=E1101
-
-            l = self.__seekJMDinfo("JOBSTATE", 1, 1) # pylint: disable-msg=W0212
-            if len(l) and len(l[0]):
-                if l[0]["Status"] == "FINISHED":
-                    self.userAppExited = True
-        except:
-            pass
-
-        if self.userAppExited:
-            outlogger.info("User application of job " + str(jobGangaID) +\
-                           " seems to have finished! Now waiting for the middleware...")
-            self.watcherThread.stop()
-
-
+        jobGangaID = job.id # pylint: disable-msg=E1101
+        outlogger.info("User application of job " + str(jobGangaID) +\
+                        " seems to have finished! Now waiting for the middleware...")
+    
+    
     def getJobID(self):
         if not self.jobID:
             job = self.getJobObject()
@@ -1061,406 +735,22 @@ class JobExecutionMonitor(GangaObject):
                 else:
                     self.jobID = str(job.backend.id)
         return self.jobID
-
-
+    
+    
     def _summary_print(self, attribute, verbosity):
         class Anonymous:
             def __repr__(self):
                 return "..."
-        if isinstance(attribute, JEMCTraceOptions):
-            return Anonymous()
-        elif isinstance(attribute, JEMAdvancedOptions):
+        if isinstance(attribute, JEMAdvancedOptions):
             return Anonymous()
         return str(attribute)
-
-
-    def __checkStatus(self, onlyReport = False):
-        """
-        Checks JEM's overall health.
-        Returns True if JEM is enabled and working correctly. Otherwise
-        returns False. Can utter a warning or error message, for example
-        for the following reasons:
-
-        - JEM is disabled globally
-        - JEM is disabled for this job
-        - the JEM library couldn't be found or loaded
-        - the realtime listener process can't be found / is inactive
-          (note: this is normal for finished jobs!)
-        """
-        j = self.getJobObject() # pylint: disable-msg=E1101
-
-        if not JEMloader.INITIALIZED:
-            if onlyReport:
-                return "disabled"
-            outlogger.info("Monitoring is globally disabled. No monitoring data is available.")
-            return False
-        if not self.enabled: # pylint: disable-msg=E1101
-            if onlyReport:
-                return "disabled"
-            outlogger.info("Monitoring is disabled for this job. No monitoring data is available.")
-            return False
-
-        if j.status not in ('completed', 'failed', 'killed', 'removed'):
-            if not self.realtime or not jemconfig['JEM_ENABLE_REALTIME']:
-                if onlyReport:
-                    return "disabled"
-                outlogger.info("Realtime monitoring is disabled. Monitoring data will only be available in the output sandbox.")
-                return False
-            if self.pid == 0:
-                if self.getJobObject().status == 'new': # pylint: disable-msg=E1101
-                    if onlyReport:
-                        return "not yet started"
-                    outlogger.info("Job has not been submitted yet. No monitoring data is available.")
-                else:
-                    if onlyReport:
-                        return "error"
-                    outlogger.info("No monitoring process started (check configuration). No monitoring data is available.")
-                return False
-
-        if not os.path.exists(self.jmdfile):
-            if onlyReport:
-                return "waiting"
-            outlogger.info("No monitoring data was received yet.")
-            return False
-
-        # To potentially utter a warning, we check the Listener status...
-        if onlyReport:
-            return self.__isListenerActive(True)
-
-        self.__isListenerActive()
-        return True
-
-
-    def __killprocess(self,pid):
-        """
-        Helpermethod to kill a given process by its own id. First try to kill it with term signal.
-        If this doesn't work try to kill it with kill signal, and otherwise by direct os call.
-        """
-        try:
-            pid = int(pid)
-        except:
-            logger.debug("Invalid PID given to __killprocess: " + str(pid))
-            return
-
-        try:
-            # try to terminate gracefully
-            os.kill(pid, signal.SIGTERM)
-
-            # wait for the process to finish
-            time.sleep(2)
-
-            # if the process is still there, KILL it :)
-            # (workaround for python bug, waitpid always raises oserror, so it can not be used here)
-
-            # first, look if we got childprocesses to kill first:
-            pids,ppids,cmds = self.__getChildProcesses() # pylint: disable-msg=W0612
-            for z,p in enumerate(pids):
-                if ppids[z] == pid:
-                    try:
-                        os.kill(p, signal.SIGKILL)
-                    except OSError, ose:
-                        if str(ose).find("No such process"):
-                            return
-                        else:
-                            os.system("kill -9 " + str(p) + " 2> /dev/null")
-
-            try:
-                os.kill(pid, signal.SIGKILL)
-            except OSError, ose:
-                if str(ose).find("No such process"):
-                    return
-                else:
-                    os.system("kill -9 " + str(pid) + " 2> /dev/null")
-        except:
-            # try to kill process with os call, will always work (or not, if the process doesn't exist...)!
-            try:
-                os.system("kill -9 " + str(pid) + " 2> /dev/null")
-            except:
-                return
-
-
-    def __getServerPid(self):
-        pid = str(self.pid) # pylint: disable-msg=E1101
-        job = self.getJobObject()
-        jobID = self.getJobID() # pylint: disable-msg=E1101
-
-        if job.status not in ['running','submitted']: # pylint: disable-msg=E1101
-            return 0
-
-        pids, ppids, cmds = self.__getChildProcesses()
-
-        # Check if all processes are running
-        if not pid in pids:
-            if pid != "0":
-                logger.debug("in __getServerPid: pid not in pids (%s not in %s)" % (str(pid), str(pids)))
-            return 0
-        else:
-            z = pids.index(pid)
-            if cmds[z].find("[python] <defunct>") != -1:
-                logger.debug("in __getServerPid: server command status includes <defunct>")
-                return 0
-            else:
-                for z,p in enumerate(ppids):
-                    if p == pid:
-                        # okay, well, let's assume SOME server is OK...
-                        if (cmds[z].find("HTTPSServer") != -1 or cmds[z].find("RGMAServer") != -1 or cmds[z].find("StompServer") != -1)\
-                           and cmds[z].find("[python] <defunct>") == -1:
-                            return int(pids[z])
-                logger.debug("in __getServerPid: server commands didn't include HTTPSServer or RGMAServer, or did include <defunct>")
-                return 0
-
-
-    def __isListenerActive(self, onlyReport = False):
-        """
-        Checks if the R-GMA/HTTPS Server and job listener are active
-        """
-
-        # not the finest solution, but it works and is quite fast!
-        pid = str(self.pid) # pylint: disable-msg=E1101
-        job = self.getJobObject()
-        jobID = self.getJobID() # pylint: disable-msg=E1101
-        logDir = JEMConfig.MON_LOG_DIR + os.sep + Utils.escapeJobID(jobID)
-
-        # check the job state
-        if job.status not in ['running','submitted']: # pylint: disable-msg=E1101
-            if onlyReport:
-                return "finished"
-            outlogger.info("Job execution finished. No new data will be received.")
-            return True
-
-        # check if RGMA/HTTPS started correctly
-        stdoutFileName = logDir + os.sep + 'stdout.log'
-        if os.path.exists(stdoutFileName):
-            fd = open(stdoutFileName,'r')
-            stdout = fd.read()
-
-            rgma = True
-            https = True
-            tcp = True
-            stomp = True
-
-            # try to find some strings to check if rgma is active
-            if stdout.find('Can not create server process R-GMA') != -1:
-                rgma = False
-            if stdout.find('R-GMA package not found') != -1:
-                rgma = False
-
-            # try to find some strings to check if https is active
-            if stdout.find('Can not create server process HTTPS') != -1:
-                https = False
-
-            # try to find some strings to check if TCP is active
-            if stdout.find('Can not create server process TCP') != -1:
-                tcp = False
-
-            # try to find some strings to check if TCP is active
-            if stdout.find('Can not create server process STOMP') != -1:
-                stomp = False
-
-            if not (rgma or https or tcp or stomp):
-                if onlyReport:
-                    return "error"
-                logger.error('Failed to start JEMs listening server(s). Monitoring is not active.')
-                return False
-
-        pids, ppids, cmds = self.__getChildProcesses()
-
-        # Check if all processes are running
-        if not pid in pids:
-            if not onlyReport:
-                if not self.userAppExited:
-                    outlogger.warn("JEM livemonitor is not running. No new data will be received (Displayed data may be outdated).")
-            else:
-                return "error"
-            #logger.debug("cause: not in there. pids: " + str(pids))
-        else:
-            z = pids.index(pid)
-            if cmds[z].find("[python] <defunct>") != -1:
-                if not onlyReport:
-                    if not self.userAppExited:
-                        outlogger.warn("JEM livemonitor is not running. No new data will be received (Displayed data may be outdated).")
-                else:
-                    return "error"
-                #logger.debug("cause: <defunct>. pids: " + str(pids))
-            else:
-                for z,p in enumerate(ppids):
-                    if p == pid:
-                        if cmds[z].find("HTTPSServer") != -1:
-                            if cmds[z].find("<defunct>") == -1:
-                                if onlyReport:
-                                    return "OK"
-                                return True
-                            else:
-                                if onlyReport:
-                                    return "error"
-                                break
-                        if cmds[z].find("RGMAServer") != -1:
-                            if cmds[z].find("<defunct>") == -1:
-                                if onlyReport:
-                                    return "OK"
-                                return True
-                            else:
-                                if onlyReport:
-                                    return "error"
-                                break
-                        if cmds[z].find("StompServer") != -1:
-                            if cmds[z].find("<defunct>") == -1:
-                                if onlyReport:
-                                    return "OK"
-                                return True
-                            else:
-                                if onlyReport:
-                                    return "error"
-                                break
-                if not self.userAppExited:
-                    outlogger.warn("JEM livemonitor is not running. No new data will be received (Displayed data may be outdated).")
-                else:
-                    outlogger.info("Job execution on the worker node has finished. No new data will be received.")
-        if onlyReport:
-            return "unknown"
-        return True
-
-
-    def __getChildProcesses(self):
-        """
-        Find the child-processes of LiveMonitoring.py (Server, PipePublisher-launched stuff, etc).
-        """
-
-        # prepare for grep
-        job = self.getJobObject()
-        jobID = self.getJobID()
-        logDir = JEMConfig.MON_LOG_DIR + os.sep + Utils.escapeJobID(jobID)
-
-        # dont delete the width parameter, otherwise the grep command will fail due to line length...
-        cmd = "ps --width 1000 -eo user,pid,ppid,command | grep " + getpass.getuser() + " | awk '{ print $1, $2, $3, $4,$5,$6,$7,$8,$9 }'"
-
-        # save results to tmp file
-        if not os.path.exists(logDir):
-            os.makedirs(logDir, 0777)
-        tmpFile = logDir + os.sep + "tmpServerActiveCheck"
-        os.system(cmd + " > " + tmpFile)
-        fd = open(tmpFile,'r')
-
-        pids = []
-        ppids = []
-        cmds = []
-
-        # read result
-        tmpString = fd.readline()
-        while tmpString:
-            user,pid,ppid,cmd = tmpString.split(" ", 3) # pylint: disable-msg=W0612
-            pids.append(pid)
-            ppids.append(ppid)
-            cmds.append(cmd)
-            tmpString = fd.readline()
-        os.remove(tmpFile)
-        return pids, ppids, cmds
-
-
-    def __parseJMDline(self, line):
-        result = {}
-        try:
-            nodes = line.split(";")
-            for n in nodes:
-                try:
-                    k,v = n.split("=")
-                    result[k] = unescape_jmd(v)
-                except:
-                    pass
-        except:
-            return {}
-        return result
-
-
-    def __seekJMDinfo(self, tag, n, start, ascending = False):
-        """
-        read the 'n' first/last lines after 'start' lines of the type 'tag' from the JMD file
-
-        @param tag: The type of messages to look for
-        @param n: The number of messages to read
-        @param start: The start-th message to start at
-        @param ascending: Wether to start at the top or bottom of the logfile
-        """
-        if ascending:
-            fd = open(self.jmdfile, "r")
-        else:
-            fd = ropen(self.jmdfile)
-
-        jmdlines = []
-        z = 1
-        while 1:
-            try:
-                line = fd.readline()
-                if len(line) == 0:
-                    break
-                line = self.__parseJMDline(line)
-                try:
-                    if line["Type"] == tag:
-                        z += 1
-                        if z > start:
-                            jmdlines += [line]
-                            if n != 0 and z - start >= n:
-                                break
-                except:
-                    continue
-            except StopIteration:
-                break
-
-        try:
-            fd.close()
-        except:
-            pass
-
-        return jmdlines
-
-
-    def __transmissionStats(self):
-        fd = ropen(self.jmdfile)
-        stats = {"Tb": 0, "Tc": 0, "Rc": 0, "Ec": 0, "Pc": 0, "Cc": 0}
-
-        while 1:
-            try:
-                line = fd.readline()
-                ll = len(line)
-                if ll == 0:
-                    break
-                elif ll == 1:
-                    continue
-
-                stats["Tb"] += ll
-                stats["Tc"] += 1
-
-                line = self.__parseJMDline(line)
-
-                if line.has_key("Type"):
-                    if line["Type"] == "RESOURCE":
-                        stats["Rc"] += 1
-                    elif line["Type"] == "EXCEPTION":
-                        stats["Ec"] += 1
-                    elif line["Type"][3:] == "PEEKLINE":
-                        stats["Pc"] += 1
-                    else:
-                        stats["Cc"] += 1
-            except StopIteration:
-                break
-
-        try:
-            fd.close()
-        except:
-            pass
-
-        # in case the watcher thread didn't notice...
-        if stats["Tc"] > 0 and not self.userAppRunning:
-            self.onBegunToReceiveMonitoringData()
-
-        return stats
-
-
+    
+    
     def __decompressTar(self, logfilePath):
         """
         Decompresses the jem monitoring log files into the job output directory
         """
-        logfileName = str(logfilePath) + WNConfig.COMPLETE_LOG
+        logfileName = str(logfilePath) + os.sep + "JEM_LOG.tgz"
         if not os.path.exists(logfileName):
             return False
         else:
@@ -1470,43 +760,3 @@ class JobExecutionMonitor(GangaObject):
             except:
                 return False
 
-
-    ####################################################################################################################
-    ### private types
-
-    class JEMWatcherThread(GangaThread):
-        def __init__(self, jemObject, jobID, gangaID, jmdfile):
-            GangaThread.__init__(self, name='JEM watcher thread for job #' + str(gangaID))
-            self.jemObject = jemObject
-            self.gangaID = gangaID
-            self.jmdfile = jmdfile
-            self.jobID = jobID
-            self.gotData = False
-            self.setDaemon(True)
-
-        def __deepcopy__(self, memento):
-            return None # te he he!
-
-        def run(self):
-            logger.debug("started watcher thread for job " + str(self.gangaID))
-            z = 0
-            while not self.should_stop():
-                time.sleep(0.1)
-                z += 1
-                if not self.gotData:
-                    if z >= 10:
-                        z = 0
-                        try:
-                            info = os.stat(self.jmdfile)
-                            if info.st_size > 0:
-                                self.gotData = True
-                                self.jemObject.onBegunToReceiveMonitoringData()
-                        except:
-                            pass
-                else:
-                    if z >= 50:
-                        z = 0
-                        self.jemObject.onWatcherThink()
-
-            logger.debug("watcher thread of job " + str(self.gangaID) + " exits")
-            self.unregister()

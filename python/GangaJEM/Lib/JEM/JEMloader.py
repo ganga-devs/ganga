@@ -37,8 +37,11 @@ import traceback
 #-----------------------------------------------------------------------------------------------------------------------
 from Ganga.Utility.logging import logging, getLogger
 logger = getLogger("GangaJEM.Lib.JEM")
-outlogger = getLogger("GangaJEM.Lib.JEM.out")
+outlogger = getLogger("GangaJEM.Lib.JEM.info")
 #-----------------------------------------------------------------------------------------------------------------------
+
+# filter JEM's startup logging, unless we want to debug
+JEM_LIBRARY_INIT_LOGLEVEL = logging.ERROR
 
 # status vars to access from other GangaJEM modules
 INITIALIZED = False
@@ -53,8 +56,6 @@ try:
     if not os.environ.has_key('JEM_PACKAGEPATH'):
         # if not, find the JEM package in the external packages...
         JEM_PACKAGEPATH = GangaJEM.PACKAGE.setup.getPackagePath('JEM')[0]
-        logger.debug("Got JEM-path from GangaJEM PACKAGE: " + JEM_PACKAGEPATH)
-
         # set the env var to enable JEM to find itself...
         os.environ['JEM_PACKAGEPATH'] = JEM_PACKAGEPATH
     else:
@@ -62,46 +63,25 @@ try:
 
     # ...and prepend it to the python-path (priorizing it)
     if not JEM_PACKAGEPATH in sys.path:
-        sys.path = [JEM_PACKAGEPATH] + [JEM_PACKAGEPATH + os.sep + "legacy"] + sys.path
+        sys.path = [JEM_PACKAGEPATH] + sys.path
 
     # import JEM-Ganga-Integration module (that manages the rest of JEMs initialisation)
     initError = None
-    userpath = os.path.expanduser("~/.JEMrc")
-
     os.environ["JEM_Global_mode"] = "Ganga"
 
+    logger.debug("Using JEM from: " + JEM_PACKAGEPATH)
     try:
-        # try to import JEM configs and submit methods
-        from JEMlib.conf import JEMSysConfig as SysConfig
-        from JEMui.conf import JEMuiSysConfig as JEMConfig
-        from JEMlib.conf import JEMConfig as WNConfig
-        from JEMui.conf import JEMuiConfig as UIConfig
+        lvl = logger.level
+        logger.setLevel(JEM_LIBRARY_INIT_LOGLEVEL)
 
-        # import needed JEM modules
-        from JEMlib.utils.ReverseFileReader import ropen
-        from JEMlib.utils.DictPacker import multiple_replace
-        from JEMlib.utils import Utils
-        from JEMlib import VERSION as JEM_VERSION
-    except Exception, e:
-        initError = "Wrong JEM_PACKAGEPATH specified. Could not find JEM library. (%s)" % e
-
-    if initError == None:
-        logger.debug("Using JEM from: " + JEM_PACKAGEPATH)
-        try:
-            # disable warnings to avoid startup-annoyance in Ganga.
-            lvl = logger.level
-            logger.setLevel(logging.ERROR)
-
-            # import JEM 0.3 stuff
-            import JEM as JEMmain
-            runner = JEMmain.setup(logger=getLogger, logprefix="GangaJEM.Lib.JEM", allconfig=True)
-
-            logger.setLevel(lvl)
-        except:
-            ei = sys.exc_info()
-            initError = "Failed to setup JEMs runtime: " + str(ei[0]) + " - " + str(ei[1])
-            import traceback
-            initError += "\n" + str(traceback.format_tb(ei[2]))
+        # import JEM 0.3 stuff
+        import JEM as JEMmain
+        GangaJEM.library = JEMmain.setup(logger=getLogger, logprefix="GangaJEM.Lib.JEM", allconfig=True)
+        
+        logger.setLevel(lvl)
+    except:
+        ei = sys.exc_info()
+        initError = "Failed to setup JEMs runtime: " + str(ei[0]) + " - " + str(ei[1])
 
     # if some error occured during initialization, disable JEM monitoring.
     if initError != None:

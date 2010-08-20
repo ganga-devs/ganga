@@ -40,7 +40,7 @@ from GangaJEM.Lib.JEM import JobExecutionMonitor
 
 ########################################################################################################################
 # Our logging instance and configuration
-logger = getLogger("GangaJEM.Lib.JEM.out")
+logger = getLogger("GangaJEM.Lib.JEM.info")
 
 jemconfig = getConfig("JEM")
 
@@ -55,38 +55,16 @@ if not jemconfig['JEM_ENABLE']:
 
 # if INITIALIZED, we may import JEMs modules (they are in the pythonpath then)
 if JEMloader.INITIALIZED:
-    #######################################################
-    ## legacy (JEM 0.2) modules; to be refactored
-    import JEMlib
-
-    # try to import JEM configs and submit methods
-    from JEMlib.conf import JEMSysConfig as SysConfig
-    from JEMui.conf import JEMuiSysConfig as JEMConfig
-    from JEMlib.conf import JEMConfig as WNConfig
-    from JEMui.conf import JEMuiConfig as UIConfig
-
-    # import needed JEM modules
-    from JEMlib.utils.ReverseFileReader import ropen
-    from JEMlib.utils.DictPacker import multiple_replace
-    from JEMlib.utils.FreePortFinder import FreePortFinder
-    from JEMlib.utils import Utils
-    from JEMlib import VERSION as JEM_VERSION
-    #######################################################
-
     # JEM 0.3 modules
     from Modes.Ganga import ConfigConverter
+    from Common.Utils.CoreUtils import job_id_to_stomp_topic
+
 
 ########################################################################################################################
 ########################################################################################################################
 class JEMMonitoringServiceHandler(object):
 
-    _freeportfinder = None
     _instances = {}
-
-    try:
-        _freeportfinder = FreePortFinder()
-    except:
-        pass
 
     def getInstance(job):
         """
@@ -105,9 +83,8 @@ class JEMMonitoringServiceHandler(object):
         It holds a reference to the job-object.
         """
         self.__job = job
-        self.__httpsListenPort = 0
         self.__monitoredSubjobs = []
-        self.__JEMrc = None
+        #logger.info("JEMMonitoringServiceHandler created for job " + str(job))
 
 
     def submitting(self):
@@ -286,16 +263,16 @@ class JEMMonitoringServiceHandler(object):
                     jobIsAthena = self.__isAthenaJob()
 
                     # configure the C-Tracer
-                    if mo.ctracer.enabled:
-                        logger.warning("The C-Tracer is an experimental feature (refer to https://svn.grid.uni-wuppertal.de/trac/JEM for more information)")
+                    #if mo.ctracer.enabled:
+                        #logger.warning("The C-Tracer is an experimental feature (refer to https://svn.grid.uni-wuppertal.de/trac/JEM for more information)")
 
-                        if jobIsAthena:  # The run application for Athena jobs always is Python!
-                            config.env['JEM_CTracer_trace_apps'] = "__find_python__"
+                        #if jobIsAthena:  # The run application for Athena jobs always is Python!
+                            #config.env['JEM_CTracer_trace_apps'] = "__find_python__"
 
-                        if config.env['JEM_CTracer_trace_apps'] == '' and config.env['JEM_CTracer_trace_modules'] != '':
-                            config.env['JEM_CTracer_trace_apps'] = config.env['JEM_CTracer_trace_modules']
-                    else:
-                        config.env['JEM_CTracer_disable'] = "True"
+                        #if config.env['JEM_CTracer_trace_apps'] == '' and config.env['JEM_CTracer_trace_modules'] != '':
+                            #config.env['JEM_CTracer_trace_apps'] = config.env['JEM_CTracer_trace_modules']
+                    #else:
+                        #config.env['JEM_CTracer_disable'] = "True"
 
                     # add some information about this Ganga session
                     #config.env['JEM_Ganga_Version'] = 
@@ -321,34 +298,36 @@ class JEMMonitoringServiceHandler(object):
                         logger.error("  error occured while preparing: " + str(ei[0]) + ": " + str(ei[1]))
                         logger.debug("  trace:\n" + "".join(traceback.format_tb(ei[2])))
 
-                    ## DEBUG OUTPUT #################################################################
-                    s =  "Config for #" + self.__getFullJobId() + "." + str(i) + ":"                #
-                    s += "\n    exe = " + str(config.exe)                                           #
-                    s += "\n   args = " + str(config.args)                                          #
-                                                                                                    #
-                    s += "\n    env = {"                                                            #
-                    for k in config.env:                                                            #
-                        s += "\n            '" + str(k) + "': '"                                    #
-                        s += PrettyStrings.formatString(str(config.env[k]), 80).strip() +  "',"     #
-                    s += "\n          }"                                                            #
-                                                                                                    #
-                    s += "\n inp-sb = ["                                                            #
-                    for z,ii in enumerate(config.inputbox):                                         #
-                        if isinstance(ii, FileBuffer):                                              #
-                            ii = ii.subdir + os.sep + ii.name                                       #
-                        s += "\n            '" + str(ii) + "'"                                      #
-                        if z < len(config.inputbox)-1:                                              #
-                            s += ","                                                                #
-                    s += "\n          ]"                                                            #
-                                                                                                    #
-                    s += "\n out-sb = ["                                                            #
-                    for z,ii in enumerate(config.outputbox):                                        #
-                        s += "\n            '" + str(ii) + "'"                                      #
-                        if z < len(config.outputbox)-1:                                             #
-                            s += ","                                                                #
-                    s += "\n          ]"                                                            #
-                    logger.debug(s)                                                                 #
-                    #################################################################################
+                    if False:
+                        ## DEBUG OUTPUT #################################################################
+                        s =  "Config for #" + self.__getFullJobId() + "." + str(i) + ":"                #
+                        s += "\n    exe = " + str(config.exe)                                           #
+                        s += "\n   args = " + str(config.args)                                          #
+                                                                                                        #
+                        s += "\n    env = {"                                                            #
+                        for k in config.env:                                                            #
+                            s += "\n            '" + str(k) + "': '"                                    #
+                            s += PrettyStrings.formatString(str(config.env[k]), 80).strip() +  "',"     #
+                        s += "\n          }"                                                            #
+                                                                                                        #
+                        s += "\n inp-sb = ["                                                            #
+                        for z,ii in enumerate(config.inputbox):                                         #
+                            if isinstance(ii, FileBuffer):                                              #
+                                ii = ii.subdir + os.sep + ii.name                                       #
+                            s += "\n            '" + str(ii) + "'"                                      #
+                            if z < len(config.inputbox)-1:                                              #
+                                s += ","                                                                #
+                        s += "\n          ]"                                                            #
+                                                                                                        #
+                        s += "\n out-sb = ["                                                            #
+                        for z,ii in enumerate(config.outputbox):                                        #
+                            s += "\n            '" + str(ii) + "'"                                      #
+                            if z < len(config.outputbox)-1:                                             #
+                                s += ","                                                                #
+                        s += "\n          ]"                                                            #
+                        logger.debug(s)                                                                 #
+                        #################################################################################
+            
             logger.debug("Monitored subjobs: " + str(self.__monitoredSubjobs))
         except:
             import traceback
@@ -371,19 +350,20 @@ class JEMMonitoringServiceHandler(object):
             return
 
         # nicely ask the user to give some feedback.
-        logger.info("The Job Execution Monitor is active for this job.")
-        logger.info("  Please consider providing (positive and/or negative) feedback of your user experience")
-        logger.info("  with GangaJEM - visit https://svn.grid.uni-wuppertal.de/trac/JEM for that. Thanks :)")
+        logger.info("* The Job Execution Monitor is active for this job.")
+        logger.info("*   Please consider providing (positive and/or negative) feedback of your user experience")
+        logger.info("*   with GangaJEM - visit https://svn.grid.uni-wuppertal.de/trac/JEM for that. Thanks :)")
 
         if self.__job.subjobs and len(self.__job.subjobs) > 0:
             # HACK: If we are a split job, we have to wait for the subjobs to be assigned
             #       their backend-id (JobID) before we can start the Job-Listener process
-            #       So: Wait in it in an own thread!
+            #       So: Wait for it in an own thread!
             ###-------------------------------------------------------------------------------------#########
             from Ganga.Core.GangaThread import GangaThread                                                  #
             class WaitForJobIDsThread(GangaThread):                                                         #
-                def __init__(self, job, callback):                                                          #
+                def __init__(self, handler, job, callback):                                                 #
                     GangaThread.__init__(self, name='wait_for_jobID_thread')                                #
+                    self.__serviceHandler = handler                                                         #
                     self.__job = job                                                                        #
                     self.__callback = callback                                                              #
                     self.setDaemon(True) # don't hang the main thread                                       #
@@ -391,7 +371,11 @@ class JEMMonitoringServiceHandler(object):
                 def run(self):                                                                              #
                     logger.debug("started thread waiting for subjob-ids of job #" + str(self.__job.id))     #
                     while not self.should_stop():                                                           #
-                        if self.__job.subjobs[0].backend.id != "":                                          #
+                        all_ids_known = True                                                                #
+                        for sj_id in self.__serviceHandler.__monitoredSubjobs:                              #
+                            if self.__job.subjobs[i].backend.id == "":                                      #
+                                all_ids_known = False                                                       #
+                        if all_ids_known:                                                                   #
                             logger.debug("Job " + str(self.__job.id) + " has been submitted.")              #
                             self.__callback()                                                               #
                             break                                                                           #
@@ -400,7 +384,7 @@ class JEMMonitoringServiceHandler(object):
                     logger.debug("thread waiting for subjob-ids of job #" + str(self.__job.id) + " exits")  #
                     self.unregister()                                                                       #
             ###--------------------------------------------------------------------------------------------##
-            self.__waitForJobIDsThread = WaitForJobIDsThread(self.__job, self.__startJobListener)
+            self.__waitForJobIDsThread = WaitForJobIDsThread(self, self.__job, self.__startJobListener)
             self.__waitForJobIDsThread.start()
         else:
             logger.debug("Job " + self.__getFullJobId() + " has been submitted.")
@@ -413,9 +397,7 @@ class JEMMonitoringServiceHandler(object):
         for this job.
         """
         if not JEMloader.INITIALIZED:
-            logger.debug("Job Execution Monitor is disabled or failed to initialize")
             return
-
         self.__userAppRunning = True
         logger.info("Begun to receive monitoring data for job " + str(self.__job.id))
 
@@ -433,49 +415,49 @@ class JEMMonitoringServiceHandler(object):
             # main job
             logger.debug("Job " + self.__getFullJobId() + " has completed. Status: " + cause)
             self.__stopJobListener()
-            if cause != "failed":
-                if self.__job.info.monitor.extractLogfiles():
-                    # now that the job has finished and the logiles have been extracted,
-                    # we copy the full JMD log (if present) into our workspace (so all
-                    # the events can be inspected from within Ganga)
-                    copiedStuff = False
 
-                    if os.path.exists(self.__job.info.monitor.jmdfile):
-                        if not os.path.exists(self.__job.outputdir + "JEM_MON.jmd"):
-                            logger.info("no log in output sandbox, but live received data is present - copying into output dir")
-                            os.system('cp ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.outputdir + "JEM_MON.jmd")
-                        try:
-                            os.system('mv ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.info.monitor.jmdfile + '.bak')
-                        except:
-                            pass
+            if self.__job.info.monitor.extractLogfiles():
+                # now that the job has finished and the logiles have been extracted,
+                # we copy the full JMD log (if present) into our workspace (so all
+                # the events can be inspected from within Ganga)
+                copiedStuff = False
 
-                    try:
-                        if os.path.exists(self.__job.outputdir + "JEM_MON.jmd"):
-                            logger.info("Copying the full log into the workspace...")
-                            os.system('cp ' + self.__job.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile)
-                            copiedStuff = True
-                            logger.debug("  OK, log of main job #" + str(self.__job.id) + " has been copied.")
-                    except:
-                        pass
+                #if os.path.exists(self.__job.info.monitor.jmdfile):
+                    #if not os.path.exists(self.__job.outputdir + "JEM_MON.jmd"):
+                        #logger.info("no log in output sandbox, but live received data is present - copying into output dir")
+                        #os.system('cp ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.outputdir + "JEM_MON.jmd")
+                    #try:
+                        #os.system('mv ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.info.monitor.jmdfile + '.bak')
+                    #except:
+                        #pass
 
-                    logger.debug("  (now trying to copy the subjobs' logs)")
+                #try:
+                    #if os.path.exists(self.__job.outputdir + "JEM_MON.jmd"):
+                        #logger.info("Copying the full log into the workspace...")
+                        #os.system('cp ' + self.__job.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile)
+                        #copiedStuff = True
+                        #logger.debug("  OK, log of main job #" + str(self.__job.id) + " has been copied.")
+                #except:
+                    #pass
 
-                    for sj in self.__job.subjobs:
-                        if os.path.exists(sj.outputdir + "JEM_MON.jmd"):
-                            try:
-                                os.system('cp ' + sj.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile + ".subjob." + str(sj.id))
-                                logger.debug("  OK, log of subjob #" + str(self.__job.id) + "." + str(sj.id) + " has been copied.")
-                                copiedStuff = True
-                            except:
-                                pass
+                #logger.debug("  (now trying to copy the subjobs' logs)")
 
-                    if copiedStuff:
-                        logger.info("...done. Inspecting the data now should display the whole available info.")
+                #for sj in self.__job.subjobs:
+                    #if os.path.exists(sj.outputdir + "JEM_MON.jmd"):
+                        #try:
+                            #os.system('cp ' + sj.outputdir + "JEM_MON.jmd " + self.__job.info.monitor.jmdfile + ".subjob." + str(sj.id))
+                            #logger.debug("  OK, log of subjob #" + str(self.__job.id) + "." + str(sj.id) + " has been copied.")
+                            #copiedStuff = True
+                        #except:
+                            #pass
 
-                if not os.path.exists(self.__job.outputdir + "JEM_MON.jmd"):
-                    if os.path.exists(self.__job.info.monitor.jmdfile):
-                        logger.info("no log in output sandbox, but live received data is present - copying into output dir")
-                        os.system('cp ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.outputdir + "JEM_MON.jmd")
+                if copiedStuff:
+                    logger.info("...done. Inspecting the data now should display the whole available info.")
+
+            #if not os.path.exists(self.__job.outputdir + "JEM_MON.jmd"):
+                #if os.path.exists(self.__job.info.monitor.jmdfile):
+                    #logger.info("no log in output sandbox, but live received data is present - copying into output dir")
+                    #os.system('cp ' + self.__job.info.monitor.jmdfile + ' ' + self.__job.outputdir + "JEM_MON.jmd")
 
 
     def rollback(self):
@@ -512,13 +494,7 @@ class JEMMonitoringServiceHandler(object):
             return
 
         jobID = self.__job.info.monitor.getJobID()
-        escapedJobID = Utils.escapeJobID(jobID)
-
-        jmdDir = WNConfig.LOG_DIR + os.sep + escapedJobID
-        if not os.path.exists(jmdDir):
-            os.makedirs(jmdDir, 0777)
-
-        self.__job.info.monitor.jmdfile = jmdDir + os.sep + UIConfig.PUBLISHER_JMD_FILE
+        escapedJobID = job_id_to_stomp_topic(jobID)
 
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
             logger.debug('realtime mode is disabled, not launching listener process')
@@ -539,39 +515,19 @@ class JEMMonitoringServiceHandler(object):
                     s += " [M]"                                                         #
                 logger.debug(s)                                                         #
             #############################################################################
-
-            # the job listener executable now lies in a subdir of the JEM package path.
-            executable = JEMloader.JEM_PACKAGEPATH + os.sep + 'legacy' + os.sep + 'JEMganga' + os.sep + 'LiveMonitoring.py'
-            try:
-                stompserver = self.__job.info.monitor.advanced.stompvalve.host
-                stompport = str(self.__job.info.monitor.advanced.stompvalve.port)
-                args = [executable, "--stomp-server", stompserver, "--stomp-port", stompport, jobID]
-            except:
-                args = [executable, jobID]
-
-            # further job IDs (subjob IDs)
+            
+            # further job IDs (subjob IDs) - set this first to avoid race condition (JEMServiceThread waits
+            # for monitor.jobID to be set)
             for i, sj in enumerate(self.__job.subjobs):
                 if i in self.__monitoredSubjobs:
-                    args += [str(sj.backend.id)]
-
-            try:
-                self.__job.info.monitor.pid = os.spawnve(os.P_NOWAIT, executable, args, os.environ)
-            except Exception, r:
-                logger.error('Could not start job listener process.')
-                logger.error('The Job with the id %s will start without monitoring.' % jobID)
-                logger.error('Error cause: %s.' % str(r))
-                if self.pid > 0:
-                    self.__stopJobListener()
-                self.__job.info.monitor.enabled = False # pylint: disable-msg=E1101
-                return
-
-            logger.info('The JEM realtime monitoring listener has been started for job ' + str(self.__job.id) + '.')
-            logger.debug('Listener process: PID %s' % self.__job.info.monitor.pid)
-            logger.debug('Listener arguments: ' + str(args))
-            logger.debug('Logfiles: %s' % WNConfig.LOG_DIR + os.sep + escapedJobID)
-
-            # start a watcher thread for this job.
-            self.__job.info.monitor.watch(jobID)
+                    if self.__job.info.monitor.andJobIDs is not None:
+                        self.__job.info.monitor.andJobIDs += ',' + str(sj.backend.id)
+                    else:
+                        self.__job.info.monitor.andJobIDs = str(sj.backend.id)
+            
+            self.__job.info.monitor.jobID = escapedJobID
+            
+            self.__job.info.monitor._ensure_listener_running()
         except:
             ei = sys.exc_info()
             logger.error("An error occured while trying to launch the JEM realtime monitoring listener process.")
@@ -583,98 +539,11 @@ class JEMMonitoringServiceHandler(object):
         Shutdown the job listener of this job
         """
         if not isinstance(self.__job.info.monitor, JobExecutionMonitor.JobExecutionMonitor):
-            logger.debug('__stopJobListener(): j.info.monitor is no JobExecutionMonitor!')
             return
-
-        logger.debug('__stopJobListener() [job %s]: aborting watcher thread' % self.__job.id)
-        self.__job.info.monitor.abortWatch()
-
+        
         if not self.__job.info.monitor.realtime or not jemconfig['JEM_ENABLE_REALTIME']: # pylint: disable-msg=E1101
             logger.debug('__stopJobListener() [pid %s]: no realtime...' % self.__job.info.monitor.pid)
             return
-
-        if self.__job.info.monitor.pid != 0:
-            logger.debug('__stopJobListener() [pid %s]: shutting down process.' % self.__job.info.monitor.pid)
-            logger.info("The JEM realtime monitoring listener for job %s exits." % self.__job.info.monitor.getJobID())
-            self.__killprocess(self.__job.info.monitor.pid)
-
-
-    def __getChildProcesses(self):
-        """
-        Find the child-processes of LiveMonitoring.py (Server, PipePublisher-launched stuff, etc).
-        """
-        pids = ppids = cmds = []
-
-        _pid_match = re.compile("(?P<pid>[0-9]{1,5})")
-        for root, dirs, files in os.walk("/proc"):
-            _del = []
-            for d in dirs:
-                try:
-                    m = _pid_match.match(d)
-                except:
-                    m = None
-                if m:
-                    pid = m.group("pid")
-                    fd = open("/proc/%s/stat" % pid, "r")
-                    for l in fd.readlines():
-                        ppid = int(l.split()[3])
-                        if ppid == self.__job.info.monitor.pid:
-                            pids += [int(pid)]
-                            ppids += [ppid]
-                            fd2 = open("/proc/%s/cmdline" % pid, "r")
-                            cmds += [fd2.readline()]
-                            fd2.close()
-                    fd.close()
-                # do not recurse.
-                _del += [d]
-            for d in _del:
-                dirs.remove(d)
-        return pids, ppids, cmds
-
-
-    def __killprocess(self,pid):
-        """
-        Helpermethod to kill a given process by its own id. First try to kill it with term signal.
-        If this doesn't work try to kill it with kill signal, and otherwise by direct os call.
-        """
-        try:
-            pid = int(pid)
-        except:
-            logger.debug("Invalid PID given to __killprocess: " + str(pid))
-            return
-
-        def internal_shutdown(thepid):
-            logger.debug('internal_shutdown(%s)' % str(thepid))
-            thepid = int(thepid)
-            try:
-                os.kill(thepid, signal.SIGTERM)
-                time.sleep(0.5)
-                if (os.waitpid(thepid, os.WNOHANG) == (0,0)):
-                    logger.debug('internal_shutdown(%s): -15 did not suffice, killing using -9' % str(thepid))
-                    os.kill(thepid, signal.SIGKILL)
-            except OSError, ose:
-                logger.debug('internal_shutdown(%s): %s' % (str(thepid), str(ose)))
-                if "No such process" in str(ose):
-                    return
-                else:
-                    os.system("kill -9 " + str(thepid) + " 2> /dev/null")
-
-        try:
-            # first, look if we got childprocesses to kill first:
-            pids,ppids,cmds = self.__getChildProcesses() # pylint: disable-msg=W0612
-            logger.debug('shutting down LM child processes:')
-            for z,p in enumerate(pids):
-                if ppids[z] == pid:
-                    internal_shutdown(p)
-                    logger.debug('   %s: %s' % (str(p), cmds[z]))
-            logger.debug('shutting down LM main process (%s)' % str(pid))
-            internal_shutdown(pid)
-        except:
-            ei = sys.exc_info()
-            logger.debug("in __killprocess: " + str(ei[0]) + ": " + str(ei[1]))
-            # try to kill process with os call, will always work (or not, if the process doesn't exist...)!
-            try:
-                os.system("kill -9 " + str(pid) + " 2> /dev/null")
-            except:
-                return
-
+        
+        self.__job.info.monitor._shutdown_listener()
+        self.__job.info.monitor.realtime = False
