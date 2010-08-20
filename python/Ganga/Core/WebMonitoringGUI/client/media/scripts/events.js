@@ -68,7 +68,7 @@ function Events() {
             this.Data.tid = '';
             this.Data.user = '';
         }
-        else if ($(el).text() == 'Tasks') {
+        else if ($(el).text() == 'Jobs') {
             this.Data.tid = '';
         }
         $('.tablePlus').attr('src', 'media/images/table_plus.png');
