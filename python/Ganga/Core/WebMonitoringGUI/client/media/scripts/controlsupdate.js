@@ -74,16 +74,16 @@ function ControlsUpdate() {
     
     this.breadcrumbs_update = function() {
         var thidRef = this;
-        var output = '&nbsp;:: ';
+        var output = '<span class="bold">Job monitoring : </span>';
         // id=breadcrumbs
         if (this.Data.user) {
             if (this.Data.tid) {
                 // show jobs
-                output += '<a>Users List</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; <a>Tasks</a> &raquo; ' + this.Data.tid;
+                output += '<a>Users List</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; <a>Jobs</a> &raquo; ' + this.Data.tid;
             }
             else {
                 // show tasks
-                output += '<a>Users List</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; Tasks';
+                output += '<a>Users List</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; Jobs';
             }
         }
         else {
