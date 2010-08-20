@@ -98,6 +98,7 @@ p.add_option('--batchextraopts' , action='store', type='string', dest='batchextr
 p.add_option('--check_availability', action='store_true', help='Check for availability of input files on NG' )
 p.add_option('--runtimeenvironment', action='store', type='string', dest='runtimeenvironment', help='Specify the required runtime environment on an NG site' )
 p.add_option('--bexec', action='store', type='string', dest='bexec', help='Specify the build command for --athena_exe EXE on Panda')
+p.add_option('--extOutFile', action='store', type='string', dest='extOutFile', help='define extra output files on Panda, e.g. --extOutFile=output1.txt:output2.dat')
 
 # Application options
 p.add_option('-c', action='store', type='string', dest='options', help='One-liner, runs before any job Options')
@@ -115,6 +116,7 @@ p.add_option('--user_setupfile', action='store', type='string', dest='user_setup
 p.add_option('--excludepackage', action='store', type='string', dest='excludepackage', help='Pattern of files to exclude from user area requirements files, separated by : , e.g. --excludepackage=MyPackage:YourPackage' )
 p.add_option('--prepare_old', action='store_true', help='Use prepare_old instead of new prepare method' )
 p.add_option('--collectstats', action='store_true', help='Switch to collect application statistics info and store in stats field' )
+p.add_option('--atlas_supp_stream', action='store', type='string', dest='atlas_supp_stream', help='suppress some output streams. e.g.,  --atlas_supp_stream=GLOBAL:D3PD' )
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -234,6 +236,9 @@ else:
 	    j.application.prepare()
 if opt.collectstats:
     j.application.collect_stats=True
+
+if opt.atlas_supp_stream:
+    j.application.atlas_supp_stream=opt.atlas_supp_stream.split(':')
 
 # inputdata
 
@@ -433,6 +438,7 @@ elif opt.backend=='panda':
     if opt.long: j.backend.requirements.long = True 
     if opt.cputime: j.backend.requirements.cputime = opt.cputime
     if opt.memory: j.backend.requirements.memory = opt.memory
+    if opt.extOutFile: j.backend.extOutFile = opt.extOutFile.split(':')
 
     if opt.bexec:
         j.backend.bexec=opt.bexec
