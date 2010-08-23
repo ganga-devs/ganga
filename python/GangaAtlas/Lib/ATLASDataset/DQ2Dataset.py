@@ -219,15 +219,19 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                 datasetsiteinfo = dq2.listFileReplicas(location, dataset)
             finally:
                 dq2_lock.release()
-            numberoffiles = datasetsiteinfo[0]['found']
-            locations_num[location]=int(numberoffiles)
 
-            guidsSite = datasetsiteinfo[0]['content']
-            for guid in guidsDataset:
-                if guid in guidsSite:
-                    temp = guidLocation[guid]
-                    temp.append(location)
-                    guidLocation[guid] = temp
+            if datasetsiteinfo[0]['found'] != None: 
+                numberoffiles = datasetsiteinfo[0]['found']
+                locations_num[location]=int(numberoffiles)
+             
+                guidsSite = datasetsiteinfo[0]['content']
+                for guid in guidsDataset:
+                    if guid in guidsSite:
+                        temp = guidLocation[guid]
+                        temp.append(location)
+                        guidLocation[guid] = temp
+            else:
+                logger.warning('cannot get file replica info - ignore site %s' % location)
 
         dataset_locations_list[dataset] = locations_num
 
