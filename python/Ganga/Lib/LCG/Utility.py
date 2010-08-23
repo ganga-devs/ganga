@@ -18,7 +18,9 @@ def get_uuid(*args):
         a = random.random()*100000000000000000L
     data = str(t)+' '+str(r)+' '+str(a)+' '+str(args)
 
-    data = get_md5_obj().update( data ).hexdigest()
+    md5_obj = get_md5_obj()
+    md5_obj.update( data )
+    data = md5_obj.hexdigest()
         
     return data
 
