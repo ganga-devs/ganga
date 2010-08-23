@@ -42,6 +42,7 @@ outlogger = getLogger("GangaJEM.Lib.JEM.info")
 
 # filter JEM's startup logging, unless we want to debug
 JEM_LIBRARY_INIT_LOGLEVEL = logging.ERROR
+#JEM_LIBRARY_INIT_LOGLEVEL = logging.DEBUG
 
 # status vars to access from other GangaJEM modules
 INITIALIZED = False

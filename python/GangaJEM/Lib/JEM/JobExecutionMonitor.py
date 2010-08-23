@@ -533,7 +533,14 @@ class JobExecutionMonitor(GangaObject):
         Check that there is an event listener process associated with this job and that
         it is running; launch a new one otherwise.
         """
-        if self.jobID is None:
+        try:
+            job = self.getJobObject()
+            if job.status not in ('submitted', 'running', 'completing'):
+                return
+        except:
+            return
+        
+        if self.getJobID() is None:
             return
         
         # at first, assure our event processor runs. if it doesn't exist, it will get created.
@@ -722,7 +729,7 @@ class JobExecutionMonitor(GangaObject):
     
     
     def getJobID(self):
-        if not self.jobID:
+        if self.jobID is None:
             job = self.getJobObject()
             if job.backend.__class__.__name__ == "Localhost":
                 self.jobID = uuid.getUniqueID()
