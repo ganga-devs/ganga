@@ -49,3 +49,13 @@ a { cursor:pointer; }
 .Unknown { border:1px #1e4a68 solid; background-color:gray; color:black; }
 .Incomplete { border:1px #1e4a68 solid; background-color:magenta; color:black; }
 .Failed { border:1px #1e4a68 solid; background-color:red; color:yellow; }
+
+.NewSubjob { border:1px #1e4a68 solid; background-color:#00ff7d; color:black; }
+.SubmittingSubjob { border:1px #1e4a68 solid; background-color:white; color:gray; }
+.SubmittedSubjob { border:1px #1e4a68 solid; background-color:#00007d; color:white; }
+.RunningSubjob { border:1px #1e4a68 solid; background-color:#00F000; color:black; }
+.CompletedSubjob,  CompletingSubjob { border:1px #1e4a68 solid; background-color:#009000; color:white; }
+.KilledSubjob { border:1px #1e4a68 solid; background-color:#7D0000; color:black; }
+.UnknownSubjob { border:1px #1e4a68 solid; background-color:gray; color:black; }
+.IncompleteSubjob { border:1px #1e4a68 solid; background-color:#7d007d; color:black; }
+.FailedSubjob { border:1px #1e4a68 solid; background-color:#7D0000; color:yellow; }

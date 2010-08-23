@@ -157,15 +157,15 @@ function Settings() {
         },
         'translateData': function(dataJSON) {
             var jobStatuses = {
-                'new':'New',
-		'submitting':'Submitting',
-                'submitted':'Submitted',
-		'running':'Running',
-		'completed':'Completed',
-		'killed':'Killed',
-		'unknown':'Unknown',
-		'incomplete':'Incomplete',
-		'failed':'Failed'
+                'new':'NewSubjob',
+		'submitting':'SubmittingSubjob',
+                'submitted':'SubmittedSubjob',
+		'running':'RunningSubjob',
+		'completed':'CompletedSubjob',
+		'killed':'KilledSubjob',
+		'unknown':'UnknownSubjob',
+		'incomplete':'IncompleteSubjob',
+		'failed':'FailedSubjob'
             };
             var tasksArr = Array();
             for (i in dataJSON) {
