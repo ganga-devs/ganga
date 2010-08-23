@@ -104,11 +104,16 @@ function Settings() {
                     ('<a class="">'+dataJSON[i].name+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].application+'</a>' || ''),
                     ('<a class="">'+dataJSON[i].backend+'</a>' || ''),
-                    ('<a class="noJobsClick">'+dataJSON[i].subjobs+'</a>' || '0'),
-                    ('<a class="">'+dataJSON[i].submitted+'</a>' || '0'),
-                    ('<a class="noRunnClick">'+dataJSON[i].running+'</a>' || '0'),
-                    ('<a class="">'+dataJSON[i].completed+'</a>' || '0'),
-                    ('<a class="noFailClick">'+dataJSON[i].failed+'</a>' || '0'),
+		    (dataJSON[i].subjobs),   
+		    (dataJSON[i].submitted),   
+		    (dataJSON[i].running),   
+		    (dataJSON[i].completed),   
+		    (dataJSON[i].failed),   
+                    //('<a class="noJobsClick">'+dataJSON[i].subjobs+'</a>' || '0'),
+                    //('<a class="">'+dataJSON[i].submitted+'</a>' || '0'),
+                    //('<a class="noRunnClick">'+dataJSON[i].running+'</a>' || '0'),
+                    //('<a class="">'+dataJSON[i].completed+'</a>' || '0'),
+                    //('<a class="noFailClick">'+dataJSON[i].failed+'</a>' || '0'),
                     ('<a class="">'+dataJSON[i].actualCE+'</a>' || '')
                 ));
             }
