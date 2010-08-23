@@ -1559,8 +1559,10 @@ class DQ2OutputDataset(Dataset):
                 sj.outputdata.retrieve()
             return
        
-        if job.backend._name == 'LCG':
+        if job.backend._name in [ 'LCG' ]:
             Download.prefix_hack = job.backend.middleware
+        elif job.backend._name in [ 'CREAM']:
+            Download.prefix_hack = 'GLITE'
         else:
             Download.prefix_hack = 'EDG'
 
@@ -1572,7 +1574,7 @@ class DQ2OutputDataset(Dataset):
         if not os.environ.has_key('DQ2_COPY_COMMAND'):
             os.environ['DQ2_COPY_COMMAND']="lcg-cp --vo atlas"
 
-        if (job.outputdata.outputdata and job.backend._name == 'LCG' and job.outputdata.output) or (job.backend._name == 'Panda' and job.outputdata.output):
+        if (job.outputdata.outputdata and job.backend._name in [ 'LCG', 'CREAM'] and job.outputdata.output) or (job.backend._name == 'Panda' and job.outputdata.output):
             # Determine local output path to store files
             local_location = options.get('local_location')
 
