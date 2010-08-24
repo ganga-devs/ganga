@@ -322,7 +322,7 @@ class AnaTransform(Transform):
       if self.partitions_sites:
          j.backend.requirements.sites = self.partitions_sites[partitions[0]-1]
       j.outputdata = self.outputdata
-      if stripProxy(j.backend)._name == "Panda":
+      if stripProxy(j.backend)._name == "Panda" and j.application.atlas_exetype == "ATHENA":
           j.outputdata.outputdata=[]
       j.outputdata.datasetname = ""
       #if j.outputdata.datasetname:
