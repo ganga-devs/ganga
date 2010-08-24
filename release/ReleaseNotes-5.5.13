@@ -1,5 +1,12 @@
 **************************************************************************************************************
-5.5.13 (2010/8/23)
+5.5.13 (2010/8/24)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Updates and fixes to the new monitoring gui (--webgui).
+Fixed report(j) function which may now accept subjobs.
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -35,6 +42,9 @@ Athena:
   - Subsequent jobs could use
     j.inputdata.names = prev_j.splitter.missing_files
     to process only those missing files.
+* Fix bug #71765: avoid dq2 glitches in 
+  DQ2Dataset.list_location_siteindex() routine
+* Fix outputdata.retrieve() for CREAM backend
 
 AthenaMC:
 ---------
@@ -51,6 +61,8 @@ Tasks:
 * can now pause while tasks is submitting jobs, pause now works better
 * use t.name to set DQ2 datasetname, check if it is usable
 * truncate long dataset names in AnaTask
+* made files_per_job configuration option obsolete (automatism not 
+  necessary anymore)
 
 scripts:
 --------
@@ -59,12 +71,18 @@ scripts:
   is default
 * fix tabs
 
+tests:
+------
+* Reorganized AthenaMC tests to make them uniform between the two 
+  backends. Also, added timestamp to output datasets as testing 
+  framework recycles job numbers
+
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaJEM
 --------------------------------------------------------------------------------------------------------------
 This is a major update of the UI part of the Job Execution Monitor. GangaJEM now refers to the JEM
-library 0.3.1.0 and lost the legacy codebase. This is also reflected by a change of versioning
+library 0.3.1.2 and lost the legacy codebase. This is also reflected by a change of versioning
 numbers for GangaJEM, closer reflecting which JEM lib version it uses.
 
 
