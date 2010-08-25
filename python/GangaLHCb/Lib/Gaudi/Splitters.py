@@ -132,11 +132,7 @@ class SplitByFiles(ISplitter):
             logger.info("Only using a maximum of %d inputfiles"
                         % int(self.maxFiles))
         
-        #store names to add cache info later
-        dataset_files = {}
-        for i in inputdata.files: dataset_files[i.name] = i
         datasetlist = self._splitFiles(inputs)
-
         for dataset in datasetlist:
             subjobs.append(create_gaudi_subjob(job,dataset))
                 

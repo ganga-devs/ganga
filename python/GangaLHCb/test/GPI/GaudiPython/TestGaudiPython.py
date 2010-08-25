@@ -5,8 +5,9 @@ import shutil
 import tempfile
 from os.path import join
 
+from GangaLHCb.test import *
+
 import Ganga.Utility.Config
-config = Ganga.Utility.Config.getConfig('DIRAC')
 configDaVinci = Ganga.Utility.Config.getConfig('defaults_DaVinci')
 
 class TestGaudiPython(GangaGPITestCase):
@@ -30,7 +31,7 @@ class TestGaudiPython(GangaGPITestCase):
                'stdout should contain string: ' + executionstring
 
     def testDirac(self):
-        gp = GaudiPython(platform=config['AllowedPlatforms'][0])
+        gp = GaudiPython(platform=getDiracAppPlatform())
         #gp.version = configDaVinci['version']
         j = Job(application=gp, backend=Dirac())
         j.submit()

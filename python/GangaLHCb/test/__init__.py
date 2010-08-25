@@ -10,6 +10,10 @@ except ImportError:
 from Ganga.GPI import *
 import os.path
 DAVINCI_VERSION=None
+
+def getDiracAppPlatform():
+    return 'slc4_ia32_gcc34'
+
 # Add Local runtimehandler for Testsubmitter
 def addLocalTestSubmitter():
     allHandlers.add('DaVinci', 'TestSubmitter', GaudiRunTimeHandler)

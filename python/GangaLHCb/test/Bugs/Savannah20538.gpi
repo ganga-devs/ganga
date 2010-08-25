@@ -3,7 +3,7 @@ from GangaLHCb.test import *
 from os.path import join,basename
 
 j = Job ( application = DaVinci(), backend = Dirac())
-j.application.platform=config['DIRAC']['AllowedPlatforms'][0]
+j.application.platform = getDiracAppPlatform()
 tmpdir = mkdtemp()
 
 fname = 'test'

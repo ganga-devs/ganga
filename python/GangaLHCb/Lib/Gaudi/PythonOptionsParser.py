@@ -153,6 +153,14 @@ class PythonOptionsParser:
         outsandbox = []
         outputdata = []
 
+        if self.opts_dict.has_key('CounterSummarySvc'):
+            if self.opts_dict['CounterSummarySvc'].has_key('xmlfile'):
+                 f = self.opts_dict['CounterSummarySvc']['xmlfile']
+                 if sbtypes.count('CounterSummarySvc') > 0:
+                     outsandbox.append(f)
+                 else:
+                     outputdata.append(f) 
+
         datatypes = ['NTupleSvc','EvtTupleSvc']
         for type in datatypes:
             if self.opts_dict.has_key(type):

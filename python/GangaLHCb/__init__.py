@@ -22,8 +22,9 @@ overridden by the user in a specific job via the Job.outputdata field). Files \
 from all other known handlers will go to output data (unless overridden by \
 the user in a specific job via the Job.outputsandbox field).'
 configLHCb.addOption('outputsandbox_types',
-                     ['NTupleSvc','HistogramPersistencySvc',
-                      'MicroDSTStream','EvtTupleSvc'],dscrpt)
+                     ['CounterSummarySvc','NTupleSvc',
+                      'HistogramPersistencySvc','MicroDSTStream',
+                      'EvtTupleSvc'],dscrpt)
 dscrpt = 'The string that is added after the filename in the options to tell' \
          ' Gaudi how to read the data. This is the default value used if the '\
          'file name does not match any of the patterns in '\
@@ -48,7 +49,8 @@ configLHCb.addOption('noInputDataBannedSites',sites,dscrpt)
 # Set default values for the Dirac section.
 dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
 configDirac.addOption('ShowDIRACstdout',False,dscrpt)
-configDirac.addOption('AllowedPlatforms',['slc4_ia32_gcc34'],'depricated')
+dscrpt = 'Global timeout (seconds) for Dirac commands'
+configDirac.addOption('Timeout',1000,dscrpt)
     
 def getEnvironment( config = {} ):
    import sys

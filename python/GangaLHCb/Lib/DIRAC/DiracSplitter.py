@@ -37,6 +37,7 @@ class DiracSplitter(SplitByFiles):
         })
     
     def _splitFiles(self, inputs):
+        from GangaLHCb.Lib.LHCbDataset import LogicalFile
         files = []
         for f in inputs.files:
             if isLFN(f): files.append(f.name)
@@ -52,26 +53,19 @@ class DiracSplitter(SplitByFiles):
             raise SplittingError('An unknown error occured.')
         datasets = []
         # check that all files were available on the grid
-        for file in inputs.files:
-            found = False
-            for list in split_files:
-                for f in list:
-                    if file.name.find(f) >= 0:
-                        found = True
-                        break
-            if not found:
-                if self.ignoremissing:
-                    logger.warning('Ignored file %s' % file.name)
-                else: raise SplittingError('File not found: %s' % file.name)
+        big_list = []
+        for l in split_files: big_list.extend(l)
+        diff = set(inputs.getFileNames()).difference(big_list)
+        if self.ignoremissing:
+            if len(diff) > 0:
+                for f in diff: logger.warning('Ignored file: %s' % f)
+                else: raise SplittingError('Some files not found!')
         
-        for list in split_files:
+        for l in split_files:
             dataset = LHCbDataset()
             dataset.depth = inputs.depth
-            for file in list:
-                for dfile in inputs.files:
-                    if dfile.name.find(file) >= 0:
-                        dataset.files.append(dfile)
-                        break
+            for file in l:
+                dataset.files.append(LogicalFile(file))
             datasets.append(dataset)
         return datasets
         

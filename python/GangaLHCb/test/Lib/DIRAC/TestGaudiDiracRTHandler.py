@@ -2,6 +2,7 @@ from GangaTest.Framework.tests import GangaGPITestCase
 from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
 from GangaLHCb.Lib.Gaudi.Francesc import GaudiExtras
 from Ganga.GPIDev.Lib.File.File import File
+from GangaLHCb.test import *
 
 class TestGaudiDiracRTHandler(GangaGPITestCase):
 
@@ -11,7 +12,7 @@ class TestGaudiDiracRTHandler(GangaGPITestCase):
         j.outputsandbox = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl
-        self.app.platform = config['DIRAC']['AllowedPlatforms'][0]
+        self.app.platform = getDiracAppPlatform()
         self.extra = GaudiExtras()
         self.extra.master_input_buffers['master.buffer'] = '###MASTERBUFFER###'
         self.extra.master_input_files = [File(name='master.in')]

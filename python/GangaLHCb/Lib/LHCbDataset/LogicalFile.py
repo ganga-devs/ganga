@@ -48,7 +48,7 @@ class LogicalFile(GangaObject):
     _category='datafiles'
     _name='LogicalFile'
     _exportmethods = ['replicate','download','remove','removeReplica',
-                      'getMetadata','getReplicas']
+                      'getMetadata','getReplicas','bkMetadata']
 
     def __init__(self,name=''):        
         super(LogicalFile,self).__init__()
@@ -113,5 +113,11 @@ class LogicalFile(GangaObject):
         metadata = result['Value']['Successful']
         if metadata.has_key(self.name): return metadata[self.name]
         return {}        
+
+    def bkMetadata(self):
+        'Returns the bookkeeping meta-data for this file.'
+        cmd = 'result = DiracCommands.bkMetaData(["%s"])' % self.name
+        r = get_result(cmd,'Error removing replica','Replica rm error.')
+        return r['Value'].get(self.name,{})
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

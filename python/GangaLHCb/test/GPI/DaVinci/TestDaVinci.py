@@ -1,6 +1,8 @@
 import os
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed
+from GangaLHCb.test import *
+
 
 class TestDaVinci(GangaGPITestCase):
 
@@ -48,7 +50,7 @@ class TestDaVinci(GangaGPITestCase):
 
     def test_outputdata_submit(self):
         j = Job(application=DaVinci(),backend=Dirac())
-        j.application.platform = config.DIRAC.AllowedPlatforms[0]
+        j.application.platform = getDiracAppPlatform()
         j.outputdata = ['Something.root']
         j.submit()
         j.kill()

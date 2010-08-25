@@ -208,7 +208,7 @@ class DiracServer:
         elif self.show_stdout is not configDirac['ShowDIRACstdout']:
             self.disconnect()
             self.connect()
-        def_timeout = self.socket.gettimeout()
+        self.socket.settimeout(float(configDirac['Timeout']))
         if timeout is not None:
             self.socket.settimeout(timeout)
             logger.debug('Server timeout set to %d s.' % timeout)
@@ -219,7 +219,7 @@ class DiracServer:
             print result.replace('###TRACEBACK###','')
             raise GangaException('Exception executing DIRAC API code.')
         logger.debug('Received %s from Dirac server.' % result)
-        self.socket.settimeout(def_timeout)
+        self.socket.settimeout(float(configDirac['Timeout']))
         return result
     
     def disconnect(self):

@@ -98,8 +98,8 @@ class Dirac(IBackend):
     
     """    
     _schema = Schema(Version(3, 2),schema)
-    _exportmethods = ['getOutputData','getOutputSandbox',
-                      'getOutputDataLFNs','peek','reset','debug']
+    _exportmethods = ['getOutputData','getOutputSandbox','checkSites',
+                      'getOutputDataLFNs','peek','reset','debug','checkTier1s']
     _packed_input_sandbox = True
     _category = "backends"
     _name = 'Dirac'
@@ -295,6 +295,24 @@ class Dirac(IBackend):
         for f in lfns: ds.files.append(LogicalFile(f))
         return GPIProxyObjectFactory(ds)
 
+    def checkSites(self):
+        global dirac_ganga_server
+        cmd = 'result = DiracCommands.checkSites()'
+        result = dirac_ganga_server.execute(cmd)
+        if not result_ok(result):
+            logger.warning('Could not obtain site info: %s' % str(result))
+            return
+        return result.get('Value',{})
+
+    def checkTier1s(self):
+        global dirac_ganga_server
+        cmd = 'result = DiracCommands.checkTier1s()'
+        result = dirac_ganga_server.execute(cmd)
+        if not result_ok(result):
+            logger.warning('Could not obtain Tier-1 info: %s' % str(result))
+            return
+        return result.get('Value',{})
+
     def debug(self):
         '''Obtains some (possibly) useful DIRAC debug info. '''
         global dirac_ganga_server
@@ -348,6 +366,7 @@ class Dirac(IBackend):
                 
     def updateMonitoringInformation(jobs):
         """Check the status of jobs and retrieve output sandboxes"""
+        from Ganga.Core import monitoring_component
         dirac_job_ids = []
         for j in jobs: dirac_job_ids.append(j.backend.id)
         global dirac_monitoring_server
@@ -367,6 +386,8 @@ class Dirac(IBackend):
             return
                 
         for i in range(0,len(jobs)):
+            if monitoring_component:
+                if monitoring_component.should_stop(): break
             j = jobs[i]
             j.backend.statusInfo = result[i][0]
             j.backend.status = result[i][1]

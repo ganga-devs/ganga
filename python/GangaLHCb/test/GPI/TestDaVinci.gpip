@@ -5,8 +5,10 @@ import tempfile
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from GangaTest.Framework.utils import is_job_finished, write_file
 
+from GangaLHCb.test import *
+
+
 import Ganga.Utility.Config
-config = Ganga.Utility.Config.getConfig('DIRAC')
 
 def get_datafile_name():
     return '/lhcb/MC/2008/DST/00003392/0000/00003392_00000001_5.dst'
@@ -51,7 +53,7 @@ def get_app_and_make_libs():
         app.make()
         # build for grid
         native = app.platform
-        app.platform = config['AllowedPlatforms'][0]
+        app.platform = getDiracAppPlatform()
         app.make()
         app.platform = native
         os.system('touch %s/TestDaVinci.local_lfns_via_optsfile.lock' % ura)
@@ -113,7 +115,7 @@ def remove_ura():
 ##        return DaVinciJob(self.j)
 
 ##    def test_dirac_lfns_via_optsfile(self):
-##        self.j.application.platform = config['AllowedPlatforms'][0]
+##        self.j.application.platform = getDiracAppPlatform()
 ##        self.j.backend = Dirac()
 ##        fname = '%s/options/Bs2JpsiPhi2008.LFNs.py' % self.top_dir
 ##        write_data_optsfile(fname,'LFN:')
@@ -123,7 +125,7 @@ def remove_ura():
 ##        return DaVinciJob(self.j)
 
 ##    def test_dirac_lfns_inputdata(self):
-##        self.j.application.platform = config['AllowedPlatforms'][0]
+##        self.j.application.platform = getDiracAppPlatform()
 ##        self.j.backend = Dirac()
 ##        self.j.inputdata = ['LFN:%s' % get_datafile_name()]
 ##        self.j.submit()

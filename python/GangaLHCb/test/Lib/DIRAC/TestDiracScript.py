@@ -4,6 +4,7 @@ import tempfile
 from GangaTest.Framework.tests import GangaGPITestCase
 import Ganga.Utility.Config
 from GangaLHCb.Lib.DIRAC.DiracScript import *
+from GangaLHCb.test import *
 
 config = Ganga.Utility.Config.getConfig('DIRAC')
 
@@ -61,7 +62,7 @@ class TestDiracScript(GangaGPITestCase):
             ds.job_type = 'LHCbJob()'
             ds.outputdata = ['data1.out','data2.out']
             ds.dirac_opts = 'some_options'
-            ds.platform = config['AllowedPlatforms'][0]
+            ds.platform = getDiracAppPlatform()
             ds.write('/tmp/dswrite.py')
             file = open('/tmp/dswrite.py')
             s = file.read()

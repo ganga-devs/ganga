@@ -45,7 +45,10 @@ class LHCbDataset(Dataset):
     _category = 'datasets'
     _name = "LHCbDataset"
     _exportmethods = ['getReplicas','__len__','__getitem__','replicate',
-                      'hasLFNs','extend','getCatalog','optionsString']
+                      'hasLFNs','extend','getCatalog','optionsString',
+                      'getFileNames','getFullFileNames',
+                      'difference','isSubset','isSuperset','intersection',
+                      'symmetricDifference','union','bkMetadata']
 
     def __init__(self, files=[]):
         super(LHCbDataset, self).__init__()
@@ -158,6 +161,14 @@ class LHCbDataset(Dataset):
         'Returns a list of the names of all files stored in the dataset.'
         return [f.name for f in self.files]
 
+    def getFullFileNames(self):
+        'Returns all file names w/ PFN or LFN prepended.'
+        names = []
+        for f in self.files:
+            if type(f) is LogicalFile: names.append('LFN:%s' % f.name)
+            else: names.append('PFN:%s' % f.name)
+        return names
+
     def getCatalog(self,site=''):
         '''Generates an XML catalog from the dataset (returns the XML string).
         Note: site defaults to config.LHCb.LocalSite
@@ -210,6 +221,55 @@ class LHCbDataset(Dataset):
             f.write(s)
             f.close()
         else: return s
+
+    def difference(self,other):
+        '''Returns a new data set w/ files in this that are not in other.'''
+        other_files = other.getFullFileNames()
+        files = set(self.getFullFileNames()).difference(other_files)
+        data = LHCbDataset()
+        data.__construct__([list(files)])
+        data.depth = self.depth
+        return GPIProxyObjectFactory(data)
+
+    def isSubset(self,other):
+        '''Is every file in this data set in other?'''
+        return set(self.getFileNames()).issubset(other.getFileNames())
+
+    def isSuperset(self,other):
+        '''Is every file in other in this data set?'''
+        return set(self.getFileNames()).issuperset(other.getFileNames())
+
+    def symmetricDifference(self,other):
+        '''Returns a new data set w/ files in either this or other but not
+        both.'''
+        other_files = other.getFullFileNames()
+        files = set(self.getFullFileNames()).symmetric_difference(other_files)
+        data = LHCbDataset()
+        data.__construct__([list(files)])
+        data.depth = self.depth
+        return GPIProxyObjectFactory(data)
+
+    def intersection(self,other):
+        '''Returns a new data set w/ files common to this and other.'''
+        other_files = other.getFullFileNames()
+        files = set(self.getFullFileNames()).intersection(other_files)
+        data = LHCbDataset()
+        data.__construct__([list(files)])
+        data.depth = self.depth
+        return GPIProxyObjectFactory(data)
+
+    def union(self,other):
+        '''Returns a new data set w/ files from this and other.'''
+        files = set(self.getFullFileNames()).union(other.getFullFileNames())
+        data = LHCbDataset()
+        data.__construct__([list(files)])
+        data.depth = self.depth
+        return GPIProxyObjectFactory(data)
+
+    def bkMetadata(self):
+        'Returns the bookkeeping metadata for all LFNs. '
+        cmd = 'result = DiracCommands.bkMetaData(%s)' % self.getLFNs()
+        return get_result(cmd,'Error removing replica','Replica rm error.')
         
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

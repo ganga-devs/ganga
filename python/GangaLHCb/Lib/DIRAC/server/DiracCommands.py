@@ -257,6 +257,21 @@ class DiracCommands:
         return result
     getDataset = staticmethod(getDataset)
 
+    def checkSites():
+        return DiracCommands.dirac.checkSites()
+    checkSites = staticmethod(checkSites)
+
+    def checkTier1s():
+        result =  DiracCommands.dirac.gridWeather()
+        if result.get('OK',False):
+            result['Value'] = result['Value']['Tier-1s']
+        return result
+    checkTier1s = staticmethod(checkTier1s)
+
+    def bkMetaData(files):
+        return DiracCommands.dirac.bkMetadata(files)
+    bkMetaData = staticmethod(bkMetaData)
+
     # Not sure if there's a way to filter out the ones I want
     #def getLHCbJobSettings():        
     #    import inspect

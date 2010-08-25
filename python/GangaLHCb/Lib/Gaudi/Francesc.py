@@ -225,6 +225,11 @@ class Francesc(IApplication):
     def _configure(self):
         data_str = self.extra.inputdata.optionsString()
         self.extra.input_buffers['data.py'] += data_str
+
+    #def postprocess(self):
+    #    job = self.getJobObject()
+    #    print job.status
+    #    job.updateStatus('failed')
         
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
