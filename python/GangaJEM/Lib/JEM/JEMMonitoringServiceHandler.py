@@ -527,7 +527,8 @@ class JEMMonitoringServiceHandler(object):
             
             self.__job.info.monitor.jobID = escapedJobID
             
-            self.__job.info.monitor._ensure_listener_running()
+            # don't launch the listener here, this will collide with the JEMServiceThread.
+            #self.__job.info.monitor._ensure_listener_running()
         except:
             ei = sys.exc_info()
             logger.error("An error occured while trying to launch the JEM realtime monitoring listener process.")

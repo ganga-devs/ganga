@@ -157,7 +157,7 @@ class JobExecutionMonitor(GangaObject):
     JEM (c)2004-2010 Bergische Universitaet Wuppertal
 
     """
-    _schema = Schema(Version(0,307), {
+    _schema = Schema(Version(0,313), {
         'anonymous'              : SimpleItem(hidden=True, defvalue=False, doc='internal anonymize flag'),
         'enabled'                : SimpleItem(defvalue=True, doc='Enables JEM monitoring for the job'),
         'realtime'               : SimpleItem(defvalue=False, doc='Enables realtime reception of monitoring data'),
@@ -180,6 +180,8 @@ class JobExecutionMonitor(GangaObject):
         'chunkProcessor'         : SimpleItem(hidden=True, defvalue=None, protected=1, copyable=0, transient=1,\
                                               typelist=['type(None)', 'GangaChunkProcessor'], optional=1,\
                                               doc='Internal event processor reference'),
+        'launchingListener'      : SimpleItem(hidden=True, defvalue=False, protected=1, copyable=0, transient=1,\
+                                              doc='Internal flag'),
         # internal identifiers
         'pid'                    : SimpleItem(hidden=True, defvalue=0, protected=1, copyable=0,\
                                               doc='Process id of the job listener'),
@@ -538,33 +540,51 @@ class JobExecutionMonitor(GangaObject):
         Check that there is an event listener process associated with this job and that
         it is running; launch a new one otherwise.
         """
-        if self.jobID is None:
+        #logger.debug("_ensure_listener_running() job %s: launchingListener=%s ui=%s key=0x%x" % \
+            #(self.getJobObject().id, str(self.launchingListener), str(self.ui), self.shmKey))
+        #if self.jobID is None:
+        #    return
+        if self.launchingListener:
+            # don't try to launch listener multiple times at once!
             return
         
-        # at first, assure our event processor runs. if it doesn't exist, it will get created.
-        new_key = self._register_processor()
+        self.launchingListener = True
         
-        # then, assure the listener runs.
-        def __listener_not_running(self):
-            try:
-                proc_dir = "/proc/%d" % self.pid
-                if not os.path.isdir(proc_dir):
+        try:
+            # at first, assure our event processor runs. if it doesn't exist, it will get created.
+            new_key = self._register_processor()
+            
+            # then, assure the listener runs.
+            def __listener_not_running(self):
+                try:
+                    proc_dir = "/proc/%d" % self.pid
+                    if not os.path.isdir(proc_dir):
+                        return True
+                except:
                     return True
-            except:
-                return True
-            return False
+                return False
+            
+            if self.pid == 0:
+                logger.info("launching listener for job %d" % self.getJobObject().id)
+                self._start_listener()
+                
+                t0 = time.time()
+                while __listener_not_running(self):
+                    if time.time() - t0 > 30.0: # yes... on high-load machines, we really need to wait that long (duh!)
+                        logger.warning("listener for job %d didn't come up after 30.0 seconds")
+                        break
+                    time.sleep(0.5)
+            elif __listener_not_running(self):
+                logger.warning("listener for job %d seems to be down - relaunching listener" % self.getJobObject().id)
+                self._start_listener()
+                time.sleep(5)
+            
+            if __listener_not_running(self):
+                logger.error("failed to launch listener for job %d" % self.getJobObject().id)
+        except:
+            log_last_exception(logger.debug, True)
         
-        if self.pid == 0:
-            logger.info("launching listener for job %d" % self.getJobObject().id)
-            self._start_listener()
-            time.sleep(0.5)
-        elif __listener_not_running(self):
-            logger.warning("listener for job %d seems to be down - relaunching listener" % self.getJobObject().id)
-            self._start_listener()
-            time.sleep(0.5)
-        
-        if __listener_not_running(self):
-            logger.error("failed to launch listener for job %d" % self.getJobObject().id)
+        self.launchingListener = False
         
         return new_key
     
