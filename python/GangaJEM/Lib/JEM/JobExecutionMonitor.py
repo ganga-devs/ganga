@@ -135,10 +135,11 @@ class JobExecutionMonitor(GangaObject):
     getMetrics()                 prints current WN metrics (load, RAM usage, disk space, etc)
     listExceptions()             lists the last some exceptions that happened
     listCommands()               lists the last some commands / calls / returns that happened
-    showException()              prints verbose information about an exception
-    showCommand()                prints verbose information about a command / call / return
+    listAll()                    lists the last some events that happened
+    details()                    shows details about one event (exception, command, ...)
     peek()                       peeks into the job's stdout/-err streams (like 'tail')
     livePeek()                   prints the job's stdout as it is created (like 'tail -f')
+    getStatistics()              prints statistics about the job's monitoring (e.g. events per sec)
     extractLogfiles()            extracts JEMs logfiles (available after the job finished)
     waitForRealStart()           waits until the the user application on the WN has started
                                  (this wait may be aborted by pressing <return>)
@@ -190,21 +191,17 @@ class JobExecutionMonitor(GangaObject):
     _name = 'JobExecutionMonitor'   # GPI-public classname
 
     # methods accessible from GPI
-    _exportmethods = [
-                        'getStatus',
-                        'getMetrics',
-                        'plotMetrics',
-                        'listExceptions',
-                        'listCommands',
-                        #'showException',
-                        #'showCommand',
-                        'peek', 'outPeek', 'errPeek',
-                        'livePeek',
+    _exportmethods = [  # user methods
+                        'getStatus', 'getMetrics', 'details',
+                        'listAll', 'listExceptions', 'listCommands',
+                        'peek', 'outPeek', 'errPeek', 'livePeek',
+                        'waitForRealStart',
+                        'launchGUI',
+                        # debug methods
                         'getStatistics',
                         'getListenerLog',
-                        'waitForRealStart',
+                        # internal methods (normally not intended to be called by the user)
                         'extractLogfiles',
-                        'launchGUI',
                         '_getListenerPid',
                         '_getShmKey',
                         '_ensure_listener_running',
@@ -320,6 +317,22 @@ class JobExecutionMonitor(GangaObject):
             log_last_exception(logger.debug, LOG_STACK_TRACES)
     
     
+    def listAll(self, n = 20, start = 1, ascending = False, exclude=[], include=[]):
+        """
+        This method lists all monitoring events.
+
+        @param n: how many events to list. default = 5
+        @param start: the list begins at the start-th event. default = 1
+        @param ascending: wether to start at the beginning of the list. default = False
+        @param exclude: list of event types to skip. default = []
+        @param include: list of event types to list. default = all
+        """
+        try:
+            outlogger.info(library.listAll(self.getJobObject(), n, start, ascending, exclude, include))
+        except:
+            log_last_exception(logger.debug, LOG_STACK_TRACES)
+    
+    
     def listExceptions(self, n = 20, start = 1, ascending = False):
         """
         This method lists exceptions happened during the job run. For details about
@@ -351,30 +364,22 @@ class JobExecutionMonitor(GangaObject):
             log_last_exception(logger.debug, LOG_STACK_TRACES)
     
     
-    def showException(self, n = 1, ascending = False):
+    def details(self, event = None):
         """
-        This method prints detailled information about an exception that
-        happened during the job run.
+        This method prints detailled information about a monitoring
+        event. The event to view can be specified by its ID or its
+        timestamp.
 
-        @param n: The n-th exception is shown. default = 1
-        @param ascending: Wether n counts from the beginning of the list. default = False
+        @param event: Which event to show (ID or timestamp)
         """
+        if event is None:
+            return
+        
         try:
-            outlogger.info(library.showException(self.getJobObject(), n, ascending))
-        except:
-            log_last_exception(logger.debug, LOG_STACK_TRACES)
-    
-    
-    def showCommand(self, n = 1, ascending = False):
-        """
-        This method prints detailled information about a command that
-        happened during the job run.
-
-        @param n: The n-th command is shown. default = 1
-        @param ascending: Wether n counts from the beginning of the list. default = False
-        """
-        try:
-            outlogger.info(library.showCommand(self.getJobObject(), n, ascending))
+            s = library.showEventDetails(self.getJobObject(), event)
+            if s is None:
+                return
+            outlogger.info(s)
         except:
             log_last_exception(logger.debug, LOG_STACK_TRACES)
     
@@ -533,14 +538,7 @@ class JobExecutionMonitor(GangaObject):
         Check that there is an event listener process associated with this job and that
         it is running; launch a new one otherwise.
         """
-        try:
-            job = self.getJobObject()
-            if job.status not in ('submitted', 'running', 'completing'):
-                return
-        except:
-            return
-        
-        if self.getJobID() is None:
+        if self.jobID is None:
             return
         
         # at first, assure our event processor runs. if it doesn't exist, it will get created.
@@ -729,7 +727,7 @@ class JobExecutionMonitor(GangaObject):
     
     
     def getJobID(self):
-        if self.jobID is None:
+        if not self.jobID:
             job = self.getJobObject()
             if job.backend.__class__.__name__ == "Localhost":
                 self.jobID = uuid.getUniqueID()
