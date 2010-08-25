@@ -17,7 +17,7 @@ class IMerger(GangaObject):
     _category = 'mergers'
     _hidden = 1
 
-    def merge(self, sum_outputdir, subjobs, **options ):
+    def merge(self, subjobs, sum_outputdir, **options ):
         """
         Merge the output of subjobs into the sum_outputdir.
         The options (keyword arguments) are merger-implementation specific and should be defined in the derived classes.

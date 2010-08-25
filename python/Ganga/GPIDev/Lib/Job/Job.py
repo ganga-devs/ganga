@@ -12,6 +12,7 @@ import Ganga.Utility.logging
 from Ganga.GPIDev.Adapters.IMerger import MergerError
 logger = Ganga.Utility.logging.getLogger()
 
+from Ganga.Utility.util import isStringLike
 from Ganga.Utility.logging import log_user_exception
 
 from Ganga.Core import GangaException
@@ -1032,7 +1033,7 @@ class Job(GangaObject):
 ##         index.reverse()
 ##         return tuple(index)
         
-    def merge(self, sum_outputdir = None , subjobs = None, **options):
+    def merge(self, subjobs = None, sum_outputdir = None,  **options):
         '''Merge the output of subjobs.
 
         By default merge all subjobs into the master outputdir.
@@ -1043,6 +1044,14 @@ class Job(GangaObject):
 
         self._getWriteAccess()
 
+        #for backward compatibility if the arguments are not passed correctly -> switch them
+        if (subjobs is not None and isStringLike(subjobs)) or (sum_outputdir is not None and not isStringLike(sum_outputdir)):
+             #switch the arguments      
+             temp = subjobs
+             subjobs = sum_outputdir
+             sum_outputdir = temp       
+             logger.warning('Deprecated use of job.merge(sum_outputdir, subjobs), swap your arguments, will break in the future, it should be job.merge(subjobs, sum_outputdir)')      
+
         if sum_outputdir is None:
             sum_outputdir = self.outputdir
 
@@ -1051,7 +1060,7 @@ class Job(GangaObject):
 
         try:
             if self.merger:
-                self.merger.merge(sum_outputdir, subjobs, **options)
+                self.merger.merge(subjobs, sum_outputdir, **options)
             else:
                 logger.warning('Cannot merge job %d: merger is not defined'%self.id)
         except Exception,x:
