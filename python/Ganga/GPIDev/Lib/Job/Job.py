@@ -641,12 +641,15 @@ class Job(GangaObject):
 
                     # EBKE changes
                     i = 0
-                    self.subjobs = subjobs
-                    for j in self.subjobs:
+                    # bug fix for #53939 -> first set id of the subjob and then append to self.subjobs
+                    #self.subjobs = subjobs
+                    #for j in self.subjobs:
+                    for j in subjobs:
                         j.info.uuid = Ganga.Utility.guid.uuid()
                         j.status='new'
                         j.id = i
                         i += 1
+                        self.subjobs.append(j)
 
                     for j in self.subjobs:
                         j._init_workspace()
