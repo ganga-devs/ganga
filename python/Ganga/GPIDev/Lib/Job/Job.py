@@ -734,10 +734,13 @@ class Job(GangaObject):
 
         If force=True then remove job without killing it.
         '''
-        
-        logger.info('removing job %d',self.id)
 
         template = self.status=='template'
+
+        if template:
+            logger.info('removing template %d',self.id)     
+        else:
+            logger.info('removing job %d',self.id)      
         
         if self.status == 'removed':
             msg = 'job %d already removed'%self.id
