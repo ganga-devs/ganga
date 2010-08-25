@@ -3,7 +3,7 @@ project GANGA
 #use LHCBGRID LHCBGRID_v1r*
 #use LCGCMT LCGCMT_56
 
-use LHCBDIRAC LHCBDIRAC_v5r6
+use LHCBDIRAC LHCBDIRAC_v5r8
 
 build_strategy	with_installarea
 setup_strategy	root
