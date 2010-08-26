@@ -20,3 +20,5 @@ import Ganga.Lib.Interactive
 import Ganga.Lib.Batch
 import Ganga.Lib.Remote
 import Ganga.Lib.MonitoringServices.MSGMS
+import Ganga.Lib.MonitoringServices.Dashboard.DashboardMS
+

@@ -791,6 +791,16 @@ default_backends = LCG
 
         # export all configuration items, new options should not be added after this point
         Ganga.GPIDev.Lib.Config.bootstrap()
+
+
+        ###########
+        # run post bootstrap hooks
+        for r in allRuntimes.values():
+            try:
+               r.postBootstrapHook()
+            except Exception,x:
+                Ganga.Utility.logging.log_user_exception()
+                self.logger.error("problems with post bootstrap hook for %s",r.name,)
         
     def startTestRunner(self):
        """

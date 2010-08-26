@@ -16,10 +16,7 @@ def _initconfig():
     try:
         from Ganga.Utility import Config
         # create configuration
-        # TODO: replace the following 2 lines by makeConfig line when ready for production
-        config = Config.getConfig('DashboardMS')
-        config.is_open = True
-#        config = Config.makeConfig('DashboardMS', 'Settings for Dashboard Messaging Service.')
+        config = Config.makeConfig('DashboardMS', 'Settings for Dashboard Messaging Service.')
         config.addOption('server', 'gridmsg002.cern.ch', 'The MSG server name.')
         config.addOption('port', 6163, 'The MSG server port.')
         config.addOption('user', '', '')

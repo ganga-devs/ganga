@@ -189,3 +189,10 @@ class RuntimePackage:
         if g: g()
         else:
             logger.debug("no shutdown procedure in runtime package %s",self.name)
+        
+    # this hook is called after the Ganga bootstrap procedure completed
+    def postBootstrapHook(self):
+        g = importName(self.name,'postBootstrapHook')
+        if g: g()
+        else:
+            logger.debug("no postBootstrapHook() in runtime package %s",self.name)
