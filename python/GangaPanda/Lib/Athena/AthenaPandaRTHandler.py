@@ -135,8 +135,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
 
             # sort out environment variables
+            env_str = ""
             if len(app.atlas_environment) > 0:
-                env_str = ""
                 for env_var in app.atlas_environment:
                     env_str += "export %s ; " % env_var
             
@@ -534,7 +534,9 @@ from Ganga.GPIDev.Credentials import GridProxy
 gridProxy = GridProxy()
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-allHandlers.add('Athena','Panda',AthenaPandaRTHandler)
+
+for app in ['Athena', 'ExecutableDQ2', 'RootDQ2']:
+    allHandlers.add(app,'Panda',AthenaPandaRTHandler)
 
 from Ganga.Utility.Config import getConfig, ConfigError
 configDQ2 = getConfig('DQ2')
