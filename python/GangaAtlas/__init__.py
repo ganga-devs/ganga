@@ -63,6 +63,6 @@ For now I will add the correct default settings (%s) to the configuration of thi
 Note that in the future you won't be able to start Ganga until these issues are corrected manually.
 '''%MONITORING_DEFAULT)
 
-        cfg.setUserValue(name,value+','+MONITORING_DEFAULT)
+             cfg.setUserValue(name,value+','+MONITORING_DEFAULT)
 
 
