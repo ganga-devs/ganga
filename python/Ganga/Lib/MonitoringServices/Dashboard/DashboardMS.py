@@ -17,14 +17,14 @@ def _initconfig():
         from Ganga.Utility import Config
         # create configuration
         config = Config.makeConfig('DashboardMS', 'Settings for Dashboard Messaging Service.')
-        config.addOption('server', 'gridmsg002.cern.ch', 'The MSG server name.')
+        config.addOption('server', 'gridmsg101.cern.ch', 'The MSG server name.')
         config.addOption('port', 6163, 'The MSG server port.')
         config.addOption('user', '', '')
         config.addOption('password', '', '')
-        config.addOption('destination_job_status', '/topic/grid.usage.jobStatusTest', 'The MSG destination (topic or queue) for job status messages.')
-        config.addOption('destination_job_processing_attributes', '/topic/grid.usage.jobProcessingAttributesTest', 'The MSG destination (topic or queue) for job processing attributes messages.')
-        config.addOption('destination_job_meta', '/topic/grid.usage.jobMetaTest', 'The MSG destination (topic or queue) for job meta messages.')
-        config.addOption('destination_task_meta', '/topic/grid.usage.taskMetaTest', 'The MSG destination (topic or queue) for task meta messages.')
+        config.addOption('destination_job_status', '/topic/dashboard.atlas.jobStatus', 'The MSG destination (topic or queue) for job status messages.')
+        config.addOption('destination_job_processing_attributes', '/topic/dashboard.atlas.jobProcessingAttributes', 'The MSG destination (topic or queue) for job processing attributes messages.')
+        config.addOption('destination_job_meta', '/topic/dashboard.atlas.jobMeta', 'The MSG destination (topic or queue) for job meta messages.')
+        config.addOption('destination_task_meta', '/topic/dashboard.atlas.taskMeta', 'The MSG destination (topic or queue) for task meta messages.')
         config.addOption('task_type', 'analysis', 'The type of task. e.g. analysis, production, hammercloud,...')
         # prevent modification during the interactive ganga session
         def deny_modification(name, value):
