@@ -953,6 +953,19 @@ default_backends = LCG
 #            ipconfig.addOption('args',"['-colors','LightBG', '-noautocall']",'FIXME')
             args = eval(ipconfig['args'])
 
+            try:
+               self.logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands',os.environ['IPYTHONDIR'])
+            except KeyError:
+               newpath = os.path.expanduser('~/.ipython-ganga')
+               oldpath = os.path.expanduser('~/.ipython')
+               os.environ['IPYTHONDIR'] = newpath
+               if not os.path.exists(newpath) and os.path.exists(oldpath):
+                  self.logger.warning('Default location of IPython history files has changed.')
+                  self.logger.warning('Ganga will now try to copy your old settings from %s to the new path %s. If you do not want that, quit Ganga and wipe off the content of new path: rm -rf %s/*',oldpath,newpath,newpath)
+                  import shutil
+                  shutil.copytree(oldpath,newpath)
+               
+
             # buffering of log messages from all threads called "GANGA_Update_Thread"
             # the logs are displayed at the next IPython prompt
             
