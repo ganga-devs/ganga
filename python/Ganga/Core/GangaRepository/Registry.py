@@ -6,7 +6,12 @@ from GangaRepository import InaccessibleObjectError
 
 import time, threading
 
-from sets import Set
+import sys
+
+if sys.hexversion >= 0x020600F0:
+    Set = set
+else:
+    from sets import Set
 
 class RegistryError(GangaException):
     def __init__(self,what):

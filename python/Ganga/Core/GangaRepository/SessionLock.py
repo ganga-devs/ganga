@@ -4,7 +4,12 @@
 # to run locking tests (run several instances in the same directory, from different machines)
 
 import os, time, errno, threading, fcntl, random
-from sets import Set
+
+import sys
+if sys.hexversion >= 0x020600F0:
+    Set = set
+else:
+    from sets import Set
 
 try:
     import cPickle as pickle

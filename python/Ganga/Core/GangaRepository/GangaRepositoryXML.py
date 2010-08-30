@@ -21,7 +21,13 @@ from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
 
-from sets import Set
+
+import sys
+if sys.hexversion >= 0x020600F0:
+    Set = set
+else:
+    from sets import Set
+
 
 printed_explanation = False
 

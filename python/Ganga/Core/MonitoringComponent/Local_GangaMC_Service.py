@@ -3,10 +3,12 @@ import Queue, threading, time
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
 
-try:
-   import sets
-except ImportError:
-   import Ganga.Utility.external.sets as sets
+import sys
+if sys.hexversion >= 0x020600F0:
+    Set = set
+else:
+    from sets import Set
+
 from Ganga.Utility.threads import SynchronisedObject
 from Ganga.Utility.util import IList
 
@@ -215,7 +217,7 @@ class UpdateDict( object ):
       try:
          backendObj, jSet, lock = self.table[ backend ].updateActionTuple()
       except KeyError: # New backend.
-         self.table[ backend ] = _DictEntry( backendObj, sets.Set( jobList ), threading.RLock(), timeoutMax )
+         self.table[ backend ] = _DictEntry( backendObj, Set( jobList ), threading.RLock(), timeoutMax )
          Qin.put( JobAction( backendCheckingFunction, self.table[ backend ].updateActionTuple() ) ) # queue to get processed
          log.debug( "**Adding %s to new %s backend entry." % ( [x.id for x in jobList], backend ) )
          return True
@@ -252,7 +254,7 @@ class UpdateDict( object ):
       except KeyError:
          log.error( "Error clearing the %s backend. It does not exist!" % backend )
       else:
-         entry.jobSet = sets.Set()
+         entry.jobSet = Set()
          entry.timeoutCounter = entry.timeoutCounterMax
 
    def timeoutCheck( self ):
