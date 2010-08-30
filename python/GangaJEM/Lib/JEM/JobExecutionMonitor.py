@@ -785,3 +785,11 @@ class JobExecutionMonitor(GangaObject):
             except:
                 return False
 
+
+### migration classes ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+class JEMCTraceOptions(GangaObject):
+    """Needed for backwards compatibility (ugh!)"""
+    _schema = Schema(Version(0,2), {})
+    _category = 'JEMCTraceOptions'
+    _name = 'JEMCTraceOptions'
