@@ -95,6 +95,10 @@ class LCGOutputDownloader(MTRunner):
         self.keepAlive = True
         self.numThread = numThread
 
+    def countAliveAgent(self):
+
+        return self.__cnt_alive_threads__()
+
     def addTask(self, grid, job, use_wms_proxy):
 
         task = LCGOutputDownloadTask(grid, job, use_wms_proxy)

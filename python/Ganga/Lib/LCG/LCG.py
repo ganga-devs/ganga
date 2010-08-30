@@ -1612,7 +1612,8 @@ sys.exit(0)
             else:
                 jobclass[mt].append(key)
 
-        ## loop over the job classes 
+        ## loop over the job classes
+        cnt_new_download_task = 0
         for mt in jobclass.keys():
 
             if not config['%s_ENABLE' % mt]:
@@ -1652,6 +1653,12 @@ sys.exit(0)
                 
                     downloader = get_lcg_output_downloader()
                     downloader.addTask(grids[mt], job, False)
+
+                    cnt_new_download_task += 1
+
+        if cnt_new_download_task > 0:
+            downloader = get_lcg_output_downloader()
+            logger.debug('%d new downloading tasks; %d alive downloading agents' % ( cnt_new_download_task, downloader.countAliveAgent() ) )
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
@@ -1707,7 +1714,8 @@ sys.exit(0)
 
         __fail_missing_jobs__(missing_glite_jids, jobdict)
 
-        ## update GANGA job repository according to the available job information 
+        ## update GANGA job repository according to the available job information
+        cnt_new_download_task = 0
         for info in status_info:
             if not info['is_node']: # this is the info for the master job
 
@@ -1790,6 +1798,12 @@ sys.exit(0)
                             subjob.updateStatus('running')
                         downloader = get_lcg_output_downloader()
                         downloader.addTask(grid, subjob, True)
+
+                        cnt_new_download_task += 1
+
+        if cnt_new_download_task > 0:
+            downloader = get_lcg_output_downloader()
+            logger.debug('%d new downloading tasks; %d alive downloading agents' % ( cnt_new_download_task, downloader.countAliveAgent() ) )
 
         # update master job status
         #if updateMasterStatus:
