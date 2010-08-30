@@ -145,7 +145,7 @@ under certain conditions; type license() for details.
         parser.add_option("-i", dest="force_interactive", action="store_true",
                           help='enter interactive mode after running script')
 
-        parser.add_option("--webgui", dest="monitoring_server",  action="store_true", default='False',
+        parser.add_option("--webgui", dest="webgui",  action="store_true", default='False',
                           help='starts web GUI monitoring server')
 
         parser.add_option('--gui',dest="GUI",action='store_true',default=False,help='Run Ganga in the GUI mode.')
@@ -841,7 +841,7 @@ default_backends = LCG
     # if namespace is not specified then run in __main__
     def run(self,local_ns=None):
 
-        if self.options.monitoring_server == True:
+        if self.options.webgui == True:
             from Ganga.Runtime.http_server import start_server
             start_server()
 
@@ -892,7 +892,7 @@ default_backends = LCG
            else:
               session_type += 'startup_script'
               
-        spyware.ganga_started(session_type)
+        spyware.ganga_started(session_type,interactive=self.interactive,GUI=self.options.GUI,webgui=self.options.webgui,script_file=runs_script, text_shell=config['TextShell'],test_framework=self.options.TEST)
         
         if self.options.TEST:
             sys.argv = self.args

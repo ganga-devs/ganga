@@ -14,6 +14,7 @@ def _initconfig():
         config.addOption('username', '', '') 
         config.addOption('password', '', '') 
         config.addOption('message_destination', '/queue/ganga.status', '')
+        config.addOption('usage_message_destination',"/queue/ganga.usage",'')
         # prevent modification during the interactive ganga session
         def deny_modification(name,x):
             raise Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))

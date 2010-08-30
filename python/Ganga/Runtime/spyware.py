@@ -7,7 +7,7 @@ monitor = None
 
 import time, os.path
 
-def ganga_started(session_type):
+def ganga_started(session_type,**extended_attributes):
     host = getConfig('System')['GANGA_HOSTNAME']
     version = getConfig('System')['GANGA_VERSION']
     user = getConfig('Configuration')['user']
@@ -15,6 +15,8 @@ def ganga_started(session_type):
     start = long(time.time()*1000)
 
     usage_message = {'user':user,'host':host,'start':start,'session':session_type,'runtime_packages':runtime_packages,'version':version}
+
+    usage_message.update(extended_attributes)
 
     if config['UsageMonitoringURL']:
         import ApMon.apmon
@@ -36,6 +38,6 @@ def ganga_started(session_type):
             msg_config['password'])
         # start publisher thread and enqueue usage message for sending
         p.start()
-        p.send("/queue/ganga.usage",repr(usage_message),{'persistent':'true'})
+        p.send(msg_config['usage_message_destination'],repr(usage_message),{'persistent':'true'})
         # ask publisher thread to stop. it will send queued message anyway.
         p.stop()
