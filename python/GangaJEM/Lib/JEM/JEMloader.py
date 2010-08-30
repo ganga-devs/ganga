@@ -77,7 +77,7 @@ try:
 
         # import JEM 0.3 stuff
         import JEM as JEMmain
-        GangaJEM.library = JEMmain.setup(logger=getLogger, logprefix="GangaJEM.Lib.JEM", allconfig=True)
+        GangaJEM.library = JEMmain.setup(logger=getLogger, logprefix="GangaJEM.Lib.JEM", allconfig=True, skip_plugins=["Analysis"])
         
         logger.setLevel(lvl)
     except:
