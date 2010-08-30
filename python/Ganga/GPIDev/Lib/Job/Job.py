@@ -18,6 +18,8 @@ from Ganga.Utility.logging import log_user_exception
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository import RegistryKeyError
 
+from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
+
 class JobStatusError(GangaException):
     def __init__(self,*args):
         GangaException.__init__(self,*args)
@@ -261,7 +263,10 @@ class Job(GangaObject):
 
         try:
             if state.hook:
-                getattr(self,state.hook)()
+                try:
+                    getattr(self,state.hook)()
+                except PostprocessStatusUpdate,x:
+                    newstatus = x.status
 
             if transition_update:
                 #we call this even if there was a hook

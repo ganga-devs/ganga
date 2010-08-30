@@ -10,6 +10,14 @@ from Ganga.GPIDev.Schema import *
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+
+class PostprocessStatusUpdate(Exception):
+    """ This exception may be raised by postprocess hooks to change the job status."""
+    def __init__(self,status):
+        Exception.__init__(self)
+        self.status = status
+
+
 class IApplication(GangaObject):
 
     """
@@ -110,11 +118,13 @@ class IApplication(GangaObject):
         raise NotImplementedError
 
     def postprocess(self):
-        """ Postprocessing after the job was completed. By default do nothing."""
+        """ Postprocessing after the job was reported as completed. By default do nothing.
+        This method may raise an exception PostprocessStatusUpdate('failed'). In this
+        case the job status will be 'failed'. The postprocess_failed() hook will NOT be called."""
         pass
 
     def postprocess_failed(self):
-        """ Postprocessing after the job was failed. By default do nothing."""
+        """ Postprocessing after the job was reported as failed. By default do nothing."""
         pass
     
     def transition_update(self,new_status):

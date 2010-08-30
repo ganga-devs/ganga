@@ -17,7 +17,8 @@ class TestApplication(IApplication):
                                     'nodefault_file_item' : FileItem(defvalue=File('a')),
                                     'args' :  SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File'],sequence=1,doc="List of arguments for the executable. Arguments may be strings or File objects."),# introduced for RTHandler compatibility
                                     'env' : SimpleItem(defvalue={},doc='Environment'),# introduced for RTHandler compatibility
-                                    'fail': SimpleItem(defvalue='',doc='Define the artificial runtime failures: "config", "PENDING:prepare"'),
+                                    'fail': SimpleItem(defvalue='',doc='Define the artificial runtime failures: "config", "prepare"'),
+                                    'postprocess_mark_as_failed': SimpleItem(defvalue=False,doc='Update teh status of the job as failed in the postprocess step'),
                                     'raw_string_exception' :  SimpleItem(defvalue=False,doc='If true use strings as exceptions.')
                                     } )
     _name = 'TestApplication'
@@ -51,6 +52,17 @@ class TestApplication(IApplication):
     def modify(self):
         self.modified = 1
         self._setDirty(1)
+
+    def postprocess(self):
+
+        if self.postprocess_mark_as_failed:
+            logger.info('postprocess: trying to mark the job as failed')
+
+            from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
+            raise PostprocessStatusUpdate("failed") 
+
+    def postprocess_failed(self):
+        logger.info('postprocess_failed() called')
 
 class TestAdvancedProperties(IApplication):
     _schema = Schema(Version(1,0), {'exe':SimpleItem(defvalue='/usr/bin/env'), 'exe2' : SimpleItem(defvalue='')} )
