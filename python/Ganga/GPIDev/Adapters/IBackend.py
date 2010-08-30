@@ -118,7 +118,11 @@ class IBackend(GangaObject):
                     return handleError(IncompleteJobSubmissionError(fqid,'submission failed'))
             except Exception,x:
                 sj.updateStatus('new')
-                log_user_exception(logger,debug = isinstance(x,GangaException))
+                if isinstance(x,GangaException):
+                    logger.error(str(x))
+                    log_user_exception(logger,debug = True)
+                else:
+                    log_user_exception(logger,debug = False)
                 return handleError(IncompleteJobSubmissionError(fqid,str(x)))
                 
         return 1

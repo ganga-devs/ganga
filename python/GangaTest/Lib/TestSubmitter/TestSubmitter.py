@@ -6,6 +6,8 @@ logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Utility.Config import makeConfig,getConfig
 
+from Ganga.Core.exceptions import GangaException
+
 monconf = getConfig('PollThread')
 monconf.addOption('TestSubmitter',1,'poll rate for test submitter')
 
@@ -27,7 +29,8 @@ class TestSubmitter(IBackend):
                                     'start_time' : SimpleItem(defvalue=0,protected=1),
                                     'update_delay' : SimpleItem(defvalue=0,doc="The time it takes to updateMonitoringInformation"),
                                     'fail' : SimpleItem(defvalue='',doc='Define the artificial runtime failures: "submit", "kill","monitor"'),
-                                    'raw_string_exception' :  SimpleItem(defvalue=False,doc='If true use strings as exceptions.')
+                                    'raw_string_exception' :  SimpleItem(defvalue=False,doc='If true use strings as exceptions.'),
+                                    'ganga_exception' :  SimpleItem(defvalue=False,doc='If true use GangaExceptions (raw_string_exception must be then set to false).')
                                     
                                     })
     _category = 'backends'
@@ -43,7 +46,10 @@ class TestSubmitter(IBackend):
             logger.info('triggered failure during %s (raw_string_exception=%d)',what,self.raw_string_exception)
             x = 'triggered failure during %s'%what
             if not self.raw_string_exception:
-                x = Exception(x)
+                if self.ganga_exception:
+                    x = GangaException(x)
+                else:
+                    x = Exception(x)
             raise x
         
     def submit(self,jobconfig,masterjobconfig):

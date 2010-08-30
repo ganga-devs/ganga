@@ -697,7 +697,11 @@ class Job(GangaObject):
 
             return 1
         except Exception,x:
-            log_user_exception(logger,debug = isinstance(x,GangaException))
+            if isinstance(x,GangaException):
+                log_user_exception(logger,debug = True)
+                logger.error(str(x))
+            else:
+                log_user_exception(logger,debug = False)
                             
             if keep_on_fail:
                 self.updateStatus('failed')
