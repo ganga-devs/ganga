@@ -130,8 +130,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     self.job_options += ' -c %s ' % app.options
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
         elif app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
-            if app.options:
-                self.job_options += ' %s ' % app.options
 
             if not job.outputdata.outputdata:
                 raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT'] and Panda backend")
@@ -151,6 +149,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; root -b -q ' + self.job_options
             elif app.atlas_exetype == 'EXE':
                 self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; ' + self.job_options
+
+            if app.options:
+                self.job_options += ' %s ' % app.options
+
         if self.job_options == '':
             raise ApplicationConfigurationError(None,"No Job Options found!")
         logger.info('Running job options: %s'%self.job_options)
