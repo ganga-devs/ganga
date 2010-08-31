@@ -102,7 +102,7 @@ from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.Gaudi.GaudiRunTimeHandler import GaudiRunTimeHandler
 from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
 
-for backend in ['LSF','Interactive','PBS','SGE','Local','Condor']:
+for backend in ['LSF','Interactive','PBS','SGE','Local','Condor','Remote']:
     allHandlers.add('GaudiPython', backend, GaudiRunTimeHandler)
 allHandlers.add('GaudiPython', 'Dirac', GaudiDiracRTHandler)
 

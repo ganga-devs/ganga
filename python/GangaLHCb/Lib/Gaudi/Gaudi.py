@@ -265,7 +265,7 @@ for app in available_apps():
     if app is not 'Gaudi':
         exec(exec_str)
 
-    for backend in ['LSF','Interactive','PBS','SGE','Local','Condor']:
+    for backend in ['LSF','Interactive','PBS','SGE','Local','Condor','Remote']:
         allHandlers.add(app, backend, GaudiRunTimeHandler)
     allHandlers.add(app, 'Dirac', GaudiDiracRTHandler)
 
