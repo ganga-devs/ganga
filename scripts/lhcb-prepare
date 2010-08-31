@@ -37,13 +37,13 @@ class InstallLHCb:
 
         ver = self.options.version
         source = self.options.source
-        #if ver != 'head':
-        pTag     = re.compile(r'.+/(\S+)$')
-        mTag = pTag.match(ver)
-        vLHCb = _versiondecode(ver)
-        versiontuple = (vLHCb[0]/100,vLHCb[0]-(vLHCb[0]/100)*100,vLHCb[1])
-        pRelease = re.compile(r'Ganga-(\d+)-(\d+)-(\d+)$')
-        mRelease = pRelease.match(ver)
+        if ver != 'head':
+            pTag     = re.compile(r'.+/(\S+)$')
+            mTag = pTag.match(ver)
+            vLHCb = _versiondecode(ver)
+            versiontuple = (vLHCb[0]/100,vLHCb[0]-(vLHCb[0]/100)*100,vLHCb[1])
+            pRelease = re.compile(r'Ganga-(\d+)-(\d+)-(\d+)$')
+            mRelease = pRelease.match(ver)
 
         if ver == 'head':
             self.versionLHCb = 'head'
@@ -120,6 +120,8 @@ class InstallLHCb:
         # Find the location in SVN
         taglocation = None
         tagdir = self.options.source + '/tags/private/LHCbSetupProject'
+        if self.options.version == 'head':
+            tagdir = self.options.source + '/trunk/external/LHCbSetupProject'
         fh, fname = mkstemp()
         command = "svn list " + tagdir
         retcode = call(command,shell=True,stdout=fh)
