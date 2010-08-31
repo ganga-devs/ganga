@@ -130,6 +130,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     self.job_options += ' -c %s ' % app.options
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
         elif app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+            if app.options:
+                self.job_options += ' %s ' % app.options
+
             if not job.outputdata.outputdata:
                 raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT'] and Panda backend")
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
