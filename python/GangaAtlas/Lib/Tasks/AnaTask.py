@@ -126,7 +126,7 @@ class AnaTask(Task):
       self.initAliases()
       if not all(ss.isalnum() for ss in self.name.split(".")):
          logger.error("Invalid character in task name! Task names are now used for DQ2 datasets; so no spaces, slashes or other special characters are allowed.")
-         raise ApplicationConfigurationError("Invalid Task name!")
+         raise ApplicationConfigurationError(None, "Invalid Task name!")
       super(AnaTask,self).check()
 
    def initAliases(self):
