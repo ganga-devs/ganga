@@ -254,7 +254,8 @@ def report(job=None):
 
                 #import ipython history in a file
                 try:
-                        ipythonFile = open(os.path.join(userHomeDir, '.ipython/history'), 'r')
+                        ipythonFile = open(os.path.join(os.environ['IPYTHONDIR'], 'history'), 'r')
+                        
                         try:                    
                                 lastIPythonCommands = ipythonFile.readlines()[-20:]             
                                 writeStringToFile(os.path.join(fullLogDirName, ipythonHistoryFileName), '\n'.join(lastIPythonCommands))
