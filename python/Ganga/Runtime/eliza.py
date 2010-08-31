@@ -273,11 +273,11 @@ gPats = [
   [r'(.*)job(.*)',
   [ "Is your job important to you?",
     "Why do you need to do this job?",
-    "Does loosing this job worry you?"]],
+    "Does losing this job worry you?"]],
 
   [r'(.*)Gaudi(.*)',
   [ "Do you like Spanish architecture?",
-    "Are you afraid, like Gaudi, of not completeing your work?",
+    "Are you afraid, like Gaudi, of not completing your work?",
     "Did your interest in Gaudi start as a child?"]],
 
   [r'(.*)Ganga(.*)',
