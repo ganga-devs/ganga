@@ -852,7 +852,6 @@ class Job(GangaObject):
                 logger.info("%s => %s"%(s,revstates[s].keys()))
             return
             
-        print 'My status',self.status,status
         if self.status == status:
             return
         
@@ -871,6 +870,7 @@ class Job(GangaObject):
                     raise x
         try:
             self.updateStatus(status)
+            logger.info('Job %s forced to status "%s"',self.getFQID('.'),status)
         except JobStatusError,x:
             logger.error(x)
             raise x
