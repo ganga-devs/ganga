@@ -72,8 +72,17 @@ class TaskApplication(object):
             if transform:
                transform._impl.setAppStatus(self, new_status)
         except Exception, x:
+            import traceback, sys
             logger.error("Exception in call to transform[%s].setAppStatus(%i, %s)", self.tasks_id, self.id, new_status)
+            print >> sys.stderr, x.__class__.__name__, ":", x
+            tb = sys.exc_info()[2]
+            if tb:
+                traceback.print_tb(tb)
+            else:
+                print >> sys.stderr, "No Traceback available"
+
             logger.error("%s", x)
+            
 
 
 class TaskSplitter(object):
