@@ -25,6 +25,9 @@ class TestPanda(GangaGPITestCase):
     def testExecutablePanda(self):
         return TestExecutablePanda(None)
 
+    def testEventPickingPanda(self):
+        return TestEventPickingPanda('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda_EventPicking')
+
 class PandaTest(ICheckTest):
     def __init__(self,srcdir=None,j = None):
         if srcdir is None:
@@ -99,6 +102,33 @@ class TestAthenaPandaNoSplit(PandaTest):
         j.outputdata=DQ2OutputDataset()
         j.backend=Panda()
         j.backend.site = 'ANALY_BNL_ATLAS_1'
+        self.j = j
+        assert(self.j.submit()==True)
+
+class TestEventPickingPanda(PandaTest):
+    def setup(self):
+        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
+        pick_event_file = '%s/RunEvent.txt' % self.tmpdir
+        archivefile = '%s/sources.9d39c3e5-652a-4515-b12b-144e0da89112.tar.gz' % self.tmpdir
+        userareapath = self.tmpdir
+
+        j = Job()
+        j.application=Athena()
+        j.application.atlas_release='15.6.9'
+        j.application.option_file=[ joboption ]
+        j.application.user_area=archivefile
+        j.application.atlas_run_dir = 'Picking/'
+        j.application.atlas_run_config = {'input': {}, 'other': {}, 'output': {'outAANT': [('AANTupleStream', 'AANT')]}}
+        j.application.user_area_path = userareapath
+        j.inputdata = EventPicking()
+        j.inputdata.pick_event_list = pick_event_file
+        j.inputdata.pick_data_type = 'ESD'
+        j.inputdata.pick_stream_name = 'physics_L1Calo'
+        j.inputdata.pick_dataset_pattern = '*f2*'
+        j.outputdata=DQ2OutputDataset()
+        j.splitter=DQ2JobSplitter()
+        j.splitter.numsubjobs=3
+        j.backend=Panda()
         self.j = j
         assert(self.j.submit()==True)
 

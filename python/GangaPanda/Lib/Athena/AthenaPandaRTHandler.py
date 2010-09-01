@@ -23,6 +23,8 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
+
+
 def getDBDatasets(jobO,trf,dbrelease):
     from pandatools import Client
 
@@ -103,6 +105,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.inputdatatype='DQ2'
                 job.inputdata.dataset = job.inputdata.search()
                 logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            elif job.inputdata._name == 'EventPicking':
+                self.inputdatatype='DQ2'
+                logger.info('Input dataset(s) %s',job.inputdata.dataset)
             elif job.inputdata._name == 'ATLASTier3Dataset':
                 self.inputdatatype='Tier3'
                 logger.info('Input dataset is a Tier3 PFN list')
@@ -165,6 +170,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             elif job.inputdata._name == 'AMIDataset':
                 self.inputdatatype='DQ2'
                 job.inputdata.dataset = job.inputdata.search()
+                logger.info('Input dataset(s) %s',job.inputdata.dataset)
+            elif job.inputdata._name == 'EventPicking':
+                self.inputdatatype='DQ2'
                 logger.info('Input dataset(s) %s',job.inputdata.dataset)
             elif job.inputdata._name == 'ATLASTier3Dataset':
                 self.inputdatatype='Tier3'
@@ -501,6 +509,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         nEventsToSkip = app.skip_events
         if app.atlas_exetype == 'ATHENA' and app.max_events > 0:
             param += '-f "theApp.EvtMax=%d;EventSelector.SkipEvents=%s" ' % (app.max_events,nEventsToSkip)
+
+        #event picking 
+        if len(app.run_event) >= 1:
+            param += '--eventPickTxt=%s ' % app.run_event_file.split('/')[-1]
+
         # addPoolFC
         #if self.config['addPoolFC'] != "":
         #    param += '--addPoolFC %s ' % self.config['addPoolFC']
