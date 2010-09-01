@@ -324,7 +324,11 @@ class AnaTransform(Transform):
       j.outputdata = self.outputdata
       if stripProxy(j.backend)._name == "Panda" and j.application.atlas_exetype == "ATHENA":
           j.outputdata.outputdata=[]
-      j.outputdata.datasetname = ""
+      #j.outputdata.datasetname = ""
+      task = self._getParent()
+      dsn = ["user",getNickname(),task.creation_date,"job_%i" % j.id, "t_%s_%s_%s" % (task.id, task.transforms.index(self), partitions[0])]
+      j.outputdata.datasetname = ".".join(dsn)
+
       #if j.outputdata.datasetname:
          #today = time.strftime("%Y%m%d",time.localtime())
          #j.outputdata.datasetname = "%s.%i.%s" % (j.outputdata.datasetname, j.id, today)
