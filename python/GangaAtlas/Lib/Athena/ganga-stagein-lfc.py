@@ -96,6 +96,26 @@ def _makeJobO(files,tag):
         # write PFN
         outFile.write('"%s",' % filename)
     outFile.write(']\n')
+
+    ## setting for event picking
+    if os.environ.has_key('ATHENA_RUN_EVENTS'):
+        revt = eval(os.environ['ATHENA_RUN_EVENTS'])
+        run_evt = []
+        for i in range(len(revt)):
+            run_evt.append((revt[i][0], revt[i][1]))
+        
+        outFile.write('\n#EventPicking\n')
+        outFile.write('from AthenaCommon.AlgSequence import AthSequencer\n')
+        outFile.write("seq = AthSequencer('AthFilterSeq')\n")
+        outFile.write('from GaudiSequencer.PyComps import PyEvtFilter\n')
+        outFile.write("seq += PyEvtFilter('alg', evt_info='',)\n")
+        outFile.write('seq.alg.evt_list = %s\n' % run_evt)
+        outFile.write("seq.alg.filter_policy = '%s'\n"  % os.environ['ATHENA_FILTER_POLICY'])
+        outFile.write('for tmpStream in theApp._streams.getAllChildren():\n')
+        outFile.write('\t fullName = tmpStream.getFullName()\n')
+        outFile.write("\t if fullName.split('/')[0] == 'AthenaOutputStream':\n")
+        outFile.write("\t\t tmpStream.AcceptAlgs = [seq.alg.name()]\n")
+   
     # close
     outFile.close()
     

@@ -56,6 +56,13 @@ p.add_option('--excludeinputnames', action='store', type='string', dest='exclude
 p.add_option('--inputnumfiles', action='store', type='int', dest='inputnumfiles', help='Number of files to proccess in a DQ2Dataset, e.g. --inputnumfiles=5' )
 p.add_option('--input_minnumfiles', action='store', type='int', dest='input_minnumfiles', help='Minimum number of files that should exist in a incomplete dataset source location of a DQ2Dataset, e.g. --input_minnumfiles=1' )
 p.add_option('--use_aodesd_backnav', action='store_const', const='use_aodesd_backnav', dest='use_aodesd_backnav', help='Use AOD to ESD Backnavigation' )
+# Event picking
+p.add_option('--pickevent', action='store_true', help='Use Event picking as inputdata' )
+p.add_option('--pick_data_type', action='store', type='string', dest='pick_data_type', help='Type of data for event picking. One of AOD, ESD, RAW.' )
+p.add_option('--pick_stream_name', action='store', type='string', dest='pick_stream_name', help='Stream name for event picking, e.g. physics_L1Calo' )
+p.add_option('--pick_dataset_pattern', action='store', type='string', dest='pick_dataset_pattern', help='Dataset pattern which matches the selection ' )
+p.add_option('--pick_event_list', action='store', type='string', dest='pick_event_list', help='A filename which contains list of runs/events for event picking.' )
+p.add_option('--pick_filter_policy', action='store', type='string', dest='pick_filter_policy', help='accept/reject the pick event.' )
 
 # Output dataset
 p.add_option('--outputdata', '-o', action='store', type='string', dest='outputdata', help='List of job output roottuples to be stored, separated by ":", e.g. AnalysisSekeleton.aan.root:Numbers.txt')
@@ -297,6 +304,23 @@ if opt.input_dataset:
         if opt.backend == 'lcg' and opt.use_aodesd_backnav:
             j.inputdata.use_aodesd_backnav = True
 
+if opt.pickevent:
+    j.inputdata=EventPicking()
+    if opt.pick_data_type:
+        j.inputdata.pick_data_type=opt.pick_data_type
+    if opt.pick_stream_name:
+        j.inputdata.pick_stream_name=opt.pick_stream_name
+    if opt.pick_dataset_pattern:
+        j.inputdata.pick_dataset_pattern=opt.pick_dataset_pattern
+    if opt.pick_event_list:
+        j.inputdata.pick_event_list=opt.pick_event_list
+    if opt.pick_filter_policy:
+        j.inputdata.pick_filter_policy=opt.pick_filter_policy
+
+    if not (opt.numsubjobs>0 and numfiles_subjob>0 and filesize>0):
+        if (opt.backend in [ 'lcg', 'cream', 'panda', 'ng' ] or opt.glite):
+            j.splitter = DQ2JobSplitter()
+	    j.splitter.numsubjobs = 1
 
 # outputdata
 

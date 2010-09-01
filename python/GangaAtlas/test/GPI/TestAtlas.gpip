@@ -67,6 +67,9 @@ class TestAtlas(GangaGPITestCase):
     
     def testAMIDataset(self):
         return TestAMIDataset(srcdirana)
+    
+    def testEventPicking(self):
+        return TestEventPicking(srcdirana)
 
 class TestAnaTaskBasic(ICheckTest):
     def __init__(self):
@@ -218,6 +221,18 @@ class TestAMIDataset(TestAthena):
         self.j.backend.requirements.cloud='ALL'
         assert(self.j.submit()==True)
 
+class TestEventPicking(TestAthena):
+    def setup(self):
+        pick_event_file = '%s/RunEvent.txt' % self.tmpdir
+        TestAthena.setup(self)
+        self.j.inputdata=EventPicking()
+        self.j.inputdata.pick_event_list = pick_event_file
+        self.j.inputdata.pick_data_type = 'ESD'
+        self.j.inputdata.pick_stream_name = 'physics_L1Calo'
+        self.j.inputdata.pick_dataset_pattern = '*f2*'
+        self.j.backend=LCG()
+        self.j.backend.requirements.cloud='ALL'
+        assert(self.j.submit()==True)
 
 class TestAthenaDQ2LCGFileStager(TestAthena):
     def setup(self):

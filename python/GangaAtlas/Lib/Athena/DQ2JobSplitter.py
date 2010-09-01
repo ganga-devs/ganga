@@ -5,7 +5,7 @@
 ###############################################################################
 # Athena DQ2JobSplitter
 
-import math, socket, operator, copy
+import math, socket, operator, copy, os
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -27,6 +27,35 @@ from Ganga.GPIDev.Credentials import GridProxy
 gridProxy = GridProxy()
 
 logger = getLogger()
+
+def appendFile(file_path, archive_path):
+    file_name = os.path.split(file_path)[1]
+    test_area = os.environ['TestArea']
+    
+    #uncompress
+    cmd = "gzip -d %s" % archive_path
+    out = commands.getoutput(cmd)
+    archive = archive_path.replace(".tar.gz", ".tar")
+    
+    #create tar ball from file list
+    cmd = "cd %s ; cat %s|xargs tar cf event_pick.tar" % (test_area, file_name) 
+    out = commands.getoutput(cmd)
+
+    #append
+    cmd = "cd %s ; tar Af %s event_pick.tar" % (test_area, archive) 
+    out = commands.getoutput(cmd)
+
+    #compress
+    cmd = "gzip %s " %(archive)
+    out = commands.getoutput(cmd)
+    
+    #remove file
+    files = ''
+    for line in open(file_path, 'r').readlines():
+        files += "%s " % line.strip('\n')
+
+    cmd = " cd %s ; rm event_pick.tar %s; rm %s " %(test_area, file_name, files)
+    out = commands.getoutput(cmd)
 
 def dq2_siteinfo(dataset, allowed_sites, locations, udays):
 
@@ -100,8 +129,8 @@ class DQ2JobSplitter(ISplitter):
 
         logger.debug('DQ2JobSplitter called')
 
-        if job.inputdata._name <> 'DQ2Dataset'  and job.inputdata._name <> 'AMIDataset':
-            raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset or AMIDataset as input')
+        if job.inputdata._name <> 'DQ2Dataset'  and job.inputdata._name <> 'AMIDataset' and job.inputdata._name <> 'EventPicking':
+            raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset or AMIDataset or EventPicking as input')
 
         if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] :
             raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, CREAM, Panda or NG backend')
@@ -122,6 +151,10 @@ class DQ2JobSplitter(ISplitter):
         #AMIDataset
         if job.inputdata._name == 'AMIDataset':
             job.inputdata.dataset = job.inputdata.search()
+
+        #EventPicking
+        if job.inputdata._name == 'EventPicking':
+            guid_run_evt_map = job.inputdata.get_pick_dataset()
 
         # before we do anything, check for tag info for this dataset
         additional_datasets = {}
@@ -415,6 +448,14 @@ class DQ2JobSplitter(ISplitter):
 
         siteinfos = {}
         allcontents = {}
+        if job.inputdata._name == 'EventPicking' and job.backend._name == 'Panda':
+            if (job.inputdata.pick_filter_policy == 'reject'):
+                raise ApplicationConfigurationError(None,"Pick event filter policy 'reject' not supported on Panda backend.")
+            # create a file containing list of files
+            test_area = os.environ['TestArea']
+            eventPickFileList = '%s/epFileList_%s.dat' % (test_area, commands.getoutput('uuidgen'))
+            evFileList = open(eventPickFileList,'w') 
+
         for dataset, content in contents.iteritems():
             content = dict(content)
             if self.use_lfc:
@@ -561,6 +602,7 @@ class DQ2JobSplitter(ISplitter):
                     j.inputdata.guids = []
                     j.inputdata.names = []
                     j.application   = job.application
+                    j.application.run_event   = []
 
                     if self.numevtsperjob > 0:
                         if  unused_events == 0:
@@ -647,7 +689,7 @@ class DQ2JobSplitter(ISplitter):
                                         j.inputdata.guids.append(ref[2])
                                         j.inputdata.names.append(allcontent[ref[2]][0])
                                         j.inputdata.sizes.append(allcontent[ref[2]][1])
-                                        
+
                                     break
                             
                                 else:
@@ -661,6 +703,27 @@ class DQ2JobSplitter(ISplitter):
                                         j.inputdata.guids.append(next_guid)
                                         j.inputdata.names.append(allcontent[next_guid][0])
                                         j.inputdata.sizes.append(allcontent[next_guid][1])
+                                    
+                                    if job.inputdata._name == 'EventPicking':
+                                        for runevent in guid_run_evt_map[next_guid]:
+                                            revt = "(%s,%s)" %(long(runevent[0]),long(runevent[1]))     
+                                            j.application.run_event.append([long(runevent[0]),long(runevent[1])])
+                                        
+                                        if job.backend._name == 'Panda':
+                                            # copy run/event list in a file
+                                            eventPickFile = 'ep_%s.dat' % commands.getoutput('uuidgen')
+                                            evFH = open(eventPickFile,'w') 
+                                            tlist = j.application.run_event
+                                            j.application.run_event_file = eventPickFile
+
+                                            for k in range(len(tlist)):
+                                                evFH.write('%s %s\n' % (tlist[k][0], tlist[k][1]))
+                                            # close        
+                                            evFH.close()
+                                            app = job.application
+                                            #write in file 
+                                            evFileList.write('%s%s\n' %(app.atlas_run_dir, eventPickFile))
+
                                         break
                                 else:
                                     break
@@ -699,6 +762,11 @@ class DQ2JobSplitter(ISplitter):
 
                     totalfiles = totalfiles + len(j.inputdata.guids) 
 
+        
+        if job.inputdata._name == 'EventPicking' and job.backend._name == 'Panda':
+            evFileList.close()
+            #append list of files from picking to source archive
+            appendFile(eventPickFileList, job.application.user_area.name)
 
         if not subjobs:
             logger.error('DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')

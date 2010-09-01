@@ -569,6 +569,24 @@ else:
 theApp.EvtMax = ###MAXEVENT###
 ## override the  number of events to skip
 ServiceMgr.EventSelector.SkipEvents = ###SKIPEVENT###
+    
+## setting for event picking
+if os.environ.has_key('ATHENA_RUN_EVENTS'):
+    from AthenaCommon.AlgSequence import AthSequencer
+    seq = AthSequencer('AthFilterSeq')
+    from GaudiSequencer.PyComps import PyEvtFilter
+    seq += PyEvtFilter('alg',evt_info='',)
+    revt = eval(os.environ['ATHENA_RUN_EVENTS'])
+    run_evt = []
+    for i in range(len(revt)):
+        run_evt.append((revt[i][0], revt[i][1]))
+    seq.alg.evt_list = run_evt
+    seq.alg.filter_policy = str(os.environ['ATHENA_FILTER_POLICY'])
+    for tmpStream in theApp._streams.getAllChildren():
+        fullName = tmpStream.getFullName()
+        if fullName.split('/')[0] == 'AthenaOutputStream':
+             tmpStream.AcceptAlgs = [seq.alg.name()]
+
 """
 
     ick = False
