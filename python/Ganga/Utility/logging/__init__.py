@@ -310,6 +310,9 @@ def _getLogger(name=None,modulename=None,_roothandler=0, handler=None,frame=None
     if name is None:
         name = _guess_module_logger_name(modulename,frame=frame)
 
+    if name.split('.')[0] != 'Ganga' and name != 'Ganga':
+        name = 'Ganga.'+name
+
     #if private_logger:
     #    private_logger.debug('getLogger: effective_name=%s original_name=%s',name,requested_name)            
     
