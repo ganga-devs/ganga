@@ -80,7 +80,7 @@ class AnaTransform(Transform):
           task_container = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, task.name]) + "/"
           subtask_dsname = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, "subtask_%s" % task.transforms.index(self), str(self.inputdata.dataset[0].strip("/"))])
           # make sure we keep the name size limit:
-          dq2_config = getConfig("DQ2")["DQ2 configuration options"]
+          dq2_config = getConfig("DQ2")
           if len(subtask_dsname) > dq2_config['OUTPUTDATASET_NAMELENGTH']:
               logger.warning("Proposed dataset name longer than limit (%d). Restricting dataset name..." % dq2_config['OUTPUTDATASET_NAMELENGTH'])
 
