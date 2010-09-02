@@ -98,6 +98,7 @@ def report(job=None):
                 defaultConfigFileName = "gangarc.txt"
                 ipythonHistoryFileName = "ipythonhistory.txt"
                 gangaLogFileName = "gangalog.txt"
+                jobsListFileName = "jobslist.txt"
                 repositoryPath = "repository/$usr/LocalXML/6.0/jobs/$thousandsNumxxx"
                 uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
                 #uploadFileServer= "http://127.0.0.1:8000/errorreports"
@@ -277,6 +278,26 @@ def report(job=None):
                         finally:
                                 gangaLogFile.close()
                 #except IOError:
+                except:
+                        writeErrorLog(str(sys.exc_value))
+
+                #import the result of jobs command in the report
+                jobsListFullFileName = os.path.join(fullLogDirName, jobsListFileName)
+                
+                try:
+                        outputFile = open(jobsListFullFileName, 'w')
+                        try:
+                        
+                                sys.stdout = outputFile
+                                
+                                from Ganga.GPI import jobs
+                                print jobs      
+                                        
+                        finally:
+                                sys.stdout = sys.__stdout__
+                                outputFile.close()
+                                        
+                #except IOError does not catch the exception ???                
                 except:
                         writeErrorLog(str(sys.exc_value))
         
