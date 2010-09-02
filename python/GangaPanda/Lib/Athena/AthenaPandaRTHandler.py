@@ -145,7 +145,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if len(app.atlas_environment) > 0:
                 for env_var in app.atlas_environment:
                     env_str += "export %s ; " % env_var
-            
+            else: 
+                env_str = ""
+
             if app.atlas_exetype == 'PYARA':
                 self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; python ' + self.job_options
             elif app.atlas_exetype == 'ARES':
