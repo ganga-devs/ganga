@@ -118,6 +118,10 @@ class JEMMonitoringServiceHandler(object):
             logger.debug("Job " + self.__getFullJobId() + " has no JobExecutionMonitor-instance set.")
             return
 
+        if mo.enabled == False:
+            logger.debug("JEM is not enabled for job " + self.__getFullJobId() + ".")
+            return
+
         jemInputBox = []
         jemOutputBox = []
 
@@ -349,6 +353,16 @@ class JEMMonitoringServiceHandler(object):
         if self.__job.master != None:
             return
 
+        mo = self.__job.info.monitor
+
+        if not isinstance(mo, JobExecutionMonitor.JobExecutionMonitor):
+            logger.debug("Job " + self.__getFullJobId() + " has no JobExecutionMonitor-instance set.")
+            return
+
+        if mo.enabled == False:
+            logger.debug("JEM is not enabled for job " + self.__getFullJobId() + ".")
+            return
+
         # nicely ask the user to give some feedback.
         logger.info("* The Job Execution Monitor is active for this job.")
         logger.info("*   Please consider providing (positive and/or negative) feedback of your user experience")
@@ -406,10 +420,14 @@ class JEMMonitoringServiceHandler(object):
         if not JEMloader.INITIALIZED:
             logger.debug("Job Execution Monitor is disabled or failed to initialize")
             return
-
+        
+        mo = self.__job.info.monitor
+        
         if self.__job.master != None: # subjobs
             return
-        elif not self.__job.info.monitor or self.__job.info.monitor.__class__.__name__ != "JobExecutionMonitor":
+        elif not isinstance(mo, JobExecutionMonitor.JobExecutionMonitor):
+            return
+        elif mo.enabled == False:
             return
         else:
             # main job
@@ -421,6 +439,8 @@ class JEMMonitoringServiceHandler(object):
                 # we copy the full JMD log (if present) into our workspace (so all
                 # the events can be inspected from within Ganga)
                 copiedStuff = False
+
+                # TODO
 
                 #if os.path.exists(self.__job.info.monitor.jmdfile):
                     #if not os.path.exists(self.__job.outputdir + "JEM_MON.jmd"):
