@@ -242,7 +242,7 @@ else:
             # split the tag file based on these dataset boundaries
             #cmd = "./CollSplitByGUID.exe -src " + os.path.basename(f) + " RootCollection -guidfile guid_list.txt -streamref " + _streamRef + " -queryopt "+_streamRef
             compress = False
-            if (os.path.getsize(f) > 20):
+            if (os.path.getsize(f) > 20000000):
                 print "COMPRESSING TAG FILE..."
                 cmd = "./CollCompressEventInfo.exe -src " + os.path.basename(f) + " RootCollection -guidfile guid_list.txt -splitref " + _streamRef + " -queryopt "+_streamRef
                 rc, out = getstatusoutput(cmd)
