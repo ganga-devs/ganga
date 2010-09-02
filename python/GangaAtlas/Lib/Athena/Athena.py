@@ -744,6 +744,8 @@ class Athena(IApplication):
             runDir = runDir[1:]
         runDir = runDir+'/'
         self.atlas_run_dir = runDir
+        if not self.atlas_run_dir and self.atlas_exetype in ['EXE']: 
+            self.atlas_run_dir = './'
         logger.info('Using run directory: %s',self.atlas_run_dir)
 
         # extract run configuration

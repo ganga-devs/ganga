@@ -123,7 +123,8 @@ p.add_option('--user_setupfile', action='store', type='string', dest='user_setup
 p.add_option('--excludepackage', action='store', type='string', dest='excludepackage', help='Pattern of files to exclude from user area requirements files, separated by : , e.g. --excludepackage=MyPackage:YourPackage' )
 p.add_option('--prepare_old', action='store_true', help='Use prepare_old instead of new prepare method' )
 p.add_option('--collectstats', action='store_true', help='Switch to collect application statistics info and store in stats field' )
-p.add_option('--atlas_supp_stream', action='store', type='string', dest='atlas_supp_stream', help='suppress some output streams. e.g.,  --atlas_supp_stream=GLOBAL:D3PD' )
+p.add_option('--atlas_supp_stream', action='store', type='string', dest='atlas_supp_stream', help='suppress some output streams, e.g. --atlas_supp_stream=GLOBAL:D3PD' )
+p.add_option('--atlas_run_dir', action='store', type='string', dest='atlas_run_dir', help='Athena run directory, e.g. --atlas_run_dir=./' )
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -205,6 +206,9 @@ if opt.athena_exe:
     j.application.atlas_exetype=opt.athena_exe
 if opt.athena_dbrelease:
     j.application.atlas_dbrelease=opt.athena_dbrelease
+if opt.atlas_run_dir:
+    j.application.atlas_run_dir=opt.atlas_run_dir
+
 
 if opt.user_area:
     j.application.user_area=opt.user_area
