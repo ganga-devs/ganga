@@ -3,6 +3,7 @@
 import re
 import inspect
 import GangaPlotHelper
+
 ## require matplotlib to produce statistic plots
 from pylab import *
 
@@ -401,7 +402,7 @@ class GangaPlotter:
         self.__doPlot__()
 
     def __makeMultiHistograms__(self, dataTable, pltColIdList, pltDataProcList, pltLabelList, pltTitle='Histogram',\
-                                pltNumBins=50,pltXLabel=None,pltColorMap=None,pltNormalize=False,\
+                                pltNumBins=50,pltRange=(-1,-1),pltXLabel=None,pltColorMap=None,pltNormalize=False,\
                                 pltOutput=None):
 
         """ backend generator for multiple histograms """
@@ -426,7 +427,7 @@ class GangaPlotter:
             pltDataProc  = pltDataProcList[id]
             pltLabel     = pltLabelList[id]
 
-            self.__makeHistogram__(dataTable, pltColId=id, pltNumBins=pltNumBins, \
+            self.__makeHistogram__(dataTable, pltColId=id, pltNumBins=pltNumBins, pltRange=pltRange, \
                                    pltFaceColor=pltFaceColor, pltNormalize=pltNormalize, \
                                    pltLabel=pltLabel, pltOutput=pltOutput, pltDataProc=pltDataProc)
 
@@ -444,7 +445,7 @@ class GangaPlotter:
         grid(True)
         self.__doPlot__()
 
-    def __makeHistogram__(self,dataTable,pltColId=0,pltNumBins=50,\
+    def __makeHistogram__(self,dataTable,pltColId=0,pltNumBins=50, pltRange=(-1,-1), \
                           pltFaceColor='green',pltNormalize=False,\
                           pltLabel=None,pltOutput=None,pltDataProc=None):
 
@@ -473,7 +474,11 @@ class GangaPlotter:
                 pltData[dataHeader[pltColId]].append(value)
         
         #a = axes([0.05,0.1,0.5,0.7])
-        n, bins, patches = hist(pltData[dataHeader[pltColId]], bins=pltNumBins, normed=pltNormalize, facecolor=pltFaceColor, label=pltLabel, alpha=pltAlpha)
+        ## disable plot range if -1 is given to the range specification
+        if -1 in pltRange:
+            pltRange = None
+
+        n, bins, patches = hist(pltData[dataHeader[pltColId]], bins=pltNumBins, range=pltRange, normed=pltNormalize, facecolor=pltFaceColor, label=pltLabel, alpha=pltAlpha)
 
         ## a trick for remove the dummy labels from the legend
         for p in patches[1:]:
@@ -771,6 +776,10 @@ class GangaPlotter:
 
                label: A string specifying the lable of the histogram displayed on the legend.
 
+                xmin: A number specifying the lower bound of the histogram range.
+    
+                xmax: A number specifying the upper bound of the histogram range.
+
               output: A name of file where the pie chart plot will be exported. The format
                       is auto-determinated by the extension of the given name.
 
@@ -791,6 +800,8 @@ class GangaPlotter:
         deep      = True        # deep looping over all the subjob levels
         normalize = False       # histogram normalization
         numbins   = 50          # number of bins in the histogram
+        xmin      = -1          # lower bound of the histogram 
+        xmax      = -1          # upper bound of the histogram
 
         # update keyword arguments with the given values
         if keywords.has_key('title'):    subtitle  = keywords['title']
@@ -802,6 +813,8 @@ class GangaPlotter:
         if keywords.has_key('deep'):       deep    = keywords['deep']
         if keywords.has_key('normalize'): normalize= keywords['normalize']
         if keywords.has_key('numbins'):   numbins  = keywords['numbins']
+        if keywords.has_key('xmin'):      xmin     = keywords['xmin']
+        if keywords.has_key('xmax'):      xmax     = keywords['xmax']
 
         jlist = []
         for j in jobs:
@@ -836,7 +849,7 @@ class GangaPlotter:
 
         # make the plot
         self.__makeMultiHistograms__(dataTable,pltColIdList=pltColIdList,pltDataProcList=dataproc,pltLabelList=label, \
-                                     pltTitle=title,pltNumBins=numbins,pltXLabel=xlabel, \
+                                     pltTitle=title,pltNumBins=numbins,pltRange=(xmin,xmax), pltXLabel=xlabel, \
                                      pltColorMap=colormap,pltNormalize=normalize, \
                                      pltOutput=output)
 
