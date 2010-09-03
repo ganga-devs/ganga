@@ -82,10 +82,9 @@ def get_job_JSON(job):
 
     return "".join(result)
 
-def get_subjobs_JSON(jobid, fromDate=None, toDate=None):
+def get_subjobs_in_time_range(jobid, fromDate=None, toDate=None):
 
-    json_subjobs_strings = []   
-    json_subjobs_strings.append("{\"taskjobs\": [")     
+    subjobs = []
 
     for subjob in jobs(jobid).subjobs:
         
@@ -93,24 +92,36 @@ def get_subjobs_JSON(jobid, fromDate=None, toDate=None):
 
         if fromDate is None and toDate is None:
 
-            json_subjobs_strings.append(get_subjob_JSON(subjob))
-            json_subjobs_strings.append(",")
+            subjobs.append(subjob)
         
         elif fromDate is not None and toDate is not None:
 
             if timeCreated >= fromDate and timeCreated <= toDate:
 
-                json_subjobs_strings.append(get_subjob_JSON(subjob))
-                json_subjobs_strings.append(",")
+                subjobs.append(subjob)
 
         elif fromDate is not None and toDate is None:
 
             if timeCreated >= fromDate:
 
-                json_subjobs_strings.append(get_subjob_JSON(subjob))
-                json_subjobs_strings.append(",")
+                subjobs.append(subjob)
+
+    return subjobs
 
 
+def get_subjobs_JSON(jobid, fromDate=None, toDate=None):
+
+    json_subjobs_strings = []   
+    json_subjobs_strings.append("{\"taskjobs\": [")     
+
+        
+    subjobs_in_time_range = get_subjobs_in_time_range(jobid, fromDate, toDate)
+
+    for subjob in subjobs_in_time_range:
+
+        json_subjobs_strings.append(get_subjob_JSON(subjob))
+        json_subjobs_strings.append(",")        
+        
     if json_subjobs_strings[-1] == ",":
         json_subjobs_strings = json_subjobs_strings[:-1]
         
@@ -118,10 +129,10 @@ def get_subjobs_JSON(jobid, fromDate=None, toDate=None):
 
     return "".join(json_subjobs_strings)
 
-def get_jobs_JSON(fromDate=None, toDate=None):
 
-    json_jobs_strings = []      
-    json_jobs_strings.append("{\"user_taskstable\": [") 
+def get_job_infos_in_time_range(fromDate=None, toDate=None):
+   
+    job_infos = []
 
     for jobInfo in jobs_dictionary.values():
 
@@ -130,26 +141,68 @@ def get_jobs_JSON(fromDate=None, toDate=None):
         if timeCreated is None:
 
             if fromDate is None and toDate is None:
-                json_jobs_strings.append(jobInfo.getJobJSON())
-                json_jobs_strings.append(",")
+
+                job_infos.append(jobInfo)
             
         elif fromDate is None and toDate is None:
 
-            json_jobs_strings.append(jobInfo.getJobJSON())
-            json_jobs_strings.append(",")
+            job_infos.append(jobInfo)
 
         elif fromDate is not None and toDate is not None:
             
             if timeCreated >= fromDate and timeCreated <= toDate:
-                json_jobs_strings.append(jobInfo.getJobJSON())
-                json_jobs_strings.append(",")
+
+                job_infos.append(jobInfo)
 
         elif fromDate is not None and toDate is None:
 
             if timeCreated >= fromDate:
-                json_jobs_strings.append(jobInfo.getJobJSON())
-                json_jobs_strings.append(",")
-        
+
+                job_infos.append(jobInfo)
+
+    return job_infos    
+
+def create_subjobs_graphics(jobid, fromDate, toDate):
+
+    subjobs_in_time_range = get_subjobs_in_time_range(jobid, fromDate, toDate)
+
+    subjobs_statuses = {}
+    subjobs_applications = {}
+    subjobs_backends = {}
+
+    for subjob in subjobs_in_time_range:
+
+        increment(subjobs_statuses,subjob.getJobStatus())       
+        increment(subjobs_applications,subjob.application.__class__.__name__)   
+        increment(subjobs_backends,subjob.backend.__class__.__name__)   
+
+
+def create_jobs_graphics(fromDate=None, toDate=None):
+
+    job_infos_in_time_range = get_job_infos_in_time_range(fromDate, toDate)
+
+    jobs_statuses = {}
+    jobs_applications = {}
+    jobs_backends = {}
+
+    for jobInfo in job_infos_in_time_range:
+
+        increment(jobs_statuses,jobInfo.getJobStatus()) 
+        increment(jobs_applications,jobInfo.getJobApplication())        
+        increment(jobs_backends,jobInfo.getJobBackend())        
+                
+
+def get_jobs_JSON(fromDate=None, toDate=None):
+
+    json_jobs_strings = []      
+    json_jobs_strings.append("{\"user_taskstable\": [") 
+
+    job_infos_in_time_range = get_job_infos_in_time_range(fromDate, toDate)
+
+    for jobInfo in job_infos_in_time_range:     
+
+        json_jobs_strings.append(jobInfo.getJobJSON())
+        json_jobs_strings.append(",")
 
     if json_jobs_strings[-1] == ",":
         json_jobs_strings = json_jobs_strings[:-1]
@@ -170,9 +223,9 @@ def update_jobs_dictionary():
             job = jobs(job_id)
 
             try:        
-                jobs_dictionary[job_id] = JobRelatedInfo(get_job_JSON(job), job.time.timestamps['new']) 
+                jobs_dictionary[job_id] = JobRelatedInfo(job, job.time.timestamps['new']) 
             except RegistryKeyError:
-                jobs_dictionary[job_id] = JobRelatedInfo(get_job_JSON(job), None)       
+                jobs_dictionary[job_id] = JobRelatedInfo(job, None)       
 
         except RegistryKeyError:
 
@@ -184,14 +237,12 @@ def fill_jobs_dictionary():
     for job in jobs:
         try:
             #get the id -> it could cause RegistryKeyError and the code below will not be executed
-            jobid = job.id
-            jobJSON = get_job_JSON(job) 
+            jobid = job.id 
 
             try:
-                jobs_dictionary[jobid] = JobRelatedInfo(jobJSON, job.time.timestamps['new']) 
+                jobs_dictionary[jobid] = JobRelatedInfo(job, job.time.timestamps['new']) 
             except RegistryKeyError:
-                jobs_dictionary[jobid] = JobRelatedInfo(jobJSON, None)
-                print jobJSON
+                jobs_dictionary[jobid] = JobRelatedInfo(job, None)
         
         except RegistryKeyError:
             pass
@@ -270,10 +321,13 @@ def getMonitoringLink(port):
 
 class JobRelatedInfo:
         
-    def __init__(self, job_json, time_created):
+    def __init__(self, job, time_created):
            
-        self.job_json = job_json
+        self.job_json = get_job_JSON(job)
         self.time_created = time_created
+        self.job_status = job.status 
+        self.job_application = job.application.__class__.__name__
+        self.job_backend = job.backend.__class__.__name__
 
     def getJobJSON(self):
 
@@ -281,7 +335,19 @@ class JobRelatedInfo:
 
     def getTimeCreated(self):
 
-        return self.time_created                
+        return self.time_created 
+
+    def getJobStatus(self):
+
+        return self.job_status  
+
+    def getJobApplication(self):
+
+        return self.job_application  
+
+    def getJobBackend(self):
+
+        return self.job_backend
 
     def __hash__(self):
 
@@ -379,7 +445,16 @@ class GetHandler(BaseHTTPRequestHandler):
         elif query == "subjobs":
                 jobid = int(qsDict['taskmonid'])
                 json = get_subjobs_JSON(jobid, fromDate, toDate)
-                
+
+        elif query == "jobs_statuses":           
+                #update dictionary with the changed jobs
+                update_jobs_dictionary()
+                create_jobs_graphics(fromDate, toDate)
+
+        elif query == "subjobs_statuses":
+                jobid = int(qsDict['taskmonid'])
+                create_subjobs_graphics(jobid, fromDate, toDate)
+        
                 
         self.send_response(200)
         self.send_header('Content-Type', 'text/html')
