@@ -162,6 +162,11 @@ def get_job_infos_in_time_range(fromDate=None, toDate=None):
 
     return job_infos    
 
+#increment dictionary value method
+def increment(d,k):
+    d.setdefault(k,0)
+    d[k] += 1
+
 def create_subjobs_graphics(jobid, fromDate, toDate):
 
     subjobs_in_time_range = get_subjobs_in_time_range(jobid, fromDate, toDate)
@@ -176,6 +181,37 @@ def create_subjobs_graphics(jobid, fromDate, toDate):
         increment(subjobs_applications,subjob.application.__class__.__name__)   
         increment(subjobs_backends,subjob.backend.__class__.__name__)   
 
+    json_subjobs_statuses = get_pie_chart_json(subjobs_statuses)
+    json_subjobs_applications = get_pie_chart_json(subjobs_applications)
+    json_subjobs_backends = get_pie_chart_json(subjobs_backends)
+        
+    #todo -> think how to return the JSONs 
+
+def get_pie_chart_json(d):
+
+    json_pie_chart = "[["
+        
+    keys = []
+    values = []
+
+    for k,v in d.iteritems():
+        keys.append(k)
+        values.append(v)
+
+    for key in keys[:-1]:
+        json_pie_chart += '%s,' % addQuotes(key)
+    json_pie_chart += addQuotes(keys[-1])
+    
+    json_pie_chart += "],["             
+        
+    for value in values[:-1]:
+        json_pie_chart += '%s,' % addQuotes(str(value))
+    json_pie_chart += addQuotes(str(values[-1]))
+
+    json_pie_chart += "]]"      
+
+    return json_pie_chart               
+
 
 def create_jobs_graphics(fromDate=None, toDate=None):
 
@@ -189,8 +225,13 @@ def create_jobs_graphics(fromDate=None, toDate=None):
 
         increment(jobs_statuses,jobInfo.getJobStatus()) 
         increment(jobs_applications,jobInfo.getJobApplication())        
-        increment(jobs_backends,jobInfo.getJobBackend())        
-                
+        increment(jobs_backends,jobInfo.getJobBackend())    
+
+    json_job_statuses = get_pie_chart_json(jobs_statuses)
+    json_job_applications = get_pie_chart_json(jobs_applications)
+    json_job_backends = get_pie_chart_json(jobs_backends)
+        
+    #todo -> think how to return the JSONs 
 
 def get_jobs_JSON(fromDate=None, toDate=None):
 
