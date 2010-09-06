@@ -308,9 +308,14 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen'))
 
             if app.user_area.name:
-                rc, output = commands.getstatusoutput('cp %s %s' % (app.user_area.name, inputsandbox))
+                rc, output = commands.getstatusoutput('cp %s %s.gz' % (app.user_area.name, inputsandbox))
                 if rc:
                     logger.error('Copying user_area failed with status %d',rc)
+                    logger.error(output)
+                    raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+                rc, output = commands.getstatusoutput('gunzip %s.gz' % (inputsandbox))
+                if rc:
+                    logger.error('Unzipping user_area failed with status %d',rc)
                     logger.error(output)
                     raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
 
