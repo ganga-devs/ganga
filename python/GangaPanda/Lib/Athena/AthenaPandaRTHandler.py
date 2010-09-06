@@ -115,13 +115,19 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         from taskbuffer.JobSpec import JobSpec
         from taskbuffer.FileSpec import FileSpec
 
+        # get Athena versions
+        rc, out = AthenaUtils.getAthenaVer()
+        # failed
+        if not rc:
+            raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+        self.userarea = out['workArea']
 
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
         if job.backend.libds == "LOCAL":
             local_libds = True
-            local_libds_nobuild = False
+            local_libds_nobuild = not app.athena_compile
             job.backend.libds = None
         elif job.backend.libds == "NOBUILD":
             local_libds = True
@@ -323,10 +329,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 fname.rstrip(os.sep)
                 path = os.path.dirname(fname)
                 fn = os.path.basename(fname)
-                rd = os.path.abspath(self.rundirectory)
-                if rd in path:
-                    fn = fname[len(rd)+1:]
-                    path = rd
+                ua = os.path.abspath(self.userarea)
+                if ua in path:
+                    fn = fname[len(ua)+1:]
+                    path = ua
                 rc, output = commands.getstatusoutput('tar rf %s -C %s %s' % (inputsandbox, path, fn))
                 if rc:
                     logger.error('Packing inputsandbox failed with status %d',rc)
