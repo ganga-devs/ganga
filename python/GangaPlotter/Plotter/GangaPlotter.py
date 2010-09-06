@@ -265,6 +265,55 @@ class GangaPlotter:
 
         return value
 
+    def __makeScatter__(self,dataTable,pltXColId=0,pltYColId=1,pltTitle='Scatter Plot',pltXLabel=None,pltYLabel=None,pltOutput=None,pltXDataProc=None,pltYDataProc=None):
+
+        """backend scatter plot generator """
+
+        pltAlpha=0.7
+
+        dataHeader = dataTable[0]
+        dataTable  = dataTable[1:]
+
+        if len(dataTable) < 1:
+            logger.warning('Scatter plot requires at least 2 columns in the data Table, the given contains only %d.') % len(dataTable)
+            return
+
+        xdata = []
+        ydata = []
+
+        for data in dataTable:
+            xval = self.__procPltData__(data[pltXColId],pltXDataProc)
+            yval = self.__procPltData__(data[pltYColId],pltYDataProc)
+
+            xdata.append(xval)
+            ydata.append(yval)
+
+        if not pltXLabel:
+            pltXLabel = dataHeader[pltXColId]
+
+        if not pltYLabel:
+            pltYLabel = dataHeader[pltYColId]
+
+        ##-----
+        ## Generating the scatter plot
+        ##-----
+        self.output = pltOutput
+        self.__setFigureId__()
+
+        figure(self.figId)
+        rc('font',size=8.0)
+
+        scatter(xdata, ydata, c='b', marker='o', alpha=pltAlpha)
+
+        grid(True)
+        title(pltTitle)
+        ylabel(pltYLabel)
+        xlabel(pltXLabel)
+        #legend(legend_labels, legend_texts, shadow=True, loc='best')
+        axis('on')
+
+        self.__doPlot__()
+
     def __makeBarChart__(self,dataTable,pltXColId=0,pltYColIds=[1],pltTitle='Bar Chart',pltXLabel=None,pltYLabel='#',pltColorMap=None,pltOutput=None,pltXDataProc=None,pltYDataProcs=None,stackedBar=True):
 
         """ backend bar chart generator """
@@ -673,6 +722,92 @@ class GangaPlotter:
 
         # make the plot
         self.__makeBarChart__(dataTable,pltXColId=0,pltYColIds=[1],pltTitle=title,pltXLabel=xlabel,pltYLabel=ylabel,pltColorMap=colormap,pltOutput=output,pltXDataProc=xdataproc,pltYDataProcs=[ydataproc],stackedBar=stacked)
+
+    def scatter(self,jobs,xattr,yattr,**keywords):
+
+        """
+        The plotter's interface for generating scatter plot.
+
+        usage:
+            >>> plotter.scatter(jobs,xattr,yattr,**keywords)
+
+            Generate a scatter chart presenting the distribution of yattr along xattr.
+
+        required arguments:
+             jobs: A GANGA's job table
+
+            xattr: A string or a user defined function, the corresponding value of which
+                   will be extracted as the x value of the scatter plot.
+
+            yattr: A string or a user defined function, the corresponding value of which
+                   will be extracted as the y value of the scatter plot.
+
+        optional arguments:
+
+               title: A string specifying the title.
+
+              xlabel: A string specifying the xlabel.
+
+              ylabel: A string specifying the ylabel.
+
+              output: A name of file where the chart will be exported. The format
+                      is auto-determinated by the extension of the given name.
+
+           xdataproc: An user-defined function which will be applied to process the value
+                      of xattr before plotting chart.
+
+           ydataproc: The same as xdataproc; but apply on the value of yattr.
+
+            xattrext: Trigger the build-in data pre-processor on the value of xattr.
+                      It will be override if "xdataproc" argument is also specified.
+                      ** Supported attrext for "backend.actualCE" and "backend.CE":
+                         - "by_ce": Catagorize CE queues into CE
+                         - "by_country": Catagorize CE queues into country
+
+            yattrext: The same as xattrext; but apply on the value of yattr.
+
+                deep: Sets if looping over all the subjob levels. Default is "True"
+        """
+
+        # default keyword arguments
+        subtitle  = self.__defaultSubtitle__(yattr)      # default subtitle
+        xlabel    = None        # xlabel
+        ylabel    = None        # ylabel
+        output    = None        # the output file of the picture
+        xattrext  = None        # trigger the build-in data processing function on xattr
+        yattrext  = None        # trigger the build-in data processing function on yattr
+        xdataproc = None        # function for xdata processing (cannot work together with 'attrext')
+        ydataproc = None        # function for ydata processing (cannot work together with 'attrext')
+        deep      = True        # deep looping over all the subjob levels
+
+        # update keyword arguments with the given values
+        if keywords.has_key('title'):    subtitle   = keywords['title']
+        if keywords.has_key('xlabel'):   xlabel     = keywords['xlabel']
+        if keywords.has_key('ylabel'):   ylabel     = keywords['ylabel']
+        if keywords.has_key('output'):   output     = keywords['output']
+        if keywords.has_key('xattrext'): xattrext   = keywords['xattrext']
+        if keywords.has_key('yattrext'): yattrext   = keywords['yattrext']
+        if keywords.has_key('xdataproc'): xdataproc = keywords['xdataproc']
+        if keywords.has_key('ydataproc'): ydataproc = keywords['ydataproc']
+        if keywords.has_key('deep'):       deep     = keywords['deep']
+
+        jlist = []
+        for j in jobs:
+            jlist.append(j)
+
+        xattr_spec = self.__makeList__(xattr)
+        yattr_spec = self.__makeList__(yattr)
+
+        # special build-in dataprocs for the CE-based bar chart
+        xdataproc = self.__setDataProcessor__(xattr_spec[0],xattrext,xdataproc)
+        ydataproc = self.__setDataProcessor__(yattr_spec[0],yattrext,ydataproc)
+
+        dataTable = getJobInfoTable(jlist,[xattr_spec[0],yattr_spec[0]],deep)
+        # make the plot title
+        title = __makePlotTitle__(len(dataTable[1:]),deep,subtitle)
+
+        # make the plot
+        self.__makeScatter__(dataTable,pltXColId=0,pltYColId=1,pltTitle=title,pltXLabel=xlabel,pltYLabel=ylabel,pltOutput=output,pltXDataProc=xdataproc,pltYDataProc=ydataproc)
 
     def piechart(self,jobs,attr,**keywords):
         
