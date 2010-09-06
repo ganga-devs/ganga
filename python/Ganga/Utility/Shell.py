@@ -93,7 +93,7 @@ class Shell:
 
       self.dirname=None
 
-   def cmd(self,cmd,soutfile=None,allowed_exit=[0], capture_stderr=False,timeout=None):
+   def cmd(self,cmd,soutfile=None,allowed_exit=[0], capture_stderr=False,timeout=None, mention_outputfile_on_errors=True):
       "Execute an OS command and captures the stderr and stdout which are returned in a file"
  
       if not soutfile: soutfile=tempfile.mktemp('.out')
@@ -133,7 +133,8 @@ class Shell:
       BYTES = 4096
       if rc not in allowed_exit:
          logger.warning('exit status [%d] of command %s',rc,cmd)
-         logger.warning('full output is in file: %s',soutfile)
+         if mention_outputfile_on_errors:
+            logger.warning('full output is in file: %s',soutfile)
          logger.warning('<first %d bytes of output>\n%s',BYTES,file(soutfile).read(BYTES))
          logger.warning('<end of first %d bytes of output>',BYTES)
          
@@ -148,7 +149,7 @@ class Shell:
    def cmd1(self,cmd,allowed_exit=[0],capture_stderr=False,timeout=None):
        "Executes an OS command and captures the stderr and stdout which are returned as a string"
        
-       rc,outfile,m = self.cmd(cmd,None,allowed_exit,capture_stderr,timeout)
+       rc,outfile,m = self.cmd(cmd,None,allowed_exit,capture_stderr,timeout,mention_outputfile_on_errors=False)
        output=file(outfile).read()
        os.unlink(outfile)
        
