@@ -2009,9 +2009,9 @@ class NG(IBackend):
 
         elif status == 'Cleared':
             if job.status in ['completed','failed']:
-                logger.warning('Monitoring loop should not have been called for job %d as status is already %s',job.id,job.status)
+                logger.warning('Monitoring loop should not have been called for job %d as status is already %s',job.getFQID('.'),job.status)
                 return 
-            logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',job.id)
+            logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',job.getFQID('.'))
             job.updateStatus('failed')
      
         else:
