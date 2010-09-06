@@ -56,10 +56,10 @@ class DiracSplitter(SplitByFiles):
         big_list = []
         for l in split_files: big_list.extend(l)
         diff = set(inputs.getFileNames()).difference(big_list)
-        if self.ignoremissing:
-            if len(diff) > 0:
-                for f in diff: logger.warning('Ignored file: %s' % f)
-                else: raise SplittingError('Some files not found!')
+        if len(diff) > 0:            
+            for f in diff: logger.warning('Ignored file: %s' % f)
+            if not self.ignoremissing:
+                raise SplittingError('Some files not found!')
         
         for l in split_files:
             dataset = LHCbDataset()

@@ -180,7 +180,10 @@ class DiracServer:
             presult += data
             if(presult.find(self.end_data_str) >= 0):
                 recv_completed = True
-                presult.replace(self.end_data_str,'')
+                presult = presult.replace(self.end_data_str,'')
+                f = open('file.pkl','w')
+                f.write(presult)
+                f.close()
                 result = pickle.loads(presult)
                 break
                             

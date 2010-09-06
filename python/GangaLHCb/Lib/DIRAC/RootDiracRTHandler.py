@@ -31,10 +31,15 @@ class RootDiracRTHandler(IRuntimeHandler):
             logger.error('Could not obtain available ROOT versions: %s' \
                          % str(result))
             logger.error('ROOT version will not be validated.')
-        root_versions = result['Value']        
-        if not app.version in root_versions:
-            versions = []
-            for v in root_versions: versions.append(v)
+        root_versions = result['Value']
+        found = False
+        versions = []
+        for v in root_versions:
+            versions.append(v)
+            if app.version.find(v) >= 0:
+                found = True
+                break
+        if not found:
             msg = 'Invalid ROOT version: %s.  Valid versions: %s' \
                   % (app.version, str(versions))
             raise ApplicationConfigurationError(None,msg)

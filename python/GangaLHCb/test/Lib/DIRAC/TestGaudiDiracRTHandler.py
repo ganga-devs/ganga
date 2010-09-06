@@ -15,9 +15,9 @@ class TestGaudiDiracRTHandler(GangaGPITestCase):
         self.app.platform = getDiracAppPlatform()
         self.extra = GaudiExtras()
         self.extra.master_input_buffers['master.buffer'] = '###MASTERBUFFER###'
-        self.extra.master_input_files = [File(name='master.in')]
+        self.extra.master_input_files = [File(name='master.in')._impl]
         self.extra.input_buffers['subjob.buffer'] = '###SUBJOBBUFFER###'
-        self.extra.input_files = [File(name='subjob.in')]        
+        self.extra.input_files = [File(name='subjob.in')._impl]        
         self.extra.outputsandbox = ['dummy1.out','dummy2.out','dummy3.out']
         self.rth = GaudiDiracRTHandler()
     
