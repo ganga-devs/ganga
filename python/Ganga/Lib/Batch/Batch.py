@@ -566,7 +566,7 @@ sys.exit(result)
                     time = get_last_alive(heartbeatfile)
                     config = getConfig(j.backend._name)
                     if time>config['timeout']:
-                        logger.warning('Job %s has disappeared from the batch system.', str(j.id))
+                        logger.warning('Job %s has disappeared from the batch system.', str(j.getFQID('.')))
                         j.updateStatus('failed')
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
