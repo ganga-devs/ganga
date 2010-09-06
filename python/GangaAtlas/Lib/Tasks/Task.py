@@ -139,7 +139,10 @@ class Task(GangaObject):
     def setBackend(self,backend):
         """Sets the backend on all transforms"""
         for tf in self.transforms:
-            tf.backend = stripProxy(backend).clone()
+            if backend is None:
+                tf.backend = None
+            else:
+                tf.backend = stripProxy(backend).clone()
 
     def setParameter(self,**args):
         """Use: setParameter(processName="HWW") to set the processName in all applications to "HWW"
