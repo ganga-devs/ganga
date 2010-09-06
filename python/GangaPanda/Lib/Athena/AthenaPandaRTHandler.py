@@ -319,10 +319,14 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     logger.error(output)
                     raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
 
-            for fname in [f.name for f in job.inputsandbox]:
+            for fname in [os.path.abspath(f.name) for f in job.inputsandbox]:
                 fname.rstrip(os.sep)
-                path = fname[:fname.rfind(os.sep)]
-                f = fname[fname.rfind(os.sep)+1:]
+                path = os.path.dirname(fname)
+                fn = os.path.basename(fname)
+                rd = os.path.abspath(self.rundirectory)
+                if rd in path:
+                    fn = fname[len(rd)+1:]
+                    path = rd
                 rc, output = commands.getstatusoutput('tar rf %s -C %s %s' % (inputsandbox, path, f))
                 if rc:
                     logger.error('Packing inputsandbox failed with status %d',rc)
