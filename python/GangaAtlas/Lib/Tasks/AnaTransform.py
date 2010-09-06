@@ -53,7 +53,7 @@ class AnaTransform(Transform):
    """ Analyzes Events """
    _schema = Schema(Version(1,0), dict(Transform._schema.datadict.items() + {
        'files_per_job'     : SimpleItem(defvalue=5, doc='files per job', modelist=["int"]),
-       'partitions_data'   : ComponentItem('datasets', defvalue=[], sequence=1, hidden=1, doc='Input dataset for each partition'),
+       'partitions_data'   : ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=1, doc='Input dataset for each partition'),
        'partitions_sites'  : SimpleItem(defvalue=[], hidden=1, modelist=["str","list"],doc='Input site for each partition'),
        'outputdata'        : ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset'),
        }.items()))
@@ -77,8 +77,13 @@ class AnaTransform(Transform):
       # if this is the first app to complete the partition...
       if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
           task = self._getParent()
-          task_container = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, task.name]) + "/"
-          subtask_dsname = ".".join(["user",getNickname(),task.creation_date,"task_%s" % task.id, "subtask_%s" % task.transforms.index(self), str(self.inputdata.dataset[0].strip("/"))])
+          name_base = ["user",getNickname(),task.creation_date,"task_%s" % task.id]
+          task_container = ".".join(name_base + [task.name]) + "/"
+          if self.inputdata.dataset:
+              subtask_dsname = ".".join(name_base +["subtask_%s" % task.transforms.index(self), str(self.inputdata.dataset[0].strip("/"))])
+          else:
+              subtask_dsname = ".".join(name_base +["subtask_%s" % task.transforms.index(self)])
+                
           # make sure we keep the name size limit:
           dq2_config = getConfig("DQ2")
           if len(subtask_dsname) > dq2_config['OUTPUTDATASET_NAMELENGTH']:
@@ -294,8 +299,6 @@ class AnaTransform(Transform):
             #print "CLOUD/BACKEND list for INCOMPLETE replicas: ", common_cbl
          if common_cbl is None or len(common_cbl) == 0:
             raise ApplicationConfigurationError(None, 'Container dataset %s has no replica on one site and backend. Please specify individual tid datasets!' % (ds))
-
-
 
          cb = common_cbl[0]
          using_cloud = cb[0]

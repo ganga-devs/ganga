@@ -137,9 +137,9 @@ class Task(GangaObject):
         self.float = float_cache
 
     def setBackend(self,backend):
-        """Sets the backend on all transforms, except if the backend is None"""
+        """Sets the backend on all transforms"""
         for tf in self.transforms:
-            tf.backend = stripProxy(backend)
+            tf.backend = stripProxy(backend).clone()
 
     def setParameter(self,**args):
         """Use: setParameter(processName="HWW") to set the processName in all applications to "HWW"

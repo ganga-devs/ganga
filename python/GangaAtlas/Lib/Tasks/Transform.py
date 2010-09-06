@@ -365,10 +365,10 @@ class Transform(GangaObject):
       task = self._getParent() # this works because createNewJob is only called by a task
       id = task.transforms.index(self)
       j = GPI.Job()
-      j.backend = self.backend
-      j.application = self.application
-      j.application._impl.tasks_id = "%i:%i" % (task.id, id)
-      j.application._impl.id = self.getNewAppID(partition)
+      j._impl.backend = self.backend.clone()
+      j._impl.application = self.application.clone()
+      j._impl.application.tasks_id = "%i:%i" % (task.id, id)
+      j._impl.application.id = self.getNewAppID(partition)
       j.inputdata = self.inputdata
       j.outputdata = self.outputdata
       j.inputsandbox = self.inputsandbox
