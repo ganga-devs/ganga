@@ -353,7 +353,7 @@ class AnaTransform(Transform):
           j.outputdata.outputdata=[]
       #j.outputdata.datasetname = ""
       task = self._getParent()
-      dsn = ["user",getNickname(),task.creation_date,"job_%i" % j.id, "t_%s_%s_%s" % (task.id, task.transforms.index(self), partitions[0])]
+      dsn = ["user",getNickname(),task.creation_date,"%i.t_%s_%s" % (j.id, task.id, task.transforms.index(self))]
       j.outputdata.datasetname = ".".join(dsn)
 
       #if j.outputdata.datasetname:
