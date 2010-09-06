@@ -22,7 +22,9 @@ from Ganga.Core import BackendError
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 
+from Ganga.Utility.GridShell import getShell
 
 
 def getDBDatasets(jobO,trf,dbrelease):
@@ -60,9 +62,50 @@ def getDBDatasets(jobO,trf,dbrelease):
                     raise ApplicationConfigurationError(None,"ERROR : %s is not in %s"%(tmpDbrLFN,tmpDbrDS))
     return dbrFiles,dbrDsList
 
+def execute_build_job(trafo, sources, parameters):
+    tmpdir = '/tmp/%s' % commands.getoutput('uuidgen')
+    os.system("mkdir %s && cd %s" % (tmpdir, tmpdir))
+
+    status, output = commands.getstatusoutput("cd %s && wget %s && ln -s %s ." % (tmpdir, trafo, sources))
+    if status != 0:
+        print output
+        raise ApplicationConfigurationError(None,"Failure in setting up local build job!")
+
+    tf = os.path.basename(trafo)
+    logger.warning("Locally executing build job. This can take minutes, please be patient.")
+    status, output = commands.getstatusoutput("cd %s && chmod +x %s && ./%s %s" % (tmpdir, tf, tf, parameters))
+    if status != 0:
+        print output
+        raise ApplicationConfigurationError(None,"Failure in creating library package with local build job!")
+   
+    return tmpdir
+    
 
 class AthenaPandaRTHandler(IRuntimeHandler):
     '''Athena Panda Runtime Handler'''
+
+    def make_local_libds(self, jspec, sources, nobuild):
+        if nobuild:
+            tmpdir = '/tmp/%s' % commands.getoutput('uuidgen')
+            os.system("mkdir %s" % (tmpdir))
+            status, output = commands.getstatusoutput("cd %s && cp %s %s" % (tmpdir, sources, self.library))
+        else:
+            tmpdir = execute_build_job(jspec.transformation, sources, jspec.jobParameters)
+
+        setupstr = ["export OLDPATH=$PATH"]
+        setupstr.append('source /afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/setup.sh 2>&1 > /dev/null')
+        setupstr.append('export VOMS_PROXY_INFO_DONT_VERIFY_AC=1')
+        setupstr.append("export PATH=$OLDPATH")
+        from pandatools import Client
+        site = Client.PandaSites[jspec.destinationSE]["ddm"]
+        cmd = "dq2-put -a -d -L %s -s %s -f %s %s" % (site, tmpdir, self.library, self.libDataset)
+        cmdline = "%s; %s" % (";".join(setupstr), cmd)
+        print cmdline
+        shell = getShell("EDG")
+        status, output = shell.cmd1(cmdline)
+        if status != 0:
+            print output
+            raise ApplicationConfigurationError(None,"Failure in uploading library package with local build job!")
 
     def master_prepare(self,app,appconfig):
         '''Prepare the master job'''
@@ -75,6 +118,17 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
+
+        if job.backend.libds == "LOCAL":
+            local_libds = True
+            local_libds_nobuild = False
+            job.backend.libds = None
+        elif job.backend.libds == "NOBUILD":
+            local_libds = True
+            local_libds_nobuild = True
+            job.backend.libds = None
+        else:
+            local_libds = False
 
         # validate application
         if not app.atlas_release:
@@ -247,9 +301,40 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # validate dbrelease
         self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
 
+        # Add inputsandbox to user_area
+        if job.inputsandbox:
+            logger.warning("Submitting Panda job with inputsandbox. This may slow the submission slightly.")
+            inpw = job.getInputWorkspace()
+            inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen'))
+
+            if app.user_area.name:
+                rc, output = commands.getstatusoutput('cp %s %s' % (app.user_area.name, inputsandbox))
+                if rc:
+                    logger.error('Copying user_area failed with status %d',rc)
+                    logger.error(output)
+                    raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+
+            for fname in [f.name for f in job.inputsandbox]:
+                fname.rstrip(os.sep)
+                path = fname[:fname.rfind(os.sep)]
+                f = fname[fname.rfind(os.sep)+1:]
+                rc, output = commands.getstatusoutput('tar rf %s -C %s %s' % (inputsandbox, path, f))
+                if rc:
+                    logger.error('Packing inputsandbox failed with status %d',rc)
+                    logger.error(output)
+                    raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+            rc, output = commands.getstatusoutput('gzip %s' % (inputsandbox))
+            if rc:
+                logger.error('Packing inputsandbox failed with status %d',rc)
+                logger.error(output)
+                raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+            inputsandbox += ".gz"
+        else:
+            inputsandbox = app.user_area.name
+
         # upload sources
-        if app.user_area.name and not job.backend.libds:
-            uploadSources(os.path.dirname(app.user_area.name),os.path.basename(app.user_area.name))
+        if inputsandbox and not job.backend.libds and not local_libds:
+            uploadSources(os.path.dirname(inputsandbox),os.path.basename(inputsandbox))
 
         # create build job
         jspec = JobSpec()
@@ -261,7 +346,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
         else:
             jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
-        if Client.isDQ2free(job.backend.site):
+        if Client.isDQ2free(job.backend.site) and not local_libds:
             jspec.destinationDBlock = '%s/%s' % (job.outputdata.datasetname,self.libDataset)
             jspec.destinationSE     = 'local'
         else:
@@ -273,8 +358,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.computingSite     = job.backend.site
         jspec.cloud             = job.backend.requirements.cloud
         jspec.jobParameters     = '-o %s' % (self.library)
-        if app.user_area.name:
-            jspec.jobParameters     += ' -i %s' % (os.path.basename(app.user_area.name))
+        if inputsandbox:
+            jspec.jobParameters     += ' -i %s' % (os.path.basename(inputsandbox))
         matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
         if matchURL:
             jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
@@ -298,6 +383,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if configPanda['chirpconfig']:
             flog.dispatchDBlockToken = configPanda['chirpconfig']
         jspec.addFile(flog)
+        
+        if local_libds:
+            self.make_local_libds(jspec, inputsandbox, local_libds_nobuild)
+            job.backend.libds = self.libDataset
+            jspec = None 
+            self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
 
         return jspec
 
