@@ -1543,7 +1543,7 @@ sys.exit(0)
             if job.status in LCG._final_ganga_states:
                 # do nothing in this case as it's in the middle of the corresponding job downloading task
                 return 
-            logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',job.id)
+            logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',job.getFQID('.'))
             job.updateStatus('failed')
      
         elif status in ['Submitted','Waiting','Scheduled','Ready','Done (Failed)']:
