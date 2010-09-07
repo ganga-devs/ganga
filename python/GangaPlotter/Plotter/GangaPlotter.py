@@ -269,6 +269,9 @@ class GangaPlotter:
 
         """backend scatter plot generator """
 
+        ## the last marker is a ntuple for "star"
+        markerList = ['o','s','^','d','+','v','x', (5,1,0)]
+
         pltAlpha=0.7
 
         dataHeader = dataTable[0]
@@ -325,8 +328,14 @@ class GangaPlotter:
         rc('font',size=8.0)
 
         i = 0
+
+        charts = []
         for key in legend_labels:
-            scatter(xdata[key], ydata[key], c=[ mycmap[i] ]*len(xdata[key]), cmap=mycmap, marker='o', alpha=pltAlpha, label=key)
+
+            marker = markerList[ i % len(markerList) ]
+            chart = scatter(xdata[key], ydata[key], c=[ mycmap[i] ]*len(xdata[key]), cmap=mycmap, marker=marker, alpha=pltAlpha, label=key)
+            charts.append(chart)
+
             i += 1
 
         grid(True)
@@ -334,7 +343,7 @@ class GangaPlotter:
         ylabel(pltYLabel)
         xlabel(pltXLabel)
         #legend(shadow=True, loc='best')
-        legend(legend_labels, shadow=True, loc='best')
+        legend(charts, legend_labels, shadow=True, loc='best')
         axis('on')
 
         self.__doPlot__()
@@ -772,6 +781,10 @@ class GangaPlotter:
                cattr: A String or a user defined function to catagorize the data points into group.
                       Each group will be plotted with the same marker filled with the same color.
 
+            colormap: A list of values representing the colors that will be picked to
+                      distinguish different data group categorized by cattr. The supported description of color can be found
+                      at http://matplotlib.sourceforge.net/matplotlib.pylab.html#-colors
+
                title: A string specifying the title.
 
               xlabel: A string specifying the xlabel.
@@ -806,6 +819,7 @@ class GangaPlotter:
         cattr     = None        # catagory attribute
         xlabel    = None        # xlabel
         ylabel    = None        # ylabel
+        colormap  = None        # colormap
         output    = None        # the output file of the picture
         xattrext  = None        # trigger the build-in data processing function on xattr
         yattrext  = None        # trigger the build-in data processing function on yattr
@@ -820,6 +834,7 @@ class GangaPlotter:
         if keywords.has_key('title'):    subtitle   = keywords['title']
         if keywords.has_key('xlabel'):   xlabel     = keywords['xlabel']
         if keywords.has_key('ylabel'):   ylabel     = keywords['ylabel']
+        if keywords.has_key('colormap'): colormap   = keywords['colormap']
         if keywords.has_key('output'):   output     = keywords['output']
         if keywords.has_key('xattrext'): xattrext   = keywords['xattrext']
         if keywords.has_key('yattrext'): yattrext   = keywords['yattrext']
@@ -851,7 +866,7 @@ class GangaPlotter:
         title = __makePlotTitle__(len(dataTable[1:]),deep,subtitle)
 
         # make the plot
-        self.__makeScatter__(dataTable,pltXColId=0,pltYColId=1,pltTitle=title,pltXLabel=xlabel,pltYLabel=ylabel,pltColorMap=None,pltOutput=output,pltXDataProc=xdataproc,pltYDataProc=ydataproc,pltCDataProc=cdataproc)
+        self.__makeScatter__(dataTable,pltXColId=0,pltYColId=1,pltTitle=title,pltXLabel=xlabel,pltYLabel=ylabel,pltColorMap=colormap,pltOutput=output,pltXDataProc=xdataproc,pltYDataProc=ydataproc,pltCDataProc=cdataproc)
 
     def piechart(self,jobs,attr,**keywords):
         
