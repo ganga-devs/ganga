@@ -556,7 +556,7 @@ class DQ2JobSplitter(ISplitter):
                         self.numevtsperjob = int(math.ceil(totalevent/float((config['MaxJobsDQ2JobSplitter'] -1))))
                         nrjob = int(math.ceil(totalevent/float(self.numevtsperjob)))
                     else:
-                        logger.warning('!!! Number of subjobs %s is larger than maximum allowed of %s - reducing to %s !!!', nrjobs, config['MaxJobsDQ2JobSplitter'], config['MaxJobsDQ2JobSplitter'] )
+                        logger.warning('!!! Number of subjobs %s is larger than maximum allowed of %s - reducing to %s !!!', nrjob, config['MaxJobsDQ2JobSplitter'], config['MaxJobsDQ2JobSplitter'] )
                         nrfiles = int(math.ceil(len(guids)/float(config['MaxJobsDQ2JobSplitter'])))
                         nrjob = int(math.ceil(len(guids)/float(nrfiles)))
                         
