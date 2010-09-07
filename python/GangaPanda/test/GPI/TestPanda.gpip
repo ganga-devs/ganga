@@ -16,6 +16,9 @@ class TestPanda(GangaGPITestCase):
     def testAthenaPandaNoSplit(self):
         return TestAthenaPandaNoSplit('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda')
 
+    def testAthenaPandaMultiSite(self):
+        return TestAthenaPandaMultiSite('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda')
+
     def testARAPanda(self):
         return TestARAPanda('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda_ARA')
 
@@ -102,6 +105,30 @@ class TestAthenaPandaNoSplit(PandaTest):
         j.outputdata=DQ2OutputDataset()
         j.backend=Panda()
         j.backend.site = 'ANALY_BNL_ATLAS_1'
+        self.j = j
+        assert(self.j.submit()==True)
+
+class TestAthenaPandaMultiSite(PandaTest):
+    def setup(self):
+        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
+        archivefile = '%s/sources.817f2846-2111-4444-af06-9a8393ed5369.tar.gz' % self.tmpdir
+        userareapath = self.tmpdir
+
+        j = Job()
+        j.application=Athena()
+        j.application.atlas_release='14.5.0'
+        j.application.option_file=[ joboption ]
+        j.application.user_area=archivefile
+        j.application.max_events=10
+        j.application.atlas_run_config = {'input': {}, 'other': {}, 'output': {'outAANT': [('AANTupleStream', 'AANT')]}}
+        j.application.atlas_run_dir = 'PhysicsAnalysis/AnalysisCommon/UserAnalysis/run/'
+        j.application.user_area_path = userareapath
+        j.inputdata=DQ2Dataset()
+        j.inputdata.dataset='mc08.105830.JF17_herwig_jet_filter.merge.AOD.e382_s462_s520_r808_r838/'
+        j.outputdata=DQ2OutputDataset()
+        j.splitter=DQ2JobSplitter()
+        j.splitter.numsubjobs=2
+        j.backend=Panda()
         self.j = j
         assert(self.j.submit()==True)
 
