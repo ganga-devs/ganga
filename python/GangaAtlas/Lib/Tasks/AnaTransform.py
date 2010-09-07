@@ -100,34 +100,20 @@ class AnaTransform(Transform):
               pass
           try:
               infos = []
-              for oinfo in j.outputdata.output:
-                  info = oinfo.split(",")
-                  # get master replica from dataset - info not set to SE; but to ANALY_XYZ from panda
-                  info[5] = dq2.getMasterReplicaLocation(info[0])
-                  if info[4][:3] == "ad:":
-                      info[4] = info[4][3:]
-                  info[0] = subtask_dsname
-                  infos.append(",".join(info))
-              retries = 3
-              while True:
-                  try:
-                      outputdata.register_datasets_details(None, infos)
-                      break
-                  except DQInvalidRequestException:
-                      retries -= 1
-                      time.sleep(1.0)
-                      if retries == 0:
-                         raise
-                  except AttributeError:
-                      retries -= 1
-                      time.sleep(1.0)
-                      if retries == 0:
-                         raise
-                  except TypeError:
-                      retries -= 1
-                      time.sleep(1.0)
-                      if retries == 0:
-                         raise
+              try:
+                  dq2_lock.acquire()
+                  for oinfo in j.outputdata.output:
+                      info = oinfo.split(",")
+                      # get master replica from dataset - info not set to SE; but to ANALY_XYZ from panda
+                      info[5] = dq2.getMasterReplicaLocation(info[0])
+                      if info[4][:3] == "ad:":
+                          info[4] = info[4][3:]
+                      info[0] = subtask_dsname
+                      infos.append(",".join(info))
+              finally:
+                  dq2_lock.release()
+
+              outputdata.register_datasets_details(None, infos)
                   
           except DQFileExistsInDatasetException:
               pass
@@ -244,20 +230,29 @@ class AnaTransform(Transform):
          if self.application.atlas_dbrelease:
             try:
                db_dataset = self.application.atlas_dbrelease.split(':')[0] 
-               db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1] 
+               try:
+                  dq2_lock.acquire()
+                  db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1] 
+               finally:
+                  dq2_lock.release()
+
             except Exception, x:
                raise ApplicationConfigurationError(x, 'Problem in AnaTask - j.application.atlas_dbrelease is wrongly configured ! ')
             db_sites = stripSites(db_locations)
          
          # Get complete/incomplete ddm sites for input dataset
          ds = self.inputdata.dataset[0]
-         if ds[-1] != "/":
-            try:
-               replicas = {ds : dq2.listDatasetReplicas(ds)}
-            except DQUnknownDatasetException:
-               ds += "/"
-         if ds[-1] == "/":
-            replicas = dq2.listDatasetReplicasInContainer(ds)
+         try:
+            dq2_lock.acquire()
+            if ds[-1] != "/":
+               try:
+                  replicas = {ds : dq2.listDatasetReplicas(ds)}
+               except DQUnknownDatasetException:
+                  ds += "/"
+            if ds[-1] == "/":
+               replicas = dq2.listDatasetReplicasInContainer(ds)
+         finally:
+            dq2_lock.release()
         
          # check if replicas are non-empty
          somefound = False
@@ -329,6 +324,7 @@ class AnaTransform(Transform):
          return
       splitter = DQ2JobSplitter()
       splitter.numfiles = self.files_per_job
+      splitter.update_siteindex = False
       #splitter.use_lfc = True
       sjl = splitter.split(self) # This works even for Panda, no special "Job" properties are used anywhere.
       self.partitions_data = [sj.inputdata for sj in sjl]
