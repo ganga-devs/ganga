@@ -265,7 +265,7 @@ class GangaPlotter:
 
         return value
 
-    def __makeScatter__(self,dataTable,pltXColId=0,pltYColId=1,pltTitle='Scatter Plot',pltXLabel=None,pltYLabel=None,pltOutput=None,pltXDataProc=None,pltYDataProc=None):
+    def __makeScatter__(self,dataTable,pltXColId=0,pltYColId=1,pltTitle='Scatter Plot',pltXLabel=None,pltYLabel=None,pltColorMap=None,pltOutput=None,pltXDataProc=None,pltYDataProc=None,pltCDataProc=None):
 
         """backend scatter plot generator """
 
@@ -278,21 +278,42 @@ class GangaPlotter:
             logger.warning('Scatter plot requires at least 2 columns in the data Table, the given contains only %d.') % len(dataTable)
             return
 
-        xdata = []
-        ydata = []
+        xdata = {} 
+        ydata = {} 
 
+        i = 0
         for data in dataTable:
+
+            print 'processing data row %d' % i
+
+            i+=1
+
             xval = self.__procPltData__(data[pltXColId],pltXDataProc)
             yval = self.__procPltData__(data[pltYColId],pltYDataProc)
+            
+            if len(data) >= 3:
+                cval = self.__procPltData__(data[2],pltCDataProc)
+            else:
+                cval = pltTitle
 
-            xdata.append(xval)
-            ydata.append(yval)
+            if cval not in xdata.keys():
+               xdata[cval] = []
+               ydata[cval] = []
+
+            xdata[cval].append(xval)
+            ydata[cval].append(yval)       
 
         if not pltXLabel:
             pltXLabel = dataHeader[pltXColId]
 
         if not pltYLabel:
             pltYLabel = dataHeader[pltYColId]
+
+        ##-----
+        ## Generating marker and color array
+        ##-----
+        legend_labels = xdata.keys()
+        mycmap = self.__setColormap__( pltColorMap, len(legend_labels) )
 
         ##-----
         ## Generating the scatter plot
@@ -303,13 +324,17 @@ class GangaPlotter:
         figure(self.figId)
         rc('font',size=8.0)
 
-        scatter(xdata, ydata, c='b', marker='o', alpha=pltAlpha)
+        i = 0
+        for key in legend_labels:
+            scatter(xdata[key], ydata[key], c=[ mycmap[i] ]*len(xdata[key]), cmap=mycmap, marker='o', alpha=pltAlpha, label=key)
+            i += 1
 
         grid(True)
         title(pltTitle)
         ylabel(pltYLabel)
         xlabel(pltXLabel)
-        #legend(legend_labels, legend_texts, shadow=True, loc='best')
+        #legend(shadow=True, loc='best')
+        legend(legend_labels, shadow=True, loc='best')
         axis('on')
 
         self.__doPlot__()
@@ -744,6 +769,9 @@ class GangaPlotter:
 
         optional arguments:
 
+               cattr: A String or a user defined function to catagorize the data points into group.
+                      Each group will be plotted with the same marker filled with the same color.
+
                title: A string specifying the title.
 
               xlabel: A string specifying the xlabel.
@@ -758,6 +786,8 @@ class GangaPlotter:
 
            ydataproc: The same as xdataproc; but apply on the value of yattr.
 
+           cdataproc: The same as xdataproc; but apply on the value of cattr.
+
             xattrext: Trigger the build-in data pre-processor on the value of xattr.
                       It will be override if "xdataproc" argument is also specified.
                       ** Supported attrext for "backend.actualCE" and "backend.CE":
@@ -766,29 +796,37 @@ class GangaPlotter:
 
             yattrext: The same as xattrext; but apply on the value of yattr.
 
+            cattrext: The same as xattrext; but apply on the value of cattr.
+
                 deep: Sets if looping over all the subjob levels. Default is "True"
         """
 
         # default keyword arguments
         subtitle  = self.__defaultSubtitle__(yattr)      # default subtitle
+        cattr     = None        # catagory attribute
         xlabel    = None        # xlabel
         ylabel    = None        # ylabel
         output    = None        # the output file of the picture
         xattrext  = None        # trigger the build-in data processing function on xattr
         yattrext  = None        # trigger the build-in data processing function on yattr
+        cattrext  = None        # trigger the build-in data processing function on cattr
         xdataproc = None        # function for xdata processing (cannot work together with 'attrext')
         ydataproc = None        # function for ydata processing (cannot work together with 'attrext')
+        cdataproc = None        # function for cdata processing (cannot work together with 'attrext')
         deep      = True        # deep looping over all the subjob levels
 
         # update keyword arguments with the given values
+        if keywords.has_key('cattr'):     cattr     = keywords['cattr']
         if keywords.has_key('title'):    subtitle   = keywords['title']
         if keywords.has_key('xlabel'):   xlabel     = keywords['xlabel']
         if keywords.has_key('ylabel'):   ylabel     = keywords['ylabel']
         if keywords.has_key('output'):   output     = keywords['output']
         if keywords.has_key('xattrext'): xattrext   = keywords['xattrext']
         if keywords.has_key('yattrext'): yattrext   = keywords['yattrext']
+        if keywords.has_key('cattrext'): cattrext   = keywords['cattrext']
         if keywords.has_key('xdataproc'): xdataproc = keywords['xdataproc']
         if keywords.has_key('ydataproc'): ydataproc = keywords['ydataproc']
+        if keywords.has_key('cdataproc'): cdataproc = keywords['cdataproc']
         if keywords.has_key('deep'):       deep     = keywords['deep']
 
         jlist = []
@@ -797,17 +835,23 @@ class GangaPlotter:
 
         xattr_spec = self.__makeList__(xattr)
         yattr_spec = self.__makeList__(yattr)
+        cattr_spec = self.__makeList__(cattr)
 
         # special build-in dataprocs for the CE-based bar chart
         xdataproc = self.__setDataProcessor__(xattr_spec[0],xattrext,xdataproc)
         ydataproc = self.__setDataProcessor__(yattr_spec[0],yattrext,ydataproc)
+        cdataproc = self.__setDataProcessor__(cattr_spec[0],cattrext,cdataproc)
 
-        dataTable = getJobInfoTable(jlist,[xattr_spec[0],yattr_spec[0]],deep)
+        if cattr_spec[0]:
+            dataTable = getJobInfoTable(jlist,[xattr_spec[0],yattr_spec[0],cattr_spec[0]],deep)
+        else:
+            dataTable = getJobInfoTable(jlist,[xattr_spec[0],yattr_spec[0]],deep)
+            
         # make the plot title
         title = __makePlotTitle__(len(dataTable[1:]),deep,subtitle)
 
         # make the plot
-        self.__makeScatter__(dataTable,pltXColId=0,pltYColId=1,pltTitle=title,pltXLabel=xlabel,pltYLabel=ylabel,pltOutput=output,pltXDataProc=xdataproc,pltYDataProc=ydataproc)
+        self.__makeScatter__(dataTable,pltXColId=0,pltYColId=1,pltTitle=title,pltXLabel=xlabel,pltYLabel=ylabel,pltColorMap=None,pltOutput=output,pltXDataProc=xdataproc,pltYDataProc=ydataproc,pltCDataProc=cdataproc)
 
     def piechart(self,jobs,attr,**keywords):
         
