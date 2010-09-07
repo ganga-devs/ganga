@@ -106,6 +106,7 @@ p.add_option('--check_availability', action='store_true', help='Check for availa
 p.add_option('--runtimeenvironment', action='store', type='string', dest='runtimeenvironment', help='Specify the required runtime environment on an NG site' )
 p.add_option('--bexec', action='store', type='string', dest='bexec', help='Specify the build command for --athena_exe EXE on Panda')
 p.add_option('--extOutFile', action='store', type='string', dest='extOutFile', help='define extra output files on Panda, e.g. --extOutFile=output1.txt:output2.dat')
+p.add_option('--excludedSite', action='store', type='string', dest='excludedSite', default='', help="list of Panda sites which are not used for site section, e.g., ANALY_ABC,ANALY_XYZ")
 
 # Application options
 p.add_option('-c', action='store', type='string', dest='options', help='One-liner, runs before any job Options')
@@ -135,6 +136,8 @@ p.add_option('--outputsandbox', action='store', type='string', dest='outputsandb
 
 # Job query
 p.add_option('--query', '-q', action='store', type='int', dest='jobid', help='Query job status, e.q. ganga athena -q jobid, Output: job id, CE, job status, job output' )
+
+
 
 opt, args = p.parse_args()
 
@@ -470,6 +473,8 @@ elif opt.backend=='panda':
 
     if opt.bexec:
         j.backend.bexec=opt.bexec
+
+    if opt.excludedSite: j.backend.requirements.excluded_sites = opt.excludedSite.split(',')
 else:
     j.backend = Local()
 
