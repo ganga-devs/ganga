@@ -14,6 +14,7 @@ function Events() {
         $('.tablePlus').attr('src', 'media/images/table_plus.png');
         //this.Data.or = [];
         this.Data.tid = '';
+	this.Data.sorting = [];
         this.Data.user = $(el).val();
         this.setupURL();
     };
@@ -66,10 +67,14 @@ function Events() {
     this.breadcrumbs_click = function(el) {
         if ($(el).text() == 'Users List') {
             this.Data.tid = '';
+            this.Data.sorting = [];
+            this.Data.uparam = [];
             this.Data.user = '';
         }
         else if ($(el).text() == 'Jobs') {
             this.Data.tid = '';
+            this.Data.sorting = [];
+            this.Data.uparam = [];
         }
         $('.tablePlus').attr('src', 'media/images/table_plus.png');
         this.Data.or = [];
@@ -77,7 +82,7 @@ function Events() {
     };
     
     this.taskExpand_click = function(dataID) {
-        var _Settings = this.Settings.Tasks; // Shortcut
+        var _Settings = this.Settings.Mains; // Shortcut
         var dataSet = this.Data.mem.tasks.data[dataID];
         
         if ($.inArray(dataID, this.Data.or) == -1) {
@@ -91,7 +96,7 @@ function Events() {
     };
     
     this.taskClose_click = function(dataID) {
-        var _Settings = this.Settings.Tasks; // Shortcut
+        var _Settings = this.Settings.Mains; // Shortcut
         if (_Settings.multipleER) {
             var position = $.inArray(dataID, this.Data.or);
             this.Data.or.splice(position,1);
@@ -115,12 +120,13 @@ function Events() {
     };
     
     this.gotoTask_click = function(el) {
-        var _Settings = this.Settings.Tasks; // Shortcut
+        var _Settings = this.Settings.Mains; // Shortcut
         var aPos = this.tasksTable[0].fnGetPosition(el);
         
         // setup model
         _Settings.setupUserParams(this.Data, el, aPos);
         this.Data.or = [];
+	this.Data.sorting = [];
         this.Data.p = 1;
         this.Data.noreload = false;
         this.setupURL();
@@ -131,5 +137,11 @@ function Events() {
         this.Data.p = $('#dataTable_0_paginate input').val();
         this.Data.noreload = true;
         this.setupURL();
+    };
+
+
+    this.tableSorting_click = function(el, dataTable) {
+        tSettings = dataTable.fnSettings();
+        this.Data.sorting = Array(tSettings.aaSorting[0][0],tSettings.aaSorting[0][1]);
     };
 }
