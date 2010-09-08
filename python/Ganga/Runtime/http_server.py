@@ -10,6 +10,7 @@ import Ganga.GPI
 from Ganga.GPI import config, jobs
 import time, datetime
 import os
+logger = Ganga.Utility.logging.getLogger()
 
 def addQuotes(value):
 
@@ -364,7 +365,7 @@ def getMonitoringLink(port):
         
     webMonitoringLink = os.path.join(config['System']['GANGA_PYTHONPATH'], 'Ganga', 'Core', 'WebMonitoringGUI', 'client', 'index.html' )
 
-    return 'file://' + webMonitoringLink + '?port=' + str(port)  + '#user=' + config.Configuration.user + '&timeRange=lastMonth'
+    return 'file://' + webMonitoringLink + '?port=' + str(port)  + '#user=' + config.Configuration.user + '&timeRange='
 
 class JobRelatedInfo:
         
@@ -462,6 +463,10 @@ class HTTPServerThread(GangaThread):
 
 class GetHandler(BaseHTTPRequestHandler):
         
+    def log_message(self, format, *args):
+
+        logger.debug(format % args)
+
     def do_GET(self):
         queryString = self.path.split('?')[1]
         import cgi
@@ -520,18 +525,16 @@ class GetHandler(BaseHTTPRequestHandler):
                 jobid = int(qsDict['taskmonid'])
                 json = create_subjobs_graphics(jobid, 'application', fromDate, toDate)
 
-
+        
         self.send_response(200)
         self.send_header('Content-Type', 'text/html')
-
         self.end_headers()
 
         jsonp_function = qsDict['jsonp_callback']
         result = "%s(%s);" % (jsonp_function, json)
         self.wfile.write(result)
-        
-        return
 
+        return
 
 jobs_dictionary={}
 httpServerHost = 'localhost'
