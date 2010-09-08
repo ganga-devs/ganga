@@ -4,6 +4,7 @@ from Ganga.Core.GangaThread import GangaThread
 from Ganga.Utility.util import hostname
 from BaseHTTPServer import HTTPServer
 
+import simplejson
 import urlparse
 import Ganga.GPI
 from Ganga.GPI import config, jobs
@@ -167,30 +168,34 @@ def increment(d,k):
     d.setdefault(k,0)
     d[k] += 1
 
-def create_subjobs_graphics(jobid, fromDate, toDate):
+def create_subjobs_graphics(jobid, subjob_attribute, fromDate, toDate):
 
     subjobs_in_time_range = get_subjobs_in_time_range(jobid, fromDate, toDate)
 
-    subjobs_statuses = {}
-    subjobs_applications = {}
-    subjobs_backends = {}
+    subjobs_attributes = {}
 
     for subjob in subjobs_in_time_range:
-
-        increment(subjobs_statuses,subjob.getJobStatus())       
-        increment(subjobs_applications,subjob.application.__class__.__name__)   
-        increment(subjobs_backends,subjob.backend.__class__.__name__)   
-
-    json_subjobs_statuses = get_pie_chart_json(subjobs_statuses)
-    json_subjobs_applications = get_pie_chart_json(subjobs_applications)
-    json_subjobs_backends = get_pie_chart_json(subjobs_backends)
         
-    #todo -> think how to return the JSONs 
+        if subjob_attribute == 'status':
+                increment(subjobs_attributes,subjob.status)       
+        
+        elif subjob_attribute == 'application':
+                increment(subjobs_attributes,subjob.application.__class__.__name__)   
+
+        elif subjob_attribute == 'backend':
+                increment(subjobs_attributes,subjob.backend.__class__.__name__)   
+
+    json_subjobs_attribute_json = get_pie_chart_json(subjobs_attributes)
+        
+    return json_subjobs_attribute_json
 
 def get_pie_chart_json(d):
 
-    json_pie_chart = "[["
+    #template = "{\"chd\":\"t:50,50\",\"chl\":\"Hello|World\"}"
         
+    if len(d) == 0:
+        return "{\"chd\":\"t:1\",\"chl\":\"no data\"}"
+
     keys = []
     values = []
 
@@ -198,40 +203,41 @@ def get_pie_chart_json(d):
         keys.append(k)
         values.append(v)
 
+    keyString = ""
+
     for key in keys[:-1]:
-        json_pie_chart += '%s,' % addQuotes(key)
-    json_pie_chart += addQuotes(keys[-1])
+        keyString += '%s|' % key
+    keyString += keys[-1]
     
-    json_pie_chart += "],["             
         
+    valueString = ""    
+
     for value in values[:-1]:
-        json_pie_chart += '%s,' % addQuotes(str(value))
-    json_pie_chart += addQuotes(str(values[-1]))
+        valueString += '%s,' % str(value)
+    valueString += str(values[-1])
 
-    json_pie_chart += "]]"      
+    result_json = "{\"chd\":\"t:%s\",\"chl\":\"%s\"}" % (valueString, keyString)
 
-    return json_pie_chart               
+    return result_json          
 
-
-def create_jobs_graphics(fromDate=None, toDate=None):
+def create_jobs_graphics(job_attribute, fromDate=None, toDate=None):
 
     job_infos_in_time_range = get_job_infos_in_time_range(fromDate, toDate)
 
-    jobs_statuses = {}
-    jobs_applications = {}
-    jobs_backends = {}
+    jobs_attribute = {}
 
     for jobInfo in job_infos_in_time_range:
-
-        increment(jobs_statuses,jobInfo.getJobStatus()) 
-        increment(jobs_applications,jobInfo.getJobApplication())        
-        increment(jobs_backends,jobInfo.getJobBackend())    
-
-    json_job_statuses = get_pie_chart_json(jobs_statuses)
-    json_job_applications = get_pie_chart_json(jobs_applications)
-    json_job_backends = get_pie_chart_json(jobs_backends)
         
-    #todo -> think how to return the JSONs 
+        if job_attribute == 'status':   
+                increment(jobs_attribute,jobInfo.getJobStatus()) 
+        elif job_attribute == 'application':    
+                increment(jobs_attribute,jobInfo.getJobApplication())        
+        elif job_attribute == 'backend':        
+                increment(jobs_attribute,jobInfo.getJobBackend())    
+
+    json_job_attribute = get_pie_chart_json(jobs_attribute)
+        
+    return json_job_attribute   
 
 def get_jobs_JSON(fromDate=None, toDate=None):
 
@@ -490,13 +496,31 @@ class GetHandler(BaseHTTPRequestHandler):
         elif query == "jobs_statuses":           
                 #update dictionary with the changed jobs
                 update_jobs_dictionary()
-                create_jobs_graphics(fromDate, toDate)
+                json = create_jobs_graphics('status', fromDate, toDate)
+
+        elif query == "jobs_backends":           
+                #update dictionary with the changed jobs
+                update_jobs_dictionary()
+                json = create_jobs_graphics('backend', fromDate, toDate)
+
+        elif query == "jobs_applications":           
+                #update dictionary with the changed jobs
+                update_jobs_dictionary()
+                json = create_jobs_graphics('application', fromDate, toDate)
 
         elif query == "subjobs_statuses":
                 jobid = int(qsDict['taskmonid'])
-                create_subjobs_graphics(jobid, fromDate, toDate)
-        
+                json = create_subjobs_graphics(jobid, 'status', fromDate, toDate)
                 
+        elif query == "subjobs_backends":
+                jobid = int(qsDict['taskmonid'])
+                json = create_subjobs_graphics(jobid, 'backend', fromDate, toDate)
+
+        elif query == "subjobs_applications":
+                jobid = int(qsDict['taskmonid'])
+                json = create_subjobs_graphics(jobid, 'application', fromDate, toDate)
+
+
         self.send_response(200)
         self.send_header('Content-Type', 'text/html')
 
