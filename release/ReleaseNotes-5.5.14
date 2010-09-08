@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.14 (2010/9/6)
+5.5.14 (2010/9/8)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -17,6 +17,13 @@ bug 44116: app.postprocess() may now raise PostprocessStatusUpdate('failed') exc
 changes:
 
 added extended attributes to usage monitoring spyware and more configuration flexibility
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices
+--------------------------------------------------------------------------------------------------------------
+change config of DashboardMS: use production server gridmsg101 and rename topic names to better 
+describe what they are
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -59,10 +66,13 @@ Tasks:
 * Fix ApplicationConfigurationError on invalid task name
 * Quick fix for Tasks not working on Panda with exetype != Athena
 * Improved error handling of DQ2
+* Replaced dq2 retry with better locking, no more errors observed.
 
 scripts:
 --------
 * athena: add --atlas_run_dir and several event picking options
+* added --excludedSite option for Panda site exclusion 
+  e.g. --excludedSite=ANALY_XYZ,ANALY_ABC
 
 
 --------------------------------------------------------------------------------------------------------------
