@@ -8,6 +8,25 @@
 //
 
 function Settings() {
+
+    // Application specific settings - START
+    this.Application = {
+        'userSelection': true, // Display user selection page? (true|false)
+        'modelDefaults': { // Here You can set up model (data.js) default values
+            'user': '',
+            'from': 0,
+            'till': 0,
+            'timeRange': 'lastDay',
+            'refresh': 0,
+            'tid': '',
+            'p': 1,
+            'sorting': [],
+            'or': [], // opened table rows
+            'uparam': [] // user defined params (for params that cannot be shared between use cases)
+        }
+    };
+    // Application specific settings - FINISH
+
     // Users list settings - START
     this.Users = {
         'dataURL': 'http://localhost/?list=users',
@@ -23,7 +42,7 @@ function Settings() {
     // Users list settings - FINISH
     
     // User Tasks settings - START
-    this.Tasks = {
+    this.Mains = {
         'dataURL': 'http://localhost/?list=jobs',
         'dataURL_params': function(Data) {
             obj = {
@@ -133,11 +152,81 @@ function Settings() {
             Data.uparam = [classTranslate[$(el).find('a').attr('class')]];
             Data.tid = Data.mem.tasks.data[aPos[0]].id; 
         },
+	'charts': [
+            {
+                'ajax':true,
+		'dataURL': 'http://localhost/?list=jobs_statuses',
+                'dataURL_params': function(Data) { 
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
+
+	            return obj; 
+		},
+                // translates data onto requires format:
+                // {"chd":"t:60,40","chl":"Hello|World"}
+                'translateData':function(dataJSON) {	
+                    return dataJSON;
+                },
+                'gChart': {
+		    'chtt':'Job status',
+                    'cht':'p3',
+                    'chs':'400x150'
+                }
+            },
+	    {
+                'ajax':true,
+		'dataURL': 'http://localhost/?list=jobs_backends',
+                'dataURL_params': function(Data) { 
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
+
+	            return obj; 
+		},
+                'translateData':function(dataJSON) {	
+                    return dataJSON;
+                },
+                'gChart': {
+		    'chtt':'Job backend',
+                    'cht':'p3',
+                    'chs':'400x150'
+                }
+            },
+	    {
+                'ajax':true,
+		'dataURL': 'http://localhost/?list=jobs_applications',
+                'dataURL_params': function(Data) { 
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
+
+	            return obj; 		
+		},
+                'translateData':function(dataJSON) {	
+                    return dataJSON;
+                },
+                'gChart': {
+		    'chtt':'Job application',
+                    'cht':'p3',
+                    'chs':'400x150'
+                }
+            }	
+        ]
     };
     // User Tasks settings - FINISH
     
     // Task Jobs settings - START
-    this.Jobs = {
+    this.Subs = {
         'dataURL': 'http://localhost/?list=subjobs',
         'dataURL_params': function(Data) {
             obj = {
@@ -200,6 +289,81 @@ function Settings() {
             }
             return tasksArr;
         },
+	'charts': [
+            {
+                'ajax':true,
+		'dataURL': 'http://localhost/?list=subjobs_statuses',
+                'dataURL_params': function(Data) { 
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
+
+	            return obj; 
+		},
+                // translates data onto requires format:
+                // {"chd":"t:60,40","chl":"Hello|World"}
+                'translateData':function(dataJSON) {	
+                    return dataJSON;
+                },
+                'gChart': {
+		    'chtt':'Job status',
+                    'cht':'p3',
+                    'chs':'400x150'
+                }
+            },
+	    {
+                'ajax':true,
+		'dataURL': 'http://localhost/?list=subjobs_backends',
+                'dataURL_params': function(Data) {
+		 	obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
+
+	            return obj; 
+		},
+
+                'translateData':function(dataJSON) {	
+                    return dataJSON;
+                },
+                'gChart': {
+		    'chtt':'Job backend',
+                    'cht':'p3',
+                    'chs':'400x150'
+                }
+            },
+	    {
+                'ajax':true,
+		'dataURL': 'http://localhost/?list=subjobs_applications',
+                'dataURL_params': function(Data) {
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
+
+	            return obj; 
+		},
+
+                'translateData':function(dataJSON) {	
+                    return dataJSON;
+                },
+                'gChart': {
+		    'chtt':'Job application',
+                    'cht':'p3',
+                    'chs':'400x150'
+		    //custom colors
+		    //'chco':'3072F3|008000'
+                }
+            }	
+        ]
+
     };
     // Task Jobs settings - FINISH
 }

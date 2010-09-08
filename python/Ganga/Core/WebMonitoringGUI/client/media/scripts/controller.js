@@ -12,8 +12,8 @@ Controller.prototype = new Events();
 
 function Controller() {
     // Data class initialization
-    this.Data = new Data($('#ajaxAnimation'));
-    this.Settings = new Settings();
+    this.Settings = new Settings();	
+    this.Data = new Data($('#ajaxAnimation'), this.Settings.Application.modelDefaults);
     
     this.tasksTable = Array();
     this.jobsTable = Array();
@@ -51,11 +51,11 @@ function Controller() {
     
     this.drawJobsTable = function() {
         var thisRef = this;
-        var _Settings = this.Settings.Jobs; // Shortcut
+        var _Settings = this.Settings.Subs; // Shortcut
         
         // "draw" function is calling lkfw.datatable plugin to create table filled with data
         var draw = function(data) {
-            thisRef.jobsTable = $('#content').lkfw_dataTable({
+            thisRef.jobsTable = $('#tableContent').lkfw_dataTable({
                 dTable: thisRef.jobsTable,
                 tableId: 'jobs',
                 items: data,
@@ -99,6 +99,8 @@ function Controller() {
                 thisRef.Data.noreload = true;
                 thisRef.setupURL();
             }
+
+	    thisRef.drawCharts(_Settings.charts);
         };
         
         // Get the data from ajax call
@@ -109,11 +111,11 @@ function Controller() {
     // or tasks (in CMS nomenclature)
     this.drawTaskTable = function() {
         var thisRef = this;
-        var _Settings = this.Settings.Tasks; // Shortcut
+        var _Settings = this.Settings.Mains; // Shortcut
         
         // "draw" function is calling lkfw.datatable plugin to create table filled with data
         var draw = function(data) {
-            thisRef.tasksTable = $('#content').lkfw_dataTable({
+            thisRef.tasksTable = $('#tableContent').lkfw_dataTable({
                 dTable: thisRef.tasksTable,
                 tableId: 'tasks',
                 expandableRows: _Settings.expandableRows,
@@ -152,7 +154,7 @@ function Controller() {
             
             // Draw data table
             draw(_Settings.translateData(userTasks));
-            
+            //alert(userTasks[0].status)
             tSettings = thisRef.tasksTable[0].fnSettings();
             tPages = parseInt( (tSettings.fnRecordsDisplay()-1) / tSettings._iDisplayLength, 10 ) + 1;
             
@@ -170,12 +172,52 @@ function Controller() {
             $.each(thisRef.Data.or, function() {
                 $('#tablePlus_'+this).parent().trigger('click');
             });
+
+	    thisRef.drawCharts(_Settings.charts);
         };
         
         // Get the data from ajax call
         this.Data.ajax_getData(_Settings.dataURL, _Settings.dataURL_params(this.Data), getData, function(){});
     };
     
+
+    this.drawCharts = function(_charts) {
+        var thisRef = this;
+       
+        var draw = function(gData) {
+	    var query = gData.join('&');
+            $('#chartContent').append(
+                $('<img></img>').attr('src','http://chart.apis.google.com/chart?'+query)
+            );
+        };
+       
+        var getData = function(data, chart) {
+            var translatedData = chart.translateData(data);
+	    var gData = [
+                'chtt='+chart.gChart.chtt,
+                'cht='+chart.gChart.cht,
+                'chs='+chart.gChart.chs,
+                'chd='+translatedData.chd,
+                'chl='+translatedData.chl
+            ];
+
+            if (chart.gChart.chco) gData.push('chco='+chart.gChart.chco);            
+	    draw(gData);
+        };
+       
+        $('#chartContent').empty();
+        
+        try {
+            for (var i=0;i<_charts.length;i++) {
+
+                // Get the data from ajax call
+		if (_charts[i].ajax) thisRef.Data.ajax_getData_charts(_charts[i].dataURL, _charts[i].dataURL_params(thisRef.Data), function(data, chart){getData(data, chart);}, function(){},_charts[i]);}                       
+
+
+        } catch(err) {}
+       
+    };
+
     // "drawUsers" draws users selection page
     this.drawUsers = function() {
         var thisRef = this;
