@@ -2453,7 +2453,7 @@ if __name__ == '__main__':
                 os.environ[ 'DQ2_LFC_HOME' ] = output_lfc_home
                 print 'LFC_HOST: %s' %os.environ[ 'LFC_HOST' ]
                 print 'DQ2_LFC_HOME: %s' %os.environ[ 'DQ2_LFC_HOME' ]
-                print 'Storing file at: %s' %siteID
+                print 'Storing file %s at: %s' %(file, siteID)
 
                 # Create output info
                 dest = os.path.join(output_srm, output_lfn, file)
@@ -2461,18 +2461,55 @@ if __name__ == '__main__':
                 griddir = os.path.join(output_lfc_home, output_lfn)
                 filename = os.path.join(os.environ['PWD'], file)
                 poolguid = ''
+
                 try:
                     poolguid = catalogguidMap[file]
                 except KeyError:
-                    rc, out = commands.getstatusoutput('pool_extractFileIdentifier '+file)
+                    print 'poolguid not found in PoolFileCatalog.xml'
+                    print 'Trying pool_extractFileIdentifier.py ...'
+                    poolextr = """#!/bin/bash
+
+if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
+    ATLAS_RELEASE_DIR=$VO_ATLAS_SW_DIR/software/$ATLAS_RELEASE
+elif [ n$GANGA_ATHENA_WRAPPER_MODE = n'local' ]; then
+    ATLAS_RELEASE_DIR=$ATLAS_SOFTWARE/$ATLAS_RELEASE
+fi
+                            
+if [ ! -z `echo $ATLAS_RELEASE | grep 16.` ]; then
+    if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
+        source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,32,setup
+    elif [ ! -z $ATLAS_PROJECT ]; then
+        source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_RELEASE,$ATLAS_PROJECT,32,setup
+    else
+        source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh AtlasOffline,$ATLAS_RELEASE,32,setup
+    fi
+else
+    if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
+        source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_PRODUCTION,$ATLAS_PROJECT,32,setup
+    elif [ ! -z $ATLAS_PROJECT ]; then
+        source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_RELEASE,$ATLAS_PROJECT,32,setup
+    else
+        source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=AtlasOffline,$ATLAS_RELEASE,32,setup
+    fi
+fi
+# extract GUID
+pool_extractFileIdentifier.py %(filename)s 
+""" % { 'filename' : file }
+
+                    outFile = open('poolextr.sh','w')
+                    outFile.write(poolextr)
+                    outFile.close()
+
+                    rc, out = commands.getstatusoutput('chmod +x poolextr.sh; ./poolextr.sh')
                     if rc == 0:
                         for line in out.split():
                             match = re.search('^([\w]+-[\w]+-[\w]+-[\w]+-[\w]+)',line)
                             if match:
                                 poolguid = match.group(1)
+                    else:
+                        print 'No poolguid stored in file or extraction failed.'
 
                 print 'poolguid: %s' %poolguid
-
 
                 guid, size, md5sum = save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, siteID, output_tokenname)
                 if guid!=-1:
