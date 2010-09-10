@@ -172,7 +172,7 @@ function Settings() {
                     return dataJSON;
                 },
                 'gChart': {
-		    'chtt':'Job status',
+		    'chtt':'Jobs status',
                     'cht':'p3',
                     'chs':'400x150'
                 }
@@ -194,7 +194,7 @@ function Settings() {
                     return dataJSON;
                 },
                 'gChart': {
-		    'chtt':'Job backend',
+		    'chtt':'Jobs backend',
                     'cht':'p3',
                     'chs':'400x150'
                 }
@@ -216,7 +216,7 @@ function Settings() {
                     return dataJSON;
                 },
                 'gChart': {
-		    'chtt':'Job application',
+		    'chtt':'Jobs application',
                     'cht':'p3',
                     'chs':'400x150'
                 }
@@ -309,7 +309,7 @@ function Settings() {
                     return dataJSON;
                 },
                 'gChart': {
-		    'chtt':'Job status',
+		    'chtt':'Subjobs status',
                     'cht':'p3',
                     'chs':'400x150'
                 }
@@ -332,7 +332,7 @@ function Settings() {
                     return dataJSON;
                 },
                 'gChart': {
-		    'chtt':'Job backend',
+		    'chtt':'Subjobs backend',
                     'cht':'p3',
                     'chs':'400x150'
                 }
@@ -355,7 +355,7 @@ function Settings() {
                     return dataJSON;
                 },
                 'gChart': {
-		    'chtt':'Job application',
+		    'chtt':'Subjobs application',
                     'cht':'p3',
                     'chs':'400x150'
 		    //custom colors
