@@ -26,6 +26,7 @@ function Controller() {
                 // Show jobs
                 this.tasksTable = Array();
                 this.drawJobsTable();
+		$("#siteTabs").tabs({selected: 1});
             }
             else {
                 //show tasks
@@ -193,6 +194,7 @@ function Controller() {
        
         var getData = function(data, chart) {
             var translatedData = chart.translateData(data);
+	    
 	    var gData = [
                 'chtt='+chart.gChart.chtt,
                 'cht='+chart.gChart.cht,
@@ -201,12 +203,13 @@ function Controller() {
                 'chl='+translatedData.chl
             ];
 
-            if (chart.gChart.chco) gData.push('chco='+chart.gChart.chco);            
+            //if (chart.gChart.chco) gData.push('chco='+chart.gChart.chco);
+	    if (translatedData.chco) gData.push('chco='+translatedData.chco);                        
 	    draw(gData);
         };
        
         $('#chartContent').empty();
-        
+
         try {
             for (var i=0;i<_charts.length;i++) {
 
