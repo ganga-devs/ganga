@@ -102,8 +102,7 @@ class Batch(IBackend):
                                     'id' : SimpleItem(defvalue='',protected=1,copyable=0,doc='Batch id of the job'),
                                     'exitcode' : SimpleItem(defvalue=None,typelist=['int','type(None)'],protected=1,copyable=0,doc='Process exit code'),
                                     'status' : SimpleItem(defvalue='',protected=1,hidden=1,copyable=0,doc='Batch status of the job'),
-                                    'actualqueue' : SimpleItem(defvalue='',protected=1,copyable=0,doc='queue name where the job was submitted.'),
-                                    'actualCE' : SimpleItem(defvalue='',protected=1,copyable=0,doc='hostname where the job is/was running.')
+                                    'actualqueue' : SimpleItem(defvalue='',protected=1,copyable=0,doc='queue name where the job was submitted.')
                                     })
     _category = 'backends'
     _name = 'Batch'
@@ -312,7 +311,6 @@ import popen2
 ############################################################################################
 
 ###INLINEMODULES###
-###INLINEHOSTNAMEFUNCTION###
 
 ############################################################################################
 
@@ -350,7 +348,6 @@ line='START: '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) +
 try:
   line+='PID: ' + os.getenv('###JOBIDNAME###') + os.linesep
   line+='QUEUE: ' + os.getenv('###QUEUENAME###') + os.linesep
-  line+='ACTUALCE: ' + hostname() + os.linesep
 except:
   pass
 statusfile.writelines(line)
@@ -450,9 +447,7 @@ sys.exit(result)
 
         import inspect
         import Ganga.Core.Sandbox as Sandbox
-        import Ganga.Utility as Utility
         text = text.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
-        text = text.replace('###INLINEHOSTNAMEFUNCTION###',inspect.getsource(Utility.util.hostname))
         text = text.replace('###APPSCRIPTPATH###',repr(appscriptpath))
         #text = text.replace('###SHAREDINPUTPATH###',repr(sharedinputpath))
         
@@ -487,7 +482,6 @@ sys.exit(result)
         import re
         repid = re.compile(r'^PID: (?P<pid>\d+)',re.M)
         requeue = re.compile(r'^QUEUE: (?P<queue>\S+)',re.M)
-        reactualCE = re.compile(r'^ACTUALCE: (?P<actualCE>\S+)',re.M)
         reexit = re.compile(r'^EXITCODE: (?P<exitcode>\d+)',re.M)
 
         def get_last_alive(f):
@@ -502,9 +496,9 @@ sys.exit(result)
             return talive
 
         def get_status(f):
-            """Give (pid,queue,actualCE,exit code) for job"""
+            """Give (pid,queue,exit code) for job"""
 
-            pid,queue,actualCE,exitcode=None,None,None,None
+            pid,queue,exitcode=None,None,None
 
             import re
             try:
@@ -512,7 +506,7 @@ sys.exit(result)
                 stat = statusfile.read()
             except IOError,x:
                 logger.debug('Problem reading status file: %s (%s)',f,str(x))
-                return pid,queue,actualCE,exitcode
+                return pid,queue,exitcode
 
             mpid = repid.search(stat)
             if mpid:
@@ -521,16 +515,12 @@ sys.exit(result)
             mqueue = requeue.search(stat)
             if mqueue:
                 queue = str(mqueue.group('queue'))          
-
-            mactualCE = reactualCE.search(stat)
-            if mactualCE:
-                actualCE = str(mactualCE.group('actualCE'))          
-
+                
             mexit = reexit.search(stat)
             if mexit:
                 exitcode = int(mexit.group('exitcode'))
             
-            return pid,queue,actualCE,exitcode
+            return pid,queue,exitcode
 
         from Ganga.Utility.Config import getConfig
         for j in jobs:
@@ -538,7 +528,7 @@ sys.exit(result)
 
             statusfile = os.path.join(outw.getPath(),'__jobstatus__')
             heartbeatfile = os.path.join(outw.getPath(),'__heartbeat__')
-            pid,queue,actualCE,exitcode = get_status(statusfile)
+            pid,queue,exitcode = get_status(statusfile)
 
             if j.status == 'submitted':
                 if pid or queue:
@@ -546,12 +536,9 @@ sys.exit(result)
 
                     if pid:
                         j.backend.id = pid
-                        
                     if queue and queue != j.backend.actualqueue:
-                        j.backend.actualqueue = queue
+                            j.backend.actualqueue = queue
 
-                    if actualCE:
-                        j.backend.actualCE = actualCE
 
             if j.status == 'running':
                 if exitcode != None:
@@ -566,7 +553,7 @@ sys.exit(result)
                     time = get_last_alive(heartbeatfile)
                     config = getConfig(j.backend._name)
                     if time>config['timeout']:
-                        logger.warning('Job %s has disappeared from the batch system.', str(j.getFQID('.')))
+                        logger.warning('Job %s has disappeared from the batch system.', str(j.id))
                         j.updateStatus('failed')
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)

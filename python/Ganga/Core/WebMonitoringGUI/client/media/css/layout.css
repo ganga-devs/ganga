@@ -25,6 +25,5 @@ body { font-family:'Lucida Grande',Verdana,Arial,Helvetica,sans-serif; font-size
 
 #supportHelp { position:absolute; top:14px; right:20px; text-align:right; border-right:2px #e1e1e1 solid; padding-right:5px; }
 
-#siteTabs { margin-left:15px; margin-right:15px; padding-bottom:30px; }
+#content { margin-left:15px; margin-right:15px; }
 
- 
