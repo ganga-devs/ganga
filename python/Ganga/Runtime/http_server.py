@@ -12,6 +12,43 @@ import time, datetime
 import os
 logger = Ganga.Utility.logging.getLogger()
 
+job_status_color = {'new' : '00FFFF',
+                    'submitting' : 'FFFFFF',
+                    'submitted' : '0000FF',
+                    'running' : '008000',
+                    'completed' : '006400',
+                    'completing' : '006400',
+                    'killed' : 'FF0000',
+                    'unknown' : '808080',
+                    'incomplete' : 'FF00FF',
+                    'failed' : 'FF0000'}
+
+
+subjob_status_color = {'new' : '00ff7d',
+                       'submitting' : 'FFFFFF',
+                       'submitted' : '00007d',
+                       'running' : '00f000',
+                       'completed' : '009000',
+                       'completing' : '009000',
+                       'killed' : '7d0000',
+                       'unknown' : '808080',
+                       'incomplete' : '7d007d',
+                       'failed' : '7D0000'}
+
+def getColorString(statuses, jobs=True):
+
+    colorString = ""    
+    colorDictionary = job_status_color
+        
+    if not jobs:        
+        colorDictionary = subjob_status_color
+
+    for status in statuses[:-1]:
+        colorString += '%s|' % colorDictionary[status]
+    colorString += colorDictionary[statuses[-1]]
+
+    return colorString
+
 def addQuotes(value):
 
     trimmedValue = value.strip('\'')
@@ -186,11 +223,12 @@ def create_subjobs_graphics(jobid, subjob_attribute, fromDate, toDate):
         elif subjob_attribute == 'backend':
                 increment(subjobs_attributes,subjob.backend.__class__.__name__)   
 
-    json_subjobs_attribute_json = get_pie_chart_json(subjobs_attributes)
-        
-    return json_subjobs_attribute_json
+    if subjob_attribute == 'status':
+        return get_pie_chart_json(subjobs_attributes, colors=True, jobs=False)
+    else:       
+        return get_pie_chart_json(subjobs_attributes)
 
-def get_pie_chart_json(d):
+def get_pie_chart_json(d,colors=False, jobs=False):
 
     #template = "{\"chd\":\"t:50,50\",\"chl\":\"Hello|World\"}"
         
@@ -217,7 +255,13 @@ def get_pie_chart_json(d):
         valueString += '%s,' % str(value)
     valueString += str(values[-1])
 
-    result_json = "{\"chd\":\"t:%s\",\"chl\":\"%s\"}" % (valueString, keyString)
+    result_json = ""    
+
+    if colors:
+        colorString = getColorString(keys, jobs)
+        result_json = "{\"chd\":\"t:%s\",\"chl\":\"%s\",\"chco\":\"%s\"}" % (valueString, keyString, colorString)
+    else:                       
+        result_json = "{\"chd\":\"t:%s\",\"chl\":\"%s\"}" % (valueString, keyString)
 
     return result_json          
 
@@ -236,9 +280,10 @@ def create_jobs_graphics(job_attribute, fromDate=None, toDate=None):
         elif job_attribute == 'backend':        
                 increment(jobs_attribute,jobInfo.getJobBackend())    
 
-    json_job_attribute = get_pie_chart_json(jobs_attribute)
-        
-    return json_job_attribute   
+    if job_attribute == 'status':
+        return get_pie_chart_json(jobs_attribute, colors=True, jobs=True)
+    else:       
+        return get_pie_chart_json(jobs_attribute)
 
 def get_jobs_JSON(fromDate=None, toDate=None):
 
@@ -482,7 +527,6 @@ class GetHandler(BaseHTTPRequestHandler):
                 toDate = convertStringToDatetime(qsDict['to'])
         #if from and to are not selected, it could be timeRange selected
         elif qsDict.has_key('timerange'):
-                print 'time range' + qsDict['timerange']
                 fromDate = getFromDateFromTimeRange(qsDict['timerange'])
 
         json = ''
