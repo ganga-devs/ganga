@@ -139,7 +139,17 @@ cmt_setup () {
     fi
  
     if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]; then
-        source $ATLAS_RELEASE_DIR/setup.sh 
+        source $ATLAS_RELEASE_DIR/setup.sh
+    # New athena v16 AtlasSetup #################
+    elif [ ! -z `echo $ATLAS_RELEASE | grep 16.` ]; then
+	if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,32,setup
+	elif [ ! -z $ATLAS_PROJECT ]; then
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_RELEASE,$ATLAS_PROJECT,32,setup
+	else
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh AtlasOffline,$ATLAS_RELEASE,32,setup
+	fi
+
     else 
         #if [ n$ATLAS_PROJECT = n'AtlasPoint1' ]; then
         if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
@@ -596,7 +606,9 @@ stage_outputs () {
 
     if [ $retcode -eq 0 ]
     then
+	echo '===================================='
         echo "Storing output data ..."
+
         if [ -e ganga-stage-in-out-dq2.py ] && [ -e output_files ] && [ ! -z $OUTPUT_DATASETNAME ]
         then
             chmod +x ganga-stage-in-out-dq2.py
