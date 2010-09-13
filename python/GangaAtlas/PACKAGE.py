@@ -13,7 +13,7 @@ from Ganga.Utility.Setup import PackageSetup, checkPythonVersion
 
 
 _external_packages = { 
-    'DQ2Clients' : { 'version' : '0.1.33.1',
+    'DQ2Clients' : { 'version' : '0.1.35',
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
                      'PYTHONPATH' : ['usr/lib/python2.3/site-packages/','external/mysqldb32/'],
