@@ -174,7 +174,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             else: 
                 raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
         else:
-            logger.info('Proceeding without an input dataset.')
+            logger.info('Submitting without an input dataset.')
 
         # handle different atlas_exetypes
         self.job_options = ''
@@ -257,9 +257,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if job.backend.site == 'AUTO':
                 raise ApplicationConfigurationError(None,'Panda+ATLASTier3Dataset requires a specified backend.site')
             job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
+        elif self.inputdatatype == 'None':
+            runPandaBrokerage(job)
             
-#        if job.backend.site == 'AUTO':
-#            raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
+        if len(job.subjobs) == 0 and job.backend.site == 'AUTO':
+            raise ApplicationConfigurationError(None,'Error: backend.site=AUTO after brokerage. Report to DA Help Forum')
         
         # handle the output dataset
         if job.outputdata:
@@ -271,9 +273,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         # get the list of sites that this jobset will run at
         sitesdict = {}
-        for sj in job.subjobs:
-            sitesdict[sj.backend.site] = 1
-        bjsites = sitesdict.keys()
+        bjsites = []
+        if job.subjobs:
+            for sj in job.subjobs:
+                sitesdict[sj.backend.site] = 1
+            bjsites = sitesdict.keys()
+        else:
+            bjsites = [job.backend.site]
 
         # validate the output dataset name (and make it a container)
         job.outputdata.datasetname,outlfn = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
@@ -282,6 +288,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         # create the container
         Client.createContainer(job.outputdata.datasetname,False)
+        logger.info('Created output container %s'%job.outputdata.datasetname)
 
         # store the lib datasts
         self.libDatasets = {}
