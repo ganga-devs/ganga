@@ -74,11 +74,17 @@ def queueToAllowedSites(queue):
             except (TypeError,KeyError):
                 continue
 
+    # add special extra tokens
+    for setoken in Client.PandaSites[queue]['setokens'].values():
+        if setoken not in allowed_sites:
+            allowed_sites.append(setoken)
+
     disallowed_sites = ['CERN-PROD_TZERO']
     allowed_allowed_sites = []
     for site in allowed_sites:
         if site not in disallowed_sites:
             allowed_allowed_sites.append(site)
+
     return allowed_allowed_sites
 
 def runPandaBrokerage(job):
@@ -192,6 +198,37 @@ def runPandaBrokerage(job):
     logger.info('Panda brokerage results: cloud %s, site %s'%(job.backend.requirements.cloud,job.backend.site))
 
 
+def selectPandaSite(job,sites):
+    from pandatools import Client
+    tag = ''
+    try:
+        if job.application.atlas_production=='':
+            tag = 'Atlas-%s' % job.application.atlas_release
+        else:
+            tag = '%s-%s' % (job.application.atlas_project,job.application.atlas_production)
+    except:
+        # application is probably AthenaMC
+        try:
+            if len(job.application.atlas_release.split('.')) == 3:
+                tag = 'Atlas-%s' % job.application.atlas_release
+            else:
+                tag = 'AtlasProduction-%s' % job.application.atlas_release
+        except:
+            logger.warning("Could not determine athena tag for Panda brokering")
+    try:
+        status,out = Client.runBrokerage([Client.convertDQ2toPandaID(x) for x in sites.split(':')],tag,verbose=False,trustIS=config['trustIS'],processingType=config['processingType'])
+    except exceptions.SystemExit:
+        job.backend.reason = 'Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1])
+        raise BackendError('Panda','Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
+    if status != 0:
+        job.backend.reason = 'Non-zero to run brokerage for automatic assignment: %s' % out
+        raise BackendError('Panda','Non-zero to run brokerage for automatic assignment: %s' % out)
+    if not Client.PandaSites.has_key(out):
+        job.backend.reason = 'brokerage gave wrong PandaSiteID:%s' % out
+        raise BackendError('Panda','brokerage gave wrong PandaSiteID:%s' % out)
+    # set site
+    return out
+
 def uploadSources(path,sources):
     from pandatools import Client
 
@@ -270,7 +307,7 @@ class Panda(IBackend):
     '''Panda backend: submission to the PanDA workload management system
     '''
 
-    _schema = Schema(Version(2,4), {
+    _schema = Schema(Version(2,5), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'requirements'  : ComponentItem('PandaRequirements',doc='Requirements for the resource selection'),
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
@@ -280,6 +317,7 @@ class Panda(IBackend):
         'actualCE'      : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Actual CE where the job is run'),
         'libds'         : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=1,doc='Existing Library dataset to use (disables buildjob)'),
         'buildjob'      : ComponentItem('PandaBuildJob',load_default=0,optional=1,protected=1,copyable=0,doc='Panda Build Job'),
+        'buildjobs'     : ComponentItem('PandaBuildJob',sequence=1,defvalue=[],optional=1,protected=1,copyable=0,doc='Panda Build Job'),
         'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
         'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code (transExitCode)'),
         'piloterrorcode': SimpleItem(defvalue='',protected=1,copyable=0,doc='Pilot Error Code'),
@@ -291,14 +329,14 @@ class Panda(IBackend):
 
     _category = 'backends'
     _name = 'Panda'
-    _exportmethods = ['list_sites','get_stats']
+    _exportmethods = ['list_sites','get_stats','list_ddm_sites']
   
     def __init__(self):
         super(Panda,self).__init__()
 
     def master_submit(self,rjobs,subjobspecs,buildjobspec):
         '''Submit jobs'''
-        
+       
         from pandatools import Client
         from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
@@ -308,47 +346,110 @@ class Panda(IBackend):
         if self.libds:
             buildjobspec = None
 
-        for subjob in rjobs:
-            subjob.updateStatus('submitting')
-
         job = self.getJobObject()
 
+        multiSiteJob=False
+
         if buildjobspec:
-            jobspecs = [buildjobspec] + subjobspecs
+            if type(buildjobspec)==type([]):
+                multiSiteJob = True
+#                logger.info("Submitting to multiple Panda sites...")
+            else:
+                jobspecs = [buildjobspec] + subjobspecs
         else:
             jobspecs = subjobspecs
 
-        if len(jobspecs) > config['serverMaxJobs']:
-            raise BackendError('Panda','Cannot submit %d subjobs. Server limits to %d.' % (len(jobspecs),config['serverMaxJobs']))
+#        raise BackendError('Panda','submit disabled')
 
-        configSys = getConfig('System')
-        for js in jobspecs:
-            js.lockedby = configSys['GANGA_VERSION']
+        if multiSiteJob:
+            jobsetID = -1
+            for bjspec in buildjobspec:
+                bjspec.jobsetID = jobsetID
+                logger.info('Submitting to %s'%bjspec.computingSite)
+                jobspecs = [bjspec]
+                thisbulk = []
+                for subjob, sjspec in zip(rjobs,subjobspecs):
+                    if sjspec.computingSite == bjspec.computingSite:
+                        sjspec.jobsetID = jobsetID
+                        jobspecs.append(sjspec)
+                        thisbulk.append(subjob)
+                        subjob.updateStatus('submitting')
+                        
+                if len(jobspecs) > config['serverMaxJobs']:
+                    raise BackendError('Panda','Cannot submit %d subjobs. Server limits to %d.' % (len(jobspecs),config['serverMaxJobs']))
 
-        verbose = logger.isEnabledFor(10)
-        status, jobids = Client.submitJobs(jobspecs,verbose)
-        if status:
-            logger.error('Status %d from Panda submit',status)
-            return False
-        if "NULL" in [jobid[0] for jobid in jobids]:
-            logger.error('Panda could not assign job id to some jobs. Dataset name too long?')
-            return False
+                configSys = getConfig('System')
+                for js in jobspecs:
+                    js.lockedby = configSys['GANGA_VERSION']
 
-        njobs = len(jobids)
+                verbose = logger.isEnabledFor(10)
+                status, jobids = Client.submitJobs(jobspecs,verbose)
+                if status:
+                    logger.error('Status %d from Panda submit',status)
+                    return False
+                if "NULL" in [jobid[0] for jobid in jobids]:
+                    logger.error('Panda could not assign job id to some jobs. Dataset name too long?')
+                    return False
 
-        if buildjobspec:
-            job.backend.buildjob = PandaBuildJob() 
-            job.backend.buildjob.id = jobids[0][0]
-            job.backend.buildjob.url = 'http://panda.cern.ch/?job=%d'%jobids[0][0]
-            del jobids[0]
+                njobs = len(jobids)
 
-        for subjob, jobid in zip(rjobs,jobids):
-            subjob.backend.id = jobid[0]
-            subjob.backend.url = 'http://panda.cern.ch/?job=%d'%jobid[0]
-            subjob.updateStatus('submitted')
+                jobdefID = jobids[0][1]
+                jobsetID = jobids[0][2]['jobsetID']
 
-        if njobs < len(jobspecs):
-            logger.error('Panda server accepted only %d of your %d jobs. Confirm serverMaxJobs=%d is correct.'%(njobs,len(jobspecs),config['serverMaxJobs']))
+                if buildjobspec:
+                    pbj = PandaBuildJob()
+                    pbj.id = jobids[0][0]
+                    pbj.url = 'http://panda.cern.ch/?job=%d'%jobids[0][0]
+                    job.backend.buildjobs.append(pbj)
+                    del jobids[0]
+
+                assert(len(thisbulk)==len(jobids))
+
+                for subjob, jobid in zip(thisbulk,jobids):
+                    subjob.backend.id = jobid[0]
+                    subjob.backend.url = 'http://panda.cern.ch/?job=%d'%jobid[0]
+                    subjob.updateStatus('submitted')
+
+                logger.info("Added jobdefinitionID %d (%d subjobs at %s) to jobsetID %d"%(jobdefID,njobs,bjspec.computingSite,jobsetID))
+
+                if njobs < len(jobspecs):
+                    logger.error('Panda server accepted only %d of your %d jobs. Confirm serverMaxJobs=%d is correct.'%(njobs,len(jobspecs),config['serverMaxJobs']))
+
+        else:
+            for subjob in rjobs:
+                subjob.updateStatus('submitting')
+
+            if len(jobspecs) > config['serverMaxJobs']:
+                raise BackendError('Panda','Cannot submit %d subjobs. Server limits to %d.' % (len(jobspecs),config['serverMaxJobs']))
+
+            configSys = getConfig('System')
+            for js in jobspecs:
+                js.lockedby = configSys['GANGA_VERSION']
+
+            verbose = logger.isEnabledFor(10)
+            status, jobids = Client.submitJobs(jobspecs,verbose)
+            if status:
+                logger.error('Status %d from Panda submit',status)
+                return False
+            if "NULL" in [jobid[0] for jobid in jobids]:
+                logger.error('Panda could not assign job id to some jobs. Dataset name too long?')
+                return False
+
+            njobs = len(jobids)
+
+            if buildjobspec:
+                job.backend.buildjob = PandaBuildJob() 
+                job.backend.buildjob.id = jobids[0][0]
+                job.backend.buildjob.url = 'http://panda.cern.ch/?job=%d'%jobids[0][0]
+                del jobids[0]
+
+            for subjob, jobid in zip(rjobs,jobids):
+                subjob.backend.id = jobid[0]
+                subjob.backend.url = 'http://panda.cern.ch/?job=%d'%jobid[0]
+                subjob.updateStatus('submitted')
+
+            if njobs < len(jobspecs):
+                logger.error('Panda server accepted only %d of your %d jobs. Confirm serverMaxJobs=%d is correct.'%(njobs,len(jobspecs),config['serverMaxJobs']))
 
         return True
 
@@ -400,7 +501,10 @@ class Panda(IBackend):
         retryDestSE  = None
         resubmittedJobs = [] # ganga jobs
         for job in jspecs:
-            if job.jobStatus in ['failed', 'killed']:
+            if job.jobStatus in ['failed', 'killed', 'cancelled']:
+                retrySite    = None
+                retryElement = None
+                retryDestSE  = None
                 oldID = job.PandaID
                 # unify sitename
                 if retrySite == None:
@@ -581,8 +685,23 @@ class Panda(IBackend):
     def list_sites(self):
         from pandatools import Client
         sites=Client.PandaSites.keys()
-        sites.sort()
-        return sites
+        spacetokens = []
+        for s in sites:
+            spacetokens.append(queueToAllowedSites(s))
+        return spacetokens
+
+    def list_ddm_sites(self,allowTape=False,allowedStatus=['online']):
+        from pandatools import Client
+        sites=Client.PandaSites.keys()
+        spacetokens = []
+        for s in sites:
+            if (self.site != 'AUTO' and self.site != s) or Client.PandaSites[s]['status'] not in allowedStatus or s in self.requirements.excluded_sites or (not self.requirements.anyCloud and Client.PandaSites[s]['cloud'] != self.requirements.cloud):
+                continue
+            tokens = queueToAllowedSites(s)
+            for t in tokens:
+                if allowTape or t.find('TAPE') == -1:
+                    spacetokens.append(t)
+        return spacetokens
 
     def get_stats(self):
         fields = {

@@ -344,9 +344,7 @@ class DQ2JobSplitter(ISplitter):
                 allowed_sites = newsites
                     
         elif job.backend._name == 'Panda':
-            from GangaPanda.Lib.Panda.Panda import runPandaBrokerage,queueToAllowedSites
-            runPandaBrokerage(job)
-            allowed_sites = queueToAllowedSites(job.backend.site)
+            allowed_sites = job.backend.list_ddm_sites()
         elif job.backend._name == 'NG':
             allowed_sites = config['AllowedSitesNGDQ2JobSplitter']
 
@@ -476,6 +474,7 @@ class DQ2JobSplitter(ISplitter):
             allcontents[dataset]=content
 
         logger.debug('siteinfos = %s', siteinfos)
+        logger.debug('allcontents = %s', allcontents)
 
         subjobs = []
         totalfiles = 0
@@ -591,7 +590,11 @@ class DQ2JobSplitter(ISplitter):
                     for tag_file in job.inputdata.tag_info:
                         if job.inputdata.tag_info[tag_file]['refs'][0][2] in remaining_guids:
                             remaining_tags.append( tag_file )
-                            
+                         
+                # do a Panda brokerage for these sites 
+                from GangaPanda.Lib.Panda.Panda import selectPandaSite
+                pandaSite = selectPandaSite(job,sites)
+
                 while remaining_guids and len(subjobs)<config['MaxJobsDQ2JobSplitter']:
                     num_remaining_guids = len(remaining_guids)
                     j = Job()
@@ -741,6 +744,8 @@ class DQ2JobSplitter(ISplitter):
                     j.backend       = job.backend
                     if j.backend._name in [ 'LCG', 'CREAM']:
                         j.backend.requirements.sites = sites.split(':')
+                    if j.backend._name == 'Panda':
+                        j.backend.site=pandaSite
                     j.inputsandbox  = job.inputsandbox
                     j.outputsandbox = job.outputsandbox 
 
