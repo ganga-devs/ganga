@@ -587,6 +587,10 @@ class Panda(IBackend):
             if buildjob and buildjob.id and buildjob.status in active_status:
                 jobdict[buildjob.id] = job
 
+            for bj in job.backend.buildjobs:
+                if bj.id and bj.status in active_status:
+                    jobdict[bj.id] = job
+
             if job.backend.id and job.backend.status in active_status:
                 jobdict[job.backend.id] = job 
 
@@ -679,6 +683,40 @@ class Panda(IBackend):
                         #un = job.backend.buildjob.jobSpec['prodUserID'].split('/CN=')[-2]
                         #jdid = job.backend.buildjob.jobSpec['jobDefinitionID']
                         #job.backend.url = 'http://panda.cern.ch/?job=*&jobDefinitionID=%s&user=%s'%(jdid,un)
+                elif job.backend.buildjobs and status.PandaID in [bj.id for bj in job.backend.buildjobs]:
+                    for bj in job.backend.buildjobs:
+                        if bj.id == status.PandaID and bj.status != status.jobStatus:
+                            bj.jobSpec = dict(zip(status._attributes,status.values()))
+                            for k in bj.jobSpec.keys():
+                                if type(bj.jobSpec[k]) not in [type(''),type(1)]:
+                                    bj.jobSpec[k]=str(bj.jobSpec[k])
+
+                            logger.debug('Buildjob %s has changed status from %s to %s',job.getFQID('.'),bj.status,status.jobStatus)
+#                            if config['enableDownloadLogs'] and not job.backend._name=='PandaBuildJob' and status.jobStatus == "finished" and job.backend.buildjob.status != "finished":
+#                                job.backend.getLogFiles(job.getOutputWorkspace().getPath("buildJob"), status)
+
+                            bj.status = status.jobStatus
+          
+                            try: 
+                                if len(job.backend.buildjobs) == 1 and status.jobStatus == 'finished':
+                                    job.backend.libds = job.backend.buildjobs[0].jobSpec['destinationDBlock']
+                            except KeyError:
+                                pass
+
+                            if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
+                                job.updateStatus('submitted')
+                            elif status.jobStatus in ['starting','running','holding','transferring']:
+                                job.updateStatus('running')
+                            elif status.jobStatus == 'failed':
+                                job.updateStatus('failed')
+                            elif status.jobStatus == 'cancelled':
+                                job.updateStatus('killed')
+                            else:
+                                logger.warning('Unexpected job status %s',status.jobStatus)
+
+                            #un = job.backend.buildjob.jobSpec['prodUserID'].split('/CN=')[-2]
+                            #jdid = job.backend.buildjob.jobSpec['jobDefinitionID']
+                            #job.backend.url = 'http://panda.cern.ch/?job=*&jobDefinitionID=%s&user=%s'%(jdid,un)
                 else:
                     logger.warning('Unexpected Panda ID %s',status.PandaID)
 
