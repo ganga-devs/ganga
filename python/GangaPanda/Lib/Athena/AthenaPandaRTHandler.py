@@ -62,50 +62,10 @@ def getDBDatasets(jobO,trf,dbrelease):
                     raise ApplicationConfigurationError(None,"ERROR : %s is not in %s"%(tmpDbrLFN,tmpDbrDS))
     return dbrFiles,dbrDsList
 
-def execute_build_job(trafo, sources, parameters):
-    tmpdir = '/tmp/%s' % commands.getoutput('uuidgen')
-    os.system("mkdir %s && cd %s" % (tmpdir, tmpdir))
-
-    status, output = commands.getstatusoutput("cd %s && wget %s && ln -s %s ." % (tmpdir, trafo, sources))
-    if status != 0:
-        print output
-        raise ApplicationConfigurationError(None,"Failure in setting up local build job!")
-
-    tf = os.path.basename(trafo)
-    logger.warning("Locally executing build job. This can take minutes, please be patient.")
-    status, output = commands.getstatusoutput("cd %s && chmod +x %s && ./%s %s" % (tmpdir, tf, tf, parameters))
-    if status != 0:
-        print output
-        raise ApplicationConfigurationError(None,"Failure in creating library package with local build job!")
-   
-    return tmpdir
-    
 
 class AthenaPandaRTHandler(IRuntimeHandler):
     '''Athena Panda Runtime Handler'''
 
-    def make_local_libds(self, jspec, sources, nobuild):
-        if nobuild:
-            tmpdir = '/tmp/%s' % commands.getoutput('uuidgen')
-            os.system("mkdir %s" % (tmpdir))
-            status, output = commands.getstatusoutput("cd %s && cp %s %s" % (tmpdir, sources, self.library))
-        else:
-            tmpdir = execute_build_job(jspec.transformation, sources, jspec.jobParameters)
-
-        setupstr = ["export OLDPATH=$PATH"]
-        setupstr.append('source /afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/setup.sh 2>&1 > /dev/null')
-        setupstr.append('export VOMS_PROXY_INFO_DONT_VERIFY_AC=1')
-        setupstr.append("export PATH=$OLDPATH")
-        from pandatools import Client
-        site = Client.PandaSites[jspec.destinationSE]["ddm"]
-        cmd = "dq2-put -a -d -L %s -s %s -f %s %s" % (site, tmpdir, self.library, self.libDataset)
-        cmdline = "%s; %s" % (";".join(setupstr), cmd)
-        print cmdline
-        shell = getShell("EDG")
-        status, output = shell.cmd1(cmdline)
-        if status != 0:
-            print output
-            raise ApplicationConfigurationError(None,"Failure in uploading library package with local build job!")
 
     def master_prepare(self,app,appconfig):
         '''Prepare the master job'''
@@ -115,12 +75,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         from taskbuffer.JobSpec import JobSpec
         from taskbuffer.FileSpec import FileSpec
 
-        # get Athena versions
-        rc, out = AthenaUtils.getAthenaVer()
-        # failed
-        if not rc:
-            raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
-        self.userarea = out['workArea']
 
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
@@ -357,7 +311,15 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 fname.rstrip(os.sep)
                 path = os.path.dirname(fname)
                 fn = os.path.basename(fname)
-                ua = os.path.abspath(self.userarea)
+
+                #app.atlas_run_dir
+                # get Athena versions
+                rc, out = AthenaUtils.getAthenaVer()
+                # failed
+                if not rc:
+                    raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+                userarea = out['workArea']
+                ua = os.path.abspath(userarea)
                 if ua in path:
                     fn = fname[len(ua)+1:]
                     path = ua
@@ -380,66 +342,69 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             uploadSources(os.path.dirname(inputsandbox),os.path.basename(inputsandbox))
 
         # create build job for each needed site
-        logger.info("Creating a build job for %s"%','.join(bjsites))
-        bjspecs=[]
-        for bjsite in bjsites:
-            tmpLibDS = job.outputdata.datasetname+'.lib'
-            jspec = JobSpec()
-            jspec.jobDefinitionID   = job.id
-            jspec.jobName           = commands.getoutput('uuidgen')
-            jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
-            jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
-            if job.backend.bexec != '':
-                jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
-            else:
-                jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
-            if Client.isDQ2free(bjsite) and not local_libds:
-                jspec.destinationDBlock = '%s/%s' % (job.outputdata.datasetname,self.libDatasets[bjsite])
-                jspec.destinationSE     = 'local'
-            else:
-                jspec.destinationDBlock = self.libDatasets[bjsite]
-                jspec.destinationSE     = bjsite
-            jspec.prodSourceLabel   = configPanda['prodSourceLabelBuild']
-            jspec.processingType    = configPanda['processingType']
-            jspec.assignedPriority  = configPanda['assignedPriorityBuild']
-            jspec.computingSite     = bjsite
-            jspec.cloud             = Client.PandaSites[bjsite]['cloud']
-            jspec.jobParameters     = '-o %s' % (self.libraries[bjsite])
-            if inputsandbox:
-                jspec.jobParameters     += ' -i %s' % (os.path.basename(inputsandbox))
-            matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
-            if matchURL:
-                jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
-            jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
-            if job.backend.bexec != '':
-                jspec.jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
-                jspec.jobParameters += ' -r %s ' % '.'
+        if app.athena_compile:
+            logger.info("Creating a build job for %s"%','.join(bjsites))
+            bjspecs=[]
+            for bjsite in bjsites:
+                tmpLibDS = job.outputdata.datasetname+'.lib'
+                jspec = JobSpec()
+                jspec.jobDefinitionID   = job.id
+                jspec.jobName           = commands.getoutput('uuidgen')
+                jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
+                jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
+                if job.backend.bexec != '':
+                    jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
+                else:
+                    jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
+                if Client.isDQ2free(bjsite) and not local_libds:
+                    jspec.destinationDBlock = '%s/%s' % (job.outputdata.datasetname,self.libDatasets[bjsite])
+                    jspec.destinationSE     = 'local'
+                else:
+                    jspec.destinationDBlock = self.libDatasets[bjsite]
+                    jspec.destinationSE     = bjsite
+                jspec.prodSourceLabel   = configPanda['prodSourceLabelBuild']
+                jspec.processingType    = configPanda['processingType']
+                jspec.assignedPriority  = configPanda['assignedPriorityBuild']
+                jspec.computingSite     = bjsite
+                jspec.cloud             = Client.PandaSites[bjsite]['cloud']
+                jspec.jobParameters     = '-o %s' % (self.libraries[bjsite])
+                if inputsandbox:
+                    jspec.jobParameters     += ' -i %s' % (os.path.basename(inputsandbox))
+                matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
+                if matchURL:
+                    jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
+                jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
+                if job.backend.bexec != '':
+                    jspec.jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
+                    jspec.jobParameters += ' -r %s ' % '.'
 
-            fout = FileSpec()
-            fout.lfn  = self.libraries[bjsite]
-            fout.type = 'output'
-            fout.dataset = self.libDatasets[bjsite]
-            fout.destinationDBlock = self.libDatasets[bjsite]
-            jspec.addFile(fout)
+                fout = FileSpec()
+                fout.lfn  = self.libraries[bjsite]
+                fout.type = 'output'
+                fout.dataset = self.libDatasets[bjsite]
+                fout.destinationDBlock = self.libDatasets[bjsite]
+                jspec.addFile(fout)
 
-            flog = FileSpec()
-            flog.lfn = '%s.log.tgz' % self.libDatasets[bjsite]
-            flog.type = 'log'
-            flog.dataset = self.libDatasets[bjsite]
-            flog.destinationDBlock = self.libDatasets[bjsite]
-            if configPanda['chirpconfig']:
-                flog.dispatchDBlockToken = configPanda['chirpconfig']
-            jspec.addFile(flog)
-            
-            bjspecs.append(jspec)
+                flog = FileSpec()
+                flog.lfn = '%s.log.tgz' % self.libDatasets[bjsite]
+                flog.type = 'log'
+                flog.dataset = self.libDatasets[bjsite]
+                flog.destinationDBlock = self.libDatasets[bjsite]
+                if configPanda['chirpconfig']:
+                    flog.dispatchDBlockToken = configPanda['chirpconfig']
+                jspec.addFile(flog)
+                
+                bjspecs.append(jspec)
         
-        if local_libds:
-            self.make_local_libds(jspec, inputsandbox, local_libds_nobuild)
-            job.backend.libds = self.libDataset
-            jspec = None 
-            self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
+            #if local_libds:
+            #    self.make_local_libds(jspec, inputsandbox, local_libds_nobuild)
+            #    job.backend.libds = self.libDataset
+            #    jspec = None 
+            #    self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
 
-        return bjspecs
+            return bjspecs
+        else:
+            return []
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         '''prepare the subjob specific configuration'''
@@ -507,21 +472,24 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
 
 #       library (source files)
-        if not job.backend.libds:
-            flib = FileSpec()
-            flib.lfn            = self.libraries[job.backend.site]
-            flib.type           = 'input'
-            flib.dataset        = self.libDatasets[job.backend.site]
-            flib.dispatchDBlock = self.libDatasets[job.backend.site]
-        else:
-            flib = FileSpec()
-            flib.lfn            = self.fileBO.lfn
-            flib.GUID           = self.fileBO.GUID
-            flib.type           = 'input'
-            flib.status         = self.fileBO.status
-            flib.dataset        = self.fileBO.destinationDBlock
-            flib.dispatchDBlock = self.fileBO.destinationDBlock
-        jspec.addFile(flib)
+        if job.application.athena_compile:
+            if not job.backend.libds:
+                flib = FileSpec()
+                flib.lfn            = self.libraries[job.backend.site]
+                flib.type           = 'input'
+                flib.dataset        = self.libDatasets[job.backend.site]
+                flib.dispatchDBlock = self.libDatasets[job.backend.site]
+            else:
+                flib = FileSpec()
+                flib.lfn            = self.fileBO.lfn
+                flib.GUID           = self.fileBO.GUID
+                flib.type           = 'input'
+                flib.status         = self.fileBO.status
+                flib.dataset        = self.fileBO.destinationDBlock
+                flib.dispatchDBlock = self.fileBO.destinationDBlock
+            jspec.addFile(flib)
+
+
 
 #       input files FIXME: many more input types
         if job.inputdata and self.inputdatatype=='DQ2' and not job.inputdata.tag_info:
@@ -561,7 +529,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #       job parameters
         param = ''
         # FIXME if not options.nobuild:
-        param =  '-l %s ' % self.libraries[job.backend.site]
+        if app.athena_compile:
+            param =  '-l %s ' % self.libraries[job.backend.site]
         param += '-r %s ' % self.rundirectory
         # set jobO parameter
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
@@ -618,6 +587,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '-i "%s" ' % input_files
         else:
             param += '-i "[]" '
+
+        if not job.application.athena_compile:
+            param += '-a %s ' % os.path.basename(job.application.user_area.name)
         #param += '-m "[]" ' #%minList FIXME
         #param += '-n "[]" ' #%cavList FIXME
         #FIXME
