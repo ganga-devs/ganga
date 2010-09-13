@@ -690,17 +690,32 @@ class Panda(IBackend):
             spacetokens.append(queueToAllowedSites(s))
         return spacetokens
 
-    def list_ddm_sites(self,allowTape=False,allowedStatus=['online']):
+    def list_ddm_sites(self,allowTape=False):
         from pandatools import Client
-        sites=Client.PandaSites.keys()
         spacetokens = []
-        for s in sites:
-            if (self.site != 'AUTO' and self.site != s) or Client.PandaSites[s]['status'] not in allowedStatus or s in self.requirements.excluded_sites or (not self.requirements.anyCloud and Client.PandaSites[s]['cloud'] != self.requirements.cloud):
-                continue
-            tokens = queueToAllowedSites(s)
+        if self.site == 'AUTO':
+            sites=Client.PandaSites.keys()
+            for s in sites:
+                if Client.PandaSites[s]['status'] not in ['online'] or s in self.requirements.excluded_sites or (not self.requirements.anyCloud and Client.PandaSites[s]['cloud'] != self.requirements.cloud):
+                    continue
+                tokens = queueToAllowedSites(s)
+                for t in tokens:
+                    if allowTape or t.find('TAPE') == -1:
+                        spacetokens.append(t)
+        else: # direct site submission
+            try:
+                s = Client.PandaSites[self.site]
+            except KeyError:
+                raise BackendError('Panda','Site %s not in a known Panda Sites'%self.site)
+            if s['status'] not in ['online','brokeroff']:
+                raise BackendError('Panda','Cannot submit to %s in status %s'%(self.site,s['status']))
+            if self.site in self.requirements.excluded_sites:
+                raise BackendError('Panda','Cannot submit to %s because it is in your requirements.excluded_sites list'%(self.site,s['status']))
+            tokens = queueToAllowedSites(self.site)
             for t in tokens:
                 if allowTape or t.find('TAPE') == -1:
                     spacetokens.append(t)
+
         return spacetokens
 
     def get_stats(self):
