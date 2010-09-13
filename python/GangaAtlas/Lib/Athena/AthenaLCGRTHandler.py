@@ -385,7 +385,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['ATHENA_SKIP_EVENTS'] = str(job.application.skip_events)
 
         # pick event 
-        if job._getRoot().splitter and job._getRoot().inputdata._name == 'EventPicking' :
+        if job._getRoot().splitter and job._getRoot().inputdata and job._getRoot().inputdata._name == 'EventPicking' :
                 #Replace blank space 
                 environment['ATHENA_RUN_EVENTS'] = str(job.application.run_event).replace(' ', '')
                 environment['ATHENA_FILTER_POLICY'] = str(job.inputdata.pick_filter_policy)
