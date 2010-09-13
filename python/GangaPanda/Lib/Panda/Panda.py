@@ -200,6 +200,12 @@ def runPandaBrokerage(job):
 
 def selectPandaSite(job,sites):
     from pandatools import Client
+
+    pandaSites = []
+    if job.backend.site == 'AUTO':
+        pandaSites = [Client.convertDQ2toPandaID(x) for x in sites.split(':')]
+    else:
+        return job.backend.site
     tag = ''
     try:
         if job.application.atlas_production=='':
@@ -216,7 +222,7 @@ def selectPandaSite(job,sites):
         except:
             logger.warning("Could not determine athena tag for Panda brokering")
     try:
-        status,out = Client.runBrokerage([Client.convertDQ2toPandaID(x) for x in sites.split(':')],tag,verbose=False,trustIS=config['trustIS'],processingType=config['processingType'])
+        status,out = Client.runBrokerage(pandaSites,tag,verbose=False,trustIS=config['trustIS'],processingType=config['processingType'])
     except exceptions.SystemExit:
         job.backend.reason = 'Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1])
         raise BackendError('Panda','Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
