@@ -343,7 +343,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         # create build job for each needed site
         if app.athena_compile:
-            logger.info("Creating a build job for %s"%','.join(bjsites))
+            if not job.backend.libds:
+                logger.info("Creating a build job for %s"%','.join(bjsites))
             bjspecs=[]
             for bjsite in bjsites:
                 tmpLibDS = job.outputdata.datasetname+'.lib'
