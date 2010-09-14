@@ -79,6 +79,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
+        app.athena_compile = True
+
         if job.backend.libds == "LOCAL":
             local_libds = True
             local_libds_nobuild = not app.athena_compile
