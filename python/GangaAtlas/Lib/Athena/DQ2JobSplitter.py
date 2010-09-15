@@ -708,7 +708,8 @@ class DQ2JobSplitter(ISplitter):
                                         j.inputdata.guids.append(next_guid)
                                         j.inputdata.names.append(allcontent[next_guid][0])
                                         j.inputdata.sizes.append(allcontent[next_guid][1])
-                                        break
+                                        if job.inputdata._name != 'EventPicking':
+                                            break
                                     
                                     if job.inputdata._name == 'EventPicking':
                                         for runevent in guid_run_evt_map[next_guid]:
