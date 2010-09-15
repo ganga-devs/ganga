@@ -48,7 +48,7 @@ class LHCbDataset(Dataset):
                       'hasLFNs','extend','getCatalog','optionsString',
                       'getFileNames','getFullFileNames',
                       'difference','isSubset','isSuperset','intersection',
-                      'symmetricDifference','union','bkMetadata']
+                      'symmetricDifference','union','bkMetadata']#,'pop']
 
     def __init__(self, files=[]):
         super(LHCbDataset, self).__init__()
@@ -140,6 +140,12 @@ class LHCbDataset(Dataset):
             if file is None: file = f
             if unique and file.name in names: continue
             self.files.append(file)
+
+    def removeFile(self,file):
+        try:
+            self.files.remove(file)
+        except:
+            raise GangaException('Dataset has no file named %s' % file.name)
 
     def getLFNs(self):
         'Returns a list of all LFNs (by name) stored in the dataset.'
@@ -270,6 +276,28 @@ class LHCbDataset(Dataset):
         'Returns the bookkeeping metadata for all LFNs. '
         cmd = 'result = DiracCommands.bkMetaData(%s)' % self.getLFNs()
         return get_result(cmd,'Error removing replica','Replica rm error.')
+
+    #def pop(self,file):
+    #    if type(file) is type(''): file = strToDataFile(file,False)
+    #    try: job = self.getJobObject()
+    #    except: job = None
+    #    if job:
+    #        if job.status != 'new' and job.status != 'failed':
+    #            msg = 'Cannot pop file b/c the job status is "%s". '\
+    #                  'Job must be either "new" or "failed".' % job.status
+    #            raise GangaException(msg)
+    #        master = job.master
+    #        if job.subjobs:
+    #            self.removeFile(file)
+    #            for sj in job.subjobs:
+    #                try: sj.inputdata.removeFile(file)
+    #                except: pass
+    #        elif master:
+    #            master.inputdata.removeFile(file)
+    #            self.removeFile(file)
+    #        else: self.removeFile(file)
+    #    else:
+    #        self.removeFile(file)
         
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

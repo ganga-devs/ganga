@@ -12,6 +12,7 @@ from Ganga.GPIDev.Adapters.IMerger import MergerError
 from Ganga.Lib.Mergers.Merger import AbstractMerger, IMergeTool
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Core import GangaException
+from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 
 xml_schema = {}
 
@@ -168,9 +169,13 @@ class GaudiXMLSummaryMerger(AbstractMerger):
         super(GaudiXMLSummaryMerger,self).__init__(_GaudiXMLSummaryMergeTool())
 
     def merge(self,jobs,outputdir=None,ignorefailed=None,overwrite=None):
-        if len(jobs) > 0:
+        from Ganga.GPIDev.Lib.Job import Job
+        gaudi_env = {}
+        if isinstance(jobs,GPIProxyObject) and isinstance(jobs._impl,Job):
+            gaudi_env = jobs.application.getenv()
+        elif len(jobs) > 0:
             gaudi_env = jobs[0].application.getenv()
-            self.merge_tool.env_var = gaudi_env['XMLSUMMARYBASEROOT']
+        self.merge_tool.env_var = gaudi_env['XMLSUMMARYBASEROOT']
         #needed as exportmethods doesn't seem to cope with inheritance
         return super(GaudiXMLSummaryMerger,self).merge(jobs,outputdir,
                                                        ignorefailed,overwrite)
