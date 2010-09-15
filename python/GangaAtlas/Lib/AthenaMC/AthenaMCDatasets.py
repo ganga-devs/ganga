@@ -12,7 +12,7 @@ from Ganga.GPIDev.Schema import *
 from Ganga.Utility.files import expandfilename
 
 from dq2.common.DQException import *
-from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites, getLocalCatalog, whichCloud
+from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites, getLocalCatalog, whichCloud,getRemoteCatalogs
 
 from dq2.repository.DQRepositoryException import DQUnknownDatasetException
 from dq2.location.DQLocationException import DQLocationExistsException
@@ -809,8 +809,12 @@ class AthenaMCInputDatasets(Dataset):
         for cl in ToACache.dbcloud:
             id=ToACache.dbcloud[cl]
             l = getLocalCatalog(id)
+            r=  getRemoteCatalogs(id)
             if l:
                 allLFCs[id]=l
+            elif len(r)>0:
+                allLFCs[id]=r[0]
+            
 #        print allLFCs
         for site in allSites:
             cloud=whichCloud(site)
