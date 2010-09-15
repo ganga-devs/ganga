@@ -324,7 +324,7 @@ if opt.pickevent:
     if opt.pick_filter_policy:
         j.inputdata.pick_filter_policy=opt.pick_filter_policy
 
-    if not (opt.numsubjobs>0 and numfiles_subjob>0 and filesize>0):
+    if not (opt.numsubjobs>0 and opt.numfiles_subjob>0 and opt.filesize>0):
         if (opt.backend in [ 'lcg', 'cream', 'panda', 'ng' ] or opt.glite):
             j.splitter = DQ2JobSplitter()
 	    j.splitter.numsubjobs = 1
