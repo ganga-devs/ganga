@@ -79,7 +79,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
-        app.athena_compile = True
+#        app.athena_compile = True
 
         if job.backend.libds == "LOCAL":
             local_libds = True
@@ -130,9 +130,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             else: 
                 raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
 
-            #if not app.athena_compile and (len(job.inputdata.dataset) > 1 or any(ds.endswith("/") for ds in job.inputdata.dataset)):
-            #    logger.warning("Since this job is submitted to multiple sites; the builjob has to be executed. Enabling athena_compile.")
-            #    app.athena_compile = True
+            if not app.athena_compile and (len(job.inputdata.dataset) > 1 or any(ds.endswith("/") for ds in job.inputdata.dataset)):
+                logger.warning("Since this job is submitted to multiple sites; the builjob has to be executed. Enabling athena_compile.")
+                app.athena_compile = True
         else:
             logger.info('Submitting without an input dataset.')
 
