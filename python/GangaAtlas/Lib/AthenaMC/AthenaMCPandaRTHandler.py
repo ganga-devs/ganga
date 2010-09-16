@@ -423,6 +423,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         if matchURL != None:
             param += " --sourceURL %s " % matchURL.group(1)
         param += " --trf"
+        param += " --useLocalIO" # needed to force the download of input files to the working area. Needed because the pilot won't change the transform parameters.
 
 
         jspec.jobParameters = param
