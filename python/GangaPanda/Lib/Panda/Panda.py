@@ -754,7 +754,7 @@ class Panda(IBackend):
             if s['status'] not in ['online','brokeroff']:
                 raise BackendError('Panda','Cannot submit to %s in status %s'%(self.site,s['status']))
             if self.site in self.requirements.excluded_sites:
-                raise BackendError('Panda','Cannot submit to %s because it is in your requirements.excluded_sites list'%(self.site,s['status']))
+                raise BackendError('Panda','Cannot submit to %s because it is in your requirements.excluded_sites list'%self.site)
             tokens = queueToAllowedSites(self.site)
             for t in tokens:
                 if allowTape or t.find('TAPE') == -1:
