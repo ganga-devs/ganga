@@ -324,14 +324,14 @@ class AnaTransform(Transform):
          return
       splitter = DQ2JobSplitter()
       splitter.numfiles = self.files_per_job
-      splitter.update_siteindex = False
+      #splitter.update_siteindex = False
       #splitter.use_lfc = True
       sjl = splitter.split(self) # This works even for Panda, no special "Job" properties are used anywhere.
       self.partitions_data = [sj.inputdata for sj in sjl]
       try:
          self.partitions_sites = [sj.backend.requirements.sites for sj in sjl]
       except AttributeError:
-         self.partitions_sites = None
+         self.partitions_sites = [sj.backend.site for sj in sjl]
          pass
       self.setPartitionsLimit(len(self.partitions_data)+1)
       self.setPartitionsStatus([c for c in range(1,len(self.partitions_data)+1) if self.getPartitionStatus(c) != "completed"], "ready")
@@ -343,7 +343,10 @@ class AnaTransform(Transform):
           j.splitter.subjobs = partitions
       j.inputdata = self.partitions_data[partitions[0]-1]
       if self.partitions_sites:
-         j.backend.requirements.sites = self.partitions_sites[partitions[0]-1]
+         if stripProxy(j.backend)._name == "Panda":
+            j.backend.site = self.partitions_sites[partitions[0]-1]
+         else:
+            j.backend.requirements.sites = self.partitions_sites[partitions[0]-1]
       j.outputdata = self.outputdata
       if stripProxy(j.backend)._name == "Panda" and j.application.atlas_exetype == "ATHENA":
           j.outputdata.outputdata=[]
