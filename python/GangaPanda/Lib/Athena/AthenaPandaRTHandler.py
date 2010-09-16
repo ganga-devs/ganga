@@ -328,7 +328,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if ua in path:
                     fn = fname[len(ua)+1:]
                     path = ua
-                rc, output = commands.getstatusoutput('tar rf %s -C %s %s' % (inputsandbox, path, fn))
+                rc, output = commands.getstatusoutput('tar -h -r -f %s -C %s %s' % (inputsandbox, path, fn))
                 if rc:
                     logger.error('Packing inputsandbox failed with status %d',rc)
                     logger.error(output)
