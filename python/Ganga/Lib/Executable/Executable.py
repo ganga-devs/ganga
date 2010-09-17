@@ -40,7 +40,7 @@ class Executable(IApplication):
     """
     _schema = Schema(Version(2,0), {
         'exe' : SimpleItem(defvalue='echo',typelist=['str','Ganga.GPIDev.Lib.File.File.File'],doc='A path (string) or a File object specifying an executable.'), 
-        'args' : SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File.File','int'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
+        'args' : SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings or File objects."),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment')
         } )
     _category = 'applications'
@@ -80,9 +80,6 @@ class Executable(IApplication):
 
             else:
               try:
-                  #int arguments are allowed -> later converted to strings      
-                  if isinstance(x,int):
-                      return
                   if not x.exists():
                       raise ApplicationConfigurationError(None,'%s: file not found'%x.name)
               except AttributeError:
@@ -107,23 +104,11 @@ config.options['exe'].type = type(None)
 #mc = getConfig('MonitoringServices')
 #mc['Executable'] = None
 
-def convertIntToStringArgs(args):
-
-    result = []
-    
-    for arg in args:
-        if isinstance(arg,int):
-            result.append(str(arg))
-        else:
-            result.append(arg)
-
-    return result
-
 class RTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
-        c = StandardJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
+        c = StandardJobConfig(app.exe,app._getParent().inputsandbox,app.args,app._getParent().outputsandbox,app.env)
 
         #c.monitoring_svc = mc['Executable']
 
@@ -149,13 +134,13 @@ class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.Lib.LCG import LCGJobConfig
 
-        return LCGJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
+        return LCGJobConfig(app.exe,app._getParent().inputsandbox,app.args,app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.Lib.gLite import gLiteJobConfig
 
-        return gLiteJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
+        return gLiteJobConfig(app.exe,app._getParent().inputsandbox,app.args,app._getParent().outputsandbox,app.env)
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('Executable','LSF', RTHandler)

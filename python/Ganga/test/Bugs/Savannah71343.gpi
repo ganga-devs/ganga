@@ -1,4 +1,0 @@
-j = Job()
-j.application = Executable()
-j.application.args = [1]
-j.submit() 

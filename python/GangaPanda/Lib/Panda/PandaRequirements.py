@@ -33,6 +33,4 @@ class PandaRequirements(GangaObject):
         if not self.cloud:
             import random
             from pandatools import Client
-            clouds = Client.PandaClouds.keys()
-            clouds.remove('OSG')
-            self.cloud = random.choice(clouds)
+            self.cloud = random.choice(Client.PandaClouds.keys())
