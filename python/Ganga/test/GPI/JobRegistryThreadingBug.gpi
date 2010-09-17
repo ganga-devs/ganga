@@ -17,7 +17,7 @@ ct.start()
 
 import time
 start = time.time()
-while time.time()<start+120:
+while time.time()<start+60:
     for j in jobs:
             try:
                 x=jobs(j.id).status
