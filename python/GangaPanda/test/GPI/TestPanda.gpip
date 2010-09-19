@@ -2,22 +2,18 @@ import os, getpass
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from GangaTest.Framework.utils import is_job_finished
 
-release = '15.6.9'
-release_mc='15.6.5.1'
-datasetana = "data09_900GeV.00140541.physics_MinBias.merge.AOD.r1093_p101_tid118749_00" 
-
 import commands
 outputdatasetname_panda = commands.getoutput('uuidgen')
 
 class TestPanda(GangaGPITestCase):
     def testAthenaPanda(self):
-        return TestAthenaPanda('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda')
+        return TestAthenaPanda('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda_15.6.9')
 
     def testAthenaPandaNoSplit(self):
-        return TestAthenaPandaNoSplit('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda')
+        return TestAthenaPandaNoSplit('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda_15.6.9')
 
     def testAthenaPandaMultiSite(self):
-        return TestAthenaPandaMultiSite('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda')
+        return TestAthenaPandaMultiSite('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda_15.6.9')
 
     def testARAPanda(self):
         return TestARAPanda('/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS_Panda_ARA')
@@ -59,13 +55,13 @@ class PandaTest(ICheckTest):
 
 class TestAthenaPanda(PandaTest):
     def setup(self):
-        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
-        archivefile = '%s/sources.817f2846-2111-4444-af06-9a8393ed5369.tar.gz' % self.tmpdir
+        joboption = '%s/AnalysisSkeleton_topOptions_v1569.py' % self.tmpdir
+        archivefile = '%s/UserAnalysis_v1569.tar.gz' % self.tmpdir
         userareapath = self.tmpdir
 
         j = Job()
         j.application=Athena()
-        j.application.atlas_release='14.5.0'
+        j.application.atlas_release='15.6.9'
         j.application.option_file=[ joboption ]
         j.application.user_area=archivefile
         j.application.max_events=10
@@ -79,20 +75,19 @@ class TestAthenaPanda(PandaTest):
         j.splitter=DQ2JobSplitter()
         j.splitter.numsubjobs=2
         j.backend=Panda()
-        j.backend.site = 'ANALY_BNL_ATLAS_1'
         self.j = j
         assert(self.j.submit()==True)
 
 # same as above but uses no splitting
 class TestAthenaPandaNoSplit(PandaTest):
     def setup(self):
-        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
-        archivefile = '%s/sources.817f2846-2111-4444-af06-9a8393ed5369.tar.gz' % self.tmpdir
+        joboption = '%s/AnalysisSkeleton_topOptions_v1569.py' % self.tmpdir
+        archivefile = '%s/UserAnalysis_v1569.tar.gz' % self.tmpdir
         userareapath = self.tmpdir
 
         j = Job()
         j.application=Athena()
-        j.application.atlas_release='14.5.0'
+        j.application.atlas_release='15.6.9'
         j.application.option_file=[ joboption ]
         j.application.user_area=archivefile
         j.application.max_events=10
@@ -104,19 +99,18 @@ class TestAthenaPandaNoSplit(PandaTest):
         j.inputdata.number_of_files=1
         j.outputdata=DQ2OutputDataset()
         j.backend=Panda()
-        j.backend.site = 'ANALY_BNL_ATLAS_1'
         self.j = j
         assert(self.j.submit()==True)
 
 class TestAthenaPandaMultiSite(PandaTest):
     def setup(self):
-        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
-        archivefile = '%s/sources.817f2846-2111-4444-af06-9a8393ed5369.tar.gz' % self.tmpdir
+        joboption = '%s/AnalysisSkeleton_topOptions_v1569.py' % self.tmpdir
+        archivefile = '%s/UserAnalysis_v1569.tar.gz' % self.tmpdir
         userareapath = self.tmpdir
 
         j = Job()
         j.application=Athena()
-        j.application.atlas_release='14.5.0'
+        j.application.atlas_release='15.6.9'
         j.application.option_file=[ joboption ]
         j.application.user_area=archivefile
         j.application.max_events=10
