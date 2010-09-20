@@ -1,0 +1,78 @@
+# GangaSAGA File Transfer Benchmark
+
+import os
+import time
+import datetime
+import uuid
+import shutil
+
+
+## Function creates 'count' files of 'size' MBytes in directory 'where' and 
+## returns a list of names.
+
+def create_input_files(where, size, count):
+    file_list = []
+  
+    # Create a dummy master file
+    master = open(where+"master", "w")
+
+    for i in range(1, 1024*1024*size):
+        master.write("X")
+     
+    master.close()
+        
+    for j in range(0, count):
+        filename = where+str(uuid.uuid4())
+        shutil.copy(where+"master", filename)
+        file_list.append(filename)
+    
+    return file_list
+
+
+### OPEN LOGFILE
+
+LOGFILE = open("ft_benchmark.csv", "w", 0) 
+
+for p in range(0, 100, 10):
+    
+	tmpdir = "/tmp/ganga_file_transfer_benchmark/"
+	if not os.path.isdir(tmpdir):
+		os.mkdir(tmpdir)
+    
+	output_str = str(p)+";"
+
+	j1 = Job()
+	j1.backend = SAGA()	
+	j1.backend.enable_compression = False
+	j1.backend.jobservice_url  = "gram://queenbee.loni-lsu.teragrid.org"
+	j1.backend.filesystem_url  = "gsiftp://queenbee.loni-lsu.teragrid.org:2811//work/oweidner/"
+	j1.inputsandbox = create_input_files(tmpdir, 1, p)
+	
+	t0 = time.mktime(datetime.datetime.now().timetuple())
+	j1.submit()
+	t1 = time.mktime(datetime.datetime.now().timetuple())
+	
+	tdiff = t1-t0
+	output_str += str(tdiff)+";"
+	
+	j2 = Job()
+	j2.backend = SAGA()	
+	j2.backend.enable_compression = True
+	j2.backend.jobservice_url  = "gram://queenbee.loni-lsu.teragrid.org"
+	j2.backend.filesystem_url  = "gsiftp://queenbee.loni-lsu.teragrid.org:2811//work/oweidner/"
+	j2.inputsandbox = create_input_files(tmpdir, 2, p)
+
+	t20 = time.mktime(datetime.datetime.now().timetuple())
+	j2.submit()
+	t21 = time.mktime(datetime.datetime.now().timetuple())
+	
+	t2diff = t21-t20
+	output_str += str(t2diff) + "\n"
+	
+	LOGFILE.write(output_str)
+	
+	if os.path.isdir(tmpdir):
+		shutil.rmtree(tmpdir)
+		
+		
+LOGFILE.close()
