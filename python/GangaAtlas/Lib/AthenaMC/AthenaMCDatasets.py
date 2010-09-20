@@ -185,18 +185,18 @@ class AthenaMCInputDatasets(Dataset):
     
     def __init__(self):
         super( AthenaMCInputDatasets, self ).__init__()
-        # Extract username from certificate
-        proxy = GridProxy()
-        username = proxy.identity()
-        if 'ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET' in configDQ2 and configDQ2['ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET']:
-            nickname = getNickname(allowMissingNickname=True)
-        else:
-            nickname = getNickname(allowMissingNickname=False)
+##         # Extract username from certificate
+##         proxy = GridProxy()
+##         username = proxy.identity()
+##         if 'ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET' in configDQ2 and configDQ2['ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET']:
+##             nickname = getNickname(allowMissingNickname=True)
+##         else:
+##             nickname = getNickname(allowMissingNickname=False)
             
-        if nickname and 'USE_NICKNAME_DQ2OUTPUTDATASET' in configDQ2 and configDQ2['USE_NICKNAME_DQ2OUTPUTDATASET']:
-            username = nickname
-        #self.initDQ2hashes()
-        #logger.debug(self.baseURLDQ2)
+##         if nickname and 'USE_NICKNAME_DQ2OUTPUTDATASET' in configDQ2 and configDQ2['USE_NICKNAME_DQ2OUTPUTDATASET']:
+##             username = nickname
+##         #self.initDQ2hashes()
+##         #logger.debug(self.baseURLDQ2)
 
 ## additional class methods to support migration ################################
     def getMigrationClass(cls, version):
@@ -1670,6 +1670,13 @@ if not 'ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET' in configDQ2:
 # Extract username from certificate
 proxy = GridProxy()
 username = proxy.identity()
+if 'ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET' in configDQ2 and configDQ2['ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET']:
+    nickname = getNickname(allowMissingNickname=True)
+else:
+    nickname = getNickname(allowMissingNickname=False)
+    
+if nickname and 'USE_NICKNAME_DQ2OUTPUTDATASET' in configDQ2 and configDQ2['USE_NICKNAME_DQ2OUTPUTDATASET']:
+    username = nickname
 
 if proxy.init_opts:
     proxytag=proxy.init_opts

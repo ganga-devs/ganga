@@ -24,14 +24,12 @@ from Ganga.Lib.LCG import LCGRequirements, LCGJobConfig
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
-#from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
-#from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
 from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import extractFileNumber, matchFile
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
-#import AthenaUtils
 
 
 # the config file may have a section
@@ -65,7 +63,8 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         logger.debug('AthenaMCPandaRTHandler master_prepare called for %s', job.getFQID('.'))
         usertag = configDQ2['usertag']
         #usertag='user09'
-        self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,gridProxy.identity(),commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
+        nickname = getNickname(allowMissingNickname=True)
+        self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,nickname,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
 #        self.userprefix='%s.%s.ganga' % (usertag,gridProxy.identity())
         sources = 'sources.%s.tar.gz' % commands.getoutput('uuidgen') 
         self.library = '%s.lib.tgz' % self.libDataset
@@ -135,7 +134,6 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             os.chdir(cwd)      
 
 
-
         # Use Panda's brokerage
 ##         if job.inputdata and len(app.sites)>0:
 ##             # update cloud, use inputdata's
@@ -166,8 +164,8 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
 ##                         raise ApplicationConfigurationError(None,'Input dataset not available in target cloud %s. Please try any of the following %s' % (job.backend.requirements.cloud, str(outclouds)))
                                                             
         from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
+        
         runPandaBrokerage(job)
-
         
         if job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
@@ -221,7 +219,12 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         jspec.computingSite     = job.backend.site
         jspec.cloud             = job.backend.requirements.cloud
 #        jspec.jobParameters     = self.args not known yet
-        jspec.jobParameters     = '-i %s -o %s' % (sources,self.library)
+        jspec.jobParameters     = '-o %s' % (self.library)
+        if app.userarea:
+            print app.userarea
+            jspec.jobParameters     += ' -i %s' % (os.path.basename(app.userarea))
+        else:
+            jspec.jobParameters     += ' -i %s' % (sources)
         jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_rel)
         
         matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
@@ -324,6 +327,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             finp.GUID           = useguid
             finp.dataset        = app.dsetmap[lfn]
             finp.prodDBlock     = app.dsetmap[lfn]
+            finp.prodDBlockToken = 'local'
             finp.dispatchDBlock = app.dsetmap[lfn]
             finp.type           = 'input'
             finp.status         = 'ready'
@@ -336,6 +340,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             finp.GUID           = useguid
             finp.dataset        = app.dsetmap[lfn]
             finp.prodDBlock     = app.dsetmap[lfn]
+            finp.prodDBlockToken = 'local'
             finp.dispatchDBlock = app.dsetmap[lfn]
             finp.type           = 'input'
             finp.status         = 'ready'
@@ -362,7 +367,6 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             fout = FileSpec()
             dset=string.replace(app.outputpaths[outtype],"/",".")
             dset=dset[1:-1]
-            print "dataset",dset
             fout.dataset=dset
             fout.lfn=pandaOutfiles[outtype]
             fout.type              = 'output'
@@ -423,7 +427,6 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         if matchURL != None:
             param += " --sourceURL %s " % matchURL.group(1)
         param += " --trf"
-        param += " --useLocalIO" # needed to force the download of input files to the working area. Needed because the pilot won't change the transform parameters.
 
 
         jspec.jobParameters = param
@@ -432,7 +435,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         #print "SUBJOB DETAILS:",jspec.values()
         if app.dryrun:
             print "job.application.dryrun activated, printing out job parameters"
-            print jspec
+            print jspec.values()
             return
         
         return jspec
