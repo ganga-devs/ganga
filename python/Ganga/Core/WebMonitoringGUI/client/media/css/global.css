@@ -1,9 +1,9 @@
 /* User List styles */
-.srchField_div { background-color:#eeeeee; border:1px #888888 solid;
-    -moz-border-radius-topleft: 6px; -webkit-border-top-left-radius: 6px; border-top-left-radius: 6px;
-    -moz-border-radius-topright: 6px; -webkit-border-top-right-radius: 6px; border-top-right-radius: 6px;
-    -moz-border-radius-bottomleft: 6px; -webkit-border-bottom-left-radius: 6px; border-bottom-left-radius: 6px;
-    -moz-border-radius-bottomright: 6px; -webkit-border-bottom-right-radius: 6px; border-bottom-right-radius: 6px;
+.srchField_div { background-color:#eeeeee; border:1px #888888 solid; 
+    -moz-border-radius-topleft: 6px; -webkit-border-top-left-radius: 6px; border-top-left-radius: 6px; 
+    -moz-border-radius-topright: 6px; -webkit-border-top-right-radius: 6px; border-top-right-radius: 6px; 
+    -moz-border-radius-bottomleft: 6px; -webkit-border-bottom-left-radius: 6px; border-bottom-left-radius: 6px; 
+    -moz-border-radius-bottomright: 6px; -webkit-border-bottom-right-radius: 6px; border-bottom-right-radius: 6px; 
 }
 
 .srchField_div form { margin:5px; }
@@ -21,15 +21,15 @@ table { border:0px }
 a.noJobsClick, a.noPendClick, a.noRunnClick, a.noSuccClick, a.noFailClick, a.noUnknClick { font-size:10pt; }
 .display a:hover { text-decoration:underline; }
 
-a { cursor:pointer; color:#3383BB; }
+a { cursor:pointer; }
 #breadcrumbs .bold { font-weight: bold; }
 
 /* Pagination style */
 #dataTable_paginate { width:400px; }
 #dataTable_paginate input { font-size:8pt; border:1px #AAAAAA solid; text-align:center; font-weight:bold; }
 
-.paginate_button { font-size:9pt; font-weight:bold; color:#27415f; margin:2px; background-color:#becee0; padding:3px; border:1px #27415f solid; cursor:pointer; }
-.paginate_button:hover { background-color:#d6dee6; }
+.paginate_button { font-size:9pt; margin:2px; background-color:#DDDDDD; padding:3px; border:1px #AAAAAA solid; cursor:pointer; }
+.paginate_button:hover { background-color:#EEEEEE; }
 .paginate_page, .paginate_of { font-size:9pt; }
 
 .orKEYS { font-weight:bold; text-align:right; color:#1e4a68; }
@@ -37,7 +37,7 @@ a { cursor:pointer; color:#3383BB; }
 
 .wrapColumn { width:350px; white-space: nowrap; overflow:hidden; }
 
-.status { width:100%; color:#ffffff; font-weight:bold; text-align:center }
+.status { width:100%; font-weight:bold; text-align:center }
 
 
 .New { border:1px #1e4a68 solid; background-color:cyan; color:black; }
