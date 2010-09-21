@@ -251,10 +251,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # create the container
         Client.createContainer(job.outputdata.datasetname,False)
         logger.info('Created output container %s'%job.outputdata.datasetname)
+        self.indivOutContList = [job.outputdata.datasetname]
 
         # store the lib datasts
         self.libDatasets = {}
         self.libraries = {}
+        self.indivOutDsList = []
         for site in bjsites:
             self.outDsLocation = Client.PandaSites[site]['ddm']
 
@@ -264,7 +266,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 Client.addDataset(tmpDSName,False,location=self.outDsLocation)
                 logger.info('Output dataset %s registered at %s'%(tmpDSName,self.outDsLocation))
                 dq2_set_dataset_lifetime(tmpDSName, self.outDsLocation)
-                self.indivOutDsList = [tmpDSName]
+                self.indivOutDsList.append(tmpDSName)
                 # add the DS to the container
                 Client.addDatasetsToContainer(job.outputdata.datasetname,[tmpDSName],False)
             except exceptions.SystemExit:
@@ -498,8 +500,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 flib.dispatchDBlock = self.fileBO.destinationDBlock
             jspec.addFile(flib)
 
-
-
 #       input files FIXME: many more input types
         if job.inputdata and self.inputdatatype=='DQ2' and not job.inputdata.tag_info:
             for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
@@ -517,21 +517,31 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
 #       output files
         outMap = {}
-        AthenaUtils.convertConfToOutput(self.runConfig,jspec,outMap,job.backend.individualOutDS,self.extOutFile)
+        AthenaUtils.convertConfToOutput(self.runConfig,jspec,outMap,job.backend.individualOutDS,self.extOutFile,masterjob.outputdata.datasetname)
         for file in jspec.Files:
             if file.type in ['output', 'log'] and configPanda['chirpconfig']:
                 file.dispatchDBlockToken = configPanda['chirpconfig']
                 logger.debug('chirp file %s',file)
-       
+      
+        subjobOutputLocation = Client.PandaSites[job.backend.site]['ddm']
+ 
         if job.backend.individualOutDS:
             for f in jspec.Files:
                 if f.type in ['output','log']:
-                    if not f.dataset in self.indivOutDsList:
+                    if not f.dataset in self.indivOutContList:
                         try:
-                            logger.info('Creating individualOutDS %s'%f.dataset)
-                            Client.addDataset(f.dataset,False,location=self.outDsLocation)
-                            dq2_set_dataset_lifetime(f.dataset, self.outDsLocation)
-                            self.indivOutDsList.append(f.dataset)
+                            logger.info('Creating output container %s'%f.dataset)
+                            Client.createContainer(f.dataset,False)
+                            self.indivOutContList.append(f.dataset)
+                        except exceptions.SystemExit:
+                            raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(f.dataset,sys.exc_info()[0],sys.exc_info()[1]))
+                    if not f.destinationDBlock in self.indivOutDsList:
+                        try:
+                            logger.info('Creating dataset %s and adding to %s'%(f.destinationDBlock,f.dataset))
+                            Client.addDataset(f.destinationDBlock,False,location=subjobOutputLocation)
+                            dq2_set_dataset_lifetime(f.destinationDBlock, subjobOutputLocation)
+                            self.indivOutDsList.append(f.destinationDBlock)
+                            Client.addDatasetsToContainer(f.dataset,[f.destinationDBlock],False)
                         except exceptions.SystemExit:
                             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(f.dataset,sys.exc_info()[0],sys.exc_info()[1]))
 
