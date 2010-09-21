@@ -99,10 +99,13 @@ class InstallLHCb:
 
         self.destination = join(topdir,"GANGA_"+self.versionLHCb)
         if isdir(self.destination) or islink(self.destination):
-            if len(os.listdir(self.destination))>0:
+            # we want to only allow the NOT_READY security file
+            dirlist = os.listdir(self.destination)
+            if dirlist.count('NOT_READY') > 0: dirlist.remove('NOT_READY')
+            if len(dirlist)>0:
                 raise InstallLHCbError(
                     "Failed to install into %s. " % self.destination + \
-                        "Directory is not empty. Either delete whole directory first or empty it.")
+                    "Directory is not empty. Either delete whole directory first or empty it.")
             
         else:
             try:
