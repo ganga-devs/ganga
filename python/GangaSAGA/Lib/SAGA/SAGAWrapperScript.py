@@ -94,18 +94,22 @@ except ImportError,x:
 #sys.stdout.flush()
 #sys.stderr.flush()
 
-#sys.stdout=file('./__syslog__','w')
-#sys.stderr=sys.stdout
+sys.stdout=file('./__syslog__','w')
+sys.stderr=sys.stdout
 
 result = 255
 
 
 ## EXECUTE THE STUFF WE WANT TO RUN
 ##
+
+outfile = open('out.log', 'w')
+errfile = open('err.log', 'w')
+
 try:
   executableandargs = arguments
   executableandargs.insert(0, executable)
-  child = subprocess.Popen(executableandargs, shell=False, stdout=sys.stdout, stderr=sys.stderr)
+  child = subprocess.Popen(executableandargs, shell=False, stdout=outfile, stderr=errfile)
 
   while 1:
     result = child.poll()
@@ -118,7 +122,14 @@ try:
     
 except Exception,x:
   print 'ERROR: %s'%str(x)
+  outfile.close()
+  errfile.close()
+  sys.stdout = sys.__stdout__
+  sys.stderr = sys.__stderr__
   
+  
+outfile.close()
+errfile.close()
   
 sys.exit(result)
 """

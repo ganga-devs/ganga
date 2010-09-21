@@ -439,16 +439,18 @@ class SAGA(IBackend):
             
         
         ## STDOUT
-        self.saga_job_out = path_component.url + "/ganga-saga.stdout"
-        jd.output =  saga.url(self.saga_job_out).path
+        self.saga_job_out = path_component.url + "/out.log"
+        #jd.output =  saga.url(self.saga_job_out).path
         
-        logger.debug("  * stdout should become available here: %s", jd.output)
+        logger.debug("  * stdout should become available here: %s", 
+            saga.url(self.saga_job_out).url)
 
         ## STDERR
-        self.saga_job_err = path_component.url + "/ganga-saga.stderr"
-        jd.error = saga.url(self.saga_job_err).path
+        self.saga_job_err = path_component.url + "/err.log"
+        #jd.error = saga.url(self.saga_job_err).path
 
-        logger.debug("  * stdout should become available here: %s", jd.error)
+        logger.debug("  * stderr should become available here: %s", 
+            saga.url(self.saga_job_err).url)
         
         return jd
                 
