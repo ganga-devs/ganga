@@ -863,6 +863,19 @@ run_athena () {
 	    $timecmd root -b -q $ATHENA_OPTIONS ; echo $? > retcode.tmp
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
+	elif [ n$ATLAS_EXETYPE == n'EXE' ]
+	    then
+		
+            # scan for %IN args
+	    pwd
+	    EXE_FILELIST=$(tr '\n' ',' < input.txt | sed 's/\//\\\//g' | sed s/,$//)  
+	    echo $EXE_FILELIST
+	    NEW_ATHENA_OPTIONS=`echo $ATHENA_OPTIONS | sed s/%IN/$EXE_FILELIST/`
+	    echo "New EXE command line: "
+	    echo $NEW_ATHENA_OPTIONS
+	    $timecmd $NEW_ATHENA_OPTIONS ; echo $? > retcode.tmp
+	    retcode=`cat retcode.tmp`
+	    rm -f retcode.tmp
 	elif [ n$ATLAS_EXETYPE == n'TRF' ] && [ -e trf_params ]
 	    then
 	    if [ -e $VO_ATLAS_SW_DIR/ddm/latest/setup.sh ] 
