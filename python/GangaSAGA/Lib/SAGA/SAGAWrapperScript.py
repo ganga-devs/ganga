@@ -7,7 +7,7 @@ __version__ = "1.0"
 ##
 class SAGAWrapperScript:
 
-    _attributes = ('wrapper_script_template', 'exe', 'args', 'envi', 'sandbox', 'imods')
+    _attributes = ('wrapper_script_template', 'exe', 'args', 'envi', 'sandbox', 'imods', 'mons')
 
     ##########################################################################
     ##    
@@ -33,6 +33,11 @@ class SAGAWrapperScript:
     ##    
     def setInlineModules(self, imods):
         self.imods = imods
+      
+    ##########################################################################
+    ##
+    def setMonitoringService(self, mons):
+        self.mons = mons
         
     ##########################################################################
     ##
@@ -43,6 +48,7 @@ class SAGAWrapperScript:
         script = script.replace('###ARGUEMTNS_AS_LIST###', repr(self.args))
         #script = script.replace('###ENVIRONMENT_AS_DICT###', repr(self.envi))
         script = script.replace('###INPUTSANDBOXFILE###', repr(self.sandbox))
+        script = script.replace('###MONITORING_SERVICE###', self.mons)
     
         return script
 
@@ -50,7 +56,7 @@ class SAGAWrapperScript:
     ##
     def __init__(self):
         self.imods = ''
-    
+        
         self.wrapper_script_template  = """#!/usr/bin/env python
 
 import shutil
@@ -104,8 +110,12 @@ except ImportError,x:
 #sys.stdout.flush()
 #sys.stderr.flush()
 
-result = 255
+###MONITORING_SERVICE###
+monitor = createMonitoringObject()
+monitor.start()
 
+
+result = 255
 
 ## EXECUTE THE STUFF WE WANT TO RUN
 ##
@@ -122,10 +132,10 @@ try:
     result = child.poll()
     if result is not None:
         break
-    #monitor.progress()
+    monitor.progress()
     #heartbeatfile.write('.')
     #flush_file(heartbeatfile)
-    #time.sleep(30)
+    time.sleep(30)
     
 except Exception,x:
   print 'ERROR: %s'%str(x)
@@ -134,7 +144,8 @@ except Exception,x:
   sys.stdout = sys.__stdout__
   sys.stderr = sys.__stderr__
   
-  
+monitor.stop(result)
+
 outfile.close()
 errfile.close()
   
