@@ -167,14 +167,22 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             jid = "%d" % job.id
 
         if output_location and job.outputdata and job.outputdata._name!='DQ2OutputDataset':
-            
-            output_location = os.path.join(output_location, jid)
+
+            if job._getRoot().subjobs and config['IndividualSubjobDirsForLocalOutput']:
+                output_location = os.path.join(output_location, "%d/%d" % (job._getRoot().id, job.id))
+            else:
+                output_location = os.path.join(output_location, jid)
+                
             if job.outputdata:
                 # Remove trailing number if job is copied
                 pat = re.compile(r'\/[\d\.]+\/[\d\.]+$')
                 if re.findall(pat,output_location):
                     output_location = re.sub(pat, '', output_location)
-                    output_location = os.path.join(output_location, jid)
+
+                    if job._getRoot().subjobs and config['IndividualSubjobDirsForLocalOutput']:
+                        output_location = os.path.join(output_location, "%d/%d" % (job._getRoot().id, job.id))
+                    else:
+                        output_location = os.path.join(output_location, jid)
 
                 job.outputdata.location = output_location
 
