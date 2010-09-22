@@ -77,7 +77,12 @@ import tarfile
 
 if os.path.exists(inputsandboxfile): 
     tar = tarfile.open(inputsandboxfile)
-    tar.extractall()
+    if sys.version_info[0] == 2 and sys.version_info[1] < 5 :
+        for tarinfo in tar:
+            tar.extract(tarinfo)
+    else:
+        # New in Python 2.5
+        tar.extractall()
     tar.close()
 
 ## Try to import the subprocess library. If it's not in the 
@@ -86,7 +91,7 @@ if os.path.exists(inputsandboxfile):
 try:
     import subprocess
 except ImportError,x:
-#    sys.path.insert(0,###SUBPROCESS_PYTHONPATH###)
+    sys.path.insert(0,"_python")
     import subprocess
     
 

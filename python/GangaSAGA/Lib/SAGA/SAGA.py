@@ -360,12 +360,16 @@ class SAGA(IBackend):
         ## of the archive unpacking as well as job monitoring / reporting.
         ws = SAGAWrapperScript()
         
+        import inspect
+        import Ganga.Core.Sandbox as Sandbox
+        import Ganga.Utility as Utility
+        ws.setInlineModules(inspect.getsource(Sandbox.WNSandbox))
+                
         ws.setExecutable(jobconfig.getExeString())
         ws.setArguments(jobconfig.getArgStrings())
         ws.setInputSandbox("_input_sandbox_0.tgz")
         
         text = ws.getScript()
-
 
         jd = saga.job.description()
         logger.debug("setting up new saga job with id: %s", job.id)
