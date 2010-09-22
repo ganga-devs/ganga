@@ -130,6 +130,7 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
         logger.warning("Copying grid proxy to input sandbox for transfer to WN...")
         inputbox = [ ( File(os.path.join(__athdirectory__,'athena-utility.sh')) ),
                      ( File(os.path.join(__directory__,'get_tag_info.py')) ),
+                     ( File(os.path.join(__directory__,'template.root')) ),
                      ( File(os.path.join(__directory__,'libPOOLCollectionTools.so.cmtref'))),
                      ( File(os.path.join(__directory__,'libPOOLCollectionTools.so'))),
                      ( File(os.path.join(__directory__,'CollSplitByGUID.exe'))),

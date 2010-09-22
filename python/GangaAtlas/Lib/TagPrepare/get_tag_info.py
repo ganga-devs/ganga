@@ -105,6 +105,7 @@ _streamRef = 'Stream'+os.environ['STREAM_REF']+'_ref'
 
 taginfo = {}
 taglfns = [ line.strip() for line in file('input_files') ]
+tag_ref_files = []
 
 #-------------------------------------------
 # Check which TAG files we're looking - DQ2 or local/ELSSI
@@ -222,13 +223,13 @@ else:
 
                 while j < len(ref_datasets[dataset]):
                     
-                    guid_str += ":my_sub_collection_%d\n" % num
+                    guid_str += ":mycoll_%d\n" % num
                     guid_str += '\n'.join(ref_datasets[dataset][j:j+eval(os.environ['MAXNUMREFS'])])
                     guid_str += '\n'
-                    file_refs["my_sub_collection_%d" % num] = []
+                    file_refs["mycoll_%d" % num] = []
                     for ref in refs:
                         if ref[2] in ref_datasets[dataset][j:j+eval(os.environ['MAXNUMREFS'])]:
-                            file_refs["my_sub_collection_%d" % num].append(ref)
+                            file_refs["mycoll_%d" % num].append(ref)
 
                     j += eval(os.environ['MAXNUMREFS'])
                     num += 1
@@ -280,12 +281,13 @@ else:
 
                 rc, out = getstatusoutput("ls -ltr")
                 print out
-                
+
             # now rename the files
             filenum = 0
+            append_list = []
             for sub_f in os.listdir('.'):
 
-                if sub_f.find('my_sub_collection') != -1:
+                if sub_f.find('mycoll_') != -1 and sub_f.find('.ref.root') == -1:
                     if compress:
                         new_name = os.path.basename(f) + '.subcoll.%d.dat' % filenum
                     else:
@@ -298,8 +300,39 @@ else:
                         sub_f = sub_f[: sub_f.find(".root") ]
                         
                     taginfo[new_name] = { 'dataset':'', 'path':os.environ['GANGA_OUTPUT_PATH'], 'refs': file_refs[sub_f], 'compress' : compress  }
-                    
-                    
+
+                if sub_f.find('mycoll_') != -1 and sub_f.find('.ref.root') != -1:
+                    append_list.append(sub_f)
+                    os.symlink(sub_f, sub_f + ".root")
+
+            print "CREATING MASTER REF FILE..."
+            cmd = "CollAppend -src " 
+            for sub_f in append_list:
+                cmd += sub_f + " RootCollection "
+            cmd += " -dst " + os.path.basename(f) + ".ref RootCollection"
+            tag_ref_files.append(os.path.basename(f)+".ref.root")
+            
+            rc, out = getstatusoutput(cmd)
+            print cmd
+            print out
+            if (rc!=0):
+                print out
+                print "ERROR: error during CollAppend. Restoring original environment variables and retrying...."
+                cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd
+                rc, out = getstatusoutput(cmd)
+
+                if (rc!=0):
+                    print out
+                    print "ERROR: error during CollAppend. Giving up..."
+                    continue
+
+            for sub_f in append_list:
+                os.system("rm " + sub_f)
+                
+            rc, out = getstatusoutput("ls -ltr")
+            print out
+
+    
     print "---------------------------------------------"
     print taginfo
 
@@ -314,9 +347,11 @@ if os.environ['GANGA_ATHENA_WRAPPER_MODE'] != 'grid':
     #for fname in taginfo:
     #    getstatusoutput("gzip %s" % fname)
     #    new_taginfo[datname + ".gz"] = taginfo[fname]
-
+    
+    pickle.dump( taginfo, open("taginfo.pkl", "w") )
+    
     # tar up the sub collections
-    rc, out = getstatusoutput("tar -zcf subcoll.tar.gz " + ' '.join( taginfo ))
+    rc, out = getstatusoutput("tar -zcf subcoll.tar.gz taginfo.pkl " + ' '.join( taginfo ) + ' ' + ' '.join(tag_ref_files) )
 
     if (rc != 0):
         print out
@@ -324,6 +359,5 @@ if os.environ['GANGA_ATHENA_WRAPPER_MODE'] != 'grid':
         sys.exit(-1)
         
 
-    pickle.dump( taginfo, open("taginfo.pkl", "w") )
 else:
     pickle.dump( taginfo, open("taginfo.pkl", "w") )
