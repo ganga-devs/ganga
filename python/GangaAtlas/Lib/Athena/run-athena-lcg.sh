@@ -815,6 +815,17 @@ site - please contact Ganga support mailing list.'
 		##
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
+	    elif [ n$ATLAS_EXETYPE == n'EXE' ]
+		then
+		
+		# scan for %IN args
+		$EXE_FILELIST=`tr '\n' ',' < input.txt`
+		$NEW_ATHENA_OPTIONS=`echo "python aratest.py - %IN" | sed s/%IN/$EXE_FILELIST/`
+		echo "New EXE command line: "
+		echo $NEW_ATHENA_OPTIONS
+		$timecmd $NEW_ATHENA_OPTIONS $inputfile'='$file `cat trf_params`; echo $? > retcode.tmp
+		retcode=`cat retcode.tmp`
+		rm -f retcode.tmp
 	    else
 		$timecmd athena.py preJobO.py $ATHENA_OPTIONS input.py; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
