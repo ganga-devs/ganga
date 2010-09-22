@@ -66,6 +66,11 @@ arguments   = ###ARGUEMTNS_AS_LIST###
 
 inputsandboxfile = ###INPUTSANDBOXFILE###
 
+#redirect stdout/stderr to file
+sys.stdout=file('./__syslog__','w')
+sys.stderr=sys.stdout
+
+
 ## First things first. Unpack the input sandbox, since that's where
 ## all our files are. 
 import tarfile
@@ -93,9 +98,6 @@ except ImportError,x:
 #print >>sys.stderr,"--- GANGA APPLICATION ERROR BEGIN ---"
 #sys.stdout.flush()
 #sys.stderr.flush()
-
-sys.stdout=file('./__syslog__','w')
-sys.stderr=sys.stdout
 
 result = 255
 
