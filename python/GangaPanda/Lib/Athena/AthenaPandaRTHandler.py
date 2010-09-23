@@ -156,6 +156,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 else:
                     self.job_options += ' -c %s ' % app.options
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
+
+            # check for TAG compression
+            if 'subcoll.tar.gz' in app.append_to_user_area:
+                self.job_options = ' uncompress.py ' + self.job_options
+                
         elif app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
 
             if not job.outputdata.outputdata:
