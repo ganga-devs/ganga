@@ -126,6 +126,7 @@ p.add_option('--prepare_old', action='store_true', help='Use prepare_old instead
 p.add_option('--collectstats', action='store_true', help='Switch to collect application statistics info and store in stats field' )
 p.add_option('--atlas_supp_stream', action='store', type='string', dest='atlas_supp_stream', help='suppress some output streams, e.g. --atlas_supp_stream=GLOBAL:D3PD' )
 p.add_option('--atlas_run_dir', action='store', type='string', dest='atlas_run_dir', help='Athena run directory, e.g. --atlas_run_dir=./' )
+p.add_option('--individualOutDS', action='store_true', dest='individualOutDS', help='Create seperate output datasets/containers for each output type (e.g. AANT, HIST).' )
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -477,6 +478,8 @@ elif opt.backend=='panda':
         j.backend.bexec=opt.bexec
 
     if opt.excludedSite: j.backend.requirements.excluded_sites = opt.excludedSite.split(',')
+
+    if opt.individualOutDS: j.backend.individualOutDS = True
 else:
     j.backend = Local()
 
