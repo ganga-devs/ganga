@@ -35,8 +35,25 @@ config.addOption( 'trustIS', True , 'Trust the Information System' )
 config.addOption( 'serverMaxJobs', 5000 , 'Maximum number of subjobs to send to the Panda server' )  
 config.addOption( 'chirpconfig', '' , 'Configuration string for chirp data output, e.g. "chirp^etpgrid01.garching.physik.uni-muenchen.de^/tanyasandoval^-d chirp" ' )  
 
+
+pandaSpecTS = time.time()
+def refreshPandaSpecs():
+    from pandatools import Client
+
+    global pandaSpecsTS
+    try:
+        if time.time() - pandaSpecsTS > 600:
+            logger.debug('Calling Client.refreshSpecs')
+            Client.refreshSpecs()
+            pandaSpecsTS = time.time()
+    except NameError:
+        Client.refreshSpecs()
+        pandaSpecsTS = time.time()
+
 def queueToAllowedSites(queue):
     from pandatools import Client
+    refreshPandaSpecs()
+
     try:
         ddm = Client.PandaSites[queue]['ddm']
     except KeyError:
@@ -89,6 +106,7 @@ def queueToAllowedSites(queue):
 
 def runPandaBrokerage(job):
     from pandatools import Client
+    refreshPandaSpecs()
 
     tmpSites = []
     # get locations when site==AUTO
@@ -200,6 +218,7 @@ def runPandaBrokerage(job):
 
 def selectPandaSite(job,sites):
     from pandatools import Client
+    refreshPandaSpecs()
 
     pandaSites = []
     if job.backend.site == 'AUTO':
@@ -348,7 +367,7 @@ class Panda(IBackend):
         from Ganga.Utility.logging import log_user_exception
 
         assert(implies(rjobs,len(subjobspecs)==len(rjobs))) 
-        
+       
         if self.libds:
             buildjobspec = None
 
@@ -545,6 +564,9 @@ class Panda(IBackend):
                         newName  = file.lfn
                         # modify jobParameters
                         job.jobParameters = re.sub("'%s'" % oldName ,"'%s'" % newName, job.jobParameters)
+                        # The previous line does not work on AthenaMC jobs, so the next lines are for them
+                        if jobIDs[oldID].application._name == 'AthenaMC':
+                            job.jobParameters = re.sub("%s" % oldName,"%s" % newName, job.jobParameters)
                 retryJobs.append(job)
                 resubmittedJobs.append(jobIDs[oldID])
             elif job.jobStatus == 'finished':
@@ -728,6 +750,8 @@ class Panda(IBackend):
 
     def list_sites(self):
         from pandatools import Client
+        refreshPandaSpecs()
+
         sites=Client.PandaSites.keys()
         spacetokens = []
         for s in sites:
@@ -736,6 +760,8 @@ class Panda(IBackend):
 
     def list_ddm_sites(self,allowTape=False):
         from pandatools import Client
+        refreshPandaSpecs()
+
         spacetokens = []
         if self.site == 'AUTO':
             sites=Client.PandaSites.keys()
