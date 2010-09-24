@@ -126,7 +126,7 @@ def _make_file_handler(logfile,logfile_size):
     global file_handler
     if logfile:
         try:
-            new_file_handler = handlers.RotatingFileHandler(logfile,maxBytes=logfile_size,backupCount=1)
+            new_file_handler = handlers.RotatingFileHandler(logfile,maxBytes=logfile_size)
         except IOError,x:
             private_logger.error('Cannot open the log file: %s',str(x))
             return

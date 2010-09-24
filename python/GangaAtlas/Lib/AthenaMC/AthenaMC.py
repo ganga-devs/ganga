@@ -60,8 +60,7 @@ class AthenaMC(IApplication):
         'siteroot' : SimpleItem(defvalue='',doc='location of experiment software area for non-grid backends.',typelist=["str"]),
         'cmtsite' : SimpleItem(defvalue='',doc='flag to use kit or cern AFS installation. Set to CERN for the latter, leave unset otherwise.',typelist=["str"]),
         'dryrun' : SimpleItem(defvalue=False,doc='flag to not do stagein/stageout, for testing.',typelist=["bool"]),
-        'transflags'  : SimpleItem(defvalue='',doc='optional flags for the transform run, like --ignoreunknown',typelist=["str"]),
-        'userarea' : SimpleItem(defvalue='',typelist=["str"])
+        'transflags'  : SimpleItem(defvalue='',doc='optional flags for the transform run, like --ignoreunknown',typelist=["str"])
         })
     
     _category = 'applications'
@@ -169,7 +168,6 @@ class AthenaMC(IApplication):
         if not rc:
             raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
         self.userarea = out['workArea']
-
          # save current dir
         currentDir = os.path.realpath(os.getcwd())
         # get run directory
@@ -247,10 +245,7 @@ class AthenaMC(IApplication):
             
         self.userarea = archiveFullName
         os.chdir(savedir)
-        job = self.getJobObject()
-        if job.backend._name=="Panda":
-            from GangaPanda.Lib.Panda.Panda import uploadSources
-            uploadSources(os.path.dirname(self.userarea),os.path.basename(self.userarea))
+        
         return
 
 
@@ -760,7 +755,7 @@ class AthenaMC(IApplication):
        self.user_area=File(name='')
        self.user_area_rundir=""
        self.backend_inputdata=""
-
+       self.userarea=""
        job = self._getRoot()
        # basic checks
        try:

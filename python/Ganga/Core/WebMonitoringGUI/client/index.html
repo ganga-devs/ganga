@@ -3,8 +3,8 @@
 <head>
 <title>Task Monitoring</title>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<link rel="stylesheet" type="text/css" href="media/css/custom-theme/jquery-ui-1.8.4.custom.css" />
 <link rel="stylesheet" type="text/css" href="media/css/base.css" />
+<link rel="stylesheet" type="text/css" href="media/css/overcast/jquery-ui-1.8.custom.css" />
 
 <script type="text/javascript" src="media/lib/jquery-1.4.2.min.js"></script>
 <script type="text/javascript" src="media/lib/jquery.dataTables.min.js"></script>
@@ -14,7 +14,7 @@
 <script type="text/javascript" src="media/lib/jquery.ba-bbq.min.js"></script>
 <script type="text/javascript" src="media/lib/cache.js"></script>
 <script type="text/javascript" src="media/lib/jquery.base64.js"></script>
-<script type="text/javascript" src="media/lib/jquery-ui-1.8.4.custom.min.js"></script>
+<script type="text/javascript" src="media/lib/jquery-ui-1.8.custom.min.js"></script>
 <script type="text/javascript" src="media/lib/jquery.dataTables.pagination.input.js"></script>
 
 <script type="text/javascript" src="media/scripts/controlsupdate.js"></script>
@@ -33,7 +33,6 @@ $(document).ready( function() {
     _Cache = new Cache(_cache_max_entries, _cache_lifetime);
     Controller = new Controller();
     Controller.Init();
-    $("#siteTabs").tabs();
 } );
 </script>
 </head>
@@ -80,14 +79,7 @@ $(document).ready( function() {
         <div id="supportHelp"><a href="#">SUPPORT</a><br /><a href="#">HELP</a></div>
     </div>
     <div style="position:fixed; bottom:15px; right:15px; display:none;"><input id="modelCheck" type="button" value="modelCheck" /></div>
-    <div id="siteTabs">
-        <ul>
-            <li><a href="#tableContent">Data</a></li>
-            <li><a href="#chartContent">Charts</a></li>
-        </ul>
-	<div id="tableContent"></div>
-	<div id="chartContent"></div>
-    </div>
+    <div id="content" class="ui-corner-br ui-corner-bl ui-corner-tr ui-corner-tl"></div>
 </div>
 <input type="hidden" id="url-page" value="hash" />
 </body>

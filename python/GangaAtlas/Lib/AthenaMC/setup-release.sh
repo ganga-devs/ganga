@@ -29,28 +29,15 @@ function do_KIT_setup(){
     echo $CMTSITE
     echo "end data"
     # Setup the Distribution Kit
-    if [ ! -z `echo $T_RELEASE | grep 16.` -o ! -z `echo $PROD_RELEASE | grep 16.` ]; then
+    echo "source ${ATLAS_ROOT}/setup.sh"        
+    source ${ATLAS_ROOT}/setup.sh   
+    if [ -e "${ATLAS_ROOT}/setup-release.sh" ]; then
+	echo "source ${ATLAS_ROOT}/setup-release.sh"
 	if [ -z "$PROD_RELEASE" ] ; then
-	    echo "base release setup:"
-	    echo "source $ATLAS_ROOT/cmtsite/asetup.sh $T_RELEASE,32,setup"
-	    source $ATLAS_ROOT/cmtsite/asetup.sh AtlasOffline,$T_RELEASE,32,setup
-	   else
-	    echo "prod patch requested"
-	    source $ATLAS_ROOT/cmtsite/asetup.sh $PROD_RELEASE,32,setup # AtlasProduction not needed?
-        fi
-	echo "Done 16.0.X setup"
-        return # no need to do more: $PWD is already in CMTPATH
-    else 
-	echo "source ${ATLAS_ROOT}/setup.sh"        
-	source ${ATLAS_ROOT}/setup.sh   
-	if [ -e "${ATLAS_ROOT}/setup-release.sh" ]; then
-	    echo "source ${ATLAS_ROOT}/setup-release.sh"
-	    if [ -z "$PROD_RELEASE" ] ; then
-		source ${ATLAS_ROOT}/setup-release.sh
-	    else
-		source ${ATLAS_ROOT}/setup-release.sh -tag=$PROD_RELEASE,AtlasProduction,opt,runtime # this should be enough, assuming that it is working
-	    fi 
-	fi
+	    source ${ATLAS_ROOT}/setup-release.sh
+	else
+	    source ${ATLAS_ROOT}/setup-release.sh -tag=$PROD_RELEASE,AtlasProduction,opt,runtime # this should be enough, assuming that it is working
+	fi 
     fi
 
     [ "$GCC_SITE" == "" ] && export GCC_SITE=${ATLAS_ROOT}/gcc-alt-3.2
@@ -226,10 +213,8 @@ if [ ! -z "$USER_AREA" ]; then
     source setup.sh
 
     echo '**********************************************************'
-    echo 'After User setup:'
     echo 'CMTPATH = ' $CMTPATH
     echo 'PYTHONPATH = '$PYTHONPATH
-    echo 'LD_LIBRARY_PATH = '$LD_LIBRARY_PATH
     echo '**********************************************************'
 
 fi

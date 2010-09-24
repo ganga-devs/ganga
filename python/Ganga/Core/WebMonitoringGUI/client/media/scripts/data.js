@@ -7,18 +7,18 @@
 // 18.05.2010 Created
 //
 
-function Data(ajaxAnimation, settings) {
+function Data(ajaxAnimation) {
     // general values
-    this.user = settings.user;
-    this.from = settings.from;
-    this.till = settings.till;
-    this.timeRange = settings.timeRange;
-    this.refresh = settings.refresh;
-    this.tid = settings.tid;
-    this.p = settings.p;
-    this.sorting = settings.sorting;
-    this.or = settings.or; // opened table rows
-    this.uparam = settings.uparam; // user defined params (for params that cannot be shared between use cases)
+    this.user = '';
+    this.from = 0;
+    this.till = 0;
+    this.timeRange = 'lastDay';
+    this.refresh = 0;
+    this.tid = '';
+    this.p = 1;
+    this.sorting = [1,'desc'];
+    this.or = []; // opened table rows
+    this.uparam = []; // user defined params (for params that cannot be shared between use cases)
     
     this.noreload = false;
         
@@ -39,18 +39,16 @@ function Data(ajaxAnimation, settings) {
     };
     
     this.quickSetup = function(params, ts2iso) {
-
-	this.user = (params['user'] || settings.user);
-        this.from = parseInt(this.iso2ts(params['from']) || settings.from);
-        this.till = parseInt(this.iso2ts(params['till'],2) || settings.till);
-        this.timeRange = ( (params['timeRange'] == '') ? params['timeRange'] : (params['timeRange'] || settings.timeRange) );
-        this.refresh = (params['refresh'] || settings.refresh);
-        this.tid = (params['tid'] || settings.tid);
-        this.p = (params['p'] || settings.p);
-        this.or = (params['or'] || settings.or);
-        this.sorting = (params['sorting'] || []);
-        this.uparam = (params['uparam'] || settings.uparam);   
-     
+        this.user = (params['user'] || '');
+        this.from = parseInt(this.iso2ts(params['from']) || 0);
+        this.till = parseInt(this.iso2ts(params['till'],2) || 0);
+        this.timeRange = ( (params['timeRange'] == '') ? params['timeRange'] : (params['timeRange'] || 'lastDay') );
+        this.refresh = (params['refresh'] || 0);
+        this.tid = (params['tid'] || '');
+        this.p = (params['p'] || 1);
+        this.or = (params['or'] || []);
+        this.uparam = (params['uparam'] || []);
+        
         // make this.or an array of ints
         for (i in this.or) {
             this.or[i] = parseInt(this.or[i]);
@@ -132,7 +130,7 @@ function Data(ajaxAnimation, settings) {
     // Get job subjobs from server
     this.ajax_getData = function(url, params, fSuccess, fFailure) {
         var thisRef = this;
-	
+
         currentUrl = window.location.toString()
         portIndex = currentUrl.indexOf('?port=');
         if (portIndex > -1) {
@@ -158,10 +156,9 @@ function Data(ajaxAnimation, settings) {
             url = this.addPortNumber(url, port);            
         }
 
+
         var key = $.base64Encode($.param.querystring(url, params, 2));
-
-	_Cache.clear();
-
+        
         var data = _Cache.get(key);
         if (data) {
             fSuccess(data);
@@ -185,61 +182,4 @@ function Data(ajaxAnimation, settings) {
             });
         }
     };
-
-    this.ajax_getData_charts = function(url, params, fSuccess, fFailure, obj) {
-        var thisRef = this;
-       
-        currentUrl = window.location.toString()
-        portIndex = currentUrl.indexOf('?port=');
-        if (portIndex > -1) {
-           
-            port = ''          
-            isNumber = true;    
-            index = portIndex + 6      
-       
-            while(isNumber){
-                char = currentUrl[index];
-                if(char == '0' || char == '1' || char =='2' ||
-                   char == '3' || char == '4' || char =='5' ||
-                   char == '6' || char == '7' || char =='8' || char =='9'){
-                    port = port + currentUrl[index];
-                    index++;
-                }
-                else{
-                    isNumber = false
-                }
-               
-            }
-
-            url = this.addPortNumber(url, port);            
-        }
-
-       
-        var key = $.base64Encode($.param.querystring(url, params, 2));
-       
-        var data = _Cache.get(key);
-        if (data) {
-            fSuccess(data, obj);
-        } else {
-            ajaxAnimation.show();
-            $.ajax({
-                type: "GET",
-                url: url,
-                data: params,
-                dataType: "jsonp",
-                jsonp: 'jsonp_callback',
-                success: function(data) {
-                    fSuccess(data, obj);
-                    ajaxAnimation.hide();
-                },
-                error: function() {
-                    ajaxAnimation.hide();
-                    fFailure(obj);
-                }
-            });
-        }
-    };
-
-
-
 }
