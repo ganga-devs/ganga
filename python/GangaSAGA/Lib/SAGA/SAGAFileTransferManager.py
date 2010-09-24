@@ -10,6 +10,10 @@ from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
+import os
+import sys
+import tarfile
+
 # SAGA Job Package Imports
 import saga.job
 
@@ -62,14 +66,37 @@ class SAGAFileTransferAlgorithm(Algorithm):
         job.updateStatus('completing')
         
         try:
+            logger.info("poststaging output sandbox files")
+
+            logger.info("  * %s", saga.url(job.backend.saga_job_out).url)
             stdout = saga.filesystem.file(saga.url(job.backend.saga_job_out));
             stdout.copy("file://localhost/"+job.getOutputWorkspace().getPath()+"stdout");
     
+            logger.info("  * %s", saga.url(job.backend.saga_job_err).url)
             stderr = saga.filesystem.file(saga.url(job.backend.saga_job_err));
             stderr.copy("file://localhost/"+job.getOutputWorkspace().getPath()+"stderr");
 
-            #for f in job.outputsandbox:
-            #    logger.error('output file: %s', f.name)
+            output_sandbox = saga.url(job.backend.filesystem_url+"/"+job.backend.workdir_uuid+"/_output_sandbox.tgz")
+            logger.info("  * %s", output_sandbox.url)
+            osb = saga.filesystem.file(output_sandbox)
+            osb.copy("file://localhost/"+job.getOutputWorkspace().getPath())
+            
+            ## Unpack the output sandbox and delete the archive
+            osbpath = job.getOutputWorkspace().getPath()+"_output_sandbox.tgz"
+            if os.path.exists(osbpath): 
+            #    tar = tarfile.open(osbpath)
+            #    if sys.version_info[0] == 2 and sys.version_info[1] < 5 :
+            #        for tarinfo in tar:
+            #            tar.extract(tarinfo)
+            #    else:
+            #        # New in Python 2.5
+            #        tar.extractall()
+            #        
+            #   tar.close()
+                if os.system("tar -C %s -xzf %s"%(job.getOutputWorkspace().getPath(),job.getOutputWorkspace().getPath()+"/_output_sandbox.tgz")) != 0:
+                    job.updateStatus('failed')
+                    raise Exception('cannot upack output sandbox')
+                os.remove(osbpath)
 
             job.updateStatus('completed')
         

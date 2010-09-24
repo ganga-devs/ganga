@@ -359,16 +359,17 @@ class SAGA(IBackend):
         ## script will be be transfered to the execution host and takes care
         ## of the archive unpacking as well as job monitoring / reporting.
         ws = SAGAWrapperScript()
-        
+                
         import inspect
         import Ganga.Core.Sandbox as Sandbox
         import Ganga.Utility as Utility
         ws.setInlineModules(inspect.getsource(Sandbox.WNSandbox))
         ws.setMonitoringService(job.getMonitoringService().getWrapperScriptConstructorText())
-                
+        
         ws.setExecutable(jobconfig.getExeString())
         ws.setArguments(jobconfig.getArgStrings())
-        ws.setInputSandbox("_input_sandbox_0.tgz")
+        ws.setOutputPatterns(jobconfig.outputbox)
+        ws.setInputSandbox("_input_sandbox_"+str(job.id)+".tgz")
         
         text = ws.getScript()
 

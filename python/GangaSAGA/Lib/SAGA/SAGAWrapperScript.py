@@ -7,12 +7,17 @@ __version__ = "1.0"
 ##
 class SAGAWrapperScript:
 
-    _attributes = ('wrapper_script_template', 'exe', 'args', 'envi', 'sandbox', 'imods', 'mons')
+    _attributes = ('wrapper_script_template', 'exe', 'args', 'envi', 'sandbox', 'imods', 'mons', 'out')
 
     ##########################################################################
     ##    
     def setExecutable(self, exe):
         self.exe = exe
+
+    ##########################################################################
+    ##    
+    def setOutputPatterns(self, out):
+        self.out = out
 
     ##########################################################################
     ##    
@@ -49,6 +54,7 @@ class SAGAWrapperScript:
         #script = script.replace('###ENVIRONMENT_AS_DICT###', repr(self.envi))
         script = script.replace('###INPUTSANDBOXFILE###', repr(self.sandbox))
         script = script.replace('###MONITORING_SERVICE###', self.mons)
+        script = script.replace('###OUTPUTPATTERNS###', repr(self.out))
     
         return script
 
@@ -66,8 +72,9 @@ import sys
 
 ###INLINEMODULES###
 
-executable  = ###EXECUTABLE###
-arguments   = ###ARGUEMTNS_AS_LIST###
+executable       = ###EXECUTABLE###
+arguments        = ###ARGUEMTNS_AS_LIST###
+outputpatterns   = ###OUTPUTPATTERNS###
 
 
 inputsandboxfile = ###INPUTSANDBOXFILE###
@@ -97,7 +104,7 @@ if os.path.exists(inputsandboxfile):
 try:
     import subprocess
 except ImportError,x:
-    sys.path.insert(0,"_python")
+    sys.path.insert(0, PYTHON_DIR)
     import subprocess
     
 
@@ -110,6 +117,7 @@ except ImportError,x:
 #sys.stdout.flush()
 #sys.stderr.flush()
 
+sys.path.insert(0, PYTHON_DIR)
 ###MONITORING_SERVICE###
 monitor = createMonitoringObject()
 monitor.start()
@@ -148,7 +156,18 @@ monitor.stop(result)
 
 outfile.close()
 errfile.close()
-  
+
+## As a last step, we will create an archive of the outputsandbox files. This
+## will speed up the post-staging process in many cases
+try:
+    filefilter
+except:
+    filefilter = None
+
+from Ganga.Utility.files import multi_glob, recursive_copy
+
+createPackedOutputSandbox(outputpatterns,filefilter,".")
+
 sys.exit(result)
 """
         
