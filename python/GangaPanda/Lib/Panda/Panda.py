@@ -548,15 +548,18 @@ class Panda(IBackend):
                 job.transExitCode = None
                 job.computingSite = retrySite
                 job.computingElement = retryElement
+                job.destinationSE = retryDestSE
                 job.dispatchDBlock = None
                 job.jobExecutionID = job.jobDefinitionID
                 for file in job.Files:
                     file.rowID = None
                     if file.type == 'input':
+                        if file.lfn.endswith('.lib.tgz') and file.GUID == 'NULL':
+                            raise BackendError('Panda','GUID for %s is unknown. Cannot retry when corresponding buildJob failed' % file.lfn)
                         file.status = 'ready'
                     elif file.type in ('output','log'):
                         file.destinationSE = retryDestSE
-                        file.destinationDBlock=file.dataset
+                        file.destinationDBlock = re.sub('_sub\d+$','',file.destinationDBlock)
                         # add attempt nr
                         oldName  = file.lfn
                         file.lfn = re.sub("\.\d+$","",file.lfn)
