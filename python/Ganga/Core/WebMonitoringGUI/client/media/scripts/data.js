@@ -225,6 +225,7 @@ function Data(ajaxAnimation, settings) {
             $.ajax({
                 type: "GET",
                 url: url,
+		async: true,
                 data: params,
                 dataType: "jsonp",
                 jsonp: 'jsonp_callback',

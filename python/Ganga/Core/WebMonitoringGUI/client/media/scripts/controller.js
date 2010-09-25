@@ -194,29 +194,32 @@ function Controller() {
        
         var getData = function(data, chart) {
             var translatedData = chart.translateData(data);
-	    
-	    var gData = [
-                'chtt='+chart.gChart.chtt,
-                'cht='+chart.gChart.cht,
-                'chs='+chart.gChart.chs,
-                'chd='+translatedData.chd,
-                'chl='+translatedData.chl
-            ];
-
-            //if (chart.gChart.chco) gData.push('chco='+chart.gChart.chco);
-	    if (translatedData.chco) gData.push('chco='+translatedData.chco);                        
-	    draw(gData);
+            var gData = [];
+            for (key in chart.gChart) { // Adding static variables
+                gData.push(key+'='+chart.gChart[key]);
+            }
+            for (key in translatedData) { // Adding dynamic variables
+                gData.push(key+'='+translatedData[key]);
+            }
+            draw(gData);
         };
+
+	//if (translatedData.chco) gData.push('chco='+translatedData.chco);                        
        
         $('#chartContent').empty();
 
         try {
             for (var i=0;i<_charts.length;i++) {
-
                 // Get the data from ajax call
-		if (_charts[i].ajax) thisRef.Data.ajax_getData_charts(_charts[i].dataURL, _charts[i].dataURL_params(thisRef.Data), function(data, chart){getData(data, chart);}, function(){},_charts[i]);}                       
-
-
+                if (_charts[i].dataURL) {
+                    thisRef.Data.ajax_getData_charts(_charts[i].dataURL, _charts[i].dataURL_params(thisRef.Data), function(data, chart){
+                        getData(data, chart);
+                    }, function(){},_charts[i]);
+                }
+                else {
+                    getData(this.Data.mem.tasks.data, _charts[i]);
+                }
+            }
         } catch(err) {}
        
     };
