@@ -308,15 +308,15 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.inputsandbox:
             logger.warning("Submitting Panda job with inputsandbox. This may slow the submission slightly.")
             inpw = job.getInputWorkspace()
-            inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen'))
+            self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen'))
 
             if app.user_area.name:
-                rc, output = commands.getstatusoutput('cp %s %s.gz' % (app.user_area.name, inputsandbox))
+                rc, output = commands.getstatusoutput('cp %s %s.gz' % (app.user_area.name, self.inputsandbox))
                 if rc:
                     logger.error('Copying user_area failed with status %d',rc)
                     logger.error(output)
                     raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
-                rc, output = commands.getstatusoutput('gunzip %s.gz' % (inputsandbox))
+                rc, output = commands.getstatusoutput('gunzip %s.gz' % (self.inputsandbox))
                 if rc:
                     logger.error('Unzipping user_area failed with status %d',rc)
                     logger.error(output)
@@ -338,23 +338,23 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if ua in path:
                     fn = fname[len(ua)+1:]
                     path = ua
-                rc, output = commands.getstatusoutput('tar -h -r -f %s -C %s %s' % (inputsandbox, path, fn))
+                rc, output = commands.getstatusoutput('tar -h -r -f %s -C %s %s' % (self.inputsandbox, path, fn))
                 if rc:
                     logger.error('Packing inputsandbox failed with status %d',rc)
                     logger.error(output)
                     raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
-            rc, output = commands.getstatusoutput('gzip %s' % (inputsandbox))
+            rc, output = commands.getstatusoutput('gzip %s' % (self.inputsandbox))
             if rc:
                 logger.error('Packing inputsandbox failed with status %d',rc)
                 logger.error(output)
                 raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
-            inputsandbox += ".gz"
+            self.inputsandbox += ".gz"
         else:
-            inputsandbox = app.user_area.name
+            self.inputsandbox = app.user_area.name
 
         # upload sources
-        if inputsandbox and not job.backend.libds and not local_libds:
-            uploadSources(os.path.dirname(inputsandbox),os.path.basename(inputsandbox))
+        if self.inputsandbox and not job.backend.libds and not local_libds:
+            uploadSources(os.path.dirname(self.inputsandbox),os.path.basename(self.inputsandbox))
 
         # create build job for each needed site
         if app.athena_compile:
@@ -384,8 +384,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 jspec.computingSite     = bjsite
                 jspec.cloud             = Client.PandaSites[bjsite]['cloud']
                 jspec.jobParameters     = '-o %s' % (self.libraries[bjsite])
-                if inputsandbox:
-                    jspec.jobParameters     += ' -i %s' % (os.path.basename(inputsandbox))
+                if self.inputsandbox:
+                    jspec.jobParameters     += ' -i %s' % (os.path.basename(self.inputsandbox))
                 matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
                 if matchURL:
                     jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
@@ -488,21 +488,21 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
 
 #       library (source files)
-        if job.application.athena_compile:
-            if not job.backend.libds:
-                flib = FileSpec()
-                flib.lfn            = self.libraries[job.backend.site]
-                flib.type           = 'input'
-                flib.dataset        = self.libDatasets[job.backend.site]
-                flib.dispatchDBlock = self.libDatasets[job.backend.site]
-            else:
-                flib = FileSpec()
-                flib.lfn            = self.fileBO.lfn
-                flib.GUID           = self.fileBO.GUID
-                flib.type           = 'input'
-                flib.status         = self.fileBO.status
-                flib.dataset        = self.fileBO.destinationDBlock
-                flib.dispatchDBlock = self.fileBO.destinationDBlock
+        if job.backend.libds:
+            flib = FileSpec()
+            flib.lfn            = self.fileBO.lfn
+            flib.GUID           = self.fileBO.GUID
+            flib.type           = 'input'
+            flib.status         = self.fileBO.status
+            flib.dataset        = self.fileBO.destinationDBlock
+            flib.dispatchDBlock = self.fileBO.destinationDBlock
+            jspec.addFile(flib)
+        elif job.application.athena_compile:
+            flib = FileSpec()
+            flib.lfn            = self.libraries[job.backend.site]
+            flib.type           = 'input'
+            flib.dataset        = self.libDatasets[job.backend.site]
+            flib.dispatchDBlock = self.libDatasets[job.backend.site]
             jspec.addFile(flib)
 
 #       input files FIXME: many more input types
@@ -552,9 +552,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
 #       job parameters
         param = ''
+
         # FIXME if not options.nobuild:
         if app.athena_compile:
             param =  '-l %s ' % self.libraries[job.backend.site]
+        else:
+            param += '-a %s ' % os.path.basename(self.inputsandbox)
+
         param += '-r %s ' % self.rundirectory
         # set jobO parameter
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
@@ -612,8 +616,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         else:
             param += '-i "[]" '
 
-        if not job.application.athena_compile:
-            param += '-a %s ' % os.path.basename(job.application.user_area.name)
+
         #param += '-m "[]" ' #%minList FIXME
         #param += '-n "[]" ' #%cavList FIXME
         #FIXME
