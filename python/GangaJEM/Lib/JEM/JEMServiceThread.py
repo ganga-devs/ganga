@@ -81,7 +81,7 @@ class JEMServiceThread(GangaThread):
         
         timeslot = 0
         while not self.should_stop():
-            time.sleep(0.01)
+            time.sleep(0.02)
             timeslot += 1
             if timeslot % 2 == 0 and self.__jobs is not None:
                 for status in ('submitted', 'running', 'completing'):
@@ -95,7 +95,7 @@ class JEMServiceThread(GangaThread):
                         except:
                             ei = sys.exc_info()
                             logger.error(str(ei[0]) + " - " + str(ei[1]))
-            if timeslot % 10 == 0:
+            if timeslot % 50 == 0:
                 if self.__jobs is None:
                     try:
                         from Ganga.GPI import jobs
@@ -105,9 +105,9 @@ class JEMServiceThread(GangaThread):
                     for status in ('submitted', 'running', 'completing'):
                         for j in self.__jobs.select(status=status):
                             self.examine_job(j, status)
-            if timeslot % 100 == 0 and self.__jobs is not None:
-                for j in self.__jobs:
-                    if j.status in ("completed", "failed", "killed"):
+            if timeslot % 200 == 0 and self.__jobs is not None:
+                for status in ("completed", "failed", "killed"):
+                    for j in self.__jobs.select(status=status):
                         try:
                             if (j.info.monitor.__class__.__name__ == "JobExecutionMonitor"):
                                 self.shutdown_listener_for_job(j)
