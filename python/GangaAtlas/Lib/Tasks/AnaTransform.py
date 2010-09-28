@@ -59,15 +59,35 @@ class AnaTransform(Transform):
        }.items()))
    _category = 'transforms'
    _name = 'AnaTransform'
-   _exportmethods = Transform._exportmethods
+   _exportmethods = Transform._exportmethods + ['getDatasetNames']
 
    def initialize(self):
       super(AnaTransform, self).initialize()
       self.application = AthenaTask()
       self.inputdata = DQ2Dataset()
 
+   def getDatasetNames(self):
+      task = self._getParent()
+      name_base = ["user",getNickname(),task.creation_date,"task_%s" % task.id]
+      task_container = ".".join(name_base + [task.name]) + "/"
+      if self.inputdata.dataset:
+          subtask_dsname = ".".join(name_base +["subtask_%s" % task.transforms.index(self), str(self.inputdata.dataset[0].strip("/"))])
+      else:
+          subtask_dsname = ".".join(name_base +["subtask_%s" % task.transforms.index(self)])
+            
+      # make sure we keep the name size limit:
+      dq2_config = getConfig("DQ2")
+      if len(subtask_dsname) > dq2_config['OUTPUTDATASET_NAMELENGTH']:
+          logger.warning("Proposed dataset name longer than limit (%d). Restricting dataset name..." % dq2_config['OUTPUTDATASET_NAMELENGTH'])
+
+          while len(subtask_dsname) > dq2_config['OUTPUTDATASET_NAMELENGTH']:
+              subtask_dsname_toks = subtask_dsname.split('.')
+              subtask_dsname = '.'.join(subtask_dsname_toks[:len(subtask_dsname_toks)-1])
+      return task_container, subtask_dsname
+
 ## Internal methods
    def checkCompletedApp(self, app):
+      task = self._getParent()
       j = app._getParent()
       for odat in j.outputdata.outputdata:
           # Look out: if this is changed, there is anothher one like it below!
@@ -76,23 +96,7 @@ class AnaTransform(Transform):
               return False
       # if this is the first app to complete the partition...
       if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
-          task = self._getParent()
-          name_base = ["user",getNickname(),task.creation_date,"task_%s" % task.id]
-          task_container = ".".join(name_base + [task.name]) + "/"
-          if self.inputdata.dataset:
-              subtask_dsname = ".".join(name_base +["subtask_%s" % task.transforms.index(self), str(self.inputdata.dataset[0].strip("/"))])
-          else:
-              subtask_dsname = ".".join(name_base +["subtask_%s" % task.transforms.index(self)])
-                
-          # make sure we keep the name size limit:
-          dq2_config = getConfig("DQ2")
-          if len(subtask_dsname) > dq2_config['OUTPUTDATASET_NAMELENGTH']:
-              logger.warning("Proposed dataset name longer than limit (%d). Restricting dataset name..." % dq2_config['OUTPUTDATASET_NAMELENGTH'])
-
-              while len(subtask_dsname) > dq2_config['OUTPUTDATASET_NAMELENGTH']:
-                  subtask_dsname_toks = subtask_dsname.split('.')
-                  subtask_dsname = '.'.join(subtask_dsname_toks[:len(subtask_dsname_toks)-1])
-                  
+          task_container, subtask_dsname = self.getDatasetNames()
           outputdata = DQ2OutputDataset()
           try:
               outputdata.create_dataset(subtask_dsname)
@@ -105,7 +109,16 @@ class AnaTransform(Transform):
                   for oinfo in j.outputdata.output:
                       info = oinfo.split(",")
                       # get master replica from dataset - info not set to SE; but to ANALY_XYZ from panda
-                      info[5] = dq2.getMasterReplicaLocation(info[0])
+                      master_replica = dq2.getMasterReplicaLocation(info[0])
+                      if master_replica:
+                          info[5] = master_replica
+                      else:
+                          replicas = dq2.listDatasetReplicas(info[0]).values()
+                          if len(replicas) == 0:
+                              info[5] = getPandaClient().PandaSites[info[5]]["ddm"]
+                          else:
+                              complete, incomplete = replicas[0].values()
+                              info[5] = (complete + incomplete)[0]
                       if info[4][:3] == "ad:":
                           info[4] = info[4][3:]
                       info[0] = subtask_dsname
@@ -142,6 +155,24 @@ class AnaTransform(Transform):
               dq2_lock.release()
       return True
 
+   def rebrokerPanda(self, cloud = None):
+      sites = getPandaClient().PandaSites.keys()
+
+      dataset_sites = [getPandaClient().convertDQ2toPandaID(site) for site in self.inputdata.get_locations(complete=1)]
+      sites = [site for site in sites if site in dataset_sites]
+      sites = [s for s in sites if not s in self.backend.requirements.excluded_sites] 
+      sites = [s for s in sites if not s.replace("ANALY_","") in self.backend.requirements.excluded_sites]
+      if cloud:
+         sites = [s for s in sites if s.replace("ANALY_","") in getPandaClient().PandaClouds[cloud]["sites"]] 
+      if len(sites) == 0:
+         logger.error("No compatible sites for rebrokering found!")
+         return
+
+      from random import shuffle
+      shuffle(sites)
+      self.backend.site = sites[0] 
+      logger.warning("Rebrokering transform - %i possible sites; chosing %s at random..." % (len(sites),sites[0]))
+
 
    def findCompleteCloudBackend(self,db_sites,allowed_sites,replicas):
       # Sort complete replicas into clouds
@@ -171,7 +202,6 @@ class AnaTransform(Transform):
             if not backend in allowed_sites.keys(): 
                continue
             if backend == "Panda":
-                from pandatools import Client
                 sites = [site for site in complete_sites[cloud] if getPandaClient().convertDQ2toPandaID(site) in allowed_sites["Panda"]]
             else:
                 sites = [site for site in complete_sites[cloud] if site in allowed_sites[backend]]
@@ -344,7 +374,8 @@ class AnaTransform(Transform):
       j.inputdata = self.partitions_data[partitions[0]-1]
       if self.partitions_sites:
          if stripProxy(j.backend)._name == "Panda":
-            j.backend.site = self.partitions_sites[partitions[0]-1]
+            if j.backend.site == "AUTO":
+               j.backend.site = self.partitions_sites[partitions[0]-1]
          else:
             j.backend.requirements.sites = self.partitions_sites[partitions[0]-1]
       j.outputdata = self.outputdata
