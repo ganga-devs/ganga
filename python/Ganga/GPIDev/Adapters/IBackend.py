@@ -109,7 +109,7 @@ class IBackend(GangaObject):
             logger.info("submitting job %s to %s backend",fqid,sj.backend._name)
             try:
                 b = sj.backend
-                sj.status = 'submitting'
+                sj.updateStatus('submitting')
                 if b.submit(sc,master_input_sandbox):
                     sj.updateStatus('submitted')
                     #sj._commit() # PENDING: TEMPORARY DISABLED
@@ -187,8 +187,9 @@ class IBackend(GangaObject):
                 logger.info("resubmitting job %s to %s backend",fqid,sj.backend._name)
                 try:
                     b = sj.backend
+                    sj.updateStatus('submitting')
                     if b.resubmit():
-                        sj.status = 'submitted' #FIXME: state transition?
+                        sj.updateStatus('submitted')
                         #sj._commit() # PENDING: TEMPORARY DISABLED
                         incomplete = 1
                     else:
