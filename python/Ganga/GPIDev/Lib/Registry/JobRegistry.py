@@ -217,9 +217,10 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(self._impl.__getitem__(_unwrap(x)))
 
+from Ganga.Utility.external.ordereddict import oDict
 def jobSlice(joblist):
     slice = JobRegistrySlice("manual slice")
-    slice.objects = dict([(j.fqid, _unwrap(j)) for j in joblist])
+    slice.objects = oDict([(j.fqid, _unwrap(j)) for j in joblist])
     return _wrap(slice)
 
 from Ganga.Runtime.GPIexport import exportToGPI
