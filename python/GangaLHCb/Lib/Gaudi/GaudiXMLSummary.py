@@ -15,6 +15,7 @@ from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 
 xml_schema = {}
+xml_summary = {}
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -53,6 +54,12 @@ class GaudiXMLSummary(GangaObject):
             if len(args) == 1: self.create(args[0])
             else: self.create(args[0],args[1])
 
+    def _attribute_filter__set__(self,n,v):
+        if n == 'env_var':
+            self.data = None
+            return os.path.expanduser(v)            
+        else: return v
+
     def summary(self):
         '''Returns the summary object.'''
         try:
@@ -63,42 +70,27 @@ class GaudiXMLSummary(GangaObject):
         return self.data
 
     def _init(self):
+        global xml_summary
+        global xml_schema
+        
         if not self.env_var:
             raise GangaException('XMLSummary env not set!')
         if not self.file: 
             raise GangaException('File not specified!')
         if not os.path.exists(self.file):
             raise GangaException('%s does not exist!' % self.file)
-        
-        script_name = tempfile.mktemp('.py')
-        script = open(script_name,'w')
-        pkl_file = tempfile.mktemp('.pkl')
 
-        # write py script
-        script.write('import sys, pickle \n')
-        script.write('sys.path.append("%s") \n' % self._xmlPath())
-        script.write('import summary \n')
-        script.write('sum = summary.Summary("%s") \n' % self._xmlSchema())
-        script.write('sum.parse("%s") \n' % self.file)
-        script.write('f = open("%s","w") \n' % pkl_file)
-        script.write('pickle.dump(sum,f) \n')
-        script.write('f.close()\n')
-        script.close()
-        
-        # run it
-        proc = subprocess.Popen(['python', script_name])
-        proc.wait()
-        rc = proc.poll()
-        if rc != 0:
-            msg = 'Failed to parse XML summary file!'
-            raise GangaException(msg)
+        p = self._xmlPath()
+        v = self.env_var        
+        if not xml_schema.has_key(self.env_var):
+            xml_schema[v] = imp.load_source('schema',p+'/schema.py')
+            xml_summary[v] = imp.load_source('summary',p+'/summary.py')
+            xml_summary[v].__schema__ = xml_schema[v]
 
-        # get summary
-        schema = imp.load_source('schema',self._xmlPath()+'/schema.py')
-        summary = imp.load_source('summary',self._xmlPath()+'/summary.py')
-        f = open(pkl_file)
-        self.data = pickle.load(f)
-        f.close()
+        sum = xml_summary[v].Summary(self._xmlSchema())
+        sum.parse(self.file)
+        self.data = sum
+        return
 
     def create(self,job,file='summary.xml'):
         '''Sets up the GaudiXMLSummary object from a Ganga job.'''
