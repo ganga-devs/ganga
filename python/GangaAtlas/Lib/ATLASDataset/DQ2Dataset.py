@@ -1407,7 +1407,7 @@ class DQ2OutputDataset(Dataset):
                 
                 #  Register DQ2 location
                 # FMB: protection against empty strings
-                if self.datasetname and not (job.application._name in ['Athena', 'AthenaTask', 'AMAAthena', 'AMAAthenaTask' ] and job.backend._name in [ 'LCG', 'CREAM', 'Local', 'LSF', 'PBS', 'SGE']):
+                if self.datasetname and not (job.application._name in ['Athena', 'AthenaTask'] and job.backend._name in [ 'LCG', 'CREAM', 'Local', 'LSF', 'PBS', 'SGE']):
                     self.register_dataset_location(self.datasetname, self.location)
                     
             pfn = job.outputdir + "output_data"
@@ -1472,7 +1472,7 @@ class DQ2OutputDataset(Dataset):
                             if not datasetnameTemp in self.allDatasets:
                                 self.allDatasets.append(datasetnameTemp)
                                 
-            if (job.application._name in ['Athena','AthenaTask', 'AMAAthena', 'AMAAthenaTask'] and job.backend._name in [ 'LCG', 'CREAM', 'Local', 'LSF', 'PBS', 'SGE']):
+            if (job.application._name in ['Athena','AthenaTask'] and job.backend._name in [ 'LCG', 'CREAM', 'Local', 'LSF', 'PBS', 'SGE']):
                 newDatasetname = job.outputdata.datasetname
                 for dataset in self.allDatasets:
                     # Clean dataset from duplicates on LCG backend
@@ -1521,7 +1521,7 @@ class DQ2OutputDataset(Dataset):
                 self.datasetname = containerName
         else:
             # AthenaMC: register dataset location and insert file in dataset only within subjobs (so that if one subjob fails, the master job fails, but the dataset is saved...). Master job completion does not do anything...
-            if not (job.application._name in ['Athena', 'AthenaTask', 'AMAAthena', 'AMAAthenaTask'] and job.backend._name in [ 'LCG', 'CREAM', 'Local', 'LSF', 'PBS', 'SGE']):
+            if not (job.application._name in ['Athena', 'AthenaTask'] and job.backend._name in [ 'LCG', 'CREAM', 'Local', 'LSF', 'PBS', 'SGE']):
                 self.register_datasets_details(self.datasetname,self.output)
             elif not job.master and not job.subjobs:
                 self.allDatasets = [ ]

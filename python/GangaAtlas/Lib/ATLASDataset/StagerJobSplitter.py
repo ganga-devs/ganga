@@ -69,8 +69,8 @@ class StagerJobSplitter(ISplitter):
         if job.inputdata._name <> 'StagerDataset':
             raise ApplicationConfigurationError(None,'StagerJobSplitter requires StagerDataset as input')
 
-        if job.application._name not in  ['AMAAthena', 'Athena']:
-            raise ApplicationConfigurationError(None,'StagerJobSplitter requires AMAAthena/Athena as application')
+        if job.application._name not in  ['Athena']:
+            raise ApplicationConfigurationError(None,'StagerJobSplitter requires Athena as application')
 
         if self.numfiles <= 0: 
             self.numfiles = 1
@@ -109,19 +109,5 @@ class StagerJobSplitter(ISplitter):
         if self.scheme.lower() == 'local': 
             for i in xrange(0,nrjob):
                 subjobs.append( self.__make_subjob__(job, myguids[i*self.numfiles:(i+1)*self.numfiles], mynames[i*self.numfiles:(i+1)*self.numfiles], sjob_evnts) )
-
-
-        ## setup up the corresponding merger for output auto-merging
-        if job.application._name in ['AMAAthena']:
-            conf_name   = os.path.basename(job.application.driver_config.config_file.name)
-            sample_name = get_sample_name(job)
-         
-            if (not job.merger) or (job.merger._name <> 'RootMerger'):
-                logger.debug('enforce job to use RootMerger')
-                job.merger = RootMerger()
-         
-            job.merger.files = [ 'summary/summary_%s_confFile_%s_nEvts_%d.root' % (sample_name, conf_name, sjob_evnts) ]
-            job.merger.ignorefailed = True
-            job.merger.overwrite = True
 
         return subjobs
