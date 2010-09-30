@@ -9,7 +9,6 @@ def loadPlugins( config = {} ):
    import Lib.Athena
    import Lib.ATLASDataset
    import Lib.AthenaMC
-   import Lib.AMAAthena
    import Lib.Tnt
    import Lib.AtlasLCGRequirements
    import Lib.Tasks

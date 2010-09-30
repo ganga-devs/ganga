@@ -16,8 +16,6 @@ from Ganga.Lib.Mergers import RootMerger
 
 from Ganga.Utility.logging import getLogger
 
-from GangaAtlas.Lib.AMAAthena.AMAAthenaCommon import *
-
 logger = getLogger()
 
 class StagerJobSplitter(ISplitter):

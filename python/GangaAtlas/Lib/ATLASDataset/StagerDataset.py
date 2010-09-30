@@ -20,7 +20,6 @@ from Ganga.Utility.logging import getLogger
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.Athena import dm_util
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
-from GangaAtlas.Lib.AMAAthena.AMAAthenaCommon import *
 from Ganga.Lib.LCG import ElapsedTimeProfiler
 
 from dq2.info import TiersOfATLAS
