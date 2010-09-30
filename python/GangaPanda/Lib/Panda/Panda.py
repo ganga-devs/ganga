@@ -450,6 +450,7 @@ class Panda(IBackend):
             configSys = getConfig('System')
             for js in jobspecs:
                 js.lockedby = configSys['GANGA_VERSION']
+                js.jobsetID = -1
 
             verbose = logger.isEnabledFor(10)
             status, jobids = Client.submitJobs(jobspecs,verbose)
