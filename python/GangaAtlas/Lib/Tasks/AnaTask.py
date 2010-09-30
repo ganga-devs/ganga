@@ -48,7 +48,7 @@ class AnaTask(Task):
        }.items()))
    _category = 'tasks'
    _name = 'AnaTask'
-   _exportmethods = Task._exportmethods + ["initializeFromDatasets", "containerName"]
+   _exportmethods = Task._exportmethods + ["initializeFromDatasets"]
 
    def initialize(self):
       super(AnaTask, self).initialize()
@@ -57,9 +57,6 @@ class AnaTask(Task):
       analysis.name = "Analysis"
       self.transforms = [analysis]
       self.setBackend(None)
-
-   def containerName(self):
-      return self.transforms[0].getDatasetNames()[0]
 
    def initializeFromDatasets(self,dataset_list):
       """ For each dataset in the dataset_list a transform is created. 

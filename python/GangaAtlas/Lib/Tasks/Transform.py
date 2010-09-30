@@ -28,7 +28,7 @@ class Transform(GangaObject):
                       'run', 'pause', # Operations
                       'setPartitionStatus', 'setRunlimit', 'setFailed', # Control Partitions
                       'getPartitionStatus', 'getJobs', 'getPartitionJobs',
-                      'overview', 'info', 'n_all', 'n_status', 'retryFailed' # Info
+                      'overview', 'info', 'n_all', 'n_status' # Info
                     ]
 
 #   _app_status = {}
@@ -207,15 +207,6 @@ class Transform(GangaObject):
          self._app_status[aid] = "failed"
          # Update the corresponding partition status
       self.setPartitionStatus(partition, "ready")
-
-   def retryFailed(self):
-      """Retry all failed partitions (forget about failed jobs)"""
-      for aid in self._app_partition:
-         if aid in self._app_status and self._app_status[aid] == "failed":
-            self._app_status[aid] = "removed"
-      clist = self._partition_status.keys()
-      for c in clist:
-         self.updatePartitionStatus(c)
 
 ## Internal methods
    def submitJobs(self, n):

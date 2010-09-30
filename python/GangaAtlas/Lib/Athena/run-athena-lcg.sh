@@ -350,6 +350,7 @@ if os.path.exists('input_files'):
         from AthenaCommon.AppMgr import ServiceMgr
         EventSelector.SkipEvents = int(os.environ['ATHENA_SKIP_EVENTS'])
 
+    
 EOF
     if [ n$DATASETDATATYPE = n'MuonCalibStream' ] 
 	then
@@ -437,43 +438,7 @@ EOF
 	then
 	ls -ltr
 	mv input_files input_files2
-
-	# inflate the TAG files if necessary
-	cat tag_file_list | while read filespec
-	  do
-	  
-	  export LD_LIBRARY_PATH_TAG_BACKUP=$LD_LIBRARY_PATH
-	  ext=`basename $filespec .dat`
-
-	  if [ $ext != $filespec ]
-	      then
-
-	      echo "UNCOMPRESSING TAG FILE "$filespec
-
-	      export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH 
-	      retcode=0
-	      ./CollInflateEventInfo.exe $filespec
-	      echo $? > retcode.tmp
-
-	      retcode=`cat retcode.tmp`
-	      rm -f retcode.tmp
-    
-	      if [ $retcode -ne 0 ]
-		  then
-		  echo "ERROR: error during CollInflateEventInfo.exe. Retrying..."
-		  export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH_BACKUP_ATH
-		  export PATH=$PATH_BACKUP_ATH
-		  export PYTHONPATH=$PYTHONPATH_BACKUP_ATH
-		  ./CollInflateEventInfo.exe $filespec
-		  echo "ERROR: error during CollInflateEventInfo.exe. Giving up..."
-		  exit -1
-	      fi
-
-	      mv outColl.root $filespec.root
-	      echo $filespec.root >> input_files
-	  fi
-	  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_TAG_BACKUP
-	done
+	mv tag_file_list input_files
     fi
 
     # Setup new dq2- tools
@@ -776,7 +741,6 @@ site - please contact Ganga support mailing list.'
 	fi
 	if [ $retcode -eq 0 ] && [ -e $file ]
 	    then
-	    more PoolFileCatalog.xml
 	    echo "Running Athena ..."
 
         # Start athena
@@ -813,17 +777,6 @@ site - please contact Ganga support mailing list.'
 		    $timecmd $ATHENA_OPTIONS $inputfile'='$file `cat trf_params`; echo $? > retcode.tmp
 		fi
 		##
-		retcode=`cat retcode.tmp`
-		rm -f retcode.tmp
-	    elif [ n$ATLAS_EXETYPE == n'EXE' ]
-		then
-		
-		# scan for %IN args
-		$EXE_FILELIST=`tr '\n' ',' < input.txt`
-		$NEW_ATHENA_OPTIONS=`echo "python aratest.py - %IN" | sed s/%IN/$EXE_FILELIST/`
-		echo "New EXE command line: "
-		echo $NEW_ATHENA_OPTIONS
-		$timecmd $NEW_ATHENA_OPTIONS $inputfile'='$file `cat trf_params`; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
 	    else

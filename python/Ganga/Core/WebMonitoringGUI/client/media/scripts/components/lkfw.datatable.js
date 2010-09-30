@@ -148,10 +148,10 @@
             if (!dTable) {
                 $(this).empty().append(_buildTable(elCnt));
                 dTable = $('#dataTable_'+elCnt).dataTable( $.extend({
-					    "bJQueryUI": false,
+					    "bJQueryUI": true,
 					    "sPaginationType": "full_numbers",
 					    "bAutoWidth":false,
-					    "aaSorting": [[_config.sorting[0],_config.sorting[1]]]
+					    "aaSorting": [[_config.sorting[0],_config.sorting[1]]],
 		        },_config.dataTable));
 		    }
 		    else {

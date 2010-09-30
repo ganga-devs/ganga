@@ -6,11 +6,10 @@ import Ganga.Utility.logging
 
 logger = Ganga.Utility.logging.getLogger()
 
-if logger.getEffectiveLevel() <= 20:
-    print >>sys.stderr
-    print >>sys.stderr, 'For help visit the ATLAS Distributed Analysis Help eGroup:'
-    print >>sys.stderr, '  https://groups.cern.ch/group/hn-atlas-dist-analysis-help/'
-    print >>sys.stderr
+print >>sys.stderr
+print >>sys.stderr, 'For help visit the ATLAS Distributed Analysis Help eGroup:'
+print >>sys.stderr, '  https://groups.cern.ch/group/hn-atlas-dist-analysis-help/'
+print >>sys.stderr
 
 try:
     from IPython.iplib import InteractiveShell

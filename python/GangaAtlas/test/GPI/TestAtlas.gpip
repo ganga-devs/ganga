@@ -122,7 +122,7 @@ class TestTask(AtlasTest):
         f = self.t.n_status("failed")
         if c+f >= n:
            return True
-        if self.t.status == "pause":
+        if self.t.analysis.status == "pause":
            return True
         return False
 

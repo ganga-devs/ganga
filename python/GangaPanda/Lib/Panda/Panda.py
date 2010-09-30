@@ -35,25 +35,8 @@ config.addOption( 'trustIS', True , 'Trust the Information System' )
 config.addOption( 'serverMaxJobs', 5000 , 'Maximum number of subjobs to send to the Panda server' )  
 config.addOption( 'chirpconfig', '' , 'Configuration string for chirp data output, e.g. "chirp^etpgrid01.garching.physik.uni-muenchen.de^/tanyasandoval^-d chirp" ' )  
 
-
-pandaSpecTS = time.time()
-def refreshPandaSpecs():
-    from pandatools import Client
-
-    global pandaSpecsTS
-    try:
-        if time.time() - pandaSpecsTS > 600:
-            logger.debug('Calling Client.refreshSpecs')
-            Client.refreshSpecs()
-            pandaSpecsTS = time.time()
-    except NameError:
-        Client.refreshSpecs()
-        pandaSpecsTS = time.time()
-
 def queueToAllowedSites(queue):
     from pandatools import Client
-    refreshPandaSpecs()
-
     try:
         ddm = Client.PandaSites[queue]['ddm']
     except KeyError:
@@ -106,7 +89,6 @@ def queueToAllowedSites(queue):
 
 def runPandaBrokerage(job):
     from pandatools import Client
-    refreshPandaSpecs()
 
     tmpSites = []
     # get locations when site==AUTO
@@ -218,7 +200,6 @@ def runPandaBrokerage(job):
 
 def selectPandaSite(job,sites):
     from pandatools import Client
-    refreshPandaSpecs()
 
     pandaSites = []
     if job.backend.site == 'AUTO':
@@ -367,7 +348,7 @@ class Panda(IBackend):
         from Ganga.Utility.logging import log_user_exception
 
         assert(implies(rjobs,len(subjobspecs)==len(rjobs))) 
-       
+        
         if self.libds:
             buildjobspec = None
 
@@ -754,8 +735,6 @@ class Panda(IBackend):
 
     def list_sites(self):
         from pandatools import Client
-        refreshPandaSpecs()
-
         sites=Client.PandaSites.keys()
         spacetokens = []
         for s in sites:
@@ -764,11 +743,27 @@ class Panda(IBackend):
 
     def list_ddm_sites(self,allowTape=False):
         from pandatools import Client
-        refreshPandaSpecs()
-
         spacetokens = []
         if self.site == 'AUTO':
-            sites=Client.PandaSites.keys()
+            if self.libds:
+                logger.info('Locating libds %s'%self.libds)
+                try:
+                    libdslocation = Client.getLocations(self.libds,[],self.requirements.cloud,False,False)
+                except exceptions.SystemExit:
+                    raise BackendError('Panda','Error in Client.getLocations for libDS')
+                if not libdslocation:
+                    raise ApplicationConfigurationError(None,'Could not locate libDS %s'%self.libds)
+                else:
+                    libdslocation = libdslocation.values()[0]
+                    try:
+                        self.requirements.cloud = Client.PandaSites[libdslocation[0]]['cloud']
+                    except:
+                        raise BackendError('Panda','Could not map libds site %s to a cloud'%libdslocation)
+                sites = libdslocation
+                logger.info('LibDS is at %s. Run jobs will execute there.'%sites)
+            else: 
+                sites=Client.PandaSites.keys()
+
             for s in sites:
                 if Client.PandaSites[s]['status'] not in ['online'] or s in self.requirements.excluded_sites or (not self.requirements.anyCloud and Client.PandaSites[s]['cloud'] != self.requirements.cloud):
                     continue

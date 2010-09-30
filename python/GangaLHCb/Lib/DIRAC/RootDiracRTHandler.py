@@ -11,8 +11,6 @@ from Ganga.Core import ApplicationConfigurationError
 
 logger = Ganga.Utility.logging.getLogger()
 
-rootVersions = None
-
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class RootDiracRTHandler(IRuntimeHandler):
@@ -27,27 +25,24 @@ class RootDiracRTHandler(IRuntimeHandler):
             msg = 'Script must exist!'
             raise ApplicationConfigurationError(None,msg)
         # check root version
-        global rootVersions
-        if not rootVersions:
-            from Dirac import Dirac
-            result = Dirac.execAPI('result = DiracCommands.getRootVersions()')
-            if not result_ok(result):
-                logger.error('Could not obtain available ROOT versions: %s' \
-                             % str(result))
-                logger.error('ROOT version will not be validated.')
-            else: rootVersions = result['Value']
-        if rootVersions:
-            found = False
-            versions = []
-            for v in rootVersions:
-                versions.append(v)
-                if app.version.find(v) >= 0:
-                    found = True
-                    break
-            if not found:
-                msg = 'Invalid ROOT version: %s.  Valid versions: %s' \
-                      % (app.version, str(versions))
-                raise ApplicationConfigurationError(None,msg)
+        from Dirac import Dirac
+        result = Dirac.execAPI('result = DiracCommands.getRootVersions()')
+        if not result_ok(result):
+            logger.error('Could not obtain available ROOT versions: %s' \
+                         % str(result))
+            logger.error('ROOT version will not be validated.')
+        root_versions = result['Value']
+        found = False
+        versions = []
+        for v in root_versions:
+            versions.append(v)
+            if app.version.find(v) >= 0:
+                found = True
+                break
+        if not found:
+            msg = 'Invalid ROOT version: %s.  Valid versions: %s' \
+                  % (app.version, str(versions))
+            raise ApplicationConfigurationError(None,msg)
         inputsandbox = app._getParent().inputsandbox[:]
         c = StandardJobConfig('',inputsandbox,[],[],None)
         return c

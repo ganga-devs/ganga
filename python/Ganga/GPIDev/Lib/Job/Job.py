@@ -621,6 +621,8 @@ class Job(GangaObject):
             # prevent other sessions from submitting this job concurrently. Also calls _getWriteAccess
             self.updateStatus('submitting')
 
+            self.time.timenow('submitting')# writing to stamps is safer than updating status with untested type #self.updateStatus('submitting') #Justin 12/8/09
+
             try:
                 #NOTE: this commit is redundant if updateStatus() is used on the line above
                 self._commit()
@@ -650,7 +652,6 @@ class Job(GangaObject):
                     for j in subjobs:
                         j.info.uuid = Ganga.Utility.guid.uuid()
                         j.status='new'
-                        j.time.timenow('new')
                         j.id = i
                         i += 1
                         self.subjobs.append(j)
@@ -684,6 +685,7 @@ class Job(GangaObject):
                 #FIXME: possibly should go to the default implementation of IBackend.master_submit
                 if self.subjobs:
                     for jobs in self.subjobs:
+                        jobs.time.timenow('submitting') ### <-- this might be an inadequate place at which to timestamp submitting for subjobs
                         jobs.info.increment()
                         
 
@@ -940,7 +942,26 @@ class Job(GangaObject):
 
         oldstatus = self.status
 
-        self.updateStatus('submitting')
+        self.status = 'submitting'
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#        #clears old stamps - neccessary?
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#        newstamps = {}
+#        newstamps['new'] = self.time.timestamps['new']
+#
+#        self.time.timestamps.clear()
+#        self.time.timestamps['new'] = newstamps['new']
+#
+#        if self.time.timestamps == newstamps:
+#            logger.debug("'new' timestamp transfer SUCCESSFUL!")
+#        else:
+#            logger.debug("'new' timestamp transfer UNSUCCESSFUL!")
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        self.time.timenow('submitting') ## << ** 
+
 
         try:
             self._commit()
@@ -960,6 +981,7 @@ class Job(GangaObject):
 
             if rjobs:
                 for sjs in rjobs:
+                    sjs.time.timenow('submitting') ## writes submitting timestamp for subjobs. 
                     sjs.info.increment()
                     sjs.getOutputWorkspace().remove(preserve_top=True) #bugfix: #31690: Empty the outputdir of the subjob just before resubmitting it
 

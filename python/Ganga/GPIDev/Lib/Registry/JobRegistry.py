@@ -66,7 +66,6 @@ class JobRegistry(Registry):
 from RegistrySlice import RegistrySlice
 
 
-
 class JobRegistrySlice(RegistrySlice):
     def __init__(self,name):
         super(JobRegistrySlice,self).__init__(name,display_prefix="jobs")
@@ -216,12 +215,3 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         jobs[1] : get second job.
         """
         return _wrap(self._impl.__getitem__(_unwrap(x)))
-
-from Ganga.Utility.external.ordereddict import oDict
-def jobSlice(joblist):
-    slice = JobRegistrySlice("manual slice")
-    slice.objects = oDict([(j.fqid, _unwrap(j)) for j in joblist])
-    return _wrap(slice)
-
-from Ganga.Runtime.GPIexport import exportToGPI
-exportToGPI("jobSlice", jobSlice, "Functions")#, "Create a job slice from a job list")

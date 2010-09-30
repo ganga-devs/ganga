@@ -21,7 +21,6 @@ from GangaAtlas.Lib.ATLASDataset import filecheck
 
 from Ganga.Lib.Mergers.Merger import *
 
-__directory__ = os.path.dirname(__file__)
 
 class TagPrepare(IApplication):
     """Run a preparation job for TAG analysis"""
@@ -36,7 +35,7 @@ class TagPrepare(IApplication):
                      
     _category = 'applications'
     _name = 'TagPrepare'
-    _exportmethods = ['prepare_user_area']
+    _exportmethods = ['taginfo']
 
     def postprocess(self):
         """Load in and sort out the tag info"""
@@ -88,39 +87,6 @@ class TagPrepare(IApplication):
         
         return (0,None)
 
-    def prepare_user_area(self):
-        "Copy appropriate files to a user area and return the required list"
-        import shutil
-
-        # copy the overall TAG info
-        job = self.getJobObject()
-        files_to_copy = ['%s/subcoll.tar.gz' % job.outputdir]
-
-        # Now the reference files
-        ref_files = []
-        for tag in self.tag_info:
-            toks = tag.split('.')
-            stripname = '.'.join( toks[: len(toks) - 3] )
-
-            if not stripname in ref_files:
-                ref_files.append( stripname )
-
-        for f in ref_files:
-            files_to_copy.append( '%s/%s.ref.root' % (job.outputdir, f) )
-
-        # and now the worker files
-        
-        for f in ['uncompress.py', 'template.root', 'CollInflateEventInfo.exe','libPOOLCollectionTools.so.cmtref','libPOOLCollectionTools.so']:
-            files_to_copy.append('%s/%s' % (__directory__, f))
-
-        filelist = []
-        logger.warning('Copying the files required for TAG running to the current directory...')
-        for f in files_to_copy:
-            shutil.copyfile( f, '%s/%s' % (os.getcwd(), os.path.basename(f)))
-            filelist.append( os.path.basename(f) )
-
-        return filelist
-    
 from Ganga.GPIDev.Adapters.IMerger import IMerger
 from commands import getstatusoutput    
 import threading

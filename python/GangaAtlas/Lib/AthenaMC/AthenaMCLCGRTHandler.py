@@ -272,7 +272,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         # user area:
         if app.userarea : 
             inputbox.append(File(app.userarea))
-            environment['USER_AREA']=os.path.basename(app.userarea)
+            environment['USER_AREA']=os.path.basename(app.user_area.name)
 
 
         if (job.inputsandbox):

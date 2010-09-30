@@ -430,22 +430,16 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
 
         # Expand Athena jobOptions
-        if not app.atlas_exetype in ['EXE']:
-            athena_options = ' '.join([os.path.basename(opt_file.name) for opt_file in app.option_file])
-            #if app.options: athena_options = ' -c ' + app.options + ' ' + athena_options
-            if app.options:
-                athena_options = app.options + ' ' + athena_options
-                
-            inputbox = [ File(opt_file.name) for opt_file in app.option_file ]
-        else:
-            athena_options = ' '.join([os.path.basename(opt_file.name) for opt_file in app.option_file])
-            inputbox = []
-            
+        athena_options = ' '.join([os.path.basename(opt_file.name) for opt_file in app.option_file])
+        #if app.options: athena_options = ' -c ' + app.options + ' ' + athena_options
+        if app.options:
+            athena_options = app.options + ' ' + athena_options
+
         athena_usersetupfile = os.path.basename(app.user_setupfile.name)
 
 #       prepare input sandbox
 
-        
+        inputbox = [ File(opt_file.name) for opt_file in app.option_file ]
         inputbox.append( File(os.path.join(__directory__,'athena-utility.sh')) )
 
         if job.inputdata and job.inputdata._name == "AMIDataset" and job.inputdata.goodRunListXML.name != '':
