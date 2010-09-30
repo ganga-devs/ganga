@@ -254,7 +254,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             job.outputdata.datasetname+='/'
 
         # create the container
-        Client.createContainer(job.outputdata.datasetname,False)
+        try:
+            Client.createContainer(job.outputdata.datasetname,False)
+        except exceptions.SystemExit:
+            raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
         logger.info('Created output container %s'%job.outputdata.datasetname)
         self.indivOutContList = [job.outputdata.datasetname]
 
