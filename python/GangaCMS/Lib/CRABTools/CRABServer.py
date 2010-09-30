@@ -32,16 +32,17 @@ class CRABServer(GangaObject):
             code = p.returncode
             end = datetime.datetime.now()
             time = (end-init).seconds
-            logger.info('%s took %d seconds'%(type,time))
+            if type != 'checking status':
+              logger.info('%s took %d seconds'%(type,time))
         except OSError,e:
             logger.error(stdout)
             logger.error(stderr)
-            raise CRABServerError(e,'OSError %s crab job(s).'%(type))
+            raise CRABServerError.CRABServerError(e,'OSError %s crab job(s).'%(type))
 
         if code != 0:
             logger.info(stdout)
             logger.info(stderr) 
-            raise CRABServerError('CRAB %s exit code %s'%(type,code))  
+            raise CRABServerError.CRABServerError('CRAB %s exit code %s'%(type,code))  
 
     def create(self, job):
 
