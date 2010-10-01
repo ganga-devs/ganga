@@ -25,6 +25,7 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 
 from Ganga.Utility.GridShell import getShell
+from GangaPanda.Lib.Panda.Panda import setChirpVariables
 
 
 def getDBDatasets(jobO,trf,dbrelease):
@@ -93,6 +94,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             job.backend.libds = None
         else:
             local_libds = False
+
+        # set chirp variables
+        if configPanda['chirpconfig'] or configPanda['chirpserver']:
+            setChirpVariables()
+            logger.debug( configPanda['chirpserver'] )
+            logger.debug( configPanda['chirpconfig'] )
 
         # validate application
         if not app.atlas_release:

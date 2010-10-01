@@ -17,11 +17,13 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core import FileWorkspace
 from Ganga.Utility.Shell import Shell
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+from Ganga.Utility.Config import makeConfig, ConfigError, getConfig, setConfigOption
 from Ganga.Utility.logging import getLogger
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
+
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 
 logger = getLogger()
 config = makeConfig('Panda','Panda backend configuration parameters')
@@ -34,7 +36,17 @@ config.addOption( 'enableDownloadLogs', False , 'enableDownloadLogs' )
 config.addOption( 'trustIS', True , 'Trust the Information System' )  
 config.addOption( 'serverMaxJobs', 5000 , 'Maximum number of subjobs to send to the Panda server' )  
 config.addOption( 'chirpconfig', '' , 'Configuration string for chirp data output, e.g. "chirp^etpgrid01.garching.physik.uni-muenchen.de^/tanyasandoval^-d chirp" ' )  
+config.addOption( 'chirpserver', '' , 'Configuration string for the chirp server, e.g. "voatlas92.cern.ch". If this variable is set config.Panda.chirpconfig is filled and chirp output will be enabled.' )  
 
+def setChirpVariables():
+    """Helper function to fill chirp config variables"""
+    configPanda = getConfig('Panda')
+
+    nickname = getNickname(allowMissingNickname=False) 
+    if configPanda['chirpserver'] and not configPanda['chirpconfig']:
+        tempchirpconfig = 'chirp^%s^/%s^-d chirp' %(configPanda['chirpserver'],nickname)
+        Ganga.Utility.Config.setConfigOption('Panda','chirpconfig', tempchirpconfig)
+    return 
 
 pandaSpecTS = time.time()
 def refreshPandaSpecs():

@@ -21,6 +21,8 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 
+from GangaPanda.Lib.Panda.Panda import setChirpVariables
+
 class ExecutablePandaRTHandler(IRuntimeHandler):
     '''Executable Panda Runtime Handler'''
 
@@ -33,6 +35,10 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
         job = app._getParent()
         logger.debug('ExecutablePandaRTHandler master_prepare called for %s', job.getFQID('.')) 
+
+        # set chirp variables
+        if configPanda['chirpconfig'] or configPanda['chirpserver']:
+            setChirpVariables()
 
 #       Pack inputsandbox
         inputsandbox = 'sources.%s.tar' % commands.getoutput('uuidgen') 
