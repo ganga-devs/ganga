@@ -7,12 +7,21 @@ def report(job=None):
         import string
         import random
         import sys
+        import platform
 
         from Ganga.GPI import config
         from Ganga.GPI import full_print
         from Ganga.GPI import Job
         
         import Ganga
+
+        #global variables that will print sumamry report to the user along with the download link
+        global JOB_REPORT, GANGA_VERSION, BACKEND_NAME, APPLICATION_NAME, PYTHON_PATH
+        JOB_REPORT = False
+        GANGA_VERSION = ''
+        BACKEND_NAME = ''
+        APPLICATION_NAME = ''
+        PYTHON_PATH = ''
 
         def random_string (length):
                 return ''.join ([random.choice (string.letters) for ii in range (length + 1)])
@@ -71,11 +80,27 @@ def report(job=None):
                 endIndex = responseResult.find("</span>")
 
                 print 'Your error report was uploaded to ganga developers with the following URL. '
-                print 'You may include this URL in your bug report or in the support email to the developers.'
+                print 'You may include this URL and the following summary information in your bug report or in the support email to the developers.'
                 print
                 print '***',responseResult[startIndex:endIndex],'***'
                 print
+                global GANGA_VERSION, JOB_REPORT, APPLICATION_NAME, BACKEND_NAME, PYTHON_PATH
+                print 'Ganga Version : ' + GANGA_VERSION
+                print 'Python Version : ' + "%s.%s.%s" % (sys.version_info[0], sys.version_info[1], sys.version_info[2])
+                print 'Operation System Version : ' + platform.platform() 
 
+                if JOB_REPORT:
+                        print 'Application Name : ' + APPLICATION_NAME
+                        print 'Backend Name : ' + BACKEND_NAME
+
+                print 'Python Path : ' + PYTHON_PATH
+                print
+
+                JOB_REPORT = False
+                GANGA_VERSION = ''
+                BACKEND_NAME = ''
+                APPLICATION_NAME = ''
+                PYTHON_PATH = ''
 
         def run_upload (server, path):
 
@@ -105,8 +130,12 @@ def report(job=None):
 
                 def printDictionary(dictionary):
                         for k,v in dictionary.iteritems():
-                                print '%s: %s' % (k,v)
+                                print '%s : %s' % (k,v)
                                 print
+                                
+                                if k == 'PYTHONPATH':
+                                        global PYTHON_PATH
+                                        PYTHON_PATH = v
 
                 def extractFileObjects(fileName, targetDirectoryName):
                         try:
@@ -205,6 +234,9 @@ def report(job=None):
                         try:
                                 sys.stdout = inputFile
                                 printDictionary(os.environ)
+
+                                print 'OS VERSION : ' + platform.platform()
+
                         finally:
                                 sys.stdout = sys.__stdout__
                                 inputFile.close()       
@@ -230,6 +262,9 @@ def report(job=None):
 
                                 print
                                 print "#GANGA_VERSION = %s" % config.System.GANGA_VERSION 
+
+                                global GANGA_VERSION
+                                GANGA_VERSION = config.System.GANGA_VERSION
 
                         finally:
                                 sys.stdout = sys.__stdout__
@@ -306,6 +341,14 @@ def report(job=None):
 
                 #import job relevant info
                 if job is not None:
+
+                        global JOB_REPORT, APPLICATION_NAME, BACKEND_NAME
+
+                        JOB_REPORT = True
+                        APPLICATION_NAME = job.application.__class__.__name__
+                        BACKEND_NAME = job.backend.__class__.__name__
+
+
                         #create job folder                      
                         jobFolder = 'job_%s' % str(job.fqid)
                         fullLogDirName = os.path.join(fullLogDirName, jobFolder)
