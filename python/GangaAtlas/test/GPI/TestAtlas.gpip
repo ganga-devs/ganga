@@ -8,7 +8,7 @@ srcdir = "/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/"
 srcdirana = srcdir + "v1569"
 release = '15.6.9'
 release_mc='15.6.5.1'
-datasetana = "data09_900GeV.00140541.physics_MinBias.merge.AOD.r1093_p101_tid118749_00" 
+datasetana = "data09_900GeV.00140541.physics_MinBias.merge.AOD.r1093_p101/" 
 
 import commands
 outputdatasetname_panda = commands.getoutput('uuidgen')
@@ -23,14 +23,14 @@ class TestAtlas(GangaGPITestCase):
     def testAthenaLCG(self):
         return TestAthenaLCG(srcdir)
 
+    def testAthenaPanda(self):
+        return TestAthenaPanda(srcdir)
+
     def testAthenaDQ2LCG(self):
         return TestAthenaDQ2LCG(srcdirana)
 
     def testAthenaDQ2LCGFileStager(self):
         return TestAthenaDQ2LCGFileStager(srcdirana)
-
-    def testAthenaDQ2LCGDQ2COPY(self):
-        return TestAthenaDQ2LCGDQ2COPY(srcdirana)
 
     def testAnaTaskBasic(self):
         return TestAnaTaskBasic()
@@ -243,14 +243,6 @@ class TestAthenaDQ2LCGFileStager(TestAthena):
         self.j.backend.requirements.cputime=1440
         assert(self.j.submit()==True)
 
-class TestAthenaDQ2LCGDQ2COPY(TestAthena):
-    def setup(self):
-        TestAthena.setup(self)
-        self.j.backend=LCG()
-        self.j.backend.requirements.cloud='ALL'
-        self.j.inputdata.type = 'DQ2_COPY'
-        assert(self.j.submit()==True)
-
 class TestAthenaDQ2LSF(TestAthena):
     def setup(self):
         TestAthena.setup(self)
@@ -268,7 +260,27 @@ class TestAthenaLCG(AtlasTest):
         j.application.option_file=[ joboption ]
         j.application.atlas_release=release
         j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
+	j.application.atlas_dbrelease=''
         j.backend=LCG()
+        assert (j.submit()==True)
+        self.j = j
+
+class TestAthenaPanda(AtlasTest):
+    def setup(self):
+        joboption = '%s/HelloWorldOptions.py' % self.tmpdir
+        self.archivefile = '%s/EmptyUserArea.tar.gz' % self.tmpdir
+        j = Job()
+        j.application=Athena()
+        j.application.option_file=[ joboption ]
+        j.application.atlas_release=release
+        j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
+	j.application.atlas_dbrelease=''
+	j.application.atlas_run_dir = './' 
+	j.application.atlas_run_config = {'input': {'noInput': True}, 'other': {}, 'output': {'alloutputs': []}} 
+        j.application.user_area = self.archivefile
+	j.outputdata=DQ2OutputDataset()
+        j.backend=Panda()
+        j.backend.site='ANALY_LRZ'
         assert (j.submit()==True)
         self.j = j
 
