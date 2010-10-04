@@ -7,6 +7,7 @@ def report(job=None):
         import string
         import random
         import sys
+        import os
         import platform
 
         from Ganga.GPI import config
@@ -130,7 +131,7 @@ def report(job=None):
 
                 def printDictionary(dictionary):
                         for k,v in dictionary.iteritems():
-                                print '%s : %s' % (k,v)
+                                print '%s: %s' % (k,v)
                                 print
                                 
                                 if k == 'PYTHONPATH':
@@ -195,7 +196,6 @@ def report(job=None):
                                         renameDataFiles(fullFileName)   
 
                 import shutil
-                import os
                 import tarfile
                 import tempfile
 
@@ -455,7 +455,6 @@ def report(job=None):
                 return (resultArchive, uploadFileServer, tempDir)
 
         def removeTempFiles(tempDir):
-                import os
                 import shutil
                 
                 #remove temp dir
@@ -483,28 +482,13 @@ def report(job=None):
 
                 resultArchive, uploadFileServer, tempDir = report_inner(job)
 
-                run_upload(server=uploadFileServer, path=resultArchive)
-
-                #print 'You can find your user report here : ' + resultArchive
-
-                #for now don't send to the server
-                #send the file to the server
-                #import xmlrpclib
-                #import os
-                #proxy = xmlrpclib.ServerProxy("http://pclcg35.cern.ch:8000")
-
+                report_bytes = os.path.getsize(resultArchive)
                 
-                #readFile = open(resultArchive, 'rb')
-                #try:
-                #       contents = readFile.read()
-                #       reportNumber = proxy.sendFile(xmlrpclib.Binary(contents), os.path.basename(resultArchive))      
-                #       print 'Your report number is ' + str(reportNumber)      
+                if report_bytes > 1024*1024*100: #if bigger than 100MB
+                        print 'The report is bigger than 100MB and can not be uploaded'
+                else:
+                        run_upload(server=uploadFileServer, path=resultArchive)
 
-                #finally:
-                #       readFile.close()
-
-                #delete the tar file
-                #os.remove(resultArchive)
                 
         except:
                 removeTempFiles(tempDir)
