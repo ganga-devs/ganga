@@ -126,15 +126,19 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
 
         self.username = gridProxy.identity(safe=True)
 
+        # check atlas release
+        atlas_release = '15.6.8'
+        if app.atlas_release != '15.6.8':
+            logger.warning("Atlas release '%s' not supported. Switching to 15.6.8." % app.atlas_release)                                                
         # prepare input sandbox
         logger.warning("Copying grid proxy to input sandbox for transfer to WN...")
         inputbox = [ ( File(os.path.join(__athdirectory__,'athena-utility.sh')) ),
                      ( File(os.path.join(__directory__,'get_tag_info.py')) ),
                      ( File(os.path.join(__directory__,'template.root')) ),
-                     ( File(os.path.join(__directory__,'libPOOLCollectionTools.so.cmtref'))),
-                     ( File(os.path.join(__directory__,'libPOOLCollectionTools.so'))),
-                     ( File(os.path.join(__directory__,'CollSplitByGUID.exe'))),
-                     ( File(os.path.join(__directory__,'CollCompressEventInfo.exe'))),
+                     ( File(os.path.join(__directory__,'r15','libPOOLCollectionTools.so.cmtref'))),
+                     ( File(os.path.join(__directory__,'r15','libPOOLCollectionTools.so'))),
+                     ( File(os.path.join(__directory__,'r15','CollSplitByGUID.exe'))),
+                     ( File(os.path.join(__directory__,'r15','CollCompressEventInfo.exe'))),
                      ( File(gridProxy.location())) ]
             
         ## insert more scripts to inputsandbox for FileStager
@@ -151,12 +155,6 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
         except ConfigError:
             raise ConfigError('No default location of ATLAS_SOFTWARE specified in the configuration.')
 
-        # check atlas release
-        atlas_release = '15.6.8'
-        if app.atlas_release != '15.6.8':
-            logger.warning("Atlas release '%s' not supported. Switching to 15.6.8." % app.atlas_release)
-
-                                                    
         # prepare environment
         environment={
             'MAXNUMREFS'     : str(app.max_num_refs),
