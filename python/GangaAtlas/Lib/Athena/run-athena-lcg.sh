@@ -767,7 +767,7 @@ site - please contact Ganga support mailing list.'
 	rm -f retcode.tmp
 	ls -rtla
 	
-	if [ $retcode -eq 0 ] && [ -e $file ]
+	if [ $retcode -eq 0 ] && [ -e $file ] && [ n$TAG_TYPE == n'' ]
 	    then
         # Create PoolFileCatalog.xml
 	    pool_insertFileToCatalog $file; echo $? > retcode.tmp
