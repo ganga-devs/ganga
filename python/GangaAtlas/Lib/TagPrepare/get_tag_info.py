@@ -197,6 +197,9 @@ if os.environ['GANGA_ATHENA_WRAPPER_MODE'] == 'grid':
 else:
     #-------------------------------------------
     # sort out the files for local running
+    num = 0
+    file_refs = {}
+
     for f in taglfns:
         if os.access( f, os.R_OK ):
             
@@ -216,8 +219,6 @@ else:
 
             # create the guid split list
             guid_str = ""
-            num = 0
-            file_refs = {}
             for dataset in ref_datasets:
                 j = 0
 
@@ -243,7 +244,7 @@ else:
             # split the tag file based on these dataset boundaries
             #cmd = "./CollSplitByGUID.exe -src " + os.path.basename(f) + " RootCollection -guidfile guid_list.txt -streamref " + _streamRef + " -queryopt "+_streamRef
             compress = False
-            if (os.path.getsize(f) > 20000000):
+            if (os.path.getsize(f) > 20):
                 print "COMPRESSING TAG FILE..."
                 cmd = "./CollCompressEventInfo.exe -src " + os.path.basename(f) + " RootCollection -guidfile guid_list.txt -splitref " + _streamRef + " -queryopt "+_streamRef
                 rc, out = getstatusoutput(cmd)
@@ -301,36 +302,38 @@ else:
                         
                     taginfo[new_name] = { 'dataset':'', 'path':os.environ['GANGA_OUTPUT_PATH'], 'refs': file_refs[sub_f], 'compress' : compress  }
 
-                if sub_f.find('mycoll_') != -1 and sub_f.find('.ref.root') != -1:
-                    append_list.append(sub_f)
-                    os.symlink(sub_f, sub_f + ".root")
+    for sub_f in os.listdir('.'):
+        if sub_f.find('mycoll_') != -1 and sub_f.find('.ref.root') != -1:
+            append_list.append(sub_f)
+            os.symlink(sub_f, sub_f + ".root")
 
-            print "CREATING MASTER REF FILE..."
-            cmd = "CollAppend -src " 
-            for sub_f in append_list:
-                cmd += sub_f + " RootCollection "
-            cmd += " -dst " + os.path.basename(f) + ".ref RootCollection"
-            tag_ref_files.append(os.path.basename(f)+".ref.root")
+    print "CREATING MASTER REF FILE..."
+    cmd = "CollAppend -src " 
+    for sub_f in append_list:
+        cmd += sub_f + " RootCollection "
+    cmd += " -dst " + os.path.basename(f) + ".ref RootCollection"
+    tag_ref_files.append(os.path.basename(f)+".ref.root")
             
-            rc, out = getstatusoutput(cmd)
-            print cmd
+    rc, out = getstatusoutput(cmd)
+    print cmd
+    print out
+    if (rc!=0):
+        print out
+        print "ERROR: error during CollAppend. Restoring original environment variables and retrying...."
+        cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd
+        rc, out = getstatusoutput(cmd)
+
+        if (rc!=0):
             print out
-            if (rc!=0):
-                print out
-                print "ERROR: error during CollAppend. Restoring original environment variables and retrying...."
-                cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP ; export PATH=$PATH_BACKUP; export PYTHONPATH=$PYTHONPATH_BACKUP ; ' + cmd
-                rc, out = getstatusoutput(cmd)
+            print "ERROR: error during CollAppend. Giving up..."
+            
 
-                if (rc!=0):
-                    print out
-                    print "ERROR: error during CollAppend. Giving up..."
-                    continue
-
+        if (rc!=0):
             for sub_f in append_list:
                 os.system("rm " + sub_f)
                 
-            rc, out = getstatusoutput("ls -ltr")
-            print out
+    rc, out = getstatusoutput("ls -ltr")
+    print out
 
     
     print "---------------------------------------------"
