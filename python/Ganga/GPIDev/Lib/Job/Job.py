@@ -40,7 +40,8 @@ class JobInfo(GangaObject):
     _schema = Schema(Version(0,1),{
                                    'submit_counter' : SimpleItem(defvalue=0,protected=1,doc="job submission/resubmission counter"),
                                    'monitor' : ComponentItem('monitor',defvalue=None,load_default=0,comparable=0, optional=1,doc="job monitor instance"),
-                                   'uuid' : SimpleItem(defvalue='',protected=1,comparable=0, doc='globally unique job identifier')
+                                   'uuid' : SimpleItem(defvalue='',protected=1,comparable=0, doc='globally unique job identifier'),
+                                   'links' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,copyable=0,doc="list of monitoring links")
                                     })
 
     _category = 'jobinfos'
