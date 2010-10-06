@@ -266,7 +266,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         #inputbox = [File(os.path.join(__directory__,'athena-utility.sh')) ]
         __tpdirectory__ = sys.modules['GangaAtlas.Lib.TagPrepare'].__path__[0]                
-        if str(app.atlas_release)[:3] == '16.'):
+        if (str(app.atlas_release[:3]) == '16.'):
             __tpdirectoryrel__ = os.path.join( __tpdirectory__, 'r16' )
         else:
             __tpdirectoryrel__ = os.path.join( __tpdirectory__, 'r15' )
