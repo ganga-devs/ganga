@@ -586,11 +586,23 @@ class DQ2JobSplitter(ISplitter):
                 if job.inputdata.tag_info and local_tag:
                     
                     remaining_tags = []   # c.f. remaining guids: list of tag files that ref. this dataset
-                    
+
                     for tag_file in job.inputdata.tag_info:
-                        if job.inputdata.tag_info[tag_file]['refs'][0][2] in remaining_guids:
+
+                        # check all guids are referenced
+                        num = 0                            
+                        for ref in job.inputdata.tag_info[tag_file]['refs']:                
+                            if ref[2] in remaining_guids:
+                                num += 1
+
+                        if num > 0 and num != len(job.inputdata.tag_info[tag_file]['refs']):
+                            for ref in job.inputdata.tag_info[tag_file]['refs']:
+                                if ref[2] in remaining_guids:
+                                    remaining_guids.remove(ref[2])
+                            logger.warning('Not all guids referenced by TAG file %s were found in available sites - ignoring this file.' % tag_file)
+                        elif num > 0:
                             remaining_tags.append( tag_file )
-                 
+                            
                 # do a Panda brokerage for these sites
                 pandaSite = ''
                 if job.backend._name == 'Panda':
@@ -689,7 +701,6 @@ class DQ2JobSplitter(ISplitter):
                                     remaining_tags.remove(next_tag)
                                     
                                     for ref in job.inputdata.tag_info[next_tag]['refs']:
-
                                         remaining_guids.remove(ref[2])
                                         j.inputdata.guids.append(ref[2])
                                         j.inputdata.names.append(allcontent[ref[2]][0])
@@ -787,6 +798,7 @@ class DQ2JobSplitter(ISplitter):
             logger.info('Total files assigned to subjobs is %d'%totalfiles)
             if not (totalfiles == allfiles):
                 logger.error('DQ2JobSplitter was only able to assign %s out of %s files to the subjobs ! Please check your job configuration if this is intended and possibly change to a different cloud or choose different sites!', totalfiles, allfiles)
+                
                 self.missing_files = []
                 for name in allnames:
                     found=False
