@@ -437,8 +437,8 @@ function Settings() {
                     'chm':'B,EFEFEF,0,0,0'// color
                 }
             }
-
-/*,
+/*
+,
 	    {
                 'dataURL': 'http://localhost/?list=testaccumulation',
                 'dataURL_params': function(Data) { return {'taskmonid':Data.tid}; },
@@ -552,7 +552,7 @@ function Settings() {
 				
                                 var output = {
                                         'chxl':'0:|' + startdatestring + '|' + enddatestring,
-                                        'chd':'t:' + reduced_finished_event_time.join(',') + '|' + reduced_accumulated_finished_events_number.join(','),
+                                        'chd':'t:0,' + reduced_finished_event_time.join(',') + '|0,' + reduced_accumulated_finished_events_number.join(','),
                                         'chxr':'1,0,' + total_number_finished_events,
                                         'chtt':'' + succjobstotalevents + ' processed events out of ' + eventsInTotal + ' in total. time interval - ' + minutes + ' minutes.'
                     };
