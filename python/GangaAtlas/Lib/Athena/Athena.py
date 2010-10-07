@@ -823,7 +823,7 @@ class Athena(IApplication):
         logger.info('Creating %s ...', archiveFullName )
 
         # Add TAG specifc files if required
-        if 'uncompress.py' in os.listdir('.'):
+        if 'uncompress.py' in os.listdir('.') and 'subcoll.tar.gz' in os.listdir('.'):
             logger.warning('Copying TAG system files to current directory...')
             __tpdirectory__ = sys.modules['GangaAtlas.Lib.TagPrepare'].__path__[0]   
             if (str(self.atlas_release[:3]) == '16.'):
