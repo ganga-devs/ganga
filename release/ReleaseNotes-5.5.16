@@ -3,6 +3,47 @@
 
 
 --------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+bugfixes:
+ - bug #71343: Executable application doesn't support numerical arguments
+ - bug #70758: subjobness not taken into account in warning "has reached unexpected the Cleared 
+state and Ganga cannot retrieve ..."
+ - bug #69216: .ganga.log surprising behaviour
+ - bug #68896: ganga - glite-wms-job-list-match fails - reports full output is in file ... - but 
+file does not exist
+ - bug #70712: SGE() should have information about job's worker node
+ - fixed a problem in timestamps for subjobs: "submitted" time is now correct even in cases where 
+the subjob submission takes a long time.
+
+New functionality in GPI:
+ - bug #73398: Ability to build slice from list of jobs)
+    - Added jobSlice function that makes a slice from a job list
+
+Error reporting tool:
+    - added list of all jobs with their statuses, subjobs, etc. in the report tarball
+    - print the most important information collected in the tarball such as python path , ganga 
+version, python version, os version, application and backend
+    - if the tar archive is bigger than 100mb - show warning message to the user that the report is 
+too big and do not upload it on the server
+
+
+Ganga Web GUI :
+    - on jobs and subjobs table chart tabs are added - for job -> pie charts for status, backend and 
+application, for subjobs -> pie charts for status and actualCE and line chart for succeeded subjobs 
+in time
+    - if number of subjobs is zero made the job not clickable
+    - added chart on the jobs menu showing graphicaly succeded/faield jobs
+    - show monitoring links in ganga web gui - added links list to job.info object in ganga, after 
+that on sumbit of some monitoring plugin some monitoring link could be added in this list and after 
+that we display the link in the ganga webgui
+
+Extended spyware :
+    - get track of how many plain jobs, master jobs and subjobs are submitted per 
+(user,host,application,backend,day) - saving this info in DB on the gangamon server
+
+
+--------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 Athena:
