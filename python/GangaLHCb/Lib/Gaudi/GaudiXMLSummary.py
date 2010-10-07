@@ -82,14 +82,19 @@ class GaudiXMLSummary(GangaObject):
 
         p = self._xmlPath()
         v = self.env_var        
-        if not xml_schema.has_key(self.env_var):
+        if not xml_schema.has_key(v):
+            if sys.modules.has_key('schema'): del sys.modules['schema']
             xml_schema[v] = imp.load_source('schema',p+'/schema.py')
+            if sys.modules.has_key('summary'): del sys.modules['summary']
             xml_summary[v] = imp.load_source('summary',p+'/summary.py')
             xml_summary[v].__schema__ = xml_schema[v]
 
         sum = xml_summary[v].Summary(self._xmlSchema())
         sum.parse(self.file)
         self.data = sum
+
+        del sys.modules['schema']
+        del sys.modules['summary']
         return
 
     def create(self,job,file='summary.xml'):

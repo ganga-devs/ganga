@@ -226,11 +226,11 @@ class Francesc(IApplication):
         data_str = self.extra.inputdata.optionsString()
         self.extra.input_buffers['data.py'] += data_str
 
-    def postprocess(self):
-        from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
-        job = self.getJobObject()
+    #def postprocess(self):
+        #from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
+        #job = self.getJobObject()
         #if job:
-        raise PostprocessStatusUpdate("failed")
+        #raise PostprocessStatusUpdate("failed")
         
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
