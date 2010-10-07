@@ -613,15 +613,17 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                         param += '--collRefName %s ' % self.runConfig.input.collRefName
                         
                     # sort out the input ELSSI file from the tag_info
-                    input_files = ['.'.join( tag_file.split(".")[:len(tag_file.split("."))-2] )]
+                    input_files = ['.'.join( tag_file.split(".")[:len(tag_file.split("."))-3] ) + '.ref.root']
+                    #input_files = [tag_file]
 
                     # get the GUID boundaries
                     guid_boundaries = []
                     for tag_file2 in job.inputdata.tag_info:
-                        guid_boundaries.append(job.inputdata.tag_info[tag_file2]['refs'][0][2])
+                        for ref in job.inputdata.tag_info[tag_file2]['refs']:
+                            guid_boundaries.append(ref[2])
 
                     param += '--guidBoundary "%s" ' % guid_boundaries
-                    
+                                        
             param += '-i "%s" ' % input_files
         else:
             param += '-i "[]" '
