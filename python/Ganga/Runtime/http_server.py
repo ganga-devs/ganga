@@ -226,6 +226,9 @@ def get_accumulated_subjobs_JSON(subjobs):
         if subjob.status == 'completed':
             completed_dates.append(subjob.time.timestamps['final'])     
 
+    if len(completed_dates) == 0 :
+        return ''       
+
     completed_dates.sort()      
 
     start_date = completed_dates[0]
