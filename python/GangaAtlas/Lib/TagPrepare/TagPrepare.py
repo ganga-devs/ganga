@@ -22,6 +22,7 @@ from GangaAtlas.Lib.ATLASDataset import filecheck
 from Ganga.Lib.Mergers.Merger import *
 
 __directory__ = os.path.dirname(__file__)
+logger = getLogger()
 
 class TagPrepare(IApplication):
     """Run a preparation job for TAG analysis"""
@@ -91,7 +92,7 @@ class TagPrepare(IApplication):
     def prepare_user_area(self):
         "Copy appropriate files to a user area and return the required list"
         import shutil
-
+        
         # copy the overall TAG info
         job = self.getJobObject()
         files_to_copy = ['%s/subcoll.tar.gz' % job.outputdir]
@@ -109,8 +110,12 @@ class TagPrepare(IApplication):
             files_to_copy.append( '%s/%s.ref.root' % (job.outputdir, f) )
 
         # and now the worker files
-        
-        for f in ['uncompress.py', 'template.root', 'CollInflateEventInfo.exe','libPOOLCollectionTools.so.cmtref','libPOOLCollectionTools.so']:
+        for f in ['uncompress.py', 'template.root']:
+            if f in os.listdir('.'):
+                size = os.path.getsize('%s/%s' % (__directory__, f))
+                if size != os.path.getsize(f):
+                    raise ApplicationConfigurationError(None, "File '%s' already present in current dir. Please rename or remove before continuing." % f)
+            
             files_to_copy.append('%s/%s' % (__directory__, f))
 
         filelist = []
