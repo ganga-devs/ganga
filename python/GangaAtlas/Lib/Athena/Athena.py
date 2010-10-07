@@ -8,7 +8,7 @@
 # ARDA/ATLAS
 # 
 
-import os, re, commands, string
+import os, re, commands, string, sys, shutil
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -821,6 +821,18 @@ class Athena(IApplication):
         verbose = False
         archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages)
         logger.info('Creating %s ...', archiveFullName )
+
+        # Add TAG specifc files if required
+        if 'uncompress.py' in os.listdir('.'):
+            logger.warning('Copying TAG system files to current directory...')
+            __tpdirectory__ = sys.modules['GangaAtlas.Lib.TagPrepare'].__path__[0]   
+            if (str(self.atlas_release[:3]) == '16.'):
+                __tpdirectoryrel__ = os.path.join( __tpdirectory__, 'r16' )
+            else:
+                __tpdirectoryrel__ = os.path.join( __tpdirectory__, 'r15' )
+            
+            for f in ['CollInflateEventInfo.exe','libPOOLCollectionTools.so.cmtref','libPOOLCollectionTools.so']:
+                shutil.copyfile( '%s/%s' % (__tpdirectoryrel__, f), '%s/%s' % (os.getcwd(), os.path.basename(f)))
 
         # Add InstallArea
         if not self.athena_compile:
