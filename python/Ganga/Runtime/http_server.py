@@ -89,7 +89,7 @@ def get_job_JSON(job):
     result.append("\"name\": %s," % addQuotes(job.name))        
 
     #add mon links in the JSON 
-    mon_links = job.info.links
+    mon_links = job.info.monitoring_links
     mon_links_html = '' 
         
     if len(mon_links) > 0:
