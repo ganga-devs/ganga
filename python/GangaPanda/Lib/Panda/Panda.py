@@ -780,7 +780,25 @@ class Panda(IBackend):
 
         spacetokens = []
         if self.site == 'AUTO':
-            sites=Client.PandaSites.keys()
+            if self.libds:
+                logger.info('Locating libds %s'%self.libds)
+                try:
+                    libdslocation = Client.getLocations(self.libds,[],self.requirements.cloud,False,False)
+                except exceptions.SystemExit:
+                    raise BackendError('Panda','Error in Client.getLocations for libDS')
+                if not libdslocation:
+                    raise ApplicationConfigurationError(None,'Could not locate libDS %s'%self.libds)
+                else:
+                    libdslocation = libdslocation.values()[0]
+                    try:
+                        self.requirements.cloud = Client.PandaSites[libdslocation[0]]['cloud']
+                    except:
+                        raise BackendError('Panda','Could not map libds site %s to a cloud'%libdslocation)
+                sites = libdslocation
+                logger.info('LibDS is at %s. Run jobs will execute there.'%sites)
+            else: 
+                sites=Client.PandaSites.keys()
+
             for s in sites:
                 if Client.PandaSites[s]['status'] not in ['online'] or s in self.requirements.excluded_sites or (not self.requirements.anyCloud and Client.PandaSites[s]['cloud'] != self.requirements.cloud):
                     continue
