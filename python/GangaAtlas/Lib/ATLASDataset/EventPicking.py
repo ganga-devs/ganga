@@ -36,23 +36,36 @@ class EventPicking(DQ2Dataset):
     def get_pick_dataset(self, verbose=False):
         
         job = self._getParent()
-        if job.inputdata.pick_event_list.name != '' and  len(job.inputdata.dataset) !=0 :
+        if job and job.inputdata and job.inputdata.pick_event_list.name != '' and  len(job.inputdata.dataset) !=0 :
             raise ApplicationConfigurationError(None, 'Cannot use event pick list and input dataset at the same time.')
 
         #parametr check for event picking
-        if job.inputdata.pick_event_list.name != '':
+        if job and job.inputdata and job.inputdata.pick_event_list.name != '':
             if job.inputdata.pick_data_type == '':
                 raise ApplicationConfigurationError(None, 'Event pick data type (pick_data_type) must be specified.')
 
-        from pandatools import eventLookup, Client
-        elssiIF = eventLookup.pyELSSI()
         # set X509_USER_PROXY
+        from pandatools import Client
         if not os.environ.has_key('X509_USER_PROXY') or os.environ['X509_USER_PROXY'] == '':
             os.environ['X509_USER_PROXY'] = Client._x509()
+
+        # setup eventLookup
+        from pandatools.eventLookupClient import eventLookupClient
+        elssiIF = eventLookupClient()
         # open run/event txt
+        runEvtList = []
         if os.path.exists( self.pick_event_list.name ):
             logger.info("Event pick list file %s selected" % self.pick_event_list.name)
             runevttxt = open(self.pick_event_list.name)
+            for line in runevttxt:
+                items = line.split()
+                if len(items) != 2:
+                    continue
+                runNr,evtNr = items
+                runEvtList.append([runNr,evtNr])
+                # close
+            runevttxt.close()
+
         else:
             raise ApplicationConfigurationError(None, 'Could not read event pick list file %s.' %self.pick_event_list.name)
 
@@ -70,80 +83,105 @@ class EventPicking(DQ2Dataset):
         logger.info('Getting dataset names and LFNs from ELSSI for event picking')
 
         # read
-        runEvtList = []
         guids = []
         guidRunEvtMap = {}
-        runEvtGuidMap = {}    
-        for line in runevttxt:
-            items = line.split()
-            if len(items) != 2:
-                continue
-            runNr,evtNr = items
-            paramStr = 'Run:%s Evt:%s Stream:%s Dataset pattern %s' % (runNr,evtNr,self.pick_stream_name, self.pick_dataset_pattern)
-            logger.info(paramStr)
+        runEvtGuidMap = {}
+        # bulk lookup
+        nEventsPerLoop = 500
+        iEventsTotal = 0
+        while iEventsTotal < len(runEvtList):
+            tmpRunEvtList = runEvtList[iEventsTotal:iEventsTotal+nEventsPerLoop]
+            iEventsTotal += nEventsPerLoop
+            paramStr = 'Run, Evt: %s, Stream: %s, Dataset pattern: %s' % (tmpRunEvtList,self.pick_stream_name, self.pick_dataset_pattern)
+            logger.debug(paramStr)
+            logger.info('.')
             # check with ELSSI
             if self.pick_stream_name == '':
-                guidListELSSI = elssiIF.eventLookup(runNr,evtNr,[streamRef],verbose=verbose)
+                guidListELSSI = elssiIF.doLookup(tmpRunEvtList,tokens=streamRef,extract=True)
             else:
-                guidListELSSI = elssiIF.eventLookup(runNr,evtNr,[streamRef],self.pick_stream_name,verbose=verbose)            
-            if guidListELSSI == []:
-                errStr = "GUID was not found in ELSSI for %s" % paramStr    
+                guidListELSSI = elssiIF.doLookup(tmpRunEvtList,stream=self.pick_stream_name,tokens=streamRef,extract=True)
+
+            if len(guidListELSSI) == 0 or guidListELSSI == None:
+                errStr = ''
+                for tmpLine in elssiIF.output:
+                    errStr += tmpLine + '\n'
+                errStr = "GUID was not found in ELSSI.\n" + errStr
                 raise ApplicationConfigurationError(None,errStr)
-            # check duplication
-            tmpguids = []
-            for tmpGuid, in guidListELSSI:
-                if tmpGuid == 'NOATTRIB':
-                    continue
-                if not tmpGuid in tmpguids:
-                    tmpguids.append(tmpGuid)
-            if tmpguids == []:
-                errStr = "no GUIDs were found in ELSSI for %s" % paramStr
+
+            # check attribute
+            attrNames, attrVals = guidListELSSI
+            def getAttributeIndex(attr):
+                for tmpIdx,tmpAttrName in enumerate(attrNames):
+                    if tmpAttrName.strip() == attr:
+                        return tmpIdx
+                errStr = "cannot find attribute=%s in %s provided by ELSSI" % (attr,str(attrNames))
                 raise ApplicationConfigurationError(None,errStr)
-            # append
-            for tmpguid in tmpguids:
-                if not tmpguid in guids:
-                    guids.append(tmpguid)
-                    guidRunEvtMap[tmpguid] = []
-                guidRunEvtMap[tmpguid].append((runNr,evtNr))
-            runEvtGuidMap[(runNr,evtNr)] = tmpguids
-        # close
-        runevttxt.close()
+            # get index
+            indexEvt = getAttributeIndex('EventNumber')
+            indexRun = getAttributeIndex('RunNumber')
+            indexTag = getAttributeIndex(streamRef)
+            # check events
+            for runNr,evtNr in tmpRunEvtList:
+                paramStr = 'Run:%s Evt:%s Stream:%s' % (runNr,evtNr,self.pick_stream_name)
+                # collect GUIDs
+                tmpguids = []
+                for attrVal in attrVals:
+                    if runNr == attrVal[indexRun] and evtNr == attrVal[indexEvt]:
+                        tmpGuid = attrVal[indexTag]
+                        # check non existing
+                        if tmpGuid == 'NOATTRIB':
+                            continue
+                        if not tmpGuid in tmpguids:
+                            tmpguids.append(tmpGuid)
+                # not found
+                if tmpguids == []:
+                    errStr = "no GUIDs were found in ELSSI for %s" % paramStr
+                    raise ApplicationConfigurationError(None,errStr)
+                # append
+                for tmpguid in tmpguids:
+                    if not tmpguid in guids:
+                        guids.append(tmpguid)
+                        guidRunEvtMap[tmpguid] = []
+                    guidRunEvtMap[tmpguid].append((runNr,evtNr))
+                runEvtGuidMap[(runNr,evtNr)] = tmpguids
+
         # convert to dataset names and LFNs
         dsLFNs,allDSMap = Client.listDatasetsByGUIDs(guids,self.pick_dataset_pattern,verbose)
         logger.debug(dsLFNs)
         
-        #populate DQ2Dataset    
-        job.inputdata.dataset = []
-        job.inputdata.names = []
-        job.inputdata.guids = []
+        #populate DQ2Datase    
+        if job and job.inputdata:
+            job.inputdata.dataset = []
+            job.inputdata.names = []
+            job.inputdata.guids = []
 
-        # check duplication
-        for runNr,evtNr in runEvtGuidMap.keys():
-            tmpLFNs = []
-            tmpAllDSs = {}
-            for tmpguid in runEvtGuidMap[(runNr,evtNr)]:
-                if dsLFNs.has_key(tmpguid):
-                    tmpLFNs.append(dsLFNs[tmpguid])
-                    job.inputdata.guids.append(tmpguid)
-                    job.inputdata.names.append(dsLFNs[tmpguid][1])
-                    if not ((dsLFNs[tmpguid][0]) in job.inputdata.dataset):
-                        job.inputdata.dataset.append(dsLFNs[tmpguid][0])
-                else:
-                    tmpAllDSs[tmpguid] = allDSMap[tmpguid]
-                    if guidRunEvtMap.has_key(tmpguid):
-                        del guidRunEvtMap[tmpguid]
-            # empty        
-            if tmpLFNs == []:
-                paramStr = 'Run:%s Evt:%s Stream:%s' % (runNr,evtNr,self.pick_stream_name)                        
-                errStr = "Dataset pattern '%s' didn't pick up a file for %s\n" % (self.pick_dataset_pattern,paramStr)
-                for tmpguid,tmpAllDS in tmpAllDSs.iteritems():
-                    errStr += "    GUID:%s dataset:%s\n" % (tmpguid,str(tmpAllDS))
-                raise ApplicationConfigurationError(None,errStr)
-            # duplicated    
-            if len(tmpLFNs) != 1:
-                paramStr = 'Run:%s Evt:%s Stream:%s' % (runNr,evtNr,self.pick_stream_name)            
-                errStr = "Multiple LFNs %s were found in ELSSI for %s. Please set pick_dataset_pattern and/or pick_stream_name correctly" %(str(tmpLFNs),paramStr)
-                raise ApplicationConfigurationError(None,errStr)
+            # check duplication
+            for runNr,evtNr in runEvtGuidMap.keys():
+                tmpLFNs = []
+                tmpAllDSs = {}
+                for tmpguid in runEvtGuidMap[(runNr,evtNr)]:
+                    if dsLFNs.has_key(tmpguid):
+                        tmpLFNs.append(dsLFNs[tmpguid])
+                        job.inputdata.guids.append(tmpguid)
+                        job.inputdata.names.append(dsLFNs[tmpguid][1])
+                        if not ((dsLFNs[tmpguid][0]) in job.inputdata.dataset):
+                            job.inputdata.dataset.append(dsLFNs[tmpguid][0])
+                    else:
+                        tmpAllDSs[tmpguid] = allDSMap[tmpguid]
+                        if guidRunEvtMap.has_key(tmpguid):
+                            del guidRunEvtMap[tmpguid]
+                # empty        
+                if tmpLFNs == []:
+                    paramStr = 'Run:%s Evt:%s Stream:%s' % (runNr,evtNr,self.pick_stream_name)                        
+                    errStr = "Dataset pattern '%s' didn't pick up a file for %s\n" % (self.pick_dataset_pattern,paramStr)
+                    for tmpguid,tmpAllDS in tmpAllDSs.iteritems():
+                        errStr += "    GUID:%s dataset:%s\n" % (tmpguid,str(tmpAllDS))
+                    raise ApplicationConfigurationError(None,errStr)
+                # duplicated    
+                if len(tmpLFNs) != 1:
+                    paramStr = 'Run:%s Evt:%s Stream:%s' % (runNr,evtNr,self.pick_stream_name)            
+                    errStr = "Multiple LFNs %s were found in ELSSI for %s. Please set pick_dataset_pattern and/or pick_stream_name correctly" %(str(tmpLFNs),paramStr)
+                    raise ApplicationConfigurationError(None,errStr)
 
         
         # return
