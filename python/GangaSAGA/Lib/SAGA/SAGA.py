@@ -347,8 +347,8 @@ class SAGA(IBackend):
         #    wd_uuid +=  job.name + "-"
 
         if sys.version_info < (2, 5):
-            wd_uuid = os.popen("/usr/bin/uuidgen").read()
-            wd_uuid = uuid_str.rstrip("\n") 
+            uuid_str = os.popen("/usr/bin/uuidgen").read()
+            wd_uuid += uuid_str.rstrip("\n") 
         else:
             import uuid
             wd_uuid += str(uuid.uuid4()) 
