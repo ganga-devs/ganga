@@ -5,6 +5,7 @@
 import os, sys, pickle
 from commands import getstatusoutput
 import dq2
+import shutil
 from dq2.clientapi.DQ2 import DQ2
 from struct import *
 
@@ -311,9 +312,8 @@ else:
     cmd = "CollAppend -src " 
     for sub_f in append_list:
         cmd += sub_f + " RootCollection "
-    cmd += " -dst " + os.path.basename(f) + ".ref RootCollection"
-    tag_ref_files.append(os.path.basename(f)+".ref.root")
-            
+    cmd += " -dst " + os.path.basename(taglfns[0]) + ".ref RootCollection"
+    tag_ref_files.append(os.path.basename(taglfns[0])+".ref.root")
     rc, out = getstatusoutput(cmd)
     print cmd
     print out
@@ -331,14 +331,24 @@ else:
         if (rc!=0):
             for sub_f in append_list:
                 os.system("rm " + sub_f)
-                
+
+    # make copies of the master ref file
+    print tag_ref_files
+    for f in taglfns:
+        print "Checking:  " + os.path.basename(f)+".ref.root"
+        if not os.path.exists(os.path.basename(f)+".ref.root"):
+            print "Copying..."
+            tag_ref_files.append(os.path.basename(f)+".ref.root")
+            shutil.copyfile(os.path.basename(taglfns[0]) + ".ref.root", os.path.basename(f)+".ref.root")
+            
     rc, out = getstatusoutput("ls -ltr")
     print out
 
     
     print "---------------------------------------------"
     print taginfo
-
+    print tag_ref_files
+    
 if len(taginfo) == 0:
     print "ERROR: Empty taginfo structure. Serious problems!"
     sys.exit(-1)
@@ -354,6 +364,7 @@ if os.environ['GANGA_ATHENA_WRAPPER_MODE'] != 'grid':
     pickle.dump( taginfo, open("taginfo.pkl", "w") )
     
     # tar up the sub collections
+    print "tar -zcf subcoll.tar.gz taginfo.pkl " + ' '.join( taginfo ) + ' ' + ' '.join(tag_ref_files)
     rc, out = getstatusoutput("tar -zcf subcoll.tar.gz taginfo.pkl " + ' '.join( taginfo ) + ' ' + ' '.join(tag_ref_files) )
 
     if (rc != 0):
