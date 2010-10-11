@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.16 (2010/10/8)
+5.5.16 (2010/10/11)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -64,6 +64,7 @@ Athena:
   online/offline queues while a ganga session is running).
 * Convert OUTPUTFILE_NAMELENGTH to str in AthenaLocalRTHandler.py
 * Adding support for FILE_STAGER/DQ2_COPY + TAG and 16.x.y support
+* Fix bug #73774: Upgrade EventPicking code to new interface
 
 AthenaMC:
 ---------
@@ -115,7 +116,7 @@ tests:
 
 externals:
 ----------
-* Update panda client to 0.2.98
+* Update panda client to 0.3.2
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -137,7 +138,7 @@ Full Changelog from 5.5.15:
   - Changed "inputsandbox" to "self.inputsandbox" in AthenaPandaRTHandler, since it is also used in 
 subjobs
   - fix for setUpper error in resubmit
-  - bump panda client to 0.2.98
+  - bump panda client to 0.3.2
   - Refresh the Panda Site specifications from the panda server every 10 minutes (to update 
 online/offline queues while a ganga session is running).
   - relax re.sub for AthenaMC resubmit's
