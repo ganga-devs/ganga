@@ -34,7 +34,7 @@ class Task(GangaObject):
         # register the job (it will also commit it)
         # job gets its id now
         registry._add(self)
-        self.creation_date = time.strftime('%Y%m%d')
+        self.creation_date = time.strftime('%Y%m%d%H%M%S')
         self.initialize()
         self.startup()
         self._setDirty()
