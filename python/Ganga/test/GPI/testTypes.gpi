@@ -23,11 +23,12 @@ except GangaAttributeError:
 
 # simple items (using typelist)
 
-try:
-    j.application.args=['a',0]
-    assert False, 'should raise GangaAttributeError'
-except GangaAttributeError: #TypeMismatchError to be more precise
-    pass
+# this should accept numerical arguments now -> so remove this test
+#try:
+#    j.application.args=['a',0]
+#    assert False, 'should raise GangaAttributeError'
+#except GangaAttributeError: #TypeMismatchError to be more precise
+#    pass
 
 j.application.args='abc' # should work fine (non-strict sequence)
 assert j.application.args == ['abc']
@@ -50,11 +51,12 @@ try:
 except GangaAttributeError: #TypeMismatchError to be more precise
     pass
 
-try:
-    j.application.args = 1
-    assert False, 'should raise GangaAttributeError'
-except GangaAttributeError: #TypeMismatchError to be more precise
-    pass
+#should now accept numerical arguments -> so remove this check
+#try:
+#    j.application.args = 1
+#    assert False, 'should raise GangaAttributeError'
+#except GangaAttributeError: #TypeMismatchError to be more precise
+#    pass
 
 j.application.args = [ File('x'), '2' ]
 
