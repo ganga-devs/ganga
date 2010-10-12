@@ -687,6 +687,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '--accessmode=filestager '
         elif job.backend.accessmode == 'DIRECT':
             param += '--accessmode=direct '
+        elif job.backend.accessmode == 'COPY2SCRATCH':
+            param += '--accessmode=copy '
         if self.inputdatatype == 'Tier3':
             param += '--givenPFN '
  
