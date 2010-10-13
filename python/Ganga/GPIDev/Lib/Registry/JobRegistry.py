@@ -219,8 +219,6 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
 
 from Ganga.Utility.external.ordereddict import oDict
 def jobSlice(joblist):
-    """create a 'JobSlice' from a list of jobs
-    example: jobSlice([j for j in jobs if j.name.startswith("T1:")])"""
     slice = JobRegistrySlice("manual slice")
     slice.objects = oDict([(j.fqid, _unwrap(j)) for j in joblist])
     return _wrap(slice)
