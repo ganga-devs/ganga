@@ -152,7 +152,7 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
     
     The 'jobs' represents all existing jobs.
 
-    A subset of jobs may be created by slicing (e.g. jobs[:-10] last ten jobs)
+    A subset of jobs may be created by slicing (e.g. jobs[-10:] last ten jobs)
     or select (e.g. jobs.select(status='new') or jobs.select(10,20) jobs with
     ids between 10 and 20). A new access list is created as a result of
     slice/select. The new access list may be further restricted.
@@ -205,7 +205,7 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
     def __getslice__(self, i1,i2):
         """ Get a slice. Examples:
         jobs[2:] : get first two jobs,
-        jobs[:-10] : get last 10 jobs.
+        jobs[-10:] : get last 10 jobs.
         """
         return _wrap(self._impl.__getslice__(i1,i2))
     
