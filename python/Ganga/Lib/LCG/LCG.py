@@ -428,7 +428,7 @@ class LCG(IBackend):
         job = self.getJobObject() 
         mt  = self.middleware.upper()
 
-        logger.warning('submitting %d subjobs ... it may take a while' % len(node_jdls))
+        logger.info('submitting %d subjobs ... it may take a while' % len(node_jdls))
         
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
@@ -512,7 +512,7 @@ class LCG(IBackend):
     def __mt_job_prepare__(self, rjobs, subjobconfigs, masterjobconfig):
         '''preparing jobs in multiple threads'''
 
-        logger.warning('preparing %d subjobs ... it may take a while' % len(rjobs))
+        logger.info('preparing %d subjobs ... it may take a while' % len(rjobs))
 
         mt = self.middleware.upper()
 
