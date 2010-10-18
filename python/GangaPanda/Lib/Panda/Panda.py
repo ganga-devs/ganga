@@ -200,7 +200,7 @@ def runPandaBrokerage(job):
             else:
                 tag = 'AtlasProduction-%s' % job.application.atlas_release
         except:
-            logger.warning("Could not determine athena tag for Panda brokering")
+            logger.debug("Could not determine athena tag for Panda brokering")
     try:
         status,out = Client.runBrokerage(tmpSites,tag,verbose=False,trustIS=config['trustIS'],processingType=config['processingType'])
     except exceptions.SystemExit:
@@ -251,7 +251,7 @@ def selectPandaSite(job,sites):
             else:
                 tag = 'AtlasProduction-%s' % job.application.atlas_release
         except:
-            logger.warning("Could not determine athena tag for Panda brokering")
+            logger.debug("Could not determine athena tag for Panda brokering")
     try:
         status,out = Client.runBrokerage(pandaSites,tag,verbose=False,trustIS=config['trustIS'],processingType=config['processingType'])
     except exceptions.SystemExit:
