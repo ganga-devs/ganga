@@ -123,7 +123,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             self.libDataset = job.backend.libds
             self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
             self.library = self.fileBO.lfn
-        else:
+        elif job.backend.bexec:
             self.libDataset = job.outputdata.datasetname+'.lib'
             self.library = '%s.tgz' % self.libDataset
             try:
@@ -256,13 +256,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         jspec.computingSite     = site
 
 #       library (source files)
-        if not job.backend.libds:
-            flib = FileSpec()
-            flib.lfn            = self.library
-            flib.type           = 'input'
-            flib.dataset        = self.libDataset
-            flib.dispatchDBlock = self.libDataset
-        else:
+        if job.backend.libds:
             flib = FileSpec()
             flib.lfn            = self.fileBO.lfn
             flib.GUID           = self.fileBO.GUID
@@ -270,7 +264,13 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             flib.status         = self.fileBO.status
             flib.dataset        = self.fileBO.destinationDBlock
             flib.dispatchDBlock = self.fileBO.destinationDBlock
-        if job.backend.bexec != '':
+            jspec.addFile(flib)
+        elif job.backend.bexec:
+            flib = FileSpec()
+            flib.lfn            = self.library
+            flib.type           = 'input'
+            flib.dataset        = self.libDataset
+            flib.dispatchDBlock = self.libDataset
             jspec.addFile(flib)
 
 #       input files FIXME: many more input types
@@ -321,17 +321,17 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             if hasattr(job.application.exe, "name"):
                 exe_name = os.path.basename(job.application.exe.name)
 
-            # FIXME if not options.nobuild:
             # set jobO parameter
-            if self.inputsandbox:
-                param += '-j "(wget %s/cache/%s || wget --no-check-certificate %s/cache/%s) && tar xzvf %s && chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (srcURL, self.inputsandbox, srcURL, self.inputsandbox, self.inputsandbox, exe_name, exe_name)
+            if job.application.args:
+                param += ' -j "" -p "%s %s" '%(exe_name,urllib.quote(" ".join(job.application.args)))
             else:
-                param += '-j "chmod -f +x %s; echo === executing user script ===; PATH=$PATH:. %s" ' % (exe_name, exe_name)
-            param += '-p "%s" ' % (" ".join(job.application.args))
+                param += ' -j "" -p "%s" '%exe_name
+            if self.inputsandbox:
+                param += ' -a %s '%self.inputsandbox
 
         else:
             param += '-l %s ' % self.library
-            param += '-j "%s" -p "%s" ' % ( exe_name,urllib.quote(" ".join(job.application.args)))
+            param += '-j "" -p "%s %s" ' % ( exe_name,urllib.quote(" ".join(job.application.args)))
 
         if job.inputdata:
             param += '-i "%s" ' % job.inputdata.names
