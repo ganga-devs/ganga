@@ -619,6 +619,8 @@ class JobExecutionMonitor(GangaObject):
                 return self.shmKey
             except:
                 logger.warn("failed to launch event processor for job %d" % self.getJobObject().id)
+                logger.debug("the underlying error was:")
+                log_last_exception(logger.debug, True)
                 self.ui = None
         return 0
     
@@ -724,7 +726,8 @@ class JobExecutionMonitor(GangaObject):
             self.pid = library.launchListener(self.getJobObject(), self.jobID, self.andJobIDs)
         except:
             ei = sys.exc_info()
-            logger.debug(str(ei[0]) + " - " + str(ei[1]))
+            logger.debug("failed to start listener. underlying exception:")
+            log_last_exception(logger.debug, True)
     
     
     def onBegunToReceiveMonitoringData(self):

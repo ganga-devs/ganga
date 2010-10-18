@@ -271,15 +271,15 @@ class JEMMonitoringServiceHandler(object):
                         #logger.warning("The C-Tracer is an experimental feature (refer to https://svn.grid.uni-wuppertal.de/trac/JEM for more information)")
 
                         #if jobIsAthena:  # The run application for Athena jobs always is Python!
-                            #config.env['JEM_CTracer_trace_apps'] = "__find_python__"
+                            #config.env['JEM.CTracer.trace_apps'] = "__find_python__"
 
-                        #if config.env['JEM_CTracer_trace_apps'] == '' and config.env['JEM_CTracer_trace_modules'] != '':
-                            #config.env['JEM_CTracer_trace_apps'] = config.env['JEM_CTracer_trace_modules']
+                        #if config.env['JEM.CTracer.trace_apps'] == '' and config.env['JEM.CTracer.trace_modules'] != '':
+                            #config.env['JEM.CTracer.trace_apps'] = config.env['JEM.CTracer.trace_modules']
                     #else:
-                        #config.env['JEM_CTracer_disable'] = "True"
+                        #config.env['JEM.CTracer.disable'] = "True"
 
                     # add some information about this Ganga session
-                    #config.env['JEM_Ganga_Version'] = 
+                    #config.env['JEM.Ganga.Version'] = 
                     config.env['JEM.Ganga.job_id'] = self.__getFullJobId() + "." + str(i)
                     try:
                         from socket import gethostname
