@@ -245,7 +245,7 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
 
     The 'tasks' represents all existing tasks.
 
-    A subset of tasks may be created by slicing (e.g. tasks[:-10] last ten tasks)
+    A subset of tasks may be created by slicing (e.g. tasks[-10:] last ten tasks)
     or select (e.g. tasks.select(status='new') or tasks.select(10,20) tasks with
     ids between 10 and 20). A new access list is created as a result of
     slice/select. The new access list may be further restricted.
@@ -295,7 +295,7 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
     def __getslice__(self, i1,i2):
         """ Get a slice. Examples:
         tasks[2:] : get first two tasks,
-        tasks[:-10] : get last 10 tasks.
+        tasks[-10:] : get last 10 tasks.
         """
         return _wrap(self._impl.__getslice__(i1,i2))
 
