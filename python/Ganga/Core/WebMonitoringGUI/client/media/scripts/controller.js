@@ -12,7 +12,7 @@ Controller.prototype = new Events();
 
 function Controller() {
     // Data class initialization
-    this.Settings = new Settings();	
+    this.Settings = new Settings();     
     this.Data = new Data($('#ajaxAnimation'), this.Settings.Application.modelDefaults, this.Settings.Application.jsonp);
     
     this.tasksTable = Array();
@@ -21,7 +21,7 @@ function Controller() {
     // "viewUpdater" function updates all page controls
     // and decides what to display based on available data
     this.viewUpdater = function() {
-	var _Settings = this.Settings.Application; // Shortcut
+        var _Settings = this.Settings.Application; // Shortcut
 
         if (this.Data.user || !_Settings.userSelection) {
             if (this.Data.tid) {
@@ -102,7 +102,7 @@ function Controller() {
                 thisRef.setupURL();
             }
 
-	    thisRef.drawCharts(_Settings.charts);
+            thisRef.drawCharts(_Settings.charts);
         };
         
         // Get the data from ajax call
@@ -160,7 +160,7 @@ function Controller() {
             tSettings = thisRef.tasksTable[0].fnSettings();
             tPages = parseInt( (tSettings.fnRecordsDisplay()-1) / tSettings._iDisplayLength, 10 ) + 1;
             
-		    if ( $.bbq.getState('p') && ($.bbq.getState('p') <= tPages) ) {
+                    if ( $.bbq.getState('p') && ($.bbq.getState('p') <= tPages) ) {
                 $('#url-page').trigger('click');  // Load page number from URL
                 thisRef.Data.noreload = true;  // tell keyup event that page hes been reloaded (history is not working without this)
                 $('#dataTable_0_paginate input').trigger('keyup');  // Recreate expand events for current page
@@ -175,7 +175,7 @@ function Controller() {
                 $('#tablePlus_'+this).parent().trigger('click');
             });
 
-	    thisRef.drawCharts(_Settings.charts);
+            thisRef.drawCharts(_Settings.charts);
         };
         
         // Get the data from ajax call
@@ -187,7 +187,7 @@ function Controller() {
         var thisRef = this;
        
         var draw = function(gData) {
-	    var query = gData.join('&');
+            var query = gData.join('&');
             $('#chartContent').append(
                 $('<img></img>').attr('src','http://chart.apis.google.com/chart?'+query)
             );
@@ -205,7 +205,7 @@ function Controller() {
             draw(gData);
         };
 
-	//if (translatedData.chco) gData.push('chco='+translatedData.chco);                        
+        //if (translatedData.chco) gData.push('chco='+translatedData.chco);                        
        
         $('#chartContent').empty();
 
@@ -297,9 +297,9 @@ function Controller() {
         // Activate datepicker
         $('#from, #till').datepicker({
             dateFormat: 'yy-mm-dd',
-			changeMonth: true,
-			changeYear: true
-		}).change( function() { thisRef.fromTill_Change(this) });
+                        changeMonth: true,
+                        changeYear: true
+                }).change( function() { thisRef.fromTill_Change(this) });
         
         // Setup Data from URL
         this.Data.quickSetup($.bbq.getState());
