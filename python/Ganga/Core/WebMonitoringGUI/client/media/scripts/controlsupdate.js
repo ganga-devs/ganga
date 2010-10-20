@@ -73,26 +73,29 @@ function ControlsUpdate() {
     };
     
     this.breadcrumbs_update = function() {
+        var _Settings = this.Settings.Application; // Shortcut
         var thidRef = this;
-        var output = '<span class="bold">Job monitoring : </span>';
+        var output = '&nbsp;:: ';
         // id=breadcrumbs
-        if (this.Data.user) {
+        if (this.Data.user || !_Settings.userSelection) {
             if (this.Data.tid) {
                 // show jobs
-                output += '<a>Users List</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; <a>Jobs</a> &raquo; ' + this.Data.tid;
+                if (_Settings.userSelection) output += '<a>'+_Settings.usersListLbl+'</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; ';
+                output += '<a>'+_Settings.mainsLbl+'</a> &raquo; ' + this.Data.tid;
             }
             else {
                 // show tasks
-                output += '<a>Users List</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; Jobs';
+                if (_Settings.userSelection) output += '<a>'+_Settings.usersListLbl+'</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; ';
+                output += _Settings.mainsLbl;
             }
         }
         else {
             // show users
             output += 'Users List';
         }
-        
+       
         $('#breadcrumbs').html(output);
-        
+       
         // Set up events
         $('#breadcrumbs a').click( function() { thisRef.breadcrumbs_click(this) });
     };
