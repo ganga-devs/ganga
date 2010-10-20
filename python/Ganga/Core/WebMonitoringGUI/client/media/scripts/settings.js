@@ -11,7 +11,11 @@ function Settings() {
 
     // Application specific settings - START
     this.Application = {
-        'userSelection': true, // Display user selection page? (true|false)
+        'userSelection': false, // Display user selection page? (true|false)
+	'jsonp': true, // allow requests to other hosts
+	'usersListLbl': 'Users List',
+        'mainsLbl': 'Jobs',
+        'subsLbL': 'Subjobs',
         'modelDefaults': { // Here You can set up model (data.js) default values
             'user': '',
             'from': 0,
