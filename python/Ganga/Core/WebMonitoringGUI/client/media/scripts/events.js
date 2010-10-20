@@ -123,16 +123,12 @@ function Events() {
     this.gotoTask_click = function(el) {
         var _Settings = this.Settings.Mains; // Shortcut
         var aPos = this.tasksTable[0].fnGetPosition(el);
-        //12th column is the monitoring link - in that case we want to open the link, not to go to subjobs
-        if (aPos[1] != 12)
-        {
-                _Settings.setupUserParams(this.Data, el, aPos);
-                this.Data.or = [];
-                this.Data.sorting = [];
-                this.Data.p = 1;
-                this.Data.noreload = false;
-                this.setupURL();
-        }
+        _Settings.setupUserParams(this.Data, el, aPos);
+        this.Data.or = [];
+        this.Data.sorting = [];
+        this.Data.p = 1;
+        this.Data.noreload = false;
+        this.setupURL();
     };
     
     this.jobsTableContent_change = function(el) {
