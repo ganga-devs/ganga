@@ -13,7 +13,7 @@ Controller.prototype = new Events();
 function Controller() {
     // Data class initialization
     this.Settings = new Settings();	
-    this.Data = new Data($('#ajaxAnimation'), this.Settings.Application.modelDefaults);
+    this.Data = new Data($('#ajaxAnimation'), this.Settings.Application.modelDefaults, this.Settings.Application.jsonp);
     
     this.tasksTable = Array();
     this.jobsTable = Array();
