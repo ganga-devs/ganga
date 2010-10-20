@@ -21,12 +21,13 @@ function Controller() {
     // "viewUpdater" function updates all page controls
     // and decides what to display based on available data
     this.viewUpdater = function() {
-        if (this.Data.user) {
+	var _Settings = this.Settings.Application; // Shortcut
+
+        if (this.Data.user || !_Settings.userSelection) {
             if (this.Data.tid) {
                 // Show jobs
                 this.tasksTable = Array();
                 this.drawJobsTable();
-		$("#siteTabs").tabs({selected: 1});
             }
             else {
                 //show tasks
@@ -35,7 +36,7 @@ function Controller() {
                 this.drawTaskTable();
             }
         }
-        else {
+        else if (_Settings.userSelection) {
             // Show users
             this.Data.uparam = [];
             this.tasksTable = Array();
