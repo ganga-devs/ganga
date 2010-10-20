@@ -25,7 +25,8 @@
             'sorting':[0,'desc'],
             'fnERContent':function(dataID, onlyData){ return [['error','Data provider function not set up!']] },
             'fnContentChange':function(el){ alert('Please define a proper function to handle "fnContentChange"!'); },
-            'fnERClose':function(dataID){ alert('Please define a proper function to handle "fnERClose"!'); }
+            'fnERClose':function(dataID){ alert('Please define a proper function to handle "fnERClose"!'); },
+            'fnTableSorting':function(el){  }
         };
         
         var _tablePlus = 'media/images/table_plus.png';
@@ -38,7 +39,11 @@
                 cellspacing: '1'
             }).addClass('display');
             var colHeaders = $('<tr></tr>');
-            for (i in _config.tblLabels) colHeaders.append($('<th></th>').text(_config.tblLabels[i]));
+            for (i in _config.tblLabels) {
+                var colHeader = $('<th></th>').text(_config.tblLabels[i]);      
+                if (!_config.expandableRows || i!=0) colHeader.addClass('tblSort');
+                colHeaders.append(colHeader);
+            }
             var colFooters = colHeaders.clone();
             var tblHead = $('<thead></thead>').append(colHeaders);
             var tblFoot = $('<tfoot></tfoot>').append(colFooters);
@@ -144,33 +149,34 @@
         var elCnt = 0;
         var dTablesArr = Array();
         this.each(function() {
-		    dTable = _config.dTable[elCnt];
+                    dTable = _config.dTable[elCnt];
             if (!dTable) {
                 $(this).empty().append(_buildTable(elCnt));
                 dTable = $('#dataTable_'+elCnt).dataTable( $.extend({
-					    "bJQueryUI": false,
-					    "sPaginationType": "full_numbers",
-					    "bAutoWidth":false,
-					    "aaSorting": [[_config.sorting[0],_config.sorting[1]]]
-		        },_config.dataTable));
-		    }
-		    else {
-		        dTable.fnClearTable();
-		    }
-		    dTable.fnAddData(_config.items);
-		    dTablesArr.push(dTable);
-		    
-		    // Setting up table events
-		    if (_config.dataTable.sPaginationType) {
+                                            "bJQueryUI": false,
+                                            "sPaginationType": "full_numbers",
+                                            "bAutoWidth":false,
+                                            "bSortClasses": true,
+                                            "aaSorting": [[_config.sorting[0],_config.sorting[1]]]
+                        },_config.dataTable));
+                    }
+                    else {
+                        dTable.fnClearTable();
+                    }
+                    dTable.fnAddData(_config.items);
+                    dTablesArr.push(dTable);
+                    
+                    // Setting up table events
+                    if (_config.dataTable.sPaginationType) {
                 $('#dataTable_'+elCnt+' thead tr,#dataTable_'+elCnt+'_next,#dataTable_'+elCnt+'_previous,#dataTable_'+elCnt+'_first,#dataTable_'+elCnt+'_last').click( function() { _config.fnContentChange(this); if (_config.expandableRows) _expandClick(dTable); } );
                 $('#dataTable_0_paginate input').keyup( function() { _config.fnContentChange(this); if (_config.expandableRows) _expandClick(dTable); } );
             }
             if (_config.expandableRows) _expandClick(dTable);
+            $('.tblSort').click( function() { _config.fnTableSorting(this); } );
             //_expandInit(dTable);
             elCnt++;
         });
         
         return dTablesArr;
-        //return this;
     };
 })(jQuery);
