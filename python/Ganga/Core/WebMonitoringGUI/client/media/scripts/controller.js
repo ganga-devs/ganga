@@ -262,6 +262,8 @@ function Controller() {
         var getData = function(data) {
             thisRef.Data.mem.users = _Settings.translateData(data);
             
+            thisRef.generateUserDropdownOptions();
+
             if (!(this.Data.user || $.bbq.getState('user'))) thisRef.drawUsers();
         }
         
