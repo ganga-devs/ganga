@@ -96,4 +96,31 @@ function ControlsUpdate() {
         // Set up events
         $('#breadcrumbs a').click( function() { thisRef.breadcrumbs_click(this) });
     };
+
+    this.charts_prepTable = function(chtCnt) {
+        var rowCnt = Math.ceil((chtCnt/2));
+        var table = $('<table></table>').attr({
+            'id':'chartTbl',
+            'cellpadding':'0',
+            'cellspacing':'0'
+        }).css('width','100%');
+       
+        var cnt = 1;
+        for (var i=0;i<rowCnt;i++) {
+            var tr = $('<tr></tr>');
+            tr.append($('<td></td>').attr('id','cht_'+cnt).addClass('chartTd'));cnt++;
+            tr.append($('<td></td>').attr('id','cht_'+cnt).addClass('chartTd'));cnt++;
+            table.append(tr);
+        }
+        $('#chartContent').append(table);
+    };
+   
+    this.charts_load = function(query, cnt) {
+        $('#cht_'+cnt).append(
+            $('<img></img>').attr({
+                'src':'http://chart.apis.google.com/chart?'+query,
+                'class':'chartImg'
+            })
+        );
+    };
 }
