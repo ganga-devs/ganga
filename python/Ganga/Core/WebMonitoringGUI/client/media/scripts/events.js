@@ -14,7 +14,7 @@ function Events() {
         $('.tablePlus').attr('src', 'media/images/table_plus.png');
         //this.Data.or = [];
         this.Data.tid = '';
-	this.Data.sorting = [];
+        this.Data.sorting = [];
         this.Data.user = $(el).val();
         this.setupURL();
     };
@@ -65,13 +65,14 @@ function Events() {
     };
     
     this.breadcrumbs_click = function(el) {
-        if ($(el).text() == 'Users List') {
+        var _Settings = this.Settings.Application; // Shortcut
+        if ($(el).text() == _Settings.usersListLbl) {
             this.Data.tid = '';
             this.Data.sorting = [];
             this.Data.uparam = [];
             this.Data.user = '';
         }
-        else if ($(el).text() == 'Jobs') {
+        else if ($(el).text() == _Settings.mainsLbl) {
             this.Data.tid = '';
             this.Data.sorting = [];
             this.Data.uparam = [];
@@ -122,16 +123,16 @@ function Events() {
     this.gotoTask_click = function(el) {
         var _Settings = this.Settings.Mains; // Shortcut
         var aPos = this.tasksTable[0].fnGetPosition(el);
-	//12th column is the monitoring link - in that case we want to open the link, not to go to subjobs
+        //12th column is the monitoring link - in that case we want to open the link, not to go to subjobs
         if (aPos[1] != 12)
-	{
-        	_Settings.setupUserParams(this.Data, el, aPos);
-        	this.Data.or = [];
-		this.Data.sorting = [];
-        	this.Data.p = 1;
-        	this.Data.noreload = false;
-        	this.setupURL();
-	}
+        {
+                _Settings.setupUserParams(this.Data, el, aPos);
+                this.Data.or = [];
+                this.Data.sorting = [];
+                this.Data.p = 1;
+                this.Data.noreload = false;
+                this.setupURL();
+        }
     };
     
     this.jobsTableContent_change = function(el) {
