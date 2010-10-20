@@ -44,7 +44,7 @@ function Controller() {
             this.drawUsers();
         }
         this.timeRange_update();
-        this.userDropdown_update();
+        if (_Settings.userSelection) this.userDropdown_update(); // Update only if avaliable
         this.fromTill_update();
         this.userRefresh_update();
         this.breadcrumbs_update();
@@ -62,14 +62,15 @@ function Controller() {
                 tableId: 'jobs',
                 items: data,
                 tblLabels: _Settings['tblLabels'],
-                sorting: _Settings.sorting,
+                sorting: (thisRef.Data.sorting.length > 0 ? thisRef.Data.sorting : _Settings.sorting),
                 fnContentChange: function(el) { thisRef.jobsTableContent_change(el) },
+                fnTableSorting: function(el) { thisRef.tableSorting_click(el,thisRef.jobsTable[0]) },
                 dataTable: {
                     iDisplayLength: _Settings.iDisplayLength,
                     sPaginationType: "input",
                     bLengthChange: false,
                     aoColumns: _Settings.aoColumns
-                },
+                }
             });
         };
         
@@ -125,16 +126,17 @@ function Controller() {
                 items: data,
                 tblLabels: _Settings['tblLabels'],
                 rowsToExpand: thisRef.Data.or,
-                sorting: _Settings.sorting,
+                sorting: (thisRef.Data.sorting.length > 0 ? thisRef.Data.sorting : _Settings.sorting),
                 fnERContent:function(dataID){ return thisRef.taskExpand_click(dataID) },
                 fnContentChange: function(el) { thisRef.tasksTableContent_change(el) },
                 fnERClose: function(dataID) { thisRef.taskClose_click(dataID) },
+                fnTableSorting: function(el) { thisRef.tableSorting_click(el,thisRef.tasksTable[0]) },
                 dataTable: {
                     iDisplayLength: _Settings.iDisplayLength,
                     sPaginationType: "input",
                     bLengthChange: false,
                     aoColumns: _Settings.aoColumns
-                },
+                }
             });
         };
         
@@ -156,7 +158,8 @@ function Controller() {
             
             // Draw data table
             draw(_Settings.translateData(userTasks));
-            //alert(userTasks[0].status)
+            
+            // Setting up current page - START
             tSettings = thisRef.tasksTable[0].fnSettings();
             tPages = parseInt( (tSettings.fnRecordsDisplay()-1) / tSettings._iDisplayLength, 10 ) + 1;
             
@@ -168,9 +171,12 @@ function Controller() {
             }
             else {
                 thisRef.Data.p = 1;
+                $('#dataTable_0_paginate input').trigger('keyup');  // Recreate expand events for current page
                 thisRef.Data.noreload = true;
                 thisRef.setupURL();
             }
+            // Setting up current page - FINISH
+
             $.each(thisRef.Data.or, function() {
                 $('#tablePlus_'+this).parent().trigger('click');
             });
@@ -182,15 +188,13 @@ function Controller() {
         this.Data.ajax_getData(_Settings.dataURL, _Settings.dataURL_params(this.Data), getData, function(){});
     };
     
-
     this.drawCharts = function(_charts) {
         var thisRef = this;
-       
+        var cnt = 1;
+
         var draw = function(gData) {
             var query = gData.join('&');
-            $('#chartContent').append(
-                $('<img></img>').attr('src','http://chart.apis.google.com/chart?'+query)
-            );
+            thisRef.charts_load(query, cnt);cnt++;
         };
        
         var getData = function(data, chart) {
@@ -204,12 +208,11 @@ function Controller() {
             }
             draw(gData);
         };
-
-        //if (translatedData.chco) gData.push('chco='+translatedData.chco);                        
        
         $('#chartContent').empty();
 
         try {
+            this.charts_prepTable(_charts.length);
             for (var i=0;i<_charts.length;i++) {
                 // Get the data from ajax call
                 if (_charts[i].dataURL) {
@@ -218,7 +221,7 @@ function Controller() {
                     }, function(){},_charts[i]);
                 }
                 else {
-                    getData(this.Data.mem.tasks.data, _charts[i]);
+                    getData(this.Data.mem, _charts[i]);
                 }
             }
         } catch(err) {}
@@ -232,7 +235,7 @@ function Controller() {
         
         // "draw" function is calling lkfw.searchable.list plugin to create searchable list of users
         var draw = function() {
-            $('#content').lkfw_searchableList({
+            $('#tableContent').lkfw_searchableList({
                 listId: 'users',
                 items: thisRef.Data.mem.users,
                 srchFldLbl: _Settings.searchLabel
@@ -257,11 +260,7 @@ function Controller() {
         // Arguments:
         //   data - object returned by ajax call
         var getData = function(data) {
-            var userDicts = data.basicData[0];
-            
-            thisRef.Data.mem.users = _Settings.translateData(userDicts);
-            
-            thisRef.generateUserDropdownOptions();
+            thisRef.Data.mem.users = _Settings.translateData(data);
             
             if (!(this.Data.user || $.bbq.getState('user'))) thisRef.drawUsers();
         }
@@ -280,6 +279,7 @@ function Controller() {
             refresh:this.Data.refresh,
             tid:this.Data.tid,
             p:this.Data.p,
+            sorting:this.Data.sorting,
             or:this.Data.or,
             uparam:this.Data.uparam
         },2);
@@ -287,10 +287,14 @@ function Controller() {
     
     // "Init" initializes the monitoring system
     this.Init = function() {
+        var _Settings = this.Settings.Application; // Shortcut
         thisRef = this;
+
+        // Remove users drop down box
+        if (!_Settings.userSelection) $('#userDropBox').hide();
         
         // Events definitions
-        $('#modelCheck').click( function() { alert(thisRef.Data.or); });
+        //$('#modelCheck').click( function() { alert(thisRef.Data.sorting); }); // If active allows to chect choosen model value
         $('#timeRange').change( function() { thisRef.timeRange_Change(this) });
         $('#refresh').change( function() { thisRef.refresh_Change(this) });
         
