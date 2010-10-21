@@ -51,7 +51,10 @@ class TaskApplication(object):
     def getTransform(self):
         tid = self.tasks_id.split(":")
         if len(tid) == 2 and tid[0].isdigit() and tid[1].isdigit():
-           task = GPI.tasks(int(tid[0]))
+           try: 
+              task = GPI.tasks(int(tid[0]))
+           except KeyError:
+              return None
            if task:
               return task.transforms[int(tid[1])]
         if len(tid) == 3 and tid[1].isdigit() and tid[2].isdigit():
