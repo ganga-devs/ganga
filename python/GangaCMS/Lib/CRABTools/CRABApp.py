@@ -29,13 +29,13 @@ class CRABApp(IApplication):
   _name = 'CRABApp' 
 
   def __init__(self):
+#    self.server = CRABServer()
     super(CRABApp,self).__init__()
 
   def writeCRABFile(self,job,cfg_file):
 
     file = open(cfg_file,'w')     
 
-#    if not job.inputdata.ui_working_dir:
     job.inputdata.ui_working_dir = job.outputdir
                         
     for params in [CMSSW(),CRAB(),GRID(),USER()]:
@@ -56,7 +56,6 @@ class CRABApp(IApplication):
     #Get job containing this CRABApp 
     job = self.getJobObject()
 
-#    if not job.application.cfgfile:
     #File where crab.cfg is going to be written
     cfg_file = '%scrab.cfg'%(job.inputdir)
     job.application.writeCRABFile(job,cfg_file)
@@ -66,6 +65,7 @@ class CRABApp(IApplication):
 
     server = CRABServer()
     server.create(job)
+#    self.server.create(job)
 
     return (1,None)
 

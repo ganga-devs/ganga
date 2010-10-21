@@ -44,6 +44,7 @@ class CRABBackend(IBackend):
     _name  = 'CRABBackend'
 
     def __init__(self):
+#        self.server = CRABServer()
         super(CRABBackend, self).__init__()
 
     def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
@@ -57,11 +58,14 @@ class CRABBackend(IBackend):
                 subjob.updateStatus('submitting')
 
             server.submit(job)
+#            job.backend.server.submit(job)
 
             for subjob in job.subjobs:
                 subjob.updateStatus('submitted')
 
             server.status(job)
+#            job.backend.server.status(job)
+
             return 1        
         #j.updateMasterJobStatus()
         logger.error('Not submitting job without subjobs.')
@@ -71,6 +75,7 @@ class CRABBackend(IBackend):
 
         server = CRABServer()
         server.resubmit(job)
+#        self.server.resubmit(job)
 
         #If first raises exception, all are caput
         #Controll that.
@@ -78,6 +83,7 @@ class CRABBackend(IBackend):
 
             subjob.updateStatus('submitting')  
             server.resubmit(job)
+#            job.backend.server.resubmit(job)
             subjob.updateStatus('submitted')  
         #j.updateMasterJobStatus()
         return 1         
@@ -88,6 +94,7 @@ class CRABBackend(IBackend):
         job = self.getJobObject()
         server = CRABServer()
         server.kill(job)    
+#        job.backend.server.kill(job)
 
         if len(job.subjobs):
             for s in job.subjobs:
@@ -100,6 +107,7 @@ class CRABBackend(IBackend):
         job.updateMasterJobStatus()        
 
         server.status(job)
+#        job.backend.server.status(job)
 
         return 1
 
@@ -109,6 +117,7 @@ class CRABBackend(IBackend):
 
         server = CRABServer()
         server.getOutput(job) 
+#        job.backend.server.getOutput(job)
 
         workdir = job.inputdata.ui_working_dir
         index = int(job.id) + 1
@@ -256,6 +265,7 @@ class CRABBackend(IBackend):
 
             server = CRABServer()
             server.status(j)
+#            j.backend.server.status(j) 
 
             workdir = j.inputdata.ui_working_dir
 

@@ -5,10 +5,12 @@ from Ganga.Core import ApplicationConfigurationError, BackendError
 from Ganga.GPIDev.Credentials import getCredential
 from Ganga.Utility.logging import getLogger
 
-import os.path
+import os,os.path
 import datetime
 
 from subprocess import Popen, PIPE
+
+import Ganga.Utility.Config
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
@@ -20,15 +22,34 @@ class CRABServer(GangaObject):
     _schema =  Schema(Version(0,0), {})
     _hidden = 1
 
+#    def __init__(self):
+#      config = Ganga.Utility.Config.getConfig('CMSSW')
+#      cmssw_version = config['CMSSW_VERSION']
+#      cmssw_setup = config['CMSSW_SETUP']
+#      cmssw_setup_script = os.path.join(cmssw_setup,cmssw_version+'.sh')
+#      from Ganga.Utility.Shell import Shell
+#      shell = Shell(cmssw_setup_script)
+#      self.env = shell.env
+
     def _send(self,cmd,type):
 
         code = 'x'
         stdout, stderr = '',''
 
+        config = Ganga.Utility.Config.getConfig('CMSSW')
+        cmssw_version = config['CMSSW_VERSION']
+        cmssw_setup = config['CMSSW_SETUP']
+        cmssw_setup_script = os.path.join(cmssw_setup,cmssw_version+'.sh')
+        from Ganga.Utility.Shell import Shell
+        shell = Shell(cmssw_setup_script)
+
+        env = shell.env
+
         try:        
             init = datetime.datetime.now()
-            p = Popen(cmd,shell=True,stdout=PIPE,stderr=PIPE)
+            p = Popen(cmd,shell=True,stdout=PIPE,stderr=PIPE,env=env)
             stdout, stderr = p.communicate()
+
             code = p.returncode
             end = datetime.datetime.now()
             time = (end-init).seconds

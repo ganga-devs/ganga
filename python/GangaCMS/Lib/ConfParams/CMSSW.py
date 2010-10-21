@@ -46,6 +46,7 @@ class CMSSW(GangaObject):
     schemadic['lumi_mask']                = SimpleItem(defvalue=None, typelist=['type(None)','str'], doc=_comments[5])
     schemadic['total_number_of_events']   = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[6])
     schemadic['events_per_job']           = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[7])
+    schemadic['split_by_event']           = SimpleItem(defvalue=None, typelist=['type(None)','int'])
     schemadic['total_number_of_lumis']    = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[8])
     schemadic['lumis_per_job']            = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[9])
     schemadic['number_of_jobs']           = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[10])

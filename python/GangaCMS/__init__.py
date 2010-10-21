@@ -49,11 +49,12 @@ def getEnvironment( config = {} ):
         print 'GangaCMS> [ERROR] CMSSW location not found: "%s"'%(cmsswhome)
         return
 
-    from Ganga.Utility.Shell import Shell
-    shell = Shell(cmssw_setup_script)   
+#    from Ganga.Utility.Shell import Shell
+#    shell = Shell(cmssw_setup_script)   
 
     print 'GangaCMS> [INFO] getEnvironment : done'   
-    return shell.env
+#    return shell.env
+    return {}
 
 def loadPlugins( config = {} ):
     import Lib.CRABTools
