@@ -4,6 +4,8 @@ from AnaTransform import AnaTransform
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
+
 
 o = [""]
 def c(s):
@@ -34,6 +36,7 @@ o.append(c("user.YourNickname.<YYYYMMDD>.task_<id>.<task name>/"))
 o.append("Subtask (Transform) outputs will be put into these datasets:")
 o.append(c("user.YourNickname.<YYYYMMDD>.task_<id>.subtask_<nr>.<inputdataset name>"))
 task_help = "\n".join(o)
+task_help_nocolor = task_help.replace(fgcol("blue"),"").replace(fx.normal, "").replace(fgcol("red"),"")
 
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException
 dq2=DQ2()
@@ -42,13 +45,14 @@ config.addOption('merged_files_per_job',1,'OBSOLETE', type=int)
 config.addOption('recon_files_per_job',10,'OBSOLETE', type=int)
 
 class AnaTask(Task):
-   __doc__ = task_help
+   __doc__ = task_help_nocolor
    _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + {
         'analysis': SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Analysis Transform'),
+        'container_name': SimpleItem(defvalue="",protected=True,transient=1, getter="get_container_name", doc='name of the output container'),
        }.items()))
    _category = 'tasks'
    _name = 'AnaTask'
-   _exportmethods = Task._exportmethods + ["initializeFromDatasets", "containerName"]
+   _exportmethods = Task._exportmethods + ["initializeFromDatasets"]
 
    def initialize(self):
       super(AnaTask, self).initialize()
@@ -58,8 +62,9 @@ class AnaTask(Task):
       self.transforms = [analysis]
       self.setBackend(None)
 
-   def containerName(self):
-      return self.transforms[0].getDatasetNames()[0]
+   def get_container_name(self):
+      name_base = ["user",getNickname(),self.creation_date,"task_%s" % self.id]
+      return ".".join(name_base + [self.name]) + "/"
 
    def initializeFromDatasets(self,dataset_list):
       """ For each dataset in the dataset_list a transform is created. 
@@ -140,3 +145,7 @@ class AnaTask(Task):
    def help(self):
       print task_help
 
+   def overview(self):
+      super(AnaTask, self).overview()
+      print
+      print "container of transform output datasets: %s" % self.container_name

@@ -56,20 +56,20 @@ class AnaTransform(Transform):
        'partitions_data'   : ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=1, doc='Input dataset for each partition'),
        'partitions_sites'  : SimpleItem(defvalue=[], hidden=1, modelist=["str","list"],doc='Input site for each partition'),
        'outputdata'        : ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset'),
+       'dataset_name'      : SimpleItem(defvalue="", transient=1, getter="get_dataset_name", doc='name of the output dataset'),
        }.items()))
    _category = 'transforms'
    _name = 'AnaTransform'
-   _exportmethods = Transform._exportmethods + ['getDatasetNames']
+   _exportmethods = Transform._exportmethods
 
    def initialize(self):
       super(AnaTransform, self).initialize()
       self.application = AthenaTask()
       self.inputdata = DQ2Dataset()
 
-   def getDatasetNames(self):
+   def get_dataset_name(self):
       task = self._getParent()
       name_base = ["user",getNickname(),task.creation_date,"task_%s" % task.id]
-      task_container = ".".join(name_base + [task.name]) + "/"
       if self.inputdata.dataset:
           subtask_dsname = ".".join(name_base +["subtask_%s" % task.transforms.index(self), str(self.inputdata.dataset[0].strip("/"))])
       else:
@@ -78,12 +78,12 @@ class AnaTransform(Transform):
       # make sure we keep the name size limit:
       dq2_config = getConfig("DQ2")
       if len(subtask_dsname) > dq2_config['OUTPUTDATASET_NAMELENGTH']:
-          logger.warning("Proposed dataset name longer than limit (%d). Restricting dataset name..." % dq2_config['OUTPUTDATASET_NAMELENGTH'])
+          logger.debug("Proposed dataset name longer than limit (%d). Restricting dataset name..." % dq2_config['OUTPUTDATASET_NAMELENGTH'])
 
           while len(subtask_dsname) > dq2_config['OUTPUTDATASET_NAMELENGTH']:
               subtask_dsname_toks = subtask_dsname.split('.')
               subtask_dsname = '.'.join(subtask_dsname_toks[:len(subtask_dsname_toks)-1])
-      return task_container, subtask_dsname
+      return subtask_dsname
 
 ## Internal methods
    def checkCompletedApp(self, app):
@@ -96,7 +96,7 @@ class AnaTransform(Transform):
               return False
       # if this is the first app to complete the partition...
       if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
-          task_container, subtask_dsname = self.getDatasetNames()
+          task_container, subtask_dsname = task.container_name, self.dataset_name
           outputdata = DQ2OutputDataset()
           try:
               outputdata.create_dataset(subtask_dsname)

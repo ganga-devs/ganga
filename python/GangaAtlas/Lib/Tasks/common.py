@@ -18,8 +18,9 @@ def say(number, unit):
 
 # Text colouring
 # http://everything2.com/e2node/ANSI%2520color%2520codes
-from Ganga.Utility.ColourText import ANSIMarkup
+from Ganga.Utility.ColourText import ANSIMarkup, Effects
 markup = ANSIMarkup()
+fx = Effects()
 cols = {"black":(0,0),"red":(0,1),"green":(0,2),"orange":(0,3),"blue":(0,4),"magenta":(0,5),"cyan":(0,6),"lgray":(0,7),
         "dgray":(6,0),"lred":(6,1),"lgreen":(6,2),"yellow":(6,3),"lblue":(6,4),"pink":(6,5),"lcyan":(6,6),"white":(6,7)}
 def col(f,b):
