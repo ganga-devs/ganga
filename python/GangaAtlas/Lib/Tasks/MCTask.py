@@ -31,9 +31,10 @@ o+="\n"+ "t.info() # Check here if settings are correct"
 o+="\n"+ "t.run()"
 o+="\n"+ "t.overview() # Watch the processing"
 mctask_help = o
+mctask_help_nocolor = mctask_help.replace(fgcol("blue"),"").replace(fx.normal, "").replace(fgcol("red"),"")
 
 class MCTask(Task):
-   __doc__ = mctask_help
+   __doc__ = mctask_help_nocolor
    _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + {
         'total_events': SimpleItem(defvalue=1000, doc="Total number of events to generate", typelist=["int"]),
         'evgen': SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Evgen Transform'),
