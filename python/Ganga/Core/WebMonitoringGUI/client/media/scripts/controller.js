@@ -107,7 +107,7 @@ function Controller() {
         };
         
         // Get the data from ajax call
-        this.Data.ajax_getData(_Settings.dataURL, _Settings.dataURL_params(this.Data), getData, function(){});
+        this.Data.ajax_getData('subsReq', _Settings.dataURL, _Settings.dataURL_params(this.Data), getData, function(){});
     };
     
     // "drawDataTable" draws data table for jobs (in ganga nomenclature)
@@ -185,7 +185,7 @@ function Controller() {
         };
         
         // Get the data from ajax call
-        this.Data.ajax_getData(_Settings.dataURL, _Settings.dataURL_params(this.Data), getData, function(){});
+        this.Data.ajax_getData('mainsReq', _Settings.dataURL, _Settings.dataURL_params(this.Data), getData, function(){});
     };
     
     this.drawCharts = function(_charts) {
@@ -216,7 +216,7 @@ function Controller() {
             for (var i=0;i<_charts.length;i++) {
                 // Get the data from ajax call
                 if (_charts[i].dataURL) {
-                    thisRef.Data.ajax_getData_charts(_charts[i].dataURL, _charts[i].dataURL_params(thisRef.Data), function(data, chart){
+                    thisRef.Data.ajax_getData_charts('chartData_'+i, _charts[i].dataURL, _charts[i].dataURL_params(thisRef.Data), function(data, chart){
                         getData(data, chart);
                     }, function(){},_charts[i]);
                 }
@@ -268,7 +268,7 @@ function Controller() {
         }
         
         // Get the users list from ajax call
-        this.Data.ajax_getData(_Settings.dataURL, {}, getData, function(){});
+        this.Data.ajax_getData('usersReq', _Settings.dataURL, {}, getData, function(){});
     };
     
     // "setupURL" builds url fragmant for bookmarking
@@ -294,7 +294,11 @@ function Controller() {
 
         // Remove users drop down box
         if (!_Settings.userSelection) $('#userDropBox').hide();
-        
+        $('title').text(_Settings.pageTitle); // Set page title
+	$('#footerTxt').text(_Settings.footerTxt); // Set footer text
+	$('#supportLnk').attr('href', _Settings.supportLnk);
+	$('#logo').css('background-image', 'url('+_Settings.logoLnk+')');
+
         // Events definitions
         //$('#modelCheck').click( function() { alert(thisRef.Data.sorting); }); // If active allows to chect choosen model value
         $('#timeRange').change( function() { thisRef.timeRange_Change(this) });

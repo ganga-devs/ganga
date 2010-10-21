@@ -13,6 +13,10 @@ function Settings() {
     this.Application = {
         'userSelection': false, // Display user selection page? (true|false)
         'jsonp': true, // allow requests to other hosts
+	'pageTitle': 'Job Monitoring', // Page title
+        'footerTxt': 'jJobMonitoring &copy;2010', // Footer text
+        'supportLnk': 'https://twiki.cern.ch/twiki/bin/view/ArdaGrid/TaskMonitoringWebUI', // Link to support page
+        'logoLnk': 'media/images/ganga_logo_72dpi.png', // Link to page logo
         'usersListLbl': 'Users List',
         'mainsLbl': 'Jobs',
         'subsLbL': 'Subjobs',

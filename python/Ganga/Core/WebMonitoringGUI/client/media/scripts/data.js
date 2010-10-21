@@ -130,7 +130,7 @@ function Data(ajaxAnimation, settings, jsonp) {
     };
     
     // Get job subjobs from server
-    this.ajax_getData = function(url, params, fSuccess, fFailure) {
+    this.ajax_getData = function(xhrName, url, params, fSuccess, fFailure) {
         var thisRef = this;
         
         currentUrl = window.location.toString()
@@ -163,8 +163,8 @@ function Data(ajaxAnimation, settings, jsonp) {
         var data = _Cache.get(key);
         if (data) {
             fSuccess(data);
-        } else {
-            ajaxAnimation.show();
+        } else if (url) {
+            ajaxAnimation.addClass(xhrName).show();;
             $.ajax({
                 type: "GET",
                 url: url,
@@ -174,17 +174,19 @@ function Data(ajaxAnimation, settings, jsonp) {
                 success: function(data) {
                     _Cache.add(key, data);
                     fSuccess(data);
-                    ajaxAnimation.hide();
+                    ajaxAnimation.removeClass(xhrName);
+		    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
                 },
                 error: function() {
-                    ajaxAnimation.hide();
+                    ajaxAnimation.removeClass(xhrName);
+		    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
                     fFailure();
                 }
             });
         }
     };
     // Get job subjobs from server
-    this.ajax_getData_charts = function(url, params, fSuccess, fFailure, obj) {
+    this.ajax_getData_charts = function(xhrName, url, params, fSuccess, fFailure, obj) {
         var thisRef = this;
        
         currentUrl = window.location.toString()
@@ -213,24 +215,27 @@ function Data(ajaxAnimation, settings, jsonp) {
         }
 
        
-        ajaxAnimation.show();
-        $.ajax({
-            type: "GET",
-            url: url,
-            async: true,
-            data: params,
-            dataType: (jsonp ? "jsonp" : "json"),
-            jsonp: "jsonp_callback",
-            success: function(data) {
-                fSuccess(data, obj);
-                ajaxAnimation.hide();
-            },
-            error: function() {
-                ajaxAnimation.hide();
-                fFailure(obj);
-            }
-        });        
-
+        ajaxAnimation.addClass(xhrName).show();
+        if (url) {
+            $.ajax({
+                type: "GET",
+                url: url,
+                async: true,
+                data: params,
+                dataType: (jsonp ? "jsonp" : "json"),
+                jsonp: "jsonp_callback",
+                success: function(data) {
+                    fSuccess(data, obj);
+                    ajaxAnimation.removeClass(xhrName);
+                    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                },
+                error: function() {
+                    ajaxAnimation.removeClass(xhrName);
+                    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                    fFailure(obj);
+                }
+            });
+        }    
     };
 
 }
