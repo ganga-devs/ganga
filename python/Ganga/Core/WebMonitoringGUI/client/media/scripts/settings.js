@@ -1,4 +1,4 @@
-// This file is part of the jTaskMonitoring software
+// This file is part of the jJobMonitoring software
 // Copyright (c) CERN 2010
 //
 // Author: Lukasz Kokoszkiewicz [lukasz@kokoszkiewicz.com , lukasz.kokoszkiewicz@cern.ch]
@@ -83,8 +83,8 @@ function Settings() {
             {"sClass":"numericTD","sWidth":"70px", "sType": "integer-in-tag"},
             {"sClass":"numericTD","sWidth":"70px", "sType": "integer-in-tag"},
             {"sClass":"numericTD","sWidth":"70px", "sType": "integer-in-tag"},  
-            {"sWidth":"130px"}, 
-            {"sWidth":"110px"},    
+            {"sClass":"graphicaly","sWidth":"200px"}, 
+            {"sClass":"link","sWidth":"200px"},    
             null
         ],
         'getDataArray': function(data) {
@@ -198,7 +198,7 @@ function Settings() {
                 'gChart': {
                     'chtt':'Jobs status',
                     'cht':'p3',
-                    'chs':'400x150'
+                    'chs':'350x130'
                 }
             },
             {
@@ -220,7 +220,7 @@ function Settings() {
                 'gChart': {
                     'chtt':'Jobs backend',
                     'cht':'p3',
-                    'chs':'400x150'
+                    'chs':'350x130'
                 }
             },
             {
@@ -242,7 +242,7 @@ function Settings() {
                 'gChart': {
                     'chtt':'Jobs application',
                     'cht':'p3',
-                    'chs':'400x150'
+                    'chs':'350x130'
                 }
             }   
         ]
@@ -335,7 +335,7 @@ function Settings() {
                 'gChart': {
                     'chtt':'Subjobs status',
                     'cht':'p3',
-                    'chs':'400x150'
+                    'chs':'350x130'
                 }
             },
             /*{
@@ -408,7 +408,7 @@ function Settings() {
                 'gChart': {
                     'chtt':'Subjobs actualCE',
                     'cht':'p3',
-                    'chs':'400x150'
+                    'chs':'350x130'
                     //custom colors
                     //'chco':'3072F3|008000'
                 }
@@ -433,7 +433,7 @@ function Settings() {
                 'gChart': {
                     'chxp':'0,0,100',
                     'chxt':'x,y',
-                    'chs':'300x150',
+                    'chs':'350x130',
                     'cht':'lxy',
                     'chco':'00FF00',
                     'chg':'9,9,1,6',
