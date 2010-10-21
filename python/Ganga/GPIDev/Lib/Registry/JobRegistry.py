@@ -95,7 +95,10 @@ class JobRegistrySlice(RegistrySlice):
             try:
                 return self.objects[id]
             except KeyError:
-                raise RegistryKeyError('Job id=%d not found'%id)
+                if self.name == 'templates':
+                    raise RegistryKeyError('Template %d not found'%id)
+                else:
+                    raise RegistryKeyError('Job %d not found'%id)       
         elif t is tuple:
             ids = id
         elif t is str:
@@ -116,7 +119,10 @@ class JobRegistrySlice(RegistrySlice):
         try:
             j = self.objects[ids[0]]
         except KeyError:
-            raise RegistryKeyError('Job %d not found'%ids[0])
+            if self.name == 'templates':
+                raise RegistryKeyError('Template %d not found'%ids[0])
+            else:
+                raise RegistryKeyError('Job %d not found'%ids[0])
 
         if len(ids)>1:
             try:
