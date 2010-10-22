@@ -141,7 +141,7 @@ function Settings() {
                     ('<a class="">'+dataJSON[i].completed+'</a>' || '0'),
                     ('<a class="noFailClick">'+dataJSON[i].failed+'</a>' || '0'),
                     ('<img src="http://chart.apis.google.com/chart?chbh=a,0&chs=130x15&cht=bhs&chco=59D118,C50000,3072F3,FF9900&chds=0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+'&chd=t:'+dataJSON[i].completed+'|'+dataJSON[i].failed+'|'+dataJSON[i].running+'|'+dataJSON[i].submitted+'" />'),
-                    (dataJSON[i].link || ''),
+                    ('<div style="width:50px;">'+dataJSON[i].link+'</div>'),
                     (dataJSON[i].actualCE || '')
                 ));
                 }
@@ -158,8 +158,8 @@ function Settings() {
                     (dataJSON[i].running || '0'),
                     (dataJSON[i].completed || '0'),
                     (dataJSON[i].failed || '0'),
-                    (''),       
-                    (dataJSON[i].link || ''),
+                    ('<div style="width:125px;">&nbsp;</div>'),       
+                    ('<div style="width:50px;">'+dataJSON[i].link+'</div>'),
                     (dataJSON[i].actualCE || '')
                 ));     
                 }
