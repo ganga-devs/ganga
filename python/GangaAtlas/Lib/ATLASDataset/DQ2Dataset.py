@@ -1578,7 +1578,7 @@ class DQ2OutputDataset(Dataset):
         if not os.environ.has_key('DQ2_COPY_COMMAND'):
             os.environ['DQ2_COPY_COMMAND']="lcg-cp --vo atlas"
 
-        if (job.outputdata.outputdata and job.backend._name in [ 'LCG', 'CREAM'] and job.outputdata.output) or (job.backend._name == 'Panda' and job.outputdata.output):
+        if (job.outputdata.outputdata and job.backend._name in [ 'LCG', 'CREAM'] and job.outputdata.output) or (job.backend._name == 'Panda'):
             # Determine local output path to store files
             local_location = options.get('local_location')
 
@@ -1624,24 +1624,27 @@ class DQ2OutputDataset(Dataset):
             
             else: # User download per subjob 
                 # loop over all filenames
-                filenames = job.outputdata.output
-                for fileinfo in filenames:
-                    filename = fileinfo.split(',')[1]
+                if job.outputdata.output:
+                    filenames = job.outputdata.output
+                    for fileinfo in filenames:
+                        filename = fileinfo.split(',')[1]
 
-                    exe = 'dq2-get --client-id=ganga -L ROAMING -a -d -D '
+                        exe = 'dq2-get --client-id=ganga -L ROAMING -a -d -D '
 
-                    if job.backend._name == 'Panda':
-                        cmd = '%s -H %s -f %s %s' %(exe, outputlocation, filename, job.outputdata.datasetname)
-                    else:
-                        cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, outputlocation, filename, job.outputdata.datasetname)
-                
-                    logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
+                        if job.backend._name == 'Panda':
+                            cmd = '%s -H %s -f %s %s' %(exe, outputlocation, filename, job.outputdata.datasetname)
+                        else:
+                            cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, outputlocation, filename, job.outputdata.datasetname)
 
-                    threads=[]
-                    thread = Download.download_dq2(cmd)
-                    thread.setDaemon(True)
-                    thread.start()
-                    threads.append(thread)
+                        logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
+
+                        threads=[]
+                        thread = Download.download_dq2(cmd)
+                        thread.setDaemon(True)
+                        thread.start()
+                        threads.append(thread)
+                else:
+                    logger.warning('job.outputdata.output emtpy - nothing to download')
                 
             #for thread in threads:
             #    thread.join()
