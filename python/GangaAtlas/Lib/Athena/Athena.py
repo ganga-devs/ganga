@@ -148,7 +148,7 @@ class Athena(IApplication):
                  'atlas_production'       : SimpleItem(defvalue='',doc='ATLAS Production Software Release'),
                  'atlas_project'          : SimpleItem(defvalue='',doc='ATLAS Project Name'),
                  'atlas_cmtconfig'        : SimpleItem(defvalue='',doc='ATLAS CMTCONFIG environment variable'),
-                 'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT, TRF '),
+                 'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT, TRF, EXE '),
                  'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
                  'atlas_dbrelease'        : SimpleItem(defvalue='LATEST',doc='ATLAS DBRelease DQ2 dataset and DQ2Release tar file. Use LATEST for most recent.'),
                  'atlas_run_dir'          : SimpleItem(defvalue='', doc='ATLAS run directory'),
@@ -693,23 +693,29 @@ class Athena(IApplication):
             self.athena_compile = opt_athena_compile  
             logger.warning('prepare(athena_compile=True/False) has been used - please change to the new option Athena.athena_compile=True/False.')
 
-        # get Athena versions
-        rc, out = AthenaUtils.getAthenaVer()
-        # failed
-        if not rc:
-            raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
-        self.userarea = out['workArea'] 
-        self.atlas_release = out['athenaVer'] 
-        self.grouparea = out['groupArea'] 
-        if out['cacheVer']:
-            pat = re.compile('-(.*)_(.*)')
-            match_pat = pat.match(out['cacheVer'])
-            if match_pat:
-                self.atlas_project = match_pat.group(1)
-                self.atlas_production = match_pat.group(2)
-        else:
-            self.atlas_production = ''
-            self.atlas_project = ''
+        if not self.atlas_exetype in ['EXE']: 
+            # get Athena versions
+            rc, out = AthenaUtils.getAthenaVer()
+            # failed
+            if not rc:
+                raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+            self.userarea = out['workArea'] 
+            self.atlas_release = out['athenaVer'] 
+            self.grouparea = out['groupArea'] 
+            if out['cacheVer']:
+                pat = re.compile('-(.*)_(.*)')
+                match_pat = pat.match(out['cacheVer'])
+                if match_pat:
+                    self.atlas_project = match_pat.group(1)
+                    self.atlas_production = match_pat.group(2)
+            else:
+                self.atlas_production = ''
+
+        else: 
+            self.userarea = os.path.realpath(os.getcwd())
+            self.grouparea = ''
+            if self.atlas_production and not self.atlas_project:
+                self.atlas_project = 'AtlasProduction'
 
         # Set CMTCONFIG
         if os.environ.has_key('CMTCONFIG'):
@@ -717,8 +723,8 @@ class Athena(IApplication):
             if self.atlas_cmtconfig.startswith('x86_64'):
                 raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
         else:
-            self.atlas_cmtconfig = ''
-
+            self.atlas_cmtconfig = config['CMTCONFIG']
+            os.environ['CMTCONFIG'] = self.atlas_cmtconfig 
 
         logger.info('Found Working Directory %s',self.userarea)
         logger.info('Found ATLAS Release %s',self.atlas_release)
@@ -737,7 +743,7 @@ class Athena(IApplication):
         sString=re.sub('[\+]','.', self.userarea)
         runDir = re.sub('^%s' % sString, '', currentDir)
         if runDir == currentDir:
-            raise ApplicationConfigurationError(None, 'You need to run panda_prepare in a directory under %s' % self.userarea)
+            raise ApplicationConfigurationError(None, 'You need to run prepare() in a directory under %s' % self.userarea)
         elif runDir == '':
             runDir = '.'
         elif runDir.startswith('/'):
