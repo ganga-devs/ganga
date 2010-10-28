@@ -5,6 +5,7 @@
 import optparse
 import sys
 import os
+import re
 from Ganga.Core.exceptions import GangaException
 
 usage = """
@@ -205,7 +206,12 @@ if opt.excludefiles:
 if opt.excludepackage:
     j.application.exclude_package=opt.excludepackage.split(':')
 if opt.athena_release:
-    j.application.atlas_release=opt.athena_release
+    match=re.search(r'^([\w+]+.[\w+]+.[\w+]+)',opt.athena_release)
+    if match:
+        j.application.atlas_release=match.group(1)
+	j.application.atlas_production=opt.athena_release
+    else:
+        j.application.atlas_release=opt.athena_release
 if opt.athena_production:
     j.application.atlas_production=opt.athena_production
 if opt.athena_project:
@@ -251,7 +257,7 @@ elif opt.nocompile:
     else:
         j.application.prepare()
 else:
-    if not (opt.athena_release or opt.user_area):
+    if not (opt.athena_release or opt.user_area) or opt.bexec:
         if opt.prepare_old:	
             j.application.prepare_old()
         else:
