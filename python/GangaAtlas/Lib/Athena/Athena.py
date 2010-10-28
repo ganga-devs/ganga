@@ -125,6 +125,146 @@ echo '**********************************************************'
 
 """ % { 'athena_compile_flag' : athena_compile_flag } 
 
+def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFile, maxFileSize, useAthenaPackages, verbose ):
+    """Helper function to create EXE tarball"""
+    # gather normal files
+
+    # go to workdir
+    os.chdir(userarea)
+
+    # gather files under work dir
+    logger.info("gathering files under %s", userarea)
+
+    # get files in the working dir
+    skippedExt   = ['.o','.a','.so']
+    skippedFlag  = False
+    workDirFiles = []
+    for tmpRoot,tmpDirs,tmpFiles in os.walk('.'):
+        emptyFlag    = True
+        for tmpFile in tmpFiles:
+            tmpPath = '%s/%s' % (tmpRoot,tmpFile)
+            # get size
+            try:
+                size = os.path.getsize(tmpPath)
+            except:
+                # skip dead symlink
+                if verbose:
+                    type,value,traceBack = sys.exc_info()
+                    logger.info("  Ignore : %s:%s" % (type,value))
+                continue
+            # check exclude files
+            excludeFileFlag = False
+            for tmpPatt in excludeFile:
+                if re.search(tmpPatt,tmpPath) != None:
+                    excludeFileFlag = True
+                    break
+            if excludeFileFlag:
+                continue
+            # skipped extension
+            isSkippedExt = False
+            for tmpExt in skippedExt:
+                if tmpPath.endswith(tmpExt):
+                    isSkippedExt = True
+                    break
+            # check root
+            isRoot = False
+            if re.search('\.root(\.\d+)*$',tmpPath) != None:
+                isRoot = True
+            # extra files
+            isExtra = False
+            for tmpExt in extFile:
+                if re.search(tmpExt+'$',tmpPath) != None:
+                    isExtra = True
+                    break
+            # regular files
+            if not isExtra:
+                # unset emptyFlag even if all files are skipped
+                emptyFlag = False
+                # skipped extensions
+                if isSkippedExt:
+                    logger.info( "  skip %s %s" % (str(skippedExt),tmpPath))
+                    skippedFlag = True
+                    continue
+                # skip root
+                if isRoot:
+                    logger.info( "  skip root file %s" % tmpPath)
+                    skippedFlag = True
+                    continue
+                # check size
+                if size > maxFileSize:
+                    logger.info( "  skip large file %s:%sB>%sB" % (tmpPath,size, maxFileSize))
+                    skippedFlag = True
+                    continue
+
+            # remove ./
+            tmpPath = re.sub('^\./','',tmpPath)
+            # append
+            workDirFiles.append(tmpPath)
+            emptyFlag = False
+        # add empty directory
+        if emptyFlag and tmpDirs==[]:
+            tmpPath = re.sub('^\./','',tmpRoot)
+            # skip tmpDir
+            if tmpPath.split('/')[-1] == archiveDir.split('/')[-1]:
+                continue
+            # append
+            workDirFiles.append(tmpPath)
+    if skippedFlag:
+        logger.info("please use --inputsandbox or j.inputdata.inputsandox or change config.Athena.EXE_MAXFILESIZE if you need to send the skipped files to WNs")
+
+    # create archive
+    # use 'jobO' for libDS/noBuild
+    archiveName     = 'jobO.%s.tar' % commands.getoutput('uuidgen')
+    archiveFullName = "%s/%s" % (archiveDir,archiveName)
+
+    # collect files
+    for tmpFile in workDirFiles:
+        if os.path.islink(tmpFile):
+            status,out = commands.getstatusoutput('tar -rh %s -f %s' % (tmpFile,archiveFullName))
+        else:
+            status,out = commands.getstatusoutput('tar rf %s %s' % (archiveFullName,tmpFile))
+        if verbose:
+            logger.info( tmpFile)
+        if status != 0 or out != '':
+            logger.info( out)
+
+    # go to tmpdir
+    os.chdir(archiveDir)
+
+    # compress
+    #status,out = commands.getstatusoutput('gzip %s' % archiveName)
+    #archiveName += '.gz'
+    #if status !=0 or verbose:
+    #    logger.info( out)
+
+    # check archive
+    #status,out = commands.getstatusoutput('ls -l %s' % archiveName)
+    #if verbose:
+    #    logger.info( out)
+    #if status != 0:
+    #    raise ApplicationConfigurationError("Failed to archive working area.\n If you see 'Disk quota exceeded'") 
+ 
+    # check symlinks
+    if useAthenaPackages:
+        logger.info("checking symbolic links")
+        status,out = commands.getstatusoutput('tar tvf %s' % archiveName)
+        if status != 0:
+            raise ApplicationConfigurationError("Failed to expand archive")
+
+        symlinks = []    
+        for line in out.split('\n'):
+            items = line.split()
+            if items[0].startswith('l') and items[-1].startswith('/'):
+                symlinks.append(line)
+        if symlinks != []:
+            tmpStr  = "Found some unresolved symlinks which may cause a problem\n"
+            tmpStr += "     See, e.g., http://savannah.cern.ch/bugs/?43885\n"
+            tmpStr += "   Please ignore if you believe they are harmless"
+            logger.warning(tmpStr)
+            for symlink in symlinks:
+                logger.info("  %s" % symlink)
+
+    return archiveName, archiveFullName
 
 class AthenaOutputDataset(GangaObject):
     """Specify the output datasets"""
@@ -159,11 +299,12 @@ class Athena(IApplication):
                  'user_area'              : FileItem(doc='A tar file of the user area'),
                  'user_area_path'         : SimpleItem(defvalue='', doc='Path where user_area tarfile is created'),
                  'athena_compile'         : SimpleItem(defvalue=False, doc='Switch if user code should be compiled remotely'),
+                 'useAthenaPackages'      : SimpleItem(defvalue=False, doc='Switch to add AthenaPackages to tarball if Athena.exetype=EXE is used.'),
                  'group_area'             : FileItem(doc='A tar file of the group area'),
                  'max_events'             : SimpleItem(defvalue=-999, typelist=['int'], doc='Maximum number of events'),
-                 'skip_events'             : SimpleItem(defvalue=0, typelist=['int'], doc='Number of events to skip'),
-                 'run_event'             : SimpleItem(defvalue=[], typelist=['list'], doc='Run event list'),
-                 'run_event_file'          : SimpleItem(defvalue='', doc='Name of the file containing run/event list for Panda backend'),
+                 'skip_events'            : SimpleItem(defvalue=0, typelist=['int'], doc='Number of events to skip'),
+                 'run_event'              : SimpleItem(defvalue=[], typelist=['list'], doc='Run event list'),
+                 'run_event_file'         : SimpleItem(defvalue='', doc='Name of the file containing run/event list for Panda backend'),
                  'option_file'            : FileItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
                  'options'                : SimpleItem(defvalue='',doc='Additional Athena options'),
                  'user_setupfile'         : FileItem(doc='User setup script for special setup'),
@@ -693,7 +834,7 @@ class Athena(IApplication):
             self.athena_compile = opt_athena_compile  
             logger.warning('prepare(athena_compile=True/False) has been used - please change to the new option Athena.athena_compile=True/False.')
 
-        if not self.atlas_exetype in ['EXE']: 
+        if not self.atlas_exetype in ['EXE'] or self.atlas_release=='': 
             # get Athena versions
             rc, out = AthenaUtils.getAthenaVer()
             # failed
@@ -825,7 +966,11 @@ class Athena(IApplication):
 
         # archive sources
         verbose = False
-        archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages)
+        if self.atlas_exetype in ['EXE'] and not self.athena_compile:
+            maxFileSize = config['EXE_MAXFILESIZE']
+            archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose )
+        else:
+            archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages)
         logger.info('Creating %s ...', archiveFullName )
 
         # Add TAG specifc files if required
@@ -841,10 +986,12 @@ class Athena(IApplication):
                 shutil.copyfile( '%s/%s' % (__tpdirectoryrel__, f), '%s/%s' % (os.getcwd(), os.path.basename(f)))
 
         # Add InstallArea
-        if not self.athena_compile:
-            nobuild = True
-            AthenaUtils.archiveInstallArea(self.userarea, self.grouparea, archiveName, archiveFullName, archiveDir, nobuild, verbose)
-            logger.info('Option athena_compile=%s. Adding InstallArea to %s ...', self.athena_compile, archiveFullName )
+        if not self.athena_compile: 
+            if not self.atlas_exetype in ['EXE']: 
+                nobuild = True
+                AthenaUtils.archiveInstallArea(self.userarea, self.grouparea, archiveName, archiveFullName, archiveDir, nobuild, verbose)
+                logger.info('Option athena_compile=%s. Adding InstallArea to %s ...', self.athena_compile, archiveFullName )
+
 
         # Add LCG/NG files
         extraFiles = self.files_lcg_ng()
@@ -1504,6 +1651,7 @@ config.addOption('CMTCONFIG_LIST', [ 'i686-slc4-gcc34-opt', 'i686-slc5-gcc43-opt
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 config.addOption('ENABLE_DQ2COPY', False , 'Enable DQ2_COPY input workflow on LCG backend')
+config.addOption('EXE_MAXFILESIZE', 1024*1024 , 'Athena.exetype=EXE jobs: Maximum size of files to be sent to WNs (default 1024*1024B)')
 
 # $Log: not supported by cvs2svn $
 # Revision 1.63  2009/07/02 19:36:23  elmsheus
