@@ -108,9 +108,10 @@ class LCGMS(DashboardMS):
             self._log('debug', 'Not sending unwanted message on complete for master wrapper job %s.' % j.fqid)
             return
         # send LB Done job-status message
-        message = self._cl_job_status_message(LCGUtil.cl_grid_status(j), 'LB', None)
-        message['GRIDEXITCODE'] = LCGUtil.cl_grid_exit_code(j)
-        message['GRIDEXITREASON'] = LCGUtil.cl_grid_exit_reason(j)
+        exec self._import_string
+        message = self._cl_job_status_message(dynamic_util.cl_grid_status(j), 'LB', None)
+        message['GRIDEXITCODE'] = dynamic_util.cl_grid_exit_code(j)
+        message['GRIDEXITREASON'] = dynamic_util.cl_grid_exit_reason(j)
         self._send(self.config_info['destination_job_status'], message)
 
     def fail(self, **opts):
@@ -122,9 +123,10 @@ class LCGMS(DashboardMS):
             self._log('debug', 'Not sending unwanted message on fail for master wrapper job %s.' % j.fqid)
             return
         # send LB Done or Aborted job-status message
-        message = self._cl_job_status_message(LCGUtil.cl_grid_status(j), 'LB', None)
-        message['GRIDEXITCODE'] = LCGUtil.cl_grid_exit_code(j)
-        message['GRIDEXITREASON'] = LCGUtil.cl_grid_exit_reason(j)
+        exec self._import_string
+        message = self._cl_job_status_message(dynamic_util.cl_grid_status(j), 'LB', None)
+        message['GRIDEXITCODE'] = dynamic_util.cl_grid_exit_code(j)
+        message['GRIDEXITREASON'] = dynamic_util.cl_grid_exit_reason(j)
         self._send(self.config_info['destination_job_status'], message)
 
     def kill(self, **opts):
@@ -148,25 +150,26 @@ class LCGMS(DashboardMS):
     def _cl_job_status_message(self, status, status_source, status_start_time=None):
         # Not null: EXECUTION_BACKEND, GRIDJOBID, JOB_ID_INSIDE_THE_TASK, TASKNAME, UNIQUEJOBID
         j = self.job_info # called on client, so job_info is Job object
+        exec self._import_string
         msg = {
-            'DESTCE': LCGUtil.cl_dest_ce(j), # Actual CE. e.g. ce-3-fzk.gridka.de:2119/jobmanager-pbspro-atlasXS
+            'DESTCE': dynamic_util.cl_dest_ce(j), # Actual CE. e.g. ce-3-fzk.gridka.de:2119/jobmanager-pbspro-atlasXS
             'DESTSITE': None, # Actual site. e.g. FZK-LCG2
             'DESTWN': None, # Actual worker node hostname. e.g. c01-102-103.gridka.de
-            'EXECUTION_BACKEND': LCGUtil.cl_execution_backend(j), # Backend. e.g. LCG
+            'EXECUTION_BACKEND': dynamic_util.cl_execution_backend(j), # Backend. e.g. LCG
             'GRIDEXITCODE': None, # e.g. 0
             'GRIDEXITREASON': None, # e.g. Job terminated successfully
-            'GRIDJOBID': LCGUtil.cl_grid_job_id(j), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
+            'GRIDJOBID': dynamic_util.cl_grid_job_id(j), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
             'JOBEXITCODE': None, # e.g. 0
             'JOBEXITREASON': None,
-            'JOB_ID_INSIDE_THE_TASK': LCGUtil.cl_job_id_inside_the_task(j), # subjob id e.g. 0
-            'OWNERDN': LCGUtil.cl_ownerdn(), # Grid certificate. e.g. /DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=dtuckett/CN=671431/CN=David Tuckett/CN=proxy
+            'JOB_ID_INSIDE_THE_TASK': dynamic_util.cl_job_id_inside_the_task(j), # subjob id e.g. 0
+            'OWNERDN': dynamic_util.cl_ownerdn(), # Grid certificate. e.g. /DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=dtuckett/CN=671431/CN=David Tuckett/CN=proxy
             'REPORTER': 'ToolUI', # e.g. ToolUI, JobWN
             'REPORTTIME': CommonUtil.utcnow(), # e.g. 2009-11-25T14:59:24.754249Z
             'STATENAME': status, # e.g. submitted, Done (Success)
             'STATESOURCE': status_source, # e.g. Ganga, LB
             'STATESTARTTIME': status_start_time, # e.g. 2009-11-25T14:32:51.428988Z
-            'TASKNAME': LCGUtil.cl_task_name(j), # e.g. ganga:6702b50a-8a31-4476-8189-62ea5b8e00b3:TrigStudy
-            'UNIQUEJOBID': LCGUtil.cl_unique_job_id(j),  # Ganga uuid e.g. 1c08ff3b-904f-4f77-a481-d6fa765813cb
+            'TASKNAME': dynamic_util.cl_task_name(j), # e.g. ganga:6702b50a-8a31-4476-8189-62ea5b8e00b3:TrigStudy
+            'UNIQUEJOBID': dynamic_util.cl_unique_job_id(j),  # Ganga uuid e.g. 1c08ff3b-904f-4f77-a481-d6fa765813cb
             '___fqid' : j.fqid,
             }
         return msg
@@ -174,14 +177,15 @@ class LCGMS(DashboardMS):
     def _wn_job_status_message(self, status, status_source, status_start_time):
         # Not null: EXECUTION_BACKEND, GRIDJOBID, JOB_ID_INSIDE_THE_TASK, TASKNAME, UNIQUEJOBID
         ji = self.job_info # called on worker node, so job_info is dictionary
+        exec self._import_string
         msg = {
-            'DESTCE': LCGUtil.wn_dest_ce(),
-            'DESTSITE': LCGUtil.wn_dest_site(),
-            'DESTWN': LCGUtil.wn_dest_wn(),
+            'DESTCE': dynamic_util.wn_dest_ce(),
+            'DESTSITE': dynamic_util.wn_dest_site(),
+            'DESTWN': dynamic_util.wn_dest_wn(),
             'EXECUTION_BACKEND': ji['EXECUTION_BACKEND'],
             'GRIDEXITCODE': None,
             'GRIDEXITREASON': None,
-            'GRIDJOBID': LCGUtil.wn_grid_job_id(),
+            'GRIDJOBID': dynamic_util.wn_grid_job_id(),
             'JOBEXITCODE': None,
             'JOBEXITREASON': None,
             'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'],
