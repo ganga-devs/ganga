@@ -25,7 +25,7 @@ class LCGMS(DashboardMS):
         import Ganga.Lib.MonitoringServices.Dashboard
         return DashboardMS.getSandboxModules(self) + [
             Ganga.Lib.MonitoringServices.Dashboard.CommonUtil,
-            Ganga.Lib.MonitoringServices.Dashboard.LCGMS,
+            Ganga.Lib.MonitoringServices.Dashboard.LCGMS1,
             Ganga.Lib.MonitoringServices.Dashboard.LCGUtil,
             ]
 
