@@ -38,13 +38,14 @@ class LCGMS(DashboardMS):
     def getJobInfo(self):
         """Create job_info from Job object."""
         j = self.job_info # called on client, so job_info is Job object
+        exec self._import_string
         ji = {
             'fqid': j.fqid,
-            'EXECUTION_BACKEND': LCGUtil.cl_execution_backend(j),
-            'OWNERDN': LCGUtil.cl_ownerdn(),
-            'JOB_ID_INSIDE_THE_TASK': LCGUtil.cl_job_id_inside_the_task(j),
-            'TASKNAME': LCGUtil.cl_task_name(j),
-            'UNIQUEJOBID': LCGUtil.cl_unique_job_id(j),
+            'EXECUTION_BACKEND': dynamic_util.cl_execution_backend(j),
+            'OWNERDN': dynamic_util.cl_ownerdn(),
+            'JOB_ID_INSIDE_THE_TASK': dynamic_util.cl_job_id_inside_the_task(j),
+            'TASKNAME': dynamic_util.cl_task_name(j),
+            'UNIQUEJOBID': dynamic_util.cl_unique_job_id(j),
             }
         return ji
     
