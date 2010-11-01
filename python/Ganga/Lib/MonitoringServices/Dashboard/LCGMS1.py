@@ -4,12 +4,10 @@ N.B. This code is under development and should not generally be used or relied u
 
 """
 
-#TODO: disable if backend is not LCG
 #TODO: report LB state change times
 
 
 from Ganga.Lib.MonitoringServices.Dashboard import CommonUtil
-#from Ganga.Lib.MonitoringServices.Dashboard import LCGUtil
 
 
 from Ganga.Lib.MonitoringServices.Dashboard.DashboardMS import DashboardMS
