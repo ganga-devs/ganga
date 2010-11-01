@@ -234,7 +234,7 @@ class DQ2JobSplitter(ISplitter):
                 elif job.backend.requirements.cloud:
 
                     if job.backend.requirements.cloud == 'ALL' and not job.backend.requirements.sites and job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
-                        logger.warning('DQ2OutputDataset being used with \'ALL\' cloud option. Attempting to find suitable site - this may take some time...')
+                        logger.warning('DQ2OutputDataset being used with \'ALL\' cloud option. Attempting to find suitable sites - this may take some time...')
                         allowed_sites = job.backend.requirements.list_sites()
                     else:
                         allowed_sites = job.backend.requirements.list_sites_cloud()
@@ -386,62 +386,69 @@ class DQ2JobSplitter(ISplitter):
 
         # to a check for the 'ALL' cloud option and if given, reduce the selection
         if hasattr(job.backend.requirements, 'cloud') and job.backend.requirements.cloud == 'ALL' and not job.backend.requirements.sites and job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
-            logger.warning('DQ2OutputDataset being used with \'ALL\' cloud option. Restricting to a single cloud. ')
 
-            avail_clouds = {}
-            for key in locations:
-                avail_clouds[key] = []
+            if not job.backend.requirements.anyCloud:
+            
+                logger.warning('DQ2OutputDataset being used with \'ALL\' cloud option. Restricting to a single cloud. Set the \'requirements.anyCloud\' to True to prevent this restriction.')
 
-                new_locations = []
-                for loc in locations[key]:
-                    if loc in allowed_sites:
-                        new_locations.append(loc)
+                avail_clouds = {}
+                for key in locations:
+                    avail_clouds[key] = []
+
+                    new_locations = []
+                    for loc in locations[key]:
+                        if loc in allowed_sites:
+                            new_locations.append(loc)
                         
-                info = job.backend.requirements.cloud_from_sites(new_locations)
+                    info = job.backend.requirements.cloud_from_sites(new_locations)
                 
-                for all_site in info:
-                    if not info[all_site] in avail_clouds[key] and not info[all_site] in ['US', 'NG']:
-                        if info[all_site] == 'T0':
-                            info[all_site] = 'CERN'                     
-                        avail_clouds[key].append(info[all_site])
+                    for all_site in info:
+                        if not info[all_site] in avail_clouds[key] and not info[all_site] in ['US', 'NG']:
+                            if info[all_site] == 'T0':
+                                info[all_site] = 'CERN'                     
+                            avail_clouds[key].append(info[all_site])
 
-            # perform logical AND to find a cloud that has all data
-            from sets import Set
+                # perform logical AND to find a cloud that has all data
+                from sets import Set
             
-            cloud_set = Set(job.backend.requirements.list_clouds())
+                cloud_set = Set(job.backend.requirements.list_clouds())
             
-            for key in avail_clouds:
-                cloud_set = cloud_set & Set(avail_clouds[key])
+                for key in avail_clouds:
+                    cloud_set = cloud_set & Set(avail_clouds[key])
 
-            # find users cloud and submit there by preference
-            fav_cloud = ''
-            for ln in gridProxy.info('--all').split('\n'):
-                if ln.find('attribute') == -1 or ln.find('atlas') == -1:
-                    continue
+                # find users cloud and submit there by preference
+                fav_cloud = ''
+                for ln in gridProxy.info('--all').split('\n'):
+                    if ln.find('attribute') == -1 or ln.find('atlas') == -1:
+                        continue
                 
-                toks = ln.split('/')
+                    toks = ln.split('/')
                             
-                if len(toks) < 3:
-                    continue
+                    if len(toks) < 3:
+                        continue
                 
-                if toks[2].upper() in job.backend.requirements.list_clouds():
-                    fav_cloud = toks[2].upper()
-                    break
+                    if toks[2].upper() in job.backend.requirements.list_clouds():
+                        fav_cloud = toks[2].upper()
+                        break
                             
-            if len(cloud_set) == 0:
-                raise ApplicationConfigurationError(None, 'Cloud option \'ALL\' could not find a complete replica of the dataset in any cloud. Please try a specific site or cloud.')
-            else:
-                cloud_list = list(cloud_set)
-                if not fav_cloud in cloud_list:
-                    fav_cloud = cloud_list[0]
+                if len(cloud_set) == 0:
+                    raise ApplicationConfigurationError(None, 'Cloud option \'ALL\' could not find a complete replica of the dataset in any cloud. Please try a specific site or cloud.')
+                else:
+                    cloud_list = list(cloud_set)
+                    if not fav_cloud in cloud_list:
+                        fav_cloud = cloud_list[0]
 
-                new_allowed_sites = []
-                for site in allowed_sites:
+                    logger.warning('\'%s\' cloud selected. Continuing job submission...' % fav_cloud)
+
+            new_allowed_sites = []
+            for site in allowed_sites:
+                if not job.backend.requirements.anyCloud:
                     if job.backend.requirements.cloud_from_sites( site )[site] == fav_cloud:
                         new_allowed_sites.append(site)
+                elif not job.backend.requirements.cloud_from_sites( site )[site] in ['US', 'NG']:
+                    new_allowed_sites.append(site)
 
-                allowed_sites = new_allowed_sites
-                logger.warning('\'%s\' cloud selected. Continuing job submission...' % fav_cloud)
+            allowed_sites = new_allowed_sites
                 
 
         siteinfos = {}
