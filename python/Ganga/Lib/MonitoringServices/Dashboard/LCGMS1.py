@@ -17,9 +17,9 @@ class LCGMS(DashboardMS):
     def __init__(self, job_info, config_info):
         """Construct the Dashboard LCG Monitoring Service."""
         DashboardMS.__init__(self, job_info, config_info)
-        backend_name = 'LCG'
-        self._import_string = "from Ganga.Lib.MonitoringServices.Dashboard import %sUtil as dynamic_util" % backend_name
-        self._util_string = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil" % backend_name
+        #backend_name = 'LCG'
+        #self._import_string = "from Ganga.Lib.MonitoringServices.Dashboard import %sUtil as dynamic_util" % backend_name
+        #self._util_string = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil" % backend_name
 
     def getSandboxModules(self):
         """Return list of module dependencies."""
