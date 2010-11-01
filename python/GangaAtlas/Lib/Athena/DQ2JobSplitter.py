@@ -490,11 +490,6 @@ class DQ2JobSplitter(ISplitter):
         #print "%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %("nrjob", "guid", "nevents", "skip_events", "max_events", "unused_evts", "id_lower", "id_upper", "counter")
 
         for dataset, siteinfo in siteinfos.iteritems():
-            counter = 0 ; id_lower = 0;  id_upper = 0; tmpid = 0
-            unused_events = 0; nskip =0; second_loop =0; nevtstoskip = 0;  
-            totalevent = 0; used_events = 0; first_loop = 0
-            left_events = 0; first_iteration = False; last_loop = False; num_of_events = 0;
-            dset_size = 0; nsubjob = 0
 
             self.numfiles = orig_numfiles
             self.numsubjobs = orig_numsubjobs
@@ -503,6 +498,12 @@ class DQ2JobSplitter(ISplitter):
 
             for sites, guids in siteinfo.iteritems():
                 # at these sites process these guids belonging to dataset
+                
+                counter = 0 ; id_lower = 0;  id_upper = 0; tmpid = 0
+                unused_events = 0; nskip =0; second_loop =0; nevtstoskip = 0;  
+                totalevent = 0; used_events = 0; first_loop = 0
+                left_events = 0; first_iteration = False; last_loop = False; num_of_events = 0;
+                dset_size = 0; nsubjob = 0
 
                 if self.numfiles <= 0: 
                     self.numfiles = 1
@@ -677,9 +678,9 @@ class DQ2JobSplitter(ISplitter):
                         j.application.max_events = num_of_events
                         events_processed += num_of_events
                         nsubjob += 1
-
+                        
                         """
-                        #print "%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %("nrjob", "guid", "nevents", "skip_events", "max_events", "unused_evts", "id_lower", "id_upper", "counter")
+                        print "%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %("nrjob", "guid", "nevents", "skip_events", "max_events", "unused_evts", "id_lower", "id_upper", "counter")
                         print "\n%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %( nsubjob, (j.inputdata.names[0])[-18:], allcontent[j.inputdata.guids[0]][2] - j.application.skip_events, j.application.skip_events, j.application.max_events, unused_events, id_lower, id_upper, counter - 1)
                         
                         kcnt = 0
@@ -695,7 +696,7 @@ class DQ2JobSplitter(ISplitter):
                             print "%10s %20s %10s" %("", "total_events", kevent)
 
                         """
-                        
+
                         #Remove previously added files from the subjobs         
                         id_lower = id_upper -1
                     

@@ -54,11 +54,18 @@ def standardSetup(setup=setup):
     # here we assume that the Ganga has been already prepended to sys.path by the caller
     if checkPythonVersion(_defaultMinVersion,_defaultMinHexVersion):
         for name in setup.packages:
-            if name == '4Suite' and sys.hexversion > 0x2050000:
+            if name == '4Suite' and (sys.hexversion > 0x2050000 and sys.hexversion < 0x2060000):
                 # hack the 4Suite path for 2.5
                 setup.packages['4Suite']['PYTHONPATH']  =  [ package.replace('2.4','2.5') for package in setup.packages['4Suite']['PYTHONPATH'] ]
                 setup.packages['4Suite']['syspath']  =  [ package.replace('2.4','2.5') for package in setup.packages['4Suite']['syspath'] ]
                 setup.setSysPath(name)
+            elif name == '4Suite' and sys.hexversion > 0x2060000:
+                # hack the 4Suite path for 2.6
+                setup.packages['4Suite']['PYTHONPATH']  =  [ package.replace('2.4','2.6') for package in setup.packages['4Suite']['PYTHONPATH'] ]
+                setup.packages['4Suite']['syspath']  =  [ package.replace('2.4','2.6') for package in setup.packages['4Suite']['syspath'] ]
+                setup.setSysPath(name)
+            else:
+               pass 
     else:
         sys.exit()
 
