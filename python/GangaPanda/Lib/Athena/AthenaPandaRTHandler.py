@@ -474,7 +474,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.transformation    = '%s/runGen-00-00-02' % Client.baseURLSUB
         else:
             jspec.transformation    = '%s/runAthena-00-00-11' % Client.baseURLSUB
-        if job.inputdata and self.inputdatatype=='DQ2' and not job.inputdata.tag_info:
+        if job.inputdata and self.inputdatatype=='DQ2' and (not job.inputdata.tag_info or app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']):
             jspec.prodDBlock    = job.inputdata.dataset[0]
         else:
             jspec.prodDBlock    = 'NULL'
@@ -516,7 +516,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(flib)
 
 #       input files FIXME: many more input types
-        if job.inputdata and self.inputdatatype=='DQ2' and not job.inputdata.tag_info:
+        if job.inputdata and self.inputdatatype=='DQ2' and (not job.inputdata.tag_info or app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']):
             for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
                 finp = FileSpec()
                 finp.lfn            = lfn
@@ -605,25 +605,49 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 tag_file = job.inputdata.tag_info.keys()[0]
                 if job.inputdata.tag_info[tag_file]['path'] != '' and job.inputdata.tag_info[tag_file]['dataset'] == '':
                     
-                    # set ship input
-                    param += '--shipInput '
-
                     # set the coll name
                     if self.runConfig.input.collRefName:
                         param += '--collRefName %s ' % self.runConfig.input.collRefName
                         
-                    # sort out the input ELSSI file from the tag_info
-                    input_files = ['.'.join( tag_file.split(".")[:len(tag_file.split("."))-3] ) + '.ref.root']
-                    #input_files = [tag_file]
-
                     # get the GUID boundaries
                     guid_boundaries = []
                     for tag_file2 in job.inputdata.tag_info:
                         for ref in job.inputdata.tag_info[tag_file2]['refs']:
                             guid_boundaries.append(ref[2])
 
-                    param += '--guidBoundary "%s" ' % guid_boundaries
-                                        
+                    if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+                        # running as exectuable so extract and change the cmd line
+                        cmdline_start = param.find('"', param.find("-p")) + 1
+                        pos = cmdline_start
+                        cmdline_stop = -1
+                        
+                        while cmdline_stop == -1:
+                            # find next non-escaped quote
+                            cmdline_stop = param.find('"', pos)
+                            if param[cmdline_stop-1] == '\\':
+                                pos = cmdline_stop+1                                
+                                cmdline_stop = -1
+
+                        # prepend the uncompress and the GUID list
+                        cmdline = ''
+                        if self.dbrelease != '':
+                            dbnum = self.dbrelease[ self.dbrelease.find('-')+1 : self.dbrelease.find('.tar')]
+                            cmdline = "export DBRELEASE_REQUESTED=%s ; " % dbnum
+
+                        cmdline += "/bin/echo %%IN | sed \'s/,/\\\\\\n/g\' > input_tag.txt; python uncompress.py %s ; " % ' '.join(job.inputdata.tag_info.keys())
+                        cmdline += param[cmdline_start:cmdline_stop].replace("%IN", "outColl.root")                            
+
+                        param = param[:cmdline_start] + cmdline + param[cmdline_stop:]
+                        print param
+                    else:
+                        # sort out the input ELSSI file from the tag_info
+                        input_files = ['.'.join( tag_file.split(".")[:len(tag_file.split("."))-3] ) + '.ref.root']
+                        # input_files = [tag_file]
+                        
+                        # set ship input
+                        param += '--shipInput '
+                        param += '--guidBoundary "%s" ' % guid_boundaries
+
             param += '-i "%s" ' % input_files
         else:
             param += '-i "[]" '
