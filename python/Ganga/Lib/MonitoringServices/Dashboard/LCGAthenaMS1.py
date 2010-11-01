@@ -8,7 +8,7 @@ N.B. This code is under development and should not generally be used or relied u
 
 
 from Ganga.Lib.MonitoringServices.Dashboard import CommonUtil
-#from Ganga.Lib.MonitoringServices.Dashboard import LCGUtil
+from Ganga.Lib.MonitoringServices.Dashboard import LCGUtil
 from Ganga.Lib.MonitoringServices.Dashboard import LCGAthenaUtil
 
 
@@ -16,7 +16,7 @@ from Ganga.Lib.MonitoringServices.Dashboard.LCGMS1 import LCGMS
 class LCGAthenaMS(LCGMS):
     """Dashboard LCG/Athena Monitoring Service based on MSG."""
 
-    #def __init__(self, job_info, config_info):
+    def __init__(self, job_info, config_info):
         """Construct the Dashboard LCG/Athena Monitoring Service."""
         LCGMS.__init__(self, job_info, config_info)
 
@@ -24,7 +24,7 @@ class LCGAthenaMS(LCGMS):
         """Return list of module dependencies."""
         import Ganga.Lib.MonitoringServices.Dashboard
         return LCGMS.getSandboxModules(self) + [
-            Ganga.Lib.MonitoringServices.Dashboard.LCGAthenaMS,
+            Ganga.Lib.MonitoringServices.Dashboard.LCGAthenaMS1,
             Ganga.Lib.MonitoringServices.Dashboard.LCGAthenaUtil,
             ]
 
