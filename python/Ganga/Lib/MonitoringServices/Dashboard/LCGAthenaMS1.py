@@ -12,7 +12,7 @@ from Ganga.Lib.MonitoringServices.Dashboard import LCGUtil
 from Ganga.Lib.MonitoringServices.Dashboard import LCGAthenaUtil
 
 
-from Ganga.Lib.MonitoringServices.Dashboard.LCGMS import LCGMS
+from Ganga.Lib.MonitoringServices.Dashboard.LCGMS1 import LCGMS
 class LCGAthenaMS(LCGMS):
     """Dashboard LCG/Athena Monitoring Service based on MSG."""
 
