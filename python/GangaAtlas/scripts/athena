@@ -106,6 +106,7 @@ p.add_option('--batchextraopts' , action='store', type='string', dest='batchextr
 p.add_option('--check_availability', action='store_true', help='Check for availability of input files on NG' )
 p.add_option('--runtimeenvironment', action='store', type='string', dest='runtimeenvironment', help='Specify the required runtime environment on an NG site' )
 p.add_option('--bexec', action='store', type='string', dest='bexec', help='Specify the build command for --athena_exe EXE on Panda')
+p.add_option('--libDS', action='store', type='string', dest='libDS', help='Existing Library dataset to use (disables buildjob)')
 p.add_option('--extOutFile', action='store', type='string', dest='extOutFile', help='define extra output files on Panda, e.g. --extOutFile=output1.txt:output2.dat')
 p.add_option('--excludedSite', action='store', type='string', dest='excludedSite', default='', help="list of Panda sites which are not used for site section, e.g., ANALY_ABC,ANALY_XYZ")
 p.add_option('--useChirpServer', action='store', type='string', dest='useChirpServer', default='', help="Chirp Server to be used to stage out the output e.g., voatlas92.cern.ch")
@@ -486,6 +487,9 @@ elif opt.backend=='panda':
 
     if opt.bexec:
         j.backend.bexec=opt.bexec
+
+    if opt.libDS:
+        j.backend.libDS=opt.libDS
 
     if opt.excludedSite: j.backend.requirements.excluded_sites = opt.excludedSite.split(',')
 
