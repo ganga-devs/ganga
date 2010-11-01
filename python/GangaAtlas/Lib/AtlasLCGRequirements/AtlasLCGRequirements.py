@@ -415,6 +415,7 @@ class AtlasLCGRequirements(LCGRequirements):
         'sites'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names'),
         'excluded_sites'  : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names to be excluded'),
         'cloud'           : SimpleItem(defvalue = 'ALL', doc='ATLAS cloud name: CERN, IT, ES, FR, UK, DE, NL, TW, CA, US, NG'),
+        'anyCloud'        : SimpleItem(defvalue = True, doc='Set to True to allow cross-cloud submission. Use with the \'ALL\' cloud option.'),
         'os'              : SimpleItem(defvalue ='', doc='Operation Systems')
     })
 
