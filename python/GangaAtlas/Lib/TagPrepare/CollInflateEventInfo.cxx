@@ -292,7 +292,9 @@ public:
 		char buf[500];
 		sprintf(buf, "[DB=%s][CNT=POOLContainer_DataHeader][CLID=D82968A1-CF91-4320-B2DD-E0F739CBC7E6][TECH=00000200][OID=%.8X-%.8X]", guid, oid, evt);
 		//std::cout << buf << std::endl;
-		
+		rowBuffer.attributeList()["EventNumber"].setValue((unsigned int)evt);
+		rowBuffer.attributeList()["RunNumber"].setValue((unsigned int)oid);
+
 		if (ref == 1)
 		  rowBuffer.tokenList()[ "StreamAOD_ref" ].fromString( buf );
 		else
