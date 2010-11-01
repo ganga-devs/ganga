@@ -8,7 +8,7 @@ N.B. This code is under development and should not generally be used or relied u
 
 
 from Ganga.Lib.MonitoringServices.Dashboard import CommonUtil
-from Ganga.Lib.MonitoringServices.Dashboard import LCGUtil
+#from Ganga.Lib.MonitoringServices.Dashboard import LCGUtil
 from Ganga.Lib.MonitoringServices.Dashboard import LCGAthenaUtil
 
 
