@@ -16,7 +16,7 @@ from Ganga.Lib.MonitoringServices.Dashboard.LCGMS1 import LCGMS
 class LCGAthenaMS(LCGMS):
     """Dashboard LCG/Athena Monitoring Service based on MSG."""
 
-    def __init__(self, job_info, config_info):
+    #def __init__(self, job_info, config_info):
         """Construct the Dashboard LCG/Athena Monitoring Service."""
         LCGMS.__init__(self, job_info, config_info)
 
