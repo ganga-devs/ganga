@@ -81,7 +81,7 @@ def wn_dest_wn():
     """Build dest_wn. Only run on worker node."""
     return CommonUtil.hostname()
 
-def wn_grid_job_id():
+def wn_grid_job_id(fqid):
     """Build grid_job_id. Only run on worker node."""
     grid_job_id = CommonUtil.env('EDG_WL_JOBID')
     if not grid_job_id:
