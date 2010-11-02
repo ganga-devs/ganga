@@ -77,7 +77,6 @@ class AthenaMS(BackendMS):
 
     def _cl_task_meta_message(self):
         j = self.job_info # called on client, so job_info is Job object
-        exec self.importDynamicUtil()
         msg = {
             'APPLICATION': LCGAthenaUtil.cl_application(j), # e.g. ATHENA
             'APPLICATIONVERSION': LCGAthenaUtil.cl_application_version(j), # e.g. 15.5.1
@@ -86,12 +85,12 @@ class AthenaMS(BackendMS):
             'JSTOOLUI': LCGAthenaUtil.cl_jstoolui(), # hostname of client. e.g. lxplus246.cern.ch
             'OUTPUTDATASET': LCGAthenaUtil.cl_output_dataset(j),# Unknown at submission. e.g. user09.DavidTuckett.ganga.420.20091125.FZK-LCG2_SCRATCHDISK
             'OUTPUTSE': LCGAthenaUtil.cl_output_se(j), # Unknown at submission. e.g. FZK-LCG2_SCRATCHDISK
-            'OWNERDN': dynamic_util.cl_ownerdn(), # Grid certificate. e.g. /DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=dtuckett/CN=671431/CN=David Tuckett/CN=proxy
+            'OWNERDN': self.dynamic_util.cl_ownerdn(), # Grid certificate. e.g. /DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=dtuckett/CN=671431/CN=David Tuckett/CN=proxy
             'REPORTER': 'ToolUI', # e.g. ToolUI, JobWN
             'REPORTTIME': CommonUtil.utcnow(), # e.g. 2009-11-25T14:59:24.754249Z
             'SUBMISSIONTYPE': 'direct',
             'TARGET': LCGAthenaUtil.cl_target(j), # e.g. CE_xxx,SITE_CSCS-LCG2_DATADISK,SITE_DESY-ZN_DATADISK
-            'TASKNAME': dynamic_util.cl_task_name(j), # e.g. ganga:6702b50a-8a31-4476-8189-62ea5b8e00b3:TrigStudy
+            'TASKNAME': self.dynamic_util.cl_task_name(j), # e.g. ganga:6702b50a-8a31-4476-8189-62ea5b8e00b3:TrigStudy
             'TASKTYPE': LCGAthenaUtil.cl_task_type(self.config_info), # e.g. analysis, production, hammercloud etc.
             '___fqid' : j.fqid,
             }
@@ -99,11 +98,10 @@ class AthenaMS(BackendMS):
 
     def _cl_job_meta_message(self):
         j = self.job_info # called on client, so job_info is Job object
-        exec self.importDynamicUtil()
         msg = {
-            'GRIDJOBID': dynamic_util.cl_grid_job_id(j), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
+            'GRIDJOBID': self.dynamic_util.cl_grid_job_id(j), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
             'INPUTDATASET': LCGAthenaUtil.cl_input_dataset(j), # e.g. fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10
-            'JOB_ID_INSIDE_THE_TASK': dynamic_util.cl_job_id_inside_the_task(j), # subjob id e.g. 0
+            'JOB_ID_INSIDE_THE_TASK': self.dynamic_util.cl_job_id_inside_the_task(j), # subjob id e.g. 0
             'NEVENTSREQUESTED': LCGAthenaUtil.cl_nevents_requested(j), # None or non-negative number e.g. 100
             'OUTPUTDATASET': LCGAthenaUtil.cl_output_dataset(j),# e.g. user09.DavidTuckett.ganga.420.20091125.FZK-LCG2_SCRATCHDISK
             'OUTPUTSE': LCGAthenaUtil.cl_output_se(j), # Unknown at submission. e.g. FZK-LCG2_SCRATCHDISK
@@ -112,8 +110,8 @@ class AthenaMS(BackendMS):
             'REPORTER': 'ToolUI', # e.g. ToolUI, JobWN
             'REPORTTIME': CommonUtil.utcnow(), # e.g. 2009-11-25T14:59:24.754249Z
             'TARGET': LCGAthenaUtil.cl_target(j), # e.g. CE_xxx,SITE_CSCS-LCG2_DATADISK,SITE_DESY-ZN_DATADISK
-            'TASKNAME': dynamic_util.cl_task_name(j), # e.g. ganga:6702b50a-8a31-4476-8189-62ea5b8e00b3:TrigStudy
-            'UNIQUEJOBID': dynamic_util.cl_unique_job_id(j), # Ganga uuid e.g. 1c08ff3b-904f-4f77-a481-d6fa765813cb
+            'TASKNAME': self.dynamic_util.cl_task_name(j), # e.g. ganga:6702b50a-8a31-4476-8189-62ea5b8e00b3:TrigStudy
+            'UNIQUEJOBID': self.dynamic_util.cl_unique_job_id(j), # Ganga uuid e.g. 1c08ff3b-904f-4f77-a481-d6fa765813cb
             '___fqid' : j.fqid,
             }
         return msg
@@ -121,9 +119,8 @@ class AthenaMS(BackendMS):
     def _wn_job_processing_attributes_message(self):
         ji = self.job_info # called on worker node, so job_info is dictionary
         athena_stats = LCGAthenaUtil.wn_load_athena_stats()
-        exec self.importDynamicUtil()
         msg = {
-            'GRIDJOBID': dynamic_util.wn_grid_job_id(ji['fqid']), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
+            'GRIDJOBID': self.dynamic_util.wn_grid_job_id(ji['fqid']), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
             'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'], # subjob id e.g. 0
             'NEVENTSPROCESSED': athena_stats.get('totalevents'), # number of events processed. e.g. 100
             'NFILESPROCESSED': athena_stats.get('numfiles'), # number of files processed. e.g. 2
