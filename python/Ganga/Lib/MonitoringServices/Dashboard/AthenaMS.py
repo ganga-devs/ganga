@@ -77,7 +77,7 @@ class AthenaMS(BackendMS):
 
     def _cl_task_meta_message(self):
         j = self.job_info # called on client, so job_info is Job object
-        exec self._import_string
+        exec self.importDynamicUtil()
         msg = {
             'APPLICATION': LCGAthenaUtil.cl_application(j), # e.g. ATHENA
             'APPLICATIONVERSION': LCGAthenaUtil.cl_application_version(j), # e.g. 15.5.1
@@ -99,7 +99,7 @@ class AthenaMS(BackendMS):
 
     def _cl_job_meta_message(self):
         j = self.job_info # called on client, so job_info is Job object
-        exec self._import_string
+        exec self.importDynamicUtil()
         msg = {
             'GRIDJOBID': dynamic_util.cl_grid_job_id(j), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
             'INPUTDATASET': LCGAthenaUtil.cl_input_dataset(j), # e.g. fdr08_run2.0052283.physics_Muon.merge.AOD.o3_f8_m10
@@ -121,7 +121,7 @@ class AthenaMS(BackendMS):
     def _wn_job_processing_attributes_message(self):
         ji = self.job_info # called on worker node, so job_info is dictionary
         athena_stats = LCGAthenaUtil.wn_load_athena_stats()
-        exec self._import_string
+        exec self.importDynamicUtil()
         msg = {
             'GRIDJOBID': dynamic_util.wn_grid_job_id(), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
             'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'], # subjob id e.g. 0
