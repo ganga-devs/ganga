@@ -73,12 +73,16 @@ def wn_dest_ce():
         dest_ce = CommonUtil.stdout('glite-brokerinfo getCE')
     return CommonUtil.strip_to_none(dest_ce)
     """
-    return 'local_dest_CE'   
+    from Ganga.Utility.Config import getConfig
+    batch = getConfig('Configuration')['Batch']
+    host = getConfig('System')['GANGA_HOSTNAME']        
+        
+    return '%s_local_%s' % (host, batch)
 #try to get the site from ganga - even for local
 def wn_dest_site():
     """Build dest_site. Only run on worker node."""
     #return CommonUtil.env('SITE_NAME')
-    from Ganga.Utility.Config import getConfig???
+    from Ganga.Utility.Config import getConfig
     host = getConfig('System')['GANGA_HOSTNAME']
     return host    
 #this is ok    
