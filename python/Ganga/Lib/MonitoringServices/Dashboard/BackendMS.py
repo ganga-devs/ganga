@@ -17,26 +17,30 @@ class BackendMS(DashboardMS):
     def __init__(self, job_info, config_info):
         """Construct the Dashboard Backend Monitoring Service."""
         DashboardMS.__init__(self, job_info, config_info)
-        backend_name = job_info.backend.__class__.__name__
-        self._import_string = "from Ganga.Lib.MonitoringServices.Dashboard import %sUtil as dynamic_util" % backend_name
-        self._util_string = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil" % backend_name
+
+    def importDynamicUtil(self):
+        backend_name = self.job_info.backend.__class__.__name__
+        import_string = "from Ganga.Lib.MonitoringServices.Dashboard import %sUtil as dynamic_util" % backend_name
+        return import_string
 
     def getSandboxModules(self):
         """Return list of module dependencies."""
         import Ganga.Lib.MonitoringServices.Dashboard
-        exec self._import_string
-        __import__(self._util_string)
-        import sys
+        exec self.importDynamicUtil()
+        backend_name = self.job_info.backend.__class__.__name__
+        util_string = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil" % backend_name
+        __import__(util_string)
+        import sys      
         return DashboardMS.getSandboxModules(self) + [
             Ganga.Lib.MonitoringServices.Dashboard.CommonUtil,
             Ganga.Lib.MonitoringServices.Dashboard.BackendMS,
-            sys.modules[self._util_string],
+            sys.modules[util_string],
             ]
 
     def getJobInfo(self):
         """Create job_info from Job object."""
         j = self.job_info # called on client, so job_info is Job object
-        exec self._import_string
+        exec self.importDynamicUtil()
         ji = {
             'fqid': j.fqid,
             'EXECUTION_BACKEND': dynamic_util.cl_execution_backend(j),
@@ -106,7 +110,7 @@ class BackendMS(DashboardMS):
             self._log('debug', 'Not sending unwanted message on complete for master wrapper job %s.' % j.fqid)
             return
         # send LB Done job-status message
-        exec self._import_string
+        exec self.importDynamicUtil()
         message = self._cl_job_status_message(dynamic_util.cl_grid_status(j), 'LB', None)
         message['GRIDEXITCODE'] = dynamic_util.cl_grid_exit_code(j)
         message['GRIDEXITREASON'] = dynamic_util.cl_grid_exit_reason(j)
@@ -121,7 +125,7 @@ class BackendMS(DashboardMS):
             self._log('debug', 'Not sending unwanted message on fail for master wrapper job %s.' % j.fqid)
             return
         # send LB Done or Aborted job-status message
-        exec self._import_string
+        exec self.importDynamicUtil()
         message = self._cl_job_status_message(dynamic_util.cl_grid_status(j), 'LB', None)
         message['GRIDEXITCODE'] = dynamic_util.cl_grid_exit_code(j)
         message['GRIDEXITREASON'] = dynamic_util.cl_grid_exit_reason(j)
@@ -148,7 +152,7 @@ class BackendMS(DashboardMS):
     def _cl_job_status_message(self, status, status_source, status_start_time=None):
         # Not null: EXECUTION_BACKEND, GRIDJOBID, JOB_ID_INSIDE_THE_TASK, TASKNAME, UNIQUEJOBID
         j = self.job_info # called on client, so job_info is Job object
-        exec self._import_string
+        exec self.importDynamicUtil()
         msg = {
             'DESTCE': dynamic_util.cl_dest_ce(j), # Actual CE. e.g. ce-3-fzk.gridka.de:2119/jobmanager-pbspro-atlasXS
             'DESTSITE': None, # Actual site. e.g. FZK-LCG2
@@ -175,7 +179,7 @@ class BackendMS(DashboardMS):
     def _wn_job_status_message(self, status, status_source, status_start_time):
         # Not null: EXECUTION_BACKEND, GRIDJOBID, JOB_ID_INSIDE_THE_TASK, TASKNAME, UNIQUEJOBID
         ji = self.job_info # called on worker node, so job_info is dictionary
-        exec self._import_string
+        exec self.importDynamicUtil()
         msg = {
             'DESTCE': dynamic_util.wn_dest_ce(),
             'DESTSITE': dynamic_util.wn_dest_site(),
