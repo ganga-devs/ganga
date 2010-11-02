@@ -429,8 +429,8 @@ class Panda(IBackend):
                     js.lockedby = configSys['GANGA_VERSION']
 
                 verbose = logger.isEnabledFor(10)
-                for js in jobspecs:
-                    print js.specialHandling
+#                for js in jobspecs:
+#                    print js.specialHandling
                 status, jobids = Client.submitJobs(jobspecs,verbose)
                 if status:
                     logger.error('Status %d from Panda submit',status)
