@@ -257,6 +257,10 @@ class DiracCommands:
         return result
     getDataset = staticmethod(getDataset)
 
+    def bkQueryDict(dict):
+        return DiracCommands.dirac.bkQuery(dict)
+    bkQueryDict = staticmethod(bkQueryDict)
+
     def checkSites():
         return DiracCommands.dirac.checkSites()
     checkSites = staticmethod(checkSites)

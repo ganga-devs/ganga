@@ -128,3 +128,62 @@ RecoToDST-07/90000000/DST" ,
         return GPIProxyObjectFactory(ds)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
+class BKQueryDict(GangaObject):
+    """Class for handling LHCb bookkeeping queries using dictionaries.
+    
+    Use BKQuery if you do not know how to use BK dictionaries!
+    
+    Example Usage:
+    
+    bkqd = BKQueryDict()
+    bkqd.dict['ConfigVersion'] = 'Collision09'
+    bkqd.dict['ConfigName'] = 'LHCb'
+    bkqd.dict['ProcessingPass'] = 'Real Data + RecoToDST-07'
+    bkqd.dict['EventType'] = '90000000'
+    bkqd.dict['FileType'] = 'DST'
+    bkqd.dict['DataTakingConditions'] = 'Beam450GeV-VeloOpen-MagDown'
+    data = bkqd.getDataset()
+    """
+    
+    _bkQueryTemplate = {'SimulationConditions'     : 'All',
+                        'DataTakingConditions'     : 'All',
+                        'ProcessingPass'           : 'All',
+                        'FileType'                 : 'All',
+                        'EventType'                : 'All',
+                        'ConfigName'               : 'All',
+                        'ConfigVersion'            : 'All',
+                        'ProductionID'             :     0,
+                        'StartRun'                 :     0,
+                        'EndRun'                   :     0,
+                        'DataQualityFlag'          : 'All'}
+    
+    schema = {}
+    docstr = 'Dirac BK query dictionary.'
+    schema['dict'] = SimpleItem(defvalue=_bkQueryTemplate,#typelist=['dict'],
+                                doc=docstr)
+    _schema = Schema(Version(1,0), schema)
+    _category = ''
+    _name = "BKQueryDict"
+    _exportmethods = ['getDataset']
+
+    def __init__(self):
+        super(BKQueryDict, self).__init__()
+
+    def __construct__(self, args):
+        if (len(args) != 1) or (type(args[0]) is not type({})):
+            super(BKQueryDict,self).__construct__(args)
+        else:
+            self.dict = args[0]
+            
+    def getDataset(self):
+        '''Gets the dataset from the bookkeeping for current dict.'''
+        if not self.dict: return None
+        cmd = 'result = DiracCommands.bkQueryDict(%s)' % self.dict
+        result = get_result(cmd,'BK query error.','BK query error.')
+        files = result['Value']
+        ds = LHCbDataset()
+        for f in files: ds.files.append(LogicalFile(f))
+        return GPIProxyObjectFactory(ds)
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
