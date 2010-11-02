@@ -344,7 +344,7 @@ class Panda(IBackend):
     '''Panda backend: submission to the PanDA workload management system
     '''
 
-    _schema = Schema(Version(2,5), {
+    _schema = Schema(Version(2,6), {
         'site'          : SimpleItem(defvalue='AUTO',protected=0,copyable=1,doc='Require the job to run at a specific site'),
         'requirements'  : ComponentItem('PandaRequirements',doc='Requirements for the resource selection'),
         'extOutFile'    : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=0,copyable=1,doc='define extra output files, e.g. [\'output1.txt\',\'output2.dat\']'),        
@@ -362,6 +362,7 @@ class Panda(IBackend):
         'accessmode'    : SimpleItem(defvalue='',protected=0,copyable=1,doc='EXPERT ONLY'),
         'individualOutDS': SimpleItem(defvalue=False,protected=0,copyable=1,doc='Create individual output dataset for each data-type. By default, all output files are added to one output dataset'),
         'bexec'         : SimpleItem(defvalue='',protected=0,copyable=1,doc='String for Executable make command - if filled triggers a build job for the Execuatble'),
+        'nobuild'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Boolean if no build job should be sent - use it together with Athena.athena_compile variable'),
     })
 
     _category = 'backends'
@@ -387,16 +388,24 @@ class Panda(IBackend):
 
         multiSiteJob=False
 
+        if job.backend.requirements.express:
+            logger.info("Enabling express mode for this job")
+            for js in subjobspecs:
+                js.specialHandling = 'express'
+            if type(buildjobspec)==type([]):
+                for js in buildjobspec:
+                    js.specialHandling = 'express'
+            else:
+                buildjobspec.specialHandling = 'express'
+
+        jobspecs = []
         if buildjobspec:
             if type(buildjobspec)==type([]):
                 multiSiteJob = True
-#                logger.info("Submitting to multiple Panda sites...")
             else:
                 jobspecs = [buildjobspec] + subjobspecs
         else:
             jobspecs = subjobspecs
-
-#        raise BackendError('Panda','submit disabled')
 
         if multiSiteJob:
             jobsetID = -1
@@ -420,6 +429,8 @@ class Panda(IBackend):
                     js.lockedby = configSys['GANGA_VERSION']
 
                 verbose = logger.isEnabledFor(10)
+                for js in jobspecs:
+                    print js.specialHandling
                 status, jobids = Client.submitJobs(jobspecs,verbose)
                 if status:
                     logger.error('Status %d from Panda submit',status)

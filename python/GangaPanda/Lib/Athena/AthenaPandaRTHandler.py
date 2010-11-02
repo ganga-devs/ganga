@@ -80,20 +80,21 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
-        app.athena_compile = True
-        for sj in job.subjobs:
-            sj.application.athena_compile = True
+        if job.backend.bexec and job.backend.nobuild:
+            raise ApplicationConfigurationError(None,"Contradicting options: job.backend.bexec and job.backend.nobuild are both enabled.")
 
-        if job.backend.libds == "LOCAL":
-            local_libds = True
-            local_libds_nobuild = not app.athena_compile
-            job.backend.libds = None
-        elif job.backend.libds == "NOBUILD":
-            local_libds = True
-            local_libds_nobuild = True
-            job.backend.libds = None
-        else:
-            local_libds = False
+        # Switch on compilation flag if bexec is set or libds is empty
+        if job.backend.bexec != '' or not job.backend.nobuild:
+            app.athena_compile = True
+            for sj in job.subjobs:
+                sj.application.athena_compile = True
+            logger.info('"job.backend.nobuild=False" or "job.backend.bexec" is set - Panda build job is enabled.')
+
+        if job.backend.nobuild:
+            app.athena_compile = False
+            for sj in job.subjobs:
+                sj.application.athena_compile = False
+            logger.info('"job.backend.nobuild=True" or "--nobuild" chosen - Panda build job is switched off.')
 
         # set chirp variables
         if configPanda['chirpconfig'] or configPanda['chirpserver']:
@@ -295,12 +296,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             else:
                 self.libDatasets[site]= tmpDSName+'.lib'
                 self.libraries[site] = '%s.tgz' % self.libDatasets[site]
-                try:
-                    Client.addDataset(self.libDatasets[site],False,location=self.outDsLocation)
-                    dq2_set_dataset_lifetime(self.libDatasets[site], self.outDsLocation)
-                    logger.info('Lib dataset %s registered at %s'%(self.libDatasets[site],self.outDsLocation))
-                except exceptions.SystemExit:
-                    raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDatasets[site],sys.exc_info()[0],sys.exc_info()[1]))
+                if not job.backend.nobuild:
+                    try:
+                        Client.addDataset(self.libDatasets[site],False,location=self.outDsLocation)
+                        dq2_set_dataset_lifetime(self.libDatasets[site], self.outDsLocation)
+                        logger.info('Lib dataset %s registered at %s'%(self.libDatasets[site],self.outDsLocation))
+                    except exceptions.SystemExit:
+                        raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDatasets[site],sys.exc_info()[0],sys.exc_info()[1]))
 
         # add extOutFiles
         self.extOutFile = []
@@ -363,7 +365,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             self.inputsandbox = app.user_area.name
 
         # upload sources
-        if self.inputsandbox and not job.backend.libds and not local_libds:
+        if self.inputsandbox and not job.backend.libds:
             uploadSources(os.path.dirname(self.inputsandbox),os.path.basename(self.inputsandbox))
 
         # create build job for each needed site
@@ -382,7 +384,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
                 else:
                     jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
-                if Client.isDQ2free(bjsite) and not local_libds:
+                if Client.isDQ2free(bjsite):
                     jspec.destinationDBlock = '%s/%s' % (job.outputdata.datasetname,self.libDatasets[bjsite])
                     jspec.destinationSE     = 'local'
                 else:
@@ -422,12 +424,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 
                 bjspecs.append(jspec)
         
-            #if local_libds:
-            #    self.make_local_libds(jspec, inputsandbox, local_libds_nobuild)
-            #    job.backend.libds = self.libDataset
-            #    jspec = None 
-            #    self.fileBO = getLibFileSpecFromLibDS(self.libDataset)
-
             return bjspecs
         else:
             return []

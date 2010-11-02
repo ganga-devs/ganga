@@ -132,6 +132,7 @@ p.add_option('--collectstats', action='store_true', help='Switch to collect appl
 p.add_option('--atlas_supp_stream', action='store', type='string', dest='atlas_supp_stream', help='suppress some output streams, e.g. --atlas_supp_stream=GLOBAL:D3PD' )
 p.add_option('--atlas_run_dir', action='store', type='string', dest='atlas_run_dir', help='Athena run directory, e.g. --atlas_run_dir=./' )
 p.add_option('--individualOutDS', action='store_true', dest='individualOutDS', help='Create seperate output datasets/containers for each output type (e.g. AANT, HIST).' )
+p.add_option('--express', action='store_true', dest='express', help='Panda option to send the job using express quota to have higher priority. The number of express subjobs in the queue and the total execution time used by express subjobs are limited (a few subjobs and several hours per day, respectively). This option is intended to be used for quick tests before bulk submission. Note that buildXYZ is not included in quota calculation. If this option is used when quota has already exceeded, the panda server will ignore the option so that subjobs have normal priorities. Also, if you submit 1 buildXYZ and N runXYZ subjobs when you only have quota of M (M < N),  only the first M runXYZ subjobs will have higher priorities' )
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -482,6 +483,7 @@ elif opt.backend=='panda':
         j.backend.requirements.cloud = opt.cloud
 	j.backend.requirements.anyCloud = False
     if opt.long: j.backend.requirements.long = True 
+    if opt.express: j.backend.requirements.express = True 
     if opt.cputime: j.backend.requirements.cputime = opt.cputime
     if opt.memory: j.backend.requirements.memory = opt.memory
     if opt.extOutFile: j.backend.extOutFile = opt.extOutFile.split(':')
