@@ -17,37 +17,35 @@ class BackendMS(DashboardMS):
     def __init__(self, job_info, config_info):
         """Construct the Dashboard Backend Monitoring Service."""
         DashboardMS.__init__(self, job_info, config_info)
-
-    def importDynamicUtil(self):
-        backend_name = self.job_info.backend.__class__.__name__
-        import_string = "from Ganga.Lib.MonitoringServices.Dashboard import %sUtil as dynamic_util" % backend_name
-        return import_string
+        try:
+                backend_name = self.job_info.backend.__class__.__name__
+                path_to_module = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil"%backend_name
+                __import__(path_to_module)
+                import sys
+                self.dynamic_util = sys.modules[path_to_module]
+        except AttributeError:
+                self.dynamic_util = None # not on a client, no access to the Util module
 
     def getSandboxModules(self):
         """Return list of module dependencies."""
         import Ganga.Lib.MonitoringServices.Dashboard
-        exec self.importDynamicUtil()
-        backend_name = self.job_info.backend.__class__.__name__
-        util_string = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil" % backend_name
-        __import__(util_string)
         import sys      
         return DashboardMS.getSandboxModules(self) + [
             Ganga.Lib.MonitoringServices.Dashboard.CommonUtil,
             Ganga.Lib.MonitoringServices.Dashboard.BackendMS,
-            sys.modules[util_string],
+            self.dynamic_util
             ]
 
     def getJobInfo(self):
         """Create job_info from Job object."""
         j = self.job_info # called on client, so job_info is Job object
-        exec self.importDynamicUtil()
         ji = {
             'fqid': j.fqid,
-            'EXECUTION_BACKEND': dynamic_util.cl_execution_backend(j),
-            'OWNERDN': dynamic_util.cl_ownerdn(),
-            'JOB_ID_INSIDE_THE_TASK': dynamic_util.cl_job_id_inside_the_task(j),
-            'TASKNAME': dynamic_util.cl_task_name(j),
-            'UNIQUEJOBID': dynamic_util.cl_unique_job_id(j),
+            'EXECUTION_BACKEND': self.dynamic_util.cl_execution_backend(j),
+            'OWNERDN': self.dynamic_util.cl_ownerdn(),
+            'JOB_ID_INSIDE_THE_TASK': self.dynamic_util.cl_job_id_inside_the_task(j),
+            'TASKNAME': self.dynamic_util.cl_task_name(j),
+            'UNIQUEJOBID': self.dynamic_util.cl_unique_job_id(j),
             }
         return ji
     
@@ -110,10 +108,9 @@ class BackendMS(DashboardMS):
             self._log('debug', 'Not sending unwanted message on complete for master wrapper job %s.' % j.fqid)
             return
         # send LB Done job-status message
-        exec self.importDynamicUtil()
-        message = self._cl_job_status_message(dynamic_util.cl_grid_status(j), 'LB', None)
-        message['GRIDEXITCODE'] = dynamic_util.cl_grid_exit_code(j)
-        message['GRIDEXITREASON'] = dynamic_util.cl_grid_exit_reason(j)
+        message = self._cl_job_status_message(self.dynamic_util.cl_grid_status(j), 'LB', None)
+        message['GRIDEXITCODE'] = self.dynamic_util.cl_grid_exit_code(j)
+        message['GRIDEXITREASON'] = self.dynamic_util.cl_grid_exit_reason(j)
         self._send(self.config_info['destination_job_status'], message)
 
     def fail(self, **opts):
@@ -125,10 +122,9 @@ class BackendMS(DashboardMS):
             self._log('debug', 'Not sending unwanted message on fail for master wrapper job %s.' % j.fqid)
             return
         # send LB Done or Aborted job-status message
-        exec self.importDynamicUtil()
-        message = self._cl_job_status_message(dynamic_util.cl_grid_status(j), 'LB', None)
-        message['GRIDEXITCODE'] = dynamic_util.cl_grid_exit_code(j)
-        message['GRIDEXITREASON'] = dynamic_util.cl_grid_exit_reason(j)
+        message = self._cl_job_status_message(self.dynamic_util.cl_grid_status(j), 'LB', None)
+        message['GRIDEXITCODE'] = self.dynamic_util.cl_grid_exit_code(j)
+        message['GRIDEXITREASON'] = self.dynamic_util.cl_grid_exit_reason(j)
         self._send(self.config_info['destination_job_status'], message)
 
     def kill(self, **opts):
@@ -152,26 +148,25 @@ class BackendMS(DashboardMS):
     def _cl_job_status_message(self, status, status_source, status_start_time=None):
         # Not null: EXECUTION_BACKEND, GRIDJOBID, JOB_ID_INSIDE_THE_TASK, TASKNAME, UNIQUEJOBID
         j = self.job_info # called on client, so job_info is Job object
-        exec self.importDynamicUtil()
         msg = {
-            'DESTCE': dynamic_util.cl_dest_ce(j), # Actual CE. e.g. ce-3-fzk.gridka.de:2119/jobmanager-pbspro-atlasXS
+            'DESTCE': self.dynamic_util.cl_dest_ce(j), # Actual CE. e.g. ce-3-fzk.gridka.de:2119/jobmanager-pbspro-atlasXS
             'DESTSITE': None, # Actual site. e.g. FZK-LCG2
             'DESTWN': None, # Actual worker node hostname. e.g. c01-102-103.gridka.de
-            'EXECUTION_BACKEND': dynamic_util.cl_execution_backend(j), # Backend. e.g. LCG
+            'EXECUTION_BACKEND': self.dynamic_util.cl_execution_backend(j), # Backend. e.g. LCG
             'GRIDEXITCODE': None, # e.g. 0
             'GRIDEXITREASON': None, # e.g. Job terminated successfully
-            'GRIDJOBID': dynamic_util.cl_grid_job_id(j), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
+            'GRIDJOBID': self.dynamic_util.cl_grid_job_id(j), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
             'JOBEXITCODE': None, # e.g. 0
             'JOBEXITREASON': None,
-            'JOB_ID_INSIDE_THE_TASK': dynamic_util.cl_job_id_inside_the_task(j), # subjob id e.g. 0
-            'OWNERDN': dynamic_util.cl_ownerdn(), # Grid certificate. e.g. /DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=dtuckett/CN=671431/CN=David Tuckett/CN=proxy
+            'JOB_ID_INSIDE_THE_TASK': self.dynamic_util.cl_job_id_inside_the_task(j), # subjob id e.g. 0
+            'OWNERDN': self.dynamic_util.cl_ownerdn(), # Grid certificate. e.g. /DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=dtuckett/CN=671431/CN=David Tuckett/CN=proxy
             'REPORTER': 'ToolUI', # e.g. ToolUI, JobWN
             'REPORTTIME': CommonUtil.utcnow(), # e.g. 2009-11-25T14:59:24.754249Z
             'STATENAME': status, # e.g. submitted, Done (Success)
             'STATESOURCE': status_source, # e.g. Ganga, LB
             'STATESTARTTIME': status_start_time, # e.g. 2009-11-25T14:32:51.428988Z
-            'TASKNAME': dynamic_util.cl_task_name(j), # e.g. ganga:6702b50a-8a31-4476-8189-62ea5b8e00b3:TrigStudy
-            'UNIQUEJOBID': dynamic_util.cl_unique_job_id(j),  # Ganga uuid e.g. 1c08ff3b-904f-4f77-a481-d6fa765813cb
+            'TASKNAME': self.dynamic_util.cl_task_name(j), # e.g. ganga:6702b50a-8a31-4476-8189-62ea5b8e00b3:TrigStudy
+            'UNIQUEJOBID': self.dynamic_util.cl_unique_job_id(j),  # Ganga uuid e.g. 1c08ff3b-904f-4f77-a481-d6fa765813cb
             '___fqid' : j.fqid,
             }
         return msg
@@ -179,15 +174,14 @@ class BackendMS(DashboardMS):
     def _wn_job_status_message(self, status, status_source, status_start_time):
         # Not null: EXECUTION_BACKEND, GRIDJOBID, JOB_ID_INSIDE_THE_TASK, TASKNAME, UNIQUEJOBID
         ji = self.job_info # called on worker node, so job_info is dictionary
-        exec self.importDynamicUtil()
         msg = {
-            'DESTCE': dynamic_util.wn_dest_ce(),
-            'DESTSITE': dynamic_util.wn_dest_site(),
-            'DESTWN': dynamic_util.wn_dest_wn(),
+            'DESTCE': self.dynamic_util.wn_dest_ce(),
+            'DESTSITE': self.dynamic_util.wn_dest_site(),
+            'DESTWN': self.dynamic_util.wn_dest_wn(),
             'EXECUTION_BACKEND': ji['EXECUTION_BACKEND'],
             'GRIDEXITCODE': None,
             'GRIDEXITREASON': None,
-            'GRIDJOBID': dynamic_util.wn_grid_job_id(),
+            'GRIDJOBID': self.dynamic_util.wn_grid_job_id(),
             'JOBEXITCODE': None,
             'JOBEXITREASON': None,
             'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'],
