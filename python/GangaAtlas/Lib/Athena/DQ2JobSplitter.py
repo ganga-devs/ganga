@@ -532,6 +532,8 @@ class DQ2JobSplitter(ISplitter):
                     max_subjob_filesize = config['MaxFileSizeNGDQ2JobSplitter']*1024*1024
                 elif job.backend._name == 'Panda' and (self.filesize < 1 or config['MaxFileSizePandaDQ2JobSplitter'] < self.filesize):
                     max_subjob_filesize = config['MaxFileSizePandaDQ2JobSplitter']*1024*1024
+                    logger.info('DQ2JobSplitter has restricted the maximum inputsize per subjob to %s Bytes.', max_subjob_filesize)
+
                 else:
                     max_subjob_filesize = 1180591620717411303424 # 1 zettabyte
 
