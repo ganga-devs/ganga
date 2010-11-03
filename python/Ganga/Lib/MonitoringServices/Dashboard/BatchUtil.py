@@ -60,31 +60,23 @@ def cl_unique_job_id(job):
     """Build unique_job_id. Only run on client."""
     return job.info.uuid
 
-#todo : think here -> it should be different
 #----- worker node meta-data builders ----- 
 #TODO: add error handling code in following methods
-#return batch_subbatch name
-def wn_dest_ce():
+
+def wn_dest_ce(ji):
     """Build dest_ce. Only run on worker node."""
-    dest_ce = CommonUtil.env('GLOBUS_CE')
-    if not dest_ce:
-        dest_ce = CommonUtil.stdout('edg-brokerinfo getCE')
-    if not dest_ce:
-        dest_ce = CommonUtil.stdout('glite-brokerinfo getCE')
-    return CommonUtil.strip_to_none(dest_ce)
+    return '%s_localbatch_%s' % (ji['GANGA_HOSTNAME'], ji['Batch'])
+
 #retrieve site name from ip adress
-def wn_dest_site():
+def wn_dest_site(ji):
     """Build dest_site. Only run on worker node."""
-    return CommonUtil.env('SITE_NAME')
+    return ji['GANGA_HOSTNAME'] 
 #this is ok  
 def wn_dest_wn():
     """Build dest_wn. Only run on worker node."""
     return CommonUtil.hostname()
 #return something like task name
-def wn_grid_job_id():
+def wn_grid_job_id(ji):
     """Build grid_job_id. Only run on worker node."""
-    grid_job_id = CommonUtil.env('EDG_WL_JOBID')
-    if not grid_job_id:
-        grid_job_id = CommonUtil.env('GLITE_WMS_JOBID')
-    return grid_job_id
-
+    task_name = 'ganga:%s:%s' % (ji['JOB_UUID'], ji['JOB_NAME'],)
+    return task_name
