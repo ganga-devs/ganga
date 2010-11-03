@@ -105,6 +105,7 @@ os.system("kinit -r 100d")
 # check for service kill
 if len(sys.argv) > 1 and sys.argv[1] == '-k':
     gConfig.read( "/afs/cern.ch/user/t/tagexsrv/public/GangaService-atlddm10/gangaService.ini" )
+    #gConfig.read( "/home/mws/GangaService/gangaService.ini" )
     work_dir = os.path.abspath( os.path.expanduser( os.path.expandvars( gConfig.get('General', 'serviceDir') ) ) )
     stop_file = os.path.join(work_dir, "gangaService.stop")
     if gConfig.has_option('General', 'stopFile'):
@@ -119,6 +120,7 @@ setupLogger('gangaService.log')
 
 # load up the config
 if loadConfig("/afs/cern.ch/user/t/tagexsrv/public/GangaService-atlddm10/gangaService.ini" ):
+#if loadConfig("/home/mws/GangaService/gangaService.ini" ):
     gLogger.error("Problem loading config file.")
     sys.exit(1)
 
@@ -178,6 +180,8 @@ if len(sys.argv) > 1 and sys.argv[1] == '-d':
 #-------------------------------------------------------------
 # setup config info/defaults
 start_time = time.gmtime()
+
+# Setup work dir
 work_dir = os.path.abspath( os.path.expanduser( os.path.expandvars( gConfig.get('General', 'serviceDir') ) ) )
 gLogger.warning("Setting working directory to '%s'" % work_dir)
 try:
@@ -188,10 +192,24 @@ except:
     gLogger.error("Could not create/change to given working directory: %s" % formatTraceback())
     sys.exit(1)
 
+# setting proxy script
 proxy_script = gConfig.get('General', 'uiScript')
 gLogger.warning("Setting UI script to '%s'" % proxy_script)
-                                
+
+# Setup proxy dir
+cred_dir = work_dir
+if gConfig.has_option('General', 'credentialsDir'):
+    cred_dir = os.path.abspath( os.path.expanduser( os.path.expandvars( gConfig.get('General', 'credentialsDir') ) ) )
     
+gLogger.warning("Setting credentials directory to '%s'" % cred_dir)
+try:
+    if not os.path.exists( cred_dir ):
+        os.makedirs( cred_dir )
+except:
+    gLogger.error("Could not create the given credentials directory: %s" % formatTraceback())
+    sys.exit(1)
+                                
+# set up users file
 user_file = os.path.join(work_dir, "gangaService.users")
 if gConfig.has_option('General', 'userFile'):
     user_file = gConfig.get('General', 'userFile')
@@ -205,7 +223,7 @@ if not os.path.exists( user_file ):
         gLogger.error("Could not create active users file: %s" % formatTraceback())
         sys.exit(1)
 
-        
+# set the stop file
 stop_file = os.path.join(work_dir, "gangaService.stop")
 if gConfig.has_option('General', 'stopFile'):
     stop_file = os.path.join(work_dir, gConfig.get('General', 'stopFile') )
@@ -219,7 +237,7 @@ if os.path.exists(stop_file):
         gLogger.error("Could not remove service stop file: %s" % formatTraceback())
         sys.exit(1)
 
-
+# set the pre script file
 pre_script_file = os.path.join(work_dir, "gangaService_pre.py")
 pre_script = ""
 if gConfig.has_option('General', 'preScriptFile'):
@@ -227,7 +245,7 @@ if gConfig.has_option('General', 'preScriptFile'):
 
 gLogger.debug("Setting 'pre-script' file to %s" % pre_script_file)
 
-
+# set the post script file
 post_script_file = os.path.join(work_dir, "gangaService_post.py")
 post_script = ""
 if gConfig.has_option('General', 'postScriptFile'):
@@ -235,7 +253,7 @@ if gConfig.has_option('General', 'postScriptFile'):
 
 gLogger.debug("Setting 'post-script' file to %s" % post_script_file)
 
-
+# set the heartbeat file
 heartbeat_file = os.path.join(work_dir, "gangaService.info")
 if gConfig.has_option('General', 'heartbeatFile'):
     heartbeat_file = gConfig.get('General', 'heartbeatFile')
@@ -247,6 +265,7 @@ except:
     gLogger.error("Could not write heartbeat file '%s': %s" % (heartbeat_file, formatTraceback()))
     sys.exit(1)
     
+# set the sleep time
 sleep_time = 60
 if gConfig.has_option('General', 'sleepTime'):
     try:
@@ -257,7 +276,7 @@ if gConfig.has_option('General', 'sleepTime'):
         
 gLogger.debug("Setting 'sleepTime' to %d" % sleep_time)
 
-
+# set the script lifetime
 script_lifetime = 24
 if gConfig.has_option('General', 'scriptLifetime'):
     try:
@@ -300,16 +319,18 @@ while True:
         scripts_dir = os.path.join( work_dir, user, 'scripts' )
         gangadir_dir = os.path.join( work_dir, user, 'gangadir' )
         info_dir = os.path.join( work_dir, user, 'info' )
-        proxy_file = os.path.join( work_dir, user, 'credentials', 'proxy' )
+        proxy_file = os.path.join( cred_dir, user, 'credentials', 'proxy' )
         pre_script_file_user = os.path.join( work_dir, user, 'pre_post', pre_script_file)
         post_script_file_user = os.path.join( work_dir, user, 'pre_post', post_script_file)
         
         gLogger.debug("Active user '%s' found" % user)
 
         # check proxy
-        (status, output) = commands.getstatusoutput( "source %s && voms-proxy-info -file %s --timeleft" % (proxy_script, proxy_file) )
+        cmd = "source %s && voms-proxy-info -file %s --timeleft" % (proxy_script, proxy_file)
+        (status, output) = commands.getstatusoutput( cmd )
         if status:
             gLogger.warning("Problem checking proxy file for user %s: %s" % (user, formatTraceback()))
+            gLogger.warning("Command used: " + cmd)
             continue
 
         lines = output.split('\n')
