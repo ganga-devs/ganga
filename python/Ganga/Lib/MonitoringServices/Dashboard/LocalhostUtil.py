@@ -63,34 +63,21 @@ def cl_unique_job_id(job):
 #----- worker node meta-data builders ----- 
 #TODO: add error handling code in following methods
 
-def wn_dest_ce():
+def wn_dest_ce(ji):
     """Build dest_ce. Only run on worker node."""
-    """
-    dest_ce = CommonUtil.env('GLOBUS_CE')
-    if not dest_ce:
-        dest_ce = CommonUtil.stdout('edg-brokerinfo getCE')
-    if not dest_ce:
-        dest_ce = CommonUtil.stdout('glite-brokerinfo getCE')
-    return CommonUtil.strip_to_none(dest_ce)
-    """
-    from Ganga.Utility.Config import getConfig
-    batch = getConfig('Configuration')['Batch']
-    host = getConfig('System')['GANGA_HOSTNAME']        
-        
-    return '%s_local_%s' % (host, batch)
+    return '%s_localnode' % ji['GANGA_HOSTNAME'] 
+       
 #try to get the site from ganga - even for local
-def wn_dest_site():
+def wn_dest_site(ji):
     """Build dest_site. Only run on worker node."""
-    #return CommonUtil.env('SITE_NAME')
-    from Ganga.Utility.Config import getConfig
-    host = getConfig('System')['GANGA_HOSTNAME']
-    return host    
+    return ji['GANGA_HOSTNAME']
+    
 #this is ok    
 def wn_dest_wn():
     """Build dest_wn. Only run on worker node."""
     return CommonUtil.hostname()
 #return the local job id
-def wn_grid_job_id(fqid):
+def wn_grid_job_id(ji):
     """Build grid_job_id. Only run on worker node."""
     """
     grid_job_id = CommonUtil.env('EDG_WL_JOBID')
@@ -98,4 +85,4 @@ def wn_grid_job_id(fqid):
         grid_job_id = CommonUtil.env('GLITE_WMS_JOBID')
     return grid_job_id
     """
-    return CommonUtil.strip_to_none(fqid)
+    return CommonUtil.strip_to_none(ji['fqid'])
