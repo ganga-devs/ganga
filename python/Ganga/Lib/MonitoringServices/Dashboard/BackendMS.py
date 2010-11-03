@@ -40,6 +40,15 @@ class BackendMS(DashboardMS):
     def getJobInfo(self):
         """Create job_info from Job object."""
         j = self.job_info # called on client, so job_info is Job object
+
+        from Ganga.Utility.Config import getConfig
+        batch = getConfig('Configuration')['Batch']
+        host = getConfig('System')['GANGA_HOSTNAME']
+
+        jj = self.job_info
+        if jj.master:
+                jj = jj.master
+        
         ji = {
             'fqid': j.fqid,
             'EXECUTION_BACKEND': self.dynamic_util.cl_execution_backend(j),
@@ -47,7 +56,11 @@ class BackendMS(DashboardMS):
             'JOB_ID_INSIDE_THE_TASK': self.dynamic_util.cl_job_id_inside_the_task(j),
             'TASKNAME': self.dynamic_util.cl_task_name(j),
             'UNIQUEJOBID': self.dynamic_util.cl_unique_job_id(j),
-            'BACKEND' : self.job_info.backend.__class__.__name__        
+            'BACKEND' : self.job_info.backend.__class__.__name__,
+            'BATCH' :  batch,
+            'GANGA_HOSTNAME' : host,
+            'JOB_UUID' : jj.info.uuid,
+            'JOB_NAME' : jj.name               
             }
         return ji
     
@@ -177,13 +190,13 @@ class BackendMS(DashboardMS):
         # Not null: EXECUTION_BACKEND, GRIDJOBID, JOB_ID_INSIDE_THE_TASK, TASKNAME, UNIQUEJOBID
         ji = self.job_info # called on worker node, so job_info is dictionary
         msg = {
-            'DESTCE': self.dynamic_util.wn_dest_ce(),
-            'DESTSITE': self.dynamic_util.wn_dest_site(),
+            'DESTCE': self.dynamic_util.wn_dest_ce(ji),
+            'DESTSITE': self.dynamic_util.wn_dest_site(ji),
             'DESTWN': self.dynamic_util.wn_dest_wn(),
             'EXECUTION_BACKEND': ji['EXECUTION_BACKEND'],
             'GRIDEXITCODE': None,
             'GRIDEXITREASON': None,
-            'GRIDJOBID': self.dynamic_util.wn_grid_job_id(ji['fqid']),
+            'GRIDJOBID': self.dynamic_util.wn_grid_job_id(ji),
             'JOBEXITCODE': None,
             'JOBEXITREASON': None,
             'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'],
