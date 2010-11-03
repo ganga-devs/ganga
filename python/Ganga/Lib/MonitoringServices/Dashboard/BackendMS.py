@@ -181,7 +181,7 @@ class BackendMS(DashboardMS):
             'EXECUTION_BACKEND': ji['EXECUTION_BACKEND'],
             'GRIDEXITCODE': None,
             'GRIDEXITREASON': None,
-            'GRIDJOBID': self.dynamic_util.wn_grid_job_id(),
+            'GRIDJOBID': self.dynamic_util.wn_grid_job_id(ji['fqid']),
             'JOBEXITCODE': None,
             'JOBEXITREASON': None,
             'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'],
