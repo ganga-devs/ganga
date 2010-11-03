@@ -120,7 +120,7 @@ class AthenaMS(BackendMS):
         ji = self.job_info # called on worker node, so job_info is dictionary
         athena_stats = LCGAthenaUtil.wn_load_athena_stats()
         msg = {
-            'GRIDJOBID': self.dynamic_util.wn_grid_job_id(ji['fqid']), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
+            'GRIDJOBID': self.dynamic_util.wn_grid_job_id(ji), # e.g. https://grid-lb0.desy.de:9000/moqY5njFGurEuoDkkJmtBA
             'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'], # subjob id e.g. 0
             'NEVENTSPROCESSED': athena_stats.get('totalevents'), # number of events processed. e.g. 100
             'NFILESPROCESSED': athena_stats.get('numfiles'), # number of files processed. e.g. 2
