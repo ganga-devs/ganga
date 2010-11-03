@@ -19,12 +19,13 @@ class BackendMS(DashboardMS):
         DashboardMS.__init__(self, job_info, config_info)
         try:
                 backend_name = self.job_info.backend.__class__.__name__
-                path_to_module = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil"%backend_name
-                __import__(path_to_module)
-                import sys
-                self.dynamic_util = sys.modules[path_to_module]
         except AttributeError:
-                self.dynamic_util = None # not on a client, no access to the Util module
+                backend_name = self.job_info['BACKEND']
+
+        path_to_module = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil"%backend_name
+        __import__(path_to_module)
+        import sys
+        self.dynamic_util = sys.modules[path_to_module]
 
     def getSandboxModules(self):
         """Return list of module dependencies."""
@@ -33,7 +34,7 @@ class BackendMS(DashboardMS):
         return DashboardMS.getSandboxModules(self) + [
             Ganga.Lib.MonitoringServices.Dashboard.CommonUtil,
             Ganga.Lib.MonitoringServices.Dashboard.BackendMS,
-            self.dynamic_util
+            self.dynamic_util,
             ]
 
     def getJobInfo(self):
@@ -46,6 +47,7 @@ class BackendMS(DashboardMS):
             'JOB_ID_INSIDE_THE_TASK': self.dynamic_util.cl_job_id_inside_the_task(j),
             'TASKNAME': self.dynamic_util.cl_task_name(j),
             'UNIQUEJOBID': self.dynamic_util.cl_unique_job_id(j),
+            'BACKEND' : self.job_info.backend.__class__.__name__        
             }
         return ji
     
