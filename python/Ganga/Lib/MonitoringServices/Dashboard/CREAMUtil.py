@@ -66,11 +66,7 @@ def cl_unique_job_id(job):
 
 def wn_dest_ce():
     """Build dest_ce. Only run on worker node."""
-    dest_ce = CommonUtil.env('GLOBUS_CE')
-    if not dest_ce:
-        dest_ce = CommonUtil.stdout('edg-brokerinfo getCE')
-    if not dest_ce:
-        dest_ce = CommonUtil.stdout('glite-brokerinfo getCE')
+    dest_ce = CommonUtil.env('CE_ID')
     return CommonUtil.strip_to_none(dest_ce)
 
 def wn_dest_site():
@@ -83,7 +79,9 @@ def wn_dest_wn():
 #gridJobId for CREAM
 def wn_grid_job_id():
     """Build grid_job_id. Only run on worker node."""
-    grid_job_id = CommonUtil.env('EDG_WL_JOBID')
+    grid_job_id = CommonUtil.env('CREAM_JOBID') 
+    if not grid_job_id: 
+        grid_job_id = CommonUtil.env('EDG_WL_JOBID')
     if not grid_job_id:
         grid_job_id = CommonUtil.env('GLITE_WMS_JOBID')
     return grid_job_id
