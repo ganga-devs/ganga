@@ -63,9 +63,6 @@ def cl_unique_job_id(job):
 #----- worker node meta-data builders ----- 
 #TODO: add error handling code in following methods
 
-def wn_dest_ce(ji):
-    """Build dest_ce. Only run on worker node."""
-    return '%s_localbatch_%s' % (ji['GANGA_HOSTNAME'], ji['Batch'])
 
 #retrieve site name from ip adress
 def wn_dest_site(ji):
