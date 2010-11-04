@@ -111,7 +111,7 @@ class LCG(IBackend):
         'parent_id'           : SimpleItem(defvalue='',protected=1,copyable=0,hidden=1,doc='Middleware job identifier for its parent job'),
         'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
         'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
-        'middleware'          : SimpleItem(defvalue='EDG',protected=0,copyable=1,doc='Middleware type',checkset='__checkset_middleware__'),
+        'middleware'          : SimpleItem(defvalue='GLITE',protected=0,copyable=1,doc='Middleware type',checkset='__checkset_middleware__'),
         'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
         'exitcode_lcg'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
         'reason'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status'),
@@ -1957,13 +1957,13 @@ config = makeConfig('LCG','LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')
 
 # set default values for the configuration parameters
-config.addOption('EDG_ENABLE',True,'enables/disables the support of the EDG middleware')
+config.addOption('EDG_ENABLE',False,'enables/disables the support of the EDG middleware')
 
 config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh', \
                  'sets the LCG-UI environment setup script for the EDG middleware', \
                  filter=Ganga.Utility.Config.expandvars)
 
-config.addOption('GLITE_ENABLE', False, 'Enables/disables the support of the GLITE middleware')
+config.addOption('GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
 
 config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh', \
                  'sets the LCG-UI environment setup script for the GLITE middleware', \
