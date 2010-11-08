@@ -73,57 +73,27 @@ function ControlsUpdate() {
     };
     
     this.breadcrumbs_update = function() {
-        var _Settings = this.Settings.Application; // Shortcut
         var thidRef = this;
-        var output = '&nbsp;:: ';
+        var output = '<span class="bold">Job monitoring : </span>';
         // id=breadcrumbs
-        if (this.Data.user || !_Settings.userSelection) {
+        if (this.Data.user) {
             if (this.Data.tid) {
                 // show jobs
-                if (_Settings.userSelection) output += '<a>'+_Settings.usersListLbl+'</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; ';
-                output += '<a>'+_Settings.mainsLbl+'</a> &raquo; ' + this.Data.tid;
+                output += '<a>Users List</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; <a>Jobs</a> &raquo; ' + this.Data.tid;
             }
             else {
                 // show tasks
-                if (_Settings.userSelection) output += '<a>'+_Settings.usersListLbl+'</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; ';
-                output += _Settings.mainsLbl;
+                output += '<a>Users List</a> &raquo; <span class="bold">' + this.Data.user + '</span> &raquo; Jobs';
             }
         }
         else {
             // show users
             output += 'Users List';
         }
-       
+        
         $('#breadcrumbs').html(output);
-       
+        
         // Set up events
         $('#breadcrumbs a').click( function() { thisRef.breadcrumbs_click(this) });
-    };
-
-    this.charts_prepTable = function(chtCnt) {
-        var rowCnt = Math.ceil((chtCnt/2));
-        var table = $('<table></table>').attr({
-            'id':'chartTbl',
-            'cellpadding':'0',
-            'cellspacing':'0'
-        }).css('width','100%');
-       
-        var cnt = 1;
-        for (var i=0;i<rowCnt;i++) {
-            var tr = $('<tr></tr>');
-            tr.append($('<td></td>').attr('id','cht_'+cnt).addClass('chartTd'));cnt++;
-            tr.append($('<td></td>').attr('id','cht_'+cnt).addClass('chartTd'));cnt++;
-            table.append(tr);
-        }
-        $('#chartContent').append(table);
-    };
-   
-    this.charts_load = function(query, cnt) {
-        $('#cht_'+cnt).append(
-            $('<img></img>').attr({
-                'src':'http://chart.apis.google.com/chart?'+query,
-                'class':'chartImg'
-            })
-        );
     };
 }

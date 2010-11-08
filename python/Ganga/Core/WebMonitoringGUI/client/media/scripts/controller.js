@@ -12,8 +12,8 @@ Controller.prototype = new Events();
 
 function Controller() {
     // Data class initialization
-    this.Settings = new Settings();     
-    this.Data = new Data($('#ajaxAnimation'), this.Settings.Application.modelDefaults, this.Settings.Application.jsonp);
+    this.Settings = new Settings();	
+    this.Data = new Data($('#ajaxAnimation'), this.Settings.Application.modelDefaults);
     
     this.tasksTable = Array();
     this.jobsTable = Array();
@@ -21,13 +21,12 @@ function Controller() {
     // "viewUpdater" function updates all page controls
     // and decides what to display based on available data
     this.viewUpdater = function() {
-        var _Settings = this.Settings.Application; // Shortcut
-
-        if (this.Data.user || !_Settings.userSelection) {
+        if (this.Data.user) {
             if (this.Data.tid) {
                 // Show jobs
                 this.tasksTable = Array();
                 this.drawJobsTable();
+		$("#siteTabs").tabs({selected: 1});
             }
             else {
                 //show tasks
@@ -36,7 +35,7 @@ function Controller() {
                 this.drawTaskTable();
             }
         }
-        else if (_Settings.userSelection) {
+        else {
             // Show users
             this.Data.uparam = [];
             this.tasksTable = Array();
@@ -44,7 +43,7 @@ function Controller() {
             this.drawUsers();
         }
         this.timeRange_update();
-        if (_Settings.userSelection) this.userDropdown_update(); // Update only if avaliable
+        this.userDropdown_update();
         this.fromTill_update();
         this.userRefresh_update();
         this.breadcrumbs_update();
@@ -62,15 +61,14 @@ function Controller() {
                 tableId: 'jobs',
                 items: data,
                 tblLabels: _Settings['tblLabels'],
-                sorting: (thisRef.Data.sorting.length > 0 ? thisRef.Data.sorting : _Settings.sorting),
+                sorting: _Settings.sorting,
                 fnContentChange: function(el) { thisRef.jobsTableContent_change(el) },
-                fnTableSorting: function(el) { thisRef.tableSorting_click(el,thisRef.jobsTable[0]) },
                 dataTable: {
                     iDisplayLength: _Settings.iDisplayLength,
                     sPaginationType: "input",
                     bLengthChange: false,
                     aoColumns: _Settings.aoColumns
-                }
+                },
             });
         };
         
@@ -103,11 +101,11 @@ function Controller() {
                 thisRef.setupURL();
             }
 
-            thisRef.drawCharts(_Settings.charts);
+	    thisRef.drawCharts(_Settings.charts);
         };
         
         // Get the data from ajax call
-        this.Data.ajax_getData('subsReq', _Settings.dataURL, _Settings.dataURL_params(this.Data), getData, function(){});
+        this.Data.ajax_getData(_Settings.dataURL, _Settings.dataURL_params(this.Data), getData, function(){});
     };
     
     // "drawDataTable" draws data table for jobs (in ganga nomenclature)
@@ -126,17 +124,16 @@ function Controller() {
                 items: data,
                 tblLabels: _Settings['tblLabels'],
                 rowsToExpand: thisRef.Data.or,
-                sorting: (thisRef.Data.sorting.length > 0 ? thisRef.Data.sorting : _Settings.sorting),
+                sorting: _Settings.sorting,
                 fnERContent:function(dataID){ return thisRef.taskExpand_click(dataID) },
                 fnContentChange: function(el) { thisRef.tasksTableContent_change(el) },
                 fnERClose: function(dataID) { thisRef.taskClose_click(dataID) },
-                fnTableSorting: function(el) { thisRef.tableSorting_click(el,thisRef.tasksTable[0]) },
                 dataTable: {
                     iDisplayLength: _Settings.iDisplayLength,
                     sPaginationType: "input",
                     bLengthChange: false,
                     aoColumns: _Settings.aoColumns
-                }
+                },
             });
         };
         
@@ -158,12 +155,11 @@ function Controller() {
             
             // Draw data table
             draw(_Settings.translateData(userTasks));
-            
-            // Setting up current page - START
+            //alert(userTasks[0].status)
             tSettings = thisRef.tasksTable[0].fnSettings();
             tPages = parseInt( (tSettings.fnRecordsDisplay()-1) / tSettings._iDisplayLength, 10 ) + 1;
             
-                    if ( $.bbq.getState('p') && ($.bbq.getState('p') <= tPages) ) {
+		    if ( $.bbq.getState('p') && ($.bbq.getState('p') <= tPages) ) {
                 $('#url-page').trigger('click');  // Load page number from URL
                 thisRef.Data.noreload = true;  // tell keyup event that page hes been reloaded (history is not working without this)
                 $('#dataTable_0_paginate input').trigger('keyup');  // Recreate expand events for current page
@@ -171,30 +167,29 @@ function Controller() {
             }
             else {
                 thisRef.Data.p = 1;
-                $('#dataTable_0_paginate input').trigger('keyup');  // Recreate expand events for current page
                 thisRef.Data.noreload = true;
                 thisRef.setupURL();
             }
-            // Setting up current page - FINISH
-
             $.each(thisRef.Data.or, function() {
                 $('#tablePlus_'+this).parent().trigger('click');
             });
 
-            thisRef.drawCharts(_Settings.charts);
+	    thisRef.drawCharts(_Settings.charts);
         };
         
         // Get the data from ajax call
-        this.Data.ajax_getData('mainsReq', _Settings.dataURL, _Settings.dataURL_params(this.Data), getData, function(){});
+        this.Data.ajax_getData(_Settings.dataURL, _Settings.dataURL_params(this.Data), getData, function(){});
     };
     
+
     this.drawCharts = function(_charts) {
         var thisRef = this;
-        var cnt = 1;
-
+       
         var draw = function(gData) {
-            var query = gData.join('&');
-            thisRef.charts_load(query, cnt);cnt++;
+	    var query = gData.join('&');
+            $('#chartContent').append(
+                $('<img></img>').attr('src','http://chart.apis.google.com/chart?'+query)
+            );
         };
        
         var getData = function(data, chart) {
@@ -208,20 +203,21 @@ function Controller() {
             }
             draw(gData);
         };
+
+	//if (translatedData.chco) gData.push('chco='+translatedData.chco);                        
        
         $('#chartContent').empty();
 
         try {
-            this.charts_prepTable(_charts.length);
             for (var i=0;i<_charts.length;i++) {
                 // Get the data from ajax call
                 if (_charts[i].dataURL) {
-                    thisRef.Data.ajax_getData_charts('chartData_'+i, _charts[i].dataURL, _charts[i].dataURL_params(thisRef.Data), function(data, chart){
+                    thisRef.Data.ajax_getData_charts(_charts[i].dataURL, _charts[i].dataURL_params(thisRef.Data), function(data, chart){
                         getData(data, chart);
                     }, function(){},_charts[i]);
                 }
                 else {
-                    getData(this.Data.mem, _charts[i]);
+                    getData(this.Data.mem.tasks.data, _charts[i]);
                 }
             }
         } catch(err) {}
@@ -235,7 +231,7 @@ function Controller() {
         
         // "draw" function is calling lkfw.searchable.list plugin to create searchable list of users
         var draw = function() {
-            $('#tableContent').lkfw_searchableList({
+            $('#content').lkfw_searchableList({
                 listId: 'users',
                 items: thisRef.Data.mem.users,
                 srchFldLbl: _Settings.searchLabel
@@ -260,15 +256,17 @@ function Controller() {
         // Arguments:
         //   data - object returned by ajax call
         var getData = function(data) {
-            thisRef.Data.mem.users = _Settings.translateData(data);
+            var userDicts = data.basicData[0];
+            
+            thisRef.Data.mem.users = _Settings.translateData(userDicts);
             
             thisRef.generateUserDropdownOptions();
-
+            
             if (!(this.Data.user || $.bbq.getState('user'))) thisRef.drawUsers();
         }
         
         // Get the users list from ajax call
-        this.Data.ajax_getData('usersReq', _Settings.dataURL, {}, getData, function(){});
+        this.Data.ajax_getData(_Settings.dataURL, {}, getData, function(){});
     };
     
     // "setupURL" builds url fragmant for bookmarking
@@ -281,7 +279,6 @@ function Controller() {
             refresh:this.Data.refresh,
             tid:this.Data.tid,
             p:this.Data.p,
-            sorting:this.Data.sorting,
             or:this.Data.or,
             uparam:this.Data.uparam
         },2);
@@ -289,27 +286,19 @@ function Controller() {
     
     // "Init" initializes the monitoring system
     this.Init = function() {
-        var _Settings = this.Settings.Application; // Shortcut
         thisRef = this;
-
-        // Remove users drop down box
-        if (!_Settings.userSelection) $('#userDropBox').hide();
-        $('title').text(_Settings.pageTitle); // Set page title
-	$('#footerTxt').text(_Settings.footerTxt); // Set footer text
-	$('#supportLnk').attr('href', _Settings.supportLnk);
-	$('#logo').css('background-image', 'url('+_Settings.logoLnk+')');
-
+        
         // Events definitions
-        //$('#modelCheck').click( function() { alert(thisRef.Data.sorting); }); // If active allows to chect choosen model value
+        $('#modelCheck').click( function() { alert(thisRef.Data.or); });
         $('#timeRange').change( function() { thisRef.timeRange_Change(this) });
         $('#refresh').change( function() { thisRef.refresh_Change(this) });
         
         // Activate datepicker
         $('#from, #till').datepicker({
             dateFormat: 'yy-mm-dd',
-                        changeMonth: true,
-                        changeYear: true
-                }).change( function() { thisRef.fromTill_Change(this) });
+			changeMonth: true,
+			changeYear: true
+		}).change( function() { thisRef.fromTill_Change(this) });
         
         // Setup Data from URL
         this.Data.quickSetup($.bbq.getState());

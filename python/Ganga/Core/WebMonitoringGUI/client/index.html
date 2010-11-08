@@ -40,56 +40,53 @@ $(document).ready( function() {
 
 <body>
 <div id="container">
-    <div id="contentWrapper">
-        <div id="header">
-            <div id="topBelt"></div>
-            <div id="breadcrumbs">&nbsp;</div>
-            <div id="logo" class="ui-corner-br ui-corner-bl ui-corner-tl ui-corner-tr"></div>
-            <div id="timeSelect" class="ui-corner-br ui-corner-bl">
-                <p><span class="tLabel_blue">FROM</span> <input id="from" type="text" />&nbsp;&nbsp;&nbsp;<span class="tLabel_blue">TILL</span> <input id="till" type="text" />&nbsp;&nbsp;&nbsp;<span class="tLabel_blue">TIME RANGE</span> <select id="timeRange" title=";)">
-                    <option value="" disabled="disabled">Disabled</option>
-                    <option value="lastDay" selected="selected">Last Day</option>
-                    <option value="last2Days">Last 2 Days</option>
-                    <option value="last3Days">Last 3 Days</option>
-                    <option value="lastWeek">Last Week</option>
-                    <option value="last2Weeks">Last 2 Weeks</option>
-                    <option value="lastMonth">Last Month</option>
-                </select></p>
-                <div class="dlabel ui-corner-br">TIME RANGE</div>
-            </div>
-            <div id="userSelect">
-                <table cellpadding="0" cellspacing="0">
-                    <tr id="userDropBox">
-                        <td class="alignRight"><span class="tLabel_white">USER&nbsp;</span></td>
-                        <td><select id="userSelect_dropdown"></select></td>
-                    </tr>
-                    <tr>
-                        <td class="alignRight"><span class="tLabel_white">REFRESH&nbsp;</span></td>
-                        <td>
-                            <select id="refresh">
-                                <option value="0" selected="selected">Disabled</option>
-			        <option value="10">10 sec</option>
-                                <option value="300">5 min</option>
-                                <option value="600">10 min</option>
-                                <option value="1200">20 min</option>
-                            </select>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div id="ajaxAnimation"><img src="media/images/loading.gif" width="43" height="39" /></div>
-            <div id="supportHelp"><a href="https://twiki.cern.ch/twiki/bin/view/ArdaGrid/TaskMonitoringWebUI">SUPPORT</a><!--<br /><a href="#">HELP</a>--></div>
+    <div id="header">
+        <div id="topBelt"></div>
+        <div id="breadcrumbs">&nbsp;:: <a href="#">lkokosz</a> &raquo; Tasks</div>
+        <div id="logo" class="ui-corner-br"></div>
+        <div id="timeSelect" class="ui-corner-br ui-corner-bl">
+            <p><span class="tLabel_blue">FROM</span> <input id="from" type="text" />&nbsp;&nbsp;&nbsp;<span class="tLabel_blue">TILL</span> <input id="till" type="text" />&nbsp;&nbsp;&nbsp;<span class="tLabel_blue">TIME RANGE</span> <select id="timeRange" title=";)">
+                <option value="" disabled="disabled">Disabled</option>
+                <option value="lastDay" selected="selected">Last Day</option>
+                <option value="last2Days">Last 2 Days</option>
+                <option value="last3Days">Last 3 Days</option>
+                <option value="lastWeek">Last Week</option>
+                <option value="last2Weeks">Last 2 Weeks</option>
+                <option value="lastMonth">Last Month</option>
+            </select></p>
+            <div class="dlabel ui-corner-br">TIME RANGE</div>
         </div>
-        <!--<div style="position:fixed; bottom:15px; right:15px; display:inline"><input id="modelCheck" type="button" value="modelCheck" /></div>-->
-        <div id="siteTabs">
-            <ul>
-                <li><a href="#tableContent">Data</a></li>
-                <li><a href="#chartContent">Charts</a></li>
-            </ul>
-	    <div id="tableContent"></div>
-	    <div id="chartContent"></div>
+        <div id="userSelect">
+            <table cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="alignRight"><span class="tLabel_white">USER&nbsp;</span></td>
+                    <td><select id="userSelect_dropdown"></select></td>
+                </tr>
+                <tr>
+                    <td class="alignRight"><span class="tLabel_white">REFRESH&nbsp;</span></td>
+                    <td>
+                        <select id="refresh">
+                            <option value="0" selected="selected">Disabled</option>
+			    <option value="10">10 sec</option>
+                            <option value="300">5 min</option>
+                            <option value="600">10 min</option>
+                            <option value="1200">20 min</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
         </div>
-	<div id="footer"><div id="footerTxt">jTaskMonitoring &copy;2010</div></div>
+        <div id="ajaxAnimation"><img src="media/images/loading.gif" /></div>
+        <div id="supportHelp"><a href="#">SUPPORT</a><br /><a href="#">HELP</a></div>
+    </div>
+    <div style="position:fixed; bottom:15px; right:15px; display:none;"><input id="modelCheck" type="button" value="modelCheck" /></div>
+    <div id="siteTabs">
+        <ul>
+            <li><a href="#tableContent">Data</a></li>
+            <li><a href="#chartContent">Charts</a></li>
+        </ul>
+	<div id="tableContent"></div>
+	<div id="chartContent"></div>
     </div>
 </div>
 <input type="hidden" id="url-page" value="hash" />

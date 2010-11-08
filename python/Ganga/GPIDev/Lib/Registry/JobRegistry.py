@@ -95,10 +95,7 @@ class JobRegistrySlice(RegistrySlice):
             try:
                 return self.objects[id]
             except KeyError:
-                if self.name == 'templates':
-                    raise RegistryKeyError('Template %d not found'%id)
-                else:
-                    raise RegistryKeyError('Job %d not found'%id)       
+                raise RegistryKeyError('Job id=%d not found'%id)
         elif t is tuple:
             ids = id
         elif t is str:
@@ -119,10 +116,7 @@ class JobRegistrySlice(RegistrySlice):
         try:
             j = self.objects[ids[0]]
         except KeyError:
-            if self.name == 'templates':
-                raise RegistryKeyError('Template %d not found'%ids[0])
-            else:
-                raise RegistryKeyError('Job %d not found'%ids[0])
+            raise RegistryKeyError('Job %d not found'%ids[0])
 
         if len(ids)>1:
             try:
@@ -158,7 +152,7 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
     
     The 'jobs' represents all existing jobs.
 
-    A subset of jobs may be created by slicing (e.g. jobs[-10:] last ten jobs)
+    A subset of jobs may be created by slicing (e.g. jobs[:-10] last ten jobs)
     or select (e.g. jobs.select(status='new') or jobs.select(10,20) jobs with
     ids between 10 and 20). A new access list is created as a result of
     slice/select. The new access list may be further restricted.
@@ -211,7 +205,7 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
     def __getslice__(self, i1,i2):
         """ Get a slice. Examples:
         jobs[2:] : get first two jobs,
-        jobs[-10:] : get last 10 jobs.
+        jobs[:-10] : get last 10 jobs.
         """
         return _wrap(self._impl.__getslice__(i1,i2))
     
@@ -225,8 +219,6 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
 
 from Ganga.Utility.external.ordereddict import oDict
 def jobSlice(joblist):
-    """create a 'JobSlice' from a list of jobs
-    example: jobSlice([j for j in jobs if j.name.startswith("T1:")])"""
     slice = JobRegistrySlice("manual slice")
     slice.objects = oDict([(j.fqid, _unwrap(j)) for j in joblist])
     return _wrap(slice)

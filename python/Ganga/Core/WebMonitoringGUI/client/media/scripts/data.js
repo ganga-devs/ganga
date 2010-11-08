@@ -7,7 +7,7 @@
 // 18.05.2010 Created
 //
 
-function Data(ajaxAnimation, settings, jsonp) {
+function Data(ajaxAnimation, settings) {
     // general values
     this.user = settings.user;
     this.from = settings.from;
@@ -40,7 +40,7 @@ function Data(ajaxAnimation, settings, jsonp) {
     
     this.quickSetup = function(params, ts2iso) {
 
-        this.user = (params['user'] || settings.user);
+	this.user = (params['user'] || settings.user);
         this.from = parseInt(this.iso2ts(params['from']) || settings.from);
         this.till = parseInt(this.iso2ts(params['till'],2) || settings.till);
         this.timeRange = ( (params['timeRange'] == '') ? params['timeRange'] : (params['timeRange'] || settings.timeRange) );
@@ -130,9 +130,9 @@ function Data(ajaxAnimation, settings, jsonp) {
     };
     
     // Get job subjobs from server
-    this.ajax_getData = function(xhrName, url, params, fSuccess, fFailure) {
+    this.ajax_getData = function(url, params, fSuccess, fFailure) {
         var thisRef = this;
-        
+	
         currentUrl = window.location.toString()
         portIndex = currentUrl.indexOf('?port=');
         if (portIndex > -1) {
@@ -160,33 +160,33 @@ function Data(ajaxAnimation, settings, jsonp) {
 
         var key = $.base64Encode($.param.querystring(url, params, 2));
 
+	_Cache.clear();
+
         var data = _Cache.get(key);
         if (data) {
             fSuccess(data);
-        } else if (url) {
-            ajaxAnimation.addClass(xhrName).show();;
+        } else {
+            ajaxAnimation.show();
             $.ajax({
                 type: "GET",
                 url: url,
                 data: params,
-                dataType: (jsonp ? "jsonp" : "json"),
-                jsonp: "jsonp_callback",
+                dataType: "jsonp",
+                jsonp: 'jsonp_callback',
                 success: function(data) {
                     _Cache.add(key, data);
                     fSuccess(data);
-                    ajaxAnimation.removeClass(xhrName);
-		    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                    ajaxAnimation.hide();
                 },
                 error: function() {
-                    ajaxAnimation.removeClass(xhrName);
-		    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                    ajaxAnimation.hide();
                     fFailure();
                 }
             });
         }
     };
-    // Get job subjobs from server
-    this.ajax_getData_charts = function(xhrName, url, params, fSuccess, fFailure, obj) {
+
+    this.ajax_getData_charts = function(url, params, fSuccess, fFailure, obj) {
         var thisRef = this;
        
         currentUrl = window.location.toString()
@@ -215,77 +215,32 @@ function Data(ajaxAnimation, settings, jsonp) {
         }
 
        
-        ajaxAnimation.addClass(xhrName).show();
-        if (url) {
+        var key = $.base64Encode($.param.querystring(url, params, 2));
+       
+        var data = _Cache.get(key);
+        if (data) {
+            fSuccess(data, obj);
+        } else {
+            ajaxAnimation.show();
             $.ajax({
                 type: "GET",
                 url: url,
-                async: true,
+		async: true,
                 data: params,
-                dataType: (jsonp ? "jsonp" : "json"),
-                jsonp: "jsonp_callback",
+                dataType: "jsonp",
+                jsonp: 'jsonp_callback',
                 success: function(data) {
                     fSuccess(data, obj);
-                    ajaxAnimation.removeClass(xhrName);
-                    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                    ajaxAnimation.hide();
                 },
                 error: function() {
-                    ajaxAnimation.removeClass(xhrName);
-                    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                    ajaxAnimation.hide();
                     fFailure(obj);
                 }
             });
-        }    
+        }
     };
 
-}
 
 
-var simpleEncoding =
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-// This function scales the submitted values so that
-// maxVal becomes the highest value.
-function simpleEncode(valueArray,maxValue) {
-  var chartData = ['s:'];
-  for (var i = 0; i < valueArray.length; i++) {
-    var currentValue = valueArray[i];
-    if (!isNaN(currentValue) && currentValue >= 0) {
-    chartData.push(simpleEncoding.charAt(Math.round((simpleEncoding.length-1) *
-      currentValue / maxValue)));
-    }
-      else {
-      chartData.push('_');
-      }
-  }
-  return chartData.join('');
-}
-
-// Same as simple encoding, but for extended encoding.
-var EXTENDED_MAP=
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.';
-var EXTENDED_MAP_LENGTH = EXTENDED_MAP.length;
-function extendedEncode(arrVals, maxVal) {
-  var chartData = '';
-
-  for(i = 0, len = arrVals.length; i < len; i++) {
-    // In case the array vals were translated to strings.
-    var numericVal = new Number(arrVals[i]);
-    // Scale the value to maxVal.
-    var scaledVal = Math.floor(EXTENDED_MAP_LENGTH *
-        EXTENDED_MAP_LENGTH * numericVal / maxVal);
-
-    if(scaledVal > (EXTENDED_MAP_LENGTH * EXTENDED_MAP_LENGTH) - 1) {
-      chartData += "..";
-    } else if (scaledVal < 0) {
-      chartData += '__';
-    } else {
-      // Calculate first and second digits and add them to the output.
-      var quotient = Math.floor(scaledVal / EXTENDED_MAP_LENGTH);
-      var remainder = scaledVal - EXTENDED_MAP_LENGTH * quotient;
-      chartData += EXTENDED_MAP.charAt(quotient) + EXTENDED_MAP.charAt(remainder);
-    }
-  }
-
-  return chartData;
 }

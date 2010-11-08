@@ -68,7 +68,7 @@ try:
 
     # import JEM-Ganga-Integration module (that manages the rest of JEMs initialisation)
     initError = None
-    os.environ["JEM.Global.mode"] = "Ganga"
+    os.environ["JEM_Global_mode"] = "Ganga"
 
     logger.debug("Using JEM from: " + JEM_PACKAGEPATH)
     try:
