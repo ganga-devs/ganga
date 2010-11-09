@@ -132,7 +132,7 @@ class DQ2JobSplitter(ISplitter):
         if job.inputdata._name <> 'DQ2Dataset'  and job.inputdata._name <> 'AMIDataset' and job.inputdata._name <> 'EventPicking':
             raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset or AMIDataset or EventPicking as input')
 
-        if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] :
+        if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] and not ( job.backend._name in ['SGE'] and config['ENABLE_SGE_DQ2JOBSPLITTER'] ):
             raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, CREAM, Panda or NG backend')
         
         if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0):
@@ -347,7 +347,11 @@ class DQ2JobSplitter(ISplitter):
             allowed_sites = job.backend.list_ddm_sites()
         elif job.backend._name == 'NG':
             allowed_sites = config['AllowedSitesNGDQ2JobSplitter']
-
+        elif job.backend._name == 'SGE':
+            from dq2.clientapi.DQ2 import DQ2
+            from dq2.info import TiersOfATLAS
+            allowed_sites = TiersOfATLAS.getAllSources()
+            
         if not allowed_sites:
             raise ApplicationConfigurationError(None,'DQ2JobSplitter found no allowed_sites for dataset')
         
@@ -385,7 +389,7 @@ class DQ2JobSplitter(ISplitter):
         logger.info('Total num files=%d, total file size=%d bytes'%(allfiles,allsizes))
 
         # to a check for the 'ALL' cloud option and if given, reduce the selection
-        if hasattr(job.backend.requirements, 'cloud') and job.backend.requirements.cloud == 'ALL' and not job.backend.requirements.sites and job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
+        if hasattr(job.backend, 'requirements') and hasattr(job.backend.requirements, 'cloud') and job.backend.requirements.cloud == 'ALL' and not job.backend.requirements.sites and job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
 
             if not job.backend.requirements.anyCloud:
             
@@ -770,6 +774,15 @@ class DQ2JobSplitter(ISplitter):
                         j.backend.requirements.sites = sites.split(':')
                     if j.backend._name == 'Panda':
                         j.backend.site=pandaSite
+                    if j.backend._name == 'SGE':
+                        for site in sites.split(':'):
+                            if site.startswith('DESY-HH'):
+                                j.backend.extraopts+=' -l site=hh '
+                                break
+                            elif site.startswith('DESY-ZN'):
+                                j.backend.extraopts+=' -l site=zn '
+                                break
+
                     j.inputsandbox  = job.inputsandbox
                     j.outputsandbox = job.outputsandbox 
 

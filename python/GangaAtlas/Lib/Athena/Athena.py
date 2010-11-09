@@ -1206,7 +1206,7 @@ class Athena(IApplication):
                     raise ApplicationConfigurationError(None,'DQ2 tag dataset %s does not exist.' % job.inputdata.tagdataset)
 
         # check grid/local class match up
-        if job.backend._name in ['LCG', 'CREAM' ,'Panda', 'NG']:
+        if job.backend._name in ['LCG', 'CREAM' ,'Panda', 'NG']: 
             # check splitter
             if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AnaTaskSplitterJob', 'ATLASTier3Splitter']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
@@ -1218,8 +1218,12 @@ class Athena(IApplication):
             # Check that only DQ2OutputDatasets are used on the grid
             #if job.outputdata and not job.outputdata._name in ['DQ2OutputDataset']:
             #    raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.outputdata._name, job.backend._name))
+        elif (job.backend._name in ['SGE' ] and config['ENABLE_SGE_DQ2JOBSPLITTER']):
+            if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AthenaSplitterJob']:
+                raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
  
         else:
+            
             # check splitter
             if job.splitter and not job.splitter._name in ['AthenaSplitterJob']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
@@ -1652,6 +1656,7 @@ config.addOption('CMTCONFIG_LIST', [ 'i686-slc4-gcc34-opt', 'i686-slc5-gcc43-opt
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 config.addOption('ENABLE_DQ2COPY', False , 'Enable DQ2_COPY input workflow on LCG backend')
+config.addOption('ENABLE_SGE_DQ2JOBSPLITTER', False , 'Enable DQ2JobSplitter for SGE backend')
 config.addOption('EXE_MAXFILESIZE', 1024*1024 , 'Athena.exetype=EXE jobs: Maximum size of files to be sent to WNs (default 1024*1024B)')
 
 # $Log: not supported by cvs2svn $

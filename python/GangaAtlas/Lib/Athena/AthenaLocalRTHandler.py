@@ -349,6 +349,17 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         # set RecExCommon options
         environment['RECEXTYPE'] = job.application.recex_type
 
+        # Set DQ2_LOCAL_SITE_ID
+        if hasattr(job.backend, 'extraopts'):
+            if job.backend.extraopts.find('site=hh')>0:
+                environment['DQ2_LOCAL_SITE_ID'] = 'DESY-HH_SCRATCHDISK'
+            elif job.backend.extraopts.find('site=zn')>0:
+                environment['DQ2_LOCAL_SITE_ID'] = 'DESY-ZN_SCRATCHDISK'
+            else:
+                environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
+        else:
+            environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
+
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
     def master_prepare( self, app, appconfig ):
@@ -551,7 +562,15 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             except:
                 pass
 
-        environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
+        if hasattr(job.backend, 'extraopts'):
+            if job.backend.extraopts.find('site=hh')>0:
+                environment['DQ2_LOCAL_SITE_ID'] = 'DESY-HH_SCRATCHDISK'
+            elif job.backend.extraopts.find('site=zn')>0:
+                environment['DQ2_LOCAL_SITE_ID'] = 'DESY-ZN_SCRATCHDISK'
+            else:
+                environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
+        else:
+            environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
 
         exe = os.path.join(os.path.dirname(__file__), 'run-athena-local.sh')
 
