@@ -12,6 +12,8 @@ from Ganga.Utility.logging import getLogger
 from GangaCMS.Lib.ConfParams import *
 from GangaCMS.Lib.CRABTools.CRABServer import *
 
+import Ganga.Utility.Config
+
 logger = getLogger()
 
 class CRABApp(IApplication):
@@ -37,14 +39,22 @@ class CRABApp(IApplication):
     file = open(cfg_file,'w')     
 
     job.inputdata.ui_working_dir = job.outputdir
-                        
+                       
     for params in [CMSSW(),CRAB(),GRID(),USER()]:
 
       section = params.__class__.__name__
+
+      config = Ganga.Utility.Config.getConfig('%s_CFG'%(section))
       file.write('['+section+']\n\n')
 
       for k in params.schemadic.keys():
-        attr = getattr(job.inputdata,k)
+
+        # We get the parametef from the config. If it is not NULL,
+        # we use that, otherwise, we try to take it from inputdata.
+        attr = config[k]
+        if attr == None:
+          attr = getattr(job.inputdata,k)
+
         if attr != None:  
           file.write('%s=%s\n'%(k,attr))                  
       file.write('\n')

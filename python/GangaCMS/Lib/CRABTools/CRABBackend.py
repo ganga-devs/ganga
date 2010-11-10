@@ -98,10 +98,10 @@ class CRABBackend(IBackend):
 
         if len(job.subjobs):
             for s in job.subjobs:
-                if not s.status in ['completed']:
+                if not s.status in ['completed','failed']:
                     s.updateStatus('killed')   
         else:
-            if not job.status in ['completed']:
+            if not job.status in ['completed','failed']:
                 job.updateStatus('killed')
 
         job.updateMasterJobStatus()        

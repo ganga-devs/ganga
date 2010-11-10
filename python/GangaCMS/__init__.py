@@ -3,6 +3,7 @@ import Ganga.Utility.Config
 import Ganga.Utility.logging
 import platform
 
+## CMSSW parameters
 configCMSSW=Ganga.Utility.Config.makeConfig('CMSSW','Parameters for CMSSW')
 
 dscrpt = 'The version CMSSW used for job submission.'
@@ -60,6 +61,17 @@ def loadPlugins( config = {} ):
     import Lib.CRABTools
     import Lib.Utils
     import Lib.ConfParams
+
+    crab_cfg_configs = {}
+
+    for params in [Lib.ConfParams.CMSSW(),Lib.ConfParams.CRAB(),Lib.ConfParams.GRID(),Lib.ConfParams.USER()]:
+
+      section = params.__class__.__name__
+      crab_cfg_configs[section] = Ganga.Utility.Config.makeConfig('%s_CFG'%(section),'Parameters for %s at crab.cfg.'%(section))
+
+      for k in params.schemadic.keys():
+       crab_cfg_configs[section].addOption(k,None,'%s at crab.cfg'%(k))
+
 
     print 'GangaCMS> [INFO] loadPlugins : done'
 
