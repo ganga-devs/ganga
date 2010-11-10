@@ -20,6 +20,7 @@ from Ganga.Core.GangaRepository import RegistryKeyError
 
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 
+
 class JobStatusError(GangaException):
     def __init__(self,*args):
         GangaException.__init__(self,*args)
@@ -567,7 +568,7 @@ class Job(GangaObject):
 
         return None
 
-    def submit(self,keep_going=False,keep_on_fail=False):
+    def submit(self,keep_going=None,keep_on_fail=None):
         '''Submits a job. Return true on success.
 
         First  the  application   is  configured  which  may  generate
@@ -575,15 +576,25 @@ class Job(GangaObject):
         Then  backend handler is  used to  submit the  configured job.
         The job is automatically checkpointed to persistent storage.
 
+        The default values of keep_going and keep_on_fail are controlled by [GPI_Semantics] configuration options.
+
         When the submission fails the job status is automatically
         reverted to new and all files in the input directory are
-        deleted (this is the default behaviour,
-        keep_on_fail=False). If keep_on_fail=True then the job status
+        deleted (keep_on_fail=False is the default behaviour unless modified in configuration).
+        If keep_on_fail=True then the job status
         is moved to the failed status and input directory is left intact.
         This is helpful for debugging anf implements the request #43143.
 
         For split jobs: consult https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaSplitters#Subjob_submission
         '''
+        from Ganga.Utility.Config import ConfigError, getConfig 
+        gpiconfig = getConfig('GPI_Semantics')
+
+        if keep_going is None:
+            keep_going = gpiconfig['job_submit_keep_going']
+
+        if keep_on_fail is None:
+            keep_on_fail = gpiconfig['job_submit_keep_on_fail']
 
         from Ganga.Core import ApplicationConfigurationError, JobManagerError, IncompleteJobSubmissionError, GangaException
 
