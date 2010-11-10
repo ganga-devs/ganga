@@ -852,7 +852,7 @@ class Job(GangaObject):
         """Deprecated. Use force_status('failed') instead."""
         raise JobError('fail() method is deprecated, use force_status("failed") instead.')
 
-    allowed_force_states = { 'completed' : ['completing'],
+    allowed_force_states = { 'completed' : ['completing','failed'],
                              'failed' : ["submitting","completing","completed","submitted","running","killed"] }
     
     def force_status(self,status,force=False):
