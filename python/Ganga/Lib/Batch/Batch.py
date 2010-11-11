@@ -468,7 +468,7 @@ sys.exit(result)
         text = text.replace('###POSTEXECUTE###',self.config['postexecute'])
         text = text.replace('###JOBIDNAME###',self.config['jobid_name'])
         text = text.replace('###QUEUENAME###',self.config['queue_name'])
-        text = text.replace('###HEARTBEATFREQUENCE###',self.config['heartbeat_frequence'])
+        text = text.replace('###HEARTBEATFREQUENCE###',self.config['heartbeat_frequency'])
 
         text = text.replace('###MONITORING_SERVICE###',job.getMonitoringService().getWrapperScriptConstructorText())
 
@@ -581,7 +581,7 @@ config.addOption('shared_python_executable', False, "Shared PYTHON")
 
 config.addOption('jobid_name', 'LSB_BATCH_JID', "Name of environment with ID of the job")
 config.addOption('queue_name', 'LSB_QUEUE', "Name of environment with queue name of the job")
-config.addOption('heartbeat_frequence', '30', "Heartbeat frequence config variable")
+config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 config.addOption('submit_str', 'cd %s; bsub %s %s %s %s', "String used to submit job to queue")
 config.addOption('submit_res_pattern', '^Job <(?P<id>\d*)> is submitted to .*queue <(?P<queue>\S*)>',
@@ -629,7 +629,7 @@ config.addOption('shared_python_executable', False, "Shared PYTHON")
 
 config.addOption('jobid_name', 'PBS_JOBID', "Name of environment with ID of the job")
 config.addOption('queue_name', 'PBS_QUEUE', "Name of environment with queue name of the job")
-config.addOption('heartbeat_frequence', '30', "Heartbeat frequence config variable")
+config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 config.addOption('submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
 config.addOption('submit_res_pattern', '^(?P<id>\d*)\.pbs\s*', "String pattern for replay from the submit command")
@@ -677,7 +677,7 @@ config.addOption('shared_python_executable', False, "Shared PYTHON")
 
 config.addOption('jobid_name', 'JOB_ID', "Name of environment with ID of the job")
 config.addOption('queue_name', 'QUEUE', "Name of environment with queue name of the job")
-config.addOption('heartbeat_frequence', '30', "Heartbeat frequence config variable")
+config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 #the -V options means that all environment variables are transferred to the batch job (ie the same as the default behaviour on LSF at CERN)
 config.addOption('submit_str', 'cd %s; qsub -cwd -V %s %s %s %s', "String used to submit job to queue")
