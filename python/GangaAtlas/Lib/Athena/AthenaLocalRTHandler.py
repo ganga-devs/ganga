@@ -82,7 +82,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
-                    if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
+                    if not job.inputdata.type in ['DQ2_LOCAL', 'FILE_STAGER', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
                         job.inputdata.type ='DQ2_LOCAL'
        
             else:
@@ -106,7 +106,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                         raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
 
                 elif job.inputdata._name == 'DQ2Dataset':
-                    if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
+                    if not job.inputdata.type in ['DQ2_LOCAL', 'FILE_STAGER', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
                         job.inputdata.type ='DQ2_LOCAL'
 
                     contents = job.inputdata.get_contents()
@@ -324,11 +324,17 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             if job.inputsandbox: inputbox += job.inputsandbox   
 
         # Fix DATASETNAME env variable for DQ2_COPY mode
-        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and (job.inputdata.type=='DQ2_LOCAL' or job.inputdata.type=='DQ2_COPY' or job.inputdata.type=='FILE_STAGER'):
+        if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type in [ 'DQ2_LOCAL', 'DQ2_COPY', 'FILE_STAGER' ]:
             if job.inputdata.dataset:
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import resolve_container
                 datasets = resolve_container(job.inputdata.dataset) 
                 environment['DATASETNAME'] = datasets[0]
+                try:
+                    environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations(overlap=False)[ datasets[0] ])
+                except:
+                    printout = 'Job submission failed ! Dataset %s could not be found in DQ2 ! Maybe retry ?' %(datasets[0])
+                    raise ApplicationConfigurationError(None,printout )
+
 
         if job.inputdata and job.inputdata._name == 'ATLASTier3Dataset':
             environment['DATASETTYPE'] = 'TIER3'
@@ -353,8 +359,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if hasattr(job.backend, 'extraopts'):
             if job.backend.extraopts.find('site=hh')>0:
                 environment['DQ2_LOCAL_SITE_ID'] = 'DESY-HH_SCRATCHDISK'
+                environment['GANGA_LCG_CE'] = 'grid-ce5.desy.de:2119' # hack for FILE_STAGER at NAF
             elif job.backend.extraopts.find('site=zn')>0:
                 environment['DQ2_LOCAL_SITE_ID'] = 'DESY-ZN_SCRATCHDISK'
+                environment['GANGA_LCG_CE'] = 'lcg-ce0.ifh.de:2119' # hack for FILE_STAGER at NAF
             else:
                 environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
         else:
@@ -418,13 +426,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 _append_files(inputbox,'ganga-stagein.py')
 
         ## insert more scripts to inputsandbox for FileStager
-        #if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.type in ['FILE_STAGER']:
-        #    _append_files(inputbox,'make_filestager_joption.py','dm_util.py','fs-copy.py')
+        if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type in ['FILE_STAGER']:
+            _append_files(inputbox,'make_filestager_joption.py','dm_util.py','fs-copy.py')
 
         if not 'getstats.py' in [ os.path.basename(file.name) for file in inputbox ]:
             _append_files(inputbox, 'getstats.py')
 
-            
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             if not job.outputdata.location:
                 raise ApplicationConfigurationError(None,'j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
@@ -508,7 +515,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 except:
                     pass
 
-                
         if job.inputdata and job.inputdata._name == 'DQ2Dataset':
             if job.inputdata.dataset:
                 datasetname = job.inputdata.dataset
@@ -586,6 +592,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if (job.outputsandbox):
             for file in job.outputsandbox:
                 outputbox += [ file ]
+
+        ## retrieve the FileStager log
+        if job.inputdata and job.inputdata._name in [ 'DQ2Dataset'] and job.inputdata.type in ['FILE_STAGER']:
+            outputbox += ['FileStager.out', 'FileStager.err']
 
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 

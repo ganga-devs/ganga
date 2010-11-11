@@ -69,6 +69,9 @@ if (io_type in ['FILE_STAGER']):
                                 force_siteid_domain=force_siteid_domain, \
                                 force_siteid_se=force_siteid_se)
 
+    if not dq2_site_id and os.environ.has_key('DQ2_LOCAL_SITE_ID'):
+        dq2_site_id = os.environ['DQ2_LOCAL_SITE_ID']
+
     print >> sys.stdout, 'detected DQ2_LOCAL_SITE_ID: %s' % dq2_site_id
 
     # get LFC_HOST associated with the dq2_site_id
