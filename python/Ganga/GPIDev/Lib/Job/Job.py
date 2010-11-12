@@ -946,8 +946,20 @@ class Job(GangaObject):
         finally:
             pass #job._registry.cache_writers_mutex.release()
 
-    def resubmit(self):
-        """Resubmit a failed or completed job. """
+    def resubmit(self,backend=None):
+        """Resubmit a failed or completed job.  A backend object may
+        be specified to change some submission parameters (which
+        parameters may be effectively changed depends on a
+        particular backend implementation).
+
+        Example:
+         b = j.backend.copy()
+         b.CE = 'some CE'
+         j.resubmit(backend=b)
+
+        Note: it is not possible to change the type of the backend in this way.
+
+        """
 
         # there are possible two race condition which must be handled somehow:
         #  - a simple job is monitorable and at the same time it is 'resubmitted' - potentially the monitoring may update the status back!
@@ -963,7 +975,19 @@ class Job(GangaObject):
             logger.error(msg)
             raise JobError(msg)
 
+        backendProxy = backend
+        backend = None
+
+        if backendProxy:
+            backend = backendProxy._impl
+
+        if backend and self.backend._name != backend._name:
+            msg = "cannot resubmit job %s: change of the backend type is not allowed"%fqid
+            logger.error(msg)
+            raise JobError(msg)
+
         oldstatus = self.status
+        oldbackend = self.backend
 
         self.updateStatus('submitting')
 
@@ -982,11 +1006,13 @@ class Job(GangaObject):
             if not rjobs:
                 rjobs = [self]
 
-
             if rjobs:
                 for sjs in rjobs:
                     sjs.info.increment()
                     sjs.getOutputWorkspace().remove(preserve_top=True) #bugfix: #31690: Empty the outputdir of the subjob just before resubmitting it
+
+            if backend:
+                self.backend = backend.clone()
 
             try:
                 if not self.backend.master_resubmit(rjobs):
@@ -1027,6 +1053,8 @@ class Job(GangaObject):
         except GangaException,x:
             logger.error("failed to resubmit job, %s" % (str(x),))
             logger.warning('reverting job %s to the %s status', fqid, oldstatus )
+            if backend:
+                self.backend = oldbackend #revert to old backend
             self.status = oldstatus
             self._commit() #PENDING: what to do if this fails?
             raise

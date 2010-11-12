@@ -1,0 +1,28 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+j = Job()
+j.backend = TestSubmitter()
+j.backend.time = 2
+j.submit()
+assert(sleep_until_completed(j,15))
+
+b = j.backend.copy()
+b.time = 3
+j.resubmit(backend = b)
+assert(j.status != 'completed')
+assert(sleep_until_completed(j,15))
+
+assert(j.backend.time == 3)
+
+
+b = j.backend.copy()
+b.fail = 'resubmit'
+try:
+  j.resubmit(backend = b)
+except GangaException:
+  pass
+else:
+  assert('resubmit has not raised an exception as expected')
+
+
+print 'passed OK'
