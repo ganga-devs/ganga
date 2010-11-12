@@ -62,7 +62,7 @@ def main():
     import getopt
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["prefix=","extern=","silent","force","make-tarballs","fetch-again","help","brute","verbose","prerelease","platf=","all-deps"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["prefix=","extern=","silent","force","make-tarballs","fetch-again","help","brute","verbose","prerelease","platf=","all-deps"])
     except getopt.error, x:
         print "command line syntax error"
         usage()
