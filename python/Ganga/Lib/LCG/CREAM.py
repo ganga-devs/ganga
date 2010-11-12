@@ -836,6 +836,44 @@ sys.exit(0)
 
         return grids['GLITE'].cream_cancelMultiple([self.id])
 
+    def master_kill(self):
+        '''kill the master job to the grid'''
+
+        job = self.getJobObject()
+
+        if not job.master and len(job.subjobs) == 0:
+            return IBackend.master_kill(self)
+        elif job.master:
+            return IBackend.master_kill(self)
+        else:
+            return self.master_bulk_kill()
+
+    def master_bulk_kill(self):
+        '''GLITE bulk resubmission'''
+
+        job = self.getJobObject()
+
+        ## killing the individually re-submitted subjobs
+        logger.debug('cancelling running/submitted subjobs.')
+
+        ## 1. collect job ids
+        ids = []
+        for sj in job.subjobs:
+            if sj.status in ['submitted','running'] and sj.backend.id:
+                ids.append(sj.backend.id)
+
+        ## 2. cancel the collected jobs
+        ck = grids['GLITE'].cream_cancelMultiple(ids)
+        if not ck:
+            logger.warning('Job cancellation failed')
+            return False
+        else:
+            for sj in job.subjobs:
+                if sj.backend.id in ids:
+                    sj.updateStatus('killed')
+
+            return True
+
     def master_bulk_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''submit multiple subjobs in parallel, by default using 10 concurrent threads'''
 
