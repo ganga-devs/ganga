@@ -19,27 +19,26 @@ function Data(ajaxAnimation, settings, jsonp) {
     this.sorting = settings.sorting;
     this.or = settings.or; // opened table rows
     this.uparam = settings.uparam; // user defined params (for params that cannot be shared between use cases)
-    
+   
     this.noreload = false;
-        
+       
     // Data
     this.mem = {
         users: Array(),
-        tasks: {
+        mains: {
             user: '',
             timestamp: 0,
             data: Array()
         },
-        jobs: {
+        subs: {
             user: '',
             tid: '',
             timestamp: 0,
             data: Array()
         }
     };
-    
+   
     this.quickSetup = function(params, ts2iso) {
-
         this.user = (params['user'] || settings.user);
         this.from = parseInt(this.iso2ts(params['from']) || settings.from);
         this.till = parseInt(this.iso2ts(params['till'],2) || settings.till);
@@ -49,14 +48,14 @@ function Data(ajaxAnimation, settings, jsonp) {
         this.p = (params['p'] || settings.p);
         this.or = (params['or'] || settings.or);
         this.sorting = (params['sorting'] || []);
-        this.uparam = (params['uparam'] || settings.uparam);   
-     
+        this.uparam = (params['uparam'] || settings.uparam);
+       
         // make this.or an array of ints
         for (i in this.or) {
             this.or[i] = parseInt(this.or[i]);
         }
     };
-    
+   
     this.setOr = function(dataID) {
         if ($.inArray(dataID, this.or) == (-1)) {
             this.or.push(dataID);
@@ -66,7 +65,7 @@ function Data(ajaxAnimation, settings, jsonp) {
             return false;
         }
     };
-    
+   
     // Dates handling - Start
     this.iso2ts = function(date, mode) {
         if (typeof mode == 'undefined') mode = 1;
@@ -77,7 +76,7 @@ function Data(ajaxAnimation, settings, jsonp) {
             else return 0;
         }
     };
-    
+   
     this.ts2iso = function(date, mode) {
         if (typeof mode == 'undefined') mode = 1;
         if (date == 0 || typeof date == 'undefined') return '';
@@ -88,12 +87,12 @@ function Data(ajaxAnimation, settings, jsonp) {
             else return '';
         }
     };
-    
+   
     this.changeFromTill = function(which, timestamp) {
         var output = true;
         if (timestamp == '') timestamp = 0;
         else timestamp = parseInt(timestamp);
-        
+       
         if (which == 'from') {
             if (timestamp > this.till && timestamp != 0) {
                 this.till = (timestamp + 86399000);
@@ -117,7 +116,7 @@ function Data(ajaxAnimation, settings, jsonp) {
         return output;
     };
     // Dates handling - Finish
-    
+   
     this.addPortNumber = function(url, port) {
         url = url.replace('//','^^');
         if (url.search('/') != -1) {
@@ -128,65 +127,9 @@ function Data(ajaxAnimation, settings, jsonp) {
         url = url.replace('^^','//');
         return url;
     };
-    
-    // Get job subjobs from server
+   
+    // Get job subs from server
     this.ajax_getData = function(xhrName, url, params, fSuccess, fFailure) {
-        var thisRef = this;
-        
-        currentUrl = window.location.toString()
-        portIndex = currentUrl.indexOf('?port=');
-        if (portIndex > -1) {
-            
-            port = ''           
-            isNumber = true;    
-            index = portIndex + 6       
-        
-            while(isNumber){
-                char = currentUrl[index];
-                if(char == '0' || char == '1' || char =='2' ||
-                   char == '3' || char == '4' || char =='5' ||
-                   char == '6' || char == '7' || char =='8' || char =='9'){
-                    port = port + currentUrl[index];
-                    index++;
-                }
-                else{
-                    isNumber = false
-                }
-                
-            }
-
-            url = this.addPortNumber(url, port);            
-        }
-
-        var key = $.base64Encode($.param.querystring(url, params, 2));
-
-        var data = _Cache.get(key);
-        if (data) {
-            fSuccess(data);
-        } else if (url) {
-            ajaxAnimation.addClass(xhrName).show();;
-            $.ajax({
-                type: "GET",
-                url: url,
-                data: params,
-                dataType: (jsonp ? "jsonp" : "json"),
-                jsonp: "jsonp_callback",
-                success: function(data) {
-                    _Cache.add(key, data);
-                    fSuccess(data);
-                    ajaxAnimation.removeClass(xhrName);
-		    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
-                },
-                error: function() {
-                    ajaxAnimation.removeClass(xhrName);
-		    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
-                    fFailure();
-                }
-            });
-        }
-    };
-    // Get job subjobs from server
-    this.ajax_getData_charts = function(xhrName, url, params, fSuccess, fFailure, obj) {
         var thisRef = this;
        
         currentUrl = window.location.toString()
@@ -215,31 +158,95 @@ function Data(ajaxAnimation, settings, jsonp) {
         }
 
        
-        ajaxAnimation.addClass(xhrName).show();
-        if (url) {
+        var key = $.base64Encode($.param.querystring(url, params, 2));
+       
+        var data = _Cache.get(key);
+        if (data) {
+            fSuccess(data);
+        } else if (url) {
+            ajaxAnimation.addClass(xhrName).show();;
             $.ajax({
                 type: "GET",
                 url: url,
-                async: true,
                 data: params,
                 dataType: (jsonp ? "jsonp" : "json"),
                 jsonp: "jsonp_callback",
                 success: function(data) {
-                    fSuccess(data, obj);
+                    _Cache.add(key, data);
+                    fSuccess(data);
                     ajaxAnimation.removeClass(xhrName);
                     if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
                 },
                 error: function() {
                     ajaxAnimation.removeClass(xhrName);
                     if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
-                    fFailure(obj);
+                    fFailure();
                 }
             });
-        }    
+        }
     };
+   
+    // Get job subs from server
+    this.ajax_getData_sync = function(xhrName, url, params, fSuccess, fFailure, obj) {
+        if ( obj === undefined ) {
+            obj = '';
+        }
+        var thisRef = this;
+       
+        currentUrl = window.location.toString()
+        portIndex = currentUrl.indexOf('?port=');
+        if (portIndex > -1) {
+           
+            port = ''          
+            isNumber = true;    
+            index = portIndex + 6      
+       
+            while(isNumber){
+                char = currentUrl[index];
+                if(char == '0' || char == '1' || char =='2' ||
+                   char == '3' || char == '4' || char =='5' ||
+                   char == '6' || char == '7' || char =='8' || char =='9'){
+                    port = port + currentUrl[index];
+                    index++;
+                }
+                else{
+                    isNumber = false
+                }
+               
+            }
 
+            url = this.addPortNumber(url, port);            
+        }
+       
+        var key = $.base64Encode($.param.querystring(url, params, 2));
+
+        //ajaxAnimation.addClass(xhrName).show();
+        var data = _Cache.get(key);
+        if (data) {
+            fSuccess(data);
+        } else if (url) {
+            $.ajax({
+                type: "GET",
+                url: url,
+                async: false,
+                timeout: 15000,
+                data: params,
+                dataType: (jsonp ? "jsonp" : "json"),
+                jsonp: "jsonp_callback",
+                success: function(data) {
+                    fSuccess(data, obj);
+                    //ajaxAnimation.removeClass(xhrName);
+                    //if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                },
+                error: function() {
+                    ajaxAnimation.removeClass(xhrName);
+                    //if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                    //fFailure(obj);
+                }
+            });
+        }
+    };
 }
-
 
 var simpleEncoding =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

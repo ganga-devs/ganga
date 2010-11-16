@@ -39,6 +39,9 @@ function Settings() {
     this.Users = {
         'dataURL': 'http://localhost/?list=users',
         'searchLabel': 'Search for user ',
+	'dataURL_params': function(Data) {
+            return {};
+        },
         'translateData': function(dataJSON) {
             var usersList = Array();
             var dataArr = dataJSON.basicData[0];
@@ -65,13 +68,21 @@ function Settings() {
         },
         'expandableRows':true,
         'multipleER':false,
-        'expandData': function(dataSet) {
-            var outputArr = [
-                ['inputdir', dataSet.inputdir],
-                ['outputdir', dataSet.outputdir],
-                ['uuid', dataSet.uuid]
-            ];
-            return outputArr;
+        'expandData': {
+
+		'dataFunction': function(rowDataSet, jsonDataSet) {
+                var properties = false;
+                var html = false;
+                var table = false;
+                
+                properties = [
+                ['inputdir', rowDataSet.inputdir],
+                ['outputdir', rowDataSet.outputdir],
+                ['uuid', rowDataSet.uuid]
+                ];
+
+                return {'properties':properties,'table':table,'html':html};
+		}
         },
         'sorting':[1,'desc'],
         'iDisplayLength': 25,
@@ -178,7 +189,7 @@ function Settings() {
                 'noUnknClick':'U'
             };
             Data.uparam = [classTranslate[$(el).find('a').attr('class')]];
-            Data.tid = Data.mem.tasks.data[aPos[0]].id; 
+            Data.tid = Data.mem.mains.data[aPos[0]].id; 
         },
         'charts': [
             {
@@ -266,6 +277,7 @@ function Settings() {
             };
             return obj;
         },
+        'expandableRows':false, 
         'sorting':[1,'desc'],
         'iDisplayLength': 25,
         'tblLabels': ['fqid','status','name','application','backend' ,'actualCE'],
