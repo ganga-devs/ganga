@@ -33,7 +33,6 @@ $(document).ready( function() {
     _Cache = new Cache(_cache_max_entries, _cache_lifetime);
     Controller = new Controller();
     Controller.Init();
-    $("#siteTabs").tabs();
 } );
 </script>
 </head>
@@ -68,7 +67,7 @@ $(document).ready( function() {
                         <td>
                             <select id="refresh">
                                 <option value="0" selected="selected">Disabled</option>
-			        <option value="10">10 sec</option>
+                                <option value="10">10 sec</option>
                                 <option value="300">5 min</option>
                                 <option value="600">10 min</option>
                                 <option value="1200">20 min</option>
@@ -78,18 +77,17 @@ $(document).ready( function() {
                 </table>
             </div>
             <div id="ajaxAnimation"><img src="media/images/loading.gif" width="43" height="39" /></div>
-            <div id="supportHelp"><a href="https://twiki.cern.ch/twiki/bin/view/ArdaGrid/TaskMonitoringWebUI">SUPPORT</a><!--<br /><a href="#">HELP</a>--></div>
+            <div id="supportHelp"><a id="supportLnk" href="#" title="Support">&nbsp;?&nbsp;</a></div>
         </div>
-        <!--<div style="position:fixed; bottom:15px; right:15px; display:inline"><input id="modelCheck" type="button" value="modelCheck" /></div>-->
         <div id="siteTabs">
             <ul>
                 <li><a href="#tableContent">Data</a></li>
                 <li><a href="#chartContent">Charts</a></li>
             </ul>
-	    <div id="tableContent"></div>
-	    <div id="chartContent"></div>
+            <div id="tableContent"></div>
+            <div id="chartContent"></div>
         </div>
-	<div id="footer"><div id="footerTxt">jTaskMonitoring &copy;2010</div></div>
+        <div id="footer"><div id="footerTxt">jTaskMonitoring &copy;2010</div></div>
     </div>
 </div>
 <input type="hidden" id="url-page" value="hash" />
