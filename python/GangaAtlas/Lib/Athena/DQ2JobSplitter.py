@@ -527,17 +527,45 @@ class DQ2JobSplitter(ISplitter):
 
                 if len(guids) == 0:
                     continue
-                    
+
                 max_subjob_filesize = 0
+                # do a Panda brokerage for these sites
+                pandaSite = ''
+                if job.backend._name == 'Panda':
+                    from GangaPanda.Lib.Panda.Panda import selectPandaSite
+                    pandaSite = selectPandaSite(job,sites)
+                    # set maximum input size per subjob 
+                    from pandatools import Client
+                    max_subjob_filesize = (Client.PandaSites[pandaSite]['maxinputsize']-1000)*1024*1024
+                    if not max_subjob_filesize:
+                        max_subjob_filesize = config['MaxFileSizePandaDQ2JobSplitter']*1024*1024
+
+                    # direct access site ?
+                    from pandatools import PsubUtils
+                    # FIXME - set correct parameter values
+                    inBS = False
+                    inTRF = False
+                    inARA = False
+                    isDirectAccess = PsubUtils.isDirectAccess(pandaSite, inBS, inTRF, inARA)
+                    if isDirectAccess: 
+                       max_subjob_filesize = 0
+                       # use numfiles if user has set it, else use MaxSubjobFilesPandaDQ2JobSplitter
+                       if not orig_numfiles>0:
+                           self.numfiles = config['MaxSubjobFilesPandaDQ2JobSplitter']
+                           self.numsubjobs = 0
+                       logger.info('DQ2JobSplitter has restricted the maximum of files per subjob to %s files.', self.numfiles)
+
                 # Restriction based on the maximum dataset filesize
                 if self.filesize > 0:
                     max_subjob_filesize = self.filesize*1024*1024
                 elif job.backend._name == 'NG' and (self.filesize < 1 or config['MaxFileSizeNGDQ2JobSplitter'] < self.filesize):
                     max_subjob_filesize = config['MaxFileSizeNGDQ2JobSplitter']*1024*1024
-                elif job.backend._name == 'Panda' and (self.filesize < 1 or config['MaxFileSizePandaDQ2JobSplitter'] < self.filesize):
-                    max_subjob_filesize = config['MaxFileSizePandaDQ2JobSplitter']*1024*1024
-                    logger.info('DQ2JobSplitter has restricted the maximum inputsize per subjob to %s Bytes.', max_subjob_filesize)
-
+                elif job.backend._name == 'Panda':
+                    if max_subjob_filesize > 0:
+                    #max_subjob_filesize = config['MaxFileSizePandaDQ2JobSplitter']*1024*1024
+                        logger.info('DQ2JobSplitter has restricted the maximum inputsize per subjob to %s Bytes.', max_subjob_filesize)
+                    else:
+                        max_subjob_filesize = 1180591620717411303424 # 1 zettabyte
                 else:
                     max_subjob_filesize = 1180591620717411303424 # 1 zettabyte
 
@@ -617,12 +645,6 @@ class DQ2JobSplitter(ISplitter):
                         elif num > 0:
                             remaining_tags.append( tag_file )
                             
-                # do a Panda brokerage for these sites
-                pandaSite = ''
-                if job.backend._name == 'Panda':
-                    from GangaPanda.Lib.Panda.Panda import selectPandaSite
-                    pandaSite = selectPandaSite(job,sites)
-
                 while remaining_guids and len(subjobs)<config['MaxJobsDQ2JobSplitter']:
                     num_remaining_guids = len(remaining_guids)
                     j = Job()
@@ -837,7 +859,9 @@ class DQ2JobSplitter(ISplitter):
     
 config = getConfig('Athena')
 config.addOption('MaxJobsDQ2JobSplitter', 5000, 'Maximum number of allowed subjobs of DQ2JobSplitter')
+config.addOption('MaxFilesPandaDQ2JobSplitter', 5000, 'Maximum number of allowed subjobs of DQ2JobSplitter')
 config.addOption('MaxJobsDQ2JobSplitterLCGCompile', 500, 'Maximum number of allowed subjobs of DQ2JobSplitter on LCG/Cream with compile option switched on')
 config.addOption('MaxFileSizeNGDQ2JobSplitter', 14336, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the NG backend (in MB)')
 config.addOption('MaxFileSizePandaDQ2JobSplitter', 13336, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (in MB)')
+config.addOption('MaxSubjobFilesPandaDQ2JobSplitter', 50, 'Maximum number of allowed input files per subjob for direct access site in Panda in DQ2JobSplitter')
 config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_MCDISK', 'NDGF-T1_PRODDISK', 'NDGF-T1_SCRATCHDISK' ], 'Allowed space tokens/sites for DQ2JobSplitter on NG backend' )
