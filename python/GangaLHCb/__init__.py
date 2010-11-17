@@ -45,6 +45,10 @@ dscrpt = 'List of sites to ban when a user job has no input data (this is '\
 sites = ['LCG.CERN.ch','LCG.CNAF.it','LCG.GRIDKA.de','LCG.IN2P3.fr',
          'LCG.NIKHEF.nl','LCG.PIC.es','LCG.RAL.uk','LCG.SARA.nl']
 configLHCb.addOption('noInputDataBannedSites',sites,dscrpt)
+tokens = ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','NIKHEF-USER',
+          'PIC-USER','RAL-USER']
+dscrpt = 'Space tokens allowed for replication, etc.'
+configLHCb.addOption('DiracSpaceTokens',tokens,dscrpt)
  
 # Set default values for the Dirac section.
 dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
@@ -61,7 +65,6 @@ def getEnvironment( config = {} ):
    return
 
 def loadPlugins( config = {} ):
-    #import Lib.Dirac
     import Lib.Gaudi
     import Lib.LHCbDataset
     import Lib.DIRAC

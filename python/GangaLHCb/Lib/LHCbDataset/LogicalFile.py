@@ -7,13 +7,15 @@ from Ganga.Utility.files import expandfilename
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 import Ganga.Utility.logging
+from Ganga.Utility.Config import getConfig
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 def get_dirac_space_tokens():
-    return ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','NIKHEF-USER',
-            'PIC-USER','RAL-USER']
+    return getConfig('LHCb')['DiracSpaceTokens']
+#    return ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','NIKHEF-USER',
+#            'PIC-USER','RAL-USER']
 
 def get_result(cmd,log_msg,except_msg):
     from GangaLHCb.Lib.DIRAC.Dirac import Dirac
