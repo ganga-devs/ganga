@@ -551,7 +551,7 @@ class DQ2JobSplitter(ISplitter):
                        max_subjob_filesize = 0
                        # use numfiles if user has set it, else use MaxSubjobFilesPandaDQ2JobSplitter
                        if not orig_numfiles>0:
-                           self.numfiles = config['MaxSubjobFilesPandaDQ2JobSplitter']
+                           self.numfiles = config['DefaultNumFilesPandaDirectDQ2JobSplitter']
                            self.numsubjobs = 0
                        logger.info('DQ2JobSplitter has restricted the maximum of files per subjob to %s files.', self.numfiles)
 
@@ -863,5 +863,5 @@ config.addOption('MaxFilesPandaDQ2JobSplitter', 5000, 'Maximum number of allowed
 config.addOption('MaxJobsDQ2JobSplitterLCGCompile', 500, 'Maximum number of allowed subjobs of DQ2JobSplitter on LCG/Cream with compile option switched on')
 config.addOption('MaxFileSizeNGDQ2JobSplitter', 14336, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the NG backend (in MB)')
 config.addOption('MaxFileSizePandaDQ2JobSplitter', 13336, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (in MB)')
-config.addOption('MaxSubjobFilesPandaDQ2JobSplitter', 50, 'Maximum number of allowed input files per subjob for direct access site in Panda in DQ2JobSplitter')
+config.addOption('DefaultNumFilesPandaDirectDQ2JobSplitter', 50, 'Default number of input files per subjob used at a direct access site in Panda in DQ2JobSplitter')
 config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_MCDISK', 'NDGF-T1_PRODDISK', 'NDGF-T1_SCRATCHDISK' ], 'Allowed space tokens/sites for DQ2JobSplitter on NG backend' )
