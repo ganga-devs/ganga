@@ -447,6 +447,12 @@ def report(job=None):
                 if(os.path.exists(folderToArchive)):
                         shutil.rmtree(folderToArchive)
 
+                #print the error if there is something
+                if os.path.exists(errorLogPath):
+                        print
+                        print 'An error occured while collecting report information : ' +  open(errorLogPath, 'r').read()
+                        print  
+
                 #delete the errorfile from user's pc
                 if(os.path.exists(errorLogPath)):
                         os.remove(errorLogPath)
