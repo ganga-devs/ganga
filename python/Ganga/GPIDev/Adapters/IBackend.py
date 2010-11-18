@@ -167,7 +167,7 @@ class IBackend(GangaObject):
             return job.createInputSandbox(files,master=True)
 
 
-    def master_resubmit(self,rjobs):
+    def master_resubmit(self,rjobs,backend=None):
         """ Resubmit (previously submitted) job. Configuration phase is skipped.
         Default implementation works is an emulated-bulk operation.
         If you override this method for bulk optimization then make sure that you call updateMasterJobStatus() on the master job,
@@ -188,7 +188,11 @@ class IBackend(GangaObject):
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
-                    if b.resubmit():
+                    if backend is None:
+                        result = b.resubmit()
+                    else:
+                        result = b.resubmit(backend=backend)
+                    if result:
                         sj.updateStatus('submitted')
                         #sj._commit() # PENDING: TEMPORARY DISABLED
                         incomplete = 1

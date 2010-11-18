@@ -981,13 +981,40 @@ class Job(GangaObject):
         if backendProxy:
             backend = backendProxy._impl
 
+        # do not allow to change the backend type
         if backend and self.backend._name != backend._name:
             msg = "cannot resubmit job %s: change of the backend type is not allowed"%fqid
             logger.error(msg)
             raise JobError(msg)
 
+        # if the backend argument is identical (no attributes changed) then it is equivalent to None
+        # the good side effect is that in this case we don't require any backend resubmit method to support
+        # the extra backend argument
+        if backend == self.backend:
+            backend = None
+
+        # check if the backend supports extra 'backend' argument for master_resubmit()
+        import inspect
+        supports_master_resubmit = len(inspect.getargspec(self.backend.master_resubmit).args)>1
+
+        if not supports_master_resubmit and backend:
+            raise JobError('%s backend does not support changing of backend parameters at resubmission (optional backend argument is not supported)'%self.backend._name)
+
+        def check_changability(obj1,obj2):
+            # check if the only allowed attributes have been modified
+            for name,item in obj1._schema.allItems():
+                v1 = getattr(obj1,name)
+                v2 = getattr(obj2,name)
+                if not item['changable_at_resubmit'] and item['copyable']:
+                    if v1 != v2:
+                        raise JobError('%s.%s attribute cannot be changed at resubmit'%(obj1._name,name))
+                if item.isA('ComponentItem'):
+                    check_changability(v1,v2)
+
+        if backend:
+            check_changability(self.backend,backend)
+
         oldstatus = self.status
-        oldbackend = self.backend
 
         self.updateStatus('submitting')
 
@@ -1011,11 +1038,12 @@ class Job(GangaObject):
                     sjs.info.increment()
                     sjs.getOutputWorkspace().remove(preserve_top=True) #bugfix: #31690: Empty the outputdir of the subjob just before resubmitting it
 
-            if backend:
-                self.backend = backend.clone()
-
             try:
-                if not self.backend.master_resubmit(rjobs):
+                if backend is None:
+                    result = self.backend.master_resubmit(rjobs)
+                else:
+                    result = self.backend.master_resubmit(rjobs,backend=backend)                
+                if not result:
                     raise JobManagerError('error during submit')
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s',fqid,x)
@@ -1053,8 +1081,6 @@ class Job(GangaObject):
         except GangaException,x:
             logger.error("failed to resubmit job, %s" % (str(x),))
             logger.warning('reverting job %s to the %s status', fqid, oldstatus )
-            if backend:
-                self.backend = oldbackend #revert to old backend
             self.status = oldstatus
             self._commit() #PENDING: what to do if this fails?
             raise
