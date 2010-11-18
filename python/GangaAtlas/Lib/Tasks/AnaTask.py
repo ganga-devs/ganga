@@ -112,6 +112,11 @@ class AnaTask(Task):
       new_tfs = []
 
       for tid in tid_list:
+         # check if dataset is empty
+         if dq2.getNumberOfFiles(tid) == 0:
+            logger.warning("Dataset %s is empty - no subtask created!" % tid)
+            continue
+
          tf = trf.clone()
          tf.name = ".".join(tid.split(".")[1:3])
 
