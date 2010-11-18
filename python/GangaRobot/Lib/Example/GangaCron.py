@@ -19,18 +19,20 @@ from GangaRobot.Lib.Core.CoreExtractor import CoreExtractor
 from GangaRobot.Lib.Core.CoreReporter import CoreReporter
 from GangaRobot.Lib.Ext.DiracExtractor import DiracExtractor
 from GangaRobot.Framework import Utility
+from Ganga.Utility.logging import getLogger
 from Ganga.Utility import files
 from Ganga.GPI import *
 import glob
 import os
 
+logger = getLogger()
 
 
 class GangaCronSubmitter(BaseSubmitter):
 
     def handlesubmit(self, jobids, runid):
         """Submit 10 DaVinci/Dirac jobs with 4 LFN files, for each CPUTime 3599 and 86399 seconds."""
-        JOB_COUNT = 1 #default 10
+        JOB_COUNT = 10 #default 10
         CHUNK_SIZE = 1 # default 4
         CPU_TIMES = [3599, 86399]
         for cputime in CPU_TIMES:
@@ -44,13 +46,12 @@ class GangaCronSubmitter(BaseSubmitter):
         j = Job()
         j.name = '%d-%d' % (cputime, time.time())
         cmt_user_path = files.expandfilename('~/cmtuserRobot')
-        optsfile = os.path.join(cmt_user_path, 'DaVinci_v23r3p1/Analysis/solutions/DaVinci2/DVTutorial_2.py')
+        optsfile = os.path.join(cmt_user_path, 'DaVinci_v19r14/Tutorial/Analysis/solutions/DaVinci2/DVTutorial_2.opts')
         j.application = DaVinci(
-            extraopts = 'DaVinci().EvtMax = 2500;\nDaVinci().DataType = "DC06"',
-            platform = 'slc4_ia32_gcc34',
+            extraopts = 'ApplicationMgr.EvtMax = 2500;',
             package = 'Phys',
             masterpackage = None,
-            version = 'v23r3p1',
+            version = 'v19r14',
             optsfile = optsfile)
         j.backend = Dirac(
             CPUTime = cputime)

@@ -420,11 +420,6 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         except Exception,x:
            raise Ganga.Utility.Config.ConfigError('Cannot get default user name'+str(x))
         
-        gpiconfig = Ganga.Utility.Config.makeConfig('GPI_Semantics','Customization of GPI behaviour. These options may affect the semantics of the Ganga GPI interface (what may result in a different behaviour of scripts and commands).')
-
-        gpiconfig.addOption('job_submit_keep_going', False, 'Keep on submitting as many subjobs as possible. Option to j.submit(), see Job class for details')
-        gpiconfig.addOption('job_submit_keep_on_fail', False,'Do not revert job to new status even if submission failed. Option to j.submit(), see Job class for details')
-
         ipconfig = Ganga.Utility.Config.makeConfig('TextShell_IPython','''IPython shell configuration
 See IPython manual for more details:
 http://ipython.scipy.org/doc/manual''')

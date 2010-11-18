@@ -20,7 +20,6 @@ from Ganga.Core.GangaRepository import RegistryKeyError
 
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 
-
 class JobStatusError(GangaException):
     def __init__(self,*args):
         GangaException.__init__(self,*args)
@@ -568,7 +567,7 @@ class Job(GangaObject):
 
         return None
 
-    def submit(self,keep_going=None,keep_on_fail=None):
+    def submit(self,keep_going=False,keep_on_fail=False):
         '''Submits a job. Return true on success.
 
         First  the  application   is  configured  which  may  generate
@@ -576,25 +575,15 @@ class Job(GangaObject):
         Then  backend handler is  used to  submit the  configured job.
         The job is automatically checkpointed to persistent storage.
 
-        The default values of keep_going and keep_on_fail are controlled by [GPI_Semantics] configuration options.
-
         When the submission fails the job status is automatically
         reverted to new and all files in the input directory are
-        deleted (keep_on_fail=False is the default behaviour unless modified in configuration).
-        If keep_on_fail=True then the job status
+        deleted (this is the default behaviour,
+        keep_on_fail=False). If keep_on_fail=True then the job status
         is moved to the failed status and input directory is left intact.
         This is helpful for debugging anf implements the request #43143.
 
         For split jobs: consult https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaSplitters#Subjob_submission
         '''
-        from Ganga.Utility.Config import ConfigError, getConfig 
-        gpiconfig = getConfig('GPI_Semantics')
-
-        if keep_going is None:
-            keep_going = gpiconfig['job_submit_keep_going']
-
-        if keep_on_fail is None:
-            keep_on_fail = gpiconfig['job_submit_keep_on_fail']
 
         from Ganga.Core import ApplicationConfigurationError, JobManagerError, IncompleteJobSubmissionError, GangaException
 
@@ -852,7 +841,7 @@ class Job(GangaObject):
         """Deprecated. Use force_status('failed') instead."""
         raise JobError('fail() method is deprecated, use force_status("failed") instead.')
 
-    allowed_force_states = { 'completed' : ['completing','failed'],
+    allowed_force_states = { 'completed' : ['completing'],
                              'failed' : ["submitting","completing","completed","submitted","running","killed"] }
     
     def force_status(self,status,force=False):
@@ -946,20 +935,8 @@ class Job(GangaObject):
         finally:
             pass #job._registry.cache_writers_mutex.release()
 
-    def resubmit(self,backend=None):
-        """Resubmit a failed or completed job.  A backend object may
-        be specified to change some submission parameters (which
-        parameters may be effectively changed depends on a
-        particular backend implementation).
-
-        Example:
-         b = j.backend.copy()
-         b.CE = 'some CE'
-         j.resubmit(backend=b)
-
-        Note: it is not possible to change the type of the backend in this way.
-
-        """
+    def resubmit(self):
+        """Resubmit a failed or completed job. """
 
         # there are possible two race condition which must be handled somehow:
         #  - a simple job is monitorable and at the same time it is 'resubmitted' - potentially the monitoring may update the status back!
@@ -974,45 +951,6 @@ class Job(GangaObject):
             msg = "cannot resubmit job %s which is in '%s' state"%(fqid,self.status)
             logger.error(msg)
             raise JobError(msg)
-
-        backendProxy = backend
-        backend = None
-
-        if backendProxy:
-            backend = backendProxy._impl
-
-        # do not allow to change the backend type
-        if backend and self.backend._name != backend._name:
-            msg = "cannot resubmit job %s: change of the backend type is not allowed"%fqid
-            logger.error(msg)
-            raise JobError(msg)
-
-        # if the backend argument is identical (no attributes changed) then it is equivalent to None
-        # the good side effect is that in this case we don't require any backend resubmit method to support
-        # the extra backend argument
-        if backend == self.backend:
-            backend = None
-
-        # check if the backend supports extra 'backend' argument for master_resubmit()
-        import inspect
-        supports_master_resubmit = len(inspect.getargspec(self.backend.master_resubmit).args)>1
-
-        if not supports_master_resubmit and backend:
-            raise JobError('%s backend does not support changing of backend parameters at resubmission (optional backend argument is not supported)'%self.backend._name)
-
-        def check_changability(obj1,obj2):
-            # check if the only allowed attributes have been modified
-            for name,item in obj1._schema.allItems():
-                v1 = getattr(obj1,name)
-                v2 = getattr(obj2,name)
-                if not item['changable_at_resubmit'] and item['copyable']:
-                    if v1 != v2:
-                        raise JobError('%s.%s attribute cannot be changed at resubmit'%(obj1._name,name))
-                if item.isA('ComponentItem'):
-                    check_changability(v1,v2)
-
-        if backend:
-            check_changability(self.backend,backend)
 
         oldstatus = self.status
 
@@ -1033,17 +971,14 @@ class Job(GangaObject):
             if not rjobs:
                 rjobs = [self]
 
+
             if rjobs:
                 for sjs in rjobs:
                     sjs.info.increment()
                     sjs.getOutputWorkspace().remove(preserve_top=True) #bugfix: #31690: Empty the outputdir of the subjob just before resubmitting it
 
             try:
-                if backend is None:
-                    result = self.backend.master_resubmit(rjobs)
-                else:
-                    result = self.backend.master_resubmit(rjobs,backend=backend)                
-                if not result:
+                if not self.backend.master_resubmit(rjobs):
                     raise JobManagerError('error during submit')
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s',fqid,x)

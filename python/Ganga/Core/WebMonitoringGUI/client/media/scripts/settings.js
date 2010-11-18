@@ -1,4 +1,4 @@
-// This file is part of the jJobMonitoring software
+// This file is part of the jTaskMonitoring software
 // Copyright (c) CERN 2010
 //
 // Author: Lukasz Kokoszkiewicz [lukasz@kokoszkiewicz.com , lukasz.kokoszkiewicz@cern.ch]
@@ -11,15 +11,7 @@ function Settings() {
 
     // Application specific settings - START
     this.Application = {
-        'userSelection': false, // Display user selection page? (true|false)
-        'jsonp': true, // allow requests to other hosts
-	'pageTitle': 'Job Monitoring', // Page title
-        'footerTxt': 'jJobMonitoring &copy;2010', // Footer text
-        'supportLnk': 'https://twiki.cern.ch/twiki/bin/view/ArdaGrid/TaskMonitoringWebUI', // Link to support page
-        'logoLnk': 'media/images/ganga_logo_72dpi.png', // Link to page logo
-        'usersListLbl': 'Users List',
-        'mainsLbl': 'Jobs',
-        'subsLbL': 'Subjobs',
+        'userSelection': true, // Display user selection page? (true|false)
         'modelDefaults': { // Here You can set up model (data.js) default values
             'user': '',
             'from': 0,
@@ -39,17 +31,13 @@ function Settings() {
     this.Users = {
         'dataURL': 'http://localhost/?list=users',
         'searchLabel': 'Search for user ',
-	'dataURL_params': function(Data) {
-            return {};
-        },
         'translateData': function(dataJSON) {
             var usersList = Array();
-            var dataArr = dataJSON.basicData[0];
-            for (i in dataArr) {
-                usersList.push(dataArr[i].GridName);//.replace(/"/g, ''));
+            for (i in dataJSON) {
+                usersList.push(dataJSON[i].GridName);//.replace(/"/g, ''));
             }
             return usersList;
-        }
+        },
     };
     // Users list settings - FINISH
     
@@ -68,21 +56,13 @@ function Settings() {
         },
         'expandableRows':true,
         'multipleER':false,
-        'expandData': {
-
-		'dataFunction': function(rowDataSet, jsonDataSet) {
-                var properties = false;
-                var html = false;
-                var table = false;
-                
-                properties = [
-                ['inputdir', rowDataSet.inputdir],
-                ['outputdir', rowDataSet.outputdir],
-                ['uuid', rowDataSet.uuid]
-                ];
-
-                return {'properties':properties,'table':table,'html':html};
-		}
+        'expandData': function(dataSet) {
+            var outputArr = [
+                ['inputdir', dataSet.inputdir],
+                ['outputdir', dataSet.outputdir],
+                ['uuid', dataSet.uuid]
+            ];
+            return outputArr;
         },
         'sorting':[1,'desc'],
         'iDisplayLength': 25,
@@ -98,8 +78,8 @@ function Settings() {
             {"sClass":"numericTD","sWidth":"70px", "sType": "integer-in-tag"},
             {"sClass":"numericTD","sWidth":"70px", "sType": "integer-in-tag"},
             {"sClass":"numericTD","sWidth":"70px", "sType": "integer-in-tag"},  
-            {"sClass":"graphicaly","sWidth":"200px"}, 
-            {"sClass":"link","sWidth":"200px"},    
+	    {"sWidth":"130px"},	
+	    {"sWidth":"110px"},	   
             null
         ],
         'getDataArray': function(data) {
@@ -125,24 +105,24 @@ function Settings() {
 
             var jobStatuses = {
                 'new':'New',
-                'submitting':'Submitting',
+		'submitting':'Submitting',
                 'submitted':'Submitted',
-                'running':'Running',
-                'completed':'Completed',
-                'killed':'Killed',
-                'unknown':'Unknown',
-                'incomplete':'Incomplete',
-                'failed':'Failed'
+		'running':'Running',
+		'completed':'Completed',
+		'killed':'Killed',
+		'unknown':'Unknown',
+		'incomplete':'Incomplete',
+		'failed':'Failed'
             };
 
-            var tasksArr = Array();
+	    var tasksArr = Array();
             for (i in dataJSON) {
 
-                if(dataJSON[i].subjobs != '0')
-                {
+		if(dataJSON[i].subjobs != '0')
+		{
                 tasksArr.push(Array(
                     ('<a>' + dataJSON[i].id + '</a>'),   
-                    (jobStatuses[dataJSON[i].status] ? '<div class="status '+jobStatuses[dataJSON[i].status]+'">'+dataJSON[i].status+'</div>' : 'Unknown'),     
+		    (jobStatuses[dataJSON[i].status] ? '<div class="status '+jobStatuses[dataJSON[i].status]+'">'+dataJSON[i].status+'</div>' : 'Unknown'),	
                     (dataJSON[i].name || ''),
                     (dataJSON[i].application || ''),
                     (dataJSON[i].backend || ''),
@@ -151,16 +131,16 @@ function Settings() {
                     ('<a class="noRunnClick">'+dataJSON[i].running+'</a>' || '0'),
                     ('<a class="">'+dataJSON[i].completed+'</a>' || '0'),
                     ('<a class="noFailClick">'+dataJSON[i].failed+'</a>' || '0'),
-                    ('<img src="http://chart.apis.google.com/chart?chbh=a,0&chs=130x15&cht=bhs&chco=59D118,C50000,3072F3,FF9900&chds=0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+'&chd=t:'+dataJSON[i].completed+'|'+dataJSON[i].failed+'|'+dataJSON[i].running+'|'+dataJSON[i].submitted+'" />'),
-                    ('<div style="width:50px;">'+dataJSON[i].link+'</div>'),
+		    ('<img src="http://chart.apis.google.com/chart?chbh=a,0&chs=130x15&cht=bhs&chco=59D118,C50000,3072F3,FF9900&chds=0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+',0,'+dataJSON[i].subjobs+'&chd=t:'+dataJSON[i].completed+'|'+dataJSON[i].failed+'|'+dataJSON[i].running+'|'+dataJSON[i].submitted+'" />'),
+	    	    (dataJSON[i].link || ''),
                     (dataJSON[i].actualCE || '')
                 ));
-                }
-                else
-                {
-                tasksArr.push(Array(
+		}
+		else
+		{
+		tasksArr.push(Array(
                     (dataJSON[i].id),   
-                    (jobStatuses[dataJSON[i].status] ? '<div class="status '+jobStatuses[dataJSON[i].status]+'">'+dataJSON[i].status+'</div>' : 'Unknown'),     
+		    (jobStatuses[dataJSON[i].status] ? '<div class="status '+jobStatuses[dataJSON[i].status]+'">'+dataJSON[i].status+'</div>' : 'Unknown'),	
                     (dataJSON[i].name || ''),
                     (dataJSON[i].application || ''),
                     (dataJSON[i].backend || ''),
@@ -169,11 +149,11 @@ function Settings() {
                     (dataJSON[i].running || '0'),
                     (dataJSON[i].completed || '0'),
                     (dataJSON[i].failed || '0'),
-                    ('<div style="width:125px;">&nbsp;</div>'),       
-                    ('<div style="width:50px;">'+dataJSON[i].link+'</div>'),
+		    (''),	
+	    	    (dataJSON[i].link || ''),
                     (dataJSON[i].actualCE || '')
-                ));     
-                }
+                ));	
+		}
             }
             return tasksArr;
         },
@@ -189,77 +169,77 @@ function Settings() {
                 'noUnknClick':'U'
             };
             Data.uparam = [classTranslate[$(el).find('a').attr('class')]];
-            Data.tid = Data.mem.mains.data[aPos[0]].id; 
+            Data.tid = Data.mem.tasks.data[aPos[0]].id; 
         },
-        'charts': [
+	'charts': [
             {
                 'ajax':true,
-                'dataURL': 'http://localhost/?list=jobs_statuses',
+		'dataURL': 'http://localhost/?list=jobs_statuses',
                 'dataURL_params': function(Data) { 
-                        obj = {
-                        'taskmonid':Data.tid,
-                        'from':Data.ts2iso(Data.from,2),
-                        'to':Data.ts2iso(Data.till,3),
-                        'timerange':Data.timeRange
-                        };
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
 
-                    return obj; 
-                },
+	            return obj; 
+		},
                 // translates data onto requires format:
                 // {"chd":"t:60,40","chl":"Hello|World"}
-                'translateData':function(dataJSON) {    
+                'translateData':function(dataJSON) {	
                     return dataJSON;
                 },
                 'gChart': {
-                    'chtt':'Jobs status',
+		    'chtt':'Jobs status',
                     'cht':'p3',
-                    'chs':'350x130'
+                    'chs':'400x150'
                 }
             },
-            {
+	    {
                 'ajax':true,
-                'dataURL': 'http://localhost/?list=jobs_backends',
+		'dataURL': 'http://localhost/?list=jobs_backends',
                 'dataURL_params': function(Data) { 
-                        obj = {
-                        'taskmonid':Data.tid,
-                        'from':Data.ts2iso(Data.from,2),
-                        'to':Data.ts2iso(Data.till,3),
-                        'timerange':Data.timeRange
-                        };
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
 
-                    return obj; 
-                },
-                'translateData':function(dataJSON) {    
+	            return obj; 
+		},
+                'translateData':function(dataJSON) {	
                     return dataJSON;
                 },
                 'gChart': {
-                    'chtt':'Jobs backend',
+		    'chtt':'Jobs backend',
                     'cht':'p3',
-                    'chs':'350x130'
+                    'chs':'400x150'
                 }
             },
-            {
+	    {
                 'ajax':true,
-                'dataURL': 'http://localhost/?list=jobs_applications',
+		'dataURL': 'http://localhost/?list=jobs_applications',
                 'dataURL_params': function(Data) { 
-                        obj = {
-                        'taskmonid':Data.tid,
-                        'from':Data.ts2iso(Data.from,2),
-                        'to':Data.ts2iso(Data.till,3),
-                        'timerange':Data.timeRange
-                        };
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
 
-                    return obj;                 
-                },
-                'translateData':function(dataJSON) {    
+	            return obj; 		
+		},
+                'translateData':function(dataJSON) {	
                     return dataJSON;
                 },
                 'gChart': {
-                    'chtt':'Jobs application',
+		    'chtt':'Jobs application',
                     'cht':'p3',
-                    'chs':'350x130'
+                    'chs':'400x150'
                 }
-            }   
+            }	
         ]
     };
     // User Tasks settings - FINISH
@@ -270,14 +250,13 @@ function Settings() {
         'dataURL_params': function(Data) {
             obj = {
                 'taskmonid':Data.tid,
-                'from':Data.ts2iso(Data.from,2),
+	        'from':Data.ts2iso(Data.from,2),
                 'to':Data.ts2iso(Data.till,3),
-                'timerange':Data.timeRange,
+	        'timerange':Data.timeRange,
                 'what':(Data.uparam[0] || 'all')
             };
             return obj;
         },
-        'expandableRows':false, 
         'sorting':[1,'desc'],
         'iDisplayLength': 25,
         'tblLabels': ['fqid','status','name','application','backend' ,'actualCE'],
@@ -295,21 +274,21 @@ function Settings() {
         'translateData': function(dataJSON) {
             var jobStatuses = {
                 'new':'NewSubjob',
-                'submitting':'SubmittingSubjob',
+		'submitting':'SubmittingSubjob',
                 'submitted':'SubmittedSubjob',
-                'running':'RunningSubjob',
-                'completed':'CompletedSubjob',
-                'killed':'KilledSubjob',
-                'unknown':'UnknownSubjob',
-                'incomplete':'IncompleteSubjob',
-                'failed':'FailedSubjob'
+		'running':'RunningSubjob',
+		'completed':'CompletedSubjob',
+		'killed':'KilledSubjob',
+		'unknown':'UnknownSubjob',
+		'incomplete':'IncompleteSubjob',
+		'failed':'FailedSubjob'
             };
             var tasksArr = Array();
             for (i in dataJSON) {
                 tasksArr.push(Array(
                     (dataJSON[i].id),   
                     //('<a class="">'+dataJSON[i].status+'</a>' || ''),
-                    (jobStatuses[dataJSON[i].status] ? '<div class="status '+jobStatuses[dataJSON[i].status]+'">'+dataJSON[i].status+'</div>' : 'Unknown'),     
+		    (jobStatuses[dataJSON[i].status] ? '<div class="status '+jobStatuses[dataJSON[i].status]+'">'+dataJSON[i].status+'</div>' : 'Unknown'),	
                     (dataJSON[i].name || ''),
                     (dataJSON[i].application || ''),
                     (dataJSON[i].backend || ''),
@@ -329,119 +308,119 @@ function Settings() {
             }
             return tasksArr;
         },
-        'charts': [
+	'charts': [
             {
                 'ajax':true,
-                'dataURL': 'http://localhost/?list=subjobs_statuses',
+		'dataURL': 'http://localhost/?list=subjobs_statuses',
                 'dataURL_params': function(Data) { 
-                        obj = {
-                        'taskmonid':Data.tid,
-                        'from':Data.ts2iso(Data.from,2),
-                        'to':Data.ts2iso(Data.till,3),
-                        'timerange':Data.timeRange
-                        };
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
 
-                    return obj; 
-                },
+	            return obj; 
+		},
                 // translates data onto requires format:
                 // {"chd":"t:60,40","chl":"Hello|World"}
-                'translateData':function(dataJSON) {    
+                'translateData':function(dataJSON) {	
                     return dataJSON;
                 },
                 'gChart': {
-                    'chtt':'Subjobs status',
-                    'cht':'p3',
-                    'chs':'350x130'
-                }
-            },
-            /*{
-                'ajax':true,
-                'dataURL': 'http://localhost/?list=subjobs_backends',
-                'dataURL_params': function(Data) {
-                        obj = {
-                        'taskmonid':Data.tid,
-                        'from':Data.ts2iso(Data.from,2),
-                        'to':Data.ts2iso(Data.till,3),
-                        'timerange':Data.timeRange
-                        };
-
-                    return obj; 
-                },
-
-                'translateData':function(dataJSON) {    
-                    return dataJSON;
-                },
-                'gChart': {
-                    'chtt':'Subjobs backend',
+		    'chtt':'Subjobs status',
                     'cht':'p3',
                     'chs':'400x150'
                 }
             },
-            {
+	    /*{
                 'ajax':true,
-                'dataURL': 'http://localhost/?list=subjobs_applications',
+		'dataURL': 'http://localhost/?list=subjobs_backends',
                 'dataURL_params': function(Data) {
-                        obj = {
-                        'taskmonid':Data.tid,
-                        'from':Data.ts2iso(Data.from,2),
-                        'to':Data.ts2iso(Data.till,3),
-                        'timerange':Data.timeRange
-                        };
+		 	obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
 
-                    return obj; 
+	            return obj; 
+		},
+
+                'translateData':function(dataJSON) {	
+                    return dataJSON;
                 },
+                'gChart': {
+		    'chtt':'Subjobs backend',
+                    'cht':'p3',
+                    'chs':'400x150'
+                }
+            },
+	    {
+                'ajax':true,
+		'dataURL': 'http://localhost/?list=subjobs_applications',
+                'dataURL_params': function(Data) {
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
+
+	            return obj; 
+		},
 
                 'translateData':function(dataJSON) {
-                        
+			
                     return dataJSON;
                 },
                 'gChart': {
-                    'chtt':'Subjobs application',
+		    'chtt':'Subjobs application',
                     'cht':'p3',
                     'chs':'400x150'
-                    //custom colors
-                    //'chco':'3072F3|008000'
+		    //custom colors
+		    //'chco':'3072F3|008000'
                 }
             },*/
-            {
+	    {
                 'ajax':true,
-                'dataURL': 'http://localhost/?list=subjobs_actualCE',
+		'dataURL': 'http://localhost/?list=subjobs_actualCE',
                 'dataURL_params': function(Data) {
-                        obj = {
-                        'taskmonid':Data.tid,
-                        'from':Data.ts2iso(Data.from,2),
-                        'to':Data.ts2iso(Data.till,3),
-                        'timerange':Data.timeRange
-                        };
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
 
-                    return obj; 
-                },
+	            return obj; 
+		},
 
                 'translateData':function(dataJSON) {
-                        
+			
                     return dataJSON;
                 },
                 'gChart': {
-                    'chtt':'Subjobs actualCE',
+		    'chtt':'Subjobs actualCE',
                     'cht':'p3',
-                    'chs':'350x130'
-                    //custom colors
-                    //'chco':'3072F3|008000'
+                    'chs':'400x150'
+		    //custom colors
+		    //'chco':'3072F3|008000'
                 }
             },
             {
                 'ajax':true,
-                'dataURL': 'http://localhost/?list=subjobs_accumulate',
+		'dataURL': 'http://localhost/?list=subjobs_accumulate',
                 'dataURL_params': function(Data) {
-                        obj = {
-                        'taskmonid':Data.tid,
-                        'from':Data.ts2iso(Data.from,2),
-                        'to':Data.ts2iso(Data.till,3),
-                        'timerange':Data.timeRange
-                        };
+			obj = {
+                	'taskmonid':Data.tid,
+	        	'from':Data.ts2iso(Data.from,2),
+                	'to':Data.ts2iso(Data.till,3),
+		        'timerange':Data.timeRange
+            		};
 
-                    return obj; 
-                },
+	            return obj; 
+		},
 
                 'translateData':function(dataJSON) {
                     return dataJSON;
@@ -449,18 +428,18 @@ function Settings() {
                 'gChart': {
                     'chxp':'0,0,100',
                     'chxt':'x,y',
-                    'chs':'350x130',
+                    'chs':'300x150',
                     'cht':'lxy',
                     'chco':'00FF00',
                     'chg':'9,9,1,6',
-                    'chtt': 'Succeeded subjobs in time',
+		    'chtt': 'Succeeded subjobs in time',
                     //'chd':'t:10,20,40,80,90,95,99|20,30,40,50,60,70,80',
                     'chm':'B,EFEFEF,0,0,0'// color
                 }
             }
 /*
 ,
-            {
+	    {
                 'dataURL': 'http://localhost/?list=testaccumulation',
                 'dataURL_params': function(Data) { return {'taskmonid':Data.tid}; },
                 'translateData':function(dataJSON) {
@@ -553,24 +532,24 @@ function Settings() {
                                 mins = interval_seconds/60 + '';
                                 minutes = getWholePart(mins);
 
-                                var numberPointsShowed = 20;
-                                scale = getWholePart(finished_event_time.length/numberPointsShowed + '');
+				var numberPointsShowed = 20;
+				scale = getWholePart(finished_event_time.length/numberPointsShowed + '');
 
-                                var reduced_finished_event_time = Array();
-                                var reduced_accumulated_finished_events_number = Array();
+				var reduced_finished_event_time = Array();
+				var reduced_accumulated_finished_events_number = Array();
 
-                                for (i = 0; i < finished_event_time.length; i++)
-                                {
-                                        if (i%scale == 0)
-                                        {
-                                                reduced_finished_event_time.push(finished_event_time[i]);
-                                                reduced_accumulated_finished_events_number.push(accumulated_finished_events_number[i]);
-                                        }
-                                }
+				for (i = 0; i < finished_event_time.length; i++)
+				{
+					if (i%scale == 0)
+					{
+						reduced_finished_event_time.push(finished_event_time[i]);
+						reduced_accumulated_finished_events_number.push(accumulated_finished_events_number[i]);
+					}
+				}
 
-                                reduced_finished_event_time.push(finished_event_time[finished_event_time.length-1]);
-                                reduced_accumulated_finished_events_number.push(accumulated_finished_events_number[finished_event_time.length-1]);
-                                
+				reduced_finished_event_time.push(finished_event_time[finished_event_time.length-1]);
+				reduced_accumulated_finished_events_number.push(accumulated_finished_events_number[finished_event_time.length-1]);
+				
                                 var output = {
                                         'chxl':'0:|' + startdatestring + '|' + enddatestring,
                                         'chd':'t:0,' + reduced_finished_event_time.join(',') + '|0,' + reduced_accumulated_finished_events_number.join(','),
@@ -589,7 +568,7 @@ function Settings() {
                     //'chd':'t:10,20,40,80,90,95,99|20,30,40,50,60,70,80',
                     'chm':'B,EFEFEF,0,0,0'// color
                 }
-            }*/
+	    }*/
         ]
 
     };

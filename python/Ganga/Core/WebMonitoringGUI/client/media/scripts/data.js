@@ -7,7 +7,7 @@
 // 18.05.2010 Created
 //
 
-function Data(ajaxAnimation, settings, jsonp) {
+function Data(ajaxAnimation, settings) {
     // general values
     this.user = settings.user;
     this.from = settings.from;
@@ -19,27 +19,28 @@ function Data(ajaxAnimation, settings, jsonp) {
     this.sorting = settings.sorting;
     this.or = settings.or; // opened table rows
     this.uparam = settings.uparam; // user defined params (for params that cannot be shared between use cases)
-   
+    
     this.noreload = false;
-       
+        
     // Data
     this.mem = {
         users: Array(),
-        mains: {
+        tasks: {
             user: '',
             timestamp: 0,
             data: Array()
         },
-        subs: {
+        jobs: {
             user: '',
             tid: '',
             timestamp: 0,
             data: Array()
         }
     };
-   
+    
     this.quickSetup = function(params, ts2iso) {
-        this.user = (params['user'] || settings.user);
+
+	this.user = (params['user'] || settings.user);
         this.from = parseInt(this.iso2ts(params['from']) || settings.from);
         this.till = parseInt(this.iso2ts(params['till'],2) || settings.till);
         this.timeRange = ( (params['timeRange'] == '') ? params['timeRange'] : (params['timeRange'] || settings.timeRange) );
@@ -48,14 +49,14 @@ function Data(ajaxAnimation, settings, jsonp) {
         this.p = (params['p'] || settings.p);
         this.or = (params['or'] || settings.or);
         this.sorting = (params['sorting'] || []);
-        this.uparam = (params['uparam'] || settings.uparam);
-       
+        this.uparam = (params['uparam'] || settings.uparam);   
+     
         // make this.or an array of ints
         for (i in this.or) {
             this.or[i] = parseInt(this.or[i]);
         }
     };
-   
+    
     this.setOr = function(dataID) {
         if ($.inArray(dataID, this.or) == (-1)) {
             this.or.push(dataID);
@@ -65,7 +66,7 @@ function Data(ajaxAnimation, settings, jsonp) {
             return false;
         }
     };
-   
+    
     // Dates handling - Start
     this.iso2ts = function(date, mode) {
         if (typeof mode == 'undefined') mode = 1;
@@ -76,7 +77,7 @@ function Data(ajaxAnimation, settings, jsonp) {
             else return 0;
         }
     };
-   
+    
     this.ts2iso = function(date, mode) {
         if (typeof mode == 'undefined') mode = 1;
         if (date == 0 || typeof date == 'undefined') return '';
@@ -87,12 +88,12 @@ function Data(ajaxAnimation, settings, jsonp) {
             else return '';
         }
     };
-   
+    
     this.changeFromTill = function(which, timestamp) {
         var output = true;
         if (timestamp == '') timestamp = 0;
         else timestamp = parseInt(timestamp);
-       
+        
         if (which == 'from') {
             if (timestamp > this.till && timestamp != 0) {
                 this.till = (timestamp + 86399000);
@@ -116,7 +117,7 @@ function Data(ajaxAnimation, settings, jsonp) {
         return output;
     };
     // Dates handling - Finish
-   
+    
     this.addPortNumber = function(url, port) {
         url = url.replace('//','^^');
         if (url.search('/') != -1) {
@@ -127,19 +128,19 @@ function Data(ajaxAnimation, settings, jsonp) {
         url = url.replace('^^','//');
         return url;
     };
-   
-    // Get job subs from server
-    this.ajax_getData = function(xhrName, url, params, fSuccess, fFailure) {
+    
+    // Get job subjobs from server
+    this.ajax_getData = function(url, params, fSuccess, fFailure) {
         var thisRef = this;
-       
+	
         currentUrl = window.location.toString()
         portIndex = currentUrl.indexOf('?port=');
         if (portIndex > -1) {
-           
-            port = ''          
+            
+            port = ''           
             isNumber = true;    
-            index = portIndex + 6      
-       
+            index = portIndex + 6       
+        
             while(isNumber){
                 char = currentUrl[index];
                 if(char == '0' || char == '1' || char =='2' ||
@@ -151,46 +152,41 @@ function Data(ajaxAnimation, settings, jsonp) {
                 else{
                     isNumber = false
                 }
-               
+                
             }
 
             url = this.addPortNumber(url, port);            
         }
 
-       
         var key = $.base64Encode($.param.querystring(url, params, 2));
-       
+
+	_Cache.clear();
+
         var data = _Cache.get(key);
         if (data) {
             fSuccess(data);
-        } else if (url) {
-            ajaxAnimation.addClass(xhrName).show();;
+        } else {
+            ajaxAnimation.show();
             $.ajax({
                 type: "GET",
                 url: url,
                 data: params,
-                dataType: (jsonp ? "jsonp" : "json"),
-                jsonp: "jsonp_callback",
+                dataType: "jsonp",
+                jsonp: 'jsonp_callback',
                 success: function(data) {
                     _Cache.add(key, data);
                     fSuccess(data);
-                    ajaxAnimation.removeClass(xhrName);
-                    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                    ajaxAnimation.hide();
                 },
                 error: function() {
-                    ajaxAnimation.removeClass(xhrName);
-                    if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                    ajaxAnimation.hide();
                     fFailure();
                 }
             });
         }
     };
-   
-    // Get job subs from server
-    this.ajax_getData_sync = function(xhrName, url, params, fSuccess, fFailure, obj) {
-        if ( obj === undefined ) {
-            obj = '';
-        }
+
+    this.ajax_getData_charts = function(url, params, fSuccess, fFailure, obj) {
         var thisRef = this;
        
         currentUrl = window.location.toString()
@@ -217,82 +213,34 @@ function Data(ajaxAnimation, settings, jsonp) {
 
             url = this.addPortNumber(url, port);            
         }
+
        
         var key = $.base64Encode($.param.querystring(url, params, 2));
-
-        //ajaxAnimation.addClass(xhrName).show();
+       
         var data = _Cache.get(key);
         if (data) {
-            fSuccess(data);
-        } else if (url) {
+            fSuccess(data, obj);
+        } else {
+            ajaxAnimation.show();
             $.ajax({
                 type: "GET",
                 url: url,
-                async: false,
-                timeout: 15000,
+		async: true,
                 data: params,
-                dataType: (jsonp ? "jsonp" : "json"),
-                jsonp: "jsonp_callback",
+                dataType: "jsonp",
+                jsonp: 'jsonp_callback',
                 success: function(data) {
                     fSuccess(data, obj);
-                    //ajaxAnimation.removeClass(xhrName);
-                    //if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
+                    ajaxAnimation.hide();
                 },
                 error: function() {
-                    ajaxAnimation.removeClass(xhrName);
-                    //if (!ajaxAnimation.attr('class')) ajaxAnimation.hide();
-                    //fFailure(obj);
+                    ajaxAnimation.hide();
+                    fFailure(obj);
                 }
             });
         }
     };
-}
 
-var simpleEncoding =
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-// This function scales the submitted values so that
-// maxVal becomes the highest value.
-function simpleEncode(valueArray,maxValue) {
-  var chartData = ['s:'];
-  for (var i = 0; i < valueArray.length; i++) {
-    var currentValue = valueArray[i];
-    if (!isNaN(currentValue) && currentValue >= 0) {
-    chartData.push(simpleEncoding.charAt(Math.round((simpleEncoding.length-1) *
-      currentValue / maxValue)));
-    }
-      else {
-      chartData.push('_');
-      }
-  }
-  return chartData.join('');
-}
 
-// Same as simple encoding, but for extended encoding.
-var EXTENDED_MAP=
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.';
-var EXTENDED_MAP_LENGTH = EXTENDED_MAP.length;
-function extendedEncode(arrVals, maxVal) {
-  var chartData = '';
-
-  for(i = 0, len = arrVals.length; i < len; i++) {
-    // In case the array vals were translated to strings.
-    var numericVal = new Number(arrVals[i]);
-    // Scale the value to maxVal.
-    var scaledVal = Math.floor(EXTENDED_MAP_LENGTH *
-        EXTENDED_MAP_LENGTH * numericVal / maxVal);
-
-    if(scaledVal > (EXTENDED_MAP_LENGTH * EXTENDED_MAP_LENGTH) - 1) {
-      chartData += "..";
-    } else if (scaledVal < 0) {
-      chartData += '__';
-    } else {
-      // Calculate first and second digits and add them to the output.
-      var quotient = Math.floor(scaledVal / EXTENDED_MAP_LENGTH);
-      var remainder = scaledVal - EXTENDED_MAP_LENGTH * quotient;
-      chartData += EXTENDED_MAP.charAt(quotient) + EXTENDED_MAP.charAt(remainder);
-    }
-  }
-
-  return chartData;
 }

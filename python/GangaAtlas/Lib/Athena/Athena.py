@@ -1206,7 +1206,7 @@ class Athena(IApplication):
                     raise ApplicationConfigurationError(None,'DQ2 tag dataset %s does not exist.' % job.inputdata.tagdataset)
 
         # check grid/local class match up
-        if job.backend._name in ['LCG', 'CREAM' ,'Panda', 'NG']: 
+        if job.backend._name in ['LCG', 'CREAM' ,'Panda', 'NG']:
             # check splitter
             if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AnaTaskSplitterJob', 'ATLASTier3Splitter']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
@@ -1218,12 +1218,8 @@ class Athena(IApplication):
             # Check that only DQ2OutputDatasets are used on the grid
             #if job.outputdata and not job.outputdata._name in ['DQ2OutputDataset']:
             #    raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.outputdata._name, job.backend._name))
-        elif (job.backend._name in ['SGE' ] and config['ENABLE_SGE_DQ2JOBSPLITTER']):
-            if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AthenaSplitterJob']:
-                raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
  
         else:
-            
             # check splitter
             if job.splitter and not job.splitter._name in ['AthenaSplitterJob']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
@@ -1240,14 +1236,7 @@ class Athena(IApplication):
         if job.backend._name in ['LCG', 'CREAM' ]:
             if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type == 'DQ2_COPY' and not config['ENABLE_DQ2COPY']:
                 raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='DQ2_COPY' is not supported anymore ! Please use a different input access mode." )
-
-        # Check if FILE_STAGER is set 
-        if job.backend._name in ['SGE' ]:
-            if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type == 'FILE_STAGER' and not config['ENABLE_SGE_FILESTAGER']:
-                raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='FILE_STAGER' is not enabled for SGE backend. Switch is on with config.Athena.ENABLE_SGE_FILESTAGER=True and use it carefully." )
-        elif job.backend._name in ['LSF', 'PBS', 'Local', 'Condor' ]:
-            raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='FILE_STAGER' is not enabled for the %s backend." % job.backend._name )
-                         
+             
         # check recex options
         if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
             raise ApplicationConfigurationError(None, 'RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
@@ -1663,8 +1652,6 @@ config.addOption('CMTCONFIG_LIST', [ 'i686-slc4-gcc34-opt', 'i686-slc5-gcc43-opt
 config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
 config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
 config.addOption('ENABLE_DQ2COPY', False , 'Enable DQ2_COPY input workflow on LCG backend')
-config.addOption('ENABLE_SGE_DQ2JOBSPLITTER', False , 'Enable DQ2JobSplitter for SGE backend')
-config.addOption('ENABLE_SGE_FILESTAGER', False , 'Enable FILE_STAGER input access mode for SGE backend')
 config.addOption('EXE_MAXFILESIZE', 1024*1024 , 'Athena.exetype=EXE jobs: Maximum size of files to be sent to WNs (default 1024*1024B)')
 
 # $Log: not supported by cvs2svn $

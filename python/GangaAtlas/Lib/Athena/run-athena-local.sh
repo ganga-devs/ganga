@@ -108,19 +108,20 @@ GANGATIME2=`date +'%s'`
 ################################################
 # state the inputs
 
-if [ $retcode -eq 0 ] 
-then
-    if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
+stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
 
-        filestager_setup
+if [ n$DATASETTYPE == n'FILE_STAGER' ]; then
 
-        make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
-	echo 'input.txt start ----------'
-	cat input.txt
-	echo 'input.txt end ----------'
-    else
-        stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
-    fi
+    filestager_setup
+    
+    #make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
+    echo "===== FileStager_jobOption.py beg. ====="
+    cat FileStager_jobOption.py
+    echo "===== FileStager_jobOption.py end. ====="
+
+    #echo 'input.txt start ----------'
+    #cat input.txt
+    #echo 'input.txt end ----------'
 fi
 
 ################################################

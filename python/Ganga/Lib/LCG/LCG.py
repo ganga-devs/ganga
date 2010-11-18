@@ -111,7 +111,7 @@ class LCG(IBackend):
         'parent_id'           : SimpleItem(defvalue='',protected=1,copyable=0,hidden=1,doc='Middleware job identifier for its parent job'),
         'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
         'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
-        'middleware'          : SimpleItem(defvalue='GLITE',protected=0,copyable=1,doc='Middleware type',checkset='__checkset_middleware__'),
+        'middleware'          : SimpleItem(defvalue='EDG',protected=0,copyable=1,doc='Middleware type',checkset='__checkset_middleware__'),
         'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
         'exitcode_lcg'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
         'reason'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status'),
@@ -428,7 +428,7 @@ class LCG(IBackend):
         job = self.getJobObject() 
         mt  = self.middleware.upper()
 
-        logger.info('submitting %d subjobs ... it may take a while' % len(node_jdls))
+        logger.warning('submitting %d subjobs ... it may take a while' % len(node_jdls))
         
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
@@ -512,7 +512,7 @@ class LCG(IBackend):
     def __mt_job_prepare__(self, rjobs, subjobconfigs, masterjobconfig):
         '''preparing jobs in multiple threads'''
 
-        logger.info('preparing %d subjobs ... it may take a while' % len(rjobs))
+        logger.warning('preparing %d subjobs ... it may take a while' % len(rjobs))
 
         mt = self.middleware.upper()
 
@@ -1543,7 +1543,7 @@ sys.exit(0)
             if job.status in LCG._final_ganga_states:
                 # do nothing in this case as it's in the middle of the corresponding job downloading task
                 return 
-            logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',job.getFQID('.'))
+            logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',job.id)
             job.updateStatus('failed')
      
         elif status in ['Submitted','Waiting','Scheduled','Ready','Done (Failed)']:
@@ -1612,8 +1612,7 @@ sys.exit(0)
             else:
                 jobclass[mt].append(key)
 
-        ## loop over the job classes
-        cnt_new_download_task = 0
+        ## loop over the job classes 
         for mt in jobclass.keys():
 
             if not config['%s_ENABLE' % mt]:
@@ -1653,12 +1652,6 @@ sys.exit(0)
                 
                     downloader = get_lcg_output_downloader()
                     downloader.addTask(grids[mt], job, False)
-
-                    cnt_new_download_task += 1
-
-        if cnt_new_download_task > 0:
-            downloader = get_lcg_output_downloader()
-            logger.debug('%d new downloading tasks; %d alive downloading agents' % ( cnt_new_download_task, downloader.countAliveAgent() ) )
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
@@ -1714,8 +1707,7 @@ sys.exit(0)
 
         __fail_missing_jobs__(missing_glite_jids, jobdict)
 
-        ## update GANGA job repository according to the available job information
-        cnt_new_download_task = 0
+        ## update GANGA job repository according to the available job information 
         for info in status_info:
             if not info['is_node']: # this is the info for the master job
 
@@ -1798,12 +1790,6 @@ sys.exit(0)
                             subjob.updateStatus('running')
                         downloader = get_lcg_output_downloader()
                         downloader.addTask(grid, subjob, True)
-
-                        cnt_new_download_task += 1
-
-        if cnt_new_download_task > 0:
-            downloader = get_lcg_output_downloader()
-            logger.debug('%d new downloading tasks; %d alive downloading agents' % ( cnt_new_download_task, downloader.countAliveAgent() ) )
 
         # update master job status
         #if updateMasterStatus:
@@ -1957,13 +1943,13 @@ config = makeConfig('LCG','LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')
 
 # set default values for the configuration parameters
-config.addOption('EDG_ENABLE',False,'enables/disables the support of the EDG middleware')
+config.addOption('EDG_ENABLE',True,'enables/disables the support of the EDG middleware')
 
 config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh', \
                  'sets the LCG-UI environment setup script for the EDG middleware', \
                  filter=Ganga.Utility.Config.expandvars)
 
-config.addOption('GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
+config.addOption('GLITE_ENABLE', False, 'Enables/disables the support of the GLITE middleware')
 
 config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh', \
                  'sets the LCG-UI environment setup script for the GLITE middleware', \

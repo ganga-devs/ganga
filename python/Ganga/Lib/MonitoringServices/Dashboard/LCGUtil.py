@@ -64,7 +64,7 @@ def cl_unique_job_id(job):
 #----- worker node meta-data builders ----- 
 #TODO: add error handling code in following methods
 
-def wn_dest_ce(ji):
+def wn_dest_ce():
     """Build dest_ce. Only run on worker node."""
     dest_ce = CommonUtil.env('GLOBUS_CE')
     if not dest_ce:
@@ -73,7 +73,7 @@ def wn_dest_ce(ji):
         dest_ce = CommonUtil.stdout('glite-brokerinfo getCE')
     return CommonUtil.strip_to_none(dest_ce)
 
-def wn_dest_site(ji):
+def wn_dest_site():
     """Build dest_site. Only run on worker node."""
     return CommonUtil.env('SITE_NAME')
     
@@ -81,7 +81,7 @@ def wn_dest_wn():
     """Build dest_wn. Only run on worker node."""
     return CommonUtil.hostname()
 
-def wn_grid_job_id(ji):
+def wn_grid_job_id():
     """Build grid_job_id. Only run on worker node."""
     grid_job_id = CommonUtil.env('EDG_WL_JOBID')
     if not grid_job_id:

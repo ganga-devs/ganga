@@ -45,10 +45,9 @@ def ganga_started(session_type,**extended_attributes):
 def ganga_job_submitted(application_name, backend_name, plain_job, master_job, sub_jobs):
     host = getConfig('System')['GANGA_HOSTNAME']
     user = getConfig('Configuration')['user']
-    runtime_packages = ':'.join(map(os.path.basename,filter(lambda x:x, config['RUNTIME_PATH'].split(':'))))    
     start = long(time.time()*1000)
 
-    job_submitted_message = {'application':application_name, 'backend':backend_name, 'user':user, 'host':host, 'start':start, 'plain_job':plain_job, 'master_job':master_job, 'sub_jobs':sub_jobs, 'runtime_packages':runtime_packages}
+    job_submitted_message = {'application':application_name, 'backend':backend_name, 'user':user, 'host':host, 'start':start, 'plain_job':plain_job, 'master_job':master_job, 'sub_jobs':sub_jobs}
 
     if config['UsageMonitoringMSG']:
         from Ganga.Lib.MonitoringServices.MSGMS import MSGUtil

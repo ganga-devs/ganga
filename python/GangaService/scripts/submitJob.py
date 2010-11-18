@@ -78,7 +78,6 @@ proxy_file = sys.argv[3]
 
 # load up the config
 if loadConfig("/afs/cern.ch/user/t/tagexsrv/public/GangaService-atlddm10/gangaService.ini" ):
-#if loadConfig("/home/mws/GangaService/gangaService.ini" ):
     gLogger.error("Problem loading config file.")
     sys.exit(1)
 
@@ -108,10 +107,7 @@ except:
     sys.exit(1)
 
 # add proxy to the directory
-cred_dir = work_dir
-if gConfig.has_option('General', 'credentialsDir'):
-    cred_dir = os.path.abspath( os.path.expanduser( os.path.expandvars( gConfig.get('General', 'credentialsDir') ) ) )
-credentials_dir = os.path.join( cred_dir, user, 'credentials' )
+credentials_dir = os.path.join( work_dir, user, 'credentials' )
 try:
     if not os.path.exists(credentials_dir):
         os.makedirs(credentials_dir)

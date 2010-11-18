@@ -168,13 +168,13 @@ class LCGMS(DashboardMS):
         # Not null: EXECUTION_BACKEND, GRIDJOBID, JOB_ID_INSIDE_THE_TASK, TASKNAME, UNIQUEJOBID
         ji = self.job_info # called on worker node, so job_info is dictionary
         msg = {
-            'DESTCE': LCGUtil.wn_dest_ce(ji),
-            'DESTSITE': LCGUtil.wn_dest_site(ji),
+            'DESTCE': LCGUtil.wn_dest_ce(),
+            'DESTSITE': LCGUtil.wn_dest_site(),
             'DESTWN': LCGUtil.wn_dest_wn(),
             'EXECUTION_BACKEND': ji['EXECUTION_BACKEND'],
             'GRIDEXITCODE': None,
             'GRIDEXITREASON': None,
-            'GRIDJOBID': LCGUtil.wn_grid_job_id(ji),
+            'GRIDJOBID': LCGUtil.wn_grid_job_id(),
             'JOBEXITCODE': None,
             'JOBEXITREASON': None,
             'JOB_ID_INSIDE_THE_TASK': ji['JOB_ID_INSIDE_THE_TASK'],
