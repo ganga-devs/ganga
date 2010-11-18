@@ -601,10 +601,14 @@ class Job(GangaObject):
         # make sure nobody writes to the cache during this operation
         #job._registry.cache_writers_mutex.lock()
 
-        if keep_going:
-            msg = 'job.submit(keep_going=True) is not implemented yet.'
+        import inspect
+        supports_keep_going = 'keep_going' in inspect.getargspec(self.backend.master_submit).args
+
+        if keep_going and not supports_keep_going:
+            msg = 'job.submit(keep_going=True) is not supported by %s backend'%self.backend._name
             logger.error(msg)
             raise JobError(msg)
+
 
         # can only submit jobs in a 'new' state
         if self.status != 'new':
@@ -690,7 +694,12 @@ class Job(GangaObject):
 
             # submit the job
             try:
-                if not self.backend.master_submit(rjobs,jobsubconfig,jobmasterconfig):
+                if supports_keep_going:
+                    r = self.backend.master_submit(rjobs,jobsubconfig,jobmasterconfig,keep_going)
+                else:
+                    r = self.backend.master_submit(rjobs,jobsubconfig,jobmasterconfig)
+                    
+                if not r:
                     raise JobManagerError('error during submit')
 
                 #FIXME: possibly should go to the default implementation of IBackend.master_submit

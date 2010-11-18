@@ -62,7 +62,7 @@ class IBackend(GangaObject):
         """
         pass
 
-    def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
+    def master_submit(self,rjobs,subjobconfigs,masterjobconfig,keep_going):
 
         """  Submit   the  master  job  and  all   its  subjobs.   The
         masterjobconfig  is  shared,  individual  subjob  configs  are
@@ -95,12 +95,17 @@ class IBackend(GangaObject):
         assert(implies(rjobs,len(subjobconfigs)==len(rjobs)))
 
         incomplete = 0
+        incomplete_subjobs = []
 
         def handleError(x):
-            if incomplete:
-                raise x
+            if keep_going:
+                incomplete_subjobs.append(fqid)
+                return False
             else:
-                return 0            
+                if incomplete:
+                    raise x
+                else:
+                    return True
 
         master_input_sandbox=self.master_prepare(masterjobconfig)
 
@@ -115,7 +120,8 @@ class IBackend(GangaObject):
                     #sj._commit() # PENDING: TEMPORARY DISABLED
                     incomplete = 1
                 else:
-                    return handleError(IncompleteJobSubmissionError(fqid,'submission failed'))
+                    if handleError(IncompleteJobSubmissionError(fqid,'submission failed')):
+                        return 0
             except Exception,x:
                 sj.updateStatus('new')
                 if isinstance(x,GangaException):
@@ -123,8 +129,12 @@ class IBackend(GangaObject):
                     log_user_exception(logger,debug = True)
                 else:
                     log_user_exception(logger,debug = False)
-                return handleError(IncompleteJobSubmissionError(fqid,str(x)))
+                if handleError(IncompleteJobSubmissionError(fqid,str(x))):
+                    return 0
                 
+        if incomplete_subjobs:
+            raise IncompleteJobSubmissionError(incomplete_subjobs,'submission failed')
+
         return 1
 
     def submit(self,subjobconfig,master_input_sandbox):
