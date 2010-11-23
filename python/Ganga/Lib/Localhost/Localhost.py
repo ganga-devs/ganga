@@ -235,9 +235,18 @@ statusfile.flush()
 
 os.chdir(workdir)
 
+# -- WARNING: get the input files including the python modules BEFORE sys.path.insert()
+# -- SINCE PYTHON 2.6 THERE WAS A SUBTLE CHANGE OF SEMANTICS IN THIS AREA
+
+for f in input_sandbox:
+  getPackedInputSandbox(f)
+
+# -- END OF MOVED CODE BLOCK
+
 import sys
 sys.path.insert(0, ###GANGADIR###)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
+
 try:
     import subprocess
 except ImportError,x:
@@ -249,8 +258,6 @@ except ImportError,x:
     sys.path.insert(0,###TARFILE_PYTHONPATH###)
     import tarfile
 
-for f in input_sandbox:
-  getPackedInputSandbox(f)
 
 for key,value in environment.iteritems():
     os.environ[key] = value
