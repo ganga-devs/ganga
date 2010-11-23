@@ -737,7 +737,11 @@ class DQ2JobSplitter(ISplitter):
                                     remaining_tags.remove(next_tag)
                                     
                                     for ref in job.inputdata.tag_info[next_tag]['refs']:
-                                        remaining_guids.remove(ref[2])
+                                        if ref[2] in remaining_guids:
+                                            remaining_guids.remove(ref[2])
+                                        else:
+                                            logger.warning("Multiple TAG files referenced GUID %s - this could lead to unexpected results!" % ref[2])
+                                                                                                
                                         j.inputdata.guids.append(ref[2])
                                         j.inputdata.names.append(allcontent[ref[2]][0])
                                         j.inputdata.sizes.append(allcontent[ref[2]][1])
