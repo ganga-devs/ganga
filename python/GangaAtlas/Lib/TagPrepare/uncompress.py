@@ -8,7 +8,8 @@ print out
 #print out                         
 
 print "------     ADdding to PFC"
-if len(sys.argv) > 1:
+if sys.argv[0].find('uncompress.py') != -1:
+    #if len(sys.argv) > 1:
     
     for ln in open('input_tag.txt').readlines():
         ln = ln.strip()
@@ -33,7 +34,8 @@ stream_ref = ''
 
 os.system('chmod +x CollInflateEventInfo.exe')
 
-if len(sys.argv) > 1:
+if sys.argv[0].find('uncompress.py') != -1:
+    #if len(sys.argv) > 1:
     # not running with Athena - do the appropriates
     for f in sys.argv[1:]:
 
@@ -113,7 +115,8 @@ rc, out = commands.getstatusoutput(cmd)
 print cmd
 print out
 
-if len(sys.argv) > 1:
+if sys.argv[0].find('uncompress.py') != -1:
+    #if len(sys.argv) > 1:
     os.rename(outname + ".newcoll.root", "outColl.root")
     sys.exit(0)
     
