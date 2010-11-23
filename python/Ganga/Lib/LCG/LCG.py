@@ -1201,7 +1201,6 @@ if scratchdir:
             printError(str_tb)
         printInfo('Linking stdout & stderr to original directory failed. Looking at stdout during job run may not be possible')
 
-sys.path.insert(0,os.path.join(wdir,PYTHON_DIR))
 os.environ['PATH'] = '.:'+os.environ['PATH']
 
 vo = os.environ['GANGA_LCG_VO']
@@ -1225,6 +1224,8 @@ try:
     printInfo('Unpack inputsandbox passed.')
 
     printInfo('Loading Python modules ...')
+
+    sys.path.insert(0,os.path.join(wdir,PYTHON_DIR))
 
     # check the python library path 
     try: 
