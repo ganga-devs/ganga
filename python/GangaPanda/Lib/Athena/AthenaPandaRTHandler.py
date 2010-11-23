@@ -634,7 +634,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                         cmdline += param[cmdline_start:cmdline_stop].replace("%IN", "outColl.root")                            
 
                         param = param[:cmdline_start] + cmdline + param[cmdline_stop:]
-                        print param
                     else:
                         # sort out the input ELSSI file from the tag_info
                         input_files = ['.'.join( tag_file.split(".")[:len(tag_file.split("."))-3] ) + '.ref.root']
