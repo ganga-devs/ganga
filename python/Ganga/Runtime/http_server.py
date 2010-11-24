@@ -95,8 +95,16 @@ def get_job_JSON(job):
     if len(mon_links) > 0:
         number = 1
         for mon_link in mon_links:      
-            mon_links_html = mon_links_html + '<div>&nbsp;&nbsp;&nbsp;<a href=\'%s\'>mon_link_%s</a></div>' % (mon_link, number)                    
-            number+=1   
+            #if it is string -> just the path to the link       
+            if isinstance(mon_link, str):       
+                mon_links_html = mon_links_html + '<div>&nbsp;&nbsp;&nbsp;<a href=\'%s\'>mon_link_%s</a></div>' % (mon_link, number)                    
+                number+=1   
+            elif isinstance(mon_link, tuple):
+                if len(mon_link) == 2:  
+                    mon_links_html = mon_links_html + '<div>&nbsp;&nbsp;&nbsp;<a href=\'%s\'>%s</a></div>' % (mon_link[0], mon_link[1])        
+                else:
+                    mon_links_html = mon_links_html + '<div>&nbsp;&nbsp;&nbsp;<a href=\'%s\'>mon_link_%s</a></div>' % (mon_link[0], number)                    
+                    number+=1   
                 
     result.append("\"link\": %s," % addQuotes(mon_links_html))        
 
