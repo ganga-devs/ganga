@@ -42,7 +42,7 @@ class JobInfo(GangaObject):
                                    'submit_counter' : SimpleItem(defvalue=0,protected=1,doc="job submission/resubmission counter"),
                                    'monitor' : ComponentItem('monitor',defvalue=None,load_default=0,comparable=0, optional=1,doc="job monitor instance"),
                                    'uuid' : SimpleItem(defvalue='',protected=1,comparable=0, doc='globally unique job identifier'),
-                                   'monitoring_links' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,copyable=0,doc="list of monitoring links")
+                                   'monitoring_links' : SimpleItem(defvalue=[],typelist=['tuple'],sequence=1,protected=1,copyable=0,doc="list of tuples of monitoring links")
                                     })
 
     _category = 'jobinfos'
