@@ -602,7 +602,7 @@ class Job(GangaObject):
         #job._registry.cache_writers_mutex.lock()
 
         import inspect
-        supports_keep_going = 'keep_going' in inspect.getargspec(self.backend.master_submit).args
+        supports_keep_going = 'keep_going' in inspect.getargspec(self.backend.master_submit)[0]
 
         if keep_going and not supports_keep_going:
             msg = 'job.submit(keep_going=True) is not supported by %s backend'%self.backend._name
@@ -1004,7 +1004,7 @@ class Job(GangaObject):
 
         # check if the backend supports extra 'backend' argument for master_resubmit()
         import inspect
-        supports_master_resubmit = len(inspect.getargspec(self.backend.master_resubmit).args)>1
+        supports_master_resubmit = len(inspect.getargspec(self.backend.master_resubmit)[0])>1
 
         if not supports_master_resubmit and backend:
             raise JobError('%s backend does not support changing of backend parameters at resubmission (optional backend argument is not supported)'%self.backend._name)
