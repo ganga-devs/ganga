@@ -18,6 +18,7 @@ class DummyMS(IMonitoringService):
     def submit(self, **opts): # called on client, so job_info is Job object
         """Log submit event on client."""
         #append monitoring link
-        self.job_info.info.monitoring_links.append('http://ganga.web.cern.ch/ganga/')
-        self.job_info.info.monitoring_links.append('http://ganga.web.cern.ch/ganga/user/index.php')
+        #self.job_info.info.monitoring_links.append('http://ganga.web.cern.ch/ganga/')
+        #self.job_info.info.monitoring_links.append('http://ganga.web.cern.ch/ganga/user/index.php')
+        self.job_info.info.monitoring_links = [('http://atlas.ch/','atlas'), ('http://cms.web.cern.ch/cms/index.html', 'cms')]
 
