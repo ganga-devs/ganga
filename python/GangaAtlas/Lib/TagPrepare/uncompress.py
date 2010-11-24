@@ -9,7 +9,7 @@ print out
 
 print "------     ADdding to PFC"
 if sys.argv[0].find('uncompress.py') != -1:
-    #if len(sys.argv) > 1:
+#if len(sys.argv) > 1:
     
     for ln in open('input_tag.txt').readlines():
         ln = ln.strip()
@@ -35,7 +35,7 @@ stream_ref = ''
 os.system('chmod +x CollInflateEventInfo.exe')
 
 if sys.argv[0].find('uncompress.py') != -1:
-    #if len(sys.argv) > 1:
+#if len(sys.argv) > 1:
     # not running with Athena - do the appropriates
     for f in sys.argv[1:]:
 
@@ -59,21 +59,40 @@ if sys.argv[0].find('uncompress.py') != -1:
 else:
     
     # find which .dat file to inflate
+    all_guids = []
     for ln in open('PoolFileCatalog.xml').readlines():
         if ln.find('<File ID="') == -1:
             continue
 
         guid = ln[ ln.find('"')+1: ln.rfind('"')]
         print "Found GUID " + guid
+        all_guids.append(guid)
+
+    for guid in all_guids:
         infile = ''
+
         for tf in tag_info:
+            tf_guids = []
             for r in tag_info[tf]['refs']:
-                if r[2] == guid:
-                    if r[1].find('AOD') != -1:
-                        stream_ref = "StreamAOD_ref"
-                    infile = tf
-                    break
-            if infile != '':
+                tf_guids.append(r[2])
+
+            if not guid in tf_guids:
+                continue
+            
+            good = True
+            for r in tf_guids:
+                if not r in all_guids:
+                    good = False
+
+            if good:
+                if tag_info[tf]['refs'][0][1].find('RAW') != -1:
+                    stream_ref = "StreamRAW_ref"
+                elif tag_info[tf]['refs'][0][1].find('ESD') != -1:
+                    stream_ref = "StreamESD_ref"
+                else:
+                    stream_ref = "StreamAOD_ref"
+                        
+                infile = tf
                 break
 
         if infile == '':
