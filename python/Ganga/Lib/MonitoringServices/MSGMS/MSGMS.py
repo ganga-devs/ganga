@@ -130,6 +130,8 @@ class MSGMS(IMonitoringService):
                 masterjob_msg['ganga_master_uuid'] = 0
                 self.send(masterjob_msg)
 
+        self.job_info.info.monitoring_links.append(('http://gangamon.cern.ch/ganga/#tid=%s'%self.job_info.info.uuid,'dashboard'))
+
         # send submitted for this job
         msg = self.getMessage('submitted')
         self.send(msg)
