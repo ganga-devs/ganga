@@ -236,32 +236,32 @@ class JEMMonitoringServiceHandler(object):
 
                     # okay, ALL JEM 0.3 config options will be passed by environment for now. Later, we will use JEM
                     # 0.3 also at UI.
-                    config.env["JEM.Global.mode"] = "WN"
+                    config.env["JEM_Global_mode"] = "WN"
 
                     if backend == "LCG":
                         if self.__job.backend.middleware == "GLITE":
-                            config.env["JEM.Global.load_job_id_from"] = "GLITE_WMS_JOBID"
+                            config.env["JEM_Global_loadJobIdFrom"] = "GLITE_WMS_JOBID"
                         elif self.__job.backend.middleware == "EDG":
-                            config.env["JEM.Global.load_job_id_from"] = "EDG_WL_JOBID"
+                            config.env["JEM_Global_loadJobIdFrom"] = "EDG_WL_JOBID"
                     elif backend == "Panda":
-                        config.env["JEM.Global.load_job_id_from"] = ""
+                        config.env["JEM_Global_loadJobIdFrom"] = ""
 
-                    if config.env.has_key("JEM.WN.script") and config.env["JEM.WN.script"] == "":
-                        del(config.env["JEM.WN.script"])
+                    if config.env.has_key("JEM_WN_script") and config.env["JEM_WN_script"] == "":
+                        del(config.env["JEM_WN_script"])
 
                     try:
                         if mo.advanced.debug:
-                            config.env["JEM.Global.debug"] = "True"
+                            config.env["JEM_Global_debug"] = "True"
                     except:
                         pass
 
                     if mo.anonymous:
                         logger.debug("Will anonymize spyware information.")
-                        config.env["JEM.WN.anonymize_spy"] = "True"
+                        config.env["JEM_WN_anonymizeSpy"] = "True"
 
                     # if we're running at Localhost, inject virtual jobID (d'oh...) - otherwise, we don't know it yet!
                     if backend == "Localhost":
-                        config.env["JEM.Global.job_id"] = self.__job.info.monitor.getJobID()
+                        config.env["JEM_Global_jobId"] = self.__job.info.monitor.getJobID()
 
                     # determine if we are an Athena job
                     jobIsAthena = self.__isAthenaJob()
@@ -280,16 +280,16 @@ class JEMMonitoringServiceHandler(object):
 
                     # add some information about this Ganga session
                     #config.env['JEM.Ganga.Version'] = 
-                    config.env['JEM.Ganga.job_id'] = self.__getFullJobId() + "." + str(i)
+                    config.env['JEM_Ganga_jobId'] = self.__getFullJobId() + "." + str(i)
                     try:
                         from socket import gethostname
-                        config.env['JEM.Ganga.submit_host'] = gethostname()
+                        config.env['JEM_Ganga_submitHost'] = gethostname()
                     except:
                         pass
 
                     try:
                         from os import getlogin
-                        config.env['JEM.Ganga.local_user'] = getlogin()
+                        config.env['JEM_Ganga_localUser'] = getlogin()
                     except:
                         pass
 

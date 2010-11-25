@@ -69,6 +69,8 @@ jemconfig.addOption('JEM_REPACK', False,
                     'Wether to repack the JEM library before each job submission. This is useful mostly for developers.')
 jemconfig.addOption('JEM_MONITOR_SUBJOBS_FREQ', 10000,
                     'Enable JEM monitoring only for every N-th subjob of a splitjob.')
+jemconfig.addOption('JEM_VERBOSE_LOADER_DEBUG', False,
+                    'Enable verbose debugging output of JEM external library loading.')
 
 #####################################################################################################################################################
 # Global initialisation
@@ -103,9 +105,10 @@ if JEMloader.INITIALIZED:
         definition, objlist = ConfigConverter.JEMConfig2GangaObjectSchemas()
         exec(definition, globals(), locals())
     except:
-        ei = sys.exc_info()
+        #ei = sys.exc_info()
         logger.debug("Failed to inject JEMs config into GangaJEM")
-        logger.debug("Reason: " + str(ei[0]) + " - " + str(ei[1]))
+        #logger.debug("Reason: " + str(ei[0]) + " - " + str(ei[1]))
+        log_last_exception(logger.debug, True)
 
 # set to True to debug
 LOG_STACK_TRACES = True
