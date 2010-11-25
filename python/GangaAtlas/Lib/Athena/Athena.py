@@ -915,6 +915,18 @@ class Athena(IApplication):
                 if not opt_file.exists():
                     raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % opt_file.name)
                 else:
+                    # check for dodgy TAG things
+                    if 'uncompress.py' in self.append_to_user_area and 'subcoll.tar.gz' in self.append_to_user_area:
+                        for ln in open(opt_file.name).readlines():
+                            bad_lines = ['from IOVDbSvc.CondDB import conddb', 'include("RecJobTransforms/UseOracle.py")']
+ 
+                            for bl in bad_lines:
+                                posA = ln.find(bl)
+                                posB = ln.find("#")
+ 
+                                if posA != -1 and (posA < posB or posB == -1):
+                                    raise ApplicationConfigurationError(None,'Please remove the line "%s" from your JOs' % bl)
+
                     jobO = jobO + opt_file.name + " "
             else:
                 pass
