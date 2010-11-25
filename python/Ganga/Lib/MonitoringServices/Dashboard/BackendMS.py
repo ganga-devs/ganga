@@ -92,6 +92,28 @@ class BackendMS(DashboardMS):
         else:
             self._send(self.config_info['destination_job_status'], message)
 
+        if j.master:
+            j = j.master
+
+        from Ganga.GPIDev import Credentials
+        proxy = Credentials.getCredential('GridProxy')
+        ownerdn = proxy.info('-subject')
+
+        user = 'unknown'
+        #if no error in the proxy -> get the second CN value from right to left
+        if ownerdn.find('ERROR') == -1:
+            if ownerdn.rfind('CN=') > -1:
+                subownerdn = ownerdn[0:ownerdn.rfind('CN=')-1]
+                user = subownerdn[subownerdn.rfind('CN=')+3:].replace(' ','')
+
+        task_name = 'ganga:%s:%s' % (j.info.uuid, j.name,)
+        task_mon_link = "http://dashb-atlas-jobdev.cern.ch/dashboard/templates/index.html#user=%s&from=&till=&timeRange=lastDay&refresh=0&tid=%s&p=1&uparam[]=all" % (user, task_name)
+
+        if j.backend.__class__.__name__ == 'Panda' and j.backend.url is not None:
+            j.info.monitoring_links = [(task_mon_link,'dashboard'), (j.backend.url, 'panda')]
+        else:
+            j.info.monitoring_links = [(task_mon_link,'dashboard')]
+
     def start(self, **opts):
         """Log start event on worker node."""
         ji = self.job_info # called on worker node, so job_info is dictionary
