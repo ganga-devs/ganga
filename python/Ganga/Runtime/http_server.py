@@ -4,7 +4,6 @@ from Ganga.Core.GangaThread import GangaThread
 from Ganga.Utility.util import hostname
 from BaseHTTPServer import HTTPServer
 
-import simplejson
 import urlparse
 import Ganga.GPI
 from Ganga.GPI import config, jobs
