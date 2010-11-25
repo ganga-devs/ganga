@@ -25,10 +25,10 @@ import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 
 class TestSubmitter(IBackend):
-    _schema = Schema(Version(1,0), {'time' : SimpleItem(defvalue=5),
-                                    'start_time' : SimpleItem(defvalue=0,protected=1),
+    _schema = Schema(Version(1,0), {'time' : SimpleItem(defvalue=5,changable_at_resubmit=1),
+                                    'start_time' : SimpleItem(defvalue=0,protected=1,comparable=0),
                                     'update_delay' : SimpleItem(defvalue=0,doc="The time it takes to updateMonitoringInformation"),
-                                    'fail' : SimpleItem(defvalue='',doc='Define the artificial runtime failures: "submit", "kill","monitor"'),
+                                    'fail' : SimpleItem(defvalue='',doc='Define the artificial runtime failures: "submit", "kill","monitor","resubmit"'),
                                     'raw_string_exception' :  SimpleItem(defvalue=False,doc='If true use strings as exceptions.'),
                                     'ganga_exception' :  SimpleItem(defvalue=False,doc='If true use GangaExceptions (raw_string_exception must be then set to false).')
                                     
@@ -60,7 +60,10 @@ class TestSubmitter(IBackend):
         self.tryfail('submit')
         return 1
 
-    def resubmit(self):
+    def resubmit(self,backend=None):
+        if backend:
+            self.time = backend.time
+
         jobid = self.getJobObject().getFQID('.')
         logger.info('testing resubmission of job %s',jobid)
         logger.info('this job will be finished in approx. %d seconds',self.time)
