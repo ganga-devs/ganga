@@ -62,7 +62,7 @@ class IBackend(GangaObject):
         """
         pass
 
-    def master_submit(self,rjobs,subjobconfigs,masterjobconfig,keep_going):
+    def master_submit(self,rjobs,subjobconfigs,masterjobconfig,keep_going=False):
 
         """  Submit   the  master  job  and  all   its  subjobs.   The
         masterjobconfig  is  shared,  individual  subjob  configs  are
@@ -81,12 +81,23 @@ class IBackend(GangaObject):
         Therefore this method may be overriden in the derived class
         in the following way:
 
-        def master_submit(self,masterjobconfig,subjobconfigs):
+        def master_submit(self,masterjobconfig,subjobconfigs,keep_going):
            ... 
            do_some_processsing_of(masterjobconfig)
            ...
-           return Backend.master_submit(self,masterjobconfig,subjobconfigs)
+           return IBackend.master_submit(self,subjobconfigs,masterjobconfig,keep_joing)
         
+
+        Implementation note: we set keep_going to be optional in the
+        signature of IBackend.master_submit() to allow the existing
+        backend implementations which do not support keep_going=True
+        and which at some point may call IBackend.master_submit() to
+        work without change. It may sometimes be non-trivial to enable
+        support for keep_going=True in some backends, even if the
+        finally call IBackend.master_submit(). Therefore it is left to
+        the decision of backend developer to explicitly enable the
+        support for keep_going flag.
+
         """
         from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
