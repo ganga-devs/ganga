@@ -517,11 +517,21 @@ if opt.backend in ['sge', 'pbs', 'lsf']:
 
 # Inputsandbox
 if opt.inputsandbox:
-    j.inputsandbox = opt.inputsandbox.split(':')        
+   if opt.inputsandbox.find(':')>0:
+      j.inputsandbox = opt.inputsandbox.split(':')        
+   elif opt.inputsandbox.find(',')>0:
+      j.inputsandbox = opt.inputsandbox.split(',')        
+   else:
+      j.inputsandbox = opt.inputsandbox.split('\n')        
 
 # Outputsandbox
 if opt.outputsandbox:
-    j.outputsandbox = opt.outputsandbox.split(':')        
+   if opt.outputsandbox.find(':')>0:
+      j.outputsandbox = opt.outputsandbox.split(':')        
+   elif opt.outputsandbox.find(',')>0:
+      j.outputsandbox = opt.outputsandbox.split(',')        
+   else:
+      j.outputsandbox = opt.outputsandbox.split('\n')        
 
 # Remove default DBRelease='LATEST' if no splitter or AthenaSplitterJob is used
 if not j.splitter:
