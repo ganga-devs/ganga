@@ -109,8 +109,8 @@ class BackendMS(DashboardMS):
         task_name = 'ganga:%s:%s' % (j.info.uuid, j.name,)
         task_mon_link = "http://dashb-atlas-jobdev.cern.ch/dashboard/templates/index.html#user=%s&from=&till=&timeRange=lastDay&refresh=0&tid=%s&p=1&uparam[]=all" % (user, task_name)
 
-        if j.backend.__class__.__name__ == 'Panda' and j.backend.url is not None:
-            j.info.monitoring_links = [(task_mon_link,'dashboard'), (j.backend.url, 'panda')]
+        if j.backend.__class__.__name__ == 'Panda' and len(j.backend.buildjobs) > 0 and j.backend.buildjobs[0].url is not None:
+            j.info.monitoring_links = [(task_mon_link,'dashboard'), (j.backend.buildjobs[0].url, 'panda')]
         else:
             j.info.monitoring_links = [(task_mon_link,'dashboard')]
 
