@@ -240,11 +240,11 @@ class JEMMonitoringServiceHandler(object):
 
                     if backend == "LCG":
                         if self.__job.backend.middleware == "GLITE":
-                            config.env["JEM_Global_loadJobIdFrom"] = "GLITE_WMS_JOBID"
+                            config.env["JEM_Global_load_job_id_from"] = "GLITE_WMS_JOBID"
                         elif self.__job.backend.middleware == "EDG":
-                            config.env["JEM_Global_loadJobIdFrom"] = "EDG_WL_JOBID"
+                            config.env["JEM_Global_load_job_id_from"] = "EDG_WL_JOBID"
                     elif backend == "Panda":
-                        config.env["JEM_Global_loadJobIdFrom"] = ""
+                        config.env["JEM_Global_load_job_id_from"] = ""
 
                     if config.env.has_key("JEM_WN_script") and config.env["JEM_WN_script"] == "":
                         del(config.env["JEM_WN_script"])
@@ -257,11 +257,11 @@ class JEMMonitoringServiceHandler(object):
 
                     if mo.anonymous:
                         logger.debug("Will anonymize spyware information.")
-                        config.env["JEM_WN_anonymizeSpy"] = "True"
+                        config.env["JEM_WN_anonymize_spy"] = "True"
 
                     # if we're running at Localhost, inject virtual jobID (d'oh...) - otherwise, we don't know it yet!
                     if backend == "Localhost":
-                        config.env["JEM_Global_jobId"] = self.__job.info.monitor.getJobID()
+                        config.env["JEM_Global_job_id"] = self.__job.info.monitor.getJobID()
 
                     # determine if we are an Athena job
                     jobIsAthena = self.__isAthenaJob()
@@ -271,25 +271,25 @@ class JEMMonitoringServiceHandler(object):
                         #logger.warning("The C-Tracer is an experimental feature (refer to https://svn.grid.uni-wuppertal.de/trac/JEM for more information)")
 
                         #if jobIsAthena:  # The run application for Athena jobs always is Python!
-                            #config.env['JEM.CTracer.trace_apps'] = "__find_python__"
+                            #config.env['JEM_CTracer_trace_apps'] = "__find_python__"
 
-                        #if config.env['JEM.CTracer.trace_apps'] == '' and config.env['JEM.CTracer.trace_modules'] != '':
-                            #config.env['JEM.CTracer.trace_apps'] = config.env['JEM.CTracer.trace_modules']
+                        #if config.env['JEM_CTracer_trace_apps'] == '' and config.env['JEM_CTracer_trace_modules'] != '':
+                            #config.env['JEM_CTracer_trace_apps'] = config.env['JEM_CTracer_trace_modules']
                     #else:
-                        #config.env['JEM.CTracer.disable'] = "True"
+                        #config.env['JEM_CTracer_disable'] = "True"
 
                     # add some information about this Ganga session
-                    #config.env['JEM.Ganga.Version'] = 
-                    config.env['JEM_Ganga_jobId'] = self.__getFullJobId() + "." + str(i)
+                    #config.env['JEM_Ganga_Version'] = 
+                    config.env['JEM_Ganga_job_id'] = self.__getFullJobId() + "." + str(i)
                     try:
                         from socket import gethostname
-                        config.env['JEM_Ganga_submitHost'] = gethostname()
+                        config.env['JEM_Ganga_submit_host'] = gethostname()
                     except:
                         pass
 
                     try:
                         from os import getlogin
-                        config.env['JEM_Ganga_localUser'] = getlogin()
+                        config.env['JEM_Ganga_local_user'] = getlogin()
                     except:
                         pass
 

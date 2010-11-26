@@ -69,8 +69,6 @@ jemconfig.addOption('JEM_REPACK', False,
                     'Wether to repack the JEM library before each job submission. This is useful mostly for developers.')
 jemconfig.addOption('JEM_MONITOR_SUBJOBS_FREQ', 10000,
                     'Enable JEM monitoring only for every N-th subjob of a splitjob.')
-jemconfig.addOption('JEM_VERBOSE_LOADER_DEBUG', False,
-                    'Enable verbose debugging output of JEM external library loading.')
 
 #####################################################################################################################################################
 # Global initialisation
@@ -105,10 +103,9 @@ if JEMloader.INITIALIZED:
         definition, objlist = ConfigConverter.JEMConfig2GangaObjectSchemas()
         exec(definition, globals(), locals())
     except:
-        #ei = sys.exc_info()
+        ei = sys.exc_info()
         logger.debug("Failed to inject JEMs config into GangaJEM")
-        #logger.debug("Reason: " + str(ei[0]) + " - " + str(ei[1]))
-        log_last_exception(logger.debug, True)
+        logger.debug("Reason: " + str(ei[0]) + " - " + str(ei[1]))
 
 # set to True to debug
 LOG_STACK_TRACES = True
@@ -622,8 +619,6 @@ class JobExecutionMonitor(GangaObject):
                 return self.shmKey
             except:
                 logger.warn("failed to launch event processor for job %d" % self.getJobObject().id)
-                logger.debug("the underlying error was:")
-                log_last_exception(logger.debug, True)
                 self.ui = None
         return 0
     
@@ -729,8 +724,7 @@ class JobExecutionMonitor(GangaObject):
             self.pid = library.launchListener(self.getJobObject(), self.jobID, self.andJobIDs)
         except:
             ei = sys.exc_info()
-            logger.debug("failed to start listener. underlying exception:")
-            log_last_exception(logger.debug, True)
+            logger.debug(str(ei[0]) + " - " + str(ei[1]))
     
     
     def onBegunToReceiveMonitoringData(self):

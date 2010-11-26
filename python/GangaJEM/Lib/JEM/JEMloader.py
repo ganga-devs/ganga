@@ -38,18 +38,11 @@ import traceback
 from Ganga.Utility.logging import logging, getLogger
 logger = getLogger("GangaJEM.Lib.JEM")
 outlogger = getLogger("GangaJEM.Lib.JEM.info")
-#---------
-from Ganga.Utility.Config import getConfig
-jemconfig = getConfig('JEM')
 #-----------------------------------------------------------------------------------------------------------------------
 
 # filter JEM's startup logging, unless we want to debug
 JEM_LIBRARY_INIT_LOGLEVEL = logging.ERROR
-try:
-    if jemconfig['JEM_VERBOSE_LOADER_DEBUG']:
-        JEM_LIBRARY_INIT_LOGLEVEL = logging.DEBUG
-except:
-    pass
+#JEM_LIBRARY_INIT_LOGLEVEL = logging.DEBUG
 
 # status vars to access from other GangaJEM modules
 INITIALIZED = False

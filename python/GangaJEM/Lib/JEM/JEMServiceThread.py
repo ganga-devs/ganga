@@ -77,71 +77,63 @@ class JEMServiceThread(GangaThread):
     
     
     def run(self):
-
-        while not self.should_stop():
-            try:        
-                from Ganga.GPI import jobs
-                self.__jobs = jobs
-                break
-            except: pass
-            time.sleep(1)
+        logger.debug("started service thread")
         
-        if self.__jobs is not None:
-            logger.debug("started service thread")
-            
-            timeslot = 0
-            while not self.should_stop():
-                time.sleep(1)
-                timeslot += 1
-                try:
+        timeslot = 0
+        while not self.should_stop():
+            time.sleep(0.02)
+            timeslot += 1
+            if timeslot % 2 == 0 and self.__jobs is not None:
+                for status in ('submitted', 'running', 'completing'):
+                    for j in self.__jobs.select(status=status):
+                        try:
+                            j.info.monitor._think()
+                        except AttributeError, e:
+                            pass
+                        except RegistryKeyError, e:
+                            pass
+                        except:
+                            ei = sys.exc_info()
+                            logger.error(str(ei[0]) + " - " + str(ei[1]))
+            if timeslot % 50 == 0:
+                if self.__jobs is None:
+                    try:
+                        from Ganga.GPI import jobs
+                        self.__jobs = jobs
+                    except: pass
+                else:
                     for status in ('submitted', 'running', 'completing'):
                         for j in self.__jobs.select(status=status):
-                            if j.info.monitor is None: continue
-                            j.info.monitor._think()
-                    
-                    if timeslot % 5 == 0:
-                        for status in ('submitted', 'running', 'completing'):
-                            for j in self.__jobs.select(status=status):
-                                if j.info.monitor is None: continue
-                                self.examine_job(j, status)
-                    
-                        for status in ("completed", "failed", "killed"):
-                            for j in self.__jobs.select(status=status):
-                                try:
-                                    if j.info.monitor is None: continue
-                                    if (j.info.monitor.__class__.__name__ == "JobExecutionMonitor"):
-                                        self.shutdown_listener_for_job(j)
-                                except: pass
-                except: pass # retry next time.
-                # reset timeslot counter
-                if timeslot >= 100:
-                    timeslot = 0
-    
-            logger.debug("service thread exits")
-        else:
-            logger.debug("prematurely exiting service thread")
+                            self.examine_job(j, status)
+            if timeslot % 200 == 0 and self.__jobs is not None:
+                for status in ("completed", "failed", "killed"):
+                    for j in self.__jobs.select(status=status):
+                        try:
+                            if (j.info.monitor.__class__.__name__ == "JobExecutionMonitor"):
+                                self.shutdown_listener_for_job(j)
+                        except: pass
+            # reset timeslot counter
+            if timeslot >= 1000:
+                timeslot = 0
+
+        logger.debug("service thread exits")
         
         # tidy up. deregister all processors that may still be running.
-        try:
-            for j in self.__jobs:
-                self.deregister_processor_for_job(j)
-        except: pass
-
-        try:            
-            # if we still have keys in our registered-keys-list, kill them.
-            for id_ in self.__registered_keys:
-                if not id_ in self.__jobs.ids():
-                    k = self.__registered_keys[id_]
-                    try:
-                        result = os.system("ipcrm -M 0x%08x 2>/dev/null" % k)
-                        if result == 0:
-                            logger.debug("destroyed orphan shared memory block with key 0x%08x" % k)
-                    except: pass
-                    try:
-                        result = os.system("ipcrm -S 0x%08x 2>/dev/null" % k)
-                        if result == 0:
-                            logger.debug("destroyed orphan semaphore set with key 0x%08x" % k)
-                    except: pass
-        except: pass
-
+        for j in self.__jobs:
+            self.deregister_processor_for_job(j)
+        
+        # if we still have keys in our registered-keys-list, kill them.
+        for id_ in self.__registered_keys:
+            if not id_ in self.__jobs.ids():
+                k = self.__registered_keys[id_]
+                try:
+                    result = os.system("ipcrm -M 0x%08x 2>/dev/null" % k)
+                    if result == 0:
+                        logger.debug("destroyed orphan shared memory block with key 0x%08x" % k)
+                except: pass
+                try:
+                    result = os.system("ipcrm -S 0x%08x 2>/dev/null" % k)
+                    if result == 0:
+                        logger.debug("destroyed orphan semaphore set with key 0x%08x" % k)
+                except: pass
         self.unregister()
