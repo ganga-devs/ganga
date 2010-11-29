@@ -22,28 +22,10 @@ class CRABServer(GangaObject):
     _schema =  Schema(Version(0,0), {})
     _hidden = 1
 
-#    def __init__(self):
-#      config = Ganga.Utility.Config.getConfig('CMSSW')
-#      cmssw_version = config['CMSSW_VERSION']
-#      cmssw_setup = config['CMSSW_SETUP']
-#      cmssw_setup_script = os.path.join(cmssw_setup,cmssw_version+'.sh')
-#      from Ganga.Utility.Shell import Shell
-#      shell = Shell(cmssw_setup_script)
-#      self.env = shell.env
-
-    def _send(self,cmd,type):
+    def _send(self,cmd,type,env):
 
         code = 'x'
         stdout, stderr = '',''
-
-        config = Ganga.Utility.Config.getConfig('CMSSW')
-        cmssw_version = config['CMSSW_VERSION']
-        cmssw_setup = config['CMSSW_SETUP']
-        cmssw_setup_script = os.path.join(cmssw_setup,cmssw_version+'.sh')
-        from Ganga.Utility.Shell import Shell
-        shell = Shell(cmssw_setup_script)
-
-        env = shell.env
 
         try:        
             init = datetime.datetime.now()
@@ -72,7 +54,7 @@ class CRABServer(GangaObject):
             raise CRABServerError('File "%s" not found.'%(cfgfile))     
 
         cmd = 'crab -create -cfg %s'%(cfgfile)
-        self._send(cmd,'creating')
+        self._send(cmd,'creating',job.backend.crab_env)
 #        msg = telltale.create('%slog/crab.log'%(job.outputdir))
         return 1
 
@@ -83,7 +65,7 @@ class CRABServer(GangaObject):
             raise CRABServerError('Workdir %s not found.'%(workdir))
 
         cmd = 'crab -submit -c %s'%(workdir)
-        self._send(cmd,'submitting')
+        self._send(cmd,'submitting',job.backend.crab_env)
 #        msg = telltale.submit('%slog/crab.log'%(job.outputdir))   
         return 1    
 
@@ -94,7 +76,7 @@ class CRABServer(GangaObject):
             raise CRABServerError('Workdir %s not found.'%(workdir))
 
         cmd = 'crab -status -c %s'%(workdir)
-        self._send(cmd,'checking status')
+        self._send(cmd,'checking status',job.backend.crab_env)
 #        msg = telltale.submit('%slog/crab.log'%(job.outputdir))
         return 1
 
@@ -109,7 +91,7 @@ class CRABServer(GangaObject):
         else:
             index = int(job.id) + 1
             cmd = 'crab -kill %d -c %s'%(index,workdir)
-        self._send(cmd,'killing')
+        self._send(cmd,'killing',job.backend.crab_env)
 #        msg = telltale.kill('%slog/crab.log'%(job.outputdir))
         return 1
 
@@ -121,7 +103,7 @@ class CRABServer(GangaObject):
 
         index = int(job.id) + 1
         cmd = 'crab -resubmit %d -c %s'%(index,workdir)
-        self._send(cmd,'resubmitting')
+        self._send(cmd,'resubmitting',job.backend.crab_env)
 #        msg = telltale.resubmit('%slog/crab.log'%(job.outputdir))
         return 1
 
@@ -133,6 +115,6 @@ class CRABServer(GangaObject):
 
         index = int(job.id) + 1
         cmd = 'crab -getoutput %d -c %s'%(index,workdir)
-        self._send(cmd,'getting Output')
+        self._send(cmd,'getting Output',job.backend.crab_env)
 #        msg = telltale.resubmit('%slog/crab.log'%(job.outputdir))
         return 1

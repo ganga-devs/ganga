@@ -38,14 +38,26 @@ class CRABBackend(IBackend):
     schemadic['statusLog']                 = SimpleItem(defvalue=0, typelist=['int'], doc=comments[1])  
     schemadic['report']                    = SimpleItem(defvalue={})
     schemadic['fjr']                       = SimpleItem(defvalue={})
+    schemadic['crab_env']                  = SimpleItem(defvalue={})
 
     _schema = Schema(Version(1,0), schemadic)
     _category = 'backends'
     _name  = 'CRABBackend'
 
     def __init__(self):
-#        self.server = CRABServer()
+
         super(CRABBackend, self).__init__()
+
+        try:
+          config = Ganga.Utility.Config.getConfig('CMSSW')
+          cmssw_version = config['CMSSW_VERSION']
+          cmssw_setup = config['CMSSW_SETUP']
+          cmssw_setup_script = os.path.join(cmssw_setup,cmssw_version+'.sh')
+          from Ganga.Utility.Shell import Shell
+          shell = Shell(cmssw_setup_script)
+          self.crab_env = shell.env
+        except:
+          pass    
 
     def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
 
@@ -83,7 +95,6 @@ class CRABBackend(IBackend):
 
             subjob.updateStatus('submitting')  
             server.resubmit(job)
-#            job.backend.server.resubmit(job)
             subjob.updateStatus('submitted')  
         #j.updateMasterJobStatus()
         return 1         
@@ -94,7 +105,6 @@ class CRABBackend(IBackend):
         job = self.getJobObject()
         server = CRABServer()
         server.kill(job)    
-#        job.backend.server.kill(job)
 
         if len(job.subjobs):
             for s in job.subjobs:
@@ -107,7 +117,6 @@ class CRABBackend(IBackend):
         job.updateMasterJobStatus()        
 
         server.status(job)
-#        job.backend.server.status(job)
 
         return 1
 
