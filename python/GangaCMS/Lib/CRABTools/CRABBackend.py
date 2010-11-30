@@ -48,16 +48,16 @@ class CRABBackend(IBackend):
 
         super(CRABBackend, self).__init__()
 
-        try:
-          config = Ganga.Utility.Config.getConfig('CMSSW')
-          cmssw_version = config['CMSSW_VERSION']
-          cmssw_setup = config['CMSSW_SETUP']
-          cmssw_setup_script = os.path.join(cmssw_setup,cmssw_version+'.sh')
-          from Ganga.Utility.Shell import Shell
-          shell = Shell(cmssw_setup_script)
-          self.crab_env = shell.env
-        except:
-          pass    
+#        try:
+        config = Ganga.Utility.Config.getConfig('CMSSW')
+        cmssw_version = config['CMSSW_VERSION']
+        cmssw_setup = config['CMSSW_SETUP']
+        cmssw_setup_script = os.path.join(cmssw_setup,cmssw_version+'.sh')
+        from Ganga.Utility.Shell import Shell
+        shell = Shell(cmssw_setup_script)
+        self.crab_env = shell.env
+#        except:
+#          pass    
 
     def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
 
@@ -269,11 +269,15 @@ class CRABBackend(IBackend):
                 logger.warning('UNKNOWN STATUS: '+str(status)+' ')
 
     def master_updateMonitoringInformation(jobs):
+ 
+        if jobs:
+          server = CRABServer()       
+          server.status(jobs[0])
 
         for j in jobs:
 
-            server = CRABServer()
-            server.status(j)
+#            server = CRABServer()
+#            server.status(j)
 #            j.backend.server.status(j) 
 
             workdir = j.inputdata.ui_working_dir
