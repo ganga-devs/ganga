@@ -11,7 +11,7 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryAccessError, RegistryKeyError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy, _wrap
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 
 import Ganga.Utility.logging
@@ -163,11 +163,22 @@ class JobTree(GangaObject):
         """
         if isinstance(job, GPIProxyObject):
             job = job._impl
+        if isinstance(job, JobRegistrySliceProxy):
+            job = job._impl
+
         if isinstance(job, Job):
             self.__select_dir(path)[job.getFQID('.')] = job.getFQID('.') #job.id
             self._setDirty()
+        elif isinstance(job, JobRegistrySlice):
+            for sliceKey in job.objects.iterkeys():
+               self.__select_dir(path)[sliceKey] = sliceKey
+               self._setDirty()
+        elif isinstance(job, list):
+            for element in job:
+               self.__select_dir(path)[element.id] = element.id
+               self._setDirty()
         else:
-            raise TreeError(4, "Not a job object")
+            raise TreeError(4, "Not a job/slice/list object")
         
     def rm(self, path):
         """Removes folder or job in the path.
