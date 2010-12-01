@@ -62,6 +62,20 @@ def refreshPandaSpecs():
         Client.refreshSpecs()
         pandaSpecsTS = time.time()
 
+def convertQueueNameToDQ2Names(queue):
+    from pandatools import Client
+    refreshPandaSpecs()
+
+    sites = []
+    for site in Client.PandaSites[queue]['setokens'].values():
+        sites.append(Client.convSrmV2ID(site))
+
+    allowed_sites = []
+    for site in ToACache.sites:
+        if site not in allowed_sites and Client.convSrmV2ID(site) in sites:
+            allowed_sites.append(site)
+    return allowed_sites
+
 def queueToAllowedSites(queue):
     from pandatools import Client
     refreshPandaSpecs()
@@ -782,7 +796,7 @@ class Panda(IBackend):
         sites=Client.PandaSites.keys()
         spacetokens = []
         for s in sites:
-            spacetokens.append(queueToAllowedSites(s))
+            spacetokens.append(convertQueueNameToDQ2Names(s))
         return spacetokens
 
     def list_ddm_sites(self,allowTape=False):
@@ -813,7 +827,7 @@ class Panda(IBackend):
             for s in sites:
                 if Client.PandaSites[s]['status'] not in ['online'] or s in self.requirements.excluded_sites or (not self.requirements.anyCloud and Client.PandaSites[s]['cloud'] != self.requirements.cloud):
                     continue
-                tokens = queueToAllowedSites(s)
+                tokens = convertQueueNameToDQ2Names(s)
                 for t in tokens:
                     if allowTape or t.find('TAPE') == -1:
                         spacetokens.append(t)
@@ -826,7 +840,7 @@ class Panda(IBackend):
                 raise BackendError('Panda','Cannot submit to %s in status %s'%(self.site,s['status']))
             if self.site in self.requirements.excluded_sites:
                 raise BackendError('Panda','Cannot submit to %s because it is in your requirements.excluded_sites list'%self.site)
-            tokens = queueToAllowedSites(self.site)
+            tokens = convertQueueNameToDQ2Names(self.site)
             for t in tokens:
                 if allowTape or t.find('TAPE') == -1:
                     spacetokens.append(t)
