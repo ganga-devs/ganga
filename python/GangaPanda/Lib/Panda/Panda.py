@@ -731,7 +731,7 @@ class Panda(IBackend):
                                 job.backend.libds = job.backend.buildjob.jobSpec['destinationDBlock']
                         except KeyError:
                             pass
-
+                        
                         if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
                             job.updateStatus('submitted')
                         elif status.jobStatus in ['starting','running','holding','transferring']:
@@ -743,6 +743,7 @@ class Panda(IBackend):
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
 
+                            
                         #un = job.backend.buildjob.jobSpec['prodUserID'].split('/CN=')[-2]
                         #jdid = job.backend.buildjob.jobSpec['jobDefinitionID']
                         #job.backend.url = 'http://panda.cern.ch/?job=*&jobDefinitionID=%s&user=%s'%(jdid,un)
@@ -766,16 +767,26 @@ class Panda(IBackend):
                             except KeyError:
                                 pass
 
-                            if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
+                            # update the status of the master job based on what all build jobs are doing
+                            bjstats = [bj2.status for bj2 in job.backend.buildjobs]
+                            new_stat = None
+                            
+                            for s in ['defined','unknown','assigned','waiting','activated','sent','finished', 'starting','running','holding','transferring', 'failed', 'cancelled']:
+                                if s in bjstats:
+                                    new_stat = s
+                                    break
+                            
+                            if new_stat in ['defined','unknown','assigned','waiting','activated','sent','finished']:
                                 job.updateStatus('submitted')
-                            elif status.jobStatus in ['starting','running','holding','transferring']:
+                            elif new_stat in ['starting','running','holding','transferring']:
                                 job.updateStatus('running')
-                            elif status.jobStatus == 'failed':
+                            elif new_stat == 'failed':
                                 job.updateStatus('failed')
-                            elif status.jobStatus == 'cancelled':
+                            elif new_stat == 'cancelled':
                                 job.updateStatus('killed')
                             else:
                                 logger.warning('Unexpected job status %s',status.jobStatus)
+
 
                             #un = job.backend.buildjob.jobSpec['prodUserID'].split('/CN=')[-2]
                             #jdid = job.backend.buildjob.jobSpec['jobDefinitionID']
