@@ -228,7 +228,7 @@ class TestEventPicking(TestAthena):
         self.j.inputdata=EventPicking()
         self.j.inputdata.pick_event_list = pick_event_file
         self.j.inputdata.pick_data_type = 'ESD'
-        self.j.inputdata.pick_stream_name = 'physics_L1Calo'
+        self.j.inputdata.pick_stream_name = 'physics_Muons'
         self.j.inputdata.pick_dataset_pattern = '*f2*'
         self.j.backend=LCG()
         self.j.backend.requirements.cloud='ALL'
