@@ -550,10 +550,10 @@ class DQ2JobSplitter(ISplitter):
                     if isDirectAccess: 
                        max_subjob_filesize = 0
                        # use numfiles if user has set it, else use MaxSubjobFilesPandaDQ2JobSplitter
-                       if not orig_numfiles>0:
+                       if not orig_numsubjobs>0 and not orig_numfiles>0:
                            self.numfiles = config['DefaultNumFilesPandaDirectDQ2JobSplitter']
                            self.numsubjobs = 0
-                       logger.info('DQ2JobSplitter has restricted the maximum of files per subjob to %s files.', self.numfiles)
+                           logger.info('DQ2JobSplitter has restricted the maximum of files per subjob to %s files.', self.numfiles)
 
                 # Restriction based on the maximum dataset filesize
                 if self.filesize > 0:
