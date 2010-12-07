@@ -212,7 +212,9 @@ if opt.athena_release:
     match=re.search(r'^([\w+]+.[\w+]+.[\w+]+)',opt.athena_release)
     if match:
         j.application.atlas_release=match.group(1)
-	j.application.atlas_production=opt.athena_release
+        match2=re.search(r'^([\w+]+.[\w+]+.[\w+]+.[\w+]+)',opt.athena_release)	
+	if match2:
+            j.application.atlas_production=opt.athena_release
     else:
         j.application.atlas_release=opt.athena_release
 if opt.athena_production:
