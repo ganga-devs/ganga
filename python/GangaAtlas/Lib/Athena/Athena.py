@@ -1262,7 +1262,8 @@ class Athena(IApplication):
             if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type == 'FILE_STAGER' and not config['ENABLE_SGE_FILESTAGER']:
                 raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='FILE_STAGER' is not enabled for SGE backend. Switch is on with config.Athena.ENABLE_SGE_FILESTAGER=True and use it carefully." )
         elif job.backend._name in ['LSF', 'PBS', 'Local', 'Condor' ]:
-            raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='FILE_STAGER' is not enabled for the %s backend." % job.backend._name )
+            if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type == 'FILE_STAGER':
+                raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='FILE_STAGER' is not enabled for the %s backend." % job.backend._name )
                          
         # check recex options
         if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
