@@ -548,8 +548,8 @@ class DQ2Dataset(Dataset):
 
             # Exclude log files
             contents = [ (guid,lfn) for guid, lfn in contents if not lfn.endswith('log.tgz') ]
-
-                
+            pat = re.compile(r'.*log.tgz.[\w+]+$')
+            contents = [ (guid,lfn) for guid, lfn in contents if not pat.match(lfn) ]
 
             # Process only certain number of files ?
             if self.number_of_files:
