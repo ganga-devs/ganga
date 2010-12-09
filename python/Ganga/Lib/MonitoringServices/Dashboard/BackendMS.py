@@ -18,11 +18,11 @@ class BackendMS(DashboardMS):
         """Construct the Dashboard Backend Monitoring Service."""
         DashboardMS.__init__(self, job_info, config_info)
         try:
-                backend_name = self.job_info.backend.__class__.__name__
+                self.backend_name = self.job_info.backend.__class__.__name__
         except AttributeError:
-                backend_name = self.job_info['BACKEND']
+                self.backend_name = self.job_info['BACKEND']
 
-        path_to_module = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil"%backend_name
+        path_to_module = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil"%self.backend_name
         __import__(path_to_module)
         import sys
         self.dynamic_util = sys.modules[path_to_module]
@@ -30,12 +30,20 @@ class BackendMS(DashboardMS):
     def getSandboxModules(self):
         """Return list of module dependencies."""
         import Ganga.Lib.MonitoringServices.Dashboard
-        import sys      
-        return DashboardMS.getSandboxModules(self) + [
-            Ganga.Lib.MonitoringServices.Dashboard.CommonUtil,
-            Ganga.Lib.MonitoringServices.Dashboard.BackendMS,
-            self.dynamic_util,
-            ]
+
+        if self.backend_name in ['LSF', 'PBS', 'SGE']:  
+                return  DashboardMS.getSandboxModules(self) + [
+                        Ganga.Lib.MonitoringServices.Dashboard.CommonUtil,
+                        Ganga.Lib.MonitoringServices.Dashboard.BackendMS,
+                        Ganga.Lib.MonitoringServices.Dashboard.BatchUtil,
+                        self.dynamic_util,
+                        ]
+        else:
+                return  DashboardMS.getSandboxModules(self) + [
+                        Ganga.Lib.MonitoringServices.Dashboard.CommonUtil,
+                        Ganga.Lib.MonitoringServices.Dashboard.BackendMS,
+                        self.dynamic_util,
+                        ]
 
     def getJobInfo(self):
         """Create job_info from Job object."""
