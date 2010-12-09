@@ -153,7 +153,7 @@ class BackendMS(DashboardMS):
             self._log('debug', 'Not sending unwanted message on complete for master wrapper job %s.' % j.fqid)
             return
         # send LB Done job-status message
-        message = self._cl_job_status_message(self.dynamic_util.cl_grid_status(j), 'LB', None)
+        message = self._cl_job_status_message('completed', 'LB', CommonUtil.utcnow())
         message['GRIDEXITCODE'] = self.dynamic_util.cl_grid_exit_code(j)
         message['GRIDEXITREASON'] = self.dynamic_util.cl_grid_exit_reason(j)
         self._send(self.config_info['destination_job_status'], message)
@@ -167,7 +167,7 @@ class BackendMS(DashboardMS):
             self._log('debug', 'Not sending unwanted message on fail for master wrapper job %s.' % j.fqid)
             return
         # send LB Done or Aborted job-status message
-        message = self._cl_job_status_message(self.dynamic_util.cl_grid_status(j), 'LB', None)
+        message = self._cl_job_status_message('failed', 'LB', CommonUtil.utcnow())
         message['GRIDEXITCODE'] = self.dynamic_util.cl_grid_exit_code(j)
         message['GRIDEXITREASON'] = self.dynamic_util.cl_grid_exit_reason(j)
         self._send(self.config_info['destination_job_status'], message)
