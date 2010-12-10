@@ -62,20 +62,6 @@ def refreshPandaSpecs():
         Client.refreshSpecs()
         pandaSpecsTS = time.time()
 
-def convertQueueNameToDQ2Names(queue):
-    from pandatools import Client
-    refreshPandaSpecs()
-
-    sites = []
-    for site in Client.PandaSites[queue]['setokens'].values():
-        sites.append(Client.convSrmV2ID(site))
-
-    allowed_sites = []
-    for site in ToACache.sites:
-        if site not in allowed_sites and Client.convSrmV2ID(site) in sites:
-            allowed_sites.append(site)
-    return allowed_sites
-
 def queueToAllowedSites(queue):
     from pandatools import Client
     refreshPandaSpecs()
@@ -731,7 +717,7 @@ class Panda(IBackend):
                                 job.backend.libds = job.backend.buildjob.jobSpec['destinationDBlock']
                         except KeyError:
                             pass
-                        
+
                         if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
                             job.updateStatus('submitted')
                         elif status.jobStatus in ['starting','running','holding','transferring']:
@@ -743,7 +729,6 @@ class Panda(IBackend):
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
 
-                            
                         #un = job.backend.buildjob.jobSpec['prodUserID'].split('/CN=')[-2]
                         #jdid = job.backend.buildjob.jobSpec['jobDefinitionID']
                         #job.backend.url = 'http://panda.cern.ch/?job=*&jobDefinitionID=%s&user=%s'%(jdid,un)
@@ -767,26 +752,16 @@ class Panda(IBackend):
                             except KeyError:
                                 pass
 
-                            # update the status of the master job based on what all build jobs are doing
-                            bjstats = [bj2.status for bj2 in job.backend.buildjobs]
-                            new_stat = None
-                            
-                            for s in ['defined','unknown','assigned','waiting','activated','sent','finished', 'starting','running','holding','transferring', 'failed', 'cancelled']:
-                                if s in bjstats:
-                                    new_stat = s
-                                    break
-                            
-                            if new_stat in ['defined','unknown','assigned','waiting','activated','sent','finished']:
+                            if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent','finished']:
                                 job.updateStatus('submitted')
-                            elif new_stat in ['starting','running','holding','transferring']:
+                            elif status.jobStatus in ['starting','running','holding','transferring']:
                                 job.updateStatus('running')
-                            elif new_stat == 'failed':
+                            elif status.jobStatus == 'failed':
                                 job.updateStatus('failed')
-                            elif new_stat == 'cancelled':
+                            elif status.jobStatus == 'cancelled':
                                 job.updateStatus('killed')
                             else:
                                 logger.warning('Unexpected job status %s',status.jobStatus)
-
 
                             #un = job.backend.buildjob.jobSpec['prodUserID'].split('/CN=')[-2]
                             #jdid = job.backend.buildjob.jobSpec['jobDefinitionID']
@@ -807,7 +782,7 @@ class Panda(IBackend):
         sites=Client.PandaSites.keys()
         spacetokens = []
         for s in sites:
-            spacetokens.append(convertQueueNameToDQ2Names(s))
+            spacetokens.append(queueToAllowedSites(s))
         return spacetokens
 
     def list_ddm_sites(self,allowTape=False):
@@ -838,7 +813,7 @@ class Panda(IBackend):
             for s in sites:
                 if Client.PandaSites[s]['status'] not in ['online'] or s in self.requirements.excluded_sites or (not self.requirements.anyCloud and Client.PandaSites[s]['cloud'] != self.requirements.cloud):
                     continue
-                tokens = convertQueueNameToDQ2Names(s)
+                tokens = queueToAllowedSites(s)
                 for t in tokens:
                     if allowTape or t.find('TAPE') == -1:
                         spacetokens.append(t)
@@ -851,7 +826,7 @@ class Panda(IBackend):
                 raise BackendError('Panda','Cannot submit to %s in status %s'%(self.site,s['status']))
             if self.site in self.requirements.excluded_sites:
                 raise BackendError('Panda','Cannot submit to %s because it is in your requirements.excluded_sites list'%self.site)
-            tokens = convertQueueNameToDQ2Names(self.site)
+            tokens = queueToAllowedSites(self.site)
             for t in tokens:
                 if allowTape or t.find('TAPE') == -1:
                     spacetokens.append(t)

@@ -18,11 +18,11 @@ class BackendMS(DashboardMS):
         """Construct the Dashboard Backend Monitoring Service."""
         DashboardMS.__init__(self, job_info, config_info)
         try:
-                self.backend_name = self.job_info.backend.__class__.__name__
+                backend_name = self.job_info.backend.__class__.__name__
         except AttributeError:
-                self.backend_name = self.job_info['BACKEND']
+                backend_name = self.job_info['BACKEND']
 
-        path_to_module = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil"%self.backend_name
+        path_to_module = "Ganga.Lib.MonitoringServices.Dashboard.%sUtil"%backend_name
         __import__(path_to_module)
         import sys
         self.dynamic_util = sys.modules[path_to_module]
@@ -30,20 +30,12 @@ class BackendMS(DashboardMS):
     def getSandboxModules(self):
         """Return list of module dependencies."""
         import Ganga.Lib.MonitoringServices.Dashboard
-
-        if self.backend_name in ['LSF', 'PBS', 'SGE']:  
-                return  DashboardMS.getSandboxModules(self) + [
-                        Ganga.Lib.MonitoringServices.Dashboard.CommonUtil,
-                        Ganga.Lib.MonitoringServices.Dashboard.BackendMS,
-                        Ganga.Lib.MonitoringServices.Dashboard.BatchUtil,
-                        self.dynamic_util,
-                        ]
-        else:
-                return  DashboardMS.getSandboxModules(self) + [
-                        Ganga.Lib.MonitoringServices.Dashboard.CommonUtil,
-                        Ganga.Lib.MonitoringServices.Dashboard.BackendMS,
-                        self.dynamic_util,
-                        ]
+        import sys      
+        return DashboardMS.getSandboxModules(self) + [
+            Ganga.Lib.MonitoringServices.Dashboard.CommonUtil,
+            Ganga.Lib.MonitoringServices.Dashboard.BackendMS,
+            self.dynamic_util,
+            ]
 
     def getJobInfo(self):
         """Create job_info from Job object."""
@@ -153,7 +145,7 @@ class BackendMS(DashboardMS):
             self._log('debug', 'Not sending unwanted message on complete for master wrapper job %s.' % j.fqid)
             return
         # send LB Done job-status message
-        message = self._cl_job_status_message('completed', 'LB', CommonUtil.utcnow())
+        message = self._cl_job_status_message(self.dynamic_util.cl_grid_status(j), 'LB', None)
         message['GRIDEXITCODE'] = self.dynamic_util.cl_grid_exit_code(j)
         message['GRIDEXITREASON'] = self.dynamic_util.cl_grid_exit_reason(j)
         self._send(self.config_info['destination_job_status'], message)
@@ -167,7 +159,7 @@ class BackendMS(DashboardMS):
             self._log('debug', 'Not sending unwanted message on fail for master wrapper job %s.' % j.fqid)
             return
         # send LB Done or Aborted job-status message
-        message = self._cl_job_status_message('failed', 'LB', CommonUtil.utcnow())
+        message = self._cl_job_status_message(self.dynamic_util.cl_grid_status(j), 'LB', None)
         message['GRIDEXITCODE'] = self.dynamic_util.cl_grid_exit_code(j)
         message['GRIDEXITREASON'] = self.dynamic_util.cl_grid_exit_reason(j)
         self._send(self.config_info['destination_job_status'], message)

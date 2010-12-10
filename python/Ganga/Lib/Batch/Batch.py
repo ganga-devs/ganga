@@ -356,11 +356,6 @@ except:
 statusfile.writelines(line)
 flush_file(statusfile)
 
-try:
-    import tarfile
-except ImportError,x:
-    sys.path.insert(0,###TARFILE_PYTHONPATH###)
-    import tarfile
 
 # -- WARNING: get the input files including the python modules BEFORE sys.path.insert()
 # -- SINCE PYTHON 2.6 THERE WAS A SUBTLE CHANGE OF SEMANTICS IN THIS AREA
@@ -379,6 +374,11 @@ try:
 except ImportError,x:
     sys.path.insert(0,###SUBPROCESS_PYTHONPATH###)
     import subprocess
+try:
+    import tarfile
+except ImportError,x:
+    sys.path.insert(0,###TARFILE_PYTHONPATH###)
+    import tarfile
 
 for key,value in environment.iteritems():
     os.environ[key] = value
