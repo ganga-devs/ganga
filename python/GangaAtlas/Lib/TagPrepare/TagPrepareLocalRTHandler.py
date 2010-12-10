@@ -126,19 +126,24 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
 
         self.username = gridProxy.identity(safe=True)
 
-        # check atlas release
-        atlas_release = '15.6.8'
-        if app.atlas_release != '15.6.8':
-            logger.warning("Atlas release '%s' not supported. Switching to 15.6.8." % app.atlas_release)                                                
         # prepare input sandbox
+        if app.atlas_release == '':
+            logger.warning('No Athena release specified - defaulting to 15.6.9')
+            app.atlas_release = '15.6.9'
+            
         logger.warning("Copying grid proxy to input sandbox for transfer to WN...")
+        if (str(app.atlas_release[:3]) == '16.'):
+            __tpdirectoryrel__ = os.path.join( __directory__, 'r16' )
+        else:
+            __tpdirectoryrel__ = os.path.join( __directory__, 'r15' )
+                
         inputbox = [ ( File(os.path.join(__athdirectory__,'athena-utility.sh')) ),
                      ( File(os.path.join(__directory__,'get_tag_info.py')) ),
                      ( File(os.path.join(__directory__,'template.root')) ),
-                     ( File(os.path.join(__directory__,'r15','libPOOLCollectionTools.so.cmtref'))),
-                     ( File(os.path.join(__directory__,'r15','libPOOLCollectionTools.so'))),
-                     ( File(os.path.join(__directory__,'r15','CollSplitByGUID.exe'))),
-                     ( File(os.path.join(__directory__,'r15','CollCompressEventInfo.exe'))),
+                     ( File(os.path.join(__tpdirectoryrel__,'libPOOLCollectionTools.so.cmtref'))),
+                     ( File(os.path.join(__tpdirectoryrel__,'libPOOLCollectionTools.so'))),
+                     ( File(os.path.join(__tpdirectoryrel__,'CollSplitByGUID.exe'))),
+                     ( File(os.path.join(__tpdirectoryrel__,'CollCompressEventInfo.exe'))),
                      ( File(gridProxy.location())) ]
             
         ## insert more scripts to inputsandbox for FileStager
@@ -159,7 +164,7 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
         environment={
             'MAXNUMREFS'     : str(app.max_num_refs),
             'STREAM_REF'     : app.stream_ref,
-            'ATLAS_RELEASE'  : atlas_release,
+            'ATLAS_RELEASE'  : app.atlas_release,
             'ATHENA_OPTIONS' : '',
             'ATLAS_SOFTWARE' : atlas_software,
             'ATHENA_USERSETUPFILE' : '',
