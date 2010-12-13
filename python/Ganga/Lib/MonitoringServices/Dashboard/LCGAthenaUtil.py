@@ -59,14 +59,17 @@ def cl_output_se(job):
 
 def cl_target(job):
     """Build target. Only run on client."""
-    targets = []
-    if job.backend.CE:
-        targets.append('CE_%s' % job.backend.CE)
-    for site in job.backend.requirements.sites:
-        if site:
-            targets.append('SITE_%s' % site)
-    targetcsv = ','.join(targets)
-    return CommonUtil.strip_to_none(targetcsv)
+    if hasattr(job.backend, 'CE'):
+        targets = []
+        if job.backend.CE:
+            targets.append('CE_%s' % job.backend.CE)
+        for site in job.backend.requirements.sites:
+            if site:
+                targets.append('SITE_%s' % site)
+        targetcsv = ','.join(targets)
+        return CommonUtil.strip_to_none(targetcsv)
+    else:
+        return CommonUtil.hostname()    
 
 def cl_task_type(config):
     """Build task_type. Only run on client."""
