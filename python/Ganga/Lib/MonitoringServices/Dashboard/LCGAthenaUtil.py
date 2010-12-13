@@ -69,7 +69,7 @@ def cl_target(job):
         targetcsv = ','.join(targets)
         return CommonUtil.strip_to_none(targetcsv)
     else:
-        return None    
+        return ''    
 
 def cl_task_type(config):
     """Build task_type. Only run on client."""
