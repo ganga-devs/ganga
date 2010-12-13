@@ -58,8 +58,9 @@ def cl_output_se(job):
     return CommonUtil.strip_to_none(locationcsv)
 
 def cl_target(job):
-    return 'baclend_CE' 
+    return 'backend_CE' 
     """Build target. Only run on client."""
+    """
     if hasattr(job.backend, 'CE'):
         targets = []
         if job.backend.CE:
@@ -71,6 +72,7 @@ def cl_target(job):
         return CommonUtil.strip_to_none(targetcsv)
     else:
         return ''    
+    """
 
 def cl_task_type(config):
     """Build task_type. Only run on client."""
