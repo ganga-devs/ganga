@@ -64,7 +64,7 @@ def cl_unique_job_id(job):
 #----- worker node meta-data builders ----- 
 #TODO: add error handling code in following methods
 
-def wn_dest_ce():
+def wn_dest_ce(ji):
     """Build dest_ce. Only run on worker node."""
     dest_ce = CommonUtil.env('CE_ID')
     return CommonUtil.strip_to_none(dest_ce)
