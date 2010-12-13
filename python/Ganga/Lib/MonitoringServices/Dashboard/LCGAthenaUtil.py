@@ -58,6 +58,7 @@ def cl_output_se(job):
     return CommonUtil.strip_to_none(locationcsv)
 
 def cl_target(job):
+    return 'baclend_CE' 
     """Build target. Only run on client."""
     if hasattr(job.backend, 'CE'):
         targets = []
