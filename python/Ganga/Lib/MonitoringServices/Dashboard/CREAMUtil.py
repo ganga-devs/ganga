@@ -69,7 +69,7 @@ def wn_dest_ce(ji):
     dest_ce = CommonUtil.env('CE_ID')
     return CommonUtil.strip_to_none(dest_ce)
 
-def wn_dest_site():
+def wn_dest_site(ji):
     """Build dest_site. Only run on worker node."""
     return CommonUtil.env('SITE_NAME')
     
@@ -77,7 +77,7 @@ def wn_dest_wn():
     """Build dest_wn. Only run on worker node."""
     return CommonUtil.hostname()
 #gridJobId for CREAM
-def wn_grid_job_id():
+def wn_grid_job_id(ji):
     """Build grid_job_id. Only run on worker node."""
     grid_job_id = CommonUtil.env('CREAM_JOBID') 
     if not grid_job_id: 
