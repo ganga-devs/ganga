@@ -77,10 +77,12 @@ class AnaTransform(Transform):
             
       # make sure we keep the name size limit:
       dq2_config = getConfig("DQ2")
-      if len(subtask_dsname) > dq2_config['OUTPUTDATASET_NAMELENGTH']:
-          logger.debug("Proposed dataset name longer than limit (%d). Restricting dataset name..." % dq2_config['OUTPUTDATASET_NAMELENGTH'])
+      max_length_site = len("ALBERTA-WESTGRID-T2_SCRATCHDISK      ")
+      max_length = dq2_config['OUTPUTDATASET_NAMELENGTH'] - max_length_site
+      if len(subtask_dsname) > max_length:
+          logger.debug("Proposed dataset name longer than limit (%d). Restricting dataset name..." % max_length)
 
-          while len(subtask_dsname) > dq2_config['OUTPUTDATASET_NAMELENGTH']:
+          while len(subtask_dsname) > max_length:
               subtask_dsname_toks = subtask_dsname.split('.')
               subtask_dsname = '.'.join(subtask_dsname_toks[:len(subtask_dsname_toks)-1])
       return subtask_dsname
@@ -97,39 +99,43 @@ class AnaTransform(Transform):
       # if this is the first app to complete the partition...
       if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
           task_container, subtask_dsname = task.container_name, self.dataset_name
-          outputdata = DQ2OutputDataset()
-          try:
-              outputdata.create_dataset(subtask_dsname)
-          except DQDatasetExistsException:
-              pass
-          try:
-              infos = []
+
+          infos = {}
+          for oinfo in j.outputdata.output:
               try:
                   dq2_lock.acquire()
-                  for oinfo in j.outputdata.output:
-                      info = oinfo.split(",")
-                      # get master replica from dataset - info not set to SE; but to ANALY_XYZ from panda
-                      master_replica = dq2.getMasterReplicaLocation(info[0])
-                      if master_replica:
-                          info[5] = master_replica
+                  info = oinfo.split(",")
+                  # get master replica from dataset - info not set to SE; but to ANALY_XYZ from panda
+                  master_replica = dq2.getMasterReplicaLocation(info[0])
+                  if master_replica:
+                      info[5] = master_replica
+                  else:
+                      replicas = dq2.listDatasetReplicas(info[0]).values()
+                      if len(replicas) == 0:
+                          info[5] = getPandaClient().PandaSites[info[5]]["ddm"]
                       else:
-                          replicas = dq2.listDatasetReplicas(info[0]).values()
-                          if len(replicas) == 0:
-                              info[5] = getPandaClient().PandaSites[info[5]]["ddm"]
-                          else:
-                              complete, incomplete = replicas[0].values()
-                              info[5] = (complete + incomplete)[0]
-                      if info[4][:3] == "ad:":
-                          info[4] = info[4][3:]
-                      info[0] = subtask_dsname
-                      infos.append(",".join(info))
+                          complete, incomplete = replicas[0].values()
+                          info[5] = (complete + incomplete)[0]
+                  if info[4][:3] == "ad:":
+                      info[4] = info[4][3:]
+
               finally:
                   dq2_lock.release()
+                
+              datasetname = subtask_dsname + '.' + info[5]
+              info[0] = datasetname
+              infos.setdefault(datasetname, []).append(",".join(info))
 
-              outputdata.register_datasets_details(None, infos)
-                  
-          except DQFileExistsInDatasetException:
-              pass
+          for ds in infos.keys():
+              outputdata = DQ2OutputDataset()
+              try:
+                  outputdata.create_dataset(ds)
+              except DQDatasetExistsException:
+                  pass
+              try:
+                  outputdata.register_datasets_details(None, infos[ds])
+              except DQFileExistsInDatasetException:
+                  pass
 
           # Register Container
           try:
@@ -145,12 +151,13 @@ class AnaTransform(Transform):
                       logger.debug('Registered container for Task %i: %s' % (task.id, task_container))
                   except Exception, x:
                       logger.error('Problem registering container for Task %i, %s : %s %s' % (task.id, task_container,x.__class__, x))
-              try:
-                  dq2.registerDatasetsInContainer(task_container, [ subtask_dsname ])
-              except DQContainerAlreadyHasDataset:
-                  pass
-              except Exception, x:
-                  logger.error('Problem registering dataset %s in container %s: %s %s' %( subtask_dsname, task_container, x.__class__, x))
+              for ds in infos.keys():
+                  try:
+                      dq2.registerDatasetsInContainer(task_container, [ ds ] )
+                  except DQContainerAlreadyHasDataset:
+                      pass
+                  except Exception, x:
+                      logger.error('Problem registering dataset %s in container %s: %s %s' %( subtask_dsname, task_container, x.__class__, x))
           finally:
               dq2_lock.release()
       return True
@@ -354,7 +361,7 @@ class AnaTransform(Transform):
          return
       splitter = DQ2JobSplitter()
       splitter.numfiles = self.files_per_job
-      #splitter.update_siteindex = False
+      #splitter.update_siteindex = False # commented to use default value
       #splitter.use_lfc = True
       sjl = splitter.split(self) # This works even for Panda, no special "Job" properties are used anywhere.
       self.partitions_data = [sj.inputdata for sj in sjl]
