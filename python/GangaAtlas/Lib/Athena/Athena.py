@@ -1269,9 +1269,13 @@ class Athena(IApplication):
         if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
             raise ApplicationConfigurationError(None, 'RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
 
-        if self.atlas_dbrelease == 'LATEST':       
-            from pandatools import Client
-            self.atlas_dbrelease = Client.getLatestDBRelease(False)
+        try:
+            if self.atlas_dbrelease == 'LATEST':       
+                from pandatools import Client
+                self.atlas_dbrelease = Client.getLatestDBRelease(False)
+        except:
+            raise ApplicationConfigurationError(None, "Error retrieving LATEST DBRelease. Try setting application.atlas_dbrelease manually.")
+            
 
         if self.atlas_dbrelease: 
             match = re.search('DBRelease-(.*)\.tar\.gz', self.atlas_dbrelease )
