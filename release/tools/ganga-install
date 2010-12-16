@@ -408,6 +408,8 @@ def untar(tarFileName, targetDir,silent):
         print cmd
     if os.system(cmd) != 0:
         error('Error untarring file: %s in directory %s' % (tarFileName,targetDir))
+    else:
+        os.unlink(tarFileName)
 
 if __name__ == '__main__':
     main()
