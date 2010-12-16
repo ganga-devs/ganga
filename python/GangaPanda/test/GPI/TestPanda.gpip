@@ -172,7 +172,7 @@ class TestEventPickingPanda(PandaTest):
         j.inputdata = EventPicking()
         j.inputdata.pick_event_list = pick_event_file
         j.inputdata.pick_data_type = 'ESD'
-        j.inputdata.pick_stream_name = 'physics_L1Calo'
+        j.inputdata.pick_stream_name = 'physics_Muons'
         j.inputdata.pick_dataset_pattern = '*f2*'
         j.outputdata=DQ2OutputDataset()
         j.splitter=DQ2JobSplitter()
