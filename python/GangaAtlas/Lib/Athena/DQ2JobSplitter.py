@@ -554,6 +554,16 @@ class DQ2JobSplitter(ISplitter):
                            self.numfiles = config['DefaultNumFilesPandaDirectDQ2JobSplitter']
                            self.numsubjobs = 0
                            logger.info('DQ2JobSplitter has restricted the maximum of files per subjob to %s files.', self.numfiles)
+                       else:
+                           if orig_numsubjobs>0:
+                               nrfiles = int(math.ceil(len(guids)/float(orig_numsubjobs)))
+                               if nrfiles > config['DefaultNumFilesPandaDirectDQ2JobSplitter']:
+                                   self.numfiles = config['DefaultNumFilesPandaDirectDQ2JobSplitter']
+                                   self.numsubjobs = 0
+                           if orig_numfiles>config['DefaultNumFilesPandaDirectDQ2JobSplitter']:
+                               self.numfiles = config['DefaultNumFilesPandaDirectDQ2JobSplitter']
+                               self.numsubjobs = 0
+                           logger.info('DQ2JobSplitter has restricted the maximum of files per subjob to %s files.', self.numfiles)
 
                 # Restriction based on the maximum dataset filesize
                 if self.filesize > 0:
