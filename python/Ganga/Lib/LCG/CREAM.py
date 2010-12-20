@@ -25,7 +25,7 @@ def __cream_resolveOSBList__(job, jdl):
 
     osbURIList = []
 
-    re_osb = re.compile('^.*OutputSandbox\s+\=\s+\{(.*)\}$')
+    re_osb = re.compile('^.*OutputSandbox\s+\=\s+\{(.*)\}\s?\]?$')
 
     for l in jdl.split(';'):
         m = re_osb.match( l )
@@ -91,7 +91,7 @@ class CREAM(IBackend):
             self.sandboxcache = scClass()
             logger.debug('load %s as SandboxCache' % scName)
         except:
-            logger.debug('load default LCGSandboxCAche')
+            logger.debug('load default SandboxCache')
             pass
 
     def __setup_sandboxcache__(self, job):
