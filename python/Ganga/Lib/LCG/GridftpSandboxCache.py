@@ -178,7 +178,8 @@ class GridftpSandboxCache(GridSandboxCache):
                 fname     = os.path.basename( urisplit(srcURI)[2] )
                 destURI   = 'file:%s/%s' % (dest_dir, fname)
 
-                cmd  = 'uberftp %s %s' % (srcURI, destURI)
+                #cmd  = 'uberftp %s %s' % (srcURI, destURI)
+                cmd  = 'globus-url-copy %s %s' % (srcURI, destURI)
 
                 rc,output,m = self.cacheObj.__cmd_retry_loop__(shell, cmd, self.cacheObj.max_try)
 
