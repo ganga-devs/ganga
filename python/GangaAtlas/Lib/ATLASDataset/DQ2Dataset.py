@@ -997,7 +997,7 @@ class DQ2OutputDataset(Dataset):
     _category = 'datasets'
     _name = 'DQ2OutputDataset'
 
-    _exportmethods = [ 'retrieve', 'fill', 'create_dataset','create_datasets', 'dataset_exists', 'get_locations', 'create_subscription', 'clean_duplicates_in_dataset', 'clean_duplicates_in_container' ]
+    _exportmethods = [ 'retrieve', 'fill', 'create_dataset','create_datasets', 'dataset_exists', 'get_locations', 'create_subscription', 'clean_duplicates_in_dataset', 'clean_duplicates_in_container', 'check_content_consistency' ]
 
     _GUIPrefs = [ { 'attribute' : 'outputdata',     'widget' : 'String_List' },
                   { 'attribute' : 'output',         'widget' : 'String_List' },
@@ -1382,6 +1382,53 @@ class DQ2OutputDataset(Dataset):
                         dq2_lock.release()
                         
             self.register_file_in_dataset(dataset,[lfn],[guid],[size],[adler32])
+
+    def check_content_consistency(self, numsubjobs, **options ):
+        """Check outputdataset consistency"""
+        
+        # Resolve container into datasets
+        datasets = resolve_container(self.dataset)
+
+        for dataset in datasets:
+            try:
+                dq2_lock.acquire()
+                try:
+                    contents = dq2.listFilesInDataset(dataset)
+                except:
+                    contents = []
+                    pass
+            finally:
+                dq2_lock.release()
+
+            if not contents:
+                contents = []
+                pass
+
+            if not len(contents):
+                continue
+       
+            contents = contents[0]
+            contents_new = []
+            for guid, info in contents.iteritems():
+                contents_new.append( (guid, info['lfn']) )
+            contents = contents_new
+
+
+            numoutputfiles = len(contents)
+            # Master job
+            if numsubjobs:
+                numrequestedoutputfiles = len(self.outputdata.outputdata)*numsubjobs
+                if not numrequestedoutputfiles == numoutputfiles:
+                    logger.warning('Number of output files %s in outputdataset %s is not consistent with number of subjobs and requested outputfiles %s - Please carefully check output !', numoutputfiles, dataset, numrequestedoutputfiles)
+            # Subjob
+            else:
+                numrequestedoutputfiles = len(self.outputdata.outputdata)
+                if not numrequestedoutputfiles == numoutputfiles:
+                    logger.warning('Number of output files %s in outputdataset %s is not consistent with number of subjobs and requested outputfiles %s - Please carefully check output !', numoutputfiles, dataset, numrequestedoutputfiles)
+                
+
+
+        return
 
     def fill(self, type=None, name=None, **options ):
         """Determine outputdata and outputsandbox locations of finished jobs

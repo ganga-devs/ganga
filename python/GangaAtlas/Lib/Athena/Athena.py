@@ -685,7 +685,25 @@ class Athena(IApplication):
                 self.stats['stoptime'] = self.stats['gangatime5'] 
         except:
             pass
-    
+
+    def postprocess_failed(self):
+        """Check consistency of output dataset"""
+        if job.backend._name in [ 'LCG', 'CREAM' ]:
+            # it's the master job 
+            if not job.master and job.subjobs:
+                numsubjobs = len(job.subjobs)
+            else:
+                numsubjobs = 0
+
+            if job.outputdata:
+                try:
+                    job.outputdata.check_content_consistency(numsubjobs)
+                except Exception, Value:
+                    logger.warning('An ERROR occured during job.outputdata.check_consistency() call: %s, %s', Exception, Value)
+                    pass
+
+        return
+
     def postprocess(self):
         """Determine outputdata and outputsandbox locations of finished jobs
         and fill output variable"""
