@@ -158,25 +158,35 @@ class TestEventPickingPanda(PandaTest):
     def setup(self):
         joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
         pick_event_file = '%s/RunEvent.txt' % self.tmpdir
-        archivefile = '%s/sources.9d39c3e5-652a-4515-b12b-144e0da89112.tar.gz' % self.tmpdir
+        archivefile = '%s/sources.237f0956-3038-4ba2-b842-5af537e4e584.tar.gz' % self.tmpdir
         userareapath = self.tmpdir
+	os.environ['TestArea'] = self.tmpdir
 
         j = Job()
         j.application=Athena()
         j.application.atlas_release='15.6.9'
         j.application.option_file=[ joboption ]
         j.application.user_area=archivefile
-        j.application.atlas_run_dir = 'Picking/'
+        j.application.atlas_run_dir = 'EventPick/'
         j.application.atlas_run_config = {'input': {}, 'other': {}, 'output': {'outAANT': [('AANTupleStream', 'AANT')]}}
         j.application.user_area_path = userareapath
+
+
+	run_dir = "%s/%s" %(os.environ['TestArea'], j.application.atlas_run_dir)
+	if not os.path.exists(run_dir):
+	    import commands 
+	    cmd = 'mkdir %s ' % run_dir
+	    commands.getoutput(cmd)
+
         j.inputdata = EventPicking()
         j.inputdata.pick_event_list = pick_event_file
         j.inputdata.pick_data_type = 'ESD'
+        j.inputdata.pick_stream_name = 'physics_Egamma'
         j.inputdata.pick_stream_name = 'physics_Muons'
-        j.inputdata.pick_dataset_pattern = '*f2*'
-        j.outputdata=DQ2OutputDataset()
+        
+	j.outputdata=DQ2OutputDataset()
         j.splitter=DQ2JobSplitter()
-        j.splitter.numsubjobs=3
+        j.splitter.numsubjobs=2
         j.backend=Panda()
         self.j = j
         assert(self.j.submit()==True)
