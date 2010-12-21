@@ -39,10 +39,12 @@ def appendFile(file_path, archive_path):
     
     #create tar ball from file list
     cmd = "cd %s ; cat %s|xargs tar cf event_pick.tar" % (test_area, file_name) 
+    #print " Tar cmd %s " %cmd
     out = commands.getoutput(cmd)
 
     #append
     cmd = "cd %s ; tar Af %s event_pick.tar" % (test_area, archive) 
+    #print "Append cmd %s " %cmd
     out = commands.getoutput(cmd)
 
     #compress
@@ -55,6 +57,7 @@ def appendFile(file_path, archive_path):
         files += "%s " % line.strip('\n')
 
     cmd = " cd %s ; rm event_pick.tar %s; rm %s " %(test_area, file_name, files)
+    #print "Delete cmd %s " %cmd
     out = commands.getoutput(cmd)
 
 def dq2_siteinfo(dataset, allowed_sites, locations, udays):
@@ -778,19 +781,19 @@ class DQ2JobSplitter(ISplitter):
                                             j.application.run_event.append([long(runevent[0]),long(runevent[1])])
                                         
                                         if job.backend._name == 'Panda':
+                                            app = job.application
                                             # copy run/event list in a file
-                                            eventPickFile = 'ep_%s.dat' % commands.getoutput('uuidgen')
+                                            eventPickFile = '%s/%s/ep_%s.dat' % (test_area,app.atlas_run_dir,commands.getoutput('uuidgen'))
                                             evFH = open(eventPickFile,'w') 
                                             tlist = j.application.run_event
-                                            j.application.run_event_file = eventPickFile
+                                            j.application.run_event_file = os.path.basename(eventPickFile)
 
                                             for k in range(len(tlist)):
                                                 evFH.write('%s %s\n' % (tlist[k][0], tlist[k][1]))
                                             # close        
                                             evFH.close()
-                                            app = job.application
                                             #write in file 
-                                            evFileList.write('%s%s\n' %(app.atlas_run_dir, eventPickFile))
+                                            evFileList.write('%s%s\n' %(app.atlas_run_dir, os.path.basename(eventPickFile)))
 
                                 else:
                                     break
