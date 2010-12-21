@@ -518,7 +518,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 #       prepare environment
 
         if not app.atlas_release: 
-            raise ApplicationConfigurationError(None,'j.application.atlas_release is empty - No ATLAS release version found by prepare() or specified.')
+            raise ApplicationConfigurationError(None,'j.application.atlas_release is empty - No ATLAS release version found. Run prepare() or specify a version explictly.')
 
         environment={ 
             'ATLAS_RELEASE'  : app.atlas_release,

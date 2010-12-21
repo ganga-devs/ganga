@@ -458,7 +458,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             raise ConfigError('No default location of ATLAS_SOFTWARE specified in the configuration.')
 
         if app.atlas_release=='':
-            raise ConfigError("j.application.atlas_release='' - No ATLAS release version found by prepare() or specified.")
+            raise ApplicationConfigurationError(None,'j.application.atlas_release is empty - No ATLAS release version found. Run prepare() or specify a version explictly.')
       
         environment={ 
             'ATLAS_RELEASE' : app.atlas_release,
