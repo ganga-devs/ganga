@@ -403,6 +403,7 @@ class DQ2Dataset(Dataset):
         'tagdataset'         : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc = 'Tag Dataset Name'),
         'use_aodesd_backnav' : SimpleItem(defvalue = False, doc = 'Use AOD to ESD Backnavigation'),
         'names'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to use for processing'),
+        'names_pattern'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical file name pattern to use for processing'),
         'exclude_names'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to exclude from processing'),
         'exclude_pattern'    : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical file name pattern to exclude from processing'),
         'number_of_files'    : SimpleItem(defvalue = 0, doc = 'Number of files. '),
@@ -425,6 +426,7 @@ class DQ2Dataset(Dataset):
     _GUIPrefs = [ { 'attribute' : 'dataset',         'widget' : 'String_List' },
                   { 'attribute' : 'tagdataset',      'widget' : 'String_List' },
                   { 'attribute' : 'names',           'widget' : 'String_List' },
+                  { 'attribute' : 'names_pattern',   'widget' : 'String_List' },
                   { 'attribute' : 'exclude_names',   'widget' : 'String_List' },
                   { 'attribute' : 'exclude_pattern', 'widget' : 'String_List' },
                   { 'attribute' : 'number_of_files', 'widget' : 'String' },
@@ -532,6 +534,13 @@ class DQ2Dataset(Dataset):
             if self.names:
                 #job = self.getJobObject()
                 contents = [ (guid,lfn) for guid, lfn in contents if lfn in self.names ]
+
+            # Process only certain file name pattern ?
+            if self.names_pattern:
+                for expattern in self.names_pattern:
+                    regex = fnmatch.translate(expattern)
+                    pat = re.compile(regex, re.IGNORECASE)
+                    contents = [ (guid,lfn) for guid, lfn in contents if pat.match(lfn) ]
 
             # Exclude certain filenames ?
             if self.exclude_names:
