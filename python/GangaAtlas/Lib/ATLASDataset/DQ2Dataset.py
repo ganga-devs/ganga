@@ -997,7 +997,7 @@ class DQ2OutputDataset(Dataset):
     _category = 'datasets'
     _name = 'DQ2OutputDataset'
 
-    _exportmethods = [ 'retrieve', 'fill', 'create_dataset','create_datasets', 'dataset_exists', 'get_locations', 'create_subscription', 'clean_duplicates_in_dataset' ]
+    _exportmethods = [ 'retrieve', 'fill', 'create_dataset','create_datasets', 'dataset_exists', 'get_locations', 'create_subscription', 'clean_duplicates_in_dataset', 'clean_duplicates_in_container' ]
 
     _GUIPrefs = [ { 'attribute' : 'outputdata',     'widget' : 'String_List' },
                   { 'attribute' : 'output',         'widget' : 'String_List' },
@@ -1024,8 +1024,8 @@ class DQ2OutputDataset(Dataset):
             dq2datasetname, output_lfn = dq2outputdatasetname(datasetname, -999 , self.isGroupDS, self.groupname)
             return dq2datasetname
 
-    def clean_duplicates_in_dataset(self, datasetname = None):
-        """Clean duplicate filesfrom dataset if e.g. shallow retry count occured"""
+    def clean_duplicates_in_dataset(self, datasetname = None, outputInfo = None):
+        """Clean duplicate files from dataset if e.g. shallow retry count occured"""
 
         trashFiles = []
         if not datasetname:
@@ -1035,7 +1035,9 @@ class DQ2OutputDataset(Dataset):
         
         # Get filenames from repository (actually finished jobs) 
         filenames = []
-        outputInfo = self.output
+        # Use subjob outputInfo if not provided as parameter
+        if not outputInfo:
+            outputInfo = self.output
         for file in outputInfo:
             filenames.append(file.split(',')[1])
 
@@ -1120,6 +1122,28 @@ class DQ2OutputDataset(Dataset):
                         pass
                 finally:                                                        
                     dq2_lock.release()
+
+        return
+
+    def clean_duplicates_in_container(self, containername = None):
+        """Clean duplicate files from container and its datasets if e.g. shallow retry count occured"""
+
+        if not containername:
+            containername = self.datasetname
+
+        logger.warning('Checking for file dulipates in %s...' %containername)
+
+        if not containername.endswith('/'):
+            logger.warning('%s is not a dataset container - doing nothing!' %containername)
+            return
+       
+        # Resolved container into datasets
+        datasets = resolve_container([containername])
+        # Use master job info
+        outputInfo = self.output
+        # Clean all dataset individually
+        for dataset in datasets:
+            self.clean_duplicates_in_dataset(dataset, outputInfo )
 
         return
 

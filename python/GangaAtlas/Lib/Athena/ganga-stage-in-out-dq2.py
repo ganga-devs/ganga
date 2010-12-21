@@ -1377,7 +1377,7 @@ def check_duplicates_in_dataset(datasetname, output_files):
                 if match.group(0) in filePattern:
                     print '!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!'
                     print 'Possible duplicated output file %s in output dataset %s' %(fileName, datasetname)
-                    print 'After all subjobs have finished run j.outputdata.clean_duplicates_in_dataset()'
+                    print 'After all subjobs have finished run j.outputdata.clean_duplicates_in_dataset() or j.outputdata.clean_duplicates_in_container()'
                     print '!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!'
                 else:
                     filePattern.append(match.group(0))
