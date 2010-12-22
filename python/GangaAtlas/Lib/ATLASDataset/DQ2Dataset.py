@@ -1387,7 +1387,7 @@ class DQ2OutputDataset(Dataset):
         """Check outputdataset consistency"""
         
         # Resolve container into datasets
-        datasets = resolve_container(self.dataset)
+        datasets = resolve_container([self.datasetname])
 
         for dataset in datasets:
             try:
@@ -1409,24 +1409,25 @@ class DQ2OutputDataset(Dataset):
        
             contents = contents[0]
             contents_new = []
+            contents_files = []
             for guid, info in contents.iteritems():
                 contents_new.append( (guid, info['lfn']) )
+                contents_files.append( info['lfn'] ) 
             contents = contents_new
 
-
             numoutputfiles = len(contents)
+            
             # Master job
             if numsubjobs:
-                numrequestedoutputfiles = len(self.outputdata.outputdata)*numsubjobs
+                numrequestedoutputfiles = len(self.outputdata)*numsubjobs
                 if not numrequestedoutputfiles == numoutputfiles:
-                    logger.warning('Number of output files %s in outputdataset %s is not consistent with number of subjobs and requested outputfiles %s - Please carefully check output !', numoutputfiles, dataset, numrequestedoutputfiles)
+                    logger.warning('%s output files in outputdataset %s is not consistent with %s subjobs and %s requested outputfiles - Please carefully check output !', numoutputfiles, dataset,numsubjobs, numrequestedoutputfiles)
             # Subjob
             else:
-                numrequestedoutputfiles = len(self.outputdata.outputdata)
-                if not numrequestedoutputfiles == numoutputfiles:
-                    logger.warning('Number of output files %s in outputdataset %s is not consistent with number of subjobs and requested outputfiles %s - Please carefully check output !', numoutputfiles, dataset, numrequestedoutputfiles)
-                
-
+                for outputinfo in self.output:
+                    filename = outputinfo.split(',')[1]
+                    if not filename in contents_files:
+                        logger.warning('output file %s is not in outputdataset %s - Please carefully check output !', filename, dataset)
 
         return
 
