@@ -362,7 +362,7 @@ get_lcg_util () {
 	export lcgcr="lcg-cr --connect-timeout 150 --sendreceive-timeout 150 --srm-timeout 150 --bdii-timeout 150 "
     fi
 
-    if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
+    if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ] || [ n$GANGA_ATHENA_WRAPPER_MODE = n'local' ]; then
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
 	export PATH=$PATH_BACKUP
 	export PYTHONPATH=$PYTHONPATH_BACKUP
