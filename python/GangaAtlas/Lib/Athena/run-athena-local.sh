@@ -114,12 +114,12 @@ then
 
         filestager_setup
 
-        make_filestager_joption $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
+        make_filestager_joption $LD_LIBRARY_PATH_GLITE $PATH_GLITE $PYTHONPATH_GLITE
 	echo 'input.txt start ----------'
 	cat input.txt
 	echo 'input.txt end ----------'
     else
-        stage_inputs $LD_LIBRARY_PATH_ORIG $PATH_ORIG $PYTHONPATH_ORIG
+        stage_inputs $LD_LIBRARY_PATH_GLITE $PATH_GLITE $PYTHONPATH_GLITE
     fi
 fi
 
@@ -250,7 +250,7 @@ GANGATIME4=`date +'%s'`
 # store output
 if [ $retcode -eq 0 ]
 then
-    stage_outputs
+    stage_outputs $LD_LIBRARY_PATH_GLITE $PATH_GLITE $PYTHONPATH_GLITE
 fi
 
 #################################################

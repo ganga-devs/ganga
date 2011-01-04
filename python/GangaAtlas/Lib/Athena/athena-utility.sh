@@ -332,6 +332,16 @@ get_lcg_util () {
 	export PYTHONPATH=$PYTHONPATH_ORIG
     fi
 
+    if [ n$GANGA_ATHENA_WRAPPER_MODE = n'local' ]; then
+	LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
+	PATH_BACKUP=$PATH
+	PYTHONPATH_BACKUP=$PYTHONPATH
+
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_GLITE
+	export PATH=$PATH_GLITE
+	export PYTHONPATH=$PYTHONPATH_GLITE
+    fi
+
     # find version string
     export lcgutil_str=`lcg-cr --version | grep lcg | cut -d- -f2`
     a=`echo ${lcgutil_str} | cut -d. -f1`
