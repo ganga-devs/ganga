@@ -253,18 +253,18 @@ def report(job=None):
                         
                                 sys.stdout = inputFile
 
+                                print "#GANGA_VERSION = %s" % config.System.GANGA_VERSION 
+                                print
+
+                                global GANGA_VERSION
+                                GANGA_VERSION = config.System.GANGA_VERSION
+
                                 #this gets the default values
                                 #Ganga.GPIDev.Lib.Config.Config.print_config_file()
                                 
                                 #this should get the changed values
                                 for c in config:
                                         print config[c]
-
-                                print
-                                print "#GANGA_VERSION = %s" % config.System.GANGA_VERSION 
-
-                                global GANGA_VERSION
-                                GANGA_VERSION = config.System.GANGA_VERSION
 
                         finally:
                                 sys.stdout = sys.__stdout__
