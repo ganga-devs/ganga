@@ -188,6 +188,14 @@ class IBackend(GangaObject):
             return job.createInputSandbox(files,master=True)
 
 
+    def master_auto_resubmit(self,rjobs):
+        """ A hook in case someone wanted to override the auto
+        resubmission behaviour. Otherwise, it auto_resubmit is
+        equivalent for all practical purposes to a normal resubmit (so
+        it automatcially benefits from bulk resubmit if implemented).
+        """
+        return self.master_resubmit(rjobs)
+
     def master_resubmit(self,rjobs,backend=None):
         """ Resubmit (previously submitted) job. Configuration phase is skipped.
         Default implementation works is an emulated-bulk operation.

@@ -134,6 +134,7 @@ class Job(GangaObject):
                                     'subjobs':ComponentItem('jobs',defvalue=[],sequence=1,protected=1,load_default=0,copyable=0,optional=1,proxy_get="_subjobs_proxy",doc='list of subjobs (if splitting)',summary_print = '_subjobs_summary_print'),
                                     'master':ComponentItem('jobs',getter="_getParent",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,doc='master job',visitable=0),
                                     'merger':ComponentItem('mergers',defvalue=None,load_default=0,optional=1,doc='optional output merger'),
+                                    'do_auto_resubmit':SimpleItem(defvalue = False, doc='Automatically resubmit failed subjobs'),
                                     'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0)
                                     })
 
@@ -969,7 +970,18 @@ class Job(GangaObject):
         Note: it is not possible to change the type of the backend in this way.
 
         """
+        return self._resubmit(backend=backend)
 
+    def auto_resubmit(self):
+        """ Private method used for auto resubmit functionality by the monitoring loop.
+        """
+        return self._resubmit(auto_resubmit=True)
+
+
+    def _resubmit(self,backend=None,auto_resubmit=False):
+        """ Internal implementation of resubmit which handles the publically accessible resubmit() method proper as well
+        as the auto_resubmit use case used in the monitoring loop.
+        """
         # there are possible two race condition which must be handled somehow:
         #  - a simple job is monitorable and at the same time it is 'resubmitted' - potentially the monitoring may update the status back!
         #  - same for the master job...
@@ -979,7 +991,13 @@ class Job(GangaObject):
         fqid = self.getFQID('.')
         logger.info('resubmitting job %s',fqid)
 
-        if not self.status in ['completed','failed','killed']:
+        if backend and auto_resubmit:
+            msg = "job %s: cannot change backend when auto_resubmit=True. This is most likely an internal implementation problem."%fqid
+            logger.error(msg)
+            raise JobError(msg)
+
+        #the status check is disabled when auto_resubmit
+        if not self.status in ['completed','failed','killed'] and not auto_resubmit:
             msg = "cannot resubmit job %s which is in '%s' state"%(fqid,self.status)
             logger.error(msg)
             raise JobError(msg)
@@ -1041,6 +1059,8 @@ class Job(GangaObject):
             rjobs = self.subjobs
             if not rjobs:
                 rjobs = [self]
+            elif auto_resubmit: # get only the failed jobs for auto resubmit
+                rjobs = [s for s in rjobs if s.status in ['failed'] ]
 
             if rjobs:
                 for sjs in rjobs:
@@ -1048,10 +1068,14 @@ class Job(GangaObject):
                     sjs.getOutputWorkspace().remove(preserve_top=True) #bugfix: #31690: Empty the outputdir of the subjob just before resubmitting it
 
             try:
-                if backend is None:
-                    result = self.backend.master_resubmit(rjobs)
+                if auto_resubmit:
+                    result = self.backend.master_auto_resubmit(rjobs)
                 else:
-                    result = self.backend.master_resubmit(rjobs,backend=backend)                
+                    if backend is None:
+                        result = self.backend.master_resubmit(rjobs)
+                    else:
+                        result = self.backend.master_resubmit(rjobs,backend=backend)                
+                        
                 if not result:
                     raise JobManagerError('error during submit')
             except IncompleteJobSubmissionError,x:

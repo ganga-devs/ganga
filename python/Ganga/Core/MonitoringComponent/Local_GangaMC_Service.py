@@ -30,6 +30,8 @@ from Ganga.Core import GangaException
 config.addOption( 'repeat_messages',False,'if 0 then log only once the errors for a given backend and do not repeat them anymore')
 config.addOption( 'autostart',None,'enable monitoring automatically at startup, in script mode monitoring is disabled by default, in interactive mode it is enabled', type=type(True)) # enable monitoring on startup
 config.addOption( 'base_poll_rate', 2,'internal supervising thread',hidden=1)
+config.addOption( 'MaxNumResubmits', 5,'Maximum number of automatic job resubmits to do before giving')
+config.addOption( 'MaxFracForResubmit', 0.25,'Maximum fraction of failed jobs before stopping automatic resubmission')
 config.addOption( 'update_thread_pool_size' , 5,'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
 config.addOption( 'default_backend_poll_rate' , 30,'Default rate for polling job status in the thread pool. This is the default value for all backends.')
 config.addOption( 'Local' , 10,'Poll rate for Local backend.')
@@ -695,6 +697,22 @@ class JobRegistry_Monitor( GangaThread ):
                 try:
                     log.debug( "[Update Thread %s] Updating %s with %s." % ( currentThread, backendObj._name, [x.id for x in jobList_fromset ] ) )
                     backendObj.master_updateMonitoringInformation( jobList_fromset )
+                    
+                    # resubmit if required
+                    for j in jobList_fromset:
+                        if len(j.subjobs) == 0 or not j.do_auto_resubmit:
+                            continue
+                        
+                        if j.info.submit_counter > config['MaxNumResubmits']:
+                            continue
+                            
+                        num_com = len( [s for s in j.subjobs if s.status in ['completed'] ] )
+                        num_fail = len( [s for s in j.subjobs if s.status in ['failed'] ] )
+                        
+                        if num_com > 0 and num_fail > 0 and (float(num_fail) / float(num_com+num_fail)) < config['MaxFracForResubmit']:
+                            log.warning('Resubmitting failed subjobs for job %d...' % j.id)
+                            j.auto_resubmit()
+                            
                 except BackendError, x:
                     self._handleError( x, x.backend_name, 0 )
                 except Exception, x:
