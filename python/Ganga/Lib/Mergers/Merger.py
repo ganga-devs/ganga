@@ -78,7 +78,7 @@ def runAutoMerge(job, new_status):
         if job.merger:
             #we run if master is in a failed state if ignorefailed flag is set
             if new_status == allowed_states[0] or job.merger.ignorefailed:
-                result = job.merger.merge(job.subjobs, job.outputdir)
+                result = job.merger.merge(job.subjobs, None) # leave the output directory to the implementation (fix for http://savannah.cern.ch/bugs/?76445)
 
     except Exception:
         log_user_exception()
