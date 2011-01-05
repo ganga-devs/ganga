@@ -706,10 +706,14 @@ class JobRegistry_Monitor( GangaThread ):
                         if j.info.submit_counter > config['MaxNumResubmits']:
                             continue
                             
+
+
                         num_com = len( [s for s in j.subjobs if s.status in ['completed'] ] )
                         num_fail = len( [s for s in j.subjobs if s.status in ['failed'] ] )
+
+                        #log.critical('Checking failed subjobs for job %d... %d %s',j.id,num_com,num_fail)
                         
-                        if num_com > 0 and num_fail > 0 and (float(num_fail) / float(num_com+num_fail)) < config['MaxFracForResubmit']:
+                        if num_com+num_fail > 0 and (float(num_fail) / float(num_com+num_fail)) < config['MaxFracForResubmit']:
                             log.warning('Resubmitting failed subjobs for job %d...' % j.id)
                             j.auto_resubmit()
                             
