@@ -309,27 +309,47 @@ def _resolveSites(sites):
 
     return new_sites
 
-def getAllSites(only_lcg=True,resolve=False):
+def getAllSites(only_lcg=True,resolve=False, excluded_clouds=[], excluded_sites=[]):
     '''list all sites defined in TiersOfATLAS'''
 
     _refreshToACache()
     _refreshCESEInfo()
-    
-    sites = getSites('CERN')
-    sites += getSites('ITALYSITES')
-    sites += getSites('SPAINSITES')
-    sites += getSites('FRANCESITES')
-    sites += getSites('UKSITES')
-    sites += getSites('FZKSITES')
-    sites += getSites('NLSITES')
-    sites += getSites('TAIWANSITES')    
-    sites += getSites('CANADASITES')    
-    
+
+    sites = []
+    if not 'TO' in excluded_clouds:
+        sites += getSites('CERN')
+    if not 'IT' in excluded_clouds:
+        sites += getSites('ITALYSITES')
+    if not 'ES' in excluded_clouds:
+        sites += getSites('SPAINSITES')
+    if not 'FR' in excluded_clouds:
+        sites += getSites('FRANCESITES')
+    if not 'UK' in excluded_clouds:
+        sites += getSites('UKSITES')
+    if not 'DE' in excluded_clouds:
+        sites += getSites('FZKSITES')
+    if not 'NL' in excluded_clouds:
+        sites += getSites('NLSITES')
+    if not 'TW' in excluded_clouds:
+        sites += getSites('TAIWANSITES')
+    if not 'CA' in excluded_clouds:
+        sites += getSites('CANADASITES')    
+
     if not only_lcg:
         sites += getSites('USASITES')
         sites += getSites('NDGF')
 
+    # exclude sites
+    for site in excluded_sites:
+        if site in sites:
+            sites.remove(site)
+    
     if resolve: sites = _resolveSites(sites)
+
+    # exclude sites - check again after site resolution
+    for site in excluded_sites:
+        if site in sites:
+            sites.remove(site)
 
     sites.sort()
 
@@ -414,6 +434,7 @@ class AtlasLCGRequirements(LCGRequirements):
         'other'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Other Requirements'),
         'sites'           : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names'),
         'excluded_sites'  : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS site names to be excluded'),
+        'excluded_clouds' : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='ATLAS cloud names to be excluded'),
         'cloud'           : SimpleItem(defvalue = 'ALL', doc='ATLAS cloud name: CERN, IT, ES, FR, UK, DE, NL, TW, CA, US, NG'),
         'anyCloud'        : SimpleItem(defvalue = True, doc='Set to True to allow cross-cloud submission. Use with the \'ALL\' cloud option.'),
         'os'              : SimpleItem(defvalue ='', doc='Operation Systems')
@@ -509,7 +530,7 @@ class AtlasLCGRequirements(LCGRequirements):
 
     def list_sites(self,only_lcg=True,resolve=False):
 
-        return getAllSites(only_lcg,resolve)
+        return getAllSites(only_lcg,resolve,self.excluded_clouds,self.excluded_sites)
 
     def list_clouds(self):
 
@@ -530,6 +551,12 @@ class AtlasLCGRequirements(LCGRequirements):
             cloud = cloudID
            
         sites = getSites(cloud)
+        
+        # exclude sites
+        for site in self.excluded_sites:
+            if site in sites:
+                sites.remove(site)
+            
         if sites:
             return sites
         raise BackendError('LCG','Could not find any sites for selected cloud %s. Allowed clouds: %s'%(cloud,self._cloudNameList.keys()))
