@@ -41,7 +41,7 @@ import os, os.path, getpass, signal, stat, time, re, socket, pprint, select
 import PrettyStrings
 
 import Ganga.Utility.Config
-from Ganga.GPIDev.Schema import * # pylint: disable-msg=W0401
+from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Base import GangaObject
 
 from Ganga.GPIDev.Lib.File import File
@@ -97,7 +97,7 @@ if JEMloader.INITIALIZED:
         logger.debug(str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
         JEMloader.INITIALIZED = False
 
-    from GangaJEM import library
+    from GangaJEM import library #@UnresolvedImport
 
     try:
         # this is a HACK to pull all config options off of JEM and create GangaObject-representations of them.
@@ -105,9 +105,7 @@ if JEMloader.INITIALIZED:
         definition, objlist = ConfigConverter.JEMConfig2GangaObjectSchemas()
         exec(definition, globals(), locals())
     except:
-        #ei = sys.exc_info()
         logger.debug("Failed to inject JEMs config into GangaJEM")
-        #logger.debug("Reason: " + str(ei[0]) + " - " + str(ei[1]))
         log_last_exception(logger.debug, True)
 
 # set to True to debug

@@ -141,7 +141,8 @@ class JEMMonitoringServiceHandler(object):
             logger.info("This seems to be your first job submission with the JobExecutionMonitor enabled.")
             logger.info("Preparing JEM for first-time use...")
             try:
-                os.system(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py --mode Packer >/dev/null")
+                os.spawnvpe(os.P_WAIT, sys.executable,
+                            [sys.executable, JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py", "--mode", "Packer"], {})
             except:
                 logger.warn('Failed to prepare JEM library package. Disabled JEM monitoring.')
                 mo.enabled = False
@@ -150,7 +151,8 @@ class JEMMonitoringServiceHandler(object):
         elif jemconfig['JEM_REPACK']:
             logger.debug("Repacking JEM library")
             try:
-                os.system(JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py --mode Packer >/dev/null")
+                os.spawnvpe(os.P_WAIT, sys.executable,
+                            [sys.executable, JEMloader.JEM_PACKAGEPATH + os.sep + "JEM.py", "--mode", "Packer"], {})
             except:
                 logger.warn('Could not repack JEM library package. JEM library package may be out of date.')
         # still not available?
