@@ -504,6 +504,25 @@ class DQ2JobSplitter(ISplitter):
                 self.numfiles = 1
 
             for sites, guids in siteinfo.iteritems():
+
+                # preferentially select sites given the cloud priority
+                cloud_pref = config['AnyCloudPreferenceList']
+                if len(cloud_pref) > 0 and job.backend._name in ['LCG', 'Panda'] and job.backend.requirements.anyCloud:
+                    # find the clouds
+                    from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
+                    a = AtlasLCGRequirements()
+                    clouds = a.cloud_from_sites(sites.split(':'))
+                    
+                    for cl in cloud_pref:
+                        if cl in clouds.values():
+                            # cloud preference found - remove all but these sites
+                            new_sites = []
+                            for site in clouds:
+                                if clouds[site] == cl:
+                                    new_sites.append( site )
+                            sites = ':'.join(new_sites)
+                            break
+                                                                                                                                                                                                                                                                                    
                 # at these sites process these guids belonging to dataset
                 
                 counter = 0 ; id_lower = 0;  id_upper = 0; tmpid = 0
@@ -882,3 +901,4 @@ config.addOption('MaxFileSizeNGDQ2JobSplitter', 14336, 'Maximum total sum of fil
 config.addOption('MaxFileSizePandaDQ2JobSplitter', 13336, 'Maximum total sum of filesizes per subjob of DQ2JobSplitter at the Panda backend (in MB)')
 config.addOption('DefaultNumFilesPandaDirectDQ2JobSplitter', 50, 'Default number of input files per subjob used at a direct access site in Panda in DQ2JobSplitter')
 config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_MCDISK', 'NDGF-T1_PRODDISK', 'NDGF-T1_SCRATCHDISK' ], 'Allowed space tokens/sites for DQ2JobSplitter on NG backend' )
+config.addOption('AnyCloudPreferenceList', [ ], 'List of clouds that should be preferentially submitted to when using the anyCloud option' )
