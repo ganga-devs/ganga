@@ -550,7 +550,7 @@ class DQ2JobSplitter(ISplitter):
                     inTRF = False
                     inARA = False
                     isDirectAccess = PsubUtils.isDirectAccess(pandaSite, inBS, inTRF, inARA)
-                    if isDirectAccess: 
+                    if isDirectAccess or job.backend.accessmode in ['DIRECT','FILE_STAGER']: 
                        max_subjob_filesize = 0
                        # use numfiles if user has set it, else use MaxSubjobFilesPandaDQ2JobSplitter
                        if not orig_numsubjobs>0 and not orig_numfiles>0:
