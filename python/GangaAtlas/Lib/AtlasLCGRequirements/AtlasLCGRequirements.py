@@ -556,7 +556,14 @@ class AtlasLCGRequirements(LCGRequirements):
         for site in self.excluded_sites:
             if site in sites:
                 sites.remove(site)
-            
+
+        # blacklist
+        for bad_site in CESEInfo['blacklist']:
+            try:
+                sites.remove(bad_site)
+            except ValueError:
+                pass
+        
         if sites:
             return sites
         raise BackendError('LCG','Could not find any sites for selected cloud %s. Allowed clouds: %s'%(cloud,self._cloudNameList.keys()))
