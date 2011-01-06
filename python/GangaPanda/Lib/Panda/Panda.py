@@ -836,7 +836,7 @@ class Panda(IBackend):
                 sites=Client.PandaSites.keys()
 
             for s in sites:
-                if Client.PandaSites[s]['status'] not in ['online'] or s in self.requirements.excluded_sites or (not self.requirements.anyCloud and Client.PandaSites[s]['cloud'] != self.requirements.cloud):
+                if Client.PandaSites[s]['status'] not in ['online'] or s in self.requirements.excluded_sites or Client.PandaSites[s]['cloud'] in self.requirements.excluded_clouds or (not self.requirements.anyCloud and Client.PandaSites[s]['cloud'] != self.requirements.cloud):
                     continue
                 tokens = convertQueueNameToDQ2Names(s)
                 for t in tokens:
