@@ -309,7 +309,7 @@ def _resolveSites(sites):
 
     return new_sites
 
-def getAllSites(only_lcg=True,resolve=False, excluded_clouds=[], excluded_sites=[]):
+def getAllSites(only_lcg=True,resolve=False, excluded_clouds=[], excluded_sites=[], blacklist=True):
     '''list all sites defined in TiersOfATLAS'''
 
     _refreshToACache()
@@ -353,11 +353,12 @@ def getAllSites(only_lcg=True,resolve=False, excluded_clouds=[], excluded_sites=
 
     sites.sort()
 
-    for bad_site in CESEInfo['blacklist']:
-        try:
-            sites.remove(bad_site)
-        except ValueError:
-            pass
+    if (blacklist):
+        for bad_site in CESEInfo['blacklist']:
+            try:
+                sites.remove(bad_site)
+            except ValueError:
+                pass
      
     return sites
 
@@ -537,7 +538,7 @@ class AtlasLCGRequirements(LCGRequirements):
         #return getCloudInfo()
         return self._cloudNameList.keys()
 
-    def list_sites_cloud(self, cloudName=''):
+    def list_sites_cloud(self, cloudName='', blacklist=True):
 
 
         if cloudName:
@@ -558,11 +559,13 @@ class AtlasLCGRequirements(LCGRequirements):
                 sites.remove(site)
 
         # blacklist
-        for bad_site in CESEInfo['blacklist']:
-            try:
-                sites.remove(bad_site)
-            except ValueError:
-                pass
+        if (blacklist):
+            _refreshCESEInfo()
+            for bad_site in CESEInfo['blacklist']:
+                try:
+                    sites.remove(bad_site)
+                except ValueError:
+                    pass
         
         if sites:
             return sites
@@ -584,14 +587,17 @@ class AtlasLCGRequirements(LCGRequirements):
         
         # sort info for site -> cloud
         for cloud in self.list_clouds():
-            cloud_sites = self.list_sites_cloud( cloud )
+            cloud_sites = getSites(self._cloudNameList[cloud])
             for site in cloud_sites:
                 mapping[ site ] = cloud
 
         # now output the mapping requested
         output = {}
         for site in sites:
-            output[site] = mapping[site]
+            try:
+                output[site] = mapping[site]
+            except:
+                logger.warning("Could not find cloud associated with site '%s'." % site)
 
         return output
                                                
