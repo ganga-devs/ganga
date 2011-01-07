@@ -93,8 +93,8 @@ class GaudiXMLSummary(GangaObject):
         sum.parse(self.file)
         self.data = sum
 
-        del sys.modules['schema']
-        del sys.modules['summary']
+        if sys.modules.has_key('schema'): del sys.modules['schema']
+        if sys.modules.has_key('summary'): del sys.modules['summary']
         return
 
     def create(self,job,file='summary.xml'):

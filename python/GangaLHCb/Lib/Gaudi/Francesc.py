@@ -127,7 +127,8 @@ class Francesc(IApplication):
         logger.debug(script)
 
         self.shell = Shell(setup=fd.name)
-        logger.debug(pprint.pformat(self.shell.env))    
+        logger.debug(pprint.pformat(self.shell.env))
+        
         fd.close()
         app_ok = False
         ver_ok = False
