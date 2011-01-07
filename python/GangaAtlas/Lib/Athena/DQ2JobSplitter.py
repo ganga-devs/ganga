@@ -507,12 +507,18 @@ class DQ2JobSplitter(ISplitter):
 
                 # preferentially select sites given the cloud priority
                 cloud_pref = config['AnyCloudPreferenceList']
-                if len(cloud_pref) > 0 and job.backend._name in ['LCG', 'Panda'] and job.backend.requirements.anyCloud:
-                    # find the clouds
-                    from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
-                    a = AtlasLCGRequirements()
-                    clouds = a.cloud_from_sites(sites.split(':'))
-                    
+                if len(cloud_pref) > 0:
+                    clouds = {}
+                    # use AtlasLCGRequirements for LCG and PandaTools for Panda to find mapping from site to cloud
+                    if job.backend._name in ['LCG'] and job.backend.requirements.anyCloud:
+                        clouds = job.backend.requirements.cloud_from_sites(sites.split(':'))
+                    elif job.backend._name in ['Panda'] and job.backend.requirements.anyCloud:
+                        from pandatools import Client
+                        for site in sites.split(':'):
+                            queue = Client.convertDQ2toPandaID(site)
+                            clouds[site] = Client.PandaSites[queue]['cloud']
+                            
+                    # Now try to match this with the cloud preferences
                     for cl in cloud_pref:
                         if cl in clouds.values():
                             # cloud preference found - remove all but these sites
@@ -522,7 +528,7 @@ class DQ2JobSplitter(ISplitter):
                                     new_sites.append( site )
                             sites = ':'.join(new_sites)
                             break
-                                                                                                                                                                                                                                                                                    
+                        
                 # at these sites process these guids belonging to dataset
                 
                 counter = 0 ; id_lower = 0;  id_upper = 0; tmpid = 0
