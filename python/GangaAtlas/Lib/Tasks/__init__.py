@@ -10,11 +10,13 @@ addRegistry(TaskRegistry("tasks", "Tasks Registry"))
 from Task import Task
 from MCTask import MCTask
 from AnaTask import AnaTask
+from MultiTask import MultiTask
 
 ## Transforms
 from Transform import Transform
 from MCTransforms import EvgenTransform, SimulTransform, ReconTransform
 from AnaTransform import AnaTransform
+from MultiTransform import MultiTransform
 from ArgTransform import ArgTransform
 
 # Applications

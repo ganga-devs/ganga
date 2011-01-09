@@ -308,10 +308,10 @@ class Transform(GangaObject):
                      #logger.warning("Partition with only unknown applications encountered. This is probably not a problem.")
                      self._partition_status[partition] = "ready"
       ## Notify the next transform (if any) of the change in input status
-      task = self._getParent()
-      if task and (task.transforms.index(self) + 1 < len(task.transforms)):
-         task.transforms[task.transforms.index(self) + 1].updateInputStatus(self, partition)
+      self.notifyNextTransform(partition)
+
       ## Update the Tasks status if necessary
+      task = self._getParent()
       if partition in self._partition_status and self._partition_status[partition] in ["completed","bad"] and self.status == "running":
          for s in self._partition_status.values():
             if s != "completed" and s != "bad":
@@ -327,6 +327,12 @@ class Transform(GangaObject):
                   task.updateStatus()
                return
 
+   def notifyNextTransform(self, partition):
+      """ Notify any dependant transforms of the input update """
+      task = self._getParent()
+      if task and (task.transforms.index(self) + 1 < len(task.transforms)):
+         task.transforms[task.transforms.index(self) + 1].updateInputStatus(self, partition)
+         
    def setPartitionsStatus(self, partitions, status):
       """ Set the Status of the partitions to "ready", "hold", "bad" or "completed".
           The status is then updated to the status indicated by the applications
