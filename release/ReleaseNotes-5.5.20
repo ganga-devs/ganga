@@ -37,6 +37,8 @@ Athena:
 * Added an exclude clouds option to AtlasLCGRequirements
 * Added blacklisting into the 'list_sites_cloud' function
 * DQ2JobSplitter: accessmode can be direct too for Panda
+* Made Multi stage analysis code compatible with new 
+  dataset freezing policy
 
 Tasks:
 ------
@@ -75,5 +77,6 @@ ganga/python/GangaPanda
 * Test for cloud/site exclusion in the requirements
 * Merge event testing fix to trunk
 * Fix for resubmit with frozen datasets
+* Made Multi stage analysis code compatible with new dataset freezing policy
 
 **************************************************************************************************************
