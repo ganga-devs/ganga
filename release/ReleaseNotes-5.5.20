@@ -74,5 +74,6 @@ ganga/python/GangaPanda
 * Added an exclude clouds option to PandaRequirements
 * Test for cloud/site exclusion in the requirements
 * Merge event testing fix to trunk
+* Fix for resubmit with frozen datasets
 
 **************************************************************************************************************
