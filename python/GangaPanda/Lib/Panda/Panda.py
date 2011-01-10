@@ -542,6 +542,14 @@ class Panda(IBackend):
              return False
         return True
 
+    def check_auto_resubmit(self):
+        """ Only auto resubmit if the master job has failed """
+        j = self._getParent()
+        if j.status == 'failed':
+            return True
+
+        return False
+        
     def master_resubmit(self,jobs):
         '''Resubmit failed subjobs'''
         from pandatools import Client
@@ -604,8 +612,10 @@ class Panda(IBackend):
                             if retryMatch == None:
                                 file.destinationDBlock += '_r1'
                             else:
-                                tmpDestinationDBlock = re.sub('_r(\d+)$',file.destinationDBlock)
-                                file.destinationDBlock = tmpDestinationDBlock + '_r%d' % (1+int(retryMatch.group(1)))
+                                tmpDestinationDBlock = re.sub('_r(\d+)$','',file.destinationDBlock)
+                                file.destinationDBlock = tmpDestinationDBlock + '_r%d' % (1+int(retryMatch.group(1)))                                
+                            jobIDs[oldID].outputdata.datasetname = file.destinationDBlock
+                                
                         # add attempt nr
                         oldName  = file.lfn
                         file.lfn = re.sub("\.\d+$","",file.lfn)
