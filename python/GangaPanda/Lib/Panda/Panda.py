@@ -598,6 +598,14 @@ class Panda(IBackend):
                     elif file.type in ('output','log'):
                         file.destinationSE = retryDestSE
                         file.destinationDBlock = re.sub('_sub\d+$','',file.destinationDBlock)
+                        # add retry num
+                        if file.dataset.endswith('/'):
+                            retryMatch = re.search('_r(\d+)$',file.destinationDBlock)
+                            if retryMatch == None:
+                                file.destinationDBlock += '_r1'
+                            else:
+                                tmpDestinationDBlock = re.sub('_r(\d+)$',file.destinationDBlock)
+                                file.destinationDBlock = tmpDestinationDBlock + '_r%d' % (1+int(retryMatch.group(1)))
                         # add attempt nr
                         oldName  = file.lfn
                         file.lfn = re.sub("\.\d+$","",file.lfn)
@@ -615,6 +623,25 @@ class Panda(IBackend):
             else:
                 logger.warning("Cannot resubmit. Some jobs are still running.")
                 return False
+
+        # register datasets
+        addedDataset = []
+        for rj in retryJobs:
+            for tmpFile in rj.Files:
+                if tmpFile.type in ['output','log'] and tmpFile.dataset.endswith('/'):
+                    # add datasets
+                    if not tmpFile.destinationDBlock in addedDataset:
+                        tmpOutDsLocation = Client.PandaSites[rj.computingSite]['ddm']
+                        try:
+                            # create dataset
+                            Client.addDataset(tmpFile.destinationDBlock,False,location=tmpOutDsLocation)
+                            # add to container
+                            Client.addDatasetsToContainer(tmpFile.dataset,[tmpFile.destinationDBlock],False)
+                            logger.warning('Created dataset %s and added to container %s.'%(tmpFile.destinationDBlock,tmpFile.dataset))
+                        except exceptions.SystemExit:
+                            raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(tmpFile.destinationDBlock,sys.exc_info()[0],sys.exc_info()[1]))
+                        # append
+                        addedDataset.append(tmpFile.destinationDBlock)
 
         # submit
         if len(retryJobs)==0:
