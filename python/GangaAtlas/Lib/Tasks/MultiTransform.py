@@ -209,8 +209,13 @@ class MultiTransform(Transform):
           jobs = ltf.getPartitionJobs(unit_list[0])
 
           # create a unit per dataset listed - note that we select the last job in the list in case to retries
+          mj = jobs[-1]._impl._getParent()
+          if not mj:
+              logger.error("Could not get master job of job id %d - can not continue setting up transform." % jobs[-1].id)
+              return
+          
           part_num = len(self.partitions_data)+1
-          ind = jobs[-1].outputdata.datasetname
+          ind = mj.outputdata.datasetname
           logger.warning("Determining partition splitting for dataset %s..." % ind )
           self.backend = stripProxy(GPI.Panda())
           
