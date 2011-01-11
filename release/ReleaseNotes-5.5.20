@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.20 (2011/1/10)
+5.5.20 (2011/1/11)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -8,7 +8,8 @@ ganga/python/Ganga
 - added implementation of auto_resubmit() 
 - bugfix #76733 - set ganga version before saving the user config where ConfigError can occur if some 
 config section is not found
-- bugfix #76445 - leave the output directory to the implementation 
+- bugfix #76445 - leave the output directory to the implementation if set_outputdir_for_automerge 
+merger class attribute is set to False
 - fixed a bug in the test case which tried to access a non-existent list index.
 
 
