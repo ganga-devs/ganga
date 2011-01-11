@@ -1504,6 +1504,9 @@ class AthenaOutputMerger(IMerger):
                   {'attribute' : 'ignorefailed', 'widget' : 'Bool'}
                   ]
 
+    # set the automerge to *not* use the output dir of the job
+    set_outputdir_for_automerge = False
+
     def merge(self, subjobs = None, sum_outputdir = None, **options ):
         '''Merge local root tuples of subjobs output'''
 
