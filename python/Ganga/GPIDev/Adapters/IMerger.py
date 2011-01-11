@@ -17,6 +17,12 @@ class IMerger(GangaObject):
     _category = 'mergers'
     _hidden = 1
 
+    # set outputdir for auto merge policy flag
+    # the default behaviour (True) is that outputdir is set by runAutoMerge() function in Merger.py module
+    # however if this flag is set to False then merge() will be called for auto merge with sum_outputdir set to None
+    # thus it is up to the subclass to decide where the output goes in case of auto merge
+    set_outputdir_for_automerge = True
+
     def merge(self, subjobs, sum_outputdir, **options ):
         """
         Merge the output of subjobs into the sum_outputdir.

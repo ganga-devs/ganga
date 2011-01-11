@@ -4,7 +4,7 @@
 # $Id: Merger.py,v 1.5 2009-03-18 10:46:01 wreece Exp $
 ################################################################################
 
-from Ganga.GPIDev.Adapters.IMerger import MergerError
+from Ganga.GPIDev.Adapters.IMerger import MergerError, IMerger
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
@@ -78,7 +78,13 @@ def runAutoMerge(job, new_status):
         if job.merger:
             #we run if master is in a failed state if ignorefailed flag is set
             if new_status == allowed_states[0] or job.merger.ignorefailed:
-                result = job.merger.merge(job.subjobs, None) # leave the output directory to the implementation (fix for http://savannah.cern.ch/bugs/?76445)
+
+                # leave the output directory to the implementation (fix for http://savannah.cern.ch/bugs/?76445)
+                sum_outputdir = None
+                if job.merger.set_outputdir_for_automerge:
+                    sum_outputdir = job.outputdir
+
+                result = job.merger.merge(job.subjobs, sum_outputdir)
 
     except Exception:
         log_user_exception()
@@ -104,7 +110,7 @@ class IMergeTool(GangaObject):
         """
         raise NotImplementedError
 
-class AbstractMerger(GangaObject):
+class AbstractMerger(IMerger):
     """
     The idea behind this class is to put all of the checking and user interaction in this class, and then use a very simple
     stateless merge_tool to actually do the relevant merge. The Abstract label is perhaps misleading, but I intend all Merger
@@ -488,7 +494,7 @@ class RootMerger(AbstractMerger):
         return super(RootMerger,self).merge(jobs, outputdir, ignorefailed, overwrite)
 
 
-class MultipleMerger(GangaObject):
+class MultipleMerger(IMerger):
     """Merger class when merges of different file types are needed.
 
     Here is a typical usage example:
