@@ -196,6 +196,12 @@ class IBackend(GangaObject):
         """
         return self.master_resubmit(rjobs)
 
+    def check_auto_resubmit(self):
+        """ A hook for the backend to check if this job can be
+        automatically resubmitted.
+        """
+        return True
+        
     def master_resubmit(self,rjobs,backend=None):
         """ Resubmit (previously submitted) job. Configuration phase is skipped.
         Default implementation works is an emulated-bulk operation.

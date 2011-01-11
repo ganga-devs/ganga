@@ -714,8 +714,9 @@ class JobRegistry_Monitor( GangaThread ):
                         #log.critical('Checking failed subjobs for job %d... %d %s',j.id,num_com,num_fail)
                         
                         if num_fail > 0 and (float(num_fail) / float(num_com+num_fail)) < config['MaxFracForResubmit']:
-                            log.warning('Resubmitting failed subjobs for job %d...' % j.id)
-                            j.auto_resubmit()
+                            if j.backend.check_auto_resubmit():
+                                log.warning('Resubmitting failed subjobs for job %d...' % j.id)
+                                j.auto_resubmit()
                             
                 except BackendError, x:
                     self._handleError( x, x.backend_name, 0 )
