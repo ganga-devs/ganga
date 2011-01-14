@@ -688,6 +688,8 @@ class Athena(IApplication):
 
     def postprocess_failed(self):
         """Check consistency of output dataset"""
+        from Ganga.GPIDev.Lib.Job import Job
+        job = self.getJobObject()
         if job.backend._name in [ 'LCG', 'CREAM' ]:
             # it's the master job 
             if not job.master and job.subjobs:
