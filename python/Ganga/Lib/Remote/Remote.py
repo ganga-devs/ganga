@@ -263,7 +263,8 @@ print "***_FINISHED_***"
             logger.warning("Error when comunicating with remote host. Retrying...")
             self._transport = None
             self._sftp = None
-            del Remote._key[self.ssh_key]
+            if Remote._key.has_key( self.ssh_key ):
+               del Remote._key[self.ssh_key]
 
          num_try = num_try + 1
 
@@ -450,6 +451,7 @@ print pickle.dumps(j._impl)
 print j
 
 # print a finished token
+print "***_END_PICKLE_***"
 print "***_FINISHED_***"
 """
       
@@ -568,6 +570,7 @@ print pickle.dumps(j._impl)
 print j
 
 # print a finished token
+print "***_END_PICKLE_***"
 print "***_FINISHED_***"
 """
       
@@ -601,7 +604,7 @@ print "***_FINISHED_***"
 
       # Find the start and end of the pickle
       start = out.find("***_START_PICKLE_***") + len("***_START_PICKLE_***")
-      stop = out.find("***_FINISHED_***")
+      stop = out.find("***_END_PICKLE_***")
       outputdir = out[start + 1:out.find("\n", start + 1) - 1]
       pickle_str = out[out.find("\n", start + 1) + 1:stop]
       
@@ -712,6 +715,7 @@ print j.outputdir
 print pickle.dumps(j._impl)
 
 # print a finished token
+print "***_END_PICKLE_***"
 print "***_FINISHED_***"
 """
       import inspect
@@ -752,10 +756,18 @@ print "***_FINISHED_***"
       import os
       import getpass
       from string import strip
-      
-      for j in jobs:
 
-         # Create a ganga script that updates the job info from the remote site
+      # first, loop over the jobs and sort by host, username, gangadir and pre_script
+      jobs_sort = {}
+      for j in jobs:
+         host_str = j.backend.username + "@" + j.backend.host + ":" + j.backend.ganga_dir + "+" + ';'.join(j.backend.pre_script)
+         if not jobs_sort.has_key(host_str):
+            jobs_sort[host_str] = []
+
+         jobs_sort[host_str].append(j)
+         
+      for host_str in jobs_sort:
+         # Create a ganga script that updates the job info for all jobs at this remote site
          script = """#!/usr/bin/env python
 #-----------------------------------------------------
 # This is a monitoring script for a remote job. It
@@ -771,67 +783,93 @@ import sys,popen2,time,traceback
 ############################################################################################
 
 code = ###CODE###
-jid = ###JOBID###
-
-j = jobs( jid )
+jids = ###JOBID###
 
 runMonitoring()
 
-# Start pickle token
-print "***_START_PICKLE_***"
-
-# pickle the job
 import pickle
-print j.outputdir
-print pickle.dumps(j._impl)
-print j
 
-# print a finished token
+for jid in jids:
+
+    j = jobs( jid )
+
+    # Start pickle token
+    print "***_START_PICKLE_***"
+
+    # pickle the job
+    print j.outputdir
+    print pickle.dumps(j._impl)
+    print j
+
+    # print a finished token
+    print "***_END_PICKLE_***"
+
 print "***_FINISHED_***"
 """
 
-         script = script.replace('###CODE###', repr(j.backend._code))
-         script = script.replace('###JOBID###', str(j.backend.remote_job_id))
+         mj = jobs_sort[host_str][0]
+         script = script.replace('###CODE###', repr(mj.backend._code))
+         rem_ids = []
+         for j in jobs_sort[host_str]:
+            rem_ids.append(j.backend.remote_job_id)
+         script = script.replace('###JOBID###', str(rem_ids))
 
          # check for the connection
-         if (j.backend.opentransport() == False):
+         if (mj.backend.opentransport() == False):
             return 0
-         
+
          # send the script
-         script_name = '/__jobscript__%s.py' % j.backend._code
-         j.backend._sftp.open(j.backend.ganga_dir + script_name, 'w').write(script)
+         script_name = '/__jobscript__%s.py' % mj.backend._code
+         mj.backend._sftp.open(mj.backend.ganga_dir + script_name, 'w').write(script)
 
          # run the script
-         stdout, stderr = j.backend.run_remote_script( script_name, j.backend.pre_script )
-         
+         stdout, stderr = mj.backend.run_remote_script( script_name, mj.backend.pre_script )
+
          # Copy the job object
          if stdout.find("***_FINISHED_***") != -1:
-            status, outputdir, id, be = j.backend.grabremoteinfo(stdout)
+
+            start_pos = stdout.find("***_START_PICKLE_***")
+            end_pos = stdout.find("***_END_PICKLE_***") + len("***_END_PICKLE_***")
             
-            if status != j.status:
-               j.updateStatus(status)
+            while start_pos != -1 and end_pos != -1:               
+               pickle_str = stdout[start_pos:end_pos + 1]
+
+               status, outputdir, id, be = mj.backend.grabremoteinfo( pickle_str )
+
+               # find the job and update it
+               found = False
+               for j in jobs_sort[host_str]:
+                  
+                  if (id == j.backend.remote_job_id):
+                     found = True
+                     if status != j.status:
+                        j.updateStatus(status)
+
+                     if hasattr(j.backend.remote_backend,'exitcode'):      
+                        j.backend.exitcode = be.exitcode
+                     if hasattr(j.backend.remote_backend,'actualCE'):
+                        j.backend.actualCE = be.actualCE
+
+                     for o in be._schema.allItems():
+                        exec("j.backend.remote_backend." + o[0] + " = be." + o[0])            
+
+                     # check for completed or failed and pull the output if required
+                     if j.status == 'completed' or j.status == 'failed':
+
+                        # we should have output, so get the file list first
+                        filelist = j.backend._sftp.listdir(outputdir)
+
+                        # go through and sftp them back
+                        for fname in filelist:
+                           data = j.backend._sftp.open(outputdir + '/' + fname, 'r').read()
+                           open(j.outputdir + '/' + os.path.basename(fname), 'w').write(data)
+
+               if not found:
+                  logger.warning("Couldn't match remote id %d with monitored job. Serious problems in Remote monitoring." % id)
+                  
+               start_pos = stdout.find("***_START_PICKLE_***", end_pos)
+               end_pos = stdout.find("***_END_PICKLE_***", end_pos) + len("***_END_PICKLE_***")
                
-            j.backend.remote_job_id = id
-            if hasattr(j.backend.remote_backend,'exitcode'):      
-               j.backend.exitcode = be.exitcode
-            if hasattr(j.backend.remote_backend,'actualCE'):
-               j.backend.actualCE = be.actualCE
-               
-            for o in be._schema.allItems():
-               exec("j.backend.remote_backend." + o[0] + " = be." + o[0])            
-
-            # check for completed or failed and pull the output if required
-            if j.status == 'completed' or j.status == 'failed':
-
-               # we should have output, so get the file list first
-               filelist = j.backend._sftp.listdir(outputdir)
-
-               # go through and sftp them back
-               for fname in filelist:
-                  data = j.backend._sftp.open(outputdir + '/' + fname, 'r').read()
-                  open(j.outputdir + '/' + os.path.basename(fname), 'w').write(data)
-
-
          # remove the script
          j.backend._sftp.remove(j.backend.ganga_dir + script_name)
          
