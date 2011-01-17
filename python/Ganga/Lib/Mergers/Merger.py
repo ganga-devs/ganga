@@ -579,7 +579,7 @@ def findFilesToMerge(jobs):
     return result
     
 
-class SmartMerger(GangaObject):
+class SmartMerger(IMerger):
     """Allows the different types of merge to be run according to file extension in an automatic way.
 
     SmartMerger accepts a list of files which it will delegate to individual Merger objects based on
