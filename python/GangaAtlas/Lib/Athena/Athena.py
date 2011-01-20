@@ -1215,6 +1215,33 @@ class Athena(IApplication):
         logger.debug('Athena configure called')
         return (None,None)
 
+    def getLatestDBRelease(self):
+        import tempfile,time
+        import cPickle as pickle
+        from pandatools import Client
+
+        TMPDIR = tempfile.gettempdir()
+        DBRELCACHE = '%s/ganga.latestdbrel'%TMPDIR
+
+        try:
+            fh = open(DBRELCACHE)
+            dbrelCache = pickle.load(fh)
+            fh.close()
+            if dbrelCache['mtime'] > time.time() - 3600:
+                logger.debug('Loading LATEST DBRelease from local cache')
+                self.atlas_dbrelease = dbrelCache['atlas_dbrelease']
+            else:
+                raise Exception()
+        except:
+            logger.debug('Updating local LATEST DBRelease cache')
+            self.atlas_dbrelease = Client.getLatestDBRelease(False)
+            dbrelCache = {}
+            dbrelCache['mtime'] = time.time()
+            dbrelCache['atlas_dbrelease'] = self.atlas_dbrelease
+            fh = open(DBRELCACHE,'w')
+            pickle.dump(dbrelCache,fh)
+            fh.close()
+
     def master_configure(self):
 
         logger.debug('Athena master_configure called')
@@ -1290,9 +1317,10 @@ class Athena(IApplication):
             raise ApplicationConfigurationError(None, 'RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
 
         try:
-            if self.atlas_dbrelease == 'LATEST':       
-                from pandatools import Client
-                self.atlas_dbrelease = Client.getLatestDBRelease(False)
+            if self.atlas_dbrelease == 'LATEST':
+                self.getLatestDBRelease()
+#                from pandatools import Client
+#                self.atlas_dbrelease = Client.getLatestDBRelease(False)
         except:
             raise ApplicationConfigurationError(None, "Error retrieving LATEST DBRelease. Try setting application.atlas_dbrelease manually.")
             
