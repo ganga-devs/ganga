@@ -1820,6 +1820,32 @@ sys.exit(0)
         mt = self.middleware.upper()
         return grids[mt].check_proxy()
 
+    def get_requirement_matches(self, jdl_file = None, spec_ce = ''):
+        """Return any matches using the requirements or given jdlfile"""
+
+        jdl_file2 = jdl_file
+        if not jdl_file:
+            # create a dummy jdl file from the given requirements
+            import tempfile
+            jdl = {'VirtualOrganisation'  : config['VirtualOrganisation'],
+                   'Executable' : os.path.basename(__file__),
+                   'InputSandbox' : [__file__],
+                   'Requirements' : self.requirements.convert()}
+
+            jdl_file_txt = Grid.expandjdl(jdl)
+            
+            jdl_file2 = tempfile.mktemp('.jdl')
+            file(jdl_file2, 'w').write(jdl_file_txt)
+            
+        mt = self.middleware.upper()
+        matches = grids[mt].list_match(jdl_file2, ce=spec_ce)
+
+        # clean up
+        if not jdl_file:
+            os.remove(jdl_file2)
+            
+        return matches
+        
 class LCGJobConfig(StandardJobConfig):
     '''Extends the standard Job Configuration with additional attributes'''
    
