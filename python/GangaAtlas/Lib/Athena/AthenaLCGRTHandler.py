@@ -58,7 +58,49 @@ def _splitlist(list):
         b_list.append(b)
 
     return a_list, b_list
- 
+
+def getLCGReleaseTag( app ):
+    """Helper function to return the LCG release tag for CE detection"""
+    requirementsSoftware = []
+
+    # check the correct app is being used
+    if not app or not hasattr(app, 'atlas_release') or not hasattr(app, 'atlas_production') or not hasattr(app, 'atlas_cmtconfig'):
+        return requirementsSoftware
+
+    # now construct the requirements release string
+    if app.atlas_release.find('11.')>=0 or app.atlas_release.find('10.')>=0:
+        requirementsSoftware = ['VO-atlas-release-%s' % app.atlas_release ]
+    elif app.atlas_release.find('12.0.0')>=0 or app.atlas_release.find('12.0.1')>=0 or app.atlas_release.find('12.0.2')>=0:
+        requirementsSoftware = ['VO-atlas-offline-%s' % app.atlas_release ]
+    elif app.atlas_release.find('13.')>=0 and app.atlas_project!="AtlasPoint1":
+        requirementsSoftware = ['VO-atlas-production-%s' % app.atlas_release ] 
+    elif app.atlas_release.find('13.')>=0 and app.atlas_project!="AtlasPoint1" and app.atlas_production!='':
+        requirementsSoftware = ['VO-atlas-production-%s' % app.atlas_production]
+    elif app.atlas_release.find('13.')>=0 and app.atlas_project=="AtlasPoint1":
+        requirementsSoftware = ['VO-atlas-point1-%s' % app.atlas_production ] 
+    elif app.atlas_release.find('14.')>=0 or app.atlas_release.find('15.')>=0 or app.atlas_release.find('16.')>=0:
+        if app.atlas_cmtconfig:
+            cmtconfig = app.atlas_cmtconfig
+        else:
+            cmtconfig = config['CMTCONFIG']
+        if not cmtconfig in config['CMTCONFIG_LIST']:
+            cmtconfig = config['CMTCONFIG']
+        if app.atlas_production=='':
+            requirementsSoftware = ['VO-atlas-offline-%s-%s' %(app.atlas_release, cmtconfig )]
+        else:
+            if app.atlas_project=="AtlasPoint1":
+                requirementsSoftware = ['VO-atlas-point1-%s' %(app.atlas_production)]
+            elif app.atlas_project=="AtlasTier0":
+                requirementsSoftware = ['VO-atlas-tier0-%s' %(app.atlas_production)]
+            elif app.atlas_project=="AtlasProduction":
+                requirementsSoftware = ['VO-atlas-production-%s-%s' %(app.atlas_production, cmtconfig )]
+            else:
+                requirementsSoftware = ['VO-atlas-%s-%s-%s' %(app.atlas_project.lower(), app.atlas_production, cmtconfig )]
+    else:
+        requirementsSoftware = ['VO-atlas-production-%s' % app.atlas_release ]
+
+    return requirementsSoftware
+    
 class AthenaLCGRTHandler(IRuntimeHandler):
     """Athena LCG Runtime Handler"""
 
@@ -623,38 +665,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['TAGDATASETNAME'] = ':'.join(job.inputdata.tagdataset)
 
 #       prepare job requirements
-        requirementsSoftware = []
-        
-        if app.atlas_release.find('11.')>=0 or app.atlas_release.find('10.')>=0:
-            requirementsSoftware = ['VO-atlas-release-%s' % app.atlas_release ]
-        elif app.atlas_release.find('12.0.0')>=0 or app.atlas_release.find('12.0.1')>=0 or app.atlas_release.find('12.0.2')>=0:
-            requirementsSoftware = ['VO-atlas-offline-%s' % app.atlas_release ]
-        elif app.atlas_release.find('13.')>=0 and app.atlas_project!="AtlasPoint1":
-            requirementsSoftware = ['VO-atlas-production-%s' % app.atlas_release ] 
-        elif app.atlas_release.find('13.')>=0 and app.atlas_project!="AtlasPoint1" and app.atlas_production!='':
-            requirementsSoftware = ['VO-atlas-production-%s' % app.atlas_production]
-        elif app.atlas_release.find('13.')>=0 and app.atlas_project=="AtlasPoint1":
-            requirementsSoftware = ['VO-atlas-point1-%s' % app.atlas_production ] 
-        elif app.atlas_release.find('14.')>=0 or app.atlas_release.find('15.')>=0 or app.atlas_release.find('16.')>=0:
-            if app.atlas_cmtconfig:
-                cmtconfig = app.atlas_cmtconfig
-            else:
-                cmtconfig = config['CMTCONFIG']
-            if not cmtconfig in config['CMTCONFIG_LIST']:
-                cmtconfig = config['CMTCONFIG']
-            if app.atlas_production=='':
-                requirementsSoftware = ['VO-atlas-offline-%s-%s' %(app.atlas_release, cmtconfig )]
-            else:
-                if app.atlas_project=="AtlasPoint1":
-                    requirementsSoftware = ['VO-atlas-point1-%s' %(app.atlas_production)]
-                elif app.atlas_project=="AtlasTier0":
-                    requirementsSoftware = ['VO-atlas-tier0-%s' %(app.atlas_production)]
-                elif app.atlas_project=="AtlasProduction":
-                    requirementsSoftware = ['VO-atlas-production-%s-%s' %(app.atlas_production, cmtconfig )]
-                else:
-                    requirementsSoftware = ['VO-atlas-%s-%s-%s' %(app.atlas_project.lower(), app.atlas_production, cmtconfig )]
-        else:
-            requirementsSoftware = ['VO-atlas-production-%s' % app.atlas_release ]
+        requirementsSoftware = getLCGReleaseTag( app )
 
         releaseBlacklist = job.backend.requirements.list_release_blacklist()     
         if requirementsSoftware and  requirementsSoftware[0] in releaseBlacklist:

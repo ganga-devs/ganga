@@ -236,11 +236,21 @@ class DQ2JobSplitter(ISplitter):
                     allowed_sites = job.backend.requirements.sites
                 elif job.backend.requirements.cloud:
 
+                    from GangaAtlas.Lib.Athena.AthenaLCGRTHandler import getLCGReleaseTag
+                    
+                    rel_tag = getLCGReleaseTag( job.application )
+                    rel_tag_str = ''
+                    if len(rel_tag) > 0:
+                        rel_tag_str = rel_tag[0]
+                    
                     if job.backend.requirements.cloud == 'ALL' and not job.backend.requirements.sites and job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
                         logger.warning('DQ2OutputDataset being used with \'ALL\' cloud option. Attempting to find suitable sites - this may take some time...')
-                        allowed_sites = job.backend.requirements.list_sites()
+                        allowed_sites = job.backend.requirements.list_sites( req_str = rel_tag_str )
                     else:
-                        allowed_sites = job.backend.requirements.list_sites_cloud()
+                        allowed_sites = job.backend.requirements.list_sites_cloud( req_str = rel_tag_str )
+
+                    if len(allowed_sites) == 0:
+                        raise ApplicationConfigurationError(None,'DQ2JobSplitter could not find any allowed sites. This could be due to blacklisting, not having the required release installed or sites/clouds being manually excluded.')
                 else: 
                     raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
                 allowed_sites_all = job.backend.requirements.list_sites(True,True)
