@@ -529,16 +529,36 @@ class AtlasLCGRequirements(LCGRequirements):
 
         return getCEsForSites(ids)
 
-    def list_sites(self,only_lcg=True,resolve=False):
+    def list_sites(self,only_lcg=True,resolve=False, req_str = ''):
 
-        return getAllSites(only_lcg,resolve,self.excluded_clouds,self.excluded_sites)
+        sites = getAllSites(only_lcg,resolve,self.excluded_clouds,self.excluded_sites)
+
+        if (req_str != '') and (self._name == 'AtlasLCGRequirements'):
+            # check release requirements
+            old_software = self.software
+            self.software = [req_str]
+            be = self._getParent()
+            matches = be.get_requirement_matches()
+
+            # find the ces for each site
+            new_sites = []
+            for site in sites:
+                ces = getCEsForSites([site])
+                for ce in ces:
+                    if ce in matches:
+                        new_sites.append(site)
+                        break
+
+            sites = new_sites
+            
+        return sites
 
     def list_clouds(self):
 
         #return getCloudInfo()
         return self._cloudNameList.keys()
 
-    def list_sites_cloud(self, cloudName='', blacklist=True):
+    def list_sites_cloud(self, cloudName='', blacklist=True, req_str = ''):
 
 
         if cloudName:
@@ -566,7 +586,25 @@ class AtlasLCGRequirements(LCGRequirements):
                     sites.remove(bad_site)
                 except ValueError:
                     pass
-        
+                
+        if (req_str != '') and (self._name == 'AtlasLCGRequirements'):
+            # check release requirements
+            old_software = self.software
+            self.software = [req_str]
+            be = self._getParent()
+            matches = be.get_requirement_matches()
+
+            # find the ces for each site
+            new_sites = []
+            for site in sites:
+                ces = getCEsForSites([site])
+                for ce in ces:
+                    if ce in matches:
+                        new_sites.append(site)
+                        break
+
+            sites = new_sites
+            
         if sites:
             return sites
         raise BackendError('LCG','Could not find any sites for selected cloud %s. Allowed clouds: %s'%(cloud,self._cloudNameList.keys()))
