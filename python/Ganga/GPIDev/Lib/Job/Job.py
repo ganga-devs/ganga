@@ -1225,6 +1225,7 @@ class JobTemplate(Job):
     _name = 'JobTemplate'
 
     _schema = Job._schema.inherit_copy()
+    _schema.datadict["status"] = SimpleItem('template',protected=1,checkset='_checkset_status',doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"') 
     
     default_registry = 'templates'
     
