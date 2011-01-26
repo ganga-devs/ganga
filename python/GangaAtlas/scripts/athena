@@ -123,7 +123,7 @@ p.add_option('--excludefiles', action='store', type='string', dest='excludefiles
 p.add_option('--athena_release', action='store', type='string', dest='athena_release', help='Athena release version to be used' )
 p.add_option('--athena_production', action='store', type='string', dest='athena_production', help='AtlasProduction transformation cache release version to be used' )
 p.add_option('--athena_project', action='store', type='string', dest='athena_project', help='AtlasProject name of release to be used, e.g. AtlasProduction' )
-p.add_option('--athena_exe', action='store', type='choice', dest='athena_exe', choices = ['ATHENA', 'PYARA', 'ROOT','ARES','EXE' ], default='ATHENA', help='Executable type: ATHENA, PYARA, ROOT [default: ATHENA]')
+p.add_option('--athena_exe', action='store', type='choice', dest='athena_exe', choices = ['ATHENA', 'PYARA', 'ROOT','ARES','EXE', 'TRF' ], default='ATHENA', help='Executable type: ATHENA, PYARA, ROOT [default: ATHENA]')
 p.add_option('--athena_dbrelease', action='store', type='string', dest='athena_dbrelease', help='ATLAS DBRelease DQ2 dataset and DQ2Release tar file (DatasetName:FileName). e.g., ddo.000001.Atlas.Ideal.DBRelease.v050101:DBRelease-5.1.1.tar.gz')
 p.add_option('--user_area', action='store', type='string', dest='user_area', help='Tar file of user athena code area produced e.g. by a previous Ganga job' )
 p.add_option('--group_area', action='store', type='string', dest='group_area', help='Tar file of GroupArea produced e.g. by a previous Ganga job' )
@@ -135,6 +135,7 @@ p.add_option('--atlas_supp_stream', action='store', type='string', dest='atlas_s
 p.add_option('--atlas_run_dir', action='store', type='string', dest='atlas_run_dir', help='Athena run directory, e.g. --atlas_run_dir=./' )
 p.add_option('--individualOutDS', action='store_true', dest='individualOutDS', help='Create seperate output datasets/containers for each output type (e.g. AANT, HIST).' )
 p.add_option('--express', action='store_true', dest='express', help='Panda option to send the job using express quota to have higher priority. The number of express subjobs in the queue and the total execution time used by express subjobs are limited (a few subjobs and several hours per day, respectively). This option is intended to be used for quick tests before bulk submission. Note that buildXYZ is not included in quota calculation. If this option is used when quota has already exceeded, the panda server will ignore the option so that subjobs have normal priorities. Also, if you submit 1 buildXYZ and N runXYZ subjobs when you only have quota of M (M < N),  only the first M runXYZ subjobs will have higher priorities' )
+p.add_option('--trf', action='store', type='string', dest='trf', help='Parameters for Athena  transformations' )
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -229,7 +230,11 @@ if opt.athena_dbrelease:
     j.application.atlas_dbrelease=opt.athena_dbrelease
 if opt.atlas_run_dir:
     j.application.atlas_run_dir=opt.atlas_run_dir
-
+if opt.trf:
+    if opt.backend == 'panda':
+        j.application.options=opt.trf
+    else: 
+        j.application.trf_parameter=opt.trf
 
 if opt.user_area:
     j.application.user_area=opt.user_area
