@@ -117,8 +117,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         self.cacheVer = ''
         if app.atlas_project and app.atlas_production:
             self.cacheVer = "-" + app.atlas_project + "_" + app.atlas_production
-        if not app.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT','EXE']:
-            raise ApplicationConfigurationError(None,"Panda backend supports only application.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT','EXE']")
+        if not app.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT','EXE', 'TRF']:
+            raise ApplicationConfigurationError(None,"Panda backend supports only application.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT','EXE', 'TRF']")
         if app.atlas_exetype == 'ATHENA' and not app.user_area.name and not job.backend.libds:
             raise ApplicationConfigurationError(None,'app.user_area.name is null')
 
@@ -149,8 +149,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # handle different atlas_exetypes
         self.job_options = ''
         if app.atlas_exetype == 'TRF':
-            #self.job_options = app.option_file.name + app.trf_parameters
-            raise ApplicationConfigurationError(None,"Sorry TRF on Panda backend not yet supported")
+            self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
+
+            if not job.outputdata.outputdata:
+                raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT','EXE' ] and Panda backend")
+            #raise ApplicationConfigurationError(None,"Sorry TRF on Panda backend not yet supported")
+
+        
         elif app.atlas_exetype == 'ATHENA':
             
             if len(app.atlas_environment) > 0 and app.atlas_environment[0].find('DBRELEASE_OVERRIDE')==-1:
@@ -172,7 +177,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         elif app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
 
             if not job.outputdata.outputdata:
-                raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT'] and Panda backend")
+                raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT','EXE' ] and Panda backend")
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
 
             # sort out environment variables
@@ -569,6 +574,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # set jobO parameter
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             param += '-j "" -p "%s" ' % self.job_options
+        elif app.atlas_exetype in ['TRF']:
+            #param += '-j "%s" ' % urllib.quote(app.options)
+            pass
         else:
             param += '-j "%s" ' % urllib.quote(self.job_options)
         if app.atlas_exetype == 'ARES':
@@ -593,7 +601,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             file.status     = 'ready'
             jspec.addFile(file)
             # set DBRelease parameter
-            param += '--dbrFile %s ' % file.lfn
+            if not app.atlas_exetype in ['TRF' ]:
+                param += '--dbrFile %s ' % file.lfn
+
         if job.inputdata:
             # check for ELSSI files
             input_files = job.inputdata.names
@@ -643,10 +653,80 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                         param += '--shipInput '
                         param += '--guidBoundary "%s" ' % guid_boundaries
 
-            param += '-i "%s" ' % input_files
+            if not app.atlas_exetype in ['TRF']:
+                param += '-i "%s" ' % input_files
         else:
             param += '-i "[]" '
 
+        # TRFs
+        if app.atlas_exetype in ['TRF']:
+            tmpJobO = app.options
+            # output
+            tmpOutMap = []
+            for tmpName,tmpLFN in outMap['IROOT']:
+                tmpJobO = tmpJobO.replace('%OUT.' + tmpName,tmpName)
+                # set correct name in outMap
+                tmpOutMap.append((tmpName,tmpLFN))
+            outMap['IROOT'] = tmpOutMap 
+            # input 
+            minList = []
+            cavList = []
+            bhaloList = []
+            bgasList = []
+            inPattList = [('%IN', input_files ),('%MININ',minList),('%CAVIN',cavList),('%BHIN',bhaloList),('%BGIN',bgasList)]    
+            for tmpPatt,tmpInList in inPattList:
+                if tmpJobO.find(tmpPatt) != -1 and len(tmpInList) > 0:
+                    tmpJobO = AthenaUtils.replaceParam(tmpPatt,tmpInList,tmpJobO)
+ 
+           # DBRelease
+            tmpItems = tmpJobO.split()
+            if self.dbrelease != '':
+                # mimic a trf parameter to reuse following algorithm
+                tmpItems += ['%DB='+self.dbrelease]
+            for tmpItem in tmpItems:
+                match = re.search('%DB=([^:]+):(.+)$',tmpItem)
+                if match:
+                    tmpDbrDS  = match.group(1)
+                    tmpDbrLFN = match.group(2)
+                    # skip if it is already extracted
+                    if tmpDbrLFN in input_files:
+                        continue
+                    # instantiate  FileSpec
+                    fileName = tmpDbrLFN
+                    vals     = self.dbrFiles[tmpDbrLFN]
+                    file = FileSpec()
+                    file.lfn            = fileName
+                    file.GUID           = vals['guid']
+                    file.fsize          = vals['fsize']
+                    file.md5sum         = vals['md5sum']
+                    file.dataset        = tmpDbrDS
+                    file.prodDBlock     = tmpDbrDS
+                    file.dispatchDBlock = tmpDbrDS
+                    file.type       = 'input'
+                    file.status     = 'ready'
+                    jspec.addFile(file)
+                    input_files.append(fileName)
+                    # replace parameters
+                    tmpJobO = tmpJobO.replace(match.group(0),tmpDbrLFN)
+
+            param += ' -j "%s" ' % urllib.quote(tmpJobO) 
+
+            param += ' -i "%s" ' % input_files
+
+            param += ' -m "[]" ' #%minList FIXME
+            param += ' -n "[]" ' #%cavList FIXME
+            param += ' --trf ' 
+
+            # direct access site ?
+            from pandatools import PsubUtils
+            inTRF = True
+            inARA = False
+            inBS = False
+            if self.runConfig.input and self.runConfig.input.inBS:
+                inBS = True
+            isDirectAccess = PsubUtils.isDirectAccess(job.backend.site, inBS, inTRF, inARA)
+            if not isDirectAccess:                
+                param += ' --useLocalIO '
 
         #param += '-m "[]" ' #%minList FIXME
         #param += '-n "[]" ' #%cavList FIXME
@@ -662,6 +742,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '-o "%s" ' % outMapNew
         else:
             param += '-o "%s" ' % outMap
+
+        print param
+
         if self.runConfig.input and self.runConfig.input.inColl: 
             param += '-c '
         if self.runConfig.input and self.runConfig.input.inBS: 
@@ -712,6 +795,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '--givenPFN '
  
         jspec.jobParameters = param
+
+        if app.atlas_exetype in ['TRF']:
+            jspec.metadata = '--trf "%s" ' %( app.options)
         
         return jspec
 
