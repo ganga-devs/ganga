@@ -673,6 +673,18 @@ class Panda(IBackend):
         logger.info('Resubmission successful')
         return True
 
+    def checkForRebrokerage(self,status,job):
+        matchObj = re.match('reassigned to another site by rebrokerage. new PandaID=(\d+) JobsetID=(\d+) JobID=(\d+)',status.taskBufferErrorDiag)
+        if matchObj:
+            logger.info(status.taskBufferErrorDiag)
+            newPandaID = matchObj.group(1)
+            newJobsetID = matchObj.group(2)
+            newJobID = matchObj.group(3)
+            job.backend.id = newPandaID
+            job.updateStatus('submitted')
+            return True
+        return False
+
     def master_updateMonitoringInformation(jobs):
         '''Monitor jobs'''       
         from pandatools import Client
@@ -723,6 +735,7 @@ class Panda(IBackend):
                                 job.backend.jobSpec[k]=str(job.backend.jobSpec[k])
 
                         logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status,status.jobStatus)
+                        job.backend.actualCE = status.computingSite
                         job.backend.status = status.jobStatus
                         job.backend.exitcode = str(status.transExitCode)
                         job.backend.piloterrorcode = str(status.pilotErrorCode)
@@ -746,7 +759,8 @@ class Panda(IBackend):
                         elif status.jobStatus == 'failed':
                             job.updateStatus('failed')
                         elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
-                            job.updateStatus('killed')
+                            if not self.checkForRebrokerage(self,status,job):
+                                job.updateStatus('killed')
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
 
@@ -776,7 +790,8 @@ class Panda(IBackend):
                         elif status.jobStatus == 'failed':
                             job.updateStatus('failed')
                         elif status.jobStatus == 'cancelled':
-                            job.updateStatus('killed')
+                            if not self.checkForRebrokerage(self,status,job):
+                                job.updateStatus('killed')
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
 
@@ -820,7 +835,8 @@ class Panda(IBackend):
                             elif new_stat == 'failed':
                                 job.updateStatus('failed')
                             elif new_stat == 'cancelled':
-                                job.updateStatus('killed')
+                                if not self.checkForRebrokerage(self,status,job):
+                                    job.updateStatus('killed')
                             else:
                                 logger.warning('Unexpected job status %s',status.jobStatus)
 
