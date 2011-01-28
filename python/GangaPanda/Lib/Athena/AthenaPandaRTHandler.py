@@ -582,7 +582,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if app.atlas_exetype == 'ARES':
             param += '--useAthenaPackages '
         # DBRelease
-        if self.dbrelease != '':
+        if self.dbrelease != '' and not app.atlas_exetype in [ 'TRF' ]:
             tmpItems = self.dbrelease.split(':')
             tmpDbrDS  = tmpItems[0]
             tmpDbrLFN = tmpItems[1]
@@ -601,8 +601,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             file.status     = 'ready'
             jspec.addFile(file)
             # set DBRelease parameter
-            if not app.atlas_exetype in ['TRF' ]:
-                param += '--dbrFile %s ' % file.lfn
+            param += '--dbrFile %s ' % file.lfn
 
         if job.inputdata:
             # check for ELSSI files
@@ -742,8 +741,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '-o "%s" ' % outMapNew
         else:
             param += '-o "%s" ' % outMap
-
-        print param
 
         if self.runConfig.input and self.runConfig.input.inColl: 
             param += '-c '
