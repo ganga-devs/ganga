@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.5.22 (2011/1/28)
+5.5.22 (2011/1/31)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -8,6 +8,13 @@ ganga/python/Ganga
 * Fixed bug #76973; Calling JobTemplate(Job) resulted in an object that had its status incorrectly
 set to 'new', and so could be submitted. The status is now correctly set to 'template', which
 prohibits submission.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* add new function for fixing bug: https://savannah.cern.ch/bugs/index.php?77180
+* move DQ2SandboxCache.py to GangaAtlas package
 
 
 --------------------------------------------------------------------------------------------------------------
