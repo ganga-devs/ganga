@@ -6,7 +6,7 @@ ganga/doc                                                              Ganga-doc
 ganga/python/Ganga                                                     Ganga-Base-30-35
 
 #hclee
-ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-22-3
+ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-22-4
 
 #dtuckett
 ganga/python/Ganga/Lib/MonitoringServices                              Ganga-MonitoringServices-30-5
@@ -33,7 +33,7 @@ ganga/python/GangaLHCb                                                 GangaLHCb
 ganga/python/GangaNG                                                   GangaNG-20-31
 
 #dan/johannes
-ganga/python/GangaPanda                                                GangaPanda-22-53
+ganga/python/GangaPanda                                                GangaPanda-22-54
 
 #hclee
 ganga/python/GangaPlotter                                              GangaPlotter-21-2
