@@ -441,7 +441,7 @@ class JobRegistry_Monitor( GangaThread ):
           This method is meant to be used in Ganga scripts to request monitoring on demand. 
         """
     
-        if not type(steps) is int or steps<0:
+        if steps<0:
             log.warning("The number of monitor steps should be a positive integer")
             return False
          
@@ -473,18 +473,9 @@ class JobRegistry_Monitor( GangaThread ):
 
             if jobs:
                try:
-                  m_jobs = jobs._impl
+                  self.registry = jobs._impl
                except AttributeError:
-                  m_jobs = jobs
-
-               # additional check if m_jobs is really a registry slice
-               # the underlying code is not prepared to handle correctly the situation if it is not
-               from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
-               if not isinstance(m_jobs,RegistrySlice):
-                   log.warning('runMonitoring: jobs argument must be a registry slice such as a result of jobs.select() or jobs[i1:i2]')
-                   return False
-
-               self.registry = m_jobs
+                  self.registry = jobs
 
             #enable mon loop
             self.enabled = True
