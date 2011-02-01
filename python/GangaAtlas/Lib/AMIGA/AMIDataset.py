@@ -277,7 +277,7 @@ class AMIDataset(DQ2Dataset):
         for dataset in datasets:
             dataset = dataset.replace("/","")    
             job = self._getParent()
-            file_info = get_file_metadata(dataset=dataset, all=all, numevtsperfile = job.splitter.numevtsperfile)
+            file_info = get_file_metadata(dataset=dataset, all=all, numevtsperfile = 0)
             metadata.update(file_info)
 
         return metadata

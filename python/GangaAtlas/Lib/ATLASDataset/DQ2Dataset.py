@@ -491,7 +491,8 @@ class DQ2Dataset(Dataset):
         # Get info from AMI for AMIDataset
         if (self._name == 'AMIDataset'):
                 metadata = self.get_files_metadata()
-                evtsperfile = (self._getParent()).splitter.numevtsperfile
+                if (self._getParent()) and (self._getParent()).splitter and (self._getParent()).splitter.numevtsperfile:
+                    evtsperfile = (self._getParent()).splitter.numevtsperfile
 
         for dataset in datasets:
             if backnav:
