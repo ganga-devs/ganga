@@ -1318,9 +1318,11 @@ class Athena(IApplication):
 
         try:
             if self.atlas_dbrelease == 'LATEST':
-                self.getLatestDBRelease()
-#                from pandatools import Client
-#                self.atlas_dbrelease = Client.getLatestDBRelease(False)
+                try:
+                    self.getLatestDBRelease()
+                except:
+                    from pandatools import Client
+                    self.atlas_dbrelease = Client.getLatestDBRelease(False)
         except:
             raise ApplicationConfigurationError(None, "Error retrieving LATEST DBRelease. Try setting application.atlas_dbrelease manually.")
             
