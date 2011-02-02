@@ -1219,9 +1219,11 @@ class Athena(IApplication):
         import tempfile,time
         import cPickle as pickle
         from pandatools import Client
+        from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
         TMPDIR = tempfile.gettempdir()
-        DBRELCACHE = '%s/ganga.latestdbrel'%TMPDIR
+        nickname = getNickname(allowMissingNickname=False)
+        DBRELCACHE = '%s/ganga.latestdbrel.%s'%(TMPDIR,nickname)
 
         try:
             fh = open(DBRELCACHE)
