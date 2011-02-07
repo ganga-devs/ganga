@@ -97,7 +97,7 @@ class DiracServer:
         self.server = Popen([cmd],shell=True,env=DiracServer.dirac_env,
                             stdout=stdout,stderr=STDOUT)
         self.show_stdout = configDirac['ShowDIRACstdout']
-        time.sleep(1)
+        time.sleep(float(configDirac['StartUpWaitTime']))
         rc = self.server.poll()
         return rc
 
@@ -169,7 +169,7 @@ class DiracServer:
         while self.isActive():
             try:
                 data = self.socket.recv(1024)
-                if(data.find('###RECV-DATA###') >= 0): data = ''
+                #if(data.find('###RECV-DATA###') >= 0): data = ''
             except error, e:
                 msg = 'Timeout attempting to receive result of command: %s' \
                       ' (w/ error: %s)'% (cmd,e)
@@ -179,6 +179,9 @@ class DiracServer:
                 
             presult += data
             if(presult.find(self.end_data_str) >= 0):
+                start_data = presult.find('###RECV-DATA###')
+                if(start_data >= 0):
+                    presult = presult[start_data + len('###RECV-DATA###'):]
                 recv_completed = True
                 presult = presult.replace(self.end_data_str,'')
                 result = pickle.loads(presult)

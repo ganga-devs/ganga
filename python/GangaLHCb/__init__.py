@@ -55,6 +55,8 @@ dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
 configDirac.addOption('ShowDIRACstdout',False,dscrpt)
 dscrpt = 'Global timeout (seconds) for Dirac commands'
 configDirac.addOption('Timeout',1000,dscrpt)
+dscrpt = 'Wait time (seconds) prior to first poll of Dirac child proc'
+configDirac.addOption('StartUpWaitTime',3,dscrpt)
     
 def getEnvironment( config = {} ):
    import sys
