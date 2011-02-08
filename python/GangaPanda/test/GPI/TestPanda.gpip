@@ -158,13 +158,13 @@ class TestEventPickingPanda(PandaTest):
     def setup(self):
         joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
         pick_event_file = '%s/RunEvent.txt' % self.tmpdir
-        archivefile = '%s/sources.237f0956-3038-4ba2-b842-5af537e4e584.tar.gz' % self.tmpdir
+        archivefile = '%s/sources.3e8a3933-68a9-493a-9abb-76904a2b5723.tar.gz' % self.tmpdir
         userareapath = self.tmpdir
 	os.environ['TestArea'] = self.tmpdir
 
         j = Job()
         j.application=Athena()
-        j.application.atlas_release='15.6.9'
+        j.application.atlas_release='16.0.3'
         j.application.option_file=[ joboption ]
         j.application.user_area=archivefile
         j.application.atlas_run_dir = 'EventPick/'
@@ -181,8 +181,8 @@ class TestEventPickingPanda(PandaTest):
         j.inputdata = EventPicking()
         j.inputdata.pick_event_list = pick_event_file
         j.inputdata.pick_data_type = 'ESD'
-        j.inputdata.pick_stream_name = 'physics_Egamma'
         j.inputdata.pick_stream_name = 'physics_Muons'
+	j.inputdata.pick_dataset_pattern = '*physics_Muons*'
         
 	j.outputdata=DQ2OutputDataset()
         j.splitter=DQ2JobSplitter()
