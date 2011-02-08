@@ -387,6 +387,8 @@ class DQ2JobSplitter(ISplitter):
         allevents = 0
         allnames = []
         for dataset, content in contents_temp.iteritems():
+            if not content:
+                continue
             contents[dataset] = content
             datasetLength[dataset] = len(contents[dataset])
             allfiles += datasetLength[dataset]
