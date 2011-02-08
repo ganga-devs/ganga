@@ -19,8 +19,10 @@ assert isinstance(j.inputdata,LHCbDataset)
 j.outputdata = ['a','b']
 assert isinstance(j.outputdata,OutputData)
 #
-LFN_DATA = ['lfn:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000326_1.dimuon.dst',
-            'lfn:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000682_1.dimuon.dst']
+LFN_DATA = ['lfn:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000001_1.dst',
+            'lfn:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000002_1.dst']
+#LFN_DATA = ["LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000001_5.dst",
+#            "LFN:/lhcb/production/DC06/phys-v2-lumi2/00001657/DST/0000/00001657_00000002_5.dst"]
 ds = LHCbDataset(LFN_DATA)
 assert len(ds.getReplicas().keys()) == 2
 #

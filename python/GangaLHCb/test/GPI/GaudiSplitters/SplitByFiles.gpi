@@ -7,13 +7,23 @@ addLocalTestSubmitter()
 ap = DaVinci()
 j = Job(application=ap, backend=TestSubmitter(time=1))
 
-j.splitter=SplitByFiles(filesPerJob=1)
-j.inputdata=LHCbDataset(['lfn:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000326_1.dimuon.dst','lfn:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000682_1.dimuon.dst'])
+j.splitter=SplitByFiles(filesPerJob=2)
+j.inputdata=LHCbDataset([
+    'LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000001_1.dst',
+    'LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000002_1.dst',
+    'LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000003_1.dst',
+    'LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000004_1.dst',
+    'LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000005_1.dst',
+    'LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000006_1.dst',
+    'LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000007_1.dst',
+    'LFN:/lhcb/MC/MC09/DST/00004831/0000/00004831_00000008_1.dst'])
 j.submit()
 
-assert(len(j.subjobs)==2)
+assert(len(j.subjobs)==4)
+assert(len(j.subjobs[0].inputdata.files)==2)
+assert(len(j.subjobs[3].inputdata.files)==2)
 assert(j.inputdata.files[0].name==j.subjobs[0].inputdata.files[0].name)
-assert(j.inputdata.files[-1].name==j.subjobs[1].inputdata.files[-1].name)
+assert(j.inputdata.files[-1].name==j.subjobs[3].inputdata.files[-1].name)
 
 
 j = j.copy()
