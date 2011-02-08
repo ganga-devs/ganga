@@ -1,0 +1,19 @@
+# Test AtlasLCGRequirements
+
+a = AtlasLCGRequirements()
+orig_list = a.list_sites()
+
+# remove a site
+a.excluded_sites = ['UKI-SOUTHGRID-RALPP_SCRATCHDISK']
+exc_list = a.list_sites()
+if len(exc_list) != len(orig_list) - 1:
+    assert False, "Incorrect num. of sites listed after one exclusion (%d != %d - 1)" % (len(exc_list), len(orig_list))
+
+# remove a cloud
+a.excluded_sites = []
+a.excluded_clouds = ['UK']
+exc_list = a.list_sites()
+rem_list = a.list_sites_cloud('UK')
+if len(exc_list) != len(orig_list) - len(rem_list):
+    assert False, "Incorrect num. of sites listed after cloud exclusion (%d != %d - %d)" % (len(exc_list), len(orig_list), len(rem_list))
+
