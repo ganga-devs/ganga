@@ -182,14 +182,14 @@ if args:
     option_files=[]
     if args:  
         for option_file in args:
-            if not opt.athena_exe in ['EXE']:	
+            if not opt.athena_exe in ['EXE']:        
                 if not os.access(option_file,os.R_OK):
                     print >>sys.stderr, 'ERROR: Cannot read athena job option file: %s' % option_file
                     sys.exit(4)
-            	else:
-		    option_files.append(option_file)
+                else:
+                    option_files.append(option_file)
             else:
-	        option_files.append(option_file)
+                option_files.append(option_file)
 else:
     print >>sys.stderr, 'ERROR: No athena job option file given'
     sys.exit(4)
@@ -215,8 +215,8 @@ if opt.athena_release:
     match=re.search(r'^([\w+]+.[\w+]+.[\w+]+)',opt.athena_release)
     if match:
         j.application.atlas_release=match.group(1)
-        match2=re.search(r'^([\w+]+.[\w+]+.[\w+]+.[\w+]+)',opt.athena_release)	
-	if match2:
+        match2=re.search(r'^([\w+]+.[\w+]+.[\w+]+.[\w+]+)',opt.athena_release)        
+        if match2:
             j.application.atlas_production=opt.athena_release
     else:
         j.application.atlas_release=opt.athena_release
@@ -258,22 +258,22 @@ if opt.atlas_supp_stream:
 
 if opt.compile:
     j.application.athena_compile=True
-    if opt.prepare_old:	
+    if opt.prepare_old:        
         j.application.prepare_old(athena_compile=True)
     else:
         j.application.prepare()
 elif opt.nocompile:
     j.application.athena_compile=False
-    if opt.prepare_old:	
+    if opt.prepare_old:        
         j.application.prepare_old(athena_compile=False)
     else:
         j.application.prepare()
 else:
     if not (opt.athena_release or opt.user_area) or opt.bexec:
-        if opt.prepare_old:	
+        if opt.prepare_old:        
             j.application.prepare_old()
         else:
-	    j.application.prepare()
+            j.application.prepare()
 if opt.collectstats:
     j.application.collect_stats=True
 
@@ -315,8 +315,8 @@ if opt.input_dataset:
         else:    
             j.inputdata.type = 'DQ2_LOCAL'
 
-	if opt.inputfailover:
-	    j.inputdata.failover=True
+        if opt.inputfailover:
+            j.inputdata.failover=True
         if opt.inputaccessprotocol:
             j.inputdata.accessprotocol = opt.inputaccessprotocol        
         if opt.backend == 'lcg' and not opt.ce and opt.match_ce_all=='match_ce_all':
@@ -324,39 +324,39 @@ if opt.input_dataset:
         if opt.input_minnumfiles>0:
             j.inputdata.min_num_files = opt.input_minnumfiles
         if opt.inputnames:
-	    if opt.inputnames.find(':')>0:
-	        j.inputdata.inputnames = opt.inputnames.split(':')
+            if opt.inputnames.find(':')>0:
+                j.inputdata.names = opt.inputnames.split(':')
             elif opt.inputnames.find(',')>0:
-	        j.inputdata.inputnames = opt.inputnames.split(',')
-	    else:
-                j.inputdata.inputnames = opt.inputnames.split('\n')
+                j.inputdata.names = opt.inputnames.split(',')
+            else:
+                j.inputdata.names = opt.inputnames.split('\n')
         if opt.inputnamespattern:
-	    if opt.inputnamespattern.find(':')>0:
-	        j.inputdata.names_pattern = opt.inputnamespattern.split(':')
+            if opt.inputnamespattern.find(':')>0:
+                j.inputdata.names_pattern = opt.inputnamespattern.split(':')
             elif opt.inputnamespattern.find(',')>0:
-	        j.inputdata.names_pattern = opt.inputnamespattern.split(',')
-	    else:
+                j.inputdata.names_pattern = opt.inputnamespattern.split(',')
+            else:
                 j.inputdata.names_pattern = opt.inputnamespattern.split('\n')
         if opt.excludeinputnames:
-	    if opt.excludeinputnames.find(':')>0:
-	        j.inputdata.exclude_names = opt.excludeinputnames.split(':')
+            if opt.excludeinputnames.find(':')>0:
+                j.inputdata.exclude_names = opt.excludeinputnames.split(':')
             elif opt.excludeinputnames.find(',')>0:
-	        j.inputdata.exclude_names = opt.excludeinputnames.split(',')
-	    else:
+                j.inputdata.exclude_names = opt.excludeinputnames.split(',')
+            else:
                 j.inputdata.exclude_names = opt.excludeinputnames.split('\n')
-        if opt.excludeinputnamespattern:	
-	    if opt.excludeinputnamespattern.find(':')>0:
-	        j.inputdata.exclude_pattern = opt.excludeinputnamespattern.split(':')
+        if opt.excludeinputnamespattern:        
+            if opt.excludeinputnamespattern.find(':')>0:
+                j.inputdata.exclude_pattern = opt.excludeinputnamespattern.split(':')
             elif opt.excludeinputnamespattern.find(',')>0:
-	        j.inputdata.exclude_pattern = opt.excludeinputnamespattern.split(',')
-	    else:
+                j.inputdata.exclude_pattern = opt.excludeinputnamespattern.split(',')
+            else:
                 j.inputdata.exclude_pattern = opt.excludeinputnamespattern.split('\n')
-        if opt.inputnamespattern:	
-	    if opt.inputnamespattern.find(':')>0:
-	        j.inputdata.names_pattern = opt.inputnamespattern.split(':')
+        if opt.inputnamespattern:        
+            if opt.inputnamespattern.find(':')>0:
+                j.inputdata.names_pattern = opt.inputnamespattern.split(':')
             elif opt.inputnamespattern.find(',')>0:
-	        j.inputdata.names_pattern = opt.inputnamespattern.split(',')
-	    else:
+                j.inputdata.names_pattern = opt.inputnamespattern.split(',')
+            else:
                 j.inputdata.names_pattern = opt.inputnamespattern.split('\n')
         if opt.inputnumfiles:
             j.inputdata.number_of_files = opt.inputnumfiles
@@ -381,7 +381,7 @@ if opt.pickevent:
     if not (opt.numsubjobs>0 and opt.numfiles_subjob>0 and opt.filesize>0):
         if (opt.backend in [ 'lcg', 'cream', 'panda', 'ng' ] or opt.glite):
             j.splitter = DQ2JobSplitter()
-	    j.splitter.numsubjobs = 1
+            j.splitter.numsubjobs = 1
 
 # outputdata
 
@@ -521,7 +521,7 @@ elif opt.backend=='panda':
     if opt.site: j.backend.site = opt.site
     if opt.cloud: 
         j.backend.requirements.cloud = opt.cloud
-	j.backend.requirements.anyCloud = False
+        j.backend.requirements.anyCloud = False
     if opt.long: j.backend.requirements.long = True 
     if opt.express: j.backend.requirements.express = True 
     if opt.cputime: j.backend.requirements.cputime = opt.cputime
