@@ -37,6 +37,7 @@ config.addOption( 'trustIS', True , 'Trust the Information System' )
 config.addOption( 'serverMaxJobs', 5000 , 'Maximum number of subjobs to send to the Panda server' )  
 config.addOption( 'chirpconfig', '' , 'Configuration string for chirp data output, e.g. "chirp^etpgrid01.garching.physik.uni-muenchen.de^/tanyasandoval^-d chirp" ' )  
 config.addOption( 'chirpserver', '' , 'Configuration string for the chirp server, e.g. "voatlas92.cern.ch". If this variable is set config.Panda.chirpconfig is filled and chirp output will be enabled.' )  
+config.addOption( 'siteType', 'analysis' , 'Expert only.' )  
 
 def setChirpVariables():
     """Helper function to fill chirp config variables"""
@@ -56,10 +57,12 @@ def refreshPandaSpecs():
     try:
         if time.time() - pandaSpecsTS > 600:
             logger.debug('Calling Client.refreshSpecs')
-            Client.refreshSpecs()
+#            Client.refreshSpecs()
+            Client.PandaSites = Client.getSiteSpecs(config['siteType'])[1]
             pandaSpecsTS = time.time()
     except NameError:
-        Client.refreshSpecs()
+#        Client.refreshSpecs()
+        Client.PandaSites = Client.getSiteSpecs(config['siteType'])[1]
         pandaSpecsTS = time.time()
 
 def convertQueueNameToDQ2Names(queue):
@@ -456,7 +459,10 @@ class Panda(IBackend):
                 njobs = len(jobids)
 
                 jobdefID = jobids[0][1]
-                jobsetID = jobids[0][2]['jobsetID']
+                try:
+                    jobsetID = jobids[0][2]['jobsetID']
+                except:
+                    jobsetID = -1
 
                 if buildjobspec:
                     pbj = PandaBuildJob()
