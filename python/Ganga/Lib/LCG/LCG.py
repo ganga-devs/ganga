@@ -318,6 +318,17 @@ class LCG(IBackend):
 
         return
 
+    def master_auto_resubmit(self,rjobs):
+        """
+        Resubmit each subjob individually as bulk resubmission will overwrite
+        previous master job statuses
+        """
+        for j in rjobs:
+            if not j.backend.master_resubmit([j]):
+                return False
+            
+        return True
+                    
     def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
         '''Submit the master job to the grid'''
 
@@ -379,7 +390,7 @@ class LCG(IBackend):
                     logger.debug('rjobs: %s' % str(rjobs))
                     logger.debug('mode: master job normal resubmission')
                     ick = IBackend.master_resubmit(self,rjobs)
-
+                    
                 elif job.master:
                     # case 2: individual subjob resubmission
                     logger.debug('mode: individual subjob resubmission')
