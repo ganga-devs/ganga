@@ -310,13 +310,8 @@ def _getLogger(name=None,modulename=None,_roothandler=0, handler=None,frame=None
     if name is None:
         name = _guess_module_logger_name(modulename,frame=frame)
 
-    ##special convention: .name is an absolute name which is not modified in any way (after stripping the leading dot)
-    #if name and name[0] == '.':
-    #    print 'special absolute logger name:',name
-    #    name = name[1:]
-    #else: # a regular name should be always prefixed by Ganga. for the logging hierarchy to work correctly
-    #    if name.split('.')[0] != 'Ganga' and name != 'Ganga':
-    #        name = 'Ganga.'+name
+    if name.split('.')[0] != 'Ganga' and name != 'Ganga':
+        name = 'Ganga.'+name
 
     #if private_logger:
     #    private_logger.debug('getLogger: effective_name=%s original_name=%s',name,requested_name)            
