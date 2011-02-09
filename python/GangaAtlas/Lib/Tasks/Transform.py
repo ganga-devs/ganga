@@ -155,7 +155,7 @@ class Transform(GangaObject):
       cs = self._partition_status.items()
       for (c,s) in cs:
          if s in ["attempted","failed"]:
-            failures = len([1 for app in self.getPartitionApps()[c] if app in self._app_status and self._app_status[app] in ["new","failed"]])
+            failures = self.getPartitionFailures(c)
             if failures >= newRL:
                self._partition_status[c] = "failed"
             else:
@@ -274,6 +274,7 @@ class Transform(GangaObject):
           "hold" is only changed to "completed" here. """
       #print "updatePartitionStatus ", partition, " transform ", self.id
       ## If the partition has status, and is not in a fixed state, check it!
+
       if partition in self._partition_status and (not self._partition_status[partition] in ["bad","completed"]):
          ## if we have no applications, we are in "ready" state
          if not partition in self.getPartitionApps():
@@ -296,7 +297,9 @@ class Transform(GangaObject):
                      break
                if not running:
                   ## Check if we failed
-                  failures = len([stat for stat in status if stat in ["failed","new"]])
+                  #failures = len([stat for stat in status if stat in ["failed","new"]])
+                  failures = self.getPartitionFailures(partition)
+
                   if failures >= self.run_limit:
                      self._partition_status[partition] = "failed"
                   elif failures > 0:
@@ -433,7 +436,7 @@ class Transform(GangaObject):
       for c in partitions:
          s = self._partition_status[c]
          if c in self.getPartitionApps():
-            failures = len([1 for app in self.getPartitionApps()[c] if app in self._app_status and self._app_status[app] in ["new","failed"]])
+            failures = self.getPartitionFailures(c)
             o += markup("%i:%i " % (c, failures), overview_colours[s])
          else:
             o += markup("%i " % c, overview_colours[s])
@@ -447,4 +450,6 @@ class Transform(GangaObject):
       print "Application:"
       self.application.printTree() 
 
-
+   def getPartitionFailures(self, partition):
+      """Return the number of failures for this partition"""
+      return len([1 for app in self.getPartitionApps()[partition] if app in self._app_status and self._app_status[app] in ["new","failed"]])
