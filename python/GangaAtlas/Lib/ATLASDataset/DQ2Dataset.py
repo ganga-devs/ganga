@@ -1630,7 +1630,8 @@ class DQ2OutputDataset(Dataset):
         import os, threading
 
         subjobDownload = options.get('subjobDownload')
-
+        blocking = options.get('blocking')
+        
         job = self._getParent()
 
         # Master job finish
@@ -1642,7 +1643,7 @@ class DQ2OutputDataset(Dataset):
         # call the subjob retrieve method if available
         if len(job.subjobs) > 0 and subjobDownload:
             for sj in job.subjobs:
-                sj.outputdata.retrieve()
+                sj.outputdata.retrieve(blocking=blocking)
             return
        
         if job.backend._name in [ 'LCG' ]:
@@ -1727,7 +1728,11 @@ class DQ2OutputDataset(Dataset):
                         threads.append(thread)
                 else:
                     logger.warning('job.outputdata.output emtpy - nothing to download')
-                
+
+            if blocking:
+                for thread in threads:
+                    thread.join()
+                                        
             #for thread in threads:
             #    thread.join()
 
