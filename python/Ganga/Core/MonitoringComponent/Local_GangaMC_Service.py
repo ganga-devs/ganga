@@ -709,22 +709,32 @@ class JobRegistry_Monitor( GangaThread ):
                     
                     # resubmit if required
                     for j in jobList_fromset:
-                        if len(j.subjobs) == 0 or not j.do_auto_resubmit:
+
+                        if not j.do_auto_resubmit:
                             continue
-                        
-                        if j.info.submit_counter > config['MaxNumResubmits']:
-                            continue
+
+                        if len(j.subjobs) == 0:
+                            try_resubmit = j.info.submit_counter <= config['MaxNumResubmits']
+                        else:
+                            # Check for max number of resubmissions
+                            skip = False
+                            for s in j.subjobs:
+                                if s.info.submit_counter > config['MaxNumResubmits']:
+                                    skip = True
+
+                            if skip:
+                                continue
+
+                            num_com = len( [s for s in j.subjobs if s.status in ['completed'] ] )
+                            num_fail = len( [s for s in j.subjobs if s.status in ['failed'] ] )
+
+                            #log.critical('Checking failed subjobs for job %d... %d %s',j.id,num_com,num_fail)
                             
-
-
-                        num_com = len( [s for s in j.subjobs if s.status in ['completed'] ] )
-                        num_fail = len( [s for s in j.subjobs if s.status in ['failed'] ] )
-
-                        #log.critical('Checking failed subjobs for job %d... %d %s',j.id,num_com,num_fail)
+                            try_resubmit = num_fail > 0 and (float(num_fail) / float(num_com+num_fail)) < config['MaxFracForResubmit']
                         
-                        if num_fail > 0 and (float(num_fail) / float(num_com+num_fail)) < config['MaxFracForResubmit']:
+                        if try_resubmit:
                             if j.backend.check_auto_resubmit():
-                                log.warning('Resubmitting failed subjobs for job %d...' % j.id)
+                                log.warning('Auto-resubmit job %d...' % j.id)
                                 j.auto_resubmit()
                             
                 except BackendError, x:

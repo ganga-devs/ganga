@@ -479,6 +479,7 @@ sys.exit(result)
         text = text.replace('###MONITORING_SERVICE###',job.getMonitoringService().getWrapperScriptConstructorText())
 
         from Ganga.Utility.Config import getConfig
+        
         text = text.replace('###GANGADIR###',repr(getConfig('System')['GANGA_PYTHONPATH']))
 
         import Ganga.PACKAGE
