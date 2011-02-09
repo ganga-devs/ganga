@@ -165,6 +165,19 @@ class Download:
                     pythonpaths.append(path)
             gridshell.env['PYTHONPATH'] = ':'.join(pythonpaths)
 
+            ## exclude any rubbish from Athena
+            ld_lib_paths = []
+            for path in gridshell.env['LD_LIBRARY_PATH'].split(':'):
+                if not re.match('.*\/external\/lfc\/.*', path) and not re.match('.*\/sw\/lcg\/external\/.*', path):
+                    ld_lib_paths.append(path)
+            gridshell.env['LD_LIBRARY_PATH'] = ':'.join(ld_lib_paths)
+
+            paths = []
+            for path in gridshell.env['PATH'].split(':'):
+                if not re.match('.*\/external\/lfc\/.*', path) and not re.match('.*\/sw\/lcg\/external\/.*', path):
+                    paths.append(path)
+            gridshell.env['PATH'] = ':'.join(paths)
+
             rc, out, m = gridshell.cmd1(self.cmd,allowed_exit=[0,255])
             if (rc==0):
                 logger.debug("dq2-get finished: %s", self.cmd)
