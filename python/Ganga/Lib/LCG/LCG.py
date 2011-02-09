@@ -323,6 +323,12 @@ class LCG(IBackend):
         Resubmit each subjob individually as bulk resubmission will overwrite
         previous master job statuses
         """
+
+        # check for master failure - in which case bulk resubmit
+        mj = self._getParent()
+        if mj.status == 'failed':
+            return self.master_resubmit(rjobs)
+
         for j in rjobs:
             if not j.backend.master_resubmit([j]):
                 return False
