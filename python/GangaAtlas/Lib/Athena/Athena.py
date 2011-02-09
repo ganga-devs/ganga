@@ -1019,7 +1019,7 @@ class Athena(IApplication):
             maxFileSize = config['EXE_MAXFILESIZE']
             archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose )
         else:
-            archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages)
+            archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages, config['dereferenceSymLinks'])
         logger.info('Creating %s ...', archiveFullName )
 
         # Add InstallArea
@@ -1742,6 +1742,7 @@ config.addOption('ENABLE_DQ2COPY', False , 'Enable DQ2_COPY input workflow on LC
 config.addOption('ENABLE_SGE_DQ2JOBSPLITTER', False , 'Enable DQ2JobSplitter for SGE backend')
 config.addOption('ENABLE_SGE_FILESTAGER', False , 'Enable FILE_STAGER input access mode for SGE backend')
 config.addOption('EXE_MAXFILESIZE', 1024*1024 , 'Athena.exetype=EXE jobs: Maximum size of files to be sent to WNs (default 1024*1024B)')
+config.addOption('dereferenceSymLinks', False , 'Set to True to dereference symlinks in the sources area. E.g. if src is a symlink, the target will be copied into the sources archive.')
 
 # $Log: not supported by cvs2svn $
 # Revision 1.63  2009/07/02 19:36:23  elmsheus
