@@ -1,0 +1,52 @@
+**************************************************************************************************************
+5.5.23 (2011/2/9)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+fixed auto-resubmission algorithm: for plain jobs it takes into account MaxNumResubmits, for master 
+jobs it takes into account MaxNumResubmits FOR INDIVIDUAL SUBJOBS
+
+Fix for bug 77962; j.resubmit() increases j.info.submit_counter by 2
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* fix for automatic job resubmission
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Sync with 5.5.22-hotfix1 and hotfix2
+* Added support for symlinked src dir. 
+  E.g. if src is a symlink, if you set 
+    config.Athena.dereferenceSymLinks=True 
+  then the symlink target will be included in the tar file sent to the Grid.
+* Update EventPicking testcase
+* Fixed some Multi Stage Analysis bugs and added support for auto downloading, merging and local jobs 
+from these files
+* Remove any Athena clashes when calling DQ2Dataset.retrieve. This now works whatever the environment.
+* Added the option of making retrieve a blocking call
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+The wait time used to allow the Dirac process Ganga runs to handle Dirac API commands to do "import
+Dirac" has been made configurable and the default value increased.  The configurable is [DIRAC]
+StartUpWaitTime and can be set larger or shorter in an institute's site config file.  This has been
+tested at Oxford and fixed problems they were having using Dirac in Ganga.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Sync with 5.5.22-hotfix1 and hotfix2
+* Update EventPicking testcase
+* jobs(x).resubmit() now handles case where retry dataset (_r1, _r2, etc..) already exists.
+* update to panda-client 0.3.29
+
+**************************************************************************************************************
