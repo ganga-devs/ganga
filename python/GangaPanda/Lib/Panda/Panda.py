@@ -648,14 +648,25 @@ class Panda(IBackend):
                     # add datasets
                     if not tmpFile.destinationDBlock in addedDataset:
                         tmpOutDsLocation = Client.PandaSites[rj.computingSite]['ddm']
-                        try:
-                            # create dataset
-                            Client.addDataset(tmpFile.destinationDBlock,False,location=tmpOutDsLocation)
-                            # add to container
-                            Client.addDatasetsToContainer(tmpFile.dataset,[tmpFile.destinationDBlock],False)
-                            logger.warning('Created dataset %s and added to container %s.'%(tmpFile.destinationDBlock,tmpFile.dataset))
-                        except exceptions.SystemExit:
-                            raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(tmpFile.destinationDBlock,sys.exc_info()[0],sys.exc_info()[1]))
+                        # check this dataset doesn't already exist (in case of previous screw ups in resubmit)
+                        res = Client.getDatasets(tmpFile.destinationDBlock)
+                        if not tmpFile.destinationDBlock in res.keys():
+                            # DS doesn't exist - create it
+                            try:
+                                Client.addDataset(tmpFile.destinationDBlock,False,location=tmpOutDsLocation)
+                            except exceptions.SystemExit:
+                                raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(tmpFile.destinationDBlock,sys.exc_info()[0],sys.exc_info()[1]))
+
+
+                        # check if this DS is in the container
+                        res = Client.getElementsFromContainer(tmpFile.dataset)
+                        if not tmpFile.destinationDBlock in res:
+                            try:
+                                # add to container
+                                Client.addDatasetsToContainer(tmpFile.dataset,[tmpFile.destinationDBlock],False)
+                                logger.warning('Created dataset %s and added to container %s.'%(tmpFile.destinationDBlock,tmpFile.dataset))
+                            except exceptions.SystemExit:
+                                raise BackendError('Panda','Exception in Client.addDatasetsToContainer %s, %s: %s %s'%(tmpFile.destinationDBlock,tmpFile.dataset,sys.exc_info()[0],sys.exc_info()[1]))
                         # append
                         addedDataset.append(tmpFile.destinationDBlock)
 
