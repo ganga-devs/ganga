@@ -382,7 +382,7 @@ sys.exit()
             try:
                 recursive_copy(os.path.join(self.workdir,fn),job.getOutputWorkspace().getPath())
             except Exception,x:
-                logger.info('problem retrieving %s:',fn,x)
+                logger.info('problem retrieving %s: %s',fn,x)
 
         self.remove_workdir()
         return 1
