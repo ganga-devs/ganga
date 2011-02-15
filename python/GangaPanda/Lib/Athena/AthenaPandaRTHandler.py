@@ -579,7 +579,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             pass
         else:
             param += '-j "%s" ' % urllib.quote(self.job_options)
-        if app.atlas_exetype == 'ARES':
+        if app.atlas_exetype == 'ARES' or (app.atlas_exetype in ['PYARA','ROOT','EXE'] and app.useAthenaPackages):
             param += '--useAthenaPackages '
         # DBRelease
         if self.dbrelease != '' and not app.atlas_exetype in [ 'TRF' ]:

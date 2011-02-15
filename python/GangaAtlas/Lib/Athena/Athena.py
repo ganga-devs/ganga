@@ -299,7 +299,7 @@ class Athena(IApplication):
                  'user_area'              : FileItem(doc='A tar file of the user area'),
                  'user_area_path'         : SimpleItem(defvalue='', doc='Path where user_area tarfile is created'),
                  'athena_compile'         : SimpleItem(defvalue=False, doc='Switch if user code should be compiled remotely'),
-                 'useAthenaPackages'      : SimpleItem(defvalue=False, doc='Switch to add AthenaPackages to tarball if Athena.exetype=EXE is used.'),
+                 'useAthenaPackages'      : SimpleItem(defvalue=False, doc='Switch to add AthenaPackages to tarball if Athena.exetype=EXE is used. Also used to enable cmt setup of athena packages for Panda when exetype is PYARA.'),
                  'group_area'             : FileItem(doc='A tar file of the group area'),
                  'max_events'             : SimpleItem(defvalue=-999, typelist=['int'], doc='Maximum number of events'),
                  'skip_events'            : SimpleItem(defvalue=0, typelist=['int'], doc='Number of events to skip'),
