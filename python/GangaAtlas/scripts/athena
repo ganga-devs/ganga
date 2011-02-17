@@ -43,6 +43,7 @@ p.add_option('--name', '-n', action='store', type='string', dest='name', help='J
 
 # Input dataset
 p.add_option('--inDS', '-i', action='store', type='string', dest='input_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname to process')
+p.add_option('--inPfnListFile', action='store', type='string', dest='input_pfnlistfile', help='Filename with list of input files to process for ATLASTier3Dataset')
 p.add_option('--inTagDS', action='store', type='string', dest='tag_input_dataset', metavar='TAGDATASETNAME', help='Name of the Tag DQ2 datasetname to process')
 p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['DQ2', 'ATLAS', 'Local', 'Castor'],  default='DQ2', help='Type of the input dataset: DQ2, ATLAS, Local, Castor, [default: DQ2]' )
 p.add_option('--inputaccessmode', action='store', type='choice', dest='inputaccessmode', choices = ['DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'FILE_STAGER' ], default='DQ2_LOCAL',  help='Access mode of the DQ2/TAG input dataset: DQ2_LOCAL, FILE_STAGER, LFC, TAG, TAG_REC [default: DQ2_LOCAL]'  )
@@ -279,6 +280,10 @@ if opt.collectstats:
 
 # inputdata
 
+if opt.input_pfnlistfile:
+    j.inputdata = ATLASTier3Dataset()
+    j.inputdata.pfnListFile = opt.input_pfnlistfile
+
 if opt.input_dataset:
     #print opt.inputtype
     if opt.inputtype:
@@ -425,6 +430,10 @@ if opt.numsubjobs > 0:
         j.splitter = AthenaSplitterJob()
     j.splitter.numsubjobs = opt.numsubjobs
 
+    if opt.input_pfnlistfile:
+        j.splitter = ATLASTier3Splitter()
+        j.splitter.numjobs = opt.numsubjobs
+
     if opt.outputdata:
         j.merger=AthenaOutputMerger()
 elif opt.numfiles_subjob>0:
@@ -437,6 +446,10 @@ elif opt.numfiles_subjob>0:
     else:
         j.splitter = AthenaSplitterJob()
         j.splitter.numfiles_subjob = opt.numfiles_subjob
+
+    if opt.input_pfnfilelist:
+        j.splitter = ATLASTier3Splitter()
+        j.splitter.numfiles = opt.numfiles_subjob
 
     if opt.outputdata:
         j.merger=AthenaOutputMerger()
