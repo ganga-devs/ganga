@@ -148,7 +148,9 @@ p.add_option('--outputsandbox', action='store', type='string', dest='outputsandb
 # Job query
 p.add_option('--query', '-q', action='store', type='int', dest='jobid', help='Query job status, e.q. ganga athena -q jobid, Output: job id, CE, job status, job output' )
 
-
+# JEM
+p.add_option('--enableJEM', action='store_true', help='Enable the Job Execution Monitor' )
+p.add_option('--configJEM', action='store', type='string', dest='configJEM', help='Config string for the Job Execution Monitor' )
 
 opt, args = p.parse_args()
 
@@ -555,6 +557,11 @@ elif opt.backend=='panda':
     if opt.useChirpServer: config.Panda.chirpserver = opt.useChirpServer
 
     if opt.individualOutDS: j.backend.individualOutDS = True
+
+    if opt.enableJEM:
+        j.backend.requirements.enableJEM = True
+        if opt.configJEM:
+            j.backend.requirements.configJEM = opt.configJEM
 else:
     j.backend = Local()
 

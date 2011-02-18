@@ -540,6 +540,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 logger.debug('chirp file %s',file)
       
         subjobOutputLocation = Client.PandaSites[job.backend.site]['ddm']
+        jspec.destinationDBlock = masterjob.outputdata.datasetname
  
         if job.backend.individualOutDS:
             for f in jspec.Files:

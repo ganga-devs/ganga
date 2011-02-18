@@ -415,6 +415,14 @@ class Panda(IBackend):
             else:
                 buildjobspec.specialHandling = 'express'
 
+        # JEM
+        if job.backend.requirements.enableJEM:
+            logger.info("Enabling Job Execution Monitor for this job")
+            for js in subjobspecs:
+                js.jobParameters += ' --enable-jem'
+                if job.backend.requirements.configJEM != '':
+                    js.jobParameters += " --jem-config %s" % job.backend.requirements.configJEM
+
         jobspecs = []
         if buildjobspec:
             if type(buildjobspec)==type([]):
