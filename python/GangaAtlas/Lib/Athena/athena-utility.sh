@@ -883,6 +883,7 @@ run_athena () {
 	    NEW_ATHENA_OPTIONS=`echo $ATHENA_OPTIONS | sed s/%IN/$EXE_FILELIST/`
 	    echo "New EXE command line: "
 	    echo $NEW_ATHENA_OPTIONS
+	    export PATH=$PATH:.
 	    $timecmd $NEW_ATHENA_OPTIONS ; echo $? > retcode.tmp
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
