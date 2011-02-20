@@ -2,6 +2,7 @@
 from Ganga.GPIDev.Schema import *
 from common import *
 from new import classobj
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 
 
 handler_map = []
@@ -119,17 +120,15 @@ from Ganga.Lib.Splitters import ArgSplitter
 ExecutableTask = taskify(Executable,"ExecutableTask")
 ArgSplitterTask = taskify(ArgSplitter,"ArgSplitterTask")
 
+task_map = {"Executable": ExecutableTask}
 def taskApp(app):
     """ Copy the application app into a task application. Returns a task application without proxy """ 
     a = stripProxy(app)
     if "Task" in a._name:
        return a
-    elif a._name == "Executable":
-       b = ExecutableTask()
-    elif a._name == "Athena":
-       b = AthenaTask()
-    elif a._name == "AthenaMC":
-       b = AthenaMCTask()
+    elif a._name in task_map:
+       b = task_map[a._name]()
+
     else:
        logger.error("The application '%s' cannot be used with the tasks package yet!" % a._name)
        raise AttributeError()

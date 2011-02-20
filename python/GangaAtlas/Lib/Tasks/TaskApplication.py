@@ -5,6 +5,7 @@ from GangaAtlas.Lib.Athena.Athena import Athena
 AthenaTask = taskify(Athena,"AthenaTask")
 AthenaMCTask = taskify(AthenaMC,"AthenaMCTask")
 AthenaMCTaskSplitterJob = taskify(AthenaMCSplitterJob,"AthenaMCTaskSplitterJob")
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -43,3 +44,7 @@ class AnaTaskSplitterJob(ISplitter):
         if not job.application.tasks_id.startswith("00"):
             job.application.tasks_id = "00:%s" % job.application.tasks_id
         return sjl
+    
+from Ganga.GPIDev.Lib.Tasks.TaskApplication import task_map
+task_map["Athena"] = AthenaTask
+task_map["AthenaMC"] = AthenaMCTask
