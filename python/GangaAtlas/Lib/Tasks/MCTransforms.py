@@ -1,8 +1,8 @@
-from common import *
+from Ganga.GPIDev.Lib.Tasks.common import *
 import random
 
-from Transform import Transform
-from TaskApplication import ExecutableTask, AthenaMCTask
+from Ganga.GPIDev.Lib.Tasks import Transform
+from TaskApplication import AthenaMCTask
 from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import AthenaMCOutputDatasets, AthenaMCInputDatasets, _usertag
 
 # Extract username from certificate

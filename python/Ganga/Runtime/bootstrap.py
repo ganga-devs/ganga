@@ -758,6 +758,7 @@ default_backends = LCG
         # bootstrap runtime modules
         import Ganga.GPIDev.Lib.Registry
         from Ganga.GPIDev.Lib.JobTree import JobTree,TreeError
+        import Ganga.GPIDev.Lib.Tasks 
 
         # boostrap the repositories and connect to them
         for n,k,d in Repository_runtime.bootstrap():
