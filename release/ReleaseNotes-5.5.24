@@ -1,4 +1,33 @@
 **************************************************************************************************************
 5.5.24 (2011/2/23)
 
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Fix exetype=EXE to execute generic script on CREAM
+* Added enableJEM and configJEM options for Job Execution Monitor on Panda backend:
+  See --enabledJEM, --configJEM, j.backend.requirements.enableJEM, j.backend.requirements.configJEM
+* Write container name to destinationDBlock for "task" monitoring purposes
+* j.application.useAthenaPackages can now be used with PYARA to use your packages on Panda.
+
+Tasks:
+------
+* Move Tasks generic code from GangaAtlas to Ganga/GPIDev/Lib/Tasks
+
+scripts:
+--------
+* Add --inPfnListFile for ATLASTier3Dataset and ATLASTier3Splitter procsessing
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Added enableJEM and configJEM options for Job Execution Monitor on Panda backend:
+  See --enabledJEM, --configJEM, j.backend.requirements.enableJEM, j.backend.requirements.configJEM
+* Write container name to destinationDBlock for "task" monitoring purposes
+* j.application.useAthenaPackages can now be used with PYARA to use your packages on Panda.
+
 **************************************************************************************************************
