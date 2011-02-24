@@ -152,6 +152,8 @@ p.add_option('--query', '-q', action='store', type='int', dest='jobid', help='Qu
 p.add_option('--enableJEM', action='store_true', help='Enable the Job Execution Monitor' )
 p.add_option('--configJEM', action='store', type='string', dest='configJEM', help='Config string for the Job Execution Monitor' )
 
+p.add_option('--useAthenaPackages', action='store_true', help='Enable to setup Athena env for PYARA' )
+
 opt, args = p.parse_args()
 
 
@@ -229,7 +231,7 @@ if opt.athena_project:
     j.application.atlas_project=opt.athena_project
 if opt.athena_exe:
     j.application.atlas_exetype=opt.athena_exe
-if opt.athena_dbrelease:
+if opt.athena_dbrelease != None:
     j.application.atlas_dbrelease=opt.athena_dbrelease
 if opt.atlas_run_dir:
     j.application.atlas_run_dir=opt.atlas_run_dir
@@ -279,6 +281,9 @@ else:
             j.application.prepare()
 if opt.collectstats:
     j.application.collect_stats=True
+
+if opt.useAthenaPackages:
+    j.application.useAthenaPackages = True
 
 # inputdata
 
