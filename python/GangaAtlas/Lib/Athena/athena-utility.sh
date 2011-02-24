@@ -113,6 +113,12 @@ frontier_setup() {
 ## function for setting up CMT environment
 cmt_setup () {
 
+    # FIX CREAM CE quotes environment problem
+    if [ -n $CREAM_JOBID ]; then 
+	env | grep \' | sed "s/'//g" | xargs -0 | sed "s/^/export /g"  | sed '$d' > repairenv.sh
+	source repairenv.sh
+    fi
+
     # setup ATLAS software
     unset CMTPATH
     

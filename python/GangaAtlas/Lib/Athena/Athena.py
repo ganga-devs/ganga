@@ -46,7 +46,7 @@ def file_install(athena_compile_flag='True'):
 #
 # ATLAS/ARDA
 
-if [ $SITEROOT != '/afs/cern.ch' ] && [ $CMTSITE != 'CERN' ]
+if [ n$SITEROOT != n'/afs/cern.ch' ] && [ n$CMTSITE != n'CERN' ]
 then
   if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
   then
