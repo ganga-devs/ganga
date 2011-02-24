@@ -188,14 +188,25 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             else: 
                 env_str = ""
 
-            if app.atlas_exetype == 'PYARA':
-                self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; python ' + self.job_options
-            elif app.atlas_exetype == 'ARES':
-                self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; athena.py ' + self.job_options
-            elif app.atlas_exetype == 'ROOT':
-                self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; root -b -q ' + self.job_options
-            elif app.atlas_exetype == 'EXE':
-                self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; ' + self.job_options
+            # below fixes issue with runGen -- job_options are executed by os.system when dbrelease is used, and by the shell otherwise
+            if app.atlas_dbrelease: 
+                if app.atlas_exetype == 'PYARA':
+                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; python ' + self.job_options
+                elif app.atlas_exetype == 'ARES':
+                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; athena.py ' + self.job_options
+                elif app.atlas_exetype == 'ROOT':
+                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; root -b -q ' + self.job_options
+                elif app.atlas_exetype == 'EXE':
+                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; ' + self.job_options
+            else:
+                if app.atlas_exetype == 'PYARA':
+                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; python ' + self.job_options
+                elif app.atlas_exetype == 'ARES':
+                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; athena.py ' + self.job_options
+                elif app.atlas_exetype == 'ROOT':
+                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; root -b -q ' + self.job_options
+                elif app.atlas_exetype == 'EXE':
+                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; ' + self.job_options
 
             if app.options:
                 self.job_options += ' %s ' % app.options
@@ -639,8 +650,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                         if self.dbrelease != '':
                             dbnum = self.dbrelease[ self.dbrelease.find('-')+1 : self.dbrelease.find('.tar')]
                             cmdline = "export DBRELEASE_REQUESTED=%s ; " % dbnum
-
-                        cmdline += "/bin/echo %%IN | sed \'s/,/\\\\\\n/g\' > input_tag.txt; python uncompress.py %s ; " % ' '.join(job.inputdata.tag_info.keys())
+                            cmdline += "/bin/echo %%IN | sed \'s/,/\\\\\\n/g\' > input_tag.txt; cat input_tag.txt; python uncompress.py %s ; " % ' '.join(job.inputdata.tag_info.keys())
+                        else: # not using dbrelease invokes different codepath in runGen
+                            cmdline += "/bin/echo %%IN | sed \'s/,/\\\\n/g\' > input_tag.txt; cat input_tag.txt; python uncompress.py %s ; " % ' '.join(job.inputdata.tag_info.keys())
                         cmdline += param[cmdline_start:cmdline_stop].replace("%IN", "outColl.root")                            
 
                         param = param[:cmdline_start] + cmdline + param[cmdline_stop:]
