@@ -345,7 +345,33 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             finp.type           = 'input'
             finp.status         = 'ready'
             jspec.addFile(finp)
-        
+        # then minbias files
+        for lfn in app.mbfiles:
+            useguid=app.minbias_turls[lfn].replace("guid:","")
+            finp = FileSpec()
+            finp.lfn            = lfn
+            finp.GUID           = useguid
+            finp.dataset        = app.dsetmap[lfn]
+            finp.prodDBlock     = app.dsetmap[lfn]
+            finp.prodDBlockToken = 'local'
+            finp.dispatchDBlock = app.dsetmap[lfn]
+            finp.type           = 'input'
+            finp.status         = 'ready'
+            jspec.addFile(finp)
+        # then cavern files
+        for lfn in app.cavernfiles:
+            useguid=app.cavern_turls[lfn].replace("guid:","")
+            finp = FileSpec()
+            finp.lfn            = lfn
+            finp.GUID           = useguid
+            finp.dataset        = app.dsetmap[lfn]
+            finp.prodDBlock     = app.dsetmap[lfn]
+            finp.prodDBlockToken = 'local'
+            finp.dispatchDBlock = app.dsetmap[lfn]
+            finp.type           = 'input'
+            finp.status         = 'ready'
+            jspec.addFile(finp)
+            
 
 #       output files( this includes the logfiles)
         # Output files
