@@ -107,6 +107,9 @@ def get_user_dlls(appname,version,user_release_area,platform,shell):
         pypath = fullpath(os.path.join(tmp,'InstallArea','python'))
         logger.debug(pypath)
         py_project_areas.append(pypath)
+        pypath = fullpath(os.path.join(tmp,'InstallArea',platform,'python'))
+        logger.debug(pypath)
+        py_project_areas.append(pypath)
 
   # savannah 47793 (remove multiple copies of the same areas)
   project_areas = unique(project_areas)

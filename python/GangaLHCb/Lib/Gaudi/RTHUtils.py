@@ -107,6 +107,8 @@ os.environ['LD_LIBRARY_PATH'] = '.:%s/lib:%s\' %(os.getcwd(),
 sys.stdout.flush()
 os.environ['PYTHONPATH'] = '%s/InstallArea/python:%s' % \\
                             (os.getcwd(), os.environ['PYTHONPATH'])
+os.environ['PYTHONPATH'] = '%s/InstallArea/%s/python:%s' % \\
+                            (os.getcwd(), platform,os.environ['PYTHONPATH'])
 
 """
   if which is 'GaudiPython':

@@ -216,12 +216,15 @@ class Francesc(IApplication):
                                           self.shell)
 
         self.extra.master_input_files += [File(f,subdir='lib') for f in dlls]
-        self.extra.master_input_files += [File(f,subdir='InstallArea/python')\
-                                          for f in pys]
+        for f in pys:
+            tmp = f.split('InstallArea')[-1]
+            subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
+            self.extra.master_input_files.append(File(f,subdir=subdir))
         for dir, files in subpys.iteritems():
-            input_files = [File(f,subdir='InstallArea/python'+os.sep+dir) \
-                           for f in files]
-            self.extra.master_input_files += input_files
+            for f in files:
+                tmp = f.split('InstallArea')[-1]
+                subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
+                self.extra.master_input_files.append(File(f,subdir=subdir))
 
     def _configure(self):
         data_str = self.extra.inputdata.optionsString()
