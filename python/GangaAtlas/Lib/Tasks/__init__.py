@@ -1,20 +1,28 @@
 # Import classes that should be in the Tasks namespace
 ## Import the list of tasks and the task and abstract job definition
+#from TaskList import TaskList
+
+from Ganga.Core.GangaRepository import addRegistry
+from TaskRegistry import TaskRegistry
+addRegistry(TaskRegistry("tasks", "Tasks Registry"))
 
 ## Tasks
+from Task import Task
 from MCTask import MCTask
 from AnaTask import AnaTask
 from MultiTask import MultiTask
 
 ## Transforms
+from Transform import Transform
 from MCTransforms import EvgenTransform, SimulTransform, ReconTransform
 from AnaTransform import AnaTransform
 from MultiTransform import MultiTransform
+from ArgTransform import ArgTransform
 
 # Applications
-from TaskApplication import AthenaTask, AthenaMCTask, AthenaMCTaskSplitterJob, AnaTaskSplitterJob
+from TaskApplication import ExecutableTask, AthenaMCTask, AthenaMCTaskSplitterJob, AthenaTask, AnaTaskSplitterJob
 
 # Start Logger
 #import Ganga.Utility.logging
 #logger = Ganga.Utility.logging.getLogger()
-from Ganga.GPIDev.Lib.Tasks.common import logger
+from common import logger
