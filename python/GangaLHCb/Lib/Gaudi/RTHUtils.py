@@ -114,8 +114,10 @@ os.environ['PYTHONPATH'] = '%s/InstallArea/%s/python:%s' % \\
   if which is 'GaudiPython':
     script += 'cmdline = \"python ./gaudipython-wrapper.py\"\n'
   else:
-    script += 'cmdline = \"%s/scripts/gaudirun.py %s data.py\" % '
-    script += "(os.environ['GAUDIROOT'],opts)\n"
+    #script += 'cmdline = \"%s/scripts/gaudirun.py %s data.py\" % '
+    #script += "(os.environ['GAUDIROOT'],opts)\n"
+    script += 'cmdline = \"gaudirun.py %s data.py\" % '
+    script += "opts\n"
 
   script += """
 # run command
