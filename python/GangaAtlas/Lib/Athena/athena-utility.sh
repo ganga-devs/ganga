@@ -1409,7 +1409,12 @@ athena_compile()
         tar xzf $GROUP_AREA -C work
     fi
     tar xzf $USER_AREA -C work
-    cd work
+
+    if [ n$ATLAS_EXETYPE == n'EXE' ]; then
+	mv work/* .
+    else
+	cd work
+    fi
     pwd
     source install.sh; echo $? > retcode.tmp
     retcode=`cat retcode.tmp`
@@ -1420,7 +1425,10 @@ athena_compile()
         echo "*************************************************************"
     fi
     pwd
-    cd ..
+
+    if [ ! n$ATLAS_EXETYPE == n'EXE' ]; then
+	cd ..
+    fi
 
     return $retcode
  
