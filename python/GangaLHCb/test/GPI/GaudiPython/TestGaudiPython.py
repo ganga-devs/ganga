@@ -26,7 +26,7 @@ class TestGaudiPython(GangaGPITestCase):
 
         fname = join(j.outputdir,'stdout')
         print 'file =', open(fname).read()
-        executionstring = 'Application Manager Configured successfully'
+        executionstring = 'Welcome to ApplicationMgr'
         assert file_contains(fname,executionstring),\
                'stdout should contain string: ' + executionstring
 

@@ -16,12 +16,12 @@ class TestDiracSplitter(GangaGPITestCase):
     def testSplit(self):
 
         inputdata = LHCbDataset(files=[
-            'LFN:/lhcb/production/DC06/phys-lumi2/00001586/DST/0000/00001586_00000923_5.dst',
-            'LFN:/lhcb/production/DC06/phys-lumi2/00001586/DST/0000/00001586_00000178_5.dst',
-            'LFN:/lhcb/production/DC06/phys-lumi2/00001586/DST/0000/00001586_00000819_5.dst',
-            'LFN:/lhcb/production/DC06/phys-lumi2/00001586/DST/0000/00001586_00000292_5.dst',
-            'LFN:/lhcb/production/DC06/phys-lumi2/00001586/DST/0000/00001586_00000471_5.dst',
-            'LFN:/lhcb/production/DC06/phys-lumi2/00001586/DST/0000/00001586_00000472_5.dst'
+            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst',
+            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000922_1.dimuon.dst',
+            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000915_1.dimuon.dst',
+            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000920_1.dimuon.dst',
+            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000916_1.dimuon.dst',
+            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
             ])
 
         len_files = len(inputdata.files)

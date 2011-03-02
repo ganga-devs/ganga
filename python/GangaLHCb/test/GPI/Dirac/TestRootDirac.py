@@ -13,7 +13,7 @@ class TestRootDirac(GangaGPITestCase):
     def testAllowedArchitecture(self):
         """Test the submission of root jobs on dirac"""
         
-        config.ROOT.arch = 'slc4_ia32_gcc34'
+        config.ROOT.arch = 'x86_64-slc5-gcc43-opt'
         
         r = Root(script=script_file)
 
@@ -25,7 +25,7 @@ class TestRootDirac(GangaGPITestCase):
     def testNotAllowedArchitecture(self):
         """Tests the architectures not allowed by dirac"""
 
-        config.ROOT.arch = 'slc4_ia32_gcc34-not-a-valid-version'
+        config.ROOT.arch = 'x86_64-slc5-gcc43-opt-not-a-valid-version'
         
         r = Root(script=script_file)
         j = Job(application=r, backend=Dirac())
@@ -40,7 +40,7 @@ class TestRootDirac(GangaGPITestCase):
         
     def testProperSubmit(self):
         
-        config.ROOT.arch = 'slc4_ia32_gcc34'
+        config.ROOT.arch = 'x86_64-slc5-gcc43-opt'
         
         j = Job(application=Root(script=script_file), backend=Dirac())
         j.submit()

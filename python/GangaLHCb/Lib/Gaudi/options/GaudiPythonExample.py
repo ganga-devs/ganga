@@ -1,20 +1,24 @@
-from ROOT import TH1F, TBrowser, TCanvas
-from Gaudi.Configuration import *
+from ROOT import TCanvas
+from GaudiConf.Configuration import *
 
-importOptions('$STDOPTS/LHCbApplication.opts')
-#importOptions('$STDOPTS/DstDicts.opts')
+lhcbApp = LHCbApp(DDDBtag = 'default',
+                  CondDBtag = 'default',
+                  DataType = '2010',
+                  Simulation = False)
 
-appConf = ApplicationMgr( OutputLevel = INFO, AppName = 'Ex3' )
-appConf.TopAlg += ["UnpackMCParticle","UnpackMCVertex"]
+from AnalysisPython import Dir, Functors
+from GaudiPython.Bindings import gbl, AppMgr, Helper
 
-import GaudiPython
+appMgr = AppMgr(outputlevel=4)
+appMgr.config( files = ['$GAUDIPOOLDBROOT/options/GaudiPoolDbRoot.opts'])
+appMgr.ExtSvc += ['DataOnDemandSvc']
+appMgr.initialize()
 
-appMgr = GaudiPython.AppMgr()
 evt = appMgr.evtsvc()
 
 appMgr.run(1)
 evt.dump()
 
-appMgr.exit()
-
+import atexit
+atexit.register(appMgr.exit)
 

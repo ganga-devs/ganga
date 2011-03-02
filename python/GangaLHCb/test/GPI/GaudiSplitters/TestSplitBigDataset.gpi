@@ -2,7 +2,7 @@ from GangaLHCb.test import *
 
 addLocalTestSubmitter()
 
-datafile = 'LFN:/lhcb/production/DC06/phys-v2-lumi2/00001694/DST/0000/00001694_00000001_5.dst'
+datafile = 'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst'
 
 data = []
 for f in range(0,20000): data.append(datafile)
