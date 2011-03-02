@@ -44,6 +44,9 @@ print 'downloadedFiles',downloadedFiles
 #assert 'output.txt' in downloadedFiles, 'output.txt must be downloaded - %s' \
 #    % str(downloadedFiles)
 
+import time
+time.sleep(30)
+
 assert exists(output_file), 'File must exist'
 
 assert(file_contains(output_file,'This is a test'))

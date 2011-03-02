@@ -98,7 +98,7 @@ class TestGaudiPython(GangaGPITestCase):
         j.submit()
         assert sleep_until_completed(j,600)
         
-        executionstring = 'Application Manager Stopped successfully'
+        executionstring = 'SUCCESS Reading Event record 1'
         for js in j.subjobs:
             fname = join(js.outputdir,'stdout')
             print 'file =', open(fname).read()

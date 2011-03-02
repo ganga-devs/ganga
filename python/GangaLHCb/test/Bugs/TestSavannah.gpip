@@ -9,6 +9,7 @@ class TestSavannah(GangaGPITestCase):
 
     def testSavannah8937(self):
         j = Job(application="DaVinci", backend="LSF")
+	j.backend.queue='8nm'
         j.submit()
         return Savannah8937(j)
 

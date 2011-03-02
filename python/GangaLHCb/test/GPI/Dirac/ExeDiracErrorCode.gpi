@@ -33,6 +33,8 @@ sleep_until_completed(j)
 # this is not working in DIRAC at the moment
 assert j.status == 'failed', 'Job should fail'
 j.backend.getOutputSandbox() # this doesn't happen automatically if failed 
+import time
+time.sleep(30)
 fileName = os.path.join(j.outputdir,'std.out')
 file = open(fileName,'r')
 print file.read()
