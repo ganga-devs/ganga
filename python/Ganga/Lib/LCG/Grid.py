@@ -830,7 +830,7 @@ class Grid(object):
                 ## NB: expiration time is "current time" + "credential lifetime"
                 t_expire = time.time() + float( self.credential.timeleft(units="seconds") )
 
-                logger.debug('new proxy at %s valid until %s' % ( ce, mydelid, time.ctime(t_expire) ) )
+                logger.debug('new proxy at %s valid until %s' % ( ce, time.ctime(t_expire) ) )
 
             self.proxy_id[ce] = [mydelid, t_expire]
 
