@@ -906,17 +906,66 @@ sys.exit(0)
         
         status = False
 
-        for sj in rjobs:
-            if sj.id in node_jids.keys():
-                sj.backend.id = node_jids[sj.id]
-                sj.backend.CE = self.CE
-                sj.backend.actualCE = sj.backend.CE
-                sj.updateStatus('submitted')
-                sj.info.submit_counter += 1
-            else:
-                logger.warning('subjob %s not successfully submitted' % sj.getFQID('.'))
-            
+        if node_jids:
+            for sj in rjobs:
+                if sj.id in node_jids.keys():
+                    sj.backend.id = node_jids[sj.id]
+                    sj.backend.CE = self.CE
+                    sj.backend.actualCE = sj.backend.CE
+                    sj.updateStatus('submitted')
+                    sj.info.submit_counter += 1
+                else:
+                    logger.warning('subjob %s not successfully submitted' % sj.getFQID('.'))
+                    
             status = True
+
+        return status
+
+    def master_bulk_resubmit(self,rjobs):
+        '''CREAM bulk resubmission'''
+
+        from Ganga.Core import IncompleteJobSubmissionError
+        from Ganga.Utility.logging import log_user_exception
+
+#        job = self.getJobObject()
+
+        # compose master JDL for collection job
+        node_jdls = []
+        for sj in rjobs:
+            jdlpath = os.path.join(sj.inputdir,'__jdlfile__')
+            node_jdls.append(jdlpath)
+
+        # set all subjobs to submitting status
+        for sj in rjobs:
+            sj.updateStatus('submitting')
+
+        node_jids  = self.__mt_bulk_submit__(node_jdls)
+
+        status = False
+
+        if node_jids:
+            for sj in rjobs:
+                if sj.id in node_jids.keys():
+                    self.__refresh_jobinfo__(sj)
+                    sj.backend.id = node_jids[sj.id]
+                    sj.backend.CE = self.CE
+                    sj.backend.actualCE = sj.backend.CE
+                    sj.updateStatus('submitted')
+                    sj.info.submit_counter += 1
+                else:
+                    logger.warning('subjob %s not successfully submitted' % sj.getFQID('.'))
+                    
+            status = True
+
+#            # set all subjobs to submitted status
+#            # NOTE: this is just a workaround to avoid the unexpected transition
+#            #       that turns the master job's status from 'submitted' to 'submitting'.
+#            #       As this transition should be allowed to simulate a lock mechanism in Ganga 4, the workaround
+#            #       is to set all subjobs' status to 'submitted' so that the transition can be avoided.
+#            #       A more clear solution should be implemented with the lock mechanism introduced in Ganga 5.
+#            for sj in rjobs:
+#                sj.updateStatus('submitted')
+#                sj.info.submit_counter += 1
 
         return status
 
@@ -997,13 +1046,12 @@ sys.exit(0)
             ick = IBackend.master_resubmit(self,rjobs)
 
         else:
-            # TODO: case 3: master job bulk resubmission
+            # case 3: master job bulk resubmission
             logger.debug('mode: master job resubmission')
-            logger.error('master job resubmission not implemented yet')
             
-#            ick = self.master_bulk_resubmit(rjobs)
-#            if not ick:
-#                raise GangaException('CREAM bulk submission failure')
+            ick = self.master_bulk_resubmit(rjobs)
+            if not ick:
+                raise GangaException('CREAM bulk submission failure')
 
         profiler.check('job re-submission elapsed time')
 
