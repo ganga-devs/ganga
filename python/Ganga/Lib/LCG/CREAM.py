@@ -930,10 +930,10 @@ sys.exit(0)
 #        job = self.getJobObject()
 
         # compose master JDL for collection job
-        node_jdls = []
+        node_jdls = {}
         for sj in rjobs:
             jdlpath = os.path.join(sj.inputdir,'__jdlfile__')
-            node_jdls.append(jdlpath)
+            node_jdls[sj.id] = jdlpath
 
         # set all subjobs to submitting status
         for sj in rjobs:
@@ -1023,6 +1023,23 @@ sys.exit(0)
                 ick = True
 
         return ick
+
+    def master_auto_resubmit(self,rjobs):
+        """
+        Resubmit each subjob individually as bulk resubmission will overwrite
+        previous master job statuses
+        """
+
+        # check for master failure - in which case bulk resubmit
+        mj = self._getParent()
+        if mj.status == 'failed':
+            return self.master_resubmit(rjobs)
+
+        for j in rjobs:
+            if not j.backend.master_resubmit([j]):
+                return False
+
+        return True
 
     def master_resubmit(self,rjobs):
         '''Resubmit the master job to the grid'''
