@@ -994,9 +994,9 @@ sys.exit(0)
         if not self.CE:
             raise GangaException('CREAM CE endpoint not set')
 
-        ## delegate proxy to CREAM CE
-        if not grids['GLITE'].cream_proxy_delegation(self.CE):
-            logger.warning('proxy delegation to %s failed' % self.CE)
+#        ## delegate proxy to CREAM CE
+#        if not grids['GLITE'].cream_proxy_delegation(self.CE):
+#            logger.warning('proxy delegation to %s failed' % self.CE)
 
         ## doing massive job preparation
         if len(job.subjobs) == 0:

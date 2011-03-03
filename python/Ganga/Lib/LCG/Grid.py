@@ -43,7 +43,7 @@ class Grid(object):
 #       start up a shell object specific to the middleware
         self.shell = getShell(self.middleware)
 
-        self.proxy_id = None
+        self.proxy_id = {}
 
         if not self.shell:
             logger.warning('LCG-%s UI has not been configured. The plugin has been disabled.' % self.middleware)
@@ -763,6 +763,23 @@ class Grid(object):
 
         return True
 
+    def cream_check_delegated_proxy(self, ce):
+        '''
+        Checking if the delegation id to given CE is still valid.
+        '''
+
+        id = None
+
+        try:
+            id = self.proxy_id[ce]
+
+            ## TODO: implement the check of the validity of the delegation id
+
+        except KeyError:
+            pass
+
+        return id
+
     def cream_proxy_delegation(self, ce):
         '''CREAM CE proxy delegation'''
 
@@ -772,26 +789,33 @@ class Grid(object):
         if not ce:
             logger.warning('No CREAM CE endpoint specified')
             return
+        
+        mydelid = self.cream_check_delegated_proxy(ce)
 
-        cmd = 'glite-ce-delegate-proxy'
-        exec_bin = True
+        if not mydelid:
+            
+            exec_bin = True
+            
+            cmd = 'glite-ce-delegate-proxy'
 
-        cmd += ' -e %s' % ce.split('/cream')[0]
+            cmd += ' -e %s' % ce.split('/cream')[0]
 
-        mydelid = '%s_%s' % (self.credential.identity(), get_uuid())
+            mydelid = '%s_%s' % (self.credential.identity(), get_uuid())
 
-        cmd = '%s %s' % (cmd, mydelid)
+            cmd = '%s %s' % (cmd, mydelid)
 
-        logger.debug('proxy delegation command: %s' % cmd)
+            logger.debug('proxy delegation command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
-                                                  allowed_exit=[0,255],
-                                                  timeout=self.config['SubmissionTimeout'])
-        if rc == 0:
-            self.proxy_id = mydelid
-            return True
-        else:
-            return False
+            rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
+                                                      allowed_exit=[0,255],
+                                                      timeout=self.config['SubmissionTimeout'])
+            if rc != 0:
+                logger.error('proxy delegation error: %s' % output)
+                mydelid = ''
+
+            self.proxy_id[ce] = mydelid
+
+        return mydelid
 
     def cream_submit(self, jdlpath, ce):
         '''CREAM CE direct job submission'''
@@ -806,8 +830,10 @@ class Grid(object):
         cmd = 'glite-ce-job-submit'
         exec_bin = True
 
-        if self.proxy_id:
-            cmd = cmd + ' -D %s' % self.proxy_id
+        mydelid = self.cream_proxy_delegation(ce)
+        
+        if mydelid:
+            cmd = cmd + ' -D %s' % mydelid
         else:
             cmd = cmd + ' -a'
 
