@@ -778,7 +778,10 @@ class Grid(object):
 
             ## check if the lifetime of the existing proxy still longer than 1800 seconds
             if t_expire - now <= 1800:
+                logger.debug('existing proxy going to expire in 1800 seconds.')
                 id = None
+            else:
+                logger.debug('reusing valid proxy %s on %s' % (id,ce))
                 
         except KeyError:
             pass
@@ -798,6 +801,8 @@ class Grid(object):
         mydelid = self.cream_check_delegated_proxy(ce)
 
         if not mydelid:
+
+            logger.debug('making new proxy delegation to %s' % ce)
 
             t_expire = 0
             
@@ -824,6 +829,8 @@ class Grid(object):
                 ## proxy delegated successfully
                 ## NB: expiration time is "current time" + "credential lifetime"
                 t_expire = time.time() + float( self.credential.timeleft(units="seconds") )
+
+                logger.debug('new proxy at %s valid until %s' % (ce, mydelid, time.strftime('%d %b %Y %H:%M:%S %Z',time.ctime(t_expire)) ) )
 
             self.proxy_id[ce] = [mydelid, t_expire]
 
