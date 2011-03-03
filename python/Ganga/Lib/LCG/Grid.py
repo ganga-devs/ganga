@@ -828,7 +828,7 @@ class Grid(object):
             else:
                 ## proxy delegated successfully
                 ## NB: expiration time is "current time" + "credential lifetime"
-                t_expire = time.time() + float( self.credential.timeleft(units="seconds") )
+                t_expire = time.time() + float( self.credential.timeleft(units="seconds", force_check=True) )
 
                 logger.debug('new proxy at %s valid until %s' % ( ce, time.ctime(t_expire) ) )
 
