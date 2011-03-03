@@ -94,6 +94,17 @@ class CREAM(IBackend):
             logger.debug('load default SandboxCache')
             pass
 
+    def __refresh_jobinfo__(self,job):
+        '''Refresh the lcg jobinfo. It will be called after resubmission.'''
+        job.backend.status   = ''
+        job.backend.reason   = ''
+        job.backend.actualCE = ''
+        job.backend.exitcode = ''
+        job.backend.exitcode_cream = ''
+        job.backend.workernode = ''
+        job.backend.isbURI = ''
+        job.backend.osbURI = ''
+
     def __setup_sandboxcache__(self, job):
         '''Sets up the sandbox cache object to adopt the runtime configuration of the LCG backend'''
 
@@ -959,6 +970,60 @@ sys.exit(0)
             self.id = grids['GLITE'].cream_submit(jdlpath,self.CE)
 
             if self.id:
+                self.actualCE = self.CE
+                ick = True
+
+        return ick
+
+    def master_resubmit(self,rjobs):
+        '''Resubmit the master job to the grid'''
+
+        profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
+        profiler.start()
+
+        job = self.getJobObject()
+
+        ick = False
+
+        if not job.master and len(job.subjobs) == 0:
+            # case 1: master job normal resubmission
+            logger.debug('rjobs: %s' % str(rjobs))
+            logger.debug('mode: master job normal resubmission')
+            ick = IBackend.master_resubmit(self,rjobs)
+
+        elif job.master:
+            # case 2: individual subjob resubmission
+            logger.debug('mode: individual subjob resubmission')
+            ick = IBackend.master_resubmit(self,rjobs)
+
+        else:
+            # TODO: case 3: master job bulk resubmission
+            logger.debug('mode: master job resubmission')
+            logger.error('master job resubmission not implemented yet')
+            
+#            ick = self.master_bulk_resubmit(rjobs)
+#            if not ick:
+#                raise GangaException('CREAM bulk submission failure')
+
+        profiler.check('job re-submission elapsed time')
+
+        return ick
+
+    def resubmit(self):
+        '''Resubmit the job'''
+
+        ick = False
+
+        job = self.getJobObject()
+
+        jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
+
+        if jdlpath:
+            self.id = grids['GLITE'].cream_submit(jdlpath,self.CE)
+
+            if self.id:
+                # refresh the lcg job information
+                self.__refresh_jobinfo__(job)
                 self.actualCE = self.CE
                 ick = True
 
