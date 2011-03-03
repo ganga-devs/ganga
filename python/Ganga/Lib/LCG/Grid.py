@@ -823,7 +823,7 @@ class Grid(object):
             else:
                 ## proxy delegated successfully
                 ## NB: expiration time is "current time" + "credential lifetime"
-                t_expire = time.time() + self.credential.timeleft(units="seconds")
+                t_expire = time.time() + float( self.credential.timeleft(units="seconds") )
 
             self.proxy_id[ce] = [mydelid, t_expire]
 
