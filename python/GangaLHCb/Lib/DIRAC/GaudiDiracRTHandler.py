@@ -11,7 +11,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer, File
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-def gaudi_dirac_wrapper(cmdline):
+def gaudi_dirac_wrapper(cmdline,platform):
     return """#!/usr/bin/env python
 '''Script to run Gaudi application'''
 
@@ -28,9 +28,10 @@ if __name__ == '__main__':
 
     prependEnv('LD_LIBRARY_PATH', getcwd() + '/lib')
     prependEnv('PYTHONPATH', getcwd() + '/InstallArea/python')
+    prependEnv('PYTHONPATH', getcwd() + '/InstallArea/%s/python')
         
     sys.exit(system(%s)/256)
-  """ % cmdline
+  """ % (platform,cmdline)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -102,7 +103,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
         if is_gaudi_child(app):
             commandline = "'gaudirun.py options.pkl data.py'"
         logger.debug('Command line: %s: ', commandline)
-        wrapper = gaudi_dirac_wrapper(commandline)
+        wrapper = gaudi_dirac_wrapper(commandline,app.platform)
         j = app.getJobObject()
         script = "%s/gaudi-script.py" % j.getInputWorkspace().getPath()
         file = open(script,'w')
