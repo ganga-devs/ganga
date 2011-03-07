@@ -70,6 +70,7 @@ def loadPlugins( config = {} ):
     import Lib.Gaudi
     import Lib.LHCbDataset
     import Lib.DIRAC
+    import Lib.Tasks
 
 #from Ganga.GPIDev.Credentials import getCredential
 #proxy = getCredential('GridProxy', '')

@@ -1,0 +1,81 @@
+# Test tasks for LHCb
+
+import os,sys,time,string
+
+#Clean up temporary files at the end
+toClean = []
+
+def createFile(fname,contents):
+  """ Create a local file and keep track of it. 
+      If a file of the same name already exists then
+      remove it.
+  """
+  if os.path.exists(fname):
+    os.remove(fname)
+  fopen = open(fname,'w')
+  fopen.write(contents)
+  fopen.close()
+  toClean.append(fname)
+
+#First make a script that creates an output sandbox file:
+
+scriptName = 'myTaskTestingScript.py'
+ofile = 'myoutputfile.txt'
+timeout = 30
+
+simpleApp = ['#!/usr/bin/env python']
+simpleApp.append('import sys,time')
+simpleApp.append('print "Script: %s" %(sys.argv[0])')
+simpleApp.append('print "Sleeping for a while..."')
+simpleApp.append('time.sleep(%s)' %(timeout))
+simpleApp.append('ofile = "%s"' %(ofile))
+simpleApp.append('print "Creating output sandbox file: %s" %(ofile)')
+simpleApp.append('fopen = open(ofile,"w")')
+simpleApp.append('fopen.write(time.asctime())')
+simpleApp.append('fopen.close()')
+simpleApp.append('print "Done"')
+
+createFile(scriptName,string.join(simpleApp,'\n'))
+toClean.append(ofile)
+
+#Next create a job (template) to pass to the AnalysisTask later:
+jt = Job()
+jt.application = Executable()
+jt.application.exe = File(scriptName)
+
+#Add an input sandbox file for completeness (ignore output data in this simple case)
+ifile = 'dummyInputSandboxFile.txt'
+createFile(ifile,'Dummy input sandbox file created on %s' %(time.asctime()))
+jt.inputsandbox.append(ifile)
+jt.outputsandbox.append(ofile)
+jt.backend = Local()
+
+#Prepare some 'data' to process
+datasets = ['a.dst','b.dst','c.dst']
+for dummy in datasets:
+  createFile(dummy,time.asctime())
+
+datasetOne = LHCbDataset(['PFN:a.dst','PFN:b.dst'])
+datasetTwo = LHCbDataset(['PFN:c.dst'])
+
+#Now start to prepare the AnalysisTask, this would be 
+#a more usual starting point for users
+
+task = AnalysisTask()
+task.setTemplate(jt)
+task.name = 'MyTaskTest'
+task.setDataset([datasetOne,datasetTwo]) #just to demonstrate this can be a list of LHCbDatasets
+task.float = 5 # this could be refactored into the LHCb task code or made a config setting
+
+#Check that the info() and overview() methods return something
+task.info()
+task.overview()
+
+#Check that there are 2 transforms with data in expected grouping and order
+assert task.transforms[0].inputdata == datasetOne
+assert task.transforms[1].inputdata == datasetTwo
+
+task.run()
+
+#Note that temporary files could be cleaned up here, assuming the task completes
+#or is not activated with the run() method.  
