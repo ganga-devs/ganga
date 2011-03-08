@@ -169,6 +169,42 @@ def resolve_file_locations(dataset, sites=None, cloud=None, token='ATLASDATADISK
 
     return replicas
 
+## system command executor with subprocess
+def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
+    '''executes system command vir subprocess module'''
+
+    import subprocess
+
+    exitcode = -999
+
+    mystdout = ''
+    mystderr = ''
+
+    try:
+
+        ## resetting essential env. variables
+        my_env = os.environ
+
+        if my_env.has_key('LD_LIBRARY_PATH_ORIG'):
+            my_env['LD_LIBRARY_PATH'] = my_env['LD_LIBRARY_PATH_ORIG']
+
+        if my_env.has_key('PATH_ORIG'):
+            my_env['PATH'] = my_env['PATH_ORIG']
+
+        if my_env.has_key('PYTHONPATH_ORIG'):
+            my_env['PYTHONPATH'] = my_env['PYTHONPATH_ORIG']
+
+        child = subprocess.Popen(cmd, cwd=wdir, env=my_env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        (mystdout, mystderr) = child.communicate()
+
+        exitcode = child.returncode
+
+    finally:
+        pass
+
+    return (exitcode, mystdout, mystderr)
+
 class StagerDatasetConfigError(ConfigError):
     '''An exception object for stager dataset configuration'''
     def __init__(self,what):
