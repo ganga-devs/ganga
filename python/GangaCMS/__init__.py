@@ -21,6 +21,9 @@ configMetrics = Ganga.Utility.Config.makeConfig('Metrics','List of desired metri
 dscrpt = 'The location of the metrics.cms list.'
 configMetrics.addOption('location','%s/GangaCMS/metrics.ini'%(ganga_pythonpath),dscrpt)
 
+dscrpt = 'The version CRAB used for job submission.'
+configCMSSW.addOption('CRAB_VERSION','CRAB_2_7_5',dscrpt)
+
 def getEnvironment( config = {} ):
     import sys
     import os.path
@@ -37,8 +40,8 @@ def getEnvironment( config = {} ):
     config = Ganga.Utility.Config.getConfig('CMSSW')
     cmssw_version = config['CMSSW_VERSION']
     cmssw_setup = config['CMSSW_SETUP']
-
-    cmssw_setup_script = os.path.join(cmssw_setup,cmssw_version+'.sh')
+    crab_version = config['CRAB_VERSION']
+    cmssw_setup_script = os.path.join(cmssw_setup,'CMSSW_generic.sh')
     if not os.path.exists(cmssw_setup_script):
         print 'GangaCMS> [ERROR] CMSSW setup script not found: "%s"'%(cmssw_setup_script)
         return

@@ -50,11 +50,12 @@ class CRABBackend(IBackend):
 
 #        try:
         config = Ganga.Utility.Config.getConfig('CMSSW')
-        cmssw_version = config['CMSSW_VERSION']
-        cmssw_setup = config['CMSSW_SETUP']
-        cmssw_setup_script = os.path.join(cmssw_setup,cmssw_version+'.sh')
+        cmssw_setup = config['CMSSW_SETUP'] # the directory
+        cmssw_version = config['CMSSW_VERSION'] # e.g. CMSSW_3_7_0, CMSSW_generic
+        crab_version = config['CRAB_VERSION']
+        cmssw_setup_script = os.path.join(cmssw_setup,'CMSSW_generic.sh')
         from Ganga.Utility.Shell import Shell
-        shell = Shell(cmssw_setup_script)
+        shell = Shell(cmssw_setup_script,[cmssw_version,crab_version])
         self.crab_env = shell.env
 #        except:
 #          pass    
