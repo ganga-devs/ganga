@@ -1290,7 +1290,7 @@ class Athena(IApplication):
         else:
             
             # check splitter
-            if job.splitter and not job.splitter._name in ['AthenaSplitterJob']:
+            if job.splitter and not job.splitter._name in ['AthenaSplitterJob','AnaTaskSplitterJob']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
              
             # Check that only ATLASLocalDataset are used locally       
@@ -1545,25 +1545,38 @@ class AthenaOutputMerger(IMerger):
         '''Merge local root tuples of subjobs output'''
 
         import os
+        from Ganga.GPIDev.Lib.Job import Job
         job = self._getRoot()
-        id = '%d' % job.id
+        if (isinstance(job,GPIProxyObject) and not isinstance(job._impl,Job)) or not isinstance(job, Job):
+            job = None
+            id = None
+        else:    
+            id = '%d' % job.id
 
         filelist = []
         joblist = []
         
         # Append jobs to the joblist for cross job merging
         if subjobs:
-            from Ganga.GPIDev.Lib.Job import Job
             for ijob in subjobs:
-                if isinstance(ijob,GPIProxyObject) and isinstance(ijob._impl,Job):
+                # check for subjobs of these jobs
+                if not ijob.subjobs:
+                    if isinstance(ijob,GPIProxyObject) and isinstance(ijob._impl,Job):
+                        joblist.append(ijob._impl)
+                    else:
+                        joblist.append(ijob)                        
+                else:                    
                     for isubjob in ijob.subjobs:
-                        joblist.append(isubjob._impl)
-
+                        if isinstance(isubjob,GPIProxyObject) and isinstance(isubjob._impl,Job):
+                            joblist.append(isubjob._impl)
+                        else:
+                            joblist.append(isubjob)
+                    
         # Determine outputlocation
         local_location = options.get('local_location')
         if local_location:
             outputlocation = expandfilename(local_location)
-            if not outputlocation.endswith(id):
+            if id and not outputlocation.endswith(id):
                 outputlocation = os.path.join( outputlocation, id )
         elif job.outputdata.local_location:
             outputlocation = expandfilename(job.outputdata.local_location)
@@ -1588,58 +1601,80 @@ class AthenaOutputMerger(IMerger):
                 pass
  
 
-        if job.status == 'completed':
-            logger.debug('Merger outputlocation is: %s',outputlocation)
+        #if job.status == 'completed':
+        logger.debug('Merger outputlocation is: %s',outputlocation)
 
         # Determine file names
-        if job._getRoot().subjobs:
-            for isubjob in job._getRoot().subjobs:
-                if isubjob.outputdata.output:
-                    iline = 0
-                    for line in isubjob.outputdata.output:
-                        if job.outputdata._name=='DQ2OutputDataset':
-                            [dataset,lfn,guid,size,md5sum,siteID]=line.split(",")
-                        elif job.outputdata._name=='ATLASOutputDataset':
-                            lfn = isubjob.outputdata.outputdata[iline]
-                            id = "%d" % (isubjob.id)
-                            lfn = os.path.join(id, lfn)
-                            
-                        pfn = os.path.join(outputlocation,lfn)
-                        
-                        if not os.path.exists(pfn):
-                            if job.outputdata._name=='DQ2OutputDataset':
+        if not job:
+            sjlist = joblist
+        else:
+            sjlist = job._getRoot().subjobs
+
+        for isubjob in sjlist:
+            if isubjob.outputdata.output:                
+                
+                iline = 0
+                for line in isubjob.outputdata.output:
+                    if isubjob.outputdata._name=='DQ2OutputDataset':
+                        [dataset,lfn,guid,size,md5sum,siteID]=line.split(",")
+                    elif isubjob.outputdata._name=='ATLASOutputDataset':
+                        lfn = isubjob.outputdata.outputdata[iline]
+                        id = "%d" % (isubjob.id)
+                        lfn = os.path.join(id, lfn)
+
+                    pfn = os.path.join(outputlocation,lfn)
+
+                    if not os.path.exists(pfn):
+                        if isubjob.outputdata._name=='DQ2OutputDataset':
+                            if isubjob.outputdata.local_location:
+                                pfn = os.path.join( isubjob.outputdata.local_location, isubjob.outputdata.datasetname, lfn )
+                            else:
                                 # fall back on usual place
                                 pfn = os.path.join( isubjob.outputdir , lfn )
-                            else:
-                                pfn = isubjob.outputdata.output[iline]
-                        
-                        for name in isubjob.outputdata.outputdata:
-                            if name in lfn:
-                                pfnlink =  os.path.join( isubjob.outputdir, name )
+                        else:
+                            pfn = isubjob.outputdata.output[iline]
 
-                                if job.outputdata._name=='DQ2OutputDataset' or (job.outputdata._name=='ATLASOutputDataset' and not isubjob.outputdata.local_location==''):
+                    # find the output list from outputdata or construct if required
+                    output_list = isubjob.outputdata.outputdata
+                    if len(output_list) == 0:
+                        output_list = []
+                        # check for numbered extensions
+                        ext = os.path.splitext(lfn)[1]
+                        if ext[1:].isdigit():
+                            ext = os.path.splitext( os.path.splitext(lfn)[0] )[1]
+                        if ext == '.root':
+                            output_list.append(lfn.split('.')[3] + '.root')
+                            
+                    for name in output_list:
 
-                                    try:
-                                        open(pfn)
-                                        fsize = os.stat(pfn).st_size
-                                    except IOError:
-                                        if isubjob.status == 'completed':
-                                            logger.debug('%s does not exist - please use retrieve() method to download file.', pfn)
-                                        continue
-                                    if not fsize>0:
-                                        if isubjob.status == 'completed':
-                                            logger.debug('Filesize of %s is 0 - please use retrieve() method to download file.', pfn)
-                                        continue
-                                    try:
-                                        open(pfnlink)
-                                    except IOError:
-                                        os.symlink(pfn, pfnlink)
+                        if (os.path.splitext(name)[0] in lfn and os.path.splitext(name)[1] in lfn) or name in lfn:
+                            pfnlink =  os.path.join( isubjob.outputdir, name )
 
-                                if not name in filelist:
-                                    filelist.append(name)
-                        iline = iline + 1
-                    if not isubjob in joblist:
-                        joblist.append(isubjob)
+                            if isubjob.outputdata._name=='DQ2OutputDataset' or (isubjob.outputdata._name=='ATLASOutputDataset' and not isubjob.outputdata.local_location==''):
+
+                                try:
+                                    open(pfn)
+                                    fsize = os.stat(pfn).st_size
+                                except IOError:
+                                    if isubjob.status == 'completed':
+                                        logger.debug('%s does not exist - please use retrieve() method to download file.', pfn)
+                                    continue
+                                if not fsize>0:
+                                    if isubjob.status == 'completed':
+                                        logger.debug('Filesize of %s is 0 - please use retrieve() method to download file.', pfn)
+                                    continue
+                                try:
+                                    open(pfnlink)
+                                except IOError:
+                                    os.symlink(pfn, pfnlink)
+
+                            if not name in filelist:
+                                filelist.append(name)
+                    iline = iline + 1
+
+                
+                if not isubjob in joblist:
+                    joblist.append(isubjob)
         
         logger.debug('Merger filelist: %s',filelist)
         logger.debug('Merger joblist: %s', [ '%d.%d'%(j.master.id,j.id) for j in joblist] )
@@ -1659,7 +1694,6 @@ class AthenaOutputMerger(IMerger):
         else:
             igfailed = False
         
-
         rm.files = filelist
         rc = rm.merge(joblist, outputdir=outputlocation, overwrite=True, ignorefailed=igfailed)
 
