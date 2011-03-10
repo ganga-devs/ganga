@@ -118,3 +118,16 @@ class CRABServer(GangaObject):
         self._send(cmd,'getting Output',job.backend.crab_env)
 #        msg = telltale.resubmit('%slog/crab.log'%(job.outputdir))
         return 1
+
+    def postMortem(self, job):
+
+        workdir = job.inputdata.ui_working_dir
+        if not os.path.exists(workdir):
+            raise CRABServerError('Workdir %s not found.'%(workdir))
+
+        index = int(job.id) + 1
+        cmd = 'crab -postMortem %d -c %s'%(index,workdir)
+        self._send(cmd,'getting postMortem',job.backend.crab_env)
+#        msg = telltale.resubmit('%slog/crab.log'%(job.outputdir))
+        return 1
+
