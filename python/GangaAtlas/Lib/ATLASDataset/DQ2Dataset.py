@@ -163,7 +163,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         locations_num = {}
         retry = 0
         allchecked = False
-
+        
         if allowed_sites:
             alllocations = [ site for site in alllocations if site in allowed_sites ]
 
@@ -1631,6 +1631,8 @@ class DQ2OutputDataset(Dataset):
 
         subjobDownload = options.get('subjobDownload')
         blocking = options.get('blocking')
+        use_dsname = options.get('useDSNameForDir')
+        output_names_re = options.get('outputNamesRE')
         
         job = self._getParent()
 
@@ -1643,7 +1645,7 @@ class DQ2OutputDataset(Dataset):
         # call the subjob retrieve method if available
         if len(job.subjobs) > 0 and subjobDownload:
             for sj in job.subjobs:
-                sj.outputdata.retrieve(blocking=blocking)
+                sj.outputdata.retrieve(blocking=blocking, useDSNameForDir=use_dsname, outputNamesRE=output_names_re)
             return
        
         if job.backend._name in [ 'LCG' ]:
@@ -1671,33 +1673,41 @@ class DQ2OutputDataset(Dataset):
                 id = "%d" % job.id
 
             if local_location:
-                outputlocation = expandfilename(local_location)             
-                try:
-                    outputlocation = os.path.join( outputlocation, id )
-                    os.makedirs(outputlocation)
-                except OSError:
-                    pass
+                outputlocation = expandfilename(local_location)
+                if not use_dsname:
+                    try:
+                        outputlocation = os.path.join( outputlocation, id )
+                        os.makedirs(outputlocation)
+                    except OSError:
+                        pass
             elif job.outputdata.local_location:
                 outputlocation = expandfilename(job.outputdata.local_location)
-                try:
-                    outputlocation = os.path.join( outputlocation, id )
-                    os.makedirs(outputlocation)
-                except OSError:
-                    pass
+                if not use_dsname:
+                    try:
+                        outputlocation = os.path.join( outputlocation, id )
+                        os.makedirs(outputlocation)
+                    except OSError:
+                        pass
             else:
                 # User job repository location
                 outputlocation = job.outputdir
 
             # Use single download if called from master job
             if masterJob and not subjobDownload:
-                exe = 'dq2-get --client-id=ganga -L ROAMING -a -d -D '
+                if not use_dsname:
+                    exe = 'dq2-get --client-id=ganga -L ROAMING -a -d -D '
+                    temp_location = outputlocation
+                else:
+                    exe = 'dq2-get --client-id=ganga -L ROAMING -a -d '
+                    temp_location = os.path.join(outputlocation, job.outputdata.datasetname)
+                    
 
                 if job.backend._name == 'Panda':
-                    cmd = '%s -H %s %s' %(exe, outputlocation, job.outputdata.datasetname)
+                    cmd = '%s -H %s %s' %(exe, temp_location, job.outputdata.datasetname)
                 else:
-                    cmd = '%s -H %s %s' %(exe, outputlocation, job.outputdata.datasetname)
+                    cmd = '%s -H %s %s' %(exe, temp_location, job.outputdata.datasetname)
                 
-                logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
+                logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, temp_location )
 
                 threads=[]
                 thread = Download.download_dq2(cmd)
@@ -1712,15 +1722,23 @@ class DQ2OutputDataset(Dataset):
                     for fileinfo in filenames:
                         filename = fileinfo.split(',')[1]
 
-                        exe = 'dq2-get --client-id=ganga -L ROAMING -a -d -D '
+                        # re if required
+                        if output_names_re and not re.search(output_names_re, filename):
+                            continue
+                        
+                        if not use_dsname:
+                            exe = 'dq2-get --client-id=ganga -L ROAMING -a -d -D '
+                            temp_location = outputlocation
+                        else:
+                            exe = 'dq2-get --client-id=ganga -L ROAMING -a -d '
+                            temp_location = os.path.join(outputlocation, job.outputdata.datasetname)
 
                         if job.backend._name == 'Panda':
-                            cmd = '%s -H %s -f %s %s' %(exe, outputlocation, filename, job.outputdata.datasetname)
+                            cmd = '%s -H %s -f %s %s' %(exe, temp_location, filename, job.outputdata.datasetname)
                         else:
-                            cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, outputlocation, filename, job.outputdata.datasetname)
+                            cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, temp_location, filename, job.outputdata.datasetname)
 
-                        logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, outputlocation )
-
+                        logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, temp_location )
                         threads=[]
                         thread = Download.download_dq2(cmd)
                         thread.setDaemon(True)
