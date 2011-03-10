@@ -109,7 +109,10 @@ class MultiTask(Task):
 
          # set the units for each tf (1 unit per ds)
          for tf in self.transforms:
-            for a in tid_datasets:
+            if not self.transforms[tf.required_trf].merger:               
+               for a in tid_datasets:
+                  tf.unit_partition_list.append( [] )
+            else:
                tf.unit_partition_list.append( [] )
                
    def startup(self):
@@ -123,3 +126,61 @@ class MultiTask(Task):
 
    def overview(self):
       super(MultiTask, self).overview()
+
+   def run(self):
+      self.checkTRFConsistency()
+      super(MultiTask, self).run()
+
+   def checkTRFConsistency(self):
+      """Check the consistency of the attached transforms"""
+      for trf in self.transforms:
+
+         # check primary trfs
+         if len(trf.required_trfs) == 0:
+
+            # ensure the number unit input data, output data and partition lists are setup properly
+            if len(trf.unit_partition_list) == 0:
+               raise ApplicationConfigurationError(None, "Transform %d (%s) is primary but hasn't been initialised with input data")
+         else:
+
+            if not trf.isLocalTRF():
+
+               if trf.single_unit:
+                  raise ApplicationConfigurationError(None, "Transform %d (%s) set as a single unit but has a grid backend")
+               
+               # this will just take the DQ2 output of the previous TRFs and process each unit itself
+               trf.unit_inputdata_list = []
+               trf.unit_outputdata_list = []
+               trf.unit_partition_list = []
+               
+               for req_trf in trf.required_trfs:
+                  trf.unit_inputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ] 
+                  trf.unit_outputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                  trf.unit_partition_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+
+            else:
+               
+               if trf.single_unit:
+                  
+                  # we only have one unit
+                  trf.unit_inputdata_list = [[]]
+                  trf.unit_outputdata_list = [[]]
+                  trf.unit_partition_list = [[]]
+               else:
+
+                  # we have units dependant on mergers, etc.
+                  trf.unit_inputdata_list = []
+                  trf.unit_outputdata_list = []
+                  trf.unit_partition_list = []
+               
+                  for req_trf in trf.required_trfs:
+                     if not self.transforms[req_trf].merger:
+                        trf.unit_inputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ] 
+                        trf.unit_outputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                        trf.unit_partition_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                     else:
+                        trf.unit_inputdata_list += [[]]
+                        trf.unit_outputdata_list += [[]]
+                        trf.unit_partition_list += [[]]
+                     
+         

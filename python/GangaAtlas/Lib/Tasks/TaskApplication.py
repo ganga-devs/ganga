@@ -134,7 +134,11 @@ class AnaTaskSplitterJob(ISplitter):
             j.application.atlas_environment.append("OUTPUT_FILE_NUMBER=%i" % sj)
             j.backend = job.backend
             if transform.partitions_sites:
-                j.backend.requirements.sites = transform.partitions_sites[sj-1]
+                if hasattr(j.backend.requirements, 'sites'):                
+                    j.backend.requirements.sites = transform.partitions_sites[sj-1]                    
+                else:
+                    j.backend.site = transform.partitions_sites[sj-1]
+
             j.inputsandbox = job.inputsandbox
             j.outputsandbox = job.outputsandbox
             sjl.append(j)

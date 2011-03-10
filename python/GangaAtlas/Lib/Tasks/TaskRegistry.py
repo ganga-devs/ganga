@@ -112,6 +112,11 @@ class TaskRegistry(Registry):
                         numjobs = p.submitJobs()
                         if numjobs > 0:
                             self._flush([p])
+
+                        # finalise any required transforms
+                        p.finaliseTransforms()
+                        p.updateStatus()
+                        
                     except Exception, x:
                         logger.error("Exception occurred in task monitoring loop: %s %s\nThe offending task was paused." % (x.__class__,x))
                         p.pause()
