@@ -9,7 +9,7 @@ ganga/python/Ganga                                                     Ganga-Bas
 ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-22-7
 
 #dtuckett
-ganga/python/Ganga/Lib/MonitoringServices                              Ganga-MonitoringServices-30-5
+ganga/python/Ganga/Lib/MonitoringServices                              Ganga-MonitoringServices-30-6
 
 #mark
 ganga/python/Ganga/Lib/Remote                                          GangaRemote-21-2
