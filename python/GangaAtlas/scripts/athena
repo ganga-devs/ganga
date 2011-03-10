@@ -454,7 +454,7 @@ elif opt.numfiles_subjob>0:
         j.splitter = AthenaSplitterJob()
         j.splitter.numfiles_subjob = opt.numfiles_subjob
 
-    if opt.input_pfnfilelist:
+    if opt.input_pfnlistfile:
         j.splitter = ATLASTier3Splitter()
         j.splitter.numfiles = opt.numfiles_subjob
 
