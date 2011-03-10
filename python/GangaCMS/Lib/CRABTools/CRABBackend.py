@@ -121,6 +121,16 @@ class CRABBackend(IBackend):
 
         return 1
 
+    def postMortem(self,job):
+
+        logger.info('postMortem')
+
+        #Gets post Mortem imformation of failed job
+        server = CRABServer()
+        server.postMortem(job)
+
+        return 1
+
     def parseResults(self):
 
         job = self.getJobObject()   
@@ -141,6 +151,7 @@ class CRABBackend(IBackend):
 
         if status in ["Failed"]:
             logger.warning('Failed job detected in parsing.')
+            self.postMortem(job)
             job.updateStatus('failed')
         elif status in ["Success"]:
             job.updateStatus('completed')
@@ -260,6 +271,7 @@ class CRABBackend(IBackend):
             # The job can be done, but failed...
             # So, let's update the status retrieved from the output file.
         elif (status == 'A' or status == 'DA') and not (job.status in ['failed','killed']):
+            self.postMortem(job)
             job.updateStatus('failed')
         elif (status == 'k') and not (job.status in ['killed']):
             job.updateStatus('killed')
@@ -270,15 +282,17 @@ class CRABBackend(IBackend):
                 logger.warning('UNKNOWN STATUS: '+str(status)+' ')
 
     def master_updateMonitoringInformation(jobs):
- 
-        if jobs:
-          server = CRABServer()       
-          server.status(jobs[0])
 
+        logger.info(len(jobs))
+ 
         for j in jobs:
 
-#            server = CRABServer()
-#            server.status(j)
+            if not j.status in ['submitted','running']:
+              logger.info('%s - %s'%(j.id,j.status))
+              continue
+
+            server = CRABServer()
+            server.status(j)
 #            j.backend.server.status(j) 
 
             workdir = j.inputdata.ui_working_dir
