@@ -1,6 +1,6 @@
 import sys, time, stomp
 
-SERVER = 'gridmsg001.cern.ch'
+SERVER = 'ganga.msg.cern.ch'
 PORT = 6163
 USERNAME = ''
 PASSWD = ''

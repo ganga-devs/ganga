@@ -37,7 +37,7 @@ class MSGPeekCollector:
     SessionId = '32' #uuid()
     control = '/topic/control.session.%s' %SessionId
     
-    def __init__(self, uuid, host = 'gridmsg001.cern.ch', port=6163, 
+    def __init__(self, uuid, host = 'ganga.msg.cern.ch', port=6163, 
                  filename='MSGPeekcollector.log', user='', passcode=''):
         self.uuid = uuid
         self.conn = stomp.Connection([(host, port)], user, passcode)

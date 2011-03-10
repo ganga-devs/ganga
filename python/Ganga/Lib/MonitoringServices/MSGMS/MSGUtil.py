@@ -65,7 +65,7 @@ def createPublisher(server, port, user='', password='', idle_timeout=IDLE_TIMEOU
     
     Usage::
         from Ganga.Lib.MonitoringServices.MSG import MSGUtil
-        p = MSGUTIL.createPublisher('gridmsg001.cern.ch', 6163)
+        p = MSGUTIL.createPublisher('ganga.msg.cern.ch', 6163)
         p.start()
         p.send('/topic/ganga.dashboard.test', 'Hello World!')
         
