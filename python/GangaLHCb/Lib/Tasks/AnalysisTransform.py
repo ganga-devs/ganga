@@ -24,13 +24,14 @@ from GangaLHCb.Lib.DIRAC.DiracSplitter import DiracSplitter
 
 class AnalysisTransform(Transform):
     """ Analyzes Events """
-    _schema = Schema(Version(1,0), dict(Transform._schema.datadict.items() + {
-        'files_per_job'     : SimpleItem(defvalue=5, doc='files per job', modelist=["int"]),
-        'partitions_data'   : ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=1, doc='Input dataset for each partition'),
-    #       'partitions_sites'  : SimpleItem(defvalue=[], hidden=1, modelist=["str","list"],doc='Input site for each partition'),
-    #    'outputdata'        : ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset'),
-           'dataset_name'      : SimpleItem(defvalue="", transient=1, getter="get_dataset_name", doc='name of the output dataset'),
-        }.items()))
+    schema = {}
+    schema['files_per_job']=SimpleItem(defvalue=5, doc='files per job', modelist=["int"])
+    schema['partitions_data']=ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=1, doc='Input dataset for each partition')
+    schema['dataset_name']=SimpleItem(defvalue="", transient=1, getter="get_dataset_name", doc='name of the output dataset')
+    #removed from LHCb case
+    #schema['partitions_sites']=SimpleItem(defvalue=[], hidden=1, modelist=["str","list"],doc='Input site for each partition')
+    #schema['outputdata']=ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset')
+    _schema = Schema(Version(1,0), dict(Transform._schema.datadict.items() + schema.items()))
     _category = 'transforms'
     _name = 'AnalysisTransform'
     _exportmethods = Transform._exportmethods
@@ -39,7 +40,7 @@ class AnalysisTransform(Transform):
         super(AnalysisTransform, self).initialize()
         #      self.application = GaudiTask() #TODO specify splitter here?
         self.application=GaudiTask() 
-        self.inputdata=LHCbDataset()    
+        self.inputdata=LHCbDataset()
     
     ## Internal methods
     def checkCompletedApp(self, app):
@@ -48,17 +49,28 @@ class AnalysisTransform(Transform):
         """
         task = self._getParent()
         j = app._getParent()
-        if j.outputdata and type(j.outputdata) is list:
-            for outputdata in j.outputdata:
-                logger.error('TODO: should do something here probably...')          
-            else:
-                logger.warning('Job %s with name %s did not produce any output data...' %(j.id,j.name))
+        if not j.outputdata: #can't check anything
+            self.setTaskFilesStatus(j.id,j.inputdata.getFullFileNames(),'Processed')
+            logger.info('Job %s has completed but had no output data specified' %(j.id))
+        elif j.outputdata:
+            logger.info('Job %s produced output data %s' %(j.id,outputdata)) 
+            self.setTaskFilesStatus(j.id,j.inputdata.getFullFileNames(),'Processed')
+        else:
+            #TODO: can check whether the output data LFNs exist here before declaring
+            #      inputs are processed                 
+            logger.warning('Job %s with name %s did not produce any output data...' %(j.id,j.name))
+            self.setTaskFilesStatus(j.id,j.inputdata.getFullFileNames(),'Processed_NoOutputs')
 
         # if this is the first app to complete the partition...
         if self.getPartitionStatus(self._app_partition[app.id]) != "completed":
             task_container, subtask_dsname = task.container_name, self.dataset_name
         
         return True
+     
+#    def updateInputStatus(self, ltf, partition):
+#        """Is called my the last transform (ltf) if the partition 'partition' changes status"""
+#        # per default no dependencies exist
+#        logger.debug('No actions to update input statuses after last transform will be taken.')
 
     def get_dataset_name(self):
         """ Propagated from the ATLAS case, perhaps not useful.
@@ -112,7 +124,7 @@ class AnalysisTransform(Transform):
         """ This overrides the Transform baseclass method
         """
         j = self.createNewJob(partitions[0])
-        print 'disabled stuff here'
+        print 'Note: disabled some ATLAS stuff here'
         #       if len(partitions) >= 1:
         #           j.splitter = AnaTaskSplitterJob()
         #           j.splitter.subjobs = partitions
@@ -122,9 +134,23 @@ class AnalysisTransform(Transform):
 #        nickname = 'user'
 #        dsn = ["user",nickname,task.creation_date,"%i.t_%s_%s" % (j.id, task.id, task.transforms.index(self))]
 #        j.outputdata.datasetname = ".".join(dsn)
+
+        # keep track of the jobs vs. data view:
+        self.setTaskFilesStatus(j.id,j.inputdata.getFullFileNames(),'Assigned')
         return [j]
 
+    def setTaskFilesStatus(self,jobID,dataList,status):
+        """ Method to update the parent task dictionary of data and statuses.
+        """
+        task = self._getParent()
+        for d in dataList:
+            task.data[d]=status
+        if not task.jobsData.has_key(jobID):
+            task.jobsData[jobID]=dataList
+
     def info(self):
+        """ Show some details about the current transform.
+        """
         print markup("%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status])
         filesList = self.inputdata.getFileNames()
         filesTotal = len(filesList)

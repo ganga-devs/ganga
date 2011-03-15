@@ -34,15 +34,14 @@
       # Define task
       template = JobTemplate(....)
       t = AnalysisTask()
-      t.template = template
-      t.query = BKquery('/foo/bar')
       t.setTemplate(template)
+      t.setQuery(BKquery('/foo/bar'))
       
       # Update dataset to make it start processing
       t.updateQuery()
       
-      # See the process
-      t.status()
+      # See the progress
+      t.progress()
       
       # Update query to get new data
       t.updateQuery()
@@ -68,37 +67,42 @@ help.append(markup('Procedure for normal analysis'+sep,header))
 help.append('LHCb Analysis Task'.ljust(adj)+sep+markup('t = AnalysisTask()',command))
 help.append('Analysis Job Template'.ljust(adj)+sep+markup('template = JobTemplate()',command))
 help.append('Add Template to Task'.ljust(adj)+sep+markup('t.setTemplate(template)',command))
-help.append('TODO: BK query'.ljust(adj)+sep+markup('t.query = "my.bkquery"',command))
+help.append('BK query'.ljust(adj)+sep+markup('t.setQuery(BKQuery("/foo/bar"))',command))
 help.append(markup('\nOther useful commands'+sep,header))
-help.append('TODO: Flush dataset (refresh BK query)'.ljust(adj)+sep+markup('t.updateQuery()',command))
-help.append('TODO: Monitor progress'.ljust(adj)+sep+markup('t.status()',command))
+help.append('TO TEST: Flush dataset (refresh BK query)'.ljust(adj)+sep+markup('t.updateQuery()',command))
+help.append('TODO: Monitor progress'.ljust(adj)+sep+markup('t.progress()',command))
 help.append('TODO: Reset file status'.ljust(adj)+sep+markup('t.forceStatus(lfn)',command))
 help.append(markup('\nAnalysis Task Properties'+sep,header))
-#TODO
-help.append('Task input data'.ljust(adj)+sep+'t.inputdata CHECK')
 
 help = string.join(help,'\n')+'\n'
 help_nocolor = help.replace(fgcol("blue"),"").replace(fx.normal, "").replace(fgcol("red"),"")
 
 from Ganga.GPIDev.Lib.Tasks import Task
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.Core.exceptions import ApplicationConfigurationError,GangaAttributeError
 
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
+from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 
 #atlas specific
 #from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 
 class AnalysisTask(Task):
     __doc__ = help_nocolor
-    _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + {
-         'template' : SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Job template'),
-#         'analysis': SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Analysis Transform'),
-         'container_name': SimpleItem(defvalue="",protected=True,transient=1, getter="get_container_name", doc='name of the output container'),
-        }.items()))
+    schema = {}
+    schema['template']=SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Job template')
+    # should make metadata,queryList, data, lostData  protected=1, hidden=1 in the future i.e. not visible / modifiable via GPI
+    schema['metadata']=SimpleItem(defvalue=[],sequence=1,typelist=['dict'],hidden=1,doc='BK metadata') #["dict","str","object","list"]
+    schema['queryList']=SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc='List of BK paths.')
+    schema['data']=SimpleItem(defvalue={},typelist=["str"], copyable=0,doc='Data and processing status.')
+    schema['jobsData']=SimpleItem(defvalue={},typelist=["str"],copyable=0,doc='Job IDs and their data after creation.')
+    schema['lostData']=SimpleItem(defvalue={},typelist=["str"], copyable=0,doc='Any data removed from the BK.')
+    schema['container_name']=SimpleItem(defvalue="",protected=True,transient=1, getter="get_container_name", doc='name of the output container')
+    _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + schema.items()))
     _category = 'tasks'
     _name = 'AnalysisTask'
-    _exportmethods = Task._exportmethods + ["setTemplate","query","updateQuery","setDataset"]
-    #["initializeFromDatasets",
+    exportMethods =  ["setTemplate","setQuery","updateQuery","setDataset","getMetadata","getQueryList","progress"]
+    _exportmethods = Task._exportmethods + exportMethods
     
     def initialize(self):
         """Initialize the class. 
@@ -109,6 +113,12 @@ class AnalysisTask(Task):
         transform.inputdata = LHCbDataset()
         self.transforms = [transform]
         self.setBackend(None)
+        self.metadata = [] #BK metadata if specified via a query
+        self.queryList = [] #list of BK queries 
+        self.transformData = {} #dictionary of transformNames and LHCbDatasets
+        self.lostData = [] # data no longer appearing in the BK after updateQuery() has been run
+        self.data = {} # dictionary of full file names and their processing status
+        self.jobsData = {} #dict of jobIDs and LFNs
     
     #try to keep simple initially
     def setTemplate(self,jobTemplate):
@@ -119,6 +129,7 @@ class AnalysisTask(Task):
         self.transforms[0].application=app 
         self.setBackend(jobTemplate.backend)
         #must think about input / output data / sandboxes etc. as necessary
+        #TODO: might be best just to copy all template properties to the transform
         inputSandbox=jobTemplate.inputsandbox
         self.transforms[0].inputsandbox=inputSandbox
         outputSandbox=jobTemplate.outputsandbox
@@ -126,18 +137,51 @@ class AnalysisTask(Task):
         outputData=jobTemplate.outputdata
         self.transforms[0].outputdata=outputData
             
-    def query(self,bkQuery):
-        """ Allows an LHCb BK query object to define the dataset.
+    def setQuery(self,bkQuery,filesPerJob=10):
+        """ Allows one or more LHCb BK query objects to define the dataset.
         """
-        print 'TODO: simple wrapping to get an LHCbDataset from BKQuery object.'      
-        return 1
+        if self.metadata:
+            self.metadata=[]
+        
+        bkQueryList = bkQuery
+        if not type(bkQuery) is list:
+            logger.debug('Assuming setQuery() argument is a single BK query object.')
+            bkQueryList = [bkQuery]
+        
+        for bk in bkQueryList:
+            if not isType(bk,BKQuery):
+                raise GangaAttributeError(None,'setQuery() method only accepts BKQuery() objects (or a list of them)')
+        
+        self.queryList = [bk.path for bk in bkQueryList]
+        
+        #Now we can retrieve the datasets corresponding to the BK query objects
+        datasets = []
+        for bk in bkQueryList:
+            result = bk.getDataset()
+            #print result
+            datasets.append(result)
+            
+        #At this point we know that the data is coming from the BK so can retrieve 
+        #metadata that could be useful for the analysis (e.g. run numbers, event stats, etc.)
+        for data in datasets:
+            mdata = data.bkMetadata()
+            if mdata['OK'] and mdata['Value']:
+                result=mdata['Value']
+                self.metadata.append(result) #i.e. a list of dictionaries containing {<LFN>:<metadata>} 
+
+        #TODO: should add an "Are you sure?" dialogue to prevent accidentally trying to 
+        #      append a query rather than creating a new task altogether.
+        self.setDataset(datasets,filesPerJob,False)
     
-    def setDataset(self,datasetList):
+    def setDataset(self,datasetList,filesPerJob=10,append=False):
         """ Instead of using a BK query can provide an LHCbDataset for input 
             data files directly. Dataset can be individual dataset or a 
             list of datasets.
             
-             For each dataset in the dataset_list a transform is created. 
+             For each dataset in the datasetList a transform is created. 
+             
+             Can optionally set filesPerJob at the same time (can also be set
+             for each transform independently.  
              
             TODO: Must think about output file names.
         """
@@ -149,8 +193,6 @@ class AnalysisTask(Task):
         transform = None
         if self.transforms:
             transform = self.transforms[0]
-            #Do this to reset the existing data i.e. setDataset is a one off operation  
-            transform.inputdata = LHCbDataset()    
                 
         #GPIDev/Base/Proxy method stripProxy was called here in the ATLAS case, not
         #sure if this is necessary.
@@ -167,30 +209,193 @@ class AnalysisTask(Task):
 
         transformsList = []
         order = 0
+        tData = {}
         for processable in finalDatasets:
             #Name the transforms via the order (also encode number of files)
             order+=1
             newTransform = transform.clone()
-            newTransform.name = '%s_Files%s_Dataset%s' %(self.name,processable.__len__(),order)
+            tName = '%s_Files%s_Dataset%s' %(self.name,processable.__len__(),order)
+            newTransform.name = tName
             newTransform.inputdata.extend(processable)
+            newTransform.files_per_job=filesPerJob
             transformsList.append(newTransform)
-            
-        self.transforms = transformsList
+            for lfn in processable.getFullFileNames():
+                tData[lfn]='New'
+        
+        if append:
+            # i.e. we are adding to existing transforms via updateQuery()
+            self.transforms += transformsList
+            self.data.update(tData)
+        else:
+            self.transforms = transformsList
+            self.data = tData
+        
         self.initAliases()
     
-    def updateQuery(self):
+    def updateQuery(self,filesPerJob=10):
         """ If the AnalysisTask dataset is defined via a BK query object this 
             method allows to retrieve the latest files from the BK as well as
             managing deprecated, lost or missing files. 
         """
-        print 'TODO: update BK query, must think about having a "data" view'
-        print '      this method will also call run() internally'  
+        if not self.queryList:
+            raise GangaAttributeError(None,'updateQuery() requires a previously defined query via setQuery()')
+        
+        bkPaths = self.queryList
+        logger.info('Refreshing the following BK queries:\n%s' %(string.join(bkPaths,'\n')))
+        
+        toCheck = []
+        for bk in self.queryList:
+            toCheck.append(BKQuery(bk).getDataset())            
+
+        #first check for files that have been added to the sample       
+        taskData = self.getData()
+        toAdd = []
+        for check in toCheck:
+            new = check.difference(taskData)
+            if new.files:
+                logger.info('Found %s new file(s) to be processed!' %(len(new.files)))
+                toAdd.append(new)
+        
+        if toAdd:
+            self.setDataset(toAdd,filesPerJob,True)
+            #Must also ensure the metadata for new files is not lost
+            for data in toAdd:
+                mdata = data.bkMetadata()
+                if mdata['OK'] and mdata['Value']:
+                    result=mdata['Value']
+                    self.metadata.append(result)
     
-    def status(self):
+        #next look for files that may have been lost
+        problematic = []
+        for check in toCheck:
+            lost = taskData.difference(check)
+            if lost.files:
+                logger.warn('Found %s file(s) that are no longer in BK!' %(len(lost.files)))
+                problematic.append(lost)
+        
+        #what to do in this case? initially set a parameter of the task with the lost files
+        #could potentially offer a method to help clean the problematic cases
+        for prob in problematic:
+            for fname in prob.getFullFileNames():
+              if fname not in self.lostData.getFullFileNames():
+                  self.lostData.extend([fname])
+    
+    def getData(self):
+        """ Uses the dictionary published during setDataset() to return an LHCbDataset 
+            containing all task data.
+        """
+        dataList = self.data.keys()
+        data = LHCbDataset()
+        for d in dataList:
+            data.extend(d)
+        return data
+    
+    def getMetadata(self):
+        """ Retrieve BK metadata for all files in the dataset.
+        """
+        metadata = {}
+        for mdata in self.metadata:
+            metadata.update(mdata)
+            
+        #BK will normally strip "LFN:" from LFNs
+        final = {}
+        for l,m in metadata.items():
+            final['LFN:%s' %(l.replace('LFN:',''))]=m
+            
+        return final
+    
+    def getQueryList(self):
+      """ Return a list of the BK query paths for the current task.
+      """ 
+      return self.queryList
+      
+    def progress(self):
         """ LHCb specific monitoring function for Analysis Task.
         """
-        print 'TODO: LHCb specific status stuff'
+        #Can use the BK metadata and data overview to provide an
+        #LHCb specific picture of the task progress
+        print markup('<==== Summary of progress for task %s %s in "%s" status ====>' %(self.id,self.name,self.status),command)
+        padj=20      
+        jobIDs = self.jobsData.keys()
+        if not jobIDs:
+            print markup('\nJobs summary:\n',header)
+            print 'No jobs found to examine for task %s %s in status "%s", try again after run()' %(self.id,self.name,self.status)
+        else:
+            print markup('\nJobs summary, total of %s submitted:\n' %(len(jobIDs)),header)
+            statusCount = {}
+            for j in self.getJobs():
+                status = j.status
+                if statusCount.has_key(status):
+                    new = statusCount[status]+1
+                    statusCount[status]=new
+                else:
+                    statusCount[status]=1
             
+
+            statuses = statusCount.keys()
+            statuses.sort()        
+            print markup('Status'.ljust(padj)+'Number of jobs'.ljust(padj)+'Percentage',command)
+            for s in statuses:
+                print s.ljust(padj)+str(statusCount[s]).ljust(padj)+str((int(100*statusCount[s]/len(jobIDs))))
+               
+        print markup('\nData summary, total of %s files:\n' %(len(self.data.keys())),header)        
+        dataCount = {}
+        for lfn,status in self.data.items():
+            if dataCount.has_key(status):
+                new = dataCount[status]+1
+                dataCount[status]=new
+            else:
+                dataCount[status]=1
+        
+        statuses = dataCount.keys()
+        totalData = 0
+        for i in dataCount.values(): totalData+=i
+        statuses.sort()
+        print markup('Status'.ljust(padj)+'Number of files'.ljust(padj)+'Percentage',command)
+        for s in statuses:
+            print s.ljust(padj)+str(dataCount[s]).ljust(padj)+str(int(100*dataCount[s]/totalData))
+            
+        metadata = self.getMetadata()
+        if not metadata:
+            print 'No BK metadata is available for an in-depth summary.'
+            return
+        
+        runNumbers = []
+        runData = {}
+        eventStat = 0
+        fileSize = 0 #bytes from BK by default
+        for lfn,mdata in metadata.items():
+            currentStat = mdata['EventStat']
+            eventStat+=currentStat
+            fsize = mdata['FileSize']
+            fileSize+=fsize
+            run=mdata['Runnumber'] #note lower case second n
+            dstatus = self.data[lfn]
+            if run not in runNumbers:
+                runNumbers.append(run)
+                runData[run]={dstatus:1}
+            else:
+                if not runData[run].has_key(dstatus):
+                    runData[run][dstatus]=1
+                else:
+                    new = runData[run][dstatus]+1
+                    runData[run][dstatus]=new
+
+        print markup('\nRun Summary, %s distinct runs:' %(len(runNumbers)),header)
+        runNumbers.sort()
+        for run in runNumbers:
+            runFiles=0
+            for d in runData[run].values(): runFiles+=d
+            print markup('\nRun %s, total files %s' %(run,runFiles),command)
+            print 'Status'.ljust(padj)+'Number of files'.ljust(padj)+'Percentage' 
+            for s in statuses:
+                if runData[run].has_key(s):
+                    print s.ljust(padj)+str(runData[run][s]).ljust(padj)+str(int(100*runData[run][s]/runFiles))
+        
+        print markup('\nBK Metadata:\n',header)
+        print markup('Total events in sample (EventStat) :',command).ljust(padj*2)+str(eventStat)
+        print markup('Total file size of sample (GB) : ',command).ljust(padj*2)+'%.2f' %(float(fileSize)/float(1024*1024*1024))
+                
     def get_container_name(self): #DQ2 specific
         nickname = 'user' #was atlas specific getNickname()
         name_base = ["user",nickname,self.creation_date,"task_%s" % self.id]
