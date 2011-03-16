@@ -139,6 +139,7 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
                 
         inputbox = [ ( File(os.path.join(__athdirectory__,'athena-utility.sh')) ),
                      ( File(os.path.join(__directory__,'get_tag_info.py')) ),
+                     ( File(os.path.join(__directory__,'get_tag_info2.py')) ),
                      ( File(os.path.join(__directory__,'template.root')) ),
                      ( File(os.path.join(__tpdirectoryrel__,'libPOOLCollectionTools.so.cmtref'))),
                      ( File(os.path.join(__tpdirectoryrel__,'libPOOLCollectionTools.so'))),
@@ -177,14 +178,20 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
             'GANGA_OUTPUT_PATH' : job.outputdir
         }
 
+        if app.lcg_prepare:
+            environment['LCG_PREPARE'] = '1'
+            
 #       jobscript
 
         exe = os.path.join(__directory__,'run-tagprepare-local.sh')
 
 #       output sandbox
-        outputbox = [
-            'taginfo.pkl', 'subcoll.tar.gz'
-        ]
+        if app.lcg_prepare:        
+            outputbox = [
+                'taginfo.pkl', 'subcoll.tar.gz'
+                ]
+        else:
+            outputbox = ['taginfo.pkl' ]
 
 
         if job.outputsandbox: outputbox += job.outputsandbox

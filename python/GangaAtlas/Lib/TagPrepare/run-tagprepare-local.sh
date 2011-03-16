@@ -122,22 +122,30 @@ export PYTHONPATH=$MY_PYTHONPATH_ORG:$PYTHONPATH_BACKUP
 # Remove lib64/python from PYTHONPATH
 dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
 export PYTHONPATH=$dum
-chmod +x get_tag_info.py
+
+if [ n$LCG_PREPARE = n'1' ] 
+then
+    gettaginfo='./get_tag_info.py'
+else
+    gettaginfo='./get_tag_info2.py'
+fi
+
+chmod +x $gettaginfo
 
 if [ ! -z $python32bin ]; then
-    $python32bin ./get_tag_info.py; echo $? > retcode.tmp
+    $python32bin $gettaginfo; echo $? > retcode.tmp
 else
     if [ -e /usr/bin32/python ]; then
-        /usr/bin32/python ./get_tag_info.py; echo $? > retcode.tmp
+        /usr/bin32/python $gettaginfo; echo $? > retcode.tmp
     else
-        ./get_tag_info.py; echo $? > retcode.tmp
+        $gettaginfo; echo $? > retcode.tmp
     fi
 fi
 retcode=`cat retcode.tmp`
 rm -f retcode.tmp
 # Fail over
 if [ $retcode -ne 0 ]; then
-    $pybin ./get_tag_info.py; echo $? > retcode.tmp
+    $pybin $gettaginfo; echo $? > retcode.tmp
     retcode=`cat retcode.tmp`
     rm -f retcode.tmp
 fi
@@ -145,7 +153,7 @@ if [ $retcode -ne 0 ]; then
     export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH_ORIG
     export PATH=$PATH_ORIG
     export PYTHONPATH=$PYTHONPATH_ORIG
-    ./get_tag_info.py; echo $? > retcode.tmp
+    $gettaginfo; echo $? > retcode.tmp
     retcode=`cat retcode.tmp`
     rm -f retcode.tmp
 fi
