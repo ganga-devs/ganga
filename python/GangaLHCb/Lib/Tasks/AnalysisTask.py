@@ -97,7 +97,7 @@ class AnalysisTask(Task):
     schema['queryList']=SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=1,doc='List of BK paths.')
     schema['data']=SimpleItem(defvalue={},typelist=["str"],hidden=1,copyable=0,doc='Dictionary of full file names and processing status.')
     schema['jobsData']=SimpleItem(defvalue={},typelist=["str"],hidden=1,copyable=0,doc='Job IDs and their data after creation.')
-    schema['lostData']=SimpleItem(defvalue={},typelist=["str"], copyable=0,doc='Data no longer appearing in the BK after updateQuery() has been run.')
+    schema['lostData']=SimpleItem(defvalue=[],sequence=1,typelist=["str"], copyable=0,doc='Data no longer appearing in the BK after updateQuery() has been run.')
     schema['container_name']=SimpleItem(defvalue="",protected=True,transient=1, getter="get_container_name", doc='name of the output container')
     _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + schema.items()))
     _category = 'tasks'
@@ -262,19 +262,22 @@ class AnalysisTask(Task):
     
         #next look for files that may have been lost
         problematic = []
+        compare = LHCbDataset()
         for check in toCheck:
-            lost = taskData.difference(check)
-            if lost.files:
-                logger.warn('Found %s file(s) that are no longer in BK!' %(len(lost.files)))
-                logger.warn('View lost data using: task.lostData')
-                problematic.append(lost)
+            compare = compare.union(check)
+        
+        lost = taskData.difference(compare)
+        if lost.files:
+            logger.warn('Found %s file(s) that are no longer in BK!' %(len(lost.files)))
+            logger.warn('View lost data using: task.lostData')
+            problematic.append(lost)
         
         #what to do in this case? initially set a parameter of the task with the lost files
         #could potentially offer a method to help clean the problematic cases
         for prob in problematic:
             for fname in prob.getFullFileNames():
-              if fname not in self.lostData.getFullFileNames():
-                  self.lostData.extend([fname])
+              if fname not in self.lostData:
+                  self.lostData.append(fname)
         
         if not toAdd and not problematic:
             logger.info('No new data added to (or existing data removed fom) the bookkeeping for current task.')
