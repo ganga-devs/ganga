@@ -6,7 +6,7 @@ import datetime
 import glob
 from LHCbDIRAC.Interfaces.API.DiracLHCb import *
 from LHCbDIRAC.Interfaces.API.LHCbJob import *
-from LHCbDIRAC.BookkeepingSystem.Client.AncestorFiles import getAncestorFiles
+#from LHCbDIRAC.BookkeepingSystem.Client.AncestorFiles import getAncestorFiles
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -137,7 +137,7 @@ class DiracCommands:
 
     def getInputDataCatalog(lfns,depth,site,xml_file):
         if depth > 0:
-            result = getAncestorFiles(lfns,depth)
+            result = DiracCommands.dirac.getBKAncestors(lfns,depth)
             if not result or not result.get('OK',False): return result
             lfns = result['Value']
         return DiracCommands.dirac.getInputDataCatalog(lfns,site,xml_file)
