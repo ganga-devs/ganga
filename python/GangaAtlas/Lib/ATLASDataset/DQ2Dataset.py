@@ -400,6 +400,7 @@ class DQ2Dataset(Dataset):
     _schema = Schema(Version(1,0), {
         'dataset'            : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="Dataset Name(s)" ),
         'tag_info'          : SimpleItem(defvalue = {}, doc = 'TAG information used to split the job'),
+        'tag_files'          : SimpleItem(defvalue = [], doc = 'Input TAG/ELSSI files to run over. tag_info structure will get filled on submission'),
         'tagdataset'         : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc = 'Tag Dataset Name'),
         'use_aodesd_backnav' : SimpleItem(defvalue = False, doc = 'Use AOD to ESD Backnavigation'),
         'names'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to use for processing'),
@@ -638,14 +639,23 @@ class DQ2Dataset(Dataset):
             else:
                 return diffcontents
 
-    def get_tag_contents(self):
+    def get_tag_contents(self, size=False, spec_dataset = None):
         '''Helper function to access tag datset content'''
 
         allcontents = []
 
-        datasets = resolve_container(self.tagdataset)
-        
+        datasets = []
+
+        for d in self.tagdataset:
+            datasets += resolve_container([d])
+            
+        allcontentsSize = []
+            
         for tagdataset in datasets:
+
+            if spec_dataset and tagdataset != spec_dataset:
+                continue
+            
             try:
                 dq2_lock.acquire()
                 contents=dq2.listFilesInDataset(tagdataset)
@@ -660,12 +670,18 @@ class DQ2Dataset(Dataset):
             # Convert 0.3 output to 0.2 style
             contents = contents[0]
             contents_new = []
+            contents_size = {}
             for guid, info in contents.iteritems():
                 contents_new.append( (guid, info['lfn']) )
+                allcontentsSize.append((guid, (info['lfn'],info['filesize'] )))
+                
             allcontents = allcontents + contents_new
 
-        return allcontents
-
+        if size:
+            return allcontentsSize
+        else:
+            return allcontents
+        
     def get_locations(self, complete=0, backnav=False, overlap=True):
         '''helper function to access the dataset location'''
 
