@@ -541,7 +541,47 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 finp.type           = 'input'
                 finp.status         = 'ready'
                 jspec.addFile(finp)
+                
+            if len(job.inputdata.tagdataset) != 0:
+                # add the TAG files
+                tag_contents = job.inputdata.get_tag_contents(size=True)
+                tag_files = map(lambda x: x[1][0],tag_contents)
+                tag_guids = map(lambda x: x[0],tag_contents)
 
+                for guid, lfn in zip(tag_guids,tag_files): 
+                    finp = FileSpec()
+                    finp.lfn            = lfn
+                    finp.GUID           = guid
+                    #            finp.fsize =
+                    #            finp.md5sum =
+                    finp.dataset        = job.inputdata.tagdataset[0]
+                    finp.prodDBlock     = job.inputdata.tagdataset[0]
+                    finp.dispatchDBlock = job.inputdata.tagdataset[0]
+                    finp.type           = 'input'
+                    finp.status         = 'ready'
+                    jspec.addFile(finp)
+
+            
+            if job.inputdata.tag_info:
+                # add the TAG files
+                tag_files = job.inputdata.tag_info.keys()
+                tag_guids = []
+                for tf in job.inputdata.tag_info.keys():
+                    tag_guids.append( job.inputdata.tag_info[tf]['guid'] )
+                    
+                for guid, lfn in zip(tag_guids,tag_files):
+                    finp = FileSpec()
+                    finp.lfn            = lfn
+                    finp.GUID           = guid
+                    #            finp.fsize =
+                    #            finp.md5sum =
+                    finp.dataset        = job.inputdata.tag_info[lfn]['dataset']  #job.inputdata.tagdataset[0]
+                    finp.prodDBlock     = job.inputdata.tag_info[lfn]['dataset'] #job.inputdata.tagdataset[0]
+                    finp.dispatchDBlock = job.inputdata.tag_info[lfn]['dataset'] #job.inputdata.tagdataset[0]
+                    finp.type           = 'input'
+                    finp.status         = 'ready'
+                    jspec.addFile(finp)
+                    
 #       output files
         outMap = {}
         AthenaUtils.convertConfToOutput(self.runConfig,jspec,outMap,job.backend.individualOutDS,self.extOutFile,masterjob.outputdata.datasetname)
@@ -619,52 +659,30 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             # check for ELSSI files
             input_files = job.inputdata.names
             if self.inputdatatype == 'DQ2' and job.inputdata.tag_info:
-                tag_file = job.inputdata.tag_info.keys()[0]
-                if job.inputdata.tag_info[tag_file]['path'] != '' and job.inputdata.tag_info[tag_file]['dataset'] == '':
+                
+                # tell Panda what files are TAG and what aren't                
+                input_files += job.inputdata.tag_info.keys()
+                param += '-i "%s" ' % input_files
+                param += '--tagFileList %s ' % ','.join(job.inputdata.tag_info.keys())
+                param += '--guidBoundary "%s" ' % job.inputdata.guids
+                
+                # set the coll name
+                if self.runConfig.input.collRefName:
+                    param += '--collRefName %s ' % self.runConfig.input.collRefName
+
+            elif self.inputdatatype == 'DQ2' and len(job.inputdata.tagdataset) != 0:
+                # tell Panda what files are TAG and what aren't
+                tag_contents = job.inputdata.get_tag_contents(size=True)
+                tag_files = map(lambda x: x[1][0],tag_contents)
+                input_files += tag_files
+                param += '-i "%s" ' % input_files
+                param += '--tagFileList %s ' % ','.join(tag_files)
+                param += '--guidBoundary "%s" ' % job.inputdata.guids
+                
+                # set the coll name
+                if self.runConfig.input.collRefName:
+                    param += '--collRefName %s ' % self.runConfig.input.collRefName
                     
-                    # set the coll name
-                    if self.runConfig.input.collRefName:
-                        param += '--collRefName %s ' % self.runConfig.input.collRefName
-                        
-                    # get the GUID boundaries
-                    guid_boundaries = []
-                    for tag_file2 in job.inputdata.tag_info:
-                        for ref in job.inputdata.tag_info[tag_file2]['refs']:
-                            guid_boundaries.append(ref[2])
-
-                    if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
-                        # running as exectuable so extract and change the cmd line
-                        cmdline_start = param.find('"', param.find("-p")) + 1
-                        pos = cmdline_start
-                        cmdline_stop = -1
-                        
-                        while cmdline_stop == -1:
-                            # find next non-escaped quote
-                            cmdline_stop = param.find('"', pos)
-                            if param[cmdline_stop-1] == '\\':
-                                pos = cmdline_stop+1                                
-                                cmdline_stop = -1
-
-                        # prepend the uncompress and the GUID list
-                        cmdline = ''
-                        if self.dbrelease != '':
-                            dbnum = self.dbrelease[ self.dbrelease.find('-')+1 : self.dbrelease.find('.tar')]
-                            cmdline = "export DBRELEASE_REQUESTED=%s ; " % dbnum
-                            cmdline += "/bin/echo %%IN | sed \'s/,/\\\\\\n/g\' > input_tag.txt; cat input_tag.txt; python uncompress.py %s ; " % ' '.join(job.inputdata.tag_info.keys())
-                        else: # not using dbrelease invokes different codepath in runGen
-                            cmdline += "/bin/echo %%IN | sed \'s/,/\\\\n/g\' > input_tag.txt; cat input_tag.txt; python uncompress.py %s ; " % ' '.join(job.inputdata.tag_info.keys())
-                        cmdline += param[cmdline_start:cmdline_stop].replace("%IN", "outColl.root")                            
-
-                        param = param[:cmdline_start] + cmdline + param[cmdline_stop:]
-                    else:
-                        # sort out the input ELSSI file from the tag_info
-                        input_files = ['.'.join( tag_file.split(".")[:len(tag_file.split("."))-3] ) + '.ref.root']
-                        # input_files = [tag_file]
-                        
-                        # set ship input
-                        param += '--shipInput '
-                        param += '--guidBoundary "%s" ' % guid_boundaries
-
             if not app.atlas_exetype in ['TRF']:
                 param += '-i "%s" ' % input_files
         else:
