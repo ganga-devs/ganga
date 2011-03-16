@@ -59,7 +59,7 @@ class MultiTransform(Transform):
        'partitions_sites'  : SimpleItem(defvalue=[], hidden=1, modelist=["str","list"],doc='Input site for each partition'),
        'partitions_fails'  : SimpleItem(defvalue=[], hidden=1, modelist=["list"],doc='Number of failures for each partition'),
        'partition_lock'    : SimpleItem( defvalue=None, typelist=None, hidden=1, transient=1, doc='Lock for partition info'),
-       'required_trfs'        :SimpleItem(defvalue=[-1], doc='ID of Transform that this should follow'),
+       'required_trfs'        :SimpleItem(defvalue=[], doc='ID of Transform that this should follow'),
        'unit_partition_list': SimpleItem(defvalue=[], hidden=1, doc='Map from unit to partitions'),
        'unit_inputdata_list': SimpleItem(defvalue=[], hidden=1, doc='Map from unit to inputdata'),
        'unit_outputdata_list': SimpleItem(defvalue=[], hidden=1, doc='Map from unit to outputdata'),
@@ -249,6 +249,12 @@ class MultiTransform(Transform):
               for f in filelist:
                   if not os.path.exists( f ):
                       do_dq2 = True
+                  else:
+                      # check if the file was OK
+                      if os.path.getsize( f ) < 10:
+                          logger.warning("Previous problem with dq2-get. Removing file %s and retrying..." % f)
+                          os.remove(f)
+                          do_dq2 = True
 
               if do_dq2:
                   # not got all files - try the retrieve
@@ -265,6 +271,13 @@ class MultiTransform(Transform):
                           logger.error("Couldn't download file %s. Will retry..." % f2)
                           do_dq2 = True
                           break
+                      else:
+                          # check if the file was OK
+                          if os.path.getsize( f2 ) < 10:
+                              logger.warning("Problem with dq2-get. Removing file %s and retrying..." % f2)
+                              os.remove(f2)
+                              do_dq2 = True
+                              break
 
               # if the dq2-get is complete, attempt the merger
               if not do_dq2 and self.merger:
@@ -298,7 +311,8 @@ class MultiTransform(Transform):
                       # construct a joblist for the merger
                       if do_merger:
                           for uind2 in range(0, len(self.unit_partition_list)):
-                              mj = getUnitMasterJob( uind2 )
+
+                              mj = self.getUnitMasterJob( uind2 )
                               for sj in mj.subjobs:
                                   joblist.append(sj)
 
@@ -307,7 +321,7 @@ class MultiTransform(Transform):
 
                       # set the output directory
                       if not self.merger.sum_outputdir:
-                          local_location = joblist[0]._impl._getParent().outputdir
+                          local_location = joblist[0]._getParent().outputdir
                       else:
                           local_location = self.merger.sum_outputdir
 
@@ -349,7 +363,8 @@ class MultiTransform(Transform):
       for ltf_id in self.required_trfs:
 
           if ltf.getID() == ltf_id:
-              full_uind += uind
+              if not ltf.merger or ltf.individual_unit_merger:                  
+                  full_uind += uind
               break
 
           full_uind += len( task.transforms[ltf_id].unit_partition_list )
@@ -637,7 +652,13 @@ class MultiTransform(Transform):
               for f in filelist:
                   if not os.path.exists( f ):
                       do_dq2 = True
-
+                  else:
+                      # check if the file was OK
+                      if os.path.getsize( f ) < 10:
+                          logger.warning("Previous problem with dq2-get. Removing file %s and retrying..." % f)
+                          os.remove(f)
+                          do_dq2 = True
+                          
               if do_dq2:
                   # still need to dq2-get
                   return

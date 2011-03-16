@@ -70,14 +70,15 @@ class MultiTask(Task):
       # check for primary transforms
       primary_tfs = []
       for tf in self.transforms:
-         if tf.required_trf == -1:
+         if len(tf.required_trfs) == 0:
             primary_tfs.append( tf )
 
       if len(primary_tfs) == 0:
          logger.error("No primary transforms specified. Yout need at least one before the Task can be initialised.")
          return
+      
+      unit_num = 0
          
-      _tid_list = []
       for dset in dataset_list:
          dset = dset.strip()
          try:
@@ -104,16 +105,12 @@ class MultiTask(Task):
             return
          logger.info("Found %i datasets matching %s..." % (len(tid_datasets), dset))
 
+         prev_num = unit_num
          for tf in primary_tfs:
-            tf.tid_list.extend(tid_datasets)
-
-         # set the units for each tf (1 unit per ds)
-         for tf in self.transforms:
-            if not self.transforms[tf.required_trf].merger:               
-               for a in tid_datasets:
-                  tf.unit_partition_list.append( [] )
-            else:
-               tf.unit_partition_list.append( [] )
+            unit_num = prev_num
+            for ds in tid_datasets:
+               tf.addUnit("Unit_%d" % unit_num, ds)
+               unit_num += 1
                
    def startup(self):
       super(MultiTask,self).startup()
