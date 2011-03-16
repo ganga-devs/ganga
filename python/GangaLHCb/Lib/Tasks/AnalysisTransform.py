@@ -57,8 +57,8 @@ class AnalysisTransform(Transform):
             self.setTaskFilesStatus(j.id,j.inputdata.getFullFileNames(),'Processed')
         else:
             #TODO: can check whether the output data LFNs exist here before declaring
-            #      inputs are processed                 
-            logger.warning('Job %s with name %s did not produce any output data...' %(j.id,j.name))
+            #      inputs are really processed                 
+            logger.warning('Job %s with name %s completed but did not produce any output data...' %(j.id,j.name))
             self.setTaskFilesStatus(j.id,j.inputdata.getFullFileNames(),'Processed_NoOutputs')
 
         # if this is the first app to complete the partition...

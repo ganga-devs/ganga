@@ -69,8 +69,9 @@ help.append('Analysis Job Template'.ljust(adj)+sep+markup('template = JobTemplat
 help.append('Add Template to Task'.ljust(adj)+sep+markup('t.setTemplate(template)',command))
 help.append('BK query'.ljust(adj)+sep+markup('t.setQuery(BKQuery("/foo/bar"))',command))
 help.append(markup('\nOther useful commands'+sep,header))
+help.append('Monitor progress'.ljust(adj)+sep+markup('t.progress()',command))
+help.append('Get BK metadata for Task data sample'.ljust(adj)+sep+markup('t.getMetadata()',command))
 help.append('TO TEST: Flush dataset (refresh BK query)'.ljust(adj)+sep+markup('t.updateQuery()',command))
-help.append('TODO: Monitor progress'.ljust(adj)+sep+markup('t.progress()',command))
 help.append('TODO: Reset file status'.ljust(adj)+sep+markup('t.forceStatus(lfn)',command))
 help.append(markup('\nAnalysis Task Properties'+sep,header))
 
@@ -91,17 +92,17 @@ class AnalysisTask(Task):
     __doc__ = help_nocolor
     schema = {}
     schema['template']=SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Job template')
-    # should make metadata,queryList, data, lostData  protected=1, hidden=1 in the future i.e. not visible / modifiable via GPI
-    schema['metadata']=SimpleItem(defvalue=[],sequence=1,typelist=['dict'],hidden=1,doc='BK metadata') #["dict","str","object","list"]
-    schema['queryList']=SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc='List of BK paths.')
-    schema['data']=SimpleItem(defvalue={},typelist=["str"], copyable=0,doc='Data and processing status.')
-    schema['jobsData']=SimpleItem(defvalue={},typelist=["str"],copyable=0,doc='Job IDs and their data after creation.')
-    schema['lostData']=SimpleItem(defvalue={},typelist=["str"], copyable=0,doc='Any data removed from the BK.')
+    # should make metadata, data, lostData  protected=1 in the future i.e. not modifiable via GPI
+    schema['metadata']=SimpleItem(defvalue=[],sequence=1,typelist=['dict'],hidden=1,doc='BK metadata if specified via a query') #["dict","str","object","list"]
+    schema['queryList']=SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=1,doc='List of BK paths.')
+    schema['data']=SimpleItem(defvalue={},typelist=["str"],hidden=1,copyable=0,doc='Dictionary of full file names and processing status.')
+    schema['jobsData']=SimpleItem(defvalue={},typelist=["str"],hidden=1,copyable=0,doc='Job IDs and their data after creation.')
+    schema['lostData']=SimpleItem(defvalue={},typelist=["str"], copyable=0,doc='Data no longer appearing in the BK after updateQuery() has been run.')
     schema['container_name']=SimpleItem(defvalue="",protected=True,transient=1, getter="get_container_name", doc='name of the output container')
     _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + schema.items()))
     _category = 'tasks'
     _name = 'AnalysisTask'
-    exportMethods =  ["setTemplate","setQuery","updateQuery","setDataset","getMetadata","getQueryList","progress"]
+    exportMethods =  ["setTemplate","setQuery","updateQuery","setDataset","getMetadata","getData","progress"]
     _exportmethods = Task._exportmethods + exportMethods
     
     def initialize(self):
@@ -113,12 +114,6 @@ class AnalysisTask(Task):
         transform.inputdata = LHCbDataset()
         self.transforms = [transform]
         self.setBackend(None)
-        self.metadata = [] #BK metadata if specified via a query
-        self.queryList = [] #list of BK queries 
-        self.transformData = {} #dictionary of transformNames and LHCbDatasets
-        self.lostData = [] # data no longer appearing in the BK after updateQuery() has been run
-        self.data = {} # dictionary of full file names and their processing status
-        self.jobsData = {} #dict of jobIDs and LFNs
     
     #try to keep simple initially
     def setTemplate(self,jobTemplate):
@@ -271,6 +266,7 @@ class AnalysisTask(Task):
             lost = taskData.difference(check)
             if lost.files:
                 logger.warn('Found %s file(s) that are no longer in BK!' %(len(lost.files)))
+                logger.warn('View lost data using: task.lostData')
                 problematic.append(lost)
         
         #what to do in this case? initially set a parameter of the task with the lost files
@@ -279,6 +275,9 @@ class AnalysisTask(Task):
             for fname in prob.getFullFileNames():
               if fname not in self.lostData.getFullFileNames():
                   self.lostData.extend([fname])
+        
+        if not toAdd and not problematic:
+            logger.info('No new data added to (or existing data removed fom) the bookkeeping for current task.')
     
     def getData(self):
         """ Uses the dictionary published during setDataset() to return an LHCbDataset 
@@ -286,8 +285,7 @@ class AnalysisTask(Task):
         """
         dataList = self.data.keys()
         data = LHCbDataset()
-        for d in dataList:
-            data.extend(d)
+        data.extend(dataList)
         return data
     
     def getMetadata(self):
@@ -304,11 +302,6 @@ class AnalysisTask(Task):
             
         return final
     
-    def getQueryList(self):
-      """ Return a list of the BK query paths for the current task.
-      """ 
-      return self.queryList
-      
     def progress(self):
         """ LHCb specific monitoring function for Analysis Task.
         """
@@ -393,7 +386,7 @@ class AnalysisTask(Task):
                     print s.ljust(padj)+str(runData[run][s]).ljust(padj)+str(int(100*runData[run][s]/runFiles))
         
         print markup('\nBK Metadata:\n',header)
-        print markup('Total events in sample (EventStat) :',command).ljust(padj*2)+str(eventStat)
+        print markup('Total events in sample (EventStat) : ',command).ljust(padj*2)+str(eventStat)
         print markup('Total file size of sample (GB) : ',command).ljust(padj*2)+'%.2f' %(float(fileSize)/float(1024*1024*1024))
                 
     def get_container_name(self): #DQ2 specific
