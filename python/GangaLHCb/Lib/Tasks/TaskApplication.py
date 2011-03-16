@@ -4,9 +4,9 @@
 
 from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify
 
-from GangaLHCb.Lib.Gaudi.Gaudi import Gaudi
+from GangaLHCb.Lib.Gaudi.Gaudi import *
 GaudiTask = taskify(Gaudi,"GaudiTask")
-DaVinci = taskify(Gaudi,"DaVinci")
+DaVinciTask = taskify(DaVinci,"DaVinciTask")
 
 from GangaLHCb.Lib.Gaudi.GaudiPython import GaudiPython
 GaudiPythonTask = taskify(Gaudi,"GaudiPythonTask")
@@ -59,5 +59,5 @@ from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
     
 from Ganga.GPIDev.Lib.Tasks.TaskApplication import task_map
 task_map["Gaudi"] = GaudiTask
-task_map["DaVinci"] = DaVinci #TODO: is there a better way to do this?  want to avoid listing all possibilities...
+task_map["DaVinci"] = DaVinciTask #TODO: is there a better way to do this?  want to avoid listing all possibilities...
 task_map["GaudiPython"] = GaudiPythonTask

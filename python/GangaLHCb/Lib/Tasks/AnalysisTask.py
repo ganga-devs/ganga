@@ -71,7 +71,7 @@ help.append('BK query'.ljust(adj)+sep+markup('t.setQuery(BKQuery("/foo/bar"))',c
 help.append(markup('\nOther useful commands'+sep,header))
 help.append('Monitor progress'.ljust(adj)+sep+markup('t.progress()',command))
 help.append('Get BK metadata for Task data sample'.ljust(adj)+sep+markup('t.getMetadata()',command))
-help.append('TO TEST: Flush dataset (refresh BK query)'.ljust(adj)+sep+markup('t.updateQuery()',command))
+help.append('Flush dataset (refresh BK query)'.ljust(adj)+sep+markup('t.updateQuery()',command))
 help.append('TODO: Reset file status'.ljust(adj)+sep+markup('t.forceStatus(lfn)',command))
 help.append(markup('\nAnalysis Task Properties'+sep,header))
 
