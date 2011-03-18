@@ -528,7 +528,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.addFile(flib)
 
 #       input files FIXME: many more input types
-        if job.inputdata and self.inputdatatype=='DQ2' and (not job.inputdata.tag_info or app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']):
+        if job.inputdata and self.inputdatatype=='DQ2':
             for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
                 finp = FileSpec()
                 finp.lfn            = lfn
