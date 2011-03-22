@@ -53,8 +53,12 @@ jt.backend = Dirac()
 #Prepare some 'data' to process, this time using a BK query
 
 bkQueryList = []
-bkQueryList.append(BKQuery('/LHCb/Collision10/Beam450GeV-VeloOpen-MagUp/RecoStripping-03/90000000/MINIBIAS.DST'))
-bkQueryList.append(BKQuery('/LHCb/Collision10/Beam450GeV-VeloOpen-MagDown/RecoStripping-03/90000000/MINIBIAS.DST'))
+bkQueryList.append(BKQuery('/LHCb/Collision10/Beam450GeV-VeloOpen-MagUp/Real Data/RecoStripping-03/90000000/MINIBIAS.DST'))
+bkQueryList.append(BKQuery('/LHCb/Collision10/Beam450GeV-VeloOpen-MagDown/Real Data/RecoStripping-03/90000000/MINIBIAS.DST'))
+#NOTICE the OLD BK has a different path and behaviour- I wasted a lot of time here because of this!
+#bkQueryList = []
+#bkQueryList.append(BKQuery('/LHCb/Collision10/Beam450GeV-VeloOpen-MagUp/Real Data+RecoStripping-03/90000000/MINIBIAS.DST'))
+#bkQueryList.append(BKQuery('/LHCb/Collision10/Beam450GeV-VeloOpen-MagDown/Real Data+RecoStripping-03/90000000/MINIBIAS.DST'))
 
 #Now start to prepare the AnalysisTask, this would be 
 #a more usual starting point for users
