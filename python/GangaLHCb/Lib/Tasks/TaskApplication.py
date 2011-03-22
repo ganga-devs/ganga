@@ -1,5 +1,5 @@
 ########################################################################
-# File : AnalysisTask.py
+# File : TaskApplication.py
 ########################################################################
 
 from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify
@@ -9,55 +9,12 @@ GaudiTask = taskify(Gaudi,"GaudiTask")
 DaVinciTask = taskify(DaVinci,"DaVinciTask")
 
 from GangaLHCb.Lib.Gaudi.GaudiPython import GaudiPython
-GaudiPythonTask = taskify(Gaudi,"GaudiPythonTask")
+GaudiPythonTask = taskify(GaudiPython,"GaudiPythonTask")
 
-#from GangaAtlas.Lib.AthenaMC.AthenaMC import AthenaMC, AthenaMCSplitterJob
-#from GangaAtlas.Lib.Athena.Athena import Athena
-#AthenaTask = taskify(Athena,"AthenaTask")
-#AthenaMCTask = taskify(AthenaMC,"AthenaMCTask")
-#AthenaMCTaskSplitterJob = taskify(AthenaMCSplitterJob,"AthenaMCTaskSplitterJob")
-
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
-#
-#from Ganga.GPIDev.Schema import *
-#from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-#class AnaTaskSplitterJob(ISplitter):
-#    """AnaTask handler for job splitting"""
-#    _name = "AnaTaskSplitterJob"
-#    _category = "splitters"
-#    _schema = Schema(Version(1,0), {
-#        'subjobs'           : SimpleItem(defvalue=[],sequence=1, doc="List of subjobs", typelist=["int"]),
-#        'numevtsperjob'     : SimpleItem(defvalue=0, doc='Number of events per subjob'),
-#        'numevtsperfile'    : SimpleItem(defvalue=0,doc='Maximum number of events in a file of input dataset')
-#    } )
-#    def split(self,job):
-#        from Ganga.GPIDev.Lib.Job import Job
-#        logger.debug("AnaTaskSplitterJob split called")
-#        sjl = []
-#        transform = stripProxy(job.application.getTransform())
-#        transform.setAppStatus(job.application, "removed")
-#        # Do the splitting
-#        for sj in self.subjobs:
-#            j = Job()
-#            j.inputdata = transform.partitions_data[sj-1]
-#            j.outputdata = job.outputdata
-#            j.application = job.application
-#            j.application.atlas_environment.append("OUTPUT_FILE_NUMBER=%i" % sj)
-#            j.backend = job.backend
-#            if transform.partitions_sites:
-#                j.backend.requirements.sites = transform.partitions_sites[sj-1]
-#            j.inputsandbox = job.inputsandbox
-#            j.outputsandbox = job.outputsandbox
-#            sjl.append(j)
-#            # Task handling
-#            j.application.tasks_id = job.application.tasks_id
-#            j.application.id = transform.getNewAppID(sj)
-#             #transform.setAppStatus(j.application, "submitting")
-#        if not job.application.tasks_id.startswith("00"):
-#            job.application.tasks_id = "00:%s" % job.application.tasks_id
-#        return sjl
-    
+#must take care of "taskifying" all possible apps
+from GangaLHCb.Lib.Gaudi.GaudiUtils import available_apps
 from Ganga.GPIDev.Lib.Tasks.TaskApplication import task_map
-task_map["Gaudi"] = GaudiTask
-task_map["DaVinci"] = DaVinciTask #TODO: is there a better way to do this?  want to avoid listing all possibilities...
-task_map["GaudiPython"] = GaudiPythonTask
+
+for app in available_apps():
+    exec('%sTask = taskify(%s,"%sTask")' %(app,app,app))
+    exec('task_map["%s"] = %sTask' %(app,app))
