@@ -38,6 +38,11 @@ def is_gaudi_child(app):
     if app.__class__.__name__ == 'Gaudi' \
            or type(app).__bases__[0].__name__ == 'Gaudi':
         return True
+    
+    if type(app).__bases__[0].__name__ == 'TaskApplication':
+        if not app.__class__.__name__ == 'GaudiPython':
+            return True
+    
     return False
 
 def create_runscript(app,outputdata,job):
