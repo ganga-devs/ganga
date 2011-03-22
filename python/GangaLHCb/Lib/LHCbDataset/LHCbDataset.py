@@ -41,7 +41,7 @@ class LHCbDataset(Dataset):
     docstr = 'Use contents of file rather than generating catalog.'
     schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
     docstr = 'Metadata container e.g. from Bookkeeping'
-    schema['metadata'] = SimpleItem(defvalue={}, doc=docstr)
+    schema['metadata'] = SimpleItem(defvalue={},hidden=1,doc=docstr)
 
     _schema = Schema(Version(3,0), schema)
     _category = 'datasets'

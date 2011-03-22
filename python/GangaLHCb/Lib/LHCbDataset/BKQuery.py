@@ -124,15 +124,16 @@ RecoToDST-07/90000000/DST" ,
         result = get_result(cmd,'BK query error.','BK query error.')
         files = result['Value']
         metadata = {}
-        if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
-            metadata = files['LFNs'].copy()
-            files = files['LFNs'].keys()
+        if not type(files) is list:
+            if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
+                metadata = files['LFNs'].copy()
+                files = files['LFNs'].keys()
         
         ds = LHCbDataset()
         for f in files: ds.files.append(LogicalFile(f))
         
         if metadata:
-          ds.metadata = {'OK':True,'Value':metadata}
+            ds.metadata = {'OK':True,'Value':metadata}
         
         return GPIProxyObjectFactory(ds)
 
@@ -192,15 +193,16 @@ class BKQueryDict(GangaObject):
         result = get_result(cmd,'BK query error.','BK query error.')
         files = result['Value']
         metadata = {}
-        if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
-            metadata = files['LFNs'].copy()
-            files = files['LFNs'].keys()
+        if not type(files) is list:
+            if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
+                metadata = files['LFNs'].copy()
+                files = files['LFNs'].keys()
         
         ds = LHCbDataset()
         for f in files: ds.files.append(LogicalFile(f))
         
         if metadata:
-          ds.metadata = {'OK':True,'Value':metadata}
+            ds.metadata = {'OK':True,'Value':metadata}
         
         return GPIProxyObjectFactory(ds)
 
