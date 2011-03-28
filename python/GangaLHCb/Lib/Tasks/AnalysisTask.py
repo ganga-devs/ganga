@@ -47,12 +47,20 @@
       t.updateQuery()
 
 """
+import string
+import Ganga.Utility.logging
 
 from Ganga.GPIDev.Lib.Tasks.common import *
+from Ganga.GPIDev.Lib.Tasks import Task
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.Core.exceptions import ApplicationConfigurationError,GangaAttributeError
 
 from AnalysisTransform import AnalysisTransform
 
-import string
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
+from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
+
+logger = Ganga.Utility.logging.getLogger()
 
 # First let's make the help string print nicely with all necessary feature information
 
@@ -72,21 +80,12 @@ help.append(markup('\nOther useful commands'+sep,header))
 help.append('Monitor progress'.ljust(adj)+sep+markup('t.progress()',command))
 help.append('Get BK metadata for Task data'.ljust(adj)+sep+markup('t.getMetadata()',command))
 help.append('Flush dataset (refresh BK query)'.ljust(adj)+sep+markup('t.updateQuery()',command))
-help.append('TODO: Reset file status'.ljust(adj)+sep+markup('t.forceStatus(lfn)',command))
-help.append(markup('\nAnalysis Task Properties'+sep,header))
+help.append('Abandon processing a file'.ljust(adj)+sep+markup('t.abandonData(data)',command))
+help.append('Forget about failed jobs and make another attempt'.ljust(adj)+sep+markup('t.retryAllFailedJobs()',command))
+#help.append(markup('\nAnalysis Task Properties'+sep,header))
 
 help = string.join(help,'\n')+'\n'
 help_nocolor = help.replace(fgcol("blue"),"").replace(fx.normal, "").replace(fgcol("red"),"")
-
-from Ganga.GPIDev.Lib.Tasks import Task
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core.exceptions import ApplicationConfigurationError,GangaAttributeError
-
-from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
-from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
-
-#atlas specific
-#from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 
 class AnalysisTask(Task):
     __doc__ = help_nocolor
@@ -95,14 +94,20 @@ class AnalysisTask(Task):
     # should make metadata, data, lostData  protected=1 in the future i.e. not modifiable via GPI
     schema['metadata']=SimpleItem(defvalue=[],sequence=1,typelist=['dict'],hidden=1,doc='BK metadata if specified via a query') #["dict","str","object","list"]
     schema['queryList']=SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=1,doc='List of BK paths.')
-    schema['data']=SimpleItem(defvalue={},typelist=["str"],hidden=1,copyable=0,doc='Dictionary of full file names and processing status.')
     schema['jobsData']=SimpleItem(defvalue={},typelist=["str"],hidden=1,copyable=0,doc='Job IDs and their data after creation.')
-    schema['lostData']=SimpleItem(defvalue=[],sequence=1,typelist=["str"], copyable=0,doc='Data no longer appearing in the BK after updateQuery() has been run.')
+#    schema['jobsData']=SimpleItem(defvalue={},typelist=["str"],hidden=0,copyable=0,doc='Job IDs and their data after creation.')
+    schema['data']=SimpleItem(defvalue={},typelist=["str"],hidden=1,copyable=0,doc='Dictionary of full file names and processing status.')
+#    schema['data']=SimpleItem(defvalue={},typelist=["str"],hidden=0,copyable=0,doc='Dictionary of full file names and processing status.')
+    schema['lostData']=SimpleItem(defvalue=[],sequence=1,typelist=["str"],protected=1,copyable=0,doc='Data no longer appearing in the BK after updateQuery() has been run.')
+#    schema['lostData']=SimpleItem(defvalue=[],sequence=1,typelist=["str"],protected=1,copyable=0,doc='Data no longer appearing in the BK after updateQuery() has been run.')
+    schema['abandonedData']=SimpleItem(defvalue=[],sequence=1,typelist=["str"],protected=1,copyable=0,doc='Data that has been removed from the sample and will not be processed.')
+    schema['failedJobs']=SimpleItem(defvalue=[],sequence=1,protected=1,copyable=0,hidden=0,doc='List of jobs that have been rerun after abandoning a subset of the original data.')
     schema['container_name']=SimpleItem(defvalue="",protected=True,transient=1, getter="get_container_name", doc='name of the output container')
+    schema['filesPerJob']=SimpleItem(defvalue=10,protected=True,hidden=1,doc='Files per job as chosen during last call to setDataset or updateQuery methods')
     _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + schema.items()))
     _category = 'tasks'
     _name = 'AnalysisTask'
-    exportMethods =  ["setTemplate","setQuery","updateQuery","setDataset","getMetadata","getData","progress"]
+    exportMethods =  ["setTemplate","setQuery","updateQuery","setDataset","getMetadata","getData","progress","abandonData","retryAllFailedJobs"]
     _exportmethods = Task._exportmethods + exportMethods
     
     def initialize(self):
@@ -119,7 +124,7 @@ class AnalysisTask(Task):
     def setTemplate(self,jobTemplate):
         """ LHCb specific method to pass the template for a transformation step.
         """
-        #try to pass application from job template
+        #pass application from job template
         app = jobTemplate.application
         self.transforms[0].application=app 
         self.setBackend(jobTemplate.backend)
@@ -131,6 +136,167 @@ class AnalysisTask(Task):
         self.transforms[0].outputsandbox=outputSandbox
         outputData=jobTemplate.outputdata
         self.transforms[0].outputdata=outputData
+#  Not yet tested merging and how that would work but could be part of the post processing actions
+#        merger=jobTemplate.merger
+#        self.transforms[0].merger = merger
+        splitter=jobTemplate.splitter
+        self.transforms[0].splitter=splitter
+            
+    def retryAllFailedJobs(self):
+        """ Calls retryFailed() for each transform.
+        """
+        for t in self.transforms:
+            logger.debug('Attempting to retry failed jobs for transform %s' %(t.name))
+            t.retryFailed()
+            
+    def abandonData(self,data,force=False):
+        """ This method will allow to permanently abandon a selection of input data e.g. 
+            if there is lost data this can be excluded from the sample of the rest.  
+            
+            Any leftover files for a given partition are recycled automatically via the
+            creation of a new transform to process them.
+        """
+        if not data and not self.lostData:
+            logger.info('No data specified, nothing to do')
+            return
+
+        if data:
+            if not isType(data,LHCbDataset):
+                raise GangaAttributeError(None,'abandonData() method only accepts LHCbDataset objects')
+        else:
+            data = LHCbDataset()
+        
+        ignore = []
+        for fname in data.getFullFileNames():
+            if not fname in self.data.keys():
+                ignore.append(fname)
+        
+        msg = 'The following files will be ignored because they were not found in the sample:'
+        for fname in ignore:
+            msg.append('\n%s' %fname)
+        if ignore:
+            logger.warning(msg)
+        
+        if self.lostData:
+            logger.info('%s files that were declared lost via updateQuery will be treated' %(len(self.lostData)))
+            data.extend(self.lostData)
+                         
+        logger.debug(str(data.getFullFileNames()))
+        if not self.status=='pause' and force: #don't change task status unless we are going to do something
+            logger.info('Ensuring task %s is paused to avoid submission of new jobs...' %(self.id))
+            self.pause()
+        
+        logger.debug('Jobs to examine: %s' %(self.jobsData.keys()))
+        affected = {} #dict of jobIDs and data that should be removed (to track all files to be abandoned are found) 
+        updated = {} #dict of existing, affected jobIDs and subset of data still ok
+        for jobID,jobData in self.jobsData.items():
+            for fname in data.getFullFileNames():
+                if fname in jobData:
+                    if not affected.has_key(jobID):
+                        affected[jobID]=[fname] #of course can be many files in same job affected
+                        newData = jobData
+                        newData.remove(fname)
+                        updated[jobID]=newData
+                    else:
+                        abandonedData = affected[jobID]
+                        updatedData = updated[jobID]
+                        abandonedData.append(fname)
+                        updatedData.remove(fname)
+                        affected[jobID]=abandonedData
+                        updated[jobID]=updatedData
+        
+        #above handles case where jobs are already there, what happens if files are "New" i.e. not yet submitted?
+        newFiles = []
+        for lfn in data.getFullFileNames():
+            if not lfn in ignore:
+                if self.data[lfn]=='New':
+                    newFiles.append(lfn)
+        
+        if not affected and not newFiles:
+            logger.info('No affected job inputs or "New" input files were found for the specified data')
+            return
+        
+        #Whether force is True or False ensure a detailed summary is printed:
+        case = 'would'
+        if force: case = 'will'        
+        
+        #handle New files by removing them from the affected partitions
+        if newFiles:
+            newDataset = LHCbDataset()
+            newDataset.extend(newFiles)
+            for i in range(len(self.transforms)):
+                newPartitionsData = []
+                for dataset in self.transforms[i].partitions_data:
+                    newData = dataset.difference(newDataset)
+                    newPartitionsData.append(newData)
+                
+                for dataset in self.transforms[i].partitions_data:
+                    index = self.transforms[i].partitions_data.index(dataset)
+                    dfiles = dataset.getFullFileNames()
+                    nfiles = newPartitionsData[index].getFullFileNames()
+                    if len(dfiles) != len(nfiles):
+                        logger.info('%s "New" unprocessed file(s) %s be removed from Task data, %s left in partition' %((len(dfiles)-len(nfiles)),case,len(nfiles)))
+               
+                if force:
+                    self.transforms[i].partitions_data = newPartitionsData
+                    self.addAbandonedData(newFiles)
+                    
+        for job,jobData in affected.items():
+            logger.info('%s file(s) %s be removed from original inputs of job %s, %s %s be recycled from partition' %(len(jobData),case,job,len(updated[job]),case))
+        
+        if not force:
+            logger.info('** Please rerun command with force flag set to True to remove data **')
+            logger.info('** e.g. abandonData(<dataset>,force=True) **')
+            logger.info('** Also note that this is a one-way operation that cannot easily be undone. **')
+            return
+                
+        #Now to finally handle the case where jobs have been created for the partition
+        #that should now be properly re-created with a subset of the data.        
+        #We have a dict of jobIDs and the new list of data that should be set as inputs
+        #must work out which partitions these come from, reset the input data sets to the
+        #new value, declare the partition as failed and carry on with the processing.
+        for i in range(len(self.transforms)):
+            newPartitionData = {}
+            for jobID,newData in updated.items():
+                print jobID,newData
+                nd = LHCbDataset()
+                nd.extend(newData)
+                for part in self.transforms[i].partitions_data:
+                    if nd.isSubset(part):
+                        index = self.transforms[i].partitions_data.index(part)
+                        newPartitionData[index]=nd
+                if self.jobsData.has_key(jobID): #to ensure correct progress summary
+                    logger.debug('Removing jobID %s from task job data dictionary' %(jobID))
+                    jdcopy = self.jobsData.copy()
+                    del jdcopy[jobID]
+                    self.jobsData = jdcopy
+                                
+            for index,newDataset in newPartitionData.items():
+                logger.debug('Resetting input data for transformation %s, partition %s' %(self.transforms[i].name,index+1))
+                self.transforms[i].partitions_data[index]=newDataset                
+                self.transforms[i].setFailed(index+1) #moves status to ready such that resubmission occurs with new dataset
+        
+        #Keep track of lost data which is now treated (i.e. any other affected files are recycled)
+        self.addAbandonedData(self.lostData)
+        self.lostData = []             
+        for job,jobData in affected.items():
+            self.addAbandonedData(jobData)
+        
+        #Keep track of jobs that will still be related to the underlying transforms but have older input data
+        self.failedJobs += affected.keys()
+        
+        #Can print or set the task to run automatically now
+        logger.info('** Operation complete, set task to run() in order to continue processing')
+        return
+
+    def addAbandonedData(self,data):
+        """ Simple internal method to ensure abandoned data list is properly tracked.
+        """
+        for d in data:
+            if not d in self.abandonedData:
+                self.abandonedData.append(d)
+            if self.data.has_key(d):
+                self.data[d] = 'Abandoned'
             
     def setQuery(self,bkQuery,filesPerJob=10):
         """ Allows one or more LHCb BK query objects to define the dataset.
@@ -185,6 +351,9 @@ class AnalysisTask(Task):
             logger.debug('Assuming setDataset() argument is a single dataset object.')
             datasetList = [datasetList]
         
+        if not filesPerJob:
+            filesPerJob=self.filesPerJob
+        
         transform = None
         if self.transforms:
             transform = self.transforms[0]
@@ -199,8 +368,6 @@ class AnalysisTask(Task):
               
             #probably need more protection in here eventually e.g. check LFNs if backend DIRAC etc. 
             finalDatasets.append(dataset)
-
-        #is there an issue with configuring the application? 
 
         transformsList = []
         order = 0
@@ -225,6 +392,7 @@ class AnalysisTask(Task):
             self.transforms = transformsList
             self.data = tData
         
+        self.filesPerJob = filesPerJob
         self.initAliases()
     
     def updateQuery(self,filesPerJob=10):
@@ -326,7 +494,6 @@ class AnalysisTask(Task):
                     statusCount[status]=new
                 else:
                     statusCount[status]=1
-            
 
             statuses = statusCount.keys()
             statuses.sort()        

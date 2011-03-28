@@ -18,6 +18,8 @@ import time
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 
+from Ganga.Lib.Splitters.ArgSplitter import ArgSplitter
+
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
 from GangaLHCb.Lib.Gaudi.Splitters import SplitByFiles
 from GangaLHCb.Lib.DIRAC.DiracSplitter import DiracSplitter
@@ -26,8 +28,11 @@ class AnalysisTransform(Transform):
     """ Analyzes Events """
     schema = {}
     schema['files_per_job']=SimpleItem(defvalue=5, doc='files per job', modelist=["int"])
-    schema['partitions_data']=ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=1, doc='Input dataset for each partition')
+    #SKP NOTE hidden change:
+#    schema['partitions_data']=ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=1, doc='Input dataset for each partition')
+    schema['partitions_data']=ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=0, doc='Input dataset for each partition')
     schema['dataset_name']=SimpleItem(defvalue="", transient=1, getter="get_dataset_name", doc='name of the output dataset')
+    schema['splitter']=ComponentItem('splitters',optional=1,hidden=1,doc='Splitter for analysis transform')
     #removed from LHCb case
     #schema['partitions_sites']=SimpleItem(defvalue=[], hidden=1, modelist=["str","list"],doc='Input site for each partition')
     #schema['outputdata']=ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset')
@@ -41,6 +46,7 @@ class AnalysisTransform(Transform):
         #      self.application = GaudiTask() #TODO specify splitter here?
         self.application=GaudiTask() 
         self.inputdata=LHCbDataset()
+        self.splitter=None
     
     ## Internal methods
     def checkCompletedApp(self, app):
@@ -84,51 +90,51 @@ class AnalysisTransform(Transform):
     def check(self):
         super(AnalysisTransform,self).check()
         if not self.inputdata.getFileNames():
-            logger.error('Empty dataset for transform...')
+            logger.error('Empty dataset for transform, nothing to do')
             return
         if not self.backend:
-            logger.warning("Determining backend and cloud TODO...")
+            logger.error("A task backend must be specified")
             assert self.backend
         
         logger.info("Determining partition splitting...")
-        logger.warning('TODO: disabled stuff here from the ATLAS case, splitter could be passed via template')
+                
+        #The splitter is either taken from the job template or guessed via the below        
+        splitter = self.splitter
         
-        #TODO: should the splitter be explicitly specified by the user via
-        #      the job template or determined like the below? 
-         
-        #Choose splitter e.g. either DiracSplitter or SplitByFiles
-        splitter = None
-        if self.inputdata.hasLFNs():
-          splitter = DiracSplitter()
-        else:
-          splitter = SplitByFiles()
+        if not splitter or splitter==ArgSplitter(): 
+            #Choose splitter e.g. either DiracSplitter or SplitByFiles
+            splitter = None
+            if self.inputdata.hasLFNs():
+              splitter = DiracSplitter()
+              logger.info('Choosing DiracSplitter for Task since dataset contains LFN(s) and template had no splitter')
+            else:
+              splitter = SplitByFiles()
+              logger.info('Choosing SplitByFiles for Task since dataset contains only PFN(s) and template had no splitter')
 
         splitter.filesPerJob = self.files_per_job
         
-        # is it necessary to send the instance self here? 
         sjl = splitter._splitFiles(self.inputdata)  
-#        self.partitions_data = [sj.inputdata for sj in sjl]
         self.partitions_data = sjl
         
-        # TODO: check that banned sites / forced destination sites propagation will work for LHCb
+        # TODO: check that banned sites / forced destination sites propagation will work for LHCb if necessary
         
-#        try:
-#            self.partitions_sites = [sj.backend.requirements.sites for sj in sjl]
-#        except AttributeError:
-#            self.partitions_sites = [sj.backend.site for sj in sjl]
-#            pass
         self.setPartitionsLimit(len(self.partitions_data)+1)
         self.setPartitionsStatus([c for c in range(1,len(self.partitions_data)+1) if self.getPartitionStatus(c) != "completed"], "ready")
 
     def getJobsForPartitions(self, partitions):
         """ This overrides the Transform baseclass method
         """
+        jobInputData = self.partitions_data[partitions[0]-1]
+        if not jobInputData:
+            logger.warning('Skipping partition for which there is no input data found (possibly in lost or abandoned data)')
+            return []
+        
         j = self.createNewJob(partitions[0])
-        print 'Note: disabled some ATLAS stuff here'
+        #print 'Note: disabled some ATLAS stuff here'
         #       if len(partitions) >= 1:
         #           j.splitter = AnaTaskSplitterJob()
         #           j.splitter.subjobs = partitions
-        j.inputdata = self.partitions_data[partitions[0]-1]
+        j.inputdata = jobInputData
         j.outputdata = self.outputdata
         task = self._getParent()
 #        nickname = 'user'
