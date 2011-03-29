@@ -48,13 +48,15 @@ ifile = 'dummyInputSandboxFile.txt'
 createFile(ifile,'Dummy input sandbox file created on %s' %(time.asctime()))
 jt.inputsandbox.append(ifile)
 jt.outputsandbox.append(ofile)
-jt.backend = Dirac()
+#jt.backend = Dirac()
+jt.backend = Local()
 
 #Prepare some 'data' to process, this time using a BK query
 
 bkQueryList = []
 bkQueryList.append(BKQuery('/LHCb/Collision10/Beam450GeV-VeloOpen-MagUp/Real Data/RecoStripping-03/90000000/MINIBIAS.DST'))
 bkQueryList.append(BKQuery('/LHCb/Collision10/Beam450GeV-VeloOpen-MagDown/Real Data/RecoStripping-03/90000000/MINIBIAS.DST'))
+
 #NOTICE the OLD BK has a different path and behaviour- I wasted a lot of time here because of this!
 #bkQueryList = []
 #bkQueryList.append(BKQuery('/LHCb/Collision10/Beam450GeV-VeloOpen-MagUp/Real Data+RecoStripping-03/90000000/MINIBIAS.DST'))
