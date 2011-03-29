@@ -107,7 +107,7 @@ class AnalysisTask(Task):
     _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + schema.items()))
     _category = 'tasks'
     _name = 'AnalysisTask'
-    exportMethods =  ["setTemplate","setQuery","updateQuery","setDataset","getMetadata","getData","progress","abandonData","retryAllFailedJobs"]
+    exportMethods =  ["setTemplate","setQuery","updateQuery","setDataset","getMetadata","getData","progress","abandonData","retryAllFailedJobs","getDistinctJobsList"]
     _exportmethods = Task._exportmethods + exportMethods
     
     def initialize(self):
@@ -330,7 +330,7 @@ class AnalysisTask(Task):
                 result=mdata['Value']
                 self.metadata.append(result) #i.e. a list of dictionaries containing {<LFN>:<metadata>} 
 
-        #TODO: should add an "Are you sure?" dialogue to prevent accidentally trying to 
+        #TODO: could add an "Are you sure?" dialogue to prevent accidentally trying to 
         #      append a query rather than creating a new task altogether.
         self.setDataset(datasets,filesPerJob,False)
     
@@ -344,7 +344,6 @@ class AnalysisTask(Task):
              Can optionally set filesPerJob at the same time (can also be set
              for each transform independently.  
              
-            TODO: Must think about output file names.
         """
         self.initAliases()
         if not type(datasetList) is list:
@@ -452,12 +451,26 @@ class AnalysisTask(Task):
     
     def getData(self):
         """ Uses the dictionary published during setDataset() to return an LHCbDataset 
-            containing all task data.
+            containing all task data. Any data declared as abandoned (e.g. lost after 
+            updating a BK query or declared bad by the user) will be removed from the
+            returned dataset.
         """
         dataList = self.data.keys()
         data = LHCbDataset()
-        data.extend(dataList)
+        final = []
+        for d in dataList:
+            if not d in self.lostData and d not in self.abandonedData:
+                final.append(d)
+        data.extend(final)
         return data
+    
+    def getDistinctJobsList(self):
+        """ Return the current distinct set of jobs charged with processing the 
+            data sample.  As opposed to the parent class method getJobs() this method
+            ignores previous attempts at processing the data and returns the list of
+            jobIDs that are available.  
+        """
+        return self.jobsData.keys()
     
     def getMetadata(self):
         """ Retrieve BK metadata for all files in the dataset.
