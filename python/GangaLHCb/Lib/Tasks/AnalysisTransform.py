@@ -28,9 +28,7 @@ class AnalysisTransform(Transform):
     """ Analyzes Events """
     schema = {}
     schema['files_per_job']=SimpleItem(defvalue=5, doc='files per job', modelist=["int"])
-    #SKP NOTE hidden change:
-#    schema['partitions_data']=ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=1, doc='Input dataset for each partition')
-    schema['partitions_data']=ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=0, doc='Input dataset for each partition')
+    schema['partitions_data']=ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=1, doc='Input dataset for each partition')
     schema['dataset_name']=SimpleItem(defvalue="", transient=1, getter="get_dataset_name", doc='name of the output dataset')
     schema['splitter']=ComponentItem('splitters',optional=1,hidden=1,doc='Splitter for analysis transform')
     #removed from LHCb case
@@ -43,7 +41,6 @@ class AnalysisTransform(Transform):
     
     def initialize(self):
         super(AnalysisTransform, self).initialize()
-        #      self.application = GaudiTask() #TODO specify splitter here?
         self.application=GaudiTask() 
         self.inputdata=LHCbDataset()
         self.splitter=None
