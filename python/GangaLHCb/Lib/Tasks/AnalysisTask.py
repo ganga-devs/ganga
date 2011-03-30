@@ -101,7 +101,7 @@ class AnalysisTask(Task):
     schema['lostData']=SimpleItem(defvalue=[],sequence=1,typelist=["str"],protected=1,copyable=0,doc='Data no longer appearing in the BK after updateQuery() has been run.')
 #    schema['lostData']=SimpleItem(defvalue=[],sequence=1,typelist=["str"],protected=1,copyable=0,doc='Data no longer appearing in the BK after updateQuery() has been run.')
     schema['abandonedData']=SimpleItem(defvalue=[],sequence=1,typelist=["str"],protected=1,copyable=0,doc='Data that has been removed from the sample and will not be processed.')
-    schema['failedJobs']=SimpleItem(defvalue=[],sequence=1,protected=1,copyable=0,hidden=0,doc='List of jobs that have been rerun after abandoning a subset of the original data.')
+    schema['attemptedJobs']=SimpleItem(defvalue=[],sequence=1,typelist=["str","int"],protected=1,copyable=0,hidden=0,doc='List of jobs that have been rerun after abandoning a subset of the original data.')
     schema['container_name']=SimpleItem(defvalue="",protected=True,transient=1, getter="get_container_name", doc='name of the output container')
     schema['filesPerJob']=SimpleItem(defvalue=10,protected=True,hidden=1,doc='Files per job as chosen during last call to setDataset or updateQuery methods')
     _schema = Schema(Version(1,1), dict(Task._schema.datadict.items() + schema.items()))
@@ -283,7 +283,7 @@ class AnalysisTask(Task):
             self.addAbandonedData(jobData)
         
         #Keep track of jobs that will still be related to the underlying transforms but have older input data
-        self.failedJobs += affected.keys()
+        self.attemptedJobs += affected.keys()
         
         #Can print or set the task to run automatically now
         logger.info('** Operation complete, set task to run() in order to continue processing')
