@@ -122,7 +122,9 @@ RecoToDST-07/90000000/DST" ,
             "%s")' % (self.path,self.dqflag,self.type,self.startDate,
                      self.endDate,self.selection)
         result = get_result(cmd,'BK query error.','BK query error.')
-        files = result['Value']
+        files = []
+        value = result['Value']
+        if value.has_key('LFNs'): files = value['LFNs']
         ds = LHCbDataset()
         for f in files: ds.files.append(LogicalFile(f))
         return GPIProxyObjectFactory(ds)
