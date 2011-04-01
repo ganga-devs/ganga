@@ -52,7 +52,7 @@ import Ganga.Utility.logging
 
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks import Task
-from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import isType,stripProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError,GangaAttributeError
 
 from AnalysisTransform import AnalysisTransform
@@ -90,6 +90,7 @@ help_nocolor = help.replace(fgcol("blue"),"").replace(fx.normal, "").replace(fgc
 class AnalysisTask(Task):
     __doc__ = help_nocolor
     schema = {}
+    #SKP: Note - should remove template as it is not used anywhere!
     schema['template']=SimpleItem(defvalue=None, transient=1, typelist=["object"], doc='Job template')
     # should make metadata, data, lostData  protected=1 in the future i.e. not modifiable via GPI
     schema['metadata']=SimpleItem(defvalue=[],sequence=1,typelist=['dict'],hidden=1,doc='BK metadata if specified via a query') #["dict","str","object","list"]
@@ -180,9 +181,14 @@ class AnalysisTask(Task):
         if self.lostData:
             logger.info('%s files that were declared lost via updateQuery will be treated' %(len(self.lostData)))
             data.extend(self.lostData)
+
+        if self.status=='new':
+            logger.warning('Cannot abandon data until it has been partitioned, try to run() the task')
+            return
                          
         logger.debug(str(data.getFullFileNames()))
-        if not self.status=='pause' and force: #don't change task status unless we are going to do something
+        #Don't change task status unless we are going to do something        
+        if not self.status=='pause' and force: 
             logger.info('Ensuring task %s is paused to avoid submission of new jobs...' %(self.id))
             self.pause()
         
@@ -228,17 +234,24 @@ class AnalysisTask(Task):
                 newPartitionsData = []
                 for dataset in self.transforms[i].partitions_data:
                     newData = dataset.difference(newDataset)
-                    newPartitionsData.append(newData)
-                
-                for dataset in self.transforms[i].partitions_data:
-                    index = self.transforms[i].partitions_data.index(dataset)
+                    nfiles = newData.getFullFileNames()                    
                     dfiles = dataset.getFullFileNames()
-                    nfiles = newPartitionsData[index].getFullFileNames()
+                    if not newData:
+                        logger.info('%s "New" unprocessed file(s) %s be removed from Task data, removing a partition dataset' %(len(dfiles),case))
+                        continue                    
+                    newPartitionsData.append(newData)
                     if len(dfiles) != len(nfiles):
-                        logger.info('%s "New" unprocessed file(s) %s be removed from Task data, %s left in partition' %((len(dfiles)-len(nfiles)),case,len(nfiles)))
+                        logger.info('%s "New" unprocessed file(s) %s be removed from Task data, %s left in partition dataset' %((len(dfiles)-len(nfiles)),case,len(nfiles)))
                
                 if force:
-                    self.transforms[i].partitions_data = newPartitionsData
+                    #Check we are not removing all data in the transform!
+                    if not newPartitionsData:
+                        logger.debug('Notice that we are removing all files and therefore all of transform %s' %i)
+                        empty = self.transforms[i]
+                        self.transforms.remove(empty)
+                    else:
+                        newPartitionsData = [stripProxy(j) for j in newPartitionsData]
+                        self.transforms[i].partitions_data = newPartitionsData
                     self.addAbandonedData(newFiles)
                     
         for job,jobData in affected.items():
@@ -258,7 +271,6 @@ class AnalysisTask(Task):
         for i in range(len(self.transforms)):
             newPartitionData = {}
             for jobID,newData in updated.items():
-                print jobID,newData
                 nd = LHCbDataset()
                 nd.extend(newData)
                 for part in self.transforms[i].partitions_data:
