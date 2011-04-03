@@ -183,7 +183,9 @@ class BKQueryDict(GangaObject):
         if not self.dict: return None
         cmd = 'result = DiracCommands.bkQueryDict(%s)' % self.dict
         result = get_result(cmd,'BK query error.','BK query error.')
-        files = result['Value']
+        files = []
+        value = result['Value']
+        if value.has_key('LFNs'): files = value['LFNs']
         ds = LHCbDataset()
         for f in files: ds.files.append(LogicalFile(f))
         return GPIProxyObjectFactory(ds)
