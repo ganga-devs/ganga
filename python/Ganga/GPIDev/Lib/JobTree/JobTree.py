@@ -63,8 +63,12 @@ class JobTree(GangaObject):
         return dict
 
     def __setstate__(self, dict):
-        super(JobTree, self).__setstate__(dict)
-        self._setRegistry(None)
+        self._getWriteAccess()
+        try:
+            super(JobTree, self).__setstate__(dict)
+            self._setRegistry(None)
+        finally:
+            self._releaseWriteAccess()
         
     def __get_path(self, path = None):
         if path == None:
@@ -161,58 +165,74 @@ class JobTree(GangaObject):
         """Adds job to the job tree into the current folder.
         If path to a folder is provided as a parameter than adds job to that folder.
         """
-        if isinstance(job, GPIProxyObject):
-            job = job._impl
-        if isinstance(job, JobRegistrySliceProxy):
-            job = job._impl
+        self._getWriteAccess()
+        try:
+            if isinstance(job, GPIProxyObject):
+                job = job._impl
+            if isinstance(job, JobRegistrySliceProxy):
+                job = job._impl
 
-        if isinstance(job, Job):
-            self.__select_dir(path)[job.getFQID('.')] = job.getFQID('.') #job.id
-            self._setDirty()
-        elif isinstance(job, JobRegistrySlice):
-            for sliceKey in job.objects.iterkeys():
-               self.__select_dir(path)[sliceKey] = sliceKey
-               self._setDirty()
-        elif isinstance(job, list):
-            for element in job:
-               self.__select_dir(path)[element.id] = element.id
-               self._setDirty()
-        else:
-            raise TreeError(4, "Not a job/slice/list object")
+            if isinstance(job, Job):
+                self.__select_dir(path)[job.getFQID('.')] = job.getFQID('.') #job.id
+                self._setDirty()
+            elif isinstance(job, JobRegistrySlice):
+                for sliceKey in job.objects.iterkeys():
+                   self.__select_dir(path)[sliceKey] = sliceKey
+                   self._setDirty()
+            elif isinstance(job, list):
+                for element in job:
+                   self.__select_dir(path)[element.id] = element.id
+                   self._setDirty()
+            else:
+                raise TreeError(4, "Not a job/slice/list object")
+        finally:
+            self._releaseWriteAccess()
         
     def rm(self, path):
         """Removes folder or job in the path.
         To clean all use /* as a path.
         """
-        path = str(path)
-        pp = self.__get_path(path)
-        if len(pp) > 1:
-            dpath = os.path.join(*pp[:-1])
-            f = self.__select_dir(dpath)
-            if pp[-1] != '*':
-                try:
-                    del f[pp[-1]]
-                except KeyError:
-                    raise TreeError(1, "%s does not exist" % str(pp[-1]))
+        self._getWriteAccess()
+        try:
+            path = str(path)
+            pp = self.__get_path(path)
+            if len(pp) > 1:
+                dpath = os.path.join(*pp[:-1])
+                f = self.__select_dir(dpath)
+                if pp[-1] != '*':
+                    try:
+                        del f[pp[-1]]
+                    except KeyError:
+                        raise TreeError(1, "%s does not exist" % str(pp[-1]))
+                else:
+                    for k in f.keys():
+                        del f[k]
             else:
-                for k in f.keys():
-                    del f[k]
-        else:
-            raise TreeError(3, "Can not delete the root directory")
-        self._setDirty()
+                raise TreeError(3, "Can not delete the root directory")
+            self._setDirty()
+        finally:
+            self._releaseWriteAccess()
             
     def mkdir(self, path):
         """Makes a folder. If any folders in the path are missing they will be created as well.
         """
-        self.__make_dir(path)
-        self._setDirty()
+        self._getWriteAccess()
+        try:
+            self.__make_dir(path)
+            self._setDirty()
+        finally:
+            self._releaseWriteAccess()
 
     def cd(self, path = os.sep):
         """Changes current directory.
         If path is not provided, than switches to the root folder.
         """
-        self.__select_dir(path)
-        self.cwd = self.__get_path(path)
+        self._getWriteAccess()
+        try:
+            self.__select_dir(path)
+            self.cwd = self.__get_path(path)
+        finally:
+            self._releaseWriteAccess()
     
     def ls(self, path = None):
         """Lists content of current folder or folder in the path if the latter is provided.
@@ -293,19 +313,23 @@ class JobTree(GangaObject):
         Normally you don't need to call this method since it is called automatically whenever
         job is deleted from the registry.
         """
-        registry = self._getRegistry()
-        if registry is not None:
-            registry = registry._parent
-            f = self.__select_dir(path)
-            fc = f.copy()
-            for i in fc:
-                if type(fc[i]) == types.DictionaryType:
-                    self.cleanlinks(os.path.join(path,i))
-                else:
-                    try:
-                        j = registry[int(fc[i])]
-                    except RegistryKeyError:
-                        del f[i]
+        self._getWriteAccess()
+        try:
+            registry = self._getRegistry()
+            if registry is not None:
+                registry = registry._parent
+                f = self.__select_dir(path)
+                fc = f.copy()
+                for i in fc:
+                    if type(fc[i]) == types.DictionaryType:
+                        self.cleanlinks(os.path.join(path,i))
+                    else:
+                        try:
+                            j = registry[int(fc[i])]
+                        except RegistryKeyError:
+                            del f[i]
+        finally:
+            self._releaseWriteAccess()
 
     def printtree(self, path = None):
         """Prints content of the job tree in a well formatted way.

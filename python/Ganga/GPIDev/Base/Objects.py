@@ -445,6 +445,15 @@ class GangaObject(Node):
         if reg is not None:
             reg._write_access(root)
 
+    def _releaseWriteAccess(self):
+        """ releases write access to the object.
+        Raise LockingError (or so) on fail
+        Please use only if the object is expected to be used by other sessions"""
+        root = self._getRoot()
+        reg = root._getRegistry()
+        if reg is not None:
+            reg._release_lock(root)
+
     def _getReadAccess(self):
         """ makes sure the objects _data is there and the object itself has a recent state.
         Raise RepositoryError"""
