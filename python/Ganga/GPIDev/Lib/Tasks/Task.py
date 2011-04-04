@@ -197,11 +197,6 @@ class Task(GangaObject):
         return JobRegistrySliceProxy(jobslice)
 
 ## Internal methods
-    def finaliseTransforms(self):
-        """Check for any things needing doing after a transform has completed"""
-        for t in self.transforms:
-            t.finalise()
-        
     def updateStatus(self):
         """Updates status based on transform status.
            Called from check() or if status of a transform changes"""

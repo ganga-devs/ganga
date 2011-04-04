@@ -40,6 +40,8 @@ class LHCbDataset(Dataset):
     schema['depth'] = SimpleItem(defvalue=0 ,doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'
     schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
+    docstr = 'Metadata container e.g. from Bookkeeping'
+    schema['metadata'] = SimpleItem(defvalue={},hidden=1,doc=docstr)
 
     _schema = Schema(Version(3,0), schema)
     _category = 'datasets'
@@ -133,6 +135,12 @@ class LHCbDataset(Dataset):
         already in the dataset.'''
         if not hasattr(files,"__getitem__"):
             raise GangaException('Argument "files" must be a iterable.')
+        
+        #note that if the dataset was created from a BK query the metadata
+        #comes for free, after extending this is reset to null
+        if self.metadata:
+          self.metadata={}
+          
         names = self.getFileNames()
         files = [f for f in files] # just in case they extend w/ self
         for f in files:
@@ -146,6 +154,12 @@ class LHCbDataset(Dataset):
             self.files.remove(file)
         except:
             raise GangaException('Dataset has no file named %s' % file.name)
+        
+        #note that if the dataset was created from a BK query the metadata
+        #comes for free, after removing a file this is reset to null
+        if self.metadata:
+          self.metadata={}
+          
 
     def getLFNs(self):
         'Returns a list of all LFNs (by name) stored in the dataset.'
@@ -273,7 +287,10 @@ class LHCbDataset(Dataset):
         return GPIProxyObjectFactory(data)
 
     def bkMetadata(self):
-        'Returns the bookkeeping metadata for all LFNs. '
+        'Returns the bookkeeping metadata for all LFNs. '        
+        if self.metadata:
+          return self.metadata  
+        
         cmd = 'result = DiracCommands.bkMetaData(%s)' % self.getLFNs()
         return get_result(cmd,'Error removing replica','Replica rm error.')
 

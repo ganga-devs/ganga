@@ -112,11 +112,6 @@ class TaskRegistry(Registry):
                         numjobs = p.submitJobs()
                         if numjobs > 0:
                             self._flush([p])
-
-                        # finalise any required transforms
-                        p.finaliseTransforms()
-                        p.updateStatus()
-                        
                     except Exception, x:
                         logger.error("Exception occurred in task monitoring loop: %s %s\nThe offending task was paused." % (x.__class__,x))
                         p.pause()
@@ -131,45 +126,6 @@ class TaskRegistry(Registry):
     def startup(self):
         """ Start a background thread that periodically run()s"""
         super(TaskRegistry,self).startup()
-
-
-        # Import possibly existing old Tasks...
-        from Ganga.Utility.Config import getConfig
-        import os
-        configuration = getConfig('Configuration')
-        try:
-            fn = os.path.join(configuration["gangadir"],"tasks.xml")
-            if os.path.exists(fn) and not os.path.exists(fn + ".converted.to.XML.6.0"):
-                from GangaAtlas.Lib.Tasks.TaskList import TaskList
-                from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-                from Ganga.Core.GangaRepository.VStreamer import from_file
-                import os
-                try:
-                    f = file(fn, "r")
-                    plists = from_file(f)
-                    if len(plists) > 0:
-                        tl = plists[0]
-                        if len(tl.tasks) > 0:
-                            logger.warning("Converted %i tasks from old tasks repository" % len(tl.tasks))
-                        for t in tl.tasks:
-                            t._setParent(None)
-                            for tf in t.transforms:
-                                tf._setParent(t)
-                            t._index_cache = None
-                            if not t.id in self:
-                                self._add(t, force_index = t.id)
-                            else:
-                                logger.warning("Tasks: Import Collision at id %i, appending job to the end...", t.id)
-                                self._add(t)
-
-                except OSError, e:
-                    logger.info("No old tasks found...")
-                file(fn+".converted.to.XML.6.0","w").close()
-        except Exception,x:
-            logger.error("Could not load old Tasks repository: %s" % x)
-
-
-
         from Ganga.Core.GangaThread import GangaThread
         self._main_thread = GangaThread(name="GangaTasks", target=self._thread_main)
         self._main_thread.start()
@@ -383,8 +339,8 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         print " Limit on how often jobs are resubmitted : "+c("tf.run_limit = 4")
         print " Manually change the status of partitions: "+c("tf.setPartitionStatus(partition, 'status')")
         print 
-        print " For a Monte Carlo Production Example and specific help type: "+c("MCTask?")
-        print " For an Analysis Example and help type: "+c("AnaTask?")
+        print " For an ATLAS Monte Carlo Production Example and specific help type: "+c("MCTask?")
+        print " For an ATLAS Analysis Example and help type: "+c("AnaTask?")
         print 
 
         if not True:
