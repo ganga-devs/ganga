@@ -423,19 +423,6 @@ class Panda(IBackend):
                 if job.backend.requirements.configJEM != '':
                     js.jobParameters += " --jem-config %s" % job.backend.requirements.configJEM
 
-        # Merging jobs
-        if job.backend.requirements.enableMerge:
-            logger.info("Enabling output merging for this job")
-            for js in subjobspecs:
-                js.jobParameters += ' --mergeOutput'
-
-                ## set merging type if the configuration is given
-#                try:
-#                    js.jobParameters += ' --mergeType "%s"' % job.backend.requirements.configMerge['type']
-#                    logger.debug("user specified merging type: %s" % job.backend.requirements.configMerge['type'])
-#                except KeyError:
-#                    pass
-
         jobspecs = []
         if buildjobspec:
             if type(buildjobspec)==type([]):
