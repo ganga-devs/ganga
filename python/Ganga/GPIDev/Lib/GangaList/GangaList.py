@@ -400,6 +400,9 @@ class GangaList(GangaObject):
             if (maxLen != -1) and (self_len > maxLen):
                 print >>out, decorateListEntries(self_len, type(self[0]).__name__),
                 return
+            else:
+                full_print(self,out)
+                return
 
         print >>out, str(self._list),
         return
