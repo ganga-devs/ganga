@@ -971,6 +971,7 @@ class Panda(IBackend):
             'pandatime2':"int(self.jobSpec['pilotTiming'].split('|')[1])",
             'pandatime3':"int(self.jobSpec['pilotTiming'].split('|')[2])",
             'pandatime4':"int(self.jobSpec['pilotTiming'].split('|')[3])",
+            'pandatime5':"int(self.jobSpec['pilotTiming'].split('|')[4])",
             'NET_ETH_RX_PREATHENA':'""',
             'NET_ETH_RX_AFTERATHENA':'""'
             }
