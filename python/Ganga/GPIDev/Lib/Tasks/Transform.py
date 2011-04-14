@@ -124,7 +124,8 @@ class Transform(GangaObject):
       if self.status == "new" and check:
          self.check()
       if self.status != "completed":
-         self.status = "running"
+         self.updateStatus("running")
+         #self.status = "running"
          # Check if this transform has completed in the meantime
          is_complete = True
          for s in self._partition_status.values():
@@ -132,7 +133,8 @@ class Transform(GangaObject):
                is_complete = False
                break
          if is_complete:
-            self.status = "completed"
+            self.updateStatus("completed")
+            #self.status = "completed"
          task = self._getParent()
          if task:
             task.updateStatus()
@@ -142,7 +144,8 @@ class Transform(GangaObject):
    def pause(self):
       """Pause the task - the background thread will not submit new jobs from this task"""
       if self.status != "completed":
-         self.status = "pause"
+         self.updateStatus("pause")
+         #self.status = "pause"
          task = self._getParent()
          if task:
             task.updateStatus()
@@ -218,6 +221,10 @@ class Transform(GangaObject):
          self.updatePartitionStatus(c)
 
 ## Internal methods
+   def finalise(self):
+      """Finalise the transform - no-op by default"""
+      return
+      
    def submitJobs(self, n):
       """Create Ganga Jobs for the next N partitions that are ready and submit them."""
       next = self.getNextPartitions(n)
@@ -319,13 +326,15 @@ class Transform(GangaObject):
          for s in self._partition_status.values():
             if s != "completed" and s != "bad":
                return
-         self.status = "completed"
+         #self.status = "completed"
+         self.updateStatus("completed")
          if task:
             task.updateStatus()
       elif self.status == "completed":
          for s in self._partition_status.values():
             if s != "completed" and s != "bad":
-               self.status = "running"
+               self.updateStatus("running")
+               #self.status = "running"
                if task:
                   task.updateStatus()
                return
@@ -453,3 +462,7 @@ class Transform(GangaObject):
    def getPartitionFailures(self, partition):
       """Return the number of failures for this partition"""
       return len([1 for app in self.getPartitionApps()[partition] if app in self._app_status and self._app_status[app] in ["new","failed"]])
+
+   def updateStatus(self, status):
+      """Update the transform status"""
+      self.status = status
