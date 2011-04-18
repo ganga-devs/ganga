@@ -25,6 +25,7 @@ class EventPicking(DQ2Dataset):
     _schema.datadict['pick_stream_name'] = SimpleItem(defvalue = '', doc = 'Stream name for event picking, e.g. physics_L1Calo')
     _schema.datadict['pick_dataset_pattern'] = SimpleItem(defvalue = '', doc="Dataset pattern which matches the selection " )
     _schema.datadict['pick_event_list'] = FileItem(doc = 'A filename which contains list of runs/events for event picking.')
+    _schema.datadict['event_pick_amitag'] = SimpleItem(defvalue = '', doc = 'AMI tag used to match TAG collections names. This option is required when you are interested in older data than the latest one. Either \ or "" is required when a wild-card is used. e.g., f2\*.')
     _schema.datadict['pick_filter_policy'] = SimpleItem(defvalue = 'accept', doc = 'accept/reject the pick event.')
 
     _exportmethods = ['get_pick_dataset']
@@ -97,9 +98,9 @@ class EventPicking(DQ2Dataset):
             logger.info('.')
             # check with ELSSI
             if self.pick_stream_name == '':
-                guidListELSSI = elssiIF.doLookup(tmpRunEvtList,tokens=streamRef,extract=True)
+                guidListELSSI = elssiIF.doLookup(tmpRunEvtList,tokens=streamRef,amitag=self.event_pick_amitag,extract=True)
             else:
-                guidListELSSI = elssiIF.doLookup(tmpRunEvtList,stream=self.pick_stream_name,tokens=streamRef,extract=True)
+                guidListELSSI = elssiIF.doLookup(tmpRunEvtList,stream=self.pick_stream_name,tokens=streamRef,amitag=self.event_pick_amitag,extract=True)
 
             if len(guidListELSSI) == 0 or guidListELSSI == None:
                 errStr = ''
@@ -180,7 +181,7 @@ class EventPicking(DQ2Dataset):
                 # duplicated    
                 if len(tmpLFNs) != 1:
                     paramStr = 'Run:%s Evt:%s Stream:%s' % (runNr,evtNr,self.pick_stream_name)            
-                    errStr = "Multiple LFNs %s were found in ELSSI for %s. Please set pick_dataset_pattern and/or pick_stream_name correctly" %(str(tmpLFNs),paramStr)
+                    errStr = "Multiple LFNs %s were found in ELSSI for %s. Please set pick_dataset_pattern and/or pick_stream_name and or event_pick_amitag correctly." %(str(tmpLFNs),paramStr)
                     raise ApplicationConfigurationError(None,errStr)
 
         
