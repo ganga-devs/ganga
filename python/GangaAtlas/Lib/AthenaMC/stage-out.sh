@@ -234,6 +234,9 @@ for path in $OUTPUTFILES; do
 	'batch')
 	    stageOutLocal $path;
 	    ;;
+	'Local')
+	    stageOutLocal $path;
+	    ;;
 	'castor')
 	    stageOutCastor $path;
 	    ;;

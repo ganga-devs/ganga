@@ -121,16 +121,18 @@ class AthenaMCLocalRTHandler(IRuntimeHandler):
 
         # select sites which are matching user's wishes, if any.
         selectedSites=app.sites
-        if len(selectedSites)>0:
-            [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(selectedSites[0])
-        if len(selectedSites)>1:
-            [outlfc2,backup,backuplocation]=job.outputdata.getDQ2Locations(selectedSites[1])
+        print app.sites
+        if job.backend._name!="Local":
+            if len(selectedSites)>0:
+                [outlfc,outsite,outputlocation]=job.outputdata.getDQ2Locations(selectedSites[0])
+            if len(selectedSites)>1:
+                [outlfc2,backup,backuplocation]=job.outputdata.getDQ2Locations(selectedSites[1])
 
         # app.se_name set: users wishes to get the output data written to another site than the one hosting the input.
         # One needs to ensure that this location is at least in the same cloud as the targetted processing site. This is done by insuring that the lfcs are the same.
         userSEs=[]
         outse=""
-        if job.application.se_name and job.application.se_name != "none":
+        if job.application.se_name and job.application.se_name != "none" and job.backend._name!="Local":
             userSEs=job.application.se_name.split(" ")
             # loop through userSEs until up to 2 valid sites are found...
             outse=""
@@ -175,8 +177,8 @@ class AthenaMCLocalRTHandler(IRuntimeHandler):
         environment["OUTLFC"]=outlfc
         environment["OUTSITE"]=outsite
         if outse:
-           environment["OUTSITE"]=outse # user's choice for output storage location overriding AthenaMC's.
-           
+            environment["OUTSITE"]=outse # user's choice for output storage location overriding AthenaMC's.
+            
         environment["OUTPUT_LOCATION"]=outputlocation
         if spacetoken:
             environment["SPACETOKEN"]=spacetoken
@@ -189,17 +191,18 @@ class AthenaMCLocalRTHandler(IRuntimeHandler):
 
         # setting environment["BACKEND"]
         # Local, Condor become "batch". LSF becomes "batch" unless the inputdata is on castor (in this case, it becomes "castor")
-##        environment["BACKEND"]=job.backend._name
-##        if job.backend._name=="LSF" and len(app.turls.values())>0:
-##            turl=app.turls.values()[0]
-####            if string.find(turl,"castor")>-1:
-####                environment["BACKEND"]="castor"
-####            else:
-####                environment["BACKEND"]="batch"
-##        if job.backend._name in ["Local","Condor","PBS"]:
-##            #environment["BACKEND"]="batch"
-        environment["SITEROOT"]=os.environ["SITEROOT"]
-        environment["CMTSITE"]=os.environ["CMTSITE"]
+        environment["BACKEND"]=job.backend._name
+        if job.backend._name=="LSF" and len(app.turls.values())>0:
+            turl=app.turls.values()[0]
+##            if string.find(turl,"castor")>-1:
+##                environment["BACKEND"]="castor"
+##            else:
+##                environment["BACKEND"]="batch"
+        if job.backend._name in ["Local","Condor","PBS"]:
+            environment["SITEROOT"]=os.environ["SITEROOT"]
+            environment["CMTSITE"]=os.environ["CMTSITE"]
+            if job.backend._name in ["Condor","PBS"]:
+                environment["BACKEND"]="batch"
 
 #       finalise environment
 
@@ -310,12 +313,16 @@ class AthenaMCLocalRTHandler(IRuntimeHandler):
 # now doing output files....
 
         outfilelist=""
+        subjob_outbox=[]
         for type in app.outputpaths.keys():
             outfilelist+=app.outputpaths[type]+app.subjobsOutfiles[job.id][type]+" "
-
+            if job.application.se_name=="ganga":
+                outfile1=app.subjobsOutfiles[job.id][type]
+                subjob_outbox.append(outfile1)
         environment["OUTPUTFILES"]=outfilelist
         # Work around for glite WMS spaced environement variable problem
         inputbox += [ FileBuffer('outputfiles.conf',environment['OUTPUTFILES']+'\n') ]        
+
 
  # setting up job wrapper arguments.       
         args=app.args
@@ -337,7 +344,7 @@ class AthenaMCLocalRTHandler(IRuntimeHandler):
 
 #       output sandbox
         outputbox =jobmasterconfig.outputbox
-
+        outputbox.extend(subjob_outbox)
 
         return StandardJobConfig(File(exe),inputbox,args,outputbox,environment) 
 

@@ -163,7 +163,7 @@ eval $INPUTSITES
 echo ${lfn[@]}
 
 ##
-if [ -z "$DQ2_HOME" -o -z "$DQ2_LOCAL_SITE_ID" ]; then
+if [ [ -z "$DQ2_HOME" -o -z "$DQ2_LOCAL_SITE_ID" ] -a "$BACKEND" != 'Local' ]; then
     echo "Setting up DQ2 tools"
     source ${VO_ATLAS_SW_DIR}/ddm/latest/setup.sh
     echo "site's DQ2 ID is $DQ2_LOCAL_SITE_ID"
@@ -226,6 +226,9 @@ for ((i=0;i<${#lfn[@]};i++)); do
     stageInOSG;
     ;;
     'batch')
+    stageInLocal $INPUTFILE `echo $TURL | cut -d ":" -f 2`;
+    ;;
+    'Local')
     stageInLocal $INPUTFILE `echo $TURL | cut -d ":" -f 2`;
     ;;
     'castor')

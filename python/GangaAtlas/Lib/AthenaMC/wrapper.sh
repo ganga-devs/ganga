@@ -105,7 +105,7 @@ if [ -z "$JTARCHIVE" ]; then
 else
     isJT=JTARCHIVE
 fi
-if [ -z "$JTARCHIVE" -a -z "$PROD_RELEASE" ]; then
+if [ -z "$JTARCHIVE" -a -z "$PROD_RELEASE" -a -z "$T_RELEASE" ]; then
     echo "Missing or badly formatted transform archive, exiting"
     exit
 fi
@@ -142,8 +142,10 @@ export PYTHONPATH_SAVE=$PYTHONPATH
 
 
 # set up the release
+if [ "$BACKEND" != "Local" ]; then
 echo "## source $T_HOMEDIR/setup-release.sh"
 source $T_HOMEDIR/setup-release.sh
+fi
 
 export LD_LIBRARY_PATH_SAVE2=$LD_LIBRARY_PATH
 export PATH_SAVE2=$PATH
@@ -224,13 +226,15 @@ echo
 
 if [ -z $isJT ]; then
     echo "LOGFILE is $T_LOGFILE"
-    cat csc_*.log > $T_LOGFILE
+    cat csc_*.log >> $T_LOGFILE
 elif [ -f "log" ]; then
     mv log $T_LOGFILE
 elif [ -f "joblog" ] ; then
     mv joblog $T_LOGFILE
 fi
-
+trflog=`echo $T_TRF | sed -e "s:\_trf\.py:\.log:"`
+echo "adding $trflog to logfile"
+cat $trflog >> $T_LOGFILE
 # athena processing finished, we can restore the original set up (LCG tools) needed by stage-out.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_SAVE
 export PATH=$PATH_SAVE
@@ -245,7 +249,7 @@ echo "==============================="
 echo "           END OF JOB          "
 echo "==============================="
 
-if [ ! -s "output_data" ]; then
+if [ ! -s "output_data" -a "$BACKEND" != "Local" ]; then
     echo "Output data missing, returning non-zero exit code"
     exit 128
 fi

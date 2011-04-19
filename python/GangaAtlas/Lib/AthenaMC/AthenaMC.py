@@ -90,7 +90,7 @@ class AthenaMC(IApplication):
                logger.warning("Job %s returned non-zero transformation code: %s . Please check stdout.gz with job.peek('stdout.gz')" % (job.getFQID('.'),trfretcode))
            else:
                logger.warning("Job %s returned without transformation return code. It either crashed before starting the transform or was a test job. Please check that application.dryrun was not set to True and check  stdout.gz and stderr.gz with job.peek()" % job.getFQID('.'))
-       if job.outputdata:
+       if job.outputdata and job.backend._name != "Local":
            job.outputdata.fill()
               
     def diagnostic(self):
@@ -818,10 +818,6 @@ class AthenaMC(IApplication):
            self.atlas_rel=self.atlas_release[:imax]
        else:
            self.atlas_rel=self.atlas_release
-       try:
-           assert self.prod_release or self.transform_archive
-       except:
-           raise ApplicationConfigurationError(None,"A reference to the Production archive to be used must be set, either through the declaration of the archive itself in application.transform_archive or by putting the 4-digit production cache release number in application.atlas_release. Neither are set. Aborting.")
        
        if job.splitter:
            try:
@@ -890,6 +886,10 @@ class AthenaMC(IApplication):
            raise
        # doing output data now
        self.fileprefixes,self.outputpaths=job.outputdata.prep_data(self)
+       if job.outputdata.outdirectory and job.backend._name=="Local":
+           for type in self.outputpaths.keys():
+               self.outputpaths[type]=job.outputdata.outdirectory
+               
        expected_datasets=""
        for filetype in self.outputpaths.keys():
            dataset=string.replace(self.outputpaths[filetype],"/",".")
