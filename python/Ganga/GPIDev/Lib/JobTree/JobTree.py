@@ -313,23 +313,23 @@ class JobTree(GangaObject):
         Normally you don't need to call this method since it is called automatically whenever
         job is deleted from the registry.
         """
-        self._getWriteAccess()
-        try:
-            registry = self._getRegistry()
-            if registry is not None:
-                registry = registry._parent
-                f = self.__select_dir(path)
-                fc = f.copy()
-                for i in fc:
-                    if type(fc[i]) == types.DictionaryType:
-                        self.cleanlinks(os.path.join(path,i))
-                    else:
+        registry = self._getRegistry()
+        if registry is not None:
+            registry = registry._parent
+            f = self.__select_dir(path)
+            fc = f.copy()
+            for i in fc:
+                if type(fc[i]) == types.DictionaryType:
+                    self.cleanlinks(os.path.join(path,i))
+                else:
+                    try:
+                        j = registry[int(fc[i])]
+                    except RegistryKeyError:
+                        self._getWriteAccess()
                         try:
-                            j = registry[int(fc[i])]
-                        except RegistryKeyError:
                             del f[i]
-        finally:
-            self._releaseWriteAccess()
+                        finally:
+                            self._releaseWriteAccess()
 
     def printtree(self, path = None):
         """Prints content of the job tree in a well formatted way.

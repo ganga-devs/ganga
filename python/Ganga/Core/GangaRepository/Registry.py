@@ -309,7 +309,7 @@ class Registry(object):
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError"""
-        logger.debug("_flush(%s)" % objs)
+        #logger.debug("_flush(%s)" % objs)
         if not self._started:
             raise RegistryAccessError("Cannot flush to a disconnected repository!")
         for obj in objs:
@@ -365,7 +365,7 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryLockError
         Raise ObjectNotInRegistryError"""
-        logger.debug("_write_access(%s)" % obj)
+        #logger.debug("_write_access(%s)" % obj)
         if not self._started:
             raise RegistryAccessError("Cannot get write access to a disconnected repository!")
         if not obj._registry_locked:
@@ -403,16 +403,16 @@ class Registry(object):
         Raise ObjectNotInRegistryError"""
         if not self._started:
             raise RegistryAccessError("Cannot manipulate locks of a disconnected repository!")
-        logger.debug("_release_lock(%s)" % obj)
+        logger.debug("_release_lock(%s)" % id(obj))
         self._lock.acquire()
         try:
             if obj._registry_locked:
-                id = self.find(obj)
+                oid = self.find(obj)
                 if obj in self.dirty_objs:
-                    self.repository.flush([id])
+                    self.repository.flush([oid])
                     self.dirty_objs.remove(obj)
                 obj._registry_locked = False
-                self.repository.unlock([id])
+                self.repository.unlock([oid])
         finally:
             self._lock.release()
 
