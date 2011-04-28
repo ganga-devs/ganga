@@ -394,7 +394,7 @@ class ReleaseCommand:
 	    <:GANGA_DATE:>    : the release date of the latest vrsion
 	    <:GANGA_ALL_VERSIONS:>: comma separated list of all existing versions of Ganga in release area
         """
-
+	import urllib
 	#we do not expose development releases to public
 	if re.compile('(beta|alpha|pre)').search(CONFIG['version']):
 	    print 'DEVELOPMENT release detected. The web pages/NEWS are not generated!'
@@ -418,7 +418,9 @@ class ReleaseCommand:
 	#replacements dictionary : KEYWORD -> (REPLACEMENT, append?)
 	# append : False - replace the KEYWORD in the destination file
 	#        : True  - replace the KEYWORD in the template file and add a new KEYWORD before the replacement and then copy the template to destination file
-	CONFIG['release_date'] = time.strftime('%d %B %Y',time.gmtime())
+	#CONFIG['release_date'] = time.strftime('%d %B %Y',time.gmtime())
+	CONFIG['release_date'] = time.strftime('%a, %d %b %Y %H:%M:%S +0000', time.gmtime())
+	cleanGuid = urllib.quote('release-' + str(CONFIG['version']) + '-' + time.strftime('%s', time.gmtime()))
         replacements = {'<!--GANGA_VERSION-->'     : (CONFIG['version'], False),
                         '<!--GANGA_DATE-->'        : (CONFIG['release_date'], False),
 			'<!--GANGA_PUB_VERSIONS-->': (publicVersStr, False),
@@ -428,8 +430,8 @@ class ReleaseCommand:
 						     "<description>%(release_date)s: public release %(version)s is available ! Check the release page for further information.</description>"\
 						     "<link>http://ganga.web.cern.ch/ganga/release/%(version)s/reports/html/Release.html</link>"\
 						     "<pubDate>%(release_date)s</pubDate>"\
-						     "<guid>release-%(version)s-%(release_date)s</guid>"\
-						     "<author>Adrian.Muraru@cern.ch</author>"
+						     "<guid isPermaLink='false'>" + cleanGuid + "</guid>"\
+						     "<author>project-ganga@cern.ch (Ganga Mailing List)</author>"
 					    	     "</item>" % CONFIG, True)
                        }
 	

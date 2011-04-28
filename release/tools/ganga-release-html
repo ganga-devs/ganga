@@ -132,7 +132,7 @@ class ReleaseHTML:
 	print 'INFO:  Generating LHCb & ATLAS manuals ... please wait... '
 	os.system('mkdir %s/Manuals'  % self.htmldir)
 	os.system('%s/bin/ganga  --config= -o[Configuration]RUNTIME_PATH=GangaLHCb manual -o %s/Manuals/GangaLHCbManual.html' % (self.gangadir,self.htmldir))
-	os.system('%s/bin/ganga  --config= -o[Configuration]RUNTIME_PATH=GangaAtlas:GangaNG:GangaPanda:GangaCronus manual -o %s/Manuals/GangaATLASManual.html' % (self.gangadir,self.htmldir))
+	os.system('%s/bin/ganga  --config= -o[Configuration]RUNTIME_PATH=GangaAtlas:GangaNG:GangaPanda manual -o %s/Manuals/GangaATLASManual.html' % (self.gangadir,self.htmldir))
 
         self.str += '\n <h2> Documentation </h2> \n'
 	#self.str += ' <a  href= "empty.html"> Manuals </a> <br>'
