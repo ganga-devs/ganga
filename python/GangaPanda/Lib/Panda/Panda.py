@@ -357,6 +357,20 @@ class PandaBuildJob(GangaObject):
     def __init__(self):
         super(PandaBuildJob,self).__init__()
 
+class PandaMergeJob(GangaObject):
+    _schema = Schema(Version(2,1), {
+        'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=0,copyable=0,doc='Panda Job id'),
+        'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=0,doc='Panda Job status'),
+        'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
+        'url'           : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Web URL for monitoring the job.')
+    })
+
+    _category = 'PandaMergeJob'
+    _name = 'PandaMergeJob'
+
+    def __init__(self):
+        super(PandaMergeJob,self).__init__()
+
 class Panda(IBackend):
     '''Panda backend: submission to the PanDA workload management system
     '''
@@ -372,6 +386,7 @@ class Panda(IBackend):
         'libds'         : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=1,doc='Existing Library dataset to use (disables buildjob)'),
         'buildjob'      : ComponentItem('PandaBuildJob',load_default=0,optional=1,protected=1,copyable=0,doc='Panda Build Job'),
         'buildjobs'     : ComponentItem('PandaBuildJob',sequence=1,defvalue=[],optional=1,protected=1,copyable=0,doc='Panda Build Job'),
+        'mergejobs'     : ComponentItem('PandaMergeJob',sequence=1,defvalue=[],optional=1,protected=1,copyable=0,doc='Panda Output Merging Jobs'),
         'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
         'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code (transExitCode)'),
         'piloterrorcode': SimpleItem(defvalue='',protected=1,copyable=0,doc='Pilot Error Code'),
