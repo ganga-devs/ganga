@@ -214,7 +214,14 @@ dq2client_setup () {
 get_remote_proxy () {
     export X509_CERT_DIR=$X509CERTDIR
     if [ ! -z $REMOTE_PROXY ]; then
-        scp -o StrictHostKeyChecking=no $REMOTE_PROXY $PWD/.proxy
+	REMOTE_PROXY_PATH=`echo $REMOTE_PROXY | awk -F ':' '{print $2}'`
+	if [ -f $REMOTE_PROXY_PATH ]; then
+	    echo cp $REMOTE_PROXY_PATH $PWD/.proxy
+	    cp $REMOTE_PROXY_PATH $PWD/.proxy
+	else
+	    echo scp -o StrictHostKeyChecking=no $REMOTE_PROXY $PWD/.proxy 
+	    scp -o StrictHostKeyChecking=no $REMOTE_PROXY $PWD/.proxy
+	fi
 	if [ -e $PWD/.proxy ]; then 
 	    export X509_USER_PROXY=$PWD/.proxy
         fi
