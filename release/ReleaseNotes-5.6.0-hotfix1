@@ -8,5 +8,6 @@ ganga/python/GangaAtlas
 GangaAtlas:
 -----------
 * Remove prepending 'gfal:' in case 'gsidcap:' is used
+* Use local copy instead of remote copy for local proxy
 
 **************************************************************************************************************
