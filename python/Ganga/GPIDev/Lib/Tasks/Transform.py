@@ -76,7 +76,7 @@ class Transform(GangaObject):
                       app = j.application._impl
                       app.getTransform()._impl.setAppStatus(app,app._getParent().status)
                 except AttributeError, e:
-                   logger.error("%s",e)
+                   logger.debug("%s",e)
       pass
 
    def getPartitionApps(self):
