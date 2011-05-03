@@ -557,7 +557,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                         pfn = re.sub('root://castoratlas.cern.ch/castor','root://castoratlas//castor',pfn)
 
                 elif usedProtocol == "gsidcap" and stUrlMap.has_key(sURLHost):
-                    pfn = re.sub('srm://','gfal:gsidcap://',pfn)
+                    #pfn = re.sub('srm://','gfal:gsidcap://',pfn)
                     pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
                     pfn = re.sub('gfal:gfal:','gfal:',pfn)
 
