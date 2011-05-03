@@ -558,6 +558,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
 
                 elif usedProtocol == "gsidcap" and stUrlMap.has_key(sURLHost):
                     #pfn = re.sub('srm://','gfal:gsidcap://',pfn)
+                    pfn = re.sub('srm://','gsidcap://',pfn)
                     pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
                     pfn = re.sub('gfal:gfal:','gfal:',pfn)
 
