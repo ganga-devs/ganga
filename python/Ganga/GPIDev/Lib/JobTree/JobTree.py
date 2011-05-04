@@ -42,7 +42,7 @@ class JobTree(GangaObject):
     """
     _schema = Schema(Version(1,2),{ 'name':SimpleItem(''),
                                     'folders':SimpleItem({os.sep:{}}, protected = 1, copyable = 1, hidden = 1),
-                                    })
+                                    'cwd':SimpleItem([os.sep], protected = 1, hidden = 1, transient = 1)})
 
     _category = 'jobtrees'
     _name = 'JobTree'
@@ -51,19 +51,10 @@ class JobTree(GangaObject):
                       'getjobs', 'find', 'cleanlinks', 'printtree']
 
     default_registry = 'jobs'
-    _cwd = {}
-   
+
     def __init__(self):
         super(JobTree, self).__init__()
         self._setRegistry(None)
-        self.cwd([os.sep])
-
-    def cwd(self, val=None):
-        """This workaround is necessary to prevent overwriting 
-        the current directory every time another session changes something"""
-        if val is None:
-            return JobTree._cwd.get(id(self), [os.sep])
-        JobTree._cwd[id(self)] = val
 
     def __getstate__(self):
         dict = super(JobTree, self).__getstate__()
@@ -76,17 +67,16 @@ class JobTree(GangaObject):
         try:
             super(JobTree, self).__setstate__(dict)
             self._setRegistry(None)
-            self._setDirty()
         finally:
             self._releaseWriteAccess()
         
     def __get_path(self, path = None):
         if path == None:
-            return self.cwd()[:]
+            return self.cwd[:]
         else:
             pp = []
             if not os.path.isabs(path):
-                d = os.path.join(os.path.join(*self.cwd()), path)
+                d = os.path.join(os.path.join(*self.cwd), path)
             else:
                 d = path
             d = os.path.normpath(d)
@@ -195,7 +185,6 @@ class JobTree(GangaObject):
                    self._setDirty()
             else:
                 raise TreeError(4, "Not a job/slice/list object")
-            self._setDirty()
         finally:
             self._releaseWriteAccess()
         
@@ -241,8 +230,7 @@ class JobTree(GangaObject):
         self._getWriteAccess()
         try:
             self.__select_dir(path)
-            self.cwd(self.__get_path(path))
-            self._setDirty()
+            self.cwd = self.__get_path(path)
         finally:
             self._releaseWriteAccess()
     
@@ -272,7 +260,7 @@ class JobTree(GangaObject):
 
     def pwd(self):
         """Returns current folder"""
-        return os.path.join(*self.cwd())
+        return os.path.join(*self.cwd)
 
     def getjobs(self, path = None):
         """Gives list of all jobs (objects) referenced in current folder
@@ -340,7 +328,6 @@ class JobTree(GangaObject):
                         self._getWriteAccess()
                         try:
                             del f[i]
-                            self._setDirty()
                         finally:
                             self._releaseWriteAccess()
 

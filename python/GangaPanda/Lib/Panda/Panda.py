@@ -12,7 +12,6 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Lib.Job import JobStatusError
 from Ganga.Core import BackendError, Sandbox
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -342,75 +341,7 @@ def getLibFileSpecFromLibDS(libDS):
         fileBO.status = 'ready'
     return fileBO
 
-def retrieveMergeJobs(job, pandaJobDefId):
-    '''
-    methods for retrieving panda job ids of merging jobs given a jobDefId
-    '''
-    from pandatools import Client
 
-    ick       = False
-    status    = ''
-    num_mjobs = 0
-
-    (ec, info) = Client.checkMergeGenerationStatus(pandaJobDefId)
-
-    if ec == 0:
-
-        try:
-            status         = info['status']
-            mergeJobDefIds = info['mergeIDs']
-
-            if status == 'NA':
-                logger.warning('No merging jobs expected')
-                job.backend.mergejobs = []
-
-            elif status == 'generating':
-                logger.debug('merging jobs are generating')
-                job.backend.mergejobs = []
-
-            elif status == 'standby':
-                logger.debug('merging jobs to be created')
-                job.backend.mergejobs = []
-
-            elif status == 'generated':
-                logger.debug('merging jobs are generated')
-
-                for id in mergeJobDefIds:
-                    logger.debug("merging jobDefId: %d" % id)
-
-                    ## retrieve merging job id,status given the jobDefId
-                    (ec2, mjs) = Client.getPandIDsWithJobID(id)
-
-                    if ec2 == 0:
-
-                        for jid,jinfo in mjs.items():
-                            mjobj = PandaMergeJob()
-                            mjobj.id     = jid
-                            #mjobj.status = jinfo[0]
-                            mjobj.url    = 'http://panda.cern.ch/?job=%d' % jid
-
-                            if mjobj not in job.backend.mergejobs:
-                                job.backend.mergejobs.append(mjobj)
-                            else:
-                                logger.debug("merging job %s already exists locally" % mjobj.id)
-
-                            num_mjobs += 1
-                    else:
-                        logger.warning("getPandIDsWithJobID returns non-zero exit code: %d" % ec2)
-
-            ick = True
-
-        except KeyError:
-            logger.error('unexpected job information: %s' % repr(info))
-
-        except Exception, e:
-            logger.error('general merge job information retrieval error')
-            raise e
-
-    else:
-        logger.error('checkMergeGenerationStatus returns non-zero exit code: %d' % ec)
-
-    return (ick, status, num_mjobs)
 
 class PandaBuildJob(GangaObject):
     _schema = Schema(Version(2,1), {
@@ -425,23 +356,6 @@ class PandaBuildJob(GangaObject):
 
     def __init__(self):
         super(PandaBuildJob,self).__init__()
-
-class PandaMergeJob(GangaObject):
-    _schema = Schema(Version(2,1), {
-        'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=0,copyable=0,doc='Panda Job id'),
-        'status'        : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=0,doc='Panda Job status'),
-        'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
-        'url'           : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=1,copyable=0,doc='Web URL for monitoring the job.')
-    })
-
-    _category = 'PandaMergeJob'
-    _name = 'PandaMergeJob'
-
-    def __init__(self):
-        super(PandaMergeJob,self).__init__()
-
-    def __eq__(self, other):
-        return other.id == self.id
 
 class Panda(IBackend):
     '''Panda backend: submission to the PanDA workload management system
@@ -458,7 +372,6 @@ class Panda(IBackend):
         'libds'         : SimpleItem(defvalue=None,typelist=['type(None)','str'],protected=0,copyable=1,doc='Existing Library dataset to use (disables buildjob)'),
         'buildjob'      : ComponentItem('PandaBuildJob',load_default=0,optional=1,protected=1,copyable=0,doc='Panda Build Job'),
         'buildjobs'     : ComponentItem('PandaBuildJob',sequence=1,defvalue=[],optional=1,protected=1,copyable=0,doc='Panda Build Job'),
-        'mergejobs'     : ComponentItem('PandaMergeJob',sequence=1,defvalue=[],optional=1,protected=1,copyable=0,doc='Panda Output Merging Jobs'),
         'jobSpec'       : SimpleItem(defvalue={},optional=1,protected=1,copyable=0,doc='Panda JobSpec'),
         'exitcode'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code (transExitCode)'),
         'piloterrorcode': SimpleItem(defvalue='',protected=1,copyable=0,doc='Pilot Error Code'),
@@ -810,7 +723,6 @@ class Panda(IBackend):
             return True
         return False
 
-
     def master_updateMonitoringInformation(jobs):
         '''Monitor jobs'''       
         from pandatools import Client
@@ -824,11 +736,6 @@ class Panda(IBackend):
             buildjob = job.backend.buildjob
             if buildjob and buildjob.id and buildjob.status in active_status:
                 jobdict[buildjob.id] = job
-
-            ## adding merging jobs for status checking
-            for mj in job.backend.mergejobs:
-                logger.debug('adding merging job %s for status checking' % mj.id)
-                jobdict[mj.id] = job
 
             for bj in job.backend.buildjobs:
                 if bj.id and bj.status in active_status:
@@ -844,8 +751,6 @@ class Panda(IBackend):
         # split into 2000-job pieces
         allJobIDs = jobdict.keys()
         jIDPieces = [allJobIDs[i:i+2000] for i in range(0,len(allJobIDs),2000)]
-
-        jlist_merge_finished = []
 
         for jIDs in jIDPieces:
             rc, jobsStatus = Client.getFullJobStatus(jIDs,False)
@@ -977,111 +882,12 @@ class Panda(IBackend):
                             #un = job.backend.buildjob.jobSpec['prodUserID'].split('/CN=')[-2]
                             #jdid = job.backend.buildjob.jobSpec['jobDefinitionID']
                             #job.backend.url = 'http://panda.cern.ch/?job=*&jobDefinitionID=%s&user=%s'%(jdid,un)
-                elif job.backend.mergejobs and status.PandaID in [mj.id for mj in job.backend.mergejobs]:
-                    tmp_mj    = PandaMergeJob()
-                    tmp_mj.id = status.PandaID
-
-                    mj = job.backend.mergejobs[ job.backend.mergejobs.index( tmp_mj ) ]
-
-                    if not mj.jobSpec:
-                        mj.jobSpec = dict(zip(status._attributes,status.values()))
-                        for k in mj.jobSpec.keys():
-                            if type(mj.jobSpec[k]) not in [type(''),type(1)]:
-                                mj.jobSpec[k]=str(mj.jobSpec[k])
-
-                    if mj.status != status.jobStatus:
-                        logger.debug('Mergejob %s has changed status from %s to %s',job.getFQID('.'), mj.status, status.jobStatus)
-
-                        mj.status = status.jobStatus
-
-                        # update the status of the master job based on what all merge jobs are doing
-                        mjstats = [mj2.status for mj2 in job.backend.mergejobs]
-
-                        merge_finished = True
-
-                        for s in mjstats:
-                            if s not in ['failed','finished','cancelled']:
-                                merge_finished = False
-
-                        if merge_finished:
-                            ## merge jobs finished, update the master job status respecting the status of subjobs
-                            job.updateMasterJobStatus()
-                            jlist_merge_finished.append(job)
-
-                        elif job.status != 'running':
-                            ## merge jobs are still running, master job status kept running
-                            job.updateStatus('running')
-
                 else:
                     logger.warning('Unexpected Panda ID %s',status.PandaID)
 
-        ## going through all jobs to find those with merging jobs to be retrieved
-        jlist_for_masterjob_update = []
         for job in jobs:
-
-            if job.backend.requirements.enableMerge:
-
-                ## check if there is a necessary to retrieve merging jobs
-                if not job.backend.mergejobs:
-
-                    do_merge_retrieve = True
-
-                    for sj in job.subjobs:
-                        ## skip merging job retrieval if there are still subjobs not in the final state
-                        if sj.backend.status not in ['failed','finished','cancelled']:
-                            do_merge_retrieve = False
-                            break
-
-                    if do_merge_retrieve:
-
-                        tot_num_mjobs = 0
-
-                        jdefids = list( set( [bj.backend.jobSpec['jobDefinitionID'] for bj in job.subjobs] ))
-
-                        do_master_update = False
-                        for jdefid in jdefids:
-                            ick,status,num_mjobs = retrieveMergeJobs(job, jdefid)
-
-                            logger.debug('retrieveMergeJobs returns: %s %s' % (repr(ick),status))
-
-                            if not ick:
-                                logger.warning('merging job retrival failure')
-
-                            if status not in ['standby','generating','generated']:
-                                ## no merging jobs are expected in this case
-                                ## skip merging jobs checking by updating the master job status
-                                do_master_update = True
-
-                            tot_num_mjobs += num_mjobs
-
-                        ## for some reason, one should call job._commit() to store merging jobs into the repository
-                        job._commit()
-                        
-                        logger.info('job %s retrieved %d merging jobs' % (job.getFQID('.'),tot_num_mjobs) )
-                        
-                        if do_master_update:
-                            jlist_for_masterjob_update.append(job)
-
-                    else:
-                        ## need to update the master job status when there are still subjobs not in final state
-                        jlist_for_masterjob_update.append(job)
-            
-            else:
-                jlist_for_masterjob_update.append(job)
-
-        ## doing master job status update only on those without merging jobs
-        for job in jlist_for_masterjob_update:
             if job.subjobs and job.status <> 'failed': job.updateMasterJobStatus()
-
-        ## ensure the master job status to be "running" if merging jobs are running or about to be generated
-        ## (i.e. those jobs not included for master job status update
-        for job in list( set(jobs) - set(jlist_for_masterjob_update) - set(jlist_merge_finished)):
-            if job.status != 'running':
-                job.updateStatus('running')
-#                try:
-#                    job.updateStatus('running')
-#                except JobStatusError:
-#                    pass
+        
 
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 

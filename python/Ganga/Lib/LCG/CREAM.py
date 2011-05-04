@@ -116,7 +116,7 @@ class CREAM(IBackend):
 
         if self.sandboxcache._name == 'LCGSandboxCache':
             if not self.sandboxcache.lfc_host:
-                self.sandboxcache.lfc_host = grids[ self.sandboxcache.middleware ].__get_lfc_host__()
+                self.sandboxcache.lfc_host = grids[self.middleware.upper()].__get_lfc_host__()
 
             if not self.sandboxcache.se:
 
