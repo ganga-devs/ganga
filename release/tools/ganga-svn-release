@@ -420,7 +420,7 @@ class ReleaseCommand:
 	#        : True  - replace the KEYWORD in the template file and add a new KEYWORD before the replacement and then copy the template to destination file
 	#CONFIG['release_date'] = time.strftime('%d %B %Y',time.gmtime())
 	CONFIG['release_date'] = time.strftime('%a, %d %b %Y %H:%M:%S +0000', time.gmtime())
-	cleanGuid = urllib.quote('release-' + str(CONFIG['version']) + '-' + str(time.time()))
+	cleanGuid = urllib.quote('release-' + str(CONFIG['version']) + '-' + time.strftime('%s', time.gmtime()))
         replacements = {'<!--GANGA_VERSION-->'     : (CONFIG['version'], False),
                         '<!--GANGA_DATE-->'        : (CONFIG['release_date'], False),
 			'<!--GANGA_PUB_VERSIONS-->': (publicVersStr, False),
