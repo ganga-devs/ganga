@@ -289,25 +289,40 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                         else:
                             cmd = "lcg-gt -t 60 " + surl + " " + protocols
                         print cmd
-                        try:
-                            signal.signal(signal.SIGALRM, ghandler)
-                            signal.alarm(240)
-                            child = popen2.Popen3(cmd,1)
-                            child.tochild.close()
-                            out=child.fromchild
-                            err=child.childerr
-                            line=out.readline()
-                            if line:
-                                match = re.search('^[^:]+://([^:/]+:*\d*)/', line)
-                                if match:
-                                    turl = line.split()
-                                elif line.startswith('file:'):
-                                    usedProtocol = 'file'
+
+                        count = 0
+                        retry = 5
+                        while count<=retry:
+                            try:
+                                signal.signal(signal.SIGALRM, ghandler)
+                                signal.alarm(240)
+                                child = popen2.Popen3(cmd,1)
+                                child.tochild.close()
+                                out=child.fromchild
+                                err=child.childerr
+                                line=out.readline()
+                                if line:
+                                    match = re.search('^[^:]+://([^:/]+:*\d*)/', line)
+                                    if match:
+                                        turl = line.split()
+                                    elif line.startswith('file:'):
+                                        usedProtocol = 'file'
+                                signal.alarm(0)
+                            except IOError:
+                                print 'lcg-gt time out !'
+                                pass
                             signal.alarm(0)
-                        except IOError:
-                            print 'lcg-gt time out !'
-                            pass
-                        signal.alarm(0)
+                            
+                            if turl:
+                                count = retry
+                                break
+                            else:
+                                if count == retry:
+                                    print '!!! lcg-gt error after %s retries - giving up !!!' %count
+                                else:
+                                    count = count + 1
+                                    print 'lcg-gt error - will start retry no. %s' %count
+                                    time.sleep(120)
 
                         print turl
                         if turl and turl[0]:
