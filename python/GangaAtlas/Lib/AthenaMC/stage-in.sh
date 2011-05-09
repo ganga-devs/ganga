@@ -163,7 +163,7 @@ eval $INPUTSITES
 echo ${lfn[@]}
 
 ##
-if [ [ -z "$DQ2_HOME" -o -z "$DQ2_LOCAL_SITE_ID" ] -a "$BACKEND" != 'Local' ]; then
+if [ [ -z "$DQ2_HOME" -o -z "$DQ2_LOCAL_SITE_ID" ] -a [ "$BACKEND" != 'Local' ] ]; then
     echo "Setting up DQ2 tools"
     source ${VO_ATLAS_SW_DIR}/ddm/latest/setup.sh
     echo "site's DQ2 ID is $DQ2_LOCAL_SITE_ID"
@@ -227,9 +227,10 @@ for ((i=0;i<${#lfn[@]};i++)); do
     ;;
     'batch')
     stageInLocal $INPUTFILE `echo $TURL | cut -d ":" -f 2`;
+    status=$?
     ;;
     'Local')
-    stageInLocal $INPUTFILE `echo $TURL | cut -d ":" -f 2`;
+    stageInLocal $INPUTFILE $INPUTDSET/$INPUTFILE;
     ;;
     'castor')
     stageInCastor $INPUTFILE  `echo $TURL | cut -d ":" -f 2`;
@@ -240,7 +241,7 @@ for ((i=0;i<${#lfn[@]};i++)); do
     ;;
     
  esac
-
+echo $status
 if [ $status -ne 0 ];then
    echo "Error in stage-in, aborting"
    exit $status

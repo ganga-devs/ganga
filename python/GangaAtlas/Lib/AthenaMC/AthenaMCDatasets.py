@@ -356,8 +356,8 @@ class AthenaMCInputDatasets(Dataset):
         partitions = app.getPartitionList()
         inputfiles = app.getInputsForPartitions(partitions[0], self)
         matchrange = (self.numbersToMatcharray(inputfiles), partitions[1])
-        logger.debug("Matchrange: %s (open: %s)" % matchrange)
-        if matchrange[1] or self.redefine_partitions=="": # We must not limit dataset collection if we have an open range...
+        logger.info("Matchrange: %s (open: %s)" % matchrange)
+        if matchrange[1] or ( self.redefine_partitions=="" and backend != "Local"): # We must not limit dataset collection if we have an open range...
             matchrange = ([],True)
 
         
@@ -372,7 +372,7 @@ class AthenaMCInputDatasets(Dataset):
             self.getlfcdata(path,matchrange,"prod-lfc-atlas-local.cern.ch",backend)
             
         if datasetType=="local" and path != "":
-            logger.debug("getting data from local source: %s " % path)
+            logger.warning("getting data from local source: %s %s  " % (path,str(matchrange)))
             self.getlocaldata(path,matchrange,backend)
 
         try:
@@ -758,7 +758,11 @@ class AthenaMCInputDatasets(Dataset):
         self.lfcs[path]=lfc
             
     def getlocaldata(self,path,matchrange,backend):
-        
+        allturls={}
+        self.turls={}
+        self.lfcs={}
+        self.sites=[]
+
         if backend not in ["LSF","Local","PBS","SGE"]:
             logger.error("Attempt to use a local file on a job due to be submitted remotely.")
             raise Exception()
@@ -787,22 +791,24 @@ class AthenaMCInputDatasets(Dataset):
             raise
         all_files = [(extractFileNumber(fn), fn) for fn in inputfiles]
         all_files.sort()
-        logger.debug("All lfns: %s " % str(all_files))
+        logger.warning("All lfns: %s " % str(all_files))
         inputfiles.sort()
                 
         numbers = []
         for (num, fn) in all_files:
-            if not matchFile(matchrange, fn):
+            print fn,matchrange,path
+            if not matchFile(matchrange, fn) :
                 continue
-            if checkpath(os.path.join(path,file),prefix):
-                num = extractFileNumber(lfn)
+            fullpath=path+"/"+fn
+            if checkpath(fullpath,prefix):
+                num = extractFileNumber(fn)
                 if num and num in numbers:
                     logger.warning("In directory %s there is more than one file with the number %i!" % (path, num))
-                    logger.warning("File '%s' ignored!" % (lfn))
+                    logger.warning("File '%s' ignored!" % (fn))
                     continue
                 numbers.append(num)
-                self.turls[file]="%s:%s/%s "% (prefix,path,file)
-                
+                self.turls[fn]="%s:%s/%s "% (prefix,path,fn)
+        self.lfcs[path]=''
     def getLFCs(self,allSites):
         result=[]
         allLFCs={}

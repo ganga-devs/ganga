@@ -105,10 +105,18 @@ class AthenaMCLocalRTHandler(IRuntimeHandler):
             if os.environ[tag]!="":
                 environment[tag]=os.environ[tag]
         
-        if app.mode !="template":
+        trfopts=app.transflags
+        # need to parse them to be able to pass them in an environment variable
+        trfopts=trfopts.replace(" ","/W")
+        trfopts=trfopts.replace("-","/F")
+        
+        trflags=trfopts
+        if app.mode =="evgen":
             trflags="/Ft"
             if app.verbosity:
                 trflags+="/W/Fl/W%s" % app.verbosity
+        
+        if trflags:
             environment["TRFLAGS"]=trflags
 
         # setting output site from input data if any.
@@ -307,6 +315,8 @@ class AthenaMCLocalRTHandler(IRuntimeHandler):
                 except:
                     logger.error("Error in DQ2 configuration. Please leave ganga, then rerun local DQ2 setup before restarting ganga. Or change inputdata.datasetType to 'local'")
                     raise
+            elif job.backend._name=="Local":
+                 environment["BACKEND"]="Local"
             else:
                  environment["BACKEND"]="batch"
 
