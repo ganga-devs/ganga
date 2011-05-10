@@ -678,7 +678,8 @@ def read_ini_files(filenames,system_vars):
     """ Return  a ConfigParser object  which contains  all options  from the
     sequence of files (which are parsed from left-to-right).
     Apply special rules for PATH-like variables - see transform_PATH_option() """
-
+    
+    import re, os
     logger = getLogger()
 
     logger.debug('reading ini files: %s',str(filenames))
@@ -721,6 +722,20 @@ def read_ini_files(filenames,system_vars):
                     
                 value = transform_PATH_option(name,value,current_value)
 
+                # check for the use of environment vars
+                #m = re.search('\$\{[^${}]*\}', value)     # matches on ${...}
+                m = re.search('\$\$[^${}]*\$\$', value)     # matches on $$...$$
+                while m:
+                    envvar = m.group(0).strip('$')
+
+                    # is env variable
+                    envval = ''
+                    if os.environ.has_key(envvar):
+                        envval = os.environ[envvar]
+                        
+                    value = value.replace( m.group(0), envval )
+                    m = re.search('\$\{[^${}]*\}', value )
+                    
                 # FIXME: strip trailing whitespaces -- SHOULD BE DONE BEFORE IF AT ALL?
                 value = value.rstrip()
                 main.set(sec,name,value)
