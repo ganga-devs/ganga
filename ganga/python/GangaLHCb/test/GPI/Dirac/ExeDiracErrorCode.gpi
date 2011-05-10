@@ -1,0 +1,42 @@
+#test that the exit code is being correctly returned to Dirac
+
+scriptString = """#!/bin/bash
+exit 45
+"""
+
+import os
+from tempfile import mktemp
+
+file_name = 'exitCode'
+        
+#write string to tmpfile
+tmpdir = mktemp()
+os.mkdir(tmpdir)
+fileName = os.path.join(tmpdir,file_name)
+
+from GangaTest.Framework.utils import write_file
+write_file(fileName,scriptString)
+#os.system('chmod +x %s' % fileName)
+        
+e = Executable()
+e.exe = File(fileName)
+
+j = Job(application = e, backend = Dirac())
+#j.inputsandbox = [fileName]
+j.backend.settings['CPUTime'] = 600
+j.submit()
+
+print j
+
+from GangaTest.Framework.utils import sleep_until_completed, file_contains
+sleep_until_completed(j)
+# this is not working in DIRAC at the moment
+assert j.status == 'failed', 'Job should fail'
+j.backend.getOutputSandbox() # this doesn't happen automatically if failed 
+import time
+time.sleep(30)
+fileName = os.path.join(j.outputdir,'std.out')
+file = open(fileName,'r')
+print file.read()
+file.close()
+assert file_contains(fileName, 'status 45'), 'Exit code should be returned from DIRAC'

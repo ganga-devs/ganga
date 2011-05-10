@@ -1,0 +1,52 @@
+/* global css */
+/* Author: Lukasz Kokoszkiewicz [lukasz@kokoszkiewicz.com] */
+
+/* defines generic content elements */
+
+.spacer { height: 20px; clear: both; }
+
+/* BLOCK/content-main[text]=BEGIN */
+p { margin:0px 0px 10px 0px; text-align:justify; }     /* default paragraph style */
+.hl { font-weight:bold; color:#0C6DFF; }               /* highlight style */
+ul { color:#4C7898; }
+a { color:#0C6DFF; text-decoration:underline; font-size:9pt; }        /* default hyperlink style */
+a:hover { color:#66A3FF; }                             /* default hyperlink style */
+h2 { margin:0px; margin-bottom:10px; }
+h3 { color:#005FA8; font-size:12pt; margin:0 0 5px; }
+/* BLOCK/content-main[text]=END */
+
+/* BLOCK/side-menu=BEGIN */
+.side-menu { display:none; float:right; width:150px; background-color:#DDDDDD; margin-left:10px; padding:1px; border:1px #83ABC8 solid; }
+.side-menu ul { list-style-type:none; margin:0px; padding:0px; }
+.side-menu li { background-color:#EEEEEE; border-bottom:1px #DDDDDD solid; padding-left:3px; line-height:1.2em; }
+.side-menu h2 { margin:0px; width:100%; background-color:#4C7898; font-size:14pt; color:white; text-align:center; }
+.side-menu a { text-decoration:none; font-weight:bold; color:#184262; font-size:9pt; }
+.side-menu a:hover { text-decoration:underline; }
+/* BLOCK/side-menu=END */
+
+/* Subjubs table style */
+table.subTable { width:100%; font-size:8pt; }
+table.subTable thead th  { background-color:transparent; color:#555555; text-align:center; padding:0px; cursor:default; border-top:1px black solid; }
+table.subTable td  { padding:0px 10px 0px 10px; }
+
+div.tableAdditionalInfo { font-size:8pt; }
+
+#formFrame { margin-bottom:7px; background-image:none; background-color:#DFDFDF; }
+
+a.darkBeltA { text-decoration:none; color:#ffffff; }
+a.darkBeltA:hover { background-color:#3c6a8e; }
+
+#dataTable { font-size:8pt; padding:1px; }
+#dataTable td {cursor:pointer}
+td { white-space:nowrap; }
+
+#beta { color:#e83f11; font-size:10pt; }
+#alpha { color:#24db1d; font-size:10pt; }
+
+/* Pagination style */
+#dataTable_paginate { width:400px; }
+#dataTable_paginate input { font-size:8pt; border:1px #AAAAAA solid; text-align:center; font-weight:bold; }
+
+.paginate_button { font-size:9pt; margin:2px; background-color:#DDDDDD; padding:3px; border:1px #AAAAAA solid; cursor:pointer; }
+.paginate_button:hover { background-color:#EEEEEE; }
+.paginate_page, .paginate_of { font-size:9pt; }

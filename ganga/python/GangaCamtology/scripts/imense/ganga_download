@@ -1,0 +1,30 @@
+# Define installation directory, Ganga version and GangaCamtology tag in CVS
+GANGA_DIR=/home/karl/Ganga 
+GANGA_VERSION=5.1.0
+GANGACAMTOLOGY_TAG=GangaCamtology-20-01
+
+# Create installation directory, removing any pre-existing installation
+rm -rf ${GANGA_DIR}
+mkdir -p ${GANGA_DIR}
+
+# Download the Ganga installer
+GANGA_INSTALLER=${GANGA_DIR}/ganga-install
+rm -rf ${GANGA_INSTALLER}
+wget http://cern.ch/ganga/download/ganga-install -O ${GANGA_INSTALLER}
+chmod a+x ${GANGA_INSTALLER}
+
+# Perform the standard Ganga installation
+${GANGA_INSTALLER} --prefix=${GANGA_DIR} --extern=GangaGUI,GangaPlotter ${GANGA_VERSION}
+
+# Link installed version as the production (pro) version
+GANGA_INSTALLDIR=${GANGA_DIR}/install
+ln -s ${GANGA_INSTALLDIR}/${GANGA_VERSION} ${GANGA_DIR}/pro
+
+# Download and unpack the GangaCamtology tarball
+echo "Downloading GangaCamtology plugins"
+GANGA_PYTHONDIR=${GANGA_INSTALLDIR}/${GANGA_VERSION}/python
+GANGACAMTOLOGY_TARBALL=${GANGA_PYTHONDIR}/GangaCamtology.tar.gz
+rm -rf ${GANGACAMTOLOGY_TARBALL}
+curl --silent --show-error "http://isscvs.cern.ch/cgi-bin/cvsweb.cgi/ganga/python/GangaCamtology/GangaCamtology.tar.gz?cvsroot=ganga;only_with_tag=${GANGACAMTOLOGY_TAG};tarball=1" > ${GANGACAMTOLOGY_TARBALL}
+tar -zxf ${GANGACAMTOLOGY_TARBALL} -C ${GANGA_PYTHONDIR}
+rm -rf ${GANGACAMTOLOGY_TARBALL}

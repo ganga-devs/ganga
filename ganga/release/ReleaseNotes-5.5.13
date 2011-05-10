@@ -1,0 +1,94 @@
+**************************************************************************************************************
+5.5.13 (2010/8/24)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Updates and fixes to the new monitoring gui (--webgui).
+Fixed report(j) function which may now accept subjobs.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* use hashlib instead of md5 module when python version >= 2.5 
+ * code clean up: remove unused imports
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* A couple of bugfixes for Athena/LCG/CREAM:
+  - Fix bug #71516: Use python version from athena release in case of 
+    PYARA
+  - AtlasLCGRequirements: use the local CESE file if the download fails.
+  - FileStager: use AthenaServices.SummarySvc and sort pfns
+  - dq2tracerreport.py: Fix for emtpy reports
+  - Add try/except to input.py
+  - AthenaLCGRTHandler.py: Correct traceback if no DQ2OutputDataset but 
+    config.LCG.JobLogHandler=DQ2 is used
+  - Use short TURLs in event loop at DPM sites
+  - A fix for version 16. releases
+  - Several fixes for ServiceMgr.EventSelector.SkipEvents to get 
+    HelloWorldOptions.py running again
+  - Add ServiceMgr.EventSelector.SkipEvents to input.py only if <> 0
+* Fix bug #70539: add subjob id to name
+* Added read-only field DQ2JobSplitter.missing_files:
+  - When not all files in the input datasets have been added to a
+    subjob, the remaining filenames are stored in missing_names.
+  - Subsequent jobs could use
+    j.inputdata.names = prev_j.splitter.missing_files
+    to process only those missing files.
+* Fix bug #71765: avoid dq2 glitches in 
+  DQ2Dataset.list_location_siteindex() routine
+* Fix outputdata.retrieve() for CREAM backend
+
+AthenaMC:
+---------
+* Updating wrapper.sh to handle Reco_trf.py python arguments 
+  (preExec, postExec)
+* Adressing case where LOCALGROUPDISK space token cannot be used by 
+  user, as well as handling of special Reco_trf.py args for reco jobs 
+  submitted to LCG backend. 
+* Forcing job to abort if one input file is missing and fixing typo in 
+  handling of some extraArgs parameters
+
+Tasks:
+------
+* can now pause while tasks is submitting jobs, pause now works better
+* use t.name to set DQ2 datasetname, check if it is usable
+* truncate long dataset names in AnaTask
+* made files_per_job configuration option obsolete (automatism not 
+  necessary anymore)
+
+scripts:
+--------
+* Add --extOutFile, --atlas_supp_stream
+* Allow easy HelloWorldOption.py submission again after dbrelease=LATEST 
+  is default
+* fix tabs
+
+tests:
+------
+* Reorganized AthenaMC tests to make them uniform between the two 
+  backends. Also, added timestamp to output datasets as testing 
+  framework recycles job numbers
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+This is a major update of the UI part of the Job Execution Monitor. GangaJEM now refers to the JEM
+library 0.3.1.2 and lost the legacy codebase. This is also reflected by a change of versioning
+numbers for GangaJEM, closer reflecting which JEM lib version it uses.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- Port tests to GPIP
+
+**************************************************************************************************************

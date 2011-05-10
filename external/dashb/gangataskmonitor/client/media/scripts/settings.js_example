@@ -1,0 +1,395 @@
+// This file is part of the jTaskMonitoring software
+// Copyright (c) CERN 2010
+//
+// Author: Lukasz Kokoszkiewicz [lukasz@kokoszkiewicz.com , lukasz.kokoszkiewicz@cern.ch]
+//
+// History:
+// 28.05.2010 Created
+// 17.01.2011 First production release (v1.0.0)
+//
+
+function Settings() {
+    // Application specific settings - START
+    this.Application = {
+        'userSelection': true, // Display user selection page? (true|false)
+        'jsonp': false, // allow requests to other hosts
+        'pageTitle': 'Task Monitoring', // Page title
+        'footerTxt': 'hBrowse framework &copy;2010', // Footer text
+        'supportLnk': 'https://twiki.cern.ch/twiki/bin/view/ArdaGrid/TaskMonitoringWebUI', // Link to support page
+        'logoLnk': 'media/images/atlaslogo.png', // Link to page logo
+        'usersListLbl': '', // Label of user list search field, example: 'Users List'
+        'mainsLbl': '', // Name of mains content, example: 'Tasks'
+        'subsLbL': '', // Name of subs content, example: 'Jobs'
+        'modelDefaults': function() { // Here You can set up model (data.js) default values
+            return {
+                'user': '',
+                'from': 0,
+                'till': 0,
+                'timeRange': 'lastDay',
+                'refresh': 0,
+                'tid': '',
+                'p': 1,
+                'sorting': [],
+                'or': [], // opened table rows
+                'uparam': [] // user defined params (for params that cannot be shared between use cases)
+            }
+        },
+        'filters':[ // optional
+            {
+                'label':'Site',  // String
+                'urlVariable':'site',  // String - lower cased, no spaces, no special characters
+                'fieldType':'select',  // String (text|select|date)
+                'value':'', // Initial value for the filter
+                'options':{
+                    'dataURL':'/dashboard/request.py/inittaskprod?data=sites',  // (optional) String, works only for select fieldType
+                    // Function translates model or ajax data onto simple elements array
+                    // Input: data - data represents Data.mem object or ajax response depending on whether dataURL exists or not
+                    // Output: [['el1','el1 label'],['el2','el2 label'], ...] - Can also be defined as a static list (when you don't want to
+                    // load the data from url nor using Data.mem object)
+                    'translateData': function(data) {
+                        /* Example useage:
+                        var sitesArr = data.basicData;
+                        var output = [['','Off']];
+                        
+                        for (var i=0;i<sitesArr.length;i++) {
+                            output.push([sitesArr[i].SITENAME,sitesArr[i].SITENAME]);
+                        }
+                        
+                        return output;
+                        */
+                    },
+                    // On and Off optional functions are executed when filters submit is clicked
+                    // On is executed when field has value other then empty string ("")
+                    // Otherwise Off is executed
+                    'On':function(Data) {  // Data is a Controller.Data object
+                        $('#from,#till,#timeRange').attr('disabled',true);
+                    },
+                    'Off':function(Data) {  // Data is a Controller.Data object
+                        $('#from,#till,#timeRange').attr('disabled',false);
+                    }
+                }
+            }
+        ]
+    };
+    // Application specific settings - FINISH
+
+    // Users list settings - START
+    this.Users = {
+        'dataURL': '/* Put url here */', // Users list URL for ajax request
+        // Function, ajax request parameters
+        // Output: {'<parameter_name>':<parameter_value>,...} (default: {})
+        'dataURL_params': function(Data) {
+            return {};
+        },
+        'searchLabel': 'Search for user ', // Label of the search field
+        // Function, translates ajax response onto searchable list plugin data format
+        // Output: [user1, user2, ...]
+        'translateData': function(dataJSON) {
+            /* Example useage:
+            var usersList = Array();
+            var dataArr = dataJSON.basicData[0];
+            for (i in dataArr) {
+                usersList.push(dataArr[i].GridName);//.replace(/"/g, ''));
+            }
+            return usersList;
+            */
+            return dataJSON;
+        }
+    };
+    // Users list settings - FINISH
+    
+    // Mains settings - START
+    this.Mains = {
+        'dataURL': '/* Put url here */', // Mains URL for ajax request
+        // Function, ajax request parameters
+        // Output: {'<parameter_name>':<parameter_value>,...} (default: {})
+        'dataURL_params': function(Data) {
+            /* Example useage:
+            obj = {
+                'usergridname':Data.user,
+                'from':Data.ts2iso(Data.from,2),
+                'to':Data.ts2iso(Data.till,3),
+                'timerange':Data.timeRange,
+                'typeofrequest':'A'
+            };
+            return obj;
+            */
+            return {};
+        },
+        'expandableRows':true, // If TRUE, rows will expand after clicking '+'
+        'multipleER':false, // If TRUE, multiple rows can be expanded
+        // Expanded data view setub object
+        'expandData': {
+            // Function, definition of data that will be displayed after row expansion
+            // Input: 
+            //  - rowDataSet - clicked row data (from ajax datatable response)
+            //  - jsonDataSet - data extracted from ajax response
+            // Output: {
+            //   'properties':[[<property_name>,'<property_value>'],...] or false,
+            //   'table':{
+            //     'tblLabels':[<label1>,<label2>,...],
+            //     'tblData':[[<row1value1>,<row1value2>,...],[<row2value1>,<row2value2>,...],...]
+            //   } or false,
+            //   'html':<custom_html> or false
+            // }
+            'dataFunction': function(rowDataSet, jsonDataSet) {
+                var properties = false;
+                var html = false;
+                var table = false;
+                
+                properties = [
+                    ['TaskMonitorId', rowDataSet.TaskMonitorId],
+                    ['TaskId', rowDataSet.TaskId],
+                    ['TaskCreatedTimeStamp', rowDataSet.TaskCreatedTimeStamp],
+                    ['TaskType', rowDataSet.TaskType],
+                    ['NEventsPerJob', rowDataSet.NEventsPerJob],
+                    ['Application', rowDataSet.Application],
+                    ['ApplicationVersion', rowDataSet.ApplicationVersion],
+                    ['Executable', rowDataSet.Executable],
+                    ['InputCollection', rowDataSet.InputCollection.replace(/,/g, ', ')],
+                    ['SubmissionTool', rowDataSet.SubmissionTool],
+                    ['SubmissionTool Version', rowDataSet.SubToolVersion],
+                    ['SubmissionType', rowDataSet.SubmissionType],
+                    ['SubmissionUI', rowDataSet.SubmissionUI],
+                    ['TargetCE', rowDataSet.TargetCE.replace(/,/g, ', ')]
+                ];
+                return {'properties':properties,'table':table,'html':html};
+            }
+        },
+        'sorting':[1,'desc'], // [<column_index>,<sorting_direction>], sorting_direction='desc'||'asc'
+        'iDisplayLength': 25, // Number of rows to display on single page
+        // Column labels: Array, example: ['monitorTaskId','Num of Jobs','Pending','Running','Successful','Failed','Unknown','Graphically']
+        'tblLabels': [],
+        // dataTables plugin column options
+        // see: http://www.datatables.net/usage/columns
+        /* Example useage:
+        'aoColumns': [
+            {"sWidth":"350px"},
+            {"sClass":"numericTD"},
+            {"sClass":"numericTD"},
+            {"sClass":"numericTD"},
+            {"sClass":"numericTD"},
+            {"sClass":"numericTD"},
+            {"sClass":"numericTD"},
+            {"sWidth":"130px","bSortable":false}
+        ],*/
+        // Function: extracting array of data (for dataTable) form Ajax response
+        // Example:
+        // - Ajax response: {'user_taskstable':[{col_val1, col_val2, ...}, ...]}
+        // - Required function: function(data) { return data.user_taskstable; }
+        'getDataArray': function(data) {
+            /* Example useage:
+            return data.user_taskstable;
+            */
+            return data;
+        },
+        // Function, translates ajax response onto dataTables plugin data format
+        // Output: [[col_val1, col_val2, ...], ...]
+        'translateData': function(dataJSON) {
+            /* Example useage:
+            var tasksArr = Array();
+            for (i in dataJSON) {
+                tasksArr.push(Array(
+                    ('<div class="wrapColumn" title="'+dataJSON[i].TASKMONID+'"><a class="drilldown tmIdClick">'+dataJSON[i].TASKMONID+'</a></div>' || 'default'),
+                    ('<a class="drilldown noJobsClick">'+dataJSON[i].NUMOFJOBS+'</a>' || '0'),
+                    ('<a class="drilldown noPendClick">'+dataJSON[i].PENDING+'</a>' || '0'),
+                    ('<a class="drilldown noRunnClick">'+dataJSON[i].RUNNING+'</a>' || '0'),
+                    ('<a class="drilldown noSuccClick">'+dataJSON[i].SUCCESS+'</a>' || '0'),
+                    ('<a class="drilldown noFailClick">'+dataJSON[i].FAILED+'</a>' || '0'),
+                    ('<a class="drilldown noUnknClick">'+dataJSON[i].UNKNOWN+'</a>' || '0'),
+                    '<img src="http://chart.apis.google.com/chart?chbh=a,0&chs=130x15&cht=bhs:nda&chco=59D118,C50000,3072F3,FF9900,C2BDDD&chds=0,'+dataJSON[i].NUMOFJOBS+',0,'+dataJSON[i].NUMOFJOBS+',0,'+dataJSON[i].NUMOFJOBS+',0,'+dataJSON[i].NUMOFJOBS+',0,'+dataJSON[i].NUMOFJOBS+'&chd=t:'+dataJSON[i].SUCCESS+'|'+dataJSON[i].FAILED+'|'+dataJSON[i].RUNNING+'|'+dataJSON[i].PENDING+'|'+dataJSON[i].UNKNOWN+'" />'
+                ));
+            }
+            return tasksArr;
+            */
+            return dataJSON;
+        },
+        // Function, it is executed every time someone clicks cell with a.drilldown html tag in it
+        // Main purpose of the function is to indicate tid and (optionary) uparam parameters from the Data object
+        // (uparam allows to setup additional parameters to tid that would define a sub table ajax request)
+        // This allows to properly display subs table
+        // Input:
+        //  - Data - application Data object
+        //  - el - clicked jQuery element
+        //  - rowIndex - index of the clicked row
+        // Output: {
+        //   'uparam':[<parameters_list>],
+        //   'tid':<id_for_the_subtable>
+        'drillDownHandler': function(Data, el, rowIndex) {
+            /* Example useage:
+            var classTranslate = {
+                'tmIdClick':'all',
+                'noJobsClick':'all',
+                'noPendClick':'P',
+                'noRunnClick':'R',
+                'noSuccClick':'S',
+                'noFailClick':'F',
+                'noUnknClick':'U'
+            };
+            var uparam = [classTranslate[$(el).find('a').attr('class').replace("drilldown ","")]];
+            var tid = Data.mem.mains.data[rowIndex].TASKMONID;
+            
+            return {'tid':tid,'uparam':uparam};
+            */
+        },
+        /*/ Allow to draw charts using both ajax request or stored data
+        // Example useage:
+        'charts': [
+            {
+                'dataURL': 'http://pcadc01.cern.ch/client/chartdata',
+                'dataURL_params': function(Data) { return {}; },
+                // translates data onto requires format:
+                // {"chd":"t:60,40","chl":"Hello|World"}
+                'translateData':function(dataJSON) {
+                    return dataJSON;
+                },
+                'gChart': {
+                    'chtt':'Example Chart',
+                    'cht':'p3',
+                    'chs':'600x350'
+                }
+            },
+        ]*/
+    };
+    // User Tasks settings - FINISH
+    
+    // Subs settings - START
+    this.Subs = {
+        'dataURL': '/* Put url here */', // Subs list URL for ajax request
+        // Function, ajax request parameters
+        // Output: {'<parameter_name>':<parameter_value>,...} (default: {})
+        'dataURL_params': function(Data) {
+            /* Example useage:
+            obj = {
+                'taskmonid':Data.tid,
+                'what':(Data.uparam[0] || 'all')
+            };
+            return obj;
+            */
+            return Data;
+        },
+        'expandableRows':false, // If TRUE, rows will expand after clicking '+'
+        'multipleER':false, // If TRUE, multiple rows can be expanded
+        // Expanded data view setub object
+        'expandData': {
+            'dataURL': 'http://pcadc01.cern.ch/dashboard/request.py/resubmittedjobsAtl',
+            // Function, ajax request parameters
+            // Output: {'<parameter_name>':<parameter_value>,...} (default: {})
+            'dataURL_params': function(Data, currentRow) {
+                obj = {
+                    'what':'ALL',
+                    'taskjobid':currentRow.TaskJobId,
+                    'taskmonid':Data.tid
+                };
+                return obj;
+            },
+            // Function, definition of data that will be displayed after row expansion
+            // Input: 
+            //  - rowDataSet - clicked row data (from ajax datatable response)
+            //  - jsonDataSet - data extracted from ajax response
+            // Output: {
+            //   'properties':[[<property_name>,'<property_value>'],...] or false,
+            //   'table':{
+            //     'tblLabels':[<label1>,<label2>,...],
+            //     'tblData':[[<row1value1>,<row1value2>,...],[<row2value1>,<row2value2>,...],...]
+            //   } or false,
+            //   'html':<custom_html> or false
+            // }
+            'dataFunction': function(rowDataSet, jsonDataSet) {
+                var properties = false;
+                var html = false;
+                var table = false;
+                
+                var tblData = Array();
+                var rsJobs = jsonDataSet.rsJobs;
+                
+                for (var i=0;i<rsJobs.length;i++) {
+                    tblData.push([rsJobs[i].SchedulerJobId,rsJobs[i].EventRange,rsJobs[i].JobExitCode,rsJobs[i].AppStatusReason,rsJobs[i].GridEndId,rsJobs[i].Site,rsJobs[i].submitted,rsJobs[i].started,rsJobs[i].finished]);
+                }
+                
+                table = {
+                    'tblLabels':['SchedulerJobId','Id in Task','Appl Exit Code','Appl Exit Reason','Grid End Status','Site','Submitted','Started','Finished'],
+                    'tblData':tblData
+                };
+                
+                return {'properties':properties,'table':table,'html':'<br />Retries:'};
+            }
+        },
+        'sorting':[0,'desc'], // [<column_index>,<sorting_direction>], sorting_direction='desc'||'asc'
+        'iDisplayLength': 25, // Number of rows to display on single page
+        // Column labels: Array, example: ['SchedulerJobId','Id in Task','Job Status','Appl Exit Code','Grid End Status','Retries','Site','Submitted','Started','Finished']
+        'tblLabels': [],
+        // dataTables plugin column options
+        // see: http://www.datatables.net/usage/columns
+        /* Example useage:
+        'aoColumns': [
+            {"sWidth":"350px"},
+            {"sClass":"numericTD","sWidth":"90px"},
+            {"sWidth":"100px"},
+            {"sClass":"numericTD","sWidth":"110px"},
+            {"sWidth":"110px"},
+            {"sClass":"numericTD","sWidth":"70px"},
+            null,
+            null,
+            null,
+            null
+        ],*/
+        // Function: extracting array of data (for dataTable) form Ajax response
+        // Example:
+        // - Ajax response: {'user_taskstable':[{col_val1, col_val2, ...}, ...]}
+        // - Required function: function(data) { return data.user_taskstable; }
+        'getDataArray': function(data) {
+            return data.taskjobs[0];
+        },
+        // Function, translates ajax response onto dataTables plugin data format
+        // Output: [[col_val1, col_val2, ...], ...]
+        'translateData': function(dataJSON) {
+            /* Example useage:
+            var jobStatuses = {
+                'PR':'NotCompleted',
+                'P':'Pending',
+                'R':'Running',
+                'U':'Unknown',
+                'S':'Successfull',
+                'F':'Failed'
+            };
+            var tasksArr = Array();
+            for (i in dataJSON) {
+                tasksArr.push(Array(
+                    ('<div class="wrapColumn" title="'+dataJSON[i].SchedulerJobId+'">'+dataJSON[i].SchedulerJobId+'</div>' || 'default'),
+                    (dataJSON[i].EventRange || '0'),
+                    (jobStatuses[dataJSON[i].STATUS] ? '<div class="status '+jobStatuses[dataJSON[i].STATUS]+'">'+jobStatuses[dataJSON[i].STATUS]+'</div>' : '<div class="status Unknown">Unknown</div>'),
+                    (dataJSON[i].JobExecExitCode || 'Not yet'),
+                    (dataJSON[i].GridEndId || '0'),
+                    (dataJSON[i].resubmissions || '0'),
+                    ('<a href="http://dashb-ssb.cern.ch/dashboard/request.py/sitehistory?site='+dataJSON[i].Site+'">'+dataJSON[i].Site+'</a>' || '0'),
+                    (dataJSON[i].submitted || '0'),
+                    (dataJSON[i].started || '0'),
+                    (dataJSON[i].finished || '0')
+                ));
+            }
+            return tasksArr;
+            */
+            return dataJSON;
+        },
+        /*/ Allow to draw charts using both ajax request or stored data
+        // Example useage:
+        'charts': [
+            {
+                'dataURL': 'http://pcadc01.cern.ch/client/chartdata',
+                'dataURL_params': function(Data) { return {}; },
+                // translates data onto requires format:
+                // {"chd":"t:60,40","chl":"Hello|World"}
+                'translateData':function(dataJSON) {
+                    return dataJSON;
+                },
+                'gChart': {
+                    'chtt':'Example Chart',
+                    'cht':'p3',
+                    'chs':'600x350'
+                }
+            },
+        ]*/
+    };
+    // Task Jobs settings - FINISH
+}

@@ -1,0 +1,104 @@
+###################################################################
+# DJANGO STANDARD TEMPLATE                                        #
+# Author: Lukasz Kokoszkiewicz [lukasz@kokoszkiewicz.com]         #
+# version: v1.0.0                                                 #
+###################################################################
+
+Table of contents
+=================
+1. Features
+2. Useful Elements
+3. Turning elements on/off
+4. Adjusting site width
+5. Using dataTables
+
+1. Features
+===========
+- Adjastable width
+- Easy add/remove layout elements
+- XHTML 1.1 strick compliant
+- Using dataTables jQuery plugin for nice table data presentation
+- Content hyperlinks target property can be adjust globally
+- Cross browser compatibility
+- Very small size
+    css ~15kB
+    images ~39kB
+    scripts ~150kB (jQuery + jQuery.dataTables)
+    overall ~150kB
+- All menus basing nicely on HTML menus
+- Works fine with images turned off
+
+2. Useful Elements
+==================
+- Description Brackets
+    DOM ID: description
+    CSS SOURCE: layout.css
+- Horizontal Menu
+    DOM ID: menu
+    CSS SOURCE: layout.css
+- Breadcrumbs Bar
+    DOM ID: breadcrumbs
+    CSS SOURCE: layout.css
+- Vertical Menu (left and right)
+    DOM ID: vert-menu-left, vert-menu-right
+    CSS SOURCE: layout.css
+- Floating Menu (many can be created)
+    DOM CLASS: side-menu
+    CSS SOURCE: global.css
+    
+3. Turning elements on/off
+==========================
+I order to turn ON or OFF template elements first thing that needs to be done is editing of proper block in proper *.css file. To find a block you are intrested in just see previous topic (Useful Elements) and run text search of aprapriate file looking for: BLOCK/{DOM_ID}. Each elements block consists of instructions on how to turn it off. If you want to make it visible just du the oposite. After changing css you can remove elements from html.
+
+4. Adjusting site width
+=======================
+Find #main-centeriser definition in layout.css and simply change width value
+
+5. Using dataTables
+===================
+DataTables is a very useful jQuery plugin allowing you to present data nicely. It adds searching, paging and sorting capabilities when activated. As data input dataTables uses html tables so when off, normal table is shown. Your tables should look like this:
+
+<table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+	<thead>
+		<tr>
+			<th>Rendering engine</th>
+			<th>Browser</th>
+			<th>Platform(s)</th>
+			<th>Engine version</th>
+			<th>CSS grade</th>
+		</tr>
+	</thead>
+	<tfoot>
+		<tr>
+			<th>Rendering engine</th>
+			<th>Browser</th>
+			<th>Platform(s)</th>
+			<th>Engine version</th>
+			<th>CSS grade</th>
+		</tr>
+	</tfoot>
+	<tbody>
+		<tr class="gradeX">
+			<td>Trident</td>
+			<td>Internet Explorer 4.0</td>
+			<td>Win 95+</td>
+			<td class="center">4</td>
+			<td class="center">X</td>
+		</tr>
+        ...
+    </tbody>
+</table>
+
+This table should be initialized this way in head section:
+
+<script type="text/javascript" charset="utf-8">
+    $(document).ready(function() {
+        $('#example').dataTable( { "iDisplayLength":25 } );  // dataTable script initialization using jQuery selectors
+    } );
+</script>
+
+"iDisplayLength" in this example defines number of data rows displayed. For more informations about dataTables options visit http://www.datatables.net/
+$(#example) is a jQuery selector to learn more about jQuery selectors visit http://docs.jquery.com/Selectors.
+Tables styles can be changes in dataTables.css.
+
+...

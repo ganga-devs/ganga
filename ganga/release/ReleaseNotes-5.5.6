@@ -1,0 +1,165 @@
+**************************************************************************************************************
+5.5.6 (2010/5/23)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* DQ2JobSplitter: 
+  - Allow up to 5000 subjobs
+  - bugfix - if inputdataset is restricted so that a site is left 
+    without guids, submission failed
+  - modified _name check to hasattr(app,"atlas_dbreleas") to make 
+    DQ2Splitter work with Executable
+* Fix for castor input access on CERN LSF
+
+AthenaMC:
+---------
+* AthenaMC.py: added declaration of self.userarea which is only 
+  needed by prepare 
+  but prevents job submission when missing.
+* Migration to new DQ2 user nickname and prefix
+* Removed offending line in setup function of class TestAthenaMCLCG 
+  in TestAtlas.gpip
+
+Tasks:
+------
+* Added check for file already existing in unique dataset (mostly if 
+  you use fix() or have problems)
+* Very much improved handling of registry/file system outages and 
+  locking
+* Consistent output data treatment
+* Added Transform number to overview
+* Modified getJobs() to also accept transform / partition numbers
+* New dataset naming scheme
+* Fixed AnaTransform brokering to Panda
+* Added creation_date to task object for consistent dq2 naming
+* Hide creation_date
+* Fix for wrong randomization
+
+tests:
+------
+* Fix and update many tests
+
+externals:
+---------
+Update to panda-client 0.2.44
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+GangaJEM now references JEM 0.3.0.3. Changelog:
+- Fixed unit tests
+- fixed emergency run (launch of user script in --mode WN when JEM init fails)
+- fixed legacy stomp logging
+- fixed StompServer in GangaJEM's LiveMonitor using correct host/port if set
+- fixed ConfigManager unneccessarily reporting config value null-changes
+- fixed invalid load of boolean config vars from rc-file.
+- added --stdout option (log to stdout instead of into a logfile)
+- made legacy DictPacker adhere to the default JMD escaping scheme
+- added finalize method to preprocessors. the JEMv2Converter, e.g., logs what chunks it ignored there
+- moved Plotter class into an own file in Common.Utils
+- added Plotter working mode
+- added topic (sender) to ConsoleLogger lines
+- GangaJEM now uses the provided Plotter class
+- fixed: legacy StompServer did only register for master job id, not for subjob id's.
+- fixed debug log output of PythonMonitor and StompServer
+- fixed byte-scale on Y-axes in Plotter
+- fixed loglevel handling in C modules
+- minor fixes and documentation corrections
+
+Fixes in GangaJEM itself:
+- Tweaked GangaJEM logging behaviour
+- Fixed packing of WN JEM library
+- Fixed command line argument passing to user script
+- Fixed running with custom stomp server
+- Fixed display of some special escaped characters in live peek
+- Beautified system metrics plots
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor bug fixes plus the following important changes in the Dirac backend:
+
+Input sandbox LFN's:
+
+The Dirac backend now has an inputSandboxLFNs attribute.  LFNs (or LogicalFile objects) can be
+placed here if the user wants to add a logical file to the input sandbox.  What does this mean?  It
+means the logical file will be downloaded into the input sandbox on the grid node.  E.g. if you add
+'lfn:/some/lfn/file.txt' to inputSandboxLFNs, then file.txt will be downloaded into the work dir
+(and visible w/ the name file.txt).  
+
+An *important* point: these files don't count in the site matching so there's a very good chance
+your job will run at a site that does *not* have this file.  Thus, Dirac will have to download the
+file.  So don't do this for production data (which will be properly banned in the next version of
+Dirac)!  This is meant for user files that are too big to put in the input sandbox...but don't abuse
+it!  If you have 100 GB worth of ROOT files they should be in the input data (so that site matching
+works).  If you have 200 MB worth of database info, then that can go in the inputSandboxLFNs.
+
+Ability to change settings during resubmit:
+
+The Dirac backend now also has a settings attribute.  The default value is {'CPUTime' : 172800}
+(notice that CPUTime has been moved here; this has the consequence that the CPUTime setting in old
+jobs is basically lost; it shouldn't really matter but be aware of it).  Any setting added here
+places the following line into the DIRAC API job definition file:
+
+# Ganga
+j.backend.settings['Key'] = Value
+
+# Dirac API job definition file
+j.setKey(Value)
+
+See the Dirac API documentation for a full list (but don't use a method unless you know what it
+does!).  The ones likely to be used are:
+
+Dirac method     | Ganga example                             | description
+-----------------------------------------------------------------------------------------------j
+setCPUTime       | settings['CPUTime'] = 1234567             | set CPUTime maximum 
+setBannedSites   | settings['BannedSites'] = ['LCG.CERN.ch'] | ban CERN (or list of sites)
+setDestination   | settings['Destination'] = 'LCG.CERN.ch'   | force job to run at CERN
+setLogLevel      | settings['LogLevel'] = 'debug'            | change Dirac's verbosity
+
+The "settings" attribute is respected whenever submit or resubmit is used...but can be edited at any
+time (i.e. it is not write protected like most other Ganga settings).  So, you (the user) can put
+the backend into an inconsistent state by editing it after the job is "completed".  This won't hurt
+anything, but you could confuse yourself...so be careful.  
+
+The reason (what you gain) for this is that now these settings can be changed when you resubmit the
+job.  So, e.g. you want to simply rerun a job that failed at CERN and ban CERN.  In Ganga you can
+now do:
+
+j.backend.settings['BannedSites'] = ['LCG.CERN.ch']
+j.resubmit()
+
+You don't have to copy the job.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Panda backend:
+- update to panda-client 0.2.44 
+  - new trf URLS from CERN server
+  - ignore TZERO and DAQ space tokens at CERN
+- fix for #67716 (transition from failed to killed)
+- increment Panda schema version for bexec field
+- fillOutputData: also fill log files in outputdata.output field (as in LCG if 
+config.LCG.JobLogHandler = "DQ2")
+
+Athena application handler:
+- support AMIDataset for Panda
+- fix bug #67425: non inputdataset jobOption can be submitted again
+
+Executable application handler:
+- Shuffled some parameters around so %IN will be replaced by the input file names
+- Adding build job functionality to the Executable application
+  - enable with e.g. j.backend.bexec=make while a Makefile is provided with the inputsandbox
+- Replaced "if file exists then chmod +x" with "chmod -f +x"; this also works with the new runGen 
+script version of Panda
+- Added ArgSplitter to name check
+
+**************************************************************************************************************

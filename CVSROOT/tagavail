@@ -1,0 +1,82 @@
+# By default nodoby can tag anything
+
+unavail
+
+# These users can tag everywhere including CVSROOT 
+# (do not remove cvsadmin from here).
+
+avail | cvsadmin ganga 
+
+# Development team can tag everywhere except under CVSROOT.
+# Make sure these two lists are the same. 
+# Do not put here users that should be able to tag 
+# to CVSROOT - put them in the list above, next to cvsadmin.
+
+avail.dev | moscicki kuba amuraru wreece 
+
+# current release manager
+avail.dev | gangage
+
+avail.dev | asaroka | ganga/python/Ganga/Core/JobRepository ganga/python/Ganga/Utility/external/ARDAMDClient ganga/python/Ganga/GPIDev/Streamers ganga/python/Ganga/GPIDev/Lib/JobTree ganga/python/Ganga/Utility/AMGAServerTools
+
+avail.dev | ctan | ganga/python/GangaGUI ganga/python/Ganga/Core/MonitoringComponent ganga/python/Ganga/GPIDev/Credentials
+
+avail.dev | karl | ganga/python/Ganga/GPIDev/Persistency ganga/python/Ganga/Lib/Condor ganga/python/Ganga/scripts ganga/python/Ganga/GPIDev/Credentials 
+
+avail.dev | asaroka andrew uegede wreece lanciott gcowan jwilliam | ganga/python/GangaLHCb
+
+avail.dev | karl liko elmsheus mkenyon nicholc fbrochu hclee mslater ebke dvanders | ganga/python/GangaAtlas 
+
+avail.dev | liko elmsheus dvanders ebke | ganga/python/GangaPanda
+
+avail.dev | liko elmsheus hclee bgaidioz | ganga/python/Ganga/Lib/LCG ganga/python/Ganga/Lib/gLite
+
+avail.dev | elmsheus | ganga/python/Ganga/Lib/PBS
+
+avail.dev | uegede wreece | ganga/python/Ganga/Lib/Root
+
+avail.dev | wreece | ganga/python/Ganga/Lib/Mergers
+
+avail.dev | hclee | ganga/python/GangaPlotter ganga/python/GangaTutorial
+
+avail.dev | mslater karl | ganga/python/Ganga/Lib/Interactive ganga/python/GangaCamtology
+
+avail.dev | dpiparo uegede andrew | ganga/python/GangaGUI/LHCB_BKDB_browser
+
+avail.dev | amuraru uegede | ganga/python/GangaTest
+
+avail.dev | bgaidioz | ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard
+avail.dev | koblitz | ganga/python/Ganga/Lib/MonitoringServices/Octopus
+
+avail.dev | pajchel bsamset gjelsten | ganga/python/GangaNG
+
+avail.dev | walkerr | ganga/python/GangaCronus
+
+avail.dev | uegede andrew | ganga/python/GangaRobot
+
+avail.dev | roma | ganga/python/Ganga/Lib/Batch ganga/python/Ganga/Core/Sandbox
+
+avail.dev | mbarison | ganga/python/GangaSFrame
+
+avail.dev | mslater | ganga/python/Ganga/Lib/Remote
+
+avail.dev | maiera andrew mslater | ganga/python/GangaNA48
+
+avail.dev | liko | ganga/python/GangaMedAustron
+
+avail.dev | moscicki kuba uegede ctan karl andrew liko asaroka elmsheus hclee dpiparo amuraru pajchel bsamset gjelsten mkenyon nicholc fbrochu dtuckett mbarison mslater jwilliam  | ganga/doc/manuals/src ganga/doc/work prototype
+
+avail.dev | lostman | ganga/python/Ganga/Lib/MonitoringServices external/stomputil
+
+
+#avail.dev   | moscicki kuba karl uegede dadams ctan asaroka ccollins andrew cibak liko
+#unavail.dev | moscicki kuba karl uegede dadams ctan asaroka ccollins andrew cibak liko | CVSROOT
+
+# migration of Gaudi and Test handlers: write-protected
+unavail.dev | moscicki kuba karl uegede dadams ctan asaroka ccollins andrew cibak liko | prototype/Ganga4/python/Ganga/Lib/Gaudi prototype/Ganga4/python/Ganga/Lib/TestApplication prototype/Ganga4/python/Ganga/Lib/TestSubmitter prototype/Ganga4 old
+
+avail.dev | hgkim | ganga/python/GangaKISTI
+avail.dev | oweidner | ganga/python/GangaSAGA
+
+
+

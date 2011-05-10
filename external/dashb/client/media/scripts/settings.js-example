@@ -1,0 +1,3 @@
+// Set up js ajax connection for ganga and diane monitoring
+var settings_HOST = 'http://127.0.0.1/django/gangamon';  // eg. 'http://localhost'
+var settings_PORT = '';  // eg. ':8088'

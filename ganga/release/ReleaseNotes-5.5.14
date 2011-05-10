@@ -1,0 +1,123 @@
+**************************************************************************************************************
+5.5.14 (2010/9/8)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+bugfixes:
+
+bug #70796: Message after force_status not illustrative - My status completed completed
+bug #67690 - include Ganga. at the begining of the logger name so that it can inherit from Ganga 
+logger
+bug #71563: DeprecationWarnings in Core when run with python 2.6
+bug #71512: BackendError is not propagated to the user
+bug 44116: app.postprocess() may now raise PostprocessStatusUpdate('failed') exception
+
+changes:
+
+added extended attributes to usage monitoring spyware and more configuration flexibility
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices
+--------------------------------------------------------------------------------------------------------------
+change config of DashboardMS: use production server gridmsg101 and rename topic names to better 
+describe what they are
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Add event picking for Panda and LCG - use it via j.inputdata
+  Provide a text file, e.g. cand.txt which contains pairs of run
+  and event number, e.g.:
+  123456 39875398723
+  123457 23657945793
+  Configure j.inputdata selecting the data stream, type and dataset
+  pattern:
+    ...
+    j.inputdata = EventPicking()
+    j.inputdata.pick_event_list = 'cand.txt'
+    j.inputdata.pick_data_type = 'ESD'
+    j.inputdata.pick_stream_name = 'physics_Muons'
+    j.inputdata.pick_dataset_pattern = '*f2*'
+    #Default filter_policy = 'accept'
+    #j.inputdata.pick_filter_policy = 'reject'
+    ...
+  or e.g.:
+    ganga athena --pickevent --pick_event_list cand.txt \
+      --pick_data_type ESD --pick_stream_name physics_Muons \
+      --pick_dataset_pattern '*f2*' --panda AODToPhysicsD3PD.py
+
+* Fixes for dashboard monitoring
+  - extra check (via postBootstrapHook()) for outdated config files for
+    Atlas monitoring dashboard.
+  - added loading of DashboardMS config section with other core plugins
+* Added pre-jobO script to local Athena jobs
+* Improved the dataset name truncation to use the DQ2 config variable
+* Increased the size of TAG files before compression is activated
+
+Tasks:
+------
+* Made individual task job datasets contain task, subtask and chunk id
+* Fix ApplicationConfigurationError on invalid task name
+* Quick fix for Tasks not working on Panda with exetype != Athena
+* Improved error handling of DQ2
+* Replaced dq2 retry with better locking, no more errors observed.
+
+scripts:
+--------
+* athena: add --atlas_run_dir and several event picking options
+* added --excludedSite option for Panda site exclusion 
+  e.g. --excludedSite=ANALY_XYZ,ANALY_ABC
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+Bumped to JEM lib 0.3.1.4, changes:
+
+- Fix for bug #72056
+- Minor fix: removed debug output for JEM-disabled jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* New class: GaudiXMLSummary, handles XML summary reports (see help(GaudiXMLSummary)).  Basic
+implimentation, please submit feature requests via Savannah. 
+
+* Added XML summary files to the automatically collected output sandbox files (see
+config.LHCb.outputsandbox_types).
+
+* New class: GaudiXMLSummaryMerger, merges XML summaries.
+
+* New method: Dirac.checkSites, returns a {} of info on DIRAC sites.
+
+* New method: Dirac.checkTier1s, returns a {} of info on DIRAC Tier 1 sites.
+
+* Gaudi apps (DaVinci, Gauss, ...) now can be used w/ the Remote backend (see FAQ for help).
+
+* Added check in the DIRAC monitoring loop to exit after the current monitored job's output is
+downloaded (rather than completing the loop prior to exiting).
+
+* DIRAC calls now have a global timeout defined.  It's user configurable (see config.DIRAC.Timeout)
+and defaults to 1000s.
+
+* The config option config.DIRAC.AllowedPlatforms (depricated a few releases ago) has now been
+removed.  Platform checking is now done by querying DIRAC (although, it is only done once per Ganga
+session to avoid battering the server).
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Add Event picking (see GangaAtlas for details)
+* Make application.options work for PYARA/EXE etc
+* Fixed missing env_str if DBRELEASE is blank
+* Fix for empty environment string
+
+**************************************************************************************************************

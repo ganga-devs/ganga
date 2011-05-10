@@ -1,0 +1,136 @@
+**************************************************************************************************************
+5.2.0 (2009/4/30)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Updated tests for Batch backend.
+
+fix #29745: use __mro__ rather than first-generation of base classes
+
+logging fixes (for Atlas Tasks):
+ - loggers created in interactive session are now mapped to Ganga.GPI 
+ - loggers created in other packages (not starting with "Ganga.") are now correctly using the log file
+ - simplification of the code (filters not used anymore)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Batch
+--------------------------------------------------------------------------------------------------------------
+Several updates to the Batch backends. The bugs and features requests
+numbered 35994, 36651, 45219, 47814 and 49078 have been addressed. The
+most important change is that batch jobs killed by the batch system
+itself (like if they overrun their CPU limit) are now correctly
+registered in Ganga as failed.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+------
+* New: prepare() has been rewritten
+  - The functionality should be the same
+  - New CMT detection and tarfile creation for Panda
+  - New Athena.athena_compile variable
+  - prepare(athena_compile=True/False) is obsolete  
+* renamed original method prepare() to prepare_old()
+* dependent now on panda-client external 
+* Fix for bug #49529: outputdata.retrieve() should be working
+  correctly again.
+* Fix for bug #49337: PYTHONPATH cmt setup problem in 15.0.0
+  should be solved now.
+* Add dq2clients version in Atlas.ini again
+* Introduce correct job statistic collection for Panda backend
+* Fix bug #49365: AtlasLCGRequirements().list_clouds() can now be
+  called several times.
+* Fix bug #47581: Adding a PoolFileCatalog to the input sandbox 
+  now skips the generation of it during the job
+* Fix bug #48446: Removed the additional newline for completed 
+  DQ2OutputDatasets to allow the XML repository to work
+* FileStager:
+  - fall back to lcgcp if trials with local protocol were all failed 
+  - resolve the transfer protocol based on the SE name associated 
+    with the DQ2 site id instead of using close SE
+* Fix bug #46825: Improve error message in case of existing output
+  dataset (DQ2OutputDataset)
+* Fix bug #49823: proper setup for local DB
+
+AthenaMC:
+---------
+Major update in migration of code from the RT Handler(s) to the 
+application class, AthenaMC.py:
+* AthenaMC.py: added two new classes, configure() and master_configure(), 
+  which are effectively preparing data before the RT Handler kicks in.
+  - master_configure() performs basic checks on user data, prepares master 
+    job level data (input datasets names and locations, output dataset names)
+  - configure() prepares subjob level data, I/O file names, partitions, 
+    transforms parameters.
+* AthenaMC RTHandlers just read back the information predigested 
+  by AthenaMC.py and fill their respective job formats, do the brokering 
+  based on input data information (and the user's wishes if any) and prepare 
+  only backend related information. 
+
+Tasks:
+-----
+* Added input/outputsandboxes to Task Transforms
+* Changes because of changed behaviour of AthenaMC
+
+scripts:
+-------
+* Usage of new prepare() method
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor bug fixes, along w/ some improvement on proxy checking.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+* Minor fix for ArgSplitter and executable application
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+5.2.0 brings large changes to Panda backend. Because of changes to the schema, jobs with the Panda
+backend are not compatible with previous releases (i.e. jobs created with 5.1.x cannot be loaded in
+5.2.0, and vice versa).
+
+See https://twiki.cern.ch/twiki/bin/view/Atlas/GangaShortTutorial5 for updated recipes to use the
+Panda backend. 
+
+Notably, ara, dbrelease, and supStream are no longer Panda backend properties; use the fields in
+Athena to achieve the same.
+
+Other notable changes include:
+  - Athena env and I/O detection now handled by PandaClient::AthenaUtils (via GangaAtlas::Athena)
+  - Panda backend now works with Athena, AthenaMC, and Executable applications
+  - Panda backend schema changed to 2.0:
+     - removed fields related to I/O detection (they are in Athena now)
+     - added JobSpec for every subjob
+  - libDS support (to reuse compiled code for subsequent submissions)
+  - get_stats() function to compute events/sec, cpu/walltime, and other metrics
+  - With all athena info now stored in the ganga job, copy() and submit() now works without Athena setup
+  - more configuration options for 'processingType', etc...
+  - Multiple test cases for Executable, Athena, and ARA added.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+fixed integer conversion
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTutorial
+--------------------------------------------------------------------------------------------------------------
+Fixed GPI export. 
+Added PI example. 
+RTHandler for PrimeFactorizer on NorduGrid is added but disabled (does not work yet).
+
+**************************************************************************************************************

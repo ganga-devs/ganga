@@ -1,0 +1,119 @@
+**************************************************************************************************************
+5.5.11 (2010/8/4)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Repository fixes.
+Prototype of a web-based GUI: --webgui
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* improve the CREAM CE selection algorithm:
+- option 1: manual j.backend.CE specification
+- option 2: using j.backend.requirements.getce() function if it's available
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Introduction of Athena.atlas_exetype='EXE' for Panda backend
+* Enable CREAM backend for Athena application and 
+  introduce AtlasCREAMRequirements - this is for advanced users
+  Use it with e.g.
+  j.backend=CREAM()
+  j.backend.requirements=AtlasCREAMRequirements()
+  j.backend.requirements.sites=['SARA-MATRIX_DATADISK']
+  or
+  j.backend=CREAM()
+  j.backend.CE='creamce.gina.sara.nl:8443/cream-pbs-short'
+* Add improved Frontier + ATLAS_POOLCOND_PATH printout and failover
+  for Local/Batch/LCG/CREAM and Add conditions data setup for NAF SGE
+* Add additional fail-over of AtlasOutputDataset stage-out and 
+  add return code on Local/Batch backend
+* Parse AthSummary.txt in Local/Batch/LCG/CREAM if available for 
+  numevents and input file info
+* Fix for bug #70403: dbrelease='LATEST' should not affect AnaTask anymore 
+* Fix bug #70732: Detection of Athena run configuration is taking 
+  into account now Athena.options during prepare() call
+* Fix bug #70477: datasetname of DQ2OutputDataset had a trailing 
+  site name in rare cases
+* Fix bug #70646: Add additional INFO message during tarball creation
+* Fix bug #70510: atlas_environment was overriden if atlas_dbrelease was 
+  set on job submission
+* Fix bug #62413: Use pool_insertFileToCatalog.py for ATLASLocalDataset
+  and add fail-overs
+* Add ls statement at end of Local/Batch job
+* Remove prepare_old warning
+* Add maximum allowed compile jobs on LCG/CREAM via 
+  config.Athena.MaxJobsDQ2JobSplitterLCGCompile
+* Disable DQ2_COPY mode on LCG/CREAM backend
+* Add default montioring hooks for Athena/LCG and Athena/CREAM
+* Apply 180 character output filename limit for Athena Local/LCG/CREAM jobs
+* Add config.DQ2.OUTPUTDATASET_LIFETIME to set the maximum lifetime of a
+  DQ2OutputDataset replica
+* Fix pybin mechanism to accidentally pick-up python 2.6 in Athena/LCG/CREAM/Local
+* Allow _ in config.DQ2.OUTPUTDATASET_LIFETIME to be used for spaces, e.g. 5_days 	
+
+AthenaMC:
+---------
+* Add frontier/squid + ATLAS_POOLCOND_PATH setup in
+  setup-release.sh
+
+scripts:
+--------
+* Add options --noblacklist, --collectstats, --batchextraopts, --cream
+  --bexec
+* Update --atlas_exe
+* Allow , and : for --outputdata
+
+externals:
+----------
+* Update to panda-client version 0.2.71
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+* referenced JEM bumped to 0.3.0.8 (minor fixes)
+* quick fix for JEM bug #66 (backend.actualCE not available in all backends)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor features and bug fixes.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Introduce Athena.atlas_exetype='EXE' and backend.bexec for Athena
+  on Panda
+  Run your compiled ROOT code on Panda with:
+   j.application=Athena()
+   j.application.atlas_exetype='EXE'
+   j.application.option_file='myROOTExe'
+   j.application.prepare()
+   ...
+   j.backend=Panda()
+   j.backend.bexec='cppmake.sh'
+   ...
+   or:
+   ganga athena --inDS somedataset --outputdata myROOTtuple.root --split 2 \
+     --athena_exe EXE --bexec cppmake.sh --panda myROOTExe
+
+* Fix bug #70696: Jobs killed by Panda can be resubmitted now
+* Fix bug #70732: Detection of Athena run configuration is taking 
+  into account now Athena.options during prepare() call
+* Add chirp config to logfile of build job
+* Add config.DQ2.OUTPUTDATASET_LIFETIME to set the maximum DQ2OutputDataset
+  lifetime
+* Update to panda-clients 0.2.71
+
+**************************************************************************************************************

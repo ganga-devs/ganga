@@ -1,0 +1,112 @@
+**************************************************************************************************************
+5.5.0 (2010/2/13)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+timestamps support merged in from the branch
+
+changes in job.clean() interface
+
+added critical-flag to GangaThread. threads not marked critical are aborted silently on shutdown
+after a 5 seconds wait.
+
+merged from trunk at the time of 5.4.2 release.
+merged from trunk at the time of 5.4.4-pre (including MSG usage monitoring)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Sync trunk with XMLMigration branch - GangaAtlas-21-42 - Ganga 5.4.5
+
+Athena:
+* Add Caching code - DQ2JobSplitter DQ2 calls are now cache for 
+  submission speed-up
+* Add clean_duplicates_in_dataset routine to DQ2OutputDataset for LCG
+  backend - can be enabled with
+  config.DQ2.CHECK_OUTPUT_DUPLICATES=True
+  If a shadow retry is done by glite WMS the output files of particular
+  dataset can be duplicated - a clean-up can be done if 
+  config.DQ2.CHECK_OUTPUT_DUPLICATES=True is used before job completion.
+  A trash dataset is created with the duplicates and can be automatically
+  be deleted with config.DQ2.DELETE_DUPLICATES_DATASET=True
+* Add AtlasLCGRequirements.list_release_blacklist() and black-list 
+  release warning in AthenaLCGRTHandler.py for Athena/LCG
+* move pandatools.Client import into functions that use it. This 
+  prevents ganga startup blockage if the panda server is down.
+* Fix PhysicsAnalysis submission tag
+
+*NEW*: AMIDataset:
+A new dataset based on Atlas metadata  has been added into Ganga. 
+This dataset is known as AMIDataset.  User can use logicalDatasetName 
+pattern for querying datasets from AMI. For job splitting, AMIDataset 
+support all the features of DQ2JobSplitter. It is necessary to set Athena 
+environment before using the AMIDataset.
+
+There exist  interfaces for querying metadata of datasets and its files.  
+These interface known as "get_datasets_metadata"  and "get_files_metadata" 
+respectively.  The interface  returns a list of dictionaries.  Each entry 
+in the list corresponds to metadata of the datasets or files. The interface 
+"get_files_metadata" takes  a boolean  argument "all".  If 'all=True', then 
+it returns  all the values of files metadata present in AMI. Otherwise, it 
+returns file name, guid and number of events in file.   By default value 
+of 'all' is 'False'.
+
+Following is a sample job submission script which uses AMIDataset:
+j = Job()
+j.application = Athena()
+j.application.option_file = 'AnalysisSkeleton_topOptions.py'
+j.application.athena_compile = False
+j.application.prepare()
+j.inputdata = AMIDataset()
+j.inputdata.logicalDatasetName = "%09_900GeV.00140541.physics_MinBias.merge.AOD.f175_m27%"
+j.outputdata=DQ2OutputDataset()
+j.outputdata.outputdata=['AnalysisSkeleton.aan.root']
+j.backend=LCG()
+j.backend.requirements=AtlasLCGRequirements()
+j.backend.requirements.cloud = 'DE'
+j.splitter = DQ2JobSplitter()
+j.splitter.numsubjobs = 5
+j.submit()
+
+
+externals:
+* Update to DQ2Clients 0.1.32
+* Update to panda-client 0.2.12
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGUI
+--------------------------------------------------------------------------------------------------------------
+Update pyqt library
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+Added a stomp data transfer mode to JEM allowing to receive realtime data everywhere by using CERN's
+gridmsg-servers as broker.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Version 5.4.5 ported to the new repository.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Send cmtConfig from local environment. Jobs processing athena >= 15.6.3 need 
+  to be submitted from slc5.
+* Update to panda-client 0.2.12'
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+use jobs.clean() for hard cleanup
+
+**************************************************************************************************************

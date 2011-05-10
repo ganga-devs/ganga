@@ -1,0 +1,146 @@
+#!/usr/bin/env python2
+#-*- python -*-
+
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: ganga-checkout,v 1.2 2009-02-05 07:28:24 gangage Exp $
+################################################################################
+
+import os,sys
+import getopt
+
+def usage():
+    print '''
+usage: ganga-checkout [-d CVSROOT] [-f PACKAGES|-v VERSION] [--platf=slc4_ia32_gcc34] [--export|--checkout] topdir
+
+Checkout ganga release as defined in the PACKAGES file to the topdir. This is the release helper tool.
+
+Exactly one option -f PACKAGES or -v VERSION must be provided:
+
+ -f refers to the existing PACKAGES file
+ -v first checks out the ganga/release/PACKAGES-$VERSION from CVS HEAD
+
+--platf option is currently not used
+'''
+
+dryrun = 0
+cvscmd = 'co'
+cvsroot = ':gserver:isscvs.cern.ch:/local/reps/ganga'
+platf = 'slc4_ia32_gcc34'
+
+def shellcmd(cmd):
+    print 'doing:',cmd
+    if not dryrun:
+        if os.system(cmd):
+            print 'error doing: ',cmd
+            sys.exit(1)
+        
+def export_tags(tagfile,exact=0):
+
+    print 'exporting tags from file',tagfile
+    
+    tags = []
+
+    for x in file(tagfile).readlines():
+        body = x.split('#')[0].strip()
+        if body == '':
+          continue
+        tags.append(body.split())
+
+    
+    for t in tags:
+        print t
+        if len(t) > 2 and not exact:
+            module_opt = '-d '+t[2]
+            targetdir=t[2]
+        else:
+            module_opt = ''
+            targetdir=t[0]
+
+	shellcmd('rm -rf '+targetdir)
+                  
+        cmd = 'cvs -d %s %s -r %s %s %s' %(cvsroot,cvscmd,t[1],module_opt,t[0])
+        shellcmd(cmd)
+        
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "d:v:f:", ["export","checkout","cvsroot=",'platf='])
+except getopt.error, x:
+    print "command line syntax error"
+    usage()
+    sys.exit(2)
+
+version = None
+pfile = None
+
+try:
+    topdir = args[0]
+
+except IndexError:
+    usage()
+    sys.exit(2)
+
+
+for o,a in opts:
+    if o == '--export':
+        cvscmd = 'export'
+
+    if o == '--checkout':
+        cvscmd = 'co'
+
+    if o in('--cvsroot','-d'):
+        cvsroot = a
+        
+    if o == '--platf':
+        platf = a
+
+    if o == '-v':
+        version = a
+
+    if o == '-f':
+        pfile = a
+
+if pfile and version or (not pfile and not version):
+    print 'ERROR: specified EITHER version OR PACKAGES file, exactly one of these options!'
+    sys.exit(1)
+
+os.environ['PATH'] += ':'+sys.path[0]
+
+topdir = os.path.realpath(topdir)
+os.chdir(topdir)
+
+format = { 'cvsroot' : cvsroot, 'cvscmd' : cvscmd,
+           'platf' : platf, 'version':version, 'exopt' : '' }
+
+# when exporting config one needs to use -D now because config files are not tagged...
+if cvscmd == 'export':
+    format['exopt'] = '-D now'
+
+if version == 'HEAD':
+    print '...checking out the HEAD...'
+    cmd = 'cvs -d %(cvsroot)s %(cvscmd)s %(exopt)s ganga' % format
+    shellcmd(cmd)
+    sys.exit(0)
+
+if version is None:
+    tagfiles = [pfile]
+else:
+    tagfiles = ["ganga/release/config/PACKAGES-%(version)s" % format]
+    #extracheckouts = ["ganga/release/ReleaseNotes"]
+    extracheckouts = ["ganga/release/ReleaseNotes-%(version)s" % format]    	
+    cmd = 'cvs -d %(cvsroot)s %(cvscmd)s %(exopt)s ' % format + reduce(lambda x,y: x+' '+y, tagfiles+extracheckouts)
+    shellcmd(cmd)
+
+for f in tagfiles:
+    export_tags(f)
+
+# updated: if ganga/ top dir has any files (as it's case now: LICENSE_GPL and README) and it's tagged
+# the release/config/PACKAGES-<version> and release/ReleaseNotes-<version> files have to be re-checked out
+# since they are removed when ganga/ dir is updated
+if version:
+    print ' Checking out the release notes '
+    tagfiles = ["ganga/release/config/PACKAGES-%(version)s" % format]
+    extracheckouts = ["ganga/release/ReleaseNotes-%(version)s" % format]
+    cmd = 'cvs -d %(cvsroot)s %(cvscmd)s %(exopt)s ' % format + reduce(lambda x,y: x+' '+y, tagfiles+extracheckouts)
+    shellcmd(cmd)

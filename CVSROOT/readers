@@ -1,0 +1,6 @@
+# In order to enable anonymous read-only access, uncomment 
+# the line below and the line in passwd file.
+
+anonymous
+
+# Don't forget to put a newline after the last user.

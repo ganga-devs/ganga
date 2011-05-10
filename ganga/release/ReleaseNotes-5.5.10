@@ -1,0 +1,83 @@
+**************************************************************************************************************
+5.5.10 (2010/7/14)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- added CREAM RThandler for Executable jobs
+- bugfix #69715: traceback "raise Error" in WNSandbox.py
+- bugfix #69718: traceback in TestShell.py
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Fix bug #69040: register outputs to same path as dq2 in DQ2OutputDataset 
+  in LCG and Batch backends
+* Enforce usage nickname in DQ2OutputDataset 
+* Ganga supports event based splitting for job submission on the Panda or LCG backend.
+  It is being supported  for AMIDataset.  If the number of events are not available in 
+  AMI, then ganga will ask this information from the user at job submission time. 
+  User can also specify the number of events in a dataset in their job submission file.  
+  Ganga job submission file for event based splitting looks like
+  +++++++++++++++++++++++++++++++++++++
+  j = Job()
+  j.application = Athena()
+  j.application.option_file = 'AnalysisSkeleton_topOptions.py'
+  j.application.athena_compile = False
+  j.application.prepare()
+  j.inputdata = AMIDataset()
+  j.inputdata.logicalDatasetName = "data10_7TeV.00154793.physics_MinBias.recon.ESD.f255"
+  j.outputdata=DQ2OutputDataset()
+  j.outputdata.outputdata=['AnalysisSkeleton.aan.root']
+  j.backend=LCG()
+  j.backend.requirements=AtlasLCGRequirements()
+  j.backend.requirements.cloud = 'ALL'
+  # or use j.backend=Panda() 
+  j.splitter = DQ2JobSplitter()
+  j.splitter.numevtsperjob = 100
+  #If dataset don't has event information in AMI, uncomment the following line
+  #j.splitter.numevtsperfile = 300
+  j.submit()
+  +++++++++++++++++++++++++++++++++++++
+* Add config.Athena.CMTCONFIG='i686-slc5-gcc43-opt' as default for LCG and Batch backend
+* athena_utility.sh: Fixed a problem with Athena Production releases and runtime_setup
+* set Athena.atlas_dbrelease default value to 'LATEST'
+
+AthenaMC:
+---------
+* Fix bug #69040: Moving to new dq2 logical path convention
+
+externals:
+----------
+* Update to panda-client version 0.2.60
+* Add AMI externals: zsi, 4Suite, pyAMI
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+Updated to JEM 0.3.0.7 - changes:
+- fixed location information resolving in BashMonitor
+- fixed: Subscribing to wrong JobID for splitjobs in legacy StompServer
+- fixed import error when pyQT is not available.
+- fixed nasty showstopper bug in StompValve
+- PythonMonitor now logs local/global vars of callee in call and return events, as well as primitive
+and aggregated return values
+- small fixes
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Enable event based job splitting together with GangaAtlas/Athena 
+  application
+* Add config.Panda.chirpconfig 
+  If this variable is set logfiles and output smaller than 50MB
+  is additionally staged-out to a chirp area
+* Update to panda-client 0.2.60
+
+**************************************************************************************************************

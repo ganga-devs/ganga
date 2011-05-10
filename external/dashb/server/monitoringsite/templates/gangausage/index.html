@@ -1,0 +1,310 @@
+{% extends "gangausage/master.html" %}
+
+{% block chartsBlock %}
+
+	    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}gangausage/css/style.css" />
+   	    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}gangausage/css/jquery-ui-1.8.custom.css" />
+	 
+	    <script type="text/javascript" src="{{ MEDIA_URL }}gangausage/js/jquery-1.4.min.js"></script>
+	    <script type="text/javascript" src="{{ MEDIA_URL }}gangausage/js/scripts.js"></script>
+	    <script type="text/javascript" src="{{ MEDIA_URL }}gangausage/js/jquery-ui-1.8.custom.min.js"></script>
+
+<h3 style="width:500px;">Ganga Usage Statistics
+    </h3>
+{% if sessions %}
+    <ul>    
+    <p style="display:none;">
+      There were {{nusers}} unique users from {{startdate}}</br> to {{enddate}}, starting Ganga {{nsessions}} times.
+      </p>
+    <img style="width:500px;" src="{{ version_piechart_url }}"></img>
+    <p>
+    <img style="width:500px;" src="{{ session_type_piechart_url }}"></img>
+    <p>
+    <img style="width:500px;" src="{{ experiments_piechart_url }}"></img>
+    </ul>
+    
+{% else %}
+    <p>No sessions are available.</p>
+{% endif %}
+
+{% endblock %}
+
+
+{% block nonCernInstallations %}
+<ul>
+	<h3>Ganga installations</h3>
+	{% if non_cern_installations %}
+	<p>Ganga Sessions of Non-CERN Ganga sites</p>
+	<img style="width:500px;" src="{{ non_cern_installations_url }}"></img>
+	<img style="width:500px;" src="{{ non_cern_installations_country_url }}"></img>
+	<p>CERN/Non-CERN Ganga installations</p>
+	<img style="width:500px;" src="{{ ganga_installations_percentage_url }}"></img>
+
+	{% else %}
+		<p>No Ganga installations are available.</p>
+	{% endif %}	
+    </ul>		
+{% endblock %}
+
+{% block nonCernInstallationsUsers %}
+<ul>
+	<h3>Ganga Users</h3>
+	{% if non_cern_installations %}
+	<p>Unique Users of Non-CERN Ganga sites</p>
+	<img style="width:500px;" src="{{ non_cern_installations_users_url }}"></img>
+	<img style="width:500px;" src="{{ non_cern_installations_country_users_url }}"></img>
+	<p>CERN/Non-CERN Ganga users</p>
+	<img style="width:500px;" src="{{ ganga_installations_users_percentage_url }}"></img>
+	{% else %}
+		<p>No users are available.</p>
+	{% endif %}	
+    </ul>		
+{% endblock %}
+
+{% block jobSubmissionDistribution %}
+<ul>
+	<h3>Job Submission Distribution</h3>
+
+	{% if job_submission_distribution %}
+
+		<div style="float:left;">
+			<p>Job submission distrubution by type of job</p>
+			<img style="width:500px;" src="{{ job_submission_distribution_url }}"></img>
+			<p>Number of jobs submitted by application</p>
+			<img style="width:500px;" src="{{ job_submission_by_application_url }}"></img>
+			<p>Number of jobs submitted by backend</p>
+			<img style="width:500px;" src="{{ job_submission_by_backend_url }}"></img>	
+		</div>
+	
+		<div style="float:left; width:500px;">
+			<p>Number of jobs submitted by Non-CERN Ganga sites</p>
+			<img style="width:500px;" src="{{ job_submission_by_site_url }}"></img>
+			<p>&nbsp;</p>
+			<img style="width:500px;" src="{{ job_submission_by_country_url }}"></img>
+			<p>CERN/Non CERN job submissions</p>
+			<img style="width:500px;" src="{{ job_submission_cern_non_cern_url }}"></img>
+		</div>
+
+	{% else %}
+		<p>No job submissions are available.</p>
+	{% endif %}	
+    </ul>		
+{% endblock %}
+
+
+
+{% block usersSessions %}
+<h3>Users Sessions</h3>
+{% if versionsUsersCount %}
+<p>Unique users per version</p>
+<img style="width:500px;" src="{{ versions_users_url }}"></img>
+{% else %}
+<p>No unique users per version</p>
+{% endif %}
+{% if sessionTypesUsersCount %}
+</br>
+<p>Unique users per session type</p>
+<img style="width:500px;" src="{{ session_types_users_url }}"></img>
+{% else %}
+<p>No unique users per session type</p>
+{% endif %}
+{% if experimentUsersCount %}
+<p>Unique users per experiment</p>
+<img style="width:500px;" src="{{ experiment_users_url }}"></img>
+{% else %}
+<p>No unique users per experiment</p>
+{% endif %}
+<!--<p>Non-CERN users</p>
+<img style="width:500px;" src="{{ non_cern_users_sessions_url }}"></img>
+<p>CERN users</p>
+<img style="width:500px;" src="{{ cern_users_sessions_url }}"></img>-->
+{% endblock %}
+
+
+{% block uniqueUsersPerPeriod %}
+<!--
+<ul>
+	<h3>Unique users per {{timePeriod}}</h3>
+   	{% if max_value_unique_users %}
+	<img src="{{ unique_users_period_url }}"></img>
+	{% else %}
+		<p>No unique users are available.</p>
+	{% endif %}	
+    </ul>		
+-->
+{% endblock %}
+
+
+{% block uniqueUsersPerPeriodAndExperiment %}
+<div style="clear:both;"></div>
+<!--<div style="display:none;">-->
+<ul>
+	<h3>Unique users by {{timePeriod}} and experiment</h3>
+   	{% if max_value_users %}
+	<img src="{{ users_per_period_and_experiment_url }}"></img>
+	<br/>
+	<div style="float:left; width:250px;">
+		<img style="border:10px solid; border-color:{{colorsUsersByExperiment.0}}" width="1" height="1" ></img>&nbsp;&nbsp;
+		<span style="width:250px;">Atlas</span>
+		<br/>
+		<img style="border:10px solid; border-color:{{colorsUsersByExperiment.1}}" width="1" height="1" ></img>&nbsp;&nbsp;
+		<span style="width:250px;">LHCb</span>	
+		</br>
+		<img style="border:10px solid; border-color:{{colorsUsersByExperiment.2}}" width="1" height="1" ></img>&nbsp;&nbsp;
+		<span style="width:250px;">other</span>
+		</br>
+	</div>
+	<div style="clear:both;"></div>
+	{% else %}
+		<p>No unique users by {{timePeriod}} and experiment are available.</p>
+	{% endif %}	
+    </ul>		
+<!--</div>-->
+{% endblock %}
+
+{% block SessionsByPeriodAndDomain %}
+<ul>
+	<div style="float:left;">	
+		<h3>Ganga sessions by {{timePeriod}} and domain</h3>
+		{% if max_value_sessions %}
+		<img src="{{ sessions_period_and_domain }}"></img>
+		<br/>
+		<div style="float:left; width:250px;">
+			<img style="border:10px solid; border-color:{{colorsSessionsByDomain.0}}" width="1" height="1" ></img>&nbsp;&nbsp;
+			<span style="width:250px;">{{ domains.0 }}</span>
+			<br/>
+			<img style="border:10px solid; border-color:{{colorsSessionsByDomain.1}}" width="1" height="1" ></img>&nbsp;&nbsp;
+			<span style="width:250px;">{{ domains.1 }}</span>	
+			</br>
+			<img style="border:10px solid; border-color:{{colorsSessionsByDomain.2}}" width="1" height="1" ></img>&nbsp;&nbsp;
+			<span style="width:250px;">{{ domains.2 }}</span>
+			</br>
+		</div>
+		<div style="float:left">
+			<img style="border:10px solid; border-color:{{colorsSessionsByDomain.3}}" width="1" height="1" ></img>&nbsp;&nbsp;
+			<span>{{ domains.3 }}</span>
+			<br/>
+			<img style="border:10px solid; border-color:{{colorsSessionsByDomain.4}}" width="1" height="1" ></img>&nbsp;&nbsp;
+			<span>{{ domains.4 }}</span>
+			<br/>
+			<img style="border:10px solid; border-color:{{colorsSessionsByDomain.5}}" width="1" height="1" ></img>&nbsp;&nbsp;
+			<span>{{ domains.5 }}</span>
+		</div>
+
+		{% else %}
+		<p>No sessions by {{timePeriod}} and domain are available.</p>
+		{% endif %}		
+	</div>
+</ul>		
+{% endblock %}
+
+{% block SessionVersionsByPeriodFixed %}
+<!--
+</br>
+<div style="clear:both;"></div>
+<ul>
+	<div style="float:left;">	
+		<h3>Ganga session versions by {{timePeriod}}</h3>
+		{% if max_value_sessions %}
+		<img src="{{ session_versions_period_fixed }}"></img>
+		<br/>
+		<div style="float:left; width:250px;">
+			<img style="border:10px solid; border-color:{{colorsSessionVersionsFixed.0}}" width="1" height="1" ></img>&nbsp;&nbsp;
+			<span style="width:250px;">versions 5.5.x</span>
+			<br/>
+			<img style="border:10px solid; border-color:{{colorsSessionVersionsFixed.1}}" width="1" height="1" ></img>&nbsp;&nbsp;
+			<span style="width:250px;">older versions</span>	
+			</br>
+			<img style="border:10px solid; border-color:{{colorsSessionVersionsFixed.2}}" width="1" height="1" ></img>&nbsp;&nbsp;
+			<span style="width:250px;">development versions</span>
+			</br>
+		</div>
+		<div style="clear:both;"></div>
+		{% else %}
+		<p>No sessions by {{timePeriod}} and domain are available.</p>
+		{% endif %}		
+	</div>
+</ul>	
+-->
+{% endblock %}
+
+{% block SessionVersionsByPeriod %}
+</br>
+<div style="clear:both;"></div>
+<ul>
+	<div style="float:left;">	
+		<h3>Ganga session versions by {{timePeriod}}</h3>
+		{% if max_value_sessions %}
+		<img src="{{ session_versions_period }}"></img>
+		<br/>
+		<div style="float:left; width:250px;">
+			{% if versionList.0 %}
+				<img style="border:10px solid; border-color:{{colorsSessionVersions.0}}" width="1" height="1" ></img>&nbsp;&nbsp;
+				<span style="width:250px;">{{ versionList.0 }}</span>
+				<br/>
+			{% endif %}
+			{% if versionList.1 %}
+				<img style="border:10px solid; border-color:{{colorsSessionVersions.1}}" width="1" height="1" ></img>&nbsp;&nbsp;
+				<span style="width:250px;">{{ versionList.1 }}</span>	
+				</br>
+			{% endif %}
+			{% if versionList.2 %}
+	
+				<img style="border:10px solid; border-color:{{colorsSessionVersions.2}}" width="1" height="1" ></img>&nbsp;&nbsp;
+				<span style="width:250px;">{{ versionList.2 }}</span>
+				</br>
+			{% endif %}
+		</div>
+		<div style="float:left">
+			{% if versionList.3 %}
+				<img style="border:10px solid; border-color:{{colorsSessionVersions.3}}" width="1" height="1" ></img>&nbsp;&nbsp;
+				<span>{{ versionList.3 }}</span>
+				<br/>
+			{% endif %}
+			{% if versionList.4 %}
+				<img style="border:10px solid; border-color:{{colorsSessionVersions.4}}" width="1" height="1" ></img>&nbsp;&nbsp;
+				<span>{{ versionList.4 }}</span>
+				<br/>
+			{% endif %}
+			{% if versionList.5 %}
+				<img style="border:10px solid; border-color:{{colorsSessionVersions.5}}" width="1" height="1" ></img>&nbsp;&nbsp;
+				<span>{{ versionList.5 }}</span>
+			{% endif %}
+		</div>
+
+		<div style="clear:both;"></div>
+		{% else %}
+		<p>No sessions by {{timePeriod}} and domain are available.</p>
+		{% endif %}		
+	</div>
+</ul>		
+{% endblock %}
+
+
+{% block JobSubmissionDistributionByPeriod %}
+<div style="clear:both;"></div>
+<ul>
+	<h3>Job submission distribution by {{timePeriod}}</h3>
+   	{% if max_value_submitted_jobs %}
+	<img src="{{ job_submission_distribution_by_period_url }}"></img>
+	<br/>
+	<div style="float:left; width:250px;">
+		<img style="border:10px solid; border-color:{{colorsSubmittedJobs.0}}" width="1" height="1" ></img>&nbsp;&nbsp;
+		<span style="width:250px;">Non-Split Jobs</span>
+		<br/>
+		<img style="border:10px solid; border-color:{{colorsSubmittedJobs.1}}" width="1" height="1" ></img>&nbsp;&nbsp;
+		<span style="width:250px;">Master Jobs</span>	
+		</br>
+		<img style="border:10px solid; border-color:{{colorsSubmittedJobs.2}}" width="1" height="1" ></img>&nbsp;&nbsp;
+		<span style="width:250px;">Sub Jobs</span>
+		</br>
+	</div>
+	<div style="clear:both;"></div>
+	{% else %}
+		<p>No submitted jobs by {{timePeriod}} are available.</p>
+	{% endif %}	
+    </ul>		
+{% endblock %}
+
+
+

@@ -1,0 +1,194 @@
+<html>
+<head>
+	    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	    <title>Ganga Monitoring System</title>
+		
+	    <script type="text/javascript">	
+	        function moveToLastDays(numberDays)
+		{
+			experiment = document.getElementById('qsExperiment')
+			
+			str = "" + window.location;
+			index = str.indexOf("/usage") + 6;
+			firstPartUrl = str.substring(0, index)
+
+			var today = new Date();
+  			var days_ago = new Date(today.getTime()-(numberDays-1)*24*60*60*1000);
+	
+			//pattern = "?f_d_month=MM&f_d_day=DD&f_d_year=YY&t_d_month=0&t_d_day=0&t_d_year=0&e=EE"
+			pattern = "?from_date=YY-MM-DD&e=EE"
+
+			pattern = pattern.replace("MM", days_ago.getMonth() + 1)
+			pattern = pattern.replace("YY", days_ago.getFullYear())	
+			pattern = pattern.replace("DD", days_ago.getDate())
+			pattern = pattern.replace("EE", experiment.value)
+			
+			window.location = firstPartUrl + pattern
+		}
+
+		function makeShortMonths(element)
+		{
+			element.options[1].text = 'Jan'
+			element.options[2].text = 'Feb'
+			element.options[3].text = 'Mar'
+			element.options[4].text = 'Apr'
+			element.options[5].text = 'May'
+			element.options[6].text = 'June'
+			element.options[7].text = 'July'
+			element.options[8].text = 'Aug'
+			element.options[9].text = 'Sep'
+			element.options[10].text = 'Oct'
+			element.options[11].text = 'Nov'
+			element.options[12].text = 'Dec'
+			
+		}
+
+		function form_load()
+		{
+			from_month = document.getElementById('id_f_d_month');
+			to_month = document.getElementById('id_t_d_month');
+
+			// Activate datepicker
+        		$('#id_from_date, #id_to_date').datepicker({
+            			dateFormat: 'yy-mm-dd',
+				changeMonth: true,
+				changeYear: true
+				});
+		}
+	
+
+	    </script>
+	
+	    <style>
+	    #id_from_date, #id_to_date
+	    {
+	    	width:100px;
+	    }
+	    </style>	
+
+</head>
+<body onload="form_load();">
+
+<div class="header" style="height:90px; border:1px solid black;">
+	</br>
+	<div id="periodLinks" style="float:left; width:211px;">
+		<span style="color:#696666">Quick search</span>
+		<select id="qsExperiment">
+			<option value="-">-----</option>
+			<option value="atl">Atlas</option>
+			<option value="lhc">LHCb</option>
+			<option value="oth">Other</option>
+		</select>
+		</br>	
+		<a href="#" onclick="moveToLastDays(1);">Last day</a> &nbsp;&nbsp;
+		<a href="#" onclick="moveToLastDays(7);">Last week</a>&nbsp;&nbsp;
+		<a href="#" onclick="moveToLastDays(31);">Last month</a>&nbsp;&nbsp;
+	</div>
+
+	<div style="float:left; position:relative; left:20px;">
+		<span style="color:#696666">Advanced search</span>
+		<span style="position:absolute; top:0px; left:120px; color:red; display:{{display_error_from_date}};">From date should be in the past</span>
+		<span style="position:absolute; top:0px; left:120px; color:red; display:{{display_error_to_date_less_than_from_date}};">To date should be greater than from date</span>
+		</br>
+<!--		<form action="{--% url monitoringsite.gangausage.current%--}" method="get"> -->
+                <form action="usage" method="get">
+			{{ form.as_table }}
+		<input style="position:absolute; top:16px; left:410px;" type="submit" value="Show statistics" />
+		</form>
+	</div>
+</div>
+</br>
+<div class="general-summary">
+	<b>
+		<div style="position:relative; left:40px; float:left; width:300px;">
+        		From: {{startdate}}
+	 		</br></br>
+			Total number sessions:  {{nsessions}}	 	
+		</div>
+		<div style="float:left; width:250px;">
+        		To: {{enddate}}
+			</br></br>
+			Number unique users: {{nusers}}		 
+		</div>
+		<div style="float:left; width:230px;">
+			Experiment: {{experimentName}}            
+			</br></br>
+			Number of sites: {{numberSites}}             		
+		</div>
+	</b>
+	<div style="clear:both; height:20px;"></div>
+</div>
+
+<div class="container">
+	<ul class="navi">
+		<li><a href="#tab_content_1">Sessions summary</a></li>
+	        <li><a href="#tab_content_2">Users summary</a></li>
+		<li><a href="#tab_content_3">Job submission summary</a></li>
+	        <li><a href="#tab_content_4">Time charts</a></li>
+	</ul>
+	<div class="content">
+	        <div id="tab_content_1" class="single_content">
+	        	<div style="float:left;">
+
+				{% block chartsBlock %}
+				{% endblock %}
+
+		    	</div>
+		    	<div style="float:left; width:500px;">
+
+				{% block nonCernInstallations %}
+				{% endblock %}
+
+		    	</div>	
+	        </div>
+
+	        <div id="tab_content_2" class="single_content">
+			<div style="float:left;">
+				{% block usersSessions %}
+				{% endblock %}
+			</div>
+
+			<div style="float:left; width:500px;">
+
+				{% block nonCernInstallationsUsers %}
+				{% endblock %}
+
+		    	</div>	
+	
+	        </div>
+
+		<div id="tab_content_3" class="single_content">
+
+			{% block jobSubmissionDistribution %}
+			{% endblock %}
+			
+		</div>
+
+	        <div id="tab_content_4" class="single_content">
+			<div>
+				{% block uniqueUsersPerPeriod %}
+       				{% endblock %}
+
+				{% block uniqueUsersPerPeriodAndExperiment %}
+				{% endblock %}            
+
+				{% block SessionsByPeriodAndDomain %}
+				{% endblock %}  
+
+				{% block SessionVersionsByPeriodFixed %}
+				{% endblock %}   	
+
+				{% block SessionVersionsByPeriod %}
+				{% endblock %}   
+
+				{% block JobSubmissionDistributionByPeriod %}
+				{% endblock %}   
+
+			</div>
+	        </div>
+	</div>
+</div>
+
+</body>
+</html>
+

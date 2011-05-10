@@ -1,0 +1,225 @@
+<html>
+
+<head>
+	<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}cmserrorreport/css/base.css" />
+	<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}cmserrorreport/css/smoothness/jquery-ui-1.7.2.custom.css" />
+
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/lib/jquery-1.3.2.min.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/lib/jquery.dataTables.js"></script>
+	<script type="text/javascript" 
+src="{{ MEDIA_URL }}cmserrorreport/scripts/lib/jquery.dataTables.pagination.input.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/lib/jquery.json-2.1.min.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/lib/jquery-ui-1.7.2.custom.min.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/lib/jquery.ba-url.min.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/lib/jquery.gchart.min.js"></script>
+
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/lib/json2.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/lib/cache.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/lib/jquery.base64.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/settings.js"></script>
+
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/mvc/model.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/mvc/view.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}cmserrorreport/scripts/mvc/controller.js"></script>
+
+	<script type="text/javascript" language="javascript">
+    	// global cache
+    	var _table_data_cache;
+    	var _cache_client_timeout = 60;   
+
+	$(document).ready(function() {
+	_table_data_cache = new Cache(5);
+
+        $('#tabs').tabs();
+	
+	model = new Model();
+        view = new View();
+        controller = new Controller(model, view);
+        controller.initialize();
+
+	site_name = document.getElementById('site-name')
+	logo_image = document.getElementById('logo-img-ganga')
+	logo_image_egee = document.getElementById('logo-img')
+	footer = document.getElementById('footer')
+	calendar_from = document.getElementById('calendar-from')
+	calendar_till = document.getElementById('calendar-till')
+	ajaxLoading = document.getElementById('ajaxLoading')
+	loading = document.getElementById('loading')
+
+
+	//depending on the dev version or on the server path to images is slightly different
+	if (settings_DEBUG == 'True')
+	{
+		if (settings_COMMUNITY == 'Ganga')
+		{
+			logo_image.style.background = "url('../../media/gangaerrorreport/images/ganga.png') no-repeat scroll left top transparent";
+		}
+		else if (settings_COMMUNITY == 'CMS')
+		{
+			logo_image.style.background = "url('../../media/gangaerrorreport/images/cms.png') no-repeat scroll left top transparent";
+		}
+	}
+	else
+	{
+		if (settings_COMMUNITY == 'Ganga')
+		{
+			logo_image.style.background = "url('../../django_media/gangaerrorreport/images/ganga.png') no-repeat scroll left top transparent";	
+		}
+		else if (settings_COMMUNITY == 'CMS')
+		{
+			logo_image.style.background = "url('../../django_media/cmserrorreport/images/cms.png') no-repeat scroll left top transparent";
+		}
+	}
+
+	if (settings_COMMUNITY == 'Ganga')
+	{
+		site_name.childNodes[0].innerHTML = 'Ganga error reports';
+		footer.childNodes[0].innerHTML = "Ganga error reports &copy; 2010"
+
+		calendar_from.src = "{{ MEDIA_URL }}gangaerrorreport/images/calendar.gif"
+		calendar_till.src = "{{ MEDIA_URL }}gangaerrorreport/images/calendar.gif"
+		ajaxLoading.src = "{{ MEDIA_URL }}gangaerrorreport/images/ajax.gif"
+		loading.src = "{{ MEDIA_URL }}gangaerrorreport/images/loading.gif"
+
+	}
+	else if(settings_COMMUNITY == 'CMS')
+	{
+		site_name.childNodes[0].innerHTML = 'CMS error reports';	
+		logo_image.style.width = '50px';
+		logo_image_egee.style.background = "url('')";
+		footer.childNodes[0].innerHTML = "CMS error reports &copy; 2010"
+
+		calendar_from.src = "{{ MEDIA_URL }}cmserrorreport/images/calendar.gif"
+		calendar_till.src = "{{ MEDIA_URL }}cmserrorreport/images/calendar.gif"
+		ajaxLoading.src = "{{ MEDIA_URL }}cmserrorreport/images/ajax.gif"
+		loading.src = "{{ MEDIA_URL }}cmserrorreport/images/loading.gif"
+
+	}
+
+        } );
+	
+	</script>
+
+	<style>
+	#dataTable_filter
+	{
+		display:none;
+	}
+	</style>
+</head>
+
+<body>
+
+<form style="display:none" enctype="multipart/form-data" action="reports" method="post">
+{{ form.as_table }}
+<input type="submit" value="Upload file" />
+</form>
+
+<span id="download_path" style="display:none;">path:{{path}}</span>
+<div id="container">
+	<div id="main-centeriser">
+		<!-- HEADER-->
+		<div id="header">
+            		<div id="header-content">
+                		<div id="logo-img">&nbsp;</div>
+                		<div id="logo-img-ganga">&nbsp;</div>
+		                <div id="description"><p>In this application you can see ganga error reports.</p></div>
+                		<div id="site-name"><h1>Ganga error reports</h1></div>
+            		</div>
+            		<div id="belt-darken">
+                		<div id="belt-darken-transparent">&nbsp;</div>
+                		<div id="belt-darken-text" />
+            		</div>
+        	</div>
+		<!-- END HEADER -->
+
+		<!-- BLOCK/menu=BEGIN -->
+        	<div id="menu">
+            		<ul>
+                		<li>&nbsp;</li>
+            		</ul>
+        	</div>
+        	<!-- BLOCK/menu=END -->
+
+		<div id="content">
+			<div id="content-main">
+				<!-- CONTENT START-->
+
+				<div id="formFrame" class="ui-corner-all ui-widget-content ui-tabs">
+					Username: <input id="input-user" type="text" style="width:100px;" />&nbsp;&nbsp;&nbsp;&nbsp;Version: <input id="input-query" type="text" style="width:100px;" />&nbsp;&nbsp;&nbsp;&nbsp;From <img id="calendar-from" style="vertical-align:middle" alt="MM/DD/YYYY" title="MM/DD/YYYY" /> <input type="text" id="from" style="width:100px;" /> &nbsp;Till <img id="calendar-till" style="vertical-align:middle" alt="MM/DD/YYYY" title="MM/DD/YYYY" /> <input type="text" id="till" style="width:100px;" /> <input id="button-query" type="button" value="Ok" />&nbsp;
+					<img id="ajaxLoading" style="display:none; vertical-align:middle" />
+				</div>
+				<div id="tabs">
+   					<ul>
+						
+					        <li><a href="#tab1">Reports</a></li>
+					</ul>
+					<div id="tab1">	
+						<div id="tableDiv">
+
+							<table class="display" id="dataTable">
+								<thead>
+									<tr>
+										<th>Report number</th>
+										<th>Time uploaded</th>
+										<th>Username</th>
+										<th>Version</th>
+										<th>Monitoring link</th>
+										<th>Download</th>
+									</tr>
+								</thead>
+								<!--
+								{% for report in reports %}
+								<tr>
+									
+									<td>{{report.id}}</td>
+									<td>{{report.date_uploaded|date:"D d M Y H:m:s"}}</td>
+									<td>{{report.username}}</td>
+									<td>{{report.ganga_version}}</td>
+	
+
+									{% if report.get_monitoring_link %}
+    									<td><a href="{{report.get_monitoring_link}}">job monitoring</a></td>
+									{% else %}
+    									<td>&nbsp;</td>
+									{% endif %}
+
+									<td><a href="/django/errorreports/download/{{report.id}}">Download</a></td>
+
+								</tr>
+								{% endfor %}
+								-->
+								<tfoot>
+									<tr>
+										<th>Report number</th>
+										<th>Time uploaded</th>
+										<th>Username</th>
+										<th>Version</th>
+										<th>Monitoring link</th>
+										<th>Download</th>
+									</tr>
+								</tfoot>
+				
+							</table>
+							</br>
+							<div id="loadingTable">
+            							<div style="position:absolute; top:0px; left:0px; background-color:white; width:100%; height:100%; filter:alpha(opacity=60); opacity:0.6;">
+								</div>
+            							<div id="dialog" style="position:absolute; top:40px; left:0px; background-color:white; border:1px solid #BBBBBB; width:300px; height:50px;">
+									<p style="text-align:center; margin:5px">Loading Table, please wait...<br /><img id="loading" /></p>
+								</div>
+        						</div>
+						</div>
+					</div>
+				</div>
+				<div class="spacer"></div>
+				<!-- CONTENT END-->
+			</div>
+		</div>
+		<div id="footer"><p>Ganga error reports &copy; 2010</p></div>
+
+	</div>
+</div>
+<body>
+
+</html>

@@ -1,0 +1,68 @@
+**************************************************************************************************************
+5.4.4 (2010/1/19)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+ospath_fix.py : bugfix #58196
+
+usage monitoring enabled via MSG
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/MSGMS
+--------------------------------------------------------------------------------------------------------------
+Minor internal fix.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Add Caching code - DQ2JobSplitter DQ2 calls are now cache for
+  submission speed-up
+* Fix for better support of inputFilePeeker/AutoConfiguration
+  in the FILE_STAGER input mode on LCG backend
+* Local, Batch backends: Enable job statistics in Athena.stats field
+* Local, Batch backends: Fix DQ2 output dataset creation workflow
+* Local, Batch backends: Fix setting of config.DQ2.DQ2_LOCAL_SITE_ID
+* Updates for InputFilePeeker/AutoConfiguration in
+  Athena/LCG/Local/Batch:
+  - search jobOptions if InputFilePeeker/AutoConfiguration is configured
+  - use preJobO.py and prepend it to jobOptions
+  - automatically works for DQ2_LOCAL, FILE_STAGER and DQ2_COPY
+  - Work-around for rfio at DPM sites: uses short TURL since Athena
+    bug (http://savannah.cern.ch/bugs/?59253) is not solved yet.
+
+AMAAthena:
+* new workflow for setting/preparing AMAAthena application:
+  - specify framework-level AMA job option files by setting flags,
+    e.g. j.application.job_option_flags = ['DATA', 'TRIG']
+  - convert AMA configuration into user-level job options on the
+    client side
+* add necessary changes for adopting the revised StagerDataset
+* add necessary changes to adopt the revised StagerDataset
+* rewriting the StagerDataset workflow:
+  - using the same code made for DQ2Dataset(type='FILE_STAGER')
+  - adding the workaround to work with inputFilePeeker
+* include AMAAthenaTask application in the new DQ2OutputDataset workflow
+* adopts the common subroutines: filestager_setup and frontier_setup
+* introduce two common subroutines: filestager_setup and frontier_setup
+* bugfix in the function for making external system call
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+* Fixed major JEM bug preventing Athena jobs to work when monitored (JEM 0.2.6.0 now referred by
+this GangaJEM version)
+* Minor fixes
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Only a few minor features added.
+
+**************************************************************************************************************

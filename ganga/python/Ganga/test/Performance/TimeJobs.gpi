@@ -1,0 +1,67 @@
+import sys
+
+bulk = 100
+cnt = 1
+modify = 0
+psyco = 0
+
+try:
+    bulk = int(sys.argv[1])
+    cnt = int(sys.argv[2])
+    modify = int(sys.argv[3])
+    psyco = int(sys.argv[4])
+except IndexError:
+    print 'usage: time_jobs [bulk_size] [cnt] [modify] [psyco]'
+    print 'performance test: create a bulk_size number of jobs and repeat it cnt times'
+    print 'if modify is 1 then the jobs are not only created but also modified'
+    print 'if psyco==1 then psyco optimizer is used'
+    print 'defaults: bulk_size=100, cnt=1, modify=0, psyco=0'
+except ValueError:
+    print 'usage: time_jobs [bulk_size] [cnt] [modify] [psyco]'
+    print 'performance test: create a bulk_size number of jobs and repeat it cnt times'
+    print 'if modify is 1 then the jobs are not only created but also modified'
+    print 'if psyco==1 then psyco optimizer is used'
+    print 'defaults: bulk_size=100, cnt=1, modify=0, psyco=0'
+
+if psyco:
+    try:
+        import psyco
+        psyco.full()
+        print 'psyco optimization enabled'
+    except ImportError:
+        print 'psyco not found'
+    
+
+def create_job():
+    j = Job()
+    if modify:
+        j.name = 'modified'
+    return j
+
+stats = []
+
+def time_jobs(N=100):
+ import time
+ t0=time.time()
+
+ j = create_job()
+ start_id = j.id
+ 
+ for i in range(N-1):
+  j = create_job()
+
+ stop_id = j.id
+ elapsed = time.time()-t0
+ size = len(jobs)
+
+ stats.append(float(elapsed)/float(N))
+ print 'jobs: %d size: %d  %.1f seconds, %.1f seconds/job' % (N,size,elapsed,float(elapsed)/float(N))
+
+for jj in range(cnt):
+    time_jobs(bulk)
+
+mean_time = 0
+for t in stats:
+    mean_time += t
+print 'mean time per job:',mean_time/cnt
+

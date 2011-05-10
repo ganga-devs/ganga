@@ -1,0 +1,50 @@
+**************************************************************************************************************
+5.4.5 (2010/1/22)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Changed splitting algorithm to better respect the filesize constraint:
+  - The numfiles constraint is always respected.
+  - The numjobs constraint is not always respected. Depending on the 
+    dataset, you can get more or fewer jobs than expected.
+  - The filesize constraint is always respected as a limit. If a 
+    single file is larger than the limit, it will not be assigned to 
+    any job. Subjobs are packed as full as possible, meaning that we 
+    search the entire dataset for a file that will fit in the remaining 
+    space up to the target numfiles per subjob.
+  - The files are now sorted by their names, and assigned to subjobs 
+    in order.
+  - Increased MaxFileSizePandaDQ2JobSplitter and 
+    MaxFileSizeNGDQ2JobSplitter to 14336 MB. This is the limit in the 
+    Panda pilot, and indeed some data files are larger than our 
+    previous limits of 5000 and 10000 MB.
+  - More clear logging messages about how many files are in the 
+    input datasets and which files could not be assigned, if any. 
+  - Add overall dataset size to info log
+* Fix SL5 cmtconfig and setup problem in Athena/LCG
+* Fix return value of DQ2Dataset.get_content(size=True)
+* Add missing DQDatasetExistsException exception in 
+  ganga-stage-in-out-dq2.py
+AMAAthena: 
+* looking for all input files instead of files with 'root' suffix 
+  in the given local directory (e.g. the data09 AOD doesn't have 
+  .root extension)
+* bug fix in generating the input.py
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few small features added.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Send cmtConfig from local environment. Jobs processing athena >= 15.6.3 need to be submitted from 
+slc5.
+
+**************************************************************************************************************

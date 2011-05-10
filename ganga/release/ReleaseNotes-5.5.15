@@ -1,0 +1,55 @@
+**************************************************************************************************************
+5.5.15 (2010/9/16)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Support for Panda JobSets:
+  - Jobs run at multi sites if input datasets are spread across sites
+  - Output is always a container
+  - new option: j.backend.requirements.anyCloud. Default is True. 
+    Set to False if you want to limit the jobs to run in a single cloud.
+  - skip Panda env warning if only setting DBRELEASE_OVERRIDE
+
+* Only selectPandaSite for panda backend
+* Fixed a crash for Athena application if there is no inputdata
+* Athena/LCG: 
+  - Improve pool guid extraction
+  - Add AtlasSetup for athena v16
+* Add MSG monitoring hooks for AthenaTask, AMAAthena, AMAAthenaTask 
+  on LCG/CREAM'
+* Fix event picking code
+
+externals:
+----------
+* Update to DQ2Clients 0.1.35
+* Update to panda-clients 0.2.92
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Support for Panda JobSets:
+  - Jobs run at multi sites if input datasets are spread across sites
+  - Output is always a container
+  - new option: j.backend.requirements.anyCloud. Default is True. Set 
+    to False if you want to limit the jobs to run in a single cloud.
+  - skip Panda env warning if only setting DBRELEASE_OVERRIDE
+
+* suppress "Creating a build job" message when reusing libds
+* Monitor the multiple buildjobs, and set backend.libds if there is 
+  only 1 buildjob
+* Fix for "similar sites" like ANALY_CERN and ANALY_CERN_XROOTD
+* fixed athena_compile (aka nobuild) will actually remove the buildjob
+* allow brokeroff sites
+* Fixes for jobs without splitter, and jobs without input data
+
+* Support for a local build job with 
+  job.backend.libds = "LOCAL"
+
+* add multi-site test
+
+**************************************************************************************************************

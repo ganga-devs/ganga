@@ -1,0 +1,29 @@
+# Test PandaRequirements
+import GangaPanda
+from pandatools import Client
+p = Panda()
+orig_list = p.list_ddm_sites()
+
+# remove a site
+p.requirements.excluded_sites=['ANALY_BHAM']
+exc_list = p.list_ddm_sites()
+rem_list = GangaPanda.Lib.Panda.convertQueueNameToDQ2Names('ANALY_BHAM')
+if len(exc_list) != len(orig_list) - len(rem_list):
+    assert False, "Incorrect num. of sites listed after one exclusion (%d != %d - %d)" % (len(exc_list), len(orig_list), len(rem_list))
+
+# remove a cloud
+p.requirements.excluded_sites=[]
+p.requirements.excluded_clouds = ['UK']
+exc_list = p.list_ddm_sites()
+rem_list = []
+        
+for q in Client.PandaSites:
+    if Client.PandaSites[q]['cloud'] == 'UK' and Client.PandaSites[q]['status'] in ['online']:
+        tokens = GangaPanda.Lib.Panda.convertQueueNameToDQ2Names(q)
+        for t in tokens:
+            if t.find("TAPE") == -1:
+                rem_list.append(t)
+
+if len(exc_list) != len(orig_list) - len(rem_list):
+    assert False, "Incorrect num. of sites listed after cloud exclusion (%d != %d - %d)" % (len(exc_list), len(orig_list), len(rem_list))
+

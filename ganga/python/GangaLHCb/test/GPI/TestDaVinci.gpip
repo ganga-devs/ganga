@@ -1,0 +1,158 @@
+import os
+import os.path
+from os.path import join
+import tempfile
+from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
+from GangaTest.Framework.utils import is_job_finished, write_file
+
+from GangaLHCb.test import *
+
+
+import Ganga.Utility.Config
+
+def get_datafile_name():
+    return '/lhcb/MC/2008/DST/00003392/0000/00003392_00000001_5.dst'
+
+def write_data_optsfile(fname,which):
+    opts = '''
+from Gaudi.Configuration import *
+
+EventSelector().Input   = [
+"    DATAFILE='%s%s' TYP='POOL_ROOTTREE' OPT='READ'"]
+''' % (which,get_datafile_name())
+    file = open(fname,'w')
+    file.write(opts)    
+    file.close()
+
+ura = tempfile.mkdtemp()
+
+def get_topdir(app):
+    return '%s/DaVinci_%s/Tutorial/Analysis/' % (ura, app.version)
+
+def get_app_and_make_libs():
+    app = DaVinci()
+    app.user_release_area = ura
+    app.masterpackage = "Phys/DaVinci"
+
+    top_dir = get_topdir(app)
+    if not os.path.exists('%s/DaVinci_%s' % (ura, app.version)):
+        print "### Building the Libs ###"
+        app.getpack( "Tutorial/Analysis v8r0" )
+        sol_dir = '%s/solutions/DaVinci1/' % top_dir
+        os.system('cp %s/DVTutorial_1.py %s/options/.' % (sol_dir, top_dir))
+        os.system('cp %s/TutorialAlgorithm.* %s/src/.' % (sol_dir, top_dir))
+        fname = '%s/src/TutorialAlgorithm.cpp' % top_dir
+        file = open(fname,'r')
+        text = file.read()
+        file.close()
+        text = text.replace('# muons','# muons n@, Go Steelers!')
+        file = open(fname + '.tmp', 'w')
+        file.write(text)
+        file.close()
+        os.system('mv %s.tmp %s' % (fname,fname))
+        app.make()
+        # build for grid
+        native = app.platform
+        app.platform = getDiracAppPlatform()
+        app.make()
+        app.platform = native
+        os.system('touch %s/TestDaVinci.local_lfns_via_optsfile.lock' % ura)
+        os.system('touch %s/TestDaVinci.local_pfns_via_optsfile.lock' % ura)
+        os.system('touch %s/TestDaVinci.local_lfns_via_inputdata.lock' % ura)
+        os.system('touch %s/TestDaVinci.local_pfns_via_inputdata.lock' % ura)
+        os.system('touch %s/TestDaVinci.dirac_lfns_via_optsfile.lock' % ura)
+        os.system('touch %s/TestDaVinci.dirac_lfns_via_inputdata.lock' % ura)
+
+    app.optsfile = File('%s/options/DVTutorial_1.py' % top_dir)
+
+    return app
+
+def remove_ura():
+    if os.path.exists(ura+'/TestDaVinci.local_pfns_via_optsfile.lock'): return
+    if os.path.exists(ura+'/TestDaVinci.local_lfns_via_optsfile.lock'): return
+    if os.path.exists(ura+'/TestDaVinci.local_pfns_via_inputdata.lock'): return
+    if os.path.exists(ura+'/TestDaVinci.local_lfns_via_inputdata.lock'): return
+    if os.path.exists(ura+'/TestDaVinci.dirac_lfns_via_inputdata.lock'): return
+    if os.path.exists(ura+'/TestDaVinci.dirac_lfns_via_optsfile.lock'): return
+    os.system('rm -rf %s' % ura)    
+
+
+## class TestDaVinci(GangaGPITestCase):
+
+##    def setUp(self):
+##        app = get_app_and_make_libs()
+##        self.j = Job(application=app)
+##        self.top_dir = get_topdir(app)
+
+##    def test_local_pfns_via_optsfile(self):
+##        fname = '%s/options/Bs2JpsiPhi2008.PFNs.py' % self.top_dir
+##        write_data_optsfile(fname,'PFN:/castor/cern.ch/grid')
+##        self.j.application.optsfile.append(File(fname))
+##        self.j.submit()
+##        os.system('rm -f %s/TestDaVinci.local_pfns_via_optsfile.lock' % ura)
+##        remove_ura()
+##        return DaVinciJob(self.j)
+
+##    def test_local_lfns_via_optsfile(self):
+##        fname = '%s/options/Bs2JpsiPhi2008.LFNs.py' % self.top_dir
+##        write_data_optsfile(fname,'LFN:')
+##        self.j.application.optsfile.append(File(fname))
+##        self.j.submit()
+##        os.system('rm -f %s/TestDaVinci.local_lfns_via_optsfile.lock' % ura)
+##        remove_ura()
+##        return DaVinciJob(self.j)
+
+##    def test_local_pfns_inputdata(self):
+##        self.j.inputdata = ['PFN:/castor/cern.ch/grid%s' % get_datafile_name()]
+##        self.j.submit()
+##        os.system('rm -f %s/TestDaVinci.local_pfns_via_inputdata.lock' % ura)
+##        return DaVinciJob(self.j)
+
+##    def test_local_lfns_inputdata(self):
+##        self.j.inputdata = ['LFN:%s' % get_datafile_name()]
+##        self.j.submit()
+##        os.system('rm -f %s/TestDaVinci.local_lfns_via_inputdata.lock' % ura)
+##        return DaVinciJob(self.j)
+
+##    def test_dirac_lfns_via_optsfile(self):
+##        self.j.application.platform = getDiracAppPlatform()
+##        self.j.backend = Dirac()
+##        fname = '%s/options/Bs2JpsiPhi2008.LFNs.py' % self.top_dir
+##        write_data_optsfile(fname,'LFN:')
+##        self.j.application.optsfile.append(File(fname))
+##        self.j.submit()
+##        os.system('rm -f %s/TestDaVinci.dirac_lfns_via_optsfile.lock' % ura)
+##        return DaVinciJob(self.j)
+
+##    def test_dirac_lfns_inputdata(self):
+##        self.j.application.platform = getDiracAppPlatform()
+##        self.j.backend = Dirac()
+##        self.j.inputdata = ['LFN:%s' % get_datafile_name()]
+##        self.j.submit()
+##        os.system('rm -f %s/TestDaVinci.dirac_lfns_via_inputdata.lock' % ura)
+##        return DaVinciJob(self.j)
+
+## class DaVinciJob(ICheckTest):
+
+##    def isReadyForCheck(self):
+##        return is_job_finished(self.j)
+
+##    def checkTest(self):
+##        print '### JOB Finished ###'
+##        file = open(join(self.j.outputdir,'stdout'))
+##        print 'stdout: ', file.read()
+##        file.close()
+##        fname = join(self.j.outputdir,'stdout')
+##        file = open(fname)
+##        found_line = False
+##        for line in file.readlines():
+##            if line.find('# muons n@, Go Steelers!') >= 0:
+##                found_line = True
+##                assert int(line.split('|')[3]) > 0, 'problem reading data'
+##                print '# muons =', int(line.split('|')[3])
+##                break
+##        file.close()
+##        assert found_line, 'special string not found'
+
+
+

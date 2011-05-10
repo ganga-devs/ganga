@@ -1,0 +1,39 @@
+**************************************************************************************************************
+5.5.12 (2010/8/10)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Add config.DQ2.OUTPUTDATASET_NAMELENGTH=131: 
+  Maximum characters of a DQ2OutputDataset
+* Add config.DQ2.OUTPUTFILE_NAMELENGTH=150 
+  Maximum characters of a filename in DQ2OutputDataset
+* Fix bug #71132: resolve Athena 15.9.0 and DQ2 
+  interference on LCG/CREAM
+* removed unused import of pandatools 
+* Minor fix for TAG compression
+
+Tasks:
+------
+* Fixed silent Anatransform failure for Panda
+* delay loading panda client
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+- Bumped referenced JEM lib version to 0.3.0.9 (newly packed without stdout spam)
+- disabled all JEM warnings on startup to avoid annoyance
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- fix to stop jobs crashing when specifying app.max_events + Panda + PYARA (or just not ATHENA)
+- add support for user environment variables in non-Athena Panda jobs
+  - it adds a string of 'export' statements based on the Athena.atlas_environment variable
+
+**************************************************************************************************************

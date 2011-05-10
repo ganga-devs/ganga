@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+
+import sys
+
+import optparse
+
+parser = optparse.OptionParser("usage: %prog [options] FILE JOBID")
+
+parser.description = "Peek runnig jobs and tail output. Specify the FILE you want to look at and a unique JOBID as defined by the job submission tool."
+
+parser.add_option("-f", "--follow", action="store_true", dest="follow", help="output appended data as the file grows, stay connected until user presses ^C or the job finishes", default=False)
+parser.add_option("-n", "--lines",action="store",dest="lines",type="int",default=10, metavar="N",help="output last N lines ")
+parser.add_option("-o", "--output",action="store",dest="output_file",default=None, help="save to the OUTPUT_FILE file. By default new lines are appended to the FILE.")
+
+(options, args) = parser.parse_args()
+
+if len(args) != 2:
+    parser.error("Incorrect number of arguments")
+
+log_file,job_id = args
+
+if options.output_file:
+    output_file = options_output_file
+else:
+    output_file = log_file
+
+info_file
+
+#--------------------------------------------------------------------------#
+#run the GjpClient software
+from GjpClient import GjpClient
+client=GjpClient(log_file, options.follow, options.lines, output_file, job_id, info_file)
+client.tail()
+
+

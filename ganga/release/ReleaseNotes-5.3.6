@@ -1,0 +1,66 @@
+**************************************************************************************************************
+5.3.6 (2009/10/12)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Detection of SLC5 platform. SLC5 platform strings are (defined by LCG-AA):
+
+{ 32: 'i686-slc5-gcc43-opt', 64: 'x86_64-slc5-gcc43-opt'}
+
+Integrated monitoring hooks and added schema attribute job.info.monitor as needed by JEM monitoring
+plugin.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+change default LCG env. setup script location for SLC5 UI
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+------
+* Fix bug #55267: The output filename that is not present is now 
+  named in the stderr
+* Fixed a minor TAG bug related to specifying multiple datasets 
+  for one job
+* Fix bug #55633: Return code is now properly transmitted for 
+  if config['LCG']['JobLogHandler'] == "DQ2" is used
+* Fix setup of Athena.atlas_environment if several '=' are used
+* Introducing Automatic Input Access method for Athena/LCG 
+  Switch it on with config['DQ2']['USE_ACCESS_INFO']=True
+  Should be used only with athena > 15.0.0
+* Add extra ATLAS local setup for Frontier/Squid
+* Minor fix to sort out the environment for TAG retry
+
+Tasks:
+------
+* Changed indentation from 3 to 4 spaces (no other changes) 
+  in Task.py
+* AnaTransform fixes for incomplete datasets
+
+scripts:
+--------
+move some Panda options to backend.requirements
+
+externals:
+----------
+* Upgrade to DQ2Clients 0.1.29 and panda-client 0.1.91
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+panda client updated to 0.1.91
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTutorial
+--------------------------------------------------------------------------------------------------------------
+fixed typo which prevented tutorial package to load at all
+
+**************************************************************************************************************

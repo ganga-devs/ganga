@@ -1,0 +1,83 @@
+**************************************************************************************************************
+5.5.20 (2011/1/11)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- added implementation of auto_resubmit() 
+- bugfix #76733 - set ganga version before saving the user config where ConfigError can occur if some 
+config section is not found
+- bugfix #76445 - leave the output directory to the implementation if set_outputdir_for_automerge 
+merger class attribute is set to False
+- fixed a bug in the test case which tried to access a non-existent list index.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* CREAM backend fix
+   - use globus-url-copy (instead of uberftp) to download output sandboxes
+   - bugfix https://savannah.cern.ch/bugs/index.php?76520
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Fix stage-in/out bug for Local backend caused by mixed-up 
+  athena/glite env
+* Add DQ2OutputDataset.check_content_consistency method 
+  which is called by Athena.postprocessing_failed
+* Add DQ2OutputDataset.clean_duplicates_in_container(), 
+  fix bug #73662
+* Change error message if atlas_relase is empty, fix bug #76399
+* Add DQ2Dataset.names_pattern, fix bug #75112
+* Added ability to specify cloud priority, fix bug 76334
+* Added an exclude clouds option to AtlasLCGRequirements
+* Added blacklisting into the 'list_sites_cloud' function
+* DQ2JobSplitter: accessmode can be direct too for Panda
+* Made Multi stage analysis code compatible with new 
+  dataset freezing policy
+
+Tasks:
+------
+First upload of Multi stage analysis using Tasks
+
+scripts:
+--------
+* Added the following options to athena:
+   --inputnames, --inputnamespattern, --excludeinputnames, 
+  --excludeinputnamespattern 
+  and ':' or ',' separation to above options if multiple files
+  are used
+
+tests:
+------
+* Merge event testing fix to trunk
+* Test for excluded sites/clouds option
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+small fixes, new ext. JEM version (0.3.2.1)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor bug fixes.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Added an exclude clouds option to PandaRequirements
+* Test for cloud/site exclusion in the requirements
+* Merge event testing fix to trunk
+* Fix for resubmit with frozen datasets
+* Made Multi stage analysis code compatible with new dataset freezing policy
+
+**************************************************************************************************************

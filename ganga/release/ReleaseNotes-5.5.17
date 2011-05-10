@@ -1,0 +1,83 @@
+**************************************************************************************************************
+5.5.17 (2010/11/3)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+GangaAtlas:
+-----------
+* Enable job.outputdata.retrieve() for Panda master jobs (only one download)
+* Enable Athena.atlas_exetype=EXE submission without previous athena setup
+* Add helper function create_tarball() for Athena.exetype=EXE workflow
+* Add config.Athena.EXE_MAXFILESIZE
+* Enabled cross cloud support for LCG
+* Fixed a minor bug in transferring TAG files to Panda
+* Added the event and run number to inflated TAG file
+* Fix for event based splitting for datasets which are spread across several 
+  sites 
+* Fix warning from AMI for athena release 15.9.0
+* Fix bug #74461: Add additional logger message in DQ2JobSplitter for 
+  filesize based splitting
+* Added Panda backend.nobuild setting to disable the build jobs -- 
+  default is False. Use athena --nobuild to enable this.
+* Added Panda backend.requirements.express setting to enable the express 
+  handling of your jobs -- default is False. Use ganga athena --express to 
+  enable this.
+
+Tasks:
+------
+* Added container_name property to AnaTask (read-only)
+* Added dataset_name property to AnaTransform (read-only)
+* Remove coloring from __doc__ 
+* Removed annoying errors if tasks has been deleted
+* fixed documentation of slicing
+* Record timestamp extension in online help
+
+scripts:
+--------
+* Added athena options --athena_project, --nobuild, --libDS, --express
+* Fixed --inputaccessmode choices
+* Update filling of j.application.atlas_release
+  and Add opt.bexec if no compile option is set
+
+externals:
+----------
+* Update to panda-client 0.3.8
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Added BKQueryDict class to allow users to use Dirac BK dictionaries directly in their queries.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Added Panda backend.nobuild setting to disable the build jobs -- default is False. 
+  Use athena --nobuild to enable this.
+* Added Panda backend.requirements.express setting to enable the express handling 
+  of your jobs -- default is False. 
+  Use ganga athena --express to enable this.
+* Added GangaTAG support for EXE types in Panda 
+* hide athena missing warning
+* don't make libds if not building
+* runAthena options: 
+  - use -a option to download sandbox
+  - run script in -p option rather than -j
+* Added GangaTAG support for EXE types in Panda 
+
+externals:
+----------
+* Update to panda-client 0.3.8
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaService
+--------------------------------------------------------------------------------------------------------------
+Initial upload of the GangaService scripts
+
+**************************************************************************************************************

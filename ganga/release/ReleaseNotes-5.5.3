@@ -1,0 +1,109 @@
+**************************************************************************************************************
+5.5.3 (2010/3/30)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- bugfix #64081: Fix timestamp object to avoid exception when status is forced
+- bugfix #59165: Syntax error in bootstrap.py
+- bugfix #55568, ganga -o option does not accept = 
+solution: the option name may only contain the following characters: [a-zA-z0-9._]
+- bugfix #63157: resubmit Interactive jobs
+- bugfix #31690: Empty the outputdir of the subjob just before resubmitting it
+
+- Add a global flush in Batch job wrapper scripts (in some situations the status of a Batch job was 
+not updated until the statusfile was closed at the end of the job's execution). The flushing function 
+looks now as follows:
+
+def flush_file(f):
+   f.flush()
+   os.fsync(f.fileno()) #this forces a global flush (cache synchronization on AFS)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* print JDL when no matched resource.
+* fix 32/64 bit mixture issue with glite-wms-job-status and glite-wms-job-logging-info
+(script-based) commands.
+* add configuration variable (config.LCG.IgnoreGliteScriptHeader) to turn on/off the trick for 32/64
+bit library compatibility issues. Default it's off (i.e without the trick).
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Athena/LCG: Additional DBRelease setup print-out
+* DQ2JobSplitter: fix for splitting
+* make deepcopy of master job's inputdata in creating subjobs
+* Fix bug #64384: list_sites_cloud not allow unknown cloud
+* Send processingType with runBrokerage
+* Fixes for AMI externals and AMIDataset
+* Another fix for bug #62416: Add full environment for 
+  DQ2OutputDataset and Local handler
+* Fix bug #65016 - add missing import os'
+
+AthenaMC:
+---------
+* undid temporary fix to AthenaMCPandaRTHandler.py to fully 
+  use the new Panda auto cloud selection from input data location
+* Bug fixes: added release matching condition for atlas releases 
+  >15.6.1 (slc5,gcc43), and for recently implemented environment 
+  variable BACKEND_DATA, which is not set when the job have no 
+  input data (evgen jobs) and cause the output registration to fail.
+* Updated tests with new datasets name, added use of dryrun in 
+  AthenaMCPandaRTHandler to prevent the creation of output datasets 
+  which would remain empty from test job submissions, and enforce 
+  the use of input data's location cloud(s) in job submission 
+  whenever an input dataset is required.
+* Panda RT Handler: adding cmtConfig support to allow use of either 
+  SL4 and SL5 releases
+
+Tasks:
+------
+* Fixed bug: non-root output files always fail
+* Removed old exclude from user area field from example
+* Make Tasks fail gracefully if task is locked from another session
+
+tests:
+------
+* Updated the tests with new input datasets, also did some cleanup
+* changed target release for AthenaMCLCG tests as this release is 
+  not available in target test site
+
+externals:
+----------
+* update panda-client 0.2.21
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Some minor bug fixes and:
+
+* Users can now add a string to be added to the path of outputdata using the OutputData.location
+attribute.  
+
+* The CMT make command is now configurable using [LHCb] make_cmd.
+
+* Ganga/LHCb now queries DIRAC to determine which ROOT versions are available; thus, the [DIRAC]
+RootVersions config option no longer exists.
+
+* Ganga/LHCb also queries DIRAC to determine which versions of LHCb applications are available on
+the grid (and prevents submission accordingly).
+
+* Ganga/LHCb also queries DIRAC to determine which architecture is supported for a given version of
+an LHCb package; thus, the [DIRAC] AllowedPlatforms config option is no longer respected.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- update to panda-client 0.2.21
+- auto select the cloud if the input dataset is not in selected cloud.
+- use AthenaUtils.convertConfToOutput
+
+**************************************************************************************************************

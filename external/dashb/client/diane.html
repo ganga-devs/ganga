@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Ganga/Diane Dashboard</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="media/css/base.css" />
+<link rel="stylesheet" type="text/css" href="media/css/smoothness/jquery-ui-1.7.2.custom.css" />
+
+<script type="text/javascript" src="media/scripts/lib/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="media/scripts/lib/jquery.dataTables.js"></script>
+<script type="text/javascript" src="media/scripts/lib/jquery.dataTables.pagination.input.js"></script>
+<script type="text/javascript" src="media/scripts/lib/jquery-ui-1.7.2.custom.min.js"></script>
+<script type="text/javascript" src="media/scripts/lib/jquery.json-2.1.min.js"></script>
+<script type="text/javascript" src="media/scripts/lib/jquery.gchart.min.js"></script>
+<script type="text/javascript" src="media/scripts/lib/jquery.base64.js"></script>
+<script type="text/javascript" src="media/scripts/lib/jquery.ba-url.min.js"></script>
+
+<script type="text/javascript" src="media/scripts/lib/json2.js"></script>
+<script type="text/javascript" src="media/scripts/lib/cache.js"></script>
+
+<script type="text/javascript" src="media/scripts/settings.js"></script>
+<script type="text/javascript" src="media/scripts/diane/model.js"></script>
+<script type="text/javascript" src="media/scripts/diane/view.js"></script>
+<script type="text/javascript" src="media/scripts/diane/controller.js"></script>
+
+<script type="text/javascript" language="javascript">
+    // global cache
+    var _table_data_cache;
+    var _sub_cache;
+    var _cache_client_timeout = 60;
+    
+    $(document).ready(function() {
+        // initialize global cache (20 slots)
+        _table_data_cache = new Cache(5);
+        _sub_cache = new Cache(20);
+    
+        $('#tabs').tabs();
+        
+        model = new Model();
+        view = new View();
+        controller = new Controller(model, view);
+        controller.initialize();
+        
+        
+        $('#chart').gchart({type: 'line', maxValue: 61, encoding: 'simple', 
+            axes: [
+                $.gchart.axis('left', [], [], 0, 1400),
+                $.gchart.axis('right', [], [], 0, 1.2e+06),
+                $.gchart.axis('bottom', ['01/08/08', '01/09/08', '01/10/08', '01/11/08', '01/12/08', '01/01/09', '01/02/09', '01/03/09', '01/04/09', '01/05/09'])
+            ], 
+            series: [$.gchart.series('Level', [28, 4, 0, 4, 11, 5, 9, 
+            7, 7, 7, 10, 20, 35, 46, 61, 46, 46, 23, 20, 28])]}); 
+    } );
+</script>
+</head>
+
+<body>
+<div id="container">
+    <div id="main-centeriser">
+        <div id="header">
+            <div id="header-content">
+                <div id="logo-img">&nbsp;</div>
+                <div id="logo-img-diane">&nbsp;</div>
+                <!-- BLOCK/description=BEGIN -->
+                <div id="description"><p>In this application you can easily monitor ganga jobs and diane runs.</p></div>
+                <!-- BLOCK/description=END -->
+                <div id="site-name"><h1>Ganga/DIANE Dashboard</h1><p>Jobs and runs monitoring</p></div>
+            </div>
+            <div id="belt-darken">
+                <div id="belt-darken-transparent">&nbsp;</div>
+                <div id="belt-darken-text"><p><a class="darkBeltA" href="help.html" target="_blank">&nbsp;&nbsp;Help&nbsp;&nbsp;</a></p></div>
+            </div>
+        </div>
+        <!-- BLOCK/menu=BEGIN -->
+        <div id="menu">
+            <ul>
+                <li><a id="switchAppLink">Ganga</a></li>
+                <li><a class="active">Diane</a></li>
+            </ul>
+        </div>
+        <!-- BLOCK/menu=END -->
+        <div id="content">
+            <!-- BLOCK/breadcrumbs=BEGIN -->
+            <div id="breadcrumbs">&nbsp;:: <a href="#">Home</a> > <a href="#">Folder</a> > <a href="#">SubFolder</a></div>
+            <!-- BLOCK/breadcrumbs=END -->
+            <div id="content-main">
+<!-- CONTENT BEGIN -->
+<div id="formFrame" class="ui-corner-all ui-widget-content ui-tabs">
+    user: <input id="input-user" type="text" style="width:100px;" />&nbsp;&nbsp;&nbsp;&nbsp;Filter: <input id="input-query" type="text" style="width:200px;" /> &nbsp;&nbsp;&nbsp;&nbsp;From <img src="media/images/calendar.gif" style="vertical-align:middle" alt="MM/DD/YYYY" title="MM/DD/YYYY" /> <input type="text" id="from" style="width:100px;" /> &nbsp;Till <img src="media/images/calendar.gif" style="vertical-align:middle" alt="MM/DD/YYYY" title="MM/DD/YYYY" /> <input type="text" id="till" style="width:100px;" /> <input id="button-query" type="button" value="Ok" />&nbsp;<img id="ajaxLoading" src="media/images/ajax.gif" style="display:none; vertical-align:middle" />
+</div>
+<div id="tabs">
+    <ul>
+        <li><a href="#tab1">Runs</a></li>
+        <li><a href="#tab2">Overview</a></li>
+    </ul>
+    <div id="tab1">
+        <div id="tableDiv" style="position:relative">
+        <table cellpadding="0" cellspacing="1" border="0" class="display" id="dataTable">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Start Time</th>
+                    <th>Name</th>
+                    <th>Application</th>
+                    <th>Id</th>
+                    <th>#WN</th>
+                    <th>#WN CUR</th>
+                    <th>#TASKS</th>
+                    <th>#TASKS CPL</th>
+                    <th>MASTER_UUID</th>
+                </tr>
+            </thead>
+            <tfoot>
+                <tr>
+                    <th></th>
+                    <th>Start Time</th>
+                    <th>Name</th>
+                    <th>Application</th>
+                    <th>Id</th>
+                    <th>#WN</th>
+                    <th>#WN CUR</th>
+                    <th>#TASKS</th>
+                    <th>#TASKS CPL</th>
+                    <th>MASTER_UUID</th>
+                </tr>
+            </tfoot>
+        </table>
+        <div id="loadingTable">
+            <div style="position:absolute; top:0px; left:0px; background-color:white; width:100%; height:100%; filter:alpha(opacity=60); opacity:0.6;"></div>
+            <div id="dialog" style="position:absolute; top:40px; left:0px; background-color:white; border:1px solid #BBBBBB; width:300px; height:50px;"><p style="text-align:center; margin:5px">Loading Table, please wait...<br /><img src="media/images/loading.gif" /></p></div>
+        </div>
+        </div>
+        <input type="hidden" id="url-page" value="hash" />
+        <br />
+    </div>
+    <div id="tab2">
+        <div id="chart" style="width: 650px; height: 300px;"></div>
+    </div>
+</div>
+<div class="spacer"></div>
+            <!-- CONTENT END -->
+            </div>
+        </div>
+        <div id="footer"><p>Ganga/DIANE Dashboard &copy; 2009</p></div>
+    </div>
+</div>
+</body>
+
+</html>

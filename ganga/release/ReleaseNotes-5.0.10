@@ -1,0 +1,83 @@
+**************************************************************************************************************
+5.0.10 (2008/10/23)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard
+--------------------------------------------------------------------------------------------------------------
+Fixed all the important bugs:
+
+- now the job identifies the CE it runs on and it shows in the dashboard,
+- dataset properly returned as well,
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* DQ2JobSplitter creates the correct number of subjobs for complete 
+  datasets (Bugs #41726 and #42856)
+  Creates at max MaxJobsDQ2JobSplitter per site for incomplete datasets
+* Athena.max_events has to been an integer now (Bug #42613)
+* Include libdcap.so for Local/Batch backend
+* Athena/AthenaLCGRTHandler: add AtlasPoint1 and AtlasTier0 projects
+* perform brokering and splitting of (in)complete datasets for Panda
+* Fix HelloWorld job for Local/Batch backend
+* ganga-stage-in-out-dq2.py: Add dcap config for SFU, TRIUMF, ALBERTA 
+  and remove special SE setup at MPPMU
+* athena-utility.sh: 
+  - remove duplicated ganga-stage-in-out-dq2.py statement that could 
+    cause false double output file registration
+  - Add 'lib64/python' removal from PYTHONPATH and 
+  - Change python32 workflow
+  - Set read ahead buffer for dcap access to DCACHE_RA_BUFFER=32768
+
+AthenaMC:
+* Bug fix for inputdata.inputfiles type, improving timeout evaluation for 
+  stage-out, allowing support for stage-in files from SRMV2 space tokens, 
+  extending splitter to allow partial resubmission of master jobs 
+  (all failed subjobs at once instead of one by one.)
+
+scripts:
+* use DQ2JobSplitter for Panda backend
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGUI
+--------------------------------------------------------------------------------------------------------------
+Removed dependency on external/pyqt in PACKAGE.py
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Modified Gaudi application and runtime handlers so that they now place all *.py files under
+InstallArea/python into the job input sandbox. Previously only *_merged_confDb.py, *_confDb.py,
+*Conf.py and _init_.py were copied (Configuration.py was missing).
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+* Removed logging messages
+* Minor bugfixes
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+DQ2JobSplitter is now used by the Panda backend for job splitting. DQ2JobSplitter handles the
+brokering and incomplete datasets. (Fixes https://savannah.cern.ch/bugs/?42573)
+** NOTE: AthenaSplitterJob can no longer be used with the Panda backend. Change your ganga scripts
+to use DQ2JobSplitter instead.
+
+Added detection of 'AtlasTier0' and 'AtlasP1HLT' releases.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaRobot
+--------------------------------------------------------------------------------------------------------------
+Changed username and gangadir in the test configuration files to allow the Robot tests to run at the
+same time as the core tests.
+
+**************************************************************************************************************

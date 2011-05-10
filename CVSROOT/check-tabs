@@ -1,0 +1,14 @@
+CHECKED_EXTENSIONS=".py .gpi .gpim"
+
+for f in $*; do
+ext=`echo $f | grep -o '\.[^.]*$'`
+
+for EXT in $CHECKED_EXTENSIONS; do
+if [ "$EXT" == "$ext" ]; then
+if grep -PHn '\t' $f; then
+echo "TABS not allowed in python source files ($CHECKED_EXTENSIONS)";
+exit 1
+fi
+fi
+done
+done

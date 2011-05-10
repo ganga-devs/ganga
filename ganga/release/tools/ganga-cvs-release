@@ -1,0 +1,531 @@
+#!/usr/bin/env python
+#-*- python -*-
+
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: ganga-release,v 1.15 2009-05-06 13:52:25 gangage Exp $
+################################################################################
+
+import os,sys,time,re,shutil
+import getopt
+
+def usage():
+    print '''
+usage: ganga-release VERSION
+
+interactive release making tool...
+'''
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "", ["cvsroot=",'platf='])
+except getopt.error, x:
+    print "command line syntax error"
+    usage()
+    sys.exit(2)
+
+try:
+    version = args[0]
+except IndexError:
+    usage()
+    sys.exit(2)
+
+CONFIG = {}
+CONFIG['top'] = '/afs/cern.ch/sw/ganga'
+CONFIG['platf'] = 'slc4_amd64_gcc34'
+CONFIG['cvsroot'] = ':gserver:isscvs.cern.ch:/local/reps/ganga'
+
+CONFIG['version'] = version
+CONFIG['version-pre'] = version+'-pre'
+CONFIG['plugin_packages_gcc323']='GangaGUI,GangaLHCb,GangaAtlas,GangaPlotter,GangaTest,GangaNG,GangaPanda'
+CONFIG['plugin_packages_gcc34']='GangaGUI,GangaLHCb,GangaPlotter,GangaTest,GangaAtlas,GangaNG,GangaPanda'
+CONFIG['prereldir'] = os.path.join(CONFIG['top'], 'install',CONFIG['version-pre'])
+CONFIG['reldir'] = os.path.join(CONFIG['top'],'install',CONFIG['version'])
+CONFIG['installdir'] = os.path.join(CONFIG['top'],'install')
+CONFIG['toolsdir'] = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
+
+CONFIG['webdir_top'] = os.path.join(CONFIG['top'],'www')
+CONFIG['tagsdir_top'] = os.path.join(CONFIG['webdir_top'],'developers','tags')
+CONFIG['tagsdir'] = os.path.join(CONFIG['top'],'www','developers','tags','data',CONFIG['version'])
+
+CONFIG['configdir'] = os.path.join(CONFIG['toolsdir'],'..','config')
+CONFIG['releasenotesdir'] = os.path.join(CONFIG['toolsdir'],'..')
+
+CONFIG['tag'] = "Ganga-"+version.replace('.','-')
+
+CONFIG['RemoteSites'] = {'Imperial':
+                         {'URL': "http://www.hep.ph.ic.ac.uk/~lhcb/testrobot",
+                          "Tests" : ['Ganga.test_local']}}
+
+# accounts used for CERN deployment of Ganga
+GANGA_ACCOUNTS = [('Ganga','gangage'),('GangaRobot','gangage'),('GangaLHCb','gangalb'),('GangaAtlas','gangaat'),('GangaNG','gangaat'),('GangaPanda','gangaat')]
+
+GANGA_RUNTIME_PACKAGES = {}
+
+for pkg,account in GANGA_ACCOUNTS:
+    GANGA_RUNTIME_PACKAGES.setdefault(account,[])
+    if not pkg in GANGA_RUNTIME_PACKAGES[account]:
+        GANGA_RUNTIME_PACKAGES[account].append(pkg)
+
+#print '-----'
+#print GANGA_RUNTIME_PACKAGES
+#print '-----'
+
+def askYesNo(msg):
+    answer = raw_input(msg+' [yes/NO] ')
+
+    if answer.upper() == 'YES':
+        return 'YES'
+    else:
+        return None
+
+def acmd(cmdpath):
+    print 'doing:',cmdpath
+    print
+    if os.system(cmdpath):
+        print "problem with executing: ",cmdpath
+        sys.exit(1)
+        
+def toolcmd(cmd):
+    if CONFIG['toolsdir']:
+        cmdpath = "%s/%s" %(CONFIG['toolsdir'],cmd)
+    else:
+        cmdpath = cmd
+    acmd(cmdpath)
+
+class CollectTags:
+    "COLLECT: collect tags from the tagsdir into PACKAGES file and create the new release notes file"
+
+    def do(self):
+        print 'Collecting tags from %(tagsdir)s' % CONFIG
+        #merge the tags into PACKAGES-<version> and generate the ReleaseNotes-<version>
+        toolcmd('ganga-tags-merge %(tagsdir)s %(version)s %(configdir)s %(releasenotesdir)s' % CONFIG)
+        #prepend the new release notes
+        #RELEAES-VERSION COMMITED (TODO)
+        #frelnotes = '%(releasenotesdir)s/ReleaseNotes-%(version)s' % CONFIG
+        #frelnotes_all = '%(releasenotesdir)s/ReleaseNotes' % CONFIG    
+        #acmd('cat %s %s >> .ReleaseNotes.tmp && mv .ReleaseNotes.tmp %s ' % (frelnotes,frelnotes_all,frelnotes_all))
+        print 'Add/commit ReleaseNotes-%(version)s to CVS' % CONFIG
+        acmd('cd %(releasenotesdir)s && (cvs add ReleaseNotes-%(version)s ; cvs commit -m "Added ReleaseNotes-%(version)s" ReleaseNotes-%(version)s)' % CONFIG)
+        print 
+        print 'Add/commit %(configdir)s/PACKAGES-%(version)s to CVS' % CONFIG
+        acmd('cd %(configdir)s && (cvs add PACKAGES-%(version)s ; cvs commit -m "Added PACKAGES-%(version)s" PACKAGES-%(version)s)' % CONFIG)
+
+class PrereleaseCommand:
+    "PRE: create the PRE-RELEASE in the prereldir"
+    
+    def do(self):
+        import os,glob,re
+        if os.path.isdir(CONFIG['prereldir']):
+            print 'the current prerelease is %(prereldir)s'%CONFIG
+            prm = re.compile('(\S)+-pre(?P<num>\d+)')
+            maxnum = 0
+            for pre_rel in glob.glob(CONFIG['prereldir']+'*'):
+                print 'prelease found:', pre_rel
+                r = prm.match(os.path.split(pre_rel)[-1])
+                if r:
+                    maxnum = max(maxnum,int(r.group('num')))
+            maxnum += 1
+            new_backup_prerelease = CONFIG['prereldir']+str(maxnum)
+            #print 'if you answer YES then the current prerelease will be backed up as',new_backup_prerelease
+            if askYesNo('do you want to delete the current prerelease (and back it up as %s)?'%new_backup_prerelease) == "YES":
+                acmd('mv %s %s'%(CONFIG['prereldir'],new_backup_prerelease))
+                print 'sucessfully moved %s to %s'%(CONFIG['prereldir'],new_backup_prerelease)
+                pre_tarball = '%(top)s/tarball/Ganga-%(version-pre)s.tar.gz' % CONFIG
+		try:
+		    os.unlink(pre_tarball)
+            	    print 'sucessfully removed pre-release tarball %s' % pre_tarball
+		except OSError,e:
+		    print 'Cannot delete pre-release tarball: %s' % str(e)	    
+            else:
+                print "Cannot continue...Terminating"
+                return
+
+        # checkout to ganga directory and rename it to prerelease version name
+        toolcmd('ganga-checkout -v %(version)s %(installdir)s'%CONFIG)
+        #acmd('ls /afs/cern.ch/sw/ganga/install/ganga')
+        acmd('mv %(installdir)s/ganga %(prereldir)s'%CONFIG)
+        
+        toolcmd('ganga-release-html %(version)s %(prereldir)s'%CONFIG)    
+    
+        print
+        #previous ganga-release-html runs ganga now to generate the reference manual
+        #so we do a cleanup of pyc,pyo,py~ files
+        toolcmd('prepdist %(prereldir)s clean'%CONFIG)
+
+        # do not forget to update the list of external dependencies for the release too
+        print 'the prerelease is installed in',CONFIG['prereldir']
+        
+        #        print 'Making pre-release tarballs (forcing recreation) for slc4_ia32_gcc34 (limited externaldependencies)'
+        #        toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --make-tarballs --all-deps --platf=slc4_ia32_gcc34 --force --verbose %(version-pre)s'%CONFIG)
+
+        print 'Making pre-release tarballs (forcing recreation) for slc4_ia32_gcc34 (limited externaldependencies)'
+        toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --make-tarballs --all-deps --platf=slc4_ia32_gcc34 --force --verbose %(version-pre)s'%CONFIG)
+
+
+        print 'Making pre-release tarballs (forcing recreation) for slc4_amd64_gcc34 (limited external dependencies)'
+        toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --make-tarballs --all-deps --platf=slc4_amd64_gcc34 --force --verbose %(version-pre)s'%CONFIG)
+
+        import os.path
+        versionfile=os.path.join(CONFIG['webdir_top'],'download','VERSIONS.txt')
+        print 'Updating file with available releases'
+        acmd("touch %s && date +'%s - %%d %%b %%Y %%k:%%m:%%S' >> %s"% (versionfile, CONFIG['version-pre'], versionfile))
+
+
+class GenerateConfigFilesCommand:
+    "GENERATE CONFIG FILES: generate configuration file templates"
+    def do(self):
+        gencmd = '%(prereldir)s/bin/ganga %%s %(toolsdir)s/generate_template_file.gpi'%CONFIG
+
+        acmd('cd %(prereldir)s; cvs update -Ad templates'%CONFIG)
+
+        for x in GANGA_ACCOUNTS:
+            if not x[0] in ['Ganga','GangaLHCb','GangaAtlas']:
+                continue
+
+            if x[0] == 'Ganga':
+                cfg = ''
+            else:
+                cfg = '-o\'[Configuration]RUNTIME_PATH=%s\''%(":".join(GANGA_RUNTIME_PACKAGES[x[1]]))
+
+            print 'login to %s@lxplus and run this command:'%x[1]
+            print gencmd%cfg
+            print
+
+class CommitConfigFilesCommand:
+    "COMMIT CONFIG FILES: commit to cvs the previously generated config files (run this command after you've generated all config files on all accounts)"
+    def do(self):
+        import glob
+        
+        pars = {'configtemplatedir': '%(prereldir)s/templates'%CONFIG }
+        pars.update(CONFIG)
+        
+        config_templates = [os.path.basename(x) for x in glob.glob('%(configtemplatedir)s/CONFIG_TEMPLATE*.INI'%pars)]
+
+        print 'the following files will be commited:',config_templates
+
+        for templ in config_templates:
+            pars.update({'template_file': templ})
+            acmd('cd %(configtemplatedir)s && (cvs add %(template_file)s ; cvs commit -m "Automatically updated template for %(version)s" %(template_file)s)' % pars)
+
+        print 'done'
+    
+class PretestCommand:
+    "TEST: run the test suite in the pre-release prereldir"
+    def do(self):
+        if not os.path.isdir(CONFIG['prereldir']):
+            print "can't find the prerelease in ",CONFIG['prereldir']
+            return
+
+        outputdir = '%(prereldir)s/reports/latest/output'%CONFIG
+        try:
+            os.makedirs(outputdir)
+        except Exception,e:
+            print 'WARNING: ', str(e)
+        
+        def run_test(account,name):
+            #runtest = "--config=%s.ini run.py 2>&1| tee %s.out" % (name,name)
+            #runganga = "cd %(prereldir)s/ganga/python/Ganga/test && %(prereldir)s/ganga/bin/ganga " % CONFIG
+
+            runtest = 'rm -rf ~/gangadir_testing && %(prereldir)s/bin/ganga'%CONFIG
+            args = ' --test -o\'[Configuration]RUNTIME_PATH=GangaTest\' -o\'[TestingFramework]ReleaseTesting=True\' -o\'Config=local.ini:localxml.ini\' %s/test 2>&1 | tee %s/%s.out ' % (name,outputdir,name)
+            
+            cmd = runtest+args
+            print '*'*40
+            print '%s tests ' % name
+            print 'Login to %s@lxplus and run : %s'%(account,cmd)
+            #code = os.system(cmd)
+            #print "Exit code:",code
+            return "%s/%s.out" % (CONFIG['prereldir'],name),1
+
+        testresult = []
+        testname = GANGA_ACCOUNTS
+        for n,acc in testname:
+            testresult.append(run_test(acc,n))
+
+        print '*'*40
+        print "Now wait for tests to complete ..."
+
+class TestReportCommand:
+    "TEST REPORT: Create the summary web pages with the test results."
+
+    def do(self):
+        import urllib
+        import tarfile
+        import os
+        from os.path import join
+
+        path = join(CONFIG["prereldir"],"reports","latest")
+        remotelist = CONFIG['RemoteSites']
+        for site in remotelist:
+            print "Downloading tests from %s." %site
+            url = remotelist[site]['URL']
+            tests = remotelist[site]['Tests']
+            for test in tests:
+                fname = CONFIG['version']+'-pre_'+test+'-'+site+'.tgz'
+                urllib.urlretrieve(url+'/'+fname,join(path,fname))
+            
+                try:
+                    tf = tarfile.open(join(path,fname),'r:gz')
+                except Exception,e: 
+                    print "Test file %s could not be retrieved."
+                    print "Will just ignore this and continue without it."
+                    continue
+                for f in tf.getnames():
+                    tf.extract(f,path)
+                os.remove(join(path,fname))
+
+        print "Creating web pages."
+        acmd("%(prereldir)s/bin/ganga --test -o\'[TestingFramework]ReleaseTesting=True\' -o\'EnableHTMLReporter=True\' -o\'EnableTestRunner=False\'" % CONFIG)
+        
+class TagCommand:
+    "TAG: make a GLOBAL TAG using the a pre-release in the prereldir"
+
+    def do(self):
+        if not os.path.isdir(CONFIG['prereldir']):
+            print "can't find the prerelease in",CONFIG['prereldir']
+            return
+
+        toolcmd('prepdist %(prereldir)s clean'%CONFIG)
+        
+        tagcmd = "cd %(prereldir)s && cvs -d %(cvsroot)s tag -F %(tag)s" % CONFIG
+
+        acmd(tagcmd)
+
+        print
+        print 'A global tag %(tag)s has been created in the CVS!'%CONFIG
+
+class ReleaseCommand:
+    "RELEASE: make a release based on a previously created GLOBAL TAG and create the distribution kits"
+
+    def do(self):
+        if os.path.isdir(CONFIG['reldir']):
+            print 'release already exists in',CONFIG['reldir']
+            return
+
+        print 'Exporting sources with GLOBAL TAG %(tag)s' % CONFIG
+
+        exportcmd = "cd %(installdir)s && cvs -d %(cvsroot)s export -r %(tag)s -d %(version)s ganga " % CONFIG
+        acmd(exportcmd)
+            
+        print 'Sources with GLOBAL TAG %(tag)s have been exported ' % CONFIG
+
+        print 'Copying all reports from the pre-release area'
+
+        acmd('cp -r %(prereldir)s/reports %(reldir)s'%CONFIG)
+
+        #print 'Fixing hyperlinks'
+        #acmd('%(reldir)s/python/GangaTest/sbin/generateHTMLReports -p http://cern.ch/ganga/release/%(version)s/python/'%CONFIG)
+        
+        print 'Regenerating reports'
+        toolcmd('ganga-release-html %(version)s %(reldir)s'%CONFIG)
+        
+        print 'Cleaning any junk left by report generation scripts'
+
+        toolcmd('prepdist %(reldir)s clean'%CONFIG)
+        
+        print 'Making installation tarballs'
+
+        print 'Forcing recreation for slc4_ia32_gcc34 (all external dependencies)'
+
+        # do not forget to update the list of external dependencies for the prerelease too
+        toolcmd('ganga-install --extern=%(plugin_packages_gcc323)s --prefix=%(top)s --platf=slc4_ia32_gcc34 --make-tarballs --force --verbose %(version)s'%CONFIG)
+        
+        print 'Forcing recreation for slc4_amd64_gcc34 (limited external dependencies)'
+        toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --platf=slc4_amd64_gcc34 --make-tarballs --force --verbose %(version)s'%CONFIG)
+
+        print 'Byte-compiling sources'
+
+        toolcmd('prepdist %(reldir)s compile'%CONFIG)
+
+        print 'Fix the coverage report symlink'
+        
+        acmd('ln -s ../latest/html/coverage %(reldir)s/reports/html/coverage'%CONFIG)
+        
+        print 'Protecting the release area'
+
+        toolcmd('acl protect %(reldir)s'%CONFIG)
+
+        print 'Protecting the tags dir'
+        self._protectTagsDir()
+        
+        print 'Updating web pages'      
+        self._updateWebPages()
+        
+        print 'Release sucesfully made in the %(reldir)s'%CONFIG
+    
+    def _protectTagsDir(self):
+        """
+        write protect the tags directory
+        """
+        toolcmd('acl protect %(tagsdir)s' % CONFIG)
+        
+        try:
+            fh = open('%(tagsdir_top)s/open_releases' % CONFIG,'r')
+            next_releases = [line.strip() for line in fh.readlines() if line.strip()!=CONFIG['version']]
+        finally:
+            fh.close()
+            
+        try:    
+            fh = open('%(tagsdir_top)s/open_releases' % CONFIG,'w')
+            fh.writelines([release+'\n' for release in next_releases])
+        finally:
+            fh.close()        
+        
+    def _updateWebPages(self):
+        """
+        For each file (e.g mypage.html) that needs to be updated automatically at release time
+        one should write a template file (.tpl extension) for it (i.e. mypage.html.tpl)
+	Current keywords:
+	    <:GANGA_VERSION:> : the latest production release
+	    <:GANGA_DATE:>    : the release date of the latest vrsion
+	    <:GANGA_ALL_VERSIONS:>: comma separated list of all existing versions of Ganga in release area
+        """
+
+	#we do not expose development releases to public
+	if re.compile('(beta|alpha|pre)').search(CONFIG['version']):
+	    print 'DEVELOPMENT release detected. The web pages/NEWS are not generated!'
+	    return
+	
+	
+        # the list of directories in web area to search for templates
+        dirs = ['%(webdir_top)s/user/' % CONFIG,
+		'%(webdir_top)s/download/' % CONFIG,
+		'%(webdir_top)s/include/' % CONFIG,
+		'%(webdir_top)s/rss/' % CONFIG,
+		'%(webdir_top)s/developers/tags'%CONFIG,    
+		'%(installdir)s' % CONFIG
+	       ]
+        
+	#get production releases from ganga_setup
+	import ganga_setup
+	p,a = ganga_setup.get_versions(CONFIG['installdir'])
+	publicVersStr = ",".join(['"%s"'% r for r in p])
+	devVersStr = ",".join(['"%s"'% r for r in a if r not in p])
+	#replacements dictionary : KEYWORD -> (REPLACEMENT, append?)
+	# append : False - replace the KEYWORD in the destination file
+	#        : True  - replace the KEYWORD in the template file and add a new KEYWORD before the replacement and then copy the template to destination file
+	CONFIG['release_date'] = time.strftime('%d %B %Y',time.gmtime())
+        replacements = {'<!--GANGA_VERSION-->'     : (CONFIG['version'], False),
+                        '<!--GANGA_DATE-->'        : (CONFIG['release_date'], False),
+			'<!--GANGA_PUB_VERSIONS-->': (publicVersStr, False),
+			'<!--GANGA_DEV_VERSIONS-->': (devVersStr, False),
+			'<!--GANGA_RSS_ALERT-->'   : ("<item>"\
+						     "<title>Ganga %(version)s is available</title>"\
+						     "<description>%(release_date)s: public release %(version)s is available ! Check the release page for further information.</description>"\
+						     "<link>http://ganga.web.cern.ch/ganga/release/%(version)s/reports/html/Release.html</link>"\
+						     "<pubDate>%(release_date)s</pubDate>"\
+						     "<guid>release-%(version)s-%(release_date)s</guid>"\
+						     "<author>Adrian.Muraru@cern.ch</author>"
+					    	     "</item>" % CONFIG, True)
+                       }
+	
+        import glob
+        templates=[]
+        for dir in dirs:
+            templates.extend(glob.glob('%s/*.tpl' % dir))
+        
+        # replace the keywords in .tpl files:
+        for template in templates:
+            newfile = os.path.splitext(template)[0]
+            try:
+                print 'Writting %s '% newfile
+                tf  = file(template, 'r')
+		ntf = file('%s.new' % template, 'w')
+                nf  = file(newfile, 'w')
+                try:
+                    for line in tf:
+			#keep a copy to generate new template line
+			tline = line
+                        for keyword in replacements:
+			    repl,append = replacements[keyword]
+			    #replace the keyword
+			    line = line.replace(keyword,repl)			    
+			    #replace the keyword but keep the keyword in template file
+			    # (in this way we keep reaplacing this keyword next time we regenerate)
+			    if append:
+                        	tline = tline.replace(keyword,'%s %s'%(keyword,repl))
+                        nf.write(line)
+			ntf.write(tline)
+                finally:
+                    tf.close()
+		    ntf.close()
+                    nf.close()
+		#replace the template file (it might be modified by append rules before)
+		shutil.move('%s.new' % template, template)		                  
+            except Exception,e:
+                print 'Warning! Cannot write %s. %s' % (newfile,str(e))
+
+        
+        
+class PrepareNextRelease:
+    "PREPARE NEXT development cycle: prepare tags dir for the next releases"
+
+    def do(self):
+        print 'Closing tag form for current release:',CONFIG['version']
+        fh = open('%(tagsdir_top)s/open_releases' % CONFIG)
+        next_releases = [line.strip() for line in fh.readlines() if line.strip()!=CONFIG['version']]
+        fh.close()
+        while True:
+            print "Current releases: %s" % next_releases
+            new_release = raw_input('Enter new release number:')
+            if not new_release: 
+                break
+            print 'Generating new tags dir based on PACKAGES-%(version)s' % CONFIG
+            acmd('mkdir %s/data/%s' % (CONFIG['tagsdir_top'],new_release) )
+            toolcmd('ganga-tags-prepare %s/data/%s %s/PACKAGES-%s' % (CONFIG['tagsdir_top'],new_release, CONFIG['configdir'],CONFIG['version']))
+            acmd('fs sa %s/data/%s webserver:afs rliw system:anyuser none '% (CONFIG['tagsdir_top'],new_release) )
+            next_releases.append(new_release)
+        
+
+        
+        print "Saved releases: %s" % next_releases
+        fh = open('%(tagsdir_top)s/open_releases' % CONFIG, 'w')
+        fh.writelines([release+'\n' for release in next_releases])
+        fh.close()
+        
+        current_release_mgr=raw_input('Enter release manager email or just ENTER to keep the current release manager email:')
+        if current_release_mgr:
+            fh = open('%(tagsdir_top)s/release_manager.php' % CONFIG, 'w')
+            fh.write('<?php $release_manager_email="'+current_release_mgr+'";?>')
+            fh.close()
+    
+        
+
+class QuitCommand:
+    "Quit"
+
+    def do(self):
+        sys.exit(0)
+
+class ShowConfig:
+    "Show current configuration"
+
+    def do(self):
+        print "CONFIGURATION:"
+        for c in CONFIG:
+            print "  %-10s = %s" % (c,CONFIG[c])
+
+def _setlib():
+    '''
+    Add the script directory to python path
+    '''
+    import os.path, sys
+    libdir = os.path.normpath(os.path.dirname(__file__))
+    if libdir not in sys.path:
+	sys.path.insert(0, libdir)
+
+_setlib()
+
+commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, CommitConfigFilesCommand, PretestCommand, TestReportCommand, TagCommand, ReleaseCommand, PrepareNextRelease, QuitCommand]
+
+ShowConfig().do()
+
+while 1:
+    print
+    print "COMMANDS:"
+    for i in range(len(commands)):
+        print "  %d   - %s" % (i,commands[i].__doc__)
+    print
+    c = raw_input('Enter your choice:')
+    commands[int(c)]().do()

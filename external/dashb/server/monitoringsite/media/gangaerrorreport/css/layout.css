@@ -1,0 +1,123 @@
+/* layout css */
+/* Author: Lukasz Kokoszkiewicz [lukasz@kokoszkiewicz.com] */
+
+/* defines generic layout elements */
+
+body { margin:0px; background-color:#ADD1EB; background-image:url(../images/BG-main-top.jpg); background-repeat:repeat-x; font-family:'Trebuchet MS','Arial','Verdana'; font-size:9pt; color:#184262; }
+
+#container { text-align:center; }
+#main-centeriser { width:98%;/*(1)*/ background-color:gray; margin-left:auto; margin-right:auto; text-align:left; }
+#header { position:relative; width:100%; height:100px; background-color:#64727D; background-image:url(../images/BG-header.jpg); }
+#header-content { width:100%; height:100px; background-image:url(../images/BG-logo.jpg); background-repeat:no-repeat; }
+
+/* BLOCK/VARIANT/logo=BEGIN  */
+/* * * * * * * * * * * * * * */
+/* VARIANT/CERN-logo=BEGIN *
+#logo-img { position:absolute; top:33px; left:50px; width:65px; height:60px; background:transparent url(../images/LOGO-cern.png) no-repeat top left; z-index:2; }
+#site-name { position:absolute; top:33px; left:140px; color:#FFFFFF; }
+#site-name h1 { margin:0px; font-size:20pt; }
+#site-name p { margin:0px; margin-left:10px; color:#86CBFE; font-weight:bold; }
+* VARIANT/CERN-logo=END */
+
+/* VARIANT/EGEE-logo=BEGIN */
+#logo-img { position:absolute; top:1px; left:1px; width:100px; height:23px; background:transparent url(../images/LOGO-egee.png) no-repeat top left; z-index:2; }
+#site-name { position:absolute; top:35px; left:30px; color:#FFFFFF; }
+#site-name h1 { margin:0px; font-size:20pt; }
+#site-name p { margin:0px; margin-left:10px; color:#86CBFE; font-weight:bold; }
+/* VARIANT/EGEE-logo=END */
+
+/* VARIANT/EGEE-logo=BEGIN */
+#logo-img-ganga { position:absolute; top:37px; right:20px; width:223px; height:50px; background:transparent url(../images/ganga.png) no-repeat top left; z-index:2; }
+/* VARIANT/EGEE-logo=END */
+
+/* VARIANT/EGEE-logo=BEGIN */
+#logo-img-diane { position:absolute; top:37px; right:20px; width:223px; height:50px; background:transparent url(../images/diane.png) no-repeat top left; z-index:2; }
+/* VARIANT/EGEE-logo=END */
+
+/* VARIANT/WLCG-logo=BEGIN *
+#logo-img { position:absolute; top:33px; left:60px; width:60px; height:60px; background:transparent url(../images/LOGO-wlcg.png) no-repeat top left; z-index:2; }
+#site-name { position:absolute; top:35px; left:130px; color:#FFFFFF; }
+#site-name h1 { margin:0px; font-size:20pt; }
+#site-name p { margin:0px; margin-left:10px; color:#86CBFE; font-weight:bold; }
+/* VARIANT/WLCG-logo=END */
+/* * * * * * * * * * * * * * */
+/* BLOCK/VARIANT/logo=END    */
+
+/* BLOCK/description=BEGIN */
+/* uncomment display property to turn it off */
+#description { display:none; position:absolute; top:33px; right:50px; width:344px; height:67px; background:transparent url(../images/desc-braces.png) no-repeat top left; vertical-align:middle; }
+#description p { margin:0px; padding:15px 25px 5px 25px; text-align:justify; color:#FFFFFF; line-height:13px; }/*(2)*/
+/* BLOCK/description=END */
+
+/* BLOCK/belt-darken=BEGIN */
+/* uncomment next line to turn it off */
+#belt-darken { /*display:none;*/ z-index:1; }
+#belt-darken-transparent { position:absolute; background-color:#000000; top:0px; left:0px; width:100%; height:25px;
+  /* for IE */
+  filter:alpha(opacity=30);
+  /* CSS3 standard */
+  opacity:0.3; 
+}/*(3)*/
+#belt-darken-text { position:absolute; background:transparent; top:0px; left:0px; width:100%; height:25px; }
+#belt-darken-text p { float:right; text-align:right; line-height:25px; font-weight:bold; color:#FFFFFF; margin-right:10px; }
+/* BLOCK/belt-darken=END */
+
+/* BLOCK/menu=BEGIN */
+/* in order to turn it off uncomment display property and comment body definition */
+#menu { /*display:none;*/ background-color:#406F91; background-image:url(../images/BG-menu.jpg); width:100%; height:40px; }
+#menu ul { float:left; padding:0; margin:0; list-style-type:none; border-right:1px #5282A6 solid; }
+#menu li { display:inline; line-height:40px; }
+#menu a { float:left; width:160px; font-size:13pt; font-weight:bold; text-align:center; text-decoration:none; color:white; border-right:1px #174262 solid; border-left:1px #5282A6 solid; cursor:pointer; }
+#menu a.active { background-image:url(../images/menu-current.png); background-repeat:no-repeat; background-position:bottom center; }
+#menu a:hover {background-image:url(../images/BG-menu-hover.jpg);}
+#menu a.active:hover { background-image:url(../images/menu-current.png); }
+body { background-image:url(../images/BG-main-top-menu.jpg); }
+/* BLOCK/menu=END */
+
+/* BLOCK/content=BEGIN */
+#content { background-color:#EFEFEF; width:100%; }
+#content-main { padding:10px; font-size:10pt; line-height:1.5em; background-color:#FFFFFF; }
+/* BLOCK/content=END */
+
+/* BLOCK/breadcrumbs=BEGIN */
+/* uncomment display property to turn it off */
+#breadcrumbs { display:none; border-bottom:1px #1E4866 dotted; line-height:25px; color:#8EBDE1; font-size:10pt; background-color:#FFFFFF; }
+#breadcrumbs a { color:#184262; text-decoration:none; }
+#breadcrumbs a:hover { text-decoration:underline; }
+/* BLOCK/breadcrumbs=END */
+
+/* BLOCK/vert-menu-left=BEGIN */
+/* in order to turn it off uncomment display property and comment #content-main definition */
+#vert-menu-left { display:none; float:left; width:162px; background-color:#DDDDDD; }
+#vert-menu-left ul { list-style-type:none; margin:0px; padding:0px; }
+#vert-menu-left li { background-color:#EEEEEE; border-bottom:1px #DDDDDD solid; padding-left:5px; line-height:2em; }
+#vert-menu-left h2 { margin:0px; width:100%; background-color:#4C7898; font-size:14pt; color:white; text-align:center; }
+#vert-menu-left a { text-decoration:none; font-weight:bold; color:#184262; font-size:9pt; }
+#vert-menu-left a:hover { text-decoration:underline; }
+/*#content-main { margin-left:162px; }*/
+/* BLOCK/vert-menu-left=END 
+
+/* BLOCK/vert-menu-right=BEGIN */
+/* in order to turn it off uncomment display property and comment #content-main definition */
+#vert-menu-right { display:none; float:right; width:162px; background-color:#DDDDDD; }
+#vert-menu-right ul { list-style-type:none; margin:0px; padding:0px; }
+#vert-menu-right li { background-color:#EEEEEE; border-bottom:1px #BBBBBB solid; padding-left:3px; }
+#vert-menu-right h2 { margin:0px; width:100%; background-color:#4C7898; font-size:14pt; color:white; text-align:center; }
+#vert-menu-right a { text-decoration:none; font-weight:bold; color:#184262; font-size:9pt; }
+#vert-menu-right a:hover { text-decoration:underline; }
+/*#content-main { margin-right:162px; }*/
+/* BLOCK/vert-menu-right=END 
+
+/* BLOCK/footer=BEGIN */
+#footer { background-color:#4B7797; width:100%; height:45px; border-top:4px #2C4558 solid; clear:both; }
+#footer p { color:white; margin:0px; line-height:45px; text-align:right; margin-right: 20px; font-weight:bold; }
+/* BLOCK/footer=END */
+
+/* 
+Styles Comments
+===============
+(1) - Master site width control. Entire site width can be adjusted here, changing width doesn't require adujsting position of other elements.
+(2) - #description p may require some adjusting according to ammount of text in it.
+(3) - transparent div may not work in older browsers.
+===============
+*/

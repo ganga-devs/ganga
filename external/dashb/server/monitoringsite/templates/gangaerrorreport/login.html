@@ -1,0 +1,66 @@
+
+<head>
+	<script type="text/javascript" src="{{ MEDIA_URL }}gangaerrorreport/scripts/settings.js"></script>
+</head>
+
+<form id="form" method="post">
+
+	<script type="text/javascript">
+	function clearErrorMessage()
+	{
+		errorSpan = document.getElementById('error_message')
+		errorSpan.style.display = 'none';
+	}
+	</script>
+
+	<h4>Login to download the file</h4>
+	<span id="error_message" style="color:red;display:{{display_error_message}}">Invalid username and password!</span>
+	</br>
+	<label>Username: </label>
+	<input type="text" name="user"></input>
+	</br>
+	<label>Password: </label>
+	<input type="password" name="pass"></input>
+	</br></br>
+	<input onclick="clearErrorMessage();" type="submit" value="login" />
+</form>
+
+
+</br></br>
+<a id="a" href="">Back to list of error reports</a>
+
+<script type="text/javascript" language="javascript">
+
+	form = document.getElementById('form')
+	link = document.getElementById('a')
+	
+	if (settings_DEBUG == 'True')
+	{
+		if (settings_COMMUNITY == 'Ganga')
+		{
+			form.action = "/errorreports/login/{{reportId}}"
+			link.href = "/errorreports"
+		}
+		else if (settings_COMMUNITY == 'CMS')
+		{
+			form.action = "/cmserrorreports/login/{{reportId}}"
+			link.href = "/cmserrorreports"
+		}
+	}
+	else
+	{
+		if (settings_COMMUNITY == 'Ganga')
+		{
+			form.action = "/django/errorreports/login/{{reportId}}"
+			link.href = "/django/errorreports"
+		}
+		else if (settings_COMMUNITY == 'CMS')
+		{
+			form.action = "/django/cmserrorreports/login/{{reportId}}"
+			link.href = "/django/cmserrorreports"
+		}
+	}
+
+</script>
+
+

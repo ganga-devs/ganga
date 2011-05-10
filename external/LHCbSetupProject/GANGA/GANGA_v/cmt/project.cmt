@@ -1,0 +1,11 @@
+project GANGA
+
+#use LHCBGRID LHCBGRID_v1r*
+#use LCGCMT LCGCMT_56
+
+use LHCBDIRAC LHCBDIRAC_v6r2p3
+
+build_strategy	with_installarea
+setup_strategy	root
+
+container GangaSys

@@ -1,0 +1,2 @@
+#! /bin/sh
+exec $CVSROOT/CVSROOT/cvs-acls.pl $CVSROOT/CVSROOT/commitavail "$@"

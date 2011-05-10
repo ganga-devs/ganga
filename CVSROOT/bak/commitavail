@@ -1,0 +1,70 @@
+# By default nodoby can commit anything
+
+unavail
+
+# These users can commit everywhere including CVSROOT 
+# (do not remove cvsadmin from here).
+
+avail | cvsadmin ganga 
+
+# Development team can commit everywhere except under CVSROOT.
+# Make sure these two lists are the same. 
+# Do not put here users that should be able to commit 
+# to CVSROOT - put them in the list above, next to cvsadmin.
+
+
+avail.dev | moscicki kuba kubam amuraru wreece roma
+
+avail.dev | gangage ganga/release
+
+avail.dev | asaroka | ganga/python/Ganga/Core/JobRepository ganga/python/Ganga/Utility/external/ARDAMDClient ganga/python/Ganga/GPIDev/Streamers ganga/python/Ganga/GPIDev/Lib/JobTree ganga/python/Ganga/Utility/AMGAServerTools
+
+avail.dev | ctan | ganga/python/GangaGUI ganga/python/Ganga/Core/MonitoringComponent ganga/doc ganga/python/Ganga/GPIDev/Credentials
+
+avail.dev | karl | ganga/python/Ganga/GPIDev/Persistency ganga/python/Ganga/Lib/Condor ganga/python/Ganga/scripts ganga/python/Ganga/GPIDev/Credentials ganga/doc
+
+avail.dev | asaroka andrew uegede wreece lanciott gcowan | ganga/python/GangaLHCb
+
+avail.dev | karl liko elmsheus mkenyon nicholc fbrochu | ganga/python/GangaAtlas 
+
+avail.dev | liko elmsheus dvanders | ganga/python/GangaPanda
+
+avail.dev | liko elmsheus hclee bgaidioz | ganga/python/Ganga/Lib/LCG ganga/python/Ganga/Lib/gLite
+
+avail.dev | elmsheus | ganga/python/Ganga/Lib/PBS
+
+avail.dev | uegede wreece | ganga/python/Ganga/Lib/Root
+
+avail.dev | wreece | ganga/python/Ganga/Lib/Mergers
+
+avail.dev | hclee | ganga/python/GangaPlotter ganga/python/Ganga/Utility
+
+avail.dev | karl | ganga/python/Ganga/Lib/Interactive ganga/python/GangaCamtology
+
+avail.dev | dpiparo uegede andrew | ganga/python/GangaGUI/LHCB_BKDB_browser
+
+avail.dev | amuraru | ganga/python/GangaTest
+
+avail.dev | bgaidioz | ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard
+avail.dev | koblitz | ganga/python/Ganga/Lib/MonitoringServices/Octopus
+
+avail.dev | hclee | ganga/python/Ganga/Lib/Splitters ganga/python/GangaTutorial
+
+avail.dev | pajchel bsamset | ganga/python/GangaNG
+
+avail.dev | walkerr | ganga/python/GangaCronus
+
+avail.dev | uegede | ganga/python/GangaRobot
+
+avail.dev | mbarison | ganga/python/GangaSFrame
+
+avail.dev | mslater | ganga/python/Ganga/Lib/Remote
+ 
+avail.dev | moscicki kuba uegede ctan karl andrew liko asaroka elmsheus hclee dpiparo amuraru roma bgaidioz pajchel bsamset mkenyon nicholc fbrochu wreece dtuckett mbarison mslater | ganga/python/Ganga/test ganga/python/GangaLHCb/test ganga/python/GangaAtlas/test ganga/doc/manuals/src ganga/doc/work ganga/doc/journal prototype
+
+avail.dev | roma | ganga/python/Ganga/Lib/Batch ganga/python/Ganga/Core/Sandbox
+
+# remote workspace prototype
+avail.dev | asaroka |  ganga/python/Ganga/Core/Workspace ganga/python/Ganga/Utility/external/dav ganga/python/Ganga/GPIDev/Lib/Job
+
+unavail

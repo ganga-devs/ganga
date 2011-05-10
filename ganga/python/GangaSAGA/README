@@ -1,0 +1,28 @@
+INTRODUCTION
+
+  This is the ganga IBackend for SAGA. It should run out of the box if,
+  and only if you have SAGA & the SAGA Python bindings installed on your
+  system and added to you PYTHONPATH.
+
+  If you have no idea what that means, you probably want to check out the
+  SAGA website: http://saga.cct.lsu.edu
+
+  If you have any questions, feel free to send me an email:
+  oweidner <at> cct.lsu.edu or oweidner <at> cern.ch
+
+EXAMPLE: 
+
+  Here's an example how to submit a job to a Globus GRAM2 gatekeeper
+  through ganga/saga:
+
+j = Job()
+j.backend = SAGA()
+j.backend.jobservice_url  = "gram://queenbee.loni-lsu.teragrid.org"
+j.backend.filesystem_url  = "gsiftp://queenbee.loni-lsu.teragrid.org:2811//work/test"
+
+j.application.exe = "/bin/cat"
+j.application.args = ['/proc/cpuinfo']
+
+j.submit()
+
+

@@ -1,0 +1,237 @@
+**************************************************************************************************************
+5.4.0 (2009/10/27)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+migrated to stomputil2.0
+
+new environment variable - GANGA_NEVER_REEXEC - prevents reexec if one ganga session is calling
+another one (as it is the case in the testing framework for example)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard
+--------------------------------------------------------------------------------------------------------------
+Fix for https://savannah.cern.ch/bugs/?57112
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/JobExecutionMonitorMS
+--------------------------------------------------------------------------------------------------------------
+Part of the Job Execution Monitor
+This is the initial release of GangaJEM. The JobExecutionMonitorMS is a
+IMonitoringService-implementation needed by GangaJEM.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/MSGMS
+--------------------------------------------------------------------------------------------------------------
+migrated to using stomputil 2.0
+added AthenaMSGMS for UAT09 (User Analysis Test)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* As of Ganga 5.4.0, the method for running with TAGS has 
+changed significantly. You now need to submit a 'TagPrepare' 
+job that analyses the TAG files you wish to run on and 
+assembles the information required. This can then be supplied 
+to the analysis job. For more information, please see the 
+GangaAtlas tutorial:
+https://twiki.cern.ch/twiki/bin/view/Atlas/FullGangaAtlasTutorial 
+* Disable DQ2_DOWNLOAD
+* Add MSGMS for Athena/LCG to Atlas.ini
+* Change Milano access algorithm
+* Fix for groupname problem
+* Fix bug 57480: change order of tar options in prepare()
+* 
+
+AthenaMC:
+---------
+* Modified __init__.py to prevent loading of Panda RT Handler 
+if there is something wrong with the Panda module 
+(Panda.lib.Panda classes failed imports)
+
+* Change in output dataset management: dataset freezing is no 
+longer done automatically. Users have to run 
+job.outputdata.validate() to do so. 
+* New application method: prepare() to append user area to the job. 
+* Added support for transforms inline option (new member transflags) 
+and a new application method: diagostic() to identify jobs and 
+subjobs in completed state but with some errors.
+* AthenaMCPandaRTHandler: bug fix to prevent Client.addDataset() to 
+be called once per submitted subjob (which causes a DQ2DatasetExists 
+exception to be raised at the second subjob).
+
+Detailed release notes:
+
+* Dataset freezing and creation/filling of containers is no longer 
+automatic.
+The users now have to explicitly issue this statement to do so :
+jobs(X).outputdata.validate()
+
+Consequences:
+-> All generated output datasets by the job are left opened until 
+   the user decides to run this command. 
+-> This allows resubmitted jobs (via jobs(X).resubmit()) to dump 
+   their output data in the same output dataset as the initial job. 
+   This does not, however, lift the restriction of one attempt per 
+   day coming from the file timestamps.
+-> Datasets created by Panda jobs can now be frozen like the LCG ones.
+-> Datasets created by Panda jobs can now be aggregated in containers 
+   like the LCG ones.
+-> Users can force to freeze output datasets from a master job which 
+   is not "completed". This is especially useful in the case of 
+   master jobs with a very large number of subjobs, in the 
+   situation where only a handful of subjobs are not completed 
+   and one wants to start the next processing step with the data 
+   already available.
+
+* Change of default behaviour for jobs(X).outputdata.recover()
+This command does no longer freeze output datasets by default.
+To freeze output datasets with this command, type:
+jobs(X).outputdata.recover(freeze='yes')
+
+* Support for transforms' inline option (or flags)
+Transforms flags like --ignoreunknown or --ignoreerrors can now 
+be passed via the application member transflags:
+
+jobs(X).application.transflags='--ignoreunknown'
+
+* Protoype support for user area
+The application method prepare() is now performing a similar 
+service to Athena's own prepare() method, but in a much lighter 
+and automated way. For instance, there is no support for excluded 
+file types or user setup scripts, and there is no "compile" switch: 
+the user code to be run must be precompiled.
+
+Like Athena's prepare() method, one has to set up Athena before 
+running the prepare() method, and ganga must be started from the 
+run or cmt directory. Otherwise, it is pretty much similar in 
+behaviour. This protoype has only been tested on LCG backend.
+
+* diagnostic() tool
+This new application method allows the user to find jobs that 
+completed with errors (status=completed or failed) and get a raw 
+idea of the error that occured.
+It is complementary of the warning and error messages provided by 
+ganga at completion time, in the sense that it can be run any time 
+(even a very long time after the job completed). 
+It only works with master jobs:
+
+jobs(X).application.diagnostic()
+
+and loop over the subjobs (if any).
+
+This prototype tool relies on a scan of the stdout file and the 
+backend data, therefore it does not work with jobs submitted to the 
+Panda backend. The analysis is very crude: do not hesitate to 
+contact hn-atlas-dist-analysis-help@cern.ch if there is any 
+problem with the result of diagnostic().
+
+* AthenaMCPandaRTHandler: DQ2DatasetExists exception used to be 
+raised when master jobs with more than one subjob were submitted, 
+preventing the submission of the job. This is now fixed.
+
+AMAAthena
+---------
+* add codes in job wrapper to collect simular runtime status in 
+  Athena module
+* introduce the AMA specific getstats script for collecting 
+  application.stats
+* enhance the event number parsing
+* add alternative way to get number of processed events: parse 
+  message from AMAEventCounter
+* fix message parser to get number of staged files to WN
+* remove useless imports of python modules
+* enhance the handler for uploading AMAAthena output files to a 
+  grid storage
+  - tar up the "summary" directory in which AMA stores ntuples 
+    and histograms
+  - specify the summary tarball in DQ2OutputDataset 	
+* add new AMAAthena runtime handler for Panda backend
+
+Tasks:
+-----
+* Added warning that files_per_job is changed if 
+  initializeFromDatasets is used
+
+externals:
+----------
+* Upgrade to DQ2Clients 0.1.31 and panda-client 0.1.94
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGUI
+--------------------------------------------------------------------------------------------------------------
+Use new pyqt package
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+Part of the Job Execution Monitor
+This is the initial release of GangaJEM, using the external package JEM v0.2.5. More information can
+be found within Ganga (if GangaJEM is loaded) by typing 'help(JobExecutionMonitor)', and on the
+Ganga TWIKI pages at https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaJEM .
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+This release marks the move of Ganga into the standard LHCb software scheme.  I.e. you will now need
+to do "SetupProject Ganga" instead of "GangaEnv" and can install Ganga using "install_project".  
+
+Apart from this, there are many performance enhancements in this release for LHCb.  The start-up
+time should be much less at all sites.  In fact, w/ an empty repository on lxplus the start-up time
+is about 1.5 seconds.  In the near future (current plans are for 5.5.0), Ganga will be implementing
+a new job repository that will perform "lazy loading".  Tests on this repository have shown that
+this reduces the time at start up for job repository loading down to an insignificant amount even
+for *very* large repositories.  Combined w/ the enhancements for LHCb in this release, Ganga-LHCb
+users (regardless of repository size) will soon be able to start up Ganga in just a few seconds (and
+should be able to now if their repository isn't too big).
+
+The LHCbDataset/LHCbDataFile classes have also been significantly modified.  The LHCbDataFile class
+has been replaced by 2 classes: PhysicalFile and LogicalFile.  The PhysicalFile class should be used
+for PFN's and also provides the ability to upload files to Grid storage.  The LogicalFile class
+should be used for LFN's and provides the ability to download the file, replicate it, get its
+replicas and/or metadata, etc.  See the class documentation for further details.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+- Fixed problem with the two co-existing lfc path conventions
+- Removed banning of t1-repro queues
+- Made arcgiis list brokering work (make giises.txt available in present dir.)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+added config.serverMaxJobs which defaults to 2000. Useful if Panda server increases the number of jobs 
+allowed per submission.
+
+externals:
+----------
+* Upgrade to panda-client 0.1.94
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPlotter
+--------------------------------------------------------------------------------------------------------------
+change to use SLC5 compatible libraries
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaSFrame
+--------------------------------------------------------------------------------------------------------------
+Changes to use the legacy Athena.prepare_old() method.
+Bugfix for SFrameAra jobs.
+
+**************************************************************************************************************

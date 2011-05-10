@@ -1,0 +1,65 @@
+**************************************************************************************************************
+5.5.1 (2010/3/1)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Fixed subjobs not being marked as "clean" after flushing
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Add pypath and pyldpath in front of dq2-get calls in
+  run-athena-lcg.sh and athena-utility.sh
+* Split lcg-getturls call in chunks of 50 for DPM sites
+  in ganga-stage-in-out-dq2.py
+* Remove DQ2Clients requirments in AthenaLCGRTHandler.py
+* Remove sqlite DB download in run-athena-lcg.sh
+* Update requirments to 0.1.32 of DQ2Clients
+* Set user10 tag in Atlas.ini
+* Change order of glite UI and athena setup in
+  run-athena-local.sh
+* Added GRL support to AMIDataset
+* Removed bad combinations of grid/local options
+* Made 'ALL' the default for the cloud in LCG
+* Fixed TAG bug - now TAG files are downloaded on the WN
+* Fix bug #63513: Ganga/Athena/LCG reporting incorrect sites
+  to DQ2 Tracer Framework is fixed now
+* Fix bug #62416: The Local and Batch execution of Athena
+  without prior DQ2 setup works fine again
+* Update to more stable libdcap.so
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+* removed GangaJEM startup banner
+* fixed path access right problems
+* changed default logging directory
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor features implemented.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Panda backend:
+ - https://savannah.cern.ch/bugs/index.php?53471: Fix 4 digit release brokering for Athena and 
+AthenaMC
+ - https://savannah.cern.ch/bugs/index.php?58477: use the libds cloud if libds supplied
+ - https://savannah.cern.ch/bugs/?62031: suppress stdout/err when using AthenaUtils
+ - add accessmode option (FOR ADC OPS USE ONLY)
+
+AthenaPandaRTHandler:
+ - https://savannah.cern.ch/bugs/index.php?62109: disable outputdata.location. Refer user to DaTRI.
+ - Don't use local cmt_config. Get version dependent string from AthenaUtils. This means you can 
+submit any athena version jobs from SLC4 or SLC5
+
+**************************************************************************************************************
