@@ -54,7 +54,6 @@ class Bender(Francesc):
     def configure(self,master_appconfig):
         self._configure()
         modulename = split(self.module.name)[-1].split('.')[0]
-        print 'modulename',modulename
         script =  "from Gaudi.Configuration import *\n"
         script += "importOptions('data.py')\n"
         script += "import %s as USERMODULE\n" % modulename
