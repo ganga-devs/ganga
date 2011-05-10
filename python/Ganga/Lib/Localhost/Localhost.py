@@ -188,7 +188,7 @@ class Localhost(IBackend):
       script= """#!/usr/bin/env python
 
 import os,os.path,shutil,tempfile
-import sys,popen2,time
+import sys,time
 
 import sys
 
