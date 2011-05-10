@@ -26,6 +26,7 @@ from dq2.repository.DQRepositoryException import DQFrozenDatasetException
 
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
 _refreshToACache()
 
@@ -1649,7 +1650,8 @@ class DQ2OutputDataset(Dataset):
         blocking = options.get('blocking')
         use_dsname = options.get('useDSNameForDir')
         output_names_re = options.get('outputNamesRE')
-        
+        thread_pool = options.get('threadPool')
+
         job = self._getParent()
 
         # Master job finish
@@ -1660,8 +1662,15 @@ class DQ2OutputDataset(Dataset):
 
         # call the subjob retrieve method if available
         if len(job.subjobs) > 0 and subjobDownload:
+            
+            thread_pool = DQ2OutputDownloader(numThread = config['NumberOfDQ2DownloadThreads'])
             for sj in job.subjobs:
-                sj.outputdata.retrieve(blocking=blocking, useDSNameForDir=use_dsname, outputNamesRE=output_names_re)
+                sj.outputdata.retrieve(blocking=False, useDSNameForDir=use_dsname, outputNamesRE=output_names_re, threadPool=thread_pool)
+
+            thread_pool.start()
+
+            if blocking:
+                thread_pool.join()
             return
        
         if job.backend._name in [ 'LCG' ]:
@@ -1755,11 +1764,14 @@ class DQ2OutputDataset(Dataset):
                             cmd = '%s -s %s -H %s -f %s %s' %(exe, job.outputdata.location, temp_location, filename, job.outputdata.datasetname)
 
                         logger.warning("Please be patient - background execution of dq2-get of %s to %s", job.outputdata.datasetname, temp_location )
-                        threads=[]
-                        thread = Download.download_dq2(cmd)
-                        thread.setDaemon(True)
-                        thread.start()
-                        threads.append(thread)
+                        if thread_pool:
+                            thread_pool.addTask(cmd)
+                        else:
+                            threads=[]
+                            thread = Download.download_dq2(cmd)
+                            thread.setDaemon(True)
+                            thread.start()
+                            threads.append(thread)
                 else:
                     logger.warning('job.outputdata.output emtpy - nothing to download')
 
@@ -1772,6 +1784,59 @@ class DQ2OutputDataset(Dataset):
 
         else:
             logger.error("Nothing to download")
+
+
+class DQ2OutputDownloadTask:
+    """
+    Class for defining a data object for each output downloading task.
+    """
+
+    _attributes = ('cmd')
+
+    def __init__(self, cmd):
+        self.cmd = cmd
+
+
+class DQ2OutputDownloadAlgorithm(Algorithm):
+    """
+    Class for implementing the logic of each downloading task.
+    """
+
+    def process(self, item):
+        """
+        downloads output of one DQ2 job
+        """
+        from GangaAtlas.Lib.ATLASDataset import Download
+
+        thread = Download.download_dq2(item.cmd)
+        thread.setDaemon(True)
+        thread.start()
+        thread.join()
+
+        return True
+
+class DQ2OutputDownloader(MTRunner):
+
+    """
+    Class for managing multi-threaded downloading of DQ2 Output
+    """
+
+    def __init__(self, numThread=5):
+
+        MTRunner.__init__(self, name='dq2_output_downloader', data=Data(collection=[]), algorithm=DQ2OutputDownloadAlgorithm())
+
+        #self.keepAlive = True
+        self.numThread = numThread
+
+    def countAliveAgent(self):
+
+        return self.__cnt_alive_threads__()
+
+    def addTask(self, cmd):
+        task = DQ2OutputDownloadTask(cmd)
+        self.addDataItem(task)
+
+        return True
 
 
 logger = getLogger()
@@ -1821,6 +1886,7 @@ config.addOption('ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET', False, 'Allow that v
 config.addOption('OUTPUTDATASET_LIFETIME', '', 'Maximum lifetime of a DQ2OutputDataset.')
 config.addOption('OUTPUTDATASET_NAMELENGTH', 131, 'Maximum characters of a DQ2OutputDataset.')
 config.addOption('OUTPUTFILE_NAMELENGTH', 150, 'Maximum characters of a filename in DQ2OutputDataset.')
+config.addOption('NumberOfDQ2DownloadThreads', 5, 'Number of simultaneous DQ2 downloads when calling "retrieve"')
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
