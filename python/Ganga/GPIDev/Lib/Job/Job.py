@@ -46,10 +46,10 @@ class JobError(GangaException):
 
 class ConfiguredStateError(GangaException):
     def __init__(self,txt):
-    GangaException.__init__(self,txt)
-    self.txt=txt
+        GangaException.__init__(self,txt)
+        self.txt=txt
     def __str__(self):
-    return "ConfiguredStateError: %s"%str(self.txt)
+        return "ConfiguredStateError: %s"%str(self.txt)
 
 import Ganga.Utility.guid
     

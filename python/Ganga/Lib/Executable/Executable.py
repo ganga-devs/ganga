@@ -58,7 +58,7 @@ class Executable(IApplication):
         super(Executable,self).__init__()
         
     def _user_configure_job(self):
-    print "dummy method"
+        print "dummy method"
 
     def configure(self,masterappconfig):
         from Ganga.Core import ApplicationConfigurationError
