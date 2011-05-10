@@ -4,6 +4,8 @@
 # $Id: File.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ################################################################################
 
+import Ganga.Utility.Config
+config = Ganga.Utility.Config.getConfig('Configuration')
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 import os
@@ -16,7 +18,7 @@ class File(GangaObject):
     Typically in the context of job submission, the files are copied to the directory where the application
     runs on the worker node. The 'subdir' attribute influances the destination directory. The 'subdir' feature
     is not universally supported however and needs a review.
-    
+
     """
     _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='path to the file source'),
                                     'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)'),
@@ -40,6 +42,7 @@ class File(GangaObject):
 
         if not subdir is None:
             self.subdir = subdir
+
 
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
@@ -105,6 +108,167 @@ def string_file_shortcut(v,item):
         
 allComponentFilters['files'] = string_file_shortcut
 
+
+
+class SharedFile(GangaObject):
+    """Represent the files, both local and remote and provide an interface to transparently get access to them.
+
+    Typically in the context of job submission, the files are copied to the directory where the application
+    runs on the worker node. The 'subdir' attribute influances the destination directory. The 'subdir' feature
+    is not universally supported however and needs a review.
+
+    """
+    _schema = Schema(Version(1,0), {'name': SimpleItem(defvalue="mjk",doc='path to the file source'),
+                                    'subdir': SimpleItem(defvalue=(os.path.join(expandfilename(config['gangadir']),'shared',config['user'])),doc='destination subdirectory (a relative path)')})
+    _category = 'sharedfiles'
+    _name = "SharedFile"
+    def _readonly(self):
+        return True
+
+    def __init__(self,name="",subdir=os.curdir):
+        super(SharedFile, self).__init__()
+
+        shared_path = os.path.join(expandfilename(config['gangadir']),'shared',config['user'])
+        if not os.access(shared_path, os.F_OK):
+            os.mkdir(shared_path)
+        #continue generating a filename until we create a unique one.
+        while True:
+            name = shared_path + '/conf.' + Ganga.Utility.guid.uuid() + '.tar.gz'
+            if not os.path.isfile(name):
+                break
+
+
+
+        #print "shared_path=" + shared_path
+#        if not expandfilename(self.subdir) == shared_path:
+#            print "does", shared_path, "/", name, "exist?"
+#            if os.path.isfile(os.path.join(shared_path, self.name)):
+#                print "yes"
+#                #name = "%s.%s" % (uuid.uuid1(), name)
+#                name = "%s.%s" % ('randomstring', name)
+#                print "here1"
+#            else:
+#                print "no"
+#                print "trying to touch ", shared_path+"/"+str(name)
+#                os.system('touch %s' % (os.path.join(shared_path, str(name))))
+#                print "here2"
+        self.name=str(name)
+
+            #os.system("cp %s %s" % (os.path.join(self.subdir, self.name), os.path.join(shared_path, name)))
+
+
+
+
+    def __construct__(self,args):
+        print "running construct"
+        if len(args) == 1 and type(args[0]) == type(''):
+            v = args[0]
+            import os.path
+            expanded = expandfilename(v)
+            if not urlprefix.match(expanded): # if it is not already an absolute filename
+                self.name = os.path.abspath(expanded)
+            else: #bugfix #20545 
+                self.name = expanded
+                print "self.name", self.name
+                print "got here1"
+        else:
+            super(SharedFile,self).__construct__(args)
+            print "got here2"
+        
+    def exists(self):
+        """check if the file exists (as specified by 'name')"""
+        import os.path
+        return os.path.isfile(expandfilename(self.name))
+        
+    def create(self,outname):
+        """create a file in  a local filesystem as 'outname', maintain
+        the original permissions """
+        import shutil
+
+        shutil.copy(expandfilename(self.name),outname)
+        if self.executable:
+            chmod_executable(outname)
+            
+    def __repr__(self):
+        """Get   the  representation   of  the   file.  Since   the  a
+        SimpleStreamer uses  __repr__ for persistency  it is important
+        to return  a valid python expression  which fully reconstructs
+        the object.  """
+
+        return "SharedFile(name='%s',subdir='%s')"%(self.name,self.subdir)
+
+    def isExecutable(self):
+        """  return true  if  a file  is  create()'ed with  executable
+        permissions,  i.e. the  permissions of  the  existing 'source'
+        file are checked"""
+        return self.executable or is_executable(expandfilename(self.name))
+
+import Ganga.Utility.Config
+Ganga.Utility.Config.config_scope['SharedFile'] = SharedFile
+
+from Ganga.GPIDev.Base.Filters import allComponentFilters
+
+import re
+#regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
+urlprefix=re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
+
+def string_sharedfile_shortcut(v,item):
+    if type(v) is type(''):
+        # use proxy class to enable all user conversions on the value itself
+        # but return the implementation object (not proxy)
+        return SharedFile._proxyClass(v)._impl
+    return None 
+        
+allComponentFilters['sharedfiles'] = string_sharedfile_shortcut
+
+
+
+
+
+
+#class SharedFile(File):
+#    """Represent the files, both local and remote and provide an interface to transparently get access to them.
+#
+#    Typically in the context of job submission, the files are copied to the directory where the application
+#    runs on the worker node. The 'subdir' attribute influances the destination directory. The 'subdir' feature
+#    is not universally supported however and needs a review.
+#    
+#    """
+#    _schema = Schema(Version(1,0), {'name': SimpleItem(defvalue="",doc='path to the file source'),
+#                                    'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)')})
+#    _category = 'sharedfiles'
+#    _name = "SharedFile"
+##    def _readonly(self):
+##        return True
+#
+#    def __init__(self, name=None, subdir=os.curdir):
+#        File.__init__(self, name, subdir)
+#        ## TODO: Copy file into shared files area if it is not already there
+#        ## change name on conflict
+#        shared_path = os.path.join(expandfilename(config['gangadir']),'shared',config['user'])
+#
+#        if not expandfilename(self.subdir) == shared_path:
+#            if os.path.exists(os.path.join(shared_path, self.name)):
+#                name = "%s.%s" % (uuid.uuid1(), name)
+#            else:
+#                name = self.name
+#            os.system('touch %s' % (os.path.join(shared_path, name)))
+#            #os.system("cp %s %s" % (os.path.join(self.subdir, self.name), os.path.join(shared_path, name)))
+#        
+#    def __repr__(self):
+#        """Get   the  representation   of  the   file.  Since   the  a
+#        SimpleStreamer uses  __repr__ for persistency  it is important
+#        to return  a valid python expression  which fully reconstructs
+#        the object.  """
+#        return "SharedFile(name='%s')"%(self.name)
+#
+#def string_sharedfile_shortcut(v,item):
+#    if type(v) is type(''):
+#        # use proxy class to enable all user conversions on the value itself
+#        # but return the implementation object (not proxy)
+#        return SharedFile._proxyClass(v)._impl
+#    return None 
+#allComponentFilters['sharedfiles'] = string_sharedfile_shortcut
 ## JUNK -------------------------
 ##         This is just a first idea and exact details how to implement such transparent access will be resolved later.
 ##         For example path resolution levels could imply:

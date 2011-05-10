@@ -15,11 +15,23 @@ logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility.util import isStringLike
 from Ganga.Utility.logging import log_user_exception
 
+import Ganga.Utility.Config
+config = Ganga.Utility.Config.getConfig('Configuration')
+from Ganga.Utility.files import expandfilename
+
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository import RegistryKeyError
 
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
+from Ganga.GPIDev.Lib.File import SharedFile
 
+from Ganga.GPIDev.Lib.Registry import *
+from Ganga.Core.GangaRepository import *
+
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Lib.File import File
+
+import os
 
 class JobStatusError(GangaException):
     def __init__(self,*args):
@@ -31,6 +43,13 @@ class JobError(GangaException):
         self.what=what
     def __str__(self):
         return "JobError: %s"%str(self.what)
+
+class ConfiguredStateError(GangaException):
+    def __init__(self,txt):
+    GangaException.__init__(self,txt)
+    self.txt=txt
+    def __str__(self):
+    return "ConfiguredStateError: %s"%str(self.txt)
 
 import Ganga.Utility.guid
     
@@ -140,7 +159,7 @@ class Job(GangaObject):
 
     _category = 'jobs'
     _name = 'Job'
-    _exportmethods = ['submit','remove','kill', 'resubmit', 'peek','fail', 'force_status','merge' ]
+    _exportmethods = ['configure','submit','remove','kill', 'resubmit', 'peek','fail', 'force_status','merge' ]
 
     default_registry = 'jobs'
 
@@ -569,6 +588,65 @@ class Job(GangaObject):
 
         return None
 
+    def configure(self):
+        '''Placeholder for a method to put a job in a configured state.
+        Returns True on success.'''
+
+        try:
+            #check to see if app is a configurable one (caught by AttributeError)
+            self.application.__getattribute__('is_configured')
+            #has the job already been configured? If so, then we'll create a copy of the configured job in the 'new' state
+            if self.application.is_configured is None:
+                logger.info('Configuring job %s, %s application.'%(self.id,self.application._name))
+
+                #print self.application._name
+                #find any file items and see if they've been set. This basically equates to checking whether
+                #inputsandbox is set
+                addToSharedFile = []
+                for name,item in self._schema._filter(FileItem):
+                    #print name, item
+                    #print name + " is a FileItem"
+                    if self.inputsandbox.__len__():
+                        #print name + " is set to " + str(getattr(self,name))
+                        for fileItem in self.inputsandbox:
+                            addToSharedFile.append(fileItem)
+                #now check to see if the application contains any executable File items
+                if isinstance(self.application.exe, File):
+                    addToSharedFile.append(self.application.exe)
+
+                #now configure the application.
+                #start by creating a file, if necessary. This would be required if there are files
+                #in the inputsandbox or if an executable file references something locally
+                if addToSharedFile.__len__() > 0:
+                    self.application.is_configured = SharedFile()
+                    #create a tar file
+                    tarInputs = ''
+                    for inputFile in addToSharedFile:
+                        tarInputs = tarInputs + inputFile.name + ' '
+                        ##########################################
+                        #this is a little hack to create the files while we're testing
+                        #must be removed prior to release!
+                        if not os.path.isfile(inputFile.name):
+                            os.system('touch ' + inputFile.name)
+                        ##########################################
+                        print "Adding " + inputFile.name + " to shared file"
+                    tarcmd = 'tar '
+                    os.system('%(tc)s -czf %(sf)s %(ti)s ' % {'tc':tarcmd, 'sf':shared_filename, 'ti':tarInputs})
+                    if os.path.isfile(shared_filename):
+                        print 'Successfully created ' + shared_filename
+                    #print '%(tc)s -czf %(sf)s %(ti)s ' % {'tc':tarcmd, 'sf':shared_filename, 'ti':tarInputs}
+                else:
+                    self.application.is_configured = True
+            else:
+                logger.info('Job %s , %s application was already configured; not configuring again.'%(self.id,self.application._name))
+            return 1
+        except AttributeError,msg:
+            msg = 'Cannot configure job %s; the configure() method is not implemented for %s applications.'%(self.id,self.application._name)
+            logger.error(msg)
+            raise ConfiguredStateError(msg)
+
+
+
     def submit(self,keep_going=None,keep_on_fail=None):
         '''Submits a job. Return true on success.
 
@@ -713,6 +791,7 @@ class Job(GangaObject):
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
             self.info.increment()
             self.updateStatus('submitted') # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
+            self.configure()
             self._commit() # make sure that the status change goes to the repository, NOTE: this commit is redundant if updateStatus() is used on the line above
 
             #send job submission message
