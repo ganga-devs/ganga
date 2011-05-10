@@ -63,6 +63,7 @@ class MultiTransform(Transform):
        'unit_partition_list': SimpleItem(defvalue=[], hidden=1, doc='Map from unit to partitions'),
        'unit_inputdata_list': SimpleItem(defvalue=[], hidden=1, doc='Map from unit to inputdata'),
        'unit_outputdata_list': SimpleItem(defvalue=[], hidden=1, doc='Map from unit to outputdata'),
+       'unit_state_list': SimpleItem(defvalue=[], hidden=1, doc='An array storing the unit states'),
        'do_auto_download'   : SimpleItem(defvalue=False, doc='Trigger automatic dq2 download of related datasets'),
        'individual_unit_merger'   : SimpleItem(defvalue=False, doc='Run the merger per unit rather than on the whole transform'),
        'single_unit'   : SimpleItem(defvalue=False, doc='Reduce to a single unit that runs over the all outputs from all required trfs'),
@@ -73,7 +74,7 @@ class MultiTransform(Transform):
        }.items()))
    _category = 'transforms'
    _name = 'MultiTransform'
-   _exportmethods = Transform._exportmethods + ['getID', 'addUnit']
+   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob']
    
    def initialize(self):
        super(MultiTransform, self).initialize()
@@ -86,7 +87,48 @@ class MultiTransform(Transform):
            raise ApplicationConfigurationError(None, "This transform has not been associated with a task and so there is no ID available")
        
        return task.transforms.index(self)
-       
+
+   def unit_overview(self):
+       """Show the status of the units in this transform"""
+       for uind in range(0, len(self.unit_outputdata_list)):
+           
+           o = ""                  
+           o += ("%d:  " % uind) + self.unit_outputdata_list[uind]
+           
+           # is unit active?
+           if self.unit_state_list[uind]['active']:
+               o += " " * (47-len(o) + 3) + "*"
+           else:
+               o += " " * (47-len(o) + 3) + "-"
+
+           # is unit configured?
+           if self.unit_state_list[uind]['configured']:
+               o += "\t"+" " * 5 + "*"
+           else:
+               o += "\t"+" " * 5 + "-"
+               
+           # is unit submitted?
+           if self.unit_state_list[uind]['submitted']:
+               o += "\t\t"+" " * 5 + "*"
+           else:
+               o += "\t\t"+" " * 5 + "-"
+
+           # is unit downloaded?
+           if self.unit_state_list[uind]['download']:
+               o += "\t\t"+" " * 4 + "*"
+           else:
+               o += "\t\t"+" " * 4 + "-"
+
+           # is unit Merged?
+           if self.unit_state_list[uind]['merged']:
+               o += "\t\t"+" " * 3 + "*"
+           else:
+               o += "\t\t"+" " * 3 + "-"
+
+           # Any reasons?
+           o += "\t" + self.unit_state_list[uind]['reason']
+           print o
+                      
    def check(self):
       super(MultiTransform,self).check()
 
@@ -209,10 +251,13 @@ class MultiTransform(Transform):
 
        return filelist
 
-   def getUnitMasterJob(self, uind):
+   def getUnitMasterJob(self, uind, proxy=False):
        """Return the master job corresponding to this unit"""
        sj = self.getPartitionJobs( self.unit_partition_list[uind][0] )
-       mj = sj[-1]._impl._getParent()
+       if proxy:
+           mj = sj[-1].master
+       else:
+           mj = sj[-1]._impl._getParent()
        return mj
   
    def finalise(self):
@@ -233,9 +278,13 @@ class MultiTransform(Transform):
               do_download = True
 
       # loop over any complete units
+      break_loop = False
       for uind in range(0, len(self.unit_partition_list)):
 
-          if not self.isUnitComplete(uind):
+          if len(self.unit_partition_list[uind]) > 0 and self.getUnitMasterJob( uind ):
+              self.unit_state_list[uind]['submitted'] = True
+              
+          if not self.isUnitComplete(uind) or not self.unit_state_list[uind]['active']:
               continue
 
           # check for dq2
@@ -259,10 +308,17 @@ class MultiTransform(Transform):
               if do_dq2:
                   # not got all files - try the retrieve
                   mj = self.getUnitMasterJob( uind )
-                  if mj.outputdata.local_location:
-                      mj.outputdata.retrieve(blocking=True, subjobDownload=True, useDSNameForDir=True, outputNamesRE=".root")
-                  else:
-                      mj.outputdata.retrieve(blocking=True, subjobDownload=True, outputNamesRE=".root")
+                  try:
+                      if mj.outputdata.local_location:
+                          mj.outputdata.retrieve(blocking=True, subjobDownload=True, useDSNameForDir=True, outputNamesRE=".root")
+                      else:
+                          mj.outputdata.retrieve(blocking=True, subjobDownload=True, outputNamesRE=".root")
+
+                  except:
+                      pass
+
+                  
+                  break_loop = True
 
                   # check if the download worked
                   do_dq2 = False
@@ -270,17 +326,22 @@ class MultiTransform(Transform):
                       if not os.path.exists( f2 ):
                           logger.error("Couldn't download file %s. Will retry..." % f2)
                           do_dq2 = True
+                          self.unit_state_list[uind]['reason'] = "Problem with dq2-get. Will retry."
                           break
                       else:
                           # check if the file was OK
                           if os.path.getsize( f2 ) < 10:
                               logger.warning("Problem with dq2-get. Removing file %s and retrying..." % f2)
+                              self.unit_state_list[uind]['reason'] = "Problem with dq2-get. Will retry."
                               os.remove(f2)
                               do_dq2 = True
                               break
 
               # if the dq2-get is complete, attempt the merger
               if not do_dq2 and self.merger:
+                  
+                  self.unit_state_list[uind]['download'] = True
+                  
                   do_merger = True
                   joblist = []
 
@@ -334,14 +395,21 @@ class MultiTransform(Transform):
                       if not os.path.exists(local_location):
                           os.makedirs(local_location)
 
-                      self.merger.merge( subjobs = joblist, local_location = local_location)
+                      try:
+                          self.merger.merge( subjobs = joblist, local_location = local_location)
+                      except:
+                          pass
+                      
+                      break_loop = True
 
                       # check files are there
                       if len(os.listdir(local_location)) == 0:
                           logger.error("Problem with merger. Will retry...")
+                          self.unit_state_list[uind]['reason'] = "Problem with merger. Will retry."
                           return
                       else:
                           logger.info("Merged unit %d from transform %d" % ( uind, self.getID()))
+                          self.unit_state_list[unit]['merged'] = True
                           for f in os.listdir(local_location):
                               full_path = os.path.join(local_location, f)
                               self.local_files['merge'].append(full_path)
@@ -354,6 +422,9 @@ class MultiTransform(Transform):
                       trf.updateInputStatus(self, uind)
               
       
+          if break_loop:
+              break
+
    def updateInputStatus(self, ltf, uind):
       """We have a completed unit - set this one off if required"""
 
@@ -482,6 +553,8 @@ class MultiTransform(Transform):
                for p in self.unit_partition_list[ uind ]:
                    self.setPartitionStatus(p, 'bad')
 
+               self.unit_state_list[unit_num]['configured'] = False
+               self.unit_state_list[unit_num]['submitted'] = False
                self.createPartitionList( uind )
                continue
 
@@ -505,6 +578,8 @@ class MultiTransform(Transform):
                for p in self.unit_partition_list[ uind ]:
                    self.setPartitionStatus(p, 'bad')
 
+               self.unit_state_list[unit_num]['configured'] = False
+               self.unit_state_list[unit_num]['submitted'] = False
                self.createPartitionList( uind )
                continue
            
@@ -537,6 +612,8 @@ class MultiTransform(Transform):
                        for p in self.unit_partition_list[ uind ]:
                            self.setPartitionStatus(p, 'bad')
 
+                       self.unit_state_list[unit_num]['configured'] = False
+                       self.unit_state_list[unit_num]['submitted'] = False
                        self.createPartitionList( uind )
                        continue
                
@@ -565,18 +642,59 @@ class MultiTransform(Transform):
        return self.partitions_fails[partition-1] + total
 
    def addUnit(self, outName, inDSList):
-       """Specify the output datset name and inputDS lists for a unit"""
+       """Specify the output datset name and inputDS lists for a unit"""       
        self.unit_outputdata_list.append(outName)
        self.unit_inputdata_list.append(inDSList)
        self.unit_partition_list.append([])
+       self.unit_state_list.append({'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':''})
 
+   def getUnit(self, unit):
+       """get the unit number by number or name"""       
+       if isinstance(unit, str):
+           for uind in range(0, len(self.unit_outputdata_list)):
+               if unit == self.unit_outputdata_list[uind]:
+                   return uind
+           logger.warning("Couldn't find unit with name '%s'." % unit)
+       elif isinstance(unit, int):
+           if unit < 0 and unit > len(self.unit_outputdata_list):
+               logger.warning("Unit number '%d' out of range" % unit)
+           else:
+               return unit
+       else:
+           logger.warning('Incorrect type for unit referral. Allowed types are int or string.')
+
+       return -1
+           
+   def getUnitJob(self, unit):
+       """activate the given unit"""
+       unit = self.getUnit(unit)
+       if unit != -1:           
+           return self.getUnitMasterJob( unit, proxy=True )
+       else:
+           return None
+       
+   def activateUnit(self, unit):
+       """activate the given unit"""
+       unit = self.getUnit(unit)
+       if unit != -1:
+           self.unit_state_list[unit]['active'] = True
+
+   def deactivateUnit(self, unit):
+       """deactivate the given unit"""
+       unit = self.getUnit(unit)
+       if unit != -1:
+           self.unit_state_list[unit]['active'] = False
+           
    def createPartitionList( self, unit_num ):
 
       if not self.partition_lock:
           self.partition_lock = threading.Lock()
+
           
+      self.unit_state_list[unit_num]['active'] = True
+
       # create partitions as given by the unit lists
-      part_num = len(self.partitions_data) + 1
+      part_num = len(self.partitions_data) + 1      
       
       if not self.backend:
           self.backend = stripProxy(GPI.Panda())
@@ -600,16 +718,22 @@ class MultiTransform(Transform):
           self.pause()
           raise ApplicationConfigurationError(None, "Backend '%s' not supported in MultiTask mode" % self.backend._name)
 
+      #sjl = splitter.split(self)
       try:
           sjl = splitter.split(self)
-      except:
-          logger.error("Exception during split - pausing transform. Maybe no valid sites found?")
-          self.pause()
+      except Exception, x:
+          logger.error("Exception during split %s %s\nPausing transform. Maybe no valid sites found?" % (x.__class__,x))
+          self.unit_state_list[unit_num]['active'] = False
+          self.unit_state_list[unit_num]['configured'] = False
+          self.unit_state_list[unit_num]['reason'] = "Error during split. No valid site?"
           return
+
       
       if len(sjl) == 0:
-          logger.error("Splitter didn't produce any subjobs - pausing this transform")
-          self.pause()
+          logger.error("Splitter didn't produce any subjobs - deactivating this unit")
+          self.unit_state_list[unit_num]['active'] = False
+          self.unit_state_list[unit_num]['configured'] = False
+          self.unit_state_list[unit_num]['reason'] = "No subjobs produced in split. Brokering issue?"
           return
       
       self.partition_lock.acquire()
@@ -633,6 +757,8 @@ class MultiTransform(Transform):
               self.setPartitionsLimit( len(self.partitions_data)+2 )
               self.setPartitionsStatus([len(self.partitions_data)+1], "hold")
               break
+          
+      self.unit_state_list[unit_num]['configured'] = True
                   
       self.partition_lock.release()
       

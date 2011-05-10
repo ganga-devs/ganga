@@ -50,12 +50,29 @@ class MultiTask(Task):
        }.items()))
    _category = 'tasks'
    _name = 'MultiTask'
-   _exportmethods = Task._exportmethods + ["initializeFromDatasets"]
+   _exportmethods = Task._exportmethods + ["initializeFromDatasets", "unitOverview", 'getTransform']
    
    def initialize(self):
       super(MultiTask, self).initialize()
       self.transforms = []
 
+   def getTransform(self, trf):
+      """Get transform using either index or name"""
+      if isinstance(trf, str):
+         for trfid in range(0, len(self.transforms)):
+            if trf == self.transforms[trfid].name:
+               return self.transforms[trfid]
+         logger.warning("Couldn't find transform with name '%s'." % trf)
+      elif isinstance(trf, int):
+         if trf < 0 and trf > len(self.transforms):
+            logger.warning("Transform number '%d' out of range" % trf)
+         else:
+            return self.transforms[trf]
+      else:
+         logger.warning('Incorrect type for transform referral. Allowed types are int or string.')
+
+      return None
+      
    def get_container_name(self):
       name_base = ["user",getNickname(),self.creation_date,"task_%s" % self.id]
       return ".".join(name_base + [self.name]) + "/"
@@ -124,6 +141,21 @@ class MultiTask(Task):
    def overview(self):
       super(MultiTask, self).overview()
 
+   def unitOverview(self):
+      """Show a overview of the units"""
+      #print "Colours: " + ", ".join([markup(key, overview_colours[key])
+      #                             for key in ["hold", "ready", "running", "completed", "attempted", "failed", "bad", "unknown"]])
+      print "Lists the units for each partition and their current status"
+      #print "Format: (partition number)[:(number of failed attempts)]"
+      print
+      print " "* 47 + "Active\tConfigured\tSubmitted\tDownload\tMerged\tReason"
+      for trfid in range(0, len(self.transforms)):
+         print "----------------------------------------------------------------------------------------------------------------------"
+         print "----   Transform %d:  %s" % (trfid, self.transforms[trfid].name)
+         print
+         self.transforms[trfid].unit_overview()
+         print
+      
    def run(self):
       self.checkTRFConsistency()
       super(MultiTask, self).run()
@@ -138,6 +170,7 @@ class MultiTask(Task):
             # ensure the number unit input data, output data and partition lists are setup properly
             if len(trf.unit_partition_list) == 0:
                raise ApplicationConfigurationError(None, "Transform %d (%s) is primary but hasn't been initialised with input data")
+
          else:
 
             if not trf.isLocalTRF():
