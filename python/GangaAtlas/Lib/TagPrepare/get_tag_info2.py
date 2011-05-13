@@ -149,7 +149,7 @@ def findReferences2( infile ):
         
         ref_name = ''
         ref_dataset = ''
-
+        
         # check the cache first
         for name in _refCache:
             if _refCache[name].has_key(ref_guid):
@@ -188,7 +188,7 @@ def findReferences2( infile ):
             
         if ref_name == '':
             continue
-
+        
         # store useful stuff
         ref_files = _dq.listFilesInDataset(ref_name)
         if ref_files[0].has_key(ref_guid):
@@ -301,37 +301,63 @@ def createTagInfo( stream_ref, infiles ):
             tagCache = {}
             for ref in refs:
                 file_done = False
-                tagds = ref[1].replace(_datasetType, 'TAG')
+                tagds = ref[1].replace(_datasetType, 'TAG').replace('.recon.', '.merge.')
+                poss_tagds =_dq.listDatasets(tagds + "*")
 
+                if len(poss_tagds.keys()) == 0:
+                    print "ERROR: Couldn't find matching TAG dataset."
+                    return {}
+                elif len(poss_tagds.keys()) > 1:
+                    print "WARNING: More than one TAG dataset found. Picking the first"
+
+                tagds = poss_tagds.keys()[0]
+                
                 if not tagds in tagCache:                    
                     tagCache[tagds] = _dq.listFilesInDataset(tagds)[0]
+
 
                 for tf in tagCache[tagds]:
                     if ref[0].replace(_datasetType, 'TAG') == tagCache[tagds][tf]['lfn']:
                         taginfo[ref[0].replace(_datasetType, 'TAG')] = {}
                         taginfo[ref[0].replace(_datasetType, 'TAG')]['dataset'] = tagds
                         taginfo[ref[0].replace(_datasetType, 'TAG')]['guid'] = tf
-                        if not 'refs' in taginfo[ref[0].replace(_datasetType, 'TAG')]:
+                        if not 'refs' in taginfo[ref[0].replace(_datasetType, 'TAG')].keys():
                             taginfo[ref[0].replace(_datasetType, 'TAG')]['refs'] = []
 
                         taginfo[ref[0].replace(_datasetType, 'TAG')]['refs'].append(ref)
                         file_done = True
 
                 if not file_done:
-                    raise TypeError("COULDN'T FIND LINK FOR FILE:  %S (%s)" % (ref[0], ref[1]))
-                    tag_info = {}
-                    return
+                    print "WARNING: No direct matching of files from data to TAG."
+                    for tf in tagCache[tagds]:
+                        if not tagCache[tagds][tf]['lfn'] in taginfo.keys():
+                            taginfo[ tagCache[tagds][tf]['lfn'] ] = {}
+                        taginfo[tagCache[tagds][tf]['lfn']]['dataset'] = tagds
+                        taginfo[tagCache[tagds][tf]['lfn']]['guid'] = tf
+                        if not 'refs' in taginfo[tagCache[tagds][tf]['lfn']].keys():
+                            taginfo[tagCache[tagds][tf]['lfn']]['refs'] = []
+
+                        taginfo[tagCache[tagds][tf]['lfn']]['refs'].append(ref)
+
+                    #raise TypeError("COULDN'T FIND LINK FOR FILE:  %s (%s)" % (ref[0], ref[1]))
+                    #tag_info = {}
+                    #return {}
 
     return taginfo
 
 if __name__ == "__main__":
 
     taglfns = [ line.strip() for line in file('input_files') ]
-    print taglfns
+
     if os.environ.has_key('STREAM_REF'):
         taginfo = createTagInfo( os.environ['STREAM_REF'], taglfns )
     else:
         taginfo = createTagInfo( 'AOD', taglfns )
 
+    if len(taginfo) == 0:
+        print "ERROR: Empty taginfo structure"
+        pickle.dump( taginfo, open("taginfo.pkl", "w") )
+        sys.exit(-1)
+    
     pickle.dump( taginfo, open("taginfo.pkl", "w") )
         
