@@ -16,7 +16,7 @@ _dq = DQ2 ()
 
 def findReferences( infile ):
     """Find the references from this input TAG file"""
-    global _refCache, _streamRef
+    global _refCache, _streamRef, _datasetType
 
     # Find the links to the stream required
     cmd = "CollListFileGUID -src " + infile + " RootCollection -queryopt "+ _streamRef +" | cut -d' ' -f 1"
@@ -71,6 +71,7 @@ def findReferences( infile ):
                 #print "Trying VUID %s for GUID %s... " % (ref_vuid, ref_guid)
                 ref_dataset = _dq.repositoryClient.resolveVUID(ref_vuid)
                 ref_name = ref_dataset.get('dsn')
+
                 if ref_name != '' and len(_dq.listDatasetReplicas(ref_name)) != 0 and ref_name.find("." + _datasetType + ".") != -1:
                     break
                 else:
@@ -79,7 +80,7 @@ def findReferences( infile ):
             except dq2.repository.DQRepositoryException.DQUnknownDatasetException:
                 pass
                 #print "ERROR Finding dataset for vuid for " + ref_vuid
-            
+
         if ref_name == '':
             continue
 
@@ -97,7 +98,7 @@ def findReferences( infile ):
 
 def findReferences2( infile ):
     """Find the references from this input TAG file"""
-    global _refCache, _streamRef
+    global _refCache, _streamRef, _datasetType
 
     # Find the links to the stream required
     cmd = "CollListToken -src " + infile + " RootCollection | grep -E \"Tokens|StreamTAG|%s\"" % _streamRef
@@ -271,7 +272,8 @@ def findReferences2( infile ):
 # Go through the input file list and get TAG info
 # stream_ref: AOD/ESD/RAW
 def createTagInfo( stream_ref, infiles ):
-    global _refCache, _streamRef
+
+    global _refCache, _streamRef, _datasetType
     
     if not stream_ref in ['AOD','ESD','RAW']:
         raise TypeError("Incorrect stream ref specification %s" % stream_ref)
@@ -296,12 +298,13 @@ def createTagInfo( stream_ref, infiles ):
 
             # first, list all the guids that we care about
             refs = findReferences(os.path.basename(f))
-
+            
             # try to match on names
             tagCache = {}
             for ref in refs:
                 file_done = False
                 tagds = ref[1].replace(_datasetType, 'TAG').replace('.recon.', '.merge.')
+                print tagds
                 poss_tagds =_dq.listDatasets(tagds + "*")
 
                 if len(poss_tagds.keys()) == 0:
