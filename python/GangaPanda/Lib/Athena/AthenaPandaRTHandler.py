@@ -171,7 +171,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
                 logger.warning('The value of j.application.options has been prepended with " -c " ')
                 logger.warning('Please make sure to use proper quotes for the values of j.application.options !')
-
+                
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
 
             # check for TAG compression
@@ -358,23 +358,51 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 fname.rstrip(os.sep)
                 path = os.path.dirname(fname)
                 fn = os.path.basename(fname)
-
+                
                 #app.atlas_run_dir
                 # get Athena versions
                 rc, out = AthenaUtils.getAthenaVer()
                 # failed
                 if not rc:
-                    raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
-                userarea = out['workArea']
-                ua = os.path.abspath(userarea)
-                if ua in path:
-                    fn = fname[len(ua)+1:]
-                    path = ua
+                    #raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+                    logger.warning("CMT could not parse correct environment for inputsandbox - will use the atlas_run_dir as default")
+
+                    # as we don't have to be in the run dir now, create a copy of the run_dir directory structure and use that
+                    input_dir = os.path.dirname(self.inputsandbox)
+                    run_path = "%s/sbx_tree/%s" % (input_dir, app.atlas_run_dir)
+                    rc, output = commands.getstatusoutput("mkdir -p %s" % run_path)
+                    if not rc:
+                        # copy this sandbox file
+                        rc, output = commands.getstatusoutput("cp %s %s" % (fname, run_path))
+                        if not rc:
+                            path = os.path.join(input_dir, 'sbx_tree')
+                            fn = os.path.join(app.atlas_run_dir, fn)
+                        else:
+                            raise ApplicationConfigurationError(None, "Couldn't copy file %s to recreate run_dir for input sandbox" % fname)
+                    else:
+                        raise ApplicationConfigurationError(None, "Couldn't create directory structure to match run_dir %s for input sandbox" % run_path)
+                    
+                else:
+                    userarea = out['workArea']
+                    
+                    # strip the path from the filename if present in the userarea
+                    ua = os.path.abspath(userarea)
+                    if ua in path:
+                        fn = fname[len(ua)+1:]
+                        path = ua
+                                                       
                 rc, output = commands.getstatusoutput('tar -h -r -f %s -C %s %s' % (self.inputsandbox, path, fn))
                 if rc:
                     logger.error('Packing inputsandbox failed with status %d',rc)
                     logger.error(output)
                     raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+
+            # remove sandbox tree if created
+            if "sbx_tree" in os.listdir(os.path.dirname(self.inputsandbox)):
+                rc, output = commands.getstatusoutput("rm -r %s/sbx_tree" % os.path.dirname(self.inputsandbox))
+                if rc:
+                    raise ApplicationConfigurationError(None, "Couldn't remove directory structure used for input sandbox")
+                
             rc, output = commands.getstatusoutput('gzip %s' % (self.inputsandbox))
             if rc:
                 logger.error('Packing inputsandbox failed with status %d',rc)
@@ -673,7 +701,20 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 # set the coll name
                 if self.runConfig.input.collRefName:
                     param += '--collRefName %s ' % self.runConfig.input.collRefName
+                else:
+                    # get coll ref from input data
+                    if input_files[0].find("AOD") != -1:
+                        param += '--collRefName StreamAOD_ref'
+                    elif input_files[0].find("ESD") != -1:
+                        param += '--collRefName StreamESD_ref'
+                    elif input_files[0].find("RAW") != -1:
+                        param += '--collRefName StreamRAW_ref'
 
+                # sort out TAG use for exe types other than just athena - TRF dealt with below
+                if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+                    self.job_options.replace("%IN", "$MY_INPUT_FILES")
+                    self.job_options = "echo -e \"from commands import getstatusoutput\\nrc,o=getstatusoutput('ls pre_*-????-*-*-*.py')\\n__import__(o.split()[0][:-3])\\nfrom AthenaCommon.AthenaCommonFlags import athenaCommonFlags\\nopen('input_files.txt', 'w').write(','.join(athenaCommonFlags.FilesInput() ))\" > my_conv.py ; python my_conv.py ; export MY_INPUT_FILES=`cat input_files.txt` ; " + self.job_options
+                
             elif self.inputdatatype == 'DQ2' and len(job.inputdata.tagdataset) != 0:
                 # tell Panda what files are TAG and what aren't
                 tag_contents = job.inputdata.get_tag_contents(size=True)
@@ -686,7 +727,20 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 # set the coll name
                 if self.runConfig.input.collRefName:
                     param += '--collRefName %s ' % self.runConfig.input.collRefName
-                    
+                else:
+                    # get coll ref from input data
+                    if input_files[0].find("AOD") != -1:
+                        param += '--collRefName StreamAOD_ref'
+                    elif input_files[0].find("ESD") != -1:
+                        param += '--collRefName StreamESD_ref'
+                    elif input_files[0].find("RAW") != -1:
+                        param += '--collRefName StreamRAW_ref'
+
+                # sort out TAG use for exe types other than just athena - TRF dealt with below
+                if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+                    self.job_options.replace("%IN", "$MY_INPUT_FILES")
+                    self.job_options = "echo -e \"from commands import getstatusoutput\\nrc,o=getstatusoutput('ls pre_*-????-*-*-*.py')\\n__import__(o.split()[0][:-3])\\nfrom AthenaCommon.AthenaCommonFlags import athenaCommonFlags\\nopen('input_files.txt', 'w').write(','.join(athenaCommonFlags.FilesInput() ))\" > my_conv.py ; python my_conv.py ; export MY_INPUT_FILES=`cat input_files.txt` ; " + self.job_options
+
             if not app.atlas_exetype in ['TRF']:
                 param += '-i "%s" ' % input_files
         else:
@@ -695,6 +749,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # TRFs
         if app.atlas_exetype in ['TRF']:
             tmpJobO = app.options
+
+            # sort out TAG use for exe types other than just athena
+            if self.inputdatatype == 'DQ2' and (len(job.inputdata.tagdataset) != 0 or job.inputdata.tag_info):
+                tmpJobO = tmpJobO.replace("%IN", "$MY_INPUT_FILES")
+                tmpJobO = "echo -e \"from commands import getstatusoutput\\nrc,o=getstatusoutput('ls pre_*-????-*-*-*.py')\\n__import__(o.split()[0][:-3])\\nfrom AthenaCommon.AthenaCommonFlags import athenaCommonFlags\\nopen('input_files.txt', 'w').write(','.join(athenaCommonFlags.FilesInput() ))\" > my_conv.py ; python my_conv.py ; export MY_INPUT_FILES=`cat input_files.txt` ; " + tmpJobO
+
             # output
             tmpOutMap = []
             for tmpName,tmpLFN in outMap['IROOT']:
@@ -777,7 +837,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         else:
             param += '-o "%s" ' % outMap
 
-        if self.runConfig.input and self.runConfig.input.inColl: 
+        if (self.runConfig.input and self.runConfig.input.inColl) or param.find('--collRefName') != -1: 
             param += '-c '
         if self.runConfig.input and self.runConfig.input.inBS: 
             param += '-b '
