@@ -213,11 +213,13 @@ class DQ2JobSplitter(ISplitter):
                     if dsNameForLookUp.endswith("/"):
                         dsNameForLookUp = dsNameForLookUp[:-1]
 
-                    tagResults = tagIF.countGuids(dsNameForLookUp,"", streamRef + ",StreamTAG")
+                    tagResults = tagIF.countGuids(dsNameForLookUp,"", streamRef + ",StreamTAG_ref")
                     
                     if not tagResults:
-                        raise ApplicationConfigurationError(None,"Could not find references to TAG dataset %s in ELSSI DB. Try matching from dq2 or using TagPrepare." % dsNameForLookUp)
-
+                        tagResults = tagIF.countGuids(dsNameForLookUp,"", streamRef + ",StreamTAG")
+                        if not tagResults:
+                            raise ApplicationConfigurationError(None,"Could not find references to TAG dataset %s in ELSSI DB. Try matching from dq2 or using TagPrepare." % dsNameForLookUp)
+                                                        
                     # NOTE: The folowing should use the TAG info returned by countGuids but ELSSI DB
                     # is messed up for pre 2011 data. This should be fixed!
                     
@@ -256,7 +258,12 @@ class DQ2JobSplitter(ISplitter):
                             if single_tid != '':
                                 tag_dataset_map[ parentDSList[0][g][0] ] = [tagDS]
                             else:
-                                tag_dataset_map[ parentDSList[0][g][0] ] = resolve_container( [dsNameForLookUp + '/'] )
+                                if dsNameForLookUp == tagDS:
+                                    tag_dataset_map[ parentDSList[0][g][0] ] = resolve_container( [dsNameForLookUp ] )                                    
+                                else:
+                                    tag_dataset_map[ parentDSList[0][g][0] ] = resolve_container( [dsNameForLookUp + '/'] )
+
+
 
                         if not parentDSList[0][g][1] in job.inputdata.names:
                             job.inputdata.names.append(parentDSList[0][g][1])
