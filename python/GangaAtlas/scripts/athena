@@ -292,7 +292,7 @@ if opt.input_pfnlistfile:
     j.inputdata = ATLASTier3Dataset()
     j.inputdata.pfnListFile = opt.input_pfnlistfile
 
-if opt.input_dataset:
+if opt.input_dataset or opt.tag_input_dataset:
     #print opt.inputtype
     if opt.inputtype:
         if opt.inputtype=='DQ2':
@@ -322,7 +322,9 @@ if opt.input_dataset:
         opt.inputtype = 'DQ2'
 
     if opt.inputtype == 'DQ2':
-        j.inputdata.dataset = opt.input_dataset.split(',')
+	if opt.input_dataset:
+	    j.inputdata.dataset = opt.input_dataset.split(',')
+
         if opt.inputaccessmode:
             j.inputdata.type = opt.inputaccessmode        
         else:    
