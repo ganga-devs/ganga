@@ -186,9 +186,9 @@ class MultiTask(Task):
                
                for req_trf in trf.required_trfs:
                   trf.unit_inputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ] 
-                  trf.unit_outputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                  trf.unit_outputdata_list += [ self.transforms[req_trf].unit_outputdata_list[uind] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
                   trf.unit_partition_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
-                  trf.unit_state_list += [ {'active':False, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                  trf.unit_state_list += [ {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
             else:
                
                if trf.single_unit:
@@ -197,7 +197,7 @@ class MultiTask(Task):
                   trf.unit_inputdata_list = [[]]
                   trf.unit_outputdata_list = [[]]
                   trf.unit_partition_list = [[]]
-                  trf.unit_state_list = [{'active':False, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} ]
+                  trf.unit_state_list = [{'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} ]
                else:
 
                   # we have units dependant on mergers, etc.
@@ -209,13 +209,13 @@ class MultiTask(Task):
                   for req_trf in trf.required_trfs:
                      if not self.transforms[req_trf].merger:
                         trf.unit_inputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ] 
-                        trf.unit_outputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                        trf.unit_outputdata_list += [ self.transforms[req_trf].unit_outputdata_list[uind] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
                         trf.unit_partition_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
-                        trf.unit_state_list += [ {'active':False, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                        trf.unit_state_list += [ {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
                         
                      else:
                         trf.unit_inputdata_list += [[]]
                         trf.unit_outputdata_list += [[]]
                         trf.unit_partition_list += [[]]
-                        trf.unit_state_list += [{'active':False, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} ]
+                        trf.unit_state_list += [{'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} ]
          

@@ -142,7 +142,7 @@ class MultiTransform(Transform):
       # backwards compatibility
       if len(self.unit_state_list) == 0:
           for uind in range(0, len(self.unit_partition_list)):
-              self.unit_state_list.append({'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0})
+              self.unit_state_list.append({'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0, 'force':False})
 
       for uind in range(0, len(self.unit_partition_list)):
           if not 'active' in self.unit_state_list[uind].keys():
@@ -165,6 +165,9 @@ class MultiTransform(Transform):
               
           if not 'exceptions' in self.unit_state_list[uind].keys():
               self.unit_state_list[uind]['exceptions'] = 0
+
+          if not 'force' in self.unit_state_list[uind].keys():
+              self.unit_state_list[uind]['force'] = False
               
 
       # make sure the unit list hasn't already been determined
@@ -249,6 +252,11 @@ class MultiTransform(Transform):
 
    def isUnitComplete(self, uind):
        """Return if this unit is complete"""
+
+       # check for force complete
+       if self.unit_state_list[uind]['force']:
+           return True
+           
        for c in self.unit_partition_list[uind]:
            if self.getPartitionStatus(c) != "completed":
                return False
@@ -644,7 +652,7 @@ class MultiTransform(Transform):
                break
 
            # check for full failed units (dodgy site?)
-           if not self.isLocalTRF() and len(partition_status_dict['attempted']) == len(self.unit_partition_list[uind]):
+           if not self.isLocalTRF() and len(partition_status_dict['attempted']) == len(self.unit_partition_list[uind]) and len(self.unit_partition_list[uind]) > 2:
                #full_partition_list += partition_status_dict['attempted']
                
                for p in partition_status_dict['attempted']:
@@ -688,8 +696,14 @@ class MultiTransform(Transform):
                    full_resubmit = False
                    for f in failed_sites:
                        if not f in completed_sites and not f in self.backend.requirements.excluded_sites:
-                           self.backend.requirements.excluded_sites.append( f )
-                           full_resubmit = True
+                           num_fails = 0
+                           for sj in mj.subjobs:
+                               if sj.backend.site == f:
+                                   num_fails += 1
+
+                           if num_fails > 2:
+                               self.backend.requirements.excluded_sites.append( f )
+                               full_resubmit = True
                            
                    if full_resubmit:
                        #full_partition_list += partition_status_dict['completed']
@@ -774,7 +788,26 @@ class MultiTransform(Transform):
        if unit != -1:
            self.unit_state_list[unit]['active'] = False
            self.unit_state_list[unit]['exceptions'] = 0
-           
+
+   def forceUnitCompletion(self, unit):
+       """Set unit to ignore all failed jobs/partitions"""
+       unit = self.getUnit(unit)
+       if unit != -1:
+           self.unit_state_list[unit]['force'] = True
+
+
+   def resetUnit(self, unit):
+       """Reset a unit completely"""
+       unit = self.getUnit(unit)
+       if unit != -1:
+           self.unit_state_list[unit] = {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0, 'force':False}
+
+           # reset the partitions
+           for p in self.unit_partition_list[uind]:
+               self.setPartitionStatus(p, 'bad')
+
+           self.unit_partition_list[uind] = []
+               
    def createPartitionList( self, unit_num ):
 
       if not self.partition_lock:
