@@ -198,6 +198,8 @@ class DQ2JobSplitter(ISplitter):
                 streamRef = 'StreamAOD_ref'
                 if job.application.atlas_run_config['input'].has_key('collRefName'):
                     streamRef = job.application.atlas_run_config['input']['collRefName']
+                elif job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
+                    streamRef = "Stream%s_ref" % job,inputdata.tag_coll_ref
 
                 newTagDSList = []
 
@@ -297,10 +299,15 @@ class DQ2JobSplitter(ISplitter):
                 if not os.path.exists(f):
                     raise ApplicationConfigurationError(None, "Couldn't find tag file '%s'." % f)
 
+                ref = ''
                 if not app.atlas_run_config['input'].has_key('collRefName') or not app.atlas_run_config['input']['collRefName'] in ['StreamAOD_ref', 'StreamESD_ref', 'StreamRAW_ref']:
-                    raise ApplicationConfigurationError(None, "No valid Collection Referenece in job options.")
-
-                ref = app.atlas_run_config['input']['collRefName'][6:9]
+                    if job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
+                        ref = job.inputdata.tag_coll_ref
+                    else:
+                        raise ApplicationConfigurationError(None, "No valid Collection Referenece in job options. Maybe use inputdata.tag_coll_ref?")
+                else:
+                    ref = app.atlas_run_config['input']['collRefName'][6:9]
+                    
                 tag_info = createTagInfo(ref, [f])
                 if len(tag_info) == 0:
                     raise ApplicationConfigurationError(None, "Couldn't find tag info for file '%s'." % f)
