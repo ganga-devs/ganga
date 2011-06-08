@@ -45,6 +45,8 @@ p.add_option('--name', '-n', action='store', type='string', dest='name', help='J
 p.add_option('--inDS', '-i', action='store', type='string', dest='input_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname to process')
 p.add_option('--inPfnListFile', action='store', type='string', dest='input_pfnlistfile', help='Filename with list of input files to process for ATLASTier3Dataset')
 p.add_option('--inTagDS', action='store', type='string', dest='tag_input_dataset', metavar='TAGDATASETNAME', help='Name of the Tag DQ2 datasetname to process')
+p.add_option('--inTagFiles', action='store', type='string', dest='tag_input_files', help='Name of local TAG files to determine input data' )
+p.add_option('--tagCollRef', action='store', type='string', dest='tag_coll_ref', help='Directly specify the collection reference if not in JOs (e.g. TRF usage)' )
 p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['DQ2', 'ATLAS', 'Local', 'Castor'],  default='DQ2', help='Type of the input dataset: DQ2, ATLAS, Local, Castor, [default: DQ2]' )
 p.add_option('--inputaccessmode', action='store', type='choice', dest='inputaccessmode', choices = ['DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'FILE_STAGER' ], default='DQ2_LOCAL',  help='Access mode of the DQ2/TAG input dataset: DQ2_LOCAL, FILE_STAGER, LFC, TAG, TAG_REC [default: DQ2_LOCAL]'  )
 p.add_option('--inputfailover', action='store_true', help='Use DQ2_COPY automatically if DQ2_LOCAL fails' )
@@ -188,7 +190,7 @@ if args:
     option_files=[]
     if args:  
         for option_file in args:
-            if not opt.athena_exe in ['EXE']:        
+            if not opt.athena_exe in ['EXE', 'TRF']:        
                 if not os.access(option_file,os.R_OK):
                     print >>sys.stderr, 'ERROR: Cannot read athena job option file: %s' % option_file
                     sys.exit(4)
@@ -292,7 +294,7 @@ if opt.input_pfnlistfile:
     j.inputdata = ATLASTier3Dataset()
     j.inputdata.pfnListFile = opt.input_pfnlistfile
 
-if opt.input_dataset or opt.tag_input_dataset:
+if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files:
     #print opt.inputtype
     if opt.inputtype:
         if opt.inputtype=='DQ2':
@@ -376,10 +378,15 @@ if opt.input_dataset or opt.tag_input_dataset:
         if opt.inputnumfiles:
             j.inputdata.number_of_files = opt.inputnumfiles
         if opt.tag_input_dataset:
-            j.inputdata.tagdataset = opt.tag_input_dataset
+            j.inputdata.tagdataset = opt.tag_input_dataset.split(',')
+        if opt.tag_input_files:
+            j.inputdata.tag_files = opt.tag_input_files.split(',')
         if opt.backend == 'lcg' and opt.use_aodesd_backnav:
             j.inputdata.use_aodesd_backnav = True
-
+	if opt.tag_coll_ref:
+	    j.inputdata.tag_coll_ref = opt.tag_coll_ref
+	
+	
 if opt.pickevent:
     j.inputdata=EventPicking()
     if opt.pick_data_type:
