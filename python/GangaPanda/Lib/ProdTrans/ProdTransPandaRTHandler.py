@@ -66,7 +66,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         jspec.cmtConfig = app.atlas_cmtconfig
         if app.dbrelease == 'LATEST':
             from pandatools import Client
-            m = re.search('(.*)DBRelease-(.*)\.tar\.gz', Client.getLatestDBRelease())
+            m = re.search('(.*):DBRelease-(.*)\.tar\.gz', Client.getLatestDBRelease())
             if m:
                 self.dbrelease_dataset = m.group(1)
                 self.dbrelease = m.group(2)
@@ -78,6 +78,12 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         jspec.jobParameters = '%s DBRelease=DBRelease-%s.tar.gz' % (app.job_parameters,
                                                                     self.dbrelease)
 
+        m = re.search('(.*)\.(.*)\.(.*)\.(.*)\.(.*)\.(.*)',
+                      job.inputdata.dataset[0])
+        if not m:
+            raise ApplicationConfigurationError(None, "Error retrieving run number from dataset name")
+        jspec.jobParameters += ' RunNumber=%d' % int(m.group(2))
+        
         # Output files.
         for lfn in app.output_files:
             ofspec = FileSpec()
@@ -98,6 +104,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 ifspec.prodDBlock = jspec.prodDBlock
                 ifspec.type = 'input'
                 jspec.addFile(ifspec)
+        jspec.jobParameters += ' inputESDFile=%s' % (','.join(job.inputdata.names),)
 
         # DB dataset
         dbspec = FileSpec()
