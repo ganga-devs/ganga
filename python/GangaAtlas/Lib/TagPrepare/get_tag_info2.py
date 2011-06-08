@@ -289,7 +289,8 @@ def createTagInfo( stream_ref, infiles ):
     # sort out the files for local running
     num = 0
     file_refs = {}
-
+    print_num = 0
+    
     for f in taglfns:
         if os.access( f, os.R_OK ):
 
@@ -304,15 +305,27 @@ def createTagInfo( stream_ref, infiles ):
             for ref in refs:
                 file_done = False
                 tagds = ref[1].replace(_datasetType, 'TAG').replace('.recon.', '.merge.')
-                print tagds
                 poss_tagds =_dq.listDatasets(tagds + "*")
+
+                del_list = []
+                for tagds2 in poss_tagds.keys():
+                    if tagds2.find("_tid") != -1 or tagds2.find("_sub") != -1:
+                        del_list.append(tagds2)
+
+                for tagds2 in del_list:
+                    del poss_tagds[tagds2]
 
                 if len(poss_tagds.keys()) == 0:
                     print "ERROR: Couldn't find matching TAG dataset."
                     return {}
                 elif len(poss_tagds.keys()) > 1:
-                    print "WARNING: More than one TAG dataset found. Picking the first"
-
+                    if print_num < 10:
+                        print "WARNING: More than one TAG dataset found. Picking the first"
+                        print "Possible Datasets were %s" % poss_tagds.keys()
+                        print_num += 1
+                        if print_num == 10:
+                            print "WARNING: Reached printout limit..."
+                            
                 tagds = poss_tagds.keys()[0]
                 
                 if not tagds in tagCache:                    
@@ -331,7 +344,12 @@ def createTagInfo( stream_ref, infiles ):
                         file_done = True
 
                 if not file_done:
-                    print "WARNING: No direct matching of files from data to TAG."
+                    if print_num < 10:
+                        print "WARNING: No direct matching of files from data to TAG."
+                        print_num += 1
+                        if print_num == 10:
+                            print "WARNING: Reached printout limit..."
+                    
                     for tf in tagCache[tagds]:
                         if not tagCache[tagds][tf]['lfn'] in taginfo.keys():
                             taginfo[ tagCache[tagds][tf]['lfn'] ] = {}
