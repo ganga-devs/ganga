@@ -402,6 +402,7 @@ class DQ2Dataset(Dataset):
         'dataset'            : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="Dataset Name(s)" ),
         'tag_info'          : SimpleItem(defvalue = {}, doc = 'TAG information used to split the job'),
         'tag_files'          : SimpleItem(defvalue = [], doc = 'Input TAG/ELSSI files to run over. tag_info structure will get filled on submission'),
+        'tag_coll_ref'       : SimpleItem(defvalue = '', doc = 'Provide the collection ref if not in primary JOs (useful for TRF usage): AOD, ESD, RAW'),
         'tagdataset'         : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc = 'Tag Dataset Name'),
         'use_aodesd_backnav' : SimpleItem(defvalue = False, doc = 'Use AOD to ESD Backnavigation'),
         'names'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to use for processing'),
