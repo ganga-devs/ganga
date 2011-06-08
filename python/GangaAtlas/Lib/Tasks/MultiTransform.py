@@ -74,7 +74,7 @@ class MultiTransform(Transform):
        }.items()))
    _category = 'transforms'
    _name = 'MultiTransform'
-   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob']
+   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit']
    
    def initialize(self):
        super(MultiTransform, self).initialize()
