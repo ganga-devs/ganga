@@ -29,10 +29,6 @@ class ProdTrans(IApplication):
                                    doc='Initialial priority for the Job'),
             'max_events': SimpleItem(defvalue=0,
                                      docs='Max events'),
-            'stats': SimpleItem(defvalue = {},
-                                doc='Dictionary of stats info'),
-            'collect_stats': SimpleItem(defvalue = False,
-                                        doc='Switch to collect statistics info and store in stats field')
             })
     _category = 'applications'
     _name = 'ProdTrans'
