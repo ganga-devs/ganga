@@ -104,7 +104,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 ifspec.prodDBlock = jspec.prodDBlock
                 ifspec.type = 'input'
                 jspec.addFile(ifspec)
-        jspec.jobParameters += ' inputESDFile=%s' % (','.join(job.inputdata.names),)
+        # jspec.jobParameters += ' inputESDFile=%s' % (','.join(job.inputdata.names),)
 
         # DB dataset
         dbspec = FileSpec()
