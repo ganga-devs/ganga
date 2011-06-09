@@ -91,8 +91,9 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             ofspec.destinationDBlock = jspec.destinationDBlock
             ofspec.destinationSE = jspec.destinationSE
             ofspec.dataset = jspec.destinationDBlock
-            ofspe.type = 'output'
+            ofspec.type = 'output'
             jspec.addFile(ofspec)
+        jspec.jobParameters += ' outputNTUP_TOPFile=%s' % (','.join(app.output_files),)
 
         # Input files.
         if job.inputdata:
@@ -104,7 +105,8 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 ifspec.prodDBlock = jspec.prodDBlock
                 ifspec.type = 'input'
                 jspec.addFile(ifspec)
-        # jspec.jobParameters += ' inputESDFile=%s' % (','.join(job.inputdata.names),)
+        jspec.jobParameters += ' input%sFile=%s' % (m.group(5),
+                                                    ','.join(job.inputdata.names),)
 
         # DB dataset
         dbspec = FileSpec()
