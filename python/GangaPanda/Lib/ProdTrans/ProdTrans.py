@@ -28,10 +28,15 @@ class ProdTrans(IApplication):
             'priority': SimpleItem(defvalue=1000,
                                    doc='Initialial priority for the Job'),
             'max_events': SimpleItem(defvalue=0,
-                                     docs='Max events')
+                                     docs='Max events'),
+            'stats': SimpleItem(defvalue = {},
+                                doc='Dictionary of stats info'),
+            'collect_stats': SimpleItem(defvalue = False,
+                                        doc='Switch to collect statistics info and store in stats field')
             })
     _category = 'applications'
     _name = 'ProdTrans'
+    _exportmethods = ['postprocess']
 
     def __init__(self):
         super(ProdTrans, self).__init__()
@@ -46,3 +51,7 @@ class ProdTrans(IApplication):
         """Configure the specific aspect of the application."""
         logger.debug('ProdTrans configure called')
         return (None, None)
+
+    def postprocess(self):
+        """Determine the outputdata and outputsandbox locations."""
+        pass
