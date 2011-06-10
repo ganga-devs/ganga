@@ -99,7 +99,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             ofspec.dataset = jspec.destinationDBlock
             ofspec.type = 'output'
             jspec.addFile(ofspec)
-        jspec.jobParameters += ' outputNTUP_TOPFile=%s' % (','.join(modified_lfns),)
+        jspec.jobParameters += ' outputNTUP_TOPFile=%s' % (','.join(randomized_lfns),)
 
         # Input files.
         if job.inputdata:
