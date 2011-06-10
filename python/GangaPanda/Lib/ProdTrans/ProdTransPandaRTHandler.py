@@ -1,4 +1,4 @@
-import commands, re
+import commands, random, re
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -87,7 +87,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         # Output files.
         for lfn in app.output_files:
             ofspec = FileSpec()
-            ofspec.lfn = lfn
+            ofspec.lfn = lfn.replace('####RND####', str(int(random.random() * 1000000)))
             ofspec.destinationDBlock = jspec.destinationDBlock
             ofspec.destinationSE = jspec.destinationSE
             ofspec.dataset = jspec.destinationDBlock
