@@ -1,8 +1,6 @@
 """GangaMon Monitoring Service plugin."""
 
 from Ganga.Lib.MonitoringServices.MSGMS import MSGUtil
-import Ganga.Utility.Config
-config = Ganga.Utility.Config.getConfig('Configuration')
 
 
 def _initconfig():
@@ -13,8 +11,8 @@ def _initconfig():
         config = Config.makeConfig('MSGMS','Settings for the MSGMS monitoring plugin. Cannot be changed ruding the interactive Ganga session.')
         config.addOption('server', 'ganga.msg.cern.ch', 'The server to connect to')
         config.addOption('port', 6163, 'The port to connect to')
-        config.addOption('username', 'ganga', '') 
-        config.addOption('password', 'analysis', '') 
+        config.addOption('username', '', '') 
+        config.addOption('password', '', '') 
         config.addOption('message_destination', '/queue/ganga.status', '')
         config.addOption('usage_message_destination',"/queue/ganga.usage",'')
         config.addOption('job_submission_message_destination',"/queue/ganga.jobsubmission",'')
@@ -132,7 +130,7 @@ class MSGMS(IMonitoringService):
                 masterjob_msg['ganga_master_uuid'] = 0
                 self.send(masterjob_msg)
 
-        self.job_info.info.monitoring_links.append(('http://gangamon.cern.ch/ganga/#user=%s'%config['user'],'dashboard'))
+        self.job_info.info.monitoring_links.append(('http://gangamon.cern.ch/ganga/#tid=%s'%self.job_info.info.uuid,'dashboard'))
 
         # send submitted for this job
         msg = self.getMessage('submitted')
