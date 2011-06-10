@@ -27,6 +27,8 @@ class ProdTrans(IApplication):
                                             doc='Dataset name for the DB'),
             'priority': SimpleItem(defvalue=1000,
                                    doc='Initialial priority for the Job'),
+            'randomize_lfns': SimpleItem(defvalue=False,
+                                         doc='Generate output file names with random suffix'),
             'max_events': SimpleItem(defvalue=0,
                                      docs='Max events'),
             })

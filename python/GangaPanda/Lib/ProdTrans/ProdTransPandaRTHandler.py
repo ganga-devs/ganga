@@ -85,15 +85,21 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         jspec.jobParameters += ' RunNumber=%d' % int(m.group(2))
         
         # Output files.
+        randomized_lfns = []
         for lfn in app.output_files:
             ofspec = FileSpec()
-            ofspec.lfn = lfn + ('.%d' % int(random.random() * 1000000))
+            if app.randomize_lfns:
+                randomized_lfn = lfn + ('.%d' % int(random.random() * 1000000))
+            else:
+                randomized_lfn = lfn
+            ofspec.lfn = randomized_lfn
+            randomized_lfns.append(randomized_lfn)
             ofspec.destinationDBlock = jspec.destinationDBlock
             ofspec.destinationSE = jspec.destinationSE
             ofspec.dataset = jspec.destinationDBlock
             ofspec.type = 'output'
             jspec.addFile(ofspec)
-        jspec.jobParameters += ' outputNTUP_TOPFile=%s' % (','.join(app.output_files),)
+        jspec.jobParameters += ' outputNTUP_TOPFile=%s' % (','.join(modified_lfns),)
 
         # Input files.
         if job.inputdata:
