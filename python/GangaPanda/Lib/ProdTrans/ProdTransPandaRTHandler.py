@@ -87,7 +87,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         # Output files.
         for lfn in app.output_files:
             ofspec = FileSpec()
-            ofspec.lfn = lfn.replace('####RND####', str(int(random.random() * 1000000)))
+            ofspec.lfn = lfn + ('.%d' % int(random.random() * 1000000))
             ofspec.destinationDBlock = jspec.destinationDBlock
             ofspec.destinationSE = jspec.destinationSE
             ofspec.dataset = jspec.destinationDBlock
