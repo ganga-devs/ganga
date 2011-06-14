@@ -62,6 +62,9 @@ class Gaudi(Francesc):
     _exportmethods = ['getenv','getpack', 'make', 'cmt', 'readInputData']
 
     schema = get_common_gaudi_schema()
+    docstr = 'The gaudirun.py cli args that will be passed at run-time'
+    schema['args'] =  SimpleItem(sequence=1,strict_sequence=0,defvalue=[],
+                                 typelist=['str','type(None)'],doc=docstr)
     docstr = 'The name of the optionsfile. Import statements in the file ' \
              'will be expanded at submission time and a full copy made'
     schema['optsfile'] =  FileItem(sequence=1,strict_sequence=0,defvalue=[],
