@@ -305,6 +305,8 @@ def undefined_release_error(rel,avail=""):
     error('Requested release (%s) was not found in the Ganga repository\n%s\nConsult %s' %(rel,avail,CONFIG['website_url']))
 
 import urllib, string, stat
+from urllib2 import Request, urlopen, URLError, HTTPError
+
 # download files over http
 # override == 0   : never override any files
 # override == 1   : override if files differ in length
@@ -326,11 +328,23 @@ def fetch(tarFileName, targetDir=None, downloadURL = "", override=0, silent=0):
     if not silent:
         print "fetching file: " + fileName,
 
-    opener = urllib.urlopen(tarFileURL)
-    if opener.code == 200:
+    req = Request(tarFileURL)
+    try: 
+        response = urlopen(req)
+    except HTTPError, error:
+        if not silent:
+            print "Couldn't download " + str(tarFileURL) 
+            print "Error: " + str(error.code)
+        return 0
+    except URLError, error:
+        if not silent:
+            print "Couldn't download " + str(tarFileURL)
+            print "Reason: " + str(error.reason)
+        return 0
+    else:
         if ( os.path.exists(fileName) ) :
         
-            filesize = opener.headers.getheader('content-length')
+            filesize = response.headers.getheader('content-length')
 
             if not silent:
                 print 'size:',filesize,
@@ -356,13 +370,7 @@ def fetch(tarFileName, targetDir=None, downloadURL = "", override=0, silent=0):
                     return 1
 
         (fileNameRet, info) = urllib.urlretrieve (tarFileURL, fileName)
-    else:
-        if silent < 2:
-            print "\nERROR: could not download the file :", tarFileName
-        return 0
-    if not silent:
-        print "ok"
-    return 1
+        return 1
         
 def tar(tarFileName, targetDir, tarPath, silent,skip=1,force=0,opts=""):
     import os.path
