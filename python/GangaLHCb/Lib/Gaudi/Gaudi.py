@@ -145,17 +145,23 @@ class Gaudi(Francesc):
             raise ApplicationConfigurationError(None,msg)
 
         inputs = None
+        
         if len(self.optsfile)==0:
-            logger.warning("The 'optsfile' is not set. I hope this is OK!")
-            packagedir = self.shell.env[self.appname.upper()+'ROOT']
-            opts = os.path.expandvars(os.path.join(packagedir,'options',
-                                                   self.appname + '.py'))
-            if opts: self.optsfile.append(opts)
-            else:
-                logger.error('Cannot find the default opts file for ' % \
-                             self.appname + os.sep + self.version)
-            inputs = ['optsfile']
-            
+            msg = "The 'optsfile' attribute must be set for application. "
+            raise ApplicationConfigurationError(None,msg)
+
+        nonexistentOptFiles = []
+        for f in self.optsfile:
+            if not os.path.isfile(f.name):
+                nonexistentOptFiles.append(f)
+        
+        if len(nonexistentOptFiles):
+            tmpmsg = "The 'optsfile' attribute contains non-existent file/s: ["
+            for f in nonexistentOptFiles:
+                tmpmsg+="'%s', " % f.name
+            msg=tmpmsg[:-2]+']'
+            raise ApplicationConfigurationError(None,msg)
+
         return inputs
 
     def readInputData(self,optsfiles,extraopts=False):
