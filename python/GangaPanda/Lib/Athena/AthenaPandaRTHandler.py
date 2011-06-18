@@ -883,7 +883,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '--accessmode=direct '
         elif job.backend.accessmode == 'COPY2SCRATCH':
             param += '--accessmode=copy '
-        if self.inputdatatype == 'Tier3':
+        if self.inputdatatype == 'Tier3' and not app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             param += '--givenPFN '
  
         jspec.jobParameters = param
