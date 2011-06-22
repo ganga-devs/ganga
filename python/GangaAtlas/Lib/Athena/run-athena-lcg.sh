@@ -1,4 +1,4 @@
-#! /bin/sh -x
+#!/usr/bin/env bash -x
 #
 # Run Athena on the Grid
 #
