@@ -45,29 +45,32 @@ def checkCommandArgs(job):
 
 
 
-
+tmpdir2 = tempfile.mktemp()
+os.mkdir(tmpdir2)
+fname2 = os.path.join(tmpdir2,'test.opts')
+os.system('echo "#testopts" > ' + fname2)
 
 # should pass
 
-j=Job(application=DaVinci(args=['-T','-v']),backend=Local())
+j=Job(application=DaVinci(args=['-T','-v'],optsfile=[fname2]),backend=Local())
 try:
     checkCommandArgs(j)
 except JobError:
     assert False
 
-j=Job(application=DaVinci(args=['-T -v']),backend=Local())
+j=Job(application=DaVinci(args=['-T -v'],optsfile=[fname2]),backend=Local())
 try:
     checkCommandArgs(j)
 except JobError:
     assert False
 
-j=Job(application=DaVinci(args=['-T','-v']),backend=Dirac())
+j=Job(application=DaVinci(args=['-T','-v'],optsfile=[fname2]),backend=Dirac())
 try:
     checkCommandArgs(j)
 except JobError:
     assert False
 
-j=Job(application=DaVinci(args=['-T -v']),backend=Dirac())
+j=Job(application=DaVinci(args=['-T -v'],optsfile=[fname2]),backend=Dirac())
 try:
     checkCommandArgs(j)
 except JobError:
@@ -75,8 +78,8 @@ except JobError:
 
 
 # should fail
-j1=Job(application=DaVinci(args=['-T']),backend=Local())
-j2=Job(application=DaVinci(args=['-T-v']),backend=Dirac())
+j1=Job(application=DaVinci(args=['-T'],optsfile=[fname2]),backend=Local())
+j2=Job(application=DaVinci(args=['-T-v'],optsfile=[fname2]),backend=Dirac())
 try:
     checkCommandArgs(j1)
     assert False
