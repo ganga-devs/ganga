@@ -2,8 +2,8 @@ import sys, time, stomp
 
 SERVER = 'ganga.msg.cern.ch'
 PORT = 6163
-USERNAME = ''
-PASSWD = ''
+USERNAME = 'ganga'
+PASSWD = 'analysis'
 
 from Ganga.Utility.logging import getLogger
 log = getLogger('MSGErrorLog')

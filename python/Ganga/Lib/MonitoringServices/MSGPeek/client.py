@@ -16,9 +16,9 @@ if __name__ == '__main__':
                       help = 'Hostname or IP to connect to. Defaults to ganga.msg.cern.ch if not specified.')
     parser.add_option('-P', '--port', type = 'int', dest = 'port', default = 6163,
                       help = 'Port providing stomp protocol connections. Defaults to 6163 if not specified.')
-    parser.add_option('-U', '--user', type = 'string', dest = 'user', default = None,
+    parser.add_option('-U', '--user', type = 'string', dest = 'user', default = 'ganga',
                       help = 'Username for the connection')
-    parser.add_option('-W', '--password', type = 'string', dest = 'password', default = None,
+    parser.add_option('-W', '--password', type = 'string', dest = 'password', default = 'analysis',
                       help = 'Password for the connection')
     parser.add_option('-F', '--file', type = 'string', dest = 'filename', default = 'MSGPeek-collector.log',
                       help = 'File containing the output of the jobs')
