@@ -138,7 +138,7 @@ class DQ2JobSplitter(ISplitter):
         if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] and not ( job.backend._name in ['SGE'] and config['ENABLE_SGE_DQ2JOBSPLITTER'] ):
             raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, CREAM, Panda or NG backend')
         
-        if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0):
+        if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0 and self.filesize <=0):
             raise ApplicationConfigurationError(None,"Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
  
         if (self.numevtsperjob > 0 and job.inputdata._name <> 'AMIDataset'):
