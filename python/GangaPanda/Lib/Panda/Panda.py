@@ -516,12 +516,34 @@ class Panda(IBackend):
             for js in subjobspecs:
                 js.jobParameters += ' --mergeOutput'
 
-                ## set merging type if the configuration is given
-#                try:
-#                    js.jobParameters += ' --mergeType "%s"' % job.backend.requirements.configMerge['type']
-#                    logger.debug("user specified merging type: %s" % job.backend.requirements.configMerge['type'])
-#                except KeyError:
-#                    pass
+                ## set merging type and user executable if the configurations are given
+                merge_type = ''
+                merge_exec = ''
+                try:
+                    merge_type = job.backend.requirements.configMerge['type']
+                    merge_exec = job.backend.requirements.configMerge['exec']
+                except KeyError:
+                    pass
+
+                if not merge_type:
+                    pass
+
+                elif merge_type.lower() in ['hist','pool','ntuple','text','log']:
+
+                    js.jobParameters += ' --mergeType "%s"' % merge_type.lower()
+
+                elif merge_type.lower() in ['user']:
+
+                    if not merge_exec:
+                        logger.error("user merging executable not set for merging type 'user': set PandaRequirements.configMerge['user_exec']")
+                        return False
+
+                    else:
+                        js.jobParameters += ' --mergeType "%s"'   % merge_type.lower()
+                        js.jobParameters += ' --mergeScript "%s"' % merge_exec
+                else:
+                    logger.error("merging type '%s' not supported" % merge_type)
+                    return False
 
         jobspecs = []
         if buildjobspec:
