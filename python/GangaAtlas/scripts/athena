@@ -118,7 +118,7 @@ p.add_option('--excludedSite', action='store', type='string', dest='excludedSite
 p.add_option('--useChirpServer', action='store', type='string', dest='useChirpServer', default='', help="Chirp Server to be used to stage out the output e.g., voatlas92.cern.ch")
 
 # Application options
-p.add_option('-c', action='store', type='string', dest='options', help='One-liner, runs before any job Options')
+p.add_option('--options', '-c', action='store', type='string', dest='options', help='One-liner, runs before any job Options')
 p.add_option('--maxevt' , action='store', type='int', dest='maxevt', help='Maximal number of events to process')
 p.add_option('--compile', action='store_true', help='Determine if job should be recompiled on Grid worker node' )
 p.add_option('--nocompile', action='store_true', help='Determine if job should *not* be recompiled on Grid worker node' )
@@ -140,6 +140,7 @@ p.add_option('--individualOutDS', action='store_true', dest='individualOutDS', h
 p.add_option('--express', action='store_true', dest='express', help='Panda option to send the job using express quota to have higher priority. The number of express subjobs in the queue and the total execution time used by express subjobs are limited (a few subjobs and several hours per day, respectively). This option is intended to be used for quick tests before bulk submission. Note that buildXYZ is not included in quota calculation. If this option is used when quota has already exceeded, the panda server will ignore the option so that subjobs have normal priorities. Also, if you submit 1 buildXYZ and N runXYZ subjobs when you only have quota of M (M < N),  only the first M runXYZ subjobs will have higher priorities' )
 p.add_option('--trf', action='store', type='string', dest='trf', help='Parameters for Athena  transformations' )
 p.add_option('--mergeOutput', action='store_true', dest='mergeOutput', help='Panda option to enable the output merging jobs.')
+p.add_option('--usecommainputtxt', action='store_true', dest='usecommainputtxt', help='Boolean if input.txt contains the input files as comma separated list or separeted by a line break')
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -251,9 +252,13 @@ if opt.group_area:
 
 j.application.option_file = option_files
 if opt.options:
-    aoptions = opt.options.replace('"',"'''")        
-    aoptions = opt.options.replace('\'',"'''")        
-    j.application.options = "-c '''%s''' " %aoptions
+    if opt.athena_exe in ['EXE']:
+        j.application.options = " %s " %opt.options
+    else:
+        aoptions = opt.options.replace('"',"'''")        
+    	aoptions = opt.options.replace('\'',"'''")
+        j.application.options = "-c '''%s''' " %aoptions
+
 if opt.user_setupfile:
     j.application.user_setupfile = opt.user_setupfile
 
@@ -555,6 +560,7 @@ elif opt.backend=='panda':
     if opt.long: j.backend.requirements.long = True 
     if opt.express: j.backend.requirements.express = True 
     if opt.mergeOutput: j.backend.requirements.enableMerge = True 
+    if opt.usecommainputtxt: j.backend.requirements.usecommainputtxt = True 
     if opt.cputime: j.backend.requirements.cputime = opt.cputime
     if opt.memory: j.backend.requirements.memory = opt.memory
     if opt.extOutFile: j.backend.extOutFile = opt.extOutFile.split(':')
