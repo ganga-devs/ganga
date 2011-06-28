@@ -21,7 +21,8 @@ class PandaRequirements(GangaObject):
         'enableJEM'     : SimpleItem(defvalue = False,protected=0,copyable=1,doc='Enable the Job Execution Monitor.'),
         'configJEM'     : SimpleItem(defvalue = '',protected=0,copyable=1,doc='Config string for the Job Execution Monitor.'),
         'enableMerge'   : SimpleItem(defvalue = False, protected=0, copyable=1, doc='Enable the output merging jobs.'),
-        'configMerge'   : SimpleItem(defvalue = {'type':'','exec':''}, protected=0, copyable=1, doc='Config parameters for output merging jobs.')
+        'configMerge'   : SimpleItem(defvalue = {'type':'','exec':''}, protected=0, copyable=1, doc='Config parameters for output merging jobs.'),
+        'usecommainputtxt' : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Boolean if input.txt contains the input files as comma separated list or separeted by a line break'),
     })
 
     _category = 'PandaRequirements'
