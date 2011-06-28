@@ -195,7 +195,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             # below fixes issue with runGen -- job_options are executed by os.system when dbrelease is used, and by the shell otherwise
             if app.atlas_dbrelease: 
                 if job.backend.requirements.usecommainputtxt:
-                    input_str = '/bin/echo %IN; '
+                    input_str = '/bin/echo %IN > input.txt; cat input.txt; '
                 else:
                     input_str = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; '
                 if app.atlas_exetype == 'PYARA':
@@ -208,7 +208,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     self.job_options = env_str + input_str + self.job_options
             else:
                 if job.backend.requirements.usecommainputtxt:
-                    input_str = '/bin/echo %IN; '
+                    input_str = '/bin/echo %IN > input.txt; cat input.txt; '
                 else:
                     input_str = '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; '
                 if app.atlas_exetype == 'PYARA':
