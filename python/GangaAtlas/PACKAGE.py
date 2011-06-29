@@ -31,7 +31,7 @@ _external_packages = {
                        'PYTHONPATH':['lib/python'],
                        'noarch':True
                        },
-    '4Suite' : { 'version' : '1.0.2', 
+    '4Suite' : { 'version' : '1.0.2.1', 
                  'PYTHONPATH':['lib/python2.4/site-packages'],
                  'syspath':['lib/python2.4/site-packages']
                        },
