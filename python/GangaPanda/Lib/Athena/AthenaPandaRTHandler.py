@@ -827,7 +827,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if self.runConfig.input and self.runConfig.input.inBS:
                 inBS = True
             isDirectAccess = PsubUtils.isDirectAccess(job.backend.site, inBS, inTRF, inARA)
-            if not isDirectAccess:                
+
+            #if not isDirectAccess:
+            if not isDirectAccess and (( self.inputdatatype != 'DQ2' ) or (len(job.inputdata.tagdataset) == 0 and not job.inputdata.tag_info)):
                 param += ' --useLocalIO '
 
         #param += '-m "[]" ' #%minList FIXME
