@@ -7,12 +7,9 @@ def getNickname(gridProxy=None,allowMissingNickname=True):
 
     logger = getLogger()
     if not gridProxy:
-        gridProxy=GridProxy(middleware = "GLITE")
-        gridProxy.command.info='voms-proxy-info'
-        output = gridProxy.info(opt = '-all', force_check = True)
+        gridProxy=GridProxy()
     nickName = ''
-    if not output:
-        output = gridProxy.info(opt = '-all')
+    output = gridProxy.info(opt = '-all')
     for line in output.split('\n'):
         if line.startswith('attribute'):
             match = re.search('nickname =\s*([^\s]+)\s*\(atlas\)',line)
@@ -34,3 +31,4 @@ def getNickname(gridProxy=None,allowMissingNickname=True):
             raise ApplicationConfigurationError(None,wMessage)
     return nickName
 
+ 
