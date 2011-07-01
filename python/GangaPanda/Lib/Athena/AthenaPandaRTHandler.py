@@ -289,14 +289,18 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if not job.outputdata.datasetname.endswith('/'):
             job.outputdata.datasetname+='/'
 
-        # create the container
-        try:
-            Client.createContainer(job.outputdata.datasetname,False)
-        except exceptions.SystemExit:
-            raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
-        logger.info('Created output container %s'%job.outputdata.datasetname)
-        self.indivOutContList = [job.outputdata.datasetname]
-
+        # check if this container exists
+        res = Client.getDatasets(job.outputdata.datasetname)
+        if not job.outputdata.datasetname in res.keys():
+            # create the container
+            try:
+                Client.createContainer(job.outputdata.datasetname,False)
+            except exceptions.SystemExit:
+                raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
+            logger.info('Created output container %s'%job.outputdata.datasetname)
+        else:
+            logger.warning('Adding datasets to already existing container %s' % job.outputdata.datasetname)
+            
         # store the lib datasts
         self.libDatasets = {}
         self.libraries = {}
@@ -433,6 +437,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 tmpLibDS = job.outputdata.datasetname+'.lib'
                 jspec = JobSpec()
                 jspec.jobDefinitionID   = job.id
+
+                if job.backend.jobSpec.has_key('provenanceID'):
+                    jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
+                
                 jspec.jobName           = commands.getoutput('uuidgen')
                 jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
                 jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
@@ -519,6 +527,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         jspec = JobSpec()
         jspec.jobDefinitionID   = masterjob.id
+
+        if job.backend.jobSpec.has_key('provenanceID'):
+            jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
+        
         jspec.jobName           = commands.getoutput('uuidgen')  
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
         jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer

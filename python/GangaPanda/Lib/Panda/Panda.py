@@ -471,7 +471,7 @@ class Panda(IBackend):
 
     _category = 'backends'
     _name = 'Panda'
-    _exportmethods = ['list_sites','get_stats','list_ddm_sites']
+    _exportmethods = ['list_sites','get_stats','list_ddm_sites', 'rebroker']
   
     def __init__(self):
         super(Panda,self).__init__()
@@ -677,6 +677,103 @@ class Panda(IBackend):
              logger.error('Failed killing job (status = %d)',status)
              return False
         return True
+
+    def rebroker(self):
+        """ Rebroker the failed subjobs. Basically a helper function that creates a new master job from
+        this parent and submits it"""
+        
+        from Ganga.GPIDev.Lib.Job import Job
+        from Ganga.Core.GangaRepository import getRegistry
+        from Ganga.Utility.guid import uuid
+        from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
+        
+        if self._getParent()._getParent(): # if has a parent then this is a subjob
+            raise BackendError('Panda','Rebroker on subjobs is not supported for Panda backend. \nUse j.backend.rebroker() (i.e. rebroker the master job) and your failed subjobs \nwill be automatically selected and retried.')
+
+        if self._getParent().splitter and self._getParent().splitter.numevtsperjob > 0:
+            raise BackendError('Panda','Rebroker while using numevtsperjob currently not supported.')
+
+        if not self._getParent().status in ['failed', 'killed']:
+            raise BackendError('Panda',"Cannot Rebroker jobs that haven't reached failed or killed state")
+        
+        # create a new job and copy the main parts
+        job = self._getParent()
+        mj = Job()
+        mj.info.uuid = uuid()
+        mj.name = job.name
+        mj.application = job.application
+        mj.application.run_event   = []
+        mj.outputdata = job.outputdata
+        mj.inputdata = job.inputdata
+        mj.backend = job.backend
+        mj.inputsandbox  = job.inputsandbox
+        mj.outputsandbox = job.outputsandbox
+
+        # libDS set?
+        if mj.backend.libds:
+            logger.warning("No libDS allowed when rebrokering.")
+            mj.backend.libds = None
+
+        # run prepare if necessary        
+        if not os.path.exists( mj.application.user_area.name ):
+            logger.warning("Previous user area not available. Re-running prepare()...(note this will pick up the current install area, etc.)")
+            mj.application.prepare()
+        else:
+            logger.warning("Re-using previous user area")
+        
+
+        # sort out the input data and excluded sites from the failed subjobs
+        inDS = []
+        inDSNames = []
+        exc_sites = []
+        num_sj = 0
+        
+        if self._getParent().subjobs:
+
+            for sj in self._getParent().subjobs:
+
+                if not sj.status in ['failed', 'killed']:
+                    continue
+
+                if not mj.backend.jobSpec.has_key('provenanceID'):
+                    mj.backend.jobSpec['provenanceID'] = sj.backend.jobSpec['jobExecutionID']
+
+                num_sj += 1
+                
+                # indata
+                if not sj.inputdata.dataset[0] in inDS:
+                    inDS.append(sj.inputdata.dataset[0])
+                inDSNames += sj.inputdata.names
+
+                # sites
+                if not sj.backend.site in exc_sites:
+                    exc_sites.append(sj.backend.site)
+                
+            if len(inDS) == 0:
+                raise BackendError('Panda','No failed subjobs to rebroker!')
+            
+            mj.inputdata.dataset = inDS
+            mj.inputdata.names = inDSNames
+            
+        else:            
+            mj.inputdata = job.inputdata
+            exc_sites.append(job.backend.site)
+            num_sj = 1
+
+        # excluded sites
+        mj.backend.requirements.excluded_sites.extend(exc_sites)
+        
+        # splitter
+        mj.splitter = DQ2JobSplitter()
+        mj.splitter.numsubjobs = num_sj
+        
+        # Add into repository
+        registry = getRegistry("jobs")
+        registry._add(mj)
+
+        # submit the job
+        mj.submit()        
+
 
     def check_auto_resubmit(self):
         """ Only auto resubmit if the master job has failed """
