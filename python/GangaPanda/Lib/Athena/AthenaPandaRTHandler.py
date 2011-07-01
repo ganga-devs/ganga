@@ -76,6 +76,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         from taskbuffer.JobSpec import JobSpec
         from taskbuffer.FileSpec import FileSpec
 
+        # create a random number for this submission to allow multiple use of containers
+        self.rndSubNum = random.randint(1111,9999)
 
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
@@ -308,7 +310,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         for site in bjsites:
             self.outDsLocation = Client.PandaSites[site]['ddm']
 
-            tmpDSName = job.outputdata.datasetname[0:-1] + ".%s"%site
+            tmpDSName = job.outputdata.datasetname[0:-1] + ".%d.%s"% (self.rndSubNum, site)
 
             try:
                 Client.addDataset(tmpDSName,False,location=self.outDsLocation)
@@ -519,7 +521,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #       if no outputdata are given
         if not job.outputdata:
             job.outputdata = DQ2OutputDataset()
-        job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]+'.%s'%job.backend.site 
+        job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]+'.%d.%s'% ( self.rndSubNum, job.backend.site )
 
         if job.inputdata and self.inputdatatype=='DQ2':
             if len(job.inputdata.dataset) > 1:
