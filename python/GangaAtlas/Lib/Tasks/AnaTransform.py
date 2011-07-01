@@ -56,7 +56,7 @@ class AnaTransform(Transform):
        'partitions_data'   : ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=1, doc='Input dataset for each partition'),
        'partitions_sites'  : SimpleItem(defvalue=[], hidden=1, modelist=["str","list"],doc='Input site for each partition'),
        'outputdata'        : ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset'),
-       'dataset_name'      : SimpleItem(defvalue="", transient=1, getter="get_dataset_name", doc='name of the output dataset'),
+       'dataset_name'      : SimpleItem(defvalue="", transient=1, comparable=False, getter="get_dataset_name", doc='name of the output dataset'),
        }.items()))
    _category = 'transforms'
    _name = 'AnaTransform'
