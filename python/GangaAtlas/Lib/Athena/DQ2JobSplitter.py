@@ -851,6 +851,11 @@ class DQ2JobSplitter(ISplitter):
                         events_per_subjob = max_subjob_filesize/filesize_per_event 
                         self.numevtsperjob = events_per_subjob
                         nrjob = int(math.ceil(totalevent/float(events_per_subjob)))
+                                    
+                # filesize based splitting
+                if max_subjob_filesize and self.filesize > 0:
+                    nrjob = config['MaxJobsDQ2JobSplitter']
+                    nrfiles = len(guids)
 
                 # split on local tag files if required
                 if job.inputdata.tag_info and local_tag and nrjob > len(job.inputdata.tag_info):
@@ -886,7 +891,8 @@ class DQ2JobSplitter(ISplitter):
                 if self.numevtsperjob > 0:
                     logger.info('DQ2JobSplitter will attempt to create %d subjobs using  %d events per subjob subject to a limit of %d Bytes per subjob.' %(nrjob,self.numevtsperjob, max_subjob_filesize))
                 elif max_subjob_filesize and  self.filesize > 0:
-                    logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob subject to a limit of %d Bytes per subjob.'%(nrjob,max_subjob_numfiles,max_subjob_filesize))
+                    #logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob subject to a limit of %d Bytes per subjob.'%(nrjob,max_subjob_numfiles,max_subjob_filesize))
+                    pass
                 remaining_guids = list(guids)
 
                 # sort out the tag files that reference this if required
