@@ -111,14 +111,13 @@ allComponentFilters['files'] = string_file_shortcut
 
 
 class SharedDir(GangaObject):
-    """Represent the files, both local and remote and provide an interface to transparently get access to them.
+    """Represents the directory used to store resources that are shared amongst multiple Ganga objects.
 
-    Typically in the context of job submission, the files are copied to the directory where the application
-    runs on the worker node. The 'subdir' attribute influances the destination directory. The 'subdir' feature
-    is not universally supported however and needs a review.
+    Currently this is only used in the context of the prepare() method for certain applications, such as
+    the Executable() application. A single ("prepared") application can be associated to multiple jobs.
 
     """
-    _schema = Schema(Version(1,0), {'name': SimpleItem(defvalue="mjk",doc='path to the file source'),
+    _schema = Schema(Version(1,0), {'name': SimpleItem(defvalue='',doc='path to the file source'),
                                     'subdir': SimpleItem(defvalue=(os.path.join(expandfilename(config['gangadir']),'shared',config['user'])),doc='destination subdirectory (a relative path)')})
     _category = 'shareddirs'
     _name = "SharedDir"
