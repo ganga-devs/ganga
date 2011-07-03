@@ -253,6 +253,12 @@ def selectPandaSite(job,sites):
     pandaSites = []
     if job.backend.site == 'AUTO':
         pandaSites = [Client.convertDQ2toPandaID(x) for x in sites.split(':')]
+
+        # ensure these aren't excluded
+        for s in job.backend.requirements.excluded_sites:
+            if s in pandaSites:
+                pandaSites.remove(s)
+                                        
     else:
         return job.backend.site
     tag = ''
@@ -678,7 +684,7 @@ class Panda(IBackend):
              return False
         return True
 
-    def resplit(self, newDS = False, sj_status = ['killed', 'failed'], splitter = None):
+    def resplit(self, newDS = False, sj_status = ['killed', 'failed'], splitter = None, auto_exclude = True):
         """ Rerun the splitting for subjobs. Basically a helper function that creates a new master job from
         this parent and submits it"""
         
@@ -761,7 +767,8 @@ class Panda(IBackend):
             num_sj = 1
 
         # excluded sites
-        mj.backend.requirements.excluded_sites.extend(exc_sites)
+        if auto_exclude:
+            mj.backend.requirements.excluded_sites.extend(exc_sites)
         
         # splitter
         if splitter:            
