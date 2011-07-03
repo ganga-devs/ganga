@@ -118,7 +118,7 @@ class Node(object):
         for (name,item) in self._schema.componentItems():
             if item['visitable']:
                 visitor.componentAttribute(self,name,getdata(name),item['sequence'])
-                                       
+
         visitor.nodeEnd(self)
 
     # clone self and return a properly initialized object
