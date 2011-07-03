@@ -776,6 +776,10 @@ default_backends = LCG
         exportToGPI('jobtree',jobtree,'Objects','Logical tree view of the jobs')
         exportToGPI('TreeError',TreeError,'Exceptions')
 
+        # ShareRef
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        exportToGPI('shareref',shareref,'Objects','Mechanism for tracking use of shared directory resources')
+
         # bootstrap the workspace
         import Workspace_runtime
         Workspace_runtime.bootstrap()
