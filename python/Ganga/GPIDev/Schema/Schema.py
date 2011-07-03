@@ -1,4 +1,4 @@
-################################################################################
+###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: Schema.py,v 1.3 2009-05-20 13:40:22 moscicki Exp $
@@ -84,9 +84,6 @@ class Schema:
 
     def componentItems(self):
         return self._filter(ComponentItem)
-
-    def sharedItems(self):
-        return self._filter(SharedItem)
 
     def hasAttribute(self,name):
         return self.datadict.has_key(name)
@@ -487,17 +484,7 @@ class SimpleItem(Item):
 ## ##        assert(not setter is None)
 ##         self._update(kwds,forced=BindingItem._forced)
 
-class SharedItem(SimpleItem):
-    def __init__(self, **kwds):
-        #kwds["defvalue"] = None
-        kwds["sequence"] = 0
-        kwds["strict_sequence"] = 0
-        #kwds["hidden"] = True
-        SimpleItem.__init__(self, **kwds)
-         
-    def _describe(self):
-        return 'shared file resource,' + Item._describe(self)
-        
+       
 # Files are important and common enough to merit a special support for defining their metaproperties
 class FileItem(ComponentItem):
     def __init__(self,**kwds):
@@ -549,7 +536,6 @@ if __name__=='__main__':
     assert(schema.allItems() == dd.items())
 
     cc = (schema.componentItems() + schema.simpleItems()).sort()
-    cc = (schema.componentItems() + schema.simpleItems() + schema.sharedItems()).sort()
     cc2 = dd.items().sort()
     assert(cc == cc2)
 
