@@ -1,8 +1,6 @@
 """GangaMon Monitoring Service plugin."""
 
 from Ganga.Lib.MonitoringServices.MSGMS import MSGUtil
-import Ganga.Utility.Config
-config = Ganga.Utility.Config.getConfig('Configuration')
 
 
 def _initconfig():
@@ -132,7 +130,9 @@ class MSGMS(IMonitoringService):
                 masterjob_msg['ganga_master_uuid'] = 0
                 self.send(masterjob_msg)
 
-        self.job_info.info.monitoring_links.append(('http://gangamon.cern.ch/ganga/#user=%s'%config['user'],'dashboard'))
+        from Ganga.Utility import Config
+        gangausername = Config.getConfig('Configuration')['user']
+        self.job_info.info.monitoring_links.append(('http://gangamon.cern.ch/ganga/#user=%s'%gangausername,'dashboard'))
 
         # send submitted for this job
         msg = self.getMessage('submitted')
