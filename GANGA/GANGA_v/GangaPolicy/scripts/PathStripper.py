@@ -136,6 +136,17 @@ def _store_dirac_environment(option, opt_str, value, parser):
         raise OptionValueError(msg)
     WriteVar("GANGADIRACENVIRONMENT",fname,parser.values.shell, parser.values.output)
 
+
+def _store_root_version(option, opt_str, value, parser):
+    if 'ROOTSYS' in os.environ:
+        vstart=os.environ['ROOTSYS'].find('ROOT/')+5
+        vend=os.environ['ROOTSYS'][vstart:].find('/')
+        rootversion=os.environ['ROOTSYS'][vstart:vstart+vend]
+        WriteVar('ROOTVERSION',rootversion , parser.values.shell, parser.values.output)
+    else:
+        msg = 'Tried to setup ROOTVERSION environment variable but no ROOTSYS variable found.
+        raise OptionValueError(msg)
+
 if __name__ == '__main__':
 
     import os
@@ -145,6 +156,8 @@ if __name__ == '__main__':
     parser.add_option("-d", "--dirac", action="callback", callback = _store_dirac_environment, help="Setup Dirac environment and store result in file pointed to by $GANGADIRACENVIRONMENT")
 
     parser.add_option("-g", "--ganga", action="callback", callback = _site_configuration, help="Setup the site configuration for Ganga")
+
+    parser.add_option("-r", "--root", action="callback", callback = _store_root_version, help="Store in the environment variable 'ROOTVERSION' the verion number of the release pointed to by 'ROOTSYS'")
 
     parser.add_option("-e", "--env",
                       action="append",
