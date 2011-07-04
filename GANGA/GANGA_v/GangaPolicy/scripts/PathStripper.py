@@ -144,7 +144,7 @@ def _store_root_version(option, opt_str, value, parser):
         rootversion=os.environ['ROOTSYS'][vstart:vstart+vend]
         WriteVar('ROOTVERSION',rootversion , parser.values.shell, parser.values.output)
     else:
-        msg = 'Tried to setup ROOTVERSION environment variable but no ROOTSYS variable found.
+        msg = 'Tried to setup ROOTVERSION environment variable but no ROOTSYS variable found.'
         raise OptionValueError(msg)
 
 if __name__ == '__main__':
