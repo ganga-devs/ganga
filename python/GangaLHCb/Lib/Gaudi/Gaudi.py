@@ -148,10 +148,16 @@ class Gaudi(Francesc):
             raise ApplicationConfigurationError(None,msg)
 
         inputs = None
-        
+
+        def dummyfile():
+            temp_fd,temp_filename=tempfile.mkstemp(text=True,suffix='.py')
+            os.write(temp_fd,"#Dummy file to keep the Optionsparser happy")
+            os.close(temp_fd)
+            return temp_filename
+
         if len(self.optsfile)==0:
-            msg = "The 'optsfile' attribute must be set for application. "
-            raise ApplicationConfigurationError(None,msg)
+            self.optsfiles.append(dummyfile())
+            inputs = ['optsfile']
 
         nonexistentOptFiles = []
         for f in self.optsfile:
