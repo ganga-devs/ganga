@@ -42,9 +42,7 @@ class LHCbDataset(Dataset):
     schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
     docstr = 'Metadata container e.g. from Bookkeeping'
     schema['metadata'] = SimpleItem(defvalue={},hidden=1,doc=docstr)
-    docstr = 'Specify the dataset persistency technology'
-    schema['persistency'] = SimpleItem(defvalue=None,typelist=['str','type(None)'] ,doc=docstr)
-    
+
     _schema = Schema(Version(3,0), schema)
     _category = 'datasets'
     _name = "LHCbDataset"
@@ -54,10 +52,9 @@ class LHCbDataset(Dataset):
                       'difference','isSubset','isSuperset','intersection',
                       'symmetricDifference','union','bkMetadata']#,'pop']
 
-    def __init__(self, files=[],persistency=None):
+    def __init__(self, files=[]):
         super(LHCbDataset, self).__init__()
         self.files = files
-        self.persistency=persistency
 
     def __construct__(self, args):
         if (len(args) != 1) or (type(args[0]) is not type([])):
@@ -217,21 +214,8 @@ class LHCbDataset(Dataset):
         'Returns the Gaudi-style options string for the dataset (if file' \
         ' is given, output is written there).'
         if not self or len(self) == 0: return ''
-        snew=''
-        if self.persistency=='ROOT':
-            snew='\n#new method\n    from GaudiConf import IOExtension\n    IOExtension(\"%s\").inputFiles([' % self.persistency
-        elif self.persistency=='POOL': 
-            snew='\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    IOExtension(\"%s\").inputFiles([' % self.persistency
-        elif self.persistency==None:
-            snew='\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    IOExtension().inputFiles(['
-        else:
-            logger.warning("Unknown LHCbDataset persistency technology... reverting to None")
-            snew='\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    IOExtension().inputFiles(['
-            
-        sold='\nexcept ImportError:\n    #Use previous method\n    from Gaudi.Configuration import EventSelector\n    EventSelector().Input=['
-        sdatasetsnew=''
-        sdatasetsold=''
-        
+        s = '\nfrom Gaudi.Configuration import * \n'
+        s += 'EventSelector().Input = ['
         dtype_str_default = getConfig('LHCb')['datatype_string_default']
         dtype_str_patterns = getConfig('LHCb')['datatype_string_patterns']
         for f in self.files:
@@ -244,34 +228,19 @@ class LHCbDataset(Dataset):
                         matched = True
                         break
                 if matched: break
-            sdatasetsnew += '\n        '
-            sdatasetsold += '\n        '
+            s += '\n'
             if isLFN(f):
-                sdatasetsnew += """ \"LFN:%s\",""" % f.name
-                sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.name, dtype_str)
+                s += """ \"DATAFILE='LFN:%s' %s\",""" % (f.name, dtype_str)
             else:
-                sdatasetsnew += """ \"PFN:%s\",""" % f.name
-                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.name, dtype_str)
-        if sdatasetsold.endswith(","):
-            sdatasetsnew = sdatasetsnew[:-1] + """\n    ], clear=True)"""
-            sdatasetsold = sdatasetsold[:-1]
-            sdatasetsold += """\n    ]"""
+                s += """ \"DATAFILE='PFN:%s' %s\",""" % (f.name, dtype_str)
+        if s.endswith(","):
+            s = s[:-1]
+            s += """\n]"""
         if(file):
             f = open(file,'w')
-            if self.persistency=='ROOT':
-                f.write(snew)
-                f.write(sdatssetsnew)
-            else:
-                f.write(snew)
-                f.write(sdatasetsnew)
-                f.write(sold)
-                f.write(sdatasetsold)
+            f.write(s)
             f.close()
-        else:
-            if self.persistency=='ROOT':
-                return snew+sdatasetsnew
-            else:
-                return snew+sdatasetsnew+sold+sdatasetsold
+        else: return s
 
     def difference(self,other):
         '''Returns a new data set w/ files in this that are not in other.'''
