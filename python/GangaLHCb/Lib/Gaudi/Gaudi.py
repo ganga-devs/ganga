@@ -149,16 +149,9 @@ class Gaudi(Francesc):
 
         inputs = None
 
-        def dummyfile():
-            temp_fd,temp_filename=tempfile.mkstemp(text=True,suffix='.py')
-            os.write(temp_fd,"#Dummy file to keep the Optionsparser happy")
-            os.close(temp_fd)
-            return temp_filename
-
         if len(self.optsfile)==0:
-            self.optsfiles.append(dummyfile())
-            inputs = ['optsfile']
-
+            logger.warning("The 'optsfile' is not set. I hope this is OK!")
+        
         nonexistentOptFiles = []
         for f in self.optsfile:
             if not os.path.isfile(f.name):
