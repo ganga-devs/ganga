@@ -168,6 +168,14 @@ class PrereleaseCommand:
         print 'Making pre-release tarballs (forcing recreation) for slc4_amd64_gcc34 (limited external dependencies)'
         toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --make-tarballs --all-deps --platf=slc4_amd64_gcc34 --force --verbose %(version-pre)s'%CONFIG)
 
+
+        print 'Making pre-release tarballs (forcing recreation) for i686-slc5-gcc43-opt (limited external dependencies)'
+        toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --make-tarballs --all-deps --platf=i686-slc5-gcc43-opt --force --verbose %(version-pre)s'%CONFIG)
+
+
+        print 'Making pre-release tarballs (forcing recreation) for x86_64-slc5-gcc43-opt (limited external dependencies)'
+        toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --make-tarballs --all-deps --platf=x86_64-slc5-gcc43-opt --force --verbose %(version-pre)s'%CONFIG)
+
         import os.path
         versionfile=os.path.join(CONFIG['webdir_top'],'download','VERSIONS.txt')
         print 'Updating file with available releases'
@@ -346,6 +354,16 @@ class ReleaseCommand:
         
         print 'Forcing recreation for slc4_amd64_gcc34 (limited external dependencies)'
         toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --platf=slc4_amd64_gcc34 --make-tarballs --force --verbose %(version)s'%CONFIG)
+
+        print 'Forcing recreation for i686-slc5-gcc43-opt (limited external dependencies)'
+        toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --platf=i686-slc5-gcc43-opt --make-tarballs --force --verbose %(version)s'%CONFIG)
+
+        print 'Forcing recreation for x86_64-slc5-gcc43-opt (limited external dependencies)'
+        toolcmd('ganga-install --extern=%(plugin_packages_gcc34)s --prefix=%(top)s --platf=x86_64-slc5-gcc43-opt --make-tarballs --force --verbose %(version)s'%CONFIG)
+
+
+
+
 
         print 'Byte-compiling sources'
 
