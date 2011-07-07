@@ -263,9 +263,14 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
 
                     surl = rep.sfn
 
+                    if (surl.find('atlasmctape')>0) or (surl.find('atlasdatatape')>0):
+                        if globalVerbose:
+                            print 'Skip atlasmctape or atlasdatatape replica'
+                        continue
+
                     lfn = mapLFN[rep.guid]
                     guidReplicas[lfn] = surl
-
+                    
                     fsizeMap[lfn] = long(rep.filesize)
                     md5sumMap[lfn] = rep.csumvalue
                     
@@ -358,6 +363,10 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             if fr:
                 if fr.sfn.startswith(localsitesrm):
                     surl = fr.sfn
+                    if (surl.find('atlasmctape')>0) or (surl.find('atlasdatatape')>0):
+                        if globalVerbose:
+                            print 'Skip atlasmctape or atlasdatatape replica'
+                        continue
                     guidReplicas[lfn] = surl
 
                     res = lfc.lfc_statg("",guid,stat)
