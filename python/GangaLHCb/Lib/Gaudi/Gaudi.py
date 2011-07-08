@@ -148,10 +148,11 @@ class Gaudi(Francesc):
             raise ApplicationConfigurationError(None,msg)
 
         inputs = None
-
-        if len(self.optsfile)==0:
-            logger.warning("The 'optsfile' is not set. I hope this is OK!")
         
+        if len(self.optsfile)==0:
+            msg = "The 'optsfile' attribute must be set for application. "
+            raise ApplicationConfigurationError(None,msg)
+
         nonexistentOptFiles = []
         for f in self.optsfile:
             if not os.path.isfile(f.name):
