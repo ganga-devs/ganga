@@ -101,10 +101,10 @@ class GaudiDiracRTHandler(IRuntimeHandler):
         '''Creates the script that will be executed by DIRAC job. '''
         commandline = "'python ./gaudipython-wrapper.py'"
         if is_gaudi_child(app):
-            commandline = "'gaudirun.py "
+            commandline = '\"\"\"gaudirun.py '
             for arg in app.args:
                 commandline+=arg+' '
-            commandline+="options.pkl data.py'"
+            commandline+='options.pkl data.py\"\"\"'
         logger.debug('Command line: %s: ', commandline)
         wrapper = gaudi_dirac_wrapper(commandline,app.platform)
         j = app.getJobObject()
