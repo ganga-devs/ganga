@@ -177,7 +177,8 @@ class AnaTransform(Transform):
 
       from random import shuffle
       shuffle(sites)
-      self.backend.site = sites[0] 
+      self.backend.site = sites[0]
+      self.partitions_sites = [sites[0]]*len(self.partitions_sites)
       logger.warning("Rebrokering transform - %i possible sites; chosing %s at random..." % (len(sites),sites[0]))
 
 
