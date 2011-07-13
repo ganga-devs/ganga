@@ -10,7 +10,6 @@ def report(job=None):
         import os
         import platform
 
-
         from Ganga.GPI import config
         from Ganga.GPI import full_print
         from Ganga.GPI import Job

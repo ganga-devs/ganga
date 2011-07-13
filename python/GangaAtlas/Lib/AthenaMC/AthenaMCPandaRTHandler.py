@@ -293,21 +293,12 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
 
         # How to specify jspec.destinationDBlock  when more than one type of output is available? Panda prod jobs seem to specify only the last output dataset
         outdset=""
-        for type in ["EVNT","RDO","HITS","AOD","ESD","NTUP"]:
+        for type in ["EVNT","RDO","AOD"]:
             if type in app.outputpaths.keys():
                 outdset=string.replace(app.outputpaths[type],"/",".")
                 outdset=outdset[1:-1]
                 break
-        if not outdset:
-            try:
-                assert len(app.outputpaths.keys())>0
-            except:
-                logger.error("app.outputpaths is empty: check your output datasets")
-                raise
-            type=app.outputpaths.keys()[0]
-            outdset=string.replace(app.outputpaths[type],"/",".")
-            outdset=outdset[1:-1]
-            
+        
         jspec.destinationDBlock = outdset
         jspec.destinationSE = self.outsite
         jspec.prodSourceLabel   = 'user'
