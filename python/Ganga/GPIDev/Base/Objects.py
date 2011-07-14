@@ -29,6 +29,18 @@ from Ganga.Core import GangaValueError
 
 from Ganga.Utility.logic import implies
 from Ganga.Utility.util import canLoopOver, isStringLike
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+
+
+import sys
+from Ganga.Core import GangaException
+class PreparedStateError(GangaException):
+    def __init__(self,txt):
+        GangaException.__init__(self,txt)
+        self.txt=txt
+    def __str__(self):
+        return "PreparedStateError: %s"%str(self.txt)
+
 
     
 class Node(object):
@@ -114,6 +126,10 @@ class Node(object):
         for (name,item) in self._schema.simpleItems():
             if item['visitable']:            
                 visitor.simpleAttribute(self,name,getdata(name),item['sequence'])
+
+        for (name,item) in self._schema.sharedItems():
+            if item['visitable']:            
+                visitor.sharedAttribute(self,name,getdata(name),item['sequence'])
 
         for (name,item) in self._schema.componentItems():
             if item['visitable']:
@@ -426,11 +442,36 @@ class GangaObject(Node):
 
     # on the deepcopy reset all non-copyable properties as defined in the schema
     def __deepcopy__(self, memo = None):
+        print self
         self._getReadAccess()
         c = super(GangaObject,self).__deepcopy__(memo)
         for name,item in self._schema.allItems():
+#            print "    ", name, item
             if not item['copyable']:
                 setattr(c,name,self._schema.getDefaultValue(name))
+            if item.isA(Schema.SharedItem):
+                shared_dir=getattr(c,name)
+                try:
+                    print shared_dir.name
+                    from Ganga.Core.GangaRepository import getRegistry
+                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    shareref.add(shared_dir.name)
+                except AttributeError:
+                    pass
+#                except:
+#                    msg = 'Unexpected error: %s'%(sys.exc_info()[0])
+#                    raise PreparedStateError(msg)
+                print "end"
+#                junk=item
+#                print "#######"
+#                print "#######"
+                #from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+                #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                #shareref.add(self.application.is_prepared.name)
+
+
+#                print "### We have a shared item"
+            
         return c
 
     def accept(self, visitor):
