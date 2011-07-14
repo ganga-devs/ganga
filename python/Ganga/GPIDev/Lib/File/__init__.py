@@ -1,4 +1,4 @@
 from File import File
-from File import SharedDir
+from File import ShareDir
 from FileBuffer import FileBuffer
 
