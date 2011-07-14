@@ -110,6 +110,20 @@ class VPrinter(object):
             #    print 'no transformation'
             print >> self.out, self.indent(), name, '=', self.quote(value),
 
+    def sharedAttribute(self,node,name, value,sequence):
+        if self.showAttribute( node, name ):
+            self.empty_body = 0
+            self.comma()
+            # DISABLED
+            #print '*'*20,name
+            #if sequence:
+            #    print 'transformation:',repr(value)
+            #    value = value.toString()
+            #    print 'into',repr(value)
+            #else:
+            #    print 'no transformation'
+            print >> self.out, self.indent(), name, '=', self.quote(value),
+
     def acceptOptional(self,s):
         if s is None:
             print >> self.out, None,
@@ -185,6 +199,23 @@ class VSummaryPrinter(VPrinter):
 
         #just go back to default behaviour
         super(VSummaryPrinter,self).simpleAttribute(node, name, value, sequence)
+
+    def sharedAttribute(self, node, name, value, sequence):
+        """Overrides the baseclass method. Tries to print a summary of the attribute."""
+        if not self.showAttribute( node, name ):
+            return
+        if self._CallSummaryPrintMember(node,name,getattr(node,name)):
+            return
+        
+        if sequence:
+            self.empty_body = 0
+            self.comma()
+            print >> self.out, self.indent(), name, '=',
+            self._CallPrintSummaryTree(value)
+            return
+
+        #just go back to default behaviour
+        super(VSummaryPrinter,self).sharedAttribute(node, name, value, sequence)
         
     def componentAttribute(self,node,name,subnode,sequence):
         if not self.showAttribute( node, name ):
