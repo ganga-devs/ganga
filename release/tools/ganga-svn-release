@@ -64,6 +64,9 @@ GANGA_ACCOUNTS = [('Ganga','gangage'),('GangaRobot','gangage'),('GangaLHCb','gan
 #running tests on different accounts
 GANGA_ACCOUNT_TEST = [('gangage', 'test_ganga_generic'),('gangaat', 'test_ganga_atlas'),('gangalb', 'test_ganga_lhcb')]
 
+#generation config files
+GANGA_ACCOUNT_CONFIG = {'gangage':'generate_generic_config_files', 'gangaat':'generate_atlas_config_files', 'gangalb':'generate_lhcb_config_files' }
+
 GANGA_RUNTIME_PACKAGES = {}
 
 for pkg,account in GANGA_ACCOUNTS:
@@ -202,7 +205,8 @@ class GenerateConfigFilesCommand:
                 cfg = '-o\'[Configuration]RUNTIME_PATH=%s\''%(":".join(GANGA_RUNTIME_PACKAGES[x[1]]))
 
             print 'login to %s@lxplus and run this command:'%x[1]
-            print gencmd%cfg
+            print 'sh ~/test/%s.sh %s'%(GANGA_ACCOUNT_CONFIG[x[1]], version.replace('.',' '))
+            #print gencmd%cfg
             print
 
 class CommitConfigFilesCommand:
