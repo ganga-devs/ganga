@@ -85,6 +85,9 @@ class Schema:
     def componentItems(self):
         return self._filter(ComponentItem)
 
+    def sharedItems(self):
+        return self._filter(SharedItem)
+
     def hasAttribute(self,name):
         return self.datadict.has_key(name)
 
@@ -467,6 +470,21 @@ class SimpleItem(Item):
 
     def _describe(self):
         return 'simple property,' + Item._describe(self)
+
+
+class SharedItem(Item):
+    def __init__(self,defvalue,typelist=[],**kwds):
+        Item.__init__(self)
+        kwds['defvalue'] = defvalue
+        kwds['typelist'] = typelist
+        self._update(kwds)
+
+    def _describe(self):
+        return 'shared property,' + Item._describe(self)
+    
+#    def _increment(self):
+#        return Item
+
 
 
 #    def type_match(self,v):
