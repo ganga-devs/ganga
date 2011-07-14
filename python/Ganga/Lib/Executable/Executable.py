@@ -11,12 +11,11 @@ from Ganga.GPIDev.Schema import *
 from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File import File
-from Ganga.GPIDev.Lib.File import SharedDir
+from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.Core.GangaRepository import getRegistry
 
-import os, shutil
+import os
 
 class Executable(IApplication):
     """
@@ -48,7 +47,7 @@ class Executable(IApplication):
         'exe' : SimpleItem(defvalue='echo',typelist=['str','Ganga.GPIDev.Lib.File.File.File'],doc='A path (string) or a File object specifying an executable.'), 
         'args' : SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File.File','int'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
-        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, typelist=['type(None)','str'],protected=1,doc='Save file for prepared state test. Presence of this attribute implies the application is prepared.')
+        'is_prepared' : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
         } )
     _category = 'applications'
     _name = 'Executable'
@@ -65,56 +64,42 @@ class Executable(IApplication):
         super(Executable,self).__init__()
         
     def prepare(self,force=False):
-
-        if (self.is_prepared is None) or (force is True):
-            logger.info('Preparing %s application.'%(self._name))
-
-            #does the application contains any File items
-            #because of bug #82818 the next 2 lines don't properly work
-            #if isinstance(self.exe, File):
-            #    addToSharedDir.append(self.exe)
-    
-            #difficult to distinguish between, say, /bin/echo and /home/user/echo; we don't necessarily
-            #want to copy the former into the shareddir, but we would the latter. 
-            #if we simply test for the existence of the self.exe file, then a system file won't be found, but a 
-            #"local" user-space file will, because it should have an absolute path or be in the pwd (is this true?)
-            #lets use the same criteria as the configure() method for checking file existence & sanity
-            #this will bail us out of prepare if there's somthing odd with the job config - like the executable
-            #file is unspecified or has a space
-            self.configure(self)
-
-            #should we check for blank "" and/or None type self.exes? or does self.configure() do that for us?
-
-            if type(self.exe) is str:
-                self.is_prepared = SharedDir()
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                shareref.add(self.is_prepared.name)
-                shared_dirname = self.is_prepared.name
-                addToSharedDir = self.exe
-                #we have a file. if it's an absolute path, copy to shared dir
-                if os.path.abspath(addToSharedDir) == addToSharedDir:
-                    logger.info('Adding executable file to shared directory %s'%(shared_dirname))
-                    shutil.copy2(addToSharedDir, shared_dirname)
-                #else assume it's a system binary, and create a wrapper to call this on the WN
+        #does the application contains any File items
+        #because of bug #82818 they don't work properly
+        #difficult to distinguish between, say, /bin/echo and /home/user/echo; we don't necessarily
+        #want to copy the former into the sharedir, but we would the latter. 
+        #if we simply test for the existence of the self.exe file, then a system file won't be found, but a 
+        #"local" user-space file will, because it should have an absolute path or be in the pwd (is this true?)
+        #lets use the same criteria as the configure() method for checking file existence & sanity
+        #this will bail us out of prepare if there's somthing odd with the job config - like the executable
+        #file is unspecified, has a space or is a relative path
+        self.configure(self)
+        #should we check for blank "" and/or None type self.exes? or does self.configure() do that for us?
+        if type(self.exe) is str:
+            send_to_sharedir = self.exe
+            #we have a file. if it's an absolute path, copy it to the shared dir
+            if os.path.abspath(send_to_sharedir) == send_to_sharedir:
+                logger.info('Sending executable file %s to shared directory.'%(send_to_sharedir))
+            #else assume it's a system binary, and create a wrapper to call this on the WN
+            else:
+                logger.info('Sending executable wrapper to shared directory.')
+                # We'll need a tmpdir to momentarily store the wrapper in.
+                if os.environ.has_key('TMPDIR'):
+                    tmpDir = os.environ['TMPDIR']
                 else:
-                    logger.info('Adding executable wrapper to shared directory %s'%(shared_dirname))
-                    os.system('touch ' + os.path.join(shared_dirname,os.path.basename(addToSharedDir)))
-
-                #if it's not a string, and is a File(), then that should be copied to the shared directory
-                #though this doesn't yet work, because of bug #82818
-            elif type(self.exe) is File:
-                self.is_prepared = SharedDir()
-                shared_dirname = self.is_prepared.name
-                addToSharedDir = self.exe.name
-                print "Adding " + addToSharedDir + " to shared dir " + str(shared_dirname)
-                shutil.copy2(addToSharedDir,shared_dirname)
-                if os.path.isfile(os.path.join(shared_dirname,os.path.basename(addToSharedDir))):
-                    print 'Successfully added ' + os.path.join(shared_dirname,os.path.basename(addToSharedDir))
-        else:
-            logger.info('Job %s , %s application was already prepared; not prepared again.'%(self.id,self.application._name))
-            logger.info('If you really want to prepare the job, use \'job.prepare(force=True)\'')
-            print force
-        return 1
+                    cn = os.path.basename( os.path.expanduser( "~" ) )
+                    tmpDir = os.path.realpath('/tmp/' + cn )
+                if not os.access(tmpDir,os.W_OK):
+                    os.makedirs(tmpDir)
+                send_to_sharedir = os.path.join(tmpDir,os.path.basename(send_to_sharedir))
+                wrap_cmd='''#!/bin/bash
+%s
+''' %(self.exe)
+                file(send_to_sharedir,'w').write(wrap_cmd)
+        elif type(self.exe) is File:
+            send_to_sharedir = self.exe.name
+            logger.info('Sending file object %s to shared directory'%send_to_sharedir)
+        return send_to_sharedir
 
 
     def configure(self,masterappconfig):
