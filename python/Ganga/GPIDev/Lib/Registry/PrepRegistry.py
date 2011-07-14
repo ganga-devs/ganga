@@ -1,6 +1,7 @@
 import os
 import types
 import atexit
+import shutil
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
 from Ganga.GPIDev.Base   import GangaObject
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
@@ -27,18 +28,25 @@ class PrepRegistry(Registry):
 
     def getProxy(self):
         pass
+    
+    def shutdown(self):
+        self.shareref = self.metadata[self.metadata.ids()[-1]]
+        self.shareref.closedown()
+
+
+
 
 
 class ShareRef(GangaObject):
     """The shareref (shared files reference) object in Ganga gives 
     you a mechanism for reusing "prepared" applications with multiple jobs.
-    shareref is persisted in between Ganga sessions.
+    shareref persists between Ganga sessions.
     """
     _schema = Schema(Version(1,2),{ 'name':SimpleItem({}, protected=1,copyable=1,hidden=1)})
 
     _category = 'sharerefs'
     _name = 'ShareRef'
-    _exportmethods = ['add']
+    _exportmethods = ['add','remove','printtree']
 
     default_registry = 'prep'
    
@@ -62,8 +70,8 @@ class ShareRef(GangaObject):
             self._releaseWriteAccess()
         
     def add(self,shareddir):
-        """Adds job to the job tree into the current folder.
-        If path to a folder is provided as a parameter than adds job to that folder.
+        """Adds shared object to the ShareRef 'tree', incrementing a reference counter
+        as appropriate.
         """
         self._getWriteAccess()
         
@@ -75,7 +83,66 @@ class ShareRef(GangaObject):
 
         self._setDirty()
         self._releaseWriteAccess()
+
+
+    def remove(self,shareddir):
+        """Reduces the metadata reference counter for a given shared object by 1. If the current value
+        of the counter is 0, the shared object will be removed from the metadata, and the files deleted
+        when Ganga exits.
+        """
+        self._getWriteAccess()
         
+        if shareddir not in self.name:
+            logger.info('%s is not stored in the shareref metadata object.' %shareddir)
+            self.name[shareddir] = 1
+        elif self.name[shareddir] == 1:
+            #self.name.pop(shareddir) 
+            self.name[shareddir] -= 1
+        elif self.name[shareddir] == 0:
+            pass
+        else:
+            self.name[shareddir] -= 1
+
+        self._setDirty()
+        self._releaseWriteAccess()
+
+
+    def closedown(self):
+        """Cleans up the ShareDir upon shutdown of the registry, ie. when exiting a Ganga session."""
+        self._getWriteAccess()
+        for shareddir in self.name:
+            #logger.info('Checking %s' %shareddir)
+            if self.name[shareddir] == 0:
+                logger.info('%s no longer being referenced by any Prepared() jobs...removing directory.' %shareddir)
+                if os.path.isdir(shareddir):
+                    shutil.rmtree(shareddir)
+                #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                #shareref.remove(shareddir)
+
+
+        #should also check that any directories contained within the sharetree exist, otherwise remove their references.
+
+
+        self._setDirty()
+        self._releaseWriteAccess()
+
+    def _display(self):
+        """Prints content of the shareref metadata in a well formatted way.
+        """
+
+        return self.name
+
+    def _proxy_display(self,stuff):
+        return self._display()
+
+
+class _proxy_display(object):
+    def __get__(self, obj, cls):
+        if obj is None:
+            return cls._impl._proxy_display
+        return obj._impl._proxy_display
+
+      
 
 #class _copy(object):
 #    def __get__(self, obj, cls):
@@ -83,7 +150,7 @@ class ShareRef(GangaObject):
 #            return cls._impl._copy
 #        return obj._impl._copy   
 
-#ShareRef.__str__              = ShareRef._display    
-#ShareRef._proxyClass._display = _proxy_display()
-#ShareRef._proxyClass.__str__  = _proxy_display()
+ShareRef.__str__              = ShareRef._display    
+ShareRef._proxyClass._display = _proxy_display()
+ShareRef._proxyClass.__str__  = _proxy_display()
 #ShareRef._proxyClass.copy = _copy()
