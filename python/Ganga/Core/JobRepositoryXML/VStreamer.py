@@ -111,6 +111,40 @@ class VStreamer(object):
                 print >> self.out,'</attribute>'
             self.level-=1
 
+    def sharedAttribute(self,node,name, value,sequence):
+        if self.showAttribute( node, name ):
+            self.level+=1
+            print >> self.out, self.indent(),
+            print >> self.out, '<attribute name="%s">'%name,
+
+            def print_value(v):
+                #print 'value',quote(v)
+                print >> self.out,'<value>%s</value>'%self.quote(v),
+                
+            if sequence:
+                self.level+=1
+                print >> self.out
+                print >> self.out, self.indent(),'<sequence>'
+                for v in value:
+                    self.level+=1
+                    print >> self.out, self.indent(),
+                    print_value(v)
+                    print >> self.out
+                    self.level-=1
+                print >> self.out, self.indent(), '</sequence>'
+                self.level-=1
+                print >> self.out, self.indent(), '</attribute>'
+            else:
+                self.level+=1
+                print_value(value)
+                self.level-=1
+                print >> self.out,'</attribute>'
+            self.level-=1
+
+
+
+
+
     def acceptOptional(self,s):
         self.level+=1     
         if s is None:
