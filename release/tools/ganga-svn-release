@@ -61,6 +61,9 @@ CONFIG['RemoteSites'] = {'Imperial':
 # accounts used for CERN deployment of Ganga
 GANGA_ACCOUNTS = [('Ganga','gangage'),('GangaRobot','gangage'),('GangaLHCb','gangalb'),('GangaAtlas','gangaat'),('GangaNG','gangaat'),('GangaPanda','gangaat')]
 
+#running tests on different accounts
+GANGA_ACCOUNT_TEST = [('gangage', 'test_ganga_generic'),('gangaat', 'test_ganga_atlas'),('gangalb', 'test_ganga_lhcb')]
+
 GANGA_RUNTIME_PACKAGES = {}
 
 for pkg,account in GANGA_ACCOUNTS:
@@ -134,11 +137,11 @@ class PrereleaseCommand:
                 acmd('mv %s %s'%(CONFIG['prereldir'],new_backup_prerelease))
                 print 'sucessfully moved %s to %s'%(CONFIG['prereldir'],new_backup_prerelease)
                 pre_tarball = '%(top)s/tarball/Ganga-%(version-pre)s.tar.gz' % CONFIG
-		try:
-		    os.unlink(pre_tarball)
-            	    print 'sucessfully removed pre-release tarball %s' % pre_tarball
-		except OSError,e:
-		    print 'Cannot delete pre-release tarball: %s' % str(e)	    
+                try:
+                    os.unlink(pre_tarball)
+                    print 'sucessfully removed pre-release tarball %s' % pre_tarball
+                except OSError,e:
+                    print 'Cannot delete pre-release tarball: %s' % str(e)          
             else:
                 print "Cannot continue...Terminating"
                 return
@@ -241,12 +244,19 @@ class PretestCommand:
             args = ' --test -o\'[Configuration]RUNTIME_PATH=GangaTest\' -o\'[TestingFramework]ReleaseTesting=True\' -o\'Config=localxml.ini\' %s/test 2>&1 | tee %s/%s.out ' % (name,outputdir,name)
             
             cmd = runtest+args
-            print '*'*40
-            print '%s tests ' % name
-            print 'Login to %s@lxplus and run : %s'%(account,cmd)
+            #print '*'*40
+            #print '%s tests ' % name
+            #print 'Login to %s@lxplus and run : %s'%(account,cmd)
             #code = os.system(cmd)
             #print "Exit code:",code
             return "%s/%s.out" % (CONFIG['prereldir'],name),1
+
+        def print_test_command(account, test_name):
+            print '*'*40
+            print 'Login to %s@lxplus and run : sh ~/test/%s.sh %s'%(account,test_name, version.replace('.',' '))       
+        
+        for acc,test_name in GANGA_ACCOUNT_TEST:
+            print_test_command(acc,test_name) 
 
         testresult = []
         testname = GANGA_ACCOUNTS
@@ -312,7 +322,7 @@ class SetVerCommand:
     "SETVER: Mark relevant files with the release version number."
 
     def do(self):
-	toolcmd('ganga-set-version %(tag)s'%CONFIG)
+        toolcmd('ganga-set-version %(tag)s'%CONFIG)
         print
         print ''
 
@@ -407,52 +417,52 @@ class ReleaseCommand:
         """
         For each file (e.g mypage.html) that needs to be updated automatically at release time
         one should write a template file (.tpl extension) for it (i.e. mypage.html.tpl)
-	Current keywords:
-	    <:GANGA_VERSION:> : the latest production release
-	    <:GANGA_DATE:>    : the release date of the latest vrsion
-	    <:GANGA_ALL_VERSIONS:>: comma separated list of all existing versions of Ganga in release area
+        Current keywords:
+            <:GANGA_VERSION:> : the latest production release
+            <:GANGA_DATE:>    : the release date of the latest vrsion
+            <:GANGA_ALL_VERSIONS:>: comma separated list of all existing versions of Ganga in release area
         """
-	import urllib
-	#we do not expose development releases to public
-	if re.compile('(beta|alpha|pre)').search(CONFIG['version']):
-	    print 'DEVELOPMENT release detected. The web pages/NEWS are not generated!'
-	    return
-	
-	
+        import urllib
+        #we do not expose development releases to public
+        if re.compile('(beta|alpha|pre)').search(CONFIG['version']):
+            print 'DEVELOPMENT release detected. The web pages/NEWS are not generated!'
+            return
+        
+        
         # the list of directories in web area to search for templates
         dirs = ['%(webdir_top)s/user/' % CONFIG,
-		'%(webdir_top)s/download/' % CONFIG,
-		'%(webdir_top)s/include/' % CONFIG,
-		'%(webdir_top)s/rss/' % CONFIG,
-		'%(webdir_top)s/developers/tags'%CONFIG,    
-		'%(installdir)s' % CONFIG
-	       ]
+                '%(webdir_top)s/download/' % CONFIG,
+                '%(webdir_top)s/include/' % CONFIG,
+                '%(webdir_top)s/rss/' % CONFIG,
+                '%(webdir_top)s/developers/tags'%CONFIG,    
+                '%(installdir)s' % CONFIG
+               ]
         
-	#get production releases from ganga_setup
-	import ganga_setup
-	p,a = ganga_setup.get_versions(CONFIG['installdir'])
-	publicVersStr = ",".join(['"%s"'% r for r in p])
-	devVersStr = ",".join(['"%s"'% r for r in a if r not in p])
-	#replacements dictionary : KEYWORD -> (REPLACEMENT, append?)
-	# append : False - replace the KEYWORD in the destination file
-	#        : True  - replace the KEYWORD in the template file and add a new KEYWORD before the replacement and then copy the template to destination file
-	#CONFIG['release_date'] = time.strftime('%d %B %Y',time.gmtime())
-	CONFIG['release_date'] = time.strftime('%a, %d %b %Y %H:%M:%S +0000', time.gmtime())
-	cleanGuid = urllib.quote('release-' + str(CONFIG['version']) + '-' + time.strftime('%s', time.gmtime()))
+        #get production releases from ganga_setup
+        import ganga_setup
+        p,a = ganga_setup.get_versions(CONFIG['installdir'])
+        publicVersStr = ",".join(['"%s"'% r for r in p])
+        devVersStr = ",".join(['"%s"'% r for r in a if r not in p])
+        #replacements dictionary : KEYWORD -> (REPLACEMENT, append?)
+        # append : False - replace the KEYWORD in the destination file
+        #        : True  - replace the KEYWORD in the template file and add a new KEYWORD before the replacement and then copy the template to destination file
+        #CONFIG['release_date'] = time.strftime('%d %B %Y',time.gmtime())
+        CONFIG['release_date'] = time.strftime('%a, %d %b %Y %H:%M:%S +0000', time.gmtime())
+        cleanGuid = urllib.quote('release-' + str(CONFIG['version']) + '-' + time.strftime('%s', time.gmtime()))
         replacements = {'<!--GANGA_VERSION-->'     : (CONFIG['version'], False),
                         '<!--GANGA_DATE-->'        : (CONFIG['release_date'], False),
-			'<!--GANGA_PUB_VERSIONS-->': (publicVersStr, False),
-			'<!--GANGA_DEV_VERSIONS-->': (devVersStr, False),
-			'<!--GANGA_RSS_ALERT-->'   : ("<item>"\
-						     "<title>Ganga %(version)s is available</title>"\
-						     "<description>%(release_date)s: public release %(version)s is available ! Check the release page for further information.</description>"\
-						     "<link>http://ganga.web.cern.ch/ganga/release/%(version)s/reports/html/Release.html</link>"\
-						     "<pubDate>%(release_date)s</pubDate>"\
-						     "<guid isPermaLink='false'>" % CONFIG + cleanGuid + "</guid>"\
-						     "<author>project-ganga@cern.ch (Ganga Mailing List)</author>"
-					    	     "</item>", True)
+                        '<!--GANGA_PUB_VERSIONS-->': (publicVersStr, False),
+                        '<!--GANGA_DEV_VERSIONS-->': (devVersStr, False),
+                        '<!--GANGA_RSS_ALERT-->'   : ("<item>"\
+                                                     "<title>Ganga %(version)s is available</title>"\
+                                                     "<description>%(release_date)s: public release %(version)s is available ! Check the release page for further information.</description>"\
+                                                     "<link>http://ganga.web.cern.ch/ganga/release/%(version)s/reports/html/Release.html</link>"\
+                                                     "<pubDate>%(release_date)s</pubDate>"\
+                                                     "<guid isPermaLink='false'>" % CONFIG + cleanGuid + "</guid>"\
+                                                     "<author>project-ganga@cern.ch (Ganga Mailing List)</author>"
+                                                     "</item>", True)
                        }
-	
+        
         import glob
         templates=[]
         for dir in dirs:
@@ -464,28 +474,28 @@ class ReleaseCommand:
             try:
                 print 'Writting %s '% newfile
                 tf  = file(template, 'r')
-		ntf = file('%s.new' % template, 'w')
+                ntf = file('%s.new' % template, 'w')
                 nf  = file(newfile, 'w')
                 try:
                     for line in tf:
-			#keep a copy to generate new template line
-			tline = line
+                        #keep a copy to generate new template line
+                        tline = line
                         for keyword in replacements:
-			    repl,append = replacements[keyword]
-			    #replace the keyword
-			    line = line.replace(keyword,repl)			    
-			    #replace the keyword but keep the keyword in template file
-			    # (in this way we keep reaplacing this keyword next time we regenerate)
-			    if append:
-                        	tline = tline.replace(keyword,'%s %s'%(keyword,repl))
+                            repl,append = replacements[keyword]
+                            #replace the keyword
+                            line = line.replace(keyword,repl)                       
+                            #replace the keyword but keep the keyword in template file
+                            # (in this way we keep reaplacing this keyword next time we regenerate)
+                            if append:
+                                tline = tline.replace(keyword,'%s %s'%(keyword,repl))
                         nf.write(line)
-			ntf.write(tline)
+                        ntf.write(tline)
                 finally:
                     tf.close()
-		    ntf.close()
+                    ntf.close()
                     nf.close()
-		#replace the template file (it might be modified by append rules before)
-		shutil.move('%s.new' % template, template)		                  
+                #replace the template file (it might be modified by append rules before)
+                shutil.move('%s.new' % template, template)                                
             except Exception,e:
                 print 'Warning! Cannot write %s. %s' % (newfile,str(e))
 
@@ -546,7 +556,7 @@ def _setlib():
     import os.path, sys
     libdir = os.path.normpath(os.path.dirname(__file__))
     if libdir not in sys.path:
-	sys.path.insert(0, libdir)
+        sys.path.insert(0, libdir)
 
 _setlib()
 
