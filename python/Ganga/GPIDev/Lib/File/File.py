@@ -110,7 +110,7 @@ allComponentFilters['files'] = string_file_shortcut
 
 
 
-class SharedDir(GangaObject):
+class ShareDir(GangaObject):
     """Represents the directory used to store resources that are shared amongst multiple Ganga objects.
 
     Currently this is only used in the context of the prepare() method for certain applications, such as
@@ -120,37 +120,39 @@ class SharedDir(GangaObject):
     _schema = Schema(Version(1,0), {'name': SimpleItem(defvalue='',doc='path to the file source'),
                                     'subdir': SimpleItem(defvalue=(os.path.join(expandfilename(config['gangadir']),'shared',config['user'])),doc='destination subdirectory (a relative path)')})
     _category = 'shareddirs'
-    _name = "SharedDir"
+    _name = "ShareDir"
     def _readonly(self):
         return True
 
-    def __init__(self,name="",subdir=os.curdir):
-        super(SharedDir, self).__init__()
+    def __init__(self,name=None,subdir=os.curdir):
+        super(ShareDir, self).__init__()
         self._setRegistry(None)
 
-        shared_path = os.path.join(expandfilename(config['gangadir']),'shared',config['user'])
-        if not os.access(shared_path, os.F_OK):
-            os.makedirs(shared_path)
-        #continue generating directory names until we create a unique one (which will likely be on the first attempt).
-        while True:
-            name = shared_path + '/conf-' + Ganga.Utility.guid.uuid() 
-            if not os.path.isdir(os.path.join(shared_path,name)):
-                os.makedirs(os.path.join(shared_path, name))
-                break
-
-        self.name=str(name)
-
-    def __construct__(self,args):
-        if len(args) == 1 and type(args[0]) == type(''):
-            v = args[0]
-            import os.path
-            expanded = expandfilename(v)
-            if not urlprefix.match(expanded): # if it is not already an absolute filename
-                self.name = os.path.abspath(expanded)
-            else: #bugfix #20545 
-                self.name = expanded
+        if not name is None:
+            self.name = name
         else:
-            super(SharedDir,self).__construct__(args)
+            shared_path = os.path.join(expandfilename(config['gangadir']),'shared',config['user'])
+            if not os.access(shared_path, os.F_OK):
+                os.makedirs(shared_path)
+            #continue generating directory names until we create a unique one (which will likely be on the first attempt).
+            while True:
+                name = shared_path + '/conf-' + Ganga.Utility.guid.uuid() 
+                if not os.path.isdir(os.path.join(shared_path,name)):
+                    os.makedirs(os.path.join(shared_path, name))
+                    break
+            self.name=str(name)
+
+#    def __construct__(self,args):
+#        if len(args) == 1 and type(args[0]) == type(''):
+#            v = args[0]
+#            import os.path
+#            expanded = expandfilename(v)
+#            if not urlprefix.match(expanded): # if it is not already an absolute filename
+#                self.name = os.path.abspath(expanded)
+#            else: #bugfix #20545 
+#                self.name = expanded
+#        else:
+#            super(ShareDir,self).__construct__(args)
         
     def exists(self):
         """check if the file exists (as specified by 'name')"""
@@ -172,7 +174,7 @@ class SharedDir(GangaObject):
         to return  a valid python expression  which fully reconstructs
         the object.  """
 
-        return "SharedDir(name='%s',subdir='%s')"%(self.name,self.subdir)
+        return "ShareDir(name='%s',subdir='%s')"%(self.name,self.subdir)
 
     def isExecutable(self):
         """  return true  if  a file  is  create()'ed with  executable
@@ -181,7 +183,7 @@ class SharedDir(GangaObject):
         return self.executable or is_executable(expandfilename(self.name))
 
 import Ganga.Utility.Config
-Ganga.Utility.Config.config_scope['SharedDir'] = SharedDir
+Ganga.Utility.Config.config_scope['ShareDir'] = ShareDir
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 
@@ -193,7 +195,7 @@ def string_sharedfile_shortcut(v,item):
     if type(v) is type(''):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
-        return SharedDir._proxyClass(v)._impl
+        return ShareDir._proxyClass(v)._impl
     return None 
         
 allComponentFilters['shareddirs'] = string_sharedfile_shortcut
