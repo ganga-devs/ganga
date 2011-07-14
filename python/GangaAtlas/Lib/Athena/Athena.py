@@ -314,7 +314,8 @@ class Athena(IApplication):
                  'stats'                  : SimpleItem(defvalue = {}, doc='Dictionary of stats info'),
                  'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field'),
                  'recex_type'             : SimpleItem(defvalue = '',doc='Set to RDO, ESD or AOD to enable RecExCommon type jobs of appropriate type'),
-                 'glue_packages'          : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='list of glue packages which cannot be found due to empty i686-slc4-gcc34-opt. e.g., [\'External/AtlasHepMC\',\'External/Lhapdf\']')
+                 'glue_packages'          : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='list of glue packages which cannot be found due to empty i686-slc4-gcc34-opt. e.g., [\'External/AtlasHepMC\',\'External/Lhapdf\']'),
+                 'is_prepared'            : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
               })
                      
     _category = 'applications'
@@ -1049,7 +1050,13 @@ class Athena(IApplication):
         self.user_area.name = archiveFullName
         os.chdir(savedir)
         
-        return
+        send_to_sharedir = []
+        send_to_sharedir.append(archiveFullName)
+
+        for opt_file in self.option_file:
+            send_to_sharedir.append(opt_file.name)
+
+        return send_to_sharedir
 
     def prepare_old(self, athena_compile=True, NG=False, **options):
         """Prepare the job from the user area"""
