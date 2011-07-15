@@ -148,7 +148,7 @@ class MultiTask(Task):
       print "Lists the units for each partition and their current status"
       #print "Format: (partition number)[:(number of failed attempts)]"
       print
-      print " "* 47 + "Active\tConfigured\tSubmitted\tDownload\tMerged\tReason"
+      print " "* 41 + "Active\tConfigured\tSubmitted\tDownload\tMerged\tExcep.\tReason"
       for trfid in range(0, len(self.transforms)):
          print "----------------------------------------------------------------------------------------------------------------------"
          print "----   Transform %d:  %s" % (trfid, self.transforms[trfid].name)
@@ -181,13 +181,14 @@ class MultiTask(Task):
                # this will just take the DQ2 output of the previous TRFs and process each unit itself
                trf.unit_inputdata_list = []
                trf.unit_outputdata_list = []
+               trf.unit_state_list = []
                trf.unit_partition_list = []
                
                for req_trf in trf.required_trfs:
                   trf.unit_inputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ] 
-                  trf.unit_outputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                  trf.unit_outputdata_list += [ self.transforms[req_trf].unit_outputdata_list[uind] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
                   trf.unit_partition_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
-
+                  trf.unit_state_list += [ {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
             else:
                
                if trf.single_unit:
@@ -196,21 +197,25 @@ class MultiTask(Task):
                   trf.unit_inputdata_list = [[]]
                   trf.unit_outputdata_list = [[]]
                   trf.unit_partition_list = [[]]
+                  trf.unit_state_list = [{'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} ]
                else:
 
                   # we have units dependant on mergers, etc.
                   trf.unit_inputdata_list = []
                   trf.unit_outputdata_list = []
                   trf.unit_partition_list = []
+                  trf.unit_state_list = []
                
                   for req_trf in trf.required_trfs:
                      if not self.transforms[req_trf].merger:
                         trf.unit_inputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ] 
-                        trf.unit_outputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                        trf.unit_outputdata_list += [ self.transforms[req_trf].unit_outputdata_list[uind] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
                         trf.unit_partition_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                        trf.unit_state_list += [ {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                        
                      else:
                         trf.unit_inputdata_list += [[]]
                         trf.unit_outputdata_list += [[]]
                         trf.unit_partition_list += [[]]
-                     
+                        trf.unit_state_list += [{'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} ]
          

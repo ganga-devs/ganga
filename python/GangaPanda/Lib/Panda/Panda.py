@@ -253,6 +253,12 @@ def selectPandaSite(job,sites):
     pandaSites = []
     if job.backend.site == 'AUTO':
         pandaSites = [Client.convertDQ2toPandaID(x) for x in sites.split(':')]
+
+        # ensure these aren't excluded
+        for s in job.backend.requirements.excluded_sites:
+            if s in pandaSites:
+                pandaSites.remove(s)
+                                        
     else:
         return job.backend.site
     tag = ''
@@ -471,7 +477,7 @@ class Panda(IBackend):
 
     _category = 'backends'
     _name = 'Panda'
-    _exportmethods = ['list_sites','get_stats','list_ddm_sites']
+    _exportmethods = ['list_sites','get_stats','list_ddm_sites', 'resplit']
   
     def __init__(self):
         super(Panda,self).__init__()
@@ -516,12 +522,34 @@ class Panda(IBackend):
             for js in subjobspecs:
                 js.jobParameters += ' --mergeOutput'
 
-                ## set merging type if the configuration is given
-#                try:
-#                    js.jobParameters += ' --mergeType "%s"' % job.backend.requirements.configMerge['type']
-#                    logger.debug("user specified merging type: %s" % job.backend.requirements.configMerge['type'])
-#                except KeyError:
-#                    pass
+                ## set merging type and user executable if the configurations are given
+                merge_type = ''
+                merge_exec = ''
+                try:
+                    merge_type = job.backend.requirements.configMerge['type']
+                    merge_exec = job.backend.requirements.configMerge['exec']
+                except KeyError:
+                    pass
+
+                if not merge_type:
+                    pass
+
+                elif merge_type.lower() in ['hist','pool','ntuple','text','log']:
+
+                    js.jobParameters += ' --mergeType "%s"' % merge_type.lower()
+
+                elif merge_type.lower() in ['user']:
+
+                    if not merge_exec:
+                        logger.error("user merging executable not set for merging type 'user': set PandaRequirements.configMerge['user_exec']")
+                        return False
+
+                    else:
+                        js.jobParameters += ' --mergeType "%s"'   % merge_type.lower()
+                        js.jobParameters += ' --mergeScript "%s"' % merge_exec
+                else:
+                    logger.error("merging type '%s' not supported" % merge_type)
+                    return False
 
         jobspecs = []
         if buildjobspec:
@@ -655,6 +683,106 @@ class Panda(IBackend):
              logger.error('Failed killing job (status = %d)',status)
              return False
         return True
+
+    def resplit(self, newDS = False, sj_status = ['killed', 'failed'], splitter = None, auto_exclude = True):
+        """ Rerun the splitting for subjobs. Basically a helper function that creates a new master job from
+        this parent and submits it"""
+        
+        from Ganga.GPIDev.Lib.Job import Job
+        from Ganga.Core.GangaRepository import getRegistry
+        from Ganga.Utility.guid import uuid
+        from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
+        
+        if self._getParent()._getParent(): # if has a parent then this is a subjob
+            raise BackendError('Panda','Resplit on subjobs is not supported for Panda backend. \nUse j.backend.resplit() (i.e. rebroker the master job) and your failed (by default) subjobs \nwill be automatically selected and split again.')
+
+        if self._getParent().splitter and self._getParent().splitter.numevtsperjob > 0:
+            raise BackendError('Panda','Resplit while using numevtsperjob currently not supported. Please supply a new splitter.')
+
+        # create a new job and copy the main parts
+        job = self._getParent()
+        mj = Job()
+        mj.info.uuid = uuid()
+        mj.name = job.name
+        mj.application = job.application
+        mj.application.run_event   = []
+        mj.outputdata = job.outputdata
+        if newDS:
+            mj.outputdata.datasetname = ""
+            
+        mj.inputdata = job.inputdata
+        mj.backend = job.backend
+        mj.inputsandbox  = job.inputsandbox
+        mj.outputsandbox = job.outputsandbox
+
+        # libDS set?
+        if mj.backend.libds:
+            logger.warning("No libDS allowed when resplitting.")
+            mj.backend.libds = None
+
+        # run prepare if necessary        
+        if not os.path.exists( mj.application.user_area.name ):
+            logger.warning("Previous user area not available. Re-running prepare()...(note this will pick up the current install area, etc.)")
+            mj.application.prepare()
+        else:
+            logger.warning("Re-using previous user area")
+        
+
+        # sort out the input data and excluded sites from the failed subjobs
+        inDS = []
+        inDSNames = []
+        exc_sites = []
+        num_sj = 0
+        
+        if self._getParent().subjobs:
+
+            for sj in self._getParent().subjobs:
+
+                if not sj.status in sj_status:
+                    continue
+
+                if not mj.backend.jobSpec.has_key('provenanceID'):
+                    mj.backend.jobSpec['provenanceID'] = sj.backend.jobSpec['jobExecutionID']
+
+                num_sj += 1
+                
+                # indata
+                if not sj.inputdata.dataset[0] in inDS:
+                    inDS.append(sj.inputdata.dataset[0])
+                inDSNames += sj.inputdata.names
+
+                # sites
+                if not sj.backend.site in exc_sites:
+                    exc_sites.append(sj.backend.site)
+                
+            if len(inDS) == 0:
+                raise BackendError('Panda','No subjobs in state %s to resplit!' % sj_status)
+            
+            mj.inputdata.dataset = inDS
+            mj.inputdata.names = inDSNames
+            
+        else:            
+            mj.inputdata = job.inputdata
+            exc_sites.append(job.backend.site)
+            num_sj = 1
+
+        # excluded sites
+        if auto_exclude:
+            mj.backend.requirements.excluded_sites.extend(exc_sites)
+        
+        # splitter
+        if splitter:            
+            mj.splitter = splitter._impl
+        else:
+            mj.splitter = DQ2JobSplitter()
+            mj.splitter.numsubjobs = num_sj
+        
+        # Add into repository
+        registry = getRegistry("jobs")
+        registry._add(mj)
+
+        # submit the job
+        mj.submit()
 
     def check_auto_resubmit(self):
         """ Only auto resubmit if the master job has failed """

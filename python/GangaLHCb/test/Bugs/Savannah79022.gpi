@@ -1,0 +1,13 @@
+from Ganga.Core import ApplicationConfigurationError
+j1=Job(name='testing',application=DaVinci(version='v28r0'),backend=Local())
+j2=Job(name='testing',application=DaVinci(version='v28r0',optsfile='~/deadparrot.opts'),backend=Local())
+
+try:
+    j1.submit()
+    assert False
+except JobError:
+    try:
+        j2.submit()
+        assert False
+    except JobError:
+        pass

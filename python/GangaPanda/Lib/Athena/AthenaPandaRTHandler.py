@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions
+import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions, random
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -76,6 +76,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         from taskbuffer.JobSpec import JobSpec
         from taskbuffer.FileSpec import FileSpec
 
+        # create a random number for this submission to allow multiple use of containers
+        self.rndSubNum = random.randint(1111,9999)
 
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
@@ -194,23 +196,31 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
             # below fixes issue with runGen -- job_options are executed by os.system when dbrelease is used, and by the shell otherwise
             if app.atlas_dbrelease: 
+                if job.backend.requirements.usecommainputtxt:
+                    input_str = '/bin/echo %IN > input.txt; cat input.txt; '
+                else:
+                    input_str = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; '
                 if app.atlas_exetype == 'PYARA':
-                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; python ' + self.job_options
+                    self.job_options = env_str + input_str + ' python ' + self.job_options
                 elif app.atlas_exetype == 'ARES':
-                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; athena.py ' + self.job_options
+                    self.job_options = env_str + input_str + ' athena.py ' + self.job_options
                 elif app.atlas_exetype == 'ROOT':
-                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; root -b -q ' + self.job_options
+                    self.job_options = env_str + input_str + ' root -b -q ' + self.job_options
                 elif app.atlas_exetype == 'EXE':
-                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; ' + self.job_options
+                    self.job_options = env_str + input_str + self.job_options
             else:
+                if job.backend.requirements.usecommainputtxt:
+                    input_str = '/bin/echo %IN > input.txt; cat input.txt; '
+                else:
+                    input_str = '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; '
                 if app.atlas_exetype == 'PYARA':
-                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; python ' + self.job_options
+                    self.job_options = env_str + input_str + ' python ' + self.job_options
                 elif app.atlas_exetype == 'ARES':
-                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; athena.py ' + self.job_options
+                    self.job_options = env_str + input_str + ' athena.py ' + self.job_options
                 elif app.atlas_exetype == 'ROOT':
-                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; root -b -q ' + self.job_options
+                    self.job_options = env_str + input_str + ' root -b -q ' + self.job_options
                 elif app.atlas_exetype == 'EXE':
-                    self.job_options = env_str + '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; ' + self.job_options
+                    self.job_options = env_str + input_str + self.job_options
 
             if app.options:
                 self.job_options += ' %s ' % app.options
@@ -281,14 +291,19 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if not job.outputdata.datasetname.endswith('/'):
             job.outputdata.datasetname+='/'
 
-        # create the container
-        try:
-            Client.createContainer(job.outputdata.datasetname,False)
-        except exceptions.SystemExit:
-            raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
-        logger.info('Created output container %s'%job.outputdata.datasetname)
+        # check if this container exists
+        res = Client.getDatasets(job.outputdata.datasetname)
+        if not job.outputdata.datasetname in res.keys():
+            # create the container
+            try:
+                Client.createContainer(job.outputdata.datasetname,False)
+            except exceptions.SystemExit:
+                raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
+            logger.info('Created output container %s'%job.outputdata.datasetname)
+        else:
+            logger.warning('Adding datasets to already existing container %s' % job.outputdata.datasetname)
         self.indivOutContList = [job.outputdata.datasetname]
-
+            
         # store the lib datasts
         self.libDatasets = {}
         self.libraries = {}
@@ -296,7 +311,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         for site in bjsites:
             self.outDsLocation = Client.PandaSites[site]['ddm']
 
-            tmpDSName = job.outputdata.datasetname[0:-1] + ".%s"%site
+            tmpDSName = job.outputdata.datasetname[0:-1] + ".%d.%s"% (self.rndSubNum, site)
 
             try:
                 Client.addDataset(tmpDSName,False,location=self.outDsLocation)
@@ -364,17 +379,45 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 rc, out = AthenaUtils.getAthenaVer()
                 # failed
                 if not rc:
-                    raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
-                userarea = out['workArea']
-                ua = os.path.abspath(userarea)
-                if ua in path:
-                    fn = fname[len(ua)+1:]
-                    path = ua
+                    #raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+                    logger.warning("CMT could not parse correct environment for inputsandbox - will use the atlas_run_dir as default")
+                    
+                    # as we don't have to be in the run dir now, create a copy of the run_dir directory structure and use that
+                    input_dir = os.path.dirname(self.inputsandbox)
+                    run_path = "%s/sbx_tree/%s" % (input_dir, app.atlas_run_dir)
+                    rc, output = commands.getstatusoutput("mkdir -p %s" % run_path)
+                    if not rc:
+                        # copy this sandbox file
+                        rc, output = commands.getstatusoutput("cp %s %s" % (fname, run_path))
+                        if not rc:
+                            path = os.path.join(input_dir, 'sbx_tree')
+                            fn = os.path.join(app.atlas_run_dir, fn)
+                        else:
+                            raise ApplicationConfigurationError(None, "Couldn't copy file %s to recreate run_dir for input sandbox" % fname)
+                    else:
+                        raise ApplicationConfigurationError(None, "Couldn't create directory structure to match run_dir %s for input sandbox" % run_path)
+
+                else:
+                    userarea = out['workArea']
+
+                    # strip the path from the filename if present in the userarea
+                    ua = os.path.abspath(userarea)
+                    if ua in path:
+                        fn = fname[len(ua)+1:]
+                        path = ua
+
                 rc, output = commands.getstatusoutput('tar -h -r -f %s -C %s %s' % (self.inputsandbox, path, fn))
                 if rc:
                     logger.error('Packing inputsandbox failed with status %d',rc)
                     logger.error(output)
                     raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+
+            # remove sandbox tree if created
+            if "sbx_tree" in os.listdir(os.path.dirname(self.inputsandbox)):                
+                rc, output = commands.getstatusoutput("rm -r %s/sbx_tree" % os.path.dirname(self.inputsandbox))
+                if rc:
+                    raise ApplicationConfigurationError(None, "Couldn't remove directory structure used for input sandbox")
+                
             rc, output = commands.getstatusoutput('gzip %s' % (self.inputsandbox))
             if rc:
                 logger.error('Packing inputsandbox failed with status %d',rc)
@@ -397,6 +440,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 tmpLibDS = job.outputdata.datasetname+'.lib'
                 jspec = JobSpec()
                 jspec.jobDefinitionID   = job.id
+
+                if job.backend.jobSpec.has_key('provenanceID'):
+                    jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
+                
                 jspec.jobName           = commands.getoutput('uuidgen')
                 jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
                 jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
@@ -475,7 +522,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #       if no outputdata are given
         if not job.outputdata:
             job.outputdata = DQ2OutputDataset()
-        job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]+'.%s'%job.backend.site 
+        job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]+'.%d.%s'% ( self.rndSubNum, job.backend.site )
 
         if job.inputdata and self.inputdatatype=='DQ2':
             if len(job.inputdata.dataset) > 1:
@@ -483,6 +530,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         jspec = JobSpec()
         jspec.jobDefinitionID   = masterjob.id
+
+        if job.backend.jobSpec.has_key('provenanceID'):
+            jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
+        
         jspec.jobName           = commands.getoutput('uuidgen')  
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
         jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
@@ -673,7 +724,20 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 # set the coll name
                 if self.runConfig.input.collRefName:
                     param += '--collRefName %s ' % self.runConfig.input.collRefName
+                else:
+                    # get coll ref from input data
+                    if input_files[0].find("AOD") != -1:
+                        param += '--collRefName StreamAOD_ref'
+                    elif input_files[0].find("ESD") != -1:
+                        param += '--collRefName StreamESD_ref'
+                    elif input_files[0].find("RAW") != -1:
+                        param += '--collRefName StreamRAW_ref'
 
+                # sort out TAG use for exe types other than just athena - TRF dealt with below
+                if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+                    self.job_options.replace("%IN", "$MY_INPUT_FILES")
+                    self.job_options = "echo -e \"from commands import getstatusoutput\\nrc,o=getstatusoutput('ls pre_*-????-*-*-*.py')\\n__import__(o.split()[0][:-3])\\nfrom AthenaCommon.AthenaCommonFlags import athenaCommonFlags\\nopen('__input_files.txt', 'w').write(','.join(athenaCommonFlags.FilesInput() ))\" > __my_conv.py ; python __my_conv.py ; export MY_INPUT_FILES=`cat __input_files.txt` ; " + self.job_options
+                
             elif self.inputdatatype == 'DQ2' and len(job.inputdata.tagdataset) != 0:
                 # tell Panda what files are TAG and what aren't
                 tag_contents = job.inputdata.get_tag_contents(size=True)
@@ -686,6 +750,19 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 # set the coll name
                 if self.runConfig.input.collRefName:
                     param += '--collRefName %s ' % self.runConfig.input.collRefName
+                else:
+                    # get coll ref from input data
+                    if input_files[0].find("AOD") != -1:
+                        param += '--collRefName StreamAOD_ref'
+                    elif input_files[0].find("ESD") != -1:
+                        param += '--collRefName StreamESD_ref'
+                    elif input_files[0].find("RAW") != -1:
+                        param += '--collRefName StreamRAW_ref'
+
+                # sort out TAG use for exe types other than just athena - TRF dealt with below
+                if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+                    self.job_options.replace("%IN", "$MY_INPUT_FILES")
+                    self.job_options = "echo -e \"from commands import getstatusoutput\\nrc,o=getstatusoutput('ls pre_*-????-*-*-*.py')\\n__import__(o.split()[0][:-3])\\nfrom AthenaCommon.AthenaCommonFlags import athenaCommonFlags\\nopen('__input_files.txt', 'w').write(','.join(athenaCommonFlags.FilesInput() ))\" > __my_conv.py ; python __my_conv.py ; export MY_INPUT_FILES=`cat __input_files.txt` ; " + self.job_options
                     
             if not app.atlas_exetype in ['TRF']:
                 param += '-i "%s" ' % input_files
@@ -695,6 +772,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # TRFs
         if app.atlas_exetype in ['TRF']:
             tmpJobO = app.options
+
+            # sort out TAG use for exe types other than just athena
+            if self.inputdatatype == 'DQ2' and (len(job.inputdata.tagdataset) != 0 or job.inputdata.tag_info):
+                tmpJobO = tmpJobO.replace("%IN", "$MY_INPUT_FILES")
+                tmpJobO = "echo -e \"from commands import getstatusoutput\\nrc,o=getstatusoutput('ls pre_*-????-*-*-*.py')\\n__import__(o.split()[0][:-3])\\nfrom AthenaCommon.AthenaCommonFlags import athenaCommonFlags\\nopen('__input_files.txt', 'w').write(','.join(athenaCommonFlags.FilesInput() ))\" > __my_conv.py ; python __my_conv.py ; export MY_INPUT_FILES=`cat __input_files.txt` ; " + tmpJobO
+                
             # output
             tmpOutMap = []
             for tmpName,tmpLFN in outMap['IROOT']:
@@ -759,7 +842,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if self.runConfig.input and self.runConfig.input.inBS:
                 inBS = True
             isDirectAccess = PsubUtils.isDirectAccess(job.backend.site, inBS, inTRF, inARA)
-            if not isDirectAccess:                
+
+            #if not isDirectAccess:
+            if not isDirectAccess and (( self.inputdatatype != 'DQ2' ) or (len(job.inputdata.tagdataset) == 0 and not job.inputdata.tag_info)):
                 param += ' --useLocalIO '
 
         #param += '-m "[]" ' #%minList FIXME
@@ -777,7 +862,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         else:
             param += '-o "%s" ' % outMap
 
-        if self.runConfig.input and self.runConfig.input.inColl: 
+        if (self.runConfig.input and self.runConfig.input.inColl) or param.find('--collRefName') != -1: 
             param += '-c '
         if self.runConfig.input and self.runConfig.input.inBS: 
             param += '-b '
@@ -823,7 +908,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '--accessmode=direct '
         elif job.backend.accessmode == 'COPY2SCRATCH':
             param += '--accessmode=copy '
-        if self.inputdatatype == 'Tier3':
+        if self.inputdatatype == 'Tier3' and not app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             param += '--givenPFN '
  
         jspec.jobParameters = param

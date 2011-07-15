@@ -121,8 +121,10 @@ os.environ['PYTHONPATH'] = '%s/InstallArea/%s/python:%s' % \\
   else:
     #script += 'cmdline = \"%s/scripts/gaudirun.py %s data.py\" % '
     #script += "(os.environ['GAUDIROOT'],opts)\n"
-    script += 'cmdline = \"gaudirun.py %s data.py\" % '
-    script += "opts\n"
+    script += 'cmdline = \"\"\"gaudirun.py '
+    for arg in app.args:
+      script += arg+' '
+    script += '%s data.py\"\"\" % opts \n'
 
   script += """
 # run command

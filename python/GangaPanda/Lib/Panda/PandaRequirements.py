@@ -7,7 +7,7 @@ class PandaRequirements(GangaObject):
     '''Helper class to group Panda requirements.
     '''
 
-    _schema = Schema(Version(1,5), {
+    _schema = Schema(Version(1,6), {
         'long'          : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Send job to a long queue'),
         'cloud'         : SimpleItem(defvalue='US',protected=0,copyable=1,doc='cloud where jobs are submitted (default:US)'),
         'anyCloud'      : SimpleItem(defvalue=True,protected=0,copyable=1,doc='Set to true to allow jobs to run in all clouds. If False, jobs are limited to run in "requirements.cloud"'),
@@ -21,7 +21,8 @@ class PandaRequirements(GangaObject):
         'enableJEM'     : SimpleItem(defvalue = False,protected=0,copyable=1,doc='Enable the Job Execution Monitor.'),
         'configJEM'     : SimpleItem(defvalue = '',protected=0,copyable=1,doc='Config string for the Job Execution Monitor.'),
         'enableMerge'   : SimpleItem(defvalue = False, protected=0, copyable=1, doc='Enable the output merging jobs.'),
-        'configMerge'   : SimpleItem(defvalue = {}, protected=0, copyable=1, doc='Config parameters for output merging jobs.')
+        'configMerge'   : SimpleItem(defvalue = {'type':'','exec':''}, protected=0, copyable=1, doc='Config parameters for output merging jobs.'),
+        'usecommainputtxt' : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Boolean if input.txt contains the input files as comma separated list or separeted by a line break'),
     })
 
     _category = 'PandaRequirements'

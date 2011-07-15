@@ -21,7 +21,7 @@ _external_packages = {
                      'DQ2_ENDUSER_SETUP' : 'True',
                      'noarch':True 
                      },
-    'panda-client' : { 'version' : '0.3.39', 
+    'panda-client' : { 'version' : '0.3.46', 
                        'PYTHONPATH':['lib/python2.4/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
@@ -31,7 +31,7 @@ _external_packages = {
                        'PYTHONPATH':['lib/python'],
                        'noarch':True
                        },
-    '4Suite' : { 'version' : '1.0.2', 
+    '4Suite' : { 'version' : '1.0.2.1', 
                  'PYTHONPATH':['lib/python2.4/site-packages'],
                  'syspath':['lib/python2.4/site-packages']
                        },

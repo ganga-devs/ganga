@@ -62,6 +62,9 @@ class Gaudi(Francesc):
     _exportmethods = ['getenv','getpack', 'make', 'cmt', 'readInputData']
 
     schema = get_common_gaudi_schema()
+    docstr = 'The gaudirun.py cli args that will be passed at run-time'
+    schema['args'] =  SimpleItem(sequence=1,strict_sequence=0,defvalue=[],
+                                 typelist=['str','type(None)'],doc=docstr)
     docstr = 'The name of the optionsfile. Import statements in the file ' \
              'will be expanded at submission time and a full copy made'
     schema['optsfile'] =  FileItem(sequence=1,strict_sequence=0,defvalue=[],
@@ -145,17 +148,22 @@ class Gaudi(Francesc):
             raise ApplicationConfigurationError(None,msg)
 
         inputs = None
+
         if len(self.optsfile)==0:
             logger.warning("The 'optsfile' is not set. I hope this is OK!")
-            packagedir = self.shell.env[self.appname.upper()+'ROOT']
-            opts = os.path.expandvars(os.path.join(packagedir,'options',
-                                                   self.appname + '.py'))
-            if opts: self.optsfile.append(opts)
-            else:
-                logger.error('Cannot find the default opts file for ' % \
-                             self.appname + os.sep + self.version)
-            inputs = ['optsfile']
-            
+        
+        nonexistentOptFiles = []
+        for f in self.optsfile:
+            if not os.path.isfile(f.name):
+                nonexistentOptFiles.append(f)
+        
+        if len(nonexistentOptFiles):
+            tmpmsg = "The 'optsfile' attribute contains non-existent file/s: ["
+            for f in nonexistentOptFiles:
+                tmpmsg+="'%s', " % f.name
+            msg=tmpmsg[:-2]+']'
+            raise ApplicationConfigurationError(None,msg)
+
         return inputs
 
     def readInputData(self,optsfiles,extraopts=False):

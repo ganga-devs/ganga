@@ -138,7 +138,7 @@ class DQ2JobSplitter(ISplitter):
         if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] and not ( job.backend._name in ['SGE'] and config['ENABLE_SGE_DQ2JOBSPLITTER'] ):
             raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, CREAM, Panda or NG backend')
         
-        if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0):
+        if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0 and self.filesize <=0):
             raise ApplicationConfigurationError(None,"Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
  
         if (self.numevtsperjob > 0 and job.inputdata._name <> 'AMIDataset'):
@@ -198,6 +198,8 @@ class DQ2JobSplitter(ISplitter):
                 streamRef = 'StreamAOD_ref'
                 if job.application.atlas_run_config['input'].has_key('collRefName'):
                     streamRef = job.application.atlas_run_config['input']['collRefName']
+                elif job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
+                    streamRef = "Stream%s_ref" % job,inputdata.tag_coll_ref
 
                 newTagDSList = []
 
@@ -213,11 +215,13 @@ class DQ2JobSplitter(ISplitter):
                     if dsNameForLookUp.endswith("/"):
                         dsNameForLookUp = dsNameForLookUp[:-1]
 
-                    tagResults = tagIF.countGuids(dsNameForLookUp,"", streamRef + ",StreamTAG")
+                    tagResults = tagIF.countGuids(dsNameForLookUp,"", streamRef + ",StreamTAG_ref")
                     
                     if not tagResults:
-                        raise ApplicationConfigurationError(None,"Could not find references to TAG dataset %s in ELSSI DB. Try matching from dq2 or using TagPrepare." % dsNameForLookUp)
-
+                        tagResults = tagIF.countGuids(dsNameForLookUp,"", streamRef + ",StreamTAG")
+                        if not tagResults:
+                            raise ApplicationConfigurationError(None,"Could not find references to TAG dataset %s in ELSSI DB. Try matching from dq2 or using TagPrepare." % dsNameForLookUp)
+                                                        
                     # NOTE: The folowing should use the TAG info returned by countGuids but ELSSI DB
                     # is messed up for pre 2011 data. This should be fixed!
                     
@@ -256,7 +260,12 @@ class DQ2JobSplitter(ISplitter):
                             if single_tid != '':
                                 tag_dataset_map[ parentDSList[0][g][0] ] = [tagDS]
                             else:
-                                tag_dataset_map[ parentDSList[0][g][0] ] = resolve_container( [dsNameForLookUp + '/'] )
+                                if dsNameForLookUp == tagDS:
+                                    tag_dataset_map[ parentDSList[0][g][0] ] = resolve_container( [dsNameForLookUp ] )                                    
+                                else:
+                                    tag_dataset_map[ parentDSList[0][g][0] ] = resolve_container( [dsNameForLookUp + '/'] )
+
+
 
                         if not parentDSList[0][g][1] in job.inputdata.names:
                             job.inputdata.names.append(parentDSList[0][g][1])
@@ -290,10 +299,15 @@ class DQ2JobSplitter(ISplitter):
                 if not os.path.exists(f):
                     raise ApplicationConfigurationError(None, "Couldn't find tag file '%s'." % f)
 
+                ref = ''
                 if not app.atlas_run_config['input'].has_key('collRefName') or not app.atlas_run_config['input']['collRefName'] in ['StreamAOD_ref', 'StreamESD_ref', 'StreamRAW_ref']:
-                    raise ApplicationConfigurationError(None, "No valid Collection Referenece in job options.")
-
-                ref = app.atlas_run_config['input']['collRefName'][6:9]
+                    if job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
+                        ref = job.inputdata.tag_coll_ref
+                    else:
+                        raise ApplicationConfigurationError(None, "No valid Collection Referenece in job options. Maybe use inputdata.tag_coll_ref?")
+                else:
+                    ref = app.atlas_run_config['input']['collRefName'][6:9]
+                    
                 tag_info = createTagInfo(ref, [f])
                 if len(tag_info) == 0:
                     raise ApplicationConfigurationError(None, "Couldn't find tag info for file '%s'." % f)
@@ -837,6 +851,11 @@ class DQ2JobSplitter(ISplitter):
                         events_per_subjob = max_subjob_filesize/filesize_per_event 
                         self.numevtsperjob = events_per_subjob
                         nrjob = int(math.ceil(totalevent/float(events_per_subjob)))
+                                    
+                # filesize based splitting
+                if max_subjob_filesize and self.filesize > 0:
+                    nrjob = config['MaxJobsDQ2JobSplitter']
+                    nrfiles = len(guids)
 
                 # split on local tag files if required
                 if job.inputdata.tag_info and local_tag and nrjob > len(job.inputdata.tag_info):
@@ -872,7 +891,8 @@ class DQ2JobSplitter(ISplitter):
                 if self.numevtsperjob > 0:
                     logger.info('DQ2JobSplitter will attempt to create %d subjobs using  %d events per subjob subject to a limit of %d Bytes per subjob.' %(nrjob,self.numevtsperjob, max_subjob_filesize))
                 elif max_subjob_filesize and  self.filesize > 0:
-                    logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob subject to a limit of %d Bytes per subjob.'%(nrjob,max_subjob_numfiles,max_subjob_filesize))
+                    #logger.info('DQ2JobSplitter will attempt to create %d subjobs using %d files per subjob subject to a limit of %d Bytes per subjob.'%(nrjob,max_subjob_numfiles,max_subjob_filesize))
+                    pass
                 remaining_guids = list(guids)
 
                 # sort out the tag files that reference this if required

@@ -56,7 +56,7 @@ class AnaTransform(Transform):
        'partitions_data'   : ComponentItem('datasets', defvalue=[], optional=1, sequence=1, hidden=1, doc='Input dataset for each partition'),
        'partitions_sites'  : SimpleItem(defvalue=[], hidden=1, modelist=["str","list"],doc='Input site for each partition'),
        'outputdata'        : ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset'),
-       'dataset_name'      : SimpleItem(defvalue="", transient=1, getter="get_dataset_name", doc='name of the output dataset'),
+       'dataset_name'      : SimpleItem(defvalue="", transient=1, comparable=False, getter="get_dataset_name", doc='name of the output dataset'),
        }.items()))
    _category = 'transforms'
    _name = 'AnaTransform'
@@ -177,7 +177,8 @@ class AnaTransform(Transform):
 
       from random import shuffle
       shuffle(sites)
-      self.backend.site = sites[0] 
+      self.backend.site = sites[0]
+      self.partitions_sites = [sites[0]]*len(self.partitions_sites)
       logger.warning("Rebrokering transform - %i possible sites; chosing %s at random..." % (len(sites),sites[0]))
 
 

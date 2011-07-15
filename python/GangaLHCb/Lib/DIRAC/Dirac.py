@@ -344,22 +344,41 @@ class Dirac(IBackend):
         else:
             print result.get('Message','')
 
-    def getStateTime(self, status):
+    def _getStateTime(job, status):
         """Returns the timestamps for 'running' or 'completed' by extracting
         their equivalent timestamps from the loggingInfo."""
-        global dirac_monitoring_server
-        if not self.id: return None
-        logger.debug("Accessing getStateTime() in diracAPI")
-        dirac_cmd = "result = DiracCommands.getStateTime(%d,\'%s\')" % \
-                    (self.id, status)
-        result = dirac_monitoring_server.execute(dirac_cmd)
-        return result
-     
+        ## Now private to stop server cross-talk from user thread. Since updateStatus calles
+        ## this method whether called itself by the user thread or monitoring thread.
+        ## Now don't use hook but define our own private version
+        ## used in monitoring loop... messy but works.
+        if job.status != status:
+            b_list = ['running', 'completing', 'completed', 'failed']
+            backend_final = ['failed', 'completed']
+            #backend stamps
+            if not job.subjobs and status in b_list: 
+                for childstatus in b_list:
+                    if job.backend.id:
+                        global dirac_monitoring_server
+                        logger.debug("Accessing getStateTime() in diracAPI")
+                        dirac_cmd = "result = DiracCommands.getStateTime(%d,\'%s\')" % (job.backend.id, childstatus)
+                        be_statetime = dirac_monitoring_server.execute(dirac_cmd)
+                        if childstatus in backend_final:
+                            job.time.timestamps["backend_final"] = be_statetime 
+                            logger.debug("Wrote 'backend_final' to timestamps.")
+                        else:
+                            job.time.timestamps["backend_"+childstatus] = be_statetime 
+                            logger.debug("Wrote 'backend_%s' to timestamps.", childstatus)
+                    if childstatus==status: break
+            logger.debug("_getStateTime(job with id: %d, '%s') called.", job.id, job.status)
+        else:
+            logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", job.status, status)
+    _getStateTime = staticmethod(_getStateTime)
+
     def timedetails(self):
         """Prints contents of the loggingInfo from the Dirac API."""
         global dirac_ganga_server
         if not self.id: return None
-        logger.debug("Accessing getStateTime() in diracAPI")
+        logger.debug("Accessing timedetails() in diracAPI")
         dirac_cmd = 'result = DiracCommands.timedetails(%d)' % self.id
         result = dirac_ganga_server.execute(dirac_cmd)
         return result
@@ -367,6 +386,7 @@ class Dirac(IBackend):
     def updateMonitoringInformation(jobs):
         """Check the status of jobs and retrieve output sandboxes"""
         from Ganga.Core import monitoring_component
+        ganga_job_status = [ j.status for j in jobs ]
         dirac_job_ids = []
         for j in jobs: dirac_job_ids.append(j.backend.id)
         global dirac_monitoring_server
@@ -394,15 +414,24 @@ class Dirac(IBackend):
             j.backend.actualCE = result[i][2]
             cmd = 'result = DiracCommands.normCPUTime(%d)' % j.backend.id
             j.backend.normCPUTime = dirac_monitoring_server.execute(cmd)
+            if j.status != ganga_job_status[i]:
+                logger.warning('User changed Ganga job status from %s -> %s' % (str(ganga_job_status[i]),j.status))
+                continue
             if result[i][3] != 'completed' and result[i][3] != j.status:
+                Dirac._getStateTime(j,result[i][3])
                 j.updateStatus(result[i][3])
             if result[i][3] == 'completed':
+                Dirac._getStateTime(j,'completing')
                 j.updateStatus('completing')
                 ok = j.backend._getOutputSandbox(dirac_monitoring_server)
                 if ok and j.outputdata:
                     j.backend._getOutputDataLFNs(dirac_monitoring_server,True)
-                if not ok: j.updateStatus('failed')
-                else: j.updateStatus('completed')
+                if not ok:
+                    Dirac._getStateTime(j,'failed')
+                    j.updateStatus('failed')
+                else:
+                    Dirac._getStateTime(j,'completed')
+                    j.updateStatus('completed')
             if result[i][3] == 'failed':
                 if configLHCb['failed_sandbox_download']:
                     j.backend._getOutputSandbox(dirac_monitoring_server)

@@ -20,6 +20,7 @@ def loadPlugins(c):
             raise ApplicationConfigurationError(None,"Couldn't load Panda Client")
     import Lib.Athena
     import Lib.Executable
+    import Lib.ProdTrans
 
     return None
 

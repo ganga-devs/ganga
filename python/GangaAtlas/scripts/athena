@@ -45,6 +45,8 @@ p.add_option('--name', '-n', action='store', type='string', dest='name', help='J
 p.add_option('--inDS', '-i', action='store', type='string', dest='input_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname to process')
 p.add_option('--inPfnListFile', action='store', type='string', dest='input_pfnlistfile', help='Filename with list of input files to process for ATLASTier3Dataset')
 p.add_option('--inTagDS', action='store', type='string', dest='tag_input_dataset', metavar='TAGDATASETNAME', help='Name of the Tag DQ2 datasetname to process')
+p.add_option('--inTagFiles', action='store', type='string', dest='tag_input_files', help='Name of local TAG files to determine input data' )
+p.add_option('--tagCollRef', action='store', type='string', dest='tag_coll_ref', help='Directly specify the collection reference if not in JOs (e.g. TRF usage)' )
 p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['DQ2', 'ATLAS', 'Local', 'Castor'],  default='DQ2', help='Type of the input dataset: DQ2, ATLAS, Local, Castor, [default: DQ2]' )
 p.add_option('--inputaccessmode', action='store', type='choice', dest='inputaccessmode', choices = ['DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'FILE_STAGER' ], default='DQ2_LOCAL',  help='Access mode of the DQ2/TAG input dataset: DQ2_LOCAL, FILE_STAGER, LFC, TAG, TAG_REC [default: DQ2_LOCAL]'  )
 p.add_option('--inputfailover', action='store_true', help='Use DQ2_COPY automatically if DQ2_LOCAL fails' )
@@ -116,7 +118,7 @@ p.add_option('--excludedSite', action='store', type='string', dest='excludedSite
 p.add_option('--useChirpServer', action='store', type='string', dest='useChirpServer', default='', help="Chirp Server to be used to stage out the output e.g., voatlas92.cern.ch")
 
 # Application options
-p.add_option('-c', action='store', type='string', dest='options', help='One-liner, runs before any job Options')
+p.add_option('--options', '-c', action='store', type='string', dest='options', help='One-liner, runs before any job Options')
 p.add_option('--maxevt' , action='store', type='int', dest='maxevt', help='Maximal number of events to process')
 p.add_option('--compile', action='store_true', help='Determine if job should be recompiled on Grid worker node' )
 p.add_option('--nocompile', action='store_true', help='Determine if job should *not* be recompiled on Grid worker node' )
@@ -138,6 +140,7 @@ p.add_option('--individualOutDS', action='store_true', dest='individualOutDS', h
 p.add_option('--express', action='store_true', dest='express', help='Panda option to send the job using express quota to have higher priority. The number of express subjobs in the queue and the total execution time used by express subjobs are limited (a few subjobs and several hours per day, respectively). This option is intended to be used for quick tests before bulk submission. Note that buildXYZ is not included in quota calculation. If this option is used when quota has already exceeded, the panda server will ignore the option so that subjobs have normal priorities. Also, if you submit 1 buildXYZ and N runXYZ subjobs when you only have quota of M (M < N),  only the first M runXYZ subjobs will have higher priorities' )
 p.add_option('--trf', action='store', type='string', dest='trf', help='Parameters for Athena  transformations' )
 p.add_option('--mergeOutput', action='store_true', dest='mergeOutput', help='Panda option to enable the output merging jobs.')
+p.add_option('--usecommainputtxt', action='store_true', dest='usecommainputtxt', help='Boolean if input.txt contains the input files as comma separated list or separeted by a line break')
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -188,7 +191,7 @@ if args:
     option_files=[]
     if args:  
         for option_file in args:
-            if not opt.athena_exe in ['EXE']:        
+            if not opt.athena_exe in ['EXE', 'TRF']:        
                 if not os.access(option_file,os.R_OK):
                     print >>sys.stderr, 'ERROR: Cannot read athena job option file: %s' % option_file
                     sys.exit(4)
@@ -249,9 +252,13 @@ if opt.group_area:
 
 j.application.option_file = option_files
 if opt.options:
-    aoptions = opt.options.replace('"',"'''")        
-    aoptions = opt.options.replace('\'',"'''")        
-    j.application.options = "-c '''%s''' " %aoptions
+    if opt.athena_exe in ['EXE']:
+        j.application.options = " %s " %opt.options
+    else:
+        aoptions = opt.options.replace('"',"'''")        
+    	aoptions = opt.options.replace('\'',"'''")
+        j.application.options = "-c '''%s''' " %aoptions
+
 if opt.user_setupfile:
     j.application.user_setupfile = opt.user_setupfile
 
@@ -292,7 +299,7 @@ if opt.input_pfnlistfile:
     j.inputdata = ATLASTier3Dataset()
     j.inputdata.pfnListFile = opt.input_pfnlistfile
 
-if opt.input_dataset:
+if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files:
     #print opt.inputtype
     if opt.inputtype:
         if opt.inputtype=='DQ2':
@@ -322,7 +329,9 @@ if opt.input_dataset:
         opt.inputtype = 'DQ2'
 
     if opt.inputtype == 'DQ2':
-        j.inputdata.dataset = opt.input_dataset.split(',')
+	if opt.input_dataset:
+	    j.inputdata.dataset = opt.input_dataset.split(',')
+
         if opt.inputaccessmode:
             j.inputdata.type = opt.inputaccessmode        
         else:    
@@ -374,10 +383,15 @@ if opt.input_dataset:
         if opt.inputnumfiles:
             j.inputdata.number_of_files = opt.inputnumfiles
         if opt.tag_input_dataset:
-            j.inputdata.tagdataset = opt.tag_input_dataset
+            j.inputdata.tagdataset = opt.tag_input_dataset.split(',')
+        if opt.tag_input_files:
+            j.inputdata.tag_files = opt.tag_input_files.split(',')
         if opt.backend == 'lcg' and opt.use_aodesd_backnav:
             j.inputdata.use_aodesd_backnav = True
-
+	if opt.tag_coll_ref:
+	    j.inputdata.tag_coll_ref = opt.tag_coll_ref
+	
+	
 if opt.pickevent:
     j.inputdata=EventPicking()
     if opt.pick_data_type:
@@ -546,6 +560,7 @@ elif opt.backend=='panda':
     if opt.long: j.backend.requirements.long = True 
     if opt.express: j.backend.requirements.express = True 
     if opt.mergeOutput: j.backend.requirements.enableMerge = True 
+    if opt.usecommainputtxt: j.backend.requirements.usecommainputtxt = True 
     if opt.cputime: j.backend.requirements.cputime = opt.cputime
     if opt.memory: j.backend.requirements.memory = opt.memory
     if opt.extOutFile: j.backend.extOutFile = opt.extOutFile.split(':')

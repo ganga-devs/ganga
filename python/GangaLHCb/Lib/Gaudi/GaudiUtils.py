@@ -6,8 +6,10 @@ from Ganga.Utility.Shell import Shell
 from Ganga.Utility.files import fullpath
 from Ganga.Utility.util import unique
 import Ganga.Utility.logging
+import Ganga.Utility.Config
 
 logger = Ganga.Utility.logging.getLogger()
+configLHCb = Ganga.Utility.Config.getConfig('LHCb')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -67,6 +69,25 @@ def update_cmtproject_path(user_release_area,env=os.environ):
       if cmtpp[0] != user_release_area:
         cmtpp = [user_release_area] + cmtpp
         env['CMTPROJECTPATH']=':'.join(cmtpp)
+
+def pyFileCollector(dir, file_list, subdir_dict, depth_cut, depth=0,zerodepth_pathlength=0):
+  if zerodepth_pathlength==0: zerodepth_pathlength=len(dir)+1
+  sub_pys=[]
+  for item in os.listdir(dir):
+    file_path = os.path.join(dir, item)
+    if (file_path.endswith('.py')):
+      if os.path.exists(file_path):
+        if depth==0: file_list.append(file_path)
+        else: sub_pys.append(file_path) 
+      else:
+        logger.warning("File %s in %s does not exist. Skipping...",str(item),str(dir))
+    elif os.path.isdir(file_path) and not os.path.islink(file_path):
+      if depth >=depth_cut: continue
+      pyFileCollector(file_path,file_list,subdir_dict,depth_cut,depth+1,zerodepth_pathlength)
+        
+  if depth !=0:
+    subdir_dict[dir[zerodepth_pathlength:]] = sub_pys
+
 
 def get_user_dlls(appname,version,user_release_area,platform,shell):
 
@@ -150,26 +171,8 @@ def get_user_dlls(appname,version,user_release_area,platform,shell):
 
   for pypath in py_project_areas:
     if os.path.exists( pypath):
-      for f in os.listdir( pypath):
-        confDB_path = os.path.join( pypath, f)
-        if confDB_path.endswith( '.py'):
-          if os.path.exists( confDB_path):
-            merged_pys.append( confDB_path)
-          else:
-            logger.warning("File %s in %s does not exist. Skipping...",
-                           str(f),str(confDB_path))
-        elif os.path.isdir(confDB_path):
-          pyfiles = []
-          for g in os.listdir(confDB_path):
-            file_path = os.path.join(confDB_path, g)
-            if (file_path.endswith('.py')):
-              if os.path.exists(file_path):
-                pyfiles.append(file_path)
-              else:
-                logger.warning("File %s in %s does not exist. Skipping...",
-                               str(g),str(f))
-          subdir_pys[ f] = pyfiles
-                    
+      pyFileCollector(pypath, merged_pys, subdir_pys,configLHCb['pyFileCollectionDepth'])
+
   logger.debug("%s",pprint.pformat( libs))
   logger.debug("%s",pprint.pformat( merged_pys))
   logger.debug("%s",pprint.pformat( subdir_pys))

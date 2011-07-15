@@ -1,0 +1,75 @@
+**************************************************************************************************************
+5.6.4 (2011/7/4)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* bugfix for CREAM backend
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices
+--------------------------------------------------------------------------------------------------------------
+Fixes bug #83902
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Enable filesize based jobs splitting again
+* Minor TAG lookup fix
+* Copy a few options from lxplus setup to Atlas.ini
+* Made AnaTransform dataset not comparable, since it 
+  was causing infinite recursion in rare cases
+* Correct algorithm for filesize based splitting
+
+scripts:
+--------
+* Add --options and -c for Panda EXE workflow to add to be 
+  passed to executable on worker node 
+* Add --usecommainputtxt option, if set an input.txt with a
+  comma separated list of input files is generated instead of
+  default line break separated list
+
+tests:
+------
+* Update test cases to newer athena and dataset versions
+
+externals:
+----------
+* update panda-client 0.3.46 (for new LATEST dbrelease logic)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+GangaLHCb-23-7 - Fixed Savannah bug #82532 New Dataset persistency format 'ROOT' added
+
+GangaLHCb-23-8 - Fixed Savannah bug #68951 ROOT Version Handling added
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Allowed client side rebrokering and the ablilty to add to 
+  already present containers
+* Changed rebroker to resplit and added a random number 
+  that's added to the DS name to avoid clashes
+* Added an option of turning off the automatic exclusion 
+  in resplit.
+* Added code in selectPandaSite to ensure excluded sites 
+  aren't returned (stops e.g. ANALY_LONG_BNL_ATLAS still 
+  being used when excluded)
+* Add job.backend.requirements.usecommainputtxt option
+  If set an input.txt with a comma separated list of input 
+  files is generated instead of default line break separated 
+  list 
+* enable output merging with user provided code
+* Temporary fix to not use the --useLocalIO flag for TAG. 
+  May be removed for all workflows in the future
+* update panda-client 0.3.46 (for new LATEST dbrelease logic)
+
+**************************************************************************************************************

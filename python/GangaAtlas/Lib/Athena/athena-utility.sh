@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # function for resolving and setting TMPDIR env. variable
 resolve_tmpdir () {

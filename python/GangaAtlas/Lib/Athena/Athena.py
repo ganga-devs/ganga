@@ -932,7 +932,7 @@ class Athena(IApplication):
         if not self.option_file:
             raise ApplicationConfigurationError(None,'Set option_file before calling prepare()')
         for opt_file in self.option_file:
-            if not self.atlas_exetype in ['EXE']: 
+            if not self.atlas_exetype in ['EXE', 'TRF']: 
                 if not opt_file.exists():
                     raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % opt_file.name)
                 else:
@@ -1264,7 +1264,7 @@ class Athena(IApplication):
                 raise ApplicationConfigurationError(None,'The tar file %s with the group area does not exist.' % self.group_area.name)
        
         for opt_file in self.option_file:
-            if not self.atlas_exetype in ['EXE'] and not opt_file.exists():
+            if not self.atlas_exetype in ['EXE', 'TRF'] and not opt_file.exists():
                 raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % opt_file.name)
 
 

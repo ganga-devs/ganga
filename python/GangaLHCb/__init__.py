@@ -49,6 +49,8 @@ tokens = ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','NIKHEF-USER',
           'PIC-USER','RAL-USER']
 dscrpt = 'Space tokens allowed for replication, etc.'
 configLHCb.addOption('DiracSpaceTokens',tokens,dscrpt)
+dscrpt = 'Levels below InstallArea/[<platform>]/python to decend when looking for .py files to include'
+configLHCb.addOption('pyFileCollectionDepth',2,dscrpt)
  
 # Set default values for the Dirac section.
 dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
