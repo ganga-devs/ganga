@@ -4,9 +4,9 @@ j = Job(backend=Batch())
 j.application = Executable(exe='ThisScriptDoesNotExist')
 j.submit()
 
-if not sleep_until_state(j,600,'failed',['new','killed','completed','unknown','removed']):
+if not sleep_until_state(j,6000,'failed',['new','killed','completed','unknown','removed']):
     if j.status in ['running','submitted']:
-        raise failureException("Job did not complete within timeout period [10min]")
+        raise failureException("Job did not complete within timeout period [100min]")
     else:
         raise failureException("Job with illegal script should fail. Instead it went into the state %s"% j.status)
 
