@@ -13,8 +13,8 @@ j.application.exe  = '/bin/cat'
 j.application.args = ['subdir/%s' % os.path.basename(tfname)]
 j.submit()
 
-if not sleep_until_completed(j,600):
-    raise failureException("Job failed to complete successfully whithin timeout period [10min]")
+if not sleep_until_completed(j,6000):
+    raise failureException("Job failed to complete successfully whithin timeout period [100min]")
 
 #FIXME: LCG outputs are gzipped
 import gzip
