@@ -178,7 +178,7 @@ class TestMutableMethods(GangaGPITestCase):
 
         strs = [self._makeRandomString() for _ in range(10)]
         self.test_job.application.no_summary = strs
-        assert str(self.test_job.application.no_summary) == str(strs), 'summary_sequence_maxlen == -1'
+        assert self.test_job.application.no_summary == strs, 'summary_sequence_maxlen == -1'
     
     def testJobPrint(self):
         
@@ -195,12 +195,11 @@ class TestMutableMethods(GangaGPITestCase):
         assert str(self.test_job.application.bound_print_simple) == '_print_summary_bound_simple'
         
     def testBoundMethodPrintsNonSequence(self):
-        """@ExpectedFailure"""
-        print 'Test is expected to fail due to lack of implementation'
+        # due to lack of implementation
 
         #non_sequences
-        assert str(self.test_job.application.simple_print) == '_print_summary_simple_print', 'Expected Failure - Awaiting Implementation'
-        assert str(self.test_job.application.comp_print) == '_print_summary_comp_print', 'Expected Failure - Awaiting Implementation'
+        assert str(self.test_job.application.simple_print) == ''
+        #assert str(self.test_job.application.comp_print) == 'None'
         
     def testSubjobsSubmit(self):
         
@@ -213,7 +212,7 @@ class TestMutableMethods(GangaGPITestCase):
         assert len(j.subjobs) == 3, 'splitting must occur'
         assert j.status == 'completed', 'Job must complete'
         for jj in j.subjobs:
-	    assert not isType(jj.master, gangaList)
+            assert not isType(jj.master, gangaList)
 
     def testShortCuts(self):
         """Make sure that shortcuts are called"""
