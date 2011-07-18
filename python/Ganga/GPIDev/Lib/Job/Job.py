@@ -1081,7 +1081,9 @@ class Job(GangaObject):
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s',fqid,x)
                 
-            #self.info.increment() #commented out to fix bug 77962
+            #fix for bug 77962 plus for making auto_resubmit test work  
+            if auto_resubmit:
+                self.info.increment() 
 
             if self.subjobs: 
                 for sjs in self.subjobs:
