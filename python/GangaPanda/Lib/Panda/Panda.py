@@ -671,6 +671,9 @@ class Panda(IBackend):
         jobids = []
         if self.buildjob and self.buildjob.id and self.buildjob.status in active_status: 
             jobids.append(self.buildjob.id)
+        for bj in self.buildjobs:
+            if bj.id and bj.status in active_status:
+                jobids.append(bj.id)
         if self.id and self.status in active_status: 
             jobids.append(self.id)
 
