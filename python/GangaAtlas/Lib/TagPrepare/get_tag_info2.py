@@ -21,7 +21,7 @@ def findReferences( infile ):
     # Find the links to the stream required
     cmd = "CollListFileGUID -src " + infile + " RootCollection -queryopt "+ _streamRef +" | cut -d' ' -f 1"
     rc, out = getstatusoutput(cmd)
-    if (rc!=0):
+    if (rc!=0) or (out.find("command not found")!=-1):
         print "ERROR: error during CollListFileGUID:"
         print out
         return {}
@@ -103,6 +103,7 @@ def findReferences2( infile ):
     # Find the links to the stream required
     cmd = "CollListToken -src " + infile + " RootCollection | grep -E \"Tokens|StreamTAG|%s\"" % _streamRef
     rc, out = getstatusoutput(cmd)
+
     if (rc!=0):
         print "ERROR: error during CollListFileGUID:"
         print out
@@ -292,6 +293,7 @@ def createTagInfo( stream_ref, infiles ):
     print_num = 0
     
     for f in taglfns:
+        print f
         if os.access( f, os.R_OK ):
 
             if not os.path.exists( os.path.basename(f) + ".root"):
@@ -299,7 +301,7 @@ def createTagInfo( stream_ref, infiles ):
 
             # first, list all the guids that we care about
             refs = findReferences(os.path.basename(f))
-            
+
             # try to match on names
             tagCache = {}
             for ref in refs:
