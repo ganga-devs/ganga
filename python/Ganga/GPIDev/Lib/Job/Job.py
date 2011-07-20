@@ -731,7 +731,7 @@ class Job(GangaObject):
                 raise JobError(msg)
 
             self.getDebugWorkspace().remove(preserve_top=True)
-            
+            self.prepare()
             appmasterconfig = self.application.master_configure()[1] # FIXME: obsoleted "modified" flag
             # split into subjobs
 #            try:
@@ -796,7 +796,6 @@ class Job(GangaObject):
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
             self.info.increment()
             self.updateStatus('submitted') # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
-            self.prepare()
             self._commit() # make sure that the status change goes to the repository, NOTE: this commit is redundant if updateStatus() is used on the line above
 
             #send job submission message
