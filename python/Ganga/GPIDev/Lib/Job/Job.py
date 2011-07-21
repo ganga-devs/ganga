@@ -620,7 +620,7 @@ class Job(GangaObject):
         #has the job already been prepared? If so, then we'll create a copy of the configured job in the 'new' state
         if (self.application.is_prepared is None) or (force is True):
             try:
-                send_to_sharedir.extend(self.application.prepare())
+                send_to_sharedir.append(self.application.prepare())
             except:
                 logger.info('Unable to prepare job %s, %s application.'%(self.id,self.application._name))
                 raise Exception('Unable to prepare job %s, %s application.'%(self.id,self.application._name))
