@@ -441,7 +441,7 @@ def %(method_name)s(self):
         
         code=code+"""
     try:
-        print "\\n**** %(description)s"
+        print "\\n****** %(description)s"
         print "\\tLog file: %(output_path)s"
         import signal
 """%VARS

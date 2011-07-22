@@ -81,7 +81,7 @@ class GangaGPIPTestCase(unittest.TestCase):
         import os
         import sys
         from subprocess import PIPE,Popen,STDOUT
-        print '\n**** %s' % self.description
+        print '\n***** %s' % self.description
         print '\tLog file: %s' % self.output_path
 
         #print 'test cmd : %s' % self.testCmd
