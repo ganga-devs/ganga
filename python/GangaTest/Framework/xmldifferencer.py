@@ -199,14 +199,21 @@ def start(cmd_args=None):
     
     #process args
     if ( len(cmd_args) == 1 ):
-        #is of format: number
-        oldversion = cmd_args[0]
-        thisversion = config['GANGA_VERSION']
-        a = []
-        for i in range(len(thisversion)):
-            if (thisversion[i] == '-'):
-                a += thisversion[i+1]
-        newversion = a[0]+'.'+a[1]+'.'+a[2] 
+        
+        search_dir = '/afs/cern.ch/sw/ganga/install/'
+
+        def isPre(x):
+            return (x.endswith('-pre') and x.find('hotfix') == -1)
+
+        os.chdir(search_dir)
+        dirs = filter(os.path.isdir, os.listdir(search_dir))
+        dirs = filter(isPre, os.listdir(search_dir))
+        dirs = [os.path.join(search_dir, d) for d in dirs] # add path to each dir
+        dirs.sort(key=lambda x: os.path.getmtime(x))
+
+        newversion = os.path.basename(dirs[-1])
+        oldversion = os.path.basename(dirs[-2])
+
         oldconfig = 'ALL'
         newconfig = 'ALL'
     elif ( len(cmd_args) == 2 ):
