@@ -114,15 +114,13 @@ def send_mail(key):
     if key == 'prerelease':
 
         email_file = './ganga/release/tools/release_tool_emails/prerelease.txt'
-        #todo uncomment before release
-        #receivers = 'project-ganga-developers@cern.ch'
+        receivers = 'project-ganga-developers@cern.ch'
         subject = 'Ganga %s-pre is ready' % CONFIG['version']
 
     elif key == 'release':
 
         email_file = './ganga/release/tools/release_tool_emails/release.txt'
-        #todo uncomment before release
-        #receivers = 'project-ganga-developers@cern.ch;project-ganga@cern.ch'   
+        receivers = 'project-ganga-developers@cern.ch;project-ganga@cern.ch'   
         subject = 'Ganga release %s is ready' % CONFIG['version']
 
     fp = open(email_file, 'rb')
@@ -448,6 +446,8 @@ class ReleaseCommand:
         self._updateWebPages()
         
         print 'Release sucesfully made in the %(reldir)s'%CONFIG
+
+        send_mail('release')
     
     def _protectTagsDir(self):
         """
