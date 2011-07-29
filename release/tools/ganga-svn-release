@@ -113,14 +113,14 @@ def send_mail(key):
 
     if key == 'prerelease':
 
-        email_file = 'release_tool_emails/prerelease.txt'
+        email_file = './ganga/release/tools/release_tool_emails/prerelease.txt'
         #todo uncomment before release
         #receivers = 'project-ganga-developers@cern.ch'
         subject = 'Ganga %s-pre is ready' % CONFIG['version']
 
     elif key == 'release':
 
-        email_file = 'release_tool_emails/release.txt'
+        email_file = './ganga/release/tools/release_tool_emails/release.txt'
         #todo uncomment before release
         #receivers = 'project-ganga-developers@cern.ch;project-ganga@cern.ch'   
         subject = 'Ganga release %s is ready' % CONFIG['version']
@@ -130,8 +130,6 @@ def send_mail(key):
     fp.close()
 
     msg = email.message_from_string(msg_string)
-        
-    #todo format msg text
 
     msg['Subject'] = subject
     msg['From'] = sender
@@ -149,7 +147,7 @@ def send_mail(key):
         smtpObj.sendmail(sender, receivers, string_message)         
         
     except SMTPException:
-        print "Can not send release notification email"
+        print "Can not send %s notification email" % key
 
 class CollectTags:
     "COLLECT: collect tags from the tagsdir into PACKAGES file and create the new release notes file"
