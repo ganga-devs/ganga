@@ -74,7 +74,7 @@ class MultiTransform(Transform):
        }.items()))
    _category = 'transforms'
    _name = 'MultiTransform'
-   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit']
+   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName']
    
    def initialize(self):
        super(MultiTransform, self).initialize()
@@ -939,3 +939,72 @@ class MultiTransform(Transform):
    def notifyNextTransform(self, partition):
        """ Notify any dependant transforms of the input update """
        return
+
+   def getContainerName(self):
+       """Return the parent container for this whole transform"""
+       if self.name == "":
+           name = "trf"
+       else:
+           name = self.name
+          
+       return self._getParent().getContainerName()[:-1] + ".%s.%i/" % (name, self.getID())
+
+   def checkCompletedApp(self, app):
+      j = app._getParent()
+
+      if not j.outputdata or j.outputdata._name != "DQ2OutputDataset":
+          return True
+
+      # add dataset to the transform container
+      trf_container = self.getContainerName()
+      
+      try:
+          containerinfo = {}
+          dq2_lock.acquire()
+          try:
+              containerinfo = dq2.listDatasets(trf_container)
+          except:
+              containerinfo = {}
+          if containerinfo == {}:
+              try:
+                  dq2.registerContainer(trf_container)
+                  logger.debug('Registered container for Transform %i: %s' % (self.getID(), trf_container))
+              except Exception, x:
+                  logger.error('Problem registering container for Task %i, %s : %s %s' % (self.getID(), trf_container,x.__class__, x))
+                  
+          try:
+              dq2.registerDatasetsInContainer(trf_container, [ j.outputdata.datasetname ] )
+          except DQContainerAlreadyHasDataset:
+              pass
+          except Exception, x:
+              logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+      finally:
+          dq2_lock.release()
+
+      # add dataset to the task container
+      task_container = self._getParent().getContainerName()
+      
+      try:
+          containerinfo = {}
+          dq2_lock.acquire()
+          try:
+              containerinfo = dq2.listDatasets(task_container)
+          except:
+              containerinfo = {}
+          if containerinfo == {}:
+              try:
+                  dq2.registerContainer(task_container)
+                  logger.debug('Registered container for Transform %i: %s' % (self.getID(), task_container))
+              except Exception, x:
+                  logger.error('Problem registering container for Task %i, %s : %s %s' % (self.getID(), task_container,x.__class__, x))
+                  
+          try:
+              dq2.registerDatasetsInContainer(task_container, [ j.outputdata.datasetname ] )
+          except DQContainerAlreadyHasDataset:
+              pass
+          except Exception, x:
+              logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, task_container, x.__class__, x))
+      finally:
+          dq2_lock.release()
+
+      return True

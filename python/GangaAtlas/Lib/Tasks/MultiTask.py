@@ -50,7 +50,7 @@ class MultiTask(Task):
        }.items()))
    _category = 'tasks'
    _name = 'MultiTask'
-   _exportmethods = Task._exportmethods + ["initializeFromDatasets", "unitOverview", 'getTransform']
+   _exportmethods = Task._exportmethods + ["initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName']
    
    def initialize(self):
       super(MultiTask, self).initialize()
@@ -73,9 +73,14 @@ class MultiTask(Task):
 
       return None
       
-   def get_container_name(self):
-      name_base = ["user",getNickname(),self.creation_date,"task_%s" % self.id]
-      return ".".join(name_base + [self.name]) + "/"
+   def getContainerName(self):
+      if self.name == "":
+         name = "task"
+      else:
+         name = self.name
+         
+      name_base = ["user",getNickname(),self.creation_date, name, "id_%i" % self.id ]
+      return ".".join(name_base) + "/"
 
    def initializeFromDatasets(self,dataset_list):
       """ For each dataset in the dataset_list a unit is created. 
