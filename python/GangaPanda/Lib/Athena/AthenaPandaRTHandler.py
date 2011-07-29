@@ -27,6 +27,18 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from Ganga.Utility.GridShell import getShell
 from GangaPanda.Lib.Panda.Panda import setChirpVariables
 
+def createContainer(name):
+    from pandatools import Client
+    if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
+        try:
+            Client.createContainer(name,False)
+        except exceptions.SystemExit:
+            raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(name,sys.exc_info()[0],sys.exc_info()[1]))
+
+def addDatasetsToContainer(container,datasets):
+    from pandatools import Client
+    if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
+        Client.addDatasetsToContainer(container,datasets,False)
 
 def getDBDatasets(jobO,trf,dbrelease):
     from pandatools import Client
@@ -295,10 +307,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         res = Client.getDatasets(job.outputdata.datasetname)
         if not job.outputdata.datasetname in res.keys():
             # create the container
-            try:
-                Client.createContainer(job.outputdata.datasetname,False)
-            except exceptions.SystemExit:
-                raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
+            createContainer(job.outputdata.datasetname)
             logger.info('Created output container %s'%job.outputdata.datasetname)
         else:
             logger.warning('Adding datasets to already existing container %s' % job.outputdata.datasetname)
@@ -319,7 +328,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 dq2_set_dataset_lifetime(tmpDSName, self.outDsLocation)
                 self.indivOutDsList.append(tmpDSName)
                 # add the DS to the container
-                Client.addDatasetsToContainer(job.outputdata.datasetname,[tmpDSName],False)
+                addDatasetsToContainer(job.outputdata.datasetname,[tmpDSName])
             except exceptions.SystemExit:
                 raise BackendError('Panda','Exception in adding dataset %s: %s %s'%(tmpDSName,sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -652,19 +661,16 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             for f in jspec.Files:
                 if f.type in ['output','log']:
                     if not f.dataset in self.indivOutContList:
-                        try:
-                            logger.info('Creating output container %s'%f.dataset)
-                            Client.createContainer(f.dataset,False)
-                            self.indivOutContList.append(f.dataset)
-                        except exceptions.SystemExit:
-                            raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(f.dataset,sys.exc_info()[0],sys.exc_info()[1]))
+                        logger.info('Creating output container %s'%f.dataset)
+                        createContainer(f.dataset)
+                        self.indivOutContList.append(f.dataset)
                     if not f.destinationDBlock in self.indivOutDsList:
                         try:
                             logger.info('Creating dataset %s and adding to %s'%(f.destinationDBlock,f.dataset))
                             Client.addDataset(f.destinationDBlock,False,location=subjobOutputLocation)
                             dq2_set_dataset_lifetime(f.destinationDBlock, subjobOutputLocation)
                             self.indivOutDsList.append(f.destinationDBlock)
-                            Client.addDatasetsToContainer(f.dataset,[f.destinationDBlock],False)
+                            addDatasetsToContainer(f.dataset,[f.destinationDBlock],False)
                         except exceptions.SystemExit:
                             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(f.dataset,sys.exc_info()[0],sys.exc_info()[1]))
 
