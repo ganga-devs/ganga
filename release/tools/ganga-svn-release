@@ -122,6 +122,12 @@ def send_mail(key):
         email_file = './ganga/release/tools/release_tool_emails/release.txt'
         receivers = 'project-ganga-developers@cern.ch;project-ganga@cern.ch'   
         subject = 'Ganga release %s is ready' % CONFIG['version']
+        
+    elif key == 'testreports':
+
+        email_file = './ganga/release/tools/release_tool_emails/testreports.txt'
+        receivers = 'project-ganga-developers@cern.ch'   
+        subject = 'Ganga VER-pre test reports are ready' % CONFIG['version']    
 
     fp = open(email_file, 'rb')
     msg_string = fp.read()
@@ -135,7 +141,7 @@ def send_mail(key):
 
     string_message = msg.as_string()
         
-    if key == 'prerelease':
+    if key == 'prerelease' or key == 'testreports':
         string_message = string_message.replace('VER', CONFIG['version'])
     elif key == 'release':      
         string_message = string_message.replace('*version*', CONFIG['version'])
@@ -349,6 +355,8 @@ class TestReportCommand:
 
         print "Creating web pages."
         acmd("%(prereldir)s/bin/ganga --test -o\'[TestingFramework]ReleaseTesting=True\' -o\'EnableHTMLReporter=True\' -o\'EnableTestRunner=False\'" % CONFIG)
+
+        send_mail('testreports')
         
 class TagCommand:
     "TAG: make a GLOBAL TAG using the a pre-release in the prereldir"
