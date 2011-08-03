@@ -116,13 +116,13 @@ def send_mail(key):
 
     if key == 'prerelease':
 
-        email_file = 'release_tool_emails/prerelease.txt'
+        email_file = os.path.join(releaseToolsDir, 'release_tool_emails/prerelease.txt')
         receivers = 'project-ganga-developers@cern.ch'
         subject = 'Ganga %s-pre is ready' % CONFIG['version']
 
     elif key == 'release':
 
-        email_file = 'release_tool_emails/release.txt'
+        email_file = os.path.join(releaseToolsDir, 'release_tool_emails/release.txt')
         receivers = 'project-ganga-developers@cern.ch;project-ganga@cern.ch'   
         subject = 'Ganga release %s is ready' % CONFIG['version']
         
@@ -242,7 +242,8 @@ class PrereleaseCommand:
         print 'Updating file with available releases'
         acmd("touch %s && date +'%s - %%d %%b %%Y %%k:%%m:%%S' >> %s"% (versionfile, CONFIG['version-pre'], versionfile))
 
-        send_mail('prerelease')
+        if askYesNo('Do you want to send email to Ganga developers list that the prerelease is ready?') == "YES":
+            send_mail('prerelease')
 
 
 class GenerateConfigFilesCommand:
@@ -359,7 +360,8 @@ class TestReportCommand:
         print "Creating web pages."
         acmd("%(prereldir)s/bin/ganga --test -o\'[TestingFramework]ReleaseTesting=True\' -o\'EnableHTMLReporter=True\' -o\'EnableTestRunner=False\'" % CONFIG)
 
-        send_mail('testreports')
+        if askYesNo('Do you want to send email to Ganga developers list that test reports are ready?') == "YES":
+            send_mail('testreports')
         
 class TagCommand:
     "TAG: make a GLOBAL TAG using the a pre-release in the prereldir"
@@ -458,7 +460,8 @@ class ReleaseCommand:
         
         print 'Release sucesfully made in the %(reldir)s'%CONFIG
 
-        send_mail('release')
+        if askYesNo('Do you want to send email to Ganga developers and Ganga project lists that the release is ready?') == "YES":
+            send_mail('release')
     
     def _protectTagsDir(self):
         """
