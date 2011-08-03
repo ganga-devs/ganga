@@ -105,6 +105,9 @@ def send_mail(key):
         
     import smtplib
     import email
+    import os
+
+    releaseToolsDir = os.path.dirname(os.path.abspath(__file__))
 
     sender = 'project-ganga-developers@cern.ch'
     receivers = 'idzhunov@cern.ch'
@@ -113,19 +116,19 @@ def send_mail(key):
 
     if key == 'prerelease':
 
-        email_file = './ganga/release/tools/release_tool_emails/prerelease.txt'
+        email_file = 'release_tool_emails/prerelease.txt'
         receivers = 'project-ganga-developers@cern.ch'
         subject = 'Ganga %s-pre is ready' % CONFIG['version']
 
     elif key == 'release':
 
-        email_file = './ganga/release/tools/release_tool_emails/release.txt'
+        email_file = 'release_tool_emails/release.txt'
         receivers = 'project-ganga-developers@cern.ch;project-ganga@cern.ch'   
         subject = 'Ganga release %s is ready' % CONFIG['version']
         
     elif key == 'testreports':
 
-        email_file = './ganga/release/tools/release_tool_emails/testreports.txt'
+        email_file = os.path.join(releaseToolsDir, 'release_tool_emails/testreports.txt')
         receivers = 'project-ganga-developers@cern.ch'   
         subject = 'Ganga %s-pre test reports are ready' % CONFIG['version']    
 
