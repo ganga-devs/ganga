@@ -127,7 +127,7 @@ def send_mail(key):
 
         email_file = './ganga/release/tools/release_tool_emails/testreports.txt'
         receivers = 'project-ganga-developers@cern.ch'   
-        subject = 'Ganga VER-pre test reports are ready' % CONFIG['version']    
+        subject = 'Ganga %s-pre test reports are ready' % CONFIG['version']    
 
     fp = open(email_file, 'rb')
     msg_string = fp.read()
