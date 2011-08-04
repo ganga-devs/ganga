@@ -442,7 +442,6 @@ class GangaObject(Node):
 
     # on the deepcopy reset all non-copyable properties as defined in the schema
     def __deepcopy__(self, memo = None):
-        print self
         self._getReadAccess()
         c = super(GangaObject,self).__deepcopy__(memo)
         for name,item in self._schema.allItems():
@@ -461,7 +460,6 @@ class GangaObject(Node):
 #                except:
 #                    msg = 'Unexpected error: %s'%(sys.exc_info()[0])
 #                    raise PreparedStateError(msg)
-                print "end"
 #                junk=item
 #                print "#######"
 #                print "#######"
