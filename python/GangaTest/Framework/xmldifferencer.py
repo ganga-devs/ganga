@@ -305,7 +305,7 @@ def start(cmd_args=None):
     #go through dictionaries and compare files and then compare tests
     comparetestfiles(newfiles, oldfiles)
 
-    print 'Tests finished!'
+    print 'Tests finished.Press any key to continue...'
     
 
 def main(cmd_args):
