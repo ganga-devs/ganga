@@ -160,6 +160,9 @@ p.add_option('--useAthenaPackages', action='store_true', help='Enable to setup A
 
 opt, args = p.parse_args()
 
+# make panda the default backend
+if not opt.backend:
+    opt.backend = "panda"
 
 # Job query
 if opt.jobid:
@@ -199,7 +202,7 @@ if args:
                     option_files.append(option_file)
             else:
                 option_files.append(option_file)
-else:
+elif opt.athena_exe in ['EXE', 'TRF']:
     print >>sys.stderr, 'ERROR: No athena job option file given'
     sys.exit(4)
 
