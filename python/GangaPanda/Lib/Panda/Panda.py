@@ -687,7 +687,7 @@ class Panda(IBackend):
              return False
         return True
 
-    def resplit(self, newDS = False, sj_status = ['killed', 'failed'], splitter = None, auto_exclude = True, newDSName = ""):
+    def resplit(self, newDS = False, sj_status = ['killed', 'failed'], splitter = None, auto_exclude = True):
         """ Rerun the splitting for subjobs. Basically a helper function that creates a new master job from
         this parent and submits it"""
         
@@ -695,16 +695,13 @@ class Panda(IBackend):
         from Ganga.Core.GangaRepository import getRegistry
         from Ganga.Utility.guid import uuid
         from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
-
+        
         if self._getParent()._getParent(): # if has a parent then this is a subjob
             raise BackendError('Panda','Resplit on subjobs is not supported for Panda backend. \nUse j.backend.resplit() (i.e. rebroker the master job) and your failed (by default) subjobs \nwill be automatically selected and split again.')
 
         if self._getParent().splitter and self._getParent().splitter.numevtsperjob > 0:
             raise BackendError('Panda','Resplit while using numevtsperjob currently not supported. Please supply a new splitter.')
 
-        if not newDS and (('running' in sj_status) or ('submitted' in sj_status)):
-            raise BackendError('Panda','Cannot resplit running jobs without specifying a new DS. Either specify a new DS or kill the active subjobs (j.kill())')
-            
         # create a new job and copy the main parts
         job = self._getParent()
         mj = Job()
@@ -714,14 +711,13 @@ class Panda(IBackend):
         mj.application.run_event   = []
         mj.outputdata = job.outputdata
         if newDS:
-            mj.outputdata.datasetname = newDSName
+            mj.outputdata.datasetname = ""
             
         mj.inputdata = job.inputdata
         mj.backend = job.backend
         mj.inputsandbox  = job.inputsandbox
         mj.outputsandbox = job.outputsandbox
-        mj.backend.site = 'AUTO'
-        
+
         # libDS set?
         if mj.backend.libds:
             logger.warning("No libDS allowed when resplitting.")
