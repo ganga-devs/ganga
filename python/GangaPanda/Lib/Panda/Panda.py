@@ -814,7 +814,8 @@ class Panda(IBackend):
         if rc:
             logger.error('Return code %d retrieving job status information.',rc)
             raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
-
+       
+        newJobsetID = -1 # get jobset
         retryJobs = [] # jspecs
         retrySite    = None
         retryElement = None
@@ -846,6 +847,11 @@ class Panda(IBackend):
                 job.destinationSE = retryDestSE
                 job.dispatchDBlock = None
                 job.jobExecutionID = job.jobDefinitionID
+                job.parentID = oldID
+                if job.jobsetID != ['NULL',None,-1]:
+                    job.sourceSite          = job.jobsetID
+                    job.jobsetID            = newJobsetID
+
                 for file in job.Files:
                     file.rowID = None
                     if file.type == 'input':
