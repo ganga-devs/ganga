@@ -203,6 +203,8 @@ if args:
             else:
                 option_files.append(option_file)
 elif opt.athena_exe in ['EXE', 'TRF']:
+    option_files = []
+else:
     print >>sys.stderr, 'ERROR: No athena job option file given'
     sys.exit(4)
 
