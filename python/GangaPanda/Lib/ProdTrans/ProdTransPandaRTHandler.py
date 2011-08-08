@@ -30,7 +30,6 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         from pandatools import AthenaUtils
         from taskbuffer.JobSpec import JobSpec
         from taskbuffer.FileSpec import FileSpec
-        from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 
         job = app._getParent()
         masterjob = job._getRoot()
@@ -41,14 +40,6 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         job.backend.actualCE = job.backend.site
         job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
 
-        try:
-            outDsLocation = Client.PandaSites[job.backend.site]['ddm']
-            Client.addDataset(job.outputdata.datasetname,False,location=outDsLocation)
-            logger.info('Output dataset %s registered at %s'%(job.outputdata.datasetname,outDsLocation))
-            dq2_set_dataset_lifetime(job.outputdata.datasetname, outDsLocation)
-        except exceptions.SystemExit:
-            raise BackendError('Panda','Exception in adding dataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
-        
         # JobSpec.
         jspec = JobSpec()
         jspec.currentPriority = app.priority

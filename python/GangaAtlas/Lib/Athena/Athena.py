@@ -135,16 +135,6 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
     # gather files under work dir
     logger.info("gathering files under %s", userarea)
 
-    # change from glob to re
-    excludeFile2 = []
-    for tmpItem in excludeFile:
-        # change . to \. for regexp
-        tmpItem = tmpItem.replace('.','\.')        
-        # change * to .* for regexp
-        tmpItem = tmpItem.replace('*','.*')
-        # append
-        excludeFile2.append(tmpItem)
-        
     # get files in the working dir
     skippedExt   = ['.o','.a','.so']
     skippedFlag  = False
@@ -164,7 +154,7 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
                 continue
             # check exclude files
             excludeFileFlag = False
-            for tmpPatt in excludeFile2:
+            for tmpPatt in excludeFile:
                 if re.search(tmpPatt,tmpPath) != None:
                     excludeFileFlag = True
                     break
@@ -938,7 +928,7 @@ class Athena(IApplication):
             else:
                 jobO = ' -c %s ' % self.options
 
-        if not self.option_file and not self.atlas_exetype in ['EXE', 'TRF']:
+        if not self.option_file:
             raise ApplicationConfigurationError(None,'Set option_file before calling prepare()')
         for opt_file in self.option_file:
             if not self.atlas_exetype in ['EXE', 'TRF']: 
