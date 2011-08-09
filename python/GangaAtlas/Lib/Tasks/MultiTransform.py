@@ -842,7 +842,7 @@ class MultiTransform(Transform):
                self.setPartitionStatus(p, 'bad')
 
            self.unit_partition_list[unit] = []
-           self.createPartitionList( uind )
+           self.createPartitionList( unit )
                           
    def createPartitionList( self, unit_num ):
 
