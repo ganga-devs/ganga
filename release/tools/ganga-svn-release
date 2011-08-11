@@ -101,6 +101,50 @@ def toolcmd(cmd):
         cmdpath = cmd
     acmd(cmdpath)
 
+def wait_all_tests_to_finish(outputdir):
+
+    startTime = int(time.time())
+
+    filesToSearch = ['Ganga.out', 'GangaRobot.out', 'GangaNG.out', 'GangaPanda.out', 'GangaAtlas.out', 'GangaLHCb.out']
+
+    #for test   
+    #filesToSearch = ['a.txt']
+
+    os.chdir(outputdir)
+
+    def isFileToSearchFor(x):
+
+        return x in filesToSearch
+
+    def isFileNew(x):
+
+        fullFileName = os.path.join(outputdir,x)
+        return os.path.getmtime(fullFileName) > startTime
+        
+    while True:
+
+        files = filter(os.path.isfile, os.listdir(outputdir))
+
+        matchingFiles = []
+
+        for f in files:
+
+            fullFileName = os.path.join(outputdir,f)
+
+            if f in filesToSearch and os.path.getmtime(fullFileName) > startTime:
+
+                matchingFiles.append(f)         
+
+
+        if len(matchingFiles) == len(filesToSearch):
+                break
+
+        time.sleep(60)
+
+    #todo send email to rel manager that tests are finished     
+    print 'Now we have to send email to rel manager'    
+        
+
 def send_mail(key):
         
     import smtplib
@@ -293,6 +337,7 @@ class PretestCommand:
             return
 
         outputdir = '%(prereldir)s/reports/latest/output'%CONFIG
+
         try:
             os.makedirs(outputdir)
         except Exception,e:
@@ -326,7 +371,10 @@ class PretestCommand:
             testresult.append(run_test(acc,n))
 
         print '*'*40
-        print "Now wait for tests to complete ..."
+        print "Now wait for tests to complete, a notification email will be sent to the release manager when all tests are finished."
+
+        wait_all_tests_to_finish(outputdir)
+        #wait_all_tests_to_finish('/home/ivan') 
 
 class TestReportCommand:
     "TEST REPORT: Create the summary web pages with the test results."
