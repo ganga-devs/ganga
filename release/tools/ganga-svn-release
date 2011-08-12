@@ -101,14 +101,27 @@ def toolcmd(cmd):
         cmdpath = cmd
     acmd(cmdpath)
 
+def get_rel_manager_email():
+
+    f = open('%(tagsdir_top)s/release_manager.php' % CONFIG, 'r')
+    content = f.read()
+    content = content.strip()   
+    f.close()
+
+    leftIndex = content.find('"')
+    rightIndex = content.rfind('"')
+
+    relManagerEmail = content[leftIndex+1:rightIndex]
+
+    return relManagerEmail      
+
 def wait_all_tests_to_finish(outputdir):
 
     startTime = int(time.time())
 
     filesToSearch = ['Ganga.out', 'GangaRobot.out', 'GangaNG.out', 'GangaPanda.out', 'GangaAtlas.out', 'GangaLHCb.out']
 
-    #for test   
-    #filesToSearch = ['a.txt']
+    currentDir = os.getcwd()    
 
     os.chdir(outputdir)
 
@@ -137,15 +150,19 @@ def wait_all_tests_to_finish(outputdir):
 
 
         if len(matchingFiles) == len(filesToSearch):
-                break
+            break
 
         time.sleep(60)
 
-    #todo send email to rel manager that tests are finished     
-    print 'Now we have to send email to rel manager'    
-        
+    rel_manager_email = get_rel_manager_email()
 
-def send_mail(key):
+    os.chdir(currentDir)
+
+    send_mail('testsfinished', receiver=rel_manager_email)
+
+    print 'Email sent to release manager'
+
+def send_mail(key, receiver=''):
         
     import smtplib
     import email
@@ -169,6 +186,12 @@ def send_mail(key):
         email_file = os.path.join(releaseToolsDir, 'release_tool_emails/release.txt')
         receivers = 'project-ganga-developers@cern.ch;project-ganga@cern.ch'   
         subject = 'Ganga release %s is ready' % CONFIG['version']
+   
+    elif key == 'testsfinished':
+
+        email_file = os.path.join(releaseToolsDir, 'release_tool_emails/testsfinished.txt')
+        receivers = receiver   
+        subject = 'Ganga tests for %s-pre are finished' % CONFIG['version']        
         
     elif key == 'testreports':
 
@@ -374,7 +397,6 @@ class PretestCommand:
         print "Now wait for tests to complete, a notification email will be sent to the release manager when all tests are finished."
 
         wait_all_tests_to_finish(outputdir)
-        #wait_all_tests_to_finish('/home/ivan') 
 
 class TestReportCommand:
     "TEST REPORT: Create the summary web pages with the test results."
