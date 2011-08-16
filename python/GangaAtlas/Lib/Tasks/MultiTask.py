@@ -80,7 +80,8 @@ class MultiTask(Task):
          name = self.name
          
       name_base = ["user",getNickname(),self.creation_date, name, "id_%i" % self.id ]
-      return ".".join(name_base) + "/"
+      
+      return (".".join(name_base) + "/").replace(" ", "_")
 
    def initializeFromDatasets(self,dataset_list):
       """ For each dataset in the dataset_list a unit is created. 

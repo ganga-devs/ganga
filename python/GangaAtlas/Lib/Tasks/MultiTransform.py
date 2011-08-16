@@ -9,6 +9,7 @@ from GangaAtlas.Lib.Athena.Athena import AthenaSplitterJob
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
+from dq2.common.DQException import DQException
 
 #config.addOption('cloudPreference',[],'list of preferred clouds to choose for AnaTask analysis')
 #config.addOption('backendPreference',["LCG","Panda","NG"],'order of preferred backends (LCG, Panda, NG) for AnaTask analysis')
@@ -989,7 +990,7 @@ class MultiTransform(Transform):
        else:
            name = self.name
           
-       return self._getParent().getContainerName()[:-1] + ".%s.%i/" % (name, self.getID())
+       return (self._getParent().getContainerName()[:-1] + ".%s.%i/" % (name, self.getID())).replace(" ", "_")
 
    def checkCompletedApp(self, app):
       j = app._getParent()
@@ -1010,9 +1011,12 @@ class MultiTransform(Transform):
           if containerinfo == {}:
               try:
                   dq2.registerContainer(trf_container)
-                  logger.debug('Registered container for Transform %i: %s' % (self.getID(), trf_container))
+                  logger.warning('Registered container for Transform %i: %s' % (self.getID(), trf_container))
+                  
               except Exception, x:
-                  logger.error('Problem registering container for Task %i, %s : %s %s' % (self.getID(), trf_container,x.__class__, x))
+                  logger.error('Problem registering container for Transform %i, %s : %s %s' % (self.getID(), trf_container,x.__class__, x))
+              except DQException, x:
+                  logger.error('DQ2 Problem registering container for Transform %i, %s : %s %s' % (self.getID(), trf_container,x.__class__, x))
                   
           try:
               dq2.registerDatasetsInContainer(trf_container, [ j.outputdata.datasetname ] )
@@ -1020,6 +1024,8 @@ class MultiTransform(Transform):
               pass
           except Exception, x:
               logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+          except DQException, x:
+              logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
       finally:
           dq2_lock.release()
 
@@ -1039,6 +1045,8 @@ class MultiTransform(Transform):
                   logger.debug('Registered container for Transform %i: %s' % (self.getID(), task_container))
               except Exception, x:
                   logger.error('Problem registering container for Task %i, %s : %s %s' % (self.getID(), task_container,x.__class__, x))
+              except DQException, x:
+                  logger.error('DQ2 Problem registering container for Task %i, %s : %s %s' % (self.getID(), task_container,x.__class__, x))
                   
           try:
               dq2.registerDatasetsInContainer(task_container, [ j.outputdata.datasetname ] )
@@ -1046,6 +1054,8 @@ class MultiTransform(Transform):
               pass
           except Exception, x:
               logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, task_container, x.__class__, x))
+          except DQException, x:
+              logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, task_container, x.__class__, x))
       finally:
           dq2_lock.release()
 
