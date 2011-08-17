@@ -124,15 +124,6 @@ def wait_all_tests_to_finish(outputdir):
     currentDir = os.getcwd()    
 
     os.chdir(outputdir)
-
-    def isFileToSearchFor(x):
-
-        return x in filesToSearch
-
-    def isFileNew(x):
-
-        fullFileName = os.path.join(outputdir,x)
-        return os.path.getmtime(fullFileName) > startTime
         
     while True:
 
@@ -144,6 +135,7 @@ def wait_all_tests_to_finish(outputdir):
 
             fullFileName = os.path.join(outputdir,f)
 
+            #if it is one of the files we search and is a new file
             if f in filesToSearch and os.path.getmtime(fullFileName) > startTime:
 
                 matchingFiles.append(f)         
@@ -171,7 +163,7 @@ def send_mail(key, receiver=''):
     releaseToolsDir = os.path.dirname(os.path.abspath(__file__))
 
     sender = 'project-ganga-developers@cern.ch'
-    receivers = 'idzhunov@cern.ch'
+    receivers = ''
     email_file = ''
     subject = ''
 
