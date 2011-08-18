@@ -101,6 +101,53 @@ def toolcmd(cmd):
         cmdpath = cmd
     acmd(cmdpath)
 
+def remove_prerelease(prereleaseDir):
+
+    acmd('rm -rf %s ' % prereleaseDir)
+    
+    #todo check for these links 
+    pre_tarball = '%(top)s/tarball/Ganga-%(version-pre)s.tar.gz' % CONFIG
+    try:
+        os.unlink(pre_tarball)
+        print 'sucessfully removed pre-release tarball %s' % pre_tarball
+    except OSError,e:
+        print 'Cannot delete pre-release tarball: %s' % str(e)  
+
+
+def remove_oldest_prereleases(installDir):
+
+    currentDir = os.getcwd()    
+
+    os.chdir(installDir)
+
+    def isPre(x):
+        return (x.endswith('-pre') and x.find('hotfix') == -1)
+
+    dirs = filter(os.path.isdir, os.listdir(installDir))
+    dirs = filter(isPre, os.listdir(installDir))
+    dirs = [os.path.join(installDir, d) for d in dirs] # add path to each dir
+    dirs.sort(key=lambda x: os.path.getmtime(x))
+
+    num_prereleases = len(dirs)
+
+    if num_prereleases == 0:
+
+        os.chdir(currentDir)        
+        return False
+
+    elif num_prereleases == 1:
+
+        remove_prerelease(dirs[0])
+        
+    else:
+
+        remove_prerelease(dirs[0])
+        remove_prerelease(dirs[1])
+
+    os.chdir(currentDir)            
+    return True
+
+
 def get_rel_manager_email():
 
     f = open('%(tagsdir_top)s/release_manager.php' % CONFIG, 'r')
@@ -262,6 +309,11 @@ class PrereleaseCommand:
             else:
                 print "Cannot continue...Terminating"
                 return
+
+        #todo uncomment and check if there is not enough disk space then call
+        #if not remove_oldest_prereleases(CONFIG['installdir']):
+        #    print "There is not enough disk space for creation of the prerelease, please remove some of the oldest releases in %s" % CONFIG['installdir']
+        #    return
 
         # checkout to ganga directory and rename it to prerelease version name
         toolcmd('ganga-svn-checkout -v %(version)s %(installdir)s'%CONFIG)
