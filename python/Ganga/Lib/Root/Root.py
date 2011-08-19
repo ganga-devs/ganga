@@ -6,7 +6,7 @@
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import FileItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Schema import FileItem, Schema, SimpleItem, Version, SharedItem
 from Ganga.GPIDev.Lib.File import File
 
 from Ganga.Utility.Config import makeConfig, getConfig, ConfigError
@@ -200,7 +200,8 @@ class Root(IApplication):
         'script' : FileItem(defvalue=File(),doc='A File object specifying the script to execute when Root starts',checkset='_checkset_script'), 
         'args' : SimpleItem(defvalue=[],typelist=['str','int'],sequence=1,doc="List of arguments for the script. Accepted types are numerics and strings"),
         'version' : SimpleItem(defvalue='5.18.00',doc="The version of Root to run"),
-        'usepython' : SimpleItem(defvalue = False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH.")
+        'usepython' : SimpleItem(defvalue = False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
+        'is_prepared' : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
         } )
     _category = 'applications'
     _name = 'Root'
@@ -219,6 +220,10 @@ class Root(IApplication):
         
     def configure(self,masterappconfig):
         return (None,None)
+
+    def prepare(self, force=False):
+        pass
+    
     
     def _checkset_script(self,value):
         """Callback used to set usepython to 1 if the script name has a *.py or *.PY extention.""" 
