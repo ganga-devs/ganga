@@ -888,7 +888,13 @@ class MultiTransform(Transform):
       try:
           sjl = splitter.split(self)
       except Exception, x:
-          logger.error("Exception during split %s %s\nDeactivating unit. Maybe no valid sites found?" % (x.__class__,x))
+          logger.error('General Exception during split %s %s\nDeactivating unit.' % (x.__class__,x))
+          self.unit_state_list[unit_num]['active'] = False
+          self.unit_state_list[unit_num]['configured'] = False
+          self.unit_state_list[unit_num]['reason'] = "Error during split. No valid site?"
+          return
+      except DQException, x:
+          logger.error("Exception in DQ2 during split %s %s\nDeactivating unit. Maybe no valid sites found?" % (x.__class__,x))
           self.unit_state_list[unit_num]['active'] = False
           self.unit_state_list[unit_num]['configured'] = False
           self.unit_state_list[unit_num]['reason'] = "Error during split. No valid site?"
