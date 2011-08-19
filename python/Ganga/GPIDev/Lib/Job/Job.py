@@ -163,7 +163,7 @@ class Job(GangaObject):
 
     _category = 'jobs'
     _name = 'Job'
-    _exportmethods = ['prepare','submit','remove','kill', 'resubmit', 'peek','fail', 'force_status','merge' ]
+    _exportmethods = ['prepare','unprepare','submit','remove','kill', 'resubmit', 'peek','fail', 'force_status','merge' ]
 
     default_registry = 'jobs'
 
@@ -597,62 +597,24 @@ class Job(GangaObject):
         Returns True on success.
         '''
     
-        send_to_sharedir = []
-
-        try:
-            #check to see if app is a configurable one (caught by AttributeError)
-            self.application.__getattribute__('is_prepared')
-        except AttributeError,msg:
-            msg = 'Cannot prepare job %s ; Prepare() is not implemented for %s applications.'%(self.id,self.application._name)
-            logger.error(msg)
-            raise PreparedStateError(msg)
-            return 0
-
-        if len(self.inputsandbox) > 0:
-            print "We have an ISB"
-            for inputfile in self.inputsandbox:
-                if not os.path.isfile(inputfile.name):
-                    raise Exception('File listed in inputsandbox not found: ' + inputfile.name)
-                else:
-                    send_to_sharedir.append(inputfile.name)
-            self.inputsandbox = []
-    
-        #has the job already been prepared? If so, then we'll create a copy of the configured job in the 'new' state
-        if (self.application.is_prepared is None) or (force is True):
-            try:
-                send_to_sharedir.extend(self.application.prepare())
-            except:
-                logger.info('Unable to prepare job %s, %s application.'%(self.id,self.application._name))
-                raise Exception('Unable to prepare job %s, %s application.'%(self.id,self.application._name))
-            else:
-
-                logger.info('Preparing job %s, %s application.'%(self.id,self.application._name))
-                #create the shared directory
-                self.application.is_prepared = ShareDir()
-                #get hold of the metadata object for storing shared directory reference counts
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                shared_dirname = self.application.is_prepared.name
-                #add the newly created shared directory into the metadata system
-                shareref.add(self.application.is_prepared.name)
-                print send_to_sharedir
-                for inputfile in send_to_sharedir:
-                    print 'trying to copy ', inputfile, ' to ', shared_dirname
-                    shutil.copy2(inputfile, shared_dirname)
-                    #We want the files in ShareDir to be referenced in the inputsandbox
-                    self.inputsandbox.append(os.path.join(shared_dirname,os.path.basename(inputfile)))
-                return 1
+        if (self.application.is_prepared is None) or (force == True):
+            add_to_inputsandbox = self.application.prepare(force=True)
+            if isType(add_to_inputsandbox,list):
+                self.inputsandbox.extend(add_to_inputsandbox)
         else:
-            logger.info('%s application (job %s) was already prepared; not preparing again.'%(self.application._name,self.id))
-            logger.info('If you really want to prepare the job, use \'job.prepare(force=True)\'')
-            return 0
-#        except:
-#            msg = 'Unexpected error: %s'%(sys.exc_info()[0])
-#            raise PreparedStateError(msg)
+            msg = "The application associated with job %d has already been prepared. To force the operation, call prepare(force=True)" % (self.id)
+            raise JobError(msg)
+            
 
 
+    def unprepare(self,force=False):
+        '''Revert the application associated with a job to the unprepared state
+        Returns True on success.
+        '''
+        self.application.unprepare()
 
 
-    def submit(self,keep_going=None,keep_on_fail=None):
+    def submit(self,keep_going=None,keep_on_fail=None,prepare=False):
         '''Submits a job. Return true on success.
 
         First  the  application   is  configured  which  may  generate
@@ -731,7 +693,19 @@ class Job(GangaObject):
                 raise JobError(msg)
 
             self.getDebugWorkspace().remove(preserve_top=True)
-            self.prepare()
+
+            if (self.application.is_prepared is None) or (prepare == True):
+                self.prepare(force=True)
+                #print "add_to_inputsandbox:", add_to_inputsandbox
+                #if add_to_inputsandbox is not None:
+                #    self.inputsandbox.extend(add_to_inputsandbox)
+                #return 1
+            else:
+                msg = "Job %d's application has already been prepared." % (self.id)
+                logger.info(msg)
+ 
+
+            #self.prepare()
             appmasterconfig = self.application.master_configure()[1] # FIXME: obsoleted "modified" flag
             # split into subjobs
 #            try:
@@ -944,7 +918,7 @@ class Job(GangaObject):
             #decrement the reference counter.
             if self.application.__getattribute__('is_prepared'):
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                shareref.remove(self.application.is_prepared.name)
+                shareref.decrease(self.application.is_prepared.name)
                 
 
     def fail(self,force=False):
