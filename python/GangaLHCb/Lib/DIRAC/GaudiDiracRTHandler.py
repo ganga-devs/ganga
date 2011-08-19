@@ -8,6 +8,8 @@ from DiracUtils import *
 from DiracScript import *
 from GangaLHCb.Lib.Gaudi.RTHUtils import *
 from Ganga.GPIDev.Lib.File import FileBuffer, File
+from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
+from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -40,8 +42,8 @@ gaudiSoftwareVersions = None
 class GaudiDiracRTHandler(IRuntimeHandler):
     """The runtime handler to run Gaudi jobs on the Dirac backend"""
 
-    def master_prepare(self,app,appconfig):
-        # check version
+    def master_prepare(self,app,appmasterconfig):
+        ## check version
         global gaudiSoftwareVersions
         if not gaudiSoftwareVersions:
             from Dirac import Dirac
@@ -67,20 +69,50 @@ class GaudiDiracRTHandler(IRuntimeHandler):
                     msg = 'Invalid platform: %s. Valid platforms: %s' % \
                           (app.platform,str(platforms))
                     raise ApplicationConfigurationError(None,msg)
-        sandbox = get_master_input_sandbox(app.getJobObject(),app.extra) 
-        c = StandardJobConfig('',sandbox,[],[],None)
-        return c
 
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        if app.extra.inputdata and app.extra.inputdata.hasLFNs():        
-            cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ' \
-                       '["xmlcatalog_file:pool_xml_catalog.xml"]\n'
-            app.extra.input_buffers['data.py'] += cat_opts
+        import pickle
+        file=open(os.path.join(app.is_prepared.name,'outputsandbox.pkl'),'rb')
+        outputsandbox = pickle.load(file)
+        file.close()
+        ## Pickup outputdata defined in the options file
+        file=open(os.path.join(app.is_prepared.name,'outputdata.pkl'),'rb')
+        outdata = pickle.load(file)
+        file.close()
+
+        ## Note EITHER the master inputsandbox OR the job.inputsandbox is added to
+        ## the subjob inputsandbox depending if the jobmasterconfig object is present
+        ## or not... Therefore combine the job.inputsandbox with appmasterconfig. Currently emtpy.
+        inputsandbox = app.getJobObject().inputsandbox[:]
+        inputsandbox += appmasterconfig.getSandboxFiles()
+
+        return GaudiJobConfig(inputbox=inputsandbox,outputbox=outputsandbox,outputdata=outdata)
+
+    def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
+
+        job=app.getJobObject()
+        inputsandbox=[]
+        
+        if job.inputdata:
+            data_str = job.inputdata.optionsString()
+            if job.inputdata.hasLFNs():        
+                cat_opts = '\nFileCatalog().Catalogs = ' \
+                           '["xmlcatalog_file:pool_xml_catalog.xml"]\n'
+                data_str += cat_opts
+            
+            inputsandbox.append(FileBuffer('data.py',data_str).create())
+
+        #sandbox = get_input_sandbox(app.extra)
+        inputsandbox += appsubconfig.getSandboxFiles()
+
+        outputsandbox = job.outputsandbox[:]
+        outputsandbox += jobmasterconfig.getOutputSandboxFiles()
+        outputsandbox += appsubconfig.getOutputSandboxFiles()
+
+
 
         script = self._create_gaudi_script(app)
-        sandbox = get_input_sandbox(app.extra)
-        outputsandbox = app.extra.outputsandbox 
-        c = StandardJobConfig(script,sandbox,[],outputsandbox,None)
+
+        #c = StandardJobConfig(script,sandbox,[],outputsandbox,None)
 
         dirac_script = DiracScript()
         dirac_script.job_type = 'LHCbJob()'
@@ -88,14 +120,18 @@ class GaudiDiracRTHandler(IRuntimeHandler):
         dirac_script.platform = app.platform
         dirac_script.output_sandbox = outputsandbox
 
-        if app.extra.inputdata:
-            dirac_script.inputdata = DiracInputData(app.extra.inputdata)
-          
-        if app.extra.outputdata:
-            dirac_script.outputdata = app.extra.outputdata
+        if job.inputdata:
+            dirac_script.inputdata = DiracInputData(job.inputdata)
 
-        c.script = dirac_script        
+        outputdata = OutputData()
+        outputdata.files += jobmasterconfig.outputdata
+        if job.outputdata:
+            dirac_script.outputdata = job.outputdata
+
+        c = StandardJobConfig(script,inputbox=inputsandbox,outputbox=outputsandbox)
+        c.script = dirac_script
         return c
+        #return StandardJobConfig(dirac_script,inputbox=inputsandbox,outputbox=outputsandbox)
 
     def _create_gaudi_script(self,app):
         '''Creates the script that will be executed by DIRAC job. '''

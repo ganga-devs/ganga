@@ -80,7 +80,16 @@ class Gaudi(Francesc):
              '\"myPlots.root"\\nEventSelector().PrintFreq = 100\n or by '  \
              'using triple quotes around a multiline string.'
     schema['extraopts'] = SimpleItem(defvalue=None,
-                                     typelist=['str','type(None)'],doc=docstr) 
+                                     typelist=['str','type(None)'],doc=docstr)
+    docstr = 'Location of shared resources. Presence of this attribute implies'\
+          'the application has been prepared.'
+    schema['is_prepared'] = SimpleItem(defvalue=None,
+                                       strict_sequence=0,
+                                       visitable=1,
+                                       copyable=1,
+                                       typelist=['type(None)','str'],
+                                       protected=1,
+                                       doc=docstr)
     _schema = Schema(Version(2, 1), schema)
 
     def _auto__init__(self):
@@ -88,12 +97,25 @@ class Gaudi(Francesc):
         set up some basic structure like version platform..."""
         if not self.appname: return 
         self._init(self.appname,True)
-            
-    def master_configure(self):
 
-        job = self.getJobObject()
-        self._master_configure()
-        inputs = self._check_inputs()         
+##     def _get_parser(self):
+##         import pickle
+
+##         if self.is_prepared is None:
+##             msg = "Application should be prepared but isn\'t"
+##             raise ApplicationConfigurationError(None,msg)   
+
+##         parser_file = open(os.path.join(self.is_prepared.name,'parser.pkl'),'rb')
+
+##         if not os.path.isfile(parser_file.name):
+##             msg = 'Unable to find pickled options parser.'
+##             raise ApplicationConfigurationError(None,msg)
+##         parser = pickle.load(parser_file)
+
+##         return parser
+
+
+    def _get_parser(self):
         optsfiles = [fileitem.name for fileitem in self.optsfile]
         try:
             parser = PythonOptionsParser(optsfiles,self.extraopts,self.shell)
@@ -108,40 +130,86 @@ class Gaudi(Francesc):
                   'by doing job.peek(\'../debug/gaudirun.stdout\').' % f.name
             #logger.error(msg)
             raise ApplicationConfigurationError(None,msg)
+        return parser
 
-        self.extra.master_input_buffers['options.pkl'] = parser.opts_pkl_str
-        inputdata = parser.get_input_data()
-  
-        # If user specified a dataset, ignore optsfile data but warn the user.
-        if len(inputdata.files) > 0:
-            if job.inputdata:
-                msg = 'A dataset was specified for this job but one was ' \
-                      'also defined in the options file. Data in the options '\
-                      'file will be ignored...hopefully this is OK.' 
-                logger.warning(msg)            
-            else:
-                logger.info('Using the inputdata defined in the options file.')
-                self.extra.inputdata = inputdata
-        
-        self.extra.outputsandbox,outputdata = parser.get_output(job)
-        self.extra.outputdata.files += outputdata
-        self.extra.outputdata.files = unique(self.extra.outputdata.files)
-
-        # write env into input dir
+    def prepare(self):
+        send_to_share = self._prepare()
+        job = self.getJobObject()
+        parser = self._check_inputs()         
         input_dir = job.getInputWorkspace().getPath()
-        file = gzip.GzipFile(input_dir + '/gaudi-env.py.gz','wb')
+
+        send_to_share.append(FileBuffer(os.path.join(input_dir,'options.pkl'),
+                                        parser.opts_pkl_str).create())
+
+        ## write env into input dir and share dir
+        file = gzip.GzipFile(os.path.join(input_dir,'gaudi-env.py.gz'),'wb')
         file.write('gaudi_env = %s' % str(self.shell.env))
         file.close()
-        
-        return (inputs, self.extra) # return (changed, extra)
+        send_to_share.append(File(os.path.join(input_dir,'gaudi-env.py.gz')))
 
-    def configure(self,master_appconfig):
-        self._configure()
-        return (None,self.extra)
+        ## store the outputsandbox/outputdata defined in the options file
+        ## Can remove this when no-longer need to define outputdata in optsfiles
+        outputsandbox, outputdata = parser.get_output(job)
+        import pickle
+        ## sandbox
+        file = open(os.path.join(input_dir,'outputsandbox.pkl'),'wb')
+        pickle.dump(outputsandbox,file)
+        file.close()
+        send_to_share.append(File(os.path.join(input_dir,'outputsandbox.pkl')))
+        ## data
+        file = open(os.path.join(input_dir,'outputdata.pkl'),'wb')
+        pickle.dump(outputdata,file)
+        file.close()
+        send_to_share.append(File(os.path.join(input_dir,'outputdata.pkl')))
+
+        return [fb.name for fb in send_to_share]
+    
+    def master_configure(self):
+        #self._master_configure()
+        #appmasterconfig = GaudiAppConfig()
+
+#        parser = self._get_parser()
+
+  ##       job = self.getJobObject()
+##         if job.inputdata: self.appconfig.inputdata = job.inputdata
+##         if job.outputdata: self.appconfig.outputdata = job.outputdata
+
+ #       self.appconfig.outputsandbox,outputdata = parser.get_output(job)
+##         self.appconfig.outputdata.files += outputdata
+##         self.appconfig.outputdata.files = unique(self.appconfig.outputdata.files)
+        #self.appconfig = appmasterconfig
+
+        
+        return (None, StandardJobConfig()) # return (changed, extra)
+
+    def configure(self, appmasterconfig):
+        #self._configure()
+        #appsubconfig = GaudiAppConfig()
+
+        #data_str = self.appconfig.inputdata.optionsString()
+
+
+
+##         # pick up the data.py contents from the splitter
+##         name_list = [fb.name for fb in self.appconfig.inputsandbox]
+##         data_count = name_list.count('data.py')         
+##         if data_count == 1:
+##             item = name_list.index('data.py')
+##             full_data = self.appconfig.inputsandbox[item].getContents()
+##             full_data += data_str
+##             appsubconfig.inputsandbox.append(FileBuffer('data.py',full_data).create())
+##         elif not data_count:
+##             appsubconfig.inputsandbox.append(FileBuffer('data.py',data_str).create())
+##         else:
+##             msg = 'ERROR: more than one data.py file defined.'
+##             logger.error('You should not be seeing this, if you are then it is a bug!')
+##             raise ApplicationConfigurationError(None,msg)
+
+
+        return (None, StandardJobConfig())
 
     def _check_inputs(self):
         """Checks the validity of some of user's entries for Gaudi schema"""
-
         self._check_gaudi_inputs(self.optsfile,self.appname)        
         if self.package is None:
             msg = "The 'package' attribute must be set for application. "
@@ -149,9 +217,11 @@ class Gaudi(Francesc):
 
         inputs = None
 
+        ## Warn user that no optsfiles given
         if len(self.optsfile)==0:
             logger.warning("The 'optsfile' is not set. I hope this is OK!")
-        
+
+        ## Check for non-exting optsfiles defined
         nonexistentOptFiles = []
         for f in self.optsfile:
             if not os.path.isfile(f.name):
@@ -164,7 +234,17 @@ class Gaudi(Francesc):
             msg=tmpmsg[:-2]+']'
             raise ApplicationConfigurationError(None,msg)
 
-        return inputs
+
+        ## Check in any datasets defined in optsfiles
+        parser = self._get_parser()
+        inputdata = parser.get_input_data()
+        if len(inputdata.files) > 0:
+            msg='Found inputdataset defined in optsfiles,'\
+                ' This is no longer allowed, please use the'\
+                'inputdata attribute of job.inputdata'
+            raise ApplicationConfigurationError(None,msg)
+
+        return parser
 
     def readInputData(self,optsfiles,extraopts=False):
         """Returns a LHCbDataSet object from a list of options files. The

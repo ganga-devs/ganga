@@ -13,7 +13,7 @@ from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
 from Ganga.Utility.util import unique 
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
-from Francesc import GaudiExtras
+from GaudiAppConfig import *
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -28,12 +28,11 @@ def copy_app(app):
         else:
             c = copy.copy(getattr(app,name))
             setattr(cp_app,name,c)
-    if not hasattr(app,'extra'): return cp_app
-    cp_app.extra = GaudiExtras() 
-    cp_app.extra.input_buffers = app.extra.input_buffers.copy()
-    cp_app.extra.input_files = app.extra.input_files[:]
-    cp_app.extra.outputsandbox = app.extra.outputsandbox[:]
-    cp_app.extra.outputdata = app.extra.outputdata
+    if not hasattr(app,'appconfig'): return cp_app
+    cp_app.appconfig = GaudiAppConfig() 
+    cp_app.appconfig.inputsandbox = app.appconfig.inputsandbox[:]
+    cp_app.appconfig.outputsandbox = app.appconfig.outputsandbox[:]
+    cp_app.appconfig.outputdata = app.appconfig.outputdata
     return cp_app 
 
 def create_gaudi_subjob(job, inputdata):
@@ -43,12 +42,12 @@ def create_gaudi_subjob(job, inputdata):
     j.backend = job.backend # no need to deepcopy 
     if inputdata:
         j.inputdata = inputdata
-        if hasattr(j.application,'extra'):
-            j.application.extra.inputdata = j.inputdata
+        if hasattr(j.application,'appconfig'):
+            j.application.appconfig.inputdata = j.inputdata
     else:
         j.inputdata = None
-        if hasattr(j.application,'extra'):
-            j.application.extra.inputdata = LHCbDataset()
+        if hasattr(j.application,'appconfig'):
+            j.application.appconfig.inputdata = LHCbDataset()
     j.outputsandbox = job.outputsandbox[:]
     j.outputdata = job.outputdata
     return j
@@ -120,8 +119,8 @@ class SplitByFiles(ISplitter):
 
         subjobs=[]
         inputdata = job.inputdata
-        if hasattr(job.application,'extra'):
-            inputdata = job.application.extra.inputdata
+        if hasattr(job.application,'appconfig'):
+            inputdata = job.application.appconfig.inputdata
         inputs = LHCbDataset()
         inputs.depth = inputdata.depth
         if int(self.maxFiles) == -1:
@@ -158,7 +157,14 @@ class OptionsFileSplitter(ISplitter):
         subjobs=[]
         for i in self.optsArray:
             j = create_gaudi_subjob(job, job.inputdata)
-            j.application.extra.input_buffers['data.py'] += i
+  ##           for index, filename in enumerate( [fb.name for fb in j.application.appconfig.inputsandbox] ):
+##                 if filename == 'data.py':
+##                     data_str = j.application.appconfig.inputsandbox[index].append(i)
+## ##                  data_str = j.application.appconfig.inputsandbox[index].getContents()
+## ##                     data_str+=i
+## ##                     j.application.appconfig.inputsandbox.append(FileBuffer('data.py',data_str).create())
+## ##                     j.application.appconfig.inputsandbox = unique(j.application.appconfig.inputsandbox)
+            j.application.appconfig.inputsandbox.append(FileBuffer('data.py',i))
             subjobs.append(j)
         return subjobs
 
@@ -195,7 +201,7 @@ class GaussSplitter(ISplitter):
             spillOver = ["GaussGenPrev","GaussGenPrevPrev","GaussGenNext"] 
             for s in spillOver : 
                 opts += 'GenInit("%s").FirstEventNumber = %d\n' % (s,first) 
-            j.application.extra.input_buffers['data.py'] += opts
+            j.application.appconfig.inputsandbox.append(FileBuffer('data.py',opts))
             logger.debug("Creating job %d w/ FirstEventNumber = %d"%(i,first))
             subjobs.append(j)
             
