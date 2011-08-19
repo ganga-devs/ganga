@@ -118,9 +118,10 @@ class ShareDir(GangaObject):
 
     """
     _schema = Schema(Version(1,0), {'name': SimpleItem(defvalue='',doc='path to the file source'),
-                                    'subdir': SimpleItem(defvalue=(os.path.join(expandfilename(config['gangadir']),'shared',config['user'])),doc='destination subdirectory (a relative path)')})
+                                    'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)')})
     _category = 'shareddirs'
     _name = "ShareDir"
+    _shared_path = os.path.join(expandfilename(config['gangadir']),'shared',config['user'])
     def _readonly(self):
         return True
 
