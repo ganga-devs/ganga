@@ -11,6 +11,7 @@ logger = getLogger()
 import os.path
 from Ganga.Utility.files import expandfilename
 from Ganga.Core.GangaRepository import getRegistries, RepositoryError
+from Ganga.Core.GangaRepository import getRegistry
 
 def requiresAfsToken():
     from Ganga.Utility.files import fullpath
@@ -91,9 +92,41 @@ def bootstrap():
     return retval
 
 def shutdown():
-    logger.debug("registry shutdown")
+    logger.debug('registry shutdown')
     for registry in getRegistries():
         if not registry.name in started_registries: continue
+        if registry.name == 'jobs':
+            resp = 'n'
+            for job in getRegistry('jobs').__iter__():
+                if (resp != 'N'):
+                    if job.application.is_prepared is not None:
+                        shareddir = job.application.is_prepared.name
+                        if not os.path.isdir(shareddir):
+                            if (resp == 'A'):
+                                print 'deleting %s' % shareddir
+                                shutil.rmtree(shareddir)
+                            else:
+                                print "%s not found" % shareddir
+                                logger.warning("Can't find shared directory %s associated with job ID %s" % (shareddir, job.id))
+                                msg = 'Do you want to remove the missing directory %s? (y/n/All/[N]one)' %(shareddir)
+                                resp = raw_input(msg)
+                                if (resp == 'y'):
+                                    logger.warning("Deleting %s") %(shareddir)
+                                    shutil.rmtree(shareddir)
+                                elif (resp == 'n'):
+                                    print 'not deleting %s' %(shareddir)
+                                elif (resp == 'N'):
+                                    pass
+                                elif (resp == 'A'):
+                                    print 'deleting %s' %(shareddir)
+                                    shutil.rmtree(shareddir)
+                                else:
+                                    resp = 'N'
+                else:
+                    pass
+                            
+                            
+                       
         started_registries.remove(registry.name) # in case this is called repeatedly, only call shutdown once
         registry.shutdown() # flush and release locks
 
