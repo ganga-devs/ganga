@@ -26,8 +26,8 @@ class StandardJobConfig:
         exe - executable string to be run on the worker node or a File object to be shipped as executable script to the worker node
         args - list of strings which are passed as arguments to the executable string or File objects which are automatically added to the sandbox
         inputbox - list of additional File or FileBuffer objects which go to the sandbox
-	outputbox - list of additional files which should be returned by the sandbox
-	env - environment to be set for execution of the job
+    outputbox - list of additional files which should be returned by the sandbox
+    env - environment to be set for execution of the job
 
         The constructor does processValues() automatically so the construction of the object may failed with exceptions raised by that method.
         Notes for derived classes:
@@ -38,7 +38,7 @@ class StandardJobConfig:
         self.inputbox = inputbox[:]
         self.args = args
         self.outputbox = outputbox[:]
-	self.env = env
+        self.env = env
         
         self.__all_inputbox = []
         self.__args_strings = []
@@ -94,7 +94,6 @@ class StandardJobConfig:
         self.__exe_string = ""
         self.__sandbox_check = {}
 
-	
 
         def _get_path_in_sandbox(f):
             ''' A helper which checks conflicts in sandbox.
@@ -107,10 +106,9 @@ class StandardJobConfig:
             self.__sandbox_check[fn] = f.name
             return fn
 
-	#to check for double file
-	
-	for f in self.inputbox:
-		fn = _get_path_in_sandbox(f)
+    #to check for double file
+    for f in self.inputbox:
+        fn = _get_path_in_sandbox(f)
 
         # convert all args into strings (some of args may be FileItems)
         # make an assumption that all File Items go to the sandbox (thus convert to basename)
