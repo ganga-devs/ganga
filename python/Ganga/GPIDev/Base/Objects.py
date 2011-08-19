@@ -451,10 +451,9 @@ class GangaObject(Node):
             if item.isA(Schema.SharedItem):
                 shared_dir=getattr(c,name)
                 try:
-                    print shared_dir.name
                     from Ganga.Core.GangaRepository import getRegistry
                     shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                    shareref.add(shared_dir.name)
+                    shareref.increase(shared_dir.name)
                 except AttributeError:
                     pass
 #                except:
