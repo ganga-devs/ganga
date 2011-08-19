@@ -14,8 +14,10 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.Core.GangaRepository import getRegistry
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.Core import ApplicationConfigurationError
 
-import os
+import os, shutil
 
 class Executable(IApplication):
     """
@@ -62,19 +64,46 @@ class Executable(IApplication):
 
     def __init__(self):
         super(Executable,self).__init__()
+
+    def _readonly(self):
+        """An application is read-only once it has been prepared."""
+        if self.is_prepared is None:
+            return 0
+        else:
+            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
+            return 1
+
         
     def prepare(self,force=False):
+        if self._getRegistry() is None:
+            raise ApplicationConfigurationError(None,'Applications not associated with a persisted object (Job or Box) cannot be prepared.')
+    
+        if (self.is_prepared is not None) and (force is not True):
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
+
+
+        print self._schema
+        self.configure(self)
         #does the application contains any File items
         #because of bug #82818 they don't work properly
         #difficult to distinguish between, say, /bin/echo and /home/user/echo; we don't necessarily
         #want to copy the former into the sharedir, but we would the latter. 
-        #if we simply test for the existence of the self.exe file, then a system file won't be found, but a 
-        #"local" user-space file will, because it should have an absolute path or be in the pwd (is this true?)
         #lets use the same criteria as the configure() method for checking file existence & sanity
         #this will bail us out of prepare if there's somthing odd with the job config - like the executable
         #file is unspecified, has a space or is a relative path
-        self.configure(self)
+
+        logger.info('Preparing %s application.'%(self._name))
+        self.is_prepared = ShareDir()
+        #get hold of the metadata object for storing shared directory reference counts
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        shared_dirname = self.is_prepared.name
+        #add the newly created shared directory into the metadata system
+        shareref.increase(self.is_prepared.name)
+
+
+
         #should we check for blank "" and/or None type self.exes? or does self.configure() do that for us?
+        send_to_sharedir = []
         if type(self.exe) is str:
             send_to_sharedir = self.exe
             #we have a file. if it's an absolute path, copy it to the shared dir
@@ -93,14 +122,30 @@ class Executable(IApplication):
                     os.makedirs(tmpDir)
                 send_to_sharedir = os.path.join(tmpDir,os.path.basename(send_to_sharedir))
                 wrap_cmd='''#!/bin/bash
-%s
+%s $*
 ''' %(self.exe)
                 file(send_to_sharedir,'w').write(wrap_cmd)
         elif type(self.exe) is File:
             send_to_sharedir = self.exe.name
             logger.info('Sending file object %s to shared directory'%send_to_sharedir)
-        return send_to_sharedir
+        logger.info('Copying %s to %s' %(send_to_sharedir, self.is_prepared.name))
+        shutil.copy2(send_to_sharedir, self.is_prepared.name)
+        import time
+        time.sleep(10)
 
+        self.exe=File(os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir)))
+        os.chmod(self.exe.name, 0755)
+
+        #return [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
+        return 1
+
+    def unprepare(self, force=False):
+        if self.is_prepared is not None:
+            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+            shareref.decrease(self.is_prepared.name)
+            self.is_prepared = None
+    
+    
 
     def configure(self,masterappconfig):
         from Ganga.Core import ApplicationConfigurationError
@@ -120,9 +165,11 @@ class Executable(IApplication):
                     dirn,filen = os.path.split(x)
                     if not filen:
                         raise ApplicationConfigurationError(None,'exe "%s" is a directory'%x)
-                    if dirn and not os.path.isabs(dirn):
+                    if dirn and not os.path.isabs(dirn) and self.is_prepared is None:
                         raise ApplicationConfigurationError(None,'exe "%s" is a relative path'%x)
-
+                    if not os.path.basename(x) == x:
+                        if not os.path.isfile(x):
+                            raise ApplicationConfigurationError(None,'%s: file not found'%x)
 
             else:
               try:
