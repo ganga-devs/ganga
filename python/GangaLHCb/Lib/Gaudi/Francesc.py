@@ -90,6 +90,7 @@ class Francesc(IApplication):
         """Checks the validity of some of user's entries."""
         for fileitem in optsfiles:
             fileitem.name = os.path.expanduser(fileitem.name)
+            fileitem.name = os.path.expandvars(fileitem.name)
             fileitem.name = os.path.normpath(fileitem.name)
     
         if appname is None:

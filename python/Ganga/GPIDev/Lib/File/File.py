@@ -52,7 +52,11 @@ class File(GangaObject):
                 self.name = expanded
         else:
             super(File,self).__construct__(args)
-        
+
+    def _attribute_filter__set__(self,attribName,attribValue):
+        if attribName is 'name':
+            return expandfilename(attribValue)
+    
     def getPathInSandbox(self):
         """return a relative location of a file in a sandbox: subdir/name"""
         from Ganga.Utility.files import real_basename       
