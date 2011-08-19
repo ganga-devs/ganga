@@ -73,7 +73,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
 
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         if app.extra.inputdata and app.extra.inputdata.hasLFNs():        
-            cat_opts = '\nFileCatalog().Catalogs = ' \
+            cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ' \
                        '["xmlcatalog_file:pool_xml_catalog.xml"]\n'
             app.extra.input_buffers['data.py'] += cat_opts
 
