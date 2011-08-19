@@ -21,7 +21,7 @@ class StandardJobConfig:
     
     """
 
-    def __init__(self,exe=None,inputbox=[],args=[],outputbox=[],env={}):
+    def __init__(self,exe='',inputbox=[],args=[],outputbox=[],env={}):
         """
         exe - executable string to be run on the worker node or a File object to be shipped as executable script to the worker node
         args - list of strings which are passed as arguments to the executable string or File objects which are automatically added to the sandbox

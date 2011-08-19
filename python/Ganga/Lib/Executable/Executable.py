@@ -10,8 +10,9 @@ from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import File
-from Ganga.GPIDev.Lib.File import ShareDir
+from Ganga.GPIDev.Lib.File import *
+#from Ganga.GPIDev.Lib.File import File
+#from Ganga.GPIDev.Lib.File import SharedDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
@@ -49,7 +50,7 @@ class Executable(IApplication):
         'exe' : SimpleItem(defvalue='echo',typelist=['str','Ganga.GPIDev.Lib.File.File.File'],doc='A path (string) or a File object specifying an executable.'), 
         'args' : SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File.File','int'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
-        'is_prepared' : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
         } )
     _category = 'applications'
     _name = 'Executable'
