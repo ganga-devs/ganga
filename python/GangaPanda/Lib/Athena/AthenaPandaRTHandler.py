@@ -670,7 +670,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                             Client.addDataset(f.destinationDBlock,False,location=subjobOutputLocation)
                             dq2_set_dataset_lifetime(f.destinationDBlock, subjobOutputLocation)
                             self.indivOutDsList.append(f.destinationDBlock)
-                            addDatasetsToContainer(f.dataset,[f.destinationDBlock],False)
+                            addDatasetsToContainer(f.dataset,[f.destinationDBlock])
                         except exceptions.SystemExit:
                             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(f.dataset,sys.exc_info()[0],sys.exc_info()[1]))
 
