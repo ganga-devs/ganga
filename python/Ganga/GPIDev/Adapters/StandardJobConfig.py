@@ -106,9 +106,9 @@ class StandardJobConfig:
             self.__sandbox_check[fn] = f.name
             return fn
 
-    #to check for double file
-    for f in self.inputbox:
-        fn = _get_path_in_sandbox(f)
+        #to check for double file
+        for f in self.inputbox:
+            fn = _get_path_in_sandbox(f)
 
         # convert all args into strings (some of args may be FileItems)
         # make an assumption that all File Items go to the sandbox (thus convert to basename)
