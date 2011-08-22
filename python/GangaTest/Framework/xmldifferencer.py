@@ -209,7 +209,7 @@ def start(cmd_args=None):
         dirs = filter(os.path.isdir, os.listdir(search_dir))
         dirs = filter(isPre, os.listdir(search_dir))
         dirs = [os.path.join(search_dir, d) for d in dirs] # add path to each dir
-        dirs.sort(key=lambda x: os.path.getmtime(x))
+        dirs.sort(lambda x,y: cmp(os.path.getmtime(x),os.path.getmtime(y)))
 
         newversion = os.path.basename(dirs[-1])
         oldversion = os.path.basename(dirs[-2])
