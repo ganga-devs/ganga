@@ -1,3 +1,4 @@
+export PATH=/usr/bin:$PATH
 REL=v$10$2r$3
 VERSION=$1.$2.$3-pre
 svn update ~/scripts
