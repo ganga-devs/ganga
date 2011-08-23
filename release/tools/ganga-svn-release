@@ -105,13 +105,32 @@ def remove_prerelease(prereleaseDir):
 
     acmd('rm -rf %s ' % prereleaseDir)
     
-    #todo check for these links 
-    pre_tarball = '%(top)s/tarball/Ganga-%(version-pre)s.tar.gz' % CONFIG
+    prerel_basename = os.path.basename(prereleaseDir)   
+
+    #remove the tarball also
+    pre_tarball = '%s/tarball/Ganga-%s.tar.gz' % (CONFIG['top'], prerel_basename)
     try:
         os.unlink(pre_tarball)
         print 'sucessfully removed pre-release tarball %s' % pre_tarball
     except OSError,e:
         print 'Cannot delete pre-release tarball: %s' % str(e)  
+
+
+def get_count_releases(installDir):
+
+    currentDir = os.getcwd()    
+
+    os.chdir(installDir)
+
+    def isRelease(x):
+        return (x[1] == '.' and x[3] == '.')
+
+    dirs = filter(os.path.isdir, os.listdir(installDir))
+    dirs = filter(isRelease, os.listdir(installDir))
+
+    os.chdir(currentDir)   
+
+    return len(dirs)
 
 
 def remove_oldest_prereleases(installDir):
@@ -121,12 +140,12 @@ def remove_oldest_prereleases(installDir):
     os.chdir(installDir)
 
     def isPre(x):
-        return (x.endswith('-pre') and x.find('hotfix') == -1)
+        return (x.find('-pre') > -1)
 
     dirs = filter(os.path.isdir, os.listdir(installDir))
     dirs = filter(isPre, os.listdir(installDir))
     dirs = [os.path.join(installDir, d) for d in dirs] # add path to each dir
-    dirs.sort(key=lambda x: os.path.getmtime(x))
+    dirs.sort(lambda x,y: cmp(os.path.getmtime(x), os.path.getmtime(y)))
 
     num_prereleases = len(dirs)
 
@@ -136,10 +155,14 @@ def remove_oldest_prereleases(installDir):
         return False
 
     elif num_prereleases == 1:
+        
+        print 'Removing oldest prereleases to free space in the install directory' 
 
         remove_prerelease(dirs[0])
         
     else:
+
+        print 'Removing oldest prereleases to free space in the install directory'
 
         remove_prerelease(dirs[0])
         remove_prerelease(dirs[1])
@@ -310,10 +333,11 @@ class PrereleaseCommand:
                 print "Cannot continue...Terminating"
                 return
 
-        #todo uncomment and check if there is not enough disk space then call
-        #if not remove_oldest_prereleases(CONFIG['installdir']):
-        #    print "There is not enough disk space for creation of the prerelease, please remove some of the oldest releases in %s" % CONFIG['installdir']
-        #    return
+        #if there are a lot of releases we should clean some disk space
+        if get_count_releases(CONFIG['installdir']) > 199:
+            if not remove_oldest_prereleases(CONFIG['installdir']):     
+                print "There is not enough disk space for creation of the prerelease, please remove some of the oldest releases in %s" % CONFIG['installdir']
+                return
 
         # checkout to ganga directory and rename it to prerelease version name
         toolcmd('ganga-svn-checkout -v %(version)s %(installdir)s'%CONFIG)
@@ -512,6 +536,12 @@ class ReleaseCommand:
         if os.path.isdir(CONFIG['reldir']):
             print 'release already exists in',CONFIG['reldir']
             return
+
+        #if there are a lot of releases we should clean some disk space
+        if get_count_releases(CONFIG['installdir']) > 199:
+            if not remove_oldest_prereleases(CONFIG['installdir']):     
+                print "There is not enough disk space for creation of the prerelease, please remove some of the oldest releases in %s" % CONFIG['installdir']
+                return
 
         print 'Exporting sources with GLOBAL TAG %(tag)s' % CONFIG
 
