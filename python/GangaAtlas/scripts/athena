@@ -123,6 +123,7 @@ p.add_option('--maxevt' , action='store', type='int', dest='maxevt', help='Maxim
 p.add_option('--compile', action='store_true', help='Determine if job should be recompiled on Grid worker node' )
 p.add_option('--nocompile', action='store_true', help='Determine if job should *not* be recompiled on Grid worker node' )
 p.add_option('--excludefiles', action='store', type='string', dest='excludefiles', help='List of files to be excluded from user_area tar file, separated by ":", e.g. --excludefiles=*.root:Numbers.txt')
+p.add_option('--appendfiles', action='store', type='string', dest='appendfiles', help='List of files to be included in user_area tar file, separated by ":", e.g. --appendfiles=*.root:Numbers.txt')
 p.add_option('--athena_release', action='store', type='string', dest='athena_release', help='Athena release version to be used' )
 p.add_option('--athena_production', action='store', type='string', dest='athena_production', help='AtlasProduction transformation cache release version to be used' )
 p.add_option('--athena_project', action='store', type='string', dest='athena_project', help='AtlasProject name of release to be used, e.g. AtlasProduction' )
@@ -223,6 +224,8 @@ if opt.name:
 j.application = Athena()
 if opt.excludefiles:
     j.application.exclude_from_user_area=opt.excludefiles.split(':')
+if opt.appendfiles:
+    j.application.append_to_user_area=opt.appendfiles.split(':')
 if opt.excludepackage:
     j.application.exclude_package=opt.excludepackage.split(':')
 if opt.athena_release:
