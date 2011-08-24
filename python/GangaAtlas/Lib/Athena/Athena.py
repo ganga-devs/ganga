@@ -144,7 +144,16 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
         tmpItem = tmpItem.replace('*','.*')
         # append
         excludeFile2.append(tmpItem)
-        
+
+    extFile2 = []
+    for tmpItem in extFile:
+        # change . to \. for regexp
+        tmpItem = tmpItem.replace('.','\.')
+        # change * to .* for regexp
+        tmpItem = tmpItem.replace('*','.*')
+        # append
+        extFile2.append(tmpItem)
+
     # get files in the working dir
     skippedExt   = ['.o','.a','.so']
     skippedFlag  = False
@@ -182,7 +191,7 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
                 isRoot = True
             # extra files
             isExtra = False
-            for tmpExt in extFile:
+            for tmpExt in extFile2:
                 if re.search(tmpExt+'$',tmpPath) != None:
                     isExtra = True
                     break
