@@ -199,7 +199,7 @@ class DQ2JobSplitter(ISplitter):
                 if job.application.atlas_run_config['input'].has_key('collRefName'):
                     streamRef = job.application.atlas_run_config['input']['collRefName']
                 elif job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
-                    streamRef = "Stream%s_ref" % job,inputdata.tag_coll_ref
+                    streamRef = "Stream%s_ref" % job.inputdata.tag_coll_ref
 
                 newTagDSList = []
 
