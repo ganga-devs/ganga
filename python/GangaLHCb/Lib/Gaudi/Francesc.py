@@ -15,7 +15,6 @@ from GaudiUtils import *
 from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
-from GaudiAppConfig import *
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -86,7 +85,6 @@ class Francesc(IApplication):
             if expanded == "$User_release_area": self.user_release_area = ""
             else:
                 self.user_release_area = expanded.split(os.pathsep)[0]
-        #self.appconfig = GaudiAppConfig()
 
     def _check_gaudi_inputs(self,optsfiles,appname):
         """Checks the validity of some of user's entries."""
@@ -202,9 +200,14 @@ class Francesc(IApplication):
         command = '###CMT### ' + command
         CMTscript.CMTscript(self,command)
 
-    def _prepare(self):
+    def _master_configure(self):
+        '''Handles all common master_configure actions.'''
+        self.extra = GaudiExtras()
         self._getshell()
-        send_to_share=[]
+        
+        job=self.getJobObject()                
+        if job.inputdata: self.extra.inputdata = job.inputdata
+        if job.outputdata: self.extra.outputdata = job.outputdata
                         
         if not self.user_release_area: return
 
@@ -212,32 +215,21 @@ class Francesc(IApplication):
         dlls, pys, subpys = get_user_dlls(appname, self.version,
                                           self.user_release_area,self.platform,
                                           self.shell)
-        #self.appconfig.inputsandbox += [File(f,subdir='lib') for f in dlls]
-        send_to_share += [File(f,subdir='lib') for f in dlls]
+
+        self.extra.master_input_files += [File(f,subdir='lib') for f in dlls]
         for f in pys:
             tmp = f.split('InstallArea')[-1]
             subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
-            send_to_share.append(File(f,subdir=subdir))
+            self.extra.master_input_files.append(File(f,subdir=subdir))
         for dir, files in subpys.iteritems():
             for f in files:
                 tmp = f.split('InstallArea')[-1]
                 subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
-                send_to_share.append(File(f,subdir=subdir))
-
-        return send_to_share
-
-    def _master_configure(self):
-        '''Handles all common master_configure actions.'''
-        ## job=self.getJobObject()                
-##         if job.inputdata: self.appconfig.inputdata = job.inputdata
-##         if job.outputdata: self.appconfig.outputdata = job.outputdata
+                self.extra.master_input_files.append(File(f,subdir=subdir))
 
     def _configure(self):
-        pass
-        # return self.appconfig.inputdata.optionsString()
-
-
-
+        data_str = self.extra.inputdata.optionsString()
+        self.extra.input_buffers['data.py'] += data_str
 
     #def postprocess(self):
         #from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
@@ -247,19 +239,19 @@ class Francesc(IApplication):
         
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-## class GaudiExtras:
-##     '''Used to pass extra info from Gaudi apps to the RT-handler.'''
-##     _name = "GaudiExtras"
-##     _category = "extras"
+class GaudiExtras:
+    '''Used to pass extra info from Gaudi apps to the RT-handler.'''
+    _name = "GaudiExtras"
+    _category = "extras"
 
-##     def __init__(self):
-##         self.master_input_buffers = {}
-##         self.master_input_files = []
-##         self.input_buffers = {}
-##         self.input_files = []
-##         self.inputdata = LHCbDataset()
-##         self.outputsandbox = []
-##         self.outputdata = OutputData()
-##         self.input_buffers['data.py'] = ''
+    def __init__(self):
+        self.master_input_buffers = {}
+        self.master_input_files = []
+        self.input_buffers = {}
+        self.input_files = []
+        self.inputdata = LHCbDataset()
+        self.outputsandbox = []
+        self.outputdata = OutputData()
+        self.input_buffers['data.py'] = ''
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
