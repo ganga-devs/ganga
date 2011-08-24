@@ -56,6 +56,7 @@ class File(GangaObject):
     def _attribute_filter__set__(self,attribName,attribValue):
         if attribName is 'name':
             return expandfilename(attribValue)
+        return attribValue
     
     def getPathInSandbox(self):
         """return a relative location of a file in a sandbox: subdir/name"""
