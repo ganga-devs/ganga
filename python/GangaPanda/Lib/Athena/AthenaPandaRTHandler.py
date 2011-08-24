@@ -169,7 +169,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT','EXE' ] and Panda backend")
             #raise ApplicationConfigurationError(None,"Sorry TRF on Panda backend not yet supported")
 
-        
+            if app.options:
+                self.job_options += ' %s ' % app.options
+                
         elif app.atlas_exetype == 'ATHENA':
             
             if len(app.atlas_environment) > 0 and app.atlas_environment[0].find('DBRELEASE_OVERRIDE')==-1:
@@ -733,11 +735,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 else:
                     # get coll ref from input data
                     if input_files[0].find("AOD") != -1:
-                        param += '--collRefName StreamAOD_ref'
+                        param += '--collRefName StreamAOD_ref '
                     elif input_files[0].find("ESD") != -1:
-                        param += '--collRefName StreamESD_ref'
+                        param += '--collRefName StreamESD_ref '
                     elif input_files[0].find("RAW") != -1:
-                        param += '--collRefName StreamRAW_ref'
+                        param += '--collRefName StreamRAW_ref '
 
                 # sort out TAG use for exe types other than just athena - TRF dealt with below
                 if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
@@ -759,11 +761,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 else:
                     # get coll ref from input data
                     if input_files[0].find("AOD") != -1:
-                        param += '--collRefName StreamAOD_ref'
+                        param += '--collRefName StreamAOD_ref '
                     elif input_files[0].find("ESD") != -1:
-                        param += '--collRefName StreamESD_ref'
+                        param += '--collRefName StreamESD_ref '
                     elif input_files[0].find("RAW") != -1:
-                        param += '--collRefName StreamRAW_ref'
+                        param += '--collRefName StreamRAW_ref '
 
                 # sort out TAG use for exe types other than just athena - TRF dealt with below
                 if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
