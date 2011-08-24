@@ -12,6 +12,9 @@ import os.path
 from Ganga.Utility.files import expandfilename
 from Ganga.Core.GangaRepository import getRegistries, RepositoryError
 from Ganga.Core.GangaRepository import getRegistry
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Lib.Job import Job
+
 
 def requiresAfsToken():
     from Ganga.Utility.files import fullpath
@@ -95,37 +98,76 @@ def shutdown():
     logger.debug('registry shutdown')
     for registry in getRegistries():
         if not registry.name in started_registries: continue
+
+#        if registry.name == 'prep':
+#            print "closing down prep reg"
+#            for dir in getRegistry('prep').__iter__():
+#                # if there's no directory present on the filesyste
+#                print "DIR:", dir
+
+#        if registry.name == 'jobs':
+#            resp = 'n'
+#            for job in getRegistry('jobs').__iter__():
+#                if (resp != 'N'):
+#                    if job.application.is_prepared is not None:
+#                        shareddir = job.application.is_prepared.name
+#                        if not os.path.isdir(shareddir):
+#                            if (resp == 'A'):
+#                                logger.warning('Unpreparing %s') % shareddir
+#                                job.unprepare()
+#                                #shutil.rmtree(shareddir)
+#                            else:
+#                                logger.warning("Can't find shared directory %s associated with job %s" % (shareddir, job.id))
+#                                msg = 'Do you want to unprepare job %s? (y/n/All/[N]one)' %(job.id)
+#                                resp = raw_input(msg)
+#                                if (resp == 'y'):
+#                                    #logger.warning("Deleting %s") %(shareddir)
+#                                    logger.warning("Unpreparing job %s" % (job.id))
+#                                    job.unprepare()
+#                                    #shutil.rmtree(shareddir)
+#                                elif (resp == 'n'):
+#                                    #print 'not deleting %s' %(shareddir)
+#                                    print '%s not found, but not unpreparing job %s' %(shareddir, job.id)
+#                                elif (resp == 'N'):
+#                                    pass
+#                                elif (resp == 'A'):
+#                                    #print 'deleting %s' %(shareddir)
+#                                    logger.warning("Unpreparing job %s" % (job.id))
+#                                    job.unprepare()
+#                                    #shutil.rmtree(shareddir)
+#                                else:
+#                                    resp = 'N'
+#                else:
+#                    pass
+ 
+
+
         if registry.name == 'jobs':
-            resp = 'n'
             for job in getRegistry('jobs').__iter__():
-                if (resp != 'N'):
-                    if job.application.is_prepared is not None:
+                if job.application.is_prepared is not None:
+                    shareddir = job.application.is_prepared.name
+                    if not os.path.isdir(shareddir):
+                        logger.warning("Can't find shared directory %s associated with job %s. Unpreparing job." % (shareddir, job.id))
+                        job.unprepare()
+                            
+        if registry.name == 'box':
+            for item in getRegistry('box').__iter__():
+                if isType(item,Job):
+                     job = item
+                     if job.application.is_prepared is not None:
                         shareddir = job.application.is_prepared.name
                         if not os.path.isdir(shareddir):
-                            if (resp == 'A'):
-                                print 'deleting %s' % shareddir
-                                shutil.rmtree(shareddir)
-                            else:
-                                print "%s not found" % shareddir
-                                logger.warning("Can't find shared directory %s associated with job ID %s" % (shareddir, job.id))
-                                msg = 'Do you want to remove the missing directory %s? (y/n/All/[N]one)' %(shareddir)
-                                resp = raw_input(msg)
-                                if (resp == 'y'):
-                                    logger.warning("Deleting %s") %(shareddir)
-                                    shutil.rmtree(shareddir)
-                                elif (resp == 'n'):
-                                    print 'not deleting %s' %(shareddir)
-                                elif (resp == 'N'):
-                                    pass
-                                elif (resp == 'A'):
-                                    print 'deleting %s' %(shareddir)
-                                    shutil.rmtree(shareddir)
-                                else:
-                                    resp = 'N'
+                            logger.warning("Can't find shared directory %s associated with job %s in box. Unpreparing job." % (shareddir, job.id))
+                            job.unprepare()
                 else:
-                    pass
-                            
-                            
+                    if hasattr(item,'is_prepared'):
+                        app = item
+                        if app.is_prepared is not None:
+                            shareddir = app.is_prepared.name
+                            if not os.path.isdir(shareddir):
+                                logger.warning("Can't find shared directory %s associated with %s application stored in box. Unpreparing application." % (shareddir, app._name))
+                                app.unprepare()
+                          
                        
         started_registries.remove(registry.name) # in case this is called repeatedly, only call shutdown once
         registry.shutdown() # flush and release locks
