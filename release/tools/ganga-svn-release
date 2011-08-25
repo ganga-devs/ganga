@@ -189,21 +189,23 @@ def wait_all_tests_to_finish(outputdir):
 
     startTime = int(time.time())
 
-    filesToSearch = ['Ganga.out', 'GangaRobot.out', 'GangaNG.out', 'GangaPanda.out', 'GangaAtlas.out', 'GangaLHCb.out']
+    latestDir = os.path.dirname(outputdir)
+
+    filesToSearch = ['Ganga.test.ALL__localxml.xml', 'GangaAtlas.test.ALL__localxml.xml', 'GangaLHCb.test.ALL__localxml.xml', 'GangaNG.test.ALL__localxml.xml', 'GangaPanda.test.ALL__localxml.xml', 'GangaRobot.test.ALL__localxml.xml']
 
     currentDir = os.getcwd()    
 
-    os.chdir(outputdir)
+    os.chdir(latestDir)
         
     while True:
 
-        files = filter(os.path.isfile, os.listdir(outputdir))
+        files = filter(os.path.isfile, os.listdir(latestDir))
 
         matchingFiles = []
 
         for f in files:
 
-            fullFileName = os.path.join(outputdir,f)
+            fullFileName = os.path.join(latestDir,f)
 
             #if it is one of the files we search and is a new file
             if f in filesToSearch and os.path.getmtime(fullFileName) > startTime:
