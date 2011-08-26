@@ -135,6 +135,12 @@ class ProxyDataDescriptor(object):
         
     def __set__(self, obj, val):
         item = obj._impl._schema[self._name]
+    
+        if self._name == 'application' and hasattr(obj.application,'is_prepared'):
+            if obj.application.is_prepared is not None:
+                logger.info('Overwriting a prepared application with one that is unprepared')
+                obj.application.unprepare()
+ 
 
         if item['protected']:
             raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified'%(self._name,))
