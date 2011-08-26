@@ -98,10 +98,11 @@ class ShareRef(GangaObject):
         self._releaseWriteAccess()
 
 
-    def decrease(self,shareddir):
+    def decrease(self,shareddir, remove=0):
         """Reduce the reference counter for a given shared directory by 1. If the current value
         of the counter is 0, the shared object will be removed from the metadata, and the files within
-        the shared object directory deleted when Ganga exits.
+        the shared object directory deleted when Ganga exits. If the optional remove parameter is specified
+        the shared directory is removed from the table.
         """
         self._getWriteAccess()
         
@@ -109,7 +110,11 @@ class ShareRef(GangaObject):
         if shareddir not in self.name:
             logger.info('%s is not stored in the shareref metadata object.' %shareddir)
         elif self.name[shareddir] > 0:
-            self.name[shareddir] -= 1
+            if remove == 1:
+                self.name[shareddir] = 0
+            else:
+                self.name[shareddir] -= 1
+            
         else:
             pass
 
@@ -118,29 +123,25 @@ class ShareRef(GangaObject):
 
 
     def closedown(self):
-        """Cleans up the ShareDir upon shutdown of the registry, ie. when exiting a Ganga session."""
+        """Cleans up the Shared Directory registry upon shutdown of the registry, ie. when exiting a Ganga session."""
         self._getWriteAccess()
         cleanup_list = []
         for shareddir in self.name:
             #logger.info('Checking %s' %shareddir)
-            if self.name[shareddir] == 0:
+            if self.name[shareddir] == 0 and os.path.isdir(shareddir):
                 logger.info('%s no longer being referenced by any objects. Removing directory.' %shareddir)
-                if os.path.isdir(shareddir):
-                    shutil.rmtree(shareddir)
+                shutil.rmtree(shareddir)
                 cleanup_list.append(shareddir)
+            if not os.path.isdir(shareddir):
+                if shareddir not in cleanup_list:
+                    logger.info('%s not found on disk. Removing entry from shared files reference table (shareref).' %shareddir)
+                    cleanup_list.append(shareddir)
+                
         for element in cleanup_list:
             del self.name[element]
-        #should also check that any directories contained within the sharetree exist, otherwise remove their references.
+        #should also check that any directories contained within the sharetree exist, otherwise unprepare any associated jobs.
+        #(this is now done in Repository_runtime.py
 
-
-        #for jobs that have prepared applications, check to see if the directory exists
-        from Ganga.Core.GangaRepository import getRegistry
-        for thing in getRegistry('jobs').__iter__():
-            if thing.application.is_prepared is not None:
-                shareddir = thing.application.is_prepared.name
-                print "Checking " + shareddir 
-                if not os.path.isdir(shareddir):
-                    print "Can't find shared directory " + shareddir
 
         self._setDirty()
         self._releaseWriteAccess()
@@ -167,7 +168,6 @@ class ShareRef(GangaObject):
                 print padding*level + pieces[-1] + symbol
 
 
-
     def _display(self):
         """Prints content of the shareref metadata in a well formatted way.
         """
@@ -185,6 +185,7 @@ class ShareRef(GangaObject):
                     unsorted.append((os.path.basename(element), int(os.path.getctime(element)), self.name[element]))
                 else:
                     unsorted.append((os.path.basename(element), "Directory not found", self.name[element]))
+                    #shareref.decrease(element)
             from operator import itemgetter
             sorted_refs = sorted(unsorted, key=itemgetter(1))
             #for line in sorted_refs:
