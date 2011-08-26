@@ -179,7 +179,6 @@ class Node(object):
         
         if self is node:
             return 1
-        
         if not node or not self._schema.isEqual(node._schema):
             return 0
 
@@ -445,7 +444,6 @@ class GangaObject(Node):
         self._getReadAccess()
         c = super(GangaObject,self).__deepcopy__(memo)
         for name,item in self._schema.allItems():
-#            print "    ", name, item
             if not item['copyable']:
                 setattr(c,name,self._schema.getDefaultValue(name))
             if item.isA(Schema.SharedItem):
@@ -465,9 +463,6 @@ class GangaObject(Node):
                 #from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
                 #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                 #shareref.add(self.application.is_prepared.name)
-
-
-#                print "### We have a shared item"
             
         return c
 
