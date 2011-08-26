@@ -396,6 +396,10 @@ class Job(GangaObject):
 
         self.info.uuid = Ganga.Utility.guid.uuid()
 
+        #increment the shareref counter if the job we're copying is prepared.
+        if self.application.is_prepared is not None:
+            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+            shareref.increase(self.application.is_prepared.name)
         # register the job (it will also commit it)
         # job gets its id now
         registry._add(self)
@@ -596,14 +600,17 @@ class Job(GangaObject):
         '''A method to put a job's application into a prepared state.
         Returns True on success.
         '''
-    
-        if (self.application.is_prepared is None) or (force == True):
-            add_to_inputsandbox = self.application.prepare(force=True)
-            if isType(add_to_inputsandbox,list):
-                self.inputsandbox.extend(add_to_inputsandbox)
-        else:
+
+        if (self.application.is_prepared is not None) and (force == False):
             msg = "The application associated with job %d has already been prepared. To force the operation, call prepare(force=True)" % (self.id)
             raise JobError(msg)
+        if (self.application.is_prepared is None):
+            add_to_inputsandbox = self.application.prepare(force=True)
+#            if isType(add_to_inputsandbox,list):
+#                self.inputsandbox.extend(add_to_inputsandbox)
+        if (self.application.is_prepared is not None) and (force == True):
+            self.unprepare()
+            self.application.prepare()
             
 
 
@@ -703,9 +710,14 @@ class Job(GangaObject):
             else:
                 msg = "Job %d's application has already been prepared." % (self.id)
                 logger.info(msg)
- 
 
-            #self.prepare()
+            if not os.path.isdir(self.application.is_prepared.name):
+                msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
+                self.unprepare()
+                raise JobError(msg)
+
+
+
             appmasterconfig = self.application.master_configure()[1] # FIXME: obsoleted "modified" flag
             # split into subjobs
 #            try:
