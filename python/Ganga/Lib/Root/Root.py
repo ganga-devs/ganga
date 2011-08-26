@@ -7,7 +7,10 @@
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Schema import FileItem, Schema, SimpleItem, Version, SharedItem
-from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import File, ShareDir
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.Core.GangaRepository import getRegistry
+from Ganga.GPIDev.Base.Proxy import isType
 
 from Ganga.Utility.Config import makeConfig, getConfig, ConfigError
 from Ganga.Utility.root import getrootsys,getpythonhome
@@ -17,7 +20,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 #config = getConfig('Root_Properties')
 
-import sys
+import sys, shutil
 config = makeConfig('ROOT',"Options for Root backend")
 config.addOption('arch','slc4_ia32_gcc34','Architecture of ROOT')
 config.addOption('location','/afs/cern.ch/sw/lcg/external/root','Location of ROOT')
@@ -27,6 +30,7 @@ config.addOption('pythonversion','',"Version number of python used for execution
 config.addOption('version','5.18.00','Version of ROOT')
     
 import os
+ 
 
 class Root(IApplication):
     """
@@ -205,6 +209,7 @@ class Root(IApplication):
         } )
     _category = 'applications'
     _name = 'Root'
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'script', 'widget' : 'FileOrString' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'version', 'widget' : 'String' },
@@ -221,9 +226,52 @@ class Root(IApplication):
     def configure(self,masterappconfig):
         return (None,None)
 
+    def _readonly(self):
+        """An application is read-only once it has been prepared."""
+        if self.is_prepared is None:
+            return 0
+        else:
+            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
+            return 1
+
+
     def prepare(self, force=False):
-        pass
+        if self._getRegistry() is None:
+            raise ApplicationConfigurationError(None,'Applications not associated with a persisted object (Job or Box) cannot be prepared.')
     
+        if (self.is_prepared is not None) and (force is not True):
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
+
+        logger.info('Preparing %s application.'%(self._name))
+        self.is_prepared = ShareDir()
+        #get hold of the metadata object for storing shared directory reference counts
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        shared_dirname = self.is_prepared.name
+        #add the newly created shared directory into the metadata system
+        shareref.increase(self.is_prepared.name)
+
+        send_to_sharedir = []
+        if self.script.name is not '':
+            send_to_sharedir = self.script.name
+            logger.info('Sending file object %s to shared directory'%send_to_sharedir)
+            logger.info('Copying %s to %s' %(send_to_sharedir, self.is_prepared.name))
+            shutil.copy2(send_to_sharedir, self.is_prepared.name)
+            self.script=File(os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir)))
+            return 1
+
+    def unprepare(self, force=False):
+        if self.is_prepared is not None:
+            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+            shareref.decrease(self.is_prepared.name)
+            self.is_prepared = None
+            if isType(self.script, File):
+                if len(os.path.basename(self.script.name).split('.gangawrapper')) > 1:
+                    self.script = ''.join(os.path.basename(self.script.name).split('.gangawrapper')[:-1])
+                else:
+                    self.script.name = os.path.basename(self.script.name)
+ 
+
+
     
     def _checkset_script(self,value):
         """Callback used to set usepython to 1 if the script name has a *.py or *.PY extention.""" 
