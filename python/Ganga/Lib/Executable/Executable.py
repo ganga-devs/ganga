@@ -15,6 +15,7 @@ from Ganga.GPIDev.Lib.File import *
 #from Ganga.GPIDev.Lib.File import SharedDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.Core.GangaRepository import getRegistry
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.Core import ApplicationConfigurationError
 
@@ -47,14 +48,14 @@ class Executable(IApplication):
     
     """
     _schema = Schema(Version(2,0), {
-        'exe' : SimpleItem(defvalue='echo',typelist=['str','Ganga.GPIDev.Lib.File.File.File'],doc='A path (string) or a File object specifying an executable.'), 
+        'exe' : SimpleItem(defvalue='echo',typelist=['str','Ganga.GPIDev.Lib.File.File.File'],comparable=1,doc='A path (string) or a File object specifying an executable.'), 
         'args' : SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File.File','int'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
-        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=1,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
         } )
     _category = 'applications'
     _name = 'Executable'
-    _exportmethods = ['prepare']
+    _exportmethods = ['prepare','unprepare']
     _GUIPrefs = [ { 'attribute' : 'exe', 'widget' : 'File' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'env', 'widget' : 'DictOfString' } ]
@@ -83,7 +84,6 @@ class Executable(IApplication):
             raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
 
 
-        print self._schema
         self.configure(self)
         #does the application contains any File items
         #because of bug #82818 they don't work properly
@@ -121,7 +121,7 @@ class Executable(IApplication):
                     tmpDir = os.path.realpath('/tmp/' + cn )
                 if not os.access(tmpDir,os.W_OK):
                     os.makedirs(tmpDir)
-                send_to_sharedir = os.path.join(tmpDir,os.path.basename(send_to_sharedir))
+                send_to_sharedir = os.path.join(tmpDir,os.path.basename(send_to_sharedir)+'.gangawrapper.sh')
                 wrap_cmd='''#!/bin/bash
 %s $*
 ''' %(self.exe)
@@ -131,8 +131,6 @@ class Executable(IApplication):
             logger.info('Sending file object %s to shared directory'%send_to_sharedir)
         logger.info('Copying %s to %s' %(send_to_sharedir, self.is_prepared.name))
         shutil.copy2(send_to_sharedir, self.is_prepared.name)
-        import time
-        time.sleep(10)
 
         self.exe=File(os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir)))
         os.chmod(self.exe.name, 0755)
@@ -145,6 +143,11 @@ class Executable(IApplication):
             shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
             shareref.decrease(self.is_prepared.name)
             self.is_prepared = None
+            if isType(self.exe, File):
+                if len(os.path.basename(self.exe.name).split('.gangawrapper')) > 1:
+                    self.exe = ''.join(os.path.basename(self.exe.name).split('.gangawrapper')[:-1])
+                else:
+                    self.exe.name = os.path.basename(self.exe.name)
     
     
 
