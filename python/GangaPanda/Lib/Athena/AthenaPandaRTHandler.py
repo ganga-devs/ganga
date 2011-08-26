@@ -306,7 +306,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             job.outputdata.datasetname+='/'
 
         # check if this container exists
-        res = Client.getDatasets(job.outputdata.datasetname)
+        try:
+            res = Client.getDatasets(job.outputdata.datasetname)
+        except exceptions.SystemExit:
+            raise BackendError('Panda','Exception in Client.getDatasets %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
         if not job.outputdata.datasetname in res.keys():
             # create the container
             createContainer(job.outputdata.datasetname)
