@@ -133,3 +133,11 @@ class IApplication(GangaObject):
         The default it to do nothing.
         """
         pass
+
+    def prepare(self):
+        """
+        A method to place an application into a prepared state. 
+        Not implemented for all applications.
+        """
+        pass
+ 
