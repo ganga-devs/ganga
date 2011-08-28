@@ -77,6 +77,27 @@ class Executable(IApplication):
 
         
     def prepare(self,force=False):
+        """
+        A method to place the Executable application into a prepared state.
+
+        The application wil have a Shared Directory object created for it. 
+        If the application's 'exe' attribute references a File() object or
+        is a string equivalent to the absolute path of a file, the file 
+        will be copied into the Shared Directory.
+
+        Otherwise, it is assumed that the 'exe' attribute is referencing a 
+        file available in the user's path (as per the default "echo Hello World"
+        example). In this case, a wrapper script which calls this same command 
+        is created and placed into the Shared Directory.
+
+        When the application is submitted for execution, it is the contents of the
+        Shared Directory that are shipped to the execution backend. 
+
+        The Shared Directory contents can be queried with 
+        shareref.ls('directory_name')
+        
+        See help(shareref) for further information.
+        """
         if self._getRegistry() is None:
             raise ApplicationConfigurationError(None,'Applications not associated with a persisted object (Job or Box) cannot be prepared.')
     
@@ -139,6 +160,9 @@ class Executable(IApplication):
         return 1
 
     def unprepare(self, force=False):
+        """
+        Revert an Executable() application back to it's unprepared state.
+        """
         if self.is_prepared is not None:
             shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
             shareref.decrease(self.is_prepared.name)
