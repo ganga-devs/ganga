@@ -597,8 +597,24 @@ class Job(GangaObject):
         return None
 
     def prepare(self,force=False):
-        '''A method to put a job's application into a prepared state.
-        Returns True on success.
+        '''A method to put a job's application into a prepared state. Returns 
+        True on success.
+        
+        The benefits of preparing an application are twofold:
+
+        1) The application can be copied from a previously executed job and
+           run again over a different input dataset.
+        2) Sharing applications (and their associated files) between jobs will 
+           optimise disk usage of the Ganga client.
+
+        Exactly what happens during the transition to becoming prepared
+        is determined by the application associated with the job. 
+        See help(j.application.prepare) for application-specific comments.
+
+        Prepared applications are always associated with a Shared Directory object
+        which contains their required files. Details for all Shared Directories in use
+        can been seen by calling 'shareref'. See help(shareref) for further details.
+        
         '''
 
         if (self.application.is_prepared is not None) and (force == False):
@@ -606,8 +622,8 @@ class Job(GangaObject):
             raise JobError(msg)
         if (self.application.is_prepared is None):
             add_to_inputsandbox = self.application.prepare(force=True)
-#            if isType(add_to_inputsandbox,list):
-#                self.inputsandbox.extend(add_to_inputsandbox)
+            if isType(add_to_inputsandbox,list):
+                self.inputsandbox.extend(add_to_inputsandbox)
         if (self.application.is_prepared is not None) and (force == True):
             self.unprepare()
             self.application.prepare()
