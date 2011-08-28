@@ -33,17 +33,12 @@ class FileBuffer:
         else:
             return self._contents.read()
 
-    def append(self, content):
-        if type(self._contents) is type(''):
-            self._contents+=content
-        else:
-            pass
-        return self
-
     def create(self,outname=None):
         """create a file in a local filesystem as 'outname' """
-        if outname != None: file(outname,'w').write(self.getContents())
-        else: file(self.name,'w').write(self.getContents())
+        if outname is not None:    
+            file(outname,'w').write(self.getContents())
+        else:   
+            file(self.name,'w').write(self.getContents())
 
         if self.executable:
             from Ganga.Utility.files import chmod_executable

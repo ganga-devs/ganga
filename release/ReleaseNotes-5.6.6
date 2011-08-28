@@ -1,0 +1,43 @@
+**************************************************************************************************************
+5.6.6 (2011/7/26)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- increased time out periods for a couple of tests
+- fix for bug 77962 and for test case test/GPI/auto_resubmit/auto_resubmit - resubmit counter was
+not correct if auto_resubmit method was called
+- test was failing for the last 2 years with timeout, changed the submission to local instead of Batch
+- fixed two test cases - one of them failed expectidly - to show there is not given fuctionality and
+the other failed because lists were compared after they were converted to strings, I removed the
+convertion and everything works as expected
+- Changes to allow more intuitive and efficient use of FileBuffer. 
+From: FileBuffer('myfile.py',"import os\n print Blah").create('myfile.py')
+To: FileBuffer('myfile.py',"import os\n print Blah").create()
+- minor syntax fix
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fixed athena-utility not working with Athena 17
+* Tasks/AnaTransform: Fixed rebrokerPanda
+* changed testing dir so GangaAtlas tests can run in prallel 
+  with other tests
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Fix: job kill() forgot to kill the buildjobs
+* made gangadir unigue for GangaPanda so this tests can run 
+  in parallel with other tests
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+added new report html page for showing the list of test cases that took longest time
+
+**************************************************************************************************************

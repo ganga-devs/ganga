@@ -27,6 +27,18 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from Ganga.Utility.GridShell import getShell
 from GangaPanda.Lib.Panda.Panda import setChirpVariables
 
+def createContainer(name):
+    from pandatools import Client
+    if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
+        try:
+            Client.createContainer(name,False)
+        except exceptions.SystemExit:
+            raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(name,sys.exc_info()[0],sys.exc_info()[1]))
+
+def addDatasetsToContainer(container,datasets):
+    from pandatools import Client
+    if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
+        Client.addDatasetsToContainer(container,datasets,False)
 
 def getDBDatasets(jobO,trf,dbrelease):
     from pandatools import Client
@@ -157,7 +169,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT','EXE' ] and Panda backend")
             #raise ApplicationConfigurationError(None,"Sorry TRF on Panda backend not yet supported")
 
-        
+            if app.options:
+                self.job_options += ' %s ' % app.options
+                
         elif app.atlas_exetype == 'ATHENA':
             
             if len(app.atlas_environment) > 0 and app.atlas_environment[0].find('DBRELEASE_OVERRIDE')==-1:
@@ -292,13 +306,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             job.outputdata.datasetname+='/'
 
         # check if this container exists
-        res = Client.getDatasets(job.outputdata.datasetname)
+        try:
+            res = Client.getDatasets(job.outputdata.datasetname)
+        except exceptions.SystemExit:
+            raise BackendError('Panda','Exception in Client.getDatasets %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
         if not job.outputdata.datasetname in res.keys():
             # create the container
-            try:
-                Client.createContainer(job.outputdata.datasetname,False)
-            except exceptions.SystemExit:
-                raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
+            createContainer(job.outputdata.datasetname)
             logger.info('Created output container %s'%job.outputdata.datasetname)
         else:
             logger.warning('Adding datasets to already existing container %s' % job.outputdata.datasetname)
@@ -319,7 +333,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 dq2_set_dataset_lifetime(tmpDSName, self.outDsLocation)
                 self.indivOutDsList.append(tmpDSName)
                 # add the DS to the container
-                Client.addDatasetsToContainer(job.outputdata.datasetname,[tmpDSName],False)
+                addDatasetsToContainer(job.outputdata.datasetname,[tmpDSName])
             except exceptions.SystemExit:
                 raise BackendError('Panda','Exception in adding dataset %s: %s %s'%(tmpDSName,sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -652,19 +666,16 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             for f in jspec.Files:
                 if f.type in ['output','log']:
                     if not f.dataset in self.indivOutContList:
-                        try:
-                            logger.info('Creating output container %s'%f.dataset)
-                            Client.createContainer(f.dataset,False)
-                            self.indivOutContList.append(f.dataset)
-                        except exceptions.SystemExit:
-                            raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(f.dataset,sys.exc_info()[0],sys.exc_info()[1]))
+                        logger.info('Creating output container %s'%f.dataset)
+                        createContainer(f.dataset)
+                        self.indivOutContList.append(f.dataset)
                     if not f.destinationDBlock in self.indivOutDsList:
                         try:
                             logger.info('Creating dataset %s and adding to %s'%(f.destinationDBlock,f.dataset))
                             Client.addDataset(f.destinationDBlock,False,location=subjobOutputLocation)
                             dq2_set_dataset_lifetime(f.destinationDBlock, subjobOutputLocation)
                             self.indivOutDsList.append(f.destinationDBlock)
-                            Client.addDatasetsToContainer(f.dataset,[f.destinationDBlock],False)
+                            addDatasetsToContainer(f.dataset,[f.destinationDBlock])
                         except exceptions.SystemExit:
                             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(f.dataset,sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -727,11 +738,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 else:
                     # get coll ref from input data
                     if input_files[0].find("AOD") != -1:
-                        param += '--collRefName StreamAOD_ref'
+                        param += '--collRefName StreamAOD_ref '
                     elif input_files[0].find("ESD") != -1:
-                        param += '--collRefName StreamESD_ref'
+                        param += '--collRefName StreamESD_ref '
                     elif input_files[0].find("RAW") != -1:
-                        param += '--collRefName StreamRAW_ref'
+                        param += '--collRefName StreamRAW_ref '
 
                 # sort out TAG use for exe types other than just athena - TRF dealt with below
                 if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
@@ -753,11 +764,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 else:
                     # get coll ref from input data
                     if input_files[0].find("AOD") != -1:
-                        param += '--collRefName StreamAOD_ref'
+                        param += '--collRefName StreamAOD_ref '
                     elif input_files[0].find("ESD") != -1:
-                        param += '--collRefName StreamESD_ref'
+                        param += '--collRefName StreamESD_ref '
                     elif input_files[0].find("RAW") != -1:
-                        param += '--collRefName StreamRAW_ref'
+                        param += '--collRefName StreamRAW_ref '
 
                 # sort out TAG use for exe types other than just athena - TRF dealt with below
                 if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:

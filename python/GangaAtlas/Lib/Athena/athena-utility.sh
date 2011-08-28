@@ -147,7 +147,7 @@ cmt_setup () {
     if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]; then
         source $ATLAS_RELEASE_DIR/setup.sh
     # New athena v16 AtlasSetup #################
-    elif [ ! -z `echo $ATLAS_RELEASE | grep 16.` ]; then
+    elif [ ! -z `echo $ATLAS_RELEASE | grep 16.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 17.` ]; then
 	if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
 	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,32,setup
 	elif [ ! -z $ATLAS_PROJECT ]; then
@@ -1329,7 +1329,7 @@ runtime_setup () {
     if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
     then
         source $SITEROOT/dist/$ATLAS_RELEASE/Control/AthenaRunTime/AthenaRunTime-*/cmt/setup.sh
-    elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 16.` ]
+    elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 16.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 17.` ]
     then
 	if [ -z $ATLAS_PROJECT ]
 	then

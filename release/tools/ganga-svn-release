@@ -101,6 +101,192 @@ def toolcmd(cmd):
         cmdpath = cmd
     acmd(cmdpath)
 
+def remove_prerelease(prereleaseDir):
+
+    acmd('rm -rf %s ' % prereleaseDir)
+    
+    prerel_basename = os.path.basename(prereleaseDir)   
+
+    #remove the tarball also
+    pre_tarball = '%s/tarball/Ganga-%s.tar.gz' % (CONFIG['top'], prerel_basename)
+    try:
+        os.unlink(pre_tarball)
+        print 'sucessfully removed pre-release tarball %s' % pre_tarball
+    except OSError,e:
+        print 'Cannot delete pre-release tarball: %s' % str(e)  
+
+
+def get_count_releases(installDir):
+
+    currentDir = os.getcwd()    
+
+    os.chdir(installDir)
+
+    def isRelease(x):
+        return (x[1] == '.' and x[3] == '.')
+
+    dirs = filter(os.path.isdir, os.listdir(installDir))
+    dirs = filter(isRelease, os.listdir(installDir))
+
+    os.chdir(currentDir)   
+
+    return len(dirs)
+
+
+def remove_oldest_prereleases(installDir):
+
+    currentDir = os.getcwd()    
+
+    os.chdir(installDir)
+
+    def isPre(x):
+        return (x.find('-pre') > -1)
+
+    dirs = filter(os.path.isdir, os.listdir(installDir))
+    dirs = filter(isPre, os.listdir(installDir))
+    dirs = [os.path.join(installDir, d) for d in dirs] # add path to each dir
+    dirs.sort(lambda x,y: cmp(os.path.getmtime(x), os.path.getmtime(y)))
+
+    num_prereleases = len(dirs)
+
+    if num_prereleases == 0:
+
+        os.chdir(currentDir)        
+        return False
+
+    elif num_prereleases == 1:
+        
+        print 'Removing oldest prereleases to free space in the install directory' 
+
+        remove_prerelease(dirs[0])
+        
+    else:
+
+        print 'Removing oldest prereleases to free space in the install directory'
+
+        remove_prerelease(dirs[0])
+        remove_prerelease(dirs[1])
+
+    os.chdir(currentDir)            
+    return True
+
+
+def get_rel_manager_email():
+
+    f = open('%(tagsdir_top)s/release_manager.php' % CONFIG, 'r')
+    content = f.read()
+    content = content.strip()   
+    f.close()
+
+    leftIndex = content.find('"')
+    rightIndex = content.rfind('"')
+
+    relManagerEmail = content[leftIndex+1:rightIndex]
+
+    return relManagerEmail      
+
+def wait_all_tests_to_finish(outputdir):
+
+    startTime = int(time.time())
+
+    latestDir = os.path.dirname(outputdir)
+
+    filesToSearch = ['Ganga.test.ALL__localxml.xml', 'GangaAtlas.test.ALL__localxml.xml', 'GangaLHCb.test.ALL__localxml.xml', 'GangaNG.test.ALL__localxml.xml', 'GangaPanda.test.ALL__localxml.xml', 'GangaRobot.test.ALL__localxml.xml']
+
+    currentDir = os.getcwd()    
+
+    os.chdir(latestDir)
+        
+    while True:
+
+        files = filter(os.path.isfile, os.listdir(latestDir))
+
+        matchingFiles = []
+
+        for f in files:
+
+            fullFileName = os.path.join(latestDir,f)
+
+            #if it is one of the files we search and is a new file
+            if f in filesToSearch and os.path.getmtime(fullFileName) > startTime:
+
+                matchingFiles.append(f)         
+
+
+        if len(matchingFiles) == len(filesToSearch):
+            break
+
+        time.sleep(60)
+
+    rel_manager_email = get_rel_manager_email()
+
+    os.chdir(currentDir)
+
+    send_mail('testsfinished', receiver=rel_manager_email)
+
+    print 'Email sent to release manager'
+
+def send_mail(key, receiver=''):
+        
+    import smtplib
+    import email
+    import os
+
+    releaseToolsDir = os.path.dirname(os.path.abspath(__file__))
+
+    sender = 'project-ganga-developers@cern.ch'
+    receivers = ''
+    email_file = ''
+    subject = ''
+
+    if key == 'prerelease':
+
+        email_file = os.path.join(releaseToolsDir, 'release_tool_emails/prerelease.txt')
+        receivers = 'project-ganga-developers@cern.ch'
+        subject = 'Ganga %s-pre is ready' % CONFIG['version']
+
+    elif key == 'release':
+
+        email_file = os.path.join(releaseToolsDir, 'release_tool_emails/release.txt')
+        receivers = 'project-ganga-developers@cern.ch;project-ganga@cern.ch'   
+        subject = 'Ganga release %s is ready' % CONFIG['version']
+   
+    elif key == 'testsfinished':
+
+        email_file = os.path.join(releaseToolsDir, 'release_tool_emails/testsfinished.txt')
+        receivers = receiver   
+        subject = 'Ganga tests for %s-pre are finished' % CONFIG['version']        
+        
+    elif key == 'testreports':
+
+        email_file = os.path.join(releaseToolsDir, 'release_tool_emails/testreports.txt')
+        receivers = 'project-ganga-developers@cern.ch'   
+        subject = 'Ganga %s-pre test reports are ready' % CONFIG['version']    
+
+    fp = open(email_file, 'rb')
+    msg_string = fp.read()
+    fp.close()
+
+    msg = email.message_from_string(msg_string)
+
+    msg['Subject'] = subject
+    msg['From'] = sender
+    msg['To'] = receivers
+
+    string_message = msg.as_string()
+        
+    if key == 'prerelease' or key == 'testreports':
+        string_message = string_message.replace('VER', CONFIG['version'])
+    elif key == 'release':      
+        string_message = string_message.replace('*version*', CONFIG['version'])
+
+    try:
+        smtpObj = smtplib.SMTP('cernmx.cern.ch')
+        smtpObj.sendmail(sender, receivers, string_message)         
+        
+    except SMTPException:
+        print "Can not send %s notification email" % key
+
 class CollectTags:
     "COLLECT: collect tags from the tagsdir into PACKAGES file and create the new release notes file"
 
@@ -149,6 +335,12 @@ class PrereleaseCommand:
                 print "Cannot continue...Terminating"
                 return
 
+        #if there are a lot of releases we should clean some disk space
+        if get_count_releases(CONFIG['installdir']) > 199:
+            if not remove_oldest_prereleases(CONFIG['installdir']):     
+                print "There is not enough disk space for creation of the prerelease, please remove some of the oldest releases in %s" % CONFIG['installdir']
+                return
+
         # checkout to ganga directory and rename it to prerelease version name
         toolcmd('ganga-svn-checkout -v %(version)s %(installdir)s'%CONFIG)
         #acmd('ls /afs/cern.ch/sw/ganga/install/ganga')
@@ -186,6 +378,9 @@ class PrereleaseCommand:
         versionfile=os.path.join(CONFIG['webdir_top'],'download','VERSIONS.txt')
         print 'Updating file with available releases'
         acmd("touch %s && date +'%s - %%d %%b %%Y %%k:%%m:%%S' >> %s"% (versionfile, CONFIG['version-pre'], versionfile))
+
+        if askYesNo('Do you want to send email to Ganga developers list that the prerelease is ready?') == "YES":
+            send_mail('prerelease')
 
 
 class GenerateConfigFilesCommand:
@@ -235,6 +430,7 @@ class PretestCommand:
             return
 
         outputdir = '%(prereldir)s/reports/latest/output'%CONFIG
+
         try:
             os.makedirs(outputdir)
         except Exception,e:
@@ -268,7 +464,9 @@ class PretestCommand:
             testresult.append(run_test(acc,n))
 
         print '*'*40
-        print "Now wait for tests to complete ..."
+        print "Now wait for tests to complete, a notification email will be sent to the release manager when all tests are finished."
+
+        wait_all_tests_to_finish(outputdir)
 
 class TestReportCommand:
     "TEST REPORT: Create the summary web pages with the test results."
@@ -301,6 +499,9 @@ class TestReportCommand:
 
         print "Creating web pages."
         acmd("%(prereldir)s/bin/ganga --test -o\'[TestingFramework]ReleaseTesting=True\' -o\'EnableHTMLReporter=True\' -o\'EnableTestRunner=False\'" % CONFIG)
+
+        if askYesNo('Do you want to send email to Ganga developers list that test reports are ready?') == "YES":
+            send_mail('testreports')
         
 class TagCommand:
     "TAG: make a GLOBAL TAG using the a pre-release in the prereldir"
@@ -337,6 +538,12 @@ class ReleaseCommand:
         if os.path.isdir(CONFIG['reldir']):
             print 'release already exists in',CONFIG['reldir']
             return
+
+        #if there are a lot of releases we should clean some disk space
+        if get_count_releases(CONFIG['installdir']) > 199:
+            if not remove_oldest_prereleases(CONFIG['installdir']):     
+                print "There is not enough disk space for creation of the prerelease, please remove some of the oldest releases in %s" % CONFIG['installdir']
+                return
 
         print 'Exporting sources with GLOBAL TAG %(tag)s' % CONFIG
 
@@ -398,6 +605,9 @@ class ReleaseCommand:
         self._updateWebPages()
         
         print 'Release sucesfully made in the %(reldir)s'%CONFIG
+
+        if askYesNo('Do you want to send email to Ganga developers and Ganga project lists that the release is ready?') == "YES":
+            send_mail('release')
     
     def _protectTagsDir(self):
         """

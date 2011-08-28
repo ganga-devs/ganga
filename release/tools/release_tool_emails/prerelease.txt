@@ -1,0 +1,14 @@
+Hello,
+
+The prerelease for Ganga VER-pre is ready and is currently under testing:
+ /afs/cern.ch/sw/ganga/install/VER-pre.
+
+This release is not officially supported and may be unstable. The audience
+are the Ganga developers and some users, who may want to test the newest
+functionality.
+
+Release page:
+http://ganga.web.cern.ch/ganga/release/VER-pre/reports/html/Release.html
+
+Cheers,
+Ganga Developers

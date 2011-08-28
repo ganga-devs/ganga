@@ -253,10 +253,12 @@ def generate1stLevelReports(reports,categories=[]):
     lines_packages={}
     lines_categories={}
     totals={}
+    all_testcases = []  
     for report_line in reports:
         for column in reports[report_line]:
             columns[column]=None
             testcases = reports[report_line][column].getElementsByTagName("testcase")
+            all_testcases.append(testcases)
             for testcase in testcases:
                 if testcase.nodeType == testcase.ELEMENT_NODE:
                     package = None
@@ -313,10 +315,51 @@ def generate1stLevelReports(reports,categories=[]):
     appendLinesToSummaryReport(out,columns,lines_categories)
     appendSummaryFooter(out)
         
+    generateSlowestTestsReport(out, all_testcases)
+
     out.close()
     #return the top-level packages list
     return lines_packages.keys()
-        
+
+
+def generateSlowestTestsReport(out, group_testcases):
+    print >>out,'<br/>' 
+    print >>out,getCSSStyles()
+    print >>out,'<h3>List with top 25 testcases that took longest time to execute <a href="summary_top25.html">here</a></h3>'
+
+    import time 
+    now=time.strftime("%d/%m/%Y",time.gmtime(time.time()))   
+
+    file = open(os.path.join(html_dir,"summary_top25.html"),'w')        
+    appendDetailedHeader(file,title='List with top 25 testcases that took longest time to execute performed on %s &nbsp;<a href="index.html">[BACK]</a>'%now)
+
+    testcases = []
+
+    for group_testcase in group_testcases:
+        for testcase in group_testcase:
+            if testcase.nodeType == testcase.ELEMENT_NODE:
+                testcases.append(testcase)      
+
+    def cmp_testcases(t1,t2):   
+
+        t1_time = float(t1.getAttribute('time'))        
+        t2_time = float(t2.getAttribute('time'))        
+  
+        if t1_time > t2_time:
+            return -1
+        elif t1_time < t2_time:
+            return 1
+        else:
+            return 0
+            
+    testcases.sort(cmp_testcases)
+    
+    for testcase in testcases[:25]:
+        printTestCase(file,testcase, 'localxml')
+
+    appendDetailedFooter(file)
+    file.close()    
+    
 def generate2ndLevelReports(reports,categories=[]):
     
     global html_dir

@@ -50,7 +50,7 @@ class MultiTask(Task):
        }.items()))
    _category = 'tasks'
    _name = 'MultiTask'
-   _exportmethods = Task._exportmethods + ["initializeFromDatasets", "unitOverview", 'getTransform']
+   _exportmethods = Task._exportmethods + ["initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName']
    
    def initialize(self):
       super(MultiTask, self).initialize()
@@ -73,9 +73,15 @@ class MultiTask(Task):
 
       return None
       
-   def get_container_name(self):
-      name_base = ["user",getNickname(),self.creation_date,"task_%s" % self.id]
-      return ".".join(name_base + [self.name]) + "/"
+   def getContainerName(self):
+      if self.name == "":
+         name = "task"
+      else:
+         name = self.name
+         
+      name_base = ["user",getNickname(),self.creation_date, name, "id_%i" % self.id ]
+      
+      return (".".join(name_base) + "/").replace(" ", "_")
 
    def initializeFromDatasets(self,dataset_list):
       """ For each dataset in the dataset_list a unit is created. 
@@ -188,7 +194,7 @@ class MultiTask(Task):
                   trf.unit_inputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ] 
                   trf.unit_outputdata_list += [ self.transforms[req_trf].unit_outputdata_list[uind] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
                   trf.unit_partition_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
-                  trf.unit_state_list += [ {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                  trf.unit_state_list += [ {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0, 'force' : False} for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
             else:
                
                if trf.single_unit:
@@ -197,7 +203,7 @@ class MultiTask(Task):
                   trf.unit_inputdata_list = [[]]
                   trf.unit_outputdata_list = [[]]
                   trf.unit_partition_list = [[]]
-                  trf.unit_state_list = [{'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} ]
+                  trf.unit_state_list = [{'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0, 'force' : False} ]
                else:
 
                   # we have units dependant on mergers, etc.
@@ -211,11 +217,11 @@ class MultiTask(Task):
                         trf.unit_inputdata_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ] 
                         trf.unit_outputdata_list += [ self.transforms[req_trf].unit_outputdata_list[uind] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
                         trf.unit_partition_list += [ [] for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
-                        trf.unit_state_list += [ {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
+                        trf.unit_state_list += [ {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0, 'force' : False} for uind in range(len(self.transforms[req_trf].unit_outputdata_list)) ]
                         
                      else:
                         trf.unit_inputdata_list += [[]]
                         trf.unit_outputdata_list += [[]]
                         trf.unit_partition_list += [[]]
-                        trf.unit_state_list += [{'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0} ]
+                        trf.unit_state_list += [{'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0, 'force' : False} ]
          
