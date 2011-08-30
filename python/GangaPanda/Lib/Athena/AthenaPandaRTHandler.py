@@ -484,7 +484,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
                 if matchURL:
                     jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
-                jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
+                jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
                 if job.backend.bexec != '':
                     jspec.jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
                     jspec.jobParameters += ' -r %s ' % '.'
@@ -578,7 +578,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.minRamCount = job.backend.requirements.memory
         if job.backend.requirements.cputime != -1:
             jspec.maxCpuCount = job.backend.requirements.cputime
-        jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
+        jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
 
 #       library (source files)
         if job.backend.libds:
