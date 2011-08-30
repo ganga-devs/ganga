@@ -1522,7 +1522,7 @@ if __name__ == '__main__':
         siteID = ''
         cmd =  "grep DQ2_LOCAL_SITE_ID $VO_ATLAS_SW_DIR/ddm/latest/setup.sh |  tr '=' '\n' | tail -1"
         rc, out = commands.getstatusoutput(cmd)
-        if not rc and not out.startswith('grep'):
+        if not rc and not out.startswith('grep') and out.endswith('DISK'):
             dq2localsiteid = out
         else:
             dq2localsiteid = DQ2LOCALSITEID
