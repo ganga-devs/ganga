@@ -310,8 +310,8 @@ class Athena(IApplication):
                  'atlas_exetype'          : SimpleItem(defvalue='ATHENA',doc='Athena Executable type, e.g. ATHENA, PYARA, ROOT, TRF, EXE '),
                  'atlas_environment'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Extra environment variable to be set'),
                  'atlas_dbrelease'        : SimpleItem(defvalue='LATEST',doc='ATLAS DBRelease DQ2 dataset and DQ2Release tar file. Use LATEST for most recent.'),
-                 'atlas_run_dir'          : SimpleItem(defvalue='', doc='ATLAS run directory'),
-                 'atlas_run_config'       : SimpleItem(defvalue={}, doc='ATLAS run configuration'),
+                 'atlas_run_dir'          : SimpleItem(defvalue='./', doc='ATLAS run directory'),
+                 'atlas_run_config'       : SimpleItem(defvalue={'input': {'noInput': True}, 'other': {}, 'output': {'alloutputs': []}}, doc='ATLAS run configuration'),
                  'atlas_supp_stream'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='suppress some output streams. e.g., [\'ESD\',\'TAG\']'),
                  'atlas_use_AIDA'         : SimpleItem(defvalue=False, doc='use AIDA'),
                  'trf_parameter'          : SimpleItem(defvalue={},typelist=["dict","str"], doc='Parameters for transformations'),
@@ -901,7 +901,8 @@ class Athena(IApplication):
         if os.environ.has_key('CMTCONFIG'):
             self.atlas_cmtconfig = os.environ['CMTCONFIG']
             if self.atlas_cmtconfig.startswith('x86_64'):
-                raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
+                #raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
+                logger.warning('CMTCONFIG = %s, Your CMT setup is using 64 bit - are you sure you want to use 64 bit ?'% self.atlas_cmtconfig)
         else:
             self.atlas_cmtconfig = config['CMTCONFIG']
             os.environ['CMTCONFIG'] = self.atlas_cmtconfig 
