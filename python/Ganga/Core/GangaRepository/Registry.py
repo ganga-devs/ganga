@@ -108,7 +108,7 @@ class Registry(object):
         self.doc = doc
         self._started = False
         self.dirty_flush_counter = dirty_flush_counter
-        self.dirty_objs = []
+        self.dirty_objs = {}
         self.dirty_hits = 0
         self.update_index_time = update_index_time 
         self._update_index_timer = 0
@@ -213,7 +213,7 @@ class Registry(object):
                     return False
             self.repository.reap_locks()
             self.repository.delete(self._objects.keys())
-            self.dirty_objs = []
+            self.dirty_objs = {}
             self.dirty_hits = 0
             self.changed_ids = {}
             self.repository.clean()
@@ -272,7 +272,7 @@ class Registry(object):
             self._lock.acquire()
             try:
                 if obj in self.dirty_objs:
-                    self.dirty_objs.remove(obj)
+                    del self.dirty_objs[obj]
                 self.repository.delete([id])
                 del obj
                 for d in self.changed_ids.itervalues():
@@ -291,14 +291,11 @@ class Registry(object):
         self._write_access(obj)
         self._lock.acquire()
         try:
-            if not obj in self.dirty_objs:
-                self.dirty_objs.append(obj)
+            self.dirty_objs[obj] = 1
             self.dirty_hits += 1
             if self.dirty_hits % self.dirty_flush_counter == 0:
                 self._flush()
-            # HACK for GangaList: there _dirty is called _before_ the object is modified
-            if not obj in self.dirty_objs:
-                self.dirty_objs.append(obj)
+            self.dirty_objs[obj] = 1 # HACK for GangaList: there _dirty is called _before_ the object is modified
             for d in self.changed_ids.itervalues():
                 d.add(self.find(obj))
         finally:
@@ -318,17 +315,16 @@ class Registry(object):
         self._lock.acquire()
         try:
             for obj in objs:
-                if not obj in self.dirty_objs:
-                    self.dirty_objs.append(obj)
+                self.dirty_objs[obj] = 1
             ids = []
-            for obj in self.dirty_objs:
+            for obj in self.dirty_objs.keys():
                 try:
                     ids.append(self.find(obj))
                 except ObjectNotInRegistryError, x:
                     logger.error(x.what)
             logger.debug("repository.flush(%s)" % ids)
             self.repository.flush(ids)
-            self.dirty_objs = []
+            self.dirty_objs = {}
         finally:
             self._lock.release()
 
@@ -410,7 +406,7 @@ class Registry(object):
                 oid = self.find(obj)
                 if obj in self.dirty_objs:
                     self.repository.flush([oid])
-                    self.dirty_objs.remove(obj)
+                    del self.dirty_objs[obj]
                 obj._registry_locked = False
                 self.repository.unlock([oid])
         finally:
