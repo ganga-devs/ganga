@@ -142,6 +142,7 @@ p.add_option('--express', action='store_true', dest='express', help='Panda optio
 p.add_option('--trf', action='store', type='string', dest='trf', help='Parameters for Athena  transformations' )
 p.add_option('--mergeOutput', action='store_true', dest='mergeOutput', help='Panda option to enable the output merging jobs.')
 p.add_option('--usecommainputtxt', action='store_true', dest='usecommainputtxt', help='Boolean if input.txt contains the input files as comma separated list or separeted by a line break')
+p.add_option('--cmtConfig', action='store', type='string', dest='cmtConfig', help='CMTCONFIG=i686-slc5-gcc43-opt is used on remote worker-node by default even if you use another CMTCONFIG locally. This option allows you to use another CMTCONFIG remotely. e.g., --cmtConfig x86_64-slc5-gcc43-opt. If you use --libDS together with this option, make sure that the libDS was compiled with the same CMTCONFIG, in order to avoid failures due to inconsistency in binary files')
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -300,6 +301,9 @@ if opt.collectstats:
 
 if opt.useAthenaPackages:
     j.application.useAthenaPackages = True
+
+if opt.cmtConfig:
+    j.application.atlas_cmtconfig=opt.cmtConfig
 
 # inputdata
 
