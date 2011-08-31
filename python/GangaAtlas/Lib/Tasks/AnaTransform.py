@@ -112,7 +112,10 @@ class AnaTransform(Transform):
                   else:
                       replicas = dq2.listDatasetReplicas(info[0]).values()
                       if len(replicas) == 0:
-                          info[5] = getPandaClient().PandaSites[info[5]]["ddm"]
+                          try:
+                              info[5] = getPandaClient().PandaSites[info[5]]["ddm"]
+                          except KeyError:
+                              pass
                       else:
                           complete, incomplete = replicas[0].values()
                           info[5] = (complete + incomplete)[0]

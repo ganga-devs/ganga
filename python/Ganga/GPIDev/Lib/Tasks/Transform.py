@@ -105,7 +105,7 @@ class Transform(GangaObject):
       id = "%i:%i"%(self._getParent().id,self._getParent().transforms.index(self))
       for j in GPI.jobs:
          if "tasks_id" in j.application._impl._data:
-            if j.application._impl._data["tasks_id"] == id:
+            if j.application._impl._data["tasks_id"].endswith(id):
                 try:
                    if j.subjobs:
                       for sj in j.subjobs:
