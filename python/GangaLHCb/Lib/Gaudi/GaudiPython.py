@@ -58,12 +58,24 @@ class GaudiPython(Francesc):
     schema['project'] = SimpleItem(defvalue=None,
                                    typelist=['str','type(None)'],
                                    doc=docstr)
+    docstr = 'Location of shared resources. Presence of this attribute implies'\
+             'the application has been prepared.'
+    schema['is_prepared'] = SimpleItem(defvalue=None,
+                                       strict_sequence=0,
+                                       visitable=1,
+                                       copyable=1,
+                                       typelist=['type(None)','str'],
+                                       protected=1,
+                                       doc=docstr)
     _schema = Schema(Version(1, 2), schema)                                    
 
     def _auto__init__(self):
         if (not self.project): self.project = 'DaVinci'
         self._init(self.project,False)
-        
+
+    def prepare(self):
+        pass
+    
     def master_configure(self):
         self._master_configure()
         self._check_inputs()
