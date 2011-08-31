@@ -324,6 +324,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                             else:
                                 if count == retry:
                                     print '!!! lcg-gt error after %s retries - giving up !!!' %count
+                                    count = count + 1          
                                 else:
                                     count = count + 1
                                     print 'lcg-gt error - will start retry no. %s' %count
