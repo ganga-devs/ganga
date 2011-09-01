@@ -266,6 +266,11 @@ class MultiTransform(Transform):
 
        if len(self.unit_partition_list[uind]) == 0:
            return False
+
+       # check for merged job completion
+       mj = self.getUnitMasterJob( uind )
+       if mj.status != "completed":
+           return False
        
        return True
 
@@ -997,12 +1002,37 @@ class MultiTransform(Transform):
            name = self.name
           
        return (self._getParent().getContainerName()[:-1] + ".%s.%i/" % (name, self.getID())).replace(" ", "_")
-
+   
    def checkCompletedApp(self, app):
       j = app._getParent()
 
       if not j.outputdata or j.outputdata._name != "DQ2OutputDataset":
           return True
+
+      return True
+
+   def setAppStatus(self, app, new_status):
+       # call parent first
+       super(MultiTransform,self).setAppStatus(app, new_status)
+       
+       if j.subjobs or new_status != "completed" or (app.id in self._app_status and self._app_status[app.id] in ["removed","completed","failed"]):
+           return
+
+       self.addDatasetsToContainers(app._getParent())
+           
+   def setMasterJobStatus(self, job, new_status):
+       """hook for a master job status update"""
+       
+       if new_status != "completed" or job.status == new_status:
+           return
+
+       self.addDatasetsToContainers(job)
+                             
+   def addDatasetsToContainers(self, j):
+      """add datasets to transform and task containers"""
+       
+      if not j.outputdata or j.outputdata._name != "DQ2OutputDataset":
+          return
 
       # add dataset to the transform container
       trf_container = self.getContainerName()
@@ -1023,15 +1053,28 @@ class MultiTransform(Transform):
                   logger.error('Problem registering container for Transform %i, %s : %s %s' % (self.getID(), trf_container,x.__class__, x))
               except DQException, x:
                   logger.error('DQ2 Problem registering container for Transform %i, %s : %s %s' % (self.getID(), trf_container,x.__class__, x))
+
+          if j.subjobs:
+              ds_list = dq2.listDatasetsInContainer(j.outputdata.datasetname)
+              for ds in ds_list:
+                  try:
+                      dq2.registerDatasetsInContainer(trf_container, [ ds ] )
+                  except DQContainerAlreadyHasDataset:
+                      pass
+                  except Exception, x:
+                      logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+                  except DQException, x:
+                      logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+          else:
+              try:
+                  dq2.registerDatasetsInContainer(trf_container, [ j.outputdata.datasetname ] )
                   
-          try:
-              dq2.registerDatasetsInContainer(trf_container, [ j.outputdata.datasetname ] )
-          except DQContainerAlreadyHasDataset:
-              pass
-          except Exception, x:
-              logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
-          except DQException, x:
-              logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+              except DQContainerAlreadyHasDataset:
+                  pass
+              except Exception, x:
+                  logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+              except DQException, x:
+                  logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
       finally:
           dq2_lock.release()
 
@@ -1053,16 +1096,29 @@ class MultiTransform(Transform):
                   logger.error('Problem registering container for Task %i, %s : %s %s' % (self.getID(), task_container,x.__class__, x))
               except DQException, x:
                   logger.error('DQ2 Problem registering container for Task %i, %s : %s %s' % (self.getID(), task_container,x.__class__, x))
+
+          if j.subjobs:
+              ds_list = dq2.listDatasetsInContainer(j.outputdata.datasetname)
+              for ds in ds_list:
+                  try:
+                      dq2.registerDatasetsInContainer(task_container, [ ds ] )
+                  except DQContainerAlreadyHasDataset:
+                      pass
+                  except Exception, x:
+                      logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+                  except DQException, x:
+                      logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+          else:
+              try:
+                  dq2.registerDatasetsInContainer(task_container, [ j.outputdata.datasetname ] )
                   
-          try:
-              dq2.registerDatasetsInContainer(task_container, [ j.outputdata.datasetname ] )
-          except DQContainerAlreadyHasDataset:
-              pass
-          except Exception, x:
-              logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, task_container, x.__class__, x))
-          except DQException, x:
-              logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, task_container, x.__class__, x))
+              except DQContainerAlreadyHasDataset:
+                  pass
+              except Exception, x:
+                  logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+              except DQException, x:
+                  logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+
       finally:
           dq2_lock.release()
 
-      return True
