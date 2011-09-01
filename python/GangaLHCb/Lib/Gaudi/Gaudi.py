@@ -9,6 +9,7 @@ import Ganga.Utility.logging
 from GaudiUtils import *
 from GaudiRunTimeHandler import * 
 from PythonOptionsParser import PythonOptionsParser
+from Ganga.Core.GangaRepository import getRegistry
 from Francesc import *
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
@@ -132,7 +133,22 @@ class Gaudi(Francesc):
             raise ApplicationConfigurationError(None,msg)
         return parser
 
-    def prepare(self):
+    def unprepare(self,force=False):
+        """
+        Revert an Executable() application back to it's unprepared state.
+        """
+        if self.is_prepared is not None:
+            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+            shareref.decrease(self.is_prepared.name)
+            self.is_prepared = None
+
+    def prepare(self,force=False):
+        if self._getRegistry() is None:
+            raise ApplicationConfigurationError(None,'Applications not associated with a persisted object (Job or Box) cannot be prepared.')
+    
+        if (self.is_prepared is not None) and (force is not True):
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
+
         send_to_share = self._prepare()
         job = self.getJobObject()
         parser = self._check_inputs()         
