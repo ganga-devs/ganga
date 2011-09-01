@@ -76,7 +76,7 @@ class Transform(GangaObject):
                       app = j.application._impl
                       app.getTransform()._impl.setAppStatus(app,app._getParent().status)
                 except AttributeError, e:
-                   logger.debug("%s",e)
+                   logger.error("%s",e)
       pass
 
    def getPartitionApps(self):
@@ -105,7 +105,7 @@ class Transform(GangaObject):
       id = "%i:%i"%(self._getParent().id,self._getParent().transforms.index(self))
       for j in GPI.jobs:
          if "tasks_id" in j.application._impl._data:
-            if j.application._impl._data["tasks_id"].endswith(id):
+            if j.application._impl._data["tasks_id"] == id:
                 try:
                    if j.subjobs:
                       for sj in j.subjobs:
