@@ -10,6 +10,7 @@ from GaudiUtils import *
 from GaudiRunTimeHandler import * 
 from PythonOptionsParser import PythonOptionsParser
 from Ganga.Core.GangaRepository import getRegistry
+from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Francesc import *
 from Ganga.Utility.util import unique
