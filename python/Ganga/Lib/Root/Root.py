@@ -11,6 +11,7 @@ from Ganga.GPIDev.Lib.File import File, ShareDir
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.Core import ApplicationConfigurationError
 
 from Ganga.Utility.Config import makeConfig, getConfig, ConfigError
 from Ganga.Utility.root import getrootsys,getpythonhome
