@@ -244,7 +244,7 @@ class Grid(object):
     def list_match(self, jdlpath, ce=None):
         '''Returns a list of computing elements can run the job'''
 
-        re_ce = re.compile('^\s*\-\s*(\S+\:2119\/\S+)\s*$')
+        re_ce = re.compile('^\s*\-\s*(\S+\:(2119|8443)\/\S+)\s*$')
 
         matched_ces = []
 
