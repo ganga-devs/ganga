@@ -1015,7 +1015,7 @@ class MultiTransform(Transform):
        # call parent first
        super(MultiTransform,self).setAppStatus(app, new_status)
        
-       if j.subjobs or new_status != "completed" or (app.id in self._app_status and self._app_status[app.id] in ["removed","completed","failed"]):
+       if app._getParent().subjobs or new_status != "completed" or (app.id in self._app_status and self._app_status[app.id] in ["removed","completed","failed"]):
            return
 
        self.addDatasetsToContainers(app._getParent())
