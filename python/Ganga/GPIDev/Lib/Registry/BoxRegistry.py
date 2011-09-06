@@ -83,6 +83,18 @@ class BoxRegistry(Registry):
             return self[self.find(obj)]
 
     def proxy_add(self,obj,name):
+        """
+        Add an object to the box
+         
+        The object must also be given a descriptive text name, for example:
+
+        box.add(Job(),'A job')
+
+        or
+
+        a=Executable()
+        box.add(a, 'An executable application')
+        """
         obj = _unwrap(obj)
         if isinstance(obj,list):
             obj = makeGangaList(obj)
@@ -97,6 +109,11 @@ class BoxRegistry(Registry):
         obj._setDirty()
 
     def proxy_rename(self,obj_id,name):
+        """
+        Rename an object in the box. For example:
+    
+        box(0,'new name')
+        """
         self._setName(self._get_obj(obj_id), name)
     
     def proxy_remove(self,obj_id):
