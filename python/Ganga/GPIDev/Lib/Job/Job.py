@@ -621,12 +621,12 @@ class Job(GangaObject):
             msg = "The application associated with job %d has already been prepared. To force the operation, call prepare(force=True)" % (self.id)
             raise JobError(msg)
         if (self.application.is_prepared is None):
-            add_to_inputsandbox = self.application.prepare(force=True)
+            add_to_inputsandbox = self.application.prepare()
             if isType(add_to_inputsandbox,list):
                 self.inputsandbox.extend(add_to_inputsandbox)
-        if (self.application.is_prepared is not None) and (force == True):
-            self.unprepare()
-            self.application.prepare()
+        elif (self.application.is_prepared is not None) and (force == True):
+            self.application.unprepare(force=True)
+            self.application.prepare(force=True)
             
 
 
