@@ -83,18 +83,6 @@ class BoxRegistry(Registry):
             return self[self.find(obj)]
 
     def proxy_add(self,obj,name):
-        """
-        Add an object to the box
-         
-        The object must also be given a descriptive text name, for example:
-
-        box.add(Job(),'A job')
-
-        or
-
-        a=Executable()
-        box.add(a, 'An executable application')
-        """
         obj = _unwrap(obj)
         if isinstance(obj,list):
             obj = makeGangaList(obj)
@@ -109,11 +97,6 @@ class BoxRegistry(Registry):
         obj._setDirty()
 
     def proxy_rename(self,obj_id,name):
-        """
-        Rename an object in the box. For example:
-    
-        box(0,'new name')
-        """
         self._setName(self._get_obj(obj_id), name)
     
     def proxy_remove(self,obj_id):
@@ -174,40 +157,8 @@ class BoxRegistrySlice(RegistrySlice):
 
 from RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 class BoxRegistrySliceProxy(RegistrySliceProxy):
-    """This object is a list of objects in the box.
-    
-    Any Ganga object can be stored in the box. For example, a job can be added thus:
-    
-    a=Job()
-    box.add(a, 'Some descriptive text')
-
-    or an application:
-
-    a=Executable()
-    box.add(a, 'An application')
-
-    Box objects are referenced by their IDs which can be viewed by simply calling 'box', or
-    box.ids()
-
-    Once defined, box objects can be renamed:        
-    box.rename(0, 'new name')
-
-    removed:
-    box.remove(0)
-
-    or selected:
-    box.select(0)
-    box.select(application='Executable')
-    box.select(name='text name')
-    
-
-    Finally, to remove all box objects:
-    box.remove_all()
-
-    or to completelty clean the box registry:
-    box.clean()
+    """This object is a list of objects in the box
     """
-
     def __call__(self,x):
         """ Access individual object. Examples:
         box(10) : get object with id 10 or raise exception if it does not exist.
@@ -230,10 +181,6 @@ class BoxRegistrySliceProxy(RegistrySliceProxy):
         return _wrap(self._impl.__getslice__(i1,i2))
 
     def remove_all(self):
-        """
-        Remove all objects from the box registry.
-        """ 
-
         items = self._impl.objects.items()
         for id,obj in items:
             reg = obj._getRegistry()
