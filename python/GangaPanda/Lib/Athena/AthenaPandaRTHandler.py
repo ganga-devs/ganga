@@ -859,6 +859,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             #if not isDirectAccess:
             if not isDirectAccess and (( self.inputdatatype != 'DQ2' ) or (len(job.inputdata.tagdataset) == 0 and not job.inputdata.tag_info)):
                 param += ' --useLocalIO '
+                param += ' --accessmode=copy '
 
         #param += '-m "[]" ' #%minList FIXME
         #param += '-n "[]" ' #%cavList FIXME
