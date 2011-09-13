@@ -120,6 +120,7 @@ class Executable(IApplication):
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shared_dirname = self.is_prepared.name
         #add the newly created shared directory into the metadata system
+        logger.debug("Increasing shareref")
         shareref.increase(self.is_prepared.name)
 
 
