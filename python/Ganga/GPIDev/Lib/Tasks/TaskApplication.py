@@ -67,14 +67,19 @@ class TaskApplication(object):
     def transition_update(self,new_status):
         #print "Transition Update of app ", self.id, " to ",new_status
         try:
+            transform = self.getTransform()
             if self.tasks_id.startswith("00"): ## Master job
                if new_status == "new": ## something went wrong with submission
                   for sj in self._getParent().subjobs:
                      sj.application.transition_update(new_status)
-               return
-            transform = self.getTransform()
-            if transform:
-               transform._impl.setAppStatus(self, new_status)
+           
+               if transform:
+                   transform._impl.setMasterJobStatus(self._getParent(), new_status)
+
+            else:
+               if transform:
+                   transform._impl.setAppStatus(self, new_status)
+                   
         except Exception, x:
             import traceback, sys
             logger.error("Exception in call to transform[%s].setAppStatus(%i, %s)", self.tasks_id, self.id, new_status)

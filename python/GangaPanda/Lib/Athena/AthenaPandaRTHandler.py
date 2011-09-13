@@ -32,6 +32,7 @@ def createContainer(name):
     if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
         try:
             Client.createContainer(name,False)
+            logger.info('Created output container %s' %name)
         except exceptions.SystemExit:
             raise BackendError('Panda','Exception in Client.createContainer %s: %s %s'%(name,sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -39,6 +40,7 @@ def addDatasetsToContainer(container,datasets):
     from pandatools import Client
     if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
         Client.addDatasetsToContainer(container,datasets,False)
+
 
 def getDBDatasets(jobO,trf,dbrelease):
     from pandatools import Client
@@ -313,7 +315,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if not job.outputdata.datasetname in res.keys():
             # create the container
             createContainer(job.outputdata.datasetname)
-            logger.info('Created output container %s'%job.outputdata.datasetname)
+
         else:
             logger.warning('Adding datasets to already existing container %s' % job.outputdata.datasetname)
         self.indivOutContList = [job.outputdata.datasetname]
@@ -482,7 +484,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
                 if matchURL:
                     jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
-                jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
+                jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
                 if job.backend.bexec != '':
                     jspec.jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
                     jspec.jobParameters += ' -r %s ' % '.'
@@ -576,7 +578,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.minRamCount = job.backend.requirements.memory
         if job.backend.requirements.cputime != -1:
             jspec.maxCpuCount = job.backend.requirements.cputime
-        jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release)
+        jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
 
 #       library (source files)
         if job.backend.libds:
@@ -857,6 +859,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             #if not isDirectAccess:
             if not isDirectAccess and (( self.inputdatatype != 'DQ2' ) or (len(job.inputdata.tagdataset) == 0 and not job.inputdata.tag_info)):
                 param += ' --useLocalIO '
+                param += ' --accessmode=copy '
 
         #param += '-m "[]" ' #%minList FIXME
         #param += '-n "[]" ' #%cavList FIXME

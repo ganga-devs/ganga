@@ -279,6 +279,8 @@ def send_mail(key, receiver=''):
         string_message = string_message.replace('VER', CONFIG['version'])
     elif key == 'release':      
         string_message = string_message.replace('*version*', CONFIG['version'])
+    elif key == 'testsfinished':      
+        string_message = string_message.replace('VER', CONFIG['version'])
 
     try:
         smtpObj = smtplib.SMTP('cernmx.cern.ch')
