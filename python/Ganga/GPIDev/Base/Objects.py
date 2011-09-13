@@ -451,6 +451,7 @@ class GangaObject(Node):
                 try:
                     from Ganga.Core.GangaRepository import getRegistry
                     shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    logger.debug("Increasing shareref")
                     shareref.increase(shared_dir.name)
                 except AttributeError:
                     pass
