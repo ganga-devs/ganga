@@ -92,12 +92,14 @@ class BoxRegistry(Registry):
             if hasattr(obj.application, 'is_prepared'):
                 if obj.application.is_prepared is not None:
                     shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    logger.debug("Increasing shareref")
                     shareref.increase(obj.application.is_prepared.name)
                     logger.info('Adding a prepared job to the box and increasing the shareref counter')
         if obj._category == 'applications':
             if hasattr(obj, 'is_prepared'):
                 if obj.is_prepared is not None:
                     shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    logger.debug("Increasing shareref")
                     shareref.increase(obj.is_prepared.name)
                     logger.info('Adding a prepared application to the box and increasing the shareref counter')
 
