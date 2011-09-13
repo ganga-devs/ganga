@@ -140,6 +140,11 @@ class ProxyDataDescriptor(object):
             if obj.application.is_prepared is not None:
                 logger.info('Overwriting a prepared application with one that is unprepared')
                 obj.application.unprepare()
+            elif obj.application.is_prepared is None and val.is_prepared is not None:
+                from Ganga.Core.GangaRepository import getRegistry
+                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                shareref.increase(val.is_prepared.name)
+                logger.info('Incrementing shareref')
  
 
         if item['protected']:
