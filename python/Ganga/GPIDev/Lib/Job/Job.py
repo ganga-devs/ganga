@@ -399,6 +399,7 @@ class Job(GangaObject):
         #increment the shareref counter if the job we're copying is prepared.
         if self.application.is_prepared is not None:
             shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+            logger.debug("Increasing shareref")
             shareref.increase(self.application.is_prepared.name)
         # register the job (it will also commit it)
         # job gets its id now
