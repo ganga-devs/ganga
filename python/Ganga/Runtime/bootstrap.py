@@ -411,6 +411,7 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
 
         config.addOption('TextShell','IPython',""" The type of the interactive shell: IPython (cooler) or Console (limited)""")
         config.addOption('StartupGPI','','block of GPI commands executed at startup')
+        config.addOption('ReleaseNotes',False,'Flag to print out the relevent subsection of release notes for each experiment at start up')
         config.addOption('gangadir',Ganga.Utility.Config.expandvars(None,'~/gangadir'),'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.',filter=Ganga.Utility.Config.expandvars)
         config.addOption('repositorytype','LocalXML','Type of the repository.',examples='LocalXML')
         config.addOption('workspacetype','LocalFilesystem','Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
@@ -890,7 +891,62 @@ default_backends = LCG
            # using explicitly '\n' and '\t' chars
            code = config['StartupGPI'].replace('\\t','\t').replace('\\n','\n')
            exec code in local_ns
-           
+          
+
+        #Go through file line by line, use the 'name' to find where the experiment specific notes are.
+        def printreleasenotes(filelist, name, version):
+            startprinting = 100000
+            stopprinting = 100000
+            for linenumber, line in enumerate(filelist):  
+                if line.find(name) > 0:
+                    print name.lstrip('python/').rstrip('\n')+' release notes for version '+version+':\n'
+                    startprinting = linenumber+2
+                if startprinting < linenumber and stopprinting > linenumber and line[1:5] == '----': 
+                    stopprinting = linenumber-2
+            for line in filelist[startprinting:stopprinting]:
+                print line,
+           #If there is no release notes:
+            if stopprinting-startprinting < 1:
+                print 'No release notes for '+name.lstrip('python/').rstrip('\n')+' in version '+version+'\n'
+            else: 
+                print ' '
+
+        #Find out if ganga version has been used before by writing to a hidden file in the gangadir
+        def new_version(version):
+            _new_version = True
+            versionfile_path = config['gangadir']+'/.used_versions'
+            if os.path.isfile(versionfile_path):
+                f_version = open(versionfile_path,'r+')
+                for line in f_version:
+                    if version == line:
+                        _new_version = False
+                if _new_version == True:
+                    f_version.write(version)
+                f_version.close()
+            else:
+                f_version = open(versionfile_path,'w')
+                f_version.write(version)
+                f_version.close()
+            return _new_version
+
+        #print release notes
+        if config['ReleaseNotes']==True:
+            runtime = config['RUNTIME_PATH']
+            #name = runtime[runtime.find(':')+1:len(runtime)-1]
+            name = [n for n in runtime.strip().split(':') if n is not '']
+            import commands
+            version = commands.getoutput('ganga --version').lstrip("Ganga-")
+            version = version.replace('-','.')
+            if new_version(version+'\n') == True:
+                installdir = commands.getoutput('which ganga').rstrip("/InstallArea/scripts/ganga")
+                f_releasenotes = open(installdir+'/install/ganga/release/ReleaseNotes-'+version)
+                filelist = f_releasenotes.readlines()
+                print '\n*****************************************************************************'
+                printreleasenotes(filelist,'python/Ganga'+'\n',version)
+                for n in name: printreleasenotes(filelist,'python/'+n+'\n',version)
+                print '*****************************************************************************'
+
+ 
         # monitor the  ganga usage
         import spyware
 
