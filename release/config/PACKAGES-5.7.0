@@ -3,7 +3,7 @@
 #kuba
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Core-Prepared-0-2
+ganga/python/Ganga                                                     Ganga-Core-Prepared-0-3
 
 #hclee
 ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-22-8
@@ -27,7 +27,7 @@ ganga/python/GangaJEM                                                  GangaJEM-
 ganga/python/GangaKISTI                                                GangaKISTI-1-1
 
 #will/ulrik
-ganga/python/GangaLHCb                                                 Ganga-LHCb-Prepared-0-5
+ganga/python/GangaLHCb                                                 Ganga-LHCb-Prepared-0-6
 
 #pajchel/bsamset
 ganga/python/GangaNG                                                   GangaNG-20-31
