@@ -164,9 +164,15 @@ class Gaudi(Francesc):
         
         send_to_share = self._prepare()
         job = self.getJobObject()
-        parser = self._check_inputs()         
-        input_dir = job.getInputWorkspace().getPath()
+        parser = self._check_inputs()
+        ## Next line would have stored them in the jobs inputdir but want them
+        ## in sharedDir now we have prepared state.
+        ##input_dir = job.getInputWorkspace().getPath()
+        input_dir = shared_dirname
 
+
+        ## Need to remember to create the buffer as the perpare methods returns
+        ## are merely copied to the inputsandbox so must alread exist.
         send_to_share.append(FileBuffer(os.path.join(input_dir,'options.pkl'),
                                         parser.opts_pkl_str).create())
 

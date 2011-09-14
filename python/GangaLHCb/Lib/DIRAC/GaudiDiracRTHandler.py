@@ -70,14 +70,19 @@ class GaudiDiracRTHandler(IRuntimeHandler):
                           (app.platform,str(platforms))
                     raise ApplicationConfigurationError(None,msg)
 
+        ## Pickup outputsandbox defined in the options file
         import pickle
-        file=open(os.path.join(app.is_prepared.name,'outputsandbox.pkl'),'rb')
-        outputsandbox = pickle.load(file)
-        file.close()
+        f_osandbox = os.path.join(app.is_prepared.name,'outputsandbox.pkl')
+        if os.path.isfile(f_osandbox):
+            file=open(f_osandbox,'rb')
+            outputsandbox = pickle.load(file)
+            file.close()
         ## Pickup outputdata defined in the options file
-        file=open(os.path.join(app.is_prepared.name,'outputdata.pkl'),'rb')
-        outdata = pickle.load(file)
-        file.close()
+        f_odata = os.path.join(app.is_prepared.name,'outputdata.pkl')
+        if os.path.isfile(f_odata):
+            file=open(f_odata,'rb')
+            outdata = pickle.load(file)
+            file.close()
 
         ## Note EITHER the master inputsandbox OR the job.inputsandbox is added to
         ## the subjob inputsandbox depending if the jobmasterconfig object is present
@@ -91,7 +96,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
 
         job=app.getJobObject()
         inputsandbox=[]
-        
+        data_str=''
         if job.inputdata:
             data_str = job.inputdata.optionsString()
             if job.inputdata.hasLFNs():        
@@ -99,7 +104,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
                            '["xmlcatalog_file:pool_xml_catalog.xml"]\n'
                 data_str += cat_opts
             
-            inputsandbox.append(FileBuffer('data.py',data_str).create())
+        inputsandbox.append(FileBuffer('data.py',data_str))
 
         #sandbox = get_input_sandbox(app.extra)
         inputsandbox += appsubconfig.getSandboxFiles()

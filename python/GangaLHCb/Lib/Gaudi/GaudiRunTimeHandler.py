@@ -30,13 +30,17 @@ class GaudiRunTimeHandler(IRuntimeHandler):
 
         ## Pickup outputsandbox defined in the options file
         import pickle
-        file=open(os.path.join(app.is_prepared.name,'outputsandbox.pkl'),'rb')
-        outputsandbox = pickle.load(file)
-        file.close()
+        f_osandbox = os.path.join(app.is_prepared.name,'outputsandbox.pkl')
+        if os.path.isfile(f_osandbox):
+            file=open(f_osandbox,'rb')
+            outputsandbox = pickle.load(file)
+            file.close()
         ## Pickup outputdata defined in the options file
-        file=open(os.path.join(app.is_prepared.name,'outputdata.pkl'),'rb')
-        outdata = pickle.load(file)
-        file.close()
+        f_odata = os.path.join(app.is_prepared.name,'outputdata.pkl')
+        if os.path.isfile(f_odata):
+            file=open(f_odata,'rb')
+            outdata = pickle.load(file)
+            file.close()
         
  #       self.appconfig.outputsandbox,outputdata = parser.get_output(job)
 ##         self.appconfig.outputdata.files += outputdata
@@ -49,7 +53,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
         inputsandbox=job.inputsandbox[:]
         if job.inputdata and job.inputdata.hasLFNs():
             xml_catalog_str = job.inputdata.getCatalog()
-            inputsandbox.append(FileBuffer('catalog.xml').create())
+            inputsandbox.append(FileBuffer('catalog.xml'))
             
         ## Here add any sandbox files coming from the appmasterconfig
         ## currently none.
@@ -68,13 +72,17 @@ class GaudiRunTimeHandler(IRuntimeHandler):
         ## Note the master inputsandbox will be added automatically
         ## no need to add it here
         inputsandbox=[]
+        data_str=''
         if job.inputdata:
             data_str = job.inputdata.optionsString()
             if job.inputdata.hasLFNs():
                 cat_opts='\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
                 data_str += cat_opts
 
-            inputsandbox.append(FileBuffer('data.py',data_str).create())
+        ## Unlike in the applications prepare method, buffers are created into
+        ## files later on in job submission.
+#        inputsandbox.append(FileBuffer('data.py',data_str).create())
+        inputsandbox.append(FileBuffer('data.py',data_str))
 
         ## Here add any sandbox files coming from the appsubconfig
         ## currently none.
