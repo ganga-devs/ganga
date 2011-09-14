@@ -1,18 +1,24 @@
 **************************************************************************************************************
-5.7.0 (2011/9/13)
+5.7.0 (2011/9/14)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* fix the bug in resolving CREAM CE endpoints in job-resource match-making
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
-* Added protection in DQ2Split for DQExceptions
-* Fixed a bug with DQ2 exceptions not getting caught properly
-* Added --appendfiles option to cmd line (cf append_to_user_area)
+* Upgrade to panda-client 0.3.58
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaPanda
 --------------------------------------------------------------------------------------------------------------
-* minor fix for indOutDS and addDatasetsToContainer
+* Upgrade to panda-client 0.3.58
+* add --accessmode=copy to TRF workflows
+* Add missing import for Python exceptions module to ProdTrans
 
 **************************************************************************************************************
