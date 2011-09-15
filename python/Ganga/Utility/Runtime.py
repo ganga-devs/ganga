@@ -108,7 +108,7 @@ class RuntimePackage:
         showpath = self.syspath
         if not showpath:
             showpath = '<defaultpath>'
-        logger.info("initializing runtime: '%s' '%s'",self.name,showpath)
+        logger.debug("initializing runtime: '%s' '%s'",self.name,showpath)
         
         if allRuntimes.has_key(self.name):
             if allRuntimes[self.name].path != self.path:
@@ -132,7 +132,7 @@ class RuntimePackage:
                 if self.modpath.find(self.syspath) == -1:
                     logger.warning("runtime '%s' imported from '%s' but specified path is '%s'. You might be getting different code than expected!",self.name,self.modpath,self.syspath)
             else:
-                logger.info("runtime package %s imported from %s",self.name,self.modpath)
+                logger.debug("runtime package %s imported from %s",self.name,self.modpath)
                 
             # import the <PACKAGE>/PACKAGE.py module
             # @see Ganga/PACKAGE.py for description of this magic module            
