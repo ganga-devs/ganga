@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.6.10 (2011/9/13)
+5.6.10 (2011/9/15)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -11,6 +11,9 @@ Ganga-Base-30-55 -  Added release note printing facility of first version use.
                     off by default, enable through config file
                     [Configuration]
                     ReleaseNotes = True
+Ganga-Base-30-56 -  Added hook for change in master job status
+
+Ganga-Base-30-57 -  Small fix to ReleaseNote printing
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -32,6 +35,8 @@ GangaLHCb-23-15 -   Added release note printing facility of first version use.
                     off by default, enable through config file
                     [Configuration]
                     ReleaseNotes = True
+
+GangaLHCb-23-16 -   minor fix to make some of the tests more relevant
 
 
 --------------------------------------------------------------------------------------------------------------
