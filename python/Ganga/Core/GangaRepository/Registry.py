@@ -456,7 +456,7 @@ class Registry(object):
             # All Ids could have changed
             self.changed_ids = {}
             t1 = time.time()
-            logger.info("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0))
+            logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1-t0))
             self._started = True
         finally:
             self._lock.release()
