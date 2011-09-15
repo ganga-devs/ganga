@@ -937,15 +937,16 @@ default_backends = LCG
             import commands
             version = commands.getoutput('ganga --version').lstrip("Ganga-")
             version = version.replace('-','.')
-            if new_version(version+'\n') == True:
-                installdir = commands.getoutput('which ganga').rstrip("/InstallArea/scripts/ganga")
+            installdir = commands.getoutput('which ganga').rstrip("/InstallArea/scripts/ganga")
+            relnotespath =installdir+'/install/ganga/release/ReleaseNotes-'+version
+            if new_version(version+'\n') == True and os.path.isfile(relnotespath):
                 f_releasenotes = open(installdir+'/install/ganga/release/ReleaseNotes-'+version)
                 filelist = f_releasenotes.readlines()
                 print '\n*****************************************************************************'
                 printreleasenotes(filelist,'python/Ganga'+'\n',version)
                 for n in name: printreleasenotes(filelist,'python/'+n+'\n',version)
                 print '*****************************************************************************'
-
+                f_releasenotes.close()
  
         # monitor the  ganga usage
         import spyware
