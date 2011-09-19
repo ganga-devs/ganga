@@ -73,7 +73,7 @@ The log level may be one of: CRITICAL ERROR WARNING INFO DEBUG
 """,is_open=True)
                                          
 # FIXME: Ganga WARNING should be turned into INFO level when the messages are reviewed in all the code
-config.addOption('Ganga', "WARNING","top-level logger")
+config.addOption('Ganga', "INFO","top-level logger")
 config.addOption('Ganga.Runtime.bootstrap',"INFO",'FIXME')
 config.addOption('Ganga.GPIDev',"INFO","logger of Ganga.GPIDev.* packages")
 config.addOption('Ganga.Utility.logging',"WARNING","logger of the Ganga logging package itself (use with care!)")
