@@ -6,7 +6,8 @@
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import FileItem, Schema, SimpleItem, Version, SharedItem
+#from Ganga.GPIDev.Schema import FileItem, Schema, SimpleItem, Version, SharedItem
+from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import File, ShareDir
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.Core.GangaRepository import getRegistry
@@ -242,7 +243,7 @@ class Root(IApplication):
         if (self.is_prepared is not None) and (force is not True):
             raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
         elif (self.script.name is not ''):
-            logger.warn('Preparing %s application.'%(self._name))
+            logger.info('Preparing %s application.'%(self._name))
             self.is_prepared = ShareDir()
             #get hold of the metadata object for storing shared directory reference counts
             shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
@@ -252,8 +253,8 @@ class Root(IApplication):
     
             send_to_sharedir = []
             send_to_sharedir = self.script.name
-            logger.warn('Sending file object %s to shared directory'%send_to_sharedir)
-            logger.warn('Copying %s to %s' %(send_to_sharedir, self.is_prepared.name))
+            logger.info('Sending file object %s to shared directory'%send_to_sharedir)
+            logger.info('Copying %s to %s' %(send_to_sharedir, self.is_prepared.name))
             shutil.copy2(send_to_sharedir, self.is_prepared.name)
             self.script=File(os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir)))
             return 1
