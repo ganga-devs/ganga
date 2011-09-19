@@ -320,27 +320,27 @@ class TestAthenaMC_evgen(AtlasTest):
     def setup(self):
         j=Job()
         j.application=AthenaMC() 
-	j.application.mode='evgen'
-        j.application.atlas_release = '15.6.12.9'
-      	j.application.transform_script = 'Evgen_trf.py'
-        j.application.evgen_job_option = 'MC9.105428.Pythia_DYmumu_75M120.py'
-        j.application.random_seed='1'
-        j.application.extraArgs = 'ecmEnergy=7000'
+	j.application.mode='template'
+        j.application.atlas_release = '16.6.7.13'
+      	j.application.transform_script = 'Generate_trf.py'
+        j.application.extraArgs = 'ecmEnergy=7000 evgenJobOpts=MC11JobOpts-00-00-87_v0.tar.gz runNumber=128501 firstEvent=1 randomSeed=1 outputEVNTFile=$outEvgen jobConfig=MC11.128501.PythiaDYmumu_Mll7to60_Pt15Pt8.py'
         j.application.number_events_job = 30
-        j.application.production_name = 'test-%s' % today # needed to change the file names, as test jobs are always given the same job id.
-        j.outputdata = AthenaMCOutputDatasets ()
+        j.outputdata = AthenaMCOutputDatasets()
+	j.outputdata.outrootfiles['Evgen']='test-%s.EVNT'
+	j.outputdata.outrootfiles['LOG']='test-%s.log'
 	self.j = j
+
 
 class TestAthenaMC_simul(AtlasTest):
     def setup(self):
         j=Job()
         j.application=AthenaMC() 
         j.application.mode='simul'
-	j.application.atlas_release = '15.6.3.10'
+	j.application.atlas_release = '15.6.12.9'
         j.application.transform_script = "csc_simul_trf.py"
-        j.application.geometryTag = 'ATLAS-GEO-10-00-00'
-	j.application.triggerConfig = 'NONE' 	
-	j.application.extraArgs = 'jobConfig=VertexFromCondDB.py,CalHits.py,jobConfig.LooperKiller.py physicsList=QGSP_BERT DBRelease=9.0.1'
+        j.application.geometryTag = 'ATLAS-GEO-16-00-00'
+        j.application.number_events_job = 3
+	j.application.extraArgs = 'jobConfig=VertexFromCondDB.py,CalHits.py,jobConfig.LooperKiller.py physicsList=QGSP_BERT DBRelease=12.2.1 ConditionsTag=OFLCOND-SDR-BS7T-02'
 	j.application.production_name='test-%s' % today
         j.inputdata=AthenaMCInputDatasets()
         j.inputdata.DQ2dataset='user09.fredericbrochu.ganga.prod.100000.Pythia_RPV_UDD_1em6.evgen.EVNT/' # dataset in CAMBRIDGE, available in both Panda and LCG backends.
@@ -360,6 +360,7 @@ class TestAthenaMC_recon(AtlasTest):
 	j.application.geometryTag = 'ATLAS-GEO-10-00-00'	
 	j.application.production_name = 'test-%s' % today
 	j.application.extraArgs ='RunNumber=105485 autoConfiguration=everything preInclude=RecJobTransforms/SetJetConstants-02-000.py preExec="rec.Commissioning.set_Value_and_Lock(True);InDetFlags.doMinBias.set_Value_and_Lock(False);jobproperties.Beam.energy.set_Value_and_Lock(3500*Units.GeV);muonRecFlags.writeSDOs=True;rec.doDPD=True;InDetFlags.useBeamConstraint.set_Value_and_Lock(True);from CaloRec.CaloCellFlags import jobproperties;jobproperties.CaloCellFlags.doLArDeadOTXCorr.set_Value_and_Lock(False)" postExec="topSequence.TimeOut=7200*Units.s" DBRelease=DBRelease-10.7.1.tar.gz conditionsTag=OFLCOND-DR-BS7T-ANom-15 geometryVersion=ATLAS-GEO-10-00-00 AMITag=r1302 triggerConfig=MCRECO:DB:TRIGGERDBMC:145,73,124 --ignoreerrors=ALL'	
+	j.application.number_events_job = 3	
         j.inputdata=AthenaMCInputDatasets()
         j.inputdata.DQ2dataset='group09.phys-exotics.mc09_7TeV.105485.Pythia_DYmumu_1500M1750_unfiltered.digit.RDO.e549_s765_s767_d308' # dataset in ALBERTA, available in both Panda and LCG backends.
         j.inputdata.datasetType='DQ2'
@@ -397,7 +398,6 @@ class TestAthenaMCPanda_evgen(TestAthenaMC_evgen):
         TestAthenaMC_evgen.setup(self)
 	self.j.backend=Panda()
 	self.j.application.dryrun = False 
-	self.j.backend.site="ANALY_SLAC"	
 	self.j.backend.requirements.cloud = "US"
         self.j.submit()
 

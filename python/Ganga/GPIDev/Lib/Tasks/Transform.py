@@ -275,6 +275,10 @@ class Transform(GangaObject):
       # Update the corresponding partition status
       self.updatePartitionStatus(self._app_partition[app.id])
 
+   def setMasterJobStatus(self, job, new_status):
+      """hook for a master job status update"""
+      return
+               
    def updatePartitionStatus(self, partition):
       """ Calculate the correct status of the given partition. 
           "completed" and "bad" is never changed here

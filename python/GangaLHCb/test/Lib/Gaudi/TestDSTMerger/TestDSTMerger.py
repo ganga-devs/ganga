@@ -29,8 +29,7 @@ class TestDSTMerger(GangaGPITestCase):
             assert os.path.exists(dst1), 'Test file must be created'
             dst_files.append(dst1)
         
-        outdst = tempfile.mktemp('.dst')
-        
+        fout, outdst = tempfile.mkstemp('.dst')
         tool = dstTool()
         tool.version = 'v23r1'
         tool.mergefiles(dst_files,outdst)
