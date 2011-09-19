@@ -23,6 +23,9 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaAtlas.Lib.ATLASDataset import filecheck
 
 from Ganga.Lib.Mergers.Merger import *
+from Ganga.Core.GangaRepository import getRegistry
+from Ganga.GPIDev.Lib.File import ShareDir, File
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 from pandatools import AthenaUtils
 
@@ -864,11 +867,16 @@ class Athena(IApplication):
         os.chdir(savedir)
         return extraFilesPath
 
-    def prepare(self, **options):
+    def prepare(self, force=False, **options):
         """Extract Athena job configuration and prepare job for submission"""
 
-        logger.debug('New prepare() method has been called. The old prepare method is called now prepare_old()')
+        if self._getRegistry() is None:
+            raise ApplicationConfigurationError(None,'Applications not associated with a persisted object (Job or Box) cannot be prepared.')
+        if (self.is_prepared is not None) and (force is not True):
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
 
+        logger.info('Preparing %s application.'%(self._name))
+        logger.debug('New prepare() method has been called. The old prepare method is called now prepare_old()')
         opt_athena_compile = options.get('athena_compile')
         if opt_athena_compile:
             self.athena_compile = opt_athena_compile  
@@ -1070,13 +1078,33 @@ class Athena(IApplication):
         self.user_area.name = archiveFullName
         os.chdir(savedir)
         
-        send_to_sharedir = []
-        send_to_sharedir.append(archiveFullName)
+        #create our shared directory
+        self.is_prepared = ShareDir()
+        #we want to add the tarball to the shared directory.
+        logger.info('Copying %s to %s' %(archiveFullName, self.is_prepared.name))
+        shutil.copy2(archiveFullName, self.is_prepared.name)
+        self.user_area.name = File(os.path.join(self.is_prepared.name,archiveFullName))
 
+        #copy each option_file to the shared directory and reflect their new location in the application object.
+        tmp_option_file = []
         for opt_file in self.option_file:
-            send_to_sharedir.append(opt_file.name)
+            logger.info('Copying %s to %s' %(opt_file.name, self.is_prepared.name))
+            shutil.copy2(opt_file.name, self.is_prepared.name)
+            #rename the file object to reflect that it now lives in the shared directory.
+            tmp_option_file.append(File((os.path.join(self.is_prepared.name,os.path.basename(opt_file.name)))))
+    
+        self.option_file = tmp_option_file
 
-        return send_to_sharedir
+        #get hold of the metadata object for storing shared directory reference counts
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        shared_dirname = self.is_prepared.name
+        #add the newly created shared directory into the metadata system
+        shareref.increase(self.is_prepared.name)
+
+
+        #return [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
+        #return [ filename for filename in  send_to_sharedir ]
+        return 1
 
     def prepare_old(self, athena_compile=True, NG=False, **options):
         """Prepare the job from the user area"""
