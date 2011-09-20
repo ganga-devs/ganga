@@ -317,7 +317,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             createContainer(job.outputdata.datasetname)
 
         else:
-            logger.warning('Adding datasets to already existing container %s' % job.outputdata.datasetname)
+            logger.info('Adding datasets to already existing container %s' % job.outputdata.datasetname)
         self.indivOutContList = [job.outputdata.datasetname]
             
         # store the lib datasts
