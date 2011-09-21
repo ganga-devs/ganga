@@ -261,7 +261,7 @@ if opt.group_area:
 
 j.application.option_file = option_files
 if opt.options:
-    if opt.athena_exe in ['EXE']:
+    if opt.athena_exe in ['EXE', 'PYARA']:
         j.application.options = " %s " %opt.options
     else:
         aoptions = opt.options.replace('"',"'''")        
