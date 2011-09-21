@@ -822,6 +822,7 @@ class MultiTransform(Transform):
        if unit != -1:
            self.unit_state_list[unit]['active'] = True
            self.unit_state_list[unit]['exceptions'] = 0
+           self.unit_state_list[unit]['reason'] = ''
 
    def deactivateUnit(self, unit):
        """deactivate the given unit"""
@@ -1047,7 +1048,7 @@ class MultiTransform(Transform):
           if containerinfo == {}:
               try:
                   dq2.registerContainer(trf_container)
-                  logger.warning('Registered container for Transform %i: %s' % (self.getID(), trf_container))
+                  logger.info('Registered container for Transform %i: %s' % (self.getID(), trf_container))
                   
               except Exception, x:
                   logger.error('Problem registering container for Transform %i, %s : %s %s' % (self.getID(), trf_container,x.__class__, x))
@@ -1091,7 +1092,7 @@ class MultiTransform(Transform):
           if containerinfo == {}:
               try:
                   dq2.registerContainer(task_container)
-                  logger.debug('Registered container for Transform %i: %s' % (self.getID(), task_container))
+                  logger.info('Registered container for Transform %i: %s' % (self.getID(), task_container))
               except Exception, x:
                   logger.error('Problem registering container for Task %i, %s : %s %s' % (self.getID(), task_container,x.__class__, x))
               except DQException, x:
