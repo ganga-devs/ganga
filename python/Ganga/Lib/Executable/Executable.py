@@ -5,6 +5,7 @@
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Schema import *
 
@@ -14,14 +15,12 @@ from Ganga.GPIDev.Lib.File import *
 #from Ganga.GPIDev.Lib.File import File
 #from Ganga.GPIDev.Lib.File import SharedDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
-from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.Core import ApplicationConfigurationError
 
 import os, shutil
 
-class Executable(IApplication):
+class Executable(IPrepareApp):
     """
     Executable application -- running arbitrary programs.
     
@@ -67,15 +66,6 @@ class Executable(IApplication):
     def __init__(self):
         super(Executable,self).__init__()
 
-    def _readonly(self):
-        """An application is read-only once it has been prepared."""
-        if self.is_prepared is None:
-            return 0
-        else:
-            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
-            return 1
-
-        
     def prepare(self,force=False):
         """
         A method to place the Executable application into a prepared state.
@@ -98,64 +88,37 @@ class Executable(IApplication):
         
         See help(shareref) for further information.
         """
-        if self._getRegistry() is None:
-            raise ApplicationConfigurationError(None,'Applications not associated with a persisted object (Job or Box) cannot be prepared.')
-    
-        if (self.is_prepared is not None) and (force is not True):
-            raise ApplicationConfigurationError(None,'Executable application has already been prepared. Use prepare(force=True) to prepare again.')
 
-
-        self.configure(self)
-        #does the application contains any File items
-        #because of bug #82818 they don't work properly
-        #difficult to distinguish between, say, /bin/echo and /home/user/echo; we don't necessarily
-        #want to copy the former into the sharedir, but we would the latter. 
         #lets use the same criteria as the configure() method for checking file existence & sanity
         #this will bail us out of prepare if there's somthing odd with the job config - like the executable
         #file is unspecified, has a space or is a relative path
+        self.configure(self)
 
         logger.info('Preparing %s application.'%(self._name))
         self.is_prepared = ShareDir()
-        #get hold of the metadata object for storing shared directory reference counts
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shared_dirname = self.is_prepared.name
         #add the newly created shared directory into the metadata system
-        logger.debug("Increasing shareref")
-        shareref.increase(self.is_prepared.name)
-
-
+        self.incrementShareCounter(self.is_prepared.name)
 
         #should we check for blank "" and/or None type self.exes? or does self.configure() do that for us?
         send_to_sharedir = []
         if type(self.exe) is str:
-            send_to_sharedir = self.exe
             #we have a file. if it's an absolute path, copy it to the shared dir
-            if os.path.abspath(send_to_sharedir) == send_to_sharedir:
+            if os.path.abspath(self.exe) == self.exe:
                 logger.info('Sending executable file %s to shared directory.'%(send_to_sharedir))
-            #else assume it's a system binary, and create a wrapper to call this on the WN
+                send_to_sharedir = self.exe
+            #else assume it's a system binary, so we don't need to transport anything to the sharedir
             else:
-                logger.info('Sending executable wrapper to shared directory.')
-                # We'll need a tmpdir to momentarily store the wrapper in.
-                if os.environ.has_key('TMPDIR'):
-                    tmpDir = os.environ['TMPDIR']
-                else:
-                    cn = os.path.basename( os.path.expanduser( "~" ) )
-                    tmpDir = os.path.realpath('/tmp/' + cn )
-                if not os.access(tmpDir,os.W_OK):
-                    os.makedirs(tmpDir)
-                send_to_sharedir = os.path.join(tmpDir,os.path.basename(send_to_sharedir)+'.gangawrapper.sh')
-                wrap_cmd='''#!/bin/bash
-%s $*
-''' %(self.exe)
-                file(send_to_sharedir,'w').write(wrap_cmd)
+                logger.info('Preparing application to use \'%s\', assumed to be available in $PATH'%(self.exe))
         elif type(self.exe) is File:
             send_to_sharedir = self.exe.name
             logger.info('Sending file object %s to shared directory'%send_to_sharedir)
-        logger.info('Copying %s to %s' %(send_to_sharedir, self.is_prepared.name))
-        shutil.copy2(send_to_sharedir, self.is_prepared.name)
 
-        self.exe=File(os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir)))
-        os.chmod(self.exe.name, 0755)
+        #if we have a file to send to the sharedir
+        if send_to_sharedir:
+            logger.info('Copying %s to %s' %(send_to_sharedir, self.is_prepared.name))
+            shutil.copy2(send_to_sharedir, self.is_prepared.name)
+
 
         #return [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
         return 1
@@ -165,15 +128,8 @@ class Executable(IApplication):
         Revert an Executable() application back to it's unprepared state.
         """
         if self.is_prepared is not None:
-            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-            shareref.decrease(self.is_prepared.name)
+            self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
-            if isType(self.exe, File):
-                if len(os.path.basename(self.exe.name).split('.gangawrapper')) > 1:
-                    self.exe = ''.join(os.path.basename(self.exe.name).split('.gangawrapper')[:-1])
-                else:
-                    self.exe.name = os.path.basename(self.exe.name)
-    
     
 
     def configure(self,masterappconfig):
@@ -245,6 +201,10 @@ class RTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
+        if app.is_prepared is not None:
+            logger.info("Submitting a prepared application; taking input files from %s" %(app.is_prepared.name))
+            logger.error(app.exe)
+            app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
         c = StandardJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
 
         #c.monitoring_svc = mc['Executable']
@@ -271,11 +231,21 @@ class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.Lib.LCG import LCGJobConfig
 
+        if app.is_prepared is not None:
+            logger.info("Submitting a prepared application; taking input files from %s" %(app.is_prepared.name))
+            logger.error(app.exe)
+            app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+
         return LCGJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.Lib.gLite import gLiteJobConfig
+
+        if app.is_prepared is not None:
+            logger.info("Submitting a prepared application; taking input files from %s" %(app.is_prepared.name))
+            logger.error(app.exe)
+            app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
 
         return gLiteJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
