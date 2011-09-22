@@ -23,6 +23,7 @@ class PandaRequirements(GangaObject):
         'enableMerge'   : SimpleItem(defvalue = False, protected=0, copyable=1, doc='Enable the output merging jobs.'),
         'configMerge'   : SimpleItem(defvalue = {'type':'','exec':''}, protected=0, copyable=1, doc='Config parameters for output merging jobs.'),
         'usecommainputtxt' : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Boolean if input.txt contains the input files as comma separated list or separeted by a line break'),
+        'rootver' : SimpleItem(defvalue = '',protected=0,copyable=1,doc='Specify a different root version for non-Athena jobs.'),
     })
 
     _category = 'PandaRequirements'

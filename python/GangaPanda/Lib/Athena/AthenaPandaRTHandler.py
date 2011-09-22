@@ -99,6 +99,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.backend.bexec and job.backend.nobuild:
             raise ApplicationConfigurationError(None,"Contradicting options: job.backend.bexec and job.backend.nobuild are both enabled.")
 
+        if job.backend.requirements.rootver != '' and job.backend.nobuild:
+            raise ApplicationConfigurationError(None,"Contradicting options: job.backend.requirements.rootver given and job.backend.nobuild are enabled.")
+        
         # Switch on compilation flag if bexec is set or libds is empty
         if job.backend.bexec != '' or not job.backend.nobuild:
             app.athena_compile = True
@@ -463,7 +466,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 jspec.jobName           = commands.getoutput('uuidgen')
                 jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
                 jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
-                if job.backend.bexec != '':
+                if (job.backend.bexec != '') or (job.backend.requirements.rootver != ''):
                     jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
                 else:
                     jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
@@ -488,6 +491,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if job.backend.bexec != '':
                     jspec.jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
                     jspec.jobParameters += ' -r %s ' % '.'
+
+                if job.backend.requirements.rootver != '':
+                    rootver = re.sub('/','.', job.backend.requirements.rootver)
+                    jspec.jobParameters += ' --rootVer %s ' % rootver
 
                 fout = FileSpec()
                 fout.lfn  = self.libraries[bjsite]
@@ -701,6 +708,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '-j "%s" ' % urllib.quote(self.job_options)
         if app.atlas_exetype == 'ARES' or (app.atlas_exetype in ['PYARA','ROOT','EXE'] and app.useAthenaPackages):
             param += '--useAthenaPackages '
+            
+        if app.atlas_exetype in ['PYARA','ROOT','EXE'] and job.backend.requirements.rootver != '':
+            rootver = re.sub('/','.', job.backend.requirements.rootver)
+            param += "--rootVer %s " % rootver
+            
         # DBRelease
         if self.dbrelease != '' and not app.atlas_exetype in [ 'TRF' ]:
             tmpItems = self.dbrelease.split(':')
