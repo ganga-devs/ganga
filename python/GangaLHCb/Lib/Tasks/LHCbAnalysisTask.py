@@ -433,5 +433,6 @@ class LHCbAnalysisTask(Task):
         else:
             raise GangaException(None,'Coundnt set the transform id')
         transform.update()
+        self.updateStatus()
         return r
 
