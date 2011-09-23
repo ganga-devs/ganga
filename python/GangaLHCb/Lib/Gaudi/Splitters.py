@@ -14,7 +14,7 @@ from Ganga.Utility.util import unique
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 from Francesc import GaudiExtras
-
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -40,7 +40,7 @@ def create_gaudi_subjob(job, inputdata):
     j = Job()
     j.name = job.name
     j.application = copy_app(job.application)
-    j.backend = job.backend # no need to deepcopy 
+    j.backend = stripProxy(job.backend) # no need to deepcopy 
     if inputdata:
         j.inputdata = inputdata
         if hasattr(j.application,'extra'):
