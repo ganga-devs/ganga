@@ -5,6 +5,7 @@
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 #from Ganga.GPIDev.Schema import FileItem, Schema, SimpleItem, Version, SharedItem
 from Ganga.GPIDev.Schema import *
@@ -34,7 +35,7 @@ config.addOption('version','5.18.00','Version of ROOT')
 import os
  
 
-class Root(IApplication):
+class Root(IPrepareApp):
     """
     Root application -- running ROOT
     
@@ -256,7 +257,6 @@ class Root(IApplication):
             logger.info('Sending file object %s to shared directory'%send_to_sharedir)
             logger.info('Copying %s to %s' %(send_to_sharedir, self.is_prepared.name))
             shutil.copy2(send_to_sharedir, self.is_prepared.name)
-            self.script=File(os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir)))
             return 1
         else:
             logger.error('Not preparing %s application; application.script.name is not set.'%(self._name))
@@ -266,14 +266,6 @@ class Root(IApplication):
             shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
             shareref.decrease(self.is_prepared.name)
             self.is_prepared = None
-            if isType(self.script, File):
-                if len(os.path.basename(self.script.name).split('.gangawrapper')) > 1:
-                    self.script = ''.join(os.path.basename(self.script.name).split('.gangawrapper')[:-1])
-                else:
-                    self.script.name = os.path.basename(self.script.name)
- 
-
-
     
     def _checkset_script(self,value):
         """Callback used to set usepython to 1 if the script name has a *.py or *.PY extention.""" 
@@ -366,7 +358,7 @@ class RootRTHandler(IRuntimeHandler):
                 arglist.append(arg)
         rootarg='('+string.join([str(s) for s in arglist],',')+')'
 
-        script=app.script
+        script=File(os.path.join(app.is_prepared.name,os.path.basename(app.script.name)))
         if script==File():
             script=File(defaultScript())
 
@@ -387,7 +379,7 @@ class RootRTHandler(IRuntimeHandler):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         from os.path import join, split
 
-        script=app.script
+        script=File(os.path.join(app.is_prepared.name,os.path.basename(app.script.name)))
         if script==File():
             script=File(defaultPyRootScript())
 
