@@ -720,10 +720,6 @@ class Job(GangaObject):
 
             if (self.application.is_prepared is None) or (prepare == True):
                 self.prepare(force=True)
-                #print "add_to_inputsandbox:", add_to_inputsandbox
-                #if add_to_inputsandbox is not None:
-                #    self.inputsandbox.extend(add_to_inputsandbox)
-                #return 1
             else:
                 msg = "Job %d's application has already been prepared." % (self.id)
                 logger.info(msg)
