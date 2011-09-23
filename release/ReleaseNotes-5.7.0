@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.7.0 (2011/9/19)
+5.7.0 (2011/9/23)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -9,10 +9,15 @@ ganga/python/Ganga/Lib/LCG
 
 
 --------------------------------------------------------------------------------------------------------------
-ganga/python/GangaPanda
+ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
-* Upgrade to panda-client 0.3.58
-* add --accessmode=copy to TRF workflows
-* Add missing import for Python exceptions module to ProdTrans
+* adding new prepare() GangaCore functionality
+* Added a --rootver option to scripts/athena
+* Cleared the reason field when reactivating a unit and shifted DS
+ creations to INFO
+* Fixed a problem with PYARA adding a '-c' when using --options
+* Updating AthenaMC tests. Panda evgen requirements relaxed to
+ increase chances of quick run. Similarly, reduced number of
+ events per jobs processed in Panda+simul and Panda+recon tests
 
 **************************************************************************************************************
