@@ -77,12 +77,15 @@ class MultiTransform(Transform):
        }.items()))
    _category = 'transforms'
    _name = 'MultiTransform'
-   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName']
+   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName', 'getNumUnits']
    
    def initialize(self):
        super(MultiTransform, self).initialize()
        self.backend = None
 
+   def getNumUnits(self):
+       return len(self.unit_partition_list)
+   
    def getID(self):
        """Return the index of this trf in the parent task"""
        task = self._getParent()
@@ -327,6 +330,13 @@ class MultiTransform(Transform):
 
       if self.merger:
           do_download = True
+
+      # check for forced units and set partitions within to 'bad'
+      for uind2 in range(0, len(self.unit_partition_list)):
+          if self.unit_state_list[uind2]['force']:
+              for p in self.unit_partition_list[uind2]:
+                  if self._partition_status[p] in ['attempted','failed']:
+                      self.setPartitionStatus(p, 'bad')
 
       # find unit with least exceptions raised
       min_excep = 3
@@ -947,6 +957,11 @@ class MultiTransform(Transform):
           self.status = status
           return
 
+      # check for all DSs in containers (usually because of forced completion)
+      for uind in range(0, len(self.unit_partition_list)):
+          j = self.getUnitMasterJob(uind)
+          self.addDatasetsToContainers(j)
+                  
       # check that dq2-get and merger has completed
       if (self.do_auto_download or self.merger):
           import os
