@@ -1083,7 +1083,10 @@ class Athena(IApplication):
         #we want to add the tarball to the shared directory.
         logger.info('Copying %s to %s' %(archiveFullName, self.is_prepared.name))
         shutil.copy2(archiveFullName, self.is_prepared.name)
-        self.user_area.name = File(os.path.join(self.is_prepared.name,archiveFullName))
+
+        if self.group_area.name:
+            logger.info('Copying %s to %s' %(self.group_area.name, self.is_prepared.name))
+            shutil.copy2(self.group_area.name, self.is_prepared.name)
 
         #copy each option_file to the shared directory and reflect their new location in the application object.
         tmp_option_file = []
