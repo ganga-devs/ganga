@@ -405,7 +405,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             athena_options += ' ' + athena_option
             if app.options:
                 athena_options =  app.options + ' ' + athena_options
-            inputbox += [ File(option_file.name) ]
+            inputbox += [ File(os.path.join(app.is_prepared.name,os.path.basename(option_file.name))) ]
 
         athena_usersetupfile = os.path.basename(app.user_setupfile.name)
 
@@ -446,9 +446,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             for file in job.inputsandbox:
                 inputbox += [ file ]
         if app.user_area.name:
-            inputbox += [ File(app.user_area.name) ]
+            inputbox += [ File(os.path.join(app.is_prepared.name,os.path.basename(app.user_area.name))) ]
         if app.group_area.name and string.find(app.group_area.name,"http")<0:
-            inputbox += [ File(app.group_area.name) ]
+            inputbox += [ File(os.path.join(app.is_prepared.name,os.path.basename(app.group_area.name))) ]
    
 #       prepare environment
 
