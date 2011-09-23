@@ -85,7 +85,7 @@ RecoToDST-07/90000000/DST" ,
     works for type="RunsByDate")'
     schema['selection'] = SimpleItem(defvalue='',doc=docstr)
     _schema = Schema(Version(1,2), schema)
-    _category = ''
+    _category = 'query'
     _name = "BKQuery"
     _exportmethods = ['getDataset']
 
