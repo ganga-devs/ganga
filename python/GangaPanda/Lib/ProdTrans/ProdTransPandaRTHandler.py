@@ -2,6 +2,7 @@ import commands, exceptions, random, re
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from Ganga.Core import BackendError
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
