@@ -32,8 +32,7 @@ class IPrepareApp(IApplication):
         if self.is_prepared is None:
             return 0
         else:
-            logger.error("Cannot modify a prepared application's attributes.\
-                 First unprepare() the application.")
+            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
             return 1
 
 
@@ -42,19 +41,9 @@ class IPrepareApp(IApplication):
         Base class for all applications which can be placed into a prepared\
         state. 
 
-        If an application has no use for a prepared state, then it should
-        define a no-operation prepare() method.
         """
+        pass
 
-        if self._getRegistry() is None:
-            raise ApplicationConfigurationError(None,'Applications not\
-                associated with a persisted object (Job or Box) cannot\
-                be prepared.')
-
-        if (self.is_prepared is not None) and (force is not True):
-            raise ApplicationConfigurationError(None,'Executable application\
-                has already been prepared. Use prepare(force=True) to prepare\
-                again.')
 
     def unprepare(self, force=False):
         """
@@ -62,7 +51,7 @@ class IPrepareApp(IApplication):
         prepared.
         """
         pass
-    
+
 
     def incrementShareCounter(self, shared_directory_name):
         logger.info('Incrementing shared directory reference counter')
@@ -74,5 +63,3 @@ class IPrepareApp(IApplication):
         logger.info('Decrementing shared directory reference counter')
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.decrease(shared_directory_name)
-
-
