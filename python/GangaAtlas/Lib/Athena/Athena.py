@@ -1088,16 +1088,11 @@ class Athena(IApplication):
             logger.info('Copying %s to %s' %(self.group_area.name, self.is_prepared.name))
             shutil.copy2(self.group_area.name, self.is_prepared.name)
 
-        #copy each option_file to the shared directory and reflect their new location in the application object.
-        tmp_option_file = []
+        #copy each option_file to the shared directory 
         for opt_file in self.option_file:
             logger.info('Copying %s to %s' %(opt_file.name, self.is_prepared.name))
             shutil.copy2(opt_file.name, self.is_prepared.name)
-            #rename the file object to reflect that it now lives in the shared directory.
-            tmp_option_file.append(File((os.path.join(self.is_prepared.name,os.path.basename(opt_file.name)))))
     
-        self.option_file = tmp_option_file
-
         #get hold of the metadata object for storing shared directory reference counts
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shared_dirname = self.is_prepared.name
