@@ -89,6 +89,12 @@ class Executable(IPrepareApp):
         See help(shareref) for further information.
         """
 
+        if self._getRegistry() is None:
+            raise ApplicationConfigurationError(None,'Applications not associated with a persisted object (Job or Box) cannot be prepared.')
+        if (self.is_prepared is not None) and (force is not True):
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
+
+
         #lets use the same criteria as the configure() method for checking file existence & sanity
         #this will bail us out of prepare if there's somthing odd with the job config - like the executable
         #file is unspecified, has a space or is a relative path
