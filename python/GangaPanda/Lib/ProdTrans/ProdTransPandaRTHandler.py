@@ -39,10 +39,15 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                      job.getFQID('.'))
 
         # rename output dataset to prod_test.*
-        origname = job.outputdata.datasetname
-        newname = origname.replace('user.','prod_test.')
-        masterjob.outputdata.datasetname = job.outputdata.datasetname = newname
-        logger.info('Renamed outDS from %s to %s'%(origname,newname))
+        if !job.outputdata.datasetname.startswith('prod_test'):
+            origname = job.outputdata.datasetname
+            newname = origname.replace('user.','prod_test.')
+            masterjob.outputdata.datasetname = newname
+            job.outputdata.datasetname = newname
+            logger.info('Renamed outDS, now it's %s'%job.outputdata.datasetname)
+
+        if job.outputdata.datasetname.startswith('user.'):
+            raise BackendError('Panda','%s is an invalid dataset name for production queue testing'%job.outputdata.datasetname)
 
         job.backend.actualCE = job.backend.site
         job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
