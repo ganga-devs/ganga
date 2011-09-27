@@ -39,7 +39,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                      job.getFQID('.'))
 
         # rename output dataset to prod_test.*
-        if !job.outputdata.datasetname.startswith('prod_test'):
+        if not job.outputdata.datasetname.startswith('prod_test'):
             origname = job.outputdata.datasetname
             newname = origname.replace('user.','prod_test.')
             masterjob.outputdata.datasetname = newname
