@@ -38,6 +38,12 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         logger.debug('ProdTransPandaRTHandler prepare called for %s',
                      job.getFQID('.'))
 
+        # rename output dataset to prod_test.*
+        origname = job.outputdata.datasetname
+        newname = origname.replace('user.','prod_test.')
+        masterjob.outputdata.datasetname = job.outputdata.datasetname = newname
+        logger.info('Renamed outDS from %s to %s'%(origname,newname))
+
         job.backend.actualCE = job.backend.site
         job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
 
@@ -70,6 +76,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             jspec.prodSourceLabel = app.prod_source_label
         else:
             jspec.prodSourceLabel = configPanda['prodSourceLabelRun']
+        jspec.processingType = configPanda['processingType']
         jspec.computingSite = job.backend.site
         jspec.cloud = job.backend.requirements.cloud
         jspec.cmtConfig = app.atlas_cmtconfig
