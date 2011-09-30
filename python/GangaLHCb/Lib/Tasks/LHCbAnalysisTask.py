@@ -53,12 +53,13 @@ class LHCbAnalysisTask(Task):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def addQuery(self, transform,bkQuery,associate=True):
         """Allows the user to add multiple transforms corresponding to the list of
-        BKQuery type objects given in the second parameter. The first parameter
+        BKQuery type objects given in the second argument. The first argument
         is a transform object to use as the basis for the creation of further
         transforms."""
         if not isType(transform,LHCbAnalysisTransform):
             raise GangaException(None,'First argument must be an LHCbAnalysisTransform objects to use as the basis for establishing the new transforms')
 
+        ## Check if the template transform is associated with the Task
         try:
             self.transforms.index(transform)
         except:
@@ -66,25 +67,20 @@ class LHCbAnalysisTask(Task):
                 logger.info('The transform is not associated with this Task, doing so now.')
                 self.appendTransform(transform)
 
-        
-        if type(bkQuery) is not list: ## If single objects arg
-            if not isType(bkQuery,BKQuery):
+        ## Check if the BKQuery input is correct and append/update
+        if type(bkQuery) is not list: bkQuery = [bkQuery]
+        for bk in bkQuery:
+            if not isType(bk,BKQuery):
                 raise GangaAttributeError(None,'LHCbTransform expects a BKQuery object or list of BKQuery objects passed to the addQuery method')
-            if transform.query is not None: ## If self.query already set
-                logger.info('Duplicating transform to add new query.')
-
-                tr = deepcopy(transform)
-                tr.query = stripProxy(bkQuery)
-                self.appendTransform(tr)
-            else: ## If transform.query still = None
+            if transform.query is None: ## If template has no query itself
                 logger.info('Attaching query to transform')
-                transform.query=stripProxy(bkQuery)
+                transform.query=stripProxy(bk)
                 transform.update()
-        else: ## If list arg
-            for bk in bkQuery:
-                if not isType(bk,BKQuery):
-                    raise GangaAttributeError(None,'LHCbTransform expects a BKQuery object or list of BKQuery objects passed to the addQuery method!')
-                self.addQuery(transform,bk)
+            else: ## Duplicate from template
+                logger.info('Duplicating transform to add new query.')
+                tr = deepcopy(transform)
+                tr.query = stripProxy(bk)
+                self.appendTransform(tr)
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def appendTransform(self,transform):
@@ -102,7 +98,10 @@ class LHCbAnalysisTask(Task):
                 raise GangaException(None,'transform not added to task properly')
         else:
             raise GangaException(None,'Coundnt set the transform id')
-        transform.update()
+
+        ## User may wish to append a transform and then update the whole task
+        ## after appending a query later.
+        if transform.query is not None: transform.update()
         self.updateStatus()
         return r
 
