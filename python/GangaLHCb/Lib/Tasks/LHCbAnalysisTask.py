@@ -2,7 +2,7 @@ from LHCbAnalysisTransform import *
 from Ganga.GPIDev.Lib.Tasks.Task import Task
 from Ganga.GPIDev.Base.Proxy import stripProxy
 ## to do...
-##1) Multi threading,
+##1) Multi threading, even with multi threads, bottle neck at the server while updating.
 ##2) Check prepared works(looks like does because of application.clone())
 ##3) Dirac bulk submit
 
@@ -139,6 +139,7 @@ class LHCbAnalysisTask(Task):
         include any new data in the processing or re-run jobs that have data which
         has been removed."""
         ## Tried to use multithreading, better to check the tasksregistry class
+        ## Also tried multiprocessing but bottleneck at server.
         for t in self.transforms:
             t.update(resubmit)
 

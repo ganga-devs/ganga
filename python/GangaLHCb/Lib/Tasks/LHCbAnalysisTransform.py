@@ -85,6 +85,7 @@ class LHCbAnalysisTransform(Transform):
     #####################################################################
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    ## This can probably be neatened up.
     def overview(self):
         """ Get an ascii art overview over task status. Can be overridden """
         o = markup("Transform %s: %s '%s'\n" % (self.transform_id, self.__class__.__name__, self.name), status_colours[self.status])
