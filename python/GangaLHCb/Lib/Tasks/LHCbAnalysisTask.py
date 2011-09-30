@@ -1,13 +1,7 @@
-#from Ganga.GPIDev.Lib.Tasks.common import *
-#from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-#import time
 from LHCbAnalysisTransform import *
 from Ganga.GPIDev.Lib.Tasks.Task import Task
-#from Ganga.GPIDev.Base.Proxy import isType
-#from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
-#from copy import deepcopy
-#from multiprocessing import Process
-#import sys,time
+from Ganga.GPIDev.Base.Proxy import stripProxy
+
 
 class LHCbAnalysisTask(Task):
     """The LHCbAnalysisTask class looks after the running of LHCb Analysis jobs, including helping to keep
@@ -59,19 +53,25 @@ class LHCbAnalysisTask(Task):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def resubmitFailedSubjobs(self):
         """If some of the transforms in this task have failed subjobs within a partition
-        then this method will automatically resubmit them all"""
+        then this method will automatically resubmit them all."""
         for t in self.transforms:
             t.resubmit()
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def update(self, resubmit=False):
+        """Update the dataset information of all attached transforms. This will
+        include any new data in the processing or re-run jobs that have data which
+        has been removed."""
         ## Tried to use multithreading, better to check the tasksregistry class
         for t in self.transforms:
             t.update(resubmit)
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def addQuery(self, transform,bkQuery,associate=True):
-        """ Allows one or more LHCb BK query objects to define the dataset. """
+        """Allows the user to add multiple transforms corresponding to the list of
+        BKQuery type objects given in the second parameter. The first parameter
+        is a transform object to use as the basis for the creation of further
+        transforms."""
         if not isType(transform,LHCbAnalysisTransform):
             raise GangaException(None,'First argument must be an LHCbAnalysisTransform objects to use as the basis for establishing the new transforms')
 
@@ -104,7 +104,7 @@ class LHCbAnalysisTask(Task):
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def overview(self):
-        """ Get an ascii art overview over task status. Can be overridden """
+        """ Get an ascii art overview over task status."""
         print "Partition Colours: " + ", ".join([markup(key, partition_colours[key])
             for key in ["hold", "ready", "running", "completed", "attempted", "failed", "bad", "unknown"]])
         print "Job Colours: " + ", ".join([markup(job, job_colours[job])
@@ -117,10 +117,13 @@ class LHCbAnalysisTask(Task):
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def help(self):
+        """Brief description of the LHCbAnalysisTask object."""
         print "This is an LHCbTask, Which simplifies the query driven analysis of data"
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def appendTransform(self,transform):
+        """Append a transform to this task. This method also performs an update on
+        the transform once successfully appended."""
         r=super(LHCbAnalysisTask,self).appendTransform(transform)
         if hasattr(transform,'task_id'):
             transform._impl.task_id = self.id
@@ -137,13 +140,17 @@ class LHCbAnalysisTask(Task):
         self.updateStatus()
         return r
 
-    ## Public GPI methods
+    ## Public methods
     #####################################################################
     
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    ## Called as part of the monitoring loop, which doesn't call this
+    ## while task in 'new'
     def updateStatus(self):
-        if self.status is not 'new':# only want to start this when user runs the task else jobs submitted when appending
-            for t in self.transforms:# could thread this
+        """Check and update the status of each attached transform and then update
+        own status."""
+        if self.status is not 'new':## only want to start this when user runs the task else jobs submitted when appending
+            for t in self.transforms:## could thread this
                 t.checkStatus()
 
         ## The overridden method will update the tasks status based on the transforms status
