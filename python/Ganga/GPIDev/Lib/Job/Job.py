@@ -398,9 +398,8 @@ class Job(GangaObject):
 
         #increment the shareref counter if the job we're copying is prepared.
         if self.application.is_prepared is not None:
-            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+            self.application.incrementShareCounter(self.application.is_prepared.name)
             logger.debug("Increasing shareref")
-            shareref.increase(self.application.is_prepared.name)
         # register the job (it will also commit it)
         # job gets its id now
         registry._add(self)
@@ -942,8 +941,7 @@ class Job(GangaObject):
             #If the job is associated with a shared directory resource (e.g. has a prepared() application)
             #decrement the reference counter.
             if self.application.__getattribute__('is_prepared'):
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                shareref.decrease(self.application.is_prepared.name)
+                self.application.decrementShareCounter(self.application.is_prepared.name)
                 
 
     def fail(self,force=False):
