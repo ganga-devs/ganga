@@ -294,7 +294,7 @@ class Schema:
 
 class Item:
     # default values of common metaproperties
-    _metaproperties = {'transient' : 0, 'protected' : 0, 'hidden' : 0, 'comparable' : 1, 'sequence' : 0, 'defvalue' : None, 'copyable' : 1, 'doc' : '','visitable':1, 'checkset':None, 'filter':None,'strict_sequence':1, 'summary_print':None, 'summary_sequence_maxlen':5,'proxy_get':None,'getter':None, 'changable_at_resubmit':0}
+    _metaproperties = {'transient' : 0, 'protected' : 0, 'hidden' : 0, 'comparable' : 1, 'sequence' : 0, 'defvalue' : None, 'copyable' : 1, 'doc' : '','visitable':1, 'checkset':None, 'filter':None,'strict_sequence':1, 'summary_print':None, 'summary_sequence_maxlen':5,'proxy_get':None,'getter':None, 'changable_at_resubmit':0, 'preparable':0}
     
     def __init__(self):
         self._meta = Item._metaproperties.copy()
