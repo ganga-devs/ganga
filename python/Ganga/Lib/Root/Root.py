@@ -204,7 +204,7 @@ class Root(IPrepareApp):
     
     """
     _schema = Schema(Version(1,1), {
-        'script' : FileItem(defvalue=File(),doc='A File object specifying the script to execute when Root starts',checkset='_checkset_script'), 
+        'script' : FileItem(defvalue=File(),preparable=1, doc='A File object specifying the script to execute when Root starts',checkset='_checkset_script'), 
         'args' : SimpleItem(defvalue=[],typelist=['str','int'],sequence=1,doc="List of arguments for the script. Accepted types are numerics and strings"),
         'version' : SimpleItem(defvalue='5.18.00',doc="The version of Root to run"),
         'usepython' : SimpleItem(defvalue = False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
@@ -239,32 +239,26 @@ class Root(IPrepareApp):
 
 
     def prepare(self, force=False):
-        if self._getRegistry() is None:
-            raise ApplicationConfigurationError(None,'Applications not associated with a persisted object (Job or Box) cannot be prepared.')
         if (self.is_prepared is not None) and (force is not True):
             raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
         elif (self.script.name is not ''):
             logger.info('Preparing %s application.'%(self._name))
             self.is_prepared = ShareDir()
-            #get hold of the metadata object for storing shared directory reference counts
-            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-            shared_dirname = self.is_prepared.name
-            #add the newly created shared directory into the metadata system
-            shareref.increase(self.is_prepared.name)
-    
-            send_to_sharedir = []
-            send_to_sharedir = self.script.name
-            logger.info('Sending file object %s to shared directory'%send_to_sharedir)
-            logger.info('Copying %s to %s' %(send_to_sharedir, self.is_prepared.name))
-            shutil.copy2(send_to_sharedir, self.is_prepared.name)
+            logger.info('Created shared directory: %s'%(self.is_prepared.name))
+
+            #copy any 'preparable' objects into the shared directory
+            send_to_sharedir = self.copyPreparables()
+            #add the newly created shared directory into the metadata system if the app is associated with a persisted object
+            self.checkPreparedHasParent(self)
             return 1
         else:
             logger.error('Not preparing %s application; application.script.name is not set.'%(self._name))
 
+
+
     def unprepare(self, force=False):
         if self.is_prepared is not None:
-            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-            shareref.decrease(self.is_prepared.name)
+            self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
     
     def _checkset_script(self,value):
