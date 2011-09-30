@@ -229,6 +229,7 @@ class Francesc(IPrepareApp):
 
     def _master_configure(self):
         '''Handles all common master_configure actions.'''
+        self.extra = GaudiExtras()
         ## job=self.getJobObject()                
 ##         if job.inputdata: self.appconfig.inputdata = job.inputdata
 ##         if job.outputdata: self.appconfig.outputdata = job.outputdata
@@ -248,19 +249,19 @@ class Francesc(IPrepareApp):
         
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-## class GaudiExtras:
-##     '''Used to pass extra info from Gaudi apps to the RT-handler.'''
-##     _name = "GaudiExtras"
-##     _category = "extras"
+class GaudiExtras:
+    '''Used to pass extra info from Gaudi apps to the RT-handler.'''
+    _name = "GaudiExtras"
+    _category = "extras"
 
-##     def __init__(self):
-##         self.master_input_buffers = {}
-##         self.master_input_files = []
-##         self.input_buffers = {}
-##         self.input_files = []
-##         self.inputdata = LHCbDataset()
-##         self.outputsandbox = []
-##         self.outputdata = OutputData()
-##         self.input_buffers['data.py'] = ''
+    def __init__(self):
+        self.master_input_buffers = {}
+        self.master_input_files = []
+        self.input_buffers = {}
+        self.input_files = []
+        self.inputdata = LHCbDataset()
+        self.outputsandbox = []
+        self.outputdata = OutputData()
+        self.input_buffers['data.py'] = ''
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
