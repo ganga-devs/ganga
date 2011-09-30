@@ -1,7 +1,10 @@
 from LHCbAnalysisTransform import *
 from Ganga.GPIDev.Lib.Tasks.Task import Task
 from Ganga.GPIDev.Base.Proxy import stripProxy
-
+## to do...
+##1) Multi threading,
+##2) Check prepared works(looks like does because of application.clone())
+##3) Dirac bulk submit
 
 class LHCbAnalysisTask(Task):
     """The LHCbAnalysisTask class looks after the running of LHCb Analysis jobs, including helping to keep
