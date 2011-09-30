@@ -5,6 +5,7 @@ import tempfile
 import gzip
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Adapters.IApplication import IApplication
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import CMTscript
 from GangaLHCb.Lib.Gaudi.CMTscript import parse_master_package
 import Ganga.Utility.logging
@@ -60,7 +61,7 @@ def get_common_gaudi_schema():
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-class Francesc(IApplication):
+class Francesc(IPrepareApp):
     '''Parent for all Gaudi and GaudiPython applications, should not be used
     directly.'''    
     _name = 'Francesc'
