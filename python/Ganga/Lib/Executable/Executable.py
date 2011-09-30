@@ -100,7 +100,6 @@ class Executable(IPrepareApp):
         logger.info('Preparing %s application.'%(self._name))
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s'%(self.is_prepared.name))
-        shared_dirname = self.is_prepared.name
 
         #copy any 'preparable' objects into the shared directory
         send_to_sharedir = self.copyPreparables()
