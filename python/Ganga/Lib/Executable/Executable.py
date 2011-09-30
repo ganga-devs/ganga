@@ -47,7 +47,7 @@ class Executable(IPrepareApp):
     
     """
     _schema = Schema(Version(2,0), {
-        'exe' : SimpleItem(defvalue='echo',typelist=['str','Ganga.GPIDev.Lib.File.File.File'],comparable=1,doc='A path (string) or a File object specifying an executable.'), 
+        'exe' : SimpleItem(preparable=1,defvalue='echo',typelist=['str','Ganga.GPIDev.Lib.File.File.File'],comparable=1,doc='A path (string) or a File object specifying an executable.'), 
         'args' : SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File.File','int'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
         'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=1,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
@@ -89,8 +89,6 @@ class Executable(IPrepareApp):
         See help(shareref) for further information.
         """
 
-        if self._getRegistry() is None:
-            raise ApplicationConfigurationError(None,'Applications not associated with a persisted object (Job or Box) cannot be prepared.')
         if (self.is_prepared is not None) and (force is not True):
             raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
 
@@ -99,33 +97,15 @@ class Executable(IPrepareApp):
         #this will bail us out of prepare if there's somthing odd with the job config - like the executable
         #file is unspecified, has a space or is a relative path
         self.configure(self)
-
         logger.info('Preparing %s application.'%(self._name))
         self.is_prepared = ShareDir()
+        logger.info('Created shared directory: %s'%(self.is_prepared.name))
         shared_dirname = self.is_prepared.name
-        #add the newly created shared directory into the metadata system
-        self.incrementShareCounter(self.is_prepared.name)
 
-        #should we check for blank "" and/or None type self.exes? or does self.configure() do that for us?
-        send_to_sharedir = []
-        if type(self.exe) is str:
-            #we have a file. if it's an absolute path, copy it to the shared dir
-            if os.path.abspath(self.exe) == self.exe:
-                logger.info('Sending executable file %s to shared directory.'%(send_to_sharedir))
-                send_to_sharedir = self.exe
-            #else assume it's a system binary, so we don't need to transport anything to the sharedir
-            else:
-                logger.info('Preparing application to use \'%s\', assumed to be available in $PATH'%(self.exe))
-        elif type(self.exe) is File:
-            send_to_sharedir = self.exe.name
-            logger.info('Sending file object %s to shared directory'%send_to_sharedir)
-
-        #if we have a file to send to the sharedir
-        if send_to_sharedir:
-            logger.info('Copying %s to %s' %(send_to_sharedir, self.is_prepared.name))
-            shutil.copy2(send_to_sharedir, self.is_prepared.name)
-
-
+        #copy any 'preparable' objects into the shared directory
+        send_to_sharedir = self.copyPreparables()
+        #add the newly created shared directory into the metadata system if the app is associated with a persisted object
+        self.checkPreparedHasParent(self)
         #return [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
         return 1
 
