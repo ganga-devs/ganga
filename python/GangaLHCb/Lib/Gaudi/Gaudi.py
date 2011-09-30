@@ -140,25 +140,17 @@ class Gaudi(Francesc):
         Revert an Executable() application back to it's unprepared state.
         """
         if self.is_prepared is not None:
-            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-            shareref.decrease(self.is_prepared.name)
+            self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
 
     def prepare(self,force=False):
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-        if self._getRegistry() is None:
-            raise ApplicationConfigurationError(None,'Applications not associated with a persisted object (Job or Box) cannot be prepared.')
-    
         if (self.is_prepared is not None) and (force is not True):
             raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
 
         logger.info('Preparing %s application.'%(self._name))
         self.is_prepared = ShareDir()
-        #get hold of the metadata object for storing shared directory reference counts
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shared_dirname = self.is_prepared.name
-        #add the newly created shared directory into the metadata system
-        shareref.increase(self.is_prepared.name)
 
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
         
@@ -197,6 +189,8 @@ class Gaudi(Francesc):
         file.close()
         send_to_share.append(File(os.path.join(input_dir,'outputdata.pkl')))
 
+        #add the newly created shared directory into the metadata system if the app is associated with a persisted object
+        self.checkPreparedHasParent(self)
         return [fb.name for fb in send_to_share]
     
     def master_configure(self):
