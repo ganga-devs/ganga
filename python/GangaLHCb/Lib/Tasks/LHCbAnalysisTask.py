@@ -51,22 +51,6 @@ class LHCbAnalysisTask(Task):
     #####################################################################
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    def resubmitFailedSubjobs(self):
-        """If some of the transforms in this task have failed subjobs within a partition
-        then this method will automatically resubmit them all."""
-        for t in self.transforms:
-            t.resubmit()
-
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    def update(self, resubmit=False):
-        """Update the dataset information of all attached transforms. This will
-        include any new data in the processing or re-run jobs that have data which
-        has been removed."""
-        ## Tried to use multithreading, better to check the tasksregistry class
-        for t in self.transforms:
-            t.update(resubmit)
-
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def addQuery(self, transform,bkQuery,associate=True):
         """Allows the user to add multiple transforms corresponding to the list of
         BKQuery type objects given in the second parameter. The first parameter
@@ -103,26 +87,8 @@ class LHCbAnalysisTask(Task):
                 self.addQuery(transform,bk)
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    def overview(self):
-        """ Get an ascii art overview over task status."""
-        print "Partition Colours: " + ", ".join([markup(key, partition_colours[key])
-            for key in ["hold", "ready", "running", "completed", "attempted", "failed", "bad", "unknown"]])
-        print "Job Colours: " + ", ".join([markup(job, job_colours[job])
-            for job in ["new", "submitting", "running", "completed", "killed", "failed", "incomplete", "unknown"]])
-        print "Lists the transforms, their partitions and partition subjobs, as well as the number of failures."
-        print "Format: (partition/subjob number)[:(number of failed attempts)]"
-        print
-        for t in self.transforms:
-            t.overview()
-
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    def help(self):
-        """Brief description of the LHCbAnalysisTask object."""
-        print "This is an LHCbTask, Which simplifies the query driven analysis of data"
-
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def appendTransform(self,transform):
-        """Append a transform to this task. This method also performs an update on
+        """Append a transform to this task. This method also performs an update() on
         the transform once successfully appended."""
         r=super(LHCbAnalysisTask,self).appendTransform(transform)
         if hasattr(transform,'task_id'):
@@ -139,6 +105,40 @@ class LHCbAnalysisTask(Task):
         transform.update()
         self.updateStatus()
         return r
+
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    def help(self):
+        """Brief description of the LHCbAnalysisTask object."""
+        print "This is an LHCbTask, Which simplifies the query driven analysis of data"
+
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    def overview(self):
+        """ Get an ascii art overview over task status."""
+        print "Partition Colours: " + ", ".join([markup(key, partition_colours[key])
+            for key in ["hold", "ready", "running", "completed", "attempted", "failed", "bad", "unknown"]])
+        print "Job Colours: " + ", ".join([markup(job, job_colours[job])
+            for job in ["new", "submitting", "running", "completed", "killed", "failed", "incomplete", "unknown"]])
+        print "Lists the transforms, their partitions and partition subjobs, as well as the number of failures."
+        print "Format: (partition/subjob number)[:(number of failed attempts)]"
+        print
+        for t in self.transforms:
+            t.overview()
+
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    def resubmitFailedSubjobs(self):
+        """If some of the transforms in this task have failed subjobs within a partition
+        then this method will automatically resubmit them all."""
+        for t in self.transforms:
+            t.resubmit()
+
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    def update(self, resubmit=False):
+        """Update the dataset information of all attached transforms. This will
+        include any new data in the processing or re-run jobs that have data which
+        has been removed."""
+        ## Tried to use multithreading, better to check the tasksregistry class
+        for t in self.transforms:
+            t.update(resubmit)
 
     ## Public methods
     #####################################################################
