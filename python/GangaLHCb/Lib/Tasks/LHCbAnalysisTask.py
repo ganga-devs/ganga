@@ -8,7 +8,6 @@ from Ganga.GPIDev.Lib.Tasks.Task import Task
 #from copy import deepcopy
 #from multiprocessing import Process
 #import sys,time
-########################################################################
 
 class LHCbAnalysisTask(Task):
     """The LHCbAnalysisTask class looks after the running of LHCb Analysis jobs, including helping to keep
@@ -54,19 +53,23 @@ class LHCbAnalysisTask(Task):
     
     default_registry = "tasks"
 
-    
+    ## Public GPI methods
+    #####################################################################
 
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def resubmitFailedSubjobs(self):
         """If some of the transforms in this task have failed subjobs within a partition
         then this method will automatically resubmit them all"""
         for t in self.transforms:
             t.resubmit()
 
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def update(self, resubmit=False):
         ## Tried to use multithreading, better to check the tasksregistry class
         for t in self.transforms:
             t.update(resubmit)
 
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def addQuery(self, transform,bkQuery,associate=True):
         """ Allows one or more LHCb BK query objects to define the dataset. """
         if not isType(transform,LHCbAnalysisTransform):
@@ -89,7 +92,6 @@ class LHCbAnalysisTask(Task):
                 tr = deepcopy(transform)
                 tr.query = stripProxy(bkQuery)
                 self.appendTransform(tr)
-#                tr.update()
             else: ## If transform.query still = None
                 logger.info('Attaching query to transform')
                 transform.query=stripProxy(bkQuery)
@@ -100,7 +102,7 @@ class LHCbAnalysisTask(Task):
                     raise GangaAttributeError(None,'LHCbTransform expects a BKQuery object or list of BKQuery objects passed to the addQuery method!')
                 self.addQuery(transform,bk)
 
-
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def overview(self):
         """ Get an ascii art overview over task status. Can be overridden """
         print "Partition Colours: " + ", ".join([markup(key, partition_colours[key])
@@ -113,10 +115,11 @@ class LHCbAnalysisTask(Task):
         for t in self.transforms:
             t.overview()
 
-
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def help(self):
         print "This is an LHCbTask, Which simplifies the query driven analysis of data"
 
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def appendTransform(self,transform):
         r=super(LHCbAnalysisTask,self).appendTransform(transform)
         if hasattr(transform,'task_id'):
@@ -134,22 +137,17 @@ class LHCbAnalysisTask(Task):
         self.updateStatus()
         return r
 
-
+    ## Public GPI methods
+    #####################################################################
+    
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def updateStatus(self):
         if self.status is not 'new':# only want to start this when user runs the task else jobs submitted when appending
-            running_state = set(['submitting','submitted','running','completing'])
-            for t in self.transforms:
-                t.updatePartitions()
-                status = set(t._partition_status.values())
-                if status.intersection(running_state):
-                    t.updateStatus('running')
-                elif 'ready' in status:
-                    t.updateStatus('running')
-                elif 'attempted' in status:
-                    t.updateStatus('running')
-##             elif 'failed' in status:
-##                 t.updateStatus('completed')
-                else:
-                    t.updateStatus('completed')
+            for t in self.transforms:# could thread this
+                t.checkStatus()
+
+        ## The overridden method will update the tasks status based on the transforms status
         return super(LHCbAnalysisTask,self).updateStatus()
-    
+
+## End of class LHCbAnalysisTask
+########################################################################

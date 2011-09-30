@@ -315,7 +315,7 @@ class LHCbAnalysisTransform(Transform):
         partitions = self._partition_status.keys()
         partitions.sort()
         for c in partitions:
-            self.updatePartitionStatus(c)
+#            self.updatePartitionStatus(c)
             s = self._partition_status[c]
             if c in self.getPartitionApps():
                 failures = self.getPartitionFailures(c)
@@ -354,3 +354,17 @@ class LHCbAnalysisTransform(Transform):
                 o+="\n"
         print o
 
+    def checkStatus(self):
+        self.updatePartitions()
+        running_state = set(['submitting','submitted','running','completing'])
+        status = set(self._partition_status.values())
+        if status.intersection(running_state):
+            self.updateStatus('running')
+        elif 'ready' in status:
+            self.updateStatus('running')
+        elif 'attempted' in status:
+            self.updateStatus('running')
+        # elif 'failed' in status:
+            # self.updateStatus('completed')
+        else:
+            self.updateStatus('completed')
