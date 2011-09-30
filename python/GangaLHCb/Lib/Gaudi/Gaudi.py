@@ -62,7 +62,7 @@ class Gaudi(Francesc):
     _name = 'Gaudi'
     __doc__ = GaudiDocString(_name)
     _category = 'applications'
-    _exportmethods = ['getenv','getpack', 'make', 'cmt', 'readInputData']
+    _exportmethods = ['getenv','getpack', 'make', 'cmt', 'readInputData','prepare']
 
     schema = get_common_gaudi_schema()
     docstr = 'The gaudirun.py cli args that will be passed at run-time'
