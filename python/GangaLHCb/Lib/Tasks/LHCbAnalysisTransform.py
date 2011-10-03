@@ -259,6 +259,7 @@ class LHCbAnalysisTransform(Transform):
                         if failures >= self.run_limit:
                             self._partition_status[partition] = "failed"
                         elif failures > 0:
+                            if len(mj.subjobs): mj._impl.info.submit_counter +=1 ## Catches the fact that master job submit doesnt increment when subjobs resubmitted.
                             self._partition_status[partition] = "attempted"
                 else:
                     self._partition_status[partition] = "completed"
@@ -304,7 +305,10 @@ class LHCbAnalysisTransform(Transform):
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     ## Once partition finished, if in state 'partition_status' then resubmit
-    ## jobs in state 'job_status'
+    ## jobs in state 'job_status'. This works in conjunction with the auto_resubmit
+    ## which only resubmits subjobs while the master job is running IF they have not
+    ## been submitted more than n times and IF the ratio of failed to complete is betetr
+    ## than x. This will resubmit ALL failed jobs once the partition has finished.
     def _resubmitAttemptedJobs(self):
         partition_status = ['attempted']
         job_status = ['failed','killed']
