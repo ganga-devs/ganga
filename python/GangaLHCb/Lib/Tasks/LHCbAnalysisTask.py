@@ -7,6 +7,7 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 ##3) Dirac bulk submit
 ##4) Sort out job resubmission on failure
 ##5) Mergers
+##6) submit_counter for master job = 1 always unless whole job resubmitted.
 
 class LHCbAnalysisTask(Task):
     """The LHCbAnalysisTask class looks after the running of LHCb Analysis jobs, including helping to keep
@@ -48,7 +49,7 @@ class LHCbAnalysisTask(Task):
     _category = 'tasks'
     _name = 'LHCbAnalysisTask'
     _exportmethods = Task._exportmethods
-    _exportmethods +=['addQuery','update','resubmitFailedSubjobs']
+    _exportmethods +=['addQuery','update']
     
     default_registry = "tasks"
 
@@ -127,13 +128,6 @@ class LHCbAnalysisTask(Task):
         print
         for t in self.transforms:
             t.overview()
-
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    def resubmitFailedSubjobs(self):
-        """If some of the transforms in this task have failed subjobs within a partition
-        then this method will automatically resubmit them all."""
-        for t in self.transforms:
-            t.resubmit()
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def update(self, resubmit=False):

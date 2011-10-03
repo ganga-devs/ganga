@@ -52,7 +52,7 @@ class LHCbAnalysisTransform(Transform):
     _category = 'transforms'
     _name = 'LHCbAnalysisTransform'
     _exportmethods = Transform._exportmethods 
-    _exportmethods += [ 'update','resubmitFailedSubjobs' ]
+    _exportmethods += [ 'update' ]
 
     ## Special methods
     #####################################################################
@@ -85,7 +85,6 @@ class LHCbAnalysisTransform(Transform):
     #####################################################################
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    ## This can probably be neatened up.
     def overview(self):
         """ Get an ascii art overview over task status. Can be overridden """
         o = markup("Transform %s: %s '%s'\n" % (self.transform_id, self.__class__.__name__, self.name), status_colours[self.status])
@@ -95,18 +94,17 @@ class LHCbAnalysisTransform(Transform):
         for c in partitions:
             s = self._partition_status[c]
             if c in self.getPartitionApps():
-                failures = self.getPartitionFailures(c)
-
-
-                p_jobs = [pj for pj in self.getPartitionJobs(c)]
-                p_jobs.sort(key=lambda job: job.id)
+                
                 mj = self._getPartitionMasterJob(c)
                 failure = 0
                 if mj.status in ['submitting','submitted','running','completing','completed']:
                     failure = mj.info.submit_counter - 1
                 else: failure = mj.info.submit_counter
+                
                 o += markup("Partition %i (attached to job# %s, containing %i datafiles):%i" % (c,mj.id,self._datafile_count(self.getPartitionJobs(c)),failure), partition_colours[s])
                 o += '\n'
+                p_jobs = [pj for pj in self.getPartitionJobs(c)]
+                p_jobs.sort(key=lambda job: job.id)
                 for j in p_jobs:
                     fails = 0
                     if j.status in ['submitting','submitted','running','completing','completed']:
@@ -121,13 +119,6 @@ class LHCbAnalysisTransform(Transform):
                 o+="\n"
         print o
 
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    def resubmitFailedSubjobs(self):
-        status = ['failed','killed','attempted']
-        for p in self._partition_status:
-            for j in self.getPartitionJobs(p):
-                if j.status in status: j.resubmit()
-    
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def run(self, check=True):
         self.submitJobs(1)
@@ -181,13 +172,14 @@ class LHCbAnalysisTransform(Transform):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def checkStatus(self):
         self.updatePartitions()
-        running_state = set(['submitting','submitted','running','completing'])
         status = set(self._partition_status.values())
-        if status.intersection(running_state):
+        if 'running' in status:
+            self._resubmitAttemptedJobs() ## Check here as well else have to wait until all partitions are finished.
             self.updateStatus('running')
         elif 'ready' in status:
             self.updateStatus('running')
         elif 'attempted' in status:
+            self._resubmitAttemptedJobs()
             self.updateStatus('running')
         # elif 'failed' in status:
             # self.updateStatus('completed')
@@ -310,6 +302,16 @@ class LHCbAnalysisTransform(Transform):
         ## as in prepared stuff, see Executable for example or even tasksregistry.py!
         return GPI.jobs(partition_jobs[0].fqid.split('.')[0])
 
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    ## Once partition finished, if in state 'partition_status' then resubmit
+    ## jobs in state 'job_status'
+    def _resubmitAttemptedJobs(self):
+        partition_status = ['attempted']
+        job_status = ['failed','killed']
+        for p in (part for part, state in self._partition_status.iteritems() if state in partition_status):
+            for j in (job for job in self.getPartitionJobs(p) if job.status in job_status):
+                if j.info.submit_counter >= self.run_limit: continue
+                j.resubmit()
 
 ## End of class LHCbAnalysisTransform
 ########################################################################
