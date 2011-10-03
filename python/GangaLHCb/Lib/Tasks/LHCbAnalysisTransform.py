@@ -259,7 +259,7 @@ class LHCbAnalysisTransform(Transform):
                         if failures >= self.run_limit:
                             self._partition_status[partition] = "failed"
                         elif failures > 0:
-                            if len(mj.subjobs): mj._impl.info.submit_counter +=1 ## Catches the fact that master job submit doesnt increment when subjobs resubmitted.
+                            if len(mj.subjobs): mj._impl.info.submit_counter +=1 ## Catches the fact that master job submit counter doesnt increment when subjobs resubmitted.
                             self._partition_status[partition] = "attempted"
                 else:
                     self._partition_status[partition] = "completed"
