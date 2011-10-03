@@ -5,6 +5,8 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 ##1) Multi threading, even with multi threads, bottle neck at the server while updating.
 ##2) Check prepared works(looks like does because of application.clone())
 ##3) Dirac bulk submit
+##4) Sort out job resubmission on failure
+##5) Mergers
 
 class LHCbAnalysisTask(Task):
     """The LHCbAnalysisTask class looks after the running of LHCb Analysis jobs, including helping to keep

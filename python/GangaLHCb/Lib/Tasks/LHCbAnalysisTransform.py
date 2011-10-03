@@ -153,8 +153,8 @@ class LHCbAnalysisTransform(Transform):
             ## If nothing to be updated then exit
             redo_jobs = self._getJobsWithRemovedData(self.removed_data)
             if redo_jobs and not resubmit:
-                logger.info('There are jobs with out of data datasets, some datafiles must'\
-                            'be removed. This will mean loss of existing output and mean that mergers'\
+                logger.info('There are jobs with out-of-date datasets, some datafiles must'\
+                            'be removed. Updating will mean loss of existing output and mean that mergers'\
                             'must be rerun. Due to the permenant nature of this request please recall'\
                             'update with the True argument as update(True)')
                 logger.info('Continuing to look for new data...')
