@@ -28,7 +28,7 @@ partition_colours = {
 job_colours = {
     'new'        : col("black","white"),
     'submitting' : col("black","orange"),
-    'submitted'  : col("black","orange"),
+    'submitted'  : col("white","orange"),
     'running'    : col("black","green"),
     'completing' : col("black","green"),
     'completed'  : col("white","blue"),
