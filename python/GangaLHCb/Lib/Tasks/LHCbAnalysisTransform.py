@@ -145,8 +145,8 @@ class LHCbAnalysisTransform(Transform):
             redo_jobs = self._getJobsWithRemovedData(self.removed_data)
             if redo_jobs and not resubmit:
                 logger.info('There are jobs with out-of-date datasets, some datafiles must'\
-                            'be removed. Updating will mean loss of existing output and mean that mergers'\
-                            'must be rerun. Due to the permenant nature of this request please recall'\
+                            'be removed. Updating will mean loss of existing output and mean that merged'\
+                            'will change respectively. Due to the permenant nature of this request please recall'\
                             'update with the True argument as update(True)')
                 logger.info('Continuing to look for new data...')
             else:
@@ -185,6 +185,7 @@ class LHCbAnalysisTransform(Transform):
         # elif 'failed' in status:
             # self.updateStatus('completed')
         else:
+            if self.merger is not None: self._mergeTransformOutput()
             self.updateStatus('completed')
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -305,6 +306,14 @@ class LHCbAnalysisTransform(Transform):
         return GPI.jobs(partition_jobs[0].fqid.split('.')[0])
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    def _mergeTransformOutput(self):
+        try:
+            self.merger.merge(self.getJobs())
+        except:
+            logger.error('There was a problem merging the output from all partitions.')
+
+
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     ## Once partition finished, if in state 'partition_status' then resubmit
     ## jobs in state 'job_status'. This works in conjunction with the auto_resubmit
     ## which only resubmits subjobs while the master job is running IF they have not
@@ -316,6 +325,7 @@ class LHCbAnalysisTransform(Transform):
         for p in (part for part, state in self._partition_status.iteritems() if state in partition_status):
             for j in (job for job in self.getPartitionJobs(p) if job.status in job_status):
                 if j.info.submit_counter >= self.run_limit: continue
+                logger.warning('Resubmitting job %s from T%i Tr%i P%i'%(j.fqid,self.task_id,self.transform_id,p))
                 j.resubmit()
 
 ## End of class LHCbAnalysisTransform
