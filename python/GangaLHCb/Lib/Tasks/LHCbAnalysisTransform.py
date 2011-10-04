@@ -30,7 +30,7 @@ job_colours = {
     'submitting' : col("black","orange"),
     'submitted'  : col("white","orange"),
     'running'    : col("black","green"),
-    'completing' : col("black","green"),
+    'completing' : col("white","green"),
     'completed'  : col("white","blue"),
     'killed'     : col("white","lred"),
     'failed'     : col("black","lred"),
