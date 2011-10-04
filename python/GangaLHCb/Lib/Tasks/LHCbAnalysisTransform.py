@@ -170,6 +170,7 @@ class LHCbAnalysisTransform(Transform):
     #####################################################################
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    ## Called as part of the tasks monitoring loop when task not in 'new'
     def checkStatus(self):
         self.updatePartitions()
         status = set(self._partition_status.values())
@@ -234,17 +235,17 @@ class LHCbAnalysisTransform(Transform):
     ## Sseems to be called at startup only!?, now calling it also in checkStatus to make
     ## it part of the Tasks monitoring thread loop.
     def updatePartitionStatus(self, partition):
-        """ Calculate the correct status of the given partition. 
-        "completed" and "bad" is never changed here
-        "hold" is only changed to "completed" here. """
-
+        """ Calculate the correct status of the given partition."""
         running_status = set(['submitting','submitted','running','completing'])
+        nonProcessing_states = set(['bad','ignored','unknown'])
         ## If the partition has status, and is not in a fixed state...
-        if partition in self._partition_status and (not self._partition_status[partition] in ["bad","completed"]):
+        if partition in self._partition_status and (not self._partition_status[partition] in nonProcessing_states):
+
             ## if we have no applications, we are in "ready" state
             if not partition in self.getPartitionApps():
                 if self._partition_status[partition] != "hold":
                     self._partition_status[partition] = "ready"
+                    
             elif self._partition_status[partition] != "hold":
                 status = set([pj.status for pj in self.getPartitionJobs(partition)])
                 

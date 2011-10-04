@@ -8,6 +8,7 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 ##4) Sort out job resubmission on failure
 ##5) Mergers
 ##6) submit_counter for master job = 1 always unless whole job resubmitted.
+##7) Partition updating from completed by manual resubmit
 
 class LHCbAnalysisTask(Task):
     """The LHCbAnalysisTask class looks after the running of LHCb Analysis jobs, including helping to keep
