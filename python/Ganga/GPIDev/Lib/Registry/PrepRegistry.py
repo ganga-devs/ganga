@@ -223,7 +223,7 @@ class ShareRef(GangaObject):
     
         return disp_string
 
-    def _proxy_display(self,stuff):
+    def _proxy_display(self):
         return self._display()
 
 
