@@ -20,7 +20,12 @@ config.addOption('MaxNumOfDatasets', 100, 'Maximum number of datasets in a given
 
 try:
     from pyAMI.pyAMI import AMI as AMIClient
+    from pyAMI.pyAMIEndPoint import pyAMIEndPoint
+
+    #Reading from CERN replica
+    pyAMIEndPoint.setType("replica")
     amiclient = AMIClient()
+
 except ImportError:
     logger.warning("AMI not properly set up. Set athena to access AMI from this ganga session.")
     pass
