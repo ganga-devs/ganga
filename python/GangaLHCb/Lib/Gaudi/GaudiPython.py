@@ -73,17 +73,33 @@ class GaudiPython(Francesc):
         if (not self.project): self.project = 'DaVinci'
         self._init(self.project,False)
 
-    def prepare(self):
-        pass
+    def unprepare(self,force=False):
+        if self.is_prepared is not None:
+            self.decrementShareCounter(self.is_prepared.name)
+            self.is_prepared = None
+
+    def prepare(self,force=False):
+        #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+        if (self.is_prepared is not None) and (force is not True):
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
+
+        logger.info('Preparing %s application.'%(self._name))
+        self.is_prepared = ShareDir()
+        self.incrementShareCounter(self.is_prepared.name)
+
+        #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+        send_to_share = self._prepare()
+        self._check_inputs()
+        return send_to_share
     
     def master_configure(self):
-        self._master_configure()
-        self._check_inputs()
+        #self._master_configure()
+        #self._check_inputs()
         self.extra.master_input_files += self.script[:]
         return (None,self.extra)
 
     def configure(self,master_appconfig):
-        self._configure()
+        #self._configure()
         name = join('.',self.script[0].subdir,split(self.script[0].name)[-1])
         script =  "from Gaudi.Configuration import *\n"
         if self.args:

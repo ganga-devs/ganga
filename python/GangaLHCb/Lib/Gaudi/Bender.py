@@ -38,16 +38,42 @@ class Bender(Francesc):
                                    typelist=['str'],doc=docstr)
     docstr = 'The number of events '
     schema['events'] = SimpleItem(defvalue=-1,typelist=['int'],doc=docstr)
-
+    schema['is_prepared'] = SimpleItem(defvalue=None,
+                                       strict_sequence=0,
+                                       visitable=1,
+                                       copyable=1,
+                                       typelist=['type(None)','str'],
+                                       protected=1,
+                                       doc=docstr)
     _schema = Schema(Version(1, 3), schema)
 
     def _auto__init__(self):
         if (not self.project): self.project = 'Bender'
         self._init(self.project,False)
 
-    def master_configure(self):
-        self._master_configure()
+    def unprepare(self,force=False):
+        if self.is_prepared is not None:
+            self.decrementShareCounter(self.is_prepared.name)
+            self.is_prepared = None
+
+    def prepare(self,force=False):
+        #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+        if (self.is_prepared is not None) and (force is not True):
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
+
+        logger.info('Preparing %s application.'%(self._name))
+        self.is_prepared = ShareDir()
+        self.incrementShareCounter(self.is_prepared.name)
+
+        #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+        send_to_share = self._prepare()
         self._check_inputs()
+        
+        return send_to_share
+    
+    def master_configure(self):
+        #self._master_configure()
+        #self._check_inputs()
         self.extra.master_input_files += [self.module]
         return (None,self.extra)
 

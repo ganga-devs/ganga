@@ -204,6 +204,7 @@ class Francesc(IPrepareApp):
         CMTscript.CMTscript(self,command)
 
     def _prepare(self):
+        self.extra = GaudiExtras()
         self._getshell()
         send_to_share=[]
                         
@@ -229,7 +230,7 @@ class Francesc(IPrepareApp):
 
     def _master_configure(self):
         '''Handles all common master_configure actions.'''
-        self.extra = GaudiExtras()
+        pass
         ## job=self.getJobObject()                
 ##         if job.inputdata: self.appconfig.inputdata = job.inputdata
 ##         if job.outputdata: self.appconfig.outputdata = job.outputdata

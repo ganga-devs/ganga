@@ -123,7 +123,7 @@ class Gaudi(Francesc):
         try:
             parser = PythonOptionsParser(optsfiles,self.extraopts,self.shell)
         except ApplicationConfigurationError, e:
-            debug_dir = job.getDebugWorkspace().getPath()
+            debug_dir = self.getJobObject().getDebugWorkspace().getPath()
             f = open(debug_dir + '/gaudirun.stdout','w')
             f.write(e.message)
             f.close()
@@ -150,7 +150,8 @@ class Gaudi(Francesc):
 
         logger.info('Preparing %s application.'%(self._name))
         self.is_prepared = ShareDir()
-        shared_dirname = self.is_prepared.name
+        #shared_dirname = self.is_prepared.name
+        self.incrementShareCounter(self.is_prepared.name)
 
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
         
@@ -160,7 +161,7 @@ class Gaudi(Francesc):
         ## Next line would have stored them in the jobs inputdir but want them
         ## in sharedDir now we have prepared state.
         ##input_dir = job.getInputWorkspace().getPath()
-        input_dir = shared_dirname
+        input_dir = self.is_prepared.name#shared_dirname
 
 
         ## Need to remember to create the buffer as the perpare methods returns
