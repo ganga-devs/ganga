@@ -1,11 +1,6 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-#GangaTest.Framework.utils defines some utility methods
-#from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
-#from GangaLHCb.Lib.Tasks.LHCbAnalysisTransform import LHCbAnalysisTransform
-#from GangaLHCb.Lib.Tasks.LHCbAnalysisTask import LHCbAnalysisTask
-#from GangaLHCb.Lib.Tasks.BKTestQuery import BKTestQuery
 from Ganga import GPI
-import unittest
+#import unittest
 
 #Setup bookeeping
 stripping15up = '/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real Data/Reco11/Stripping15/90000000/DIMUON.DST'
@@ -56,10 +51,14 @@ class TestLHCbAnalysisTask(GangaGPITestCase):
 
      def test_update(self):
           t = GPI.LHCbAnalysisTask()
-          tr = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
-          t.appendTransform(tr)
-          tr.query = GPI.BKTestQuery(stripping15up)
-
-          ## Check that update produces some files to process
+          tr1 = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
+          tr2 = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
+          t.appendTransform(tr1)
+          t.appendTransform(tr2)
+          tr1.query = GPI.BKTestQuery(stripping15up)
+          tr2.query = GPI.BKTestQuery(stripping15down)
+          
+          ## Check that update produces some files to process over multiple transforms
           t.update()
-          assert len(t.transforms[0]._impl.toProcess_dataset.files),'Update did not produce any datafiles to process'
+          assert len(t.transforms[0]._impl.toProcess_dataset.files),'Update did not produce any datafiles to process in transform 0'
+          assert len(t.transforms[1]._impl.toProcess_dataset.files),'Update did not produce any datafiles to process in transform 1'
