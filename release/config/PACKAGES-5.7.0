@@ -28,7 +28,6 @@ ganga/python/GangaKISTI                                                GangaKIST
 
 #will/ulrik
 ganga/python/GangaLHCb                                                 Ganga-LHCb-Prepared-0-12
-ganga/python/GangaLHCb~                                                Ganga-LHCb-Prepared-0-11
 
 #pajchel/bsamset
 ganga/python/GangaNG                                                   GangaNG-20-31
@@ -53,7 +52,4 @@ ganga/python/GangaTest                                                 Ganga-Tes
 
 #kuba/hclee
 ganga/python/GangaTutorial                                             GangaTutorial-20-5
-
-#kuba
-ganga/python/Ganga~                                                    Ganga-Core-Prepared-0-8
 
