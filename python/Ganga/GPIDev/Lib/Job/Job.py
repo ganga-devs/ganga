@@ -397,7 +397,7 @@ class Job(GangaObject):
         self.info.uuid = Ganga.Utility.guid.uuid()
 
         #increment the shareref counter if the job we're copying is prepared.
-        if self.application.is_prepared is not None:
+        if hasattr(self.application,'is_prepared') and self.application.is_prepared is not None:
             self.application.incrementShareCounter(self.application.is_prepared.name)
             logger.debug("Increasing shareref")
         # register the job (it will also commit it)
@@ -616,6 +616,9 @@ class Job(GangaObject):
         can been seen by calling 'shareref'. See help(shareref) for further details.
         
         '''
+        if not hasattr(self.application,'is_prepared'):
+            logger.warning("Non-preparable application %s cannot be prepared" % self.application._name)
+            return
 
         if (self.application.is_prepared is not None) and (force == False):
             msg = "The application associated with job %d has already been prepared. To force the operation, call prepare(force=True)" % (self.id)
@@ -634,6 +637,10 @@ class Job(GangaObject):
         '''Revert the application associated with a job to the unprepared state
         Returns True on success.
         '''
+        if not hasattr(self.application,'is_prepared'):
+            logger.warning("Non-preparable application %s cannot be unprepared" % self.application._name)
+            return
+
         self.application.unprepare()
 
 
@@ -717,16 +724,17 @@ class Job(GangaObject):
 
             self.getDebugWorkspace().remove(preserve_top=True)
 
-            if (self.application.is_prepared is None) or (prepare == True):
-                self.prepare(force=True)
-            else:
-                msg = "Job %d's application has already been prepared." % (self.id)
-                logger.info(msg)
+            if hasattr(self.application,'is_prepared'):
+                if (self.application.is_prepared is None) or (prepare == True):
+                    self.prepare(force=True)
+                else:
+                    msg = "Job %d's application has already been prepared." % (self.id)
+                    logger.info(msg)
 
-            if not os.path.isdir(self.application.is_prepared.name):
-                msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
-                self.unprepare()
-                raise JobError(msg)
+                if not os.path.isdir(self.application.is_prepared.name):
+                    msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
+                    self.unprepare()
+                    raise JobError(msg)
 
 
 
@@ -940,7 +948,7 @@ class Job(GangaObject):
 
             #If the job is associated with a shared directory resource (e.g. has a prepared() application)
             #decrement the reference counter.
-            if self.application.__getattribute__('is_prepared'):
+            if hasattr(self.application,'is_prepared') and self.application.__getattribute__('is_prepared'):
                 self.application.decrementShareCounter(self.application.is_prepared.name)
                 
 
