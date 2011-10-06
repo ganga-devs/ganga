@@ -133,8 +133,12 @@ class Batch(IBackend):
         scriptpath=self.preparejob(jobconfig,master_input_sandbox)
 
         # FIX from Angelo Carbone
-        stderr_option = '-e '+str(outw.getPath())+'stderr'
-        stdout_option = '-o '+str(outw.getPath())+'stdout'
+        # stderr_option = '-e '+str(outw.getPath())+'stderr'
+        # stdout_option = '-o '+str(outw.getPath())+'stdout'
+
+        # FIX from Alex Richards - see Savannah #87477
+        stdout_option = self.config['stdoutConfig'] % str(outw.getPath())
+        stderr_option = self.config['stderrConfig'] % str(outw.getPath())
 
         queue_option = ''
         if self.queue:
@@ -209,8 +213,12 @@ class Batch(IBackend):
                 logger.warning("OSError:"+str(x))
             
         scriptpath = inw.getPath('__jobscript__')
-        stderr_option = '-e '+str(outw.getPath())+'stderr'
-        stdout_option = '-o '+str(outw.getPath())+'stdout'
+        #stderr_option = '-e '+str(outw.getPath())+'stderr'
+        #stdout_option = '-o '+str(outw.getPath())+'stdout'
+
+        # FIX from Alex Richards - see Savannah #87477
+        stdout_option = self.config['stdoutConfig'] % str(outw.getPath())
+        stderr_option = self.config['stderrConfig'] % str(outw.getPath())
 
         queue_option = ''
         if self.queue:
@@ -594,6 +602,9 @@ config.addOption('submit_str', 'cd %s; bsub %s %s %s %s', "String used to submit
 config.addOption('submit_res_pattern', '^Job <(?P<id>\d*)> is submitted to .*queue <(?P<queue>\S*)>',
                   "String pattern for replay from the submit command")
 
+config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
+config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
+
 config.addOption('kill_str', 'bkill %s', "String used to kill job")
 config.addOption('kill_res_pattern', 
                  '(^Job <\d+> is being terminated)|(Job <\d+>: Job has already finished)|(Job <\d+>: No matching job found)',
@@ -640,6 +651,9 @@ config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variab
 
 config.addOption('submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
 config.addOption('submit_res_pattern', '^(?P<id>\d*)\.pbs\s*', "String pattern for replay from the submit command")
+
+config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
+config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
 
 config.addOption('kill_str', 'qdel %s', "String used to kill job")
 config.addOption('kill_res_pattern', '(^$)|(qdel: Unknown Job Id)', "String pattern for replay from the kill command")
@@ -689,6 +703,9 @@ config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variab
 #the -V options means that all environment variables are transferred to the batch job (ie the same as the default behaviour on LSF at CERN)
 config.addOption('submit_str', 'cd %s; qsub -cwd -V %s %s %s %s', "String used to submit job to queue")
 config.addOption('submit_res_pattern', 'Your job (?P<id>\d+) (.+)', "String pattern for replay from the submit command")
+
+config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
+config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
 
 config.addOption('kill_str', 'qdel %s', "String used to kill job")
 config.addOption('kill_res_pattern', '(has registered the job +\d+ +for deletion)|(denied: job +"\d+" +does not exist)', 
