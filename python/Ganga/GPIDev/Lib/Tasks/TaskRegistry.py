@@ -94,9 +94,6 @@ class TaskRegistry(Registry):
                         if self[tid].status in ["running","running/pause"]:
                             self[tid]._getWriteAccess()
                             p = self[tid]
-                        elif self[tid].status is 'completed' and ( self[tid].n_status('ready') or self[tid].n_status('running') ):
-                            self[tid].updateStatus()
-                            continue
                         else:
                             continue
                     except RegistryError:
