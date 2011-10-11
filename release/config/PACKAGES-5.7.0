@@ -26,8 +26,8 @@ ganga/python/GangaJEM                                                  Ganga-JEM
 #hgkim
 ganga/python/GangaKISTI                                                GangaKISTI-1-1
 
-#will/ulrik
-ganga/python/GangaLHCb                                                 Ganga-LHCb-Prepared-0-12
+#alex/will/ulrik
+ganga/python/GangaLHCb                                                 Ganga-LHCb-Prepared-0-13
 
 #pajchel/bsamset
 ganga/python/GangaNG                                                   GangaNG-20-31
