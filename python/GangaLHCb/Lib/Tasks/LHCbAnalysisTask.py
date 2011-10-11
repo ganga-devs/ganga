@@ -5,10 +5,10 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 ##1) Multi threading, even with multi threads, bottle neck at the server while updating.
 ##2) Check prepared works(looks like does because of application.clone())
 ##3) Dirac bulk submit
-##4) Sort out job resubmission on failure
-##5) Mergers
-##6) submit_counter for master job = 1 always unless whole job resubmitted.
-##7) Partition updating from completed by manual resubmit
+##4) Sort out job resubmission on failure - done
+##5) Mergers - done
+##6) submit_counter for master job = 1 always unless whole job resubmitted. - done
+##7) Partition updating from completed by manual resubmit - done
 
 class LHCbAnalysisTask(Task):
     """The LHCbAnalysisTask class looks after the running of LHCb Analysis jobs, including helping to keep
@@ -37,7 +37,7 @@ class LHCbAnalysisTask(Task):
     In[6]: tasks          # less verbose
     In[7]: tasks.table()  # more verbose
 
-    A Pretty view of all the partition and subjobs within a task can be obtained with.
+    A Pretty, operational view of all the partition and subjobs within a task can be obtained with.
 
     In[8]: t.overview()
     
@@ -110,7 +110,6 @@ class LHCbAnalysisTask(Task):
         ## after appending a query later.
         if transform.query is not None: transform.update()
         self.updateStatus()
-        self.updateStatus()
         return r
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -126,7 +125,7 @@ class LHCbAnalysisTask(Task):
         print "Job Colours: " + ", ".join([markup(job, job_colours[job])
             for job in ["new", "submitting", "submitted", "running", "completing", "completed", "failed", "killed", "incomplete", "unknown"]])
         print "Lists the transforms, their partitions and partition subjobs, as well as the number of failures."
-        print "Format: (partition/subjob number)[:(number of submissions)]"
+        print "Format: (partition/subjob number)[:(number of resubmissions)]"
         print
         for t in self.transforms:
             t.overview()

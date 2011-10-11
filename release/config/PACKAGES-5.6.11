@@ -3,7 +3,7 @@
 #kuba
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Core-Prepared-0-9
+ganga/python/Ganga                                                     Ganga-Base-30-57
 
 #hclee
 ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-22-9
@@ -15,25 +15,25 @@ ganga/python/Ganga/Lib/MonitoringServices                              Ganga-Mon
 ganga/python/Ganga/Lib/Remote                                          GangaRemote-21-2
 
 #johannes/dan/mark
-ganga/python/GangaAtlas                                                Ganga-Atlas-Prepared-0-3
+ganga/python/GangaAtlas                                                GangaAtlas-23-38
 
 #alvin
 ganga/python/GangaGUI                                                  GangaGUI-20-6
 
 #muenchen
-ganga/python/GangaJEM                                                  Ganga-JEM-Prepared-0-1
+ganga/python/GangaJEM                                                  GangaJEM-3-2-1
 
 #hgkim
 ganga/python/GangaKISTI                                                GangaKISTI-1-1
 
-#alex/will/ulrik
-ganga/python/GangaLHCb                                                 Ganga-LHCb-Prepared-0-13
+#will/ulrik
+ganga/python/GangaLHCb                                                 GangaLHCb-23-18
 
 #pajchel/bsamset
 ganga/python/GangaNG                                                   GangaNG-20-31
 
 #dan/johannes
-ganga/python/GangaPanda                                                Ganga-Panda-Prepared-0-1
+ganga/python/GangaPanda                                                GangaPanda-22-82
 
 #hclee
 ganga/python/GangaPlotter                                              GangaPlotter-21-2
@@ -48,7 +48,7 @@ ganga/python/GangaSAGA                                                 GangaSAGA
 ganga/python/GangaService                                              GangaService-1-0
 
 #kuba
-ganga/python/GangaTest                                                 Ganga-Test-Prepared-0-1
+ganga/python/GangaTest                                                 GangaTest-30-9
 
 #kuba/hclee
 ganga/python/GangaTutorial                                             GangaTutorial-20-5

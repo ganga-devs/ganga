@@ -25,69 +25,26 @@ class BKTestQuery(BKQuery):
 ##     schema['selection'] = SimpleItem(defvalue='',doc=docstr)
     _schema = BKQuery._schema.inherit_copy()
     _schema.datadict['dataset']  =  ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='dataset',hidden=0)
+    _schema.datadict['fulldataset']  =  ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='dataset',hidden=1)
+    _schema.datadict['fulldatasetptr']  =  SimpleItem(defvalue=0, optional=0, load_default=True,doc='dataset position pointer',hidden=1,typeList=['int'])
+    _schema.datadict['filesToRelease']  =  SimpleItem(defvalue=3, optional=0, load_default=True,doc='number of files to release at a time',hidden=0,typeList=['int'])
     _category = 'query'
     _name = "BKTestQuery"
     _exportmethods = BKQuery._exportmethods
-
-##     def __init__(self, path=''):
-##         super(BKQuery, self).__init__()
-##         self.path = path
-
-##     def __construct__(self, args):
-##         if (len(args) != 1) or (type(args[0]) is not type('')):
-##             super(BKQuery,self).__construct__(args)
-##         else:
-##             self.path = args[0]
+    _exportmethods += ['removeData']
 
     def getDataset(self):
-        ds = super(BKTestQuery,self).getDataset()
+        if self.fulldataset is None:
+            self.fulldataset = super(BKTestQuery,self).getDataset()
         if self.dataset is None:
-            self.dataset = LHCbDataset(ds.files[:3])
+            self.dataset = LHCbDataset(self.fulldataset.files[:self.filesToRelease])
         else:
-            import sets
-            a=set(self.dataset.files)
-            b=set(ds.files)
-            self.dataset.files += list(b.difference(a))[:3]
+            self.dataset.files += self.fulldataset.files[self.fulldatasetptr:fulldatasetptr+self.filesToRelease]
         return self.dataset
+
+    def removeData(self):
+        if len(self.dataset):
+            del self.dataset[0]
         
-##     def _getDataset(self):
-##         '''Gets the dataset from the bookkeeping for current path, etc.'''
-##         if not self.path: return None
-##         if not self.type in ['Path','RunsByDate','Run','Production']:
-##             raise GangaException('Type="%s" is not valid.' % self.type)
-##         if not self.type is 'RunsByDate':
-##             if self.startDate:
-##                 msg = 'startDate not supported for type="%s".' % self.type
-##                 raise GangaException(msg)
-##             if self.endDate:
-##                 msg = 'endDate not supported for type="%s".' % self.type
-##                 raise GangaException(msg)
-##             if self.selection:
-##                 msg = 'selection not supported for type="%s".' % self.type
-##                 raise GangaException(msg)            
-##         cmd = 'result = DiracCommands.getDataset("%s","%s","%s","%s","%s",\
-##         "%s")' % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
-##                   self.selection)
-##         if type(self.dqflag) == type([]):
-##             cmd = 'result = DiracCommands.getDataset("%s",%s,"%s","%s","%s",\
-##             "%s")' % (self.path,self.dqflag,self.type,self.startDate,
-##                      self.endDate,self.selection)
-##         result = get_result(cmd,'BK query error.','BK query error.')
-##         files = []
-##         value = result['Value']
-##         if value.has_key('LFNs'): files = value['LFNs']
-##         metadata = {}
-##         if not type(files) is list:
-##             if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
-##                 metadata = files['LFNs'].copy()
-##                 files = files['LFNs'].keys()
-        
-##         ds = LHCbDataset()
-##         for f in files: ds.files.append(LogicalFile(f))
-        
-##         if metadata:
-##             ds.metadata = {'OK':True,'Value':metadata}
-        
-##         return GPIProxyObjectFactory(ds)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

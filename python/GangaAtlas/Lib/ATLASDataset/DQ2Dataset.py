@@ -371,8 +371,13 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
         output_datasetname = patName
         output_lfn = patLfn
 
-    if len(output_datasetname)>config['OUTPUTDATASET_NAMELENGTH']:
+    # container limit: 131, Dataset limit: 200
+    if output_datasetname[-1:] == '/' and len(output_datasetname)>config['OUTPUTDATASET_NAMELENGTH']:
         raise ApplicationConfigurationError(None,'DQ2OutputDataset.datasetname = %s is longer than limit of %s characters ! ' %(output_datasetname,config['OUTPUTDATASET_NAMELENGTH']))
+
+
+    if output_datasetname[-1:] != '/' and len(output_datasetname)>200:
+        raise ApplicationConfigurationError(None,'DQ2OutputDataset.datasetname = %s is longer than limit of 200 characters ! ' %(output_datasetname))
 
     return output_datasetname, output_lfn 
 

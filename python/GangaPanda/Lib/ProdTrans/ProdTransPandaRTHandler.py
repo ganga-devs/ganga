@@ -2,6 +2,7 @@ import commands, exceptions, random, re
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from Ganga.Core import BackendError
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -70,6 +71,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             jspec.prodSourceLabel = app.prod_source_label
         else:
             jspec.prodSourceLabel = configPanda['prodSourceLabelRun']
+        jspec.processingType = configPanda['processingType']
         jspec.computingSite = job.backend.site
         jspec.cloud = job.backend.requirements.cloud
         jspec.cmtConfig = app.atlas_cmtconfig

@@ -35,7 +35,7 @@ _external_packages = {
                  'PYTHONPATH':['lib/python2.4/site-packages'],
                  'syspath':['lib/python2.4/site-packages']
                        },
-    'pyAMI' : { 'version' : '3.1.2', 
+    'pyAMI' : { 'version' : '3.1.2.1', 
                        'PYTHONPATH':['.'],
                        'noarch':True
                        }

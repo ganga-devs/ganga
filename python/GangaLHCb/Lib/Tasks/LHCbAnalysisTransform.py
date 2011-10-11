@@ -39,7 +39,15 @@ job_colours = {
     }
 
 class LHCbAnalysisTransform(Transform):
-    
+    """The LHCbAnalysisTransform class contains the setup needed for a standard job,
+    such as application, backend etc. In addition one can define a BKQuery to attach
+    to the transforms 'query' attribute. This enables the transform to be updated to
+    account for new additions as well as removals of data files from the BKQuery dataset.
+
+    Transforms are attached to an LHCbAnalysisTask object using the appendTransform()
+    method of the task. All of the functionality of the Transform is designed to be used
+    via a task so it is recomended that you attach it to one."""
+
     _schema = Transform._schema.inherit_copy()
     _schema.datadict['name'].defvalue='LHCbAnalysisTransform' 
     _schema.datadict['query'] =  ComponentItem('query',defvalue=None,load_default=0,hidden=0,protected=0,optional=1,copyable=1,doc='Bookkeeping query object BKQuery()')
@@ -107,7 +115,8 @@ class LHCbAnalysisTransform(Transform):
                 p_jobs.sort(key=lambda job: job.id)
                 for j in p_jobs:
                     fails = 0
-                    if j.status in ['submitting','submitted','running','completing','completed']:
+                    # if j.status in ['submitting','submitted','running','completing','completed']:
+                    if j.status in ['submitted','running','completing','completed']:
                         fails = j.info.submit_counter - 1
                     else: fails = j.info.submit_counter
                     o += markup("%i:%i"%(j.id,fails),job_colours[j.status])
@@ -121,11 +130,15 @@ class LHCbAnalysisTransform(Transform):
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def run(self, check=True):
+        """Start the transform running, thereby assigning all necessary jobs."""
         self.submitJobs(1)
         return super(LHCbAnalysisTransform,self).run(check)
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def update(self, resubmit=False):
+        """Update the dataset information of the transforms. This will
+        include any new data in the processing or re-run jobs that have data which
+        has been removed."""
         if self.query is None:
             raise GangaException(None,'Cannot call update() on an LHCbTransform without the query attribute set')
         if len(self.toProcess_dataset.files):
@@ -136,35 +149,49 @@ class LHCbAnalysisTransform(Transform):
         latest_dataset=self.query.getDataset()
         self.toProcess_dataset.files = latest_dataset.files
 
+
+        ## Compare to previous inputdata, get new and removed
+        logger.info('Checking for new and removed data, please wait...')
+        dead_data = LHCbDataset()
         if self.inputdata is not None:
             ## Get new files
             self.toProcess_dataset.files = latest_dataset.difference(self.inputdata).files
             ## Get removed files
-            self.removed_data.files += self.inputdata.difference(latest_dataset).files
+            dead_data.files += self.inputdata.difference(latest_dataset).files
             ## If nothing to be updated then exit
-            redo_jobs = self._getJobsWithRemovedData(self.removed_data)
-            if redo_jobs and not resubmit:
-                logger.info('There are jobs with out-of-date datasets, some datafiles must'\
-                            'be removed. Updating will mean loss of existing output and mean that mergers'\
-                            'must be rerun. Due to the permenant nature of this request please recall'\
-                            'update with the True argument as update(True)')
-                logger.info('Continuing to look for new data...')
-            else:
-                for j in redo_jobs:
-                # for j in self._getJobsWithRemovedData(self.removed_data):
-                    logger.info('Resubmitting job \'%s\' as it\'s dataset is out of date.'%j.name)
-                    j.resubmit()
 
+        ## Carry out actions as needed
+        redo_jobs = self._getJobsWithRemovedData(dead_data)
         new_jobs = len(self.toProcess_dataset.files)
         if not new_jobs and not redo_jobs:
             logger.info('Transform %i:%i is already up to date'%(self.task_id,self.transform_id))
             return
+        
+        if redo_jobs and not resubmit:
+            logger.info('There are jobs with out-of-date datasets, some datafiles must '\
+                        'be removed. Updating will mean loss of existing output and mean that merged data '\
+                        'will change respectively. Due to the permenant nature of this request please recall '\
+                        'update with the True argument as update(True)')
+            self.toProcess_dataset.files = []
+            return
 
+        if redo_jobs:
+            self.removed_data.files += dead_data.files
+            for j in redo_jobs:
+                if j.status in ['submitting','submitted','running','completing']:
+                    logger.warning('Job \'%s\' as it is still running but is marked for resubmission due to removed data. It will be killed first'%j.fqid)
+                    j.kill()
+                # for j in self._getJobsWithRemovedData(self.removed_data):
+                logger.info('Resubmitting job \'%s\' as it\'s dataset is out of date.'%j.fqid)
+                j.resubmit()
+                    
         if new_jobs:
             logger.info('Transform %i:%i updated, adding partition %i containing %i more file(s) for processing'%(self.task_id,self.transform_id,len(self._partition_status),len(self.toProcess_dataset.files)))
             self.setPartitionStatus(len(self._partition_status),'ready')
             if self.status != 'new': self.submitJobs(1) ## After the first time, when transform is running or complete, calling update will submit the jobs thereby blocking the user thread
         self.inputdata = LHCbDataset(latest_dataset.files)
+
+
 
     ## Public methods
     #####################################################################
@@ -172,6 +199,7 @@ class LHCbAnalysisTransform(Transform):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     ## Called as part of the tasks monitoring loop when task not in 'new'
     def checkStatus(self):
+        """Update the partitions statuses and then process the status of the transform."""
         self.updatePartitions()
         status = set(self._partition_status.values())
         if 'running' in status:
@@ -185,6 +213,7 @@ class LHCbAnalysisTransform(Transform):
         # elif 'failed' in status:
             # self.updateStatus('completed')
         else:
+            if self.merger is not None: self._mergeTransformOutput()
             self.updateStatus('completed')
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -214,7 +243,7 @@ class LHCbAnalysisTransform(Transform):
     ## transform.run() and t.update() this is called now by the user thread via
     ## self.submitJobs(1)
     def getJobsForPartitions(self, partitions):
-        """This is only an example, this class should be overridden by derived classes"""
+        """Create Jobs for new partitions."""
         ## need to fix this in future releases
         if len(partitions) > 1:
             logger.warning('Dont know how to deal with multiple partition creation yet.')
@@ -228,6 +257,7 @@ class LHCbAnalysisTransform(Transform):
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def updatePartitions(self):
+        """Convenient method for updating ALL partitions at once."""
         for p in self._partition_status:
             self.updatePartitionStatus(p)
             
@@ -270,17 +300,23 @@ class LHCbAnalysisTransform(Transform):
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _datafile_count(self,job_reg_slice):
+        """Count the number of datafiles for any given registry slice."""
         r = 0
         for j in job_reg_slice:
             r+= len(j.inputdata.files)
         return r
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    def _getJobsWithRemovedData(self, removed_dataset):
-        logger.info('Checking for lost data, please wait...')
+    def _getJobsWithRemovedData(self,lost_dataset):
+        """Find the jobs associated with removed data files."""
         jobs=[]
+        if not len(lost_dataset.files): return jobs
+        if self.task_id is -1: ## Needed for self.getPartitionJobs below
+            logger.warning('Transforms must be attached to tasks before checking for removed data, attach this transform using t=LHCbAnalysisTask();t.appendTransform(<thisTransform>)')
+            return jobs
+        
         running_status = set(['submitting','submitted','running','completing'])
-        rf = set([file.name for file in removed_dataset.files])
+        rf = set([file.name for file in lost_dataset.files])
         for p in self._partition_status:
             for pj in self.getPartitionJobs(p):
                 pjf = set([file.name for file in pj.inputdata.files])
@@ -288,13 +324,14 @@ class LHCbAnalysisTransform(Transform):
                 for ddf in dead_datafiles:
                     if pj.status in running_status:
                         logger.info('running job %s from %s has an obsolete datafile(s), it will be killed and re-submitted'%(pj.fqid,pj.name))
-                        pj.kill()
+                        #pj.kill()
                     del pj._impl.inputdata.files[pj.inputdata.getFileNames().index(ddf)]
                     jobs += [pj]
         return jobs
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _getPartitionMasterJob(self,partition):
+        """Get the master job from any number of partition jobs."""
         partition_jobs = self.getPartitionJobs(partition) ## only call method once
         if not len(partition_jobs):
             raise GangaException(None,'Cant get partition master job when NO jobs assigned to partition')
@@ -305,17 +342,28 @@ class LHCbAnalysisTransform(Transform):
         return GPI.jobs(partition_jobs[0].fqid.split('.')[0])
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    def _mergeTransformOutput(self):
+        """Merge the output from a transforms jobs."""
+        try:
+            self.merger.merge(self.getJobs())
+        except:
+            logger.error('There was a problem merging the output from all partitions.')
+
+
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     ## Once partition finished, if in state 'partition_status' then resubmit
     ## jobs in state 'job_status'. This works in conjunction with the auto_resubmit
     ## which only resubmits subjobs while the master job is running IF they have not
     ## been submitted more than n times and IF the ratio of failed to complete is betetr
     ## than x. This will resubmit ALL failed jobs once the partition has finished.
     def _resubmitAttemptedJobs(self):
+        """Resubmit all 'failed' and 'killed' jobs within 'attempted' partitions."""
         partition_status = ['attempted']
         job_status = ['failed','killed']
         for p in (part for part, state in self._partition_status.iteritems() if state in partition_status):
             for j in (job for job in self.getPartitionJobs(p) if job.status in job_status):
                 if j.info.submit_counter >= self.run_limit: continue
+                logger.warning('Resubmitting job %s from T%i Tr%i P%i'%(j.fqid,self.task_id,self.transform_id,p))
                 j.resubmit()
 
 ## End of class LHCbAnalysisTransform
