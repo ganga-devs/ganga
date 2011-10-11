@@ -8,7 +8,7 @@ import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.File import  File
 from Francesc import *
 from Ganga.Utility.util import unique
-
+from Ganga.GPIDev.Lib.File import ShareDir
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

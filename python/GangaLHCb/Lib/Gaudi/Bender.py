@@ -9,7 +9,7 @@ from Ganga.GPIDev.Lib.File import  File
 from GangaLHCb.Lib.Gaudi.Francesc import *
 from Ganga.Utility.util import unique
 from Ganga.Core import ApplicationConfigurationError
-
+from Ganga.GPIDev.Lib.File import ShareDir
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
