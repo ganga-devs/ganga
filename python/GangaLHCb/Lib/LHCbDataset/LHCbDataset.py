@@ -214,8 +214,8 @@ class LHCbDataset(Dataset):
         return xml_catalog
 
     def optionsString(self,file=None):
-        'Returns the Gaudi-style options string for the dataset (if file' \
-        ' is given, output is written there).'
+        'Returns the Gaudi-style options string for the dataset (if a filename' \
+        ' is given, the file is created and output is written there).'
         if not self or len(self) == 0: return ''
         snew=''
         if self.persistency=='ROOT':
