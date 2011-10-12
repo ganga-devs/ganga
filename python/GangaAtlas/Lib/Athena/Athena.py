@@ -1077,7 +1077,24 @@ class Athena(IPrepareApp):
 
         self.user_area.name = archiveFullName
         os.chdir(savedir)
-        
+
+        # determine LATEST dbrelease
+        try:
+            if self.atlas_dbrelease == 'LATEST':
+                try:
+                    self.getLatestDBRelease()
+                except:
+                    from pandatools import Client
+                    self.atlas_dbrelease = Client.getLatestDBRelease(False)
+        except:
+            raise ApplicationConfigurationError(None, "Error retrieving LATEST DBRelease. Try setting application.atlas_dbrelease manually.")
+            
+
+        if self.atlas_dbrelease: 
+            match = re.search('DBRelease-(.*)\.tar\.gz', self.atlas_dbrelease )
+            if match:
+                dbvers = match.group(1)
+                self.atlas_environment+=['DBRELEASE_OVERRIDE=%s'%dbvers] 
        
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s'%(self.is_prepared.name))
@@ -1090,6 +1107,7 @@ class Athena(IPrepareApp):
 
         #return [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
         #return [ filename for filename in  send_to_sharedir ]
+
         return 1
 
     def prepare_old(self, athena_compile=True, NG=False, **options):
@@ -1359,22 +1377,6 @@ class Athena(IPrepareApp):
         if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
             raise ApplicationConfigurationError(None, 'RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
 
-        try:
-            if self.atlas_dbrelease == 'LATEST':
-                try:
-                    self.getLatestDBRelease()
-                except:
-                    from pandatools import Client
-                    self.atlas_dbrelease = Client.getLatestDBRelease(False)
-        except:
-            raise ApplicationConfigurationError(None, "Error retrieving LATEST DBRelease. Try setting application.atlas_dbrelease manually.")
-            
-
-        if self.atlas_dbrelease: 
-            match = re.search('DBRelease-(.*)\.tar\.gz', self.atlas_dbrelease )
-            if match:
-                dbvers = match.group(1)
-                self.atlas_environment+=['DBRELEASE_OVERRIDE=%s'%dbvers] 
 
         return (0,None)
 
