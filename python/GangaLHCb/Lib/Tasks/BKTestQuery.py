@@ -35,7 +35,7 @@ class BKTestQuery(BKQuery):
 
     def getDataset(self):
         if self.fulldataset is None:
-            self.fulldataset = super(BKTestQuery,self).getDataset()
+            self.fulldataset = LHCbDataset(super(BKTestQuery,self).getDataset().files)
         if self.dataset is None:
             self.dataset = LHCbDataset(self.fulldataset.files[:self.filesToRelease])
         else:

@@ -9,6 +9,7 @@ from Ganga.GPIDev.Lib.File import  File
 from Francesc import *
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Lib.File import ShareDir
+from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -96,7 +97,8 @@ class GaudiPython(Francesc):
         #self._master_configure()
         #self._check_inputs()
         self.extra.master_input_files += self.script[:]
-        return (None,self.extra)
+        #return (None,self.extra)
+        return (None,StandardJobConfig(inputbox=self.extra.master_input_files))
 
     def configure(self,master_appconfig):
         #self._configure()
@@ -106,10 +108,17 @@ class GaudiPython(Francesc):
             script += 'import sys\nsys.argv += %s\n' % str(self.args)
         script += "importOptions('data.py')\n"
         script += "execfile(\'%s\')\n" % name
-        self.extra.input_buffers['gaudipython-wrapper.py'] = script
+        #self.extra.input_buffers['gaudipython-wrapper.py'] = script
+
+        
         outsb = self.getJobObject().outputsandbox
         self.extra.outputsandbox = unique(outsb)
-        return (None,self.extra)
+        
+        input_dir = job.getInputWorkspace().getPath()
+        self.extra.input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
+        #return (None,self.extra)
+        return (None,StandardJobConfig(inputbox=self.extra.input_files,
+                                       outputbox=self.extra.outputsandbox))
             
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""
