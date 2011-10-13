@@ -137,7 +137,7 @@ class ProxyDataDescriptor(object):
         item = obj._impl._schema[self._name]
     
         if self._name == 'application' and hasattr(obj.application,'is_prepared'):
-            if obj.application.is_prepared is not None:
+            if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
                 logger.info('Overwriting a prepared application with one that is unprepared')
                 obj.application.unprepare()
             elif obj.application.is_prepared is None and hasattr(val,'is_prepared') and val.is_prepared is not None:

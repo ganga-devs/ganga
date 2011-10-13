@@ -144,7 +144,7 @@ def shutdown():
 
         if registry.name == 'jobs':
             for job in getRegistry('jobs').__iter__():
-                if job.application.is_prepared is not None:
+                if job.application.is_prepared is not None and job.application.is_prepared is not True:
                     shareddir = job.application.is_prepared.name
                     if not os.path.isdir(shareddir):
                         logger.warning("Can't find shared directory %s associated with job %s. Unpreparing job." % (shareddir, job.id))
@@ -154,7 +154,7 @@ def shutdown():
             for item in getRegistry('box').__iter__():
                 if isType(item,Job):
                      job = item
-                     if job.application.is_prepared is not None:
+                     if job.application.is_prepared is not None and job.application.is_prepared is not True:
                         shareddir = job.application.is_prepared.name
                         if not os.path.isdir(shareddir):
                             logger.warning("Can't find shared directory %s associated with job %s in box. Unpreparing job." % (shareddir, job.id))
@@ -162,7 +162,7 @@ def shutdown():
                 else:
                     if hasattr(item,'is_prepared'):
                         app = item
-                        if app.is_prepared is not None:
+                        if app.is_prepared is not None and app.is_prepared is not True:
                             shareddir = app.is_prepared.name
                             if not os.path.isdir(shareddir):
                                 logger.warning("Can't find shared directory %s associated with %s application stored in box. Unpreparing application." % (shareddir, app._name))
