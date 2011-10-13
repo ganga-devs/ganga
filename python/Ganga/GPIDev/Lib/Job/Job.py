@@ -121,6 +121,9 @@ class Job(GangaObject):
                                     'time':ComponentItem('jobtime', defvalue=None,protected=1,comparable=0,doc='provides timestamps for status transitions'),
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
+
+                                    'outputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects decorating what have to be done with the output files after job is completed "),
+
                                     'id' : SimpleItem('',protected=1,comparable=0,doc='unique Ganga job identifier generated automatically'),
                                     'status': SimpleItem('new',protected=1,checkset='_checkset_status',doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"'),
                                     'name':SimpleItem('',doc='optional label which may be any combination of ASCII characters',typelist=['str']),
@@ -352,6 +355,7 @@ class Job(GangaObject):
     def postprocess_hook(self):
         self.application.postprocess()
         self.getMonitoringService().complete()
+        self.backend.postprocess(self.outputfiles, self.getOutputWorkspace().getPath())
 
     def postprocess_hook_failed(self):
         self.application.postprocess_failed()
@@ -569,6 +573,23 @@ class Job(GangaObject):
 
         return None
 
+    def _create_post_process_output(self):
+ 
+        from Ganga.GPIDev.Lib.File.OutputFile import OutputFile
+        from Ganga.GPIDev.Lib.File.CompressedFile import CompressedFile
+
+        from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
+
+        content = ''
+
+        if len(self.outputfiles) > 0:
+            for outputFile in self.outputfiles:
+                if outputFile.__class__.__name__ == 'CompressedFile':
+                    content += 'zipped %s\n' % outputFile.name  
+
+        if content is not '':
+            self.getInputWorkspace().writefile(FileBuffer('__postprocessoutput__', content))
+
     def submit(self,keep_going=None,keep_on_fail=None):
         '''Submits a job. Return true on success.
 
@@ -691,7 +712,10 @@ class Job(GangaObject):
             jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
 
             # notify monitoring-services
-            self.monitorPrepare_hook(jobsubconfig) 
+            self.monitorPrepare_hook(jobsubconfig)      
+
+            #create a file in the inputsandbox with instructions for postporcessing output on the WN
+            self._create_post_process_output()
 
             # submit the job
             try:
