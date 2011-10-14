@@ -1004,7 +1004,7 @@ class DQ2Dataset(Dataset):
 class DQ2OutputDataset(Dataset):
     """DQ2 Dataset class for a dataset of output files"""
     
-    _schema = Schema(Version(1,0), {
+    _schema = Schema(Version(1,1), {
         'outputdata'     : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc='Output files to be returned via SE'), 
         'output'         : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, protected=1, doc = 'Output information automatically filled by the job'),
         'isGroupDS'      : SimpleItem(defvalue = False, doc = 'Use group datasetname prefix'),
@@ -1015,7 +1015,8 @@ class DQ2OutputDataset(Dataset):
         'location'       : SimpleItem(defvalue='',doc='SE output path location'),
         'local_location' : SimpleItem(defvalue='',doc='Local output path location'),
 #        'use_datasetname' : SimpleItem(defvalue = False, doc = 'Use datasetname as it is and do not prepend users.myname.ganga'),
-        'use_shortfilename' : SimpleItem(defvalue = False, doc = 'Use shorter version of filenames and do not prepend users.myname.ganga')
+        'use_shortfilename' : SimpleItem(defvalue = False, doc = 'Use shorter version of filenames and do not prepend users.myname.ganga'),
+        'transferredDS' : SimpleItem(defvalue='',doc='Panda only: Specify a comma-separated list of patterns so that only datasets which match the given patterns are transferred when outputdata.location is set. Either \ or "" is required when a wildcard is used. If omitted, all datasets are transferred')
         })
     
     _category = 'datasets'

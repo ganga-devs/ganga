@@ -946,6 +946,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         if app.atlas_exetype in ['TRF']:
             jspec.metadata = '--trf "%s" ' %( app.options)
+
+        # disable redundant transfer if needed
+        from pandatools import PsubUtils
+        PsubUtils.disableRedundantTransfer(jspec, job.outputdata.transferredDS)
         
         return jspec
 
