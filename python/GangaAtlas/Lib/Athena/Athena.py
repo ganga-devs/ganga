@@ -1092,6 +1092,17 @@ class Athena(IPrepareApp):
         #return [ filename for filename in  send_to_sharedir ]
         return 1
 
+    def unprepare(self, force=False):
+        """
+        Revert an Athena() application back to it's unprepared state.
+        """
+       if self.is_prepared is not None:
+           self.decrementShareCounter(self.is_prepared.name)
+           self.is_prepared = None
+           self.makeWriteable()
+
+
+
     def prepare_old(self, athena_compile=True, NG=False, **options):
         """Prepare the job from the user area"""
 
