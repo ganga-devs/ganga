@@ -1096,10 +1096,10 @@ class Athena(IPrepareApp):
         """
         Revert an Athena() application back to it's unprepared state.
         """
-       if self.is_prepared is not None:
-           self.decrementShareCounter(self.is_prepared.name)
-           self.is_prepared = None
-           self.makeWriteable()
+        if self.is_prepared is not None:
+            self.decrementShareCounter(self.is_prepared.name)
+            self.is_prepared = None
+            self.makeWriteable()
 
 
 
