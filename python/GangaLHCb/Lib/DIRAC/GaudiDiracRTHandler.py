@@ -70,19 +70,25 @@ class GaudiDiracRTHandler(IRuntimeHandler):
                           (app.platform,str(platforms))
                     raise ApplicationConfigurationError(None,msg)
 
-        ## Pickup outputsandbox defined in the options file
-        import pickle
-        f_osandbox = os.path.join(app.is_prepared.name,'outputsandbox.pkl')
-        if os.path.isfile(f_osandbox):
-            file=open(f_osandbox,'rb')
-            outputsandbox = pickle.load(file)
-            file.close()
-        ## Pickup outputdata defined in the options file
-        f_odata = os.path.join(app.is_prepared.name,'outputdata.pkl')
-        if os.path.isfile(f_odata):
-            file=open(f_odata,'rb')
-            outdata = pickle.load(file)
-            file.close()
+        outputsandbox=[]
+        outdata=[]
+        ## catch errors from not preparing properly
+        if hasattr(app,'is_prepared') and app.is_prepared is not None:
+            ## Pickup outputsandbox defined in the options file
+            import pickle
+            f_osandbox = os.path.join(app.is_prepared.name,'outputsandbox.pkl')
+            if os.path.isfile(f_osandbox):
+                file=open(f_osandbox,'rb')
+                outputsandbox = pickle.load(file)
+                file.close()
+            ## Pickup outputdata defined in the options file
+            f_odata = os.path.join(app.is_prepared.name,'outputdata.pkl')
+            if os.path.isfile(f_odata):
+                file=open(f_odata,'rb')
+                outdata = pickle.load(file)
+                file.close()
+        else:
+            logger.warning('Application is not prepared properly, ignoring outputsandbox and outputdata defined in options file(s)')
 
         ## Note EITHER the master inputsandbox OR the job.inputsandbox is added to
         ## the subjob inputsandbox depending if the jobmasterconfig object is present
@@ -96,6 +102,15 @@ class GaudiDiracRTHandler(IRuntimeHandler):
 
         job=app.getJobObject()
         inputsandbox=[]
+        ## Add the job.inputsandbox as splitters create subjobs that are
+        ## seperate Job objects and therefore have their own job.inputsandbox
+        ## which can be appended to in the splitters.
+        inputsandbox = job.inputsandbox[:]
+
+        #sandbox = get_input_sandbox(app.extra)
+        inputsandbox += appsubconfig.getSandboxFiles()
+
+        
         data_str=''
         if job.inputdata:
             data_str = job.inputdata.optionsString()
@@ -103,11 +118,25 @@ class GaudiDiracRTHandler(IRuntimeHandler):
                 cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ' \
                            '["xmlcatalog_file:pool_xml_catalog.xml"]\n'
                 data_str += cat_opts
-            
-        inputsandbox.append(FileBuffer('data.py',data_str))
 
-        #sandbox = get_input_sandbox(app.extra)
-        inputsandbox += appsubconfig.getSandboxFiles()
+
+        ## Unlike in the applications prepare method, buffers are created into
+        ## files later on in job submission.
+        ## Additional as data.py could be created in OptionsFileSplitter,
+        ## Need to add the existing data.py content to the end of this, if present.
+        # inputsandbox.append(FileBuffer('data.py',data_str).create())
+        existing_data = [file for file in inputsandbox if file.name is 'data.py']
+        if existing_data:
+            if len(existing_data) is not 1:
+                logger.warning('Appear to have more than one data.py file in inputsandbox, contact ganga developers!')
+            if not isType(existing_data[0],FileBuffer):
+                logger.error('Found data.py in inputsandbox but not of type \'FileBuffer\', contact ganga developers!')
+                raise TypeMismatchError('Expected file data.py to be of type FileBuffer.')
+            else:
+                existing_data[0]._contents=data_str + existing_data[0].getContents()
+        else:
+            inputsandbox.append(FileBuffer('data.py',data_str))            
+
 
         outputsandbox = job.outputsandbox[:]
         outputsandbox += jobmasterconfig.getOutputSandboxFiles()

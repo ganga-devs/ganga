@@ -149,7 +149,6 @@ class LHCbAnalysisTransform(Transform):
         latest_dataset=self.query.getDataset()
         self.toProcess_dataset.files = latest_dataset.files
 
-
         ## Compare to previous inputdata, get new and removed
         logger.info('Checking for new and removed data, please wait...')
         dead_data = LHCbDataset()

@@ -42,7 +42,9 @@ j.submit()
 os.system('cd '+j.inputdir+';tar -xzvf _input_sandbox_'+str(j.id)+'_master.tgz|grep test |tee pyfiles.log')
 file = open(os.path.join(j.inputdir,'pyfiles.log'),'r')
 
-status = [line.find('test')!=0 for line in file.readlines()]
+lines = [line for line in file.readlines()]
+status = [line.find('test')==0 for line in lines]
+print "Lines =",lines
 print 'status list =', status
 print 'expected = [True, True, True]',
 

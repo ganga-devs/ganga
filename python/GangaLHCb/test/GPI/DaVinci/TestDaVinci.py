@@ -16,7 +16,7 @@ class TestDaVinci(GangaGPITestCase):
         dv = DaVinci()
         # until this is updated, just use the default options
         #dv.optsfile = [self.path + 'opts.current.py']
-        dv.extraopts = 'DaVinci.HistFile="DVHistos_1.root"\nDaVinci().EvtMax = 100\nDaVinci().DataType =\'2010\''
+        dv.extraopts = 'from Configurables import DaVinci\nDaVinci.HistFile="DVHistos_1.root"\nDaVinci().EvtMax = 100\nDaVinci().DataType =\'2010\''
         j = Job(application=dv)
         #outfile_name = 'Presel_test.dst'
         outfile_name = 'DVHistos_1.root'

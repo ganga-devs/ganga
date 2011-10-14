@@ -11,6 +11,7 @@ from Ganga.Utility.util import unique
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -95,8 +96,9 @@ class Bender(Francesc):
         self.extra.outputsandbox = unique(outsb)
 
 
-        input_dir = job.getInputWorkspace().getPath()
+        input_dir = self.getJobObject().getInputWorkspace().getPath()
         self.extra.input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
+        #return (None,self.extra)
         return (None,StandardJobConfig(inputbox=self.extra.input_files,
                                        outputbox=self.extra.outputsandbox))
 

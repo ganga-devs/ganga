@@ -32,10 +32,10 @@ class TestLHCbAnalysisTransform(GangaGPITestCase):
              ## remove toProcess dataset so can update again with a removed dataset
              tr._impl.toProcess_dataset.files=[]
              del tr._impl.query.dataset.files[0]
-             tr.update()
+             tr.update(True)
              
              ## Check the dead dataset is picked up
-             assert len(tr._impl.removed_data.files), 'Didn\'t Pick up loss of a dataset'
+             assert len(tr._impl.removed_data.files), "Didn\'t Pick up loss of a dataset"
              
              try:
                  ## Shouldn't allow a second update before processed the data in toProcess_dataset
