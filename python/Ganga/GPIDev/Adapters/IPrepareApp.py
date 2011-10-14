@@ -30,13 +30,13 @@ class IPrepareApp(IApplication):
     _name = 'PrepareApp'
     _hidden = 1
 
-    def _readonly(self):
-        """An application is read-only once it has been prepared."""
-        if self.is_prepared is None:
-            return 0
-        else:
-            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
-            return 1
+#    def _readonly(self):
+#        """An application is read-only once it has been prepared."""
+#        if self.is_prepared is None:
+#            return 0
+#        else:
+#            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
+#            return 1
 
 
     def prepare(self, force=False):
@@ -55,6 +55,12 @@ class IPrepareApp(IApplication):
         """
         pass
 
+    def makeWriteable(self):
+        for name, item in self._schema.allItems():
+            if item['preparable']:
+                item._meta['protected'] = 0
+                
+
 
     def copyPreparables(self):
         """
@@ -68,6 +74,7 @@ class IPrepareApp(IApplication):
                 logger.debug('Found preparable %s' %(name))
                 logger.debug('adding to sharedir %s' %(self.__getattribute__(name)))
                 send_to_sharedir.append(self.__getattribute__(name))
+                item._meta['protected'] = 1
     
         for prepitem in send_to_sharedir:
             logger.debug('working on %s' %(prepitem))
