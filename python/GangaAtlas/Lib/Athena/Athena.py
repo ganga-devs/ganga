@@ -368,7 +368,13 @@ class Athena(IPrepareApp):
                   { 'attribute' : 'recex_type',     'widget' : 'String' },  
                   { 'attribute' : 'glue_packages',   'widget' : 'String_List' }
                   ]
-    
+
+
+    def unprepare(self, force=False):
+        """Revert the application back to it's unprepared state."""
+        if self.is_prepared is not None:
+            self.decrementShareCounter(self.is_prepared.name)
+            self.is_prepared = None
                   
     def read_cmt(self):
         """Get some relevant CMT settings"""
