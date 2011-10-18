@@ -168,10 +168,9 @@ class ShareRef(GangaObject):
                 print padding*level + pieces[-1] + symbol
 
 
-    def _display(self):
+    def _display(self, interactive=0):
         """Prints content of the shareref metadata in a well formatted way.
         """
-
 
         if len(self.name) > 0:
             fstring = " %48s | %20s |  %15s"
@@ -201,11 +200,14 @@ class ShareRef(GangaObject):
                         line[2])
                     
                 if (line[2] == 0) or (isinstance(line[1],str)):
-                    from Ganga.Utility.ColourText import ANSIMarkup, Foreground, Background, Effects
+                    from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Background, Effects
                     fg=Foreground()
                     fg=Background()
                     fx=Effects()
-                    m = ANSIMarkup()
+                    if interactive:
+                        m = ANSIMarkup()
+                    else:
+                        m = NoMarkup()
                     disp_string += fg.red + tmp_string + fx.normal + '\n'
                     #disp_string += m(tmp_string,code=fg.red)
                     if (line[2] == 0):
@@ -223,9 +225,9 @@ class ShareRef(GangaObject):
     
         return disp_string
 
-    def _proxy_display(self):
-        return self._display()
 
+    def _proxy_display(self, interactive = 1):
+        return self._display(interactive = interactive)
 
 class _proxy_display(object):
     def __get__(self, obj, cls):
