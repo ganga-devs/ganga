@@ -181,25 +181,23 @@ class ShareRef(GangaObject):
             unsorted = []
             for element in self.name:
                 if os.path.isdir(element):
-                    unsorted.append((os.path.basename(element), int(os.path.getctime(element)), self.name[element]))
+                    unsorted.append(shareref_data(os.path.basename(element), int(os.path.getctime(element)), self.name[element]))
                 else:
-                    unsorted.append((os.path.basename(element), "Directory not found", self.name[element]))
-                    #shareref.decrease(element)
-            from operator import itemgetter
-            sorted_refs = sorted(unsorted, key=itemgetter(1))
-            #for line in sorted_refs:
-            #    print line[0]
+                    unsorted.append(shareref_data(os.path.basename(element), "Directory not found", self.name[element]))
+            decorated = [(name.date, i, name) for i, name in enumerate(unsorted)]
+            decorated.sort()
+            sorted_refs = [name for date, i, name in decorated]
             for line in sorted_refs:
-                if isinstance(line[1],int):
-                    tmp_string = fstring % (os.path.basename(line[0]), \
-                        time.strftime("%d %b %Y %H:%M:%S", time.localtime(line[1])), \
-                        line[2])
+                if isinstance(line.date,int):
+                    tmp_string = fstring % (os.path.basename(line.name), \
+                        time.strftime("%d %b %Y %H:%M:%S", time.localtime(line.date)), \
+                        line.counter)
                 else:
-                    tmp_string = fstring % (os.path.basename(line[0]), \
-                        line[1], \
-                        line[2])
+                    tmp_string = fstring % (os.path.basename(line.name), \
+                        line.date, \
+                        line.counter)
                     
-                if (line[2] == 0) or (isinstance(line[1],str)):
+                if (line.counter == 0) or (isinstance(line.date,str)):
                     from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Background, Effects
                     fg=Foreground()
                     fg=Background()
@@ -210,7 +208,7 @@ class ShareRef(GangaObject):
                         m = NoMarkup()
                     disp_string += fg.red + tmp_string + fx.normal + '\n'
                     #disp_string += m(tmp_string,code=fg.red)
-                    if (line[2] == 0):
+                    if (line.counter == 0):
                         zero_ref = True
                 else:
                     disp_string += tmp_string + '\n'
@@ -228,6 +226,14 @@ class ShareRef(GangaObject):
 
     def _proxy_display(self, interactive = 1):
         return self._display(interactive = interactive)
+
+class shareref_data:
+    def __init__(self, name, date, counter):
+        self.name = name
+        self.date = date
+        self.counter = counter
+    def __repr__(self):
+        return repr((self.name,self.date,self.counter))
 
 class _proxy_display(object):
     def __get__(self, obj, cls):
