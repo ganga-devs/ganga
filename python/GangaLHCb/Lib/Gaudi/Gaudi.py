@@ -86,7 +86,7 @@ class Gaudi(Francesc):
                                      typelist=['str','type(None)'],doc=docstr)
     docstr = 'Location of shared resources. Presence of this attribute implies'\
           'the application has been prepared.'
-    schema['is_prepared'] = SimpleItem(preparable=1,defvalue=None,
+    schema['is_prepared'] = SimpleItem(defvalue=None,
                                        strict_sequence=0,
                                        visitable=1,
                                        copyable=1,

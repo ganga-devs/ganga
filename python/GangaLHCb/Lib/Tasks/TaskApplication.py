@@ -16,3 +16,8 @@ for app in available_apps():
 
 from GangaLHCb.Lib.Gaudi.GaudiPython import GaudiPython
 GaudiPythonTask = taskify(GaudiPython,"GaudiPythonTask")
+task_map["GaudiPython"] = GaudiPythonTask
+
+from GangaLHCb.Lib.Gaudi.Bender import Bender
+BenderTask = taskify(Bender,"BenderTask")
+task_map["Bender"] = BenderTask

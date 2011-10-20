@@ -40,7 +40,7 @@ class Bender(Francesc):
                                    typelist=['str'],doc=docstr)
     docstr = 'The number of events '
     schema['events'] = SimpleItem(preparable=1,defvalue=-1,typelist=['int'],doc=docstr)
-    schema['is_prepared'] = SimpleItem(preparable=1,defvalue=None,
+    schema['is_prepared'] = SimpleItem(defvalue=None,
                                        strict_sequence=0,
                                        visitable=1,
                                        copyable=1,

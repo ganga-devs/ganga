@@ -1,4 +1,5 @@
 from GangaTest.Framework.tests import GangaGPITestCase
+from GangaTest.Framework.utils import sleep_until_completed
 from Ganga import GPI
 #import unittest
 
@@ -17,7 +18,7 @@ class TestLHCbAnalysisTransform(GangaGPITestCase):
 
      def test_update(self):
          t = GPI.LHCbAnalysisTask()
-         tr = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
+         tr = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Dirac())
          t.appendTransform(tr)
          try:
              tr.update()
@@ -29,8 +30,11 @@ class TestLHCbAnalysisTransform(GangaGPITestCase):
              ## Check some new data added
              assert len(tr._impl.toProcess_dataset.files), 'No data added after call to update'
              
-             ## remove toProcess dataset so can update again with a removed dataset
-             tr._impl.toProcess_dataset.files=[]
+             ## run so can update again with a removed dataset recall that jobs with the
+             ## old dataset only created when run called.
+             t.run()
+             assert len(tr.getPartitionJobs(0)), "No Jobs created upon run()"
+             sleep_until_completed(GPI.jobs(tr.getPartitionJobs(0)[0].fqid().split('.')[0]))
              del tr._impl.query.dataset.files[0]
              tr.update(True)
              
