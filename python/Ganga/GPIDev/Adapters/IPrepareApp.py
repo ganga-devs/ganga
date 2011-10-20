@@ -87,9 +87,10 @@ class IPrepareApp(IApplication):
                         if os.path.abspath(subitem) == subitem:
                             logger.info('Sending file %s to shared directory.'%(subitem))
                             shutil.copy2(subitem, self.is_prepared.name)
-                            #else assume it's a system binary, so we don't need to transport anything to the sharedir
+                            #else assume it's a system binary (or other attribute), so we don't need to transport anything to the sharedir
                         else:
-                            logger.info('Preparing application to use \'%s\', assumed to be available in $PATH'%(subitem))
+                            pass
+                            #logger.debug('\'%s\', assumed to be available in $PATH'%(subitem))
                     elif type(subitem) is File and subitem.name is not '':
                         logger.info('Sending file object %s to shared directory'%subitem.name)
                         shutil.copy2(subitem.name, self.is_prepared.name)
@@ -99,9 +100,10 @@ class IPrepareApp(IApplication):
                 if os.path.abspath(prepitem) == prepitem:
                     logger.info('Sending file %s to shared directory.'%(prepitem))
                     shutil.copy2(prepitem, self.is_prepared.name)
-                    #else assume it's a system binary, so we don't need to transport anything to the sharedir
+                    #else assume it's a system binary (or other attribute), so we don't need to transport anything to the sharedir
                 else:
-                    logger.info('Preparing application to use \'%s\', assumed to be available in $PATH'%(prepitem))
+                    pass
+                    #logger.info('Preparing application to use \'%s\', assumed to be available in $PATH'%(prepitem))
             elif type(prepitem) is File and prepitem.name is not '':
                 logger.debug('found a file')
                 logger.info('Sending file object %s to shared directory'%prepitem.name)
