@@ -34,13 +34,13 @@ class Bender(Francesc):
     schema = get_common_gaudi_schema()
     docstr = 'The name of the module to import. A copy will be made ' \
              'at submission time'
-    schema['module'] = FileItem(doc=docstr)
+    schema['module'] = FileItem(preparable=1,doc=docstr)
     docstr = 'The name of the Gaudi application (Bender)'
-    schema['project'] = SimpleItem(defvalue='Bender',hidden=1,protected=1,
+    schema['project'] = SimpleItem(preparable=1,defvalue='Bender',hidden=1,protected=1,
                                    typelist=['str'],doc=docstr)
     docstr = 'The number of events '
-    schema['events'] = SimpleItem(defvalue=-1,typelist=['int'],doc=docstr)
-    schema['is_prepared'] = SimpleItem(defvalue=None,
+    schema['events'] = SimpleItem(preparable=1,defvalue=-1,typelist=['int'],doc=docstr)
+    schema['is_prepared'] = SimpleItem(preparable=1,defvalue=None,
                                        strict_sequence=0,
                                        visitable=1,
                                        copyable=1,

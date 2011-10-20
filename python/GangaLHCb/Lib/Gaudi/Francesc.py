@@ -25,28 +25,28 @@ logger = Ganga.Utility.logging.getLogger()
 def get_common_gaudi_schema():
     schema = {}
     docstr = 'The version of the application (like "v19r2")'
-    schema['version'] = SimpleItem(defvalue=None,
+    schema['version'] = SimpleItem(preparable=1,defvalue=None,
                                    typelist=['str','type(None)'],doc=docstr)
     docstr = 'The platform the application is configured for (e.g. ' \
              '"slc4_ia32_gcc34")'
-    schema['platform'] = SimpleItem(defvalue=None,
+    schema['platform'] = SimpleItem(preparable=1,defvalue=None,
                                     typelist=['str','type(None)'],doc=docstr)
     docstr = 'The package the application belongs to (e.g. "Sim", "Phys")'
-    schema['package'] = SimpleItem(defvalue=None,
+    schema['package'] = SimpleItem(preparable=1,defvalue=None,
                                    typelist=['str','type(None)'],doc=docstr)
     docstr = 'The user path to be used. After assigning this'  \
              ' you can do j.application.getpack(\'Phys DaVinci v19r2\') to'  \
              ' check out into the new location. This variable is used to '  \
              'identify private user DLLs by parsing the output of "cmt '  \
              'show projects".'
-    schema['user_release_area'] = SimpleItem(defvalue=None,
+    schema['user_release_area'] = SimpleItem(preparable=1,defvalue=None,
                                              typelist=['str','type(None)'],
                                              doc=docstr)
     docstr = 'The package where your top level requirements file is read '  \
              'from. Can be written either as a path '  \
              '\"Tutorial/Analysis/v6r0\" or in a CMT style notation '  \
              '\"Analysis v6r0 Tutorial\"'
-    schema['masterpackage'] = SimpleItem(defvalue=None,
+    schema['masterpackage'] = SimpleItem(preparable=1,defvalue=None,
                                          typelist=['str','type(None)'],
                                          doc=docstr)
     docstr = 'Extra options to be passed onto the SetupProject command '  \
@@ -54,7 +54,7 @@ def get_common_gaudi_schema():
              'setting it to \'--dev\' will give access to the DEV area. '  \
              'For full documentation of the available options see '  \
              'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
-    schema['setupProjectOptions'] = SimpleItem(defvalue='',
+    schema['setupProjectOptions'] = SimpleItem(preparable=1,defvalue='',
                                                typelist=['str','type(None)'],
                                                doc=docstr)
     return schema

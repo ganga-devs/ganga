@@ -51,18 +51,18 @@ class GaudiPython(Francesc):
     schema = get_common_gaudi_schema()
     docstr = 'The name of the script to execute. A copy will be made ' + \
              'at submission time'
-    schema['script'] = FileItem(sequence=1,strict_sequence=0,defvalue=[],
+    schema['script'] = FileItem(preparable=1,sequence=1,strict_sequence=0,defvalue=[],
                                 doc=docstr)
     docstr = "List of arguments for the script"
-    schema['args'] =  SimpleItem(defvalue=[],typelist=['str'],
+    schema['args'] =  SimpleItem(preparable=1,defvalue=[],typelist=['str'],
                                  sequence=1,doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
-    schema['project'] = SimpleItem(defvalue=None,
+    schema['project'] = SimpleItem(preparable=1,defvalue=None,
                                    typelist=['str','type(None)'],
                                    doc=docstr)
     docstr = 'Location of shared resources. Presence of this attribute implies'\
              'the application has been prepared.'
-    schema['is_prepared'] = SimpleItem(defvalue=None,
+    schema['is_prepared'] = SimpleItem(preparable=1,defvalue=None,
                                        strict_sequence=0,
                                        visitable=1,
                                        copyable=1,

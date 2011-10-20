@@ -66,27 +66,27 @@ class Gaudi(Francesc):
 
     schema = get_common_gaudi_schema()
     docstr = 'The gaudirun.py cli args that will be passed at run-time'
-    schema['args'] =  SimpleItem(sequence=1,strict_sequence=0,defvalue=[],
+    schema['args'] =  SimpleItem(preparable=1,sequence=1,strict_sequence=0,defvalue=[],
                                  typelist=['str','type(None)'],doc=docstr)
     docstr = 'The name of the optionsfile. Import statements in the file ' \
              'will be expanded at submission time and a full copy made'
-    schema['optsfile'] =  FileItem(sequence=1,strict_sequence=0,defvalue=[],
+    schema['optsfile'] =  FileItem(preparable=1,sequence=1,strict_sequence=0,defvalue=[],
                                    doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
-    schema['appname'] = SimpleItem(defvalue=None,typelist=['str','type(None)'],
+    schema['appname'] = SimpleItem(preparable=1,defvalue=None,typelist=['str','type(None)'],
                                    hidden=1,doc=docstr)
-    schema['configured'] = SimpleItem(defvalue=None,hidden=0,copyable=0,
+    schema['configured'] = SimpleItem(preparable=1,defvalue=None,hidden=0,copyable=0,
                                       typelist=['str','type(None)']) 
     docstr = 'A python configurable string that will be appended to the '  \
              'end of the options file. Can be multiline by using a '  \
              'notation like \nHistogramPersistencySvc().OutputFile = '  \
              '\"myPlots.root"\\nEventSelector().PrintFreq = 100\n or by '  \
              'using triple quotes around a multiline string.'
-    schema['extraopts'] = SimpleItem(defvalue=None,
+    schema['extraopts'] = SimpleItem(preparable=1,defvalue=None,
                                      typelist=['str','type(None)'],doc=docstr)
     docstr = 'Location of shared resources. Presence of this attribute implies'\
           'the application has been prepared.'
-    schema['is_prepared'] = SimpleItem(defvalue=None,
+    schema['is_prepared'] = SimpleItem(preparable=1,defvalue=None,
                                        strict_sequence=0,
                                        visitable=1,
                                        copyable=1,
