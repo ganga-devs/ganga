@@ -55,11 +55,10 @@ class IPrepareApp(IApplication):
         """
         pass
 
-    def makeWriteable(self):
+    def unlockPreparable(self):
         for name, item in self._schema.allItems():
             if item['preparable']:
                 item._meta['protected'] = 0
-                
 
 
     def copyPreparables(self):
@@ -75,6 +74,7 @@ class IPrepareApp(IApplication):
                 logger.debug('adding to sharedir %s' %(self.__getattribute__(name)))
                 send_to_sharedir.append(self.__getattribute__(name))
                 item._meta['protected'] = 1
+
     
         for prepitem in send_to_sharedir:
             logger.debug('working on %s' %(prepitem))
@@ -132,18 +132,18 @@ class IPrepareApp(IApplication):
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.ls(shared_directory_name)
 
-    def checkPreparedHasParent(self, shared_directory_object):
-        if shared_directory_object._getRegistry() is None:
-            self.incrementShareCounter(shared_directory_object.is_prepared.name)
-            self.decrementShareCounter(shared_directory_object.is_prepared.name)
+    def checkPreparedHasParent(self, prepared_object):
+        if prepared_object._getRegistry() is None:
+            self.incrementShareCounter(prepared_object.is_prepared.name)
+            self.decrementShareCounter(prepared_object.is_prepared.name)
             logger.warn('Application is not currently associated with a persisted Ganga object')
             logger.warn('(e.g. box, job, task). Both the prepared application and the contents of')
             logger.warn('its shared directory will be lost when Ganga exits.')
             logger.warn('Shared directory location: %s' %(self.is_prepared.name))
             logger.warn('Shared directory contents:')
-            self.listShareDirContents(shared_directory_object.is_prepared.name)
+            self.listShareDirContents(prepared_object.is_prepared.name)
         else:
-            self.incrementShareCounter(shared_directory_object.is_prepared.name)
+            self.incrementShareCounter(prepared_object.is_prepared.name)
 
 
 
