@@ -455,16 +455,6 @@ class GangaObject(Node):
                     shareref.increase(shared_dir.name)
                 except AttributeError:
                     pass
-#                except:
-#                    msg = 'Unexpected error: %s'%(sys.exc_info()[0])
-#                    raise PreparedStateError(msg)
-#                junk=item
-#                print "#######"
-#                print "#######"
-                #from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-                #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                #shareref.add(self.application.is_prepared.name)
-            
         return c
 
     def accept(self, visitor):
