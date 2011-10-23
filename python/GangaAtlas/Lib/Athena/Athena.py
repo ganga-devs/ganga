@@ -1105,7 +1105,6 @@ class Athena(IPrepareApp):
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
-            self.unlockPreparable()
 
 
 
