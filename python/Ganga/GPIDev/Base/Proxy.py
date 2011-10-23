@@ -135,7 +135,15 @@ class ProxyDataDescriptor(object):
         
     def __set__(self, obj, val):
         item = obj._impl._schema[self._name]
-    
+
+        #mechanism to provide for locking of preparable attributes
+        #we tried this with the 'protected' meta attribute, but this is static, so cannot be set on a per-instance basis.
+        if item['preparable']:
+            #then we must have an application here.
+            if hasattr(obj,'is_prepared'):
+                if obj.is_prepared is not None and obj.is_prepared is not True:
+                    #then we must have a preparble application that has been prepared
+                    raise ProtectedAttributeError('AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified. unprepare() the application if you want to modify this value, or copy the job/application (using j.copy(unprepare=True)) and modify that instance.'%(self._name,))
         if self._name == 'application' and hasattr(obj.application,'is_prepared'):
             if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
                 logger.info('Overwriting a prepared application with one that is unprepared')
@@ -145,10 +153,7 @@ class ProxyDataDescriptor(object):
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
                 logger.debug("Increasing shareref")
                 shareref.increase(val.is_prepared.name)
- 
 
-        if item['protected']:
-            raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified'%(self._name,))
         if obj._impl._readonly():
             raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj),self._name))
 
