@@ -298,9 +298,13 @@ def GPIProxyClassFactory(name, pluginclass):
         return self._impl.__ne__(x._impl)
     helptext(_ne,"Non-equality operator (!=).")
 
-    def _copy(self):
-        c = self._impl.clone()
-        c._auto__init__()
+    def _copy(self, unprepare=None):
+        if unprepare is True:
+            c = self._impl.clone()
+            c._auto__init__(unprepare=unprepare)
+        else:
+            c = self._impl.clone()
+            c._auto__init__()
         return GPIProxyObjectFactory(c)
 
     helptext(_copy,"Make an identical copy of self.")
