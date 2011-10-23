@@ -389,10 +389,13 @@ class Job(GangaObject):
     def monitorRollbackToNew_hook(self):
         self.getMonitoringService().rollback()
 
-    def _auto__init__(self,registry=None):
+    def _auto__init__(self,registry=None, unprepare=None):
         if registry is None:
             from Ganga.Core.GangaRepository import getRegistry
             registry = getRegistry(self.default_registry)
+
+        if unprepare is True:
+            self.unprepare()
 
         self.info.uuid = Ganga.Utility.guid.uuid()
 
