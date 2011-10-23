@@ -38,6 +38,17 @@ class IPrepareApp(IApplication):
 #            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
 #            return 1
 
+#    def _auto__init__(self):
+#        print "running init in iprepare"
+
+#    def __deepcopy__(self, memo, unprepare=None):
+#        obj = super(IPrepareApp, self).__deepcopy__(memo)
+#        print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+#        print obj
+#        print unprepare
+#        print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+#        return obj
+#
 
     def prepare(self, force=False):
         """
@@ -55,12 +66,6 @@ class IPrepareApp(IApplication):
         """
         pass
 
-    def unlockPreparable(self):
-        for name, item in self._schema.allItems():
-            if item['preparable']:
-                item._meta['protected'] = 0
-
-
     def copyPreparables(self):
         """
         This method iterates over all attributes in an application and decides\
@@ -73,7 +78,6 @@ class IPrepareApp(IApplication):
                 logger.debug('Found preparable %s' %(name))
                 logger.debug('adding to sharedir %s' %(self.__getattribute__(name)))
                 send_to_sharedir.append(self.__getattribute__(name))
-                item._meta['protected'] = 1
 
     
         for prepitem in send_to_sharedir:
