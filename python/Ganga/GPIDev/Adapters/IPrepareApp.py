@@ -38,17 +38,10 @@ class IPrepareApp(IApplication):
 #            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
 #            return 1
 
-#    def _auto__init__(self):
-#        print "running init in iprepare"
+    def _auto__init__(self, unprepare=None):
+        if unprepare is True:
+            self.unprepare()
 
-#    def __deepcopy__(self, memo, unprepare=None):
-#        obj = super(IPrepareApp, self).__deepcopy__(memo)
-#        print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-#        print obj
-#        print unprepare
-#        print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-#        return obj
-#
 
     def prepare(self, force=False):
         """
