@@ -20,4 +20,12 @@ ganga/python/GangaAtlas
  increase chances of quick run. Similarly, reduced number of
  events per jobs processed in Panda+simul and Panda+recon tests
 
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga-LHCb-Prepared-0-16 is Ganga-5.7.0-beta
+
+Included tasks framework and prepared state
+
 **************************************************************************************************************
