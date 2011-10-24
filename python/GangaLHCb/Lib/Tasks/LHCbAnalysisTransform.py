@@ -338,7 +338,7 @@ class LHCbAnalysisTransform(Transform):
             return partition_jobs[0]
         ## Need registry access here might be better to get registry directly
         ## as in prepared stuff, see Executable for example or even tasksregistry.py!
-        return GPI.jobs(partition_jobs[0].fqid.split('.')[0])
+        return GPI.jobs(int(partition_jobs[0].fqid.split('.')[0]))
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _mergeTransformOutput(self):

@@ -97,9 +97,11 @@ class GaudiPython(Francesc):
     def master_configure(self):
         #self._master_configure()
         #self._check_inputs()
-        self.extra.master_input_files += self.script[:]
+        #self.extra.master_input_files += self.script[:]
+        master_input_files=[]
+        master_input_files += self.script[:]
         #return (None,self.extra)
-        return (None,StandardJobConfig(inputbox=self.extra.master_input_files))
+        return (None,StandardJobConfig(inputbox=master_input_files))
 
     def configure(self,master_appconfig):
         #self._configure()
@@ -112,14 +114,16 @@ class GaudiPython(Francesc):
         #self.extra.input_buffers['gaudipython-wrapper.py'] = script
 
         
-        outsb = self.getJobObject().outputsandbox
-        self.extra.outputsandbox = unique(outsb)
+        #outsb = self.getJobObject().outputsandbox
+        outputsandbox = unique(self.getJobObject().outputsandbox)
         
         input_dir = self.getJobObject().getInputWorkspace().getPath()
-        self.extra.input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
+        input_files=[]
+        input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
+        #self.extra.input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
         #return (None,self.extra)
-        return (None,StandardJobConfig(inputbox=self.extra.input_files,
-                                       outputbox=self.extra.outputsandbox))
+        return (None,StandardJobConfig(inputbox=input_files,
+                                       outputbox=outputsandbox))
             
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""

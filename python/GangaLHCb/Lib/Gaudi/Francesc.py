@@ -77,7 +77,8 @@ class Francesc(IPrepareApp):
             appname = self.project
         return appname
 
-    def _init(self,gaudi_app,set_ura):        
+    def _init(self,gaudi_app,set_ura):
+        self.extra = GaudiExtras()
         if (not self.version): self.version = guess_version(gaudi_app)
         if (not self.platform): self.platform = get_user_platform()
         if (not self.package): self.package = available_packs(gaudi_app)
@@ -204,7 +205,7 @@ class Francesc(IPrepareApp):
         CMTscript.CMTscript(self,command)
 
     def _prepare(self):
-        self.extra = GaudiExtras()
+        #self.extra = GaudiExtras()
         self._getshell()
         send_to_share=[]
                         

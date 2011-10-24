@@ -6,14 +6,14 @@ from GangaLHCb.Lib.Gaudi.GaudiPython import GaudiPython
 class TestGaudiPython(GangaGPITestCase):
 
     def setUp(self):
-        job = Job(application=GaudiPython())
-        gp = job.application
+        self.job = Job(application=GaudiPython())
+        gp = self.job.application
         gp._impl._auto__init__()
         gp.script = [File('dummy.script')]
-        job.inputdata = ['pfn:dummy1.in','pfn:dummy2.in']               
+        self.job.inputdata = ['pfn:dummy1.in','pfn:dummy2.in']               
         self.gp = gp._impl
-        self.gp.master_configure()
-        self.job = job
+        self.master_config = self.gp.master_configure()[1]
+        #self.job = job
 
     def test_GaudiPython__auto__init__(self):
         assert self.gp.project, 'project not set automatically'
@@ -24,9 +24,9 @@ class TestGaudiPython(GangaGPITestCase):
     def test_GaudiPython_master_configure(self):
         gp = self.gp
         #gp.master_configure() # must call this in set up for configure to work
-        assert gp.extra.inputdata == self.job.inputdata._impl, 'inputdata err'
+        #assert gp.extra.inputdata == self.job.inputdata._impl, 'inputdata err'
         found_script = False
-        for f in gp.extra.master_input_files:
+        for f in self.master_config.inputbox:
             print 'f.name =', f.name
             if f.name.rfind('dummy.script') >= 0:
                 found_script = True
@@ -36,8 +36,12 @@ class TestGaudiPython(GangaGPITestCase):
 
     def test_GaudiPtython_configure(self):
         gp = self.gp
-        gp.configure(None)
-        assert gp.extra.input_buffers['gaudipython-wrapper.py'] is not None
+        subconfig = gp.configure(None)[1]
+        assert 'gaudipython-wrapper.py' in [f.name for f in subconfig.inputbox] , 'didnt find gaudipython wrapper'
+        f=file([file.name for file in subconfig.inputbox if file.name is 'gaudipython-wrapper.py'][0],'r')
+        buffer = f.read()
+        f.close()
+        assert buffer is not ''
 
     # not much to check here...as this method simply runs checks itself
     #def test_GaudiPython__check_inputs(self):

@@ -11,7 +11,7 @@ from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
 from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
+from Ganga.GPIDev.Lib.File import FileBuffer, File
 from Ganga.Core import TypeMismatchError
 
 logger = Ganga.Utility.logging.getLogger()
@@ -65,8 +65,8 @@ class GaudiRunTimeHandler(IRuntimeHandler):
             inputsandbox.append(FileBuffer('catalog.xml'))
             
         ## Here add any sandbox files coming from the appmasterconfig
-        ## currently none.
-        inputsandbox += appmasterconfig.getSandboxFiles()
+        ## currently none. catch the case where None is passes (as in tests)
+        if appmasterconfig: inputsandbox += appmasterconfig.getSandboxFiles()
 
 
         ## Here return a GaudiJobConfig built on the StandardJobConfig but also
@@ -85,7 +85,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
 
         ## Here add any sandbox files coming from the appsubconfig
         ## currently none.
-        inputsandbox += appsubconfig.getSandboxFiles()
+        if appsubconfig: inputsandbox += appsubconfig.getSandboxFiles()
 
         ## Note the master inputsandbox will be added automatically
         ## no need to add it here
@@ -97,36 +97,54 @@ class GaudiRunTimeHandler(IRuntimeHandler):
                 data_str += cat_opts
 
         ## Unlike in the applications prepare method, buffers are created into
-        ## files later on in job submission.
+        ## files later on in job submission.when put in inputsandbox which only
+        ## accepts File objects.
         ## Additional as data.py could be created in OptionsFileSplitter,
         ## Need to add the existing data.py content to the end of this, if present.
-        # inputsandbox.append(FileBuffer('data.py',data_str).create())
-        existing_data = [file for file in inputsandbox if file.name is 'data.py']
-        if existing_data:
-            if len(existing_data) is not 1:
-                logger.warning('Appear to have more than one data.py file in inputsandbox, contact ganga developers!')
-            if not isType(existing_data[0],FileBuffer):
-                logger.error('Found data.py in inputsandbox but not of type \'FileBuffer\', contact ganga developers!')
-                raise TypeMismatchError('Expected file data.py to be of type FileBuffer.')
-            else:
-                existing_data[0]._contents=data_str + existing_data[0].getContents()
-        else:
-            inputsandbox.append(FileBuffer('data.py',data_str))
+        #OLD inputsandbox.append(FileBuffer('data.py',data_str).create())
+##         existing_data = [file for file in inputsandbox if file.name is 'data.py']
+##         if existing_data:
+##             if len(existing_data) is not 1:
+##                 logger.warning('Appear to have more than one data.py file in inputsandbox, contact ganga developers!')
+##             if not isType(existing_data[0],File):
+##                 logger.error('Found data.py in inputsandbox but not of type \'File\', contact ganga developers!')
+##                 raise TypeMismatchError('Expected file data.py to be of type File.')
+##             else:
+##                 existing_data[0]._contents=data_str + existing_data[0].getContents()
+##         else:
+##             inputsandbox.append(FileBuffer(os.path.join(job.getInputWorkspace(),'data.py'),data_str))
+
+        def existingDataFilter(file):
+            return file.name.find('/tmp/')>=0 and file.name.find('_data.py')>=0
+        existingDataFile = filter(existingDataFilter,job.inputsandbox)
+        if len(existingDataFile) is 1:
+            # data_path = os.path.join(job.getInputWorkspace().getPath(),'data.py')
+       # if os.path.isfile(data_path) and not os.path.islink(data_path):
+            data_path = existingDataFile[0].name
+            f=file(data_path,'r')
+            existing_data = f.read()
+            data_str+=existing_data
+            f.close()
+            del job.inputsandbox[job.inputsandbox.index(existingDataFile[0])]
+            os.remove(data_path)
+        elif len(existingDataFile) is not 0:
+            logger.error('There seems to be more than one existing data file in the inputsandbox!')
+        inputsandbox.append(FileBuffer('data.py',data_str))
 
 
         ## Strangly NEITHER the master outputsandbox OR job.outputsandbox
         ## are added automatically. As can define outputsandbox in optsfile
         ## will add it here
         outputsandbox=job.outputsandbox[:]
-        outputsandbox += jobmasterconfig.getOutputSandboxFiles()
-        outputsandbox += appsubconfig.getOutputSandboxFiles()
+        if jobmasterconfig: outputsandbox += jobmasterconfig.getOutputSandboxFiles()
+        if appsubconfig: outputsandbox += appsubconfig.getOutputSandboxFiles()
 
 
         ## As can define outputdata in the optsfiles need to pick this up from
         ## jobmasterconfig. Also append any job.outputdata for processing in
         ## create_runscript
         outputdata=OutputData()
-        outputdata.files += jobmasterconfig.outputdata
+        if jobmasterconfig: outputdata.files += jobmasterconfig.outputdata
         if job.outputdata:
             outputdata.files += job.outputdata
 

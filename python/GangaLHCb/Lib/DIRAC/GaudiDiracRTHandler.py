@@ -94,7 +94,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
         ## the subjob inputsandbox depending if the jobmasterconfig object is present
         ## or not... Therefore combine the job.inputsandbox with appmasterconfig. Currently emtpy.
         inputsandbox = app.getJobObject().inputsandbox[:]
-        inputsandbox += appmasterconfig.getSandboxFiles()
+        if appmasterconfig: inputsandbox += appmasterconfig.getSandboxFiles()
 
         return GaudiJobConfig(inputbox=inputsandbox,outputbox=outputsandbox,outputdata=outdata)
 
@@ -108,7 +108,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
         inputsandbox = job.inputsandbox[:]
 
         #sandbox = get_input_sandbox(app.extra)
-        inputsandbox += appsubconfig.getSandboxFiles()
+        if appsubconfig: inputsandbox += appsubconfig.getSandboxFiles()
 
         
         data_str=''
@@ -121,26 +121,56 @@ class GaudiDiracRTHandler(IRuntimeHandler):
 
 
         ## Unlike in the applications prepare method, buffers are created into
-        ## files later on in job submission.
+        ## files later on in job submission when put in inputsandbox which only
+        ## accepts File objects.
         ## Additional as data.py could be created in OptionsFileSplitter,
         ## Need to add the existing data.py content to the end of this, if present.
-        # inputsandbox.append(FileBuffer('data.py',data_str).create())
-        existing_data = [file for file in inputsandbox if file.name is 'data.py']
-        if existing_data:
-            if len(existing_data) is not 1:
-                logger.warning('Appear to have more than one data.py file in inputsandbox, contact ganga developers!')
-            if not isType(existing_data[0],FileBuffer):
-                logger.error('Found data.py in inputsandbox but not of type \'FileBuffer\', contact ganga developers!')
-                raise TypeMismatchError('Expected file data.py to be of type FileBuffer.')
-            else:
-                existing_data[0]._contents=data_str + existing_data[0].getContents()
-        else:
-            inputsandbox.append(FileBuffer('data.py',data_str))            
+        #OLD inputsandbox.append(FileBuffer('data.py',data_str).create())
+##        existing_data = [file for file in inputsandbox if file.name is 'data.py']
+##         if existing_data:
+##             if len(existing_data) is not 1:
+##                 logger.warning('Appear to have more than one data.py file in inputsandbox, contact ganga developers!')
+##             if not isType(existing_data[0],File):
+##                 logger.error('Found data.py in inputsandbox but not of type \'File\', contact ganga developers!')
+##                 raise TypeMismatchError('Expected file data.py to be of type File.')
+##             else:
+##                 existing_data[0]._contents=data_str + existing_data[0].getContents()
+##         else:
+##             inputsandbox.append(FileBuffer(os.path.join(job.getInputWorkspace(),'data.py'),data_str))
+
+
+        def existingDataFilter(file):
+            return file.name.find('/tmp/')>=0 and file.name.find('_data.py')>=0
+        existingDataFile = filter(existingDataFilter,job.inputsandbox)
+        if len(existingDataFile) is 1:
+            # data_path = os.path.join(job.getInputWorkspace().getPath(),'data.py')
+       # if os.path.isfile(data_path) and not os.path.islink(data_path):
+            data_path = existingDataFile[0].name
+            f=file(data_path,'r')
+            existing_data = f.read()
+            data_str+=existing_data
+            f.close()
+            del job.inputsandbox[job.inputsandbox.index(existingDataFile[0])]
+            os.remove(data_path)
+        elif len(existingDataFile) is not 0:
+            logger.error('There seems to be more than one existing data file in the inputsandbox!')
+        inputsandbox.append(FileBuffer('data.py',data_str))
+
+
+
+##         data_path = os.path.join(job.getInputWorkspace().getPath(),'data.py')
+##         if os.path.isfile(data_path) and not os.path.islink(data_path):
+##             f=file(data_path,'r')
+##             existing_data = f.read()
+##             data_str+=existing_data
+##             f.close()
+##             os.remove(data_path)
+##         inputsandbox.append(FileBuffer(data_path,data_str))
 
 
         outputsandbox = job.outputsandbox[:]
-        outputsandbox += jobmasterconfig.getOutputSandboxFiles()
-        outputsandbox += appsubconfig.getOutputSandboxFiles()
+        if jobmasterconfig: outputsandbox += jobmasterconfig.getOutputSandboxFiles()
+        if appsubconfig: outputsandbox += appsubconfig.getOutputSandboxFiles()
 
 
 
@@ -158,9 +188,10 @@ class GaudiDiracRTHandler(IRuntimeHandler):
             dirac_script.inputdata = DiracInputData(job.inputdata)
 
         outputdata = OutputData()
-        outputdata.files += jobmasterconfig.outputdata
+        if jobmasterconfig: outputdata.files += jobmasterconfig.outputdata
         if job.outputdata:
-            dirac_script.outputdata = job.outputdata
+            outputdata.files += job.outputdata
+        dirac_script.outputdata = outputdata.files
 
         c = StandardJobConfig(script,inputbox=inputsandbox,outputbox=outputsandbox)
         c.script = dirac_script

@@ -1,13 +1,15 @@
 from __future__ import division
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
+import os
 import time
 import string
 import copy
+from tempfile import *
 from Ganga.Core import ApplicationConfigurationError
 from GangaLHCb.Lib.LHCbDataset import *
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import  File
+from Ganga.GPIDev.Lib.File.FileBuffer import  FileBuffer
 from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
 from Ganga.Utility.util import unique 
@@ -120,6 +122,8 @@ class SplitByFiles(ISplitter):
             raise SplittingError('filesPerJob < 1 : %d' % self.filesPerJob)
 
         subjobs=[]
+
+        if not job.inputdata: return subjobs
         inputdata = job.inputdata
 ##         if hasattr(job.application,'extra'):
 ##             inputdata = job.application.extra.inputdata
@@ -159,8 +163,10 @@ class OptionsFileSplitter(ISplitter):
         subjobs=[]
         for i in self.optsArray:
             j = create_gaudi_subjob(job, job.inputdata)
+            path = NamedTemporaryFile().name+'_data.py'
+            j.inputsandbox +=[File(FileBuffer(path,i).create().name)]
             #j.application.extra.input_buffers['data.py'] += i
-            j.inputsandbox.append(FileBuffer('data.py',i))
+            #j.inputsandbox.append(File(FileBuffer(path,i).create().name))
             subjobs.append(j)
         return subjobs
 
@@ -198,7 +204,9 @@ class GaussSplitter(ISplitter):
             for s in spillOver : 
                 opts += 'GenInit("%s").FirstEventNumber = %d\n' % (s,first) 
             #j.application.extra.input_buffers['data.py'] += opts
-            j.inputsandbox.append(FileBuffer('data.py',opts))
+            path = NamedTemporaryFile().name+'_data.py'
+            j.inputsandbox +=[File(FileBuffer(path,opts).create().name)]
+            #j.inputsandbox.append(File(FileBuffer(path,opts).create().name))
             logger.debug("Creating job %d w/ FirstEventNumber = %d"%(i,first))
             subjobs.append(j)
             
