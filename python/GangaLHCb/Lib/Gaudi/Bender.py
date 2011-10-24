@@ -98,9 +98,10 @@ class Bender(Francesc):
         outputsandbox = unique(self.getJobObject().outputsandbox)
 
 
-        input_dir = self.getJobObject().getInputWorkspace().getPath()
+        #input_dir = self.getJobObject().getInputWorkspace().getPath()
         input_files=[]
-        input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
+        #input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
+        input_files += [FileBuffer('gaudipython-wrapper.py',script)]
         #self.extra.input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
         #return (None,self.extra)
         return (None,StandardJobConfig(inputbox=input_files,

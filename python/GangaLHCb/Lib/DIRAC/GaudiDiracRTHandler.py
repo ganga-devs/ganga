@@ -191,7 +191,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
         if jobmasterconfig: outputdata.files += jobmasterconfig.outputdata
         if job.outputdata:
             outputdata.files += job.outputdata
-        dirac_script.outputdata = outputdata.files
+        dirac_script.outputdata = outputdata
 
         c = StandardJobConfig(script,inputbox=inputsandbox,outputbox=outputsandbox)
         c.script = dirac_script

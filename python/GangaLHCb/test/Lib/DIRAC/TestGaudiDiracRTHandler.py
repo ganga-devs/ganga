@@ -41,7 +41,7 @@ class TestGaudiDiracRTHandler(GangaGPITestCase):
         stdjobconfig = self.rth.prepare(self.app,sjc,self.appmasterconfig,None)
         # should have subjob.in(buffer), data.opts and gaudiscript.py
         print "sandbox =",stdjobconfig.getSandboxFiles()
-        assert len(stdjobconfig.getSandboxFiles()) == 3, 'inputsandbox error'
+        assert len(stdjobconfig.getSandboxFiles()) == 4, 'inputsandbox error'
         l = len(stdjobconfig.getOutputSandboxFiles())
         assert  l == 3, 'outputsandbox error'
 

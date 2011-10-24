@@ -37,10 +37,13 @@ class TestGaudiPython(GangaGPITestCase):
     def test_GaudiPtython_configure(self):
         gp = self.gp
         subconfig = gp.configure(None)[1]
-        assert 'gaudipython-wrapper.py' in [f.name for f in subconfig.inputbox] , 'didnt find gaudipython wrapper'
-        f=file([file.name for file in subconfig.inputbox if file.name is 'gaudipython-wrapper.py'][0],'r')
-        buffer = f.read()
-        f.close()
+        input_files = [f.name for f in subconfig.inputbox]
+        print 'input_files =',input_files
+        assert 'gaudipython-wrapper.py' in input_files , 'didnt find gaudipython wrapper'
+        f = subconfig.inputbox[input_files.index('gaudipython-wrapper.py')]
+        #f=file(path,'r')
+        buffer = f.getContents()
+        #f.close()
         assert buffer is not ''
 
     # not much to check here...as this method simply runs checks itself
