@@ -144,9 +144,6 @@ class Job(GangaObject):
                                     'time':ComponentItem('jobtime', defvalue=None,protected=1,comparable=0,doc='provides timestamps for status transitions'),
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
-
-                                    'outputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects decorating what have to be done with the output files after job is completed "),
-
                                     'id' : SimpleItem('',protected=1,comparable=0,doc='unique Ganga job identifier generated automatically'),
                                     'status': SimpleItem('new',protected=1,checkset='_checkset_status',doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"'),
                                     'name':SimpleItem('',doc='optional label which may be any combination of ASCII characters',typelist=['str']),
@@ -378,7 +375,6 @@ class Job(GangaObject):
     def postprocess_hook(self):
         self.application.postprocess()
         self.getMonitoringService().complete()
-        self.backend.postprocess(self.outputfiles, self.getOutputWorkspace().getPath())
 
     def postprocess_hook_failed(self):
         self.application.postprocess_failed()
@@ -603,24 +599,55 @@ class Job(GangaObject):
 
         return None
 
-    def _create_post_process_output(self):
- 
-        from Ganga.GPIDev.Lib.File.OutputFile import OutputFile
-        from Ganga.GPIDev.Lib.File.CompressedFile import CompressedFile
+    def prepare(self,force=False):
+        '''A method to put a job's application into a prepared state. Returns 
+        True on success.
+        
+        The benefits of preparing an application are twofold:
 
-        from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
+        1) The application can be copied from a previously executed job and
+           run again over a different input dataset.
+        2) Sharing applications (and their associated files) between jobs will 
+           optimise disk usage of the Ganga client.
 
-        content = ''
+        Exactly what happens during the transition to becoming prepared
+        is determined by the application associated with the job. 
+        See help(j.application.prepare) for application-specific comments.
 
-        if len(self.outputfiles) > 0:
-            for outputFile in self.outputfiles:
-                if outputFile.__class__.__name__ == 'CompressedFile':
-                    content += 'zipped %s\n' % outputFile.name  
+        Prepared applications are always associated with a Shared Directory object
+        which contains their required files. Details for all Shared Directories in use
+        can been seen by calling 'shareref'. See help(shareref) for further details.
+        
+        '''
+        if not hasattr(self.application,'is_prepared'):
+            logger.warning("Non-preparable application %s cannot be prepared" % self.application._name)
+            return
 
-        if content is not '':
-            self.getInputWorkspace().writefile(FileBuffer('__postprocessoutput__', content))
+        if (self.application.is_prepared is not None) and (force == False):
+            msg = "The application associated with job %d has already been prepared. To force the operation, call prepare(force=True)" % (self.id)
+            raise JobError(msg)
+        if (self.application.is_prepared is None):
+            add_to_inputsandbox = self.application.prepare()
+            if isType(add_to_inputsandbox,list):
+                self.inputsandbox.extend(add_to_inputsandbox)
+        elif (self.application.is_prepared is not None) and (force == True):
+            self.application.unprepare(force=True)
+            self.application.prepare(force=True)
+            
 
-    def submit(self,keep_going=None,keep_on_fail=None):
+
+    def unprepare(self,force=False):
+        '''Revert the application associated with a job to the unprepared state
+        Returns True on success.
+        '''
+        if not hasattr(self.application,'is_prepared'):
+            logger.warning("Non-preparable application %s cannot be unprepared" % self.application._name)
+            return
+
+        self.application.unprepare()
+
+
+    def submit(self,keep_going=None,keep_on_fail=None,prepare=False):
         '''Submits a job. Return true on success.
 
         First  the  application   is  configured  which  may  generate
@@ -760,10 +787,7 @@ class Job(GangaObject):
             jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
 
             # notify monitoring-services
-            self.monitorPrepare_hook(jobsubconfig)      
-
-            #create a file in the inputsandbox with instructions for postporcessing output on the WN
-            self._create_post_process_output()
+            self.monitorPrepare_hook(jobsubconfig) 
 
             # submit the job
             try:
