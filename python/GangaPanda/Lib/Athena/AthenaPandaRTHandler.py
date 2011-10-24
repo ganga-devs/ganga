@@ -700,6 +700,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         param += '-r %s ' % self.rundirectory
         # set jobO parameter
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+
+            # add inDS name
+            if job.inputdata:
+                self.job_options = self.job_options.replace("%INDS", job.inputdata.dataset[0].strip('/'))
+
             param += '-j "" -p "%s" ' % self.job_options
         elif app.atlas_exetype in ['TRF']:
             #param += '-j "%s" ' % urllib.quote(app.options)
@@ -941,6 +946,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         if app.atlas_exetype in ['TRF']:
             jspec.metadata = '--trf "%s" ' %( app.options)
+
+        # disable redundant transfer if needed
+        from pandatools import PsubUtils
+        PsubUtils.disableRedundantTransfer(jspec, job.outputdata.transferredDS)
         
         return jspec
 

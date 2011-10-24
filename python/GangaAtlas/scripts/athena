@@ -161,6 +161,9 @@ p.add_option('--configJEM', action='store', type='string', dest='configJEM', hel
 
 p.add_option('--useAthenaPackages', action='store_true', help='Enable to setup Athena env for PYARA' )
 
+p.add_option('--transferredDS', action='store', type='string', dest='transferredDS', help='Specify a comma-separated list of patterns so that only datasets which match the given patterns are transferred when --outputlocation is set. Either \ or "" is required when a wildcard is used. If omitted, all datasets are transferred')
+
+
 opt, args = p.parse_args()
 
 # make panda the default backend
@@ -453,6 +456,8 @@ if opt.outputdata or opt.backend == 'panda':
 #        j.outputdata.use_datasetname = True
     if opt.use_shortfilename:
         j.outputdata.use_shortfilename = True
+    if opt.transferredDS:
+        j.outputdata.transferredDS = opt.transferredDS
 
 # splitter
 

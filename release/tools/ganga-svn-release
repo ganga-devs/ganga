@@ -405,6 +405,8 @@ class GenerateConfigFilesCommand:
             print 'sh ~/test/%s.sh %s'%(GANGA_ACCOUNT_CONFIG[x[1]], version.replace('.',' '))
             #print gencmd%cfg
             print
+            
+        raw_input("When you have executed the commands for all accounts, press Enter to continue ...")
 
 class CommitConfigFilesCommand:
     "COMMIT CONFIG FILES: commit to svn the previously generated config files (run this command after you've generated all config files on all accounts)"

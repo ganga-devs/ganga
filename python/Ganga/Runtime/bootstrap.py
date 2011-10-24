@@ -458,6 +458,13 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         #[Shell] section
         shellconfig = makeConfig( "Shell", "configuration parameters for internal Shell utility." )
         shellconfig.addOption('IgnoredVars',['_','SHVL','PWD'],'list of env variables not inherited in Shell environment')
+
+        #[Output] section
+        outputconfig = makeConfig( "Output", "configuration section for postprocessing the output" )
+        outputconfig.addOption('CompressedFile',['stdout','stderr'],'list of output files that will be compressed after job is completed')
+        outputconfig.addOption('ScratchFile',['*.root'],'list of output files that will be written to large scratch disk after job is completed')
+        outputconfig.addOption('LHCbDataFile',['*.dst','*.digi','*.raw'],'list of output files that will be stored in Storage Element and registered in LHCb file catalogue after job is completed')
+
         
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B

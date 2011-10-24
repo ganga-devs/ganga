@@ -220,6 +220,22 @@ appscriptpath = ###APPSCRIPTPATH###
 environment = ###ENVIRONMENT###
 workdir = ###WORKDIR###
 
+def postprocessoutput():
+
+    zippedList = []             
+
+    inpfile = os.path.join(###INPUT_DIR###, '__postprocessoutput__')
+    
+    if not os.path.exists(inpfile):
+        return None
+                
+    for line in open(inpfile, 'r').readlines(): 
+        line = line.strip()     
+        if line.startswith('zipped'):
+            zippedList.append(line.split()[1])
+
+    return [" ".join(zippedList)]
+
 statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
 try:
@@ -317,7 +333,26 @@ errorfile.close()
 
 from Ganga.Utility.files import recursive_copy
 
-for fn in ['stdout','stderr','__syslog__']:
+f_to_copy = ['stdout','stderr','__syslog__']
+
+postProcessOutputResult = postprocessoutput()
+filesToZip = []
+
+if postProcessOutputResult is not None:
+    filesToZip = postProcessOutputResult[0].split(' ')
+    for fileToZip in filesToZip:
+        if os.path.exists(fileToZip):                   
+            os.system("gzip %s" % fileToZip)
+            
+final_list_to_copy = []
+
+for f in f_to_copy:
+    if f in filesToZip:
+        final_list_to_copy.append('%s.gz' % f)  
+    else:       
+        final_list_to_copy.append(f)
+
+for fn in final_list_to_copy:
     try:
         recursive_copy(fn,sharedoutputpath)
     except Exception,x:
@@ -341,9 +376,10 @@ sys.exit()
       script = script.replace('###JOBID###',repr(job.getFQID('.')))
       script = script.replace('###ENVIRONMENT###',repr(environment))
       script = script.replace('###WORKDIR###',repr(workdir))
+      script = script.replace('###INPUT_DIR###',repr(job.getStringInputDir()))
       
       script = script.replace('###MONITORING_SERVICE###',job.getMonitoringService().getWrapperScriptConstructorText())
-      
+
       self.workdir = workdir
       
       from Ganga.Utility.Config import getConfig
@@ -352,7 +388,7 @@ sys.exit()
 
       import Ganga.PACKAGE
       script = script.replace('###SUBPROCESS_PYTHONPATH###',repr(Ganga.PACKAGE.setup.getPackagePath2('subprocess','syspath',force=True)))
-      script = script.replace('###TARFILE_PYTHONPATH###',repr(Ganga.PACKAGE.setup.getPackagePath2('tarfile','syspath',force=True)))
+      script = script.replace('###TARFILE_PYTHONPATH###',repr(Ganga.PACKAGE.setup.getPackagePath2('tarfile','syspath',force=True)))             
 
       return job.getInputWorkspace().writefile(FileBuffer('__jobscript__',script),executable=1)
 
@@ -394,7 +430,7 @@ sys.exit()
                 shutil.rmtree(self.workdir)
             except OSError,x:
                 logger.warning('problem removing the workdir %s: %s',str(self.id),str(x))        
-    
+
     def updateMonitoringInformation(jobs):
 
       def get_exit_code(f):

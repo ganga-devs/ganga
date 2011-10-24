@@ -86,8 +86,16 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         else:
             self.dbrelease_dataset = app.dbrelease_dataset
             self.dbrelease = app.dbrelease
-        jspec.jobParameters = '%s DBRelease=DBRelease-%s.tar.gz' % (app.job_parameters,
-                                                                    self.dbrelease)
+        jspec.jobParameters = app.job_parameters
+
+        if self.dbrelease:
+            jspec.jobParameters += ' DBRelease=DBRelease-%s.tar.gz' % (self.dbrelease,)
+            dbspec = FileSpec()
+            dbspec.lfn = 'DBRelease-%s.tar.gz' % self.dbrelease
+            dbspec.dataset = self.dbrelease_dataset
+            dbspec.prodDBlock = jspec.prodDBlock
+            dbspec.type = 'input'
+            jspec.addFile(dbspec)
 
         m = re.search('(.*)\.(.*)\.(.*)\.(.*)\.(.*)\.(.*)',
                       job.inputdata.dataset[0])
@@ -110,7 +118,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             ofspec.dataset = jspec.destinationDBlock
             ofspec.type = 'output'
             jspec.addFile(ofspec)
-        jspec.jobParameters += ' outputNTUP_TOPFile=%s' % (','.join(randomized_lfns),)
+        jspec.jobParameters += ' output%sFile=%s' % (app.output_type, ','.join(randomized_lfns))
 
         # Input files.
         if job.inputdata:
@@ -122,16 +130,11 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 ifspec.prodDBlock = jspec.prodDBlock
                 ifspec.type = 'input'
                 jspec.addFile(ifspec)
-        jspec.jobParameters += ' input%sFile=%s' % (m.group(5),
-                                                    ','.join(job.inputdata.names),)
-
-        # DB dataset
-        dbspec = FileSpec()
-        dbspec.lfn = 'DBRelease-%s.tar.gz' % self.dbrelease
-        dbspec.dataset = self.dbrelease_dataset
-        dbspec.prodDBlock = jspec.prodDBlock
-        dbspec.type = 'input'
-        jspec.addFile(dbspec)
+            if not app.input_type:
+                itype = app.input_type
+            else:
+                itype = m.group(5)
+            jspec.jobParameters += ' input%sFile=%s' % (itype, ','.join(job.inputdata.names))
 
         # Log files.
         lfspec = FileSpec()

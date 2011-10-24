@@ -11,6 +11,7 @@ from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 import Ganga.Utility.Config
 from copy import deepcopy
 import sets
+import os
 config = Ganga.Utility.Config.getConfig('Configuration')
 
 partition_colours = {
@@ -343,9 +344,13 @@ class LHCbAnalysisTransform(Transform):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _mergeTransformOutput(self):
         """Merge the output from a transforms jobs."""
+        outputdir = config['gangadir']+'/workspace/'+config['user']+'/'+config['repositorytype']+'/Tasks/'+str(self.task_id)+'/'+str(self.transform_id)
         try:
-            self.merger.merge(self.getJobs())
-        except:
+            if os.path.exists(outputdir) == False:
+               os.makedirs(outputdir)
+            self.merger.merge(self.getJobs(),outputdir)
+        except Exception,x:
+            print x
             logger.error('There was a problem merging the output from all partitions.')
 
 

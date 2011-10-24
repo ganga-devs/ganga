@@ -512,6 +512,17 @@ class FileItem(ComponentItem):
     def _describe(self):
         return "'files' object,"+ Item._describe(self)
 
+
+class OutputFileItem(ComponentItem):
+    def __init__(self,**kwds):
+        ComponentItem.__init__(self,'outputfiles')
+        self._update(kwds)
+
+    def _describe(self):
+        return "'outputfiles' object,"+ Item._describe(self)
+
+
+
 # a helper class which gives a human readible representation of schema items
 # for example suitable for python interactive help()
 def make_helper(item):

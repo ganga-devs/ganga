@@ -498,6 +498,13 @@ sys.exit(result)
         
         return job.getInputWorkspace().writefile(FileBuffer('__jobscript__',text),executable=1)
 
+    def postprocess(self, outputfiles, outputdir):      
+        if len(outputfiles) > 0:
+            for outputFile in outputfiles:
+                if outputFile.__class__.__name__ == 'CompressedFile':
+                    fullFilePath = os.path.join(outputdir, outputFile.name)
+                    os.system("gzip %s" % fullFilePath) 
+
     def updateMonitoringInformation(jobs):
 
         import re
