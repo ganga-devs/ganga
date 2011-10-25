@@ -220,7 +220,7 @@ class MultiTransform(Transform):
 
           # construct the out DS name
           task = self._getParent()
-          dsn = ["user", getNickname(), task.creation_date,
+          dsn = [self.getContainerName()[:-1],
                  self.unit_outputdata_list[uind],
                  "j%i.t%i.trf%i.u%i" % (j.id, task.id,
                                     task.transforms.index(self),
@@ -878,7 +878,9 @@ class MultiTransform(Transform):
           self.backend = stripProxy(self.backend)
 
       if self.backend._name in ['Panda']:
-          self.inputdata = DQ2Dataset()
+          if not self.inputdata:
+              self.inputdata = DQ2Dataset()
+              
           self.inputdata.dataset = self.unit_inputdata_list[unit_num]
           splitter = DQ2JobSplitter()
           if self.MB_per_job > 0:
