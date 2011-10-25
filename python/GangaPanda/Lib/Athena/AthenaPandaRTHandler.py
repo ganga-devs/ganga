@@ -466,7 +466,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 jspec.jobName           = commands.getoutput('uuidgen')
                 jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
                 jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
-                if (job.backend.bexec != '') or (job.backend.requirements.rootver != ''):
+                if (job.backend.bexec != '') or (job.backend.requirements.rootver != '') or app.useRootCore:
                     jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
                 else:
                     jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
@@ -495,6 +495,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if job.backend.requirements.rootver != '':
                     rootver = re.sub('/','.', job.backend.requirements.rootver)
                     jspec.jobParameters += ' --rootVer %s ' % rootver
+
+                if app.useRootCore:
+                    jspec.jobParameters += " --useRootCore "
+                    jspec.jobParameters += ' -r %s ' % '.'
 
                 fout = FileSpec()
                 fout.lfn  = self.libraries[bjsite]
@@ -717,7 +721,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if app.atlas_exetype in ['PYARA','ROOT','EXE'] and job.backend.requirements.rootver != '':
             rootver = re.sub('/','.', job.backend.requirements.rootver)
             param += "--rootVer %s " % rootver
-            
+        
+        if app.useRootCore:
+            param += "--useRootCore "
+
         # DBRelease
         if self.dbrelease != '' and not app.atlas_exetype in [ 'TRF' ]:
             tmpItems = self.dbrelease.split(':')
