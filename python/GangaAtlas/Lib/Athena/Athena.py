@@ -338,7 +338,7 @@ class Athena(IPrepareApp):
                  'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field'),
                  'recex_type'             : SimpleItem(defvalue = '',doc='Set to RDO, ESD or AOD to enable RecExCommon type jobs of appropriate type'),
                  'glue_packages'          : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='list of glue packages which cannot be found due to empty i686-slc4-gcc34-opt. e.g., [\'External/AtlasHepMC\',\'External/Lhapdf\']'),
-                 'is_prepared'            : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+                 'is_prepared'            : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool', 'str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
                  'useRootCore'            : SimpleItem(defvalue = False, doc='Use RootCore'),
                  })
                      
