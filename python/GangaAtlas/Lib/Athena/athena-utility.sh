@@ -144,10 +144,12 @@ cmt_setup () {
         ATLAS_RELEASE_DIR=$ATLAS_SOFTWARE/$ATLAS_RELEASE
     fi
  
+    ATHENA_MAJOR_RELEASE=`echo $ATLAS_RELEASE | cut -d '.' -f 1`
+
     if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]; then
         source $ATLAS_RELEASE_DIR/setup.sh
     # New athena v16 AtlasSetup #################
-    elif [ ! -z `echo $ATLAS_RELEASE | grep 16.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 17.` ]; then
+    elif [ $ATHENA_MAJOR_RELEASE -gt 15 ]; then
 	if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
 	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,32,setup
 	elif [ ! -z $ATLAS_PROJECT ]; then
@@ -396,9 +398,11 @@ get_pybin () {
         echo "get_pybin not implemented"
     fi
 
+    ATHENA_MAJOR_RELEASE=`echo $ATLAS_RELEASE | cut -d '.' -f 1`
+
     if ( [ ! -z `echo $CMTCONFIG | grep slc5` ] ); then
 	export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/*/bin/python | grep slc5 | grep 2.5 |  head -1)
-    elif ( [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 16.` ] ); then
+    elif ( [ $ATHENA_MAJOR_RELEASE -gt 13 ] ); then
         export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/*/bin/python | grep 2.5 | head -1)
     elif ( [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] ); then
 	export pybin=$(ls -r $ATLAS_PYBIN_LOOKUP_PATH/*/sw/lcg/external/Python/*/slc3_ia32_gcc323/bin/python | head -1)
@@ -1326,10 +1330,11 @@ download_dbrelease() {
 ## function for setting up athena runtime environment, no compilation
 runtime_setup () {
 
+    ATHENA_MAJOR_RELEASE=`echo $ATLAS_RELEASE | cut -d '.' -f 1`
     if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
     then
         source $SITEROOT/dist/$ATLAS_RELEASE/Control/AthenaRunTime/AthenaRunTime-*/cmt/setup.sh
-    elif [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 16.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 17.` ]
+    elif [ $ATHENA_MAJOR_RELEASE -gt 12 ]
     then
 	if [ -z $ATLAS_PROJECT ]
 	then

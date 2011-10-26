@@ -338,8 +338,9 @@ class Athena(IPrepareApp):
                  'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field'),
                  'recex_type'             : SimpleItem(defvalue = '',doc='Set to RDO, ESD or AOD to enable RecExCommon type jobs of appropriate type'),
                  'glue_packages'          : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='list of glue packages which cannot be found due to empty i686-slc4-gcc34-opt. e.g., [\'External/AtlasHepMC\',\'External/Lhapdf\']'),
-                 'is_prepared'            : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
-              })
+                 'is_prepared'            : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+                 'useRootCore'            : SimpleItem(defvalue = False, doc='Use RootCore'),
+                 })
                      
     _category = 'applications'
     _name = 'Athena'
@@ -1041,12 +1042,47 @@ class Athena(IPrepareApp):
             # check run config conforms to a TAG analysis
             if not self.atlas_exetype in ['EXE'] and (not self.atlas_run_config['input'].has_key('collRefName') or not self.atlas_run_config['input'].has_key('inColl')):
                 raise ApplicationConfigurationError(None, 'Attempt to run a TAG based analysis without appropriate settings in Job Options.\nPlease set e.g.\nServiceMgr.EventSelector.CollectionType="ExplicitROOT"\nServiceMgr.EventSelector.Query = ""\nServiceMgr.EventSelector.RefName= "StreamAOD"')
-                                            
+
         # set extFile
         AthenaUtils.extFile=[]
         AthenaUtils.setExtFile(self.append_to_user_area)
         AthenaUtils.excludeFile=[]
         AthenaUtils.setExcludeFile(','.join(self.exclude_from_user_area))
+
+        # copy RootCore packages
+        if self.useRootCore:
+            # check $ROOTCOREDIR
+            if not os.environ.has_key('ROOTCOREDIR'):
+                raise ApplicationConfigurationError(None,'$ROOTCOREDIR is not definied in your enviornment. Please setup RootCore runtime beforehand')
+
+            # check grid_submit.sh
+            rootCoreSubmitSh  = os.environ['ROOTCOREDIR'] + '/scripts/grid_submit.sh'
+            rootCoreCompileSh = os.environ['ROOTCOREDIR'] + '/scripts/grid_compile.sh'
+            rootCoreRunSh     = os.environ['ROOTCOREDIR'] + '/scripts/grid_run.sh'
+            for tmpShFile in [rootCoreSubmitSh,rootCoreCompileSh,rootCoreRunSh]:
+                if not os.path.exists(tmpShFile):
+                    tmpErrMsg  = "%s doesn't exist. Please use a newer version of RootCore" % tmpShFile
+                    raise ApplicationConfigurationError(None,tmpErrMsg)
+
+            logger.info("Copying RootCore packages to current dir ...")
+            # destination
+            pandaRootCoreWorkDirName = '__panda_rootCoreWorkDir'
+            rootCoreDestWorkDir = currentDir + '/' + pandaRootCoreWorkDirName
+            # add all files to extFile
+            AthenaUtils.extFile.append(pandaRootCoreWorkDirName + '/.*')
+            self.append_to_user_area+=[pandaRootCoreWorkDirName + '/.*']
+            # add to be deleted on exit
+            ###delFilesOnExit.append(rootCoreDestWorkDir)
+            
+            tmpStat = os.system('%s %s' % (rootCoreSubmitSh,rootCoreDestWorkDir))
+            tmpStat %= 255
+            if tmpStat != 0:
+                tmpErrMsg  = "%s failed with %s" % (rootCoreSubmitSh,tmpStat)
+                raise ApplicationConfigurationError(None,tmpErrMsg)
+            # copy build and run scripts
+            shutil.copy(rootCoreRunSh,rootCoreDestWorkDir)            
+            shutil.copy(rootCoreCompileSh,rootCoreDestWorkDir)
+                                            
 
         # archive sources
         verbose = False
@@ -1083,7 +1119,12 @@ class Athena(IPrepareApp):
 
         self.user_area.name = archiveFullName
         os.chdir(savedir)
-        
+
+        # Remove tmp RootCore dir
+        if self.useRootCore:
+            logger.info('Removing temporary RootCore submission directory %s ...', rootCoreDestWorkDir)
+            out = commands.getoutput('rm -rf ' + rootCoreDestWorkDir)
+
        
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s'%(self.is_prepared.name))

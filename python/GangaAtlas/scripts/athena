@@ -144,6 +144,8 @@ p.add_option('--trf', action='store', type='string', dest='trf', help='Parameter
 p.add_option('--mergeOutput', action='store_true', dest='mergeOutput', help='Panda option to enable the output merging jobs.')
 p.add_option('--usecommainputtxt', action='store_true', dest='usecommainputtxt', help='Boolean if input.txt contains the input files as comma separated list or separeted by a line break')
 p.add_option('--cmtConfig', action='store', type='string', dest='cmtConfig', help='CMTCONFIG=i686-slc5-gcc43-opt is used on remote worker-node by default even if you use another CMTCONFIG locally. This option allows you to use another CMTCONFIG remotely. e.g., --cmtConfig x86_64-slc5-gcc43-opt. If you use --libDS together with this option, make sure that the libDS was compiled with the same CMTCONFIG, in order to avoid failures due to inconsistency in binary files')
+p.add_option('--useRootCore', action='store_true', dest='useRootCore', help='Use RootCore')
+
 
 # Inputsandbox
 p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
@@ -281,7 +283,11 @@ if opt.maxevt:
 
 if opt.atlas_supp_stream:
     j.application.atlas_supp_stream=opt.atlas_supp_stream.split(':')
+if opt.collectstats:
+    j.application.collect_stats=True
 
+if opt.useRootCore:
+    j.application.useRootCore = True
 if opt.compile:
     j.application.athena_compile=True
     if opt.prepare_old:        
@@ -300,14 +306,14 @@ else:
             j.application.prepare_old()
         else:
             j.application.prepare()
-if opt.collectstats:
-    j.application.collect_stats=True
 
 if opt.useAthenaPackages:
     j.application.useAthenaPackages = True
 
 if opt.cmtConfig:
     j.application.atlas_cmtconfig=opt.cmtConfig
+
+
 
 # inputdata
 
@@ -345,7 +351,7 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files:
         opt.inputtype = 'DQ2'
 
     if opt.inputtype == 'DQ2':
-	if opt.input_dataset:
+        if opt.input_dataset:
 	    j.inputdata.dataset = opt.input_dataset.split(',')
 
         if opt.inputaccessmode:
@@ -404,10 +410,10 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files:
             j.inputdata.tag_files = opt.tag_input_files.split(',')
         if opt.backend == 'lcg' and opt.use_aodesd_backnav:
             j.inputdata.use_aodesd_backnav = True
-	if opt.tag_coll_ref:
-	    j.inputdata.tag_coll_ref = opt.tag_coll_ref
-	
-	
+        if opt.tag_coll_ref:
+            j.inputdata.tag_coll_ref = opt.tag_coll_ref
+
+
 if opt.pickevent:
     j.inputdata=EventPicking()
     if opt.pick_data_type:
@@ -590,8 +596,8 @@ elif opt.backend=='panda':
         j.backend.nobuild=opt.nobuild
 
     if opt.rootver:
-	if opt.nobuild:
-	    print >>sys.stderr, 'ERROR: Cannot specify a ROOT version and the nobuild option.'
+        if opt.nobuild:
+            print >>sys.stderr, 'ERROR: Cannot specify a ROOT version and the nobuild option.'
             sys.exit(101)
 
         j.backend.requirements.rootver = opt.rootver
