@@ -283,7 +283,11 @@ if opt.maxevt:
 
 if opt.atlas_supp_stream:
     j.application.atlas_supp_stream=opt.atlas_supp_stream.split(':')
+if opt.collectstats:
+    j.application.collect_stats=True
 
+if opt.useRootCore:
+    j.application.useRootCore = True
 if opt.compile:
     j.application.athena_compile=True
     if opt.prepare_old:        
@@ -302,8 +306,6 @@ else:
             j.application.prepare_old()
         else:
             j.application.prepare()
-if opt.collectstats:
-    j.application.collect_stats=True
 
 if opt.useAthenaPackages:
     j.application.useAthenaPackages = True
@@ -311,8 +313,7 @@ if opt.useAthenaPackages:
 if opt.cmtConfig:
     j.application.atlas_cmtconfig=opt.cmtConfig
 
-if opt.useRootCore:
-    j.application.useRootCore = True
+
 
 # inputdata
 

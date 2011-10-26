@@ -1035,7 +1035,7 @@ class Athena(IApplication):
         AthenaUtils.setExcludeFile(','.join(self.exclude_from_user_area))
 
         # copy RootCore packages
-        if Athena.useRootCore:
+        if self.useRootCore:
             # check $ROOTCOREDIR
             if not os.environ.has_key('ROOTCOREDIR'):
                 raise ApplicationConfigurationError(None,'$ROOTCOREDIR is not definied in your enviornment. Please setup RootCore runtime beforehand')
@@ -1107,7 +1107,7 @@ class Athena(IApplication):
         os.chdir(savedir)
 
         # Remove tmp RootCore dir
-        if Athena.useRootCore:
+        if self.useRootCore:
             logger.info('Removing temporary RootCore submission directory %s ...', rootCoreDestWorkDir)
             out = commands.getoutput('rm -rf ' + rootCoreDestWorkDir)
 
