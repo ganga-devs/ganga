@@ -357,8 +357,9 @@ EOF
 	sed 's/EventSelector.InputCollections/svcMgr.MuonCalibStreamFileInputSvc.InputFiles/' input.py > input.py.new
 	mv input.py.new input.py
     fi
-    if [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 16.` ] 
-	then
+    ATHENA_MAJOR_RELEASE=`echo $ATLAS_RELEASE | cut -d '.' -f 1`
+    if [ $ATHENA_MAJOR_RELEASE -gt 12 ]
+    then
 	sed 's/EventSelector/ServiceMgr.EventSelector/' input.py > input.py.new
 	mv input.py.new input.py
     fi
