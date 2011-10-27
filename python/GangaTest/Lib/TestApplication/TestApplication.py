@@ -1,5 +1,6 @@
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 
 from Ganga.Utility.logging import getLogger
 
@@ -7,7 +8,7 @@ logger = getLogger()
 
 from Ganga.GPIDev.Lib.File import File
 
-class TestApplication(IApplication):
+class TestApplication(IPrepareApp):
     _schema = Schema(Version(1,0), {'exe':SimpleItem(defvalue='/usr/bin/env'),
                                     'derived_value' : SimpleItem(defvalue='',typelist=['str']),
                                     'sequence' : SimpleItem([],sequence=1,typelist=['str']),
@@ -19,7 +20,8 @@ class TestApplication(IApplication):
                                     'env' : SimpleItem(defvalue={},doc='Environment'),# introduced for RTHandler compatibility
                                     'fail': SimpleItem(defvalue='',doc='Define the artificial runtime failures: "config", "prepare"'),
                                     'postprocess_mark_as_failed': SimpleItem(defvalue=False,doc='Update teh status of the job as failed in the postprocess step'),
-                                    'raw_string_exception' :  SimpleItem(defvalue=False,doc='If true use strings as exceptions.')
+                                    'raw_string_exception' :  SimpleItem(defvalue=False,doc='If true use strings as exceptions.'),
+                                    'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
                                     } )
     _name = 'TestApplication'
 
