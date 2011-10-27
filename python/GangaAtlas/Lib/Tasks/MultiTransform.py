@@ -71,7 +71,8 @@ class MultiTransform(Transform):
        'individual_unit_merger'   : SimpleItem(defvalue=False, doc='Run the merger per unit rather than on the whole transform'),
        'single_unit'   : SimpleItem(defvalue=False, doc='Reduce to a single unit that runs over the all outputs from all required trfs'),
        'local_files'       :  SimpleItem(defvalue={'dq2':[], 'merge':[]}, doc='Local files downloaded/merged by the completed transform'),
-       'merger'            : ComponentItem('mergers', defvalue=None, load_default=0,optional=1, doc='Local merger to be done over all units when complete.')
+       'merger'            : ComponentItem('mergers', defvalue=None, load_default=0,optional=1, doc='Local merger to be done over all units when complete.'),
+       'splitter'            : ComponentItem('splitters', defvalue=None, load_default=0,optional=1, doc='Splitter to be used for this transform. Note that split options specified in the transform WILL NOT overwrite these settings.')
        #'outputdata'        : ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset'),
        #'dataset_name'      : SimpleItem(defvalue="", transient=1, getter="get_dataset_name", doc='name of the output dataset'),
        }.items()))
@@ -882,13 +883,16 @@ class MultiTransform(Transform):
               self.inputdata = DQ2Dataset()
               
           self.inputdata.dataset = self.unit_inputdata_list[unit_num]
-          splitter = DQ2JobSplitter()
-          if self.MB_per_job > 0:
-              splitter.filesize = self.MB_per_job
-          elif self.subjobs_per_unit > 0:
-              splitter.numsubjobs = self.subjobs_per_unit
-          else:              
-              splitter.numfiles = self.files_per_job
+          splitter = self.splitter
+          if not splitter:
+              splitter = DQ2JobSplitter()
+              
+              if self.MB_per_job > 0:
+                  splitter.filesize = self.MB_per_job
+              elif self.subjobs_per_unit > 0:
+                  splitter.numsubjobs = self.subjobs_per_unit
+              else:              
+                  splitter.numfiles = self.files_per_job
               
           logger.warning("Determining partition splitting for dataset(s) %s..." % self.inputdata.dataset )
 
@@ -896,8 +900,10 @@ class MultiTransform(Transform):
           self.inputdata = ATLASLocalDataset()
           self.inputdata.names = self.unit_inputdata_list[unit_num]
 
-          splitter = AthenaSplitterJob()
-          splitter.numsubjobs = int( len(self.inputdata.names) / self.files_per_job ) + 1
+          splitter = self.splitter
+          if not splitter:
+              splitter = AthenaSplitterJob()
+              splitter.numsubjobs = int( len(self.inputdata.names) / self.files_per_job ) + 1
       else:
           self.pause()
           raise ApplicationConfigurationError(None, "Backend '%s' not supported in MultiTask mode" % self.backend._name)
