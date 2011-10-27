@@ -50,7 +50,7 @@ class Executable(IPrepareApp):
         'exe' : SimpleItem(preparable=1,defvalue='echo',typelist=['str','Ganga.GPIDev.Lib.File.File.File'],comparable=1,doc='A path (string) or a File object specifying an executable.'), 
         'args' : SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File.File','int'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
-        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
         } )
     _category = 'applications'
     _name = 'Executable'
@@ -108,14 +108,6 @@ class Executable(IPrepareApp):
         #return [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
         return 1
 
-    def unprepare(self, force=False):
-        """
-        Revert an Executable() application back to it's unprepared state.
-        """
-        if self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
-            self.is_prepared = None
-    
 
     def configure(self,masterappconfig):
         from Ganga.Core import ApplicationConfigurationError
@@ -197,7 +189,7 @@ class RTHandler(IRuntimeHandler):
                     pass
             elif type(app.exe) is File:
                 logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
-                app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+                app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(app.exe.name)))
 
         c = StandardJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
         return c
