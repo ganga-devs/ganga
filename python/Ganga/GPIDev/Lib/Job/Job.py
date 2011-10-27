@@ -397,7 +397,7 @@ class Job(GangaObject):
             registry = getRegistry(self.default_registry)
 
         if unprepare is True:
-            self.unprepare()
+            self.application.is_prepared=None
 
         self.info.uuid = Ganga.Utility.guid.uuid()
 
@@ -758,7 +758,7 @@ class Job(GangaObject):
                     msg = "Job %d's application has already been prepared." % (self.id)
                     logger.info(msg)
 
-                if self.application.is_prepared is not True:
+                if self.application.is_prepared is not True and self.application.is_prepared is not None:
                     if not os.path.isdir(self.application.is_prepared.name):
                         msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
                         self.unprepare()
