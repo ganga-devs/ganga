@@ -96,6 +96,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         job = app._getParent()
         logger.debug('AthenaPandaRTHandler master_prepare called for %s', job.getFQID('.')) 
 
+        if app.useRootCoreNoBuild:
+            logger.info('Athena.useRootCoreNoBuild is True, setting Panda.nobuild=True.')
+            job.backend.nobuild = True
+
         if job.backend.bexec and job.backend.nobuild:
             raise ApplicationConfigurationError(None,"Contradicting options: job.backend.bexec and job.backend.nobuild are both enabled.")
 
@@ -722,7 +726,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             rootver = re.sub('/','.', job.backend.requirements.rootver)
             param += "--rootVer %s " % rootver
         
-        if app.useRootCore:
+        if app.useRootCore or app.useRootCoreNoBuild:
             param += "--useRootCore "
 
         # DBRelease
