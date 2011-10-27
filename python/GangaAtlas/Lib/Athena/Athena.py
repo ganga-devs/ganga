@@ -345,7 +345,7 @@ class Athena(IPrepareApp):
                      
     _category = 'applications'
     _name = 'Athena'
-    _exportmethods = ['prepare_old', 'setup', 'postprocess', 'prepare']
+    _exportmethods = ['prepare_old', 'setup', 'postprocess', 'prepare', 'unprepare']
     
     _GUIPrefs = [ { 'attribute' : 'atlas_release',     'widget' : 'String' },
                   { 'attribute' : 'atlas_production',  'widget' : 'String' },
@@ -372,12 +372,7 @@ class Athena(IPrepareApp):
                   ]
 
 
-    def unprepare(self, force=False):
-        """Revert the application back to it's unprepared state."""
-        if self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
-            self.is_prepared = None
-                  
+
     def read_cmt(self):
         """Get some relevant CMT settings"""
  
@@ -1142,15 +1137,6 @@ class Athena(IPrepareApp):
         #return [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
         #return [ filename for filename in  send_to_sharedir ]
         return 1
-
-    def unprepare(self, force=False):
-        """
-        Revert an Athena() application back to it's unprepared state.
-        """
-        if self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
-            self.is_prepared = None
-
 
 
     def prepare_old(self, athena_compile=True, NG=False, **options):
