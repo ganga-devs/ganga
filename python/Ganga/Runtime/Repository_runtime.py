@@ -144,21 +144,23 @@ def shutdown():
 
         if registry.name == 'jobs':
             for job in getRegistry('jobs').__iter__():
-                if job.application.is_prepared is not None and job.application.is_prepared is not True:
-                    shareddir = job.application.is_prepared.name
-                    if not os.path.isdir(shareddir):
-                        logger.warning("Can't find shared directory %s associated with job %s. Unpreparing job." % (shareddir, job.id))
-                        job.unprepare()
+                if hasattr(job.application,'is_prepared'):
+                    if job.application.is_prepared is not None and job.application.is_prepared is not True:
+                        shareddir = job.application.is_prepared.name
+                        if not os.path.isdir(shareddir):
+                            logger.warning("Can't find shared directory %s associated with job %s. Unpreparing job." % (shareddir, job.id))
+                            job.unprepare()
                             
         if registry.name == 'box':
             for item in getRegistry('box').__iter__():
                 if isType(item,Job):
                      job = item
-                     if job.application.is_prepared is not None and job.application.is_prepared is not True:
-                        shareddir = job.application.is_prepared.name
-                        if not os.path.isdir(shareddir):
-                            logger.warning("Can't find shared directory %s associated with job %s in box. Unpreparing job." % (shareddir, job.id))
-                            job.unprepare()
+                     if hasattr(job.application,'is_prepared'):
+                        if job.application.is_prepared is not None and job.application.is_prepared is not True:
+                            shareddir = job.application.is_prepared.name
+                            if not os.path.isdir(shareddir):
+                                logger.warning("Can't find shared directory %s associated with job %s in box. Unpreparing job." % (shareddir, job.id))
+                                job.unprepare()
                 else:
                     if hasattr(item,'is_prepared'):
                         app = item
