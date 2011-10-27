@@ -152,9 +152,9 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
     extFile2 = []
     for tmpItem in extFile:
         # change . to \. for regexp
-        tmpItem = tmpItem.replace('.','\.')
+        ###tmpItem = tmpItem.replace('.','\.')
         # change * to .* for regexp
-        tmpItem = tmpItem.replace('*','.*')
+        ####tmpItem = tmpItem.replace('*','.*')
         # append
         extFile2.append(tmpItem)
 
@@ -243,9 +243,9 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
     # collect files
     for tmpFile in workDirFiles:
         if os.path.islink(tmpFile):
-            status,out = commands.getstatusoutput('tar -rh %s -f %s' % (tmpFile,archiveFullName))
+            status,out = commands.getstatusoutput("tar --exclude '.[a-zA-Z]*' -rh '%s' -f '%s'" % (tmpFile,archiveFullName))
         else:
-            status,out = commands.getstatusoutput('tar rf %s %s' % (archiveFullName,tmpFile))
+            status,out = commands.getstatusoutput("tar --exclude '.[a-zA-Z]*' -rf '%s' '%s'" % (archiveFullName,tmpFile))
         if verbose:
             logger.info( tmpFile)
         if status != 0 or out != '':
@@ -340,6 +340,7 @@ class Athena(IPrepareApp):
                  'glue_packages'          : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='list of glue packages which cannot be found due to empty i686-slc4-gcc34-opt. e.g., [\'External/AtlasHepMC\',\'External/Lhapdf\']'),
                  'is_prepared'            : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool', 'str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
                  'useRootCore'            : SimpleItem(defvalue = False, doc='Use RootCore'),
+                 'useRootCoreNoBuild'     : SimpleItem(defvalue = False, doc='Use RootCore with NoBuild'),
                  })
                      
     _category = 'applications'
@@ -1050,13 +1051,16 @@ class Athena(IPrepareApp):
         AthenaUtils.setExcludeFile(','.join(self.exclude_from_user_area))
 
         # copy RootCore packages
-        if self.useRootCore:
+        if self.useRootCore or self.useRootCoreNoBuild:
             # check $ROOTCOREDIR
             if not os.environ.has_key('ROOTCOREDIR'):
                 raise ApplicationConfigurationError(None,'$ROOTCOREDIR is not definied in your enviornment. Please setup RootCore runtime beforehand')
 
             # check grid_submit.sh
             rootCoreSubmitSh  = os.environ['ROOTCOREDIR'] + '/scripts/grid_submit.sh'
+            if self.useRootCoreNoBuild:
+                rootCoreSubmitSh  = os.environ['ROOTCOREDIR'] + '/scripts/grid_submit_nobuild.sh'
+
             rootCoreCompileSh = os.environ['ROOTCOREDIR'] + '/scripts/grid_compile.sh'
             rootCoreRunSh     = os.environ['ROOTCOREDIR'] + '/scripts/grid_run.sh'
             for tmpShFile in [rootCoreSubmitSh,rootCoreCompileSh,rootCoreRunSh]:
@@ -1121,7 +1125,7 @@ class Athena(IPrepareApp):
         os.chdir(savedir)
 
         # Remove tmp RootCore dir
-        if self.useRootCore:
+        if self.useRootCore or self.useRootCoreNoBuild:
             logger.info('Removing temporary RootCore submission directory %s ...', rootCoreDestWorkDir)
             out = commands.getoutput('rm -rf ' + rootCoreDestWorkDir)
 
@@ -1846,7 +1850,7 @@ class _RootMergeToolAANT(IMergeTool):
         arg_list.extend(file_list)
         merge_cmd += string.join(arg_list,' ')
 
-        print merge_cmd
+        logger.info(merge_cmd)
         rc, out = commands.getstatusoutput(merge_cmd)
         
         if rc:

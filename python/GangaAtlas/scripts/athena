@@ -145,6 +145,7 @@ p.add_option('--mergeOutput', action='store_true', dest='mergeOutput', help='Pan
 p.add_option('--usecommainputtxt', action='store_true', dest='usecommainputtxt', help='Boolean if input.txt contains the input files as comma separated list or separeted by a line break')
 p.add_option('--cmtConfig', action='store', type='string', dest='cmtConfig', help='CMTCONFIG=i686-slc5-gcc43-opt is used on remote worker-node by default even if you use another CMTCONFIG locally. This option allows you to use another CMTCONFIG remotely. e.g., --cmtConfig x86_64-slc5-gcc43-opt. If you use --libDS together with this option, make sure that the libDS was compiled with the same CMTCONFIG, in order to avoid failures due to inconsistency in binary files')
 p.add_option('--useRootCore', action='store_true', dest='useRootCore', help='Use RootCore')
+p.add_option('--useRootCoreNoBuild', action='store_true', dest='useRootCoreNoBuild', help='Use RootCore with no build job on Panda')
 
 
 # Inputsandbox
@@ -288,6 +289,8 @@ if opt.collectstats:
 
 if opt.useRootCore:
     j.application.useRootCore = True
+if opt.useRootCoreNoBuild:
+    j.application.useRootCoreNoBuild = True
 if opt.compile:
     j.application.athena_compile=True
     if opt.prepare_old:        
