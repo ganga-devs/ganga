@@ -1,5 +1,11 @@
 **************************************************************************************************************
-5.7.0 (2011/10/25)
+5.7.0 (2011/10/27)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Improvements to application prepare() functionality
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -12,20 +18,59 @@ ganga/python/Ganga/Lib/LCG
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 * adding new prepare() GangaCore functionality
-* Added a --rootver option to scripts/athena
-* Cleared the reason field when reactivating a unit and shifted DS
- creations to INFO
-* Fixed a problem with PYARA adding a '-c' when using --options
-* Updating AthenaMC tests. Panda evgen requirements relaxed to
- increase chances of quick run. Similarly, reduced number of
- events per jobs processed in Panda+simul and Panda+recon tests
+* Add RootCore support for Panda jobs:
+  - with build job Athena.useRootCore=True or athena --useRootCore 
+  - without build job Athena.useRootCoreNoBuild=True or athena --useRootCoreNoBuild
+* Added the option of specfying a splitter to the transform
+* Fix bug #88111, make major athena release setup more flexible
+* Stopped DQ2Dataset getting overwritten and added full trf/task name 
+  to unit DS name
+* Add --transferredDS option and j.outputdata.transferredDS
+* Upgrade to panda-client 0.3.64
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
-Ganga-LHCb-Prepared-0-16 is Ganga-5.7.0-beta
+Ganga-LHCb-Prepared-0-16
 
 Included tasks framework and prepared state
+
+Ganga-LHCb-Prepared-0-17
+Changed NIKHEF-USER -> SARA-USER SE token
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Add RootCore support for Panda jobs:
+  - with build job Athena.useRootCore=True or athena --useRootCore 
+  - without build job Athena.useRootCoreNoBuild=True or athena --useRootCoreNoBuild
+* Add --transferredDS option and j.outputdata.transferredDS
+* Added a %INDS flag to EXE/PYARA jobs that will be replaced on 
+  submission with the input dataset name
+* Make several improvements on ProdTrans:
+  - Added the input_type options to the ProdTrans app to control 
+    the input_type (for instance, 'Evgen').
+  - Added the output_type in the symmetric way (for instance, 'Hits').
+  - Improved the way DBRelease is handled (to not add DBRelease, 
+    set it to None).
+  - revert change to outDS name. set with usertag config instead
+  - add BackendError
+  - Renamed output dataset from user* to prod_test*
+    Added possibility to configure processingType
+* Upgrade to panda-client 0.3.64
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaRobot
+--------------------------------------------------------------------------------------------------------------
+* Added functionality to bypass an application's prepare() step.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+* Added compatibility with application's prepare() method.
 
 **************************************************************************************************************
