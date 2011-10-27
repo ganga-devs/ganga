@@ -134,6 +134,10 @@ class ProxyDataDescriptor(object):
         return item._check_type(val, self._name)
         
     def __set__(self, obj, val):
+        #self is the attribute we're about to change (?)
+        #obj is the object we're about to make the change in
+        #val is the value we're setting the attribute to.
+        #item is the schema entry of the attribute we're about to change
         item = obj._impl._schema[self._name]
 
         #mechanism to provide for locking of preparable attributes
@@ -144,11 +148,17 @@ class ProxyDataDescriptor(object):
                 if obj.is_prepared is not None and obj.is_prepared is not True:
                     #then we must have a preparble application that has been prepared
                     raise ProtectedAttributeError('AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified. unprepare() the application if you want to modify this value, or copy the job/application (using j.copy(unprepare=True)) and modify that instance.'%(self._name,))
+
+        #if we set is_prepared to None in the GPI, that should effectively unprepare the application
+        if self._name == 'is_prepared' and val is None:
+            logger.info('Unpreparing application.')
+            obj.unprepare()
+            
         if self._name == 'application' and hasattr(obj.application,'is_prepared'):
             if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
                 logger.info('Overwriting a prepared application with one that is unprepared')
                 obj.application.unprepare()
-            elif obj.application.is_prepared is None and hasattr(val,'is_prepared') and val.is_prepared is not None:
+            elif obj.application.is_prepared is None and hasattr(val,'is_prepared') and val.is_prepared is not None and val.is_prepared is not True:
                 from Ganga.Core.GangaRepository import getRegistry
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
                 logger.debug("Increasing shareref")
