@@ -38,9 +38,10 @@ class IPrepareApp(IApplication):
 #            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
 #            return 1
 
+
     def _auto__init__(self, unprepare=None):
         if unprepare is True:
-            self.unprepare()
+            self.is_prepared=None
 
 
     def prepare(self, force=False):
@@ -57,7 +58,12 @@ class IPrepareApp(IApplication):
         Revert an application back to the exact state it was in prior to being\
         prepared.
         """
-        pass
+        if self.is_prepared is True:
+            self.is_prepared = None
+        elif self.is_prepared is not None:
+            self.decrementShareCounter(self.is_prepared.name)
+            self.is_prepared = None
+
 
     def copyPreparables(self):
         """
