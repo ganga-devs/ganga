@@ -150,6 +150,7 @@ class LHCbAnalysisTransform(Transform):
         latest_dataset=self.query.getDataset()
         self.toProcess_dataset.files = latest_dataset.files
 
+
         ## Compare to previous inputdata, get new and removed
         logger.info('Checking for new and removed data, please wait...')
         dead_data = LHCbDataset()
@@ -339,20 +340,19 @@ class LHCbAnalysisTransform(Transform):
             return partition_jobs[0]
         ## Need registry access here might be better to get registry directly
         ## as in prepared stuff, see Executable for example or even tasksregistry.py!
-        return GPI.jobs(int(partition_jobs[0].fqid.split('.')[0]))
+        return GPI.jobs(partition_jobs[0].fqid.split('.')[0])
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _mergeTransformOutput(self):
         """Merge the output from a transforms jobs."""
-        outputdir = config['gangadir']+'/workspace/'+config['user']+'/'+config['repositorytype']+'/Tasks/'+str(self.task_id)+'/'+str(self.transform_id)
+        outputdir = os.path.join(config['gangadir'],'workspace',config['user'],config['repositorytype'],'Tasks',str(self.task_id),str(self.transform_id))
         try:
-            if os.path.exists(outputdir) == False:
+            if not os.path.exists(outputdir):
                os.makedirs(outputdir)
             self.merger.merge(self.getJobs(),outputdir)
-        except Exception,x:
-            print x
+        except Exception, x:
             logger.error('There was a problem merging the output from all partitions.')
-
+            print x
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     ## Once partition finished, if in state 'partition_status' then resubmit
