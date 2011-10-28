@@ -330,6 +330,7 @@ class TestAthenaMC_evgen(AtlasTest):
         j.application.atlas_release = '16.6.7.13'
       	j.application.transform_script = 'Generate_trf.py'
         j.application.extraArgs = 'ecmEnergy=7000 evgenJobOpts=MC11JobOpts-00-00-87_v0.tar.gz runNumber=128501 firstEvent=1 randomSeed=1 outputEVNTFile=$outEvgen jobConfig=MC11.128501.PythiaDYmumu_Mll7to60_Pt15Pt8.py'
+        j.application.production_name='test-%s' % today
         j.application.number_events_job = 30
         j.outputdata = AthenaMCOutputDatasets()
 	j.outputdata.outrootfiles['Evgen']='test-%s.EVNT'
