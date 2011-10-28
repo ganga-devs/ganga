@@ -21,14 +21,19 @@ class DiracCommands:
     def peek(id): return DiracCommands.dirac.peek(id)
     peek = staticmethod(peek)
 
-    def getOutputSandbox(id,tmpdir,dir):    
+    def getOutputSandbox(id,tmpdir,dir,ZipLogs):    
         result = DiracCommands.dirac.getOutputSandbox(id,outputDir=tmpdir)
         files = []
         if result is not None and result.get('OK',False):
             outdir = os.path.join(tmpdir,str(id))
+            ganga_logs = glob.glob('%s/*_Ganga_*.log' % outdir)
+            if ZipLogs == 'True':
+                for log in ganga_logs:
+                    os.system('gzip %s' % (log))
             os.system('mv -f %s/* %s/.' % (outdir,dir))
             os.system('rmdir %s' % outdir)
             ganga_logs = glob.glob('%s/*_Ganga_*.log' % dir)
+
             if ganga_logs:
                 os.system('ln -s %s %s/stdout' % (ganga_logs[0],dir))
         return result

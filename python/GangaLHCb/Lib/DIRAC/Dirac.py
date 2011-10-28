@@ -109,6 +109,16 @@ class Dirac(IBackend):
         j = self.getJobObject()
         return os.path.join(j.getInputWorkspace().getPath(),'dirac-script.py')
 
+    def _CompressOutput(self):
+        j = self.getJobObject()
+        ppfile = os.path.join(j.inputdir,'__postprocessoutput__')
+        ZipLogs=False
+        if os.path.exists(ppfile):
+          for line in open(ppfile).readlines():
+             if line.find('zipped alllogs') == 0:
+                  ZipLogs=True
+        return ZipLogs
+
     def _submit(self):
         '''Submit the job via the Dirac server.'''
         self.id = None
@@ -223,16 +233,18 @@ class Dirac(IBackend):
         global dirac_ganga_server
         return self._getOutputSandbox(dirac_ganga_server,dir)
 
+
     def _getOutputSandbox(self,server,dir=None):
         j = self.getJobObject()
+        ZipLogs=self._CompressOutput()
         if dir is None: dir = j.getOutputWorkspace().getPath()
         tmpdir = j.getDebugWorkspace().getPath()
         if os.path.exists("%s/%d" % (tmpdir,self.id)):
             os.system('rm -f %s/%d/*' % (tmpdir,self.id))
             os.system('rmdir --ignore-fail-on-non-empty %s/%d' \
                       % (tmpdir,self.id))
-        dirac_cmd = 'result = DiracCommands.getOutputSandbox(%d,"%s","%s")' \
-                    % (self.id,tmpdir,dir)
+        dirac_cmd = 'result = DiracCommands.getOutputSandbox(%d,"%s","%s","%s")' \
+                    % (self.id,tmpdir,dir,ZipLogs)
         result = server.execute(dirac_cmd)
         if not result_ok(result):
             msg = 'Problem retrieving output: %s' % str(result)
