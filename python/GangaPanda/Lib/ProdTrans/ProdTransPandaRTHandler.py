@@ -130,7 +130,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 ifspec.prodDBlock = jspec.prodDBlock
                 ifspec.type = 'input'
                 jspec.addFile(ifspec)
-            if not app.input_type:
+            if app.input_type:
                 itype = app.input_type
             else:
                 itype = m.group(5)
