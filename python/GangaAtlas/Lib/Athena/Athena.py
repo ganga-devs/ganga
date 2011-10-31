@@ -1068,7 +1068,7 @@ class Athena(IPrepareApp):
             pandaRootCoreWorkDirName = '__panda_rootCoreWorkDir'
             rootCoreDestWorkDir = currentDir + '/' + pandaRootCoreWorkDirName
             # add all files to extFile
-            AthenaUtils.extFile.append(pandaRootCoreWorkDirName + '/.*')
+            #AthenaUtils.extFile.append(pandaRootCoreWorkDirName + '/.*')
             self.append_to_user_area+=[pandaRootCoreWorkDirName + '/.*']
             # add to be deleted on exit
             ###delFilesOnExit.append(rootCoreDestWorkDir)
