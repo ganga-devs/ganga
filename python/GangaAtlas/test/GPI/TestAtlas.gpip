@@ -77,6 +77,7 @@ class TestAnaTaskBasic(ICheckTest):
         return True
     def checkTest(self):
         t = AnaTask()
+        t.analysis.application.is_prepared=True
         t.analysis.application.atlas_release=release
         t.analysis.application.max_events=10
         t.analysis.files_per_job = 1
@@ -141,12 +142,13 @@ class TestAnaTask(TestTask):
         self.joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
         self.archivefile = '%s/EmptyUserArea.tar.gz' % self.tmpdir
         t = AnaTask()
+        t.analysis.application.is_prepared=True
         t.analysis.application.atlas_release=release
         t.analysis.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
         t.analysis.application.option_file=[ self.joboption ]
         t.analysis.application.user_area = self.archivefile
         t.analysis.application.max_events=10
-        t.analysis.application.atlas_run_config= {'input': {}, 'other': {}, 'output': {'alloutputs': ['AnalysisSkeleton.aan.root'], 'outAANT': [('AANTupleStream', 'AANT')]}} 
+        t.analysis.application.atlas_run_config= {'input': {}, 'other': {}, 'output': {'alloutputs': ['AnalysisSkeleton.aan.root'], 'outAANT': [('AANTupleStream', 'AANT', 'AnalysisSkeleton.aan.root')]}} 
         t.analysis.files_per_job = 1
         t.analysis.inputdata.dataset = datasetana
         t.analysis.outputdata=DQ2OutputDataset()
@@ -188,6 +190,7 @@ class TestAthena(AtlasTest):
         joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
         j = Job()
         j.application=Athena()
+        j.application.is_prepared=True
         j.application.atlas_release=release
         j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
         j.application.atlas_run_dir = '.' 
@@ -256,6 +259,7 @@ class TestAthenaLCG(AtlasTest):
         joboption = '%s/HelloWorldOptions.py' % self.tmpdir
         j = Job()
         j.application=Athena()
+        j.application.is_prepared=True
         j.application.option_file=[ joboption ]
         j.application.atlas_release=release
         j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
@@ -270,6 +274,7 @@ class TestAthenaPanda(AtlasTest):
         self.archivefile = '%s/EmptyUserArea.tar.gz' % self.tmpdir
         j = Job()
         j.application=Athena()
+        j.application.is_prepared=True
         j.application.option_file=[ joboption ]
         j.application.atlas_release=release
         j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
@@ -279,7 +284,7 @@ class TestAthenaPanda(AtlasTest):
         j.application.user_area = self.archivefile
         j.outputdata=DQ2OutputDataset()
         j.backend=Panda()
-        j.backend.site='ANALY_LRZ'
+        #j.backend.site='ANALY_LRZ'
         assert (j.submit()==True)
         self.j = j
 
@@ -288,6 +293,7 @@ class TestAthenaLocal(AtlasTest):
         joboption = '%s/HelloWorldOptions.py' % self.tmpdir
         j = Job()
         j.application=Athena()
+        j.application.is_prepared=True
         j.application.option_file=[ joboption ]
         j.application.atlas_release=release
         j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
@@ -324,6 +330,7 @@ class TestAthenaMC_evgen(AtlasTest):
         j.application.atlas_release = '16.6.7.13'
         j.application.transform_script = 'Generate_trf.py'
         j.application.extraArgs = 'ecmEnergy=7000 evgenJobOpts=MC11JobOpts-00-00-87_v0.tar.gz runNumber=128501 firstEvent=1 randomSeed=1 outputEVNTFile=$outEvgen jobConfig=MC11.128501.PythiaDYmumu_Mll7to60_Pt15Pt8.py'
+        j.application.production_name='test-%s' % today
         j.application.number_events_job = 30
         j.outputdata = AthenaMCOutputDatasets()
         j.outputdata.outrootfiles['Evgen']='test-%s.EVNT'
