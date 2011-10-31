@@ -59,3 +59,73 @@ def killDiracServer():
     return Dirac.killServer()
 
 exportToGPI('killDiracServer',killDiracServer,'Functions')    
+
+def fixBKQueryInBox(newCategory='query'):
+    import os
+    from Ganga.Utility.Config import getConfig
+
+    def _filt(line):
+        return 'class name=\"BKQuery\"' in line
+
+    gangadir = getConfig('Configuration')['gangadir']
+    print 'found gangadir =',gangadir
+    for root, dirs, files in os.walk(gangadir):
+        if 'data' in files and 'box' in root and not 'box.' in root:
+            path = os.path.join(root,'data')
+            print "looking at",path
+            f1 = file(path,'r')
+            f2 = file(path+'~','r')
+            lines1 = f1.readlines()
+            lines2 = f2.readlines()
+            line1 = filter(_filt, lines1)
+            line2 = filter(_filt, lines2)
+            f1.close()
+            f2.close()
+
+            newline =  ' <class name=\"BKQuery\" version=\"1.2\" category=\"%s\">\n'%newCategory
+            if len(line1) is 1:
+                lines1[lines1.index(line1[0])] = newline
+                print 'backing up old settings...'
+                os.system('cp %s %sX; mv %s~ %s~X'%(path,path,path,path))
+                f1=file(path,'w')
+                f2=file(path+'~','w')
+                for l in lines1:
+                    f1.write(l)
+                    f2.write(l)
+                f1.close()
+                f2.close()
+                p = os.path.join(root[:-2],root.split('/')[-1]+'.index')
+                #print "path to delete =",p
+                os.system('rm -f %s'%p)
+            elif len(line2) is 1:
+                lines2[lines2.index(line2[0])] = newline
+                print 'backing up old settings...'
+                os.system('cp %s %sX; mv %s~ %s~X'%(path,path,path,path))
+                f1=file(path,'w')
+                f2=file(path+'~','w')
+                for l in lines2:
+                    f1.write(l)
+                    f2.write(l)
+                f1.close()
+                f2.close()
+                p = os.path.join(root[:-2],root.split('/')[-1]+'.index')
+                #print "path to delete =",p
+                os.system('rm -f %s'%p)
+    print "box repository converted!\n"
+    print "PLEASE NOW QUIT THIS GANGA SESSION AND RESTART TO SEE EFFECTS."
+
+exportToGPI('fixBKQueryInBox',fixBKQueryInBox,'Functions')
+
+def restoreOLDBox():
+    gangadir = getConfig('Configuration')['gangadir']
+    print 'found gangadir =',gangadir
+    for root, dirs, files in os.walk(gangadir):
+        if 'dataX' in files and 'box' in root and not 'box.' in root:
+            path = os.path.join(root,'data')
+            print "restoring old BKQuery box file..."
+            os.system('mv %sX %s; mv %s~X %s~'%(path,path,path,path))
+            
+    print "box repository converted!\n"
+    print "PLEASE NOW QUIT THIS GANGA SESSION AND RESTART TO SEE EFFECTS."
+
+exportToGPI('restoreOLDBox',restoreOLDBox,'Functions')

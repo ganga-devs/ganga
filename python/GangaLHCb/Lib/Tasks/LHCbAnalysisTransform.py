@@ -345,15 +345,14 @@ class LHCbAnalysisTransform(Transform):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _mergeTransformOutput(self):
         """Merge the output from a transforms jobs."""
-        outputdir = config['gangadir']+'/workspace/'+config['user']+'/'+config['repositorytype']+'/Tasks/'+str(self.task_id)+'/'+str(self.transform_id)
+        outputdir = os.path.join(config['gangadir'],'workspace',config['user'],config['repositorytype'],'Tasks',str(self.task_id),str(self.transform_id))
         try:
-            if os.path.exists(outputdir) == False:
+            if not os.path.exists(outputdir):
                os.makedirs(outputdir)
             self.merger.merge(self.getJobs(),outputdir)
-        except Exception,x:
-            print x
+        except Exception, x:
             logger.error('There was a problem merging the output from all partitions.')
-
+            print x
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     ## Once partition finished, if in state 'partition_status' then resubmit
