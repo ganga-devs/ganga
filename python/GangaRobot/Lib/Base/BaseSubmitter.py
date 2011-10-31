@@ -77,6 +77,7 @@ class BaseSubmitter(IAction):
         e.g.
         def handlesubmit(self, jobids, runid):
             j = Job()
+            j.application.is_prepared = True
             j.submit()
             jobids.append(j.id)
 

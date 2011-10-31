@@ -651,9 +651,11 @@ if opt.outputsandbox:
 
 # Remove default DBRelease='LATEST' if no splitter or AthenaSplitterJob is used
 if not j.splitter:
-    j.application.atlas_dbrelease=''
+    #j.application.atlas_dbrelease=''
+    pass
 if j.splitter and j.splitter.__class__.__name__=='AthenaSplitterJob':
-    j.application.atlas_dbrelease=''
+    #j.application.atlas_dbrelease=''
+    pass
 
 #print j
 

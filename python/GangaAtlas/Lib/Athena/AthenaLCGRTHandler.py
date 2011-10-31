@@ -476,6 +476,12 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     raise ApplicationConfigurationError(None,printout )
 
 
+        #this next for loop instructs ganga to use option_files that live in the appropriate shared directory (the job
+        #will already have been prepared
+        #(if is_prepared is True, then we've most likely submitted a job via GangaRobot. We know what we're doing.
+        if app.is_prepared is not True:
+            for position in xrange(len(app.option_file)):
+                app.option_file[position]=File(os.path.join(app.is_prepared.name,os.path.basename(app.option_file[position].name)))
         # Expand Athena jobOptions
         if not app.atlas_exetype in ['EXE']:
             athena_options = ' '.join([os.path.basename(opt_file.name) for opt_file in app.option_file])
@@ -505,10 +511,16 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 _append_files(inputbox,'ganga-stagein.py')
             
         if app.user_area.name: 
+            #we will now use the user_area that's stored in the users shared directory
+            if app.is_prepared is not True:
+                app.user_area.name = os.path.join(app.is_prepared.name,os.path.basename(app.user_area.name))
             inputbox.append(File(app.user_area.name))
 
         #if app.group_area.name: inputbox += [ File(app.group_area.name) ]
         if app.group_area.name and str(app.group_area.name).find('http')<0:
+            #we will now use the group_area that's stored in the users shared directory
+            if app.is_prepared is not True:
+                app.group_area.name = os.path.join(app.is_prepared.name,os.path.basename(app.group_area.name))
             inputbox.append(File(app.group_area.name))
     
         if app.user_setupfile.name: inputbox.append(File(app.user_setupfile.name))

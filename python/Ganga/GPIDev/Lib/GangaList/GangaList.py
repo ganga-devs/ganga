@@ -208,8 +208,11 @@ class GangaList(GangaObject):
         return self._list.__gt__(self.strip_proxy_list(obj_list))
     
     def __hash__(self):
-        #will always throw an error
-        return self._list.__hash__()
+        result = 0
+        for element in self:
+            result ^= hash(element)
+        return result
+        #return self._list.__hash__()
        
     def __iadd__(self, obj_list):
         self._list.__iadd__(self.strip_proxy_list(obj_list, True))

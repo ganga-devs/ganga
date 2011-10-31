@@ -35,16 +35,18 @@ class BKTestQuery(BKQuery):
 
     def getDataset(self):
         if self.fulldataset is None:
-            self.fulldataset = super(BKTestQuery,self).getDataset()
+            self.fulldataset = LHCbDataset(super(BKTestQuery,self).getDataset().files)
         if self.dataset is None:
             self.dataset = LHCbDataset(self.fulldataset.files[:self.filesToRelease])
+            self.fulldatasetptr = self.filesToRelease
         else:
-            self.dataset.files += self.fulldataset.files[self.fulldatasetptr:fulldatasetptr+self.filesToRelease]
+            self.dataset.files += self.fulldataset.files[self.fulldatasetptr:self.fulldatasetptr+self.filesToRelease]
+            self.fulldatasetptr += self.filesToRelease
         return self.dataset
 
     def removeData(self):
         if len(self.dataset):
-            del self.dataset[0]
+            del self.dataset.files[0]
         
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

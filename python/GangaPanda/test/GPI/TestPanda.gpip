@@ -76,7 +76,6 @@ class TestAthenaPanda(PandaTest):
 
         j = Job()
         j.application=Athena()
-	j.application.is_prepared=True
         j.application.atlas_release=release
         j.application.option_file=[ joboption ]
         j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
@@ -106,7 +105,6 @@ class TestAthenaPandaNoSplit(PandaTest):
 
         j = Job()
         j.application=Athena()
-	j.application.is_prepared=True
         j.application.atlas_release=release
         j.application.option_file=[ joboption ]
         j.application.user_area=archivefile
@@ -131,7 +129,6 @@ class TestAthenaPandaMultiSite(PandaTest):
 
         j = Job()
         j.application=Athena()
-	j.application.is_prepared=True
         j.application.atlas_release=release
         j.application.option_file=[ joboption ]
         j.application.user_area=archivefile
@@ -156,7 +153,6 @@ class TestAthenaPandaIndOutDS(PandaTest):
 
         j = Job()
         j.application=Athena()
-	j.application.is_prepared=True
         j.application.atlas_release=release
         j.application.option_file=[ joboption ]
         j.application.user_area=archivefile
@@ -184,7 +180,6 @@ class TestEventPickingPanda(PandaTest):
 
         j = Job()
         j.application=Athena()
-	j.application.is_prepared=True
         j.application.atlas_release=release
         j.application.option_file=[ joboption ]
         j.application.user_area=archivefile
@@ -220,7 +215,6 @@ class TestARAPanda(PandaTest):
 
         j = Job()
         j.application=Athena()
-	j.application.is_prepared=True
         j.application.option_file=[ joboption ]
         j.application.atlas_release=release
         j.application.atlas_exetype='PYARA'
@@ -246,7 +240,6 @@ class TestAthenaPandaLibDS(PandaTest):
 
         j=Job()
         j.application=Athena()
-	j.application.is_prepared=True
         j.application.atlas_run_dir = './'
         j.application.atlas_run_config = {'input': {'noInput': True}, 'other': {}, 'output': {'alloutputs': []}} 
         j.application.atlas_release = release

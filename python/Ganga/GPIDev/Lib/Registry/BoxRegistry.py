@@ -1,5 +1,4 @@
-
-
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
@@ -100,6 +99,18 @@ class BoxRegistry(Registry):
             obj = makeGangaList(obj)
         if not isinstance(obj,GangaObject):
             raise BoxTypeError("The Box can only contain Ganga Objects (i.e. Applications, Datasets or Backends). Check that the object is first in box.add(obj,'name')")
+
+        if obj._category == 'jobs':
+            if hasattr(obj.application, 'is_prepared'):
+                if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
+                    logger.info('Adding a prepared job to the box and increasing the shareref counter')
+                    obj.application.incrementShareCounter(obj.application.is_prepared.name)
+        if obj._category == 'applications':
+            if hasattr(obj, 'is_prepared'):
+                if obj.is_prepared is not None and obj.is_prepared is not True:
+                    logger.info('Adding a prepared application to the box and increasing the shareref counter')
+                    obj.incrementShareCounter(obj.is_prepared.name)
+
         obj = obj.clone()
         nobj = BoxMetadataObject()
         nobj.name = name
@@ -117,7 +128,25 @@ class BoxRegistry(Registry):
         self._setName(self._get_obj(obj_id), name)
     
     def proxy_remove(self,obj_id):
+
+        if obj._category == 'jobs':
+            if hasattr(obj.application, 'is_prepared'):
+                if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
+                    logger.info('Removing a prepared job from the box and decreasing the shareref counter')
+                    obj.application.decrementShareCounter(obj.application.is_prepared.name)
+        if obj._category == 'applications':
+            if hasattr(obj, 'is_prepared'):
+                if obj.is_prepared is not None and obj.is_prepared is not True:
+                    logger.info('Removing a prepared application from the box and decreasing the shareref counter')
+                    obj.decrementShareCounter(obj.is_prepared.name)
+
+
+
+
         self._remove(self._get_obj(obj_id))
+
+
+
 
     def getProxy(self):
         slice = BoxRegistrySlice(self.name)

@@ -191,6 +191,9 @@ class PythonOptionsParser:
                     if sbtypes.count(type) > 0: outsandbox.append(file)
                     else: outputdata.append(file)
 
+##         print "ALEX CHECK THESE"
+##         print outsandbox
+##         print outputdata
         return outsandbox, outputdata
 
     def get_output(self, job):

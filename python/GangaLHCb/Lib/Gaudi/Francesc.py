@@ -5,6 +5,7 @@ import tempfile
 import gzip
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Adapters.IApplication import IApplication
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import CMTscript
 from GangaLHCb.Lib.Gaudi.CMTscript import parse_master_package
 import Ganga.Utility.logging
@@ -15,6 +16,7 @@ from GaudiUtils import *
 from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
+#from GaudiAppConfig import *
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -23,28 +25,28 @@ logger = Ganga.Utility.logging.getLogger()
 def get_common_gaudi_schema():
     schema = {}
     docstr = 'The version of the application (like "v19r2")'
-    schema['version'] = SimpleItem(defvalue=None,
+    schema['version'] = SimpleItem(preparable=1,defvalue=None,
                                    typelist=['str','type(None)'],doc=docstr)
     docstr = 'The platform the application is configured for (e.g. ' \
              '"slc4_ia32_gcc34")'
-    schema['platform'] = SimpleItem(defvalue=None,
+    schema['platform'] = SimpleItem(preparable=1,defvalue=None,
                                     typelist=['str','type(None)'],doc=docstr)
     docstr = 'The package the application belongs to (e.g. "Sim", "Phys")'
-    schema['package'] = SimpleItem(defvalue=None,
+    schema['package'] = SimpleItem(preparable=1,defvalue=None,
                                    typelist=['str','type(None)'],doc=docstr)
     docstr = 'The user path to be used. After assigning this'  \
              ' you can do j.application.getpack(\'Phys DaVinci v19r2\') to'  \
              ' check out into the new location. This variable is used to '  \
              'identify private user DLLs by parsing the output of "cmt '  \
              'show projects".'
-    schema['user_release_area'] = SimpleItem(defvalue=None,
+    schema['user_release_area'] = SimpleItem(preparable=1,defvalue=None,
                                              typelist=['str','type(None)'],
                                              doc=docstr)
     docstr = 'The package where your top level requirements file is read '  \
              'from. Can be written either as a path '  \
              '\"Tutorial/Analysis/v6r0\" or in a CMT style notation '  \
              '\"Analysis v6r0 Tutorial\"'
-    schema['masterpackage'] = SimpleItem(defvalue=None,
+    schema['masterpackage'] = SimpleItem(preparable=1,defvalue=None,
                                          typelist=['str','type(None)'],
                                          doc=docstr)
     docstr = 'Extra options to be passed onto the SetupProject command '  \
@@ -52,14 +54,14 @@ def get_common_gaudi_schema():
              'setting it to \'--dev\' will give access to the DEV area. '  \
              'For full documentation of the available options see '  \
              'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
-    schema['setupProjectOptions'] = SimpleItem(defvalue='',
+    schema['setupProjectOptions'] = SimpleItem(preparable=1,defvalue='',
                                                typelist=['str','type(None)'],
                                                doc=docstr)
     return schema
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-class Francesc(IApplication):
+class Francesc(IPrepareApp):
     '''Parent for all Gaudi and GaudiPython applications, should not be used
     directly.'''    
     _name = 'Francesc'
@@ -75,7 +77,8 @@ class Francesc(IApplication):
             appname = self.project
         return appname
 
-    def _init(self,gaudi_app,set_ura):        
+    def _init(self,gaudi_app,set_ura):
+        self.extra = GaudiExtras()
         if (not self.version): self.version = guess_version(gaudi_app)
         if (not self.platform): self.platform = get_user_platform()
         if (not self.package): self.package = available_packs(gaudi_app)
@@ -85,6 +88,7 @@ class Francesc(IApplication):
             if expanded == "$User_release_area": self.user_release_area = ""
             else:
                 self.user_release_area = expanded.split(os.pathsep)[0]
+        #self.appconfig = GaudiAppConfig()
 
     def _check_gaudi_inputs(self,optsfiles,appname):
         """Checks the validity of some of user's entries."""
@@ -200,14 +204,10 @@ class Francesc(IApplication):
         command = '###CMT### ' + command
         CMTscript.CMTscript(self,command)
 
-    def _master_configure(self):
-        '''Handles all common master_configure actions.'''
-        self.extra = GaudiExtras()
+    def _prepare(self):
+        #self.extra = GaudiExtras()
         self._getshell()
-        
-        job=self.getJobObject()                
-        if job.inputdata: self.extra.inputdata = job.inputdata
-        if job.outputdata: self.extra.outputdata = job.outputdata
+        send_to_share=[]
                         
         if not self.user_release_area: return
 
@@ -215,21 +215,33 @@ class Francesc(IApplication):
         dlls, pys, subpys = get_user_dlls(appname, self.version,
                                           self.user_release_area,self.platform,
                                           self.shell)
-
-        self.extra.master_input_files += [File(f,subdir='lib') for f in dlls]
+        #self.appconfig.inputsandbox += [File(f,subdir='lib') for f in dlls]
+        send_to_share += [File(f,subdir='lib') for f in dlls]
         for f in pys:
             tmp = f.split('InstallArea')[-1]
             subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
-            self.extra.master_input_files.append(File(f,subdir=subdir))
+            send_to_share.append(File(f,subdir=subdir))
         for dir, files in subpys.iteritems():
             for f in files:
                 tmp = f.split('InstallArea')[-1]
                 subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
-                self.extra.master_input_files.append(File(f,subdir=subdir))
+                send_to_share.append(File(f,subdir=subdir))
+
+        return send_to_share
+
+    def _master_configure(self):
+        '''Handles all common master_configure actions.'''
+        pass
+        ## job=self.getJobObject()                
+##         if job.inputdata: self.appconfig.inputdata = job.inputdata
+##         if job.outputdata: self.appconfig.outputdata = job.outputdata
 
     def _configure(self):
-        data_str = self.extra.inputdata.optionsString()
-        self.extra.input_buffers['data.py'] += data_str
+        pass
+        # return self.appconfig.inputdata.optionsString()
+
+
+
 
     #def postprocess(self):
         #from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate

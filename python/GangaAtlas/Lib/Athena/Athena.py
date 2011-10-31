@@ -19,10 +19,14 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.files import expandfilename
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaAtlas.Lib.ATLASDataset import filecheck
 
 from Ganga.Lib.Mergers.Merger import *
+from Ganga.Core.GangaRepository import getRegistry
+from Ganga.GPIDev.Lib.File import ShareDir, File
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 from pandatools import AthenaUtils
 
@@ -299,7 +303,7 @@ class AthenaOutputDataset(GangaObject):
     def __init__(self):
         super(AthenaOutputDataset,self).__init__()
       
-class Athena(IApplication):
+class Athena(IPrepareApp):
     """The main Athena Job Handler"""
 
     _schema = Schema(Version(2,3), {
@@ -315,18 +319,18 @@ class Athena(IApplication):
                  'atlas_supp_stream'      : SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='suppress some output streams. e.g., [\'ESD\',\'TAG\']'),
                  'atlas_use_AIDA'         : SimpleItem(defvalue=False, doc='use AIDA'),
                  'trf_parameter'          : SimpleItem(defvalue={},typelist=["dict","str"], doc='Parameters for transformations'),
-                 'user_area'              : FileItem(doc='A tar file of the user area'),
+                 'user_area'              : FileItem(preparable=1, doc='A tar file of the user area'),
                  'user_area_path'         : SimpleItem(defvalue='', doc='Path where user_area tarfile is created'),
                  'athena_compile'         : SimpleItem(defvalue=False, doc='Switch if user code should be compiled remotely'),
                  'useAthenaPackages'      : SimpleItem(defvalue=False, doc='Switch to add AthenaPackages to tarball if Athena.exetype=EXE is used. Also used to enable cmt setup of athena packages for Panda when exetype is PYARA.'),
-                 'group_area'             : FileItem(doc='A tar file of the group area'),
+                 'group_area'             : FileItem(preparable=1, doc='A tar file of the group area'),
                  'max_events'             : SimpleItem(defvalue=-999, typelist=['int'], doc='Maximum number of events'),
                  'skip_events'            : SimpleItem(defvalue=0, typelist=['int'], doc='Number of events to skip'),
                  'run_event'              : SimpleItem(defvalue=[], typelist=['list'], doc='Run event list'),
                  'run_event_file'         : SimpleItem(defvalue='', doc='Name of the file containing run/event list for Panda backend'),
-                 'option_file'            : FileItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
+                 'option_file'            : FileItem(defvalue = [], preparable=1,typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
                  'options'                : SimpleItem(defvalue='',doc='Additional Athena options'),
-                 'user_setupfile'         : FileItem(doc='User setup script for special setup'),
+                 'user_setupfile'         : FileItem(preparable=1, doc='User setup script for special setup'),
                  'exclude_from_user_area' : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Pattern of files to exclude from user area'),
                  'append_to_user_area'    : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Extra files to include in the user area'),
                  'exclude_package'        : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Packages to exclude from user area requirements file'),
@@ -334,13 +338,14 @@ class Athena(IApplication):
                  'collect_stats'          : SimpleItem(defvalue = False, doc='Switch to collect statistics info and store in stats field'),
                  'recex_type'             : SimpleItem(defvalue = '',doc='Set to RDO, ESD or AOD to enable RecExCommon type jobs of appropriate type'),
                  'glue_packages'          : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='list of glue packages which cannot be found due to empty i686-slc4-gcc34-opt. e.g., [\'External/AtlasHepMC\',\'External/Lhapdf\']'),
+                 'is_prepared'            : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool', 'str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
                  'useRootCore'            : SimpleItem(defvalue = False, doc='Use RootCore'),
                  'useRootCoreNoBuild'     : SimpleItem(defvalue = False, doc='Use RootCore with NoBuild'),
-              })
+                 })
                      
     _category = 'applications'
     _name = 'Athena'
-    _exportmethods = ['prepare_old', 'setup', 'postprocess', 'prepare']
+    _exportmethods = ['prepare_old', 'setup', 'postprocess', 'prepare', 'unprepare']
     
     _GUIPrefs = [ { 'attribute' : 'atlas_release',     'widget' : 'String' },
                   { 'attribute' : 'atlas_production',  'widget' : 'String' },
@@ -365,8 +370,9 @@ class Athena(IApplication):
                   { 'attribute' : 'recex_type',     'widget' : 'String' },  
                   { 'attribute' : 'glue_packages',   'widget' : 'String_List' }
                   ]
-    
-                  
+
+
+
     def read_cmt(self):
         """Get some relevant CMT settings"""
  
@@ -865,11 +871,14 @@ class Athena(IApplication):
         os.chdir(savedir)
         return extraFilesPath
 
-    def prepare(self, **options):
+    def prepare(self, force=False, **options):
         """Extract Athena job configuration and prepare job for submission"""
 
-        logger.debug('New prepare() method has been called. The old prepare method is called now prepare_old()')
+        if (self.is_prepared is not None) and (force is not True):
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
 
+        logger.info('Preparing %s application.'%(self._name))
+        logger.debug('New prepare() method has been called. The old prepare method is called now prepare_old()')
         opt_athena_compile = options.get('athena_compile')
         if opt_athena_compile:
             self.athena_compile = opt_athena_compile  
@@ -984,6 +993,7 @@ class Athena(IApplication):
         if not self.atlas_exetype in ['EXE']: 
             rc, runConfig = AthenaUtils.extractRunConfig(jobO, supStream, self.atlas_use_AIDA, shipInput, trf)
             self.atlas_run_config = runConfig
+            #self.atlas_run_config = {'input': {}, 'other': {}, 'output': {'outAANT': [('AANTupleStream', 'AANT', 'AnalysisSkeleton.aan.root')], 'alloutputs': ['AnalysisSkeleton.aan.root']}}
             logger.info('Detected Athena run configuration: %s',self.atlas_run_config)
             if not rc:
                 raise ApplicationConfigurationError(None, 'Error in AthenaUtils.extractRunConfig - could not extract Athena configuration!')
@@ -1075,7 +1085,6 @@ class Athena(IApplication):
 
         # archive sources
         verbose = False
-
         if self.atlas_exetype in ['EXE'] and not self.athena_compile:
             maxFileSize = config['EXE_MAXFILESIZE']
             archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose )
@@ -1115,7 +1124,20 @@ class Athena(IApplication):
             logger.info('Removing temporary RootCore submission directory %s ...', rootCoreDestWorkDir)
             out = commands.getoutput('rm -rf ' + rootCoreDestWorkDir)
 
-        return
+       
+        self.is_prepared = ShareDir()
+        logger.info('Created shared directory: %s'%(self.is_prepared.name))
+
+        send_to_sharedir = self.copyPreparables()
+
+        #get hold of the metadata object for storing shared directory reference counts
+        #we now inherit this from the IPrepareApp class
+        self.checkPreparedHasParent(self)
+
+        #return [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
+        #return [ filename for filename in  send_to_sharedir ]
+        return 1
+
 
     def prepare_old(self, athena_compile=True, NG=False, **options):
         """Prepare the job from the user area"""

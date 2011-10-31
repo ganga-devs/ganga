@@ -13,6 +13,7 @@ configLHCb = Ganga.Utility.Config.getConfig('LHCb')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+
 def available_apps():
   return ["Gauss", "Boole", "Brunel", "DaVinci", "Moore", "Vetra",
           "Panoptes", "Gaudi","Erasmus"]

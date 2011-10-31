@@ -4,6 +4,8 @@
 # $Id: File.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ################################################################################
 
+import Ganga.Utility.Config
+config = Ganga.Utility.Config.getConfig('Configuration')
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 import os
@@ -16,7 +18,7 @@ class File(GangaObject):
     Typically in the context of job submission, the files are copied to the directory where the application
     runs on the worker node. The 'subdir' attribute influances the destination directory. The 'subdir' feature
     is not universally supported however and needs a review.
-    
+
     """
     _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='path to the file source'),
                                     'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)'),
@@ -40,6 +42,7 @@ class File(GangaObject):
 
         if not subdir is None:
             self.subdir = subdir
+
 
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
@@ -110,17 +113,98 @@ def string_file_shortcut(v,item):
         
 allComponentFilters['files'] = string_file_shortcut
 
-## JUNK -------------------------
-##         This is just a first idea and exact details how to implement such transparent access will be resolved later.
-##         For example path resolution levels could imply:
-##          - UNCHANGED_PATH = 0    # path 'a' is left as is
-##          - ABSOLUTE_PATH = 1     # path 'a' is turned into '$CWD/a'
-##          - UNIVERSAL_PATH = 2    # path 'a' is turned into 'protocol:$HOST:$CWD/a'
-##         At GPI Level files are also represented in this way. Special filter implements the string shortcut:
-##         object.file = 'x' is equivalent to object.file = File('x')
-## JUNK -------------------------
 
 
+class ShareDir(GangaObject):
+    """Represents the directory used to store resources that are shared amongst multiple Ganga objects.
+
+    Currently this is only used in the context of the prepare() method for certain applications, such as
+    the Executable() application. A single ("prepared") application can be associated to multiple jobs.
+
+    """
+    _schema = Schema(Version(1,0), {'name': SimpleItem(defvalue='',doc='path to the file source'),
+                                    'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)')})
+    _category = 'shareddirs'
+    _name = "ShareDir"
+    _shared_path = os.path.join(expandfilename(config['gangadir']),'shared',config['user'])
+    def _readonly(self):
+        return True
+
+    def __init__(self,name=None,subdir=os.curdir):
+        super(ShareDir, self).__init__()
+        self._setRegistry(None)
+
+        if not name is None:
+            self.name = name
+        else:
+            shared_path = os.path.join(expandfilename(config['gangadir']),'shared',config['user'])
+            if not os.access(shared_path, os.F_OK):
+                os.makedirs(shared_path)
+            #continue generating directory names until we create a unique one (which will likely be on the first attempt).
+            while True:
+                name = shared_path + '/conf-' + Ganga.Utility.guid.uuid() 
+                if not os.path.isdir(os.path.join(shared_path,name)):
+                    os.makedirs(os.path.join(shared_path, name))
+                    break
+            self.name=str(name)
+
+#    def __construct__(self,args):
+#        if len(args) == 1 and type(args[0]) == type(''):
+#            v = args[0]
+#            import os.path
+#            expanded = expandfilename(v)
+#            if not urlprefix.match(expanded): # if it is not already an absolute filename
+#                self.name = os.path.abspath(expanded)
+#            else: #bugfix #20545 
+#                self.name = expanded
+#        else:
+#            super(ShareDir,self).__construct__(args)
+        
+    def exists(self):
+        """check if the file exists (as specified by 'name')"""
+        import os.path
+        return os.path.isdir(expandfilename(self.name))
+        
+    def create(self,outname):
+        """create a file in  a local filesystem as 'outname', maintain
+        the original permissions """
+        import shutil
+
+        shutil.copy(expandfilename(self.name),outname)
+        if self.executable:
+            chmod_executable(outname)
+            
+    def __repr__(self):
+        """Get   the  representation   of  the   file.  Since   the  a
+        SimpleStreamer uses  __repr__ for persistency  it is important
+        to return  a valid python expression  which fully reconstructs
+        the object.  """
+
+        return "ShareDir(name='%s',subdir='%s')"%(self.name,self.subdir)
+
+    def isExecutable(self):
+        """  return true  if  a file  is  create()'ed with  executable
+        permissions,  i.e. the  permissions of  the  existing 'source'
+        file are checked"""
+        return self.executable or is_executable(expandfilename(self.name))
+
+import Ganga.Utility.Config
+Ganga.Utility.Config.config_scope['ShareDir'] = ShareDir
+
+from Ganga.GPIDev.Base.Filters import allComponentFilters
+
+import re
+#regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
+urlprefix=re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
+
+def string_sharedfile_shortcut(v,item):
+    if type(v) is type(''):
+        # use proxy class to enable all user conversions on the value itself
+        # but return the implementation object (not proxy)
+        return ShareDir._proxyClass(v)._impl
+    return None 
+        
+allComponentFilters['shareddirs'] = string_sharedfile_shortcut
 #
 #
 # $Log: not supported by cvs2svn $

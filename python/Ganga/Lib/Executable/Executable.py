@@ -5,14 +5,22 @@
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import *
+#from Ganga.GPIDev.Lib.File import File
+#from Ganga.GPIDev.Lib.File import SharedDir
+from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.Core import ApplicationConfigurationError
 
-class Executable(IApplication):
+import os, shutil
+
+class Executable(IPrepareApp):
     """
     Executable application -- running arbitrary programs.
     
@@ -39,12 +47,14 @@ class Executable(IApplication):
     
     """
     _schema = Schema(Version(2,0), {
-        'exe' : SimpleItem(defvalue='echo',typelist=['str','Ganga.GPIDev.Lib.File.File.File'],doc='A path (string) or a File object specifying an executable.'), 
+        'exe' : SimpleItem(preparable=1,defvalue='echo',typelist=['str','Ganga.GPIDev.Lib.File.File.File'],comparable=1,doc='A path (string) or a File object specifying an executable.'), 
         'args' : SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File.File','int'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
-        'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment')
+        'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
         } )
     _category = 'applications'
     _name = 'Executable'
+    _exportmethods = ['prepare','unprepare']
     _GUIPrefs = [ { 'attribute' : 'exe', 'widget' : 'File' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'env', 'widget' : 'DictOfString' } ]
@@ -55,7 +65,50 @@ class Executable(IApplication):
 
     def __init__(self):
         super(Executable,self).__init__()
+
+    def prepare(self,force=False):
+        """
+        A method to place the Executable application into a prepared state.
+
+        The application wil have a Shared Directory object created for it. 
+        If the application's 'exe' attribute references a File() object or
+        is a string equivalent to the absolute path of a file, the file 
+        will be copied into the Shared Directory.
+
+        Otherwise, it is assumed that the 'exe' attribute is referencing a 
+        file available in the user's path (as per the default "echo Hello World"
+        example). In this case, a wrapper script which calls this same command 
+        is created and placed into the Shared Directory.
+
+        When the application is submitted for execution, it is the contents of the
+        Shared Directory that are shipped to the execution backend. 
+
+        The Shared Directory contents can be queried with 
+        shareref.ls('directory_name')
         
+        See help(shareref) for further information.
+        """
+
+        if (self.is_prepared is not None) and (force is not True):
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
+
+
+        #lets use the same criteria as the configure() method for checking file existence & sanity
+        #this will bail us out of prepare if there's somthing odd with the job config - like the executable
+        #file is unspecified, has a space or is a relative path
+        self.configure(self)
+        logger.info('Preparing %s application.'%(self._name))
+        self.is_prepared = ShareDir()
+        logger.info('Created shared directory: %s'%(self.is_prepared.name))
+
+        #copy any 'preparable' objects into the shared directory
+        send_to_sharedir = self.copyPreparables()
+        #add the newly created shared directory into the metadata system if the app is associated with a persisted object
+        self.checkPreparedHasParent(self)
+        #return [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
+        return 1
+
+
     def configure(self,masterappconfig):
         from Ganga.Core import ApplicationConfigurationError
         import os.path
@@ -74,9 +127,11 @@ class Executable(IApplication):
                     dirn,filen = os.path.split(x)
                     if not filen:
                         raise ApplicationConfigurationError(None,'exe "%s" is a directory'%x)
-                    if dirn and not os.path.isabs(dirn):
+                    if dirn and not os.path.isabs(dirn) and self.is_prepared is None:
                         raise ApplicationConfigurationError(None,'exe "%s" is a relative path'%x)
-
+                    if not os.path.basename(x) == x:
+                        if not os.path.isfile(x):
+                            raise ApplicationConfigurationError(None,'%s: file not found'%x)
 
             else:
               try:
@@ -123,10 +178,20 @@ class RTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
+        if app.is_prepared is not None:
+            if type(app.exe) is str:
+                #we have a file. is it an absolute path?
+                if os.path.abspath(app.exe) == app.exe:
+                    logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
+                    app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+                #else assume it's a system binary, so we don't need to transport anything to the sharedir
+                else:
+                    pass
+            elif type(app.exe) is File:
+                logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
+                app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(app.exe.name)))
+
         c = StandardJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
-
-        #c.monitoring_svc = mc['Executable']
-
         return c
         
 
@@ -149,11 +214,37 @@ class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.Lib.LCG import LCGJobConfig
 
+        if app.is_prepared is not None:
+            if type(app.exe) is str:
+                #we have a file. is it an absolute path?
+                if os.path.abspath(app.exe) == app.exe:
+                    logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
+                    app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+                #else assume it's a system binary, so we don't need to transport anything to the sharedir
+                else:
+                    pass
+            elif type(app.exe) is File:
+                logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
+                app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+
         return LCGJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.Lib.gLite import gLiteJobConfig
+
+        if app.is_prepared is not None:
+            if type(app.exe) is str:
+                #we have a file. is it an absolute path?
+                if os.path.abspath(app.exe) == app.exe:
+                    logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
+                    app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+                #else assume it's a system binary, so we don't need to transport anything to the sharedir
+                else:
+                    pass
+            elif type(app.exe) is File:
+                logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
+                app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
 
         return gLiteJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
@@ -172,133 +263,3 @@ allHandlers.add('Executable','Cronus', RTHandler)
 allHandlers.add('Executable','Remote', LCGRTHandler)
 allHandlers.add('Executable','CREAM', LCGRTHandler)
 
-#
-#
-# $Log: not supported by cvs2svn $
-# Revision 1.29.24.6  2008/06/24 15:10:57  moscicki
-# added Remote
-#
-# Revision 1.29.24.5  2007/12/18 16:40:03  moscicki
-# removed unneccessary 'list' from the typelist
-#
-# Revision 1.29.24.4  2007/12/18 09:07:42  moscicki
-# integrated typesystem from Alvin
-#
-# Revision 1.29.24.3  2007/12/10 17:51:22  amuraru
-# merged changes from Ganga 4.4.4
-#
-# Revision 1.29.24.2  2007/10/12 14:41:49  moscicki
-# merged from disabled jobs[] syntax and test migration
-#
-# Revision 1.29.24.1  2007/10/12 13:56:25  moscicki
-# merged with the new configuration subsystem
-#
-# Revision 1.29.26.1  2007/09/25 09:45:12  moscicki
-# merged from old config branch
-#
-# Revision 1.29.6.1  2007/06/18 07:44:55  moscicki
-# config prototype
-#
-# Revision 1.29.22.1  2007/09/26 08:42:44  amuraru
-# *** empty log message ***
-#
-# Revision 1.31  2007/09/26 08:39:17  amuraru
-# *** empty log message ***
-#
-# Revision 1.30  2007/09/25 15:16:45  amuraru
-# removed MonitoringServices configuration
-#
-# Revision 1.32  2007/10/22 11:52:57  amuraru
-# removed job[] syntax intended for 4.4.X series
-#
-#
-# Revision 1.30  2007/09/25 15:16:45  amuraru
-# removed MonitoringServices configuration
-#
-# Revision 1.29.22.1  2007/09/26 08:42:44  amuraru
-# *** empty log message ***
-#
-# Revision 1.31  2007/09/26 08:39:17  amuraru
-# *** empty log message ***
-#
-# Revision 1.30  2007/09/25 15:16:45  amuraru
-# removed MonitoringServices configuration
-#
-# Revision 1.29  2007/03/12 15:45:47  moscicki
-# cronus added
-#
-# Revision 1.28  2007/03/07 09:52:37  moscicki
-# Executable: args non-strict, i.e. a.args = 'abcd' => a.args = ['abcd']
-#
-# Revision 1.27  2007/02/15 10:20:04  moscicki
-# added SGE backend (merged from branch)
-#
-# Revision 1.26.2.1  2007/02/15 10:14:31  moscicki
-# added SGE to runtime handlers list
-#
-# Revision 1.26  2006/10/06 10:25:13  moscicki
-# removed DIRAC-Executable binding
-#
-# Revision 1.25  2006/08/24 16:50:19  moscicki
-# MonitoringServices added
-#
-# Revision 1.24  2006/08/03 10:28:16  moscicki
-# added Interactive
-#
-# Revision 1.23  2006/07/27 20:23:26  moscicki
-# moved default values to the schema
-# removed the explicit configuration unit
-#
-# Revision 1.22  2006/06/21 11:44:31  moscicki
-# moved ExeSplitter to Lib/Splitters
-#
-# Revision 1.21  2006/06/13 12:25:59  moscicki
-# make a entire copy of a master job for each subjob (instead of just copying the backend)
-#
-# Revision 1.20  2006/03/21 16:50:02  moscicki
-# added Condor
-#
-# Revision 1.19  2006/03/09 08:34:48  moscicki
-# - ExeSplitter fix (job copy)
-#
-# Revision 1.18  2006/02/10 14:28:16  moscicki
-# validation of arguments on configure (fixes:  bug #13685 overview: cryptic message if executable badly specified in LCG handler)
-#
-# Revision 1.17  2006/01/09 16:40:09  moscicki
-# Executable_default config: echo Hello World
-#
-# Revision 1.16  2005/12/02 15:36:43  moscicki
-# adapter to new base classes, added a simple splitter
-#
-# Revision 1.15  2005/11/25 12:59:37  moscicki
-# added runtime handler for TestSubmitter
-#
-# Revision 1.14  2005/11/23 13:39:19  moscicki
-# added PBS, removed obsolteted getRuntimeHandler() method
-#
-# Revision 1.13  2005/11/14 10:35:20  moscicki
-# GUI prefs
-#
-# Revision 1.12.2.3  2005/10/28 17:32:46  ctan
-# *** empty log message ***
-#
-# Revision 1.12.2.2  2005/10/27 15:04:03  ctan
-# *** empty log message ***
-#
-# Revision 1.12.2.1  2005/10/26 09:02:13  ctan
-# *** empty log message ***
-#
-# Revision 1.12  2005/09/21 12:41:26  andrew
-# Changes made to include a gLite handler.
-#
-# Revision 1.11  2005/09/02 12:49:13  liko
-# Include LCG Handler, extend application with environment
-#
-# Revision 1.10  2005/08/30 08:03:05  andrew
-# Added Dirac as a possible backend. Not that this would really work mind you
-#
-# Revision 1.9  2005/08/24 08:13:41  moscicki
-# using StandardJobConfig
-#
-#
-#

@@ -1,4 +1,4 @@
-################################################################################
+###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: Schema.py,v 1.3 2009-05-20 13:40:22 moscicki Exp $
@@ -84,6 +84,9 @@ class Schema:
 
     def componentItems(self):
         return self._filter(ComponentItem)
+
+    def sharedItems(self):
+        return self._filter(SharedItem)
 
     def hasAttribute(self,name):
         return self.datadict.has_key(name)
@@ -291,7 +294,7 @@ class Schema:
 
 class Item:
     # default values of common metaproperties
-    _metaproperties = {'transient' : 0, 'protected' : 0, 'hidden' : 0, 'comparable' : 1, 'sequence' : 0, 'defvalue' : None, 'copyable' : 1, 'doc' : '','visitable':1, 'checkset':None, 'filter':None,'strict_sequence':1, 'summary_print':None, 'summary_sequence_maxlen':5,'proxy_get':None,'getter':None, 'changable_at_resubmit':0}
+    _metaproperties = {'transient' : 0, 'protected' : 0, 'hidden' : 0, 'comparable' : 1, 'sequence' : 0, 'defvalue' : None, 'copyable' : 1, 'doc' : '','visitable':1, 'checkset':None, 'filter':None,'strict_sequence':1, 'summary_print':None, 'summary_sequence_maxlen':5,'proxy_get':None,'getter':None, 'changable_at_resubmit':0, 'preparable':0}
     
     def __init__(self):
         self._meta = Item._metaproperties.copy()
@@ -469,6 +472,21 @@ class SimpleItem(Item):
         return 'simple property,' + Item._describe(self)
 
 
+class SharedItem(Item):
+    def __init__(self,defvalue,typelist=[],**kwds):
+        Item.__init__(self)
+        kwds['defvalue'] = defvalue
+        kwds['typelist'] = typelist
+        self._update(kwds)
+
+    def _describe(self):
+        return 'shared property,' + Item._describe(self)
+    
+#    def _increment(self):
+#        return Item
+
+
+
 #    def type_match(self,v):
 #        return (self['sequence'] and v == []) or \
 #               (not self['typelist'] or valueTypeAllowed( v, self['typelist']))
@@ -484,8 +502,7 @@ class SimpleItem(Item):
 ## ##        assert(not setter is None)
 ##         self._update(kwds,forced=BindingItem._forced)
 
-    
-        
+       
 # Files are important and common enough to merit a special support for defining their metaproperties
 class FileItem(ComponentItem):
     def __init__(self,**kwds):

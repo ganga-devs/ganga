@@ -134,10 +134,36 @@ class ProxyDataDescriptor(object):
         return item._check_type(val, self._name)
         
     def __set__(self, obj, val):
+        #self is the attribute we're about to change (?)
+        #obj is the object we're about to make the change in
+        #val is the value we're setting the attribute to.
+        #item is the schema entry of the attribute we're about to change
         item = obj._impl._schema[self._name]
 
-        if item['protected']:
-            raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified'%(self._name,))
+        #mechanism to provide for locking of preparable attributes
+        #we tried this with the 'protected' meta attribute, but this is static, so cannot be set on a per-instance basis.
+        if item['preparable']:
+            #then we must have an application here.
+            if hasattr(obj,'is_prepared'):
+                if obj.is_prepared is not None and obj.is_prepared is not True:
+                    #then we must have a preparble application that has been prepared
+                    raise ProtectedAttributeError('AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified. unprepare() the application if you want to modify this value, or copy the job/application (using j.copy(unprepare=True)) and modify that instance.'%(self._name,))
+
+        #if we set is_prepared to None in the GPI, that should effectively unprepare the application
+        if self._name == 'is_prepared' and val is None:
+            logger.info('Unpreparing application.')
+            obj.unprepare()
+            
+        if self._name == 'application' and hasattr(obj.application,'is_prepared'):
+            if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
+                logger.info('Overwriting a prepared application with one that is unprepared')
+                obj.application.unprepare()
+            elif obj.application.is_prepared is None and hasattr(val,'is_prepared') and val.is_prepared is not None and val.is_prepared is not True:
+                from Ganga.Core.GangaRepository import getRegistry
+                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                logger.debug("Increasing shareref")
+                shareref.increase(val.is_prepared.name)
+
         if obj._impl._readonly():
             raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj),self._name))
 
@@ -282,9 +308,13 @@ def GPIProxyClassFactory(name, pluginclass):
         return self._impl.__ne__(x._impl)
     helptext(_ne,"Non-equality operator (!=).")
 
-    def _copy(self):
-        c = self._impl.clone()
-        c._auto__init__()
+    def _copy(self, unprepare=None):
+        if unprepare is True:
+            c = self._impl.clone()
+            c._auto__init__(unprepare=unprepare)
+        else:
+            c = self._impl.clone()
+            c._auto__init__()
         return GPIProxyObjectFactory(c)
 
     helptext(_copy,"Make an identical copy of self.")

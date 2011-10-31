@@ -29,6 +29,18 @@ from Ganga.Core import GangaValueError
 
 from Ganga.Utility.logic import implies
 from Ganga.Utility.util import canLoopOver, isStringLike
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+
+
+import sys
+from Ganga.Core import GangaException
+class PreparedStateError(GangaException):
+    def __init__(self,txt):
+        GangaException.__init__(self,txt)
+        self.txt=txt
+    def __str__(self):
+        return "PreparedStateError: %s"%str(self.txt)
+
 
     
 class Node(object):
@@ -115,10 +127,14 @@ class Node(object):
             if item['visitable']:            
                 visitor.simpleAttribute(self,name,getdata(name),item['sequence'])
 
+        for (name,item) in self._schema.sharedItems():
+            if item['visitable']:            
+                visitor.sharedAttribute(self,name,getdata(name),item['sequence'])
+
         for (name,item) in self._schema.componentItems():
             if item['visitable']:
                 visitor.componentAttribute(self,name,getdata(name),item['sequence'])
-                                       
+
         visitor.nodeEnd(self)
 
     # clone self and return a properly initialized object
@@ -163,7 +179,6 @@ class Node(object):
         
         if self is node:
             return 1
-        
         if not node or not self._schema.isEqual(node._schema):
             return 0
 
@@ -431,6 +446,15 @@ class GangaObject(Node):
         for name,item in self._schema.allItems():
             if not item['copyable']:
                 setattr(c,name,self._schema.getDefaultValue(name))
+            if item.isA(Schema.SharedItem):
+                shared_dir=getattr(c,name)
+                try:
+                    from Ganga.Core.GangaRepository import getRegistry
+                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    logger.debug("Increasing shareref")
+                    shareref.increase(shared_dir.name)
+                except AttributeError:
+                    pass
         return c
 
     def accept(self, visitor):
