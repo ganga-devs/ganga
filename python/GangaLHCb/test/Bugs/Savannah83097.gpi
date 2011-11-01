@@ -35,7 +35,7 @@ def checkCommandArgs(job):
             print '******************************************************************'
             print '* Dirac backend job failed - Problem with GaudiDiracRTHandler.py *'
             print '******************************************************************'
-            print r"* Expected: gaudirun.py -T -v options.pkl data.py""")/256)\n       *"
+            print r'* Expected: gaudirun.py -T -v options.pkl data.py""")/256)\n       *'
             print '* Located :', line[line.find('gaudirun.py'):]
             print '******************************************************************'
             raise JobError('Command line args wrong for Dirac() job')
