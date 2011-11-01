@@ -1,11 +1,14 @@
 **************************************************************************************************************
-5.7.0 (2011/10/27)
+5.7.0 (2011/11/1)
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 * Improvements to application prepare() functionality
+
+Merged the Ganga-ConfState branch into the trunk.
+Incorperating the prepare functionality.
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -26,18 +29,64 @@ ganga/python/GangaAtlas
 * Stopped DQ2Dataset getting overwritten and added full trf/task name 
   to unit DS name
 * Add --transferredDS option and j.outputdata.transferredDS
+* Update test case
 * Upgrade to panda-client 0.3.64
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+incorperated the prepared state
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
-Ganga-LHCb-Prepared-0-16
-
-Included tasks framework and prepared state
-
-Ganga-LHCb-Prepared-0-17
+Minor Changes:
 Changed NIKHEF-USER -> SARA-USER SE token
+
+Major Changes:
+1) Prepared State
+Incorperated the prepared state for applications. Prepared applications can be run on different
+inputdatasets without having to repackage up the users release area.
+
+try 
+j=Job(application=DaVinci(),backend=Dirac())
+j.prepare()
+
+Note: applications are automatically prepared upon submit if not done so already.
+
+2) Tasks Framework
+Incorperated the tasks framework for database query driven analysis of data. Can type
+help(LHCbAnalysisTask) for more information but basic usage is as with jobs but modified slightly,
+see below.
+
+tr = LHCbAnalysisTransform()
+tr.application = DaVinci()
+tr.backend = Dirac()
+tr.query = BKQuery('/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real
+Data/Reco11/Stripping15/90000000/DIMUON.DST')
+
+t = LHCbAnalysisTask()
+t.appendTransform(tr)
+t.run()
+
+Then at a later date, update all transform attached to a task from the database using
+t.update()
+
+3) BKQuery object Migration tool
+For those who have BKQuery objects stored in their box, there is a compatability problem between the
+old BKQuery object and the new tasks framework. Any new BKQuery objects stored in 5.7.0 will be
+readable but those created and stored in pre 5.7.0 will not. These older BKQuery objects can be read
+if you switch back to a pre 5.7.0 release, or you can run the migration tool to convert them into
+new objects as follows.
+
+fixBKQueryInBox()
+
+then restart your session. In case of any problems, this migration tool attempts to back up your
+BKQuery objects first and they can be restored from this backup as follows.
+
+restoreOLDBox()
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -59,6 +108,7 @@ ganga/python/GangaPanda
   - add BackendError
   - Renamed output dataset from user* to prod_test*
     Added possibility to configure processingType
+* Update tests
 * Upgrade to panda-client 0.3.64
 
 
@@ -66,6 +116,8 @@ ganga/python/GangaPanda
 ganga/python/GangaRobot
 --------------------------------------------------------------------------------------------------------------
 * Added functionality to bypass an application's prepare() step.
+
+Merged the Ganga-ConfState branch onto the trunk, incorperating the prepared functionality
 
 
 --------------------------------------------------------------------------------------------------------------
