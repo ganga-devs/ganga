@@ -1,4 +1,5 @@
 from GangaTest.Framework.tests import GangaGPITestCase
+from GangaTest.Framework.utils import sleep_until_state
 from Ganga import GPI
 #import unittest
 
@@ -12,35 +13,38 @@ bkQueryList = [GPI.BKTestQuery(stripping15down), GPI.BKTestQuery(stripping16up),
 
 class TestLHCbAnalysisTransform(GangaGPITestCase):
      def test_overview(self):
-         tr = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
-         tr.overview()
+          tr = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
+          tr.overview()
 
      def test_update(self):
-         t = GPI.LHCbAnalysisTask()
-         tr = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
-         t.appendTransform(tr)
-         try:
-             tr.update()
-             assert false, 'Should have thrown exception if updated with no query'
-         except:
-             tr.query = GPI.BKTestQuery(stripping15down)
-             tr.update()
+          t = GPI.LHCbAnalysisTask()
+          tr = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Dirac())
+          t.appendTransform(tr)
+          try:
+               tr.update()
+               assert false, 'Should have thrown exception if updated with no query'
+          except:
+               tr.query = GPI.BKTestQuery(stripping15down)
+               tr.update()
              
-             ## Check some new data added
-             assert len(tr._impl.toProcess_dataset.files), 'No data added after call to update'
-             
-             ## remove toProcess dataset so can update again with a removed dataset
-             tr._impl.toProcess_dataset.files=[]
-             del tr._impl.query.dataset.files[0]
-             tr.update()
-             
-             ## Check the dead dataset is picked up
-             assert len(tr._impl.removed_data.files), 'Didn\'t Pick up loss of a dataset'
-             
-             try:
-                 ## Shouldn't allow a second update before processed the data in toProcess_dataset
-                 tr.update()
-                 assert false, 'Should have thrown an error if updated with files already to process'
-             except:
-                 pass
+               ## Check some new data added
+               assert len(tr._impl.toProcess_dataset.files), 'No data added after call to update'
+
+               try:
+                    ## Shouldn't allow a second update before processed the data in toProcess_dataset
+                    tr.update()
+                    assert false, 'Should have thrown an error if updated with files already to process'
+               except:
+                    ## run so can update again with a removed dataset recall that jobs with the
+                    ## old dataset only created when run called.
+                    t.run()
+                    assert len(tr.getPartitionJobs(0)), "No Jobs created upon run()"
+                    job = GPI.jobs(int(tr.getPartitionJobs(0)[0].fqid.split('.')[0]))
+                    sleep_until_state(job,None,'submitted')
+                    del tr._impl.query.dataset.files[0]
+                    tr.update(True)
+                    
+                    ## Check the dead dataset is picked up
+                    assert len(tr._impl.removed_data.files), "Didn\'t Pick up loss of a dataset"
+                    job.remove()
               
