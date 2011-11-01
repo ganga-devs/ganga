@@ -1341,6 +1341,46 @@ class Panda(IBackend):
             job.outputdata.location = locations.keys()[0]
         job.outputdata.output = outputdata
 
+# jobSpec = {'startTime': '2011-11-01 09:37:51', 'modificationTime': '2011-11-01 10:03:22', 'creationTime': '2011-11-01 09:37:40', 'endTime': '2011-11-01 09:47:16', } ,
+
+
+
+    def getStateTime(self, status):
+        """Obtains the timestamps for the 'running', 'completed', and 'failed' states.
+
+           The __jobstatus__ file in the job's output directory is read to obtain the start and stop times of the job.
+           These are converted into datetime objects and returned to the user.
+        """
+
+        import datetime
+        checkstr=''
+        if status == 'running':
+            checkstr='startTime'
+        elif status == 'completed':
+            checkstr='endTime'
+        elif status == 'failed':
+            checkstr='endTime'
+
+        if not checkstr:
+            return None
+
+        try:
+            t = datetime.datetime(*(time.strptime(self.jobSpec[checkstr], "%Y-%m-%d %H:%M:%S")[0:6]))
+        except ValueError, KeyError:
+            t = None
+        return t
+
+
+    def timedetails(self):
+        """Return all available timestamps from this backend.
+        """
+
+        import datetime
+        r = self.getStateTime('running')
+        c = self.getStateTime('completed')
+        d = {'START' : r, 'STOP' : c}
+
+        return d
 
 
 
