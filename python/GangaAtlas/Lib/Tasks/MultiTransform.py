@@ -820,7 +820,7 @@ class MultiTransform(Transform):
        return -1
            
    def getUnitJob(self, unit):
-       """activate the given unit"""
+       """Return the Master job associated with this unit (takes either unit name or number)"""
        unit = self.getUnit(unit)
        if unit != -1:           
            return self.getUnitMasterJob( unit, proxy=True )
