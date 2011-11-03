@@ -1,0 +1,137 @@
+from Ganga.Core.exceptions import *
+import time
+#from GangaTest.Framework.tests import GangaGPITestCase
+#from GangaTest.Framework.utils import sleep_until_completed
+a=Job()
+a.prepare()
+time.sleep(1)
+assert a.application.is_prepared is not None, 'Prepare Test 1: Failed to prepare vanilla job'
+
+
+b=a.copy()
+time.sleep(1)
+assert a.application.is_prepared.name == b.application.is_prepared.name, 'Prepare Test 2: failed to copy a prepared job fully'
+
+s=shareref._impl.name
+time.sleep(1)
+assert s[a.application.is_prepared.name] == 2, 'Prepare Test 3 failed; shareref wasnt incremented after job copy'
+
+
+box.add(a,'testjob')
+s=shareref._impl.name
+time.sleep(1)
+assert s[a.application.is_prepared.name] == 3, 'Prepare Test 4 failed; shareref wasnt incremented after copying job to the box '
+
+
+c=Executable()
+box.add(c,'testapp')
+#this is how we index the last thing added to the box, and then prepare it
+box(box.ids()[-1]).prepare()
+s=shareref._impl.name
+assert s[box(box.ids()[-1]).is_prepared.name] == 1, 'Prepare Test 6 failed; a prepred app in the box didnt increment the sharedref'
+
+
+#this sleep is needed
+time.sleep(3)
+a.unprepare()
+assert a.application.is_prepared is None, 'Prepare Test 7 failed; unpreparing a job'
+s=shareref._impl.name
+assert s[b.application.is_prepared.name] == 2, 'Prepare Test 8 failed; shareref wasnt decremented after unpreparing job'
+
+a.application=box(box.ids()[-1])
+assert a.application.is_prepared.name == box(box.ids()[-1]).is_prepared.name, 'Prepare Test 9 failed; copying prepared app from box to new job'
+
+
+s=shareref._impl.name
+assert s[box(box.ids()[-1]).is_prepared.name] == 2, 'Prepare Test 10 failed; a prepared app in the box didnt increment the sharedref when we copied the app to a new job'
+
+
+try:
+    box(box.ids()[-1]).copy()
+    assert False, 'we should have thrown an error here because we shouldnt be able to copy an app out of the box'
+except:
+    pass
+
+
+appName = box(box.ids()[-1]).is_prepared.name
+box(box.ids()[-1]).unprepare()
+assert box(box.ids()[-1]).is_prepared is None, 'Prepare Test 11 failed; unpreparing an executable app in the box'
+assert s[appName] == 1, 'Prepare Test 12 failed; a prepared app in the box didnt decrement the sharedref when unprepared'
+
+
+
+#quick test to make sure bug #82818 didn't come back
+a=Job()
+a.prepare()
+a=Job()
+#and another
+a=Job()
+a.application.exe=File('junk')
+a=Job()
+
+
+
+j=Job()
+j.prepare()
+app=j.application.copy()
+s=shareref._impl.name
+assert s[j.application.is_prepared.name] == 1, 'Prepare Test 12 failed; when we copy the app from a prepared job, we dont want the shareref to increase'
+
+app=Executable()
+app.prepare()
+j=Job()
+j.application=app
+s=shareref._impl.name
+assert s[j.application.is_prepared.name] == 1, 'Prepare Test 13 failed; when we prepare an isolated app, then copy it to a job, the shareref should equal 1'
+
+a=Job()
+a.prepare()
+b=a.copy(unprepare=True)
+s=shareref._impl.name
+time.sleep(1)
+assert s[a.application.is_prepared.name] == 1, 'Prepare Test 14 failed; when we prepare a job, then copy with unprepare=True, the shareref should equal 1'
+
+
+a=Job()
+a.application.is_prepared=True
+a.submit()
+assert a.application.is_prepared == True, 'Prepare Test 15 failed; if we set is_prepared=True, the job should not be prepared during submission'
+
+a=Job()
+a.prepare()
+tmp = a.application.is_prepared.name
+a.application.is_prepared=None
+s=shareref._impl.name
+time.sleep(1)
+assert s[tmp] == 0, 'Prepare Test 16 failed; set is_prepared=None on a prepared job, that should effectively unprepare the application'
+
+j=Job()
+j.name='LocalEcho'
+j.application=Executable()
+j.application.exe=File('/bin/echo')
+j.application.args='Hello Local World'
+j.backend=Local()
+
+assert(j.submit() == True), 'Prepare Test 17 failed. submitting a local executable job with a File() type as the exe argument (rather than the default exe string'
+
+
+#a.submit()
+
+#if not sleep_until_completed(a):
+#    assert False, 'Test #1 timed out'
+#assert a.status == 'completed', 'Failed to complete job #1'
+
+#import os
+#assert(os.path.isfile(os.path.join(a.application.is_prepared.name,a.application.exe))), "Test 1 failed. The one with creating a wrapper for /bin/echo"
+#
+#a=Job()
+#a.application.exe='/bin/cp'
+#assert(a.prepare()), "Test 2 failed. The one with a system binary"
+
+#won't work because of bug #82818
+#a=Job()
+#a.application.exe=File('testbin.sh')
+#assert(a.prepare()), "Test 3 failed. The one with the local file (testbin.sh)"
+print "############################"
+print "REACHED END OF PREPARE TESTS"
+print "############################"
