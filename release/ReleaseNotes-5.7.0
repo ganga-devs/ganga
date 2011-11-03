@@ -1,14 +1,23 @@
 **************************************************************************************************************
-5.7.0 (2011/11/1)
+5.7.0 (2011/11/3)
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
-* Improvements to application prepare() functionality
+**Major Change:
+Introduction of the Prepared State for applications
 
-Merged the Ganga-ConfState branch into the trunk.
-Incorperating the prepare functionality.
+See https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaPreparedApplications for detailed usage 
+instructions.
+
+The purpose of the prepared state is to allow users to freeze an application in a known state, such 
+that the exact same analysis job can be executed in the future (optionally over different input 
+data). During the prepare phase, files that are integral to the applications execution (such as 
+custom binaries or experiment-specific software areas) are copied to the users Shared Directory 
+which is by default <gangadir>/shared/<user>.
+
+Note: applications are automatically prepared upon submit if not done so already.
 
 
 --------------------------------------------------------------------------------------------------------------
