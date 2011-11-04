@@ -39,6 +39,7 @@ class USER(GangaObject):
     _comments.append('http://belforte.home.cern.ch/belforte/misc/test/crab-v2.7.2.html#deep_debug')
     _comments.append('http://belforte.home.cern.ch/belforte/misc/test/crab-v2.7.2.html#dontcheckspaceleft')
     _comments.append('http://belforte.home.cern.ch/belforte/misc/test/crab-v2.7.2.html#check_user_remote_dir')
+    _comments.append('http://belforte.home.cern.ch/belforte/misc/test/crab-v2.7.2.html#tasktype')
 
     schemadic = {} 
     schemadic['additional_input_files']  = SimpleItem(defvalue=None, typelist=['type(None)','str'], doc=_comments[0])
@@ -69,6 +70,7 @@ class USER(GangaObject):
     schemadic['deep_debug']              = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[25])
     schemadic['dontCheckSpaceLeft']      = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[26])
     schemadic['check_user_remote_dir']   = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[27])
+    schemadic['tasktype']                = SimpleItem(defvalue=None, typelist=['type(None)','int'], doc=_comments[28])
 
 
     _schema =  Schema(Version(0,0), {})

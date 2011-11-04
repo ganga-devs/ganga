@@ -241,7 +241,6 @@ class CRABBackend(IBackend):
         GANGA_S = ['completed','failed','killed','new','running','submitted','submitting']
         STATUS  = {'A':'submitted, not known to scheduler / aborted anyway',
                    'C':'',
-                   'CS':'',
                    'DA':'done and failed',
                    'E':'ended,output retrieved and DB updated from journal',
                    'K':'killed by user',
@@ -262,7 +261,7 @@ class CRABBackend(IBackend):
                 job.updateStatus('submitted')
             elif not (job.status in ['running'] ):
                 job.updateStatus('running')
-        elif (status == 'C' or status == 'CS' or status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','submitted','killed']):
+        elif (status == 'C' or status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','submitted','killed']):
             job.updateStatus("submitting")
         elif (status == 'SU') and not (job.status in ['submitted','killed']):
             job.updateStatus('submitted')
