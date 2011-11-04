@@ -547,7 +547,7 @@ get the output from a running LSf job with the \texttt{bpeek} command like:
 \begin{verbatim}
 In [67]:!/usr/local/lsf/bin/bpeek $j.backend.id
 << output from stdout >>
-@(#)CERN job starter $Date: 2009-02-26 21:38:52 $
+@(#)CERN job starter $Date: 2008-07-17 16:40:41 $
 Working directory is </pool/lsf/uegede/767136> on <lxb6084.cern.ch>
 
 lxb6084.cern.ch
@@ -1668,15 +1668,6 @@ options:
                         LD_LIBRARY_PATH)
 \end{verbatim}
 
-\subsection{Startup file}
-
-If you have a file \texttt{~/.ganga.py} when \ganga starts, it will execute all the commands in there exactly as if you had typed them on the screen after the appearance of the prompt. As an exmaple we might list all the running jobs in the repository. For that you would just place
-\begin{verbatim}
-slice = jobs.select(status='running')
-slice
-\end{verbatim}
-into the file.
-
 \subsection{Configuration file}
 
 The configuration file will be covered here while the options related to
@@ -1690,7 +1681,7 @@ and you can create an empty  one by running \texttt{ganga -g}. A small
 section of a default configuration file is shown below.
 
 \begin{verbatim}
-# Ganga configuration file ($Name: Ganga-SVN $). DO NOT remove this line.
+# Ganga configuration file ($Name: not supported by cvs2svn $). DO NOT remove this line.
 #
 :
 :
@@ -2032,96 +2023,6 @@ in contact with the development team if you need help.
 
 \section{Release Notes}
 \label{ReleaseNotes}
-
-\subsection{New features in \ganga-5.7}
-\subsubsection{A `prepared' state for Ganga applications }
-This documents the `prepared' state for Ganga Core applications, as introduced in Ganga 5.7.0.
-\subsubsection{High-level overview }
-The purpose of the prepared state is to allow users to `freeze' an application in a known state, such that the exact same analysis job can be executed in the future (optionally over different input data). During the prepare phase, files that are integral to the applications execution (such as custom binaries or experiment-specific software areas) are copied to the user's Shared Directory (ShareDir) which is by default
-\begin{verbatim}
-<gangadir>/shared/<user>
-\end{verbatim}
-\par
-This functionality already existed in the Athena backend, as exposed by the prepare() method, but the resulting configuration files were stored in the /tmp directory, the persistence of which cannot be predicted. Similar underlying techniques will be exploited to allow initially Executable and later Root applications, plus any defined within the GangaTutorial package, be place into a prepared state.
-\textbf{\\}
-\subsubsection{Demonstration - Executable() application }
-We use an attribute attached to the application to indicate whether it has been prepared:
-\begin{verbatim}Out[23]: Executable (
- exe = 'echo' ,
- env = {} ,
- args = [Hello World] ,
- is_prepared = None 
- ) 
-\end{verbatim}
-\par
-The \texttt{\textbf{is\_prepared}} attribute will hold a ShareDir object, which is generated with a random name in the users gangadir/shared directory:
-\begin{verbatim}Out[27]: ShareDir (
- name = '/home/mkenyon/gangadir/shared/mkenyon/conf-41540084-7372-1309946661-72' ,
- subdir = '.'  
- ) 
-\end{verbatim}
-\par
-As an example, we can configure the default Ganga job, which has the above Executable() application attached to it:
-\begin{verbatim}In [1]:a=Job()
-In [2]:a.prepare()
-Ganga.GPIDev.Schema                : INFO     Preparing Executable application.
-Ganga.GPIDev.Schema                : INFO     Created shared directory: /home/gangadir/shared/conf-d7533df3-066a-4922-81ca-ec6404a10c6a</div>\end{verbatim}
-\par
-
-Note that it is equivalent to prepare the job, or the application associated with the job. In other words
-\begin{verbatim}job.prepare()
-\end{verbatim}
-\par
-and
-\begin{verbatim}job.application.prepare()
-\end{verbatim}
-\par
-are equivalent. Additionally, submitting a job also automatically calls the prepare method behind-the-scenes. The result of running the prepare phase is a job with the following application attributes.
-\begin{verbatim}Out[10]: Executable (
- exe = 'echo' ,
- env = {} ,
- args = [Hello World] ,
- is_prepared = ShareDir(name='/home/gangadir/shared/conf-d7533df3-066a-4922-81ca-ec6404a10c6a',subdir='.') 
- ) 
-\end{verbatim}
-\par
-The contents of the ShareDir depend on the type of application that was prepared. In the basic example above, the application would attempt to execute the command `echo' on the backend/workernode, so we don't need to copy anything to the ShareDir. In a more realistic case, though, we might have a custom script that we wish to run on the worker node. This would then be copied to the ShareDir during the prepare phase.
-Once an application has been prepared, it gains a reference counter which is stored in the Ganga metadata system, and can be checked by calling shareref:
-\begin{verbatim}
-In [10]:shareref
-Out[10]: 
-                                 Shared directory |         Date created |  Reference count
- ------------------------------------------------ | -------------------- |  ---------------
-                 conf-12754112-8042-1314361528-33 | 26 Aug 2011 13:25:28 |                1
-                    conf-86403407-38-1314361595-8 | 26 Aug 2011 13:26:35 |                1
-                 conf-24411345-7135-1314361709-42 | 26 Aug 2011 13:28:29 |                1
-                 conf-69852897-3565-1314541740-23 | 28 Aug 2011 15:29:00 |                1
-\end{verbatim}
-\par
-If an application is later associated with another job, or placed in the box, the reference counter is incremented. Likewise, it's decremented when a job or box object is removed. ShareDirs with a reference count of 0 will be removed when Ganga next closes down; in the event that an application's ShareDir cannot be found during Ganga closedown, the application will be unprepared.
-The contents of the shared directories can be viewed:
-\begin{verbatim}In [12]:shareref.ls('conf-284cbb3e-da37-4f6c-87e3-55576ec82cb7')
-|  conf-284cbb3e-da37-4f6c-87e3-55576ec82cb7/
-|  |  runMain.C
-\end{verbatim}
-\par
-Applications not associated with a persisted Ganga object (such as a job or the box) can be prepared, but they, and their associated ShareDir, will not persist beyond the current Ganga session.
-\subsubsection{Unpreparing an application }
-Once an application has been prepared, some of its attributes (as determined by that application's developers) will become read-only. This is to prevent the user accidentally changing an attribute on a prepared application (and hence violating the sense of a prepared application). In the event that the user really does want to modify a procted attribute, they should either unprepare the application/job
-\begin{verbatim}j.app.unprepare()
-app.unprepare()
-\end{verbatim}
-\par
-or copy the application/job to a new instance in the following manner:
-\begin{verbatim}newjob=oldjob.copy(unprepare=True)
-\end{verbatim}
-\par
-Applications can also be unprepared by resetting their \texttt{is\_prepared} attribute to \texttt{None}:
-\begin{verbatim}In [1]:a.application.is_prepared=None
-Ganga.GPIDev.Base.Proxy            : INFO     Unpreparing application.
-\end{verbatim}
-\par
-
 
 \subsection{New features in \release}
 

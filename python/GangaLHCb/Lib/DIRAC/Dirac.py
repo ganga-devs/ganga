@@ -115,7 +115,7 @@ class Dirac(IBackend):
         ZipLogs=False
         if os.path.exists(ppfile):
           for line in open(ppfile).readlines():
-             if line.find('zipped *.log') == 0:
+             if line.find('zipped alllogs') == 0:
                   ZipLogs=True
         return ZipLogs
 

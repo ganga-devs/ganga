@@ -377,13 +377,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # Add inputsandbox to user_area
         if job.inputsandbox:
             logger.warning("Submitting Panda job with inputsandbox. This may slow the submission slightly.")
-
-            if app.user_area.name:
-                inpw = os.path.dirname(app.user_area.name)
-                self.inputsandbox = os.path.join(inpw, 'sources.%s.tar' % commands.getoutput('uuidgen'))
-            else:
-                inpw = job.getInputWorkspace()
-                self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen'))
+            inpw = job.getInputWorkspace()
+            self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen'))
 
             if app.user_area.name:
                 rc, output = commands.getstatusoutput('cp %s %s.gz' % (app.user_area.name, self.inputsandbox))
