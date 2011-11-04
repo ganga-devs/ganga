@@ -17,6 +17,7 @@ class CRABDataset(Dataset):
     schemadic.update(CRAB().schemadic)
     schemadic.update(GRID().schemadic)
     schemadic.update(USER().schemadic)
+    schemadic['target_site'] = SimpleItem(defvalue=None, typelist=['type(None)','str'], doc='Target site name for the job. Intented to use only on HammerCloud.')
 
     _schema   = Schema(Version(1,0), schemadic) 
     _category = 'datasets'
