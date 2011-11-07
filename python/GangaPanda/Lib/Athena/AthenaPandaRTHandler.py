@@ -459,6 +459,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if self.inputsandbox and not job.backend.libds:
             uploadSources(os.path.dirname(self.inputsandbox),os.path.basename(self.inputsandbox))
 
+            if not self.inputsandbox == app.user_area.name:
+                logger.info('Removing source tarball %s ...' % self.inputsandbox )
+                os.remove(self.inputsandbox)
+
+
         # create build job for each needed site
         if app.athena_compile:
             if not job.backend.libds:
