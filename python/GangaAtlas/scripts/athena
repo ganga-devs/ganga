@@ -309,6 +309,8 @@ else:
             j.application.prepare_old()
         else:
             j.application.prepare()
+    else:
+        j.application.is_prepared=True
 
 if opt.useAthenaPackages:
     j.application.useAthenaPackages = True
