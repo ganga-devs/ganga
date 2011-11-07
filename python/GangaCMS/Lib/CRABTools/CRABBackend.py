@@ -261,7 +261,9 @@ class CRABBackend(IBackend):
                 job.updateStatus('submitted')
             elif not (job.status in ['running'] ):
                 job.updateStatus('running')
-        elif (status == 'C' or status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','submitted','killed']):
+        elif (status == 'C') and not (job.status not in ['submitting','new']):
+            job.rollbackToNewState()
+        elif (status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','submitted','killed']):
             job.updateStatus("submitting")
         elif (status == 'SU') and not (job.status in ['submitted','killed']):
             job.updateStatus('submitted')
