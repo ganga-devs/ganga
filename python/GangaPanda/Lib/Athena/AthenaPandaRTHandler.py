@@ -218,32 +218,19 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 env_str = ""
 
             # below fixes issue with runGen -- job_options are executed by os.system when dbrelease is used, and by the shell otherwise
-            if app.atlas_dbrelease: 
-                if job.backend.requirements.usecommainputtxt:
-                    input_str = '/bin/echo %IN > input.txt; cat input.txt; '
-                else:
-                    input_str = '/bin/echo %IN | sed \'s/,/\\\\\\n/g\' > input.txt; cat input.txt; '
-                if app.atlas_exetype == 'PYARA':
-                    self.job_options = env_str + input_str + ' python ' + self.job_options
-                elif app.atlas_exetype == 'ARES':
-                    self.job_options = env_str + input_str + ' athena.py ' + self.job_options
-                elif app.atlas_exetype == 'ROOT':
-                    self.job_options = env_str + input_str + ' root -b -q ' + self.job_options
-                elif app.atlas_exetype == 'EXE':
-                    self.job_options = env_str + input_str + self.job_options
+            ## - REMOVED FIX DUE TO CHANGE IN PILOT - MWS 8/11/11
+            if job.backend.requirements.usecommainputtxt:
+                input_str = '/bin/echo %IN > input.txt; cat input.txt; '
             else:
-                if job.backend.requirements.usecommainputtxt:
-                    input_str = '/bin/echo %IN > input.txt; cat input.txt; '
-                else:
-                    input_str = '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; '
-                if app.atlas_exetype == 'PYARA':
-                    self.job_options = env_str + input_str + ' python ' + self.job_options
-                elif app.atlas_exetype == 'ARES':
-                    self.job_options = env_str + input_str + ' athena.py ' + self.job_options
-                elif app.atlas_exetype == 'ROOT':
-                    self.job_options = env_str + input_str + ' root -b -q ' + self.job_options
-                elif app.atlas_exetype == 'EXE':
-                    self.job_options = env_str + input_str + self.job_options
+                input_str = '/bin/echo %IN | sed \'s/,/\\\\n/g\' > input.txt; cat input.txt; '
+            if app.atlas_exetype == 'PYARA':
+                self.job_options = env_str + input_str + ' python ' + self.job_options
+            elif app.atlas_exetype == 'ARES':
+                self.job_options = env_str + input_str + ' athena.py ' + self.job_options
+            elif app.atlas_exetype == 'ROOT':
+                self.job_options = env_str + input_str + ' root -b -q ' + self.job_options
+            elif app.atlas_exetype == 'EXE':
+                self.job_options = env_str + input_str + self.job_options
 
             if app.options:
                 self.job_options += ' %s ' % app.options
