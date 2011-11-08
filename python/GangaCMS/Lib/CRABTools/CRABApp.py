@@ -26,6 +26,15 @@ class CRABApp(IApplication):
   schemadic['cfgfile']        = SimpleItem(defvalue=None,    typelist=['type(None)','str'], doc=comments[0], copiable=0) 
   schemadic['workdir']        = SimpleItem(defvalue=None,    typelist=['type(None)','str'], doc=comments[1], copiable=0) 
 
+  # is_prepared is needed for GangaRobot on Ganga 5.7.0 and later.
+  schemadic['is_prepared']    = SharedItem(defvalue=None,
+                                           strict_sequence=0,
+                                           visitable=1,
+                                           copyable=1,
+                                           typelist=['type(None)','bool','str'],
+                                           protected=0,
+                                           doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
+
   _schema = Schema(Version(1,0), schemadic)
   _category = 'applications'
   _name = 'CRABApp' 
