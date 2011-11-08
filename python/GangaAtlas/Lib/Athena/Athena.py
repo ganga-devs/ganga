@@ -328,7 +328,7 @@ class Athena(IPrepareApp):
                  'skip_events'            : SimpleItem(defvalue=0, typelist=['int'], doc='Number of events to skip'),
                  'run_event'              : SimpleItem(defvalue=[], typelist=['list'], doc='Run event list'),
                  'run_event_file'         : SimpleItem(defvalue='', doc='Name of the file containing run/event list for Panda backend'),
-                 'option_file'            : FileItem(defvalue = [], preparable=1,typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
+                 'option_file'            : FileItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
                  'options'                : SimpleItem(defvalue='',doc='Additional Athena options'),
                  'user_setupfile'         : FileItem(preparable=1, doc='User setup script for special setup'),
                  'exclude_from_user_area' : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Pattern of files to exclude from user area'),
