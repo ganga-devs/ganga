@@ -418,6 +418,21 @@ def retrieveMergeJobs(job, pandaJobDefId):
 
     return (ick, status, num_mjobs)
 
+def checkForRebrokerage(string):
+    import re
+    matchObj = re.match('reassigned to another site by rebrokerage. new PandaID=(\d+) JobsetID=(\d+) JobID=(\d+)', string)
+    if matchObj:
+        newPandaID = long(matchObj.group(1))
+        newJobsetID = long(matchObj.group(2))
+        newJobID = long(matchObj.group(3))
+        return newPandaID
+        print newPandaID
+    raise BackendError('Panda','Error getting new PandaID for rebrokered job. Report to DA Help')
+
+
+
+
+
 class PandaBuildJob(GangaObject):
     _schema = Schema(Version(2,1), {
         'id'            : SimpleItem(defvalue=None,typelist=['type(None)','int'],protected=0,copyable=0,doc='Panda Job id'),
@@ -939,18 +954,6 @@ class Panda(IBackend):
         logger.info('Resubmission successful')
         return True
 
-    def checkForRebrokerage(self,status,job):
-        matchObj = re.match('reassigned to another site by rebrokerage. new PandaID=(\d+) JobsetID=(\d+) JobID=(\d+)',status.taskBufferErrorDiag)
-        if matchObj:
-            logger.info(status.taskBufferErrorDiag)
-            newPandaID = matchObj.group(1)
-            newJobsetID = matchObj.group(2)
-            newJobID = matchObj.group(3)
-            job.backend.id = newPandaID
-            job.updateStatus('submitted')
-            return True
-        return False
-
 
     def master_updateMonitoringInformation(jobs):
         '''Monitor jobs'''       
@@ -1041,8 +1044,13 @@ class Panda(IBackend):
                             else:
                                 job.updateStatus('failed')
                         elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
-#                            if not self.checkForRebrokerage(self,status,job):
-                            job.updateStatus('killed')
+                            if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
+                                newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
+                                logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(job.backend.id, newPandaID))
+                                job.backend.id = newPandaID
+                                job.backend.status = None
+                            else:
+                                job.updateStatus('killed')
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
 
@@ -1072,7 +1080,12 @@ class Panda(IBackend):
                         elif status.jobStatus == 'failed':
                             job.updateStatus('failed')
                         elif status.jobStatus == 'cancelled':
-                            if not self.checkForRebrokerage(self,status,job):
+                            if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
+                                newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
+                                logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(job.backend.id, newPandaID))
+                                job.backend.id = newPandaID
+                                job.backend.status = None
+                            else:
                                 job.updateStatus('killed')
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
@@ -1117,7 +1130,12 @@ class Panda(IBackend):
                             elif new_stat == 'failed':
                                 job.updateStatus('failed')
                             elif new_stat == 'cancelled':
-                                if not self.checkForRebrokerage(self,status,job):
+                                if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
+                                    newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
+                                    logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(job.backend.id, newPandaID))
+                                    job.backend.id = newPandaID
+                                    job.backend.status = None
+                                else:
                                     job.updateStatus('killed')
                             else:
                                 logger.warning('Unexpected job status %s',status.jobStatus)
