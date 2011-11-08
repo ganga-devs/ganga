@@ -1031,7 +1031,13 @@ class Panda(IBackend):
                                     job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
                             job.updateStatus('completed')
                         elif status.jobStatus == 'failed':
-                            job.updateStatus('failed')
+                            # check for server side retry
+                            if job.backend.jobSpec.has_key('taskBufferErrorDiag') and job.backend.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
+                                # grab the new panda ID
+                                newPandaID = long(job.backend.jobSpec['taskBufferErrorDiag'].split("=")[1])
+                                job.backend.id = newPandaID
+                            else:
+                                job.updateStatus('failed')
                         elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
 #                            if not self.checkForRebrokerage(self,status,job):
                             job.updateStatus('killed')
