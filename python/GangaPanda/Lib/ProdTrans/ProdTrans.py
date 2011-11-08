@@ -34,7 +34,10 @@ class ProdTrans(IApplication):
             'output_type': SimpleItem(defvalue='NTUP_TOP',
                                       doc='Type of the output file'),
             'input_type': SimpleItem(defvalue='',
-                                     doc='Type of the input file')
+                                     doc='Type of the input file'),
+            'is_prepared': SharedItem(defvalue=None, strict_sequence=0, visitable=1, 
+                copyable=1, typelist=['type(None)', 'bool', 'str'], protected=0,
+                doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
             })
     _category = 'applications'
     _name = 'ProdTrans'
