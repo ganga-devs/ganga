@@ -1036,6 +1036,8 @@ class Panda(IBackend):
                                 # grab the new panda ID
                                 newPandaID = long(job.backend.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                 job.backend.id = newPandaID
+                                job.backend.status = None
+                                job.backend.url = 'http://panda.cern.ch/?job=%d'%jobid[0]
                             else:
                                 job.updateStatus('failed')
                         elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
