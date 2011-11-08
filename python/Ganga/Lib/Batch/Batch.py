@@ -1,3 +1,5 @@
+import datetime
+import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
@@ -296,7 +298,69 @@ class Batch(IBackend):
             logger.warning('while killing job %s: %s',self.getJobObject().getFQID('.'), sout)
         
             return not m==None
-        
+
+    def getStateTime(self, status):
+        """Obtains the timestamps for the 'running', 'completed', and 'failed' states.
+
+           The __jobstatus__ file in the job's output directory is read to obtain the start and stop times of the job.
+           These are converted into datetime objects and returned to the user.
+        """
+        j = self.getJobObject()
+        end_list = ['completed', 'failed']
+        d = {}
+        checkstr=''
+
+        if status == 'running': checkstr='START:'
+        elif status == 'completed': checkstr='STOP:'
+        elif status == 'failed': checkstr='FAILED:'
+        else:
+            checkstr=''
+
+        if checkstr=='':
+            logger.debug("In getStateTime(): checkstr == ''")
+            return None
+
+        try:
+            p = os.path.join(j.outputdir, '__jobstatus__')
+            logger.debug("Opening output file at: %s", p)
+            f = open(p)
+        except IOError:
+            logger.debug('unable to open file %s', p)
+            return None
+
+        for l in f.readlines():
+            if checkstr in l:
+                pos=l.find(checkstr)
+                timestr=l[pos+len(checkstr)+1:pos+len(checkstr)+25]
+                try:
+                    t = datetime.datetime(*(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
+                except ValueError:
+                    logger.debug("Value Error in file: '%s': string does not match required format.", p)
+                    return None
+                return t
+
+        logger.debug("Reached the end of getStateTime('%s'). Returning None.", status)
+        return None
+
+    def timedetails(self):
+        """Return all available timestamps from this backend.
+        """
+        j = self.getJobObject()
+        try: ## check for file. if it's not there don't bother calling getSateTime (twice!)
+            p = os.path.join(j.outputdir, '__jobstatus__')
+            logger.debug("Opening output file at: %s", p)
+            f = open(p)
+            f.close()
+        except IOError:
+            logger.error('unable to open file %s', p)
+            return None
+        del f
+        r = self.getStateTime('running')
+        c = self.getStateTime('completed')
+        d = {'START' : r, 'STOP' : c}
+
+        return d
+
     def preparejob(self,jobconfig,master_input_sandbox):
 
         job = self.getJobObject()
