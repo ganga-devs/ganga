@@ -405,10 +405,11 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             athena_options += ' ' + athena_option
             if app.options:
                 athena_options =  app.options + ' ' + athena_options
-            if app.is_prepared is True:
-                inputbox += [ File(option_file.name) ]
-            else:
-                inputbox += [ File(os.path.join(app.is_prepared.name,os.path.basename(option_file.name))) ]
+            inputbox += [ File(option_file.name) ]
+            #if app.is_prepared is True:
+            #    inputbox += [ File(option_file.name) ]
+            #else:
+            #    inputbox += [ File(os.path.join(app.is_prepared.name,os.path.basename(option_file.name))) ]
 
         athena_usersetupfile = os.path.basename(app.user_setupfile.name)
 

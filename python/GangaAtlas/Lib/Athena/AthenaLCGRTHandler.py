@@ -479,9 +479,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         #this next for loop instructs ganga to use option_files that live in the appropriate shared directory (the job
         #will already have been prepared
         #(if is_prepared is True, then we've most likely submitted a job via GangaRobot. We know what we're doing.
-        if app.is_prepared is not True:
-            for position in xrange(len(app.option_file)):
-                app.option_file[position]=File(os.path.join(app.is_prepared.name,os.path.basename(app.option_file[position].name)))
+        #if app.is_prepared is not True:
+        #    for position in xrange(len(app.option_file)):
+        #        app.option_file[position]=File(os.path.join(app.is_prepared.name,os.path.basename(app.option_file[position].name)))
         # Expand Athena jobOptions
         if not app.atlas_exetype in ['EXE']:
             athena_options = ' '.join([os.path.basename(opt_file.name) for opt_file in app.option_file])
