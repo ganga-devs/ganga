@@ -9,4 +9,11 @@ ganga/python/GangaAtlas
   On Local backend in ATLAS_POOLCOND_PATH the proper file found again.
 * Fix submission problems on Local/LCG/CREAM due to option_file is set to not preparable
 
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Fix bug #88678: correct startTime in monitoring loop
+* Minor fix to correct the url for auto-retry jobs
+
 **************************************************************************************************************
