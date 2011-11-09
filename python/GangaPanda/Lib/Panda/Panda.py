@@ -1078,7 +1078,14 @@ class Panda(IBackend):
                         elif status.jobStatus in ['starting','running','holding','transferring']:
                             job.updateStatus('running')
                         elif status.jobStatus == 'failed':
-                            job.updateStatus('failed')
+                            if job.backend.buildjob.jobSpec.has_key('taskBufferErrorDiag') and job.backend.buildjob.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
+                                # grab the new panda ID
+                                newPandaID = long(job.backend.buildjob.jobSpec['taskBufferErrorDiag'].split("=")[1])
+                                job.backend.buildjob.id = newPandaID
+                                job.backend.buildjob.status = None
+                                job.backend.buildjob.url = 'http://panda.cern.ch/?job=%d'%jobid[0]
+                            else:
+                                job.updateStatus('failed')
                         elif status.jobStatus == 'cancelled':
                             if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
                                 newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
@@ -1128,7 +1135,14 @@ class Panda(IBackend):
                             elif new_stat in ['starting','running','holding','transferring']:
                                 job.updateStatus('running')
                             elif new_stat == 'failed':
-                                job.updateStatus('failed')
+                                if bj.jobSpec.has_key('taskBufferErrorDiag') and bj.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
+                                    # grab the new panda ID
+                                    newPandaID = long(bj.jobSpec['taskBufferErrorDiag'].split("=")[1])
+                                    bj.id = newPandaID
+                                    bj.status = None
+                                    bj.url = 'http://panda.cern.ch/?job=%d'%jobid[0]
+                                else:                                    
+                                    job.updateStatus('failed')
                             elif new_stat == 'cancelled':
                                 if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
                                     newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
