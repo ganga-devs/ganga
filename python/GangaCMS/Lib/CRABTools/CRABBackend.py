@@ -248,6 +248,7 @@ class CRABBackend(IBackend):
                    'R':'submitted,started, the scheduler reports running',
                    'SD':'',
                    'SR':'',
+                   'S':'submitted on the server',
                    'SS':'',
                    'SU':'',
                    'SW':'',
@@ -266,7 +267,7 @@ class CRABBackend(IBackend):
             job.rollbackToNewState()
         elif (status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','submitted','killed']):
             job.updateStatus("submitting")
-        elif (status == 'SU') and not (job.status in ['submitted','killed']):
+        elif (status == 'SU' or status = 'S') and not (job.status in ['submitted','killed']):
             job.updateStatus('submitted')
         elif (status == 'SD') and not (job.status in ['completed','killed']):
             logger.info('Retrieving %d.'%(job.id))
