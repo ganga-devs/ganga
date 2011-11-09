@@ -1406,8 +1406,8 @@ class Panda(IBackend):
 
         try:
             t = datetime.datetime(*(time.strptime(self.jobSpec[checkstr], "%Y-%m-%d %H:%M:%S")[0:6]))
-        except ValueError, KeyError:
-            t = None
+        except:
+            return None
         return t
 
 
