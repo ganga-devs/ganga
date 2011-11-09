@@ -1040,7 +1040,7 @@ class Panda(IBackend):
                                 newPandaID = long(job.backend.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                 job.backend.id = newPandaID
                                 job.backend.status = None
-                                job.backend.url = 'http://panda.cern.ch/?job=%d'%jobid[0]
+                                job.backend.url = 'http://panda.cern.ch/?job=%d'%newPandaID
                             else:
                                 job.updateStatus('failed')
                         elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
@@ -1083,7 +1083,7 @@ class Panda(IBackend):
                                 newPandaID = long(job.backend.buildjob.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                 job.backend.buildjob.id = newPandaID
                                 job.backend.buildjob.status = None
-                                job.backend.buildjob.url = 'http://panda.cern.ch/?job=%d'%jobid[0]
+                                job.backend.buildjob.url = 'http://panda.cern.ch/?job=%d'%newPandaID
                             else:
                                 job.updateStatus('failed')
                         elif status.jobStatus == 'cancelled':
@@ -1140,7 +1140,7 @@ class Panda(IBackend):
                                     newPandaID = long(bj.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                     bj.id = newPandaID
                                     bj.status = None
-                                    bj.url = 'http://panda.cern.ch/?job=%d'%jobid[0]
+                                    bj.url = 'http://panda.cern.ch/?job=%d'%newPandaID
                                 else:                                    
                                     job.updateStatus('failed')
                             elif new_stat == 'cancelled':
