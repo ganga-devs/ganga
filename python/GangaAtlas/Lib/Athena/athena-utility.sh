@@ -82,8 +82,9 @@ frontier_setup() {
     if [ -z "$ATLAS_POOLCOND_PATH" ];then
 	echo 'ATLAS_POOLCOND_PATH env not set'
 	PFCFAILOVER=1
-    elif [ ! -f $ATLAS_POOLCOND_PATH/poolcond/PoolFileCatalog.xml ];then
-	echo "$ATLAS_POOLCOND_PATH/poolcond/PoolFileCatalog.xml does not exist"
+#    elif [ ! -f $ATLAS_POOLCOND_PATH/poolcond/PoolFileCatalog.xml ];then
+    elif [ ! -f $ATLAS_POOLCOND_PATH/poolcond/PoolCat_oflcond.xml ];then
+	echo "$ATLAS_POOLCOND_PATH/poolcond/PoolCat_oflcond.xml does not exist"
 	PFCFAILOVER=1
     else
 	echo "ATLAS_POOLCOND_PATH: $ATLAS_POOLCOND_PATH"
