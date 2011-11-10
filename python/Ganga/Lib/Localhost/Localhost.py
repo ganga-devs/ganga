@@ -333,6 +333,9 @@ errorfile.flush()
 
 createOutputSandbox(outputpatterns,None,sharedoutputpath)
 
+outfile.close()
+errorfile.close()
+
 postProcessOutputResult = postprocessoutput()
 
 #code here for upload to castor, test with stdout, after that move this block just above line="EXITCODE
@@ -362,9 +365,6 @@ if postProcessOutputResult is not None:
 
         #todo file name can be regex like *.root
         os.system('%s %s' % (cm_cp, filename))
-
-outfile.close()
-errorfile.close()
 
 from Ganga.Utility.files import recursive_copy
 
