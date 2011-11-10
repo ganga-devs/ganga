@@ -364,7 +364,7 @@ if postProcessOutputResult is not None:
             os.system('%s %s' % (cm_mkdir, path))
 
         #todo file name can be regex like *.root
-        os.system('%s %s' % (cm_cp, filename))
+        os.system('%s %s %s' % (cm_cp, filename, os.path.join(path, filename)))
 
 from Ganga.Utility.files import recursive_copy
 
