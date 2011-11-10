@@ -222,7 +222,8 @@ workdir = ###WORKDIR###
 
 def postprocessoutput():
 
-    zippedList = []             
+    zippedList = []           
+    massStorageList = []          
 
     inpfile = os.path.join(###INPUT_DIR###, '__postprocessoutput__')
     
@@ -233,8 +234,12 @@ def postprocessoutput():
         line = line.strip()     
         if line.startswith('zipped'):
             zippedList.append(line.split()[1])
+        elif line.startswith('massstorage'):
+            massStorageList.append(line)        
 
-    return [" ".join(zippedList)]
+    zippedListString = " ".join(zippedList)
+
+    return [zippedListString, massStorageList]
 
 statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
@@ -328,6 +333,36 @@ errorfile.flush()
 
 createOutputSandbox(outputpatterns,None,sharedoutputpath)
 
+postProcessOutputResult = postprocessoutput()
+
+#code here for upload to castor, test with stdout, after that move this block just above line="EXITCODE
+if postProcessOutputResult is not None:
+    for massStorageLine in postProcessOutputResult[1]:
+        massStorageList = massStorageLine.split(' ')
+
+        filename = massStorageList[1]
+        cm_mkdir = massStorageList[2]
+        cm_cp = massStorageList[3]
+        cm_ls = massStorageList[4]
+        path = massStorageList[5]
+
+        pathToDirName = os.path.dirname(path)
+        dirName = os.path.basename(path)
+
+        directories = os.popen('nsls %s' % pathToDirName)
+        directoryExists = False 
+
+        for directory in directories.readlines():
+            if directory.strip() == dirName:
+                directoryExists = True
+                break
+
+        if not directoryExists:
+            os.system('%s %s' % (cm_mkdir, path))
+
+        #todo file name can be regex like *.root
+        os.system('%s %s' % (cm_cp, filename))
+
 outfile.close()
 errorfile.close()
 
@@ -335,7 +370,7 @@ from Ganga.Utility.files import recursive_copy
 
 f_to_copy = ['stdout','stderr','__syslog__']
 
-postProcessOutputResult = postprocessoutput()
+
 filesToZip = []
 
 if postProcessOutputResult is not None:
@@ -350,7 +385,7 @@ for f in f_to_copy:
     if f in filesToZip:
         final_list_to_copy.append('%s.gz' % f)  
     else:       
-        final_list_to_copy.append(f)
+        final_list_to_copy.append(f)            
 
 for fn in final_list_to_copy:
     try:
