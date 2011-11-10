@@ -20,6 +20,10 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 
+from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+config = makeConfig('Preparable', 'Parameters for preparable applications')
+config.addOption('unprepare_on_copy', False, 'Unprepare a prepared application when it is copied')
+
 class IPrepareApp(IApplication):
 
     """
