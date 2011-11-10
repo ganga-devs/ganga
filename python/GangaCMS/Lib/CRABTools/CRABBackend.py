@@ -279,9 +279,9 @@ class CRABBackend(IBackend):
             job.updateStatus('failed')
         elif (status == 'k') and not (job.status in ['killed']):
             job.updateStatus('killed')
-        elif (status in ['E']):
-            logger.warning('Job %d has been purged.'%(job.id))
-            job.updateStatus('failed')
+        elif (status in ['E']) and not (job.status in ['completed','killed']):
+            logger.info('Retrieving %d.'%(job.id))
+            job.backend.parseResults()
         else:
             if not STATUS.has_key(status):  
                 logger.warning('UNKNOWN STATUS: '+str(status)+' ')
