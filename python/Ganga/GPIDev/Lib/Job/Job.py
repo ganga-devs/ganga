@@ -615,6 +615,21 @@ class Job(GangaObject):
             for outputFile in self.outputfiles:
                 if outputFile.__class__.__name__ == 'CompressedFile':
                     content += 'zipped %s\n' % outputFile.name  
+                elif outputFile.__class__.__name__ == 'MassStorageFile':
+                    from Ganga.Utility.Config import getConfig 
+                    massStorageConfig = getConfig('MassStorageOutput')  
+                    
+                    #if Castor mass storage (we understand from the nsls command)       
+                    if massStorageConfig['ls_cmd'] == 'nsls':
+                        host = getConfig('System')['GANGA_HOSTNAME']
+                        import re
+                        lxplusHost = re.match('lxplus.*cern\.ch', host)
+                        if lxplusHost is None:
+                            logger.warning('Output files can be uploaded to Castor only from lxplus')
+                            logger.warning('skipping %s for uploading to Castor' % outputFile.name)
+                            continue       
+ 
+                    content += 'massstorage %s %s %s %s %s\n' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])
 
         if content is not '':
             self.getInputWorkspace().writefile(FileBuffer('__postprocessoutput__', content))
