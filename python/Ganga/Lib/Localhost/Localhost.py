@@ -220,6 +220,23 @@ appscriptpath = ###APPSCRIPTPATH###
 environment = ###ENVIRONMENT###
 workdir = ###WORKDIR###
 
+
+## system command executor with subprocess
+def execSyscmdSubprocess(cmd):
+
+    exitcode = -999
+    mystdout = ''
+    mystderr = ''
+
+    try:
+        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (mystdout, mystderr) = child.communicate()
+        exitcode = child.returncode
+    finally:
+        pass
+
+    return (exitcode, mystdout, mystderr)
+
 def postprocessoutput():
 
     zippedList = []           
@@ -334,7 +351,11 @@ errorfile.flush()
 createOutputSandbox(outputpatterns,None,sharedoutputpath)
 
 outfile.close()
-errorfile.close()
+
+def printError(errorfile, message, error):
+    errorfile.write(message + os.linesep)
+    errorfile.write(error + os.linesep) 
+    errorfile.flush()           
 
 postProcessOutputResult = postprocessoutput()
 
@@ -352,19 +373,32 @@ if postProcessOutputResult is not None:
         pathToDirName = os.path.dirname(path)
         dirName = os.path.basename(path)
 
-        directories = os.popen('nsls %s' % pathToDirName)
-        directoryExists = False 
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
+        if exitcode != 0:
+            printError(errorfile, 'Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName, mystderr)
+            continue
 
-        for directory in directories.readlines():
+        directoryExists = False 
+        for directory in mystdout.split('\\n'):
             if directory.strip() == dirName:
                 directoryExists = True
                 break
 
         if not directoryExists:
-            os.system('%s %s' % (cm_mkdir, path))
+            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
+            if exitcode != 0:
+                printError(errorfile, 'Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path), mystderr)
+                continue
+            
 
-        #todo file name can be regex like *.root
-        os.system('%s %s %s' % (cm_cp, filename, os.path.join(path, filename)))
+        #todo file name can be regex like *.root, if succeeded remove file from output
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, filename, os.path.join(path, filename)))
+        if exitcode != 0:
+            printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, filename, os.path.join(path, filename)), mystderr)
+            continue
+
+
+errorfile.close()
 
 from Ganga.Utility.files import recursive_copy
 
