@@ -115,6 +115,7 @@ p.add_option('--libDS', action='store', type='string', dest='libDS', help='Exist
 p.add_option('--nobuild', action='store_true', help='Panda build job is switched off.' )
 p.add_option('--extOutFile', action='store', type='string', dest='extOutFile', help='define extra output files on Panda, e.g. --extOutFile=output1.txt:output2.dat')
 p.add_option('--excludedSite', action='store', type='string', dest='excludedSite', default='', help="list of Panda sites which are not used for site section, e.g., ANALY_ABC,ANALY_XYZ")
+p.add_option('--excludedCloud', action='store', type='string', dest='excludedCloud', default='', help="list of Panda clouds which are not used for site section, e.g., US,FR,TW")
 p.add_option('--useChirpServer', action='store', type='string', dest='useChirpServer', default='', help="Chirp Server to be used to stage out the output e.g., voatlas92.cern.ch")
 p.add_option('--rootver', action='store', type='string', dest='rootver', help='Specify a different ROOT version. Cannot be used with --nobuild specified.' )
 
@@ -611,6 +612,7 @@ elif opt.backend=='panda':
         j.backend.libDS=opt.libDS
 
     if opt.excludedSite: j.backend.requirements.excluded_sites = opt.excludedSite.split(',')
+    if opt.excludedCloud: j.backend.requirements.excluded_clouds = opt.excludedCloud.split(',')
 
     if opt.useChirpServer: config.Panda.chirpserver = opt.useChirpServer
 
