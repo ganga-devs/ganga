@@ -4,7 +4,7 @@ from FileBuffer import FileBuffer
 
 from OutputFile import OutputFile
 from CompressedFile import CompressedFile
-from MassStorageFile import MassStorageFile
+from CastorFile import CastorFile
 from ScratchFile import ScratchFile
 from LHCbDataFile import LHCbDataFile
 

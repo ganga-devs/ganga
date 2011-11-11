@@ -5,7 +5,6 @@
 ################################################################################
 
 import Ganga.Utility.logging
-from Ganga.Utility.Config import getConfig
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 import Ganga.GPIDev.Schema as Schema
@@ -13,7 +12,6 @@ import Ganga.GPIDev.Schema as Schema
 from Ganga.Core import GangaException,GangaAttributeError,ProtectedAttributeError,ReadOnlyObjectError,TypeMismatchError,SchemaError
 
 from Ganga.Utility.util import importName
-prepconfig = getConfig('Preparable')
 
 #some proxy related convieniance methods
 def isProxy(obj):
@@ -311,8 +309,6 @@ def GPIProxyClassFactory(name, pluginclass):
     helptext(_ne,"Non-equality operator (!=).")
 
     def _copy(self, unprepare=None):
-        if prepconfig['unprepare_on_copy'] is True:
-            unprepare = True
         if unprepare is True:
             c = self._impl.clone()
             c._auto__init__(unprepare=unprepare)

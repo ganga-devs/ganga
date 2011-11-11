@@ -465,13 +465,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         outputconfig.addOption('ScratchFile',['*.root'],'list of output files that will be written to large scratch disk after job is completed')
         outputconfig.addOption('LHCbDataFile',['*.dst','*.digi','*.raw'],'list of output files that will be stored in Storage Element and registered in LHCb file catalogue after job is completed')
 
-        #[MassStorageOutput] section
-        outputconfig = makeConfig( "MassStorageOutput", "configuration section for storing of the output to a mass storage" )
-        outputconfig.addOption('mkdir_cmd', 'nsmkdir', 'Command used to create a directory in the mass storage location')
-        outputconfig.addOption('cp_cmd', 'rfcp', 'Command used to copy out data to the mass storage location')
-        outputconfig.addOption('ls_cmd', 'nsls', 'Command used to list files in the mass storage location')
-        outputconfig.addOption('path', os.path.join(os.environ['CASTOR_HOME'], 'ganga'), 'path to the mass storage location where the files will be stored')
-
         
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B

@@ -220,27 +220,9 @@ appscriptpath = ###APPSCRIPTPATH###
 environment = ###ENVIRONMENT###
 workdir = ###WORKDIR###
 
-
-## system command executor with subprocess
-def execSyscmdSubprocess(cmd):
-
-    exitcode = -999
-    mystdout = ''
-    mystderr = ''
-
-    try:
-        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (mystdout, mystderr) = child.communicate()
-        exitcode = child.returncode
-    finally:
-        pass
-
-    return (exitcode, mystdout, mystderr)
-
 def postprocessoutput():
 
-    zippedList = []           
-    massStorageList = []          
+    zippedList = []             
 
     inpfile = os.path.join(###INPUT_DIR###, '__postprocessoutput__')
     
@@ -251,12 +233,8 @@ def postprocessoutput():
         line = line.strip()     
         if line.startswith('zipped'):
             zippedList.append(line.split()[1])
-        elif line.startswith('massstorage'):
-            massStorageList.append(line)        
 
-    zippedListString = " ".join(zippedList)
-
-    return [zippedListString, massStorageList]
+    return [" ".join(zippedList)]
 
 statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
@@ -351,60 +329,13 @@ errorfile.flush()
 createOutputSandbox(outputpatterns,None,sharedoutputpath)
 
 outfile.close()
-
-def printError(errorfile, message, error):
-    errorfile.write(message + os.linesep)
-    errorfile.write(error + os.linesep) 
-    errorfile.flush()           
-
-postProcessOutputResult = postprocessoutput()
-
-#code here for upload to castor, test with stdout, after that move this block just above line="EXITCODE
-if postProcessOutputResult is not None:
-    for massStorageLine in postProcessOutputResult[1]:
-        massStorageList = massStorageLine.split(' ')
-
-        filename = massStorageList[1]
-        cm_mkdir = massStorageList[2]
-        cm_cp = massStorageList[3]
-        cm_ls = massStorageList[4]
-        path = massStorageList[5]
-
-        pathToDirName = os.path.dirname(path)
-        dirName = os.path.basename(path)
-
-        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
-        if exitcode != 0:
-            printError(errorfile, 'Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName, mystderr)
-            continue
-
-        directoryExists = False 
-        for directory in mystdout.split('\\n'):
-            if directory.strip() == dirName:
-                directoryExists = True
-                break
-
-        if not directoryExists:
-            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
-            if exitcode != 0:
-                printError(errorfile, 'Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path), mystderr)
-                continue
-            
-
-        #todo file name can be regex like *.root, if succeeded remove file from output
-        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, filename, os.path.join(path, filename)))
-        if exitcode != 0:
-            printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, filename, os.path.join(path, filename)), mystderr)
-            continue
-
-
 errorfile.close()
 
 from Ganga.Utility.files import recursive_copy
 
 f_to_copy = ['stdout','stderr','__syslog__']
 
-
+postProcessOutputResult = postprocessoutput()
 filesToZip = []
 
 if postProcessOutputResult is not None:
@@ -419,7 +350,7 @@ for f in f_to_copy:
     if f in filesToZip:
         final_list_to_copy.append('%s.gz' % f)  
     else:       
-        final_list_to_copy.append(f)            
+        final_list_to_copy.append(f)
 
 for fn in final_list_to_copy:
     try:

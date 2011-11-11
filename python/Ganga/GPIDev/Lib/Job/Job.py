@@ -615,10 +615,6 @@ class Job(GangaObject):
             for outputFile in self.outputfiles:
                 if outputFile.__class__.__name__ == 'CompressedFile':
                     content += 'zipped %s\n' % outputFile.name  
-                elif outputFile.__class__.__name__ == 'MassStorageFile': 
-                    from Ganga.Utility.Config import getConfig 
-                    massStorageConfig = getConfig('MassStorageOutput')  
-                    content += 'massstorage %s %s %s %s %s\n' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])
 
         if content is not '':
             self.getInputWorkspace().writefile(FileBuffer('__postprocessoutput__', content))
