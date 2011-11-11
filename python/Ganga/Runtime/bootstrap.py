@@ -471,7 +471,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         outputconfig.addOption('cp_cmd', 'rfcp', 'Command used to copy out data to the mass storage location')
         outputconfig.addOption('ls_cmd', 'nsls', 'Command used to list files in the mass storage location')
         #outputconfig.addOption('path', os.path.join(os.environ['CASTOR_HOME'], 'ganga'), 'path to the mass storage location where the files will be stored')
-        outputconfig.addOption('path', os.path.join('/castor/cern.ch/user/g/gangage/ganga', 'path to the mass storage location where the files will be stored')
+        outputconfig.addOption('path', '/castor/cern.ch/user/g/gangage/ganga', 'path to the mass storage location where the files will be stored')
         
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
