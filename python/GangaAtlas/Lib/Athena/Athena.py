@@ -225,7 +225,18 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
             workDirFiles.append(tmpPath)
             emptyFlag = False
         # add empty directory
-        if emptyFlag and tmpDirs==[]:
+        if emptyFlag:
+            # check for .* subdirs that will be excluded later
+            skip = False
+            for tmpdir in tmpDirs:
+                if tmpdir[0] != '.':
+                    skip = True
+            for tmpfile in tmpFiles:
+                if tmpdir[0] != '.':
+                    skip = True
+            if skip:
+                continue
+            
             tmpPath = re.sub('^\./','',tmpRoot)
             # skip tmpDir
             if tmpPath.split('/')[-1] == archiveDir.split('/')[-1]:
