@@ -297,7 +297,8 @@ def uploadSources(path,sources):
     try:
         cwd = os.getcwd()
         os.chdir(path)
-        rc, output = Client.putFile(sources, useCacheSrv=True)
+        rc, output = Client.putFile(sources)
+        #rc, output = Client.putFile(sources, useCacheSrv=True)
         os.chdir(cwd)
         if output != 'True':
             logger.error('Uploading sources %s/%s from failed. Status = %d', path, sources, rc)
