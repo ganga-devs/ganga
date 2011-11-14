@@ -878,7 +878,9 @@ class MultiTransform(Transform):
       else:
           self.backend = stripProxy(self.backend)
 
+      temp_inds = None
       if self.backend._name in ['Panda']:
+          temp_inds = self.inputdata
           if not self.inputdata:
               self.inputdata = DQ2Dataset()
               
@@ -931,7 +933,10 @@ class MultiTransform(Transform):
           self.unit_state_list[unit_num]['configured'] = False
           self.unit_state_list[unit_num]['reason'] = "No subjobs produced in split. Brokering issue?"
           return
-      
+
+      #restore old inds
+      self.inputdata = temp_inds
+          
       self.partition_lock.acquire()
       if self.backend._name in ['Panda']:
           try:
