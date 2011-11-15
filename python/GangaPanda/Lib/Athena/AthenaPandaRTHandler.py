@@ -485,7 +485,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 jspec.jobParameters     = '-o %s' % (self.libraries[bjsite])
                 if self.inputsandbox:
                     jspec.jobParameters     += ' -i %s' % (os.path.basename(self.inputsandbox))
-                matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
+                matchURL = re.search('(http.*://[^/]+)/',Client.baseURLCSRVSSL)
                 if matchURL:
                     jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
                 jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
@@ -934,7 +934,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         #if self.config['mcData'] != '':
         #    param += '--mcData %s ' % self.config['mcData']
         # source URL
-        matchURL = re.search("(http.*://[^/]+)/",Client.baseURLSSL)
+        matchURL = re.search("(http.*://[^/]+)/",Client.baseURLCSRVSSL)
         if matchURL != None:
             param += " --sourceURL %s " % matchURL.group(1)
         # use ARA 

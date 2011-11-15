@@ -169,7 +169,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
                 jspec.jobParameters     += ' -i %s' % (self.inputsandbox)
             else:
                 raise ApplicationConfigurationError(None,'Executable on Panda with build job defined, but inputsandbox is emtpy !')
-            matchURL = re.search('(http.*://[^/]+)/',Client.baseURLSSL)
+            matchURL = re.search('(http.*://[^/]+)/',Client.baseURLCSRVSSL)
             if matchURL:
                 jspec.jobParameters += ' --sourceURL %s ' % matchURL.group(1)
             if job.backend.bexec != '':
@@ -308,7 +308,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         param = ''
 
         # source URL
-        matchURL = re.search("(http.*://[^/]+)/",Client.baseURLSSL)
+        matchURL = re.search("(http.*://[^/]+)/",Client.baseURLCSRVSSL)
         srcURL = ""
         if matchURL != None:
             srcURL = matchURL.group(1)
