@@ -83,8 +83,8 @@ frontier_setup() {
 	echo 'ATLAS_POOLCOND_PATH env not set'
 	PFCFAILOVER=1
 #    elif [ ! -f $ATLAS_POOLCOND_PATH/poolcond/PoolFileCatalog.xml ];then
-    elif [ ! -f $ATLAS_POOLCOND_PATH/poolcond/PoolCat_oflcond.xml ];then
-	echo "$ATLAS_POOLCOND_PATH/poolcond/PoolCat_oflcond.xml does not exist"
+    elif [ ! -f $ATLAS_POOLCOND_PATH/poolcond/PoolFileCatalog.xml ] && [ ! -f $ATLAS_POOLCOND_PATH/poolcond/PoolCat_oflcond.xml ]; then
+	echo "$ATLAS_POOLCOND_PATH/poolcond/PoolFileCatalog.xml and $ATLAS_POOLCOND_PATH/poolcond/PoolCat_oflcond.xml does not exist"
 	PFCFAILOVER=1
     else
 	echo "ATLAS_POOLCOND_PATH: $ATLAS_POOLCOND_PATH"
@@ -94,9 +94,13 @@ frontier_setup() {
     if [ $PFCFAILOVER -eq 1 ];then
 	echo 'Failing over to http backup for CD PFC'
 	mkdir poolcond
-	wget --timeout=60 -O poolcond/PoolFileCatalog.xml http://voatlas62.cern.ch/conditions/PoolFileCatalog.xml
+	wget --timeout=60 -O poolcond/PoolFileCatalog.xml http://atlas-conditions.web.cern.ch/atlas-conditions/poolcond/catalogue/web/PoolFileCatalog.xml
 	export ATLAS_POOLCOND_PATH=`pwd`
+	echo '!!!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!!!!!!'
 	echo "ATLAS_POOLCOND_PATH: $ATLAS_POOLCOND_PATH"
+	echo 'ATLAS_POOLCOND_PATH is not properly set - please setup correct path to conditions data pool flat files'
+	echo 'Using http fail-over for now'
+	echo '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
     fi
 
 
