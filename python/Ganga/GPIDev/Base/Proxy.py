@@ -163,8 +163,9 @@ class ProxyDataDescriptor(object):
             elif obj.application.is_prepared is None and hasattr(val,'is_prepared') and val.is_prepared is not None and val.is_prepared is not True:
                 from Ganga.Core.GangaRepository import getRegistry
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-                logger.debug("Increasing shareref")
-                shareref.increase(val.is_prepared.name)
+                s=shareref._impl.name
+                if s[val.is_prepared.name] != 0:
+                    shareref.increase(val.is_prepared.name)
 
         if obj._impl._readonly():
             raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj),self._name))
@@ -312,7 +313,22 @@ def GPIProxyClassFactory(name, pluginclass):
 
     def _copy(self, unprepare=None):
         if prepconfig['unprepare_on_copy'] is True:
-            unprepare = True
+            if hasattr(self,'is_prepared') or hasattr(self,'application'):
+                unprepare = True
+        if hasattr(self,'is_prepared'):
+            if self.is_prepared is not None and self.is_prepared is not True:
+                from Ganga.Core.GangaRepository import getRegistry
+                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                shareref.increase(self.is_prepared.name)
+
+        if  hasattr(self,'application'):
+            if self.application.is_prepared is not None and self.application.is_prepared is not True:
+                from Ganga.Core.GangaRepository import getRegistry
+                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                shareref.increase(self.application.is_prepared.name)
+    
+
+            
         if unprepare is True:
             c = self._impl.clone()
             c._auto__init__(unprepare=unprepare)
