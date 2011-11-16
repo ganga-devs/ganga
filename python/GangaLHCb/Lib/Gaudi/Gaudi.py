@@ -196,12 +196,13 @@ class Gaudi(Francesc):
         if len(inputdata.files) > 0:
             logger.warning('Found inputdataset defined in optsfile, '\
                            'this will get pickled up and stored in the '\
-                           'prepared state any change to the options/data will '\
-                           'therefore require an unprepare first. NOTE the prefered way of working '\
-                           'is to define inputdata in the job.inputdata field. '\
-                           'This field should overwrite the inputdata defined in optsfiles.')
-            logger.info('Inputdata can be transfered from optsfiles to the job.inputdata field '\
-                        'using job.inputdata = job.application.readInputData(optsfiles)')
+                           'prepared state. Any change to the options/data will '\
+                           'therefore require an unprepare first.')
+            logger.warning('NOTE: the prefered way of working '\
+                           'is to define inputdata in the job.inputdata field. ')
+            logger.warning('Data defined in job.inputdata will superseed optsfile data!')
+            logger.warning('Inputdata can be transfered from optsfiles to the job.inputdata field '\
+                           'using job.inputdata = job.application.readInputData(optsfiles)')
             #file = open(os.path.join(input_dir,'inputdata.pkl'),'wb')
             #pickle.dump([f.name for f in inputdata.files],file)
             #file.close()
