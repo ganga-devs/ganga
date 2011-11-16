@@ -2,6 +2,8 @@ from Ganga.Core.exceptions import *
 import time
 #from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaTest.Framework.utils import sleep_until_completed
+
+config['Preparable']['unprepare_on_copy']=False
 a=Job()
 a.prepare()
 time.sleep(1)
@@ -56,7 +58,15 @@ except:
 appName = box(box.ids()[-1]).is_prepared.name
 box(box.ids()[-1]).unprepare()
 assert box(box.ids()[-1]).is_prepared is None, 'Prepare Test 11 failed; unpreparing an executable app in the box'
-assert s[appName] == 1, 'Prepare Test 12 failed; a prepared app in the box didnt decrement the sharedref when unprepared'
+
+
+a=Job()
+a.prepare()
+box.add(a,'testjob')
+appName = box(box.ids()[-1]).application.is_prepared.name
+assert s[appName] == 2, 'Prepare Test 11a failed; a prepared job in the box didnt decrement the sharedref when unprepared'
+box(box.ids()[-1]).unprepare()
+assert s[appName] == 1, 'Prepare Test 11b failed; a prepared job in the box didnt decrement the sharedref when unprepared'
 
 
 
