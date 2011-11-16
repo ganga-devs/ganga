@@ -164,8 +164,7 @@ class ProxyDataDescriptor(object):
                 from Ganga.Core.GangaRepository import getRegistry
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
                 s=shareref._impl.name
-                if s[val.is_prepared.name] != 0:
-                    shareref.increase(val.is_prepared.name)
+                shareref.increase(val.is_prepared.name)
 
         if obj._impl._readonly():
             raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj),self._name))
@@ -315,23 +314,25 @@ def GPIProxyClassFactory(name, pluginclass):
         if prepconfig['unprepare_on_copy'] is True:
             if hasattr(self,'is_prepared') or hasattr(self,'application'):
                 unprepare = True
-        if hasattr(self,'is_prepared'):
-            if self.is_prepared is not None and self.is_prepared is not True:
-                from Ganga.Core.GangaRepository import getRegistry
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-                shareref.increase(self.is_prepared.name)
+#        if hasattr(self,'is_prepared'):
+#            if self.is_prepared is not None and self.is_prepared is not True:
+#                from Ganga.Core.GangaRepository import getRegistry
+#                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+#                shareref.increase(self.is_prepared.name)
 
-        if  hasattr(self,'application'):
-            if self.application.is_prepared is not None and self.application.is_prepared is not True:
-                from Ganga.Core.GangaRepository import getRegistry
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-                shareref.increase(self.application.is_prepared.name)
+        if unprepare is not True:
+            if  hasattr(self,'application'):
+                if hasattr(self.application,'is_prepared'):
+                    if self.application.is_prepared is not None and self.application.is_prepared is not True:
+                        from Ganga.Core.GangaRepository import getRegistry
+                        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                        shareref.increase(self.application.is_prepared.name)
     
 
             
         if unprepare is True:
             c = self._impl.clone()
-            c._auto__init__(unprepare=unprepare)
+            c._auto__init__(unprepare=True)
         else:
             c = self._impl.clone()
             c._auto__init__()
