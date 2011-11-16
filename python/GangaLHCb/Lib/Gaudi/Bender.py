@@ -68,7 +68,7 @@ class Bender(Francesc):
         self.incrementShareCounter(self.is_prepared.name)
 
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-        send_to_share = self._prepare()
+        send_to_share = self._prepare(self.is_prepared.name)
         self._check_inputs()
         
         return send_to_share

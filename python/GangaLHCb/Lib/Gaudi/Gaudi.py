@@ -3,6 +3,7 @@
 import os
 import tempfile
 import gzip
+import pickle
 from Ganga.GPIDev.Schema import *
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.logging
@@ -15,6 +16,7 @@ from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Francesc import *
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from GaudiJobConfig import *
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -84,6 +86,11 @@ class Gaudi(Francesc):
              'using triple quotes around a multiline string.'
     schema['extraopts'] = SimpleItem(preparable=1,defvalue=None,
                                      typelist=['str','type(None)'],doc=docstr)
+
+    docstr = 'Data/sandbox items defined in prepare'
+    schema['prep_data'] = SimpleItem(preparable=1,defvalue=None,typelist=['type(None)','GangaLHCb.Lib.Gaudi.GaudiJobConfig'],
+                                   hidden=1,doc=docstr)
+ 
     docstr = 'Location of shared resources. Presence of this attribute implies'\
           'the application has been prepared.'
     schema['is_prepared'] = SimpleItem(defvalue=None,
@@ -142,6 +149,7 @@ class Gaudi(Francesc):
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
+            self.prep_data = None
 
     def prepare(self,force=False):
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -154,20 +162,26 @@ class Gaudi(Francesc):
         self.incrementShareCounter(self.is_prepared.name)
 
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-        
-        send_to_share = self._prepare()
-        job = self.getJobObject()
-        parser = self._check_inputs()
+
         ## Next line would have stored them in the jobs inputdir but want them
         ## in sharedDir now we have prepared state.
         ##input_dir = job.getInputWorkspace().getPath()
         input_dir = self.is_prepared.name#shared_dirname
+        
+        ## We will return a list of files 'send_to_share' which will be copied into the jobs
+        ## inputsandbox when prepare called from job object. NOTE that these files will not go
+        ## into an inputsandbox when prepare called on standalone app.
+        ## Things in the inputsandbox end up in the working dir at runtime.
+        send_to_share = self._prepare(input_dir)
+        job = self.getJobObject()
+        self._check_inputs()
 
-
+        parser = self._get_parser()
         ## Need to remember to create the buffer as the perpare methods returns
         ## are merely copied to the inputsandbox so must alread exist.
-        send_to_share.append(FileBuffer(os.path.join(input_dir,'options.pkl'),
-                                        parser.opts_pkl_str).create())
+        FileBuffer(os.path.join(input_dir,'options.pkl'),
+                   parser.opts_pkl_str).create()
+        send_to_share.append(File(os.path.join(input_dir,'options.pkl')))
 
         ## write env into input dir and share dir
         file = gzip.GzipFile(os.path.join(input_dir,'gaudi-env.py.gz'),'wb')
@@ -175,24 +189,50 @@ class Gaudi(Francesc):
         file.close()
         send_to_share.append(File(os.path.join(input_dir,'gaudi-env.py.gz')))
 
+
+        ## Check in any input datasets defined in optsfiles and allow them to be read into the
+        ## prepared state.
+        inputdata = parser.get_input_data()
+        if len(inputdata.files) > 0:
+            logger.warning('Found inputdataset defined in optsfile, '\
+                           'this will get pickled up and stored in the '\
+                           'prepared state any change to the options/data will '\
+                           'therefore require an unprepare first. NOTE the prefered way of working '\
+                           'is to define inputdata in the job.inputdata field. '\
+                           'This field should overwrite the inputdata defined in optsfiles.')
+            logger.info('Inputdata can be transfered from optsfiles to the job.inputdata field '\
+                        'using job.inputdata = job.application.readInputData(optsfiles)')
+            #file = open(os.path.join(input_dir,'inputdata.pkl'),'wb')
+            #pickle.dump([f.name for f in inputdata.files],file)
+            #file.close()
+            #send_to_share.append(File(os.path.join(input_dir,'inputdata.pkl')))## dont need at run time after the run script is made
+    
+
         ## store the outputsandbox/outputdata defined in the options file
         ## Can remove this when no-longer need to define outputdata in optsfiles
         outputsandbox, outputdata = parser.get_output(job)
-        import pickle
-        ## sandbox
-        file = open(os.path.join(input_dir,'outputsandbox.pkl'),'wb')
-        pickle.dump(outputsandbox,file)
-        file.close()
-        send_to_share.append(File(os.path.join(input_dir,'outputsandbox.pkl')))
-        ## data
-        file = open(os.path.join(input_dir,'outputdata.pkl'),'wb')
-        pickle.dump(outputdata,file)
-        file.close()
-        send_to_share.append(File(os.path.join(input_dir,'outputdata.pkl')))
+        #if outputsandbox:
+            ## sandbox
+            #file = open(os.path.join(input_dir,'outputsandbox.pkl'),'wb')
+            #pickle.dump(outputsandbox,file)
+            #file.close()
+            #send_to_share.append(File(os.path.join(input_dir,'outputsandbox.pkl')))
+        #if outputdata:
+            ## data
+            #file = open(os.path.join(input_dir,'outputdata.pkl'),'wb')
+            #pickle.dump(outputdata,file)
+            #file.close()
+            #send_to_share.append(File(os.path.join(input_dir,'outputdata.pkl')))
+
+        self.prep_data=GaudiJobConfig(inputbox=send_to_share,
+                                      outputbox=outputsandbox,
+                                      inputdata=inputdata,
+                                      outputdata=OutputData(outputdata))
+        
 
         #add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
-        return [fb.name for fb in send_to_share]
+        #return send_to_share
     
     def master_configure(self):
         #self._master_configure()
@@ -210,7 +250,7 @@ class Gaudi(Francesc):
         #self.appconfig = appmasterconfig
 
         
-        return (None, StandardJobConfig()) # return (changed, extra)
+        return (None, self.prep_data) # return (changed, extra)
 
     def configure(self, appmasterconfig):
         #self._configure()
@@ -263,18 +303,6 @@ class Gaudi(Francesc):
                 tmpmsg+="'%s', " % f.name
             msg=tmpmsg[:-2]+']'
             raise ApplicationConfigurationError(None,msg)
-
-
-        ## Check in any datasets defined in optsfiles
-        parser = self._get_parser()
-        inputdata = parser.get_input_data()
-        if len(inputdata.files) > 0:
-            msg='Found inputdataset defined in optsfiles,'\
-                ' This is no longer allowed, please use the'\
-                'inputdata attribute of job.inputdata'
-            raise ApplicationConfigurationError(None,msg)
-
-        return parser
 
     def readInputData(self,optsfiles,extraopts=False):
         """Returns a LHCbDataSet object from a list of options files. The

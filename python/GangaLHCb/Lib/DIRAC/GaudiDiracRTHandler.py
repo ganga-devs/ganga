@@ -8,6 +8,7 @@ from DiracUtils import *
 from DiracScript import *
 from GangaLHCb.Lib.Gaudi.RTHUtils import *
 from Ganga.GPIDev.Lib.File import FileBuffer, File
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
 from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
 
@@ -70,33 +71,78 @@ class GaudiDiracRTHandler(IRuntimeHandler):
                           (app.platform,str(platforms))
                     raise ApplicationConfigurationError(None,msg)
 
-        outputsandbox=[]
-        outdata=[]
+        job=app.getJobObject()
         ## catch errors from not preparing properly
-        if hasattr(app,'is_prepared') and app.is_prepared is not None:
-            ## Pickup outputsandbox defined in the options file
-            import pickle
-            f_osandbox = os.path.join(app.is_prepared.name,'outputsandbox.pkl')
-            if os.path.isfile(f_osandbox):
-                file=open(f_osandbox,'rb')
-                outputsandbox = pickle.load(file)
-                file.close()
-            ## Pickup outputdata defined in the options file
-            f_odata = os.path.join(app.is_prepared.name,'outputdata.pkl')
-            if os.path.isfile(f_odata):
-                file=open(f_odata,'rb')
-                outdata = pickle.load(file)
-                file.close()
-        else:
-            logger.warning('Application is not prepared properly, ignoring outputsandbox and outputdata defined in options file(s)')
+        if not hasattr(app,'is_prepared') or app.is_prepared is None:
+            logger.warning('Application is not prepared properly, ignoring inputdata, outputsandbox and outputdata defined in options file(s)')
+            raise GangaException(None,'Application not prepared properly')
 
+        
+        
+        inputsandbox=job.inputsandbox[:]
+        outputsandbox=job.outputsandbox[:]
+        outdata=OutputData()
+        indata=LHCbDataset()
+
+        if job.outputdata: outdata.files += job.outputdata.files
+        #if job.outputdata: outdata=job.outputdata.files[:]
+        
+        
+        ## Here add any sandbox files coming from the appmasterconfig
+        ## currently none. catch the case where None is passes (as in tests)
+        if appmasterconfig:            
+            inputsandbox += appmasterconfig.getSandboxFiles()
+            outputsandbox += appmasterconfig.outputbox
+            indata = LHCbDataset(appmasterconfig.inputdata.files)
+            outdata.files += appmasterconfig.outputdata.files
+                                 
         ## Note EITHER the master inputsandbox OR the job.inputsandbox is added to
         ## the subjob inputsandbox depending if the jobmasterconfig object is present
-        ## or not... Therefore combine the job.inputsandbox with appmasterconfig. Currently emtpy.
-        inputsandbox = app.getJobObject().inputsandbox[:]
-        if appmasterconfig: inputsandbox += appmasterconfig.getSandboxFiles()
+        ## or not... Therefore combine the job.inputsandbox with appmasterconfig.
+        if ( indata.files and indata.hasLFNs() ) or ( job.inputdata and job.inputdata.files and job.inputdata.hasLFNs() ):
+            xml_catalog_str = indata.getCatalog()
+            inputsandbox.append(FileBuffer('catalog.xml',xml_catalog_str))
+            
+     
+##         outputsandbox=job.outputsandbox[:]
+##         outdata=[]
+##         indata=LHCbDataset()
+##         if job.outputdata: outdata=job.outputdata.files[:]
 
-        return GaudiJobConfig(inputbox=inputsandbox,outputbox=outputsandbox,outputdata=outdata)
+##         ## catch errors from not preparing properly
+##         if hasattr(app,'is_prepared') and app.is_prepared is not None:
+##             import pickle
+##             ## Pickup inputdata defined in the options file
+##             f_idata = os.path.join(app.is_prepared.name,'inputdata.pkl')
+##             if os.path.isfile(f_idata):
+##                 file=open(f_idata,'rb')
+##                 indata.files += [strToDataFile(name) for name in pickle.load(file)]
+##                 file.close()
+##             ## Pickup outputsandbox defined in the options file
+##             f_osandbox = os.path.join(app.is_prepared.name,'outputsandbox.pkl')
+##             if os.path.isfile(f_osandbox):
+##                 file=open(f_osandbox,'rb')
+##                 outputsandbox += pickle.load(file)
+##                 file.close()
+##             ## Pickup outputdata defined in the options file
+##             f_odata = os.path.join(app.is_prepared.name,'outputdata.pkl')
+##             if os.path.isfile(f_odata):
+##                 file=open(f_odata,'rb')
+##                 outdata += pickle.load(file)
+##                 file.close()
+##         else:
+##             logger.warning('Application is not prepared properly, ignoring outputsandbox and outputdata defined in options file(s)')
+
+##         ## Note EITHER the master inputsandbox OR the job.inputsandbox is added to
+##         ## the subjob inputsandbox depending if the jobmasterconfig object is present
+##         ## or not... Therefore combine the job.inputsandbox with appmasterconfig. Currently emtpy.
+##         inputsandbox = app.getJobObject().inputsandbox[:]
+##         if appmasterconfig: inputsandbox += appmasterconfig.getSandboxFiles()
+
+        return GaudiJobConfig(inputbox=inputsandbox,
+                              outputbox=outputsandbox,
+                              outputdata=outdata,
+                              inputdata=indata)
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
 
@@ -118,7 +164,11 @@ class GaudiDiracRTHandler(IRuntimeHandler):
                 cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ' \
                            '["xmlcatalog_file:pool_xml_catalog.xml"]\n'
                 data_str += cat_opts
-
+        elif jobmasterconfig.inputdata.files:
+            data_str = job.inputdata.optionsString()
+            if jobmasterconfig.inputdata.hasLFNs():
+                cat_opts='\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
+                data_str += cat_opts
 
         ## Unlike in the applications prepare method, buffers are created into
         ## files later on in job submission when put in inputsandbox which only
@@ -141,7 +191,9 @@ class GaudiDiracRTHandler(IRuntimeHandler):
 
         def existingDataFilter(file):
             return file.name.find('/tmp/')>=0 and file.name.find('_data.py')>=0
+        
         existingDataFile = filter(existingDataFilter,job.inputsandbox)
+        
         if len(existingDataFile) is 1:
             # data_path = os.path.join(job.getInputWorkspace().getPath(),'data.py')
        # if os.path.isfile(data_path) and not os.path.islink(data_path):
@@ -186,6 +238,8 @@ class GaudiDiracRTHandler(IRuntimeHandler):
 
         if job.inputdata:
             dirac_script.inputdata = DiracInputData(job.inputdata)
+        elif jobmasterconfig.inputdata.files:
+            dirac_script.inputdata = DiracInputData(jobmasterconfig.inputdata)
 
         outputdata = OutputData()
         if jobmasterconfig: outputdata.files += jobmasterconfig.outputdata

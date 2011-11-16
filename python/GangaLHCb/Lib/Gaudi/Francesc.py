@@ -1,8 +1,10 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Parent for all Gaudi and GaudiPython applications in LHCb.'''
 
+import os
 import tempfile
 import gzip
+import shutil
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
@@ -17,6 +19,7 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
 #from GaudiAppConfig import *
+from Ganga.Utility.files import expandfilename
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -204,11 +207,11 @@ class Francesc(IPrepareApp):
         command = '###CMT### ' + command
         CMTscript.CMTscript(self,command)
 
-    def _prepare(self):
+    def _prepare(self,input_dir):
         #self.extra = GaudiExtras()
         self._getshell()
         send_to_share=[]
-                        
+
         if not self.user_release_area: return
 
         appname = self.get_gaudi_appname()
@@ -216,16 +219,34 @@ class Francesc(IPrepareApp):
                                           self.user_release_area,self.platform,
                                           self.shell)
         #self.appconfig.inputsandbox += [File(f,subdir='lib') for f in dlls]
-        send_to_share += [File(f,subdir='lib') for f in dlls]
+        for f in dlls:
+            if not os.path.isdir(os.path.join(input_dir,'lib')): os.makedirs(os.path.join(input_dir,'lib')) 
+            share_path = os.path.join(input_dir,'lib',f.split('/')[-1])
+            shutil.copy(expandfilename(f),share_path)
+            send_to_share.append(File(share_path,subdir='lib'))
         for f in pys:
             tmp = f.split('InstallArea')[-1]
             subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
-            send_to_share.append(File(f,subdir=subdir))
+            if not os.path.isdir(os.path.join(input_dir,subdir)): os.makedirs(os.path.join(input_dir,subdir))
+            share_path = os.path.join(input_dir,subdir,f.split('/')[-1])
+            shutil.copy(expandfilename(f),share_path)
+            #File(f).create(share_path)
+            #share_file = File(name=share_path,subdir=subdir)
+            #share_file.subdir = subdir
+            #send_to_share.append(share_file)
+            send_to_share.append(File(name=share_path,subdir=subdir))
         for dir, files in subpys.iteritems():
             for f in files:
                 tmp = f.split('InstallArea')[-1]
                 subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
-                send_to_share.append(File(f,subdir=subdir))
+                if not os.path.isdir(os.path.join(input_dir,subdir)): os.makedirs(os.path.join(input_dir,subdir))
+                share_path = os.path.join(input_dir,subdir,f.split('/')[-1])
+                shutil.copy(expandfilename(f),share_path)
+                #File(f).create(share_path)
+                #share_file = File(name=share_path,subdir=subdir)
+                #share_file.subdir = subdir
+                #send_to_share.append(share_file)
+                send_to_share.append(File(name=share_path,subdir=subdir))
 
         return send_to_share
 

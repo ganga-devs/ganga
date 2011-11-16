@@ -51,7 +51,7 @@ def create_gaudi_subjob(job, inputdata):
 ##         j.inputdata = None
 ##         if hasattr(j.application,'extra'):
 ##             j.application.extra.inputdata = LHCbDataset()
-    j.inputsandbox = job.inputsandbox[:]
+    #j.inputsandbox = job.inputsandbox[:]#master input sandbox is added automatically.
     j.outputsandbox = job.outputsandbox[:]
     j.outputdata = job.outputdata
     return j

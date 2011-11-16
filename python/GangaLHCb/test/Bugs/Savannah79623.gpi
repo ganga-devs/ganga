@@ -43,12 +43,12 @@ os.system('cd '+j.inputdir+';tar -xzvf _input_sandbox_'+str(j.id)+'_master.tgz|g
 file = open(os.path.join(j.inputdir,'pyfiles.log'),'r')
 
 lines = [line for line in file.readlines()]
-status = [line.find('test')==0 for line in lines]
+status = [line.find('test')>=0 for line in lines]
 print "Lines =",lines
 print 'status list =', status
 print 'expected = [True, True, True]',
 
 file.close()
 if False in status or len(status)!=3:
-    raise JobError
+    assert false, 'didnt pick up the python files from install area'
 
