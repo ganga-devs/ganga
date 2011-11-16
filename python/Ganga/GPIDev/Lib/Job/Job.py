@@ -402,9 +402,11 @@ class Job(GangaObject):
         self.info.uuid = Ganga.Utility.guid.uuid()
 
         #increment the shareref counter if the job we're copying is prepared.
-        if hasattr(self.application,'is_prepared') and self.application.is_prepared is not None and self.application.is_prepared is not True:
-            self.application.incrementShareCounter(self.application.is_prepared.name)
-            logger.debug("Increasing shareref")
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+#        if hasattr(self.application,'is_prepared') and self.application.is_prepared is not None and self.application.is_prepared is not True:
+#            logger.warning('calling incrementsharecounter from job.py')
+#            self.application.incrementShareCounter(self.application.is_prepared.name)
+#            logger.warning("Increasing shareref in job.py")
         # register the job (it will also commit it)
         # job gets its id now
         registry._add(self)
