@@ -10,7 +10,7 @@ from GangaLHCb.Lib.Gaudi.Francesc import *
 from Ganga.Utility.util import unique
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.File import ShareDir
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GaudiJobConfig import *
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 logger = Ganga.Utility.logging.getLogger()
 
@@ -80,7 +80,7 @@ class Bender(Francesc):
         master_input_files += [self.module]
         #self.extra.master_input_files += [self.module]
         #return (None,self.extra)
-        return (None,StandardJobConfig(inputbox=master_input_files))
+        return (None,GaudiJobConfig(inputbox=master_input_files))
 
     def configure(self,master_appconfig):
         #self._configure()

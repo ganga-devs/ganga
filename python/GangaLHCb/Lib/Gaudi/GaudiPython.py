@@ -9,7 +9,7 @@ from Ganga.GPIDev.Lib.File import  File
 from Francesc import *
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Lib.File import ShareDir
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GaudiJobConfig import *
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 logger = Ganga.Utility.logging.getLogger()
 
@@ -101,7 +101,7 @@ class GaudiPython(Francesc):
         master_input_files=[]
         master_input_files += self.script[:]
         #return (None,self.extra)
-        return (None,StandardJobConfig(inputbox=master_input_files))
+        return (None,GaudiJobConfig(inputbox=master_input_files))
 
     def configure(self,master_appconfig):
         #self._configure()
