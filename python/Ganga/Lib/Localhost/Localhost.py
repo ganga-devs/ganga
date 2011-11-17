@@ -189,7 +189,7 @@ class Localhost(IBackend):
 
 import os,os.path,shutil,tempfile
 import sys,time
-
+import re
 import sys
 
 # FIXME: print as DEBUG: to __syslog__ file
@@ -359,12 +359,12 @@ def printError(errorfile, message, error):
 
 postProcessOutputResult = postprocessoutput()
 
-#code here for upload to castor, test with stdout, after that move this block just above line="EXITCODE
+#code here for upload to castor, test with stdout
 if postProcessOutputResult is not None:
     for massStorageLine in postProcessOutputResult[1]:
         massStorageList = massStorageLine.split(' ')
 
-        filename = massStorageList[1]
+        filenameRegex = massStorageList[1]
         cm_mkdir = massStorageList[2]
         cm_cp = massStorageList[3]
         cm_ls = massStorageList[4]
@@ -392,10 +392,12 @@ if postProcessOutputResult is not None:
             
 
         #todo file name can be regex like *.root, if succeeded remove file from output
-        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, filename, os.path.join(path, filename)))
-        if exitcode != 0:
-            printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, filename, os.path.join(path, filename)), mystderr)
-            continue
+        for currentFile in os.listdir('.'):
+            if re.match(filenameRegex, currentFile):
+                (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
+                if exitcode != 0:
+                    printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)), mystderr)
+                    continue
 
 
 errorfile.close()
@@ -408,10 +410,13 @@ f_to_copy = ['stdout','stderr','__syslog__']
 filesToZip = []
 
 if postProcessOutputResult is not None:
-    filesToZip = postProcessOutputResult[0].split(' ')
-    for fileToZip in filesToZip:
-        if os.path.exists(fileToZip):                   
-            os.system("gzip %s" % fileToZip)
+    regexesToZip = postProcessOutputResult[0].split(' ')
+    for regexToZip in regexesToZip:
+        #check for regex match here
+        for currentFile in os.listdir('.'):
+            if re.match(regexToZip, currentFile):
+                os.system("gzip %s" % currentFile)
+                filesToZip.append(currentFile)
             
 final_list_to_copy = []
 
@@ -498,7 +503,7 @@ sys.exit()
             try:
                 shutil.rmtree(self.workdir)
             except OSError,x:
-                logger.warning('problem removing the workdir %s: %s',str(self.id),str(x))        
+                logger.warning('problem removing the workdir %s: %s',str(self.id),str(x))            
 
     def updateMonitoringInformation(jobs):
 
