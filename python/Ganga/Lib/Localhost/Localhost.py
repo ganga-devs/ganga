@@ -409,7 +409,7 @@ f_to_copy = ['stdout','stderr','__syslog__']
 
 filesToZip = []
 
-if postProcessOutputResult is not None:
+if postProcessOutputResult is not None and postProcessOutputResult[0] != '':
     regexesToZip = postProcessOutputResult[0].split(' ')
     for regexToZip in regexesToZip:
         #check for regex match here
