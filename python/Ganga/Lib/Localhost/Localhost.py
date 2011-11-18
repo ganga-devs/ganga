@@ -560,7 +560,7 @@ sys.exit()
                                 break
 
                         if not directoryExists:
-                            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
+                            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
                             if exitcode != 0:
                                 logger.warning('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path), mystderr)
                                 logger.warning('skipping %s for uploading to Castor' % outputFile.name)
