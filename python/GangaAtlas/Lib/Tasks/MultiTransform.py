@@ -7,7 +7,7 @@ from GangaAtlas.Lib.ATLASDataset.ATLASDataset import ATLASLocalDataset,ATLASOutp
 from GangaAtlas.Lib.Athena.Athena import AthenaSplitterJob
 
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
-from dq2.container.exceptions import DQContainerAlreadyHasDataset
+from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
 
@@ -16,6 +16,7 @@ from dq2.common.DQException import DQException
 
 import time
 import threading
+import copy
 
 from dq2.info import TiersOfATLAS
 from GangaAtlas.Lib.ATLASDataset import whichCloud
@@ -304,7 +305,17 @@ class MultiTransform(Transform):
 
    def getUnitMasterJob(self, uind, proxy=False):
        """Return the master job corresponding to this unit"""
+       if uind < 0 or uind > len(self.unit_partition_list):
+           return None
+       
+       if len(self.unit_partition_list[uind]) == 0:
+           return None
+       
        sj = self.getPartitionJobs( self.unit_partition_list[uind][0] )
+
+       if not sj:
+           return None
+       
        if proxy:
            mj = sj[-1].master
        else:
@@ -634,6 +645,8 @@ class MultiTransform(Transform):
        # go through each unit and return all partitions for this unit if available
        for uind in range(0, len(self.unit_partition_list)):
 
+           mj = self.getUnitMasterJob(uind)
+
            # if active, ignore
            if not self.unit_state_list[uind]['active']:
                continue
@@ -668,7 +681,7 @@ class MultiTransform(Transform):
                    continue                   
 
            # check for any running jobs
-           if len(partition_status_dict['running']) > 0:
+           if len(partition_status_dict['running']) > 0 and not mj.status in ['failed', 'killed']:
                continue
            
            # check for full unit submission
@@ -677,37 +690,40 @@ class MultiTransform(Transform):
                #continue
                break
 
-           # check for full killed units (i.e. failed build job)
-           if not self.isLocalTRF() and len(partition_status_dict['killed']) == len(self.unit_partition_list[uind]):
-               #full_partition_list += partition_status_dict['killed']
+           # --------------------------------------
+           # check for failed build jobs within unit
+           build_fail = False
+           for sj in mj.subjobs:
+               if sj.status == 'killed':
+                   self.backend.requirements.excluded_sites.append( sj.backend.actualCE )
+                   build_fail = True
+
+           if build_fail:
+               logger.warning("killed subjobs found in unit %d. Assuming failed build job - will rebroker unit." % uind)
                
-               for p in partition_status_dict['killed']:
-                   self.partitions_fails[p-1] += 1
-                   
-               # don't need to add partition fails as the number of apps will give the value
-
-               # exclude this site
-               for sj in self.getUnitMasterJob(uind).subjobs:
-                   if not sj.backend.actualCE in self.backend.requirements.excluded_sites:
-                       self.backend.requirements.excluded_sites.append( sj.backend.actualCE )
-
-               logger.warning("All partitions failed in unit %d of transform %d. Rebrokering to avoid possible bad sites %s" %
-                              (uind, self.getID(), self.backend.requirements.excluded_sites) )
+               # mark partitions as bad
                for p in self.unit_partition_list[ uind ]:
                    self.setPartitionStatus(p, 'bad')
 
+               self.removeDatasetsFromContainers(mj)
+               
+               # recreate partition list
                self.unit_state_list[uind]['configured'] = False
                self.unit_state_list[uind]['submitted'] = False
                self.createPartitionList( uind )
-               #continue
                break
 
+
+           # --------------------------------------
            # check for full failed units (dodgy site?)
            if not self.isLocalTRF() and len(partition_status_dict['attempted']) == len(self.unit_partition_list[uind]) and len(self.unit_partition_list[uind]) > 2:
                #full_partition_list += partition_status_dict['attempted']
                
-               for p in partition_status_dict['attempted']:
-                   self.partitions_fails[p-1] += 1
+               if not mj.status in ['failed', 'killed']:
+                   continue
+               
+               #for p in partition_status_dict['attempted']:
+               #    self.partitions_fails[p-1] += 1
                    
                # don't need to add partition fails as the number of apps will give the value
            
@@ -721,7 +737,9 @@ class MultiTransform(Transform):
                
                for p in self.unit_partition_list[ uind ]:
                    self.setPartitionStatus(p, 'bad')
-
+                   
+               self.removeDatasetsFromContainers(mj)
+                   
                self.unit_state_list[uind]['configured'] = False
                self.unit_state_list[uind]['submitted'] = False
                self.createPartitionList( uind )
@@ -729,9 +747,7 @@ class MultiTransform(Transform):
                break
            
            if len(partition_status_dict['completed']) + len(partition_status_dict['attempted']) == len(self.unit_partition_list[uind]):
-               for p in partition_status_dict['attempted']:
-                   self.partitions_fails[p-1] += 1
-
+               
                # check if one site failed all jobs
                mj = self.getUnitMasterJob(uind)
 
@@ -755,7 +771,7 @@ class MultiTransform(Transform):
                            if num_fails > 2:
                                self.backend.requirements.excluded_sites.append( f )
                                full_resubmit = True
-                           
+
                    if full_resubmit:
                        #full_partition_list += partition_status_dict['completed']
                        #full_partition_list += partition_status_dict['attempted']
@@ -763,15 +779,22 @@ class MultiTransform(Transform):
                        for p in self.unit_partition_list[ uind ]:
                            self.setPartitionStatus(p, 'bad')
 
+                       #for p in partition_status_dict['attempted']:
+                       #    self.partitions_fails[p-1] += 1
+                   
+                       self.removeDatasetsFromContainers(mj)
                        self.unit_state_list[uind]['configured'] = False
                        self.unit_state_list[uind]['submitted'] = False
                        self.createPartitionList( uind )
                        #continue
                        break
-               
+
                # resubmit failed jobs
                if mj.status != 'failed':
                    continue
+
+               for p in partition_status_dict['attempted']:
+                   self.partitions_fails[p-1] += 1
 
                try:
                    mj.resubmit()
@@ -847,18 +870,30 @@ class MultiTransform(Transform):
        unit = self.getUnit(unit)
        if unit != -1:
            self.unit_state_list[unit]['force'] = True
+           addDatasetsToContainers( self.getUnitMasterJob(unit) )
 
 
    def resetUnit(self, unit):
        """Reset a unit completely"""
        unit = self.getUnit(unit)
        if unit != -1:
+           # remove any possible DSs already complete
+           mj = self.getUnitMasterJob(unit)
+           self.removeDatasetsFromContainers(mj)
+
+           # wipe the unit
            self.unit_state_list[unit] = {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0, 'force':False}
 
            # reset the partitions
            for p in self.unit_partition_list[unit]:
                self.setPartitionStatus(p, 'bad')
 
+           # kill the job
+           try:
+               mj.kill()
+           except:
+               pass
+           
            self.unit_partition_list[unit] = []
            self.createPartitionList( unit )
                           
@@ -880,10 +915,13 @@ class MultiTransform(Transform):
 
       temp_inds = None
       if self.backend._name in ['Panda']:
-          temp_inds = self.inputdata
+          
           if not self.inputdata:
               self.inputdata = DQ2Dataset()
-              
+          else:
+              # do a proper copy of the original DS
+              temp_inds = copy.deepcopy(self.inputdata)
+          
           self.inputdata.dataset = self.unit_inputdata_list[unit_num]
           splitter = self.splitter
           if not splitter:
@@ -1041,13 +1079,11 @@ class MultiTransform(Transform):
       return True
 
    def setAppStatus(self, app, new_status):
-       # call parent first
-       super(MultiTransform,self).setAppStatus(app, new_status)
-       
-       if app._getParent().subjobs or new_status != "completed" or (app.id in self._app_status and self._app_status[app.id] in ["removed","completed","failed"]):
-           return
-
-       self.addDatasetsToContainers(app._getParent())
+       if app._getParent().subjobs or new_status != "completed" or (app.id in self._app_status and self._app_status[app.id] in ["removed","completed","failed", "bad"]):
+           super(MultiTransform,self).setAppStatus(app, new_status)
+       else:
+           super(MultiTransform,self).setAppStatus(app, new_status)
+           self.addDatasetsToContainers(app._getParent())
            
    def setMasterJobStatus(self, job, new_status):
        """hook for a master job status update"""
@@ -1063,6 +1099,23 @@ class MultiTransform(Transform):
       if not j.outputdata or j.outputdata._name != "DQ2OutputDataset":
           return
 
+      # check if this is a valid job in this trf
+      ok = False
+      if j.subjobs:
+          pj = j
+      else:
+          pj = j._getParent()
+      
+      for uind in range(0, len(self.unit_partition_list)):
+          mj = self.getUnitMasterJob(uind)
+          # check for this master job attached to a unit and only forced subjob check
+          if mj and (pj.id == mj.id) and (j.subjobs or self.unit_state_list[uind]['force']):
+              ok = True
+              break
+
+      if not ok:
+          return
+      
       # add dataset to the transform container
       trf_container = self.getContainerName()
       
@@ -1151,3 +1204,81 @@ class MultiTransform(Transform):
       finally:
           dq2_lock.release()
 
+   def removeDatasetsFromContainers(self, j):
+      """add datasets to transform and task containers"""
+       
+      if not j.outputdata or j.outputdata._name != "DQ2OutputDataset":
+          return
+
+      # remove dataset from the transform container
+      trf_container = self.getContainerName()
+      
+      try:
+          containerinfo = {}
+          dq2_lock.acquire()
+          try:
+              containerinfo = dq2.listDatasets(trf_container)
+          except:
+              containerinfo = {}
+
+          if containerinfo != {}:
+              if j.subjobs:
+                  ds_list = dq2.listDatasetsInContainer(j.outputdata.datasetname)
+                  for ds in ds_list:
+                      try:
+                          dq2.deleteDatasetsFromContainer(trf_container, [ ds ] )
+                      except DQContainerDoesNotHaveDataset:
+                          pass
+                      except Exception, x:
+                          logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+                      except DQException, x:
+                          logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+              else:
+                  
+                  try:
+                      dq2.deleteDatasetsFromContainer(trf_container, [ j.outputdata.datasetname ] )
+                  except DQContainerDoesNotHaveDataset:
+                      pass
+                  except Exception, x:
+                      logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+                  except DQException, x:
+                          logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x)) 
+      finally:
+          dq2_lock.release()
+
+
+      # remove dataset from the task container
+      task_container = self._getParent().getContainerName()
+      
+      try:
+          containerinfo = {}
+          dq2_lock.acquire()
+          try:
+              containerinfo = dq2.listDatasets(task_container)
+          except:
+              containerinfo = {}
+
+          if containerinfo != {}:
+              if j.subjobs:
+                  ds_list = dq2.listDatasetsInContainer(j.outputdata.datasetname)
+                  for ds in ds_list:
+                      try:
+                          dq2.deleteDatasetsFromContainer(task_container, [ ds ] )
+                      except DQContainerDoesNotHaveDataset:
+                          pass
+                      except Exception, x:
+                          logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+                      except DQException, x:
+                          logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+              else:
+                  
+                  try:
+                      dq2.deleteDatasetsFromContainer(task_container, [ j.outputdata.datasetname ] )
+                  except DQContainerDoesNotHaveDataset:
+                      pass
+                  except Exception, x:
+                      logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+                  except DQException, x:
+                          logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x)) 
+      finally:
+          dq2_lock.release()
