@@ -238,7 +238,7 @@ def execSyscmdSubprocess(cmd):
     return (exitcode, mystdout, mystderr)
 
 def postprocessoutput():
-
+    return None
     zippedList = []           
     massStorageList = []          
 
@@ -391,7 +391,7 @@ if postProcessOutputResult is not None:
                 continue
             
 
-        #todo file name can be regex like *.root, if succeeded remove file from output
+        #todo if succeeded remove file from output
         for currentFile in os.listdir('.'):
             if re.match(filenameRegex, currentFile):
                 (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
@@ -504,6 +504,83 @@ sys.exit()
                 shutil.rmtree(self.workdir)
             except OSError,x:
                 logger.warning('problem removing the workdir %s: %s',str(self.id),str(x))            
+
+    def postprocess(self, outputfiles, outputdir):      
+
+        # system command executor with subprocess
+        def execSyscmdSubprocess(cmd):
+
+            exitcode = -999
+            mystdout = ''
+            mystderr = ''
+
+            try:
+                child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (mystdout, mystderr) = child.communicate()
+                exitcode = child.returncode
+            finally:
+                pass
+
+            return (exitcode, mystdout, mystderr)
+
+        if len(outputfiles) > 0:
+            for outputFile in outputfiles:
+                if outputFile.__class__.__name__ == 'MassStorageFile':
+
+                    from Ganga.Utility.Config import getConfig
+                    massStorageConfig = getConfig('MassStorageOutput') 
+
+                    #if Castor mass storage (we understand from the nsls command)
+                    if massStorageConfig['ls_cmd'] == 'nsls':
+                        host = getConfig('System')['GANGA_HOSTNAME']
+                        lxplusHost = re.match('lxplus.*cern\.ch', host)
+                        if lxplusHost is None:
+                            logger.warning('Output files can be uploaded to Castor only from lxplus')
+                            logger.warning('skipping %s for uploading to Castor' % outputFile.name)
+                            continue 
+
+                        mkdir_cmd = massStorageConfig['mkdir_cmd']
+                        cp_cmd = massStorageConfig['cp_cmd']
+                        ls_cmd = massStorageConfig['ls_cmd']
+                        massStoragePath = massStorageConfig['path']
+
+                        pathToDirName = os.path.dirname(massStoragePath)
+                        dirName = os.path.basename(path)
+
+                        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
+                        if exitcode != 0:
+                            logger.warning('Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName, mystderr)
+                            logger.warning('skipping %s for uploading to Castor' % outputFile.name)
+                            continue
+
+                        directoryExists = False 
+                        for directory in mystdout.split('\\n'):
+                            if directory.strip() == dirName:
+                                directoryExists = True
+                                break
+
+                        if not directoryExists:
+                            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
+                            if exitcode != 0:
+                                logger.warning('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path), mystderr)
+                                logger.warning('skipping %s for uploading to Castor' % outputFile.name)
+                                continue
+            
+
+                        #todo ivan if succeeded remove file from output
+                        for currentFile in os.listdir(outputdir):
+                            if re.match(outputFile.name, currentFile):
+                                currentFullFilePath = os.path.join(outputdir, currentFile)
+                                (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFullFilePath, massStoragePath))
+                                if exitcode != 0:
+                                    logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFullFilePath, massStoragePath))
+                                    continue
+
+                        for currentFile in os.listdir(outputdir):
+                            if re.match(outputFile.name, currentFile):
+                                fullFilePath = os.path.join(outputdir, currentFile)
+                                os.system("gzip %s" % fullFilePath)
+
 
     def updateMonitoringInformation(jobs):
 
