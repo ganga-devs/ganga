@@ -545,7 +545,7 @@ sys.exit()
                         massStoragePath = massStorageConfig['path']
 
                         pathToDirName = os.path.dirname(massStoragePath)
-                        dirName = os.path.basename(path)
+                        dirName = os.path.basename(massStoragePath)
 
                         (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
                         if exitcode != 0:
