@@ -399,6 +399,39 @@ jobid = ###JOBID###
 
 ###PREEXECUTE###
 
+## system command executor with subprocess
+def execSyscmdSubprocess(cmd):
+
+    exitcode = -999
+    mystdout = ''
+    mystderr = ''
+
+    try:
+        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (mystdout, mystderr) = child.communicate()
+        exitcode = child.returncode
+    finally:
+        pass
+
+    return (exitcode, mystdout, mystderr)
+
+def postprocessoutput():
+
+    massStorageList = []          
+
+    inpfile = os.path.join(###INPUT_DIR###, '__postprocessoutput__')
+    
+    if not os.path.exists(inpfile):
+        return None
+                
+    for line in open(inpfile, 'r').readlines(): 
+        line = line.strip()     
+        if line.startswith('massstorage'):
+            massStorageList.append(line)        
+
+    return [massStorageList]
+
+
 def flush_file(f):
    f.flush()
    os.fsync(f.fileno()) #this forces a global flush (cache synchronization on AFS)
@@ -494,7 +527,7 @@ flush_file(sys.stderr)
 sys.stdout=sys.__stdout__
 sys.stderr=sys.__stderr__
 print >>sys.stdout,"--- GANGA APPLICATION OUTPUT END ---"
-print >>sys.stderr,"--- GANGA APPLICATION ERROR END ---"
+
 
 monitor.stop(result)
 
@@ -506,6 +539,53 @@ except:
 from Ganga.Utility.files import multi_glob, recursive_copy
 
 createOutputSandbox(outputpatterns,filefilter,sharedoutputpath)
+
+postProcessOutputResult = postprocessoutput()
+
+#code here for upload to castor
+if postProcessOutputResult is not None:
+    for massStorageLine in postProcessOutputResult[0]:
+        massStorageList = massStorageLine.split(' ')
+
+        filenameRegex = massStorageList[1]
+        cm_mkdir = massStorageList[2]
+        cm_cp = massStorageList[3]
+        cm_ls = massStorageList[4]
+        path = massStorageList[5]
+
+        pathToDirName = os.path.dirname(path)
+        dirName = os.path.basename(path)
+
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
+        if exitcode != 0:
+            print >>sys.stderr, 'Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName
+            print >>sys.stderr, mystderr
+            continue
+
+        directoryExists = False 
+        for directory in mystdout.split('\\n'):
+            if directory.strip() == dirName:
+                directoryExists = True
+                break
+
+        if not directoryExists:
+            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
+            if exitcode != 0:
+                print >>sys.stderr, 'Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path)
+                print >>sys.stderr, mystderr
+                continue
+            
+
+        #todo if succeeded remove file from output
+        for currentFile in os.listdir('.'):
+            if re.match(filenameRegex, currentFile):
+                (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
+                if exitcode != 0:
+                    print >>sys.stderr, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile))    
+                    print >>sys.stderr, mystderr        
+                    continue
+
+print >>sys.stderr,"--- GANGA APPLICATION ERROR END ---"
 
 for fn in ['__syslog__']:
     try:
@@ -547,6 +627,7 @@ sys.exit(result)
         text = text.replace('###JOBIDNAME###',self.config['jobid_name'])
         text = text.replace('###QUEUENAME###',self.config['queue_name'])
         text = text.replace('###HEARTBEATFREQUENCE###',self.config['heartbeat_frequency'])
+        text = text.replace('###INPUT_DIR###',repr(job.getStringInputDir()))
 
         text = text.replace('###MONITORING_SERVICE###',job.getMonitoringService().getWrapperScriptConstructorText())
 
