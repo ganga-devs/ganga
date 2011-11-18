@@ -554,7 +554,7 @@ sys.exit()
                             continue
 
                         directoryExists = False 
-                        for directory in mystdout.split('\\n'):
+                        for directory in mystdout.split('\n'):
                             if directory.strip() == dirName:
                                 directoryExists = True
                                 break
@@ -576,7 +576,7 @@ sys.exit()
                                     logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFullFilePath, massStoragePath))
                                     continue
                                 else:
-                                    logger.info('%s successfully uplaoded to mass storage' % currentFile)       
+                                    logger.info('%s successfully uploaded to mass storage' % currentFile)       
 
 
     def updateMonitoringInformation(jobs):
