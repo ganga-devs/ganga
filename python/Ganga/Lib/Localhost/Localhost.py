@@ -359,7 +359,7 @@ def printError(errorfile, message, error):
 
 postProcessOutputResult = postprocessoutput()
 
-#code here for upload to castor, test with stdout
+#code here for upload to castor
 if postProcessOutputResult is not None:
     for massStorageLine in postProcessOutputResult[1]:
         massStorageList = massStorageLine.split(' ')
