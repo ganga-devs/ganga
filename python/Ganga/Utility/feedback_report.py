@@ -390,6 +390,20 @@ def report(job=None):
                         except:
                                 writeErrorLog(str(sys.exc_value))
 
+                        #copy shared area of the job 
+                        try:
+
+                                if hasattr(job.application,'is_prepared'):
+                                        if job.application.is_prepared is not None and job.application.is_prepared is not True:
+                                                shareddir = job.application.is_prepared.name
+                                                if os.path.isdir(shareddir):
+
+                                                        sharedAreaDir = os.path.join(fullLogDirName, 'sharedarea')
+                                                        shutil.copytree(shareddir, sharedAreaDir)
+                        #except IOError, OSError
+                        except:
+                                writeErrorLog(str(sys.exc_value))
+
                         #copy repository job file
                         try:
                                 indexFileName = str(job.id) + '.index'
