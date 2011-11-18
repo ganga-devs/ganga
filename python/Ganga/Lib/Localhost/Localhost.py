@@ -562,7 +562,7 @@ sys.exit()
                         if not directoryExists:
                             (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
                             if exitcode != 0:
-                                logger.warning('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path), mystderr)
+                                logger.warning('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (mkdir_cmd, massStoragePath))
                                 logger.warning('skipping %s for uploading to Castor' % outputFile.name)
                                 continue
             
@@ -571,15 +571,12 @@ sys.exit()
                         for currentFile in os.listdir(outputdir):
                             if re.match(outputFile.name, currentFile):
                                 currentFullFilePath = os.path.join(outputdir, currentFile)
-                                (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFullFilePath, massStoragePath))
+                                (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFullFilePath, massStoragePath))
                                 if exitcode != 0:
-                                    logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFullFilePath, massStoragePath))
+                                    logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFullFilePath, massStoragePath))
                                     continue
-
-                        for currentFile in os.listdir(outputdir):
-                            if re.match(outputFile.name, currentFile):
-                                fullFilePath = os.path.join(outputdir, currentFile)
-                                os.system("gzip %s" % fullFilePath)
+                                else:
+                                    logger.info('%s successfully uplaoded to mass storage' % currentFile)       
 
 
     def updateMonitoringInformation(jobs):
