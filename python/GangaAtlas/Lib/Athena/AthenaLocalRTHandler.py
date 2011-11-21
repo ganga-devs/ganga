@@ -339,6 +339,13 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if job.inputdata and job.inputdata._name == 'ATLASTier3Dataset':
             environment['DATASETTYPE'] = 'TIER3'
 
+
+            
+        # USE_POOLFILECATALOG_FAILOVER of Local/ATLASLocalDataset
+        if job.inputdata and job.inputdata._name == 'ATLASLocalDataset':
+            if job.inputdata.use_poolfilecatalog_failover:
+                environment['USE_POOLFILECATALOG_FAILOVER'] = '1'
+
         # Write trf parameters
         trf_params = ' '
         for key, value in job.application.trf_parameter.iteritems():

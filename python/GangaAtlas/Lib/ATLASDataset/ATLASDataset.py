@@ -282,7 +282,9 @@ class ATLASLocalDataset(Dataset):
     """ATLAS Datasets is a list of local files"""
     
     _schema = Schema(Version(1,0), {
-        'names': SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='List of input files with full path')
+        'names': SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='List of input files with full path'),
+        'use_poolfilecatalog_failover' : SimpleItem(defvalue = False, doc = 'Use pool_insertFileToCatalog per single file if bulk insert fails'),
+
     })
     
     _category = 'datasets'
