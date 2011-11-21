@@ -1471,7 +1471,11 @@ class AthenaSplitterJob(ISplitter):
                 inputnames=[]
                 for i in xrange(self.numsubjobs):    
                     inputnames.append([])
-                for j in xrange(len(job.inputdata.get_dataset_filenames())):
+                numfiles = len(job.inputdata.get_dataset_filenames())
+                if numfiles < self.numsubjobs:
+                    self.numsubjobs = numfiles
+                    logger.warning('Number of requested subjobs larger than number of files found - changing j.splitter.numsubjobs = %d ' %self.numsubjobs )
+                for j in xrange(numfiles):
                     inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset_filenames()[j])
 
             if job.inputdata._name == 'ATLASDataset':
