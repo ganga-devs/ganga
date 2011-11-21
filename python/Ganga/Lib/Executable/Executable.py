@@ -225,7 +225,7 @@ class LCGRTHandler(IRuntimeHandler):
                     pass
             elif type(app.exe) is File:
                 logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
-                app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+                app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(app.exe.name)))
 
         return LCGJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
 
