@@ -4,11 +4,13 @@ from GangaLHCb.Lib.Gaudi.GaudiRunTimeHandler import GaudiRunTimeHandler
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
 
 class TestGaudiRunTimeHandler(GangaGPITestCase):
 
     def setUp(self):
         j = Job(application=DaVinci())
+        j.prepare()
         j.inputsandbox = [File(name='dummy.in')]
         self.app = j.application._impl
         #self.extra = GaudiExtras()
@@ -16,7 +18,7 @@ class TestGaudiRunTimeHandler(GangaGPITestCase):
         #self.extra.master_input_files = [File(name='master.in')]
         #self.extra.input_buffers['subjob.buffer'] = '###SUBJOBBUFFER###'
         self.input_files = [File(name='subjob.in'),File(FileBuffer('subjob.buffer','###SUBJOBBUFFER###').create().name)]        
-        self.appmasterconfig = StandardJobConfig(inputbox=[File(name='master.in'),File(FileBuffer('master.buffer','###MASTERBUFFER###').create().name)])
+        self.appmasterconfig = GaudiJobConfig(inputbox=[File(name='master.in'),File(FileBuffer('master.buffer','###MASTERBUFFER###').create().name)])
         j.outputsandbox = ['dummy1.out','dummy2.out','dummy3.out']
         self.rth = GaudiRunTimeHandler()
 
@@ -27,8 +29,8 @@ class TestGaudiRunTimeHandler(GangaGPITestCase):
         
 
     def test_GaudiRunTimeHandler_prepare(self):
-        sjc = StandardJobConfig(inputbox=self.input_files)
-        stdjobconfig = self.rth.prepare(self.app,sjc,self.appmasterconfig,None)
+        sjc = GaudiJobConfig(inputbox=self.input_files)
+        stdjobconfig = self.rth.prepare(self.app,sjc,self.appmasterconfig,GaudiJobConfig())
         # should have subjob.in(buffer), data.opts and gaudiscript.py
         print "sandbox =",stdjobconfig.getSandboxFiles()
         print "sandbox =",[file.name for file in stdjobconfig.getSandboxFiles()]       

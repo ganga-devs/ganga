@@ -60,7 +60,10 @@ class GaudiRunTimeHandler(IRuntimeHandler):
         ## Note EITHER the master inputsandbox OR the job.inputsandbox is added to
         ## the subjob inputsandbox depending if the jobmasterconfig object is present
         ## or not... Therefore combine the job.inputsandbox with appmasterconfig.
-        if ( indata.files and indata.hasLFNs() ) or ( job.inputdata and job.inputdata.hasLFNs() ):
+        if job.inputdata and job.inputdata.hasLFNs():
+            xml_catalog_str = job.inputdata.getCatalog()
+            inputsandbox.append(FileBuffer('catalog.xml',xml_catalog_str))           
+        elif indata.files and indata.hasLFNs():
             xml_catalog_str = indata.getCatalog()
             inputsandbox.append(FileBuffer('catalog.xml',xml_catalog_str))
             

@@ -40,7 +40,7 @@ class TestLHCbAnalysisTransform(GangaGPITestCase):
                     t.run()
                     assert len(tr.getPartitionJobs(0)), "No Jobs created upon run()"
                     job = GPI.jobs(int(tr.getPartitionJobs(0)[0].fqid.split('.')[0]))
-                    sleep_until_state(job,None,'submitted')
+                    sleep_until_state(job,300,'submitted')
                     del tr._impl.query.dataset.files[0]
                     tr.update(True)
                     
