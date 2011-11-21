@@ -327,7 +327,7 @@ if opt.input_pfnlistfile:
     j.inputdata = ATLASTier3Dataset()
     j.inputdata.pfnListFile = opt.input_pfnlistfile
 
-if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files:
+if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inputtype=='Local':
     #print opt.inputtype
     if opt.inputtype:
         if opt.inputtype=='DQ2':
