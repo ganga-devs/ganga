@@ -125,7 +125,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
                 cat_opts='\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
                 data_str += cat_opts
         elif jobmasterconfig.inputdata:
-            data_str = job.inputdata.optionsString()
+            data_str = jobmasterconfig.inputdata.optionsString()
             if jobmasterconfig.inputdata.hasLFNs():
                 cat_opts='\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
                 data_str += cat_opts
