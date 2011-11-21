@@ -578,6 +578,7 @@ if postProcessOutputResult is not None:
 
         #todo if succeeded remove file from output
         for currentFile in os.listdir('.'):
+            import re
             if re.match(filenameRegex, currentFile):
                 (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
                 if exitcode != 0:
