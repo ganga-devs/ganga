@@ -6,7 +6,7 @@
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 * Feature request #88651 implemented
-* Minor bug fixe
+* Bug fix #89110
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -14,6 +14,13 @@ ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 * Fix bug #88656: Local backend: set ATLAS_POOLCOND_PATH properly 
 * Fixed a bug with MultiTask messing up the inDS in subsequent units
+* Fix bug #71436, automatically adjust numsubjobs for a ATLASLocalDataset
+* Fix bug #86924: Remove default indivual file 2nd attempt of 
+  pool_insertFileToCatalog.py in Local backend and 
+  ATLASLocalDataset, use 
+  ATLASLocalDataset.use_poolfilecatalog_failover=True or 
+  --use_poolfilecatalog_failover instead to invoke 2nd attempt
+* Allow proper ATLASLocalDataset submission for athena/scripts
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -21,7 +28,7 @@ ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 Ganga 5.7.1 Changes...
 
-GangaLHCb-23-24/GangaLHCb-23-23/GangaLHCb-23-22:
+GangaLHCb-23-25/GangaLHCb-23-24/GangaLHCb-23-23/GangaLHCb-23-22:
 Addressing minor testing issues
 
 GangaLHCb-23-21:
@@ -29,7 +36,8 @@ No major new functionality, merely a bug fix release. (For information about new
 release notes for 5.7.0 appended below)
 
 updates...
-1) Fixes for the major bug introduced migrating to the prepared state where InstallArea was flattened.
+1) Fixes for the major bug introduced migrating to the prepared state where InstallArea was 
+flattened.
 2) Relaxation of the inputdata in optsfile restriction introduced in 5.7.0
 3) Hopefully Fix of leakage from master job inputsandbox into subjob inputsandbox.
 4) misc other minor fixes.
