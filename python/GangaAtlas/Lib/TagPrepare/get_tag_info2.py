@@ -72,7 +72,7 @@ def findReferences( infile ):
                 ref_dataset = _dq.repositoryClient.resolveVUID(ref_vuid)
                 ref_name = ref_dataset.get('dsn')
 
-                if ref_name != '' and len(_dq.listDatasetReplicas(ref_name)) != 0 and ref_name.find("." + _datasetType + ".") != -1:
+                if ref_name != '' and len(_dq.listDatasetReplicas(ref_name)) != 0 and ((ref_name.find("." + _datasetType + ".") != -1) or ((_datasetType == 'RAW') and ref_name.find("." + _datasetType) != -1)):
                     break
                 else:
                     ref_name = ''
@@ -292,7 +292,7 @@ def createTagInfo( stream_ref, infiles ):
     file_refs = {}
     print_num = 0
     
-    for f in taglfns:
+    for f in taglfns:        
         print f
         if os.access( f, os.R_OK ):
 
