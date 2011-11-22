@@ -333,8 +333,8 @@ class TestAthenaMC_evgen(AtlasTest):
         j.application.production_name='test-%s' % today
         j.application.number_events_job = 30
         j.outputdata = AthenaMCOutputDatasets()
-        j.outputdata.outrootfiles['Evgen']='test-%s.EVNT'
-        j.outputdata.outrootfiles['LOG']='test-%s.log'
+        j.outputdata.outrootfiles['Evgen']='test-%s.EVNT' % today
+        j.outputdata.outrootfiles['LOG']='test-%s.log' % today
         self.j = j
 
 
