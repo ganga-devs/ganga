@@ -1643,6 +1643,8 @@ sys.exit(0)
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
     def postprocess(self, outputfiles, outputdir):      
+        
+        import subprocess       
 
         # system command executor with subprocess
         def execSyscmdSubprocess(cmd):
