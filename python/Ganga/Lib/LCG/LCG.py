@@ -1253,7 +1253,11 @@ try:
 
 #   unpack inputsandbox from wdir
     for f in input_sandbox['local']:
-        getPackedInputSandbox(os.path.join(orig_wdir,f))
+        try:
+            getPackedInputSandbox(os.path.join(orig_wdir,f))
+        except:
+            #there could be an exception for __postprocessoutput__ file which is not archived   
+            pass
 
     printInfo('Unpack inputsandbox passed.')
 
