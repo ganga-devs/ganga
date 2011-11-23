@@ -1157,6 +1157,22 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
 
     return isDone
 
+def postprocessoutput():
+ 
+    massStorageList = []          
+
+    inpfile = '__postprocessoutput__'
+    
+    if not os.path.exists(inpfile):
+        return None
+                
+    for line in open(inpfile, 'r').readlines(): 
+        line = line.strip()     
+        if line.startswith('massstorage'):
+            massStorageList.append(line)        
+
+    return [massStorageList]
+
 ############################################################################################
 
 ###INLINEMODULES###
@@ -1313,6 +1329,16 @@ try:
     if not status:
         raise Exception('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)
+
+    postProcessOutputResult = postprocessoutput()
+
+    #code here for output postprocessing
+    if postProcessOutputResult is not None:
+        for massStorageLine in postProcessOutputResult[0]:
+            filenameRegex = massStorageLine.split(' ')[1]
+            for currentFile in os.listdir('.'):
+                if re.match(filenameRegex, currentFile):
+                    outputsandbox.append(currentFile)           
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
