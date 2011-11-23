@@ -1516,6 +1516,10 @@ sys.exit(0)
         ## update the job wrapper with the inputsandbox list
         script = script.replace('###INPUTSANDBOX###',repr({'remote':inputs['remote'],'local':[ os.path.basename(f) for f in inputs['local'] ]}))
 
+        #remove now __postprocessoutput__ from inputs['local']
+        if '__postprocessoutput__' in inputs['local']:
+            inputs['local'].remove('__postprocessoutput__')
+
         ## write out the job wrapper and put job wrapper into job's inputsandbox
         scriptPath = inpw.writefile(FileBuffer('__jobscript_%s__' % job.getFQID('.'),script),executable=1)
         input_sandbox  = inputs['local'] + [scriptPath]
