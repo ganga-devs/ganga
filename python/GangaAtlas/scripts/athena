@@ -349,11 +349,11 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
             print opt.locallocation
             if opt.locallocation:
                 j.inputdata.get_dataset(opt.locallocation[0],opt.locallocation[1])
-	    if opt.use_poolfilecatalog_failover:
-	        j.inputdata.use_poolfilecatalog_failover=True
             else:
                 print >>sys.stderr, 'ERROR: No parameter --locallocation for AthenaLocalDataset given'
                 sys.exit(4)
+	    if opt.use_poolfilecatalog_failover:
+	        j.inputdata.use_poolfilecatalog_failover=True
         if opt.inputtype=='Castor':
             j.inputdata = ATLASCastorDataset()
     else:        
