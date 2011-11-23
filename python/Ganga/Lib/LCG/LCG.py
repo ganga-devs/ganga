@@ -1510,6 +1510,9 @@ sys.exit(0)
 
         script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
        
+        if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
+            inputs['local'].append('__postprocessoutput__')
+
         ## update the job wrapper with the inputsandbox list
         script = script.replace('###INPUTSANDBOX###',repr({'remote':inputs['remote'],'local':[ os.path.basename(f) for f in inputs['local'] ]}))
 
