@@ -1157,22 +1157,6 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
 
     return isDone
 
-def postprocessoutput():
- 
-    massStorageList = []          
-
-    inpfile = '__postprocessoutput__'
-    
-    if not os.path.exists(inpfile):
-        return None
-                
-    for line in open(inpfile, 'r').readlines(): 
-        line = line.strip()     
-        if line.startswith('massstorage'):
-            massStorageList.append(line)        
-
-    return [massStorageList]
-
 ############################################################################################
 
 ###INLINEMODULES###
@@ -1188,6 +1172,7 @@ appexec = ###APPLICATIONEXEC###
 appargs = ###APPLICATIONARGS###
 appenvs = ###APPLICATIONENVS###
 timeout = ###TRANSFERTIMEOUT###
+massStorageRegex = ###MASSSTORAGEREGEX###
 
 exitcode=-1
 
@@ -1253,11 +1238,7 @@ try:
 
 #   unpack inputsandbox from wdir
     for f in input_sandbox['local']:
-        try:
-            getPackedInputSandbox(os.path.join(orig_wdir,f))
-        except:
-            #there could be an exception for __postprocessoutput__ file which is not archived   
-            pass
+        getPackedInputSandbox(os.path.join(orig_wdir,f))
 
     printInfo('Unpack inputsandbox passed.')
 
@@ -1334,12 +1315,9 @@ try:
         raise Exception('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)
 
-    postProcessOutputResult = postprocessoutput()
-
     #code here for output postprocessing
-    if postProcessOutputResult is not None:
-        for massStorageLine in postProcessOutputResult[0]:
-            filenameRegex = massStorageLine.split(' ')[1]
+    if len(massStorageRegex) > 0:
+        for filenameRegex in massStorageRegex:
             for currentFile in os.listdir('.'):
                 if re.match(filenameRegex, currentFile):
                     outputsandbox.append(currentFile)           
@@ -1514,15 +1492,24 @@ sys.exit(0)
 
         script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
        
+        #check if there are some files for postprocessing 
+        massStorageRegexList = []
+
         if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
-            inputs['local'].append('__postprocessoutput__')
+            
+            fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
+                fileRead = open(fullFilePath, 'r')
+                for line in fileRead.readlines(): 
+                    line = line.strip()     
+                    if line.startswith('massstorage'):
+                        massStorageRegexList.append(line.split(' ')[1])  
+
+                fileRead.close()
+
+        script = script.replace('###MASSSTORAGEREGEX###',repr(massStorageRegexList))
 
         ## update the job wrapper with the inputsandbox list
         script = script.replace('###INPUTSANDBOX###',repr({'remote':inputs['remote'],'local':[ os.path.basename(f) for f in inputs['local'] ]}))
-
-        #remove now __postprocessoutput__ from inputs['local']
-        if '__postprocessoutput__' in inputs['local']:
-            inputs['local'].remove('__postprocessoutput__')
 
         ## write out the job wrapper and put job wrapper into job's inputsandbox
         scriptPath = inpw.writefile(FileBuffer('__jobscript_%s__' % job.getFQID('.'),script),executable=1)
