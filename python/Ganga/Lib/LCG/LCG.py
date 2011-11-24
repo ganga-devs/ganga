@@ -1000,6 +1000,7 @@ class LCG(IBackend):
 #-----------------------------------------------------
 import os,os.path,shutil,tempfile
 import sys,popen2,time,traceback
+import re
 
 #bugfix #36178: subprocess.py crashes if python 2.5 is used
 #try to import subprocess from local python installation before an
