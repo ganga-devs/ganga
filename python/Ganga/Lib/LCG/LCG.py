@@ -1317,14 +1317,16 @@ try:
     printInfo('Application execution passed with exit code %d.' % exitcode)
 
     printInfo('current dir : %s' % str(os.listdir('.')))        
-    printInfo('working dir : %s' % str(os.listdir(orig_wdir)))  
+    printInfo('massStorageRegex : %s' % str(massStorageRegex))  
 
     #code here for output postprocessing
     if len(massStorageRegex) > 0:
         for filenameRegex in massStorageRegex:
             for currentFile in os.listdir('.'):
                 if re.match(filenameRegex, currentFile):
-                    outputsandbox.append(currentFile)           
+                    outputsandbox.append(currentFile) 
+
+    printInfo('outputsandbox : %s' % str(outputsandbox))          
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
