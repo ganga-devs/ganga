@@ -1501,6 +1501,7 @@ sys.exit(0)
         #check if there are some files for postprocessing 
         massStorageRegexList = []
 
+        """
         if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
             
             fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
@@ -1511,6 +1512,7 @@ sys.exit(0)
                     massStorageRegexList.append(line.split(' ')[1])  
 
             fileRead.close()
+        """
 
         script = script.replace('###MASSSTORAGEREGEX###',repr(massStorageRegexList))
 
@@ -1526,6 +1528,17 @@ sys.exit(0)
         ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
         ##  - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
+
+        if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
+            
+            fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
+            fileRead = open(fullFilePath, 'r')
+            for line in fileRead.readlines(): 
+                line = line.strip()     
+                if line.startswith('massstorage'):
+                    output_sandbox += [line.split(' ')[1]]
+
+            fileRead.close()
         
         if config['JobLogHandler'] == 'WMS':
             output_sandbox += ['stdout.gz','stderr.gz']
