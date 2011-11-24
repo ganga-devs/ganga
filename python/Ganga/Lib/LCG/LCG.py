@@ -1498,13 +1498,13 @@ sys.exit(0)
         if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
             
             fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
-                fileRead = open(fullFilePath, 'r')
-                for line in fileRead.readlines(): 
-                    line = line.strip()     
-                    if line.startswith('massstorage'):
-                        massStorageRegexList.append(line.split(' ')[1])  
+            fileRead = open(fullFilePath, 'r')
+            for line in fileRead.readlines(): 
+                line = line.strip()     
+                if line.startswith('massstorage'):
+                    massStorageRegexList.append(line.split(' ')[1])  
 
-                fileRead.close()
+            fileRead.close()
 
         script = script.replace('###MASSSTORAGEREGEX###',repr(massStorageRegexList))
 
