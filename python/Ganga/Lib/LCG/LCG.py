@@ -1316,6 +1316,9 @@ try:
         raise Exception('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)
 
+    printInfo('current dir : %s' % str(os.listdir('.')))        
+    printInfo('working dir : %s' % str(os.listdir(orig_wdir)))  
+
     #code here for output postprocessing
     if len(massStorageRegex) > 0:
         for filenameRegex in massStorageRegex:
