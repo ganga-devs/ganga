@@ -823,6 +823,17 @@ sys.exit(0)
         ##  - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
 
+        if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
+            
+            fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
+            fileRead = open(fullFilePath, 'r')
+            for line in fileRead.readlines(): 
+                line = line.strip()     
+                if line.startswith('massstorage'):
+                    output_sandbox += [line.split(' ')[1]]
+
+            fileRead.close()
+
         if config['JobLogHandler'] in ['WMS']:
             output_sandbox += ['stdout.gz','stderr.gz']
 
@@ -1125,6 +1136,8 @@ sys.exit(0)
         return ick
 
     def postprocess(self, outputfiles, outputdir):      
+
+        import subprocess
 
         # system command executor with subprocess
         def execSyscmdSubprocess(cmd):
