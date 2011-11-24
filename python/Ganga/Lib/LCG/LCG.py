@@ -1173,7 +1173,6 @@ appexec = ###APPLICATIONEXEC###
 appargs = ###APPLICATIONARGS###
 appenvs = ###APPLICATIONENVS###
 timeout = ###TRANSFERTIMEOUT###
-massStorageRegex = ###MASSSTORAGEREGEX###
 
 exitcode=-1
 
@@ -1314,19 +1313,7 @@ try:
 
     if not status:
         raise Exception('Application execution failed.')
-    printInfo('Application execution passed with exit code %d.' % exitcode)
-
-    printInfo('current dir : %s' % str(os.listdir('.')))        
-    printInfo('massStorageRegex : %s' % str(massStorageRegex))  
-
-    #code here for output postprocessing
-    if len(massStorageRegex) > 0:
-        for filenameRegex in massStorageRegex:
-            for currentFile in os.listdir('.'):
-                if re.match(filenameRegex, currentFile):
-                    outputsandbox.append(currentFile) 
-
-    printInfo('outputsandbox : %s' % str(outputsandbox))          
+    printInfo('Application execution passed with exit code %d.' % exitcode)         
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
@@ -1497,24 +1484,6 @@ sys.exit(0)
             transfer_timeout = 60
 
         script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
-       
-        #check if there are some files for postprocessing 
-        massStorageRegexList = []
-
-        """
-        if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
-            
-            fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
-            fileRead = open(fullFilePath, 'r')
-            for line in fileRead.readlines(): 
-                line = line.strip()     
-                if line.startswith('massstorage'):
-                    massStorageRegexList.append(line.split(' ')[1])  
-
-            fileRead.close()
-        """
-
-        script = script.replace('###MASSSTORAGEREGEX###',repr(massStorageRegexList))
 
         ## update the job wrapper with the inputsandbox list
         script = script.replace('###INPUTSANDBOX###',repr({'remote':inputs['remote'],'local':[ os.path.basename(f) for f in inputs['local'] ]}))
@@ -1758,7 +1727,7 @@ sys.exit(0)
                                     logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFullFilePath, massStoragePath))
                                     continue
                                 else:
-                                    logger.info('%s successfully uploaded to mass storage' % currentFile)       
+                                    logger.info('%s successfully uploaded to mass storage' % currentFile)              
 
 
     def updateMonitoringInformation(jobs):
