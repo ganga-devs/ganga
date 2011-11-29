@@ -17,6 +17,7 @@ from Francesc import *
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GaudiJobConfig import *
+from GangaLHCb.Lib.LHCbDataset import LHCbDataset,OutputData
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -88,8 +89,10 @@ class Gaudi(Francesc):
                                      typelist=['str','type(None)'],doc=docstr)
 
     docstr = 'Data/sandbox items defined in prepare'
-    schema['prep_data'] = SimpleItem(preparable=1,defvalue=None,typelist=['type(None)','GangaLHCb.Lib.Gaudi.GaudiJobConfig'],
-                                   hidden=1,doc=docstr)
+    schema['prep_inputbox']   = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
+    schema['prep_outputbox']  = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
+    schema['prep_inputdata']  = ComponentItem(category='datasets', preparable=1,defvalue=LHCbDataset(),typelist=['GangaLHCb.Lib.LHCbDataset.LHCbDataset'],hidden=1,doc=docstr)
+    schema['prep_outputdata'] = ComponentItem(category='datasets', preparable=1,defvalue=OutputData(),typelist=['GangaLHCb.Lib.LHCbDataset.OutputData'],hidden=1,doc=docstr)
  
     docstr = 'Location of shared resources. Presence of this attribute implies'\
           'the application has been prepared.'
@@ -149,7 +152,10 @@ class Gaudi(Francesc):
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
-            self.prep_data = None
+            self.prep_inputbox = []
+            self.prep_outputbox = []
+            self.prep_inputdata = LHCbDataset()
+            self.prep_outputdata = OutputData()
 
     def prepare(self,force=False):
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -225,11 +231,15 @@ class Gaudi(Francesc):
             #file.close()
             #send_to_share.append(File(os.path.join(input_dir,'outputdata.pkl')))
 
-        self.prep_data=GaudiJobConfig(inputbox=send_to_share,
-                                      outputbox=outputsandbox,
-                                      inputdata=inputdata,
-                                      outputdata=OutputData(outputdata))
-        
+ ##        self.prep_data=GaudiJobConfig(inputbox=send_to_share,
+##                                       outputbox=outputsandbox,
+##                                       inputdata=inputdata,
+##                                       outputdata=OutputData(outputdata))
+        self.prep_inputbox  += send_to_share[:]
+        self.prep_outputbox += outputsandbox[:]
+        self.prep_inputdata.files += inputdata.files
+        self.prep_outputdata.files += outputdata
+
 
         #add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
@@ -251,7 +261,10 @@ class Gaudi(Francesc):
         #self.appconfig = appmasterconfig
 
         
-        return (None, self.prep_data) # return (changed, extra)
+        return (None, GaudiJobConfig(inputbox = self.prep_inputbox,
+                                     outputbox = self.prep_outputbox,
+                                     inputdata = self.prep_inputdata,
+                                     outputdata = self.prep_outputdata)) # return (changed, extra)
 
     def configure(self, appmasterconfig):
         #self._configure()
