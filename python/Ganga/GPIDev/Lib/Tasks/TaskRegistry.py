@@ -293,19 +293,19 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
 
         fstring = " %5s | %17s | %30s | %9s | %33s | %5s\n"
         lenfstring = 120
-        ds = "\n" + fstring % ("#", "Type", "Name", "State", "%4s: %4s/ %4s/ %4s/ %4s/ %4s" % (
-           "Jobs",markup("done",overview_colours["completed"])," "+markup("run",overview_colours["running"]),markup("fail",overview_colours["failed"]),markup("hold",overview_colours["hold"])," "+markup("bad",overview_colours["bad"])), "Float")
+        ds = "\n" + fstring % ("#", "Type", "Name", "State", "%4s: %4s/ %4s/ %4s/ %4s/ %4s/ %4s" % (
+           "Jobs",markup("done",overview_colours["completed"])," "+markup("run",overview_colours["running"])," "+markup("attempted",overview_colours["attempted"]),markup("fail",overview_colours["failed"]),markup("hold",overview_colours["hold"])," "+markup("bad",overview_colours["bad"])), "Float")
         ds += "-"*lenfstring + "\n"
         for p in self._impl.objects.values():
-            stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4i" % (
-                    p.n_all(), p.n_status("completed"),p.n_status("running"),p.n_status("failed"),p.n_status("hold"),p.n_status("bad"))
+            stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4i/ %4i" % (
+                    p.n_all(), p.n_status("completed"),p.n_status("running"),p.n_status("attempted"),p.n_status("failed"),p.n_status("hold"),p.n_status("bad"))
             ds += markup(fstring % (p.id, p.__class__.__name__, p.name, p.status, stat, p.float), status_colours[p.status])
             if short:
                 continue
             for ti in range(0, len(p.transforms)):
                 t = p.transforms[ti]
-                stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4s" % (
-                   t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
+                stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4i/ %4s" % (
+                   t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("attempted"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
                 ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name, t.status, stat, ""), status_colours[t.status])
             ds += "-"*lenfstring + "\n"
         return ds + "\n"
