@@ -369,7 +369,7 @@ class MultiTransform(Transform):
 
           # deactivate any units with greater than 3 exceptions
           if self.unit_state_list[uind2]['exceptions'] > 3:
-              logger.error("Too many exceptions downloading and/or merging for unit '%s'. Deactivating." % self.unit_outputdata_list[uind2])
+              logger.error("Too many exceptions downloading and/or merging for unit '%s' in Transform %d, Task %d. Deactivating unit." % (self.unit_outputdata_list[uind2], self.getID(), self._getParent().id))
               self.unit_state_list[uind2]['reason'] = 'Too many exceptions.'
               self.unit_state_list[uind2]['active'] = False
               continue
@@ -677,7 +677,7 @@ class MultiTransform(Transform):
            # check for too many failures
            for p in self.unit_partition_list[uind]:
                if self._partition_status[p] in ["failed"]:
-                   logger.error("Too many failures for partition %s. Deactivating unit." % p)
+                   logger.error("Too many failures for partition %s in Transform %d, Task %d. Deactivating unit '%s'." % (p, self.getID(), self._getParent().id, self.unit_outputdata_list[uind2]))
                    self.unit_state_list[uind]['reason'] = "Too many job failures in unit"
                    self.unit_state_list[uind]['active'] = False
                    continue                   
@@ -807,7 +807,7 @@ class MultiTransform(Transform):
                            self._app_status[ self.getPartitionApps()[p][-1] ] = 'submitting'
                    break
                except:
-                   logger.error("Error attempting to resubmit master job %i. Deactivating unit." % mj.id)
+                   logger.error("Error attempting to resubmit master job %i in Transform %d, Task %d. Deactivating unit '%s'." % (mj.id, self.getID(), self._getParent().id, self.unit_outputdata_list[uind2]))
                    self.unit_state_list[uind]['active'] = False
                    self.unit_state_list[uind]['reason'] = 'Error on resubmission'
                    #self.pause()
