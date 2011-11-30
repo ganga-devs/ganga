@@ -5,7 +5,7 @@ from MultiTransform import MultiTransform
 from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
-
+from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 
 o = [""]
 def c(s):
@@ -50,7 +50,7 @@ class MultiTask(Task):
        }.items()))
    _category = 'tasks'
    _name = 'MultiTask'
-   _exportmethods = Task._exportmethods + ["initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName']
+   _exportmethods = Task._exportmethods + ["initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName', 'listAllDatasets']
    
    def initialize(self):
       super(MultiTask, self).initialize()
@@ -82,6 +82,23 @@ class MultiTask(Task):
       name_base = ["user",getNickname(),self.creation_date, name, "id_%i" % self.id ]
       
       return (".".join(name_base) + "/").replace(" ", "_")
+
+   def listAllDatasets(self):
+      "List all datasets in container of this transform"
+      ds_list = []
+      try:
+          dq2_lock.acquire()
+          ds_list = dq2.listDatasetsInContainer(self.getContainerName())
+      except DQContainerDoesNotHaveDataset:
+          pass
+      except Exception, x:
+          logger.error('Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
+      except DQException, x:
+          logger.error('DQ2 Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
+      finally:
+          dq2_lock.release()
+          
+      return ds_list
 
    def initializeFromDatasets(self,dataset_list):
       """ For each dataset in the dataset_list a unit is created. 
