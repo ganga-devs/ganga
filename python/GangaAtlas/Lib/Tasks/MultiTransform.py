@@ -491,6 +491,7 @@ class MultiTransform(Transform):
 
                       logger.warning("Running merger for transform %d, unit %d..." % (self.getID(), uind))
 
+                      import os                      
                       if not os.path.exists(local_location):
                           os.makedirs(local_location)
 
