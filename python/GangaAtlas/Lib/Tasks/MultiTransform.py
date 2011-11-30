@@ -80,7 +80,7 @@ class MultiTransform(Transform):
        }.items()))
    _category = 'transforms'
    _name = 'MultiTransform'
-   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName', 'getNumUnits'. 'getUnitsFromPartitions', 'isLocalTRF', 'isUnitComplete', 'getLocalDQ2FileList', 'getAllUnitJobs', 'listUnitDatasets', 'listAllDatasets', 'getUnitContainerName', 'getAllUnitJobs', 'checkContainerContents']
+   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName', 'getNumUnits', 'getUnitsFromPartitions', 'isLocalTRF', 'isUnitComplete', 'getLocalDQ2FileList', 'getAllUnitJobs', 'listUnitDatasets', 'listAllDatasets', 'getUnitContainerName', 'checkContainerContents']
    
    def initialize(self):
        super(MultiTransform, self).initialize()
@@ -100,8 +100,9 @@ class MultiTransform(Transform):
    def unit_overview(self):
        """Show the status of the units in this transform"""
        for uind in range(0, len(self.unit_outputdata_list)):
-           
-           o = ""                  
+
+           # display colour given state
+           o = ""
            o += ("%d:  " % uind) + self.unit_outputdata_list[uind]
            
            # is unit active?
@@ -112,39 +113,51 @@ class MultiTransform(Transform):
 
            # is unit configured?
            if self.unit_state_list[uind]['configured']:
-               o += "\t"+" " * 5 + "*"
+               o += "\t"+" " * 3 + "*"
            else:
-               o += "\t"+" " * 5 + "-"
+               o += "\t"+" " * 3 + "-"
                
            # is unit submitted?
            if self.unit_state_list[uind]['submitted']:
-               o += "\t\t"+" " * 5 + "*"
+               o += "\t"+" " * 3 + "*"
            else:
-               o += "\t\t"+" " * 5 + "-"
+               o += "\t"+" " * 3 + "-"
 
            # is unit downloaded?
            if self.unit_state_list[uind]['download']:
-               o += "\t\t"+" " * 4 + "*"
+               o += "\t"+" " * 3 + "*"
            else:
-               o += "\t\t"+" " * 4 + "-"
+               o += "\t"+" " * 3 + "-"
 
            # is unit Merged?
            if self.unit_state_list[uind]['merged']:
-               o += "\t\t"+" " * 3 + "*"
+               o += "\t"+" " * 3 + "*"
            else:
-               o += "\t\t"+" " * 3 + "-"
+               o += "\t"+" " * 3 + "-"
 
            # is unit Complete?
            if self.isUnitComplete(uind):
-               o += "\t\t"+" " * 3 + "*"
+               o += "\t"+" " * 2 + "*"
            else:
-               o += "\t\t"+" " * 3 + "-"    
+               o += "\t"+" " * 2 + "-"    
                
            # Number of exceptions
            o += "\t" +" " * 3 + "%d" % self.unit_state_list[uind]['exceptions']
            
            # Any reasons?
            o += "\t" + self.unit_state_list[uind]['reason']
+
+           # change colour on state
+           if self.isUnitComplete(uind):
+               o = markup(o,overview_colours["completed"])
+           elif not self.unit_state_list[uind]['active']:
+               o = markup(o,overview_colours["bad"])
+           elif not self.unit_state_list[uind]['configured']:
+               o = markup(o,overview_colours["hold"])
+           elif not self.unit_state_list[uind]['submitted']:
+               o = markup(o,overview_colours["ready"])  
+           else:
+               o = markup(o,overview_colours["running"])
            print o
                       
    def check(self):
@@ -1310,7 +1323,7 @@ class MultiTransform(Transform):
 
       jobslice = JobRegistrySlice("tasks(%i).transforms[%i].allUnitJobs()"%(task.id, self.getID()))
       
-      for uind in xrange(0,trf.getNumUnits()):
+      for uind in xrange(0,self.getNumUnits()):
           mj = self.getUnitMasterJob(uind)
           if mj:
               jobslice.objects[mj.fqid] = mj
@@ -1320,7 +1333,7 @@ class MultiTransform(Transform):
    def getUnitContainerName(self, unit):
       "Return the container associated with this unit"
       mj = getUnitJob(unit)
-      if mj and mj.outputdata and mj.outputdata._name = "DQ2Dataset":
+      if mj and mj.outputdata and mj.outputdata._name == "DQ2Dataset":
          return mj.outputdata.datasetname
 
       return None

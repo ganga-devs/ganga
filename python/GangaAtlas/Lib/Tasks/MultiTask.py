@@ -171,7 +171,7 @@ class MultiTask(Task):
       print "Lists the units for each partition and their current status"
       #print "Format: (partition number)[:(number of failed attempts)]"
       print
-      print " "* 41 + "Active\tConfigured\tSubmitted\tDownload\tMerged\tComplete\tExcep.\tReason"
+      print " "* 41 + "Active\tConf'd\tSub'd\tDwnl'd\tMerged\tComp.\tExcep.\tReason"
       for trfid in range(0, len(self.transforms)):
          print "----------------------------------------------------------------------------------------------------------------------"
          print "----   Transform %d:  %s" % (trfid, self.transforms[trfid].name)
