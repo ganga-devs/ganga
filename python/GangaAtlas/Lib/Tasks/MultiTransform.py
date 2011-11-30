@@ -871,7 +871,7 @@ class MultiTransform(Transform):
        unit = self.getUnit(unit)
        if unit != -1:
            self.unit_state_list[unit]['force'] = True
-           addDatasetsToContainers( self.getUnitMasterJob(unit) )
+           self.addDatasetsToContainers( self.getUnitMasterJob(unit) )
 
 
    def resetUnit(self, unit):
