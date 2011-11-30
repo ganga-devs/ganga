@@ -233,9 +233,10 @@ class Task(GangaObject):
     def submitJobs(self):
         """Submits as many jobs as necessary to maintain the float. Internal"""
         numjobs = 0
+        if not self.status in ["running", "running/pause"]:
+            return 0
+
         for i in range(len(self.transforms)-1,-1,-1):
-            if not self.status == "running":
-                break
             tf = self.transforms[i]
             to_run = self.float - self.n_status("running")
             run = (self.resub_limit * self.float >= self.n_status("running"))
