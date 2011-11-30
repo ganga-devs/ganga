@@ -879,7 +879,9 @@ class MultiTransform(Transform):
        if unit != -1:
            # remove any possible DSs already complete
            mj = self.getUnitMasterJob(unit)
-           self.removeDatasetsFromContainers(mj)
+
+           if mj:
+               self.removeDatasetsFromContainers(mj)
 
            # wipe the unit
            self.unit_state_list[unit] = {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0, 'force':False}
@@ -1096,7 +1098,7 @@ class MultiTransform(Transform):
    def addDatasetsToContainers(self, j):
       """add datasets to transform and task containers"""
        
-      if not j.outputdata or j.outputdata._name != "DQ2OutputDataset":
+      if not j or not j.outputdata or j.outputdata._name != "DQ2OutputDataset":
           return
 
       # check if this is a valid job in this trf
@@ -1207,7 +1209,7 @@ class MultiTransform(Transform):
    def removeDatasetsFromContainers(self, j):
       """add datasets to transform and task containers"""
        
-      if not j.outputdata or j.outputdata._name != "DQ2OutputDataset":
+      if not j or not j.outputdata or j.outputdata._name != "DQ2OutputDataset":
           return
 
       # remove dataset from the transform container
