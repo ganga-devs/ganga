@@ -5,6 +5,7 @@ from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 from TaskApplication import AthenaTask, AnaTaskSplitterJob
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import ATLASLocalDataset,ATLASOutputDataset
 from GangaAtlas.Lib.Athena.Athena import AthenaSplitterJob
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
@@ -79,7 +80,7 @@ class MultiTransform(Transform):
        }.items()))
    _category = 'transforms'
    _name = 'MultiTransform'
-   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName', 'getNumUnits']
+   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName', 'getNumUnits'. 'getUnitsFromPartitions', 'isLocalTRF', 'isUnitComplete', 'getLocalDQ2FileList', 'getAllUnitJobs', 'listUnitDatasets', 'listAllDatasets', 'getUnitContainerName', 'getAllUnitJobs', 'checkContainerContents']
    
    def initialize(self):
        super(MultiTransform, self).initialize()
@@ -1095,7 +1096,15 @@ class MultiTransform(Transform):
            return
 
        self.addDatasetsToContainers(job)
-                             
+
+   def checkContainerContents(self):
+      """Check all datasets have been added to the trf and unit containers"""
+      for uind in range(0, len(self.unit_partition_list)):
+          mj = self.getUnitMasterJob(uind)
+          if mj:
+              self.addDatasetsToContainers(mj)
+      
+      
    def addDatasetsToContainers(self, j):
       """add datasets to transform and task containers"""
        
@@ -1285,3 +1294,67 @@ class MultiTransform(Transform):
                           logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x)) 
       finally:
           dq2_lock.release()
+
+
+   def getAllUnitJobs(self):
+      "Return all unit master jobs associated with this Transform"
+      task = self._getParent()
+      if not task:
+          raise ApplicationConfigurationError(None, "This transform has not been associated with a task and so no jobs are available")
+
+      jobslice = JobRegistrySlice("tasks(%i).transforms[%i].allUnitJobs()"%(task.id, self.getID()))
+      
+      for uind in xrange(0,trf.getNumUnits()):
+          mj = self.getUnitMasterJob(uind)
+          if mj:
+              jobslice.objects[mj.fqid] = mj
+
+      return JobRegistrySliceProxy(jobslice)
+  
+   def getUnitContainerName(self, unit):
+      "Return the container associated with this unit"
+      mj = getUnitJob(unit)
+      if mj and mj.outputdata and mj.outputdata._name = "DQ2Dataset":
+         return mj.outputdata.datasetname
+
+      return None
+
+   def listAllDatasets(self):
+      "List all datasets in container of this transform"
+      ds_list = []
+      try:
+          dq2_lock.acquire()
+          ds_list = dq2.listDatasetsInContainer(self.getContainerName())
+      except DQContainerDoesNotHaveDataset:
+          pass
+      except Exception, x:
+          logger.error('Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
+      except DQException, x:
+          logger.error('DQ2 Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
+      finally:
+          dq2_lock.release()
+          
+      return ds_list
+
+   def listUnitDatasets(self, unit):
+      "List all datasets in container of this transform"
+      cont_name = self.getUnitContainerName(unit)
+      if not cont_name:
+          return []
+      
+      ds_list = []
+      try:
+          dq2_lock.acquire()
+          ds_list = dq2.listDatasetsInContainer(cont_name)
+      except DQContainerDoesNotHaveDataset:
+          pass
+      except Exception, x:
+          logger.error('Problem finding datasets associated with Unit container %s: %s %s' %( cont_name, x.__class__, x))
+      except DQException, x:
+          logger.error('DQ2 Problem finding datasets associated with Unit container %s: %s %s' %( cont_name, x.__class__, x))
+      finally:
+          dq2_lock.release()
+          
+      return ds_list
+
+  
