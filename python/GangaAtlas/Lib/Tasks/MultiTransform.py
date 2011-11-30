@@ -133,6 +133,12 @@ class MultiTransform(Transform):
                o += "\t\t"+" " * 3 + "*"
            else:
                o += "\t\t"+" " * 3 + "-"
+
+           # is unit Complete?
+           if self.isUnitComplete(uind):
+               o += "\t\t"+" " * 3 + "*"
+           else:
+               o += "\t\t"+" " * 3 + "-"    
                
            # Number of exceptions
            o += "\t" +" " * 3 + "%d" % self.unit_state_list[uind]['exceptions']
