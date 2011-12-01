@@ -294,7 +294,7 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         fstring = " %5s | %17s | %30s | %9s | %33s | %5s\n"
         lenfstring = 120
         ds = "\n" + fstring % ("#", "Type", "Name", "State", "%4s: %4s/ %4s/ %4s/ %4s/ %4s/ %4s" % (
-           "Jobs",markup("done",overview_colours["completed"])," "+markup("run",overview_colours["running"])," "+markup("attempted",overview_colours["attempted"]),markup("fail",overview_colours["failed"]),markup("hold",overview_colours["hold"])," "+markup("bad",overview_colours["bad"])), "Float")
+           "Jobs",markup("done",overview_colours["completed"])," "+markup("run",overview_colours["running"])," "+markup("attd",overview_colours["attempted"]),markup("fail",overview_colours["failed"]),markup("hold",overview_colours["hold"])," "+markup("bad",overview_colours["bad"])), "Float")
         ds += "-"*lenfstring + "\n"
         for p in self._impl.objects.values():
             stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4i/ %4i" % (
