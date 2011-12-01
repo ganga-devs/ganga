@@ -88,14 +88,15 @@ class MultiTask(Task):
       "List all datasets in container of this transform"
       ds_list = []
       try:
-          dq2_lock.acquire()
-          ds_list = dq2.listDatasetsInContainer(self.getContainerName())
-      except DQContainerDoesNotHaveDataset:
-          pass
-      except Exception, x:
-          logger.error('Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
-      except DQException, x:
-          logger.error('DQ2 Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
+         try:
+            dq2_lock.acquire()
+            ds_list = dq2.listDatasetsInContainer(self.getContainerName())
+         except DQContainerDoesNotHaveDataset:
+            pass
+         except Exception, x:
+            logger.error('Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
+         except DQException, x:
+            logger.error('DQ2 Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
       finally:
           dq2_lock.release()
           

@@ -69,7 +69,7 @@ class MultiTransform(Transform):
        'unit_inputdata_list': SimpleItem(defvalue=[], hidden=1, doc='Map from unit to inputdata'),
        'unit_outputdata_list': SimpleItem(defvalue=[], hidden=1, doc='Map from unit to outputdata'),
        'unit_state_list': SimpleItem(defvalue=[], hidden=1, doc='An array storing the unit states'),
-       'unit_job_list': SimpleItem(defvalue=[], hidden=1, doc='An array mapping from units to jobs'),
+       'unit_job_list': SimpleItem(defvalue=[], transient=1,hidden=1, doc='An array mapping from units to jobs'),
        'do_auto_download'   : SimpleItem(defvalue=False, doc='Trigger automatic dq2 download of related datasets'),
        'individual_unit_merger'   : SimpleItem(defvalue=False, doc='Run the merger per unit rather than on the whole transform'),
        'single_unit'   : SimpleItem(defvalue=False, doc='Reduce to a single unit that runs over the all outputs from all required trfs'),
@@ -330,15 +330,15 @@ class MultiTransform(Transform):
        """Return the master job corresponding to this unit"""
        if uind < 0 or uind > len(self.unit_partition_list):
            return None
-       
+
        if len(self.unit_partition_list[uind]) == 0:
            return None
-
+       
        # update the unit_job_list if necessary
        if len(self.unit_job_list) == 0:
-           for uind in range(0, len(self.unit_partition_list)):
+           for uind2 in range(0, len(self.unit_partition_list)):
                self.unit_job_list.append(None)
-
+       
        if self.unit_job_list[uind]:
            if proxy:
                return self.unit_job_list[uind].master
@@ -356,7 +356,7 @@ class MultiTransform(Transform):
            mj = sj[-1].master
        else:
            mj = sj[-1]._impl._getParent()
-       
+
        return mj
   
    def finalise(self):
@@ -1363,14 +1363,15 @@ class MultiTransform(Transform):
       "List all datasets in container of this transform"
       ds_list = []
       try:
-          dq2_lock.acquire()
-          ds_list = dq2.listDatasetsInContainer(self.getContainerName())
-      except DQContainerDoesNotHaveDataset:
-          pass
-      except Exception, x:
-          logger.error('Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
-      except DQException, x:
-          logger.error('DQ2 Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
+          try:
+              dq2_lock.acquire()
+              ds_list = dq2.listDatasetsInContainer(self.getContainerName())
+          except DQContainerDoesNotHaveDataset:
+              pass
+          except Exception, x:
+              logger.error('Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
+          except DQException, x:
+              logger.error('DQ2 Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
       finally:
           dq2_lock.release()
           
@@ -1384,14 +1385,15 @@ class MultiTransform(Transform):
       
       ds_list = []
       try:
-          dq2_lock.acquire()
-          ds_list = dq2.listDatasetsInContainer(cont_name)
-      except DQContainerDoesNotHaveDataset:
-          pass
-      except Exception, x:
-          logger.error('Problem finding datasets associated with Unit container %s: %s %s' %( cont_name, x.__class__, x))
-      except DQException, x:
-          logger.error('DQ2 Problem finding datasets associated with Unit container %s: %s %s' %( cont_name, x.__class__, x))
+          try:
+              dq2_lock.acquire()
+              ds_list = dq2.listDatasetsInContainer(cont_name)
+          except DQContainerDoesNotHaveDataset:
+              pass
+          except Exception, x:
+              logger.error('Problem finding datasets associated with Unit container %s: %s %s' %( cont_name, x.__class__, x))
+          except DQException, x:
+              logger.error('DQ2 Problem finding datasets associated with Unit container %s: %s %s' %( cont_name, x.__class__, x))
       finally:
           dq2_lock.release()
           
