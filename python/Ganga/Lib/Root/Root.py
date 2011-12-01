@@ -5,7 +5,7 @@
 ################################################################################
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
-#from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 #from Ganga.GPIDev.Schema import FileItem, Schema, SimpleItem, Version, SharedItem
 from Ganga.GPIDev.Schema import *
@@ -35,7 +35,7 @@ config.addOption('version','5.18.00','Version of ROOT')
 import os
  
 
-class Root(IApplication):
+class Root(IPrepareApp):
     """
     Root application -- running ROOT
     
@@ -207,12 +207,12 @@ class Root(IApplication):
         'script' : FileItem(defvalue=File(),preparable=1, doc='A File object specifying the script to execute when Root starts',checkset='_checkset_script'), 
         'args' : SimpleItem(defvalue=[],typelist=['str','int'],sequence=1,doc="List of arguments for the script. Accepted types are numerics and strings"),
         'version' : SimpleItem(defvalue='5.18.00',doc="The version of Root to run"),
-        'usepython' : SimpleItem(defvalue = False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH.")
-#        'is_prepared' : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
+        'usepython' : SimpleItem(defvalue = False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
+        'is_prepared' : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
         } )
     _category = 'applications'
     _name = 'Root'
-#    _exportmethods = ['prepare']
+    _exportmethods = ['prepare','unprepare']
     _GUIPrefs = [ { 'attribute' : 'script', 'widget' : 'FileOrString' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'version', 'widget' : 'String' },
@@ -229,23 +229,18 @@ class Root(IApplication):
     def configure(self,masterappconfig):
         return (None,None)
 
-#    def prepare(self, force=False):
-#        if (self.is_prepared is not None) and (force is not True):
-#            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
-#        elif (self.script.name is not ''):
-#            logger.info('Preparing %s application.'%(self._name))
-#            self.is_prepared = ShareDir()
-#            logger.info('Created shared directory: %s'%(self.is_prepared.name))
-#
-#            #copy any 'preparable' objects into the shared directory
-#            send_to_sharedir = self.copyPreparables()
-#            #add the newly created shared directory into the metadata system if the app is associated with a persisted object
-#            self.checkPreparedHasParent(self)
-#            return 1
-#        else:
-#            logger.error('Not preparing %s application; application.script.name is not set.'%(self._name))
-
-
+    def prepare(self, force=False):
+        """
+        A method to place the Root application into a prepard state.
+        """
+        if (self.is_prepared is not None) and (force is not True):
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
+        self.is_prepared = ShareDir()
+        logger.info('Created shared directory: %s'%(self.is_prepared.name))
+        send_to_sharedir = self.copyPreparables()
+        #add the newly created shared directory into the metadata system if the app is associated with a persisted object
+        self.checkPreparedHasParent(self)
+        return 1
 
     def _checkset_script(self,value):
         """Callback used to set usepython to 1 if the script name has a *.py or *.PY extention.""" 
