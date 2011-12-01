@@ -69,6 +69,7 @@ class MultiTransform(Transform):
        'unit_inputdata_list': SimpleItem(defvalue=[], hidden=1, doc='Map from unit to inputdata'),
        'unit_outputdata_list': SimpleItem(defvalue=[], hidden=1, doc='Map from unit to outputdata'),
        'unit_state_list': SimpleItem(defvalue=[], hidden=1, doc='An array storing the unit states'),
+       'unit_job_list': SimpleItem(defvalue=[], hidden=1, doc='An array mapping from units to jobs'),
        'do_auto_download'   : SimpleItem(defvalue=False, doc='Trigger automatic dq2 download of related datasets'),
        'individual_unit_merger'   : SimpleItem(defvalue=False, doc='Run the merger per unit rather than on the whole transform'),
        'single_unit'   : SimpleItem(defvalue=False, doc='Reduce to a single unit that runs over the all outputs from all required trfs'),
@@ -101,6 +102,8 @@ class MultiTransform(Transform):
        """Show the status of the units in this transform"""
        for uind in range(0, len(self.unit_outputdata_list)):
 
+           is_complete = self.isUnitComplete(uind)
+           
            # display colour given state
            o = ""
            o += ("%d:  " % uind) + self.unit_outputdata_list[uind]
@@ -136,7 +139,7 @@ class MultiTransform(Transform):
                o += "\t"+" " * 3 + "-"
 
            # is unit Complete?
-           if self.isUnitComplete(uind):
+           if is_complete:
                o += "\t"+" " * 2 + "*"
            else:
                o += "\t"+" " * 2 + "-"    
@@ -148,7 +151,7 @@ class MultiTransform(Transform):
            o += "\t" + self.unit_state_list[uind]['reason']
 
            # change colour on state
-           if self.isUnitComplete(uind):
+           if is_complete:
                o = markup(o,overview_colours["completed"])
            elif not self.unit_state_list[uind]['active']:
                o = markup(o,overview_colours["bad"])
@@ -330,16 +333,30 @@ class MultiTransform(Transform):
        
        if len(self.unit_partition_list[uind]) == 0:
            return None
+
+       # update the unit_job_list if necessary
+       if len(self.unit_job_list) == 0:
+           for uind in range(0, len(self.unit_partition_list)):
+               self.unit_job_list.append(None)
+
+       if self.unit_job_list[uind]:
+           if proxy:
+               return self.unit_job_list[uind].master
+           else:
+               return self.unit_job_list[uind]._impl._getParent()
        
        sj = self.getPartitionJobs( self.unit_partition_list[uind][0] )
 
        if not sj:
            return None
+
+       self.unit_job_list[uind] = sj[-1]
        
        if proxy:
            mj = sj[-1].master
        else:
            mj = sj[-1]._impl._getParent()
+       
        return mj
   
    def finalise(self):
@@ -927,7 +944,11 @@ class MultiTransform(Transform):
 
       # reset the partition list
       self.unit_partition_list[unit_num] = []
-      
+
+      # blank entry in job list
+      if len(self.unit_job_list) > 0 and self.unit_job_list[unit_num]:
+          self.unit_job_list[unit_num] = None
+          
       # create partitions as given by the unit lists
       part_num = len(self.partitions_data) + 1      
       
@@ -1332,8 +1353,8 @@ class MultiTransform(Transform):
   
    def getUnitContainerName(self, unit):
       "Return the container associated with this unit"
-      mj = getUnitJob(unit)
-      if mj and mj.outputdata and mj.outputdata._name == "DQ2Dataset":
+      mj = self.getUnitJob(unit)
+      if mj and mj.outputdata and mj.outputdata._impl._name == "DQ2OutputDataset":
          return mj.outputdata.datasetname
 
       return None

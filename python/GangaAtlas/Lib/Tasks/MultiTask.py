@@ -3,6 +3,7 @@ from Ganga.GPIDev.Lib.Tasks import Task
 from MultiTransform import MultiTransform
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
