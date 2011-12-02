@@ -297,9 +297,10 @@ class MultiTransform(Transform):
 
        # check for merged job completion
        mj = self.getUnitMasterJob( uind )
+
        if mj.status != "completed":
            return False
-       
+
        return True
 
    def getLocalDQ2FileList(self, uind):
@@ -713,21 +714,21 @@ class MultiTransform(Transform):
            # check for too many failures
            for p in self.unit_partition_list[uind]:
                if self._partition_status[p] in ["failed"]:
-                   logger.error("Too many failures for partition %s in Transform %d, Task %d. Deactivating unit '%s'." % (p, self.getID(), self._getParent().id, self.unit_outputdata_list[uind2]))
+                   logger.error("Too many failures for partition %s in Transform %d, Task %d. Deactivating unit '%s'." % (p, self.getID(), self._getParent().id, self.unit_outputdata_list[uind]))
                    self.unit_state_list[uind]['reason'] = "Too many job failures in unit"
                    self.unit_state_list[uind]['active'] = False
                    continue                   
 
-           # check for any running jobs
-           if len(partition_status_dict['running']) > 0 and not mj.status in ['failed', 'killed']:
-               continue
-           
            # check for full unit submission
            if len(partition_status_dict['ready']) == len(self.unit_partition_list[uind]):
                full_partition_list += partition_status_dict['ready']
                #continue
                break
-
+           
+           # check for any running jobs
+           if len(partition_status_dict['running']) > 0 and mj and not mj.status in ['failed', 'killed']:
+               continue
+           
            # --------------------------------------
            # check for failed build jobs within unit
            build_fail = False
@@ -843,7 +844,7 @@ class MultiTransform(Transform):
                            self._app_status[ self.getPartitionApps()[p][-1] ] = 'submitting'
                    break
                except:
-                   logger.error("Error attempting to resubmit master job %i in Transform %d, Task %d. Deactivating unit '%s'." % (mj.id, self.getID(), self._getParent().id, self.unit_outputdata_list[uind2]))
+                   logger.error("Error attempting to resubmit master job %i in Transform %d, Task %d. Deactivating unit '%s'." % (mj.id, self.getID(), self._getParent().id, self.unit_outputdata_list[uind]))
                    self.unit_state_list[uind]['active'] = False
                    self.unit_state_list[uind]['reason'] = 'Error on resubmission'
                    #self.pause()
