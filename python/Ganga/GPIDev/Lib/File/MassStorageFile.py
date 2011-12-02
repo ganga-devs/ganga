@@ -22,7 +22,7 @@ class MassStorageFile(OutputFile):
 
 
     def __construct__(self,args):
-            super(MassStorageFile,self).__construct__(args)
+        super(MassStorageFile,self).__construct__(args)
 
             
     def __repr__(self):
