@@ -7,5 +7,6 @@ from CompressedFile import CompressedFile
 from MassStorageFile import MassStorageFile
 from ScratchFile import ScratchFile
 from LHCbDataFile import LHCbDataFile
+from LCGStorageElementFile import LCGStorageElementFile
 
 
