@@ -50,6 +50,45 @@ import sys,time
 #atexit.register = register
 
 
+TRANSITION_MESSAGE_545 =  """
+-------------------------------------
+THIS IS A NEW MAJOR RELEASE OF GANGA
+-------------------------------------
+
+In Ganga 5.5.0 a new version of the Ganga XML Repository (v6.0) is
+introduced. Its main features are enhanced reliability, concurrent
+access from several ganga sessions, and the introduction of a Ganga
+"box", where any Ganga object can be saved.
+
+On the first startup of 5.5.0, old AMGA and XML repositories as well as
+GangaTasks from the same gangadir will be automatically imported. The
+old repositories and tasks will not be touched, only a file
+"converted.to.XML.6.0" will be created in
+<gangadir>/repository/Name/LocalAMGA or respectively LocalXML/jobs,
+LocalXML/templates or <gangadir>/tasks.xml.converted.to.XML.6.0.
+
+To repeat the import process from scratch, just delete these files
+together with the new repository <gangadir>/repository/Name/LocalXML/6.0
+
+The new repository may use much more disk space than the old AMGA
+repository, and some more space than the old XML repository. This does
+however only affect <gangadir>/repository, and not the usually much
+larger workspace directory <gangadir>/workspace.
+
+When you are happy with the conversion and completely sure you do not
+want to revert to a previous release you can delete the old repository
+and tasks located in
+
+<gangadir>/repository/Name/LocalAMGA
+<gangadir>/repository/Name/LocalXML/5.0
+<gangadir>/tasks.xml
+
+-------------------------------------
+THIS IS A NEW MAJOR RELEASE OF GANGA
+-------------------------------------
+"""
+
+
 class GangaProgram:
     """ High level API to create instances of Ganga programs and configure/run it """
 
@@ -423,9 +462,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         #[Output] section
         outputconfig = makeConfig( "Output", "configuration section for postprocessing the output" )
         outputconfig.addOption('CompressedFile',['stdout','stderr'],'list of output files that will be compressed after job is completed')
-        outputconfig.addOption('ScratchFile',['*.dummy'],'list of output files that will be written to large scratch disk after job is completed')
-        outputconfig.addOption('MassStorageFile',['*.root'],'list of output files that will be written to mass storage after job is completed')
-        outputconfig.addOption('LCGStorageElementFile',['*.dummy1'],'list of output files that will be written to LCG SE after job is completed')
+        outputconfig.addOption('ScratchFile',['*.root'],'list of output files that will be written to large scratch disk after job is completed')
         outputconfig.addOption('LHCbDataFile',['*.dst','*.digi','*.raw'],'list of output files that will be stored in Storage Element and registered in LHCb file catalogue after job is completed')
 
         #[MassStorageOutput] section
@@ -566,6 +603,10 @@ If ANSI text colours are enabled, then individual colours may be specified like 
     def bootstrap(self):
         import Ganga.Utility.Config
         config = Ganga.Utility.Config.getConfig('Configuration')
+
+        # transition message from 5.4 -> 5.5
+        if not os.path.exists(os.path.join(config['gangadir'],'repository',config['user'],'LocalXML','6.0')):
+           print TRANSITION_MESSAGE_545
 
         from Ganga.Core import GangaException
         from Ganga.Utility.Runtime import allRuntimes

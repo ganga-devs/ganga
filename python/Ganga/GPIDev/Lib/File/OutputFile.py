@@ -38,13 +38,11 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 from CompressedFile import CompressedFile
 from ScratchFile import ScratchFile
 from LHCbDataFile import LHCbDataFile
-from MassStorageFile import MassStorageFile
-from LCGStorageElementFile import LCGStorageElementFile
 
 from Ganga.Utility.Config import getConfig, ConfigError
 
 outputfilesConfig = {}
-keys = ['CompressedFile', 'ScratchFile', 'LHCbDataFile', 'MassStorageFile', 'LCGStorageElementFile']
+keys = ['CompressedFile', 'ScratchFile', 'LHCbDataFile']
 
 for key in keys:
     try:
@@ -85,15 +83,10 @@ def string_file_shortcut(v,item):
         if key is not None:
             if key == 'CompressedFile':
                 return CompressedFile._proxyClass(v)._impl
-            elif key == 'MassStorageFile':
-                return MassStorageFile._proxyClass(v)._impl         
             elif key == 'ScratchFile':
                 return ScratchFile._proxyClass(v)._impl         
             elif key == 'LHCbDataFile':
                 return LHCbDataFile._proxyClass(v)._impl                                
-            elif key == 'LCGStorageElementFile':
-                return LCGStorageElementFile._proxyClass(v)._impl                                
-
         
         return OutputFile._proxyClass(v)._impl
 
