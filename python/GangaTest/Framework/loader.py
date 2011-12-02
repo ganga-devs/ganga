@@ -400,7 +400,6 @@ def %(method_name)s(self):
     def getstatusouterr(cmd,output_path="%(output_path)s",out_mode='a',setTimeout=False):
         import os
         import os.path
-        import time
         from subprocess import PIPE,STDOUT,Popen        
         info = ''
         if not os.path.exists(pytf_runner):
@@ -414,12 +413,9 @@ def %(method_name)s(self):
            
         script_runner.append('{ ' + cmd + '; }')
         output = open(output_path,out_mode)
-        output.write('########## Test started: ' + time.ctime() + ' ##########')
-        output.flush()
         process = Popen(script_runner, shell=False, bufsize=0, 
                         stdin=PIPE, stdout=output, stderr=STDOUT, close_fds=True)        
         process.wait()
-        output.write('########## Test finished: ' + time.ctime() + ' ##########')
         output.close()
         sts = process.returncode
         if sts is None:
