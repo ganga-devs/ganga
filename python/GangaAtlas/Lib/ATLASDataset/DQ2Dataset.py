@@ -882,14 +882,45 @@ class DQ2Dataset(Dataset):
         datasets = resolve_container(datasets)
 
         dataset_locations_num = {}
+
+        from Ganga.Utility.GridShell import getShell
+        gridshell = getShell()
+        gridshell.env['LFC_CONNTIMEOUT'] = '45'
+
+        gridshell.env['DQ2_URL_SERVER']=config['DQ2_URL_SERVER']
+        gridshell.env['DQ2_URL_SERVER_SSL']=config['DQ2_URL_SERVER_SSL']
+        gridshell.env['DQ2_LOCAL_ID']=''
+        import GangaAtlas.PACKAGE
+        try:
+            pythonpath=GangaAtlas.PACKAGE.setup.getPackagePath2('DQ2Clients','PYTHONPATH',force=False)
+        except:
+            pythonpath = ''
+        gridshell.env['PYTHONPATH'] = gridshell.env['PYTHONPATH']+':'+pythonpath
+        ## exclude the Ganga-owned external package for LFC python binding
+        pythonpaths = []
+        for path in gridshell.env['PYTHONPATH'].split(':'):
+            if not re.match('.*\/external\/lfc\/.*', path):
+                pythonpaths.append(path)
+        gridshell.env['PYTHONPATH'] = ':'.join(pythonpaths)
+
+        ## exclude any rubbish from Athena
+        ld_lib_paths = []
+        for path in gridshell.env['LD_LIBRARY_PATH'].split(':'):
+            if not re.match('.*\/external\/lfc\/.*', path) and not re.match('.*\/sw\/lcg\/external\/.*', path):
+                ld_lib_paths.append(path)
+        gridshell.env['LD_LIBRARY_PATH'] = ':'.join(ld_lib_paths)
+
+        paths = []
+        for path in gridshell.env['PATH'].split(':'):
+            if not re.match('.*\/external\/lfc\/.*', path) and not re.match('.*\/sw\/lcg\/external\/.*', path):
+                paths.append(path)
+        gridshell.env['PATH'] = ':'.join(paths)
+
         for dataset in datasets:
             if backnav:
                 dataset = re.sub('AOD','ESD',dataset)
 
             locations_num = {}
-            from Ganga.Utility.GridShell import getShell
-            gridshell = getShell()
-            gridshell.env['LFC_CONNTIMEOUT'] = '45'
             exe = os.path.join(os.path.dirname(__file__)+'/ganga-readlfc.py')        
             cmd= exe + " %s %s " % (dataset, complete) 
             rc, out, m = gridshell.cmd1(cmd,allowed_exit=[0,142])

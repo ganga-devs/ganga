@@ -68,7 +68,7 @@ def setLfcHost(lfcstring):
 
 ##############################
 def getreplicas_bulk(guids, allLFCs):
-    """	
+    """
     allLFCs=[]
     for cl in TiersOfATLAS.ToACache.dbcloud:
         id=TiersOfATLAS.ToACache.dbcloud[cl]
@@ -119,6 +119,8 @@ def getreplicas_bulk(guids, allLFCs):
                             surl[0]= 'gsiftp:'
                             surl[1]= rep.sfn.split("//")[1].split("/")[0]+":2811/"+'/'.join(rep.sfn.split("//")[1].split("/")[1:])
                             surl_8443 = '//'.join(surl)
+          
+                        surl_8443 = re.sub(':*\d*/srm/managerv2\?SFN=','', surl_8443 )
                         if rep.guid in guidReplicas.keys():
                             guidReplicas[rep.guid].append(surl_8443) 
                         else:
@@ -136,40 +138,40 @@ def getinputreplicas(lfn_guid, allLFCs):
 
     for lfn,guid in lfn_guid.items():
         if guid not in guidReplicas.keys():
-	    #print 'Fail to get replicas for inputfile '+guid
-	    #print 'Try single query. '
-	    return 'Not Found',  guidReplicas,guidSizes,guidmd5sum
+            #print 'Fail to get replicas for inputfile '+guid
+            #print 'Try single query. '
+            return 'Not Found',  guidReplicas,guidSizes,guidmd5sum
     
     retcode = pre_stagein(guidReplicas)
     if retcode !='OK':
-	return 'Not Pre-stage', guidReplicas,guidSizes,guidmd5sum	
+        return 'Not Pre-stage', guidReplicas,guidSizes,guidmd5sum        
     else:
-	return 'OK', guidReplicas,guidSizes,guidmd5sum
-
+        return 'OK', guidReplicas,guidSizes,guidmd5sum
+    
 ##############################
 def pre_stagein(guidReplicas):
 
     site = commands.getoutput('/bin/hostname')
     if site.find('cern.ch'):
         for guid in guidReplicas.keys():
-	    for surl in guidReplicas[guid]:
-		if surl.split('//')[1].startswith('srm.cern.ch'):
-		    #file need to be pre-stagein
-	            castor_path = '/'+'/'.join(surl.split('//')[1].split("/")[1:])
+            for surl in guidReplicas[guid]:
+                if surl.split('//')[1].startswith('srm.cern.ch'):
+                    #file need to be pre-stagein
+                    castor_path = '/'+'/'.join(surl.split('//')[1].split("/")[1:])
                     cmd = 'stager_get -M '+castor_path
                     (exitcode, output) = commands.getstatusoutput(cmd)
-		    if exitcode == 0: # if fail to stager_get
-                    	cmd = 'stager_qry -M '+castor_path
-			(exitcode, output) = commands.getstatusoutput(cmd)
-			if exitcode == 0: # if fail to stager_qry
-			    print castor_path+' has been pre-staged.'	
+                    if exitcode == 0: # if fail to stager_get
+                        cmd = 'stager_qry -M '+castor_path
+                        (exitcode, output) = commands.getstatusoutput(cmd)
+                        if exitcode == 0: # if fail to stager_qry
+                            print castor_path+' has been pre-staged.'        
                         else:
-			    return 'Not OK' 
+                            return 'Not OK' 
                     else:
                         return 'Not OK'                  
                     
                     break
-	return 'OK'
+        return 'OK'
     else:
         "For submit node out of cern, pre-stagein is not needed." 
 
