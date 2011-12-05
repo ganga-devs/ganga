@@ -1656,7 +1656,8 @@ sys.exit(0)
 
     def postprocess(self, outputfiles, outputdir):      
         
-        import subprocess       
+        import subprocess 
+        import glob      
 
         # system command executor with subprocess
         def execSyscmdSubprocess(cmd):
@@ -1719,15 +1720,16 @@ sys.exit(0)
             
 
                         #todo ivan if succeeded remove file from output???
-                        for currentFile in os.listdir(outputdir):
-                            if re.match(outputFile.name, currentFile):
-                                currentFullFilePath = os.path.join(outputdir, currentFile)
-                                (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFullFilePath, massStoragePath))
-                                if exitcode != 0:
-                                    logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFullFilePath, massStoragePath))
-                                    continue
-                                else:
-                                    logger.info('%s successfully uploaded to mass storage' % currentFile)              
+                        for currentFile in glob.glob(outputFile.name, outputdir):
+                        #for currentFile in os.listdir(outputdir):
+                            #if re.match(outputFile.name, currentFile):
+                            currentFullFilePath = os.path.join(outputdir, currentFile)
+                            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFullFilePath, massStoragePath))
+                            if exitcode != 0:
+                                logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFullFilePath, massStoragePath))
+                                continue
+                            else:
+                                logger.info('%s successfully uploaded to mass storage' % currentFile)              
 
 
     def updateMonitoringInformation(jobs):
