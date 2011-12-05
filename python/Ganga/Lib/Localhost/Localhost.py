@@ -189,7 +189,7 @@ class Localhost(IBackend):
 
 import os,os.path,shutil,tempfile
 import sys,time
-import re
+import glob
 import sys
 
 # FIXME: print as DEBUG: to __syslog__ file
@@ -409,13 +409,11 @@ f_to_copy = ['stdout','stderr','__syslog__']
 filesToZip = []
 
 if postProcessOutputResult is not None and postProcessOutputResult[0] != '':
-    regexesToZip = postProcessOutputResult[0].split(' ')
-    for regexToZip in regexesToZip:
-        #check for regex match here
-        for currentFile in os.listdir('.'):
-            if re.match(regexToZip, currentFile):
-                os.system("gzip %s" % currentFile)
-                filesToZip.append(currentFile)
+    patternsToZip = postProcessOutputResult[0].split(' ')
+    for patternToZip in patternsToZip:
+        for currentFile in glob.glob(patternToZip):
+            os.system("gzip %s" % currentFile)
+            filesToZip.append(currentFile)
             
 final_list_to_copy = []
 
