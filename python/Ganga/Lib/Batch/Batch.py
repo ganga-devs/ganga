@@ -644,13 +644,15 @@ sys.exit(result)
         return job.getInputWorkspace().writefile(FileBuffer('__jobscript__',text),executable=1)
 
     def postprocess(self, outputfiles, outputdir):      
+        import glob
         if len(outputfiles) > 0:
             for outputFile in outputfiles:
                 if outputFile.__class__.__name__ == 'CompressedFile':
-                    for currentFile in os.listdir(outputdir):
-                        if re.match(outputFile.name, currentFile):
-                            fullFilePath = os.path.join(outputdir, currentFile)
-                            os.system("gzip %s" % fullFilePath)
+                    #for currentFile in os.listdir(outputdir):
+                    for currentFile in glob.glob(os.path.join(outputdir, outputFile.name)):
+                        #if re.match(outputFile.name, currentFile):
+                        fullFilePath = os.path.join(outputdir, currentFile)
+                        os.system("gzip %s" % fullFilePath)
 
 
     def updateMonitoringInformation(jobs):
