@@ -395,9 +395,9 @@ if postProcessOutputResult is not None:
         import glob 
         for currentFile in glob.glob(filenameWildChar):
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
-                if exitcode != 0:
-                    printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)), mystderr)
-                    continue
+            if exitcode != 0:
+                printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)), mystderr)
+                continue
 
         #for currentFile in os.listdir('.'):
             #if re.match(filenameWildChar, currentFile):
