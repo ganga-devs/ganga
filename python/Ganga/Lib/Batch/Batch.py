@@ -547,7 +547,7 @@ if postProcessOutputResult is not None:
     for massStorageLine in postProcessOutputResult[0]:
         massStorageList = massStorageLine.split(' ')
 
-        filenameRegex = massStorageList[1]
+        filenameWildChar = massStorageList[1]
         cm_mkdir = massStorageList[2]
         cm_cp = massStorageList[3]
         cm_ls = massStorageList[4]
@@ -577,14 +577,13 @@ if postProcessOutputResult is not None:
             
 
         #todo if succeeded remove file from output
-        for currentFile in os.listdir('.'):
-            import re
-            if re.match(filenameRegex, currentFile):
-                (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
-                if exitcode != 0:
-                    print >>sys.stderr, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile))    
-                    print >>sys.stderr, mystderr        
-                    continue
+        import glob 
+        for currentFile in glob.glob(filenameWildChar):
+            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
+            if exitcode != 0:
+                print >>sys.stderr, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile))    
+                print >>sys.stderr, mystderr        
+                continue
 
 print >>sys.stderr,"--- GANGA APPLICATION ERROR END ---"
 
