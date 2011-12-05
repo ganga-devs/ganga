@@ -1720,7 +1720,7 @@ sys.exit(0)
             
 
                         #todo ivan if succeeded remove file from output???
-                        for currentFile in glob.glob(outputFile.name, outputdir):
+                        for currentFile in glob.glob(os.path.join(outputdir, outputFile.name)):
                         #for currentFile in os.listdir(outputdir):
                             #if re.match(outputFile.name, currentFile):
                             currentFullFilePath = os.path.join(outputdir, currentFile)
