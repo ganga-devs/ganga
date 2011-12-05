@@ -399,14 +399,6 @@ if postProcessOutputResult is not None:
                 printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)), mystderr)
                 continue
 
-        #for currentFile in os.listdir('.'):
-            #if re.match(filenameWildChar, currentFile):
-                #(exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
-                #if exitcode != 0:
-                    #printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)), mystderr)
-                    #continue
-
-
 errorfile.close()
 
 from Ganga.Utility.files import recursive_copy
