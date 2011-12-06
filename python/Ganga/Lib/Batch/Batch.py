@@ -540,6 +540,8 @@ from Ganga.Utility.files import multi_glob, recursive_copy
 
 createOutputSandbox(outputpatterns,filefilter,sharedoutputpath)
 
+postprocesslocations = file(os.path.join(sharedoutputpath, '__postprocesslocations__'), 'w')         
+
 postProcessOutputResult = postprocessoutput()
 
 #code here for upload to castor
@@ -575,15 +577,18 @@ if postProcessOutputResult is not None:
                 print >>sys.stderr, mystderr
                 continue
             
-
-        #todo if succeeded remove file from output
         import glob 
         for currentFile in glob.glob(filenameWildChar):
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
             if exitcode != 0:
                 print >>sys.stderr, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile))    
                 print >>sys.stderr, mystderr        
-                continue
+            else:
+                postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
+                #remove file from output dir
+                os.system('rm %s' % currentFile)        
+
+postprocesslocations.close()    
 
 print >>sys.stderr,"--- GANGA APPLICATION ERROR END ---"
 
@@ -643,7 +648,8 @@ sys.exit(result)
         
         return job.getInputWorkspace().writefile(FileBuffer('__jobscript__',text),executable=1)
 
-    def postprocess(self, outputfiles, outputdir):      
+    def postprocess(self, outputfiles, outputdir):  
+    
         import glob
         if len(outputfiles) > 0:
             for outputFile in outputfiles:
@@ -654,6 +660,32 @@ sys.exit(result)
                         fullFilePath = os.path.join(outputdir, currentFile)
                         os.system("gzip %s" % fullFilePath)
 
+        def findOutputFile(className, pattern):
+            for outputfile in outputfiles:
+                if outputfile.__class__.__name__ == className and outputfile.name == pattern:
+                    return outputfile
+
+            return None 
+
+        postprocesslocations = open(os.path.join(outputdir, '__postprocesslocations__'), 'r')
+        
+        for line in postprocesslocations.readlines():
+            lineParts = line.split(' ') 
+            outputType = lineParts[0] 
+            outputPattern = lineParts[1]
+            outputPath = lineParts[2]           
+
+            if line.startswith('massstorage'):
+                outputFile = findOutputFile('MassStorageFile', outputPattern)
+                if outputFile is not None:
+                    outputFile.setLocation(outputPath.strip('\n'))
+            else:
+                pass
+                #to be implemented for other output file types
+                
+        postprocesslocations.close()
+  
+        os.system('rm %s' % os.path.join(outputdir, '__postprocesslocations__'))
 
     def updateMonitoringInformation(jobs):
 
