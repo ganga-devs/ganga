@@ -392,8 +392,6 @@ if postProcessOutputResult is not None:
                 printError(errorfile, 'Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path), mystderr)
                 continue
             
-
-        #todo if succeeded remove file from output
         import glob 
         for currentFile in glob.glob(filenameWildChar):
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
@@ -402,6 +400,7 @@ if postProcessOutputResult is not None:
                 continue
             else:
                 postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
+                #remove file from output dir
                 os.system('rm %s' % currentFile)
 
 errorfile.close()
