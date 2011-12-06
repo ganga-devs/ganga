@@ -528,7 +528,7 @@ sys.exit()
             if line.startswith('massstorage'):
                 outputFile = findOutputFile('MassStorageFile', outputPattern)
                 if outputFile is not None:
-                    outputFile.setLocation(outputPath)
+                    outputFile.setLocation(outputPath.strip('\n'))
             else:
                 pass
                 #to be implemented for other output file types
