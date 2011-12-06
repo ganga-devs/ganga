@@ -355,8 +355,10 @@ outfile.close()
 def printError(errorfile, message, error):
     errorfile.write(message + os.linesep)
     errorfile.write(error + os.linesep) 
-    errorfile.flush()           
+    errorfile.flush()  
 
+postprocesslocations = file(os.path.join(sharedoutputpath, '__postprocesslocations__'), 'w')         
+#massstorage
 postProcessOutputResult = postprocessoutput()
 
 #code here for upload to castor
@@ -398,6 +400,9 @@ if postProcessOutputResult is not None:
             if exitcode != 0:
                 printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)), mystderr)
                 continue
+            else:
+                postprocesslocations.write('massstorage %s %s\n' % (filenameWildChar, os.path.join(path, currentFile)))
+                os.system('rm %s' % currentFile)
 
 errorfile.close()
 
@@ -501,6 +506,18 @@ sys.exit()
                 shutil.rmtree(self.workdir)
             except OSError,x:
                 logger.warning('problem removing the workdir %s: %s',str(self.id),str(x))            
+    """
+    def postprocess(self, outputfiles, outputdir):      
+        import glob
+        if len(outputfiles) > 0:
+            for outputFile in outputfiles:
+                if outputFile.__class__.__name__ == 'CompressedFile':
+                    #for currentFile in os.listdir(outputdir):
+                    for currentFile in glob.glob(os.path.join(outputdir, outputFile.name)):
+                        #if re.match(outputFile.name, currentFile):
+                        fullFilePath = os.path.join(outputdir, currentFile)
+                        os.system("gzip %s" % fullFilePath)
+    """ 
 
     def updateMonitoringInformation(jobs):
 
