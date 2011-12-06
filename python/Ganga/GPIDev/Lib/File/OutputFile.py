@@ -33,6 +33,19 @@ class OutputFile(GangaObject):
 
         return "OutputFile(name='%s')"% self.name
 
+    def location(self):
+        """
+        Return list with the locations of the post processed files (if they was configured to upload the output somewhere)
+        """
+        raise NotImplementedError
+
+    def get(self, dir):
+        """
+        Retrieves locally all files matching this OutputFile object pattern
+        """
+        raise NotImplementedError
+        
+
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from CompressedFile import CompressedFile
