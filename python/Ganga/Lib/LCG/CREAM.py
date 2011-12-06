@@ -1199,17 +1199,15 @@ sys.exit(0)
                                 logger.warning('skipping %s for uploading to Castor' % outputFile.name)
                                 continue
             
-
-                        #todo ivan if succeeded remove file from output???
                         for currentFile in glob.glob(os.path.join(outputdir, outputFile.name)):
-                            currentFullFilePath = os.path.join(outputdir, currentFile)
-                            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFullFilePath, massStoragePath))
+                            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
                             if exitcode != 0:
-                                logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFullFilePath, massStoragePath))
-                                continue
+                                logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFile, massStoragePath))
                             else:
-                                logger.info('%s successfully uploaded to mass storage' % currentFile)       
-
+                                logger.info('%s successfully uploaded to mass storage' % currentFile)
+                                outputFile.setLocation(os.path.join(massStoragePath, os.path.basename(currentFile)))
+                                #remove file from output
+                                os.system('rm %s' % os.path.join(outputdir, currentFile))
 
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
