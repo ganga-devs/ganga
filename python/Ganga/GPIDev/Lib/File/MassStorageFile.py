@@ -14,12 +14,13 @@ class MassStorageFile(OutputFile):
     _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='name of the file')})
     _category = 'outputfiles'
     _name = "MassStorageFile"
-
+    _location = []
+    _exportmethods = [ "location" , "get", "setLocation" ]
+        
     def __init__(self,name='', **kwds):
         """ name is the name of the output file that has to be written into mass storage
         """
         super(MassStorageFile, self).__init__(name, **kwds)
-
 
     def __construct__(self,args):
         super(MassStorageFile,self).__construct__(args)
@@ -29,6 +30,26 @@ class MassStorageFile(OutputFile):
         """Get the representation of the file."""
 
         return "MassStorageFile(name='%s')"% self.name
+
+    def setLocation(self, locationList):
+        """
+        Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
+        """
+        for location in locationList:
+            self._location.append(location)
+        
+    def location(self):
+        """
+        Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
+        """
+        return self._location
+
+    def get(self, dir):
+        """
+        Retrieves locally all files matching this OutputFile object pattern
+        """
+        print 'getting files locally'
+
 
 
 # add MassStorageFile objects to the configuration scope (i.e. it will be possible to write instatiate MassStorageFile() objects via config file)
