@@ -358,7 +358,7 @@ def printError(errorfile, message, error):
     errorfile.flush()  
 
 postprocesslocations = file(os.path.join(sharedoutputpath, '__postprocesslocations__'), 'w')         
-#massstorage
+
 postProcessOutputResult = postprocessoutput()
 
 #code here for upload to castor
@@ -397,7 +397,6 @@ if postProcessOutputResult is not None:
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
             if exitcode != 0:
                 printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)), mystderr)
-                continue
             else:
                 postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
                 #remove file from output dir
