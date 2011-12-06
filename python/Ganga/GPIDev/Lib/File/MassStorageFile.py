@@ -47,8 +47,19 @@ class MassStorageFile(OutputFile):
         """
         Retrieves locally all files matching this OutputFile object pattern
         """
-        print 'getting files locally'
+        import os
 
+        if not os.path.isdir(dir):
+            print "%s is not a valid directory.... " % dir
+            return
+
+        from Ganga.Utility.Config import getConfig 
+        cp_cmd = getConfig('MassStorageOutput')['cp_cmd']  
+        
+
+        for location in self._location:
+            targetLocation = os.path.join(dir, os.path.basename(location))      
+            os.system('%s %s %s' % (cp_cmd, location, targetLocation))
 
 
 # add MassStorageFile objects to the configuration scope (i.e. it will be possible to write instatiate MassStorageFile() objects via config file)
