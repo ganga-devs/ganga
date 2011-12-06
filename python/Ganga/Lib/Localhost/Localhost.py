@@ -405,6 +405,7 @@ if postProcessOutputResult is not None:
                 os.system('rm %s' % currentFile)
 
 errorfile.close()
+postprocesslocations.close()
 
 from Ganga.Utility.files import recursive_copy
 
@@ -506,8 +507,36 @@ sys.exit()
                 shutil.rmtree(self.workdir)
             except OSError,x:
                 logger.warning('problem removing the workdir %s: %s',str(self.id),str(x))            
-    """
-    def postprocess(self, outputfiles, outputdir):      
+    
+    def postprocess(self, outputfiles, outputdir):    
+        
+
+        def findOutputFile(className, pattern):
+            for outputfile in outputfiles:
+                if outputFile.__class__.__name__ == className and outputFile.name == pattern:
+                    return outputfile
+
+            return None 
+
+        postprocesslocations = open(os.path.join(outputdir, '__postprocesslocations__'), 'r')
+        
+        for line in postprocesslocations.readlines():
+            lineParts = line.split(' ') 
+            outputType = lineParts[0] 
+            outputPattern = lineParts[1]
+            outputPath = lineParts[2]           
+
+            if line.startswith('massstorage'):
+                outputFile = findOutputFile('MassStorageFile', outputPattern)
+                if outputFile is not None:
+                    outputFile.setLocation(outputPath)
+            else:
+                pass
+                #to be implemented for other output file types
+                
+        postprocesslocations.close()
+  
+        """
         import glob
         if len(outputfiles) > 0:
             for outputFile in outputfiles:
@@ -517,7 +546,7 @@ sys.exit()
                         #if re.match(outputFile.name, currentFile):
                         fullFilePath = os.path.join(outputdir, currentFile)
                         os.system("gzip %s" % fullFilePath)
-    """ 
+        """
 
     def updateMonitoringInformation(jobs):
 
