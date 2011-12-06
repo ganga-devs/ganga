@@ -1726,7 +1726,7 @@ sys.exit(0)
                                 logger.info('%s successfully uploaded to mass storage' % currentFile)              
                                 outputFile.setLocation(os.path.join(massStoragePath, os.path.basename(currentFile)))
                                 #remove file from output
-                                os.system('rm %s' % os.path.join(outputdir, currentFile))
+                                #os.system('rm %s' % os.path.join(outputdir, currentFile))
 
 
     def updateMonitoringInformation(jobs):
