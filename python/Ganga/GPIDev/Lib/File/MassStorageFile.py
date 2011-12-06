@@ -31,12 +31,11 @@ class MassStorageFile(OutputFile):
 
         return "MassStorageFile(name='%s')"% self.name
 
-    def setLocation(self, locationList):
+    def setLocation(self, location):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
-        for location in locationList:
-            self._location.append(location)
+        self._location.append(location)
         
     def location(self):
         """
