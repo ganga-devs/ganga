@@ -513,7 +513,7 @@ sys.exit()
 
         def findOutputFile(className, pattern):
             for outputfile in outputfiles:
-                if outputFile.__class__.__name__ == className and outputFile.name == pattern:
+                if outputfile.__class__.__name__ == className and outputfile.name == pattern:
                     return outputfile
 
             return None 
