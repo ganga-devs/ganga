@@ -401,7 +401,7 @@ if postProcessOutputResult is not None:
                 printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)), mystderr)
                 continue
             else:
-                postprocesslocations.write('massstorage %s %s\n' % (filenameWildChar, os.path.join(path, currentFile)))
+                postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
                 os.system('rm %s' % currentFile)
 
 errorfile.close()
