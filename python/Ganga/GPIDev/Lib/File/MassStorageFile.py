@@ -21,16 +21,17 @@ class MassStorageFile(OutputFile):
         """ name is the name of the output file that has to be written into mass storage
         """
         super(MassStorageFile, self).__init__(name, **kwds)
+        self._location = []
 
     def __construct__(self,args):
         super(MassStorageFile,self).__construct__(args)
 
-    """        
+            
     def __repr__(self):
-        Get the representation of the file.
+        """Get the representation of the file."""
 
         return "MassStorageFile(name='%s')"% self.name
-    """
+    
 
     def setLocation(self, location):
         """
