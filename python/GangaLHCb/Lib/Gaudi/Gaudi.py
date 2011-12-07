@@ -65,7 +65,7 @@ class Gaudi(Francesc):
     _name = 'Gaudi'
     __doc__ = GaudiDocString(_name)
     _category = 'applications'
-    _exportmethods = ['getenv','getpack', 'make', 'cmt', 'readInputData','prepare']
+    _exportmethods = ['getenv','getpack', 'make', 'cmt', 'readInputData','prepare','unprepare']
 
     schema = get_common_gaudi_schema()
     docstr = 'The gaudirun.py cli args that will be passed at run-time'
@@ -133,14 +133,21 @@ class Gaudi(Francesc):
         try:
             parser = PythonOptionsParser(optsfiles,self.extraopts,self.shell)
         except ApplicationConfigurationError, e:
-            debug_dir = self.getJobObject().getDebugWorkspace().getPath()
+            #fix this when preparing not attached to job
+            try:
+                debug_dir = self.getJobObject().getDebugWorkspace().getPath()
+                job=True
+            except:
+                debug_dir = tempfile.mkdtemp()
+                job=False
             f = open(debug_dir + '/gaudirun.stdout','w')
             f.write(e.message)
             f.close()
             msg = 'Unable to parse job options! Please check options ' \
                   'files and extraopts. The output from gaudyrun.py can be ' \
-                  'found in %s. You can also view this from within ganga '\
-                  'by doing job.peek(\'../debug/gaudirun.stdout\').' % f.name
+                  'found in %s.' % f.name
+            if job: msg+='You can also view this from within ganga '\
+                          'by doing job.peek(\'../debug/gaudirun.stdout\').'
             #logger.error(msg)
             raise ApplicationConfigurationError(None,msg)
         return parser
@@ -179,7 +186,10 @@ class Gaudi(Francesc):
         ## into an inputsandbox when prepare called on standalone app.
         ## Things in the inputsandbox end up in the working dir at runtime.
         send_to_share = self._prepare(input_dir)
-        job = self.getJobObject()
+        try:
+            job = self.getJobObject()
+        except:
+            job=None
         self._check_inputs()
 
         parser = self._get_parser()
@@ -217,7 +227,12 @@ class Gaudi(Francesc):
 
         ## store the outputsandbox/outputdata defined in the options file
         ## Can remove this when no-longer need to define outputdata in optsfiles
-        outputsandbox, outputdata = parser.get_output(job)
+        ## Can remove the if job: when look into how to do prepare for standalone app
+        ## move into RuntimeHandler move whole parsing into options maybe?
+        if job:
+            outputsandbox, outputdata = parser.get_output(job)
+        else:
+            outputsandbox, outputdata = parser.get_output_files()
         #if outputsandbox:
             ## sandbox
             #file = open(os.path.join(input_dir,'outputsandbox.pkl'),'wb')
@@ -237,8 +252,8 @@ class Gaudi(Francesc):
 ##                                       outputdata=OutputData(outputdata))
         self.prep_inputbox  += send_to_share[:]
         self.prep_outputbox += outputsandbox[:]
-        self.prep_inputdata.files += inputdata.files
-        self.prep_outputdata.files += outputdata
+        self.prep_inputdata.files += inputdata.files[:]
+        self.prep_outputdata.files += outputdata[:]
 
 
         #add the newly created shared directory into the metadata system if the app is associated with a persisted object
@@ -384,7 +399,7 @@ class ###CLASS###(Gaudi):
     _name = '###CLASS###'
     __doc__ = GaudiDocString(_name)
     _schema = myschema.inherit_copy()
-    _exportmethods = ['getenv','getpack', 'make', 'cmt', 'readInputData']
+    _exportmethods = ['getenv','getpack', 'make', 'cmt', 'readInputData','prepare','unprepare']
 
     def __init__(self):
         super(###CLASS###, self).__init__()

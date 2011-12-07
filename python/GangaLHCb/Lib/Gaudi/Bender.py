@@ -30,6 +30,7 @@ class Bender(Francesc):
     
     _name = 'Bender'
     _category = 'applications'
+    _exportmethods = ['prepare','unprepare']
 
     schema = get_common_gaudi_schema()
     docstr = 'The name of the module to import. A copy will be made ' \
@@ -38,6 +39,8 @@ class Bender(Francesc):
     docstr = 'The name of the Gaudi application (Bender)'
     schema['project'] = SimpleItem(preparable=1,defvalue='Bender',hidden=1,protected=1,
                                    typelist=['str'],doc=docstr)
+    docstr = 'Data/sandbox items defined in prepare'
+    schema['prep_inputbox']   = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
     docstr = 'The number of events '
     schema['events'] = SimpleItem(preparable=1,defvalue=-1,typelist=['int'],doc=docstr)
     schema['is_prepared'] = SimpleItem(defvalue=None,
@@ -57,7 +60,8 @@ class Bender(Francesc):
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
-
+            self.prep_inputbox = []
+            
     def prepare(self,force=False):
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
         if (self.is_prepared is not None) and (force is not True):
@@ -70,13 +74,12 @@ class Bender(Francesc):
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
         send_to_share = self._prepare(self.is_prepared.name)
         self._check_inputs()
-        
-        return send_to_share
+        self.prep_inputbox  += send_to_share[:]
     
     def master_configure(self):
         #self._master_configure()
         #self._check_inputs()
-        master_input_files=[]
+        master_input_files=self.prep_inputbox[:]
         master_input_files += [self.module]
         #self.extra.master_input_files += [self.module]
         #return (None,self.extra)

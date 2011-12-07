@@ -21,6 +21,18 @@ class TestGaudiPython(GangaGPITestCase):
         assert self.gp.platform, 'platform not set automatically'
         assert not self.gp.user_release_area
 
+    def test_GaudiPython_prepare(self):
+        g=self.job.application
+        g.prepare()
+        assert g.is_prepared is not None, 'is_prepared not correctly set'
+
+    def test_GaudiPython_unprepare(self):
+        g=self.job.application
+        g.prepare()
+        assert g.is_prepared is not None, 'is_prepared not correctly set'
+        g.unprepare()
+        assert g.is_prepared is None, 'is_prepared not correctly unset'
+
     def test_GaudiPython_master_configure(self):
         gp = self.gp
         #gp.master_configure() # must call this in set up for configure to work

@@ -200,7 +200,7 @@ class PythonOptionsParser:
         '''Builds lists of output files and output data.'''
 
         outputdata = []
-        if job.outputdata: outputdata = job.outputdata.files
+        if job.outputdata: outputdata = job.outputdata.files[:]
         outsandbox = [f for f in job.outputsandbox]
 
         # if user put any files in both, remove them from the sandbox

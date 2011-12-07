@@ -117,6 +117,8 @@ def fixBKQueryInBox(newCategory='query'):
 exportToGPI('fixBKQueryInBox',fixBKQueryInBox,'Functions')
 
 def restoreOLDBox():
+    import os
+    from Ganga.Utility.Config import getConfig
     gangadir = getConfig('Configuration')['gangadir']
     print 'found gangadir =',gangadir
     for root, dirs, files in os.walk(gangadir):

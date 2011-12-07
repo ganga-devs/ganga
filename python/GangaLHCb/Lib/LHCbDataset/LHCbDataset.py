@@ -368,12 +368,13 @@ def string_datafile_shortcut(name,item):
 allComponentFilters['datafiles'] = string_datafile_shortcut
 
 def string_dataset_shortcut(files,item):
+    from GangaLHCb.Lib.Tasks.LHCbAnalysisTransform import LHCbAnalysisTransform
     if type(files) is not type([]): return None
-    if item == Job._schema['inputdata']:
+    if item == Job._schema['inputdata'] or item == LHCbAnalysisTransform._schema['inputdata']:
         ds = LHCbDataset()
         ds.__construct__([files])
         return ds               
-    elif item == Job._schema['outputdata']:
+    elif item == Job._schema['outputdata'] or item == LHCbAnalysisTransform._schema['outputdata']:
         return OutputData(files=files)
     else:
         return None # used to be c'tors, but shouldn't happen now

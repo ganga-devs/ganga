@@ -212,7 +212,7 @@ class Francesc(IPrepareApp):
         self._getshell()
         send_to_share=[]
 
-        if not self.user_release_area: return
+        if not self.user_release_area: return send_to_share
 
         appname = self.get_gaudi_appname()
         dlls, pys, subpys = get_user_dlls(appname, self.version,

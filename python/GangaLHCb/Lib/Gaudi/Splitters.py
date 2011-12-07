@@ -123,10 +123,14 @@ class SplitByFiles(ISplitter):
 
         subjobs=[]
 
-        if not job.inputdata: return subjobs
-        inputdata = job.inputdata
-##         if hasattr(job.application,'extra'):
-##             inputdata = job.application.extra.inputdata
+        inputdata = LHCbDataset()
+        if job.inputdata:
+            inputdata.files = job.inputdata.files
+            inputdata.depth = job.inputdata.depth
+        elif hasattr(job.application,"prep_inputdata"):
+            inputdata.files = job.application.prep_inputdata.files
+            inputdata.depth = job.application.prep_inputdata.depth
+
         inputs = LHCbDataset()
         inputs.depth = inputdata.depth
         if int(self.maxFiles) == -1:
@@ -140,7 +144,7 @@ class SplitByFiles(ISplitter):
         datasetlist = self._splitFiles(inputs)
         for dataset in datasetlist:
             subjobs.append(create_gaudi_subjob(job,dataset))
-                
+            
         return subjobs
     
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -162,7 +166,10 @@ class OptionsFileSplitter(ISplitter):
     def split(self,job):        
         subjobs=[]
         for i in self.optsArray:
-            j = create_gaudi_subjob(job, job.inputdata)
+            if job.application.prep_inputdata.files and not job.inputdata:
+                j = create_gaudi_subjob(job, job.application.prep_inputdata)
+            else:
+                j = create_gaudi_subjob(job, job.inputdata)
             path = NamedTemporaryFile().name+'_data.py'
             j.inputsandbox +=[File(FileBuffer(path,i).create().name)]
             #j.application.extra.input_buffers['data.py'] += i
@@ -192,7 +199,10 @@ class GaussSplitter(ISplitter):
     def split(self,job):
         subjobs=[]
         for i in range(self.numberOfJobs):
-            j = create_gaudi_subjob(job, job.inputdata)
+            if job.application.prep_inputdata.files and not job.inputdata:
+                j = create_gaudi_subjob(job, job.application.prep_inputdata)
+            else:
+                j = create_gaudi_subjob(job, job.inputdata)
             first = i*self.eventsPerJob + 1
             opts = 'from Gaudi.Configuration import * \n'
             opts += 'from Configurables import GenInit \n'

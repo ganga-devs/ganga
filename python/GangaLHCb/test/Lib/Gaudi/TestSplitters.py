@@ -1,7 +1,8 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaLHCb.Lib.Gaudi.Gaudi import GaudiExtras
+#from GangaLHCb.Lib.Gaudi.Gaudi import GaudiExtras
 from GangaLHCb.Lib.Gaudi.Splitters import copy_app
 from GangaLHCb.Lib.Gaudi.GaudiRunTimeHandler import GaudiRunTimeHandler
+from tempfile import mkdtemp
 
 class TestSplitters(GangaGPITestCase):
 
@@ -28,7 +29,7 @@ class TestSplitters(GangaGPITestCase):
 
     def test_SplitByFiles_split(self):
         job = Job(application=DaVinci())
-        job.application._impl.extra = GaudiExtras()
+        #job.application._impl.extra = GaudiExtras()
         job.splitter = SplitByFiles(filesPerJob=2)
         dummy_files = ['pfn:f1.dst','pfn:f2.dst','pfn:f3.dst','pfn:f4.dst',
                        'pfn:f5.dst']
@@ -56,12 +57,49 @@ class TestSplitters(GangaGPITestCase):
         ok = dataopts.rfind('f5.dst') >= 0 and \
              len(subjobs[2].inputdata) == 1
         assert ok, 'problem w/ subjob 2 input data'
+
+        ## Check also that data in the optsfiles was picked up.
+        job = Job(application=DaVinci())
+        #job.application._impl.extra = GaudiExtras()
+        job.splitter = SplitByFiles(filesPerJob=2)
+        dummy_files = ['pfn:f1.dst','pfn:f2.dst','pfn:f3.dst','pfn:f4.dst',
+                       'pfn:f5.dst']
+        l = LHCbDataset(dummy_files)._impl
+        tdir = mkdtemp();
+        f=open(os.path.join(tdir,'data.py'),'w')
+        f.write(l.optionsString())
+        f.close()
+        job.application.optsfile=[f.name]
+        job.prepare()
+        subjobs = job.splitter._impl.split(job._impl)
+        assert len(subjobs) == 3, 'incorrect number of split jobs, for data in optsfile'
+        #for i in range(0,3):
+        jobconfigs=[GaudiRunTimeHandler().prepare(subjobs[i].application,None,None,None) for i in range(0,3)]
+        # job 0
+        dataopts = [file for file in jobconfigs[0].inputbox if file.name.find( 'data.py')>=0][0].getContents()
+        #dataopts = subjobs[0].application.extra.input_buffers['data.py']
+        ok = dataopts.rfind('f1.dst') >= 0 and dataopts.rfind('f2.dst') >= 0 \
+             and len(subjobs[0].inputdata) == 2
+        print len(subjobs[0].inputdata)
+        assert ok, 'problem w/ subjob 0 input data, for data in optsfile'
+        # job 1
+        dataopts = [file for file in jobconfigs[1].inputbox if file.name.find( 'data.py')>=0][0].getContents()
+        #dataopts = subjobs[1].application.extra.input_buffers['data.py']
+        ok = dataopts.rfind('f3.dst') >= 0 and dataopts.rfind('f4.dst') >= 0 \
+             and len(subjobs[1].inputdata) == 2
+        assert ok, 'problem w/ subjob 1 input data, for data in optsfile'
+        # job 2
+        dataopts = [file for file in jobconfigs[2].inputbox if file.name.find( 'data.py')>=0][0].getContents()
+       #dataopts = subjobs[2].application.extra.input_buffers['data.py']
+        ok = dataopts.rfind('f5.dst') >= 0 and \
+             len(subjobs[2].inputdata) == 1
+        assert ok, 'problem w/ subjob 2 input data, for data in optsfile'
             
     def test_OptionsFileSplitter_split(self):
         splitter = OptionsFileSplitter()
         splitter.optsArray = ['dummy1.opt','dummy2.opt','dummy3.opt']
         job = Job(application=DaVinci())
-        job.application._impl.extra = GaudiExtras()
+        #job.application._impl.extra = GaudiExtras()
         subjobs = splitter._impl.split(job._impl)
         assert len(subjobs) == 3, 'incorrect number of subjobs'
         def dataFilter(file):

@@ -47,6 +47,7 @@ class GaudiPython(Francesc):
 """
     _name = 'GaudiPython'
     _category = 'applications'
+    _exportmethods = ['prepare','unprepare']
 
     schema = get_common_gaudi_schema()
     docstr = 'The name of the script to execute. A copy will be made ' + \
@@ -60,6 +61,8 @@ class GaudiPython(Francesc):
     schema['project'] = SimpleItem(preparable=1,defvalue=None,
                                    typelist=['str','type(None)'],
                                    doc=docstr)
+    docstr = 'Data/sandbox items defined in prepare'
+    schema['prep_inputbox']   = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
     docstr = 'Location of shared resources. Presence of this attribute implies'\
              'the application has been prepared.'
     schema['is_prepared'] = SimpleItem(defvalue=None,
@@ -79,6 +82,7 @@ class GaudiPython(Francesc):
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
+            self.prep_inputbox = []
 
     def prepare(self,force=False):
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -92,13 +96,13 @@ class GaudiPython(Francesc):
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
         send_to_share = self._prepare(self.is_prepared.name)
         self._check_inputs()
-        return send_to_share
+        self.prep_inputbox  += send_to_share[:]
     
     def master_configure(self):
         #self._master_configure()
         #self._check_inputs()
         #self.extra.master_input_files += self.script[:]
-        master_input_files=[]
+        master_input_files=self.prep_inputbox[:]
         master_input_files += self.script[:]
         #return (None,self.extra)
         return (None,GaudiJobConfig(inputbox=master_input_files))
