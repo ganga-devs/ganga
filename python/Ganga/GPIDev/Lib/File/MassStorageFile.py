@@ -35,7 +35,8 @@ class MassStorageFile(OutputFile):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
-        self._location.append(location)
+        if location not in self._location:
+            self._location.append(location)
         
     def location(self):
         """
