@@ -28,10 +28,12 @@ class OutputFile(GangaObject):
         else:
             super(OutputFile,self).__construct__(args)
         
+    """ 
     def __repr__(self):
-        """Get the representation of the file."""
+        Get the representation of the file.
 
         return "OutputFile(name='%s')"% self.name
+    """
 
     def location(self):
         """
