@@ -376,7 +376,7 @@ class Job(GangaObject):
     def postprocess_hook(self):
         self.application.postprocess()
         self.getMonitoringService().complete()
-        self.outputfiles = self.backend.postprocess(self.outputfiles, self.getOutputWorkspace().getPath())
+        self.backend.postprocess(self.outputfiles, self.getOutputWorkspace().getPath())
 
     def postprocess_hook_failed(self):
         self.application.postprocess_failed()
