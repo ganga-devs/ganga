@@ -25,11 +25,12 @@ class MassStorageFile(OutputFile):
     def __construct__(self,args):
         super(MassStorageFile,self).__construct__(args)
 
-            
+    """        
     def __repr__(self):
-        """Get the representation of the file."""
+        Get the representation of the file.
 
         return "MassStorageFile(name='%s')"% self.name
+    """
 
     def setLocation(self, location):
         """
