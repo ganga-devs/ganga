@@ -536,6 +536,8 @@ sys.exit()
   
         os.system('rm %s' % os.path.join(outputdir, '__postprocesslocations__'))
 
+        return outputfiles
+
     def updateMonitoringInformation(jobs):
 
       def get_exit_code(f):
