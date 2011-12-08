@@ -11,9 +11,6 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Lib.File import *
 import os, shutil
-
-
-
 from Ganga.GPIDev.Schema import *
 
 import Ganga.Utility.logging
