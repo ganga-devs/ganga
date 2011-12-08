@@ -799,6 +799,7 @@ class Job(GangaObject):
                         j._init_workspace()
 
                     rjobs = self.subjobs
+                    logger.info('submitting %d subjobs', len(rjobs))
                     self._commit()
                 else:
                     rjobs = [self]
