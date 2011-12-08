@@ -728,6 +728,9 @@ class MultiTransform(Transform):
            # check for any running jobs
            if len(partition_status_dict['running']) > 0 and mj and not mj.status in ['failed', 'killed']:
                continue
+
+           if not mj:
+               continue
            
            # --------------------------------------
            # check for failed build jobs within unit
