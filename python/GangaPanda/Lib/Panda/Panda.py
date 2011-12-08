@@ -301,9 +301,14 @@ def uploadSources(path,sources):
         rc, output = Client.putFile(sources, useCacheSrv=True)
         os.chdir(cwd)
         if output != 'True':
-            logger.error('Uploading sources %s/%s from failed. Status = %d', path, sources, rc)
-            logger.error(output)
-            raise BackendError('Panda','Uploading sources to Panda failed')
+            if 'Cannot overwrite file' not in output:
+                logger.error('Uploading sources %s/%s failed. Status = %d', path, sources, rc)
+                logger.error(output)
+                raise BackendError('Panda','Uploading sources to Panda failed')
+            else:
+                logger.warning('Uploading sources %s/%s failed. Status = %d', path, sources, rc)
+                logger.warning(output)
+                logger.warning('Reusing existing input sandbox on panda')
     except:
         raise BackendError('Panda','Exception while uploading archive: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
 
