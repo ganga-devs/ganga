@@ -539,7 +539,7 @@ sys.exit()
                 
         postprocesslocations.close()
   
-        os.system('rm %s' % os.path.join(outputdir, '__postprocesslocations__'))
+        os.system('rm %s' % postprocessLocationsPath)
 
     def updateMonitoringInformation(jobs):
 
