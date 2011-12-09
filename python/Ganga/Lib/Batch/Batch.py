@@ -667,7 +667,12 @@ sys.exit(result)
 
             return None 
 
-        postprocesslocations = open(os.path.join(outputdir, '__postprocesslocations__'), 'r')
+        postprocessLocationsPath = os.path.join(outputdir, '__postprocesslocations__')
+
+        if not os.path.exists(postprocessLocationsPath):
+            return
+
+        postprocesslocations = open(postprocessLocationsPath, 'r')
         
         for line in postprocesslocations.readlines():
             lineParts = line.split(' ') 
@@ -685,7 +690,7 @@ sys.exit(result)
                 
         postprocesslocations.close()
   
-        os.system('rm %s' % os.path.join(outputdir, '__postprocesslocations__'))
+        os.system('rm %s' % postprocessLocationsPath)
 
     def updateMonitoringInformation(jobs):
 
