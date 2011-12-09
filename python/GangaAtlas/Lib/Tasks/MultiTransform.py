@@ -351,7 +351,9 @@ class MultiTransform(Transform):
        if not sj:
            return None
 
-       self.unit_job_list[uind] = sj[-1]
+       # check for valid subjob
+       if sj[-1].master:
+           self.unit_job_list[uind] = sj[-1]
        
        if proxy:
            mj = sj[-1].master
