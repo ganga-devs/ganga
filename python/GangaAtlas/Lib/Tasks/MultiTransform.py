@@ -1006,14 +1006,18 @@ class MultiTransform(Transform):
           self.unit_state_list[unit_num]['active'] = False
           self.unit_state_list[unit_num]['configured'] = False
           self.unit_state_list[unit_num]['reason'] = "Error during split. No valid site?"
+          self.inputdata = temp_inds
           return
       except DQException, x:
           logger.error("Exception in DQ2 during split %s %s\nDeactivating unit. Maybe no valid sites found?" % (x.__class__,x))
           self.unit_state_list[unit_num]['active'] = False
           self.unit_state_list[unit_num]['configured'] = False
           self.unit_state_list[unit_num]['reason'] = "Error during split. No valid site?"
+          self.inputdata = temp_inds
           return
 
+      #restore old inds
+      self.inputdata = temp_inds
       
       if len(sjl) == 0:
           logger.error("Splitter didn't produce any subjobs - deactivating this unit")
@@ -1022,9 +1026,7 @@ class MultiTransform(Transform):
           self.unit_state_list[unit_num]['reason'] = "No subjobs produced in split. Brokering issue?"
           return
 
-      #restore old inds
-      self.inputdata = temp_inds
-          
+         
       self.partition_lock.acquire()
       if self.backend._name in ['Panda']:
           try:
