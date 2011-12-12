@@ -8,6 +8,7 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
+from dq2.common.DQException import DQException
 
 o = [""]
 def c(s):
@@ -167,10 +168,14 @@ class MultiTask(Task):
    def overview(self):
       super(MultiTask, self).overview()
 
-   def unitOverview(self):
-      """Show a overview of the units"""
-      #print "Colours: " + ", ".join([markup(key, overview_colours[key])
-      #                             for key in ["hold", "ready", "running", "completed", "attempted", "failed", "bad", "unknown"]])
+   def unitOverview(self, status = ''):
+      """Show a overview of the units. Use the 'status' argument to only view units of a particular status. Options are: 'bad', 'hold', 'running', 'completed', 'ready'"""
+      if status and not status in ['bad', 'hold', 'running', 'completed', 'ready']:
+         logger.error("Not a valid status for unitOverview. Possible options are: 'bad', 'hold', 'running', 'completed', 'ready'.")
+         return
+      
+      print "Colours: " + ", ".join([markup(key, overview_colours[key])
+                                     for key in ["hold", "ready", "running", "completed", "bad"]])
       print "Lists the units for each partition and their current status"
       #print "Format: (partition number)[:(number of failed attempts)]"
       print
@@ -179,7 +184,7 @@ class MultiTask(Task):
          print "----------------------------------------------------------------------------------------------------------------------"
          print "----   Transform %d:  %s" % (trfid, self.transforms[trfid].name)
          print
-         self.transforms[trfid].unit_overview()
+         self.transforms[trfid].unit_overview(status)
          print
       
    def run(self):

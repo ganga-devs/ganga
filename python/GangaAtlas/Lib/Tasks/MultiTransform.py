@@ -18,6 +18,7 @@ from dq2.common.DQException import DQException
 import time
 import threading
 import copy
+import os
 
 from dq2.info import TiersOfATLAS
 from GangaAtlas.Lib.ATLASDataset import whichCloud
@@ -81,7 +82,7 @@ class MultiTransform(Transform):
        }.items()))
    _category = 'transforms'
    _name = 'MultiTransform'
-   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName', 'getNumUnits', 'getUnitsFromPartitions', 'isLocalTRF', 'isUnitComplete', 'getLocalDQ2FileList', 'getAllUnitJobs', 'listUnitDatasets', 'listAllDatasets', 'getUnitContainerName', 'checkContainerContents']
+   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName', 'getNumUnits', 'getUnitsFromPartitions', 'isLocalTRF', 'isUnitComplete', 'getLocalDQ2FileList', 'getAllUnitJobs', 'listUnitDatasets', 'listAllDatasets', 'getUnitContainerName', 'checkContainerContents', 'unitOverview']
    
    def initialize(self):
        super(MultiTransform, self).initialize()
@@ -98,7 +99,11 @@ class MultiTransform(Transform):
        
        return task.transforms.index(self)
 
-   def unit_overview(self):
+   def unitOverview(self, status = ''):
+       """User function to show the unit status"""
+       self.unit_overview(status)
+       
+   def unit_overview(self, status):
        """Show the status of the units in this transform"""
        for uind in range(0, len(self.unit_outputdata_list)):
 
@@ -108,7 +113,7 @@ class MultiTransform(Transform):
            o = ""
            o += ("%d:  " % uind) + self.unit_outputdata_list[uind]
            
-           # is unit active?
+           # is unit active?          
            if self.unit_state_list[uind]['active']:
                o += " " * (40-len(o) + 3) + "*"
            else:
@@ -161,8 +166,22 @@ class MultiTransform(Transform):
                o = markup(o,overview_colours["ready"])  
            else:
                o = markup(o,overview_colours["running"])
-           print o
-                      
+
+           # print depending on status
+           if is_complete and status == 'completed':
+               print o
+           elif not self.unit_state_list[uind]['active'] and status == 'bad':
+               print o
+           elif not self.unit_state_list[uind]['configured'] and status == 'hold':
+               print o
+           elif not self.unit_state_list[uind]['submitted'] and status == 'ready':
+               print o
+           elif status == 'running' and self.unit_state_list[uind]['active'] and self.unit_state_list[uind]['configured'] and self.unit_state_list[uind]['submitted']:
+               print o
+           elif status == '':
+               print o
+
+                                                                                               
    def check(self):
       super(MultiTransform,self).check()
 
@@ -298,14 +317,13 @@ class MultiTransform(Transform):
        # check for merged job completion
        mj = self.getUnitMasterJob( uind )
 
-       if mj.status != "completed":
+       if not mj or mj.status != "completed":
            return False
 
        return True
 
    def getLocalDQ2FileList(self, uind):
        """List the local files after a dq2 retrieve"""
-       import os
        filelist = []
        mj = self.getUnitMasterJob( uind )
        for sj in mj.subjobs:
@@ -423,7 +441,6 @@ class MultiTransform(Transform):
 
           # Find the least error-prone unit to dq2-get/merge from
           if do_download and self.unit_state_list[uind2]['exceptions'] < min_excep:
-              import os
               
               # check if this needs DQ2 or merger
               filelist = self.getLocalDQ2FileList( uind2 )
@@ -450,7 +467,6 @@ class MultiTransform(Transform):
           if do_download or self.merger:
 
               # if unit is complete - dq2-get
-              import os
               filelist = self.getLocalDQ2FileList( uind )
 
               do_dq2 = False
@@ -531,7 +547,6 @@ class MultiTransform(Transform):
 
                       logger.warning("Running merger for transform %d, unit %d..." % (self.getID(), uind))
 
-                      import os                      
                       if not os.path.exists(local_location):
                           os.makedirs(local_location)
 
@@ -940,9 +955,12 @@ class MultiTransform(Transform):
            except:
                pass
            
-           self.unit_partition_list[unit] = []
-           self.createPartitionList( unit )
-                          
+           self.unit_partition_list[unit] = []          
+
+           # finally, blank the job lookup table
+           if len(self.unit_job_list) > 0:
+               self.unit_job_list[unit] = None
+                                                                           
    def createPartitionList( self, unit_num ):
 
       if not self.partition_lock:
@@ -1001,15 +1019,17 @@ class MultiTransform(Transform):
       #sjl = splitter.split(self)
       try:
           sjl = splitter.split(self)
-      except Exception, x:
-          logger.error('General Exception during split %s %s\nDeactivating unit.' % (x.__class__,x))
+      except Exception, x:          
+          logger.error('Problem in Task %i, Transform %i, Unit %i: General Exception during split %s %s\nDeactivating unit.' %
+                       (self._getParent().id, self.getID(), unit_num, x.__class__,x, ))
           self.unit_state_list[unit_num]['active'] = False
           self.unit_state_list[unit_num]['configured'] = False
           self.unit_state_list[unit_num]['reason'] = "Error during split. No valid site?"
           self.inputdata = temp_inds
           return
       except DQException, x:
-          logger.error("Exception in DQ2 during split %s %s\nDeactivating unit. Maybe no valid sites found?" % (x.__class__,x))
+          logger.error("Problem in Task %i, Transform %i, Unit %i: Exception in DQ2 during split %s %s\nDeactivating unit. Maybe no valid sites found?" %
+                       (self._getParent().id, self.getID(), unit_num, x.__class__,x))
           self.unit_state_list[unit_num]['active'] = False
           self.unit_state_list[unit_num]['configured'] = False
           self.unit_state_list[unit_num]['reason'] = "Error during split. No valid site?"
@@ -1020,7 +1040,7 @@ class MultiTransform(Transform):
       self.inputdata = temp_inds
       
       if len(sjl) == 0:
-          logger.error("Splitter didn't produce any subjobs - deactivating this unit")
+          logger.error("Problem in Task %i, Transform %i, Unit %i: Splitter didn't produce any subjobs - deactivating this unit" % (self._getParent().id, self.getID(), unit_num))
           self.unit_state_list[unit_num]['active'] = False
           self.unit_state_list[unit_num]['configured'] = False
           self.unit_state_list[unit_num]['reason'] = "No subjobs produced in split. Brokering issue?"
@@ -1067,7 +1087,6 @@ class MultiTransform(Transform):
                   
       # check that dq2-get and merger has completed
       if (self.do_auto_download or self.merger):
-          import os
           for uind in range(0, len(self.unit_partition_list)):
               filelist = self.getLocalDQ2FileList( uind )
 
@@ -1233,11 +1252,11 @@ class MultiTransform(Transform):
           if containerinfo == {}:
               try:
                   dq2.registerContainer(task_container)
-                  logger.info('Registered container for Transform %i: %s' % (self.getID(), task_container))
+                  logger.info('Registered container for Task %i: %s' % (self._getParent().id, task_container))
               except Exception, x:
-                  logger.error('Problem registering container for Task %i, %s : %s %s' % (self.getID(), task_container,x.__class__, x))
+                  logger.error('Problem registering container for Task %i, %s : %s %s' % (self._getParent().id, task_container,x.__class__, x))
               except DQException, x:
-                  logger.error('DQ2 Problem registering container for Task %i, %s : %s %s' % (self.getID(), task_container,x.__class__, x))
+                  logger.error('DQ2 Problem registering container for Task %i, %s : %s %s' % (self._getParent().id, task_container,x.__class__, x))
 
           if j.subjobs:
               ds_list = dq2.listDatasetsInContainer(j.outputdata.datasetname)
