@@ -727,7 +727,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += "--useRootCore "
 
         # DBRelease
-        if self.dbrelease != '' and not app.atlas_exetype in [ 'TRF' ]:
+        if self.dbrelease != '' and (not app.atlas_exetype in [ 'TRF' ] or
+                                     (job.inputdata and self.inputdatatype == 'DQ2' and (job.inputdata.tag_info or len(job.inputdata.tagdataset) != 0))):
             tmpItems = self.dbrelease.split(':')
             tmpDbrDS  = tmpItems[0]
             tmpDbrLFN = tmpItems[1]
