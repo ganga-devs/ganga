@@ -50,12 +50,14 @@ def file_install(athena_compile_flag='True'):
 #
 # ATLAS/ARDA
 
+ATHENA_MAJOR_RELEASE=`echo $ATLAS_RELEASE | cut -d '.' -f 1`
+
 if [ n$SITEROOT != n'/afs/cern.ch' ] && [ n$CMTSITE != n'CERN' ]
 then
   if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]
   then
       source $SITEROOT/dist/$ATLAS_RELEASE/AtlasRelease/*/cmt/setup.sh
-  elif ( [ ! -z `echo $ATLAS_RELEASE | grep 12.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 13.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 14.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 15.` ] || [ ! -z `echo $ATLAS_RELEASE | grep 16.` ] ) && ( [ -z $ATLAS_PRODUCTION_ARCHIVE ] )
+  elif ( [ $ATHENA_MAJOR_RELEASE -gt 11 ] ) && ( [ -z $ATLAS_PRODUCTION_ARCHIVE ] )
   then
       if [ -z $ATLAS_PROJECT ]
       then
