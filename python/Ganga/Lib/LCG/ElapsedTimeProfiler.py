@@ -27,7 +27,7 @@ class ElapsedTimeProfiler:
 
     def check(self, message):
         etime = time.time() - self.beg
-        self.logger.debug('%s: %f sec.' % (message,etime))
+        self.logger.info('%s: %f sec.' % (message,etime))
 
     def checkAndStart(self, message):
         self.check(message)
