@@ -54,7 +54,7 @@ class Executable(IPrepareApp):
         } )
     _category = 'applications'
     _name = 'Executable'
-    _exportmethods = ['prepare','unprepare']
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'exe', 'widget' : 'File' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'env', 'widget' : 'DictOfString' } ]
