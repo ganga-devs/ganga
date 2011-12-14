@@ -1345,9 +1345,26 @@ try:
 
     postProcessOutputResult = postprocessoutput(orig_wdir)
 
+    def uploadToSE(lsgseItem):
+
+        lsgseItems = lsgseItem.split(' ')
+
+        filenameWildChar = lsgseItems[1]
+        lfc_host = lsgseItems[2]
+        dest_SE = lsgseItems[3]
+
+        os.environ['LFC_HOST'] = lfc_host
+        
+        import glob 
+        for currentFile in glob.glob(filenameWildChar):
+            cmd = 'lcg-cr --vo %s -P generated -d %s file:/%s' % (vo, dest_SE, filenameWildChar)
+            printInfo(cmd)      
+        
+        
 #   code here for upload to lsg se
     if postProcessOutputResult is not None:
-        printInfo(os.listdir(orig_wdir))
+        for lsgseItem in postProcessOutputResult:
+            uploadToSE(lsgseItem)
     
     # Clean up after us - All log files and packed outputsandbox should be in "wdir"
     if scratchdir:
