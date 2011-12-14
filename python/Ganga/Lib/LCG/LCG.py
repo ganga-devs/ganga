@@ -1245,6 +1245,7 @@ try:
     printInfo('Loading Python modules ...')
 
     #check if __postprocessoutput__ file exists 
+    import os   
     if os.path.exists('__postprocessoutput__')
         printInfo('__postprocessoutput__ exists')
     else 
