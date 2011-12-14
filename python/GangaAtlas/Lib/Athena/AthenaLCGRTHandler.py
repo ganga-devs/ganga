@@ -742,6 +742,12 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             
         if job.outputsandbox: outputbox += job.outputsandbox
 
+        # Switch for DEBUG print-out in logfiles
+        if app.useNoDebugLogs:
+            environment['GANGA_LOG_DEBUG'] = '0'
+        else:
+            environment['GANGA_LOG_DEBUG'] = '1'
+            
         return LCGJobConfig(File(exe),inputbox,[],outputbox,environment,[],requirements) 
 
 allHandlers.add('Athena','LCG',AthenaLCGRTHandler)

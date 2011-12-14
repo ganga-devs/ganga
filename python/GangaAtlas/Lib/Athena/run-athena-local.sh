@@ -1,5 +1,9 @@
 #!/usr/bin/env bash 
-set -x 
+
+if [ $GANGA_LOG_DEBUG -eq 1 ]; then
+    set -x 
+fi
+
 #
 # Run Athena locally
 #

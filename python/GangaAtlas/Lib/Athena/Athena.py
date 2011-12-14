@@ -99,8 +99,8 @@ echo 'PYTHONPATH = '$PYTHONPATH
 echo '**********************************************************'
 
 cmt config
-cmt broadcast source setup.sh
-cmt broadcast cmt config
+#cmt broadcast source setup.sh
+#cmt broadcast cmt config
 source setup.sh
 
 echo '**********************************************************'
@@ -119,8 +119,8 @@ then
     cmt broadcast gmake -s
 
     cmt config
-    cmt broadcast source setup.sh
-    cmt broadcast cmt config
+    #cmt broadcast source setup.sh
+    #cmt broadcast cmt config
     source setup.sh
 
 fi
@@ -354,6 +354,7 @@ class Athena(IPrepareApp):
                  'is_prepared'            : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool', 'str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
                  'useRootCore'            : SimpleItem(defvalue = False, doc='Use RootCore'),
                  'useRootCoreNoBuild'     : SimpleItem(defvalue = False, doc='Use RootCore with NoBuild'),
+                 'useNoDebugLogs'         : SimpleItem(defvalue = False, doc='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend'),
                  })
                      
     _category = 'applications'

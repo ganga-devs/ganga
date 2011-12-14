@@ -614,6 +614,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if job.inputdata and job.inputdata._name in [ 'DQ2Dataset'] and job.inputdata.type in ['FILE_STAGER']:
             outputbox += ['FileStager.out', 'FileStager.err']
 
+        # Switch for DEBUG print-out in logfiles
+        if app.useNoDebugLogs:
+            environment['GANGA_LOG_DEBUG'] = '0'
+        else:
+            environment['GANGA_LOG_DEBUG'] = '1'
+
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
 class AthenaRemoteRTHandler(IRuntimeHandler):
