@@ -1245,11 +1245,11 @@ try:
     printInfo('Loading Python modules ...')
 
     #check if __postprocessoutput__ file exists 
-    #import os   
-    #if os.path.exists('__postprocessoutput__')
-    #    printInfo('__postprocessoutput__ exists')
-    #else 
-    #    printInfo('__postprocessoutput__ does not exists')      
+    import os   
+    if os.path.exists('__postprocessoutput__')
+        printInfo('__postprocessoutput__ exists')
+    else 
+        printInfo('__postprocessoutput__ does not exists')      
 
     sys.path.insert(0,os.path.join(wdir,PYTHON_DIR))
 
