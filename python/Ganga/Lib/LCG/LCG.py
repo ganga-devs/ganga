@@ -1506,6 +1506,8 @@ sys.exit(0)
                 line = line.strip()     
                 if line.startswith('massstorage'):
                     output_sandbox += [line.split(' ')[1]]
+                elif line.startswith('lcgse'):
+                    input_sandbox += [fullFilePath]
 
             fileRead.close()
         
