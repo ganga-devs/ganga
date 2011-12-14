@@ -1158,6 +1158,22 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
 
     return isDone
 
+def postprocessoutput(orig_wdir):
+
+    lsgseList = []           
+
+    inpfile = os.path.join(orig_wdir, '__postprocessoutput__')
+    
+    if not os.path.exists(inpfile):
+        return None
+                
+    for line in open(inpfile, 'r').readlines(): 
+        line = line.strip()     
+        if line.startswith('lsgse'):
+            lsgseList.append(line)
+
+    return lsgseList
+
 ############################################################################################
 
 ###INLINEMODULES###
@@ -1242,13 +1258,7 @@ try:
 
     printInfo('Unpack inputsandbox passed.')
 
-    printInfo('Loading Python modules ...')
-
-#   check if __postprocessoutput__ file exists 
-    if os.path.exists('__postprocessoutput__'):
-        printInfo('__postprocessoutput__ exists')
-    else:
-        printInfo('__postprocessoutput__ does not exists')
+    printInfo('Loading Python modules ...')     
 
     sys.path.insert(0,os.path.join(wdir,PYTHON_DIR))
 
@@ -1330,6 +1340,14 @@ try:
 
     printInfo('Pack outputsandbox passed.')
     monitor.stop(exitcode)
+
+    printInfo(os.listdir(orig_wdir))
+
+    postProcessOutputResult = postprocessoutput(orig_wdir)
+
+#   code here for upload to lsg se
+    if postProcessOutputResult is not None:
+        printInfo(os.listdir(orig_wdir))
     
     # Clean up after us - All log files and packed outputsandbox should be in "wdir"
     if scratchdir:
