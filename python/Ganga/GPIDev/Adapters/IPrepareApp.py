@@ -42,7 +42,8 @@ class IPrepareApp(IApplication):
 
     def _auto__init__(self, unprepare=None):
         if unprepare is True:
-            self.is_prepared=None
+            logger.debug("Calling unprepare() from IPrepareApp's _auto__init__()")
+            self.unprepare()
 
 
     def prepare(self, force=False):
@@ -59,6 +60,7 @@ class IPrepareApp(IApplication):
         Revert an application back to the exact state it was in prior to being\
         prepared.
         """
+        logger.debug("Running unprepare() from IPrepareApp")
         if self.is_prepared is True:
             self.is_prepared = None
         elif self.is_prepared is not None:
