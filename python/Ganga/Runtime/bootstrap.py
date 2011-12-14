@@ -441,7 +441,11 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             massStoragePath = "/castor/cern.ch/user/%s/%s/ganga" % (user[0], user)      
             outputconfig.addOption('path', massStoragePath, 'path to the mass storage location where the files will be stored(if you set the env variable CASTOR_HOME to your home directory in castor, you can configure the path to be $CASTOR_HOME/ganga)')
                 
-        
+        #[LCGStorageElementOutput] section
+        outputconfig = makeConfig( "LCGStorageElementOutput", "configuration section for storing of the output to LCG storage element" )
+        outputconfig.addOption('LFC_HOST', 'prod-lfc-atlas.cern.ch', 'LFC host for Logical File Name association with the uploaded output file')
+        outputconfig.addOption('dest_SRM', 'srm.cern.ch', 'SRM where the output file should be uploaded')
+
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
         # because the user config file is put at the end it always may override everything else
