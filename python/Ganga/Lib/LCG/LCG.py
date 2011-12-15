@@ -1160,7 +1160,7 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
 
 def postprocessoutput(orig_wdir):
 
-    lsgseList = []           
+    lcgseList = []           
 
     inpfile = os.path.join(orig_wdir, '__postprocessoutput__')
     
@@ -1169,10 +1169,10 @@ def postprocessoutput(orig_wdir):
                 
     for line in open(inpfile, 'r').readlines(): 
         line = line.strip()     
-        if line.startswith('lsgse'):
-            lsgseList.append(line)
+        if line.startswith('lcgse'):
+            lcgseList.append(line)
 
-    return lsgseList
+    return lcgseList
 
 ############################################################################################
 
@@ -1343,15 +1343,13 @@ try:
 
     printInfo(os.listdir(orig_wdir))
 
-    postProcessOutputResult = postprocessoutput(orig_wdir)
+    def uploadToSE(lcgseItem):
 
-    def uploadToSE(lsgseItem):
+        lcgseItems = lcgseItem.split(' ')
 
-        lsgseItems = lsgseItem.split(' ')
-
-        filenameWildChar = lsgseItems[1]
-        lfc_host = lsgseItems[2]
-        dest_SE = lsgseItems[3]
+        filenameWildChar = lcgseItems[1]
+        lfc_host = lcgseItems[2]
+        dest_SE = lcgseItems[3]
 
         os.environ['LFC_HOST'] = lfc_host
         
@@ -1360,11 +1358,12 @@ try:
             cmd = 'lcg-cr --vo %s -P generated -d %s file:/%s' % (vo, dest_SE, filenameWildChar)
             printInfo(cmd)      
         
+    postProcessOutputResult = postprocessoutput(orig_wdir)
         
-#   code here for upload to lsg se
+#   code here for upload to lcg se
     if postProcessOutputResult is not None:
-        for lsgseItem in postProcessOutputResult:
-            uploadToSE(lsgseItem)
+        for lcgseItem in postProcessOutputResult:
+            uploadToSE(lcgseItem)
     
     # Clean up after us - All log files and packed outputsandbox should be in "wdir"
     if scratchdir:
