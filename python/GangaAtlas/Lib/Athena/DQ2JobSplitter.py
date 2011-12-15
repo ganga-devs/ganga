@@ -5,7 +5,7 @@
 ###############################################################################
 # Athena DQ2JobSplitter
 
-import math, socket, operator, copy, os
+import math, socket, operator, copy, os, StringIO
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -409,9 +409,11 @@ class DQ2JobSplitter(ISplitter):
 
         if self.numfiles <= 0: 
             self.numfiles = 1
-        
-        dset_names = str(job.inputdata.dataset)
-        cache_get_locations = Caching.FunctionCache(job.inputdata.get_locations, dset_names)
+
+        # use a key of the whole inDS structure for cache
+        indata_buf = StringIO.StringIO()
+        job.inputdata.printTree(indata_buf)
+        cache_get_locations = Caching.FunctionCache(job.inputdata.get_locations, indata_buf.getvalue().replace('\n', ''))
         locations = cache_get_locations(overlap=False)
 
         allowed_sites = []
@@ -555,7 +557,7 @@ class DQ2JobSplitter(ISplitter):
         
         logger.debug('allowed_sites = %s ', allowed_sites)
 
-        cache_get_contents = Caching.FunctionCache(job.inputdata.get_contents, dset_names)
+        cache_get_contents = Caching.FunctionCache(job.inputdata.get_contents, indata_buf.getvalue().replace('\n', ''))
         contents_temp = cache_get_contents(overlap=False, size=True)
 
         if self.numevtsperjob > 0:
@@ -678,7 +680,7 @@ class DQ2JobSplitter(ISplitter):
                 else:
                     udays = 10000
                 if locations and locations.has_key(dataset):
-                    cache_dq2_siteinfo = Caching.FunctionCache(dq2_siteinfo, dataset)
+                    cache_dq2_siteinfo = Caching.FunctionCache(dq2_siteinfo, indata_buf.getvalue().replace('\n', '') + dataset)
                     siteinfo = cache_dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays)
                 else:
                     siteinfo = {}
