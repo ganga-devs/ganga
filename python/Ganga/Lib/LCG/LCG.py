@@ -1355,7 +1355,7 @@ try:
         
         import glob 
         for currentFile in glob.glob(filenameWildChar):
-            cmd = 'lcg-cr --vo %s -P generated -d %s file:/%s' % (vo, dest_SE, filenameWildChar)
+            cmd = 'lcg-cr --vo %s -P generated -d %s file:/%s' % (vo, dest_SE, currentFile)
             printInfo(cmd)      
         
     postProcessOutputResult = postprocessoutput(orig_wdir)
