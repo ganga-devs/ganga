@@ -66,6 +66,15 @@ class Executable(IPrepareApp):
     def __init__(self):
         super(Executable,self).__init__()
 
+    def unprepare(self, force=False):
+        """
+        Revert an Executable() application back to it's unprepared state.
+        """
+        logger.debug('Running unprepare in Executable app')
+        if self.is_prepared is not None:
+            self.decrementShareCounter(self.is_prepared.name)
+            self.is_prepared = None
+
     def prepare(self,force=False):
         """
         A method to place the Executable application into a prepared state.
