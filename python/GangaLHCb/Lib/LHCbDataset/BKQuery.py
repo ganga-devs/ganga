@@ -126,16 +126,16 @@ RecoToDST-07/90000000/DST" ,
         value = result['Value']
         if value.has_key('LFNs'): files = value['LFNs']
         metadata = {}
-        if not type(files) is list:
-            if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
-                metadata = files['LFNs'].copy()
-                files = files['LFNs'].keys()
+        if not type(files) is list: # i.e. a dict of LFN:Metadata
+            #if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
+            metadata = files.copy()
+            files = files.keys()
         
         ds = LHCbDataset()
         for f in files: ds.files.append(LogicalFile(f))
         
         if metadata:
-            ds.metadata = {'OK':True,'Value':metadata}
+            ds.metadata = {'OK':False,'Value':metadata}
         
         return GPIProxyObjectFactory(ds)
 

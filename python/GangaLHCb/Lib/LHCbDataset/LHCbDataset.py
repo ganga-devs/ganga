@@ -320,11 +320,31 @@ class LHCbDataset(Dataset):
 
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '        
-        if self.metadata:
-          return self.metadata  
+        if not self.metadata or (not self.metadata['OK']):
+            if not self.metadata: logger.info("Getting an LHCbDataset object from BKQuery.getDataset() via the bookkeeping path will yeild more metadata such as 'TCK' info...")
+            cmd = 'result = DiracCommands.bkMetaData(%s)' % self.getLFNs()
+            b =  get_result(cmd,'Error removing replica','Replica rm error.')
+
+            if b.has_key('Value') and ( type(b['Value']) is dict ):
+                b=b['Value']
+                if self.metadata:
+                    m = self.metadata['Value']
+                    if len(m.keys()) > len(b.keys()):
+                        logger.warning("More files from BKQuery than DiracCommands.bkMetaData() only those returned from both will have full metadata info!")
+                    for f in b:
+                        if not f in m:
+                            logger.warning("Incomplete metadata for '%s'. Will not have for example 'TCK' info"%f)
+                            continue
+                        for i in b[f]:
+                            if i in m[f] and ( m[f][i] != b[f][i] ):
+                                logger.warning("Item '%s' in the metadata for file '%s' from BKQuery.getDataset() is different from that obtained with DiracCommands.bkMetaData(), the latter will be retained. Check this is ok!")
+                        b[f].update(m[f])
+                        if b[f].has_key('RunNumber') and b[f].has_key('Runnumber') and (b[f]['RunNumber'] == b[f]['Runnumber']):
+                            del b[f]['Runnumber']
+                self.metadata = {'OK':True,'Value':b}
+
+        return self.metadata
         
-        cmd = 'result = DiracCommands.bkMetaData(%s)' % self.getLFNs()
-        return get_result(cmd,'Error removing replica','Replica rm error.')
 
     #def pop(self,file):
     #    if type(file) is type(''): file = strToDataFile(file,False)
