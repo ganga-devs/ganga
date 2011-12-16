@@ -82,6 +82,7 @@ class ShareRef(GangaObject):
         Sharedir should be given relative to the user's shared directory repository, which can
         be discovered by calling 'shareref'.
         """
+        logger.debug("running increase() in prepregistry")
         self._getWriteAccess()
         
         shareddir =  os.path.join(ShareDir._shared_path,os.path.basename(shareddir))
