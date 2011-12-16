@@ -172,7 +172,7 @@ class Gaudi(Francesc):
         logger.info('Preparing %s application.'%(self._name))
         self.is_prepared = ShareDir()
         #shared_dirname = self.is_prepared.name
-        self.incrementShareCounter(self.is_prepared.name)
+        #self.incrementShareCounter(self.is_prepared.name)#NOT NECESSARY, DONT AUTOMATICALLY
 
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
