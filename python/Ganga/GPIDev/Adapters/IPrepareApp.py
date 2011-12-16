@@ -64,7 +64,6 @@ class IPrepareApp(IApplication):
         if self.is_prepared is True:
             self.is_prepared = None
         elif self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
 
 
@@ -122,6 +121,7 @@ class IPrepareApp(IApplication):
     def incrementShareCounter(self, shared_directory_name):
         logger.debug('Incrementing shared directory reference counter')
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        logger.debug('within incrementShareCounter, calling increase')
         shareref.increase(shared_directory_name)
 
 
