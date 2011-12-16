@@ -141,6 +141,10 @@ class ProxyDataDescriptor(object):
         #val is the value we're setting the attribute to.
         #item is the schema entry of the attribute we're about to change
         item = obj._impl._schema[self._name]
+        if item['protected']:
+            raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified'%(self._name,))
+        if obj._impl._readonly():
+            raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj),self._name))
 
         #mechanism to provide for locking of preparable attributes
         #we tried this with the 'protected' meta attribute, but this is static, so cannot be set on a per-instance basis.
@@ -166,8 +170,6 @@ class ProxyDataDescriptor(object):
                 s=shareref._impl.name
                 shareref.increase(val.is_prepared.name)
 
-        if obj._impl._readonly():
-            raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj),self._name))
 
         # apply attribute conversion
         def stripAttribute(v):
@@ -311,23 +313,32 @@ def GPIProxyClassFactory(name, pluginclass):
     helptext(_ne,"Non-equality operator (!=).")
 
     def _copy(self, unprepare=None):
-        if prepconfig['unprepare_on_copy'] is True:
-            if hasattr(self,'is_prepared') or hasattr(self,'application'):
-                unprepare = True
+        logger.debug('Called _copy in proxy.py')
+        logger.debug('unprepare is %s', str(unprepare))
+        if unprepare is None:
+            if prepconfig['unprepare_on_copy'] is True:
+                if hasattr(self,'is_prepared') or hasattr(self,'application'):
+                    unprepare = True
 #        if hasattr(self,'is_prepared'):
 #            if self.is_prepared is not None and self.is_prepared is not True:
 #                from Ganga.Core.GangaRepository import getRegistry
 #                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
 #                shareref.increase(self.is_prepared.name)
 
-        if unprepare is not True:
-            if  hasattr(self,'application'):
-                if hasattr(self.application,'is_prepared'):
-                    if self.application.is_prepared is not None and self.application.is_prepared is not True:
-                        from Ganga.Core.GangaRepository import getRegistry
-                        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-                        shareref.increase(self.application.is_prepared.name)
+#        if unprepare is not True:
+
+        if hasattr(self,'application'):
+            if hasattr(self.application,'is_prepared'):
+                if self.application.is_prepared is not None and self.application.is_prepared is not True:
+                    from Ganga.Core.GangaRepository import getRegistry
+                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                    logger.debug('increasing counter from proxy.py')
+                    shareref.increase(self.application.is_prepared.name)
     
+        if hasattr(self,'is_prepared') and unprepare is True:
+            from Ganga.Core.GangaRepository import getRegistry
+            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+            shareref.increase(self.is_prepared.name)
 
             
         if unprepare is True:
