@@ -1,0 +1,41 @@
+**************************************************************************************************************
+5.7.4 (2011/12/16)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fixed problem with application.unprepare() not being called when config['Preparable']
+['unprepare_on_copy']==True
+* Fixed inconsistencies in sharedref counter when (prepared) jobs/applications are copied
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fixed a bug with the cache not respecting changes to inputdata settings
+* Fix bug #89821: add useNoDebugLogs flag to switch on/off debug log flag.
+  Use it with: j.application.useNoDebugLogs=True or --useNoDebugLogs
+* Remove 'cmt broadcast' calls in install.sh for Local/Batch/CREAM/LCG backend
+* Additional fix for bug #88111: improved athena release handling
+* More minor fixes for MultiTask
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga 5.7.4
+
+Implemented small bug fixes/ feature requests including
+
+1) LHCbDataset metadata now correctly returned and includes TCK info if dataset acquired from a
+BKQuery object
+2) fixed the shareref counter for the prepared state such that it doesn't double count.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Fix for using TAGs with CVMFS sites
+
+**************************************************************************************************************
