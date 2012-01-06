@@ -1319,7 +1319,7 @@ class Panda(IBackend):
                 s = Client.PandaSites[self.site]
             except KeyError:
                 raise BackendError('Panda','Site %s not in a known Panda Sites'%self.site)
-            if s['status'] not in ['online','brokeroff']:
+            if s['status'] not in ['online','brokeroff'] and not (s['status'] == 'test' and config['processingType'].startswith('gangarobot')):
                 raise BackendError('Panda','Cannot submit to %s in status %s'%(self.site,s['status']))
             if self.site in self.requirements.excluded_sites:
                 raise BackendError('Panda','Cannot submit to %s because it is in your requirements.excluded_sites list'%self.site)
