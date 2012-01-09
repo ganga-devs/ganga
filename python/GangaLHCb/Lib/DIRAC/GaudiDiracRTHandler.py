@@ -147,16 +147,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
 
         job=app.getJobObject()
-        inputsandbox=[]
-        ## Add the job.inputsandbox as splitters create subjobs that are
-        ## seperate Job objects and therefore have their own job.inputsandbox
-        ## which can be appended to in the splitters.
-        inputsandbox = job.inputsandbox[:]
-
-        #sandbox = get_input_sandbox(app.extra)
-        if appsubconfig: inputsandbox += appsubconfig.getSandboxFiles()
-
-        
+    
         data_str=''
         if job.inputdata:
             data_str = job.inputdata.optionsString()
@@ -189,7 +180,8 @@ class GaudiDiracRTHandler(IRuntimeHandler):
 ##         else:
 ##             inputsandbox.append(FileBuffer(os.path.join(job.getInputWorkspace(),'data.py'),data_str))
 
-
+        inputsandbox=[]
+        
         def existingDataFilter(file):
             return file.name.find('/tmp/')>=0 and file.name.find('_data.py')>=0
         
@@ -204,12 +196,22 @@ class GaudiDiracRTHandler(IRuntimeHandler):
             data_str+=existing_data
             f.close()
             del job.inputsandbox[job.inputsandbox.index(existingDataFile[0])]
-            os.remove(data_path)
+            #os.remove(data_path)
         elif len(existingDataFile) is not 0:
             logger.error('There seems to be more than one existing data file in the inputsandbox!')
         inputsandbox.append(FileBuffer('data.py',data_str))
 
+        ## Add the job.inputsandbox as splitters create subjobs that are
+        ## seperate Job objects and therefore have their own job.inputsandbox
+        ## which can be appended to in the splitters.
+        inputsandbox += job.inputsandbox[:]
 
+        ## Here add any sandbox files coming from the appsubconfig
+        ## currently none.
+        #sandbox = get_input_sandbox(app.extra)
+        if appsubconfig: inputsandbox += appsubconfig.getSandboxFiles()
+
+      
 
 ##         data_path = os.path.join(job.getInputWorkspace().getPath(),'data.py')
 ##         if os.path.isfile(data_path) and not os.path.islink(data_path):
