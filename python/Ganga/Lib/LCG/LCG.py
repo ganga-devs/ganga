@@ -1374,7 +1374,7 @@ try:
         for currentFile in glob.glob(filenameWildChar):
             cmd = 'lcg-cr --vo %s -P generated -d %s file:///%s' % (vo, dest_SE, currentFile)
             printInfo(cmd)  
-            (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
+            (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
             printInfo('exitcode is %s' % str(exitcode))             
             printInfo('mystdout is %s' % str(mystdout))
             printInfo('mystderr is %s' % str(mystderr)) 
