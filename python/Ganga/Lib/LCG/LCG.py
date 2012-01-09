@@ -1334,7 +1334,6 @@ try:
     printInfo('Application execution passed with exit code %d.' % exitcode)         
 
     printInfo(os.listdir(orig_wdir))    
-    printInfo(os.listdir(wdir))
 
 #   system command executor with subprocess
     def execSyscmdSubprocessAndReturnOutput(cmd):
@@ -1364,8 +1363,8 @@ try:
         os.environ['LFC_HOST'] = lfc_host
         
         import glob 
-        for currentFile in glob.glob(filenameWildChar):
-            cmd = 'lcg-cr --vo %s -P generated -d %s file:///%s' % (vo, dest_SE, currentFile)
+        for currentFile in glob.glob(os.path.join(orig_wdir, filenameWildChar)):
+            cmd = 'lcg-cr --vo %s -P generated -d %s file:/%s' % (vo, dest_SE, currentFile)
             printInfo(cmd)  
             (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
             printInfo('exitcode is %s' % str(exitcode))             
