@@ -108,19 +108,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
 
         job = app.getJobObject()
-        inputsandbox=[]
-        ## Add the job.inputsandbox as splitters create subjobs that are
-        ## seperate Job objects and therefore have their own job.inputsandbox
-        ## which can be appended to in the splitters. Master inputsandbox is added
-        ## automatically.
-        inputsandbox = job.inputsandbox[:]
 
-        ## Here add any sandbox files coming from the appsubconfig
-        ## currently none.
-        if appsubconfig: inputsandbox += appsubconfig.getSandboxFiles()
-
-        ## Note the master inputsandbox will be added automatically
-        ## no need to add it here
         data_str=''
         if job.inputdata:
             data_str = job.inputdata.optionsString()
@@ -150,6 +138,9 @@ class GaudiRunTimeHandler(IRuntimeHandler):
 ##         else:
 ##             inputsandbox.append(FileBuffer(os.path.join(job.getInputWorkspace(),'data.py'),data_str))
 
+
+        inputsandbox=[]
+
         def existingDataFilter(file):
             return file.name.find('/tmp/')>=0 and file.name.find('_data.py')>=0
         
@@ -164,11 +155,23 @@ class GaudiRunTimeHandler(IRuntimeHandler):
             data_str+=existing_data
             f.close()
             del job.inputsandbox[job.inputsandbox.index(existingDataFile[0])]
-            os.remove(data_path)
+            #os.remove(data_path)
         elif len(existingDataFile) is not 0:
             logger.error('There seems to be more than one existing data file in the inputsandbox!')
         inputsandbox.append(FileBuffer('data.py',data_str))
 
+        ## Add the job.inputsandbox as splitters create subjobs that are
+        ## seperate Job objects and therefore have their own job.inputsandbox
+        ## which can be appended to in the splitters. Master inputsandbox is added
+        ## automatically.
+        inputsandbox += job.inputsandbox[:]
+
+        ## Here add any sandbox files coming from the appsubconfig
+        ## currently none.
+        if appsubconfig: inputsandbox += appsubconfig.getSandboxFiles()
+
+        ## Note the master inputsandbox will be added automatically
+        ## no need to add it here
 
         ## Strangly NEITHER the master outputsandbox OR job.outputsandbox
         ## are added automatically. As can define outputsandbox in optsfile
