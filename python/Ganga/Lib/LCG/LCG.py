@@ -1364,7 +1364,7 @@ try:
         
         import glob 
         for currentFile in glob.glob(os.path.join(orig_wdir, filenameWildChar)):
-            cmd = 'lcg-cr --vo %s -P generated -d %s file://%s' % (vo, dest_SE, currentFile)
+            cmd = 'lcg-cr --vo %s -P generated -d %s file:%s' % (vo, dest_SE, currentFile)
             printInfo(cmd)  
             (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
             printInfo('exitcode is %s' % str(exitcode))             
