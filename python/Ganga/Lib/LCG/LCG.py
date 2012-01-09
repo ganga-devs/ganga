@@ -1331,16 +1331,6 @@ try:
         raise Exception('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)         
 
-    createPackedOutputSandbox(outputsandbox,None,orig_wdir)
-
-#   pack outputsandbox
-#    printInfo('== check output ==')
-#    for line in os.popen('pwd; ls -l').readlines():
-#        printInfo(line)
-
-    printInfo('Pack outputsandbox passed.')
-    monitor.stop(exitcode)
-
     printInfo(os.listdir(orig_wdir))
 
 #   system command executor with subprocess
@@ -1385,6 +1375,16 @@ try:
     if postProcessOutputResult is not None:
         for lcgseItem in postProcessOutputResult:
             uploadToSE(lcgseItem)
+
+    createPackedOutputSandbox(outputsandbox,None,orig_wdir)
+
+#   pack outputsandbox
+#    printInfo('== check output ==')
+#    for line in os.popen('pwd; ls -l').readlines():
+#        printInfo(line)
+
+    printInfo('Pack outputsandbox passed.')
+    monitor.stop(exitcode)
     
     # Clean up after us - All log files and packed outputsandbox should be in "wdir"
     if scratchdir:
