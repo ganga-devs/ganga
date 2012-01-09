@@ -57,11 +57,7 @@ class CoreSubmitter(BaseSubmitter):
             jobs = load(match)
             logger.info("Loaded %d jobs from '%s'.", len(jobs), match)
             for j in jobs:
-                try:
-                    j.application.is_prepared = True
-                    j.submit()
-                except:
-                    pass
+                j.submit()
                 jobids.append(j.id)
         
         
