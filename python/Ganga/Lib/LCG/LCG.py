@@ -1343,6 +1343,23 @@ try:
 
     printInfo(os.listdir(orig_wdir))
 
+#   system command executor with subprocess
+    def execSyscmdSubprocessAndReturnOutput(cmd):
+
+        exitcode = -999
+        mystdout = ''
+        mystderr = ''
+
+        try:
+            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (mystdout, mystderr) = child.communicate()
+            exitcode = child.returncode
+        finally:
+            pass
+
+        return (exitcode, mystdout, mystderr)
+
+
     def uploadToSE(lcgseItem):
 
         lcgseItems = lcgseItem.split(' ')
@@ -1355,8 +1372,12 @@ try:
         
         import glob 
         for currentFile in glob.glob(filenameWildChar):
-            cmd = 'lcg-cr --vo %s -P generated -d %s file:/%s' % (vo, dest_SE, currentFile)
-            printInfo(cmd)      
+            cmd = 'lcg-cr --vo %s -P generated -d %s file:///%s' % (vo, dest_SE, currentFile)
+            printInfo(cmd)  
+            (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
+            printInfo('exitcode is %s' % str(exitcode))             
+            printInfo('mystdout is %s' % str(mystdout))
+            printInfo('mystderr is %s' % str(mystderr)) 
         
     postProcessOutputResult = postprocessoutput(orig_wdir)
         
