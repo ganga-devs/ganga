@@ -1311,6 +1311,8 @@ try:
         import subprocess
         printInfo('Load application executable with subprocess module')
         status = execSyscmdSubprocess('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
+        printInfo('source %s; %s %s' % (env_setup_script, appexec, appargs))
+        printInfo(wdir)
     except ImportError,err:
         # otherwise, use separate threads to control process IO pipes 
         printInfo('Load application executable with separate threads')
@@ -1331,7 +1333,8 @@ try:
         raise Exception('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)         
 
-    printInfo(os.listdir(orig_wdir))
+    printInfo(os.listdir(orig_wdir))    
+    printInfo(os.listdir(wdir))
 
 #   system command executor with subprocess
     def execSyscmdSubprocessAndReturnOutput(cmd):
