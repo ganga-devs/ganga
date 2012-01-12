@@ -1331,9 +1331,7 @@ try:
 
     if not status:
         raise Exception('Application execution failed.')
-    printInfo('Application execution passed with exit code %d.' % exitcode)         
-
-    printInfo(os.listdir(orig_wdir))    
+    printInfo('Application execution passed with exit code %d.' % exitcode)            
 
 #   system command executor with subprocess
     def execSyscmdSubprocessAndReturnOutput(cmd):
@@ -1362,21 +1360,36 @@ try:
 
         os.environ['LFC_HOST'] = lfc_host
         
+        guidResults = []
+
         import glob 
         for currentFile in glob.glob(os.path.join(orig_wdir, filenameWildChar)):
             cmd = 'lcg-cr -d %s --vo %s file:%s' % (dest_SE, vo, currentFile)
             printInfo(cmd)  
             (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
-            printInfo('exitcode is %s' % str(exitcode))             
-            printInfo('mystdout is %s' % str(mystdout))
-            printInfo('mystderr is %s' % str(mystderr)) 
+            if exitcode == 0:
+                printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
+                guidResults.append(mystdout)
+            else:
+                printError('cmd %s failed with error : %s' % (cmd, mystderr))   
+
+#            printInfo('exitcode is %s' % str(exitcode))             
+#            printInfo('mystdout is %s' % str(mystdout))
+#            printInfo('mystderr is %s' % str(mystderr)) 
+
+        return guidResults      
         
     postProcessOutputResult = postprocessoutput(orig_wdir)
+
+    lcgFile = open(os.path.join(orig_wdir, '__lcgseuploads__'), 'w')
         
 #   code here for upload to lcg se
     if postProcessOutputResult is not None:
         for lcgseItem in postProcessOutputResult:
-            uploadToSE(lcgseItem)
+            guids = uploadToSE(lcgseItem)
+            lcgFile.write('%s->%s\\n' % (lcgseItem, ' '.join(guids)))           
+
+    lcgFile.close()     
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
@@ -1571,6 +1584,7 @@ sys.exit(0)
                     output_sandbox += [line.split(' ')[1]]
                 elif line.startswith('lcgse'):
                     input_sandbox += [fullFilePath]
+                    output_sandbox += ['__lcgseuploads__']
 
             fileRead.close()
         
