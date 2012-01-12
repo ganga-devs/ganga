@@ -1589,7 +1589,7 @@ sys.exit(0)
             fileRead.close()
         
         if config['JobLogHandler'] == 'WMS':
-            output_sandbox += ['stdout.gz','stderr.gz']lcgSEUploads
+            output_sandbox += ['stdout.gz','stderr.gz']
 
         if len(jobconfig.outputbox):
             output_sandbox += [Sandbox.OUTPUT_TARBALL_NAME]
