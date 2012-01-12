@@ -1387,7 +1387,7 @@ try:
     if postProcessOutputResult is not None:
         for lcgseItem in postProcessOutputResult:
             guids = uploadToSE(lcgseItem)
-            lcgFile.write('%s->%s\\n' % (lcgseItem, ' '.join(guids)))           
+            lcgFile.write('%s->%s\\n' % (lcgseItem, '*'.join(guids)))           
 
     lcgFile.close()     
 
@@ -1589,7 +1589,7 @@ sys.exit(0)
             fileRead.close()
         
         if config['JobLogHandler'] == 'WMS':
-            output_sandbox += ['stdout.gz','stderr.gz']
+            output_sandbox += ['stdout.gz','stderr.gz']lcgSEUploads
 
         if len(jobconfig.outputbox):
             output_sandbox += [Sandbox.OUTPUT_TARBALL_NAME]
@@ -1754,9 +1754,31 @@ sys.exit(0)
 
             return (exitcode, mystdout, mystderr)
 
+
+        lcgSEUploadsFile = os.path.join(outputdir, '__lcgseuploads__')
+
+        lcgSEUploads = []
+
+        if os.path.exists(lcgSEUploadsFile):
+            fp = open(lcgSEUploadsFile, 'r')
+            for line in fp.readlines():
+                lcgSEUploads.append(line.strip())               
+
+
         if len(outputfiles) > 0:
             for outputFile in outputfiles:
-                if outputFile.__class__.__name__ == 'MassStorageFile':
+                if outputFile.__class__.__name__ == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
+                        
+                    #todo add to the search pattern lfc host, dest se, etc.
+                    searchPattern = 'lcgse %s' % outputFile.name
+
+                    for lcgSEUpload in lcgSEUploads:
+                        if lcgSEUpload.startswith(searchPattern):
+                            guids = lcgSEUpload[lcgSEUpload.find('->')+2:].split('*')
+                            for guid in guids:  
+                                outputFile.setLocation(guid)
+
+                elif outputFile.__class__.__name__ == 'MassStorageFile':
 
                     from Ganga.Utility.Config import getConfig
                     massStorageConfig = getConfig('MassStorageOutput') 
@@ -1807,6 +1829,7 @@ sys.exit(0)
                                 #remove file from output
                                 os.system('rm %s' % os.path.join(outputdir, currentFile))
 
+        #todo remove the __lcgseuploads__ file
 
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
