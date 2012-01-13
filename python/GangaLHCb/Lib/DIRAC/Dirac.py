@@ -197,7 +197,7 @@ class Dirac(IBackend):
         os.system('mv -f %s %s' % (script+'.tmp',script))
         return self._submit()
 
-    def reset(self):
+    def reset(self, doSubjobs =False):
         """Resets the state of a job back to 'submitted' so that the
         monitoring will run on it again."""        
         j = self.getJobObject()
@@ -206,7 +206,16 @@ class Dirac(IBackend):
             logger.warning("Can not reset a job in status '%s'." % j.status)
         else:
             j.getOutputWorkspace().remove(preserve_top=True)
-            j.updateStatus('submitted')        
+            j.updateStatus('submitted')
+            if j.subjobs and not doSubjobs:
+                logger.info('This job has subjobs, if you would like the backends '\
+                            'of all the subjobs that are in status=\'completing\' or '\
+                            'status=\'failed\' also reset then recall reset with the '\
+                            'arg \'True\' i.e. job(3).backend.reset(True)')
+            elif j.subjobs and doSubjobs:
+                logger.info('resetting the backends of \'completing\' and \'failed\' subjobs.')
+                for sj in j.subjobs:
+                    if sj.status is 'completing' or sj.status is 'failed': sj.backend.reset()
             if j.master: j.master.updateMasterJobStatus()
     
     def kill(self):
