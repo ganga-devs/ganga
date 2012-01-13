@@ -40,7 +40,8 @@ def is_gaudi_child(app):
         return True
     
     if type(app).__bases__[0].__name__ == 'TaskApplication':
-        if not app.__class__.__name__ == 'GaudiPython':
+        if not app.__class__.__name__ == 'GaudiPythonTask' \
+               and not app.__class__.__name__ == 'BenderTask' :
             return True
     
     return False
