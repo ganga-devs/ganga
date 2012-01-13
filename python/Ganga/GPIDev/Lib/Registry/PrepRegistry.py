@@ -128,7 +128,6 @@ class ShareRef(GangaObject):
         self._getWriteAccess()
         cleanup_list = []
         for shareddir in self.name:
-            #logger.info('Checking %s' %shareddir)
             if self.name[shareddir] == 0 and os.path.isdir(shareddir):
                 logger.info('%s no longer being referenced by any objects. Removing directory.' %shareddir)
                 shutil.rmtree(shareddir)
