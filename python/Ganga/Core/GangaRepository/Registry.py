@@ -340,6 +340,7 @@ class Registry(object):
             assert not "_registry_refresh" in obj.__dict__
             self._lock.acquire()
             if hasattr(obj, 'is_prepared'):
+               #we got here because the object in question is an application _not_ associated with a job (it may be in the box?)
                if obj.is_prepared is not None and obj.is_prepared is not True:
                   shareddir = obj.is_prepared.name
                   if not os.path.isdir(shareddir):
@@ -347,6 +348,7 @@ class Registry(object):
                      obj.unprepare()
             elif hasattr(obj, 'application'):
                if hasattr(obj.application,'is_prepared'):
+                  #we got here because the object in question an application associated with a job 
                   if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
                      shareddir = obj.application.is_prepared.name
                      if not os.path.isdir(shareddir):
