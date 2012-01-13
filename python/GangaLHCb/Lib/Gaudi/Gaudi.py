@@ -172,7 +172,7 @@ class Gaudi(Francesc):
         logger.info('Preparing %s application.'%(self._name))
         self.is_prepared = ShareDir()
         #shared_dirname = self.is_prepared.name
-        #self.incrementShareCounter(self.is_prepared.name)#NOT NECESSARY, DONT AUTOMATICALLY
+        #self.incrementShareCounter(self.is_prepared.name)#NOT NECESSARY, DONE AUTOMATICALLY
 
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
@@ -190,9 +190,17 @@ class Gaudi(Francesc):
             job = self.getJobObject()
         except:
             job=None
-        self._check_inputs()
 
-        parser = self._get_parser()
+        ## Exception is just re-thrown here after setting is_prepared to None
+        ## could have done the setting in the actual functions but didnt want
+        ## prepared state altered from the readInputData pseudo-static member
+        try:
+            self._check_inputs()
+            parser = self._get_parser()
+        except ApplicationConfigurationError, e:
+            self.is_prepared=None
+            raise e
+   
         ## Need to remember to create the buffer as the perpare methods returns
         ## are merely copied to the inputsandbox so must alread exist.
         FileBuffer(os.path.join(input_dir,'options.pkl'),
