@@ -14,8 +14,10 @@ class LCGStorageElementFile(OutputFile):
     _schema = Schema(Version(1,1), {
         'name'        : SimpleItem(defvalue="",doc='name of the file'),
         'se'          : SimpleItem(defvalue='', copyable=1, doc='the LCG SE hostname'),
-        'se_type'     : SimpleItem(defvalue='srmv2', copyable=1, doc='the LCG SE type'),
-        'se_rpath'    : SimpleItem(defvalue='generated', copyable=1, doc='the relative path to the VO directory on the SE'),
+        #'se_type'     : SimpleItem(defvalue='srmv2', copyable=1, doc='the LCG SE type'),
+        #'se_rpath'    : SimpleItem(defvalue='generated', copyable=1, doc='the relative path to the VO directory on the SE'),
+        'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
+        'se_rpath'    : SimpleItem(defvalue='', copyable=1, doc='the relative path to the VO directory on the SE'),
         'lfc_host'    : SimpleItem(defvalue='', copyable=1, doc='the LCG LFC hostname'),
         'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2')
 })
@@ -29,7 +31,11 @@ class LCGStorageElementFile(OutputFile):
         """
         super(LCGStorageElementFile, self).__init__(name, **kwds)
 
-        print self._schema.name
+        from Ganga.Utility.Config import getConfig
+        lcgSEConfig = getConfig('LCGStorageElementOutput')
+
+        self.lfc_host = lcgSEConfig['LFC_HOST']
+        self.se = lcgSEConfig['dest_SRM']
 
     def __setattr__(self, attr, value):
         if attr == 'se_type' and value not in ['','srmv1','srmv2','se']:
