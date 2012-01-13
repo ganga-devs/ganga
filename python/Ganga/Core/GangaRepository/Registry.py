@@ -6,7 +6,7 @@ from GangaRepository import InaccessibleObjectError
 
 import time, threading
 
-import sys
+import sys, os
 
 if sys.hexversion >= 0x020600F0:
     Set = set
@@ -333,13 +333,26 @@ class Registry(object):
         sub-obj is the object the read access is actually desired (ignored at the moment)
         Raise RegistryAccessError
         Raise RegistryKeyError"""
-        #logger.debug("_read_access(%s)" % obj)
         if not obj._data or "_registry_refresh" in obj.__dict__:
             if not self._started:
                 raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect."%(self.find(obj),self.name))
             obj.__dict__.pop("_registry_refresh",None)
             assert not "_registry_refresh" in obj.__dict__
             self._lock.acquire()
+            if hasattr(obj, 'is_prepared'):
+               if obj.is_prepared is not None and obj.is_prepared is not True:
+                  shareddir = obj.is_prepared.name
+                  if not os.path.isdir(shareddir):
+                     logger.warning("Can't find shared directory %s associated with %s application. Unpreparing application." % (shareddir, obj._name))
+                     obj.unprepare()
+            elif hasattr(obj, 'application'):
+               if hasattr(obj.application,'is_prepared'):
+                  if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
+                     shareddir = obj.application.is_prepared.name
+                     if not os.path.isdir(shareddir):
+                        logger.warning("Can't find shared directory %s associated with %s application. Unpreparing job %s." % (shareddir, obj.application._name, obj.id))
+                        obj.unprepare()
+
             try:
                 id = self.find(obj)
                 try:
@@ -361,7 +374,6 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryLockError
         Raise ObjectNotInRegistryError"""
-        #logger.debug("_write_access(%s)" % obj)
         if not self._started:
             raise RegistryAccessError("Cannot get write access to a disconnected repository!")
         if not obj._registry_locked:

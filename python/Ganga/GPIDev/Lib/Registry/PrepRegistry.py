@@ -132,10 +132,10 @@ class ShareRef(GangaObject):
                 logger.info('%s no longer being referenced by any objects. Removing directory.' %shareddir)
                 shutil.rmtree(shareddir)
                 cleanup_list.append(shareddir)
-            if not os.path.isdir(shareddir):
-                if shareddir not in cleanup_list:
-                    logger.info('%s not found on disk. Removing entry from shared files reference table (shareref).' %shareddir)
-                    cleanup_list.append(shareddir)
+#            if not os.path.isdir(shareddir):
+#                if shareddir not in cleanup_list:
+#                    logger.info('%s not found on disk. Removing entry from shared files reference table (shareref).' %shareddir)
+#                    cleanup_list.append(shareddir)
                 
         for element in cleanup_list:
             del self.name[element]
