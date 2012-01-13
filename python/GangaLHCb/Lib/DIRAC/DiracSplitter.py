@@ -35,6 +35,16 @@ class DiracSplitter(SplitByFiles):
                                      doc='Skip LFNs if they are not found ' \
                                      'in the LFC.')
         })
+
+    def _attribute_filter__set__(self,n,v):
+        if n is 'filesPerJob':
+            if v >100:
+                logger.warning('filesPerJob exceeded DIRAC maximum')
+                logger.warning('DIRAC has a maximum dataset limit of 100.')
+                logger.warning('BE AWARE!... will set to this maximum value')
+                return 100
+        return v
+
     
     def _splitFiles(self, inputs):
         from GangaLHCb.Lib.LHCbDataset import LogicalFile
