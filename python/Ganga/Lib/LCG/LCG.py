@@ -1387,7 +1387,8 @@ try:
     if postProcessOutputResult is not None:
         for lcgseItem in postProcessOutputResult:
             guids = uploadToSE(lcgseItem)
-            lcgFile.write('%s->%s\\n' % (lcgseItem, '*'.join(guids)))           
+            for guid in guids:
+                lcgFile.write('%s->%s\\n' % (lcgseItem, guid))           
 
     lcgFile.close()     
 
@@ -1774,8 +1775,7 @@ sys.exit(0)
 
                     for lcgSEUpload in lcgSEUploads:
                         if lcgSEUpload.startswith(searchPattern):
-                            guids = lcgSEUpload[lcgSEUpload.find('->')+2:].split('*')
-                            for guid in guids:  
+                            guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
                                 outputFile.setLocation(guid)
 
                 elif outputFile.__class__.__name__ == 'MassStorageFile':
