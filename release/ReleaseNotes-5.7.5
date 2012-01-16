@@ -1,13 +1,11 @@
 **************************************************************************************************************
-5.7.5 (2012/1/13)
+5.7.5 (2012/1/16)
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
-Switch to checking for the presence of shared directories only when their associate object is 
-accessed. Previously, every shared directory was tested upon Ganga exit, which can take a while if the 
-re are several thousand.
+Reverting changes made in SVN revision 6936 (dynamic checking of ShareDir presence).
 
 
 --------------------------------------------------------------------------------------------------------------
