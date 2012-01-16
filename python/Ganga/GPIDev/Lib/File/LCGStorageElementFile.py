@@ -24,7 +24,7 @@ class LCGStorageElementFile(OutputFile):
     _category = 'outputfiles'
     _name = "LCGStorageElementFile"
     _location = []
-    _exportmethods = [ "location" , "setLocation" ]
+    _exportmethods = [ "location" , "setLocation" , "get" ]
 
     def __init__(self,name='', **kwds):
         """ name is the name of the output file that has to be written into LCG SE
