@@ -1351,6 +1351,8 @@ try:
 
 
     def uploadToSE(lcgseItem):
+        
+        import re
 
         lcgseItems = lcgseItem.split(' ')
 
@@ -1369,7 +1371,9 @@ try:
             (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
             if exitcode == 0:
                 printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
-                guidResults.append(mystdout)
+                match = re.search('(guid:\S+)',mystdout)
+                if match:
+                    guidResults.append(mystdout)
             else:
                 printError('cmd %s failed with error : %s' % (cmd, mystderr))   
 
