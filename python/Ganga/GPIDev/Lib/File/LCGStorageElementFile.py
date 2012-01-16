@@ -64,6 +64,27 @@ class LCGStorageElementFile(OutputFile):
         """
         return self._location
 
+    def get(self, dir):
+        """
+        Retrieves locally all files matching this LCGStorageElementFile object pattern
+        """
+        import os
+
+        if not os.path.isdir(dir):
+            print "%s is not a valid directory.... " % dir
+            return
+
+        #set lfc host
+        os.environ['LFC_HOST'] = self.lfc_host
+
+        from Ganga.Utility.Config import getConfig 
+        vo = getConfig('LCG')['VirtualOrganisation']  
+
+        #lcg-cp --vo atlas guid:524a7dc6-73dc-4553-bd5a-1dbc51de01b2 file:`pwd`/test
+
+        for location in self._location:
+            cmd = 'lcg-cp --vo %s %s file:%s/%s' % (vo, location, dir, location[-5:])
+            print 'this have to be executed : %s' % cmd
 
 
 # add LCGStorageElementFile objects to the configuration scope (i.e. it will be possible to write instatiate LCGStorageElementFile() objects via config file)
