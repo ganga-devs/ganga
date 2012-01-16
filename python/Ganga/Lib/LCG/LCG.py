@@ -1776,7 +1776,7 @@ sys.exit(0)
                     for lcgSEUpload in lcgSEUploads:
                         if lcgSEUpload.startswith(searchPattern):
                             guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
-                                outputFile.setLocation(guid)
+                            outputFile.setLocation(guid)
 
                 elif outputFile.__class__.__name__ == 'MassStorageFile':
 
