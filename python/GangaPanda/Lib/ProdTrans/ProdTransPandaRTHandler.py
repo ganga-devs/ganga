@@ -44,7 +44,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
 
         try:
             outDsLocation = Client.PandaSites[job.backend.site]['ddm']
-            Client.addDataset(job.outputdata.datasetname,False,location=outDsLocation)
+            Client.addDataset(job.outputdata.datasetname,False,location=outDsLocation,allowProdDisk=True)
             logger.info('Output dataset %s registered at %s'%(job.outputdata.datasetname,outDsLocation))
             dq2_set_dataset_lifetime(job.outputdata.datasetname, outDsLocation)
         except exceptions.SystemExit:
