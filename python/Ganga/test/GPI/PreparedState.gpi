@@ -64,8 +64,10 @@ a=Job()
 a.prepare()
 box.add(a,'testjob')
 appName = box(box.ids()[-1]).application.is_prepared.name
+s=shareref._impl.name
 assert s[appName] == 2, 'Prepare Test 11a failed; adding a prepared job to the box didnt increment the sharedref counter'
 box(box.ids()[-1]).unprepare()
+s=shareref._impl.name
 assert s[appName] == 1, 'Prepare Test 11b failed; a prepared job in the box didnt decrement the sharedref when unprepared'
 
 
@@ -187,8 +189,10 @@ a=Job()
 a.prepare()
 box.add(a,'testjob')
 appName = box(box.ids()[-1]).application.is_prepared.name
+s=shareref._impl.name
 assert s[appName] == 2, 'Prepare Test 28 failed; adding a prepared job to the box didnt increment the sharedref counter'
 box(box.ids()[-1]).unprepare()
+s=shareref._impl.name
 assert s[appName] == 1, 'Prepare Test 29 failed; a prepared job in the box didnt decrement the sharedref when unprepared'
 
 
@@ -203,6 +207,7 @@ a.application.exe=File('junk')
 a=Job()
 
 
+config['Preparable']['unprepare_on_copy']=False
 
 j=Job()
 j.prepare()
