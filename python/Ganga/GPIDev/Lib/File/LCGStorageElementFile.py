@@ -69,6 +69,23 @@ class LCGStorageElementFile(OutputFile):
         Retrieves locally all files matching this LCGStorageElementFile object pattern
         """
         import os
+        import subprocess
+        
+        # system command executor with subprocess
+        def execSyscmdSubprocess(cmd):
+
+            exitcode = -999
+            mystdout = ''
+            mystderr = ''
+
+            try:
+                child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (mystdout, mystderr) = child.communicate()
+                exitcode = child.returncode
+            finally:
+                pass
+
+            return (exitcode, mystdout, mystderr)
 
         if not os.path.isdir(dir):
             print "%s is not a valid directory.... " % dir
@@ -80,11 +97,16 @@ class LCGStorageElementFile(OutputFile):
         from Ganga.Utility.Config import getConfig 
         vo = getConfig('LCG')['VirtualOrganisation']  
 
-        #lcg-cp --vo atlas guid:524a7dc6-73dc-4553-bd5a-1dbc51de01b2 file:`pwd`/test
-
         for location in self._location:
-            cmd = 'lcg-cp --vo %s %s file:%s/%s' % (vo, location, dir, location[-5:])
-            print 'this have to be executed : %s' % cmd
+            destFileName = os.path.join(dir, location[-10:])
+            cmd = 'lcg-cp --vo %s %s file:%s' % (vo, location, destFileName)
+            print 'executing ... %s' % cmd
+            (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
+
+            if exitcode == 0:
+                print 'job output downloaded here %s' % destFileName
+            else:
+                print 'command %s failed to execute , reason for failure is %s' % (cmd, mystderr)
 
 
 # add LCGStorageElementFile objects to the configuration scope (i.e. it will be possible to write instatiate LCGStorageElementFile() objects via config file)
