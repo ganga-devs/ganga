@@ -100,13 +100,13 @@ class LCGStorageElementFile(OutputFile):
         for location in self._location:
             destFileName = os.path.join(dir, location[-10:])
             cmd = 'lcg-cp --vo %s %s file:%s' % (vo, location, destFileName)
-            print 'executing ... %s' % cmd
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
 
             if exitcode == 0:
                 print 'job output downloaded here %s' % destFileName
             else:
                 print 'command %s failed to execute , reason for failure is %s' % (cmd, mystderr)
+                print 'most probably you need to source the grid environment , set environment variable LFC_HOST to %s and try again with the lcg-cp command to download the job output' % self.lfc_host
 
 
 # add LCGStorageElementFile objects to the configuration scope (i.e. it will be possible to write instatiate LCGStorageElementFile() objects via config file)
