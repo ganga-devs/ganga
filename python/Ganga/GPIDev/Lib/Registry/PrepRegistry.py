@@ -92,8 +92,6 @@ class ShareRef(GangaObject):
                 self.name[shareddir] = 1
             else:
                 self.name[shareddir] += 1
-        else:
-           raise Exception('Trying to modify the reference counter of a non-existent directory')
 
         self._setDirty()
         self._releaseWriteAccess()
