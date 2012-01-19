@@ -397,7 +397,7 @@ class Job(GangaObject):
             registry = getRegistry(self.default_registry)
 
         if unprepare is True:
-            logger.info("Calling unprepare() from Job.py")
+            logger.debug("Calling unprepare() from Job.py")
             self.application.unprepare()
 
         self.info.uuid = Ganga.Utility.guid.uuid()
