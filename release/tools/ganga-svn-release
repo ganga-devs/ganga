@@ -744,7 +744,11 @@ class PrepareNextRelease:
         fh = open('%(tagsdir_top)s/open_releases' % CONFIG, 'w')
         fh.writelines([release+'\n' for release in next_releases])
         fh.close()
-        
+       
+class ChangeReleaseManager:
+    "CHANGE RELEASE MANAGER: change the email address of the release manager"
+
+    def do(self): 
         current_release_mgr=raw_input('Enter release manager email or just ENTER to keep the current release manager email:')
         if current_release_mgr:
             fh = open('%(tagsdir_top)s/release_manager.php' % CONFIG, 'w')
@@ -778,7 +782,7 @@ def _setlib():
 
 _setlib()
 
-commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, CommitConfigFilesCommand, PretestCommand, TestReportCommand, TagCommand, SetVerCommand, ReleaseCommand, PrepareNextRelease, QuitCommand]
+commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, CommitConfigFilesCommand, PretestCommand, TestReportCommand, TagCommand, SetVerCommand, ReleaseCommand, PrepareNextRelease, ChangeReleaseManager, QuitCommand]
 
 ShowConfig().do()
 
