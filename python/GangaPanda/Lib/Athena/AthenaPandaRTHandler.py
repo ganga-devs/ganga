@@ -707,7 +707,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
 
             # add inDS name
-            if job.inputdata:
+            if job.inputdata and job.inputdata._name == 'DQ2Dataset':
                 self.job_options = self.job_options.replace("%INDS", job.inputdata.dataset[0].strip('/'))
 
             param += '-j "" -p "%s" ' % self.job_options
