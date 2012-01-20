@@ -1370,7 +1370,7 @@ try:
         for currentFile in glob.glob(os.path.join(orig_wdir, filenameWildChar)):
 #            cmd = 'lcg-cr -d %s --vo %s file:%s' % (dest_SE, vo, currentFile)
             cmd = cmd.replace('filename', currentFile)
-            cmd = cmd + ' file%s' % currentFile
+            cmd = cmd + ' file:%s' % currentFile
             printInfo(cmd)  
             (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
             if exitcode == 0:
