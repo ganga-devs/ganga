@@ -6,7 +6,13 @@
 
 from Ganga.GPIDev.Schema import *
 
+from Ganga.GPIDev.Credentials import getCredential 
+from Ganga.Lib.LCG.Utility import *
+from Ganga.Utility.Config import getConfig 
+
 from OutputFile import OutputFile
+
+import re
 
 class LCGStorageElementFile(OutputFile):
     """LCGStorageElementFile represents a class marking an output file to be written into LCG SE
@@ -14,8 +20,6 @@ class LCGStorageElementFile(OutputFile):
     _schema = Schema(Version(1,1), {
         'name'        : SimpleItem(defvalue="",doc='name of the file'),
         'se'          : SimpleItem(defvalue='', copyable=1, doc='the LCG SE hostname'),
-        #'se_type'     : SimpleItem(defvalue='srmv2', copyable=1, doc='the LCG SE type'),
-        #'se_rpath'    : SimpleItem(defvalue='generated', copyable=1, doc='the relative path to the VO directory on the SE'),
         'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
         'se_rpath'    : SimpleItem(defvalue='', copyable=1, doc='the relative path to the VO directory on the SE'),
         'lfc_host'    : SimpleItem(defvalue='', copyable=1, doc='the LCG LFC hostname'),
@@ -51,6 +55,13 @@ class LCGStorageElementFile(OutputFile):
 
         return "LCGStorageElementFile(name='%s')"% self.name
 
+    def __get_unique_fname__(self):
+        '''gets an unique filename'''
+        cred  = getCredential('GridProxy')
+        uid   = re.sub(r'[\:\-\(\)]{1,}','',cred.identity()).lower()
+        fname = 'user.%s.%s' % (uid, get_uuid())
+        return fname
+
     def setLocation(self, location):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
@@ -63,6 +74,20 @@ class LCGStorageElementFile(OutputFile):
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
         return self._location
+
+    def getUploadCmd(self):
+
+        vo = getConfig('LCG')['VirtualOrganisation']
+
+        cmd = 'lcg-cr --vo %s ' % vo
+        if self.se != '':
+            cmd  = cmd + ' -d %s' % self.se
+        if self.se_type == 'srmv2' and self.srm_token != '':
+            cmd = cmd + ' -D srmv2 -s %s' % self.srm_token
+          
+        ## specify the physical location
+        if se_rpath != '':
+            cmd = cmd + ' -P %s/ganga.%s/filename' % ( self.se_rpath, self.__get_unique_fname__() )
 
     def get(self, dir):
         """
@@ -94,7 +119,6 @@ class LCGStorageElementFile(OutputFile):
         #set lfc host
         os.environ['LFC_HOST'] = self.lfc_host
 
-        from Ganga.Utility.Config import getConfig 
         vo = getConfig('LCG')['VirtualOrganisation']  
 
         for location in self._location:
