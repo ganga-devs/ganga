@@ -92,8 +92,8 @@ class LCGStorageElementFile(OutputFile):
         ## specify the physical location
         if self.se_rpath != '':
             cmd = cmd + ' -P %s/ganga.%s/filename' % ( self.se_rpath, self.__get_unique_fname__() )
-        
-        print cmd
+
+        return cmd
     
     def get(self, dir):
         """
