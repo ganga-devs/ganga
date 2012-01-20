@@ -6,8 +6,6 @@
 
 from Ganga.GPIDev.Schema import *
 
-from Ganga.GPIDev.Credentials import getCredential 
-from Ganga.Lib.LCG.Utility import *
 from Ganga.Utility.Config import getConfig 
 
 from OutputFile import OutputFile
@@ -28,14 +26,13 @@ class LCGStorageElementFile(OutputFile):
     _category = 'outputfiles'
     _name = "LCGStorageElementFile"
     _location = []
-    _exportmethods = [ "location" , "setLocation" , "get" ]
+    _exportmethods = [ "location" , "setLocation" , "get" , "getUploadCmd"]
 
     def __init__(self,name='', **kwds):
         """ name is the name of the output file that has to be written into LCG SE
         """
         super(LCGStorageElementFile, self).__init__(name, **kwds)
 
-        from Ganga.Utility.Config import getConfig
         lcgSEConfig = getConfig('LCGStorageElementOutput')
 
         self.lfc_host = lcgSEConfig['LFC_HOST']
@@ -55,13 +52,19 @@ class LCGStorageElementFile(OutputFile):
 
         return "LCGStorageElementFile(name='%s')"% self.name
 
+    
     def __get_unique_fname__(self):
         '''gets an unique filename'''
-        cred  = getCredential('GridProxy')
-        uid   = re.sub(r'[\:\-\(\)]{1,}','',cred.identity()).lower()
-        fname = 'user.%s.%s' % (uid, get_uuid())
-        return fname
 
+        import random
+        import time
+
+        uuid = (str(random.uniform(0,100000000))+'-'+str(time.time())).replace('.','-')
+        user = getConfig('Configuration')['user']
+
+        fname = 'user.%s.%s' % (user, uuid)
+        return fname
+    
     def setLocation(self, location):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
@@ -75,6 +78,7 @@ class LCGStorageElementFile(OutputFile):
         """
         return self._location
 
+    
     def getUploadCmd(self):
 
         vo = getConfig('LCG')['VirtualOrganisation']
@@ -86,9 +90,11 @@ class LCGStorageElementFile(OutputFile):
             cmd = cmd + ' -D srmv2 -s %s' % self.srm_token
           
         ## specify the physical location
-        if se_rpath != '':
+        if self.se_rpath != '':
             cmd = cmd + ' -P %s/ganga.%s/filename' % ( self.se_rpath, self.__get_unique_fname__() )
-
+        
+        print cmd
+    
     def get(self, dir):
         """
         Retrieves locally all files matching this LCGStorageElementFile object pattern
