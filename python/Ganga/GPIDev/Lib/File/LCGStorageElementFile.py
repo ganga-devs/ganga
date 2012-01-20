@@ -37,6 +37,7 @@ class LCGStorageElementFile(OutputFile):
 
         self.lfc_host = lcgSEConfig['LFC_HOST']
         self.se = lcgSEConfig['dest_SRM']
+        self._location = []
 
     def __setattr__(self, attr, value):
         if attr == 'se_type' and value not in ['','srmv1','srmv2','se']:
