@@ -443,8 +443,8 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                 
         #[LCGStorageElementOutput] section
         outputconfig = makeConfig( "LCGStorageElementOutput", "configuration section for storing of the output to LCG storage element" )
-        outputconfig.addOption('LFC_HOST', 'prod-lfc-atlas.cern.ch', 'LFC host for Logical File Name association with the uploaded output file')
-        outputconfig.addOption('dest_SRM', 'maigrid-se1.physik.uni-mainz.de', 'SRM where the output file should be uploaded')
+        outputconfig.addOption('LFC_HOST', 'lfc-dteam.cern.ch', 'LFC host for Logical File Name association with the uploaded output file')
+        outputconfig.addOption('dest_SRM', 'srm-public.cern.ch', 'SRM where the output file should be uploaded')
 
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
