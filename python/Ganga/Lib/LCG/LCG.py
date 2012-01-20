@@ -1358,7 +1358,6 @@ try:
 
         filenameWildChar = lcgseItems[1]
         lfc_host = lcgseItems[2]
-#       dest_SE = lcgseItems[3]
 
         cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
 
@@ -1368,7 +1367,7 @@ try:
 
         import glob 
         for currentFile in glob.glob(os.path.join(orig_wdir, filenameWildChar)):
-#            cmd = 'lcg-cr -d %s --vo %s file:%s' % (dest_SE, vo, currentFile)
+            cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
             cmd = cmd.replace('filename', currentFile)
             cmd = cmd + ' file:%s' % currentFile
             printInfo(cmd)  
