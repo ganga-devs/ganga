@@ -1377,10 +1377,6 @@ try:
             else:
                 printError('cmd %s failed with error : %s' % (cmd, mystderr))   
 
-#            printInfo('exitcode is %s' % str(exitcode))             
-#            printInfo('mystdout is %s' % str(mystdout))
-#            printInfo('mystderr is %s' % str(mystderr)) 
-
         return guidResults      
         
     postProcessOutputResult = postprocessoutput(orig_wdir)
@@ -1781,7 +1777,7 @@ sys.exit(0)
                         if lcgSEUpload.startswith(searchPattern):
                             guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
                             outputFile.setLocation(guid)
-
+ 
                 elif outputFile.__class__.__name__ == 'MassStorageFile':
 
                     from Ganga.Utility.Config import getConfig
