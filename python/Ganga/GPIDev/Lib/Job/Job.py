@@ -630,8 +630,8 @@ class Job(GangaObject):
                 elif outputFile.__class__.__name__ == 'LCGStorageElementFile':
 
                     lcgSEConfig = getConfig('LCGStorageElementOutput')
-                    #content += 'lcgse %s %s %s\n' % (outputFile.name , lcgSEConfig['LFC_HOST'],  lcgSEConfig['dest_SRM'])
-                    content += 'lcgse %s %s %s\n' % (outputFile.name , outputFile.lfc_host,  outputFile.se)
+                    #content += 'lcgse %s %s %s\n' % (outputFile.name , outputFile.lfc_host,  outputFile.se)
+                    content += 'lcgse %s %s %s\n' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd())
 
         if content is not '':
             self.getInputWorkspace().writefile(FileBuffer('__postprocessoutput__', content))
