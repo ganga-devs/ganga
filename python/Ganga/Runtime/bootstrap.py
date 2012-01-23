@@ -423,9 +423,9 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         #[Output] section
         outputconfig = makeConfig( "Output", "configuration section for postprocessing the output" )
         outputconfig.addOption('CompressedFile',['stdout','stderr'],'list of output files that will be compressed after job is completed')
-        outputconfig.addOption('ScratchFile',['*.dummy'],'list of output files that will be written to large scratch disk after job is completed')
-        outputconfig.addOption('MassStorageFile',['*.root'],'list of output files that will be written to mass storage after job is completed')
-        outputconfig.addOption('LCGStorageElementFile',['*.dummy1'],'list of output files that will be written to LCG SE after job is completed')
+        outputconfig.addOption('ScratchFile',['*.dummy1'],'list of output files that will be written to large scratch disk after job is completed')
+        outputconfig.addOption('MassStorageFile',['*.dummy'],'list of output files that will be written to mass storage after job is completed')
+        outputconfig.addOption('LCGStorageElementFile',['*.root'],'list of output files that will be written to LCG SE after job is completed')
         outputconfig.addOption('LHCbDataFile',['*.dst','*.digi','*.raw'],'list of output files that will be stored in Storage Element and registered in LHCb file catalogue after job is completed')
 
         #[MassStorageOutput] section
