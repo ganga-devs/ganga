@@ -916,6 +916,8 @@ sys.exit(0)
 
             fileRead.close()
 
+        print str(input_sandbox)
+
         if config['JobLogHandler'] in ['WMS']:
             output_sandbox += ['stdout.gz','stderr.gz']
 
