@@ -126,7 +126,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             logger.debug( configPanda['chirpconfig'] )
 
         # validate application
-        if not app.atlas_release:
+        if not app.atlas_release and not job.backend.requirements.rootver:
             raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
         self.dbrelease = app.atlas_dbrelease
         if self.dbrelease != '' and self.dbrelease.find(':') == -1:
@@ -465,8 +465,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
                 
                 jspec.jobName           = commands.getoutput('uuidgen')
-                jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
-                jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
+                if app.atlas_release:
+                    jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
+                    jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
+                    jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
                 if (job.backend.bexec != '') or (job.backend.requirements.rootver != '') or app.useRootCore:
                     jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
                 else:
@@ -488,7 +490,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 matchURL = re.search('(http.*://[^/]+)/',Client.baseURLCSRVSSL)
                 if matchURL:
                     jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
-                jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
                 if job.backend.bexec != '':
                     jspec.jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
                     jspec.jobParameters += ' -r %s ' % '.'
@@ -562,9 +563,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.backend.jobSpec.has_key('provenanceID'):
             jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
         
-        jspec.jobName           = commands.getoutput('uuidgen')  
-        jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
-        jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
+        jspec.jobName           = commands.getoutput('uuidgen')
+        if app.atlas_release:
+            jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
+            jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
+            jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             jspec.transformation    = '%s/runGen-00-00-02' % Client.baseURLSUB
         else:
@@ -590,7 +593,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.minRamCount = job.backend.requirements.memory
         if job.backend.requirements.cputime != -1:
             jspec.maxCpuCount = job.backend.requirements.cputime
-        jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
 
 #       library (source files)
         if job.backend.libds:
