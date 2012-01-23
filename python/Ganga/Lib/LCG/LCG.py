@@ -1586,14 +1586,16 @@ sys.exit(0)
             for line in fileRead.readlines(): 
                 line = line.strip()     
                 if line.startswith('massstorage'):
-                    output_sandbox += [line.split(' ')[1]]
+                    massStoragePattern = line.split(' ')[1]
+                    if massStoragePattern not in output_sandbox:        
+                        output_sandbox += [massStoragePattern]
                 elif line.startswith('lcgse'):
-                    input_sandbox += [fullFilePath]
-                    output_sandbox += ['__lcgseuploads__']
+                    if fullFilePath not in input_sandbox:
+                        input_sandbox += [fullFilePath]
+                    if '__lcgseuploads__' not in output_sandbox:
+                        output_sandbox += ['__lcgseuploads__']
 
             fileRead.close()
-        
-        print str(input_sandbox)
 
         if config['JobLogHandler'] == 'WMS':
             output_sandbox += ['stdout.gz','stderr.gz']
