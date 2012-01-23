@@ -315,7 +315,11 @@ else:
         else:
             j.application.prepare()
     else:
-        j.application.is_prepared=True
+	if opt.athena_release and (opt.useRootCore or opt.useRootCoreNoBuild):
+            j.application.prepare()
+            j.application.atlas_release=opt.athena_release
+	else:
+	    j.application.is_prepared=True
 
 if opt.useAthenaPackages:
     j.application.useAthenaPackages = True
