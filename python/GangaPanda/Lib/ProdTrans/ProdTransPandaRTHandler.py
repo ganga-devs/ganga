@@ -1,4 +1,4 @@
-import commands, exceptions, random, re
+import commands, exceptions, random, re, sys
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
