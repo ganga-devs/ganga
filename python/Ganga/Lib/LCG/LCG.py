@@ -1000,7 +1000,6 @@ class LCG(IBackend):
 #-----------------------------------------------------
 import os,os.path,shutil,tempfile
 import sys,popen2,time,traceback
-import re
 
 #bugfix #36178: subprocess.py crashes if python 2.5 is used
 #try to import subprocess from local python installation before an
@@ -1158,22 +1157,6 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
 
     return isDone
 
-def postprocessoutput(orig_wdir):
-
-    lcgseList = []           
-
-    inpfile = os.path.join(orig_wdir, '__postprocessoutput__')
-    
-    if not os.path.exists(inpfile):
-        return None
-                
-    for line in open(inpfile, 'r').readlines(): 
-        line = line.strip()     
-        if line.startswith('lcgse'):
-            lcgseList.append(line)
-
-    return lcgseList
-
 ############################################################################################
 
 ###INLINEMODULES###
@@ -1258,7 +1241,7 @@ try:
 
     printInfo('Unpack inputsandbox passed.')
 
-    printInfo('Loading Python modules ...')     
+    printInfo('Loading Python modules ...')
 
     sys.path.insert(0,os.path.join(wdir,PYTHON_DIR))
 
@@ -1311,8 +1294,6 @@ try:
         import subprocess
         printInfo('Load application executable with subprocess module')
         status = execSyscmdSubprocess('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
-        printInfo('source %s; %s %s' % (env_setup_script, appexec, appargs))
-        printInfo(wdir)
     except ImportError,err:
         # otherwise, use separate threads to control process IO pipes 
         printInfo('Load application executable with separate threads')
@@ -1331,66 +1312,7 @@ try:
 
     if not status:
         raise Exception('Application execution failed.')
-    printInfo('Application execution passed with exit code %d.' % exitcode)            
-
-#   system command executor with subprocess
-    def execSyscmdSubprocessAndReturnOutput(cmd):
-
-        exitcode = -999
-        mystdout = ''
-        mystderr = ''
-
-        try:
-            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (mystdout, mystderr) = child.communicate()
-            exitcode = child.returncode
-        finally:
-            pass
-
-        return (exitcode, mystdout, mystderr)
-
-
-    def uploadToSE(lcgseItem):
-        
-        import re
-
-        lcgseItems = lcgseItem.split(' ')
-
-        filenameWildChar = lcgseItems[1]
-        lfc_host = lcgseItems[2]
-        dest_SE = lcgseItems[3]
-
-        os.environ['LFC_HOST'] = lfc_host
-        
-        guidResults = []
-
-        import glob 
-        for currentFile in glob.glob(os.path.join(orig_wdir, filenameWildChar)):
-            cmd = 'lcg-cr -d %s --vo %s file:%s' % (dest_SE, vo, currentFile)
-            printInfo(cmd)  
-            (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
-            if exitcode == 0:
-                printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
-                match = re.search('(guid:\S+)',mystdout)
-                if match:
-                    guidResults.append(mystdout)
-            else:
-                printError('cmd %s failed with error : %s' % (cmd, mystderr))   
-
-        return guidResults      
-        
-    postProcessOutputResult = postprocessoutput(orig_wdir)
-
-    lcgFile = open(os.path.join(orig_wdir, '__lcgseuploads__'), 'w')
-        
-#   code here for upload to lcg se
-    if postProcessOutputResult is not None:
-        for lcgseItem in postProcessOutputResult:
-            guids = uploadToSE(lcgseItem)
-            for guid in guids:
-                lcgFile.write('%s->%s\\n' % (lcgseItem, guid))           
-
-    lcgFile.close()     
+    printInfo('Application execution passed with exit code %d.' % exitcode)
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
@@ -1561,7 +1483,7 @@ sys.exit(0)
             transfer_timeout = 60
 
         script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
-
+       
         ## update the job wrapper with the inputsandbox list
         script = script.replace('###INPUTSANDBOX###',repr({'remote':inputs['remote'],'local':[ os.path.basename(f) for f in inputs['local'] ]}))
 
@@ -1574,20 +1496,6 @@ sys.exit(0)
         ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
         ##  - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
-
-        if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
-            
-            fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
-            fileRead = open(fullFilePath, 'r')
-            for line in fileRead.readlines(): 
-                line = line.strip()     
-                if line.startswith('massstorage'):
-                    output_sandbox += [line.split(' ')[1]]
-                elif line.startswith('lcgse'):
-                    input_sandbox += [fullFilePath]
-                    output_sandbox += ['__lcgseuploads__']
-
-            fileRead.close()
         
         if config['JobLogHandler'] == 'WMS':
             output_sandbox += ['stdout.gz','stderr.gz']
@@ -1733,103 +1641,6 @@ sys.exit(0)
         profiler.check('==> master_updateMonitoringInformation() elapsed time')
 
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
-
-    def postprocess(self, outputfiles, outputdir):      
-        
-        import subprocess 
-        import glob      
-
-        # system command executor with subprocess
-        def execSyscmdSubprocess(cmd):
-
-            exitcode = -999
-            mystdout = ''
-            mystderr = ''
-
-            try:
-                child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                (mystdout, mystderr) = child.communicate()
-                exitcode = child.returncode
-            finally:
-                pass
-
-            return (exitcode, mystdout, mystderr)
-
-
-        lcgSEUploadsFile = os.path.join(outputdir, '__lcgseuploads__')
-
-        lcgSEUploads = []
-
-        if os.path.exists(lcgSEUploadsFile):
-            fp = open(lcgSEUploadsFile, 'r')
-            for line in fp.readlines():
-                lcgSEUploads.append(line.strip())               
-
-
-        if len(outputfiles) > 0:
-            for outputFile in outputfiles:
-                if outputFile.__class__.__name__ == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
-                        
-                    #todo add to the search pattern lfc host, dest se, etc.
-                    searchPattern = 'lcgse %s' % outputFile.name
-
-                    for lcgSEUpload in lcgSEUploads:
-                        if lcgSEUpload.startswith(searchPattern):
-                            guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
-                            outputFile.setLocation(guid)
- 
-                elif outputFile.__class__.__name__ == 'MassStorageFile':
-
-                    from Ganga.Utility.Config import getConfig
-                    massStorageConfig = getConfig('MassStorageOutput') 
-
-                    #if Castor mass storage (we understand from the nsls command)
-                    if massStorageConfig['ls_cmd'] == 'nsls':
-                        host = getConfig('System')['GANGA_HOSTNAME']
-                        lxplusHost = re.match('lxplus.*cern\.ch', host)
-                        if lxplusHost is None:
-                            logger.warning('Output files can be uploaded to Castor only from lxplus')
-                            logger.warning('skipping %s for uploading to Castor' % outputFile.name)
-                            continue 
-
-                        mkdir_cmd = massStorageConfig['mkdir_cmd']
-                        cp_cmd = massStorageConfig['cp_cmd']
-                        ls_cmd = massStorageConfig['ls_cmd']
-                        massStoragePath = massStorageConfig['path']
-
-                        pathToDirName = os.path.dirname(massStoragePath)
-                        dirName = os.path.basename(massStoragePath)
-
-                        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
-                        if exitcode != 0:
-                            logger.warning('Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName, mystderr)
-                            logger.warning('skipping %s for uploading to Castor' % outputFile.name)
-                            continue
-
-                        directoryExists = False 
-                        for directory in mystdout.split('\n'):
-                            if directory.strip() == dirName:
-                                directoryExists = True
-                                break
-
-                        if not directoryExists:
-                            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
-                            if exitcode != 0:
-                                logger.warning('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (mkdir_cmd, massStoragePath))
-                                logger.warning('skipping %s for uploading to Castor' % outputFile.name)
-                                continue
-            
-                        for currentFile in glob.glob(os.path.join(outputdir, outputFile.name)):
-                            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
-                            if exitcode != 0:
-                                logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFile, massStoragePath))
-                            else:
-                                logger.info('%s successfully uploaded to mass storage' % currentFile)              
-                                outputFile.setLocation(os.path.join(massStoragePath, os.path.basename(currentFile)))
-                                #remove file from output
-                                os.system('rm %s' % os.path.join(outputdir, currentFile))
-
-        #todo remove the __lcgseuploads__ file
 
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
