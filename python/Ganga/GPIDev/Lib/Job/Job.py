@@ -634,7 +634,7 @@ class Job(GangaObject):
 
         if content is not '':
 
-            postProcessFile = os.path.join(self.getInputWorkspace(), '__postprocessoutput__')
+            postProcessFile = os.path.join(self.getInputWorkspace().getPath(), '__postprocessoutput__')
 
             if os.path.exists(postProcessFile):
                 os.system('rm  %s' % postProcessFile)
