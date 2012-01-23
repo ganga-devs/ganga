@@ -1579,7 +1579,9 @@ class ATLASTier3Splitter(ISplitter):
         if job.inputdata._name != 'ATLASTier3Dataset':
             raise ApplicationConfigurationError(None, "ATLASTier3Splitter requires ATLASTier3Dataset")
         if self.numjobs and self.numfiles:
-            raise ApplicationConfigurationError(None, "ATLASTier3Splitter: specify numjobs or numfiles, but not both.")
+            logger.warning('You specified numjobs and numfiles. Setting numjobs = 0 to continue.')
+            self.numjobs = 0
+            #raise ApplicationConfigurationError(None, "ATLASTier3Splitter: specify numjobs or numfiles, but not both.")
        
         if job.inputdata.pfnListFile.name:
             logger.info('Loading file names from %s'%job.inputdata.pfnListFile.name)
