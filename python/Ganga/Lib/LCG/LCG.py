@@ -1395,6 +1395,7 @@ try:
 
     lcgFile.close()     
 
+    printInfo(str(os.listdir(orig_wdir)))   
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
 #   pack outputsandbox
