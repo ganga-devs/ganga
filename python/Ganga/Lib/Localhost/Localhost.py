@@ -384,10 +384,10 @@ def uploadToSE(lcgseItem):
         cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
         cmd = cmd.replace('filename', currentFile)
         cmd = cmd + ' file:%s' % currentFile
-        printInfo(cmd)  
+#        printInfo(cmd)  
         (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
         if exitcode == 0:
-            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
+#            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
             match = re.search('(guid:\S+)',mystdout)
             if match:
                 guidResults.append(mystdout)
