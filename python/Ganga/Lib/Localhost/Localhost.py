@@ -569,6 +569,10 @@ sys.exit()
         postprocesslocations = open(postprocessLocationsPath, 'r')
         
         for line in postprocesslocations.readlines():
+                
+            if line.strip() == '':      
+                continue
+
             lineParts = line.split(' ') 
             outputType = lineParts[0] 
             outputPattern = lineParts[1]
