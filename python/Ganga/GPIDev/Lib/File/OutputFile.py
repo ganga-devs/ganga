@@ -85,13 +85,16 @@ def findOutputFileTypeByFileName(filename):
 
     matchCount = 0
 
+    resultKey = None    
+
     for key in outputfilesConfig.keys():
 
         if filename in outputfilesConfig[key]:
             matchCount += 1
+            resultKey = key
 
     if matchCount == 1:
-        return key
+        return resultKey
     elif matchCount > 1:        
         raise ConfigError('filename %s defined more than once in [Output] config section' % filename)
  
