@@ -651,7 +651,8 @@ sys.exit(result)
     def postprocess(self, outputfiles, outputdir):  
     
         import subprocess 
-        import glob      
+        import glob   
+        import re    
 
         # system command executor with subprocess
         def execSyscmdSubprocess(cmd):
@@ -689,9 +690,9 @@ sys.exit(result)
                         (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
                         if exitcode == 0:
                 
-                        match = re.search('(guid:\S+)',mystdout)
-                        if match:
-                            outputFile.setLocation(mystdout)
+                            match = re.search('(guid:\S+)',mystdout)
+                            if match:
+                                outputFile.setLocation(mystdout)
                         else:
                             logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))
 
