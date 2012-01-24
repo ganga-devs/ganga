@@ -240,7 +240,8 @@ def execSyscmdSubprocess(cmd):
 def postprocessoutput():
 
     zippedList = []           
-    massStorageList = []          
+    massStorageList = []  
+    lcgseList = []         
 
     inpfile = os.path.join(###INPUT_DIR###, '__postprocessoutput__')
     
@@ -253,10 +254,12 @@ def postprocessoutput():
             zippedList.append(line.split()[1])
         elif line.startswith('massstorage'):
             massStorageList.append(line)        
+        elif line.startswith('lcgse'):
+            lcgseList.append(line)
 
     zippedListString = " ".join(zippedList)
 
-    return [zippedListString, massStorageList]
+    return [zippedListString, massStorageList, lcgseList]
 
 statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
@@ -361,6 +364,40 @@ postprocesslocations = file(os.path.join(sharedoutputpath, '__postprocesslocatio
 
 postProcessOutputResult = postprocessoutput()
 
+def uploadToSE(lcgseItem):
+        
+    import re
+
+    lcgseItems = lcgseItem.split(' ')
+
+    filenameWildChar = lcgseItems[1]
+    lfc_host = lcgseItems[2]
+
+    cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+
+    os.environ['LFC_HOST'] = lfc_host
+        
+    guidResults = []
+
+    import glob 
+    for currentFile in glob.glob(filenameWildChar):
+        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+        cmd = cmd.replace('filename', currentFile)
+        cmd = cmd + ' file:%s' % currentFile
+        printInfo(cmd)  
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
+        if exitcode == 0:
+            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
+            match = re.search('(guid:\S+)',mystdout)
+            if match:
+                guidResults.append(mystdout)
+        else:
+            printError('cmd %s failed with error : %s' % (cmd, mystderr))   
+
+    return guidResults      
+
+
+
 #code here for upload to castor
 if postProcessOutputResult is not None:
     for massStorageLine in postProcessOutputResult[1]:
@@ -401,6 +438,12 @@ if postProcessOutputResult is not None:
                 postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
                 #remove file from output dir
                 os.system('rm %s' % currentFile)
+
+    for lcgseItem in postProcessOutputResult[2]:
+        guids = uploadToSE(lcgseItem)
+        for guid in guids:
+            postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid)) 
+
 
 errorfile.close()
 postprocesslocations.close()
@@ -521,6 +564,8 @@ sys.exit()
         if not os.path.exists(postprocessLocationsPath):
             return
         
+        lcgSEUploads = []
+
         postprocesslocations = open(postprocessLocationsPath, 'r')
         
         for line in postprocesslocations.readlines():
@@ -533,13 +578,28 @@ sys.exit()
                 outputFile = findOutputFile('MassStorageFile', outputPattern)
                 if outputFile is not None:
                     outputFile.setLocation(outputPath.strip('\n'))
+
+            elif line.startswith('lcgse'):
+                lcgSEUploads.append(line.strip())
             else:
                 pass
                 #to be implemented for other output file types
-                
+
         postprocesslocations.close()
   
-        os.system('rm %s' % postprocessLocationsPath)
+        os.system('rm %s' % postprocessLocationsPath)   
+
+        for outputFile in outputfiles:
+            if outputFile.__class__.__name__ == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
+                        
+                #todo add to the search pattern lfc host, dest se, etc.
+                searchPattern = 'lcgse %s' % outputFile.name
+
+                for lcgSEUpload in lcgSEUploads:
+                    if lcgSEUpload.startswith(searchPattern):
+                        guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
+                        outputFile.setLocation(guid)
+                
 
     def updateMonitoringInformation(jobs):
 
