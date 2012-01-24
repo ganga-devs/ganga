@@ -1356,6 +1356,21 @@ class Job(GangaObject):
         rslice = self._subjobs_proxy()
         return rslice._display(1)
         
+    def __setattr__(self, attr, value):
+        if attr == 'outputfiles':
+            uniqueValuesDict = []
+            uniqueValues = []
+        
+            for val in value:
+                key = '%s%s' % (val.__class__.__name__, val.name)               
+                if key not in uniqueValuesDict:
+                    uniqueValuesDict.append(key)
+                    uniqueValues.append(val)    
+        
+            #reduce duplicate values here
+            super(Job,self).__setattr__(attr, uniqueValues)     
+        else:   
+            super(Job,self).__setattr__(attr, value)
     
 class JobTemplate(Job):
     """A placeholder for Job configuration parameters.
