@@ -192,15 +192,15 @@ class RTHandler(IRuntimeHandler):
                 #we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
                     logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
-                    app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+                    prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
                 #else assume it's a system binary, so we don't need to transport anything to the sharedir
                 else:
                     pass
             elif type(app.exe) is File:
                 logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
-                app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(app.exe.name)))
+                prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(app.exe.name)))
 
-        c = StandardJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
+        c = StandardJobConfig(prepared_exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
         return c
         
 
@@ -228,15 +228,15 @@ class LCGRTHandler(IRuntimeHandler):
                 #we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
                     logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
-                    app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+                    prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
                 #else assume it's a system binary, so we don't need to transport anything to the sharedir
                 else:
                     pass
             elif type(app.exe) is File:
                 logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
-                app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(app.exe.name)))
+                prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(app.exe.name)))
 
-        return LCGJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
+        return LCGJobConfig(prepared_exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -247,15 +247,15 @@ class gLiteRTHandler(IRuntimeHandler):
                 #we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
                     logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
-                    app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+                    prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
                 #else assume it's a system binary, so we don't need to transport anything to the sharedir
                 else:
                     pass
             elif type(app.exe) is File:
                 logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
-                app.exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
+                prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
 
-        return gLiteJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
+        return gLiteJobConfig(prepared_exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('Executable','LSF', RTHandler)
