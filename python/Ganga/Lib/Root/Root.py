@@ -333,10 +333,11 @@ class RootRTHandler(IRuntimeHandler):
                 arglist.append(arg)
         rootarg='('+string.join([str(s) for s in arglist],',')+')'
 
-        #script=File(os.path.join(app.is_prepared.name,os.path.basename(app.script.name)))
-        script=app.script
+        script = app.script
         if script==File():
             script=File(defaultScript())
+        else:
+            script=File(os.path.join(app.is_prepared.name,os.path.basename(app.script.name)))
 
         # Start ROOT with the -b and -q options to run without a
         # terminal attached.
@@ -355,10 +356,11 @@ class RootRTHandler(IRuntimeHandler):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         from os.path import join, split
 
-        #script=File(os.path.join(app.is_prepared.name,os.path.basename(app.script.name)))
-        script=app.script
+        script = app.script
         if script==File():
             script=File(defaultPyRootScript())
+        else:
+            script=File(os.path.join(app.is_prepared.name,os.path.basename(app.script.name)))
 
         arguments = [join('.',script.subdir,split(script.name)[1])]
         arguments.extend([str(s) for s in app.args])
@@ -433,12 +435,14 @@ def downloadWrapper(app):
     rootsys=join('.','root')
     rootenv={'ROOTSYS':rootsys}
 
-    script=app.script
+    script = app.script
     if script==File():
         if not app.usepython:
             script=File(defaultScript())
         else:
             script=File(defaultPyRootScript())
+    else:
+        script=File(os.path.join(app.is_prepared.name,os.path.basename(app.script.name)))
 
     commandline = ''
     scriptPath  = join('.',script.subdir,split(script.name)[1])
