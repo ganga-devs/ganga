@@ -195,7 +195,7 @@ class RTHandler(IRuntimeHandler):
                     prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
                 #else assume it's a system binary, so we don't need to transport anything to the sharedir
                 else:
-                    pass
+                    prepared_exe = app.exe
             elif type(app.exe) is File:
                 logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
                 prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(app.exe.name)))
@@ -231,7 +231,7 @@ class LCGRTHandler(IRuntimeHandler):
                     prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
                 #else assume it's a system binary, so we don't need to transport anything to the sharedir
                 else:
-                    pass
+                    prepared_exe = app.exe
             elif type(app.exe) is File:
                 logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
                 prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(app.exe.name)))
@@ -250,7 +250,7 @@ class gLiteRTHandler(IRuntimeHandler):
                     prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
                 #else assume it's a system binary, so we don't need to transport anything to the sharedir
                 else:
-                    pass
+                    prepared_exe = app.exe
             elif type(app.exe) is File:
                 logger.info("Submitting a prepared application; taking any input files from %s" %(app.is_prepared.name))
                 prepared_exe = File(os.path.join(app.is_prepared.name,os.path.basename(File(app.exe).name)))
