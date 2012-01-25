@@ -632,7 +632,7 @@ sys.exit(result)
             for line in fileRead.readlines(): 
                 line = line.strip()     
                 if line.startswith('lcgse'):
-                    filenameWildChar = line.split(' ')
+                    filenameWildChar = line.split(' ')[1]
                     if filenameWildChar not in outputpatterns:
                         outputpatterns += [filenameWildChar]
             fileRead.close()
