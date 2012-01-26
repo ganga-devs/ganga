@@ -67,8 +67,10 @@ class JobTime(GangaObject):
                       'submitted',
                       'backend_running',
                       'backend_final',
+                      'backend_completing',
                       'completing',
                       'final',
+                      'running',
                       'runtime',
                       'waittime',
                       'submissiontime',
@@ -418,6 +420,11 @@ class JobTime(GangaObject):
         """        
         return self.statetime('backend_final', format)
 
+    def backend_completing(self, format=None):
+        """Method for obtaining 'backend_completing' timestamp.
+        """
+        return self.statetime('backend_completing', format)
+
     def completing(self, format=None):
         """Method for obtaining 'completing' timestamp.
         """        
@@ -427,4 +434,9 @@ class JobTime(GangaObject):
         """Method for obtaining 'final' timestamp.
         """        
         return self.statetime('final', format)  
+
+    def running(self, format=None):
+        """Method for obtaining 'running' timestamp.
+        """
+        return self.statetime('running', format)
     
