@@ -706,7 +706,7 @@ sys.exit(result)
                 
                             match = re.search('(guid:\S+)',mystdout)
                             if match:
-                                outputFile.setLocation(mystdout)
+                                outputFile.setLocation(mystdout.strip())
                         else:
                             logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))
 
