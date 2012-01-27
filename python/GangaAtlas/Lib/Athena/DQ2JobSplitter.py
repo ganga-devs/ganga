@@ -1097,10 +1097,16 @@ class DQ2JobSplitter(ISplitter):
 
                             if job.backend._name == 'Panda':
                                 for tag_file in job.inputdata.tag_info:
-                                    
                                     for tag_ref in job.inputdata.tag_info[tag_file]['refs']:
                                         if tag_ref[1] in j.inputdata.dataset and tag_ref[0] in j.inputdata.names:
-                                            j.inputdata.tag_info[tag_file] = job.inputdata.tag_info[tag_file]
+                                            if not tag_file in j.inputdata.tag_info:
+                                                j.inputdata.tag_info[tag_file] = {}                                                
+                                                j.inputdata.tag_info[tag_file]['dataset'] = job.inputdata.tag_info[tag_file]['dataset']
+                                                j.inputdata.tag_info[tag_file]['guid'] = job.inputdata.tag_info[tag_file]['guid']
+                                                j.inputdata.tag_info[tag_file]['refs'] = []
+                                                
+                                            j.inputdata.tag_info[tag_file]['refs'].append( tag_ref )
+                                    
                             else:
                                 for tag_file in j.inputdata.names:
                                     j.inputdata.tag_info[tag_file] = job.inputdata.tag_info[tag_file]
