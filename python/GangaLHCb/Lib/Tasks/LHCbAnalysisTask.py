@@ -143,7 +143,7 @@ class LHCbAnalysisTask(Task):
         for t in self.transforms:
             try:
                 t.update(resubmit)
-            except GangaException as e:
+            except GangaException, e:
                 logger.warning(e.__str__())
                 continue
 
