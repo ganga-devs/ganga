@@ -128,7 +128,7 @@ class LHCbAnalysisTask(Task):
         print "Job Colours: " + ", ".join([markup(job, job_colours[job])
             for job in ["new", "submitting", "submitted", "running", "completing", "completed", "failed", "killed", "incomplete", "unknown"]])
         print "Lists the transforms, their partitions and partition subjobs, as well as the number of failures."
-        print "Format: (partition/subjob number)[:(number of resubmissions)]"
+        print "Format: (partition/subjob number)[:(number of failures)]"
         print
         for t in self.transforms:
             t.overview()

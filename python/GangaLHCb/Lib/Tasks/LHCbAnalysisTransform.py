@@ -78,13 +78,28 @@ class LHCbAnalysisTransform(Transform):
         l.application = deepcopy(self.application,memo)
         l.backend = deepcopy(self.backend,memo)
         l.splitter = deepcopy(self.splitter,memo)
+        l.merger = deepcopy(self.merger,memo)
+        l.query = deepcopy(self.query,memo)
+        l.run_limit = deepcopy(self.run_limit,memo)
+        l.inputsandbox = deepcopy(self.inputsandbox)
+        l.outputsandbox = deepcopy(self.outputsandbox)
+        if self.inputdata:
+            l.inputdata = LHCbDataset()
+            l.inputdata.files = self.inputdata.files[:]
+        if self.outputdata:
+            l.outputdata = OutputData()
+            l.outputdata.files = self.outputdata.files[:]
         l.name = self.name
         return l
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _attribute_filter__set__(self,name,value):
         if name is 'inputdata':
-            pass ## to do...
+            if self.query is not None:
+                raise GangaAttributeError(None,'Cannot set the inputdata if a BKQuery object has already been given')
+            else:
+                logger.warning("User defined inputdata will be overwritten if one attaches a BKQuery object to the transform.query attribute")
+                logger.warning("Running with only inputdata defined will not enable the task to be updated in line with the BK database giving essentially no more functionality than a Job")
         elif name is 'query':
             if not isType(value,BKQuery):
                 raise GangaAttributeError(None,'LHCbTransform expects a BKQuery object for its query attribute!')
@@ -132,6 +147,14 @@ class LHCbAnalysisTransform(Transform):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def run(self, check=True):
         """Start the transform running, thereby assigning all necessary jobs."""
+        if self.task_id is -1 and self.transform_id is -1:
+            logger.error("Please attach this transform to a persistant LHCbAnalysisTask object before running using the appendTransform() method.")
+            return
+        if self.query is None and (self.inputdata is not None):
+            logger.warning("Running a transform without a BKQuery object attached negates the update feature which keeps is up to date with the bookkeeping database.")
+            logger.warning("This essentially equates a transform with a regular job.")
+            self.toProcess_dataset.files += self.inputdata.files[:]
+            self.setPartitionStatus(len(self._partition_status),'ready')
         self._submitJobs(1)
         return super(LHCbAnalysisTransform,self).run(check)
 
