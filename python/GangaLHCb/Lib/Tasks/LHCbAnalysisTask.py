@@ -1,6 +1,7 @@
 from LHCbAnalysisTransform import *
 from Ganga.GPIDev.Lib.Tasks.Task import Task
 from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.Core.exceptions import GangaException
 ## to do...
 ##1) Multi threading, even with multi threads, bottle neck at the server while updating.
 ##2) Check prepared works(looks like does because of application.clone())
@@ -11,7 +12,9 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 ##7) Partition updating from completed by manual resubmit - done
 
 class LHCbAnalysisTask(Task):
-    """The LHCbAnalysisTask class looks after the running of LHCb Analysis jobs, including helping to keep
+    """LHCbAnalysisTask - Top level class that looks after groups of LHCbAnalysisTransforms.
+
+    The LHCbAnalysisTask class looks after the running of LHCb Analysis jobs, including helping to keep
     them up to date when new data is added or removed.
 
     Create a task using the following syntax
@@ -138,7 +141,11 @@ class LHCbAnalysisTask(Task):
         ## Tried to use multithreading, better to check the tasksregistry class
         ## Also tried multiprocessing but bottleneck at server.
         for t in self.transforms:
-            t.update(resubmit)
+            try:
+                t.update(resubmit)
+            except GangaException as e:
+                logger.warning(e.__str__())
+                continue
 
     ## Public methods
     #####################################################################

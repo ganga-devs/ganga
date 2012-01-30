@@ -132,7 +132,7 @@ class LHCbAnalysisTransform(Transform):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def run(self, check=True):
         """Start the transform running, thereby assigning all necessary jobs."""
-        self.submitJobs(1)
+        self._submitJobs(1)
         return super(LHCbAnalysisTransform,self).run(check)
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -189,7 +189,7 @@ class LHCbAnalysisTransform(Transform):
         if new_jobs:
             logger.info('Transform %i:%i updated, adding partition %i containing %i more file(s) for processing'%(self.task_id,self.transform_id,len(self._partition_status),len(self.toProcess_dataset.files)))
             self.setPartitionStatus(len(self._partition_status),'ready')
-            if self.status != 'new': self.submitJobs(1) ## After the first time, when transform is running or complete, calling update will submit the jobs thereby blocking the user thread
+            if self.status != 'new': self._submitJobs(1) ## After the first time, when transform is running or complete, calling update will submit the jobs thereby blocking the user thread
         self.inputdata = LHCbDataset(latest_dataset.files)
 
 
@@ -255,6 +255,12 @@ class LHCbAnalysisTransform(Transform):
 
         j=self.createNewJob(partitions[0])
         return [j]
+
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    ## Masking the submitJobs from the monitoring loop as it interferes with
+    ## long job submission/updating.
+    def submitJobs(self, n):
+        return 0
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def updatePartitions(self):
@@ -369,6 +375,12 @@ class LHCbAnalysisTransform(Transform):
                 if j.info.submit_counter >= self.run_limit: continue
                 logger.warning('Resubmitting job %s from T%i Tr%i P%i'%(j.fqid,self.task_id,self.transform_id,p))
                 j.resubmit()
+
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    ## Private version of submitJobs which can be called from this class
+    ## to achieve job submission.
+    def _submitJobs(self, n):
+        return super(LHCbAnalysisTransform,self).submitJobs(n)
 
 ## End of class LHCbAnalysisTransform
 ########################################################################
