@@ -187,6 +187,7 @@ class RTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
+        prepared_exe = app.exe
         if app.is_prepared is not None:
             if type(app.exe) is str:
                 #we have a file. is it an absolute path?
@@ -223,6 +224,7 @@ class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.Lib.LCG import LCGJobConfig
 
+        prepared_exe = app.exe
         if app.is_prepared is not None:
             if type(app.exe) is str:
                 #we have a file. is it an absolute path?
@@ -242,6 +244,7 @@ class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.Lib.gLite import gLiteJobConfig
 
+        prepared_exe = app.exe
         if app.is_prepared is not None:
             if type(app.exe) is str:
                 #we have a file. is it an absolute path?
