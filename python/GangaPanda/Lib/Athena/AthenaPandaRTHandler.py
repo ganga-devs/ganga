@@ -625,6 +625,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 finp.dispatchDBlock = job.inputdata.dataset[0]
                 finp.type           = 'input'
                 finp.status         = 'ready'
+
+                if job.backend.forcestaged:
+                    finp.prodDBlockToken = 'local'
+                    
                 jspec.addFile(finp)
                 
             if len(job.inputdata.tagdataset) != 0:
@@ -644,6 +648,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     finp.dispatchDBlock = job.inputdata.tagdataset[0]
                     finp.type           = 'input'
                     finp.status         = 'ready'
+
+                    if job.backend.forcestaged:
+                        finp.prodDBlockToken = 'local'
+                        
                     jspec.addFile(finp)
 
             
@@ -665,6 +673,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     finp.dispatchDBlock = job.inputdata.tag_info[lfn]['dataset'] #job.inputdata.tagdataset[0]
                     finp.type           = 'input'
                     finp.status         = 'ready'
+
+                    if job.backend.forcestaged:
+                        finp.prodDBlockToken = 'local'
+                        
                     jspec.addFile(finp)
                     
 #       output files
