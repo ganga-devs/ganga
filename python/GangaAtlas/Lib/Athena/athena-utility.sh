@@ -156,11 +156,11 @@ cmt_setup () {
     # New athena v16 AtlasSetup #################
     elif [ $ATHENA_MAJOR_RELEASE -gt 15 ]; then
 	if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
-	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,$ATLAS_ARCH,setup
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,32,setup
 	elif [ ! -z $ATLAS_PROJECT ]; then
-	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_RELEASE,$ATLAS_PROJECT,$ATLAS_ARCH,setup
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_RELEASE,$ATLAS_PROJECT,32,setup
 	else
-	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh AtlasOffline,$ATLAS_RELEASE,$ATLAS_ARCH,setup
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh AtlasOffline,$ATLAS_RELEASE,32,setup
 	fi
 
     else 
@@ -177,11 +177,11 @@ cmt_setup () {
 	if [ n$CMTCONFIG == n'x86_64-slc5-gcc43-opt'  ]; then 
 
 	    if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
-		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_PRODUCTION,$ATLAS_PROJECT,$ATLAS_ARCH,setup
+		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_PRODUCTION,$ATLAS_PROJECT,32,setup
 	    elif [ ! -z $ATLAS_PROJECT ]; then
-		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_RELEASE,$ATLAS_PROJECT,$ATLAS_ARCH,setup
+		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_RELEASE,$ATLAS_PROJECT,32,setup
 	    else
-		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=AtlasOffline,$ATLAS_RELEASE,$ATLAS_ARCH,setup
+		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=AtlasOffline,$ATLAS_RELEASE,32,setup
 	    fi
 	fi    
     fi

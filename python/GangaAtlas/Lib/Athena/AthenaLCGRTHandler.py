@@ -687,11 +687,6 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         else:
             requirements.software = requirementsSoftware
 
-        # Set athena architecture: 32 or 64 bit    
-        environment['ATLAS_ARCH'] = '32'
-        if requirementsSoftware and requirementsSoftware[0].find('x86_64')>0:
-            environment['ATLAS_ARCH'] = '64'
-            
         #       add software requirement of dq2clients
         if job.inputdata and job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking' ]  and job.inputdata.type in [ 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease or configDQ2['USE_ACCESS_INFO']:
             try:
