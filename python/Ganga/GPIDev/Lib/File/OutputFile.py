@@ -80,7 +80,7 @@ def findOutputFileTypeByFileName(filename):
 
     dotIndex = filename.find('.')       
     #get only the extension     
-    if dotIndex > -1:
+    if dotIndex > -1 and filename.startswith('*'):
         filename = filename[dotIndex+1:]        
 
     matchCount = 0
