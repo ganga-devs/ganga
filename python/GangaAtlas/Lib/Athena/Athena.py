@@ -1081,6 +1081,12 @@ class Athena(IPrepareApp):
             # destination
             pandaRootCoreWorkDirName = '__panda_rootCoreWorkDir'
             rootCoreDestWorkDir = currentDir + '/' + pandaRootCoreWorkDirName
+
+            # If exist, then delete tmp RootCore dir
+            if os.path.exists(rootCoreDestWorkDir):
+                logger.waring('Removing already previously existing temporary RootCore submission directory %s ...', rootCoreDestWorkDir)
+                out = commands.getoutput('rm -rf ' + rootCoreDestWorkDir)
+
             # add all files to extFile
             #AthenaUtils.extFile.append(pandaRootCoreWorkDirName + '/.*')
             self.append_to_user_area+=[pandaRootCoreWorkDirName + '/.*']
