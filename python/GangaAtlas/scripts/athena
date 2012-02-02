@@ -134,6 +134,7 @@ p.add_option('--athena_project', action='store', type='string', dest='athena_pro
 p.add_option('--athena_exe', action='store', type='choice', dest='athena_exe', choices = ['ATHENA', 'PYARA', 'ROOT','ARES','EXE', 'TRF' ], default='ATHENA', help='Executable type: ATHENA, PYARA, ROOT [default: ATHENA]')
 p.add_option('--athena_dbrelease', action='store', type='string', dest='athena_dbrelease', help='ATLAS DBRelease DQ2 dataset and DQ2Release tar file (DatasetName:FileName). e.g., ddo.000001.Atlas.Ideal.DBRelease.v050101:DBRelease-5.1.1.tar.gz')
 p.add_option('--user_area', action='store', type='string', dest='user_area', help='Tar file of user athena code area produced e.g. by a previous Ganga job' )
+p.add_option('--user_area_path', action='store', type='string', dest='user_area_path', help='Path where user_area tarfile is created' )
 p.add_option('--group_area', action='store', type='string', dest='group_area', help='Tar file of GroupArea produced e.g. by a previous Ganga job' )
 p.add_option('--user_setupfile', action='store', type='string', dest='user_setupfile', help='User setup script for special setup on the grid worker node' )
 p.add_option('--excludepackage', action='store', type='string', dest='excludepackage', help='Pattern of files to exclude from user area requirements files, separated by : , e.g. --excludepackage=MyPackage:YourPackage' )
@@ -266,6 +267,8 @@ if opt.trf:
 
 if opt.user_area:
     j.application.user_area=opt.user_area
+if opt.user_area_path:
+    j.application.user_area_path=opt.user_area_path
 if opt.group_area:
     j.application.group_area=opt.group_area
 
@@ -315,8 +318,10 @@ else:
         else:
             j.application.prepare()
     else:
-	if opt.athena_release and (opt.useRootCore or opt.useRootCoreNoBuild):
+	if opt.athena_release and (opt.useRootCore or opt.useRootCoreNoBuild) and not opt.user_area:
             j.application.prepare()
+            j.application.atlas_release=opt.athena_release
+	elif opt.athena_release and (opt.useRootCore or opt.useRootCoreNoBuild) and opt.user_area:
             j.application.atlas_release=opt.athena_release
 	else:
 	    j.application.is_prepared=True
