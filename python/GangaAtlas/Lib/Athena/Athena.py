@@ -1084,7 +1084,7 @@ class Athena(IPrepareApp):
 
             # If exist, then delete tmp RootCore dir
             if os.path.exists(rootCoreDestWorkDir):
-                logger.waring('Removing already previously existing temporary RootCore submission directory %s ...', rootCoreDestWorkDir)
+                logger.warning('Removing already previously existing temporary RootCore submission directory %s ...', rootCoreDestWorkDir)
                 out = commands.getoutput('rm -rf ' + rootCoreDestWorkDir)
 
             # add all files to extFile

@@ -318,11 +318,13 @@ else:
         else:
             j.application.prepare()
     else:
-	if opt.athena_release and (opt.useRootCore or opt.useRootCoreNoBuild) and not opt.user_area:
-            j.application.prepare()
+        if opt.athena_release: 
             j.application.atlas_release=opt.athena_release
-	elif opt.athena_release and (opt.useRootCore or opt.useRootCoreNoBuild) and opt.user_area:
-            j.application.atlas_release=opt.athena_release
+	    if (opt.useRootCore or opt.useRootCoreNoBuild):
+	        if opt.user_area:
+                    j.application.is_prepared=True
+		else:
+                    j.application.prepare()
 	else:
 	    j.application.is_prepared=True
 
