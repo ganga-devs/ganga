@@ -423,7 +423,7 @@ Out[10]: Job (
 Sometimes the full printout of job attributes may get quite lengthy, especially
 if a job has many files or subjobs. So by default \ganga does a summary print in
 a way similar to the standard python \texttt{repr} module. To get the
-full print of a job (or any other \ganga object) you may use the \texttt{fullprint()} function:
+full print of a job (or any other \ganga object) you may use the \texttt{full_print()} function:
 \begin{verbatim}
 full_print(j)
 \end{verbatim}
@@ -754,7 +754,7 @@ It may be sometimes useful to explicitly mark the job as failed e.g. to indicate
 A submitted or running job must be first killed.
 
 \begin{verbatim}
-j.fail()
+j.force_status("failed")
 \end{verbatim}
 
 \subsection{Job Templates}
@@ -1088,8 +1088,7 @@ same time. If you remove a job from the repository the references in the
 jobtree will also automatically disappear. The jobtree is persisted in
 between \ganga sessions.
 
-To see the full list of commands on the jobtree type \texttt{help
-  type(jobtree)} on the command line.
+To see the full list of commands on the jobtree type \texttt{help(jobtree)} on the command line.
  
 
 
@@ -1167,14 +1166,13 @@ Here the list of all supported operations:
 \item \texttt{kill(keep_going=True)}
 \item \texttt{resubmit(keep_going=True)}
 \item \texttt{remove(keep_going=True,force=True)}
-\item \texttt{fail(keep_going=True,force=True)}
 \end{enumerate}
 
 Here is how to mark all jobs as failed (whenever this operation is permitted):
 
 \begin{verbatim}
 
-In [2]:jobs.fail()
+In [2]:jobs.force_status("failed")
 Ganga.GPIDev.Lib.Job               : INFO     job 0 status changed to "failed"
 Ganga.GPIDev.Lib.Job               : INFO     job 1 status changed to "failed"
 Ganga.GPIDev.Lib.Job               : INFO     job 2 status changed to "failed"
@@ -1228,7 +1226,7 @@ The collective operations and selections may also be performed on subjobs. For e
 
 \begin{verbatim}
 j.subjobs.resubmit()
-j.subjobs.select(status='killed').fail()
+j.subjobs.select(status='killed').force_status("failed")
 \end{verbatim}
  
 
@@ -1255,7 +1253,7 @@ the args attribute (which is the case of Executable and Root).  Below
 is an example that creates a master job with 3 sub jobs. The sub jobs
 simply prints the letters \texttt{A}, \texttt{B}, and \texttt{C}
 \begin{verbatim}
-In [21]:s = ArgSplitter(args=[['A'],['B'],['C']))
+In [21]:s = ArgSplitter(args=[['A'],['B'],['C']])
 In [22]:j = Job(splitter=s)
 In [23]:j.submit()
 Ganga.GPIDev.Lib.Job               : INFO     submitting job 164
@@ -1272,7 +1270,7 @@ to be created and submitted. To look at the output of the sub jobs we can
 access them as a list from the master job:
 \begin{verbatim}
 In [24]:for sj in j.subjobs:
-   ....:     j.peek('stdout','cat')
+   ....:     sj.peek('stdout','cat')
    ....:     
 A
 B
