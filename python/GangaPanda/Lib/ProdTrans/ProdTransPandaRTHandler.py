@@ -32,6 +32,10 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         from taskbuffer.JobSpec import JobSpec
         from taskbuffer.FileSpec import FileSpec
         from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
+        from GangaPanda.Lib.Panda.Panda import refreshPandaSpecs
+        
+        # make sure we have the correct siteType
+        refreshPandaSpecs()
 
         job = app._getParent()
         masterjob = job._getRoot()
