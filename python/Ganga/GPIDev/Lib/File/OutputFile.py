@@ -9,7 +9,7 @@ from Ganga.GPIDev.Schema import *
 
 class OutputFile(GangaObject):
     """OutputFile represents base class for output files, such as CompressedFile,
-       ScratchFile, LHCbDataFile, CastorFile, etc 
+       MassStorageFile, LCGStorageElementFile, etc 
     """
     _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='name of the file')})
     _category = 'outputfiles'
