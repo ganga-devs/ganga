@@ -10,7 +10,10 @@ from Queue import Queue, Empty
 from dq2.info import TiersOfATLAS
 from dq2.common.DQException import *
 
-from sets import Set
+if sys.hexversion >= 0x020600F0:
+    Set = set
+else:
+    from sets import Set
 
 try:
     import hashlib
