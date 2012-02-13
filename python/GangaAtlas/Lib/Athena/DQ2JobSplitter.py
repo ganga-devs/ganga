@@ -615,7 +615,11 @@ class DQ2JobSplitter(ISplitter):
                             avail_clouds[key].append(info[all_site])
 
                 # perform logical AND to find a cloud that has all data
-                from sets import Set
+                import sys
+                if sys.hexversion >= 0x020600F0:
+                    Set = set
+                else:
+                    from sets import Set
             
                 cloud_set = Set(job.backend.requirements.list_clouds())
             
