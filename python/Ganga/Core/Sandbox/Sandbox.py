@@ -24,7 +24,7 @@ def getDefaultModules():
         import Ganga.Core.Sandbox
         import subprocess
         import tarfile
-        return [Ganga,Ganga.Utility,Ganga.Utility.files, Ganga.Utility.tempfile_compatibility, Ganga.Utility.ospath_fix, subprocess,tarfile]
+        return [Ganga,Ganga.Utility,Ganga.Utility.files, Ganga.Utility.tempfile_compatibility, Ganga.Utility.ospath_fix]#, subprocess,tarfile]
 
 def getGangaModulesAsSandboxFiles(modules):
         """ This returns a list of sandbox files corresponding to specified Ganga modules.
