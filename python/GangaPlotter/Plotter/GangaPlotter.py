@@ -7,8 +7,11 @@ import GangaPlotHelper
 ## require matplotlib to produce statistic plots
 from pylab import *
 
-## require sets module supported from python 2.3 
-from sets import Set
+import sys
+if sys.hexversion >= 0x020600F0:
+    Set = set
+else:
+    from sets import Set
 
 from Ganga.Utility.Config import makeConfig
 from Ganga.Utility.logging import getLogger
