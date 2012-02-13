@@ -1,6 +1,12 @@
 
 from common import *
-from sets import Set
+
+import sys
+if sys.hexversion >= 0x020600F0:
+    Set = set
+else:
+    from sets import Set
+
 from TaskApplication import ExecutableTask, taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
