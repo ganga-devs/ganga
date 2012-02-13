@@ -121,7 +121,11 @@ class Spider(IApplication):
 
     def ExtractQueuedLinks( self, queued_list ):
 
-        from sets import Set
+        import sys
+        if sys.hexversion >= 0x020600F0:
+            Set = set
+        else:
+            from sets import Set
         
         # first, get together all similar domains
         queued_arr = { }
