@@ -29,6 +29,11 @@ class Manual:
       self.categoryList = [ \
          "Applications", "Backends", "Datasets", "Splitters", "Mergers", \
          "Exceptions", "Miscellaneous Classes", "Functions", "Objects" ] 
+
+      #for Ganga tutorial remove Datasets category, otherwise it crashes
+      if config["Configuration"]["RUNTIME_PATH"] == 'Ganga:':
+         self.categoryList.remove("Datasets")
+
       self.creationTime = time.strftime( "%c" )
       self.version = config[ "System" ][ "GANGA_VERSION" ]
       self.helpDict = {}
