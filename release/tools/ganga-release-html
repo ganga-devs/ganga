@@ -131,11 +131,13 @@ class ReleaseHTML:
 	#use Karl's script to generate LHCb and ATLAS Reference Manuals
 	print 'INFO:  Generating LHCb & ATLAS manuals ... please wait... '
 	os.system('mkdir %s/Manuals'  % self.htmldir)
+	os.system('%s/bin/ganga  --config= -o[Configuration]RUNTIME_PATH=Ganga manual -o %s/Manuals/GangaManual.html' % (self.gangadir,self.htmldir))
 	os.system('%s/bin/ganga  --config= -o[Configuration]RUNTIME_PATH=GangaLHCb manual -o %s/Manuals/GangaLHCbManual.html' % (self.gangadir,self.htmldir))
 	os.system('%s/bin/ganga  --config= -o[Configuration]RUNTIME_PATH=GangaAtlas:GangaNG:GangaPanda manual -o %s/Manuals/GangaATLASManual.html' % (self.gangadir,self.htmldir))
 
         self.str += '\n <h2> Documentation </h2> \n'
 	#self.str += ' <a  href= "empty.html"> Manuals </a> <br>'
+	self.str += ' <a  href= "Manuals/GangaManual.html"> Ganga Manual </a> <br>'
 	self.str += ' <a  href= "Manuals/GangaLHCbManual.html"> Ganga LHCb Manual </a> <br>'
 	self.str += ' <a  href= "Manuals/GangaATLASManual.html"> Ganga ATLAS Manual </a> <br>'
 	if happydoc:
