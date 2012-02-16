@@ -88,7 +88,7 @@ class TestExtract(GangaGPITestCase):
     def test_toxml(self):
         """Test toxml() writes a node to XML string."""
         expected = self.testxml
-        actual = self.testnode.toxml()
+        actual = self.testnode.toxml().replace('\n','')
         assert expected == actual, 'node does not convert to XML as expected'
 
     def test_toprettyxml(self):
