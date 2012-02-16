@@ -5,6 +5,7 @@ The IAction interface should be implemented by actions to be executed by Driver.
 """
 
 from GangaRobot.Framework import Utility
+from Ganga.Utility.Config import ConfigError
 
 class IAction(object):
     
@@ -58,5 +59,7 @@ class IAction(object):
         if hasattr(self, 'options') and key in self.options:
             return self.options[key]
         else:
-            return Utility.getconfig()[key]
-        
+            try:        
+                return Utility.getconfig()[key]
+            except ConfigError:         
+                return ''
