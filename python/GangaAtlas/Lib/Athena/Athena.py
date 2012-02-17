@@ -1146,7 +1146,6 @@ class Athena(IPrepareApp):
 
        
         self.is_prepared = ShareDir()
-        logger.info('Created shared directory: %s'%(self.is_prepared.name))
 
         send_to_sharedir = self.copyPreparables()
 
@@ -1154,8 +1153,6 @@ class Athena(IPrepareApp):
         #we now inherit this from the IPrepareApp class
         self.checkPreparedHasParent(self)
 
-        #return [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
-        #return [ filename for filename in  send_to_sharedir ]
         return 1
 
 
