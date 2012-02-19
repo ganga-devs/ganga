@@ -18,8 +18,10 @@ logger = Ganga.Utility.logging.getLogger()
 
 
 from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+from Ganga.Utility.files import expandfilename
 config = makeConfig('Preparable', 'Parameters for preparable applications')
 config.addOption('unprepare_on_copy', False, 'Unprepare a prepared application when it is copied')
+shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 class IPrepareApp(IApplication):
 
@@ -91,20 +93,20 @@ class IPrepareApp(IApplication):
                     #we have a file. if it's an absolute path, copy it to the shared dir
                         if os.path.abspath(subitem) == subitem:
                             logger.info('Sending file %s to shared directory.'%(subitem))
-                            shutil.copy2(subitem, self.is_prepared.name)
+                            shutil.copy2(subitem, os.path.join(shared_path,self.is_prepared.name))
                             #else assume it's a system binary (or other attribute), so we don't need to transport anything to the sharedir
                         else:
                             pass
                             #logger.debug('\'%s\', assumed to be available in $PATH'%(subitem))
                     elif type(subitem) is File and subitem.name is not '':
                         logger.info('Sending file object %s to shared directory'%subitem.name)
-                        shutil.copy2(subitem.name, self.is_prepared.name)
+                        shutil.copy2(subitem.name, os.path.join(shared_path,self.is_prepared.name))
             elif type(prepitem) is str:
                 logger.debug('found a string')
                 #we have a file. if it's an absolute path, copy it to the shared dir
                 if os.path.abspath(prepitem) == prepitem:
                     logger.info('Sending file %s to shared directory.'%(prepitem))
-                    shutil.copy2(prepitem, self.is_prepared.name)
+                    shutil.copy2(prepitem, os.path.join(shared_path,self.is_prepared.name))
                     #else assume it's a system binary (or other attribute), so we don't need to transport anything to the sharedir
                 else:
                     pass
@@ -112,7 +114,7 @@ class IPrepareApp(IApplication):
             elif type(prepitem) is File and prepitem.name is not '':
                 logger.debug('found a file')
                 logger.info('Sending file object %s to shared directory'%prepitem.name)
-                shutil.copy2(prepitem.name, self.is_prepared.name)
+                shutil.copy2(prepitem.name, os.path.join(shared_path,self.is_prepared.name))
             else:
                 logger.debug('Nothing worth copying found in %s' %(prepitem))
         return 

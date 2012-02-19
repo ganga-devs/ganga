@@ -395,7 +395,11 @@ def report(job=None):
 
                                 if hasattr(job.application,'is_prepared'):
                                         if job.application.is_prepared is not None and job.application.is_prepared is not True:
-                                                shareddir = job.application.is_prepared.name
+                                                import os
+                                                from Ganga.Utility.Config import getConfig
+                                                from Ganga.Utility.files import expandfilename
+                                                shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
+                                                shareddir = os.path.join(shared_path,job.application.is_prepared.name)
                                                 if os.path.isdir(shareddir):
 
                                                         sharedAreaDir = os.path.join(fullLogDirName, 'sharedarea')

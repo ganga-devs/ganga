@@ -27,6 +27,8 @@ from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+from Ganga.Utility.files import expandfilename
+shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 # the config file may have a section
 # aboout monitoring
@@ -513,15 +515,15 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         if app.user_area.name: 
             #we will now use the user_area that's stored in the users shared directory
             if app.is_prepared is not True:
-                app.user_area.name = os.path.join(app.is_prepared.name,os.path.basename(app.user_area.name))
-            inputbox.append(File(app.user_area.name))
+                new_name = os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.user_area.name))
+            inputbox.append(File(new_name))
 
         #if app.group_area.name: inputbox += [ File(app.group_area.name) ]
         if app.group_area.name and str(app.group_area.name).find('http')<0:
             #we will now use the group_area that's stored in the users shared directory
             if app.is_prepared is not True:
-                app.group_area.name = os.path.join(app.is_prepared.name,os.path.basename(app.group_area.name))
-            inputbox.append(File(app.group_area.name))
+                new_name = os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.group_area.name))
+            inputbox.append(File(new_name))
     
         if app.user_setupfile.name: inputbox.append(File(app.user_setupfile.name))
 

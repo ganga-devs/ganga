@@ -29,6 +29,7 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.Utility.files import expandfilename
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 __directory__ = os.path.dirname(__file__)
 
@@ -413,10 +414,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             if app.options:
                 athena_options =  app.options + ' ' + athena_options
             inputbox += [ File(option_file.name) ]
-            #if app.is_prepared is True:
-            #    inputbox += [ File(option_file.name) ]
-            #else:
-            #    inputbox += [ File(os.path.join(app.is_prepared.name,os.path.basename(option_file.name))) ]
 
         athena_usersetupfile = os.path.basename(app.user_setupfile.name)
 
@@ -460,12 +457,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             if app.is_prepared is True:
                 inputbox += [ File(app.user_area.name) ] 
             else:
-                inputbox += [ File(os.path.join(app.is_prepared.name,os.path.basename(app.user_area.name))) ]
+                inputbox += [ File(os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.user_area.name))) ]
         if app.group_area.name and string.find(app.group_area.name,"http")<0:
             if app.is_prepared is True:
                 inputbox += [ File(app.group_area.name) ] 
             else:
-                inputbox += [ File(os.path.join(app.is_prepared.name,os.path.basename(app.group_area.name))) ]
+                inputbox += [ File(os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.group_area.name))) ]
    
 #       prepare environment
 

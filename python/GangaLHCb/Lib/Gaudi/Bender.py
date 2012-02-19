@@ -12,6 +12,9 @@ from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.File import ShareDir
 from GaudiJobConfig import *
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
+from Ganga.Utility.Config import getConfig
+from Ganga.Utility.files import expandfilename
+shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -72,7 +75,7 @@ class Bender(Francesc):
         #self.incrementShareCounter(self.is_prepared.name)#NOT NECESSARY, DONT AUTOMATICALLY
 
         #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-        send_to_share = self._prepare(self.is_prepared.name)
+        send_to_share = self._prepare(os.path.join(shared_path,self.is_prepared.name))
         self._check_inputs()
         self.prep_inputbox  += send_to_share[:]
     

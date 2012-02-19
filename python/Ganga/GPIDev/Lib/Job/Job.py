@@ -33,6 +33,8 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 import os, shutil, sys
+from Ganga.Utility.Config import getConfig
+shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 class JobStatusError(GangaException):
     def __init__(self,*args):
@@ -404,10 +406,6 @@ class Job(GangaObject):
 
         #increment the shareref counter if the job we're copying is prepared.
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-#        if hasattr(self.application,'is_prepared') and self.application.is_prepared is not None and self.application.is_prepared is not True:
-#            logger.warning('calling incrementsharecounter from job.py')
-#            self.application.incrementShareCounter(self.application.is_prepared.name)
-#            logger.warning("Increasing shareref in job.py")
         # register the job (it will also commit it)
         # job gets its id now
         registry._add(self)
@@ -782,7 +780,7 @@ class Job(GangaObject):
                     logger.info(msg)
 
                 if self.application.is_prepared is not True and self.application.is_prepared is not None:
-                    if not os.path.isdir(self.application.is_prepared.name):
+                    if not os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
                         msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
                         self.unprepare()
                         raise JobError(msg)

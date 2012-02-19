@@ -16,6 +16,8 @@ from Ganga.Utility.util import importName
 prepconfig = getConfig('Preparable')
 
 import os
+from Ganga.Utility.files import expandfilename
+shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 #some proxy related convieniance methods
 def isProxy(obj):
@@ -173,7 +175,7 @@ class ProxyDataDescriptor(object):
                 shareref.increase(val.is_prepared.name)
         if hasattr(val, 'is_prepared'):
             if val.is_prepared is not None and val.is_prepared is not True:
-                if not os.path.isdir(val.is_prepared.name):
+                if not os.path.isdir(os.path.join(shared_path,val.is_prepared.name)):
                     logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
                     logger.error('Unpreparing %s application' % val._impl._name)
                     val.unprepare()
@@ -337,14 +339,14 @@ def GPIProxyClassFactory(name, pluginclass):
         if hasattr(self,'application'):
             if hasattr(self.application,'is_prepared'):
                 if self.application.is_prepared is not None and self.application.is_prepared \
-                           is not True and os.path.isdir(self.application.is_prepared.name):
+                           is not True and os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
                     from Ganga.Core.GangaRepository import getRegistry
                     shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
                     logger.debug('increasing counter from proxy.py')
                     shareref.increase(self.application.is_prepared.name)
                     logger.debug('Found ShareDir directory: %s' % self.application.is_prepared.name)
                 elif self.application.is_prepared is not None and self.application.is_prepared \
-                           is not True and not os.path.isdir(self.application.is_prepared.name):
+                           is not True and not os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
                     logger.error('ShareDir directory not found: %s' % self.application.is_prepared.name)
                     logger.error('Unpreparing Job #%s' % self.id)
                     from Ganga.Core.GangaRepository import getRegistry
@@ -361,7 +363,7 @@ def GPIProxyClassFactory(name, pluginclass):
 #            shareref.increase(self.is_prepared.name)
 #            logger.debug('Found ShareDir directory: %s' % self.is_prepared.name)
         if hasattr(self,'is_prepared') and self.is_prepared is not None and self.is_prepared \
-                           is not True and not os.path.isdir(self.is_prepared.name):
+                           is not True and not os.path.isdir(os.path.join(shared_path,self.is_prepared.name)):
             logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
             logger.error('Unpreparing %s application' % self._impl._name)
             self.unprepare()

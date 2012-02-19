@@ -6,9 +6,11 @@
 
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.getConfig('Configuration')
+gangadir = Ganga.Utility.Config.getConfig('Configuration')['gangadir']
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 import os
+
 
 from Ganga.Utility.files import expandfilename, chmod_executable, is_executable
 
@@ -126,7 +128,7 @@ class ShareDir(GangaObject):
                                     'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)')})
     _category = 'shareddirs'
     _name = "ShareDir"
-    _shared_path = os.path.join(expandfilename(config['gangadir']),'shared',config['user'])
+    _root_shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
     def _readonly(self):
         return True
 
@@ -137,12 +139,10 @@ class ShareDir(GangaObject):
         if not name is None:
             self.name = name
         else:
-            shared_path = os.path.join(expandfilename(config['gangadir']),'shared',config['user'])
-            if not os.access(shared_path, os.F_OK):
-                os.makedirs(shared_path)
             #continue generating directory names until we create a unique one (which will likely be on the first attempt).
             while True:
-                name = shared_path + '/conf-' + Ganga.Utility.guid.uuid() 
+                name = 'conf-' + Ganga.Utility.guid.uuid() 
+                shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
                 if not os.path.isdir(os.path.join(shared_path,name)):
                     os.makedirs(os.path.join(shared_path, name))
                     break

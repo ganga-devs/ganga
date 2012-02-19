@@ -85,13 +85,14 @@ class ShareRef(GangaObject):
         logger.debug("running increase() in prepregistry")
         self._getWriteAccess()
         
-        shareddir =  os.path.join(ShareDir._shared_path,os.path.basename(shareddir))
+        shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
+        basedir = os.path.basename(shareddir)
         if os.path.isdir(shareddir):
-            if shareddir not in self.name:
-                logger.debug('%s is not stored in the shareref metadata object...adding.' %shareddir)
-                self.name[shareddir] = 1
+            if basedir not in self.name:
+                logger.debug('%s is not stored in the shareref metadata object...adding.' %basedir)
+                self.name[basedir] = 1
             else:
-                self.name[shareddir] += 1
+                self.name[basedir] += 1
 
         self._setDirty()
         self._releaseWriteAccess()
@@ -105,14 +106,15 @@ class ShareRef(GangaObject):
         """
         self._getWriteAccess()
         
-        shareddir =  os.path.join(ShareDir._shared_path,os.path.basename(shareddir))
-        if shareddir not in self.name:
-            logger.info('%s is not stored in the shareref metadata object.' %shareddir)
-        elif self.name[shareddir] > 0:
+        shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
+        basedir = os.path.basename(shareddir)
+        if basedir not in self.name:
+            logger.info('%s is not stored in the shareref metadata object.' %basedir)
+        elif self.name[basedir] > 0:
             if remove == 1:
-                self.name[shareddir] = 0
+                self.name[basedir] = 0
             else:
-                self.name[shareddir] -= 1
+                self.name[basedir] -= 1
             
         else:
             pass
@@ -126,11 +128,12 @@ class ShareRef(GangaObject):
         self._getWriteAccess()
         cleanup_list = []
         for shareddir in self.name:
-            if self.name[shareddir] == 0 and os.path.isdir(shareddir):
+            actual_shareddir_path = os.path.join(ShareDir._root_shared_path,shareddir)
+            if self.name[shareddir] == 0 and os.path.isdir(actual_shareddir_path):
                 logger.info('%s no longer being referenced by any objects. Removing directory.' %shareddir)
-                shutil.rmtree(shareddir)
+                shutil.rmtree(actual_shareddir_path)
                 cleanup_list.append(shareddir)
-            if not os.path.isdir(shareddir):
+            if not os.path.isdir(actual_shareddir_path):
                 if shareddir not in cleanup_list:
                     logger.info('%s not found on disk. Removing entry from shared files reference table (shareref).' %shareddir)
                     cleanup_list.append(shareddir)
@@ -150,7 +153,7 @@ class ShareRef(GangaObject):
         directories repository, or 
         """
         shareddir_root = shareddir
-        shareddir =  os.path.join(ShareDir._shared_path,os.path.basename(shareddir))
+        shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
        
         if os.path.isdir(shareddir):
             cmd = "find '%s'" % (shareddir)
@@ -213,7 +216,7 @@ class ShareRef(GangaObject):
                 
 
 
-            disp_string += "\nThe shared directory repository is rooted at " + ShareDir._shared_path + "\n"
+            disp_string += "\nThe shared directory repository is rooted at " + ShareDir._root_shared_path + "\n"
             if zero_ref:
                 disp_string += "\nShared directories with a zero reference count will be removed when Ganga exits.\n"
         else:

@@ -18,6 +18,9 @@ from Ganga.Utility.util import unique
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GaudiJobConfig import *
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset,OutputData
+from Ganga.Utility.Config import getConfig
+from Ganga.Utility.files import expandfilename
+shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -179,7 +182,7 @@ class Gaudi(Francesc):
         ## Next line would have stored them in the jobs inputdir but want them
         ## in sharedDir now we have prepared state.
         ##input_dir = job.getInputWorkspace().getPath()
-        input_dir = self.is_prepared.name#shared_dirname
+        input_dir = os.path.join(shared_path,self.is_prepared.name)#shared_dirname
         
         ## We will return a list of files 'send_to_share' which will be copied into the jobs
         ## inputsandbox when prepare called from job object. NOTE that these files will not go
