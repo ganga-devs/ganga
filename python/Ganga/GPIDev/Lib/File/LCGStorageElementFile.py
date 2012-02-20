@@ -24,7 +24,7 @@ class LCGStorageElementFile(OutputSandboxFile):
         'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2'),
         'SURL'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
         'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
-        'location' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+        'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
         'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'outputfiles'
     _name = "LCGStorageElementFile"
@@ -39,7 +39,7 @@ class LCGStorageElementFile(OutputSandboxFile):
 
         self.lfc_host = lcgSEConfig['LFC_HOST']
         self.se = lcgSEConfig['dest_SRM']
-        self.location = []
+        self.locations = []
 
     def __setattr__(self, attr, value):
         if attr == 'se_type' and value not in ['','srmv1','srmv2','se']:
@@ -72,14 +72,14 @@ class LCGStorageElementFile(OutputSandboxFile):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
-        if location not in self.location:
-            self.location.append(location)
+        if location not in self.locations:
+            self.locations.append(location)
         
     def location(self):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
-        return self.location
+        return self.locations
 
     
     def getUploadCmd(self):
@@ -130,7 +130,7 @@ class LCGStorageElementFile(OutputSandboxFile):
 
         vo = getConfig('LCG')['VirtualOrganisation']  
 
-        for location in self.location:
+        for location in self.locations:
             destFileName = os.path.join(dir, location[-10:])
             cmd = 'lcg-cp --vo %s %s file:%s' % (vo, location, destFileName)
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
