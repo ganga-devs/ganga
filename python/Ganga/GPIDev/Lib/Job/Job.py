@@ -604,9 +604,6 @@ class Job(GangaObject):
 
 
     def _create_post_process_output(self):
- 
-        from Ganga.GPIDev.Lib.File.OutputFile import OutputFile
-        from Ganga.GPIDev.Lib.File.CompressedFile import CompressedFile
 
         from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 
