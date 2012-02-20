@@ -8,11 +8,11 @@ from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig 
 
-from OutputFile import OutputFile
+from OutputSandboxFile import OutputSandboxFile
 
 import re
 
-class LCGStorageElementFile(OutputFile):
+class LCGStorageElementFile(OutputSandboxFile):
     """LCGStorageElementFile represents a class marking an output file to be written into LCG SE
     """
     _schema = Schema(Version(1,1), {
@@ -21,11 +21,13 @@ class LCGStorageElementFile(OutputFile):
         'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
         'se_rpath'    : SimpleItem(defvalue='', copyable=1, doc='the relative path to the VO directory on the SE'),
         'lfc_host'    : SimpleItem(defvalue='', copyable=1, doc='the LCG LFC hostname'),
-        'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2')
-})
+        'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2'),
+        'SURL'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
+        'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
+        'location' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+        'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'outputfiles'
     _name = "LCGStorageElementFile"
-    _location = []
     _exportmethods = [ "location" , "setLocation" , "get" , "getUploadCmd"]
 
     def __init__(self,name='', **kwds):
@@ -37,7 +39,7 @@ class LCGStorageElementFile(OutputFile):
 
         self.lfc_host = lcgSEConfig['LFC_HOST']
         self.se = lcgSEConfig['dest_SRM']
-        self._location = []
+        self.location = []
 
     def __setattr__(self, attr, value):
         if attr == 'se_type' and value not in ['','srmv1','srmv2','se']:
@@ -70,14 +72,14 @@ class LCGStorageElementFile(OutputFile):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
-        if location not in self._location:
-            self._location.append(location)
+        if location not in self.location:
+            self.location.append(location)
         
     def location(self):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
-        return self._location
+        return self.location
 
     
     def getUploadCmd(self):
@@ -128,7 +130,7 @@ class LCGStorageElementFile(OutputFile):
 
         vo = getConfig('LCG')['VirtualOrganisation']  
 
-        for location in self._location:
+        for location in self.location:
             destFileName = os.path.join(dir, location[-10:])
             cmd = 'lcg-cp --vo %s %s file:%s' % (vo, location, destFileName)
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
