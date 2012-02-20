@@ -12,7 +12,7 @@ class MassStorageFile(OutputSandboxFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
     """
     _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='name of the file'),
-                                    'location' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+                                    'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
                                         })
 
@@ -24,7 +24,7 @@ class MassStorageFile(OutputSandboxFile):
         """ name is the name of the output file that has to be written into mass storage
         """
         super(MassStorageFile, self).__init__(name, **kwds)
-        self.location = []
+        self.locations = []
 
     def __construct__(self,args):
         super(MassStorageFile,self).__construct__(args)
@@ -40,14 +40,14 @@ class MassStorageFile(OutputSandboxFile):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
-        if location not in self.location:
-            self.location.append(location)
+        if location not in self.locations:
+            self.locations.append(location)
         
     def location(self):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
-        return self.location
+        return self.locations
 
     def get(self, dir):
         """
@@ -63,7 +63,7 @@ class MassStorageFile(OutputSandboxFile):
         cp_cmd = getConfig('MassStorageOutput')['cp_cmd']  
         
 
-        for location in self.location:
+        for location in self.locations:
             targetLocation = os.path.join(dir, os.path.basename(location))      
             os.system('%s %s %s' % (cp_cmd, location, targetLocation))
 
