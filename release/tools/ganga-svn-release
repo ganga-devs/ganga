@@ -38,8 +38,8 @@ CONFIG['svnurl'] = 'svn+ssh://svn.cern.ch/reps/ganga'
 
 CONFIG['version'] = version
 CONFIG['version-pre'] = version+'-pre'
-CONFIG['plugin_packages_gcc323']='GangaGUI,GangaLHCb,GangaAtlas,GangaPlotter,GangaTest,GangaNG,GangaPanda,GangaJEM'
-CONFIG['plugin_packages_gcc34']='GangaGUI,GangaLHCb,GangaPlotter,GangaTest,GangaAtlas,GangaNG,GangaPanda,GangaJEM'
+CONFIG['plugin_packages_gcc323']='GangaLHCb,GangaAtlas,GangaPlotter,GangaTest,GangaPanda'
+CONFIG['plugin_packages_gcc34']='GangaLHCb,GangaPlotter,GangaTest,GangaAtlas,GangaPanda'
 CONFIG['prereldir'] = os.path.join(CONFIG['top'], 'install',CONFIG['version-pre'])
 CONFIG['reldir'] = os.path.join(CONFIG['top'],'install',CONFIG['version'])
 CONFIG['installdir'] = os.path.join(CONFIG['top'],'install')
