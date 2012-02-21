@@ -1744,26 +1744,6 @@ sys.exit(0)
 
     def postprocess(self, outputfiles, outputdir):      
         
-        import subprocess 
-        import glob      
-
-        # system command executor with subprocess
-        def execSyscmdSubprocess(cmd):
-
-            exitcode = -999
-            mystdout = ''
-            mystderr = ''
-
-            try:
-                child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                (mystdout, mystderr) = child.communicate()
-                exitcode = child.returncode
-            finally:
-                pass
-
-            return (exitcode, mystdout, mystderr)
-
-
         lcgSEUploadsFile = os.path.join(outputdir, '__lcgseuploads__')
 
         lcgSEUploads = []
@@ -1787,57 +1767,9 @@ sys.exit(0)
                             outputFile.setLocation(guid)
  
                 elif outputFile.__class__.__name__ == 'MassStorageFile':
+
                     outputFile.put()
-                    """
-                    from Ganga.Utility.Config import getConfig
-                    massStorageConfig = getConfig('MassStorageOutput') 
 
-                    #if Castor mass storage (we understand from the nsls command)
-                    if massStorageConfig['ls_cmd'] == 'nsls':
-                        host = getConfig('System')['GANGA_HOSTNAME']
-                        lxplusHost = re.match('lxplus.*cern\.ch', host)
-                        if lxplusHost is None:
-                            logger.warning('Output files can be uploaded to Castor only from lxplus')
-                            logger.warning('skipping %s for uploading to Castor' % outputFile.name)
-                            continue 
-
-                        mkdir_cmd = massStorageConfig['mkdir_cmd']
-                        cp_cmd = massStorageConfig['cp_cmd']
-                        ls_cmd = massStorageConfig['ls_cmd']
-                        massStoragePath = massStorageConfig['path']
-
-                        pathToDirName = os.path.dirname(massStoragePath)
-                        dirName = os.path.basename(massStoragePath)
-
-                        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
-                        if exitcode != 0:
-                            logger.warning('Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName, mystderr)
-                            logger.warning('skipping %s for uploading to Castor' % outputFile.name)
-                            continue
-
-                        directoryExists = False 
-                        for directory in mystdout.split('\n'):
-                            if directory.strip() == dirName:
-                                directoryExists = True
-                                break
-
-                        if not directoryExists:
-                            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
-                            if exitcode != 0:
-                                logger.warning('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (mkdir_cmd, massStoragePath))
-                                logger.warning('skipping %s for uploading to Castor' % outputFile.name)
-                                continue
-            
-                        for currentFile in glob.glob(os.path.join(outputdir, outputFile.name)):
-                            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
-                            if exitcode != 0:
-                                logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFile, massStoragePath))
-                            else:
-                                logger.info('%s successfully uploaded to mass storage' % currentFile)              
-                                outputFile.setLocation(os.path.join(massStoragePath, os.path.basename(currentFile)))
-                                #remove file from output
-                                os.system('rm %s' % os.path.join(outputdir, currentFile))
-                    """
         #todo remove the __lcgseuploads__ file
 
     def updateMonitoringInformation(jobs):
