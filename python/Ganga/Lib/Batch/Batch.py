@@ -662,20 +662,11 @@ sys.exit(result)
         
         return job.getInputWorkspace().writefile(FileBuffer('__jobscript__',text),executable=1)
 
-    def postprocess(self, outputfiles, outputdir):  
-    
-        import glob   
+    def postprocess(self, outputfiles, outputdir):    
 
         if len(outputfiles) > 0:
             for outputFile in outputfiles:
-                if outputFile.__class__.__name__ == 'CompressedFile':
-                    """ 
-                    for currentFile in glob.glob(os.path.join(outputdir, outputFile.name)):
-                        fullFilePath = os.path.join(outputdir, currentFile)
-                        os.system("gzip %s" % fullFilePath)
-                    """
-                    outputFile.put()    
-                elif outputFile.__class__.__name__ == 'LCGStorageElementFile':
+                if outputFile.__class__.__name__ in ['OutputSandboxFile', 'LCGStorageElementFile']:
                     outputFile.put()    
 
         def findOutputFile(className, pattern):
