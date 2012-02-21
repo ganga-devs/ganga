@@ -1384,7 +1384,7 @@ try:
         
     postProcessOutputResult = postprocessoutput(orig_wdir)
 
-    lcgFile = open(os.path.join(orig_wdir, '__lcgseuploads__'), 'w')
+    lcgFile = open(os.path.join(orig_wdir, '__postprocesslocations__'), 'w')
         
 #   code here for upload to lcg se
     if postProcessOutputResult is not None:
@@ -1592,8 +1592,8 @@ sys.exit(0)
                 elif line.startswith('lcgse'):
                     if fullFilePath not in input_sandbox:
                         input_sandbox += [fullFilePath]
-                    if '__lcgseuploads__' not in output_sandbox:
-                        output_sandbox += ['__lcgseuploads__']
+                    if '__postprocesslocations__' not in output_sandbox:
+                        output_sandbox += ['__postprocesslocations__']
 
             fileRead.close()
 
@@ -1744,7 +1744,7 @@ sys.exit(0)
 
     def postprocess(self, outputfiles, outputdir):      
         
-        lcgSEUploadsFile = os.path.join(outputdir, '__lcgseuploads__')
+        lcgSEUploadsFile = os.path.join(outputdir, '__postprocesslocations__')
 
         lcgSEUploads = []
 
@@ -1770,7 +1770,7 @@ sys.exit(0)
 
                     outputFile.put()
 
-        #todo remove the __lcgseuploads__ file
+        #todo remove the __postprocesslocations__ file
 
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
