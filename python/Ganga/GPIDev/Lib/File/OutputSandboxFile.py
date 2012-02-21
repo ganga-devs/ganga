@@ -20,7 +20,7 @@ class OutputSandboxFile(GangaObject):
             in some way defined by the derived class
         """
         super(OutputSandboxFile, self).__init__()
-        self.name = name 
+        self.name = name
     
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
@@ -44,7 +44,29 @@ class OutputSandboxFile(GangaObject):
         Retrieves locally all files matching this OutputSandboxFile object pattern
         """
         raise NotImplementedError
-        
+
+    def put(self):
+        """
+        Uploads output file to the desired destination, should be overriden in LCGStorageElementFile, MassStorageFile, etc
+        """
+        raise NotImplementedError
+
+    def execSyscmdSubprocess(self, cmd):
+
+        import subprocess
+
+        exitcode = -999
+        mystdout = ''
+        mystderr = ''
+
+        try:
+            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (mystdout, mystderr) = child.communicate()
+            exitcode = child.returncode
+        finally:
+            pass
+
+        return (exitcode, mystdout, mystderr)
 
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
