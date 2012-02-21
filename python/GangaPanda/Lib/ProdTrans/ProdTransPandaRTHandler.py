@@ -101,11 +101,12 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             dbspec.type = 'input'
             jspec.addFile(dbspec)
 
-        m = re.search('(.*)\.(.*)\.(.*)\.(.*)\.(.*)\.(.*)',
-                      job.inputdata.dataset[0])
-        if not m:
-            raise ApplicationConfigurationError(None, "Error retrieving run number from dataset name")
-        jspec.jobParameters += ' RunNumber=%d' % int(m.group(2))
+        if job.inputdata:
+            m = re.search('(.*)\.(.*)\.(.*)\.(.*)\.(.*)\.(.*)',
+                          job.inputdata.dataset[0])
+            if not m:
+                raise ApplicationConfigurationError(None, "Error retrieving run number from dataset name")
+            jspec.jobParameters += ' RunNumber=%d' % int(m.group(2))
         
         # Output files.
         randomized_lfns = []
