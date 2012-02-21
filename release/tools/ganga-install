@@ -34,7 +34,7 @@ def usage():
    options:
     --prefix=DIR         : (default: ~/Ganga)
     --extern=EXT_LIST    : specify automatic download of external packages for ganga plugins in EXT_LIST
-                           EXT_LIST example: GangaGUI,GangaAtlas
+                           EXT_LIST example: GangaAtlas
     --silent             : print less messages
     --verbose            : print more messages
     --force              : override existing installation
