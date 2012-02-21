@@ -384,10 +384,10 @@ def uploadToSE(lcgseItem):
         cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
         cmd = cmd.replace('filename', currentFile)
         cmd = cmd + ' file:%s' % currentFile
-#        printInfo(cmd)  
+        printError(cmd)  
         (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
         if exitcode == 0:
-#            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
+            printError('result from cmd %s is %s' % (cmd,str(mystdout)))
             match = re.search('(guid:\S+)',mystdout)
             if match:
                 guidResults.append(mystdout)
@@ -591,7 +591,7 @@ sys.exit()
 
         postprocesslocations.close()
   
-        os.system('rm %s' % postprocessLocationsPath)   
+        #os.system('rm %s' % postprocessLocationsPath)   
 
         for outputFile in outputfiles:
             if outputFile.__class__.__name__ == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
