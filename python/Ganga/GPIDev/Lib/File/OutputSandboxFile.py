@@ -47,9 +47,14 @@ class OutputSandboxFile(GangaObject):
 
     def put(self):
         """
-        Uploads output file to the desired destination, should be overriden in LCGStorageElementFile, MassStorageFile, etc
+        Postprocesses (compress/upload) output file to the desired destination, can be overriden in LCGStorageElementFile, MassStorageFile, etc
         """
-        raise NotImplementedError
+        import glob     
+        import os
+
+        if self.compressed:
+            for currentFile in glob.glob(os.path.join(self.joboutputdir, self.name)):
+                os.system("gzip %s" % currentFile)
 
     def execSyscmdSubprocess(self, cmd):
 
