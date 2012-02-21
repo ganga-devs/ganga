@@ -7,6 +7,8 @@
 from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig 
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
 
 from OutputSandboxFile import OutputSandboxFile
 
@@ -19,6 +21,7 @@ class LCGStorageElementFile(OutputSandboxFile):
 
     _schema = Schema(Version(1,1), {
         'name'        : SimpleItem(defvalue="",doc='name of the file'),
+        'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
         'se'          : SimpleItem(defvalue=lcgSEConfig['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
         'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
         'se_rpath'    : SimpleItem(defvalue='', copyable=1, doc='the relative path to the VO directory on the SE'),
@@ -95,6 +98,30 @@ class LCGStorageElementFile(OutputSandboxFile):
             cmd = cmd + ' -P %s/ganga.%s/filename' % ( self.se_rpath, self.__get_unique_fname__() )
 
         return cmd
+
+    def put(self):
+        """
+        Executes the internally created command for file upload to LCG SE, this method will
+        be called on the client for files that are not been uploaded from the WN
+        """     
+        import glob
+        import os
+
+        os.environ['LFC_HOST'] = self.lfc_host
+
+        for currentFile in glob.glob(os.path.join(self.joboutputdir, self.name)):
+            cmd = self.getUploadCmd()
+            cmd = cmd.replace('filename', currentFile)
+            cmd = cmd + ' file:%s' % currentFile
+
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(cmd)
+            if exitcode == 0:
+                
+                match = re.search('(guid:\S+)',mystdout)
+                if match:
+                    self.setLocation(mystdout.strip())
+                else:
+                    logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))
     
     def get(self, dir):
         """
