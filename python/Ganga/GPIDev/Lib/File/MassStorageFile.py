@@ -114,7 +114,7 @@ class MassStorageFile(OutputSandboxFile):
                 if exitcode != 0:
                     logger.warning('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (mkdir_cmd, massStoragePath))
                     logger.warning('skipping %s for uploading to Castor' % outputFile.name)
-                    continue
+                    return
             
             for currentFile in glob.glob(os.path.join(self.joboutputdir, self.name)):
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
