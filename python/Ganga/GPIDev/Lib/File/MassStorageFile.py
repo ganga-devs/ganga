@@ -12,6 +12,7 @@ class MassStorageFile(OutputSandboxFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
     """
     _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='name of the file'),
+                                    'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
                                     'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
                                         })
