@@ -10,6 +10,37 @@ logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility.Config import getConfig
 configPanda = getConfig('Panda')
 
+def getLatestDBReleaseCaching():
+    import tempfile,time
+    import cPickle as pickle
+    from pandatools import Client
+    from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
+
+    TMPDIR = tempfile.gettempdir()
+    nickname = getNickname(allowMissingNickname=False)
+    DBRELCACHE = '%s/ganga.latestdbrel.%s'%(TMPDIR,nickname)
+
+    try:
+        fh = open(DBRELCACHE)
+        dbrelCache = pickle.load(fh)
+        fh.close()
+        if dbrelCache['mtime'] > time.time() - 3600:
+            logger.debug('Loading LATEST DBRelease from local cache')
+            return dbrelCache['atlas_dbrelease']
+        else:
+            raise Exception()
+    except:
+        logger.debug('Updating local LATEST DBRelease cache')
+        atlas_dbrelease = Client.getLatestDBRelease(False)
+        dbrelCache = {}
+        dbrelCache['mtime'] = time.time()
+        dbrelCache['atlas_dbrelease'] = atlas_dbrelease
+        fh = open(DBRELCACHE,'w')
+        pickle.dump(dbrelCache,fh)
+        fh.close()
+        return atlas_dbrelease
+
+
 class ProdTransPandaRTHandler(IRuntimeHandler):
     """Runtime handler for the ProdTrans application."""
 
@@ -80,8 +111,12 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         jspec.cloud = job.backend.requirements.cloud
         jspec.cmtConfig = app.atlas_cmtconfig
         if app.dbrelease == 'LATEST':
-            from pandatools import Client
-            m = re.search('(.*):DBRelease-(.*)\.tar\.gz', Client.getLatestDBRelease())
+            try:
+                latest_dbrelease = getLatestDBReleaseCaching()
+            except:
+                from pandatools import Client
+                latest_dbrelease = Client.getLatestDBRelease()
+            m = re.search('(.*):DBRelease-(.*)\.tar\.gz', latest_dbrelease)
             if m:
                 self.dbrelease_dataset = m.group(1)
                 self.dbrelease = m.group(2)
