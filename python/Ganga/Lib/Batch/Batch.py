@@ -669,6 +669,7 @@ sys.exit(result)
         import re    
 
         # system command executor with subprocess
+        """
         def execSyscmdSubprocess(cmd):
 
             exitcode = -999
@@ -683,6 +684,7 @@ sys.exit(result)
                 pass
 
             return (exitcode, mystdout, mystderr)
+        """
 
         if len(outputfiles) > 0:
             for outputFile in outputfiles:
@@ -693,7 +695,9 @@ sys.exit(result)
                         os.system("gzip %s" % fullFilePath)
 
                 elif outputFile.__class__.__name__ == 'LCGStorageElementFile':
-                    
+                    #here implement the put method
+                    outputFile.put()    
+                    """
                     os.environ['LFC_HOST'] = outputFile.lfc_host
 
                     for currentFile in glob.glob(os.path.join(outputdir, outputFile.name)):
@@ -709,7 +713,7 @@ sys.exit(result)
                                 outputFile.setLocation(mystdout.strip())
                         else:
                             logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))
-
+                    """ 
 
         def findOutputFile(className, pattern):
             for outputfile in outputfiles:
