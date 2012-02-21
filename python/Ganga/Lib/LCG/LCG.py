@@ -1787,7 +1787,8 @@ sys.exit(0)
                             outputFile.setLocation(guid)
  
                 elif outputFile.__class__.__name__ == 'MassStorageFile':
-
+                    outputFile.put()
+                    """
                     from Ganga.Utility.Config import getConfig
                     massStorageConfig = getConfig('MassStorageOutput') 
 
@@ -1836,7 +1837,7 @@ sys.exit(0)
                                 outputFile.setLocation(os.path.join(massStoragePath, os.path.basename(currentFile)))
                                 #remove file from output
                                 os.system('rm %s' % os.path.join(outputdir, currentFile))
-
+                    """
         #todo remove the __lcgseuploads__ file
 
     def updateMonitoringInformation(jobs):
