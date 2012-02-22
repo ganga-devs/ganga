@@ -330,6 +330,90 @@ class Job(GangaObject):
             self.application.transition_update(new_status)
         return new_status
 
+    def postprocessoutput(self, outputfiles, outputdir):        
+        
+        #this dictionary shows which outputpostprocessing (on a backend) should be executed on the client -> marked with 1, the other entries, marked with 0 mean that the execution should have been processed on the WN and now we only need to set the locations of the outputfiles
+        backendClientPostprocess = {'LSFOutputSandboxFile':1, 'LSFLCGStorageElementFile':1, 'LCGMassStorageFile':1, 'CREAMMassStorageFile':1, 'LocalhostMassStorageFile':0, 'LocalhostLCGStorageElementFile':0, 'LSFMassStorageFile':0, 'LCGLCGStorageElementFile':0, 'CREAMLCGStorageElementFile':0 }
+
+        if len(outputfiles) == 0:
+            return
+
+        def findOutputFile(className, pattern):
+            for outputfile in outputfiles:
+                if outputfile.__class__.__name__ == className and outputfile.name == pattern:
+                    return outputfile
+
+            return None 
+
+        postprocessLocationsPath = os.path.join(outputdir, '__postprocesslocations__')
+        if not os.path.exists(postprocessLocationsPath):
+            return
+
+        lcgSEUploads = []
+        massStorageUploads = {}
+
+        postprocesslocations = open(postprocessLocationsPath, 'r')
+        
+        for line in postprocesslocations.readlines():
+                
+            if line.strip() == '':      
+                continue
+
+            lineParts = line.split(' ') 
+            outputType = lineParts[0] 
+            outputPattern = lineParts[1]
+            outputPath = lineParts[2]           
+
+            if line.startswith('massstorage'):
+
+                if outputPattern not in massStorageUploads.keys():
+                    massStorageUploads[outputPattern] = []
+                    massStorageUploads[outputPattern].append(outputPath)                    
+                else:
+                    massStorageUploads[outputPattern].append(outputPath)                    
+                """
+                outputFile = findOutputFile('MassStorageFile', outputPattern)
+                if outputFile is not None:
+                    outputFile.setLocation(outputPath.strip('\n'))
+                """
+
+            elif line.startswith('lcgse'):
+                lcgSEUploads.append(line.strip())
+            else:
+                pass
+                #to be implemented for other output file types
+
+        postprocesslocations.close()
+  
+        for outputfile in outputfiles:
+            backendClass = self.backend.__class__.__name__
+            outputfileClass = outputfile.__class__.__name__
+            key = '%s%s' % (backendClass, outputfileClass)                  
+
+            if key in backendClientPostprocess.keys():
+                if backendClientPostprocess[key] == 1:
+                    outputfile.put()    
+                else:
+                    if outputfileClass == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
+
+                        searchPattern = 'lcgse %s' % outputFile.name
+
+                        for lcgSEUpload in lcgSEUploads:
+                            if lcgSEUpload.startswith(searchPattern):
+                                guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
+                                outputFile.setLocation(guid)
+
+                    elif outputfileClass == 'MassStorageFile':
+                                
+                        for massStoragePattern in massStorageUploads.keys():
+                            if massStoragePattern == outputfile.name:
+                                for location in massStorageUploads[massStoragePattern]:
+                                    outputfile.setLocation(location)     
+        
+        #leave it for the moment for debugging
+        os.system('rm %s' % postprocessLocationsPath)   
+
+
     def updateMasterJobStatus(self):
         """
         Update master job status based on the status of subjobs.
@@ -378,7 +462,8 @@ class Job(GangaObject):
     def postprocess_hook(self):
         self.application.postprocess()
         self.getMonitoringService().complete()
-        self.backend.postprocess(self.outputfiles, self.getOutputWorkspace().getPath())
+        #self.backend.postprocess(self.outputfiles, self.getOutputWorkspace().getPath())
+        self.postprocessoutput(self.outputfiles, self.getOutputWorkspace().getPath())
 
     def postprocess_hook_failed(self):
         self.application.postprocess_failed()
