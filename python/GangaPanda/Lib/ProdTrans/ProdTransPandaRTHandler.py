@@ -77,6 +77,10 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         job.backend.actualCE = job.backend.site
         job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
 
+        # check that the site is in a submit-able status
+        if not job.splitter or job.splitter._name != 'DQ2JobSplitter':
+            allowed_sites = job.backend.list_ddm_sites()
+
         try:
             outDsLocation = Client.PandaSites[job.backend.site]['ddm']
             Client.addDataset(job.outputdata.datasetname,False,location=outDsLocation,allowProdDisk=True)
