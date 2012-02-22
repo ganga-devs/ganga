@@ -1222,7 +1222,8 @@ sys.exit(0)
         return ick
 
     def postprocess(self, outputfiles, outputdir):      
-
+        pass
+        """
         lcgSEUploadsFile = os.path.join(outputdir, '__postprocesslocations__')
 
         lcgSEUploads = []
@@ -1247,7 +1248,7 @@ sys.exit(0)
                 elif outputFile.__class__.__name__ == 'MassStorageFile':
 
                     outputFile.put()
-
+        """
 
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
