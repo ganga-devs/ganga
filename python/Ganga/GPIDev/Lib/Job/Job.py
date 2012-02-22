@@ -368,9 +368,9 @@ class Job(GangaObject):
 
                 if outputPattern not in massStorageUploads.keys():
                     massStorageUploads[outputPattern] = []
-                    massStorageUploads[outputPattern].append(outputPath)                    
+                    massStorageUploads[outputPattern].append(outputPath.strip('\n'))                    
                 else:
-                    massStorageUploads[outputPattern].append(outputPath)                    
+                    massStorageUploads[outputPattern].append(outputPath.strip('\n'))                    
                 """
                 outputFile = findOutputFile('MassStorageFile', outputPattern)
                 if outputFile is not None:
