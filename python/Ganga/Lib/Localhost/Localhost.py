@@ -549,9 +549,9 @@ sys.exit()
             except OSError,x:
                 logger.warning('problem removing the workdir %s: %s',str(self.id),str(x))            
     
-    def postprocess(self, outputfiles, outputdir):    
-        
-
+    def postprocess(self, outputfiles, outputdir): 
+        pass   
+        """
         def findOutputFile(className, pattern):
             for outputfile in outputfiles:
                 if outputfile.__class__.__name__ == className and outputfile.name == pattern:
@@ -604,7 +604,7 @@ sys.exit()
                         guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
                         outputFile.setLocation(guid)
                 
-
+        """
     def updateMonitoringInformation(jobs):
 
       def get_exit_code(f):
