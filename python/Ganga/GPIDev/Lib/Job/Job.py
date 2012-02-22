@@ -396,12 +396,12 @@ class Job(GangaObject):
                 else:
                     if outputfileClass == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
 
-                        searchPattern = 'lcgse %s' % outputFile.name
+                        searchPattern = 'lcgse %s' % outputfile.name
 
                         for lcgSEUpload in lcgSEUploads:
                             if lcgSEUpload.startswith(searchPattern):
                                 guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
-                                outputFile.setLocation(guid)
+                                outputfile.setLocation(guid)
 
                     elif outputfileClass == 'MassStorageFile':
                                 
