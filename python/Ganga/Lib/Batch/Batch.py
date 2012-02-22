@@ -663,7 +663,8 @@ sys.exit(result)
         return job.getInputWorkspace().writefile(FileBuffer('__jobscript__',text),executable=1)
 
     def postprocess(self, outputfiles, outputdir):    
-
+        pass
+        """
         if len(outputfiles) > 0:
             for outputFile in outputfiles:
                 if outputFile.__class__.__name__ in ['OutputSandboxFile', 'LCGStorageElementFile']:
@@ -700,7 +701,7 @@ sys.exit(result)
         postprocesslocations.close()
   
         os.system('rm %s' % postprocessLocationsPath)
-
+        """
     def updateMonitoringInformation(jobs):
 
         import re
