@@ -1743,7 +1743,8 @@ sys.exit(0)
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
     def postprocess(self, outputfiles, outputdir):      
-        
+        pass
+        """
         lcgSEUploadsFile = os.path.join(outputdir, '__postprocesslocations__')
 
         lcgSEUploads = []
@@ -1771,7 +1772,7 @@ sys.exit(0)
                     outputFile.put()
 
         #todo remove the __postprocesslocations__ file
-
+        """
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
       
