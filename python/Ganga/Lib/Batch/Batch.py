@@ -662,46 +662,6 @@ sys.exit(result)
         
         return job.getInputWorkspace().writefile(FileBuffer('__jobscript__',text),executable=1)
 
-    def postprocess(self, outputfiles, outputdir):    
-        pass
-        """
-        if len(outputfiles) > 0:
-            for outputFile in outputfiles:
-                if outputFile.__class__.__name__ in ['OutputSandboxFile', 'LCGStorageElementFile']:
-                    outputFile.put()    
-
-        def findOutputFile(className, pattern):
-            for outputfile in outputfiles:
-                if outputfile.__class__.__name__ == className and outputfile.name == pattern:
-                    return outputfile
-
-            return None 
-
-        postprocessLocationsPath = os.path.join(outputdir, '__postprocesslocations__')
-
-        if not os.path.exists(postprocessLocationsPath):
-            return
-
-        postprocesslocations = open(postprocessLocationsPath, 'r')
-        
-        for line in postprocesslocations.readlines():
-            lineParts = line.split(' ') 
-            outputType = lineParts[0] 
-            outputPattern = lineParts[1]
-            outputPath = lineParts[2]           
-
-            if line.startswith('massstorage'):
-                outputFile = findOutputFile('MassStorageFile', outputPattern)
-                if outputFile is not None:
-                    outputFile.setLocation(outputPath.strip('\n'))
-            else:
-                pass
-                #to be implemented for other output file types
-                
-        postprocesslocations.close()
-  
-        os.system('rm %s' % postprocessLocationsPath)
-        """
     def updateMonitoringInformation(jobs):
 
         import re
