@@ -1221,35 +1221,6 @@ sys.exit(0)
 
         return ick
 
-    def postprocess(self, outputfiles, outputdir):      
-        pass
-        """
-        lcgSEUploadsFile = os.path.join(outputdir, '__postprocesslocations__')
-
-        lcgSEUploads = []
-
-        if os.path.exists(lcgSEUploadsFile):
-            fp = open(lcgSEUploadsFile, 'r')
-            for line in fp.readlines():
-                lcgSEUploads.append(line.strip())               
-
-        if len(outputfiles) > 0:
-            for outputFile in outputfiles:
-                if outputFile.__class__.__name__ == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
-                        
-                    #todo add to the search pattern lfc host, dest se, etc.
-                    searchPattern = 'lcgse %s' % outputFile.name
-
-                    for lcgSEUpload in lcgSEUploads:
-                        if lcgSEUpload.startswith(searchPattern):
-                            guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
-                            outputFile.setLocation(guid)
-
-                elif outputFile.__class__.__name__ == 'MassStorageFile':
-
-                    outputFile.put()
-        """
-
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
 
