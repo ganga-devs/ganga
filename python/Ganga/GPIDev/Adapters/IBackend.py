@@ -314,13 +314,6 @@ class IBackend(GangaObject):
         """Returns all available backend specific timestamps.
         """
         pass
-    
-    def postprocess(self, outputfiles, outputdir):
-        """ This is a hook called after the job is completed 
-        to postprocess the output files
-        """
-        pass
-
 
     def master_updateMonitoringInformation(jobs):
         
