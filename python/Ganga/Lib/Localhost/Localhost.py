@@ -549,62 +549,6 @@ sys.exit()
             except OSError,x:
                 logger.warning('problem removing the workdir %s: %s',str(self.id),str(x))            
     
-    def postprocess(self, outputfiles, outputdir): 
-        pass   
-        """
-        def findOutputFile(className, pattern):
-            for outputfile in outputfiles:
-                if outputfile.__class__.__name__ == className and outputfile.name == pattern:
-                    return outputfile
-
-            return None 
-
-        postprocessLocationsPath = os.path.join(outputdir, '__postprocesslocations__')
-
-        if not os.path.exists(postprocessLocationsPath):
-            return
-        
-        lcgSEUploads = []
-
-        postprocesslocations = open(postprocessLocationsPath, 'r')
-        
-        for line in postprocesslocations.readlines():
-                
-            if line.strip() == '':      
-                continue
-
-            lineParts = line.split(' ') 
-            outputType = lineParts[0] 
-            outputPattern = lineParts[1]
-            outputPath = lineParts[2]           
-
-            if line.startswith('massstorage'):
-                outputFile = findOutputFile('MassStorageFile', outputPattern)
-                if outputFile is not None:
-                    outputFile.setLocation(outputPath.strip('\n'))
-
-            elif line.startswith('lcgse'):
-                lcgSEUploads.append(line.strip())
-            else:
-                pass
-                #to be implemented for other output file types
-
-        postprocesslocations.close()
-  
-        os.system('rm %s' % postprocessLocationsPath)   
-
-        for outputFile in outputfiles:
-            if outputFile.__class__.__name__ == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
-                        
-                #todo add to the search pattern lfc host, dest se, etc.
-                searchPattern = 'lcgse %s' % outputFile.name
-
-                for lcgSEUpload in lcgSEUploads:
-                    if lcgSEUpload.startswith(searchPattern):
-                        guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
-                        outputFile.setLocation(guid)
-                
-        """
     def updateMonitoringInformation(jobs):
 
       def get_exit_code(f):
