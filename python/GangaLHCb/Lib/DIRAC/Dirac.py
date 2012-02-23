@@ -175,27 +175,33 @@ class Dirac(IBackend):
  
     def resubmit(self):
         """Resubmit a DIRAC job"""
-        script = self._getDiracScript()
-        cur_script = open(script)
-        tmp_script = open(script + '.tmp','w')
-        skip = False
-        for line in cur_script.readlines():
-            if line.find('<-- user settings') >= 0:
-                skip = True
-                # write new settings
-                tmp_script.write('# <-- user settings \n')
-                for key in self.settings:
-                    value = self.settings[key]
-                    if type(value) == type(''):
-                        tmp_script.write('j.set%s("%s")\n' % (key,value))
-                    else:
-                        tmp_script.write('j.set%s(%s)\n' % (key,str(value)))
-            if line.find('user settings -->') >= 0: skip = False
-            if not skip: tmp_script.write(line)
-        cur_script.close()
-        tmp_script.close()
-        os.system('mv -f %s %s' % (script+'.tmp',script))
-        return self._submit()
+        j = self.getJobObject()
+        j.status='new'
+        #j.updateStatus('new') # this way announces to user that status changed to new
+        j.info.submit_counter-=1 # correct the submission counter as we pick up one from the job.resubmit() and another from job.submit()
+        return j.submit()
+        
+##         script = self._getDiracScript()
+##         cur_script = open(script)
+##         tmp_script = open(script + '.tmp','w')
+##         skip = False
+##         for line in cur_script.readlines():
+##             if line.find('<-- user settings') >= 0:
+##                 skip = True
+##                 # write new settings
+##                 tmp_script.write('# <-- user settings \n')
+##                 for key in self.settings:
+##                     value = self.settings[key]
+##                     if type(value) == type(''):
+##                         tmp_script.write('j.set%s("%s")\n' % (key,value))
+##                     else:
+##                         tmp_script.write('j.set%s(%s)\n' % (key,str(value)))
+##             if line.find('user settings -->') >= 0: skip = False
+##             if not skip: tmp_script.write(line)
+##         cur_script.close()
+##         tmp_script.close()
+##         os.system('mv -f %s %s' % (script+'.tmp',script))
+##         return self._submit()
 
     def reset(self, doSubjobs =False):
         """Resets the state of a job back to 'submitted' so that the

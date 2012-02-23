@@ -12,7 +12,7 @@ from PhysicalFile import *
 from LogicalFile import *
 from OutputData import *
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-from Ganga.GPIDev.Lib.Job.Job import Job
+from Ganga.GPIDev.Lib.Job.Job import Job,JobTemplate
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -389,12 +389,20 @@ allComponentFilters['datafiles'] = string_datafile_shortcut
 
 def string_dataset_shortcut(files,item):
     from GangaLHCb.Lib.Tasks.LHCbAnalysisTransform import LHCbAnalysisTransform
+    inputdataList  = [Job._schema['inputdata'],
+                      LHCbAnalysisTransform._schema['inputdata'],
+                      JobTemplate._schema['inputdata']
+                      ]
+    outputdataList = [Job._schema['outputdata'],
+                      LHCbAnalysisTransform._schema['outputdata'],
+                      JobTemplate._schema['outputdata']
+                      ]
     if type(files) is not type([]): return None
-    if item == Job._schema['inputdata'] or item == LHCbAnalysisTransform._schema['inputdata']:
+    if item in inputdataList:
         ds = LHCbDataset()
         ds.__construct__([files])
         return ds               
-    elif item == Job._schema['outputdata'] or item == LHCbAnalysisTransform._schema['outputdata']:
+    elif item in outputdataList:
         return OutputData(files=files)
     else:
         return None # used to be c'tors, but shouldn't happen now

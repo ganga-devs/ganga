@@ -13,6 +13,7 @@ from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 from Ganga.Core import TypeMismatchError
+from Ganga.Utility.util import unique
 
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -100,10 +101,10 @@ class GaudiRunTimeHandler(IRuntimeHandler):
         ## Here return a GaudiJobConfig built on the StandardJobConfig but also
         ## containing outputdata attribute since we can define outputdata in
         ## optfiles
-        return GaudiJobConfig(inputbox=inputsandbox,
-                              outputbox=outputsandbox,
-                              outputdata=outdata,
-                              inputdata=indata)
+        return GaudiJobConfig(inputbox=unique(inputsandbox),
+                              outputbox=unique(outputsandbox),
+                              outputdata=OutputData(files=unique(outdata.files)),
+                              inputdata=LHCbDataset(files=unique(indata.files)))
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
 
@@ -200,7 +201,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
 
         return StandardJobConfig(FileBuffer('gaudiscript.py',script,
                                             executable=1),
-                                 inputbox=inputsandbox,
-                                 outputbox=outputsandbox)
+                                 inputbox=unique(inputsandbox),
+                                 outputbox=unique(outputsandbox))
         
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
