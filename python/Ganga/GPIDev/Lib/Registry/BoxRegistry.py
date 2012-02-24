@@ -129,6 +129,7 @@ class BoxRegistry(Registry):
     
     def proxy_remove(self,obj_id):
 
+        obj=self._get_obj(obj_id)
         if obj._category == 'jobs':
             if hasattr(obj.application, 'is_prepared'):
                 if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
