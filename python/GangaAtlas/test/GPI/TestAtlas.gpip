@@ -350,7 +350,7 @@ class TestAthenaMC_simul(AtlasTest):
         j.application.extraArgs = 'jobConfig=VertexFromCondDB.py,CalHits.py,jobConfig.LooperKiller.py physicsList=QGSP_BERT DBRelease=12.2.1 ConditionsTag=OFLCOND-SDR-BS7T-02'
         j.application.production_name='test-%s' % today
         j.inputdata=AthenaMCInputDatasets()
-        j.inputdata.DQ2dataset='user09.fredericbrochu.ganga.prod.100000.Pythia_RPV_UDD_1em6.evgen.EVNT/' # dataset in CAMBRIDGE, available in both Panda and LCG backends.
+        j.inputdata.DQ2dataset='user.fbrochu.SingleOmegaPt05_10.EVNT.r17.0.2.8/' # dataset in CAMBRIDGE, available in both Panda and LCG backends.
         j.inputdata.number_events_file=30
         j.outputdata = AthenaMCOutputDatasets ()
         j.splitter=AthenaMCSplitterJob()
