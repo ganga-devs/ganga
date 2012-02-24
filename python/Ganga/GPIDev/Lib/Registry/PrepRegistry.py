@@ -128,12 +128,12 @@ class ShareRef(GangaObject):
         self._getWriteAccess()
         cleanup_list = []
         for shareddir in self.name:
-            actual_shareddir_path = os.path.join(ShareDir._root_shared_path,shareddir)
-            if self.name[shareddir] == 0 and os.path.isdir(actual_shareddir_path):
+            full_shareddir_path = os.path.join(ShareDir._root_shared_path,shareddir)
+            if self.name[shareddir] == 0 and os.path.isdir(full_shareddir_path):
                 logger.info('%s no longer being referenced by any objects. Removing directory.' %shareddir)
-                shutil.rmtree(actual_shareddir_path)
+                shutil.rmtree(full_shareddir_path)
                 cleanup_list.append(shareddir)
-            if not os.path.isdir(actual_shareddir_path):
+            if not os.path.isdir(full_shareddir_path):
                 if shareddir not in cleanup_list:
                     logger.info('%s not found on disk. Removing entry from shared files reference table (shareref).' %shareddir)
                     cleanup_list.append(shareddir)
@@ -153,10 +153,10 @@ class ShareRef(GangaObject):
         directories repository, or 
         """
         shareddir_root = shareddir
-        shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
+        full_shareddir_path =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
        
-        if os.path.isdir(shareddir):
-            cmd = "find '%s'" % (shareddir)
+        if os.path.isdir(full_shareddir_path):
+            cmd = "find '%s'" % (full_shareddir_path)
             files = os.popen(cmd).read().strip().split('\n')
             padding = '|  '
             for file in files:
@@ -181,8 +181,9 @@ class ShareRef(GangaObject):
             zero_ref = False
             unsorted = []
             for element in self.name:
-                if os.path.isdir(element):
-                    unsorted.append(shareref_data(os.path.basename(element), int(os.path.getctime(element)), self.name[element]))
+                full_shareddir_path = os.path.join(ShareDir._root_shared_path, os.path.basename(element))
+                if os.path.isdir(full_shareddir_path):
+                    unsorted.append(shareref_data(os.path.basename(element), int(os.path.getctime(full_shareddir_path)), self.name[element]))
                 else:
                     unsorted.append(shareref_data(os.path.basename(element), "Directory not found", self.name[element]))
             decorated = [(name.date, i, name) for i, name in enumerate(unsorted)]
