@@ -729,17 +729,23 @@ class PrepareNextRelease:
         fh.close()
         while True:
             print "Current releases: %s" % next_releases
-            new_release = raw_input('Enter new release number:')
+
+            if len(next_releases) == 0: 
+                new_release = raw_input('Enter new release number:')
+            else:
+                new_release = raw_input('Enter new release number (blank to exit):')    
+
             if not new_release: 
                 break
-            print 'Generating new tags dir based on PACKAGES-%(version)s' % CONFIG
+            next_releases.append(new_release)
+        
+        
+        for new_release in next_releases:
+            print 'Generating new tags dir based on PACKAGES-%(version)s' % CONFIG      
             acmd('mkdir %s/data/%s' % (CONFIG['tagsdir_top'],new_release) )
             toolcmd('ganga-tags-prepare %s/data/%s %s/PACKAGES-%s' % (CONFIG['tagsdir_top'],new_release, CONFIG['configdir'],CONFIG['version']))
             acmd('fs sa %s/data/%s webserver:afs rliw system:anyuser none '% (CONFIG['tagsdir_top'],new_release) )
-            next_releases.append(new_release)
-        
 
-        
         print "Saved releases: %s" % next_releases
         fh = open('%(tagsdir_top)s/open_releases' % CONFIG, 'w')
         fh.writelines([release+'\n' for release in next_releases])
