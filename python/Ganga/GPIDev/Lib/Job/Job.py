@@ -177,6 +177,7 @@ class Job(GangaObject):
                   { 'attribute' : 'inputdata' },
                   { 'attribute' : 'outputsandbox' } ]
 
+        
 
     # TODO: usage of **kwds may be envisaged at this level to optimize the overriding of values, this must be reviewed
     def __init__(self):
@@ -218,6 +219,15 @@ class Job(GangaObject):
                 assert(not s.state in self)
                 self[s.state] = s
     
+
+    #this dictionary shows which outputpostprocessing (on a backend) should be executed on the client -> marked with 1, the other entries, marked with 0 mean that the execution should have been processed on the WN and now we only need to set the locations of the outputfiles
+    """
+    backendClientPostprocess = {'LSFOutputSandboxFile':1, 'LSFLCGStorageElementFile':1, 'LCGMassStorageFile':1, 'CREAMMassStorageFile':1, 'LocalhostMassStorageFile':0, 'LocalhostLCGStorageElementFile':0, 'LSFMassStorageFile':0, 'LCGLCGStorageElementFile':0, 'CREAMLCGStorageElementFile':0 }
+    """
+        
+    backend_output_postprocess = {'LSF' :{'OutputSandboxFile':'client', 'LCGStorageElementFile':'client', 'MassStorageFile':'WN'}, 'Localhost': {'MassStorageFile':'WN', 'LCGStorageElementFile':'WN'} , 'LCG' : {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}, 'CREAM': {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}}
+
+
     status_graph = {'new' : Transitions(State('submitting','j.submit()',hook='monitorSubmitting_hook'),
                                         State('removed','j.remove()')),
                     'submitting' : Transitions(State('new','submission failed',hook='rollbackToNewState'),
@@ -332,9 +342,6 @@ class Job(GangaObject):
 
     def postprocessoutput(self, outputfiles, outputdir):        
         
-        #this dictionary shows which outputpostprocessing (on a backend) should be executed on the client -> marked with 1, the other entries, marked with 0 mean that the execution should have been processed on the WN and now we only need to set the locations of the outputfiles
-        backendClientPostprocess = {'LSFOutputSandboxFile':1, 'LSFLCGStorageElementFile':1, 'LCGMassStorageFile':1, 'CREAMMassStorageFile':1, 'LocalhostMassStorageFile':0, 'LocalhostLCGStorageElementFile':0, 'LSFMassStorageFile':0, 'LCGLCGStorageElementFile':0, 'CREAMLCGStorageElementFile':0 }
-
         if len(outputfiles) == 0:
             return
 
@@ -371,11 +378,6 @@ class Job(GangaObject):
                     massStorageUploads[outputPattern].append(outputPath.strip('\n'))                    
                 else:
                     massStorageUploads[outputPattern].append(outputPath.strip('\n'))                    
-                """
-                outputFile = findOutputFile('MassStorageFile', outputPattern)
-                if outputFile is not None:
-                    outputFile.setLocation(outputPath.strip('\n'))
-                """
 
             elif line.startswith('lcgse'):
                 lcgSEUploads.append(line.strip())
@@ -384,14 +386,37 @@ class Job(GangaObject):
                 #to be implemented for other output file types
 
         postprocesslocations.close()
-  
+
         for outputfile in outputfiles:
             backendClass = self.backend.__class__.__name__
             outputfileClass = outputfile.__class__.__name__
             key = '%s%s' % (backendClass, outputfileClass)                  
 
-            if key in backendClientPostprocess.keys():
-                if backendClientPostprocess[key] == 1:
+            if self.backend_output_postprocess.has_key(backendClass):
+                if self.backend_output_postprocess[backendClass].has_key(outputfileClass):
+                    if self.backend_output_postprocess[backendClass][outputfileClass] == 'client':
+                        outputfile.put()    
+                    elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WN':        
+
+                        if outputfileClass == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
+
+                            searchPattern = 'lcgse %s' % outputfile.name
+
+                            for lcgSEUpload in lcgSEUploads:
+                                if lcgSEUpload.startswith(searchPattern):
+                                    guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
+                                    outputfile.setLocation(guid)
+
+                        elif outputfileClass == 'MassStorageFile':
+                                
+                            for massStoragePattern in massStorageUploads.keys():
+                                if massStoragePattern == outputfile.name:
+                                    for location in massStorageUploads[massStoragePattern]:
+                                        outputfile.setLocation(location)     
+
+            """
+            if key in self.backendClientPostprocess.keys():
+                if self.backendClientPostprocess[key] == 1:
                     outputfile.put()    
                 else:
                     if outputfileClass == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
@@ -409,7 +434,7 @@ class Job(GangaObject):
                             if massStoragePattern == outputfile.name:
                                 for location in massStorageUploads[massStoragePattern]:
                                     outputfile.setLocation(location)     
-        
+            """
         #leave it for the moment for debugging
         os.system('rm %s' % postprocessLocationsPath)   
 
