@@ -1,4 +1,4 @@
-import commands, exceptions, random, re, sys
+import commands, exceptions, random, re, sys, time
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -11,7 +11,7 @@ from Ganga.Utility.Config import getConfig
 configPanda = getConfig('Panda')
 
 def getLatestDBReleaseCaching():
-    import tempfile,time
+    import tempfile
     import cPickle as pickle
     from pandatools import Client
     from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
@@ -152,7 +152,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         for lfn in app.output_files:
             ofspec = FileSpec()
             if app.randomize_lfns:
-                randomized_lfn = lfn + ('.%d' % int(random.random() * 1000000))
+                randomized_lfn = lfn + ('.%s.%d.%s' % (job.backend.site, int(time.time()), commands.getoutput('uuidgen')[:4] ) )
             else:
                 randomized_lfn = lfn
             ofspec.lfn = randomized_lfn
