@@ -166,6 +166,7 @@ class Localhost(IBackend):
     def preparejob(self,jobconfig,master_input_sandbox):
 
       job = self.getJobObject()
+      #print str(job.backend_output_postprocess)        
       mon = job.getMonitoringService()
       import Ganga.Core.Sandbox as Sandbox
       subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
@@ -379,7 +380,6 @@ def uploadToSE(lcgseItem):
         
     guidResults = []
 
-    import glob 
     for currentFile in glob.glob(filenameWildChar):
         cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
         cmd = cmd.replace('filename', currentFile)
@@ -429,7 +429,6 @@ if postProcessOutputResult is not None:
                 printError(errorfile, 'Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path), mystderr)
                 continue
             
-        import glob 
         for currentFile in glob.glob(filenameWildChar):
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
             if exitcode != 0:
@@ -448,33 +447,7 @@ if postProcessOutputResult is not None:
 errorfile.close()
 postprocesslocations.close()
 
-from Ganga.Utility.files import recursive_copy
-
-f_to_copy = ['stdout','stderr','__syslog__']
-
-
-filesToZip = []
-
-if postProcessOutputResult is not None and postProcessOutputResult[0] != '':
-    patternsToZip = postProcessOutputResult[0].split(' ')
-    for patternToZip in patternsToZip:
-        for currentFile in glob.glob(patternToZip):
-            os.system("gzip %s" % currentFile)
-            filesToZip.append(currentFile)
-            
-final_list_to_copy = []
-
-for f in f_to_copy:
-    if f in filesToZip:
-        final_list_to_copy.append('%s.gz' % f)  
-    else:       
-        final_list_to_copy.append(f)            
-
-for fn in final_list_to_copy:
-    try:
-        recursive_copy(fn,sharedoutputpath)
-    except Exception,x:
-        print 'ERROR: (job'+###JOBID###+')',x
+###OUTPUTPOSTPROCESSING###
 
 line="EXITCODE: " + repr(result) + os.linesep
 line+='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
@@ -485,6 +458,9 @@ sys.exit()
 
       import inspect
       script = script.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
+
+      from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox
+      script = script.replace('###OUTPUTPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__']))
 
       script = script.replace('###APPLICATION_NAME###',repr(job.application._name))
       script = script.replace('###INPUT_SANDBOX###',repr(subjob_input_sandbox+master_input_sandbox))
