@@ -592,11 +592,7 @@ postprocesslocations.close()
 
 print >>sys.stderr,"--- GANGA APPLICATION ERROR END ---"
 
-for fn in ['__syslog__']:
-    try:
-        recursive_copy(fn,sharedoutputpath)
-    except Exception,x:
-        print 'ERROR: (job %s) %s'%(jobid,str(x))
+###OUTPUTPOSTPROCESSING###
 
 ###POSTEXECUTE###
 
@@ -614,6 +610,9 @@ sys.exit(result)
         import inspect
         import Ganga.Core.Sandbox as Sandbox
         import Ganga.Utility as Utility
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox
+        text = text.replace('###OUTPUTPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['__syslog__']))
+
         text = text.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
         text = text.replace('###INLINEHOSTNAMEFUNCTION###',inspect.getsource(Utility.util.hostname))
         text = text.replace('###APPSCRIPTPATH###',repr(appscriptpath))
