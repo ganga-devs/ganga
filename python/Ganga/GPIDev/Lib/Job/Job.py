@@ -219,13 +219,8 @@ class Job(GangaObject):
                 assert(not s.state in self)
                 self[s.state] = s
     
-
-    #this dictionary shows which outputpostprocessing (on a backend) should be executed on the client -> marked with 1, the other entries, marked with 0 mean that the execution should have been processed on the WN and now we only need to set the locations of the outputfiles
-    """
-    backendClientPostprocess = {'LSFOutputSandboxFile':1, 'LSFLCGStorageElementFile':1, 'LCGMassStorageFile':1, 'CREAMMassStorageFile':1, 'LocalhostMassStorageFile':0, 'LocalhostLCGStorageElementFile':0, 'LSFMassStorageFile':0, 'LCGLCGStorageElementFile':0, 'CREAMLCGStorageElementFile':0 }
-    """
         
-    backend_output_postprocess = {'LSF' :{'OutputSandboxFile':'client', 'LCGStorageElementFile':'client', 'MassStorageFile':'WN'}, 'Localhost': {'MassStorageFile':'WN', 'LCGStorageElementFile':'WN'} , 'LCG' : {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}, 'CREAM': {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}}
+    backend_output_postprocess = {'LSF' :{'OutputSandboxFile':'WNclient', 'LCGStorageElementFile':'client', 'MassStorageFile':'WN'}, 'Localhost': {'MassStorageFile':'WN', 'LCGStorageElementFile':'WN'} , 'LCG' : {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}, 'CREAM': {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}}
 
 
     status_graph = {'new' : Transitions(State('submitting','j.submit()',hook='monitorSubmitting_hook'),
@@ -390,12 +385,14 @@ class Job(GangaObject):
         for outputfile in outputfiles:
             backendClass = self.backend.__class__.__name__
             outputfileClass = outputfile.__class__.__name__
-            key = '%s%s' % (backendClass, outputfileClass)                  
 
             if self.backend_output_postprocess.has_key(backendClass):
                 if self.backend_output_postprocess[backendClass].has_key(outputfileClass):
                     if self.backend_output_postprocess[backendClass][outputfileClass] == 'client':
                         outputfile.put()    
+                    elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WNclient':  
+                        if outputfile.name == 'stdout' or outputfile.name == 'stderr':
+                            outputfile.put() 
                     elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WN':        
 
                         if outputfileClass == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
@@ -414,27 +411,6 @@ class Job(GangaObject):
                                     for location in massStorageUploads[massStoragePattern]:
                                         outputfile.setLocation(location)     
 
-            """
-            if key in self.backendClientPostprocess.keys():
-                if self.backendClientPostprocess[key] == 1:
-                    outputfile.put()    
-                else:
-                    if outputfileClass == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
-
-                        searchPattern = 'lcgse %s' % outputfile.name
-
-                        for lcgSEUpload in lcgSEUploads:
-                            if lcgSEUpload.startswith(searchPattern):
-                                guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
-                                outputfile.setLocation(guid)
-
-                    elif outputfileClass == 'MassStorageFile':
-                                
-                        for massStoragePattern in massStorageUploads.keys():
-                            if massStoragePattern == outputfile.name:
-                                for location in massStorageUploads[massStoragePattern]:
-                                    outputfile.setLocation(location)     
-            """
         #leave it for the moment for debugging
         os.system('rm %s' % postprocessLocationsPath)   
 
@@ -722,7 +698,7 @@ class Job(GangaObject):
 
         if len(self.outputfiles) > 0:
             for outputFile in self.outputfiles:
-                if outputFile.__class__.__name__ == 'CompressedFile':
+                if outputFile.__class__.__name__ == 'OutputSandboxFile' and outputFile.compressed:
 
                     content += 'zipped %s\n' % outputFile.name  
 
