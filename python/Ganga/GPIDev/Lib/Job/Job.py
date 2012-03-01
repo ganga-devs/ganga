@@ -844,11 +844,12 @@ class Job(GangaObject):
             raise JobError(msg)
 
         assert(self.subjobs == [])
-        
-        if self.master is not None:
-            msg = "Cannot submit subjobs directly."
-            logger.error(msg)
-            raise JobError(msg)
+
+        # no longer needed with prepared state
+        #if self.master is not None:
+        #    msg = "Cannot submit subjobs directly."
+        #    logger.error(msg)
+        #    raise JobError(msg)
 
         # select the runtime handler
         from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
