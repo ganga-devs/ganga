@@ -380,6 +380,7 @@ import shutil
 import os
 import time
 import popen2
+import glob
 
 ############################################################################################
 
@@ -577,7 +578,6 @@ if postProcessOutputResult is not None:
                 print >>sys.stderr, mystderr
                 continue
             
-        import glob 
         for currentFile in glob.glob(filenameWildChar):
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
             if exitcode != 0:
