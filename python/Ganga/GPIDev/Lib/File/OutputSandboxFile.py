@@ -53,7 +53,9 @@ class OutputSandboxFile(GangaObject):
         import os
 
         if self.compressed:
+            print 'compressed'
             for currentFile in glob.glob(os.path.join(self.joboutputdir, self.name)):
+                print 'matched pattern'
                 os.system("gzip %s" % currentFile)
 
     def execSyscmdSubprocess(self, cmd):
