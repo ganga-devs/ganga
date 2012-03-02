@@ -65,9 +65,6 @@ for fn in final_list_to_copy:
 
 
 def getWNCodeForOutputPostprocessing(job):
-    #print job.outputfiles
-    #print job.backend_output_postprocess
-        
 
     if len(job.outputfiles) > 0:
         for outputFile in job.outputfiles:      
