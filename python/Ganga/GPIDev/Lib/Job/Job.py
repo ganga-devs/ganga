@@ -1287,7 +1287,11 @@ class Job(GangaObject):
         self.getDebugWorkspace().remove(preserve_top=True)
 
         try:
-            rjobs = self.subjobs
+            config_resubOFS = config['resubmitOnlyFailedSubjobs']
+            if config_resubOFS is True:
+                rjobs = [s for s in self.subjobs if s.status in ['failed'] ]
+            else:
+                rjobs = self.subjobs
             if not rjobs:
                 rjobs = [self]
             elif auto_resubmit: # get only the failed jobs for auto resubmit

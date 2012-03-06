@@ -378,6 +378,7 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         config.addOption('workspacetype','LocalFilesystem','Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
 
         config.addOption('user','','User name. The same person may have different roles (user names) and still use the same gangadir. Unless explicitly set this option defaults to the real user name.')
+        config.addOption('resubmitOnlyFailedSubjobs', True , 'If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs. Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.')
         # detect default user (equal to unix user name)
         import getpass
         try:
