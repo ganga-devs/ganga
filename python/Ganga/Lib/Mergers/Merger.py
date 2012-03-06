@@ -22,13 +22,14 @@ logger = getLogger()
 config = makeConfig('Mergers','parameters for mergers')
 config.addOption('associate',"{'log':'TextMerger','root':'RootMerger',"
                  "'text':'TextMerger','txt':'TextMerger'}",'Dictionary of file associations')
-config.addOption('merge_output_dir','~/gangadir/merge_results',"location of the merger's outputdir")
+gangadir = getConfig('Configuration')['gangadir']
+config.addOption('merge_output_dir', gangadir+'/merge_results',"location of the merger's outputdir")
 config.addOption('std_merge','TextMerger','Standard (default) merger')
 
 def getDefaultMergeDir():
     """Gets the default location of the mergers outputdir from the config"""
     
-    outputdir = "~/gangadir/merge_results"
+    outputdir = gangadir + "/merge_results"
     try:
         config = getConfig('Mergers')
         outputdir = config['merge_output_dir']
