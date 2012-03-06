@@ -1484,7 +1484,7 @@ sys.exit(0)
         script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
 
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputLCGUpload
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputLCGUpload(job))
+        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputLCGUpload(job, '    '))
 
         if jobconfig.env:
             script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))
