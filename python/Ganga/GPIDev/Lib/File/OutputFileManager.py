@@ -69,18 +69,80 @@ for fn in final_list_to_copy:
 
     return insertScript 
 
-def getWNCodeForOutputPostprocessing(job):
+def getWNCodeForOutputLCGUpload(job):
+
+    lcgCommands = []
 
     if len(job.outputfiles) > 0:
         for outputFile in job.outputfiles:      
-            if outputFilePostProcessingOnWN(job, outputFile.__class__.__name__ ):
-                pass
-                #outputFile.getWNCode()
+            if outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
+                lcgCommands.append('lcgse %s %s %s\n' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
+                
+                
         
-    returnString = """\n
-def postprocess1(outfile, errfile):
-    pass"""
-    return returnString
+    insertScript = """\n
+postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
+
+#system command executor with subprocess
+def execSyscmdSubprocessAndReturnOutput(cmd):
+
+    exitcode = -999
+    mystdout = ''
+    mystderr = ''
+
+    try:
+        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (mystdout, mystderr) = child.communicate()
+        exitcode = child.returncode
+    finally:
+        pass
+
+    return (exitcode, mystdout, mystderr)
+        
+def uploadToSE(lcgseItem):
+        
+    import re
+
+    lcgseItems = lcgseItem.split(' ')
+
+    filenameWildChar = lcgseItems[1]
+    lfc_host = lcgseItems[2]
+
+    cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+
+    os.environ['LFC_HOST'] = lfc_host
+        
+    guidResults = []
+
+    import glob 
+    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
+        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+        cmd = cmd.replace('filename', currentFile)
+        cmd = cmd + ' file:%s' % currentFile
+        printInfo(cmd)  
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
+        if exitcode == 0:
+            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
+            match = re.search('(guid:\S+)',mystdout)
+            if match:
+                guidResults.append(mystdout)
+        else:
+            printError('cmd %s failed' % cmd, mystderr)   
+
+    return guidResults    
+
+for lcgseItem in ###LCGCOMMANDS###:
+    guids = uploadToSE(lcgseItem)
+    for guid in guids:
+        postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid))           
+
+  
+postprocesslocations.close()
+
+"""
+    insertScript = insertScript.replace('###LCGCOMMANDS###', str(lcgCommands))
+
+    return insertScript
     
         
 
