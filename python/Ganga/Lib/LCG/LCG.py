@@ -1334,68 +1334,73 @@ try:
     printInfo('Application execution passed with exit code %d.' % exitcode)            
 
 #   system command executor with subprocess
-    def execSyscmdSubprocessAndReturnOutput(cmd):
+#    def execSyscmdSubprocessAndReturnOutput(cmd):
+#
+#        exitcode = -999
+#        mystdout = ''
+#        mystderr = ''
 
-        exitcode = -999
-        mystdout = ''
-        mystderr = ''
+#        try:
+#            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#            (mystdout, mystderr) = child.communicate()
+#            exitcode = child.returncode
+#        finally:
+#            pass
 
-        try:
-            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (mystdout, mystderr) = child.communicate()
-            exitcode = child.returncode
-        finally:
-            pass
-
-        return (exitcode, mystdout, mystderr)
+#        return (exitcode, mystdout, mystderr)
 
 
-    def uploadToSE(lcgseItem):
+#    def uploadToSE(lcgseItem):
         
-        import re
+#        import re
 
-        lcgseItems = lcgseItem.split(' ')
+#        lcgseItems = lcgseItem.split(' ')
 
-        filenameWildChar = lcgseItems[1]
-        lfc_host = lcgseItems[2]
+#        filenameWildChar = lcgseItems[1]
+#        lfc_host = lcgseItems[2]
 
-        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+#        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
 
-        os.environ['LFC_HOST'] = lfc_host
+#        os.environ['LFC_HOST'] = lfc_host
         
-        guidResults = []
+#        guidResults = []
 
-        import glob 
-        for currentFile in glob.glob(os.path.join(orig_wdir, filenameWildChar)):
-            cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
-            cmd = cmd.replace('filename', currentFile)
-            cmd = cmd + ' file:%s' % currentFile
-            printInfo(cmd)  
-            (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
-            if exitcode == 0:
-                printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
-                match = re.search('(guid:\S+)',mystdout)
-                if match:
-                    guidResults.append(mystdout)
-            else:
-                printError('cmd %s failed with error : %s' % (cmd, mystderr))   
-
-        return guidResults      
+#        import glob 
+#        for currentFile in glob.glob(os.path.join(orig_wdir, filenameWildChar)):
+#            cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+#            cmd = cmd.replace('filename', currentFile)
+#            cmd = cmd + ' file:%s' % currentFile
+#            printInfo(cmd)  
+#            (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
+#            if exitcode == 0:
+#                printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
+#                match = re.search('(guid:\S+)',mystdout)
+#                if match:
+#                    guidResults.append(mystdout)
+#            else:
+#                printError('cmd %s failed with error : %s' % (cmd, mystderr))   
+#
+#        return guidResults      
         
-    postProcessOutputResult = postprocessoutput(orig_wdir)
+#    postProcessOutputResult = postprocessoutput(orig_wdir)
 
-    lcgFile = open(os.path.join(orig_wdir, '__postprocesslocations__'), 'w')
+#    postprocesslocations = open(os.path.join(orig_wdir, '__postprocesslocations__'), 'w')
         
 #   code here for upload to lcg se
-    if postProcessOutputResult is not None:
-        for lcgseItem in postProcessOutputResult:
-            guids = uploadToSE(lcgseItem)
-            for guid in guids:
-                lcgFile.write('%s->%s\\n' % (lcgseItem, guid))           
+#    if postProcessOutputResult is not None:
+#        for lcgseItem in postProcessOutputResult:
+#            guids = uploadToSE(lcgseItem)
+#            for guid in guids:
+#                postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid))           
 
-    lcgFile.close()     
+#    postprocesslocations.close()     
 
-    printInfo(str(os.listdir(orig_wdir)))   
+#    printInfo(str(os.listdir(orig_wdir)))   
+
+
+    ###OUTPUTUPLOADSPOSTPROCESSING###
+
+
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
 #   pack outputsandbox
@@ -1477,6 +1482,9 @@ sys.exit(0)
         script = script.replace('###APPLICATION_NAME###',job.application._name)
         script = script.replace('###APPLICATIONEXEC###',repr(jobconfig.getExeString()))
         script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
+
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputLCGUpload
+        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputLCGUpload(job))
 
         if jobconfig.env:
             script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))
