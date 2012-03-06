@@ -468,7 +468,7 @@ sys.exit()
       from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputLCGUpload
       script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__', '__postprocesslocations__']))
 
-      script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputLCGUpload(job), '')
+      script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputLCGUpload(job, ''))
 
       script = script.replace('###APPLICATION_NAME###',repr(job.application._name))
       script = script.replace('###INPUT_SANDBOX###',repr(subjob_input_sandbox+master_input_sandbox))
