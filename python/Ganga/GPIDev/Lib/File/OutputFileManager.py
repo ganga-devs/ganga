@@ -127,7 +127,7 @@ def uploadToSE(lcgseItem):
             if match:
                 guidResults.append(mystdout)
         else:
-            printError('cmd %s failed' % cmd, mystderr)   
+            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
 
     return guidResults    
 
