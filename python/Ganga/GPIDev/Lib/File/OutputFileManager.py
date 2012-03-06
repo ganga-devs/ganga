@@ -1,6 +1,9 @@
-def outputFileProcessedOnWN(job, outputFile):
+"""
+Checks if the output files of a given job(we are interested in the backend) 
+should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
+"""
+def outputFilePostProcessingOnWN(job, outputFileClassName):
     backendClassName = job.backend.__class__.__name__
-    outputFileClassName = outputFile.__class__.__name__ 
 
     if job.backend_output_postprocess.has_key(backendClassName):
         if job.backend_output_postprocess[backendClassName].has_key(outputFileClassName):
@@ -11,16 +14,18 @@ def outputFileProcessedOnWN(job, outputFile):
 
 
 
-#for now this is used from Local and Batch backend, where there is code on the WN for 
-#compressing (optional) and sending the output to the outputsandbox
+"""
+This should be used from Local and Batch backend, where there is code on the WN for 
+sending the output(optionally compressed before that) to the outputsandbox
+"""
 def getWNCodeForOutputSandbox(job, files):
         
     patternsToSandbox = []
     patternsToZip = []  
 
     if len(job.outputfiles) > 0:
-        for outputFile in job.outputfiles:      
-            if outputFile.__class__.__name__ == 'OutputSandboxFile' and job.backend.__class__.__name__ in ['Localhost', 'LSF']:
+        for outputFile in job.outputfiles:  
+            if outputFilePostProcessingOnWN(job, 'OutputSandboxFile'):    
                 patternsToSandbox.append(outputFile.name)
 
                 if outputFile.compressed:
@@ -29,6 +34,7 @@ def getWNCodeForOutputSandbox(job, files):
 
     insertScript = """\n
 from Ganga.Utility.files import recursive_copy
+import glob
 
 f_to_copy = ###FILES###
 
@@ -63,13 +69,13 @@ for fn in final_list_to_copy:
 
     return insertScript 
 
-
 def getWNCodeForOutputPostprocessing(job):
 
     if len(job.outputfiles) > 0:
         for outputFile in job.outputfiles:      
-            if outputFileProcessedOnWN(job, outputFile):
-                outputFile.getWNCode()
+            if outputFilePostProcessingOnWN(job, outputFile.__class__.__name__ ):
+                pass
+                #outputFile.getWNCode()
         
     returnString = """\n
 def postprocess1(outfile, errfile):
