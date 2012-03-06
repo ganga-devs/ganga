@@ -220,7 +220,7 @@ class Job(GangaObject):
                 self[s.state] = s
     
         
-    backend_output_postprocess = {'LSF' :{'OutputSandboxFile':'WNclient', 'LCGStorageElementFile':'client', 'MassStorageFile':'WN'}, 'Localhost': {'MassStorageFile':'WN', 'LCGStorageElementFile':'WN'} , 'LCG' : {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}, 'CREAM': {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}}
+    backend_output_postprocess = {'LSF' :{'OutputSandboxFile':'WNclient', 'LCGStorageElementFile':'client', 'MassStorageFile':'WN'}, 'Localhost': {'OutputSandboxFile':'WN', 'MassStorageFile':'WN', 'LCGStorageElementFile':'WN'} , 'LCG' : {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}, 'CREAM': {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}}
 
 
     status_graph = {'new' : Transitions(State('submitting','j.submit()',hook='monitorSubmitting_hook'),
