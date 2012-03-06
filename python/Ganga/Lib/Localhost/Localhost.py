@@ -363,94 +363,97 @@ def printInfo(message):
     outfile.flush()  
 
 #from here
-postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
+#postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
 
-postProcessOutputResult = postprocessoutput()
+#postProcessOutputResult = postprocessoutput()
 
-def uploadToSE(lcgseItem):
-        
-    import re
-
-    lcgseItems = lcgseItem.split(' ')
-
-    filenameWildChar = lcgseItems[1]
-    lfc_host = lcgseItems[2]
-
-    cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
-
-    os.environ['LFC_HOST'] = lfc_host
-        
-    guidResults = []
-
-    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
-        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
-        cmd = cmd.replace('filename', currentFile)
-        cmd = cmd + ' file:%s' % currentFile
-        printInfo(cmd)  
-        (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
-        if exitcode == 0:
-            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
-            match = re.search('(guid:\S+)',mystdout)
-            if match:
-                guidResults.append(mystdout)
-        else:
-            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
-
-    return guidResults      
+#def uploadToSE(lcgseItem):
+#        
+#    import re
+#
+#    lcgseItems = lcgseItem.split(' ')
+#
+#    filenameWildChar = lcgseItems[1]
+#    lfc_host = lcgseItems[2]
+#
+#    cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+#
+#    os.environ['LFC_HOST'] = lfc_host
+#        
+#    guidResults = []
+#
+#    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
+#        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+#        cmd = cmd.replace('filename', currentFile)
+#        cmd = cmd + ' file:%s' % currentFile
+#        printInfo(cmd)  
+#        (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
+#        if exitcode == 0:
+#            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
+#            match = re.search('(guid:\S+)',mystdout)
+#            if match:
+#                guidResults.append(mystdout)
+#        else:
+#            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
+#
+#    return guidResults      
 
 
 
 #code here for upload to castor
-if postProcessOutputResult is not None:
-    for massStorageLine in postProcessOutputResult[1]:
-        massStorageList = massStorageLine.split(' ')
+#if postProcessOutputResult is not None:
+#    for massStorageLine in postProcessOutputResult[1]:
+#        massStorageList = massStorageLine.split(' ')
+#
+#        filenameWildChar = massStorageList[1]
+#        cm_mkdir = massStorageList[2]
+#        cm_cp = massStorageList[3]
+#        cm_ls = massStorageList[4]
+#        path = massStorageList[5]
+#
+#        pathToDirName = os.path.dirname(path)
+#        dirName = os.path.basename(path)
 
-        filenameWildChar = massStorageList[1]
-        cm_mkdir = massStorageList[2]
-        cm_cp = massStorageList[3]
-        cm_ls = massStorageList[4]
-        path = massStorageList[5]
+#        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
+#        if exitcode != 0:
+#            printError('Error while executing nsls %s command, be aware that Castor commands can be executed only from #lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
+#            continue
 
-        pathToDirName = os.path.dirname(path)
-        dirName = os.path.basename(path)
+#        directoryExists = False 
+#        for directory in mystdout.split('\\n'):
+#            if directory.strip() == dirName:
+#                directoryExists = True
+#                break
 
-        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
-        if exitcode != 0:
-            printError('Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
-            continue
-
-        directoryExists = False 
-        for directory in mystdout.split('\\n'):
-            if directory.strip() == dirName:
-                directoryExists = True
-                break
-
-        if not directoryExists:
-            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
-            if exitcode != 0:
-                printError('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
-                continue
+#        if not directoryExists:
+#            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
+#            if exitcode != 0:
+#                printError('Error while executing %s %s command, check if the ganga user has rights for creating #directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
+#                continue
             
-        for currentFile in glob.glob(filenameWildChar):
-            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
-            if exitcode != 0:
-                printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)) + os.linesep + mystderr)
-            else:
-                postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
-                #remove file from output dir
-                os.system('rm %s' % currentFile)
+#        for currentFile in glob.glob(filenameWildChar):
+#            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
+#            if exitcode != 0:
+#                printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading files #to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)) + os.linesep + mystderr)
+#            else:
+#                postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
+#                #remove file from output dir
+#                os.system('rm %s' % currentFile)
 
-    for lcgseItem in postProcessOutputResult[2]:
-        guids = uploadToSE(lcgseItem)
-        for guid in guids:
-            postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid)) 
+#    for lcgseItem in postProcessOutputResult[2]:
+#        guids = uploadToSE(lcgseItem)
+#        for guid in guids:
+#            postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid)) 
 
+#postprocesslocations.close()
+
+###OUTPUTUPLOADSPOSTPROCESSING###
 
 outfile.close()
 errorfile.close()
-postprocesslocations.close()
 
-###OUTPUTPOSTPROCESSING###
+
+###OUTPUTSANDBOXPOSTPROCESSING###
 
 line="EXITCODE: " + repr(result) + os.linesep
 line+='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
@@ -462,8 +465,10 @@ sys.exit()
       import inspect
       script = script.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
 
-      from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox
-      script = script.replace('###OUTPUTPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__', '__postprocesslocations__']))
+      from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputLCGUpload
+      script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__', '__postprocesslocations__']))
+
+      script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputLCGUpload(job))
 
       script = script.replace('###APPLICATION_NAME###',repr(job.application._name))
       script = script.replace('###INPUT_SANDBOX###',repr(subjob_input_sandbox+master_input_sandbox))
