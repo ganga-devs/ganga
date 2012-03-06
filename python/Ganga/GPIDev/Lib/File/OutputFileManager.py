@@ -72,12 +72,16 @@ for fn in final_list_to_copy:
 def getWNCodeForOutputLCGUpload(job, indent):
 
     lcgCommands = []
+    massStorageCommands = []
 
     if len(job.outputfiles) > 0:
         for outputFile in job.outputfiles:      
             if outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
                 lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
-                
+            elif outputFilePostProcessingOnWN(job, 'MassStorageFile'):  
+                from Ganga.Utility.Config import getConfig      
+                massStorageConfig = getConfig('MassStorageOutput')  
+                massStorageCommands.append('massstorage %s %s %s %s %s' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
                 
         
     insertScript = """\n
@@ -135,6 +139,45 @@ def getWNCodeForOutputLCGUpload(job, indent):
 ###INDENT###    guids = uploadToSE(lcgseItem)
 ###INDENT###    for guid in guids:
 ###INDENT###        postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid))           
+
+###INDENT###for massStorageLine in postProcessOutputResult[1]:
+###INDENT###massStorageList = massStorageLine.split(' ')
+
+###INDENT###filenameWildChar = massStorageList[1]
+###INDENT###cm_mkdir = massStorageList[2]
+###INDENT###cm_cp = massStorageList[3]
+###INDENT###cm_ls = massStorageList[4]
+###INDENT###path = massStorageList[5]
+
+###INDENT###pathToDirName = os.path.dirname(path)
+###INDENT###dirName = os.path.basename(path)
+
+###INDENT###(exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('nsls %s' % pathToDirName)
+###INDENT###if exitcode != 0:
+###INDENT###    printError('Error while executing nsls %s command, be aware that Castor commands can be executed only from ###INDENT###lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
+###INDENT###    continue
+
+###INDENT###directoryExists = False 
+###INDENT###for directory in mystdout.split('\\n'):
+###INDENT###    if directory.strip() == dirName:
+###INDENT###     directoryExists = True
+###INDENT###     break
+
+###INDENT###if not directoryExists:
+###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('%s %s' % (cm_mkdir, path))
+###INDENT###    if exitcode != 0:
+###INDENT###        printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
+###INDENT###        continue
+            
+###INDENT###for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildChar)):
+###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
+###INDENT###    if exitcode != 0:
+###INDENT###        printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)) + os.linesep + ###INDENT###mystderr)
+###INDENT###    else:
+###INDENT###        postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
+###INDENT###        #remove file from output dir
+###INDENT###        os.system('rm %s' % currentFile)
+
 
   
 ###INDENT###postprocesslocations.close()
