@@ -354,13 +354,15 @@ errorfile.flush()
 
 createOutputSandbox(outputpatterns,None,sharedoutputpath)
 
-outfile.close()
-
-def printError(errorfile, message, error):
+def printError(message):
     errorfile.write(message + os.linesep)
-    errorfile.write(error + os.linesep) 
     errorfile.flush()  
 
+def printInfo(message):
+    outfile.write(message + os.linesep)
+    outfile.flush()  
+
+#from here
 postprocesslocations = file(os.path.join(sharedoutputpath, '__postprocesslocations__'), 'w')         
 
 postProcessOutputResult = postprocessoutput()
@@ -380,19 +382,20 @@ def uploadToSE(lcgseItem):
         
     guidResults = []
 
-    for currentFile in glob.glob(filenameWildChar):
+    printInfo(os.path.join(os.getcwd(), filenameWildChar))      
+    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
         cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
         cmd = cmd.replace('filename', currentFile)
         cmd = cmd + ' file:%s' % currentFile
-#        printInfo(cmd)  
+        printInfo(cmd)  
         (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
         if exitcode == 0:
-#            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
+            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
             match = re.search('(guid:\S+)',mystdout)
             if match:
                 guidResults.append(mystdout)
         else:
-            printError(errorfile, 'cmd %s failed' % cmd, mystderr)   
+            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
 
     return guidResults      
 
@@ -414,7 +417,7 @@ if postProcessOutputResult is not None:
 
         (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
         if exitcode != 0:
-            printError(errorfile, 'Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName, mystderr)
+            printError('Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
             continue
 
         directoryExists = False 
@@ -426,13 +429,13 @@ if postProcessOutputResult is not None:
         if not directoryExists:
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
             if exitcode != 0:
-                printError(errorfile, 'Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path), mystderr)
+                printError('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
                 continue
             
         for currentFile in glob.glob(filenameWildChar):
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
             if exitcode != 0:
-                printError(errorfile, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)), mystderr)
+                printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)) + os.linesep + mystderr)
             else:
                 postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
                 #remove file from output dir
@@ -444,6 +447,7 @@ if postProcessOutputResult is not None:
             postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid)) 
 
 
+outfile.close()
 errorfile.close()
 postprocesslocations.close()
 
