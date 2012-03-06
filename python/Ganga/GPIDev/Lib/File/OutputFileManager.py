@@ -76,7 +76,7 @@ def getWNCodeForOutputLCGUpload(job):
     if len(job.outputfiles) > 0:
         for outputFile in job.outputfiles:      
             if outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
-                lcgCommands.append('lcgse %s %s %s\n' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
+                lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
                 
                 
         
