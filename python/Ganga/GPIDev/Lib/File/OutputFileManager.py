@@ -69,7 +69,7 @@ for fn in final_list_to_copy:
 
     return insertScript 
 
-def getWNCodeForOutputLCGUpload(job):
+def getWNCodeForOutputLCGUpload(job, indent):
 
     lcgCommands = []
 
@@ -81,66 +81,67 @@ def getWNCodeForOutputLCGUpload(job):
                 
         
     insertScript = """\n
-postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
+###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
 
-#system command executor with subprocess
-def execSyscmdSubprocessAndReturnOutput(cmd):
+###INDENT####system command executor with subprocess
+###INDENT###def execSyscmdSubprocessAndReturnOutput(cmd):
 
-    exitcode = -999
-    mystdout = ''
-    mystderr = ''
+###INDENT###    exitcode = -999
+###INDENT###    mystdout = ''
+###INDENT###    mystderr = ''
 
-    try:
-        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (mystdout, mystderr) = child.communicate()
-        exitcode = child.returncode
-    finally:
-        pass
+###INDENT###    try:
+###INDENT###        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+###INDENT###        (mystdout, mystderr) = child.communicate()
+###INDENT###        exitcode = child.returncode
+###INDENT###    finally:
+###INDENT###        pass
 
-    return (exitcode, mystdout, mystderr)
+###INDENT###    return (exitcode, mystdout, mystderr)
         
-def uploadToSE(lcgseItem):
+###INDENT###def uploadToSE(lcgseItem):
         
-    import re
+###INDENT###    import re
 
-    lcgseItems = lcgseItem.split(' ')
+###INDENT###    lcgseItems = lcgseItem.split(' ')
 
-    filenameWildChar = lcgseItems[1]
-    lfc_host = lcgseItems[2]
+###INDENT###    filenameWildChar = lcgseItems[1]
+###INDENT###    lfc_host = lcgseItems[2]
 
-    cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+###INDENT###    cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
 
-    os.environ['LFC_HOST'] = lfc_host
+###INDENT###    os.environ['LFC_HOST'] = lfc_host
         
-    guidResults = []
+###INDENT###    guidResults = []
 
-    import glob 
-    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
-        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
-        cmd = cmd.replace('filename', currentFile)
-        cmd = cmd + ' file:%s' % currentFile
-        printInfo(cmd)  
-        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
-        if exitcode == 0:
-            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
-            match = re.search('(guid:\S+)',mystdout)
-            if match:
-                guidResults.append(mystdout)
-        else:
-            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
+###INDENT###    import glob 
+###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
+###INDENT###        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+###INDENT###        cmd = cmd.replace('filename', currentFile)
+###INDENT###        cmd = cmd + ' file:%s' % currentFile
+###INDENT###        printInfo(cmd)  
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
+###INDENT###        if exitcode == 0:
+###INDENT###            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
+###INDENT###            match = re.search('(guid:\S+)',mystdout)
+###INDENT###            if match:
+###INDENT###                guidResults.append(mystdout)
+###INDENT###        else:
+###INDENT###            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
 
-    return guidResults    
+###INDENT###    return guidResults    
 
-for lcgseItem in ###LCGCOMMANDS###:
-    guids = uploadToSE(lcgseItem)
-    for guid in guids:
-        postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid))           
+###INDENT###for lcgseItem in ###LCGCOMMANDS###:
+###INDENT###    guids = uploadToSE(lcgseItem)
+###INDENT###    for guid in guids:
+###INDENT###        postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid))           
 
   
-postprocesslocations.close()
+###INDENT###postprocesslocations.close()
 
 """
     insertScript = insertScript.replace('###LCGCOMMANDS###', str(lcgCommands))
+    insertScript = insertScript.replace('###INDENT###', indent)
 
     return insertScript
     
