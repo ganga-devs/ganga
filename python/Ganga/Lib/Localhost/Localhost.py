@@ -363,7 +363,7 @@ def printInfo(message):
     outfile.flush()  
 
 #from here
-postprocesslocations = file(os.path.join(sharedoutputpath, '__postprocesslocations__'), 'w')         
+postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
 
 postProcessOutputResult = postprocessoutput()
 
@@ -382,7 +382,6 @@ def uploadToSE(lcgseItem):
         
     guidResults = []
 
-    printInfo(os.path.join(os.getcwd(), filenameWildChar))      
     for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
         cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
         cmd = cmd.replace('filename', currentFile)
@@ -464,7 +463,7 @@ sys.exit()
       script = script.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
 
       from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox
-      script = script.replace('###OUTPUTPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__']))
+      script = script.replace('###OUTPUTPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__', '__postprocesslocations__']))
 
       script = script.replace('###APPLICATION_NAME###',repr(job.application._name))
       script = script.replace('###INPUT_SANDBOX###',repr(subjob_input_sandbox+master_input_sandbox))
