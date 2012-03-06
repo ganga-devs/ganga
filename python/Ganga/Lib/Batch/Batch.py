@@ -541,58 +541,66 @@ from Ganga.Utility.files import multi_glob, recursive_copy
 
 createOutputSandbox(outputpatterns,filefilter,sharedoutputpath)
 
-postprocesslocations = file(os.path.join(sharedoutputpath, '__postprocesslocations__'), 'w')         
+def printError(message):
+    print >>sys.stderr, message
 
-postProcessOutputResult = postprocessoutput()
+def printInfo(message):
+    print >>sys.stdout, message
+
+#postprocesslocations = file(os.path.join(sharedoutputpath, '__postprocesslocations__'), 'w')         
+
+#postProcessOutputResult = postprocessoutput()
 
 #code here for upload to castor
-if postProcessOutputResult is not None:
-    for massStorageLine in postProcessOutputResult[0]:
-        massStorageList = massStorageLine.split(' ')
+#if postProcessOutputResult is not None:
+#    for massStorageLine in postProcessOutputResult[0]:
+#        massStorageList = massStorageLine.split(' ')
 
-        filenameWildChar = massStorageList[1]
-        cm_mkdir = massStorageList[2]
-        cm_cp = massStorageList[3]
-        cm_ls = massStorageList[4]
-        path = massStorageList[5]
+#        filenameWildChar = massStorageList[1]
+#        cm_mkdir = massStorageList[2]
+#        cm_cp = massStorageList[3]
+#        cm_ls = massStorageList[4]
+#        path = massStorageList[5]
 
-        pathToDirName = os.path.dirname(path)
-        dirName = os.path.basename(path)
+#        pathToDirName = os.path.dirname(path)
+#        dirName = os.path.basename(path)
 
-        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
-        if exitcode != 0:
-            print >>sys.stderr, 'Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName
-            print >>sys.stderr, mystderr
-            continue
+#        (exitcode, mystdout, mystderr) = execSyscmdSubprocess('nsls %s' % pathToDirName)
+#        if exitcode != 0:
+#           printError('Error while executing nsls %s command, be aware that Castor commands can be executed only from #lxplus, also check if the folder name is correct and existing' % pathToDirName)
+#           printError(mystderr) 
+#            continue
 
-        directoryExists = False 
-        for directory in mystdout.split('\\n'):
-            if directory.strip() == dirName:
-                directoryExists = True
-                break
+#        directoryExists = False 
+#        for directory in mystdout.split('\\n'):
+#            if directory.strip() == dirName:
+#                directoryExists = True
+#                break
 
-        if not directoryExists:
-            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
-            if exitcode != 0:
-                print >>sys.stderr, 'Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path)
-                print >>sys.stderr, mystderr
-                continue
+#        if not directoryExists:
+#            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
+#            if exitcode != 0:
+#                printError('Error while executing %s %s command, check if the ganga user has rights for creating #directories in this folder' % (cm_mkdir, path))
+#                printError(mystderr)
+#                continue
             
-        for currentFile in glob.glob(filenameWildChar):
-            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
-            if exitcode != 0:
-                print >>sys.stderr, 'Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile))    
-                print >>sys.stderr, mystderr        
-            else:
-                postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
+#        for currentFile in glob.glob(filenameWildChar):
+#            (exitcode, mystdout, mystderr) = execSyscmdSubprocess('%s %s %s' % (cm_cp, currentFile, os.path.join(path, #currentFile)))
+#            if exitcode != 0:
+#                printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading files #to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)))    
+#                printError(mystderr)        
+#            else:
+#                postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
                 #remove file from output dir
-                os.system('rm %s' % currentFile)        
+#                os.system('rm %s' % currentFile)        
 
-postprocesslocations.close()    
+#postprocesslocations.close()    
+
+###OUTPUTUPLOADSPOSTPROCESSING###
 
 print >>sys.stderr,"--- GANGA APPLICATION ERROR END ---"
 
-###OUTPUTPOSTPROCESSING###
+###OUTPUTSANDBOXPOSTPROCESSING###
 
 ###POSTEXECUTE###
 
@@ -610,8 +618,10 @@ sys.exit(result)
         import inspect
         import Ganga.Core.Sandbox as Sandbox
         import Ganga.Utility as Utility
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox
-        text = text.replace('###OUTPUTPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['__syslog__']))
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputLCGUpload
+        text = text.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['__syslog__', '__postprocesslocations__']))
+
+        text = text.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputLCGUpload(job, ''))
 
         text = text.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
         text = text.replace('###INLINEHOSTNAMEFUNCTION###',inspect.getsource(Utility.util.hostname))
