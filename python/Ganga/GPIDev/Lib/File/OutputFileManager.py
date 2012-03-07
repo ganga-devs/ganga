@@ -170,9 +170,10 @@ def getWNCodeForOutputLCGUpload(job, indent):
 ###INDENT###            continue
             
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildChar)):
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFile)))
+###INDENT###        currentFileBaseName = os.path.basename(currentFile)
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)))
 ###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFile)) + os.linesep + ###INDENT###mystderr)
+###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)) + os.linesep ###INDENT### + mystderr)
 ###INDENT###        else:
 ###INDENT###            postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
 ###INDENT###            #remove file from output dir
