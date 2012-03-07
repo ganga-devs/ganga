@@ -4,7 +4,7 @@ import time
 a=Job()
 a.backend=LSF()
 a.submit()
-if sleep_until_state(a,60,'running'):
+if sleep_until_state(a,300,'completed'):
    assert(a.time.runtime())
 else:
    print "We timed-out waiting for an LSF() backend job to start running"
