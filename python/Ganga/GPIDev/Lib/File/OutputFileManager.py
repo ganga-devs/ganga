@@ -76,9 +76,9 @@ def getWNCodeForOutputLCGUpload(job, indent):
 
     if len(job.outputfiles) > 0:
         for outputFile in job.outputfiles:      
-            if outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
+            if outputFile.__class__.__name__ == 'LCGStorageElementFile' and outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
                 lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
-            elif outputFilePostProcessingOnWN(job, 'MassStorageFile'):  
+            elif outputFile.__class__.__name__ == 'MassStorageFile' outputFilePostProcessingOnWN(job, 'MassStorageFile'):  
                 from Ganga.Utility.Config import getConfig      
                 massStorageConfig = getConfig('MassStorageOutput')  
                 massStorageCommands.append('massstorage %s %s %s %s %s' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
