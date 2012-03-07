@@ -175,7 +175,7 @@ def getWNCodeForOutputLCGUpload(job, indent):
 ###INDENT###        if exitcode != 0:
 ###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)) + os.linesep ###INDENT### + mystderr)
 ###INDENT###        else:
-###INDENT###            postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFile)))
+###INDENT###            postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFileBaseName)))
 ###INDENT###            #remove file from output dir
 ###INDENT###            os.system('rm %s' % currentFile)
 
