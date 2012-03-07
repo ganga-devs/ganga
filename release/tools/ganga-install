@@ -204,7 +204,7 @@ def main():
     # the tarball contains a tarPath stored relatively from targetDir
     def make_tarball(tarball, targetDir, tarPath=None, override=force,silent=silent,**kwds):
         assert(tarPath)
-        tar(os.path.join(CONFIG['tarball_dir'],tarball), targetDir, tarPath,silent=silent, opts="--exclude='*.py[co]'")
+        tar(os.path.join(CONFIG['tarball_dir'],tarball), targetDir, tarPath,silent=silent, opts="--exclude='*.py[co]' --exclude='obsolete*' --exclude='reports*' --exclude='doc*' ")
 
     def action(command):
         command(ganga_tarball,CONFIG['install_dir'],tarPath=ganga_tarball_path)
