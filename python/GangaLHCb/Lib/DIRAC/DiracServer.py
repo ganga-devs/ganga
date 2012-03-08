@@ -234,6 +234,9 @@ class DiracServer:
             num_polls += 1
             if num_polls >= 100: break
             time.sleep(0.1)
+        try:
+            os.system('kill -9 %d >& /dev/null' % self.server.pid)
+        except: pass
         return not self.isActive()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
