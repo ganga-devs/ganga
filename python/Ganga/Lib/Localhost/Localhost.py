@@ -221,6 +221,7 @@ appscriptpath = ###APPSCRIPTPATH###
 environment = ###ENVIRONMENT###
 workdir = ###WORKDIR###
 
+statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
 try:
   statusfile=file(statusfilename,'w')
