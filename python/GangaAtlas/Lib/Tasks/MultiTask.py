@@ -1,3 +1,4 @@
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks import Task
 from MultiTransform import MultiTransform
@@ -9,6 +10,8 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 from dq2.common.DQException import DQException
+
+import copy
 
 o = [""]
 def c(s):
@@ -53,7 +56,7 @@ class MultiTask(Task):
        }.items()))
    _category = 'tasks'
    _name = 'MultiTask'
-   _exportmethods = Task._exportmethods + ["initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName', 'listAllDatasets']
+   _exportmethods = Task._exportmethods + ["initializeFromTagInfo", "initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName', 'listAllDatasets', 'restartTask']
    
    def initialize(self):
       super(MultiTask, self).initialize()
@@ -75,7 +78,23 @@ class MultiTask(Task):
          logger.warning('Incorrect type for transform referral. Allowed types are int or string.')
 
       return None
-      
+
+   def restartTask(self):
+      # loop over transforms and units and change status as required
+      for trf in self.transforms:
+         trf_complete = True
+         if trf.status == "pause":
+            continue
+         
+         for uind in range(0, len(trf.unit_partition_list)):
+            if not trf.isUnitComplete(uind):
+               trf_complete = False
+               break
+            
+         if not trf_complete:
+            trf.status = "running"
+            self.status = "running"
+            
    def getContainerName(self):
       if self.name == "":
          name = "task"
@@ -155,6 +174,42 @@ class MultiTask(Task):
             for ds in tid_datasets:
                tf.addUnit("Unit_%d" % unit_num, ds)
                unit_num += 1
+
+   def initializeFromTagInfo(self,tag_info):
+      """ For each dataset in the dataset_list a unit is created. 
+          The output dataset names are set using the run numbers and tags of the input datasets appended to the current t.analysis.outputdata.datasetname field."""
+      if not type(tag_info) is dict:
+         logger.error("tag_info is not a dictionary")
+         return
+
+      # check for primary transforms
+      primary_tfs = []
+      for tf in self.transforms:
+         if len(tf.required_trfs) == 0:
+            primary_tfs.append( tf )
+
+      if len(primary_tfs) == 0:
+         logger.error("No primary transforms specified. Your need at least one before the Task can be initialised.")
+         return
+
+      for tf in primary_tfs:
+         unit_num = 0      
+
+         # find the number of units
+         num_refs = 50
+         for dsf in tag_info.keys():
+
+            num_units = round( 0.5 + len(tag_info[dsf]['refs']) / num_refs)
+
+            ref_num = 0
+            for i in range(0, num_units):
+               tf.addUnit("Unit_%d" % unit_num, ":".join([dsf, str(ref_num), str(ref_num + num_refs)]))
+               unit_num += 1
+               ref_num += num_refs
+
+         # finally copy the tag info data
+         tf.inputdata = DQ2Dataset()
+         tf.inputdata.tag_info = copy.deepcopy(tag_info)
                
    def startup(self):
       super(MultiTask,self).startup()

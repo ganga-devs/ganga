@@ -76,6 +76,7 @@ class MultiTransform(Transform):
        'single_unit'   : SimpleItem(defvalue=False, doc='Reduce to a single unit that runs over the all outputs from all required trfs'),
        'local_files'       :  SimpleItem(defvalue={'dq2':[], 'merge':[]}, doc='Local files downloaded/merged by the completed transform'),
        'merger'            : ComponentItem('mergers', defvalue=None, load_default=0,optional=1, doc='Local merger to be done over all units when complete.'),
+       'rebroker_on_job_fail' : SimpleItem(defvalue=False, doc='If the maximum number of job failures is hit, rebroker the unit'),
        'splitter'            : ComponentItem('splitters', defvalue=None, load_default=0,optional=1, doc='Splitter to be used for this transform. Note that split options specified in the transform WILL NOT overwrite these settings.')
        #'outputdata'        : ComponentItem('datasets', defvalue=DQ2OutputDataset(), doc='Output dataset'),
        #'dataset_name'      : SimpleItem(defvalue="", transient=1, getter="get_dataset_name", doc='name of the output dataset'),
@@ -409,7 +410,7 @@ class MultiTransform(Transform):
                       self.setPartitionStatus(p, 'bad')
 
       # find unit with least exceptions raised
-      min_excep = 3
+      min_excep = 5
       uind = -1
       for uind2 in range(0, len(self.unit_partition_list)):
 
@@ -425,7 +426,7 @@ class MultiTransform(Transform):
               continue
 
           # deactivate any units with greater than 3 exceptions
-          if self.unit_state_list[uind2]['exceptions'] > 3:
+          if self.unit_state_list[uind2]['exceptions'] > 5:
               logger.error("Too many exceptions downloading and/or merging for unit '%s' in Transform %d, Task %d. Deactivating unit." % (self.unit_outputdata_list[uind2], self.getID(), self._getParent().id))
               self.unit_state_list[uind2]['reason'] = 'Too many exceptions.'
               self.unit_state_list[uind2]['active'] = False
@@ -692,6 +693,8 @@ class MultiTransform(Transform):
    def getNextPartitions(self, n):
        """Returns the N next partitions to process"""
 
+       #logger.warning("--------    Entering getNextPartitions for Task %d, trf %d (%s)" % (self._getParent().id, self.getID(), time.time()))
+       
        # find the partitions that are available
        if not self.partition_lock:
           self.partition_lock = threading.Lock()
@@ -701,11 +704,15 @@ class MultiTransform(Transform):
        # go through each unit and return all partitions for this unit if available
        for uind in range(0, len(self.unit_partition_list)):
 
+           #logger.warning("Checking Unit %d (%s)" % (uind, time.time()))
+           
            mj = self.getUnitMasterJob(uind)
 
            # if active, ignore
            if not self.unit_state_list[uind]['active']:
                continue
+           
+           #logger.warning("Unit %d is active (%s)" % (uind, time.time()))
            
            # create new partition list if required
            if len(self.required_trfs) == 0 and len(self.unit_partition_list[uind]) == 0:
@@ -713,10 +720,14 @@ class MultiTransform(Transform):
                full_partition_list += self.unit_partition_list[uind]
                break
 
+           #logger.warning("Unit %d did not create partition list (%s)" % (uind, time.time()))
+                      
            # avoid this unit if complete or waiting for an upstream trf
            if len(self.unit_partition_list[uind]) == 0 or self.isUnitComplete(uind):
                continue
 
+           #logger.warning("Unit %d is NOT complete and has a valid partition list (%s)" % (uind, time.time()))
+           
            # first check for completely new units
            self.partition_lock.acquire()
            partition_status_dict = {'ready':[], 'attempted':[], 'completed':[], 'killed':[], 'running':[]}
@@ -731,21 +742,52 @@ class MultiTransform(Transform):
            # check for too many failures
            for p in self.unit_partition_list[uind]:
                if self._partition_status[p] in ["failed"]:
-                   logger.error("Too many failures for partition %s in Transform %d, Task %d. Deactivating unit '%s'." % (p, self.getID(), self._getParent().id, self.unit_outputdata_list[uind]))
-                   self.unit_state_list[uind]['reason'] = "Too many job failures in unit"
-                   self.unit_state_list[uind]['active'] = False
-                   continue                   
+                   if not self.rebroker_on_job_fail:
+                       logger.error("Too many failures for partition %s in Transform %d, Task %d. Deactivating unit '%s'." % (p, self.getID(), self._getParent().id, self.unit_outputdata_list[uind]))
+                       self.unit_state_list[uind]['reason'] = "Too many job failures in unit"
+                       self.unit_state_list[uind]['active'] = False
+                       continue
+                   else:
+                       logger.warning("Too many failures for partition %s in Transform %d, Task %d. Rebrokering unit '%s'." % (p, self.getID(), self._getParent().id, self.unit_outputdata_list[uind]))
+                       # add sites to excluded
+                       for sj in mj.subjobs:
+                           if sj.status == 'failed':
+                               self.backend.requirements.excluded_sites.append( sj.backend.actualCE )
+                   
+                       # mark partitions as bad
+                       for p in self.unit_partition_list[ uind ]:
+                           self.setPartitionStatus(p, 'bad')                       
 
+                       self.removeDatasetsFromContainers(mj)
+               
+                       # recreate partition list
+                       self.unit_partition_list[uind] = []
+                       if len(self.unit_job_list) > 0:
+                           self.unit_job_list[uind] = None
+                       self.unit_state_list[uind] = {'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0, 'force':False}
+                       self.createPartitionList( uind )
+                       break
+
+           #logger.warning("Unit %d hasn't had too many failures (%s)" % (uind, time.time()))
+               
            # check for full unit submission
            if len(partition_status_dict['ready']) == len(self.unit_partition_list[uind]):
                full_partition_list += partition_status_dict['ready']
                #continue
                break
+
+           #logger.warning("Unit %d does not need full submission (%s)" % (uind, time.time()))
+
+           #if mj:
+           #    logger.warning("Checks for Unit %d: %d, %d, %s (%s)" % (uind, len(partition_status_dict['running']), mj.id, mj.status, time.time()))
+           #else:
+           #    logger.warning("Unit %d has no master job associated (%s)" % (uind, time.time()))
            
            # check for any running jobs
            if len(partition_status_dict['running']) > 0 and mj and not mj.status in ['failed', 'killed']:
                continue
 
+           
            if not mj:
                continue
            
@@ -772,11 +814,14 @@ class MultiTransform(Transform):
                self.createPartitionList( uind )
                break
 
-
+           #logger.warning("Unit %d didn't not have a failed build job (%s)" % (uind, time.time()))
+           
            # --------------------------------------
            # check for full failed units (dodgy site?)
            if not self.isLocalTRF() and len(partition_status_dict['attempted']) == len(self.unit_partition_list[uind]) and len(self.unit_partition_list[uind]) > 2:
                #full_partition_list += partition_status_dict['attempted']
+               
+               #logger.warning("Unit %d has been flagged as fully failed (%s)" % (uind, time.time()))
                
                if not mj.status in ['failed', 'killed']:
                    continue
@@ -804,8 +849,10 @@ class MultiTransform(Transform):
                self.createPartitionList( uind )
                #continue
                break
-           
+
            if len(partition_status_dict['completed']) + len(partition_status_dict['attempted']) == len(self.unit_partition_list[uind]):
+
+               #logger.warning("Unit %d has been flagged as partially failed (%s)" % (uind, time.time()))
                
                # check if one site failed all jobs
                mj = self.getUnitMasterJob(uind)
@@ -848,6 +895,8 @@ class MultiTransform(Transform):
                        #continue
                        break
 
+               #logger.warning("Unit %d has not had full resubmit and is at status %s (%s)" % (uind, mj.status, time.time()))
+               
                # resubmit failed jobs
                if mj.status != 'failed':
                    continue
@@ -857,7 +906,8 @@ class MultiTransform(Transform):
 
                try:
                    mj.resubmit()
-
+                   #logger.warning("Unit %d attempting resubmit (%s)" % (uind, time.time()))
+                   
                    for p in self.unit_partition_list[uind]:
                        if self._partition_status[p] in ["attempted"]:
                            self._partition_status[p] = 'running'
@@ -989,8 +1039,27 @@ class MultiTransform(Transform):
           else:
               # do a proper copy of the original DS
               temp_inds = copy.deepcopy(self.inputdata)
-          
-          self.inputdata.dataset = self.unit_inputdata_list[unit_num]
+
+          if self.inputdata._name == "DQ2Dataset" and self.inputdata.tag_info:
+              # copy tag info
+              fname = self.unit_inputdata_list[unit_num].split(":")[0]
+              start = int(self.unit_inputdata_list[unit_num].split(":")[1])
+              stop = int(self.unit_inputdata_list[unit_num].split(":")[2])
+
+              self.inputdata = DQ2Dataset()
+              self.inputdata.tag_info = { fname : copy.deepcopy(temp_inds.tag_info[fname]) }
+              self.inputdata.tag_info[fname]['refs'] = []
+
+              if stop >= len(temp_inds.tag_info[fname]['refs']):
+                  stop = len(temp_inds.tag_info[fname]['refs'])
+                  
+              logger.warning("Creating unit with file %s and refs %d to %d" % (fname, start, stop))
+              for i in range(start, stop):
+                  self.inputdata.tag_info[fname]['refs'].append( copy.deepcopy( temp_inds.tag_info[fname]['refs'][i]) )                                
+              
+          else:
+              self.inputdata.dataset = self.unit_inputdata_list[unit_num]
+              
           splitter = self.splitter
           if not splitter:
               splitter = DQ2JobSplitter()
@@ -1079,6 +1148,11 @@ class MultiTransform(Transform):
       if status != 'completed':
           self.status = status
           return
+
+      # before we do anything, check that all units have completed
+      for uind in range(0, len(self.unit_partition_list)):
+          if not self.isUnitComplete(uind):
+              return
 
       # check for all DSs in containers (usually because of forced completion)
       for uind in range(0, len(self.unit_partition_list)):
