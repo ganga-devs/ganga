@@ -1158,22 +1158,6 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
 
     return isDone
 
-def postprocessoutput(orig_wdir):
-
-    lcgseList = []           
-
-    inpfile = os.path.join(orig_wdir, '__postprocessoutput__')
-    
-    if not os.path.exists(inpfile):
-        return None
-                
-    for line in open(inpfile, 'r').readlines(): 
-        line = line.strip()     
-        if line.startswith('lcgse'):
-            lcgseList.append(line)
-
-    return lcgseList
-
 ############################################################################################
 
 ###INLINEMODULES###
@@ -1333,73 +1317,7 @@ try:
         raise Exception('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)            
 
-#   system command executor with subprocess
-#    def execSyscmdSubprocessAndReturnOutput(cmd):
-#
-#        exitcode = -999
-#        mystdout = ''
-#        mystderr = ''
-
-#        try:
-#            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#            (mystdout, mystderr) = child.communicate()
-#            exitcode = child.returncode
-#        finally:
-#            pass
-
-#        return (exitcode, mystdout, mystderr)
-
-
-#    def uploadToSE(lcgseItem):
-        
-#        import re
-
-#        lcgseItems = lcgseItem.split(' ')
-
-#        filenameWildChar = lcgseItems[1]
-#        lfc_host = lcgseItems[2]
-
-#        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
-
-#        os.environ['LFC_HOST'] = lfc_host
-        
-#        guidResults = []
-
-#        import glob 
-#        for currentFile in glob.glob(os.path.join(orig_wdir, filenameWildChar)):
-#            cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
-#            cmd = cmd.replace('filename', currentFile)
-#            cmd = cmd + ' file:%s' % currentFile
-#            printInfo(cmd)  
-#            (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
-#            if exitcode == 0:
-#                printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
-#                match = re.search('(guid:\S+)',mystdout)
-#                if match:
-#                    guidResults.append(mystdout)
-#            else:
-#                printError('cmd %s failed with error : %s' % (cmd, mystderr))   
-#
-#        return guidResults      
-        
-#    postProcessOutputResult = postprocessoutput(orig_wdir)
-
-#    postprocesslocations = open(os.path.join(orig_wdir, '__postprocesslocations__'), 'w')
-        
-#   code here for upload to lcg se
-#    if postProcessOutputResult is not None:
-#        for lcgseItem in postProcessOutputResult:
-#            guids = uploadToSE(lcgseItem)
-#            for guid in guids:
-#                postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid))           
-
-#    postprocesslocations.close()     
-
-#    printInfo(str(os.listdir(orig_wdir)))   
-
-
     ###OUTPUTUPLOADSPOSTPROCESSING###
-
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
