@@ -670,7 +670,10 @@ try:
         raise Exception('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)
 
+    printInfo('%s %s' % (os.getcwd(), orig_wdir))       
+
     printInfo(str(os.listdir(os.getcwd())))
+    printInfo(str(os.listdir(orig_wdir)))       
 
     ###OUTPUTUPLOADSPOSTPROCESSING###
 
