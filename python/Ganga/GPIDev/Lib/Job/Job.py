@@ -412,7 +412,7 @@ class Job(GangaObject):
                                         outputfile.setLocation(location)     
 
         #leave it for the moment for debugging
-        os.system('rm %s' % postprocessLocationsPath)   
+        #os.system('rm %s' % postprocessLocationsPath)   
 
 
     def updateMasterJobStatus(self):
