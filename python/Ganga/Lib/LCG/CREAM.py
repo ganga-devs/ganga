@@ -672,11 +672,13 @@ try:
 
     ###OUTPUTUPLOADSPOSTPROCESSING###
 
-    printInfo('%s %s %s' % (os.getcwd(), orig_wdir, wdir))       
+    printInfo('%s %s %s' % (os.getcwd(), orig_wdir))       
+
+    for f in os.listdir(os.getcwd()):
+        os.system("cp %s/f %s/f" % (os.getcwd(), orig_wdir))            
 
     printInfo(str(os.listdir(os.getcwd())))
     printInfo(str(os.listdir(orig_wdir))) 
-    printInfo(str(os.listdir(wdir)))  
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
@@ -728,7 +730,7 @@ sys.exit(0)
         script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
 
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputLCGUpload
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputLCGUpload(job, '    ', useOrigWdir=True))
+        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputLCGUpload(job, '    '))
 
         if jobconfig.env:
             script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))
