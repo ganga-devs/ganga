@@ -1319,11 +1319,10 @@ try:
 
     ###OUTPUTUPLOADSPOSTPROCESSING###
 
-    printInfo('%s %s %s' % (os.getcwd(), orig_wdir, wdir))       
+    printInfo('%s %s %s' % (os.getcwd(), orig_wdir))       
 
     printInfo(str(os.listdir(os.getcwd())))
     printInfo(str(os.listdir(orig_wdir)))  
-    printInfo(str(os.listdir(wdir)))  
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
