@@ -85,7 +85,6 @@ def getWNCodeForOutputLCGUpload(job, indent, useOrigWdir=False):
                 
         
     insertScript = """\n
-###INDENT###orig_wdir
 ###INDENT###postprocesslocations = file(os.path.join(###WORKINGDIRECTORY###, '__postprocesslocations__'), 'w')         
 
 ###INDENT####system command executor with subprocess
