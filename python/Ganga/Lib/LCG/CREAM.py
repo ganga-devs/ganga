@@ -670,6 +670,8 @@ try:
         raise Exception('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)
 
+    printInfo(str(os.listdir(os.getcwd())))
+
     ###OUTPUTUPLOADSPOSTPROCESSING###
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
