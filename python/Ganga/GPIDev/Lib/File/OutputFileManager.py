@@ -69,7 +69,7 @@ for fn in final_list_to_copy:
 
     return insertScript 
 
-def getWNCodeForOutputLCGUpload(job, indent, useOrigWdir=False):
+def getWNCodeForOutputLCGUpload(job, indent):
 
     lcgCommands = []
     massStorageCommands = []
@@ -85,7 +85,7 @@ def getWNCodeForOutputLCGUpload(job, indent, useOrigWdir=False):
                 
         
     insertScript = """\n
-###INDENT###postprocesslocations = file(os.path.join(###WORKINGDIRECTORY###, '__postprocesslocations__'), 'w')         
+###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
 
 ###INDENT####system command executor with subprocess
 ###INDENT###def execSyscmdSubprocessAndReturnOutput(cmd):
@@ -119,7 +119,7 @@ def getWNCodeForOutputLCGUpload(job, indent, useOrigWdir=False):
 ###INDENT###    guidResults = []
 
 ###INDENT###    import glob 
-###INDENT###    for currentFile in glob.glob(os.path.join(###WORKINGDIRECTORY###, filenameWildChar)):
+###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
 ###INDENT###        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
 ###INDENT###        cmd = cmd.replace('filename', currentFile)
 ###INDENT###        cmd = cmd + ' file:%s' % currentFile
@@ -169,7 +169,7 @@ def getWNCodeForOutputLCGUpload(job, indent, useOrigWdir=False):
 ###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
 ###INDENT###            continue
             
-###INDENT###    for currentFile in glob.glob(os.path.join(###WORKINGDIRECTORY###,filenameWildChar)):
+###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildChar)):
 ###INDENT###        currentFileBaseName = os.path.basename(currentFile)
 ###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)))
 ###INDENT###        if exitcode != 0:
@@ -187,12 +187,6 @@ def getWNCodeForOutputLCGUpload(job, indent, useOrigWdir=False):
     insertScript = insertScript.replace('###LCGCOMMANDS###', str(lcgCommands))
     insertScript = insertScript.replace('###MASSSTORAGECOMMANDS###', str(massStorageCommands))
     insertScript = insertScript.replace('###INDENT###', indent)
-
-    if useOrigWdir:     
-        insertScript = insertScript.replace('###WORKINGDIRECTORY###', 'orig_wdir')
-    else:
-        insertScript = insertScript.replace('###WORKINGDIRECTORY###', 'os.getcwd()')    
-
 
     return insertScript
     
