@@ -675,7 +675,7 @@ try:
     printInfo('%s %s' % (os.getcwd(), orig_wdir))       
 
     for f in os.listdir(os.getcwd()):
-        command = "cp % %s" % (os.path.join(os.getcwd(),f), os.path.join(orig_wdir,f))
+        command = "cp %s %s" % (os.path.join(os.getcwd(),f), os.path.join(orig_wdir,f))
         printInfo(command)
         os.system(command)            
 
