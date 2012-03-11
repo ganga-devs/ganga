@@ -1315,14 +1315,14 @@ try:
 
     if not status:
         raise Exception('Application execution failed.')
-    printInfo('Application execution passed with exit code %d.' % exitcode)            
+    printInfo('Application execution passed with exit code %d.' % exitcode)                 
+
+    ###OUTPUTUPLOADSPOSTPROCESSING###
 
     printInfo('%s %s' % (os.getcwd(), orig_wdir))       
 
     printInfo(str(os.listdir(os.getcwd())))
-    printInfo(str(os.listdir(orig_wdir)))       
-
-    ###OUTPUTUPLOADSPOSTPROCESSING###
+    printInfo(str(os.listdir(orig_wdir)))  
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
