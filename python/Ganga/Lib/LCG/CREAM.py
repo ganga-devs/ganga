@@ -672,7 +672,7 @@ try:
 
     ###OUTPUTUPLOADSPOSTPROCESSING###
 
-    printInfo('%s %s %s' % (os.getcwd(), orig_wdir))       
+    printInfo('%s %s' % (os.getcwd(), orig_wdir))       
 
     for f in os.listdir(os.getcwd()):
         os.system("cp %s/f %s/f" % (os.getcwd(), orig_wdir))            
