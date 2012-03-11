@@ -1,4 +1,3 @@
-+
 # CREAM backend
 import os
 import os.path
