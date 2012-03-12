@@ -1319,11 +1319,6 @@ try:
 
     ###OUTPUTUPLOADSPOSTPROCESSING###
 
-    printInfo('%s %s' % (os.getcwd(), orig_wdir))       
-
-    printInfo(str(os.listdir(os.getcwd())))
-    printInfo(str(os.listdir(orig_wdir)))  
-
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
 #   pack outputsandbox
@@ -1406,8 +1401,8 @@ sys.exit(0)
         script = script.replace('###APPLICATIONEXEC###',repr(jobconfig.getExeString()))
         script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
 
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputLCGUpload
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputLCGUpload(job, '    '))
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
+        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, '    '))
 
         if jobconfig.env:
             script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))
