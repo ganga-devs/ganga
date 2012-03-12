@@ -69,7 +69,7 @@ for fn in final_list_to_copy:
 
     return insertScript 
 
-def getWNCodeForOutputLCGUpload(job, indent):
+def getWNCodeForOutputPostprocessing(job, indent):
 
     lcgCommands = []
     massStorageCommands = []
