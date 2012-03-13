@@ -687,41 +687,6 @@ class Job(GangaObject):
 
         return None
 
-
-    def _create_post_process_output(self):
-
-        from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
-
-        from Ganga.Utility.Config import getConfig
-
-        content = ''
-
-        if len(self.outputfiles) > 0:
-            for outputFile in self.outputfiles:
-                if outputFile.__class__.__name__ == 'OutputSandboxFile' and outputFile.compressed:
-
-                    content += 'zipped %s\n' % outputFile.name  
-
-                elif outputFile.__class__.__name__ == 'MassStorageFile': 
-
-                    massStorageConfig = getConfig('MassStorageOutput')  
-                    content += 'massstorage %s %s %s %s %s\n' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])
-
-                elif outputFile.__class__.__name__ == 'LCGStorageElementFile':
-
-                    lcgSEConfig = getConfig('LCGStorageElementOutput')
-                    content += 'lcgse %s %s %s\n' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd())
-
-        if content is not '':
-
-            postProcessFile = os.path.join(self.getInputWorkspace().getPath(), '__postprocessoutput__')
-
-            if os.path.exists(postProcessFile):
-                os.system('rm  %s' % postProcessFile)
-
-            self.getInputWorkspace().writefile(FileBuffer('__postprocessoutput__', content))
-
-
     def prepare(self,force=False):
         '''A method to put a job's application into a prepared state. Returns 
         True on success.
@@ -914,9 +879,6 @@ class Job(GangaObject):
 
             # notify monitoring-services
             self.monitorPrepare_hook(jobsubconfig) 
-
-            #create a file in the inputsandbox with instructions for postporcessing output on the WN
-            #self._create_post_process_output()
 
             # submit the job
             try:
@@ -1328,9 +1290,6 @@ class Job(GangaObject):
 
             self.status = 'submitted' # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
             self._commit() # make sure that the status change goes to the repository
-
-            #create a file in the inputsandbox with instructions for postporcessing output on the WN
-            #self._create_post_process_output()
 
             #send job submission message
             from Ganga.Runtime.spyware import ganga_job_submitted       
