@@ -831,7 +831,7 @@ sys.exit(0)
         ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
         ##  - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
-
+        """
         if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
             
             fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
@@ -850,6 +850,10 @@ sys.exit(0)
 
 
             fileRead.close()
+        """
+
+        for outputSandboxPattern in getOutputSandboxPatterns(job):
+            output_sandbox.append(outputSandboxPattern)
 
         if config['JobLogHandler'] in ['WMS']:
             output_sandbox += ['stdout.gz','stderr.gz']
