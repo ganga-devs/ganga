@@ -13,6 +13,34 @@ def outputFilePostProcessingOnWN(job, outputFileClassName):
     return False
 
 
+"""
+Checks if the output files of a given job(we are interested in the backend) 
+should be postprocessed on the client, depending on job.backend_output_postprocess dictionary
+"""
+def outputFilePostProcessingOnClient(job, outputFileClassName):
+    backendClassName = job.backend.__class__.__name__
+
+    if job.backend_output_postprocess.has_key(backendClassName):
+        if job.backend_output_postprocess[backendClassName].has_key(outputFileClassName):
+            if job.backend_output_postprocess[backendClassName][outputFileClassName] == 'client' or job.backend_output_postprocess[backendClassName][outputFileClassName] == 'WNclient':
+                return True
+        
+    return False
+
+"""
+Intented for grid backends where we have to set the outputsandbox patterns for the output file types that have to be processed on the client
+"""
+def getOutputSandboxPatterns(job):
+
+    outputPatterns = ['__postprocesslocations__']       
+
+    if len(job.outputfiles) > 0:
+        for outputFile in job.outputfiles:   
+            if outputFilePostProcessingOnClient(job, outputFile.__class__.__name__): 
+                if outputFile.name not in outputPatterns:
+                    outputPatterns.append(outputFile.name)
+                
+    return outputPatterns
 
 """
 This should be used from Local and Batch backend, where there is code on the WN for 
