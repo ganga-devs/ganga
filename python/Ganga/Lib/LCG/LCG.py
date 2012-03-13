@@ -1504,25 +1504,7 @@ sys.exit(0)
         ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
         ##  - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
-        """
-        if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
-            
-            fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
-            fileRead = open(fullFilePath, 'r')
-            for line in fileRead.readlines(): 
-                line = line.strip()     
-                if line.startswith('massstorage'):
-                    massStoragePattern = line.split(' ')[1]
-                    if massStoragePattern not in output_sandbox:        
-                        output_sandbox += [massStoragePattern]
-                elif line.startswith('lcgse'):
-                    if fullFilePath not in input_sandbox:
-                        input_sandbox += [fullFilePath]
-                    if '__postprocesslocations__' not in output_sandbox:
-                        output_sandbox += ['__postprocesslocations__']
 
-            fileRead.close()
-        """
         from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
         for outputSandboxPattern in getOutputSandboxPatterns(job):
             output_sandbox.append(outputSandboxPattern)
