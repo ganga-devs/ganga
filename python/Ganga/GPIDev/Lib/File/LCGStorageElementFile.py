@@ -120,8 +120,10 @@ class LCGStorageElementFile(OutputSandboxFile):
                 match = re.search('(guid:\S+)',mystdout)
                 if match:
                     self.setLocation(mystdout.strip())
-                else:
-                    logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))
+
+            else:
+                logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))       
+                                        
     
     def get(self, dir):
         """
