@@ -550,21 +550,7 @@ sys.exit(result)
         logger.debug('master input sandbox %s ',master_input_sandbox)
         
         text = text.replace('###INPUT_SANDBOX###',repr(subjob_input_sandbox+master_input_sandbox))
-        text = text.replace('###SHAREDOUTPUTPATH###',repr(sharedoutputpath))
-
-        """
-        if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
-            
-            fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
-            fileRead = open(fullFilePath, 'r')
-            for line in fileRead.readlines(): 
-                line = line.strip()     
-                if line.startswith('lcgse'):
-                    filenameWildChar = line.split(' ')[1]
-                    if filenameWildChar not in outputpatterns:
-                        outputpatterns += [filenameWildChar]
-            fileRead.close()
-        """     
+        text = text.replace('###SHAREDOUTPUTPATH###',repr(sharedoutputpath))    
         
         text = text.replace('###OUTPUTPATTERNS###',repr(outputpatterns))
         text = text.replace('###JOBID###',repr(self.getJobObject().getFQID('.')))
