@@ -851,7 +851,7 @@ sys.exit(0)
 
             fileRead.close()
         """
-
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
         for outputSandboxPattern in getOutputSandboxPatterns(job):
             output_sandbox.append(outputSandboxPattern)
 
