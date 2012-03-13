@@ -916,7 +916,7 @@ class Job(GangaObject):
             self.monitorPrepare_hook(jobsubconfig) 
 
             #create a file in the inputsandbox with instructions for postporcessing output on the WN
-            self._create_post_process_output()
+            #self._create_post_process_output()
 
             # submit the job
             try:
@@ -1330,7 +1330,7 @@ class Job(GangaObject):
             self._commit() # make sure that the status change goes to the repository
 
             #create a file in the inputsandbox with instructions for postporcessing output on the WN
-            self._create_post_process_output()
+            #self._create_post_process_output()
 
             #send job submission message
             from Ganga.Runtime.spyware import ganga_job_submitted       
