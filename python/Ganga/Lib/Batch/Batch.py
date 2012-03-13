@@ -552,6 +552,7 @@ sys.exit(result)
         text = text.replace('###INPUT_SANDBOX###',repr(subjob_input_sandbox+master_input_sandbox))
         text = text.replace('###SHAREDOUTPUTPATH###',repr(sharedoutputpath))
 
+        """
         if '__postprocessoutput__' in os.listdir(job.getStringInputDir()):
             
             fullFilePath = os.path.join(job.getStringInputDir(), '__postprocessoutput__')
@@ -563,8 +564,8 @@ sys.exit(result)
                     if filenameWildChar not in outputpatterns:
                         outputpatterns += [filenameWildChar]
             fileRead.close()
-
-
+        """     
+        
         text = text.replace('###OUTPUTPATTERNS###',repr(outputpatterns))
         text = text.replace('###JOBID###',repr(self.getJobObject().getFQID('.')))
         text = text.replace('###ENVIRONMENT###',repr(environment))
