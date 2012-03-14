@@ -614,12 +614,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
 #       input files FIXME: many more input types
         if job.inputdata and self.inputdatatype=='DQ2':
-            for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
+            for guid, lfn, size, checksum in zip(job.inputdata.guids,job.inputdata.names,job.inputdata.sizes, job.inputdata.checksums): 
                 finp = FileSpec()
                 finp.lfn            = lfn
                 finp.GUID           = guid
-                #            finp.fsize =
-                #            finp.md5sum =
+                finp.fsize          = size
+                finp.md5sum         = checksum
                 finp.dataset        = job.inputdata.dataset[0]
                 finp.prodDBlock     = job.inputdata.dataset[0]
                 finp.dispatchDBlock = job.inputdata.dataset[0]
