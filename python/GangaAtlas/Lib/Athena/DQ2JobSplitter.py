@@ -931,6 +931,7 @@ class DQ2JobSplitter(ISplitter):
                     j.inputdata.sizes = []
                     j.inputdata.guids = []
                     j.inputdata.names = []
+                    j.inputdata.checksums = []
                     j.application   = job.application
                     j.application.run_event   = []
 
@@ -982,6 +983,7 @@ class DQ2JobSplitter(ISplitter):
                         j.inputdata.guids = list(guids[id_lower:id_upper])
                         j.inputdata.names = [allcontent[g][0] for g in j.inputdata.guids]
                         j.inputdata.sizes = [allcontent[g][1] for g in j.inputdata.guids]
+                        j.inputdata.checksums = [allcontent[g][2] for g in j.inputdata.guids]
                         j.application.skip_events = nevtstoskip
                         j.application.max_events = num_of_events
                         events_processed += num_of_events

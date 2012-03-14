@@ -416,6 +416,7 @@ class DQ2Dataset(Dataset):
         'exclude_pattern'    : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical file name pattern to exclude from processing'),
         'number_of_files'    : SimpleItem(defvalue = 0, doc = 'Number of files. '),
         'guids'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'GUID of Logical File Names'),
+        'checksums'            : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'md5sum or adler checksums of input files'),
         'type'               : SimpleItem(defvalue = '', doc = 'Dataset access on worker node: DQ2_LOCAL (default), DQ2_COPY, LFC'),
         'failover'           : SimpleItem(defvalue = False, doc = 'Use DQ2_COPY automatically if DQ2_LOCAL fails'),
         'datatype'           : SimpleItem(defvalue = '', doc = 'Data type: DATA, MC or MuonCalibStream'),
@@ -492,6 +493,7 @@ class DQ2Dataset(Dataset):
         allcontents = []
         diffcontents = {}
         contents_size = {}
+        contents_checksum = {}
 
         datasets = resolve_container(self.dataset)
 
@@ -528,7 +530,8 @@ class DQ2Dataset(Dataset):
             contents_new = []
             for guid, info in contents.iteritems():
                 contents_new.append( (guid, info['lfn']) )
-                contents_size[guid] = info['filesize'] 
+                contents_size[guid] = info['filesize']
+                contents_checksum[guid] = info['checksum'] 
             contents = contents_new
             # Sort contents
             try:
@@ -597,7 +600,7 @@ class DQ2Dataset(Dataset):
                 if contents_size.has_key(guid):
                     try:
                         sumfilesize += contents_size[guid]
-                        allcontentsSize.append((guid, (lfn, contents_size[guid])))
+                        allcontentsSize.append((guid, (lfn, contents_size[guid],contents_checksum[guid])))
                     except:
                         pass
             # Sum up dataset filesize per dataset:
@@ -610,7 +613,7 @@ class DQ2Dataset(Dataset):
                     if contents_size.has_key(guid):
                         try:
                             sumfilesizeDataset += contents_size[guid]
-                            contentsSize.append((guid, (lfn, contents_size[guid])))
+                            contentsSize.append((guid, (lfn, contents_size[guid], contents_checksum[guid])))
                             if self._name == 'AMIDataset':
                                 nevents = metadata.setdefault(guid,{'events':0, 'lfn':lfn, 'filesize': contents_size[guid]})['events']
                                 if event and (nevents <=  0):
