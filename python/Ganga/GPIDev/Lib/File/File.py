@@ -9,10 +9,15 @@ config = Ganga.Utility.Config.getConfig('Configuration')
 gangadir = Ganga.Utility.Config.getConfig('Configuration')['gangadir']
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
-import os
+from Ganga.GPIDev.Lib.GangaList import GangaList
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.Core.GangaRepository import getRegistry
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+import os,shutil
 
 
 from Ganga.Utility.files import expandfilename, chmod_executable, is_executable
+shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
 
 class File(GangaObject):
     """Represent the files, both local and remote and provide an interface to transparently get access to them.
@@ -24,8 +29,7 @@ class File(GangaObject):
     """
     _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='path to the file source'),
                                     'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)'),
-                                    'executable': SimpleItem(defvalue=False,hidden=True,transient=True,
-                                                             doc='specify if executable bit should be set when the file is created (internal framework use)')})
+                                    'executable': SimpleItem(defvalue=False,hidden=True,transient=True,doc='specify if executable bit should be set when the file is created (internal framework use)')})
     _category = 'files'
     _name = "File"
     #added a subdirectory to the File object. The default is os.curdir, that is "." in Unix.
@@ -126,11 +130,13 @@ class ShareDir(GangaObject):
     """
     _schema = Schema(Version(1,0), {'name': SimpleItem(defvalue='',doc='path to the file source'),
                                     'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)')})
+                                    
     _category = 'shareddirs'
+    _exportmethods = ['add','ls']
     _name = "ShareDir"
     _root_shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
-    def _readonly(self):
-        return True
+#    def _readonly(self):
+#        return True
 
     def __init__(self,name=None,subdir=os.curdir):
         super(ShareDir, self).__init__()
@@ -147,18 +153,68 @@ class ShareDir(GangaObject):
                     os.makedirs(os.path.join(shared_path, name))
                     break
             self.name=str(name)
+            #incrementing then decrementing the shareref counter has the effect of putting the newly 
+            #created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
+            #filled with files, then assigned to an application.
+            #a=Job(); s=ShareDir(); a.application.is_prepared=s
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        shareref.increase(self.name)
+        shareref.decrease(self.name)
 
-#    def __construct__(self,args):
-#        if len(args) == 1 and type(args[0]) == type(''):
-#            v = args[0]
-#            import os.path
-#            expanded = expandfilename(v)
-#            if not urlprefix.match(expanded): # if it is not already an absolute filename
-#                self.name = os.path.abspath(expanded)
-#            else: #bugfix #20545 
-#                self.name = expanded
-#        else:
-#            super(ShareDir,self).__construct__(args)
+
+
+#this constructor enables the ability to add files to a ShareDir at initiation by calling
+# ShareDir('filetoadd')
+#    def __construct__(self,addfile):
+#        self.addfile = addfile
+#        if self.addfile:
+#            self.add(self.addfile)
+
+    def add(self, input):
+        if not isType(input, list):
+            input = [input] 
+        for item in input:
+            if isType(item, str):
+                if os.path.isfile(expandfilename(item)):
+                    logger.info('Copying file %s to shared directory %s'%(item, self.name))
+                    shutil.copy2(expandfilename(item), os.path.join(shared_path,self.name))
+                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    shareref.increase(self.name)
+                    shareref.decrease(self.name)
+                else:
+                    logger.error('File %s not found' % expandfilename(item))
+            elif isType(item,File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
+                logger.info('Copying file object %s to shared directory %s'%(item.name,self.name))
+                shutil.copy2(expandfilename(item.name), os.path.join(shared_path,self.name))
+                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                shareref.increase(self.name)
+                shareref.decrease(self.name)
+            else:
+                logger.error('File %s not found' % expandfilename(item.name))
+                    
+
+    def ls(self):
+        """
+        Print the contents of the ShareDir
+        """
+        full_shareddir_path =  os.path.join(self._root_shared_path,self.name)
+        try:
+            os.path.isdir(full_shareddir_path)
+            cmd = "find '%s'" % (full_shareddir_path)
+            files = os.popen(cmd).read().strip().split('\n')
+            padding = '|  '
+            for file in files:
+                level = file.count(os.sep)
+                level = level -6
+                pieces = file.split(os.sep)
+                symbol = {0:'', 1:'/'}[os.path.isdir(file)]
+                print padding*level + pieces[-1] + symbol
+        except IOError:
+            logger.warn('ShareDir %s not found on storage' % full_shareddir_path)
+
+
+
+
         
     def exists(self):
         """check if the file exists (as specified by 'name')"""

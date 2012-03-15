@@ -40,11 +40,12 @@ class PrepRegistry(Registry):
 
 
 class ShareRef(GangaObject):
-    """The shareref (shared files reference counter) object provides a mechanism for 
-    for storing metadata associated with prepared applications. These applications 
-    may be referenced by other Ganga objects, such as jobs.
-    When a prepared application is attached to a job, it's reference counter is increased,
-    or created if it didn't already exist.
+    """The shareref table (shared directory reference counter table) provides a mechanism
+    for storing metadata associated with Shared Directories (see help(ShareDir)), which 
+    may be referenced by other Ganga objects, such as prepared applications.
+    When a Shared Directory is associated with a persisted Ganga object (e.g. Job, Box) its 
+    reference counter is incremented by 1. Shared Directories with a reference counter of 0 will
+    be removed (i.e. the directory deleted) the next time Ganga exits.
     """
     _schema = Schema(Version(1,2),{ 'name':SimpleItem({}, protected=1,copyable=1,hidden=1)})
 
@@ -74,11 +75,10 @@ class ShareRef(GangaObject):
         finally:
             self._releaseWriteAccess()
         
-    def increase(self,shareddir):
+    def increase(self,shareddir, force=False):
         """Increase the reference counter for a given shared directory by 1. If the directory
         doesn't currently have a reference counter, one is initialised with a value of 1.
-        The shareddir must exist for a reference counter to be initialised; an exception will
-        be raised if the specified directory doesn't exist.
+        The shareddir must exist for a reference counter to be initialised (unless Force=True).
         Sharedir should be given relative to the user's shared directory repository, which can
         be discovered by calling 'shareref'.
         """
@@ -87,12 +87,20 @@ class ShareRef(GangaObject):
         
         shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
         basedir = os.path.basename(shareddir)
-        if os.path.isdir(shareddir):
+        if os.path.isdir(shareddir) and force is False:
             if basedir not in self.name:
                 logger.debug('%s is not stored in the shareref metadata object...adding.' %basedir)
                 self.name[basedir] = 1
             else:
                 self.name[basedir] += 1
+        elif not os.path.isdir(shareddir) and force is True and basedir is not '':
+            if basedir not in self.name:
+                logger.debug('%s is not stored in the shareref metadata object...adding.' %basedir)
+                self.name[basedir] = 0
+            else:
+                self.name[basedir] += 1
+        else:
+            logger.error('Directory %s does not exist' % shareddir)
 
         self._setDirty()
         self._releaseWriteAccess()
@@ -147,10 +155,10 @@ class ShareRef(GangaObject):
         self._setDirty()
         self._releaseWriteAccess()
 
-    def ls(self, shareddir, detail=False, print_files=True):
+    def ls(self, shareddir, print_files=True):
         """
         Print the contents of the given shared directory, which can be specified as relative to the shared
-        directories repository, or 
+        directories repository, or absolute.
         """
         shareddir_root = shareddir
         full_shareddir_path =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
