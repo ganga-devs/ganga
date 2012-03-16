@@ -321,12 +321,16 @@ def getLibFileSpecFromLibDS(libDS):
     tmpList = Client.queryFilesInDataset(libDS,False)
     tmpFileList = []
     tmpGUIDmap = {}
+    tmpMD5Sum  = None
+    tmpFSize   = None
     for fileName in tmpList.keys():
         # ignore log file
         if len(re.findall('.log.tgz.\d+$',fileName)) or len(re.findall('.log.tgz$',fileName)):
             continue
         tmpFileList.append(fileName)
         tmpGUIDmap[fileName] = tmpList[fileName]['guid'] 
+        tmpMD5Sum  = tmpList[fileName]['md5sum']
+        tmpFSize   = tmpList[fileName]['fsize']
     # incomplete libDS
     if tmpFileList == []:
         # query files in dataset from Panda
@@ -352,6 +356,10 @@ def getLibFileSpecFromLibDS(libDS):
     fileBO.destinationDBlock = libDS
     if fileBO.GUID != 'NULL':
         fileBO.status = 'ready'
+    if tmpMD5Sum != None:
+        fileBO.md5sum = tmpMD5Sum
+    if tmpFSize != None:
+        fileBO.fsize = tmpFSize
     return fileBO
 
 def retrieveMergeJobs(job, pandaJobDefId):

@@ -599,6 +599,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             flib = FileSpec()
             flib.lfn            = self.fileBO.lfn
             flib.GUID           = self.fileBO.GUID
+            flib.md5sum         = self.fileBO.md5sum
+            flib.fsize          = self.fileBO.fsize
             flib.type           = 'input'
             flib.status         = self.fileBO.status
             flib.dataset        = self.fileBO.destinationDBlock
