@@ -281,21 +281,13 @@ s=shareref._impl.name
 assert s[tmpsh] == 0, 'Prepare Test 38a failed.'
 a=Executable()
 a.is_prepared = sh
-#should still equal 0
+#should still equal 0, because we've only attached it to an application
 s=shareref._impl.name
 assert s[tmpsh] == 0, 'Prepare Test 38b failed.'
 j=Job()
-j.application = a
+j.application.is_prepared = sh
 s=shareref._impl.name
 assert s[tmpsh] == 1, 'Prepare Test 38c failed.'
-j.application = a
-s=shareref._impl.name
-#should still equal 1
-assert s[tmpsh] == 1, 'Prepare Test 38d failed.'
-j.application.is_prepared=sh
-s=shareref._impl.name
-#should still equal 1
-assert s[tmpsh] == 1, 'Prepare Test 38e failed.'
 
 
 
