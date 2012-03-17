@@ -77,7 +77,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                         raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
                     if job.inputdata.names:
                         input_files = job.inputdata.names
-                        input_files = input_guids
+                        input_guids = input_files
 
                 elif job.inputdata._name == 'DQ2Dataset':
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
@@ -101,7 +101,11 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                         input_files = job.inputdata.names
                         input_guids = input_files
                     elif job.inputdata.pfnListFile:
-                        input_files = [ line.strip() for line in file(job.inputdata.pfnListFile.name) ]
+                        logger.info('Loading file names from %s'%job.inputdata.pfnListFile.name)
+                        pfnListFile = open(job.inputdata.pfnListFile.name)
+                        job.inputdata.names = [ line.strip() for line in pfnListFile]
+                        pfnListFile.close()
+                        input_files = job.inputdata.names
                         input_guids = input_files
                     else:
                         raise ApplicationConfigurationError(None,'No inputdata has been specified.') 

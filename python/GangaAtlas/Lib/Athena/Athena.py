@@ -1395,7 +1395,7 @@ class Athena(IPrepareApp):
         else:
             
             # check splitter
-            if job.splitter and not job.splitter._name in ['AthenaSplitterJob','AnaTaskSplitterJob']:
+            if job.splitter and not job.splitter._name in ['AthenaSplitterJob', 'AnaTaskSplitterJob', 'ATLASTier3Splitter']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
              
             # Check that only ATLASLocalDataset are used locally       
