@@ -285,7 +285,10 @@ class Descriptor(object):
 ##                 checklist=filter(lambda x: not implies(x is None,item['optional']) or  x._category != item['category'],val)
 ##                 if len(checklist) > 0:
 ##                     raise AttributeError('%s: attempt to assign incompatible objects %s to the property in category "%s"'%(self._name, str(checklist),item['category']))
-                val = makeGangaList(val,cloneVal, parent = obj)
+                if item['preparable']:
+                    val = makeGangaList(val,cloneVal, parent = obj, preparable = True)
+                else:
+                    val = makeGangaList(val,cloneVal, parent = obj)
             else:
                 val = cloneVal(val)
 
@@ -298,7 +301,10 @@ class Descriptor(object):
 ##                     val = cloneVal(val)
         else:
             if item['sequence']:
-                val = makeGangaList(val, parent = obj)
+                if item['preparable']:
+                    val = makeGangaList(val, parent = obj, preparable = True)
+                else:
+                    val = makeGangaList(val, parent = obj)
 
         obj._data[self._name] = val
 

@@ -5,10 +5,10 @@ from Ganga.GPIDev.Base.VPrinter import full_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem,Schema,SimpleItem,Version
 from Ganga.Utility.Plugin.GangaPlugin import allPlugins
 from Ganga.Utility.util import containsGangaObjects,isNestedList
-from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError
+from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError, isType
 import copy,sys
 
-def makeGangaList(_list, mapfunction = None, parent = None):
+def makeGangaList(_list, mapfunction = None, parent = None, preparable = False):
     """Should be used for makeing full gangalists"""
     
     #work with a simple list always
@@ -24,6 +24,8 @@ def makeGangaList(_list, mapfunction = None, parent = None):
     
     result = GangaList()
     result.extend(_list)
+
+    result._is_preparable = preparable
     
     #set the parent if possible
     if parent is not None:
@@ -73,6 +75,7 @@ class GangaList(GangaObject):
     _name = 'GangaList'
     _schema = Schema(Version(1, 0), {
         '_list' : SimpleItem(defvalue=[], doc='The raw list', hidden = 1),
+        '_is_preparable' : SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden = 1),
         })
     _enable_config = 1
     
@@ -130,6 +133,14 @@ class GangaList(GangaObject):
                 result.append(category)
         return result
     
+
+    def _readonly(self):
+        if self._is_preparable and hasattr(self, '_parent'):
+            if self._parent._category == 'applications':
+                from Ganga.GPIDev.Lib.File.File import ShareDir
+                return ( isType(self._parent.is_prepared,ShareDir) or super(GangaList,self)._readonly() )
+        return super(GangaList,self)._readonly()
+
     def checkReadOnly(self):
         """Puts a hook in to stop mutable access to readonly jobs."""
         if self._readonly():
