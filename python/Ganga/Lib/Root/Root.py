@@ -210,7 +210,7 @@ class Root(IPrepareApp):
         'args' : SimpleItem(defvalue=[],typelist=['str','int'],sequence=1,doc="List of arguments for the script. Accepted types are numerics and strings"),
         'version' : SimpleItem(defvalue='5.18.00',doc="The version of Root to run"),
         'usepython' : SimpleItem(defvalue = False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
-        'is_prepared' : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool','Ganga.GPIDev.Lib.File.File.ShareDir'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
+        'is_prepared' : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
         } )
     _category = 'applications'
     _name = 'Root'
