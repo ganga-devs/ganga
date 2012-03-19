@@ -136,7 +136,7 @@ class GangaList(GangaObject):
 
     def _readonly(self):
         if self._is_preparable and hasattr(self, '_parent'):
-            if self._parent._category == 'applications':
+            if self._parent._category == 'applications' and hasattr(self._parent,'is_prepared'):
                 from Ganga.GPIDev.Lib.File.File import ShareDir
                 return ( isType(self._parent.is_prepared,ShareDir) or super(GangaList,self)._readonly() )
         return super(GangaList,self)._readonly()
