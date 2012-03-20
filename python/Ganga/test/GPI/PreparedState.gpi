@@ -275,24 +275,6 @@ s=shareref._impl.name
 assert s[tmpj] == 0, 'Prepare Test 37a failed.' 
 assert s[tmpa] == 1, 'Prepare Test 37b failed.' 
 
-sh=ShareDir()
-tmpsh = sh.name
-s=shareref._impl.name
-assert s[tmpsh] == 0, 'Prepare Test 38a failed.'
-a=Executable()
-a.is_prepared = sh
-#should still equal 0, because we've only attached it to an application
-s=shareref._impl.name
-assert s[tmpsh] == 0, 'Prepare Test 38b failed.'
-j=Job()
-j.application.is_prepared = sh
-s=shareref._impl.name
-assert s[tmpsh] == 1, 'Prepare Test 38c failed.'
-
-
-
-
-
 
 print "############################"
 print "REACHED END OF PREPARE TESTS"
