@@ -219,9 +219,19 @@ class Job(GangaObject):
                 assert(not s.state in self)
                 self[s.state] = s
     
-        
-    backend_output_postprocess = {'LSF' :{'OutputSandboxFile':'WNclient', 'LCGStorageElementFile':'client', 'MassStorageFile':'WN'}, 'Localhost': {'OutputSandboxFile':'WN', 'MassStorageFile':'WN', 'LCGStorageElementFile':'WN'} , 'LCG' : {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}, 'CREAM': {'MassStorageFile':'client', 'LCGStorageElementFile':'WN'}}
+    from Ganga.Utility.Config import getConfig, ConfigError
 
+    backend_output_postprocess = {}
+                
+    for key in getConfig('Output').options.keys():
+        try:
+            for configEntry in getConfig('Output')[key]['backendPostprocess']:
+                if configEntry not in backend_output_postprocess.keys():
+                    backend_output_postprocess[configEntry] = {}
+
+                backend_output_postprocess[configEntry][key] = getConfig('Output')[key]['backendPostprocess'][configEntry]
+        except ConfigError:
+            pass
 
     status_graph = {'new' : Transitions(State('submitting','j.submit()',hook='monitorSubmitting_hook'),
                                         State('removed','j.remove()')),
