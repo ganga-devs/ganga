@@ -157,9 +157,9 @@ class ShareDir(GangaObject):
             #created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
             #filled with files, then assigned to an application.
             #a=Job(); s=ShareDir(); a.application.is_prepared=s
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-        shareref.increase(self.name)
-        shareref.decrease(self.name)
+        #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        #shareref.increase(self.name)
+        #shareref.decrease(self.name)
 
 
 
