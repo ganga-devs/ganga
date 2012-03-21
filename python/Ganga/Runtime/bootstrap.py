@@ -423,8 +423,12 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         #[Output] section
         outputconfig = makeConfig( "Output", "configuration section for postprocessing the output" )
-        outputconfig.addOption('MassStorageFile',['*.dummy'],'list of output files that will be written to mass storage after job is completed')
-        outputconfig.addOption('LCGStorageElementFile',['*.root'],'list of output files that will be written to LCG SE after job is completed')
+
+        outputconfig.addOption('OutputSandboxFile', {'fileExtensions':[], 'backendPostprocess':{'LSF':'WNclient', 'Localhost':'WN'}},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends')
+
+        outputconfig.addOption('MassStorageFile', {'fileExtensions':['*.dummy'], 'backendPostprocess':{'LSF':'WN', 'LCG':'client', 'CREAM':'client', 'Localhost':'WN'}},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends')
+
+        outputconfig.addOption('LCGStorageElementFile',{'fileExtensions':['*.root'], 'backendPostprocess':{'LSF':'client', 'LCG':'WN', 'CREAM':'WN', 'Localhost':'WN'}},'fileExtensions:list of output files that will be written to LCG SE, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends')
 
         #[MassStorageOutput] section
         outputconfig = makeConfig( "MassStorageOutput", "configuration section for storing of the output to a mass storage" )
