@@ -83,11 +83,11 @@ from Ganga.Utility.Config import getConfig, ConfigError
 outputfilesConfig = {}
 keys = ['MassStorageFile', 'LCGStorageElementFile']
 
-for key in keys:
+for key in getConfig('Output').options.keys():
     try:
         outputFileExtensions = []
 
-        for configEntry in getConfig('Output')[key]:
+        for configEntry in getConfig('Output')[key]['fileExtensions']:
             #get only the extension
             if configEntry.startswith('*.'):
                 outputFileExtensions.append(configEntry[2:])
