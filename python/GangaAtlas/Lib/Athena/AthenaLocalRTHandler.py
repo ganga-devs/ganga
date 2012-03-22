@@ -491,7 +491,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         # Set athena architecture: 32 or 64 bit    
         environment['ATLAS_ARCH'] = '32'
         cmtconfig = app.atlas_cmtconfig
-        if cmtconfig.find('x86_64')>0:
+        if cmtconfig.find('x86_64')>=0:
             environment['ATLAS_ARCH'] = '64'
 
         environment['DCACHE_RA_BUFFER'] = str(config['DCACHE_RA_BUFFER'])

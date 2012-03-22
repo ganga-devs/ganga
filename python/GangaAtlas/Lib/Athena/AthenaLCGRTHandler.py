@@ -695,7 +695,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         # Set athena architecture: 32 or 64 bit    
         environment['ATLAS_ARCH'] = '32'
-        if requirementsSoftware and requirementsSoftware[0].find('x86_64')>0:
+        if requirementsSoftware and requirementsSoftware[0].find('x86_64')>=0:
             environment['ATLAS_ARCH'] = '64'
             
         #       add software requirement of dq2clients
