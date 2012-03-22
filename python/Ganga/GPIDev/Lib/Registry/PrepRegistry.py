@@ -12,6 +12,7 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.File import ShareDir
+import Ganga.Utility.Config
 logger = Ganga.Utility.logging.getLogger()
 
 
@@ -160,12 +161,71 @@ class ShareRef(GangaObject):
         """Cleans up the Shared Directory registry upon shutdown of the registry, ie. when exiting a Ganga session."""
         self._getWriteAccess()
         cleanup_list = []
+
+
+        def yes_no(question, default='none'):
+            """Check whether the user wants to delete sharedirs which are no longer referenced by any Ganga object"""
+            valid = {"yes":"yes", "y":"yes", "no":"no", "n":"no", "none":"none", "all":"all"}
+            if default == 'none':
+                prompt = '(Yes/No/All/[NONE])'
+            elif default == 'yes':
+                prompt = '([YES]/No/All/None)'
+            elif default == 'no':
+                prompt = '(Yes/[NO]/All/None)'
+            else:
+                raise ValueError("Invalid default answer: '%s'" % default)
+            while 1:
+                logger.info('%s no longer being referenced by any objects. Delete directory?' %shareddir)
+                print question + prompt
+                answer = raw_input().lower()
+                if answer == '':
+                    return default
+                elif answer in valid.keys():
+                    return valid[answer]
+                else:
+                    logger.warn("Please respond with 'Yes/y', 'No/n', 'All' or 'None'")
+
+
+        delete_share_config = Ganga.Utility.Config.getConfig('Configuration')['deleteUnusedShareDir']
+        if delete_share_config == 'ask':
+            ask_delete = 'Ask'
+            default = 'none'
+        elif delete_share_config == 'never':
+            ask_delete = 'none'
+        elif delete_share_config == 'always':
+            ask_delete = 'all'
+        else:
+            ask_delete = 'Ask'
+            default = 'none'
+            
+        
         for shareddir in self.name:
             full_shareddir_path = os.path.join(ShareDir._root_shared_path,shareddir)
             if self.name[shareddir] == 0 and os.path.isdir(full_shareddir_path):
-                logger.info('%s no longer being referenced by any objects. Removing directory.' %shareddir)
-                shutil.rmtree(full_shareddir_path)
-                cleanup_list.append(shareddir)
+                if ask_delete == 'Ask':
+                    ask_delete = yes_no('', default=default)
+                if ask_delete == 'yes':
+                    shutil.rmtree(full_shareddir_path)
+                    cleanup_list.append(shareddir)
+                    ask_delete = 'Ask'
+                    default = 'yes'
+                    logger.warning('Deleting Sharedir %s because it is not referenced by a persisted Ganga object', shareddir)
+
+                if ask_delete == 'no':
+                    ask_delete = 'Ask'
+                    default = 'no'
+                    logger.warning('Keeping ShareDir %s even though it is not referenced by a persisted Ganga object', shareddir)
+
+                if ask_delete == 'all':
+                    shutil.rmtree(full_shareddir_path)
+                    cleanup_list.append(shareddir)
+                    logger.warning('Deleting Sharedir %s because it is not referenced by a persisted Ganga object', shareddir)
+
+                if ask_delete == 'none':
+                    default = 'none'
+                    logger.warning('Keeping ShareDir %s even though it is not referenced by a persisted Ganga object', shareddir)
+
+
             if not os.path.isdir(full_shareddir_path):
                 if shareddir not in cleanup_list:
                     logger.info('%s not found on disk. Removing entry from shared files reference table (shareref).' %shareddir)
