@@ -81,7 +81,6 @@ from LCGStorageElementFile import LCGStorageElementFile
 from Ganga.Utility.Config import getConfig, ConfigError
 
 outputfilesConfig = {}
-keys = ['MassStorageFile', 'LCGStorageElementFile']
 
 for key in getConfig('Output').options.keys():
     try:
