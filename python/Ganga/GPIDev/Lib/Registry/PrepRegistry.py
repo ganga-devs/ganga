@@ -51,7 +51,7 @@ class ShareRef(GangaObject):
 
     _category = 'sharerefs'
     _name = 'ShareRef'
-    _exportmethods = ['increase','decrease','ls','printtree']
+    _exportmethods = ['increase','decrease','ls','printtree', 'rebuild']
 
     default_registry = 'prep'
 
@@ -129,6 +129,31 @@ class ShareRef(GangaObject):
 
         self._setDirty()
         self._releaseWriteAccess()
+
+    def rebuild(self):
+        from Ganga.GPI import jobs, box
+        #clear the shareref table
+        self.name={}
+
+        def helper(object):
+            shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(object))
+            logger.debug( 'Adding %s to the shareref table.' % shareddir)
+            if os.path.isdir(shareddir):
+                if self.name.has_key(os.path.basename(object)):
+                    self.name[os.path.basename(object)] +=1
+                else:
+                    self.name[os.path.basename(object)] = 1
+            else:
+                logger.error('Shared directory %s not found on disk' % shareddir)
+
+        for j in jobs:
+            if hasattr(j.application,'is_prepared') and j.application.is_prepared is not None and j.application.is_prepared is not True:
+                helper(j.application.is_prepared.name)
+        for j in box:
+            if hasattr(j, 'application') and hasattr(j.application,'is_prepared') and j.application.is_prepared is not None and j.application.is_prepared is not True:
+                helper(j.application.is_prepared.name)
+            elif hasattr(j,'is_prepared') and j.is_prepared is not None and j.is_prepared is not True:
+                helper(j.is_prepared.name)
 
 
     def closedown(self):
