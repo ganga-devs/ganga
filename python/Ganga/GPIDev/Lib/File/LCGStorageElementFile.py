@@ -17,7 +17,7 @@ import re
 class LCGStorageElementFile(OutputSandboxFile):
     """LCGStorageElementFile represents a class marking an output file to be written into LCG SE
     """
-    lcgSEConfig = getConfig('LCGStorageElementOutput')
+    lcgSEConfig = getConfig('Output')['LCGStorageElementFile']['uploadOptions']
 
     _schema = Schema(Version(1,1), {
         'name'        : SimpleItem(defvalue="",doc='name of the file'),
@@ -120,6 +120,9 @@ class LCGStorageElementFile(OutputSandboxFile):
                 match = re.search('(guid:\S+)',mystdout)
                 if match:
                     self.setLocation(mystdout.strip())
+
+                #remove file from output
+                os.system('rm %s' % os.path.join(self.joboutputdir, currentFile))
 
             else:
                 logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))       
