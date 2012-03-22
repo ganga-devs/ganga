@@ -100,7 +100,8 @@ class GaudiPython(Francesc):
         send_to_share = self._prepare(os.path.join(shared_path,self.is_prepared.name))
         self._check_inputs()
         self.prep_inputbox  += send_to_share[:]
-    
+        self.checkPreparedHasParent(self)
+        
     def master_configure(self):
         #self._master_configure()
         #self._check_inputs()
