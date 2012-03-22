@@ -11,6 +11,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer, File
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
 from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
+import Ganga.Utility.Config
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -44,6 +45,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
     """The runtime handler to run Gaudi jobs on the Dirac backend"""
 
     def master_prepare(self,app,appmasterconfig):
+        config = Ganga.Utility.Config.getConfig('LHCb')
         ## check version
         global gaudiSoftwareVersions
         if not gaudiSoftwareVersions:
@@ -56,7 +58,7 @@ class GaudiDiracRTHandler(IRuntimeHandler):
                 logger.error('Version/platform will not be validated.')
             else:
                 gaudiSoftwareVersions = result['Value']
-        if gaudiSoftwareVersions:
+        if gaudiSoftwareVersions and (not config['ignore_version_check']):
             if app.get_gaudi_appname() in gaudiSoftwareVersions:
                 soft_info = gaudiSoftwareVersions[app.get_gaudi_appname()]
                 if not app.version in soft_info:

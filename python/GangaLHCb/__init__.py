@@ -51,6 +51,8 @@ dscrpt = 'Space tokens allowed for replication, etc.'
 configLHCb.addOption('DiracSpaceTokens',tokens,dscrpt)
 dscrpt = 'Levels below InstallArea/[<platform>]/python to decend when looking for .py files to include'
 configLHCb.addOption('pyFileCollectionDepth',2,dscrpt)
+dscrpt = 'Switch whether or not a check that the required app version/platform is valid for the backend'
+configLHCb.addOption('ignore_version_check',False,dscrpt)
  
 # Set default values for the Dirac section.
 dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
