@@ -1,30 +1,33 @@
 **************************************************************************************************************
-5.7.11 (2012/3/22)
+5.7.11 (2012/3/23)
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
-* Implement shareref.rebuild() method which can be called from the GPI to repopulate the shareref table in the event it becomes 
-inconsistent with the Job/Box repository contents.
+* Implement shareref.rebuild() method which can be called from the GPI to repopulate the shareref 
+  table in the event it becomes 
+  inconsistent with the Job/Box repository contents.
 
-* Implement a mechanism to control whether Ganga automatically deletes orphaned ShareDirs (i.e. those which are not associated 
-with a persisted Ganga object). This introduces a new .gangarc configuration parameter:
+* Implement a mechanism to control whether Ganga automatically deletes orphaned ShareDirs (i.e.
+  those which are not associated with a persisted Ganga object). This introduces a new .gangarc 
+  configuration parameter:
 
-[Configuration]
-deleteUnusedShareDir=ask
+  [Configuration]
+  deleteUnusedShareDir=ask
 
-which can also be set from the GPI on a per-session basis:
+  which can also be set from the GPI on a per-session basis:
 
-config['Configuration']['deleteUnusedShareDir']='ask'
+  config['Configuration']['deleteUnusedShareDir']='ask'
 
-Possible values this parameter can take are ask/always/never, which have the following effect:
-ask: Upon Ganga exit, ask the user if they wish to delete orphaned ShareDirs (default setting)
-always: Upon Ganga exit, remove all orphaned ShareDirs
-never: Upon Ganga exit, keep any orphaned ShareDirs.
+  Possible values this parameter can take are ask/always/never, which have the following effect:
+  always: Upon Ganga exit, remove all orphaned ShareDirs (default setting)
+  ask: Upon Ganga exit, ask the user if they wish to delete orphaned ShareDirs
+  never: Upon Ganga exit, keep any orphaned ShareDirs.
 
 
-* Fix removing two lines of redundant code which were causing inconsistencies in some users' shareref tables.
+* Fix removing two lines of redundant code which were causing inconsistencies in some users' 
+  shareref tables.
 
 
 --------------------------------------------------------------------------------------------------------------
