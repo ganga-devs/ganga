@@ -1000,7 +1000,6 @@ class LCG(IBackend):
 #-----------------------------------------------------
 import os,os.path,shutil,tempfile
 import sys,popen2,time,traceback
-import re
 
 #bugfix #36178: subprocess.py crashes if python 2.5 is used
 #try to import subprocess from local python installation before an
@@ -1242,7 +1241,7 @@ try:
 
     printInfo('Unpack inputsandbox passed.')
 
-    printInfo('Loading Python modules ...')     
+    printInfo('Loading Python modules ...')
 
     sys.path.insert(0,os.path.join(wdir,PYTHON_DIR))
 
@@ -1295,8 +1294,6 @@ try:
         import subprocess
         printInfo('Load application executable with subprocess module')
         status = execSyscmdSubprocess('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
-        printInfo('source %s; %s %s' % (env_setup_script, appexec, appargs))
-        printInfo(wdir)
     except ImportError,err:
         # otherwise, use separate threads to control process IO pipes 
         printInfo('Load application executable with separate threads')
@@ -1315,9 +1312,7 @@ try:
 
     if not status:
         raise Exception('Application execution failed.')
-    printInfo('Application execution passed with exit code %d.' % exitcode)                 
-
-    ###OUTPUTUPLOADSPOSTPROCESSING###
+    printInfo('Application execution passed with exit code %d.' % exitcode)
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
@@ -1400,9 +1395,6 @@ sys.exit(0)
         script = script.replace('###APPLICATION_NAME###',job.application._name)
         script = script.replace('###APPLICATIONEXEC###',repr(jobconfig.getExeString()))
         script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
-
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, '    '))
 
         if jobconfig.env:
             script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))
@@ -1491,7 +1483,7 @@ sys.exit(0)
             transfer_timeout = 60
 
         script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
-
+       
         ## update the job wrapper with the inputsandbox list
         script = script.replace('###INPUTSANDBOX###',repr({'remote':inputs['remote'],'local':[ os.path.basename(f) for f in inputs['local'] ]}))
 
@@ -1504,11 +1496,7 @@ sys.exit(0)
         ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
         ##  - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
-
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
-        for outputSandboxPattern in getOutputSandboxPatterns(job):
-            output_sandbox.append(outputSandboxPattern)
-
+        
         if config['JobLogHandler'] == 'WMS':
             output_sandbox += ['stdout.gz','stderr.gz']
 
