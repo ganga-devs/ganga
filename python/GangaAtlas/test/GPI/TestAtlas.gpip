@@ -115,6 +115,33 @@ class AtlasTest(ICheckTest):
         print 'AtlasTest %s: removing temporary directory %s' % (self.__class__.__name__, self.tmpdir)
         os.system('rm -rf %s' % self.tmpdir)
 
+class AtlasTestAthenaMC(ICheckTest):
+    def __init__(self,srcdir=None,j = None):
+        if srcdir is None:
+            self.setup()
+            self.tmpdir = None
+            return
+        self.tmpdir = '/tmp/ganga_%s_testing_data-%s' % (self.__class__.__name__, getpass.getuser())
+        print 'AtlasTest %s: copying testing data from %s to %s' % (self.__class__.__name__, srcdir, self.tmpdir)
+        os.system('rm -rf %s' % self.tmpdir)
+        os.system('cp -r %s %s' % (srcdir, self.tmpdir))
+        self.j = j
+        self.setup()
+
+    def isReadyForCheck(self):
+        return True
+
+    def checkTest(self):
+	assert(self.j.submit()==True)	
+        print "Test %s succeeded!" % (self.__class__.__name__)
+
+    def cleanup(self):
+        if self.tmpdir is None:
+            return
+        print 'AtlasTestAthenaMC %s: removing temporary directory %s' % (self.__class__.__name__, self.tmpdir)
+        os.system('rm -rf %s' % self.tmpdir)
+
+
 class TestTask(AtlasTest):
     def isReadyForCheck(self):
         n = self.t.n_all()
@@ -322,7 +349,7 @@ class TestMCTask(TestTask):
         assert t.n_all() == 5
         self.t = t
 
-class TestAthenaMC_evgen(AtlasTest):
+class TestAthenaMC_evgen(AtlasTestAthenaMC):
     def setup(self):
         j=Job()
         j.application=AthenaMC() 
@@ -338,7 +365,7 @@ class TestAthenaMC_evgen(AtlasTest):
         self.j = j
 
 
-class TestAthenaMC_simul(AtlasTest):
+class TestAthenaMC_simul(AtlasTestAthenaMC):
     def setup(self):
         j=Job()
         j.application=AthenaMC() 
@@ -357,7 +384,7 @@ class TestAthenaMC_simul(AtlasTest):
         j.splitter.numsubjobs = 3
         self.j = j
 
-class TestAthenaMC_recon(AtlasTest):
+class TestAthenaMC_recon(AtlasTestAthenaMC):
     def setup(self):
         j=Job()
         j.application=AthenaMC() 
@@ -384,21 +411,18 @@ class TestAthenaMCLCG_evgen(TestAthenaMC_evgen):
         self.j.backend.requirements=AtlasLCGRequirements()
         self.j.backend.requirements.cloud='UK'
         self.j.backend.requirements.sites=['UKI-SCOTGRID-GLASGOW_SCRATCHDISK']
-        self.j.submit() 
 
 class TestAthenaMCLCG_simul(TestAthenaMC_simul):
     def setup(self):
         TestAthenaMC_simul.setup(self)
         self.j.backend=LCG()
         self.j.backend.requirements.cloud='UK'
-        self.j.submit()
 
 class TestAthenaMCLCG_recon(TestAthenaMC_recon):
     def setup(self):
         TestAthenaMC_recon.setup(self)
         self.j.backend=LCG()    
         self.j.backend.requirements.cloud='CA'
-        self.j.submit() 
 
 class TestAthenaMCPanda_evgen(TestAthenaMC_evgen):
     def setup(self):
@@ -406,18 +430,15 @@ class TestAthenaMCPanda_evgen(TestAthenaMC_evgen):
         self.j.backend=Panda()
         self.j.application.dryrun = False 
         self.j.backend.requirements.cloud = "US"
-        self.j.submit()
 
 class TestAthenaMCPanda_simul(TestAthenaMC_simul):
     def setup(self):
         TestAthenaMC_simul.setup(self)
         self.j.backend=Panda()
         self.j.application.dryrun = False 
-        self.j.submit()
 
 class TestAthenaMCPanda_recon(TestAthenaMC_recon):
     def setup(self):
         TestAthenaMC_recon.setup(self)
         self.j.backend=Panda()
         self.j.application.dryrun = False 
-        self.j.submit()
