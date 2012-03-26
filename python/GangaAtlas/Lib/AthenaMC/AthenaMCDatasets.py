@@ -36,7 +36,8 @@ _subscriptionTokens=[]
 def getLFCmap():
     lfcstrings,lfccloud={},{}
     for lfctag, sites in ToACache.catalogsTopology.iteritems():
-        lfccloud[sites[0]]=lfctag
+        for site in sites:
+            lfccloud[site]=lfctag
     for cloud, localids in ToACache.topology.iteritems():
         if cloud not in lfccloud.keys():
             #                print cloud,localids

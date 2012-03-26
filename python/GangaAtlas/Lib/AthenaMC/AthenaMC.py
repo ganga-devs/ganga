@@ -771,10 +771,15 @@ class AthenaMC(IApplication):
 
        try:
            assert self.atlas_release
-           assert self.number_events_job
        except AssertionError:
-           logger.error('Please provide a start value for parameter atlas_release, number_events_job')
+           logger.error('Please provide a start value for parameter atlas_release')
            raise
+       if self.mode != "template":
+           try:
+               assert self.number_events_job
+           except AssertionError:
+               logger.error('Please provide a start value for parameter number_events_job')
+               raise
        
        if self.mode == "evgen":
           try:
