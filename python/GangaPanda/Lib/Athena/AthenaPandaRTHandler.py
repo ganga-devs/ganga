@@ -339,7 +339,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.fileBO = getLibFileSpecFromLibDS(self.libDatasets[site])
                 self.libraries[site] = self.fileBO.lfn
             else:
-                self.libDatasets[site]= tmpDSName+'.lib'
+                import datetime
+                tmpLibDsPrefix = 'user.%s' % getNickname()
+                libDsName = '%s.%s.%s.%d.lib' % (tmpLibDsPrefix,
+                                                 time.strftime('%m%d%H%M%S',time.gmtime()),
+                                                 datetime.datetime.utcnow().microsecond,
+                                                 self.rndSubNum)
+                self.libDatasets[site]= libDsName #tmpDSName+'.lib'              
                 self.libraries[site] = '%s.tgz' % self.libDatasets[site]
                 if not job.backend.nobuild:
                     try:
