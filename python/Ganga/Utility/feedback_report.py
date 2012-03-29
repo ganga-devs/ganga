@@ -199,6 +199,7 @@ def report(job=None):
                 import shutil
                 import tarfile
                 import tempfile
+                import os
 
                 userHomeDir = os.getenv("HOME")
                 tempDir = tempfile.mkdtemp()
