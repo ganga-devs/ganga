@@ -75,7 +75,7 @@ class CRABBackend(IBackend):
                 server.submit(job)
             except:
                 logger.error("Could not submit job using CRAB")
-                continue
+                return
 #            job.backend.server.submit(job)
 
             for subjob in job.subjobs:
