@@ -161,7 +161,7 @@ class CRABBackend(IBackend):
         server = CRABServer()
         try:
             server.getOutput(job) 
-        except CRABServerError:
+        except:
             logger.waring("It is not possible yet to retrieve the output for this job")
             return
 #        job.backend.server.getOutput(job)
@@ -312,7 +312,7 @@ class CRABBackend(IBackend):
         elif (status == 'k') and not (job.status in ['killed']):
             job.updateStatus('killed')
         elif (status in ['E']) and not (job.status in ['completed','killed']):
-            logger.info('Retrieving %d.'%(job.id))
+            logger.info('Job %d has been purged.'%(job.id))
             job.backend.parseResults()
         else:
             if not STATUS.has_key(status):  
@@ -320,13 +320,13 @@ class CRABBackend(IBackend):
 
     def master_updateMonitoringInformation(jobs):
 
-        logger.info(len(jobs))
+        logger.info('Going to update the monitoring information of ' + len(jobs) + ' jobs')
  
         for j in jobs:
 
             if not j.status in ['submitted','running']:
               logger.info('%s - %s'%(j.id,j.status))
-              continue
+              continue 
 
             server = CRABServer()
             try:
@@ -334,7 +334,6 @@ class CRABBackend(IBackend):
             except:
                 logger.error("CRAB error retrieving status")
                 continue
-#            j.backend.server.status(j) 
 
             workdir = j.inputdata.ui_working_dir
 
@@ -347,7 +346,6 @@ class CRABBackend(IBackend):
                 subjobs = j.subjobs    
 
                 for subjobDoc in jobDoc:
-
                     index  = subjobDoc.getAttribute("jobId")
 
                     subjobs[int(index)-1].backend.checkReport(subjobDoc)                   
