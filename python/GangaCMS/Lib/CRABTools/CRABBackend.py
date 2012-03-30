@@ -173,7 +173,11 @@ class CRABBackend(IBackend):
         if not os.path.exists(doc_path):
             raise CRABServerError('FJR %s not found.'%(doc_path))
 
-        doc = parse(doc_path)   
+        try:
+            doc = parse(doc_path)   
+        except:
+            logger.error("Could not parse document. File not present?")
+            return
         status = doc.firstChild.getAttribute("Status")
 
         if status in ["Failed"]:
