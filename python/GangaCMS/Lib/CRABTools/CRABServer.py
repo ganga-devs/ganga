@@ -7,6 +7,7 @@ from Ganga.Utility.logging import getLogger
 
 import os,os.path
 import datetime
+import time
 
 from subprocess import Popen, PIPE
 
@@ -47,6 +48,21 @@ class CRABServer(GangaObject):
             logger.info(stderr) 
             raise CRABServerError.CRABServerError('CRAB %s exit code %s'%(type,code))  
 
+    def _send_with_retry(self,cmd,type,env,retries=3,delay=5):
+        assert retries > 0
+        assert delay >= 0
+        
+        for i in range(retries):
+            try:
+                self._send(cmd,type,env)
+                return
+            except:
+                time.sleep(delay) # Introduce a delay to avoid flooding
+                continue
+
+        # If we reach this code, all the retries failed.
+        raise CRABServerError.CRABServerError('CRAB %s failed on all retries (%d)'%(type,retries))  
+
     def create(self, job):
 
         cfgfile = '%scrab.cfg'%(job.inputdir)
@@ -54,7 +70,7 @@ class CRABServer(GangaObject):
             raise CRABServerError('File "%s" not found.'%(cfgfile))     
 
         cmd = 'crab -create -cfg %s'%(cfgfile)
-        self._send(cmd,'creating',job.backend.crab_env)
+        self._send_with_retry(cmd,'creating',job.backend.crab_env)
 #        msg = telltale.create('%slog/crab.log'%(job.outputdir))
         return 1
 
@@ -65,7 +81,7 @@ class CRABServer(GangaObject):
             raise CRABServerError('Workdir %s not found.'%(workdir))
 
         cmd = 'crab -submit -c %s'%(workdir)
-        self._send(cmd,'submitting',job.backend.crab_env)
+        self._send_with_retry(cmd,'submitting',job.backend.crab_env)
 #        msg = telltale.submit('%slog/crab.log'%(job.outputdir))   
         return 1    
 
@@ -76,7 +92,7 @@ class CRABServer(GangaObject):
             raise CRABServerError('Workdir %s not found.'%(workdir))
 
         cmd = 'crab -status -c %s'%(workdir)
-        self._send(cmd,'checking status',job.backend.crab_env)
+        self._send_with_retry(cmd,'checking status',job.backend.crab_env)
 #        msg = telltale.submit('%slog/crab.log'%(job.outputdir))
         return 1
 
@@ -91,7 +107,7 @@ class CRABServer(GangaObject):
         else:
             index = int(job.id) + 1
             cmd = 'crab -kill %d -c %s'%(index,workdir)
-        self._send(cmd,'killing',job.backend.crab_env)
+        self._send_with_retry(cmd,'killing',job.backend.crab_env)
 #        msg = telltale.kill('%slog/crab.log'%(job.outputdir))
         return 1
 
@@ -103,7 +119,7 @@ class CRABServer(GangaObject):
 
         index = int(job.id) + 1
         cmd = 'crab -resubmit %d -c %s'%(index,workdir)
-        self._send(cmd,'resubmitting',job.backend.crab_env)
+        self._send_with_retry(cmd,'resubmitting',job.backend.crab_env)
 #        msg = telltale.resubmit('%slog/crab.log'%(job.outputdir))
         return 1
 
@@ -115,7 +131,7 @@ class CRABServer(GangaObject):
 
         index = int(job.id) + 1
         cmd = 'crab -getoutput %d -c %s'%(index,workdir)
-        self._send(cmd,'getting Output',job.backend.crab_env)
+        self._send_with_retry(cmd,'getting Output',job.backend.crab_env)
 #        msg = telltale.resubmit('%slog/crab.log'%(job.outputdir))
         return 1
 
@@ -127,7 +143,7 @@ class CRABServer(GangaObject):
 
         index = int(job.id) + 1
         cmd = 'crab -postMortem %d -c %s'%(index,workdir)
-        self._send(cmd,'getting postMortem',job.backend.crab_env)
+        self._send_with_retry(cmd,'getting postMortem',job.backend.crab_env)
 #        msg = telltale.resubmit('%slog/crab.log'%(job.outputdir))
         return 1
 
