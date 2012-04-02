@@ -70,13 +70,23 @@ class CRABBackend(IBackend):
             for subjob in job.subjobs:
                 subjob.updateStatus('submitting')
 
-            server.submit(job)
+            try:
+                server.submit(job)
+            except:
+                for subjob in job.subjobs:
+                    subjob.rollbackToNewState()
+                job.updateMasterJobStatus()
+                logger.error('Submission through CRAB failed. All subjobs have been reverted to new.')
+                return 1
 #            job.backend.server.submit(job)
 
             for subjob in job.subjobs:
                 subjob.updateStatus('submitted')
 
-            server.status(job)
+            try:
+                server.status(job)
+            except:
+                logger.warning('CRAB status failed. Submission could have been failed too.')
 #            job.backend.server.status(job)
 
             return 1        
@@ -86,6 +96,7 @@ class CRABBackend(IBackend):
 
     def master_resubmit(self,rjobs):             
 
+        logger.error('master_resubmit() called. THIS METHOD IS BUGGY, CHECK.')
         server = CRABServer()
         server.resubmit(job)
 #        self.server.resubmit(job)
@@ -105,7 +116,12 @@ class CRABBackend(IBackend):
         #Kills a job & subjobs
         job = self.getJobObject()
         server = CRABServer()
-        server.kill(job)    
+
+        try:
+            server.kill(job)    
+        except:
+            logger.warning('Killing the job using CRAB failed.')
+            return 1
 
         if len(job.subjobs):
             for s in job.subjobs:
@@ -117,7 +133,10 @@ class CRABBackend(IBackend):
 
         job.updateMasterJobStatus()        
 
-        server.status(job)
+        try:
+            server.status(job)
+        except:
+            logger.warning('Get job status from CRAB failed. Job may have not be killed.')
 
         return 1
 
@@ -127,7 +146,10 @@ class CRABBackend(IBackend):
 
         #Gets post Mortem imformation of failed job
         server = CRABServer()
-        server.postMortem(job)
+        try:
+            server.postMortem(job)
+        except:
+            logger.warning('PostMortem retrival with CRAB failed.')
 
         return 1
 
@@ -136,7 +158,13 @@ class CRABBackend(IBackend):
         job = self.getJobObject()   
 
         server = CRABServer()
-        server.getOutput(job) 
+        try:
+            server.status(job)
+            server.getOutput(job) 
+        except:
+            logger.error('Could not get the output of the job.')
+            # Let's not raise this yet (in case of a double call).
+            # raise CRABServerError('Impossible to get the output of the job')
 #        job.backend.server.getOutput(job)
 
         workdir = job.inputdata.ui_working_dir
@@ -154,7 +182,7 @@ class CRABBackend(IBackend):
         status = doc.firstChild.getAttribute("Status")
 
         if status in ["Failed"]:
-            logger.warning('Failed job detected in parsing.')
+            #logger.warning('Failed job detected in parsing.')
             self.postMortem(job)
             job.updateStatus('failed')
         elif status in ["Success"]:
@@ -268,6 +296,7 @@ class CRABBackend(IBackend):
             elif not (job.status in ['running'] ):
                 job.updateStatus('running')
         elif (status == 'C' or status == 'CS') and not (job.status not in ['submitting','new']):
+            logger.warning('The job is an invalid status (%s - %s), it will  be reverted.' % (status, job.status))
             job.rollbackToNewState()
         elif (status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','submitted','killed']):
             job.updateStatus("submitting")
@@ -292,16 +321,21 @@ class CRABBackend(IBackend):
 
     def master_updateMonitoringInformation(jobs):
 
-        logger.info('Going to update the monitoring information of ' + len(jobs) + ' jobs')
+        logger.info('Going to update the monitoring information of ' + str(len(jobs)) + ' jobs')
  
         for j in jobs:
 
             if not j.status in ['submitted','running']:
-              logger.info('%s - %s'%(j.id,j.status))
+              logger.info('Skipping job in monitring loop: %s - %s'%(j.id,j.status))
               continue 
 
             server = CRABServer()
-            server.status(j)
+
+            try:
+                server.status(j)
+            except:
+                logger.error('Get status for job %d failed, skipping.' % j.id)
+                continue
 
             workdir = j.inputdata.ui_working_dir
 
