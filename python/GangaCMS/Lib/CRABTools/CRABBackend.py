@@ -12,7 +12,6 @@ from Ganga.GPIDev.Schema import *
 from ConfigParser import ConfigParser
 import Ganga.Utility.Config
 
-from GangaCMS.Lib.CRABTools import CRABServerError
 from GangaCMS.Lib.CRABTools.CRABServer import *
 from GangaCMS.Lib.Utils import Timeout, TimeoutError
 
@@ -71,20 +70,13 @@ class CRABBackend(IBackend):
             for subjob in job.subjobs:
                 subjob.updateStatus('submitting')
 
-            try:
-                server.submit(job)
-            except:
-                logger.error("Could not submit job using CRAB")
-                return
+            server.submit(job)
 #            job.backend.server.submit(job)
 
             for subjob in job.subjobs:
                 subjob.updateStatus('submitted')
 
-            try:
-                server.status(job)
-            except:
-                pass
+            server.status(job)
 #            job.backend.server.status(job)
 
             return 1        
@@ -95,7 +87,7 @@ class CRABBackend(IBackend):
     def master_resubmit(self,rjobs):             
 
         server = CRABServer()
-#        server.resubmit(job)
+        server.resubmit(job)
 #        self.server.resubmit(job)
 
         #If first raises exception, all are caput
@@ -103,11 +95,7 @@ class CRABBackend(IBackend):
         for job in rjobs:
 
             subjob.updateStatus('submitting')  
-            try:
-                server.resubmit(job)
-            except:
-                logger.error("Could not resubmit job using CRAB")
-                continue
+            server.resubmit(job)
             subjob.updateStatus('submitted')  
         #j.updateMasterJobStatus()
         return 1         
@@ -117,11 +105,7 @@ class CRABBackend(IBackend):
         #Kills a job & subjobs
         job = self.getJobObject()
         server = CRABServer()
-        try:
-            server.kill(job)    
-        except:
-            logger.error("Could not kill job using CRAB")
-            return 0
+        server.kill(job)    
 
         if len(job.subjobs):
             for s in job.subjobs:
@@ -133,10 +117,7 @@ class CRABBackend(IBackend):
 
         job.updateMasterJobStatus()        
 
-        try:
-            server.status(job)
-        except:
-            pass
+        server.status(job)
 
         return 1
 
@@ -146,11 +127,7 @@ class CRABBackend(IBackend):
 
         #Gets post Mortem imformation of failed job
         server = CRABServer()
-        try:
-            server.postMortem(job)
-        except:
-            logger.error("Could not get postmortem of job using CRAB")
-            return 0
+        server.postMortem(job)
 
         return 1
 
@@ -159,11 +136,7 @@ class CRABBackend(IBackend):
         job = self.getJobObject()   
 
         server = CRABServer()
-        try:
-            server.getOutput(job) 
-        except:
-            logger.waring("It is not possible yet to retrieve the output for this job")
-            return
+        server.getOutput(job) 
 #        job.backend.server.getOutput(job)
 
         workdir = job.inputdata.ui_working_dir
@@ -295,7 +268,6 @@ class CRABBackend(IBackend):
             elif not (job.status in ['running'] ):
                 job.updateStatus('running')
         elif (status == 'C' or status == 'CS') and not (job.status not in ['submitting','new']):
-            logger.warning("Job is C/CS but not in submitted/new. Reverting to new.")
             job.rollbackToNewState()
         elif (status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','submitted','killed']):
             job.updateStatus("submitting")
@@ -329,11 +301,7 @@ class CRABBackend(IBackend):
               continue 
 
             server = CRABServer()
-            try:
-                server.status(j)
-            except:
-                logger.error("CRAB error retrieving status")
-                continue
+            server.status(j)
 
             workdir = j.inputdata.ui_working_dir
 
