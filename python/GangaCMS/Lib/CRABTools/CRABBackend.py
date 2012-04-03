@@ -174,7 +174,9 @@ class CRABBackend(IBackend):
         doc_path = '%s/res/crab_fjr_%d.xml'%(workdir,index)
 
         if not os.path.exists(doc_path):
-            raise CRABServerError('FJR %s not found.'%(doc_path))
+            #raise CRABServerError.CRABServerError('FJR %s not found.'%(doc_path))
+            logger.error('FJR %s not found.'%(doc_path))
+            return
 
         try:
             doc = parse(doc_path)   
