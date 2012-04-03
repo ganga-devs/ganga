@@ -190,6 +190,9 @@ class CRABBackend(IBackend):
             self.postMortem(job)
             job.updateStatus('failed')
         elif status in ["Success"]:
+            if job.status == 'submitting':
+                job.updateStatus('submitted')
+            if job.status 
             job.updateStatus('completed')
         else:
             logger.warning("UNKNOWN PARSE STATUS: "+str(status))
@@ -297,7 +300,7 @@ class CRABBackend(IBackend):
         if (status=='R' and not (job.status in ['killed'])):
             if (job.status in ['submitting','new']):
                 job.updateStatus('submitted')
-            elif not (job.status in ['running'] ):
+            if not (job.status in ['running'] ):
                 job.updateStatus('running')
         elif (status == 'C' or status == 'CS') and not (job.status in ['submitting','new']):
             logger.warning('The job is an invalid status (%s - %s), it will  be reverted.' % (status, job.status))
@@ -322,8 +325,9 @@ class CRABBackend(IBackend):
             logger.info('Job %d has been purged.'%(job.id))
             job.backend.parseResults()
             # We have to set this now (can be repeated) in case output retrieval fails.
-            self.postMortem(job)
-            job.updateStatus('failed')
+            if job.status not in ['completed','failed','killed']:
+                self.postMortem(job)
+                job.updateStatus('failed')
         else:
             if not STATUS.has_key(status):  
                 logger.warning('UNKNOWN STATUS: '+str(status)+' ')
