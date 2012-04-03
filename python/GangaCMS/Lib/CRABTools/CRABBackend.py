@@ -334,7 +334,7 @@ class CRABBackend(IBackend):
  
         for j in jobs:
 
-            if not j.status in ['submitted','running']:
+            if not j.status in ['submitting','submitted','running']:
               logger.info('Skipping job in monitring loop: %s - %s'%(j.id,j.status))
               continue 
 
