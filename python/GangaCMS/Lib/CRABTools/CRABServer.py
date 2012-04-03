@@ -48,7 +48,7 @@ class CRABServer(GangaObject):
             logger.info(stderr) 
             raise CRABServerError.CRABServerError('CRAB %s exit code %s'%(type,code))  
 
-    def _send_with_retry(self,cmd,type,env,retries=3,delay=5):
+    def _send_with_retry(self,cmd,type,env,retries=3,delay=60):
         assert retries > 0
         assert delay >= 0
         
