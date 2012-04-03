@@ -299,7 +299,7 @@ class CRABBackend(IBackend):
                 job.updateStatus('submitted')
             elif not (job.status in ['running'] ):
                 job.updateStatus('running')
-        elif (status == 'C' or status == 'CS') and not (job.status not in ['submitting','new']):
+        elif (status == 'C' or status == 'CS') and not (job.status in ['submitting','new']):
             logger.warning('The job is an invalid status (%s - %s), it will  be reverted.' % (status, job.status))
             job.rollbackToNewState()
         elif (status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','killed']):
