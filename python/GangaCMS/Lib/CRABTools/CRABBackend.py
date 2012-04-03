@@ -192,7 +192,6 @@ class CRABBackend(IBackend):
         elif status in ["Success"]:
             if job.status == 'submitting':
                 job.updateStatus('submitted')
-            if job.status 
             job.updateStatus('completed')
         else:
             logger.warning("UNKNOWN PARSE STATUS: "+str(status))
