@@ -80,7 +80,7 @@ class CRABBackend(IBackend):
                 return 1
 #            job.backend.server.submit(job)
 
-            self.master_updateMonitoringInformation(job)
+            self.master_updateMonitoringInformation((job,))
 
 #            for subjob in job.subjobs:
 #                subjob.updateStatus('submitted')
