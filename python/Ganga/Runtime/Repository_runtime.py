@@ -96,6 +96,13 @@ def bootstrap():
 
 def shutdown():
     logger.debug('registry shutdown')
+    #shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
+    #method to perform actions on the box and/or job registries.
+    if 'prep' in started_registries: 
+        registry = getRegistry('prep')
+        registry.shutdown()
+        started_registries.remove(registry.name) # in case this is called repeatedly, only call shutdown once
+        
     for registry in getRegistries():
         if not registry.name in started_registries: continue
         started_registries.remove(registry.name) # in case this is called repeatedly, only call shutdown once
