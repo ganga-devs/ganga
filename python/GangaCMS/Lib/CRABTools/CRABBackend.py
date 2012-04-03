@@ -80,13 +80,15 @@ class CRABBackend(IBackend):
                 return 1
 #            job.backend.server.submit(job)
 
-            for subjob in job.subjobs:
-                subjob.updateStatus('submitted')
+            self.master_updateMonitoringInformation(job)
 
-            try:
-                server.status(job)
-            except:
-                logger.warning('CRAB status failed. Submission could have been failed too.')
+#            for subjob in job.subjobs:
+#                subjob.updateStatus('submitted')
+
+#            try:
+#                server.status(job)
+#            except:
+#                logger.warning('CRAB status failed. Submission could have been failed too.')
 #            job.backend.server.status(job)
 
             return 1        
@@ -298,15 +300,17 @@ class CRABBackend(IBackend):
         elif (status == 'C' or status == 'CS') and not (job.status not in ['submitting','new']):
             logger.warning('The job is an invalid status (%s - %s), it will  be reverted.' % (status, job.status))
             job.rollbackToNewState()
-        elif (status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','submitted','killed']):
+        elif (status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','killed']):
             job.updateStatus("submitting")
         elif (status == 'SU' or status == 'S') and not (job.status in ['submitted','killed']):
             job.updateStatus('submitted')
-        elif (status == 'SD') and not (job.status in ['completed','killed']):
+        elif (status == 'SD') and not (job.status in ['completed','failed','killed']):
             logger.info('Retrieving %d.'%(job.id))
             job.backend.parseResults()
             # The job can be done, but failed...
             # So, let's update the status retrieved from the output file.
+            if job.status not in (['completed','failed','killed']):
+                logger.warning('Processing a done job ended in not final status. Parhaps the output getting failed?')
         elif (status == 'A' or status == 'DA') and not (job.status in ['failed','killed']):
             self.postMortem(job)
             job.updateStatus('failed')
@@ -315,6 +319,9 @@ class CRABBackend(IBackend):
         elif (status in ['E']) and not (job.status in ['completed','killed']):
             logger.info('Job %d has been purged.'%(job.id))
             job.backend.parseResults()
+            # We have to set this now (can be repeated) in case output retrieval fails.
+            self.postMortem(job)
+            job.updateStatus('failed')
         else:
             if not STATUS.has_key(status):  
                 logger.warning('UNKNOWN STATUS: '+str(status)+' ')
