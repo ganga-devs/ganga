@@ -108,7 +108,8 @@ def getWNCodeForOutputPostprocessing(job, indent):
                 lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
             elif outputFile.__class__.__name__ == 'MassStorageFile' and outputFilePostProcessingOnWN(job, 'MassStorageFile'):  
                 from Ganga.Utility.Config import getConfig      
-                massStorageConfig = getConfig('MassStorageOutput')  
+                #massStorageConfig = getConfig('MassStorageOutput')
+                massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']  
                 massStorageCommands.append('massstorage %s %s %s %s %s' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
                 
         
