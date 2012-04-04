@@ -78,7 +78,8 @@ class MassStorageFile(OutputSandboxFile):
         import re
 
         from Ganga.Utility.Config import getConfig
-        massStorageConfig = getConfig('MassStorageOutput') 
+        #massStorageConfig = getConfig('MassStorageOutput') 
+        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
         #if Castor mass storage (we understand from the nsls command)
         if massStorageConfig['ls_cmd'] == 'nsls':
