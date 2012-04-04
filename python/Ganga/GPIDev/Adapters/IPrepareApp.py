@@ -24,10 +24,10 @@ config.addOption('unprepare_on_copy', False, 'Unprepare a prepared application w
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 class IPrepareApp(IApplication):
-
     """
-     common master_configure().  """
-
+    Base class for all applications which can be placed into a prepared\
+    state. 
+    """
     _schema =  Schema(Version(0,0), {})
     _category='applications'
     _name = 'PrepareApp'
