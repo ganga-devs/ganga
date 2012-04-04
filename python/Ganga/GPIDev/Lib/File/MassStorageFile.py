@@ -61,8 +61,7 @@ class MassStorageFile(OutputSandboxFile):
             return
 
         from Ganga.Utility.Config import getConfig 
-        cp_cmd = getConfig('MassStorageOutput')['cp_cmd']  
-        
+        cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']  
 
         for location in self.locations:
             targetLocation = os.path.join(dir, os.path.basename(location))      
@@ -78,7 +77,6 @@ class MassStorageFile(OutputSandboxFile):
         import re
 
         from Ganga.Utility.Config import getConfig
-        #massStorageConfig = getConfig('MassStorageOutput') 
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
         #if Castor mass storage (we understand from the nsls command)
