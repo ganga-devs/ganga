@@ -443,21 +443,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         outputconfig.addOption('MassStorageFile', {'fileExtensions':['*.dummy'], 'backendPostprocess':{'LSF':'WN', 'LCG':'client', 'CREAM':'client', 'Localhost':'WN'}, 'uploadOptions':massStorageUploadOptions},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload to mass storage')
 
-        """
-        #[MassStorageOutput] section
-        outputconfig = makeConfig( "MassStorageOutput", "configuration section for storing of the output to a mass storage" )
-        outputconfig.addOption('mkdir_cmd', 'nsmkdir', 'Command used to create a directory in the mass storage location')
-        outputconfig.addOption('cp_cmd', 'rfcp', 'Command used to copy out data to the mass storage location')
-        outputconfig.addOption('ls_cmd', 'nsls', 'Command used to list files in the mass storage location')
-        try:
-            outputconfig.addOption('path', os.path.join(os.environ['CASTOR_HOME'], 'ganga'), 'path to the mass storage location where the files will be stored')
-        except: 
-            from Ganga.Utility.Config import getConfig
-            user = getConfig('Configuration')['user']   
-            massStoragePath = "/castor/cern.ch/user/%s/%s/ganga" % (user[0], user)      
-            outputconfig.addOption('path', massStoragePath, 'path to the mass storage location where the files will be stored(if you set the env variable CASTOR_HOME to your home directory in castor, you can configure the path to be $CASTOR_HOME/ganga)')
-        """
-
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
         # because the user config file is put at the end it always may override everything else
