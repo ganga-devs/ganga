@@ -275,6 +275,32 @@ s=shareref._impl.name
 assert s[tmpj] == 0, 'Prepare Test 37a failed.' 
 assert s[tmpa] == 1, 'Prepare Test 37b failed.' 
 
+j=Job()
+j.prepare()
+tmpj = j.application.is_prepared.name
+shareref.lookup(sharedir=tmpj, unprepare=True)
+s=shareref._impl.name
+assert s[tmpj] == 0, 'Test 38a failed; shareref.lookup() didnt behave as expected'
+
+j=Job()
+j.prepare()
+tmpj = j.application.is_prepared.name
+box.add(j,'testjob')
+shareref.lookup(sharedir=tmpj, unprepare=True)
+s=shareref._impl.name
+assert s[tmpj] == 0, 'Test 38b failed; shareref.lookup() didnt behave as expected'
+
+a=Executable()
+box.add(a,'testapp')
+#this is how we index the last thing added to the box, and then prepare it
+box(box.ids()[-1]).prepare()
+tmpname = box(box.ids()[-1]).is_prepared.name
+shareref.lookup(box(box.ids()[-1]).is_prepared.name, unprepare=True)
+s=shareref._impl.name
+assert s[tmpname] == 0, 'Test 38c failed; shareref.lookup() didnt behave as expected'
+
+
+
 
 print "############################"
 print "REACHED END OF PREPARE TESTS"
