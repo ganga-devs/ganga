@@ -428,11 +428,22 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         outputconfig.addOption('OutputSandboxFile', {'fileExtensions':[], 'backendPostprocess':{'LSF':'WNclient', 'Localhost':'WN'}},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends')
 
-        outputconfig.addOption('MassStorageFile', {'fileExtensions':['*.dummy'], 'backendPostprocess':{'LSF':'WN', 'LCG':'client', 'CREAM':'client', 'Localhost':'WN'}},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends')
-
         outputconfig.addOption('LCGStorageElementFile',{'fileExtensions':['*.root'], 'backendPostprocess':{'LSF':'client', 'LCG':'WN', 'CREAM':'WN', 'Localhost':'WN'}, 'uploadOptions':{'LFC_HOST':'lfc-dteam.cern.ch', 
 'dest_SRM':'srm-public.cern.ch'}},'fileExtensions:list of output files that will be written to LCG SE, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual LCG upload')
 
+        massStoragePath = ''
+        try:
+            massStoragePath = os.path.join(os.environ['CASTOR_HOME'], 'ganga')
+        except: 
+            from Ganga.Utility.Config import getConfig
+            user = getConfig('Configuration')['user']   
+            massStoragePath = "/castor/cern.ch/user/%s/%s/ganga" % (user[0], user)      
+
+        massStorageUploadOptions = {'mkdir_cmd':'nsmkdir', 'cp_cmd':'rfcp', 'ls_cmd':'nsls', 'path':massStoragePath}
+
+        outputconfig.addOption('MassStorageFile', {'fileExtensions':['*.dummy'], 'backendPostprocess':{'LSF':'WN', 'LCG':'client', 'CREAM':'client', 'Localhost':'WN'}, 'uploadOptions':massStorageUploadOptions},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload to mass storage')
+
+        """
         #[MassStorageOutput] section
         outputconfig = makeConfig( "MassStorageOutput", "configuration section for storing of the output to a mass storage" )
         outputconfig.addOption('mkdir_cmd', 'nsmkdir', 'Command used to create a directory in the mass storage location')
@@ -445,12 +456,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             user = getConfig('Configuration')['user']   
             massStoragePath = "/castor/cern.ch/user/%s/%s/ganga" % (user[0], user)      
             outputconfig.addOption('path', massStoragePath, 'path to the mass storage location where the files will be stored(if you set the env variable CASTOR_HOME to your home directory in castor, you can configure the path to be $CASTOR_HOME/ganga)')
-                
-        #[LCGStorageElementOutput] section
-        """
-        outputconfig = makeConfig( "LCGStorageElementOutput", "configuration section for storing of the output to LCG storage element" )
-        outputconfig.addOption('LFC_HOST', 'lfc-dteam.cern.ch', 'LFC host for Logical File Name association with the uploaded output file')
-        outputconfig.addOption('dest_SRM', 'srm-public.cern.ch', 'SRM where the output file should be uploaded')
         """
 
         # all relative names in the path are resolved wrt the _gangaPythonPath
