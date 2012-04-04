@@ -82,8 +82,10 @@ class CRABBackend(IBackend):
 
             self.master_updateMonitoringInformation((job,))
 
-#            for subjob in job.subjobs:
-#                subjob.updateStatus('submitted')
+            # Forcing all the jobs to be submitted, so the monitoring loops keeps issuing calls.
+            for subjob in job.subjobs:
+                if subjob.status in ('submitting'):
+                    subjob.updateStatus('submitted')
 
 #            try:
 #                server.status(job)
@@ -294,7 +296,11 @@ class CRABBackend(IBackend):
                    }
 
         job = self.getJobObject()
-        status = job.backend.report['status']      
+        try:
+            status = job.backend.report['status']      
+        except:
+            logger.warning('Missing the status for the job %d while checking' % job.id)
+            return
 
         if (status=='R' and not (job.status in ['killed'])):
             if (job.status in ['submitting','new']):
@@ -304,9 +310,9 @@ class CRABBackend(IBackend):
         elif (status == 'C' or status == 'CS') and not (job.status in ['submitting','new']):
             logger.warning('The job is an invalid status (%s - %s), it will  be reverted.' % (status, job.status))
             job.rollbackToNewState()
-        elif (status == 'SS' or status == 'W' or status=='SR') and not (job.status in ['submitting','killed']):
+        elif (status == 'SS' or status == 'W') and not (job.status in ['submitting','submitted','killed']):
             job.updateStatus("submitting")
-        elif (status == 'SU' or status == 'S') and not (job.status in ['submitted','killed']):
+        elif (status == 'SU' or status == 'S' or status=='SR') and not (job.status in ['submitted','killed']):
             job.updateStatus('submitted')
         elif (status == 'SD') and not (job.status in ['completed','failed','killed']):
             logger.info('Retrieving %d.'%(job.id))
