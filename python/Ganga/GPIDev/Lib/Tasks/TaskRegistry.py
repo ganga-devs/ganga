@@ -1,5 +1,5 @@
 from common import *
-import time
+import time, traceback, sys
 
 str_done = markup("done" ,overview_colours["completed"])
 str_run  =  markup("run" ,overview_colours["running"]) 
@@ -91,42 +91,54 @@ class TaskRegistry(Registry):
             if monitoring_component.enabled:
                 for tid in self.ids():
                     try:
-                        if self[tid].status in ["running","running/pause"]:
+                        if hasattr(self[tid], "_tasktype") and self[tid]._tasktype == "ITask":
+                            # for new ITasks, always need write access
                             self[tid]._getWriteAccess()
                             p = self[tid]
-                        elif self[tid].status is 'completed' and ( self[tid].n_status('ready') or self[tid].n_status('running') ):
-                            self[tid].updateStatus()
-                            continue
                         else:
-                            continue
+                            if self[tid].status in ["running","running/pause"]:
+                                self[tid]._getWriteAccess()
+                                p = self[tid]
+                            elif self[tid].status is 'completed' and ( self[tid].n_status('ready') or self[tid].n_status('running') ):
+                                self[tid].updateStatus()
+                                continue
+                            else:
+                                continue
                     except RegistryError:
                         # could not acquire lock
                         continue
                     if self._main_thread.should_stop():
                         break
                     try:
-                        # TODO: Make this user-configurable and add better error message 
-                        if (p.n_status("failed")*100.0/(20+p.n_status("completed")) > 20):
-                            p.pause()
-                            logger.error("Task %s paused - %i jobs have failed while only %i jobs have completed successfully." % (p.name,p.n_status("failed"), p.n_status("completed")))
-                            logger.error("Please investigate the cause of the failing jobs and then remove the previously failed jobs using job.remove()")
-                            logger.error("You can then continue to run this task with tasks(%i).run()" % p.id)
-                            continue
-                        numjobs = p.submitJobs()
-                        if numjobs > 0:
-                            self._flush([p])
-
-                        # finalise any required transforms
-                        p.finaliseTransforms()
-                        p.updateStatus()
-                        
+                        if hasattr(self[tid], "_tasktype") and self[tid]._tasktype == "ITask":
+                            # for new ITasks, always call update()
+                            p.update()
+                        else:
+                            # TODO: Make this user-configurable and add better error message 
+                            if (p.n_status("failed")*100.0/(20+p.n_status("completed")) > 20):
+                                p.pause()
+                                logger.error("Task %s paused - %i jobs have failed while only %i jobs have completed successfully." % (p.name,p.n_status("failed"), p.n_status("completed")))
+                                logger.error("Please investigate the cause of the failing jobs and then remove the previously failed jobs using job.remove()")
+                                logger.error("You can then continue to run this task with tasks(%i).run()" % p.id)
+                                continue
+                            numjobs = p.submitJobs()
+                            if numjobs > 0:
+                                self._flush([p])
+                            # finalise any required transforms
+                            p.finaliseTransforms()
+                            p.updateStatus()
+                     
                     except Exception, x:
                         logger.error("Exception occurred in task monitoring loop: %s %s\nThe offending task was paused." % (x.__class__,x))
+                        type_, value_, traceback_ = sys.exc_info()
+                        logger.error("Full traceback:\n %s" % ' '.join(traceback.format_exception(type_, value_, traceback_)))
                         p.pause()
+                        
                     if self._main_thread.should_stop():
                         break
+                    
             # Sleep interruptible for 10 seconds
-            for i in range(0,100):
+            for i in range(0,600):
                 if self._main_thread.should_stop():
                     break
                 time.sleep(0.1)
@@ -291,23 +303,38 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
             print " The following is the output of "+markup("tasks.table()",fgcol("blue"))
             short = False
 
-        fstring = " %5s | %17s | %30s | %9s | %33s | %5s\n"
+        fstring = " %5s | %13s | %22s | %9s | %33s | %5s\n"
         lenfstring = 120
-        ds = "\n" + fstring % ("#", "Type", "Name", "State", "%4s: %4s/ %4s/ %4s/ %4s/ %4s/ %4s" % (
-           "Jobs",markup("done",overview_colours["completed"])," "+markup("run",overview_colours["running"])," "+markup("attd",overview_colours["attempted"]),markup("fail",overview_colours["failed"]),markup("hold",overview_colours["hold"])," "+markup("bad",overview_colours["bad"])), "Float")
+        ds = "\n" + fstring % ("#", "Type", "Name", "State", "%4s: %4s/ %4s/ %4s/ %4s/ %4s/ %4s/ %4s" % (
+           "Jobs",markup("done",overview_colours["completed"])," "+markup("run",overview_colours["running"])," "+markup("subd",overview_colours["submitted"])," "+markup("attd",overview_colours["attempted"]),markup("fail",overview_colours["failed"]),markup("hold",overview_colours["hold"])," "+markup("bad",overview_colours["bad"])), "Float")
         ds += "-"*lenfstring + "\n"
         for p in self._impl.objects.values():
-            stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4i/ %4i" % (
+
+            if hasattr(p, "_tasktype") and p._tasktype == "ITask":    
+                stat = "%4i: %4i/ %4i/  %4i/    --/ %4i/ %4i/ %4i" % (
+                    p.n_all(), p.n_status("completed"),p.n_status("running"),p.n_status("submitted"),p.n_status("failed"),p.n_status("hold"),p.n_status("bad"))
+                ds += markup(fstring % (p.id, p.__class__.__name__, p.name, p.status, stat, p.float), status_colours[p.status])
+            else:
+                stat = "%4i: %4i/ %4i/    --/  %4i/ %4i/ %4i/ %4i" % (
                     p.n_all(), p.n_status("completed"),p.n_status("running"),p.n_status("attempted"),p.n_status("failed"),p.n_status("hold"),p.n_status("bad"))
-            ds += markup(fstring % (p.id, p.__class__.__name__, p.name, p.status, stat, p.float), status_colours[p.status])
+                ds += markup(fstring % (p.id, p.__class__.__name__, p.name, p.status, stat, p.float), status_colours[p.status])
+                
             if short:
                 continue
             for ti in range(0, len(p.transforms)):
                 t = p.transforms[ti]
-                stat = "%4i: %4i/ %4i/ %4i/ %4i/ %4i/ %4s" % (
-                   t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("attempted"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
-                ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name, t.status, stat, ""), status_colours[t.status])
+
+                if hasattr(p, "_tasktype") and p._tasktype == "ITask":
+                    stat = "%4i: %4i/ %4i/ %4i/     --/ %4i/ %4i/ %4s" % (
+                        t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("submitted"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
+                    ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name, t.status, stat, ""), status_colours[t.status])
+                else:
+                    stat = "%4i: %4i/ %4i/     --/ %4i/ %4i/ %4i/ %4s" % (
+                        t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("attempted"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
+                    ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name, t.status, stat, ""), status_colours[t.status])
+                    
             ds += "-"*lenfstring + "\n"
+
         return ds + "\n"
 
     _display = __str__

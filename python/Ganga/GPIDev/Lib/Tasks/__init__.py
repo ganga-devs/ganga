@@ -10,6 +10,9 @@ addRegistry(TaskRegistry("tasks", "Tasks Registry"))
 from Task import Task
 from Transform import Transform
 
+from ITask import ITask
+from ITransform import ITransform
+
 # Start Logger
 #import Ganga.Utility.logging
 #logger = Ganga.Utility.logging.getLogger()

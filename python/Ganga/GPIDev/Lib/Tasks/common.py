@@ -45,4 +45,5 @@ overview_colours = {
                    'failed'     : col("black","lred"),
                    'bad'        : col("red","lcyan"),
                    'unknown'    : col("white","magenta"),
+                   'submitted'  : col("black","lgreen"),
                    }
