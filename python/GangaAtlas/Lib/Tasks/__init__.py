@@ -10,6 +10,9 @@ from MultiTask import MultiTask
 from MCTransforms import EvgenTransform, SimulTransform, ReconTransform
 from AnaTransform import AnaTransform
 from MultiTransform import MultiTransform
+from AtlasTask import AtlasTask
+from AtlasTransform import AtlasTransform
+from AtlasUnit import AtlasUnit
 
 # Applications
 from TaskApplication import AthenaTask, AthenaMCTask, AthenaMCTaskSplitterJob, AnaTaskSplitterJob
