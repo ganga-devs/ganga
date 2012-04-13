@@ -5,13 +5,6 @@ from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
-from dq2.common.DQException import DQException
-
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
-from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
-from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
-from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 
 class IUnit(GangaObject):
    _schema = Schema(Version(1,0), {
