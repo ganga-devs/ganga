@@ -50,6 +50,13 @@ class JobRegistry(Registry):
         slice = JobRegistrySlice("tmp")
         for dpv in slice._display_columns:
             c["display:"+dpv] = slice._get_display_value(obj, dpv)
+
+        # store subjob status
+        if hasattr(obj,"subjobs"):
+            c["subjobs:status"] = []
+            for sj in obj.subjobs:
+                c["subjobs:status"].append(sj.status)
+                
         return c
 
     def startup(self):
