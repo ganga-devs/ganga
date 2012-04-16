@@ -117,16 +117,16 @@ class ShareRef(GangaObject):
         
         shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
         basedir = os.path.basename(shareddir)
-        if basedir not in self.name:
-            logger.info('%s is not stored in the shareref metadata object.' %basedir)
-        elif self.name[basedir] > 0:
-            if remove == 1:
-                self.name[basedir] = 0
-            else:
-                self.name[basedir] -= 1
-            
-        else:
-            pass
+        #if remove==1, we force the shareref counter to 0
+        try:
+            if self.name[basedir] > 0:
+                if remove == 1:
+                    self.name[basedir] = 0
+                else:
+                    self.name[basedir] -= 1
+        #if we try to decrease a shareref that doesn't exist, we just set the corresponding shareref to 0
+        except KeyError:
+            self.name[basedir] = 0
 
         self._setDirty()
         self._releaseWriteAccess()
