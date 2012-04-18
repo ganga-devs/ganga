@@ -213,11 +213,12 @@ def getWNCodeForOutputPostprocessing(job, indent):
 ###INDENT###        if exitcode != 0:
 ###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
 ###INDENT###            continue
-            
+   
+###INDENT###    if filenameWildCharZipped = filenameWildChar
 ###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
-###INDENT###        filenameWildChar = '%s.gz' % filenameWildChar
+###INDENT###        filenameWildCharZipped = '%s.gz' % filenameWildChar
 
-###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildChar)):
+###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
 ###INDENT###        currentFileBaseName = os.path.basename(currentFile)
 ###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)))
 ###INDENT###        if exitcode != 0:
