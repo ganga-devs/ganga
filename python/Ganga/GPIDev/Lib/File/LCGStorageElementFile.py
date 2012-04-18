@@ -112,7 +112,9 @@ class LCGStorageElementFile(OutputSandboxFile):
         for currentFile in glob.glob(os.path.join(self.joboutputdir, self.name)):
             cmd = self.getUploadCmd()
             if self.compressed:
+                print 'before'
                 os.system("gzip %s" % currentFile)
+                print 'after'
                 currentFileGZipped = '%s.gz' % currentFile
                 print currentFileGZipped
                 print cmd
