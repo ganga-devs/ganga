@@ -123,7 +123,7 @@ class LCGStorageElementFile(OutputSandboxFile):
                 print 'executing command : %s' % cmd
             else:       
                 cmd = cmd.replace('filename', currentFile)
-                cmd = cmd + ' file:%s' % currentFile
+                cmd = cmd + ' file%s' % currentFile
 
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(cmd)
             if exitcode == 0:
