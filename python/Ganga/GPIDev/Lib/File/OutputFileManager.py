@@ -55,11 +55,12 @@ def getWNCodeForOutputSandbox(job, files):
     patternsToZip = []  
 
     if len(job.outputfiles) > 0:
-        for outputFile in job.outputfiles:  
-            patternsToSandbox.append(outputFile.name)
+        for outputFile in job.outputfiles: 
+            if outputFile.__class__.__name__ == 'OutputSandboxFile':     
+                patternsToSandbox.append(outputFile.name)
 
-            if outputFile.compressed:
-                patternsToZip.append(outputFile.name)               
+                if outputFile.compressed:
+                    patternsToZip.append(outputFile.name)               
                 
 
     insertScript = """\n
@@ -108,12 +109,17 @@ def getWNCodeForOutputPostprocessing(job, indent):
     if len(job.outputfiles) > 0:
         for outputFile in job.outputfiles:  
 
-            if outputFile.compressed:   
-                patternsToZip.append(outputFile.name)               
+            outputfileClassName = outputFile.__class__.__name__
+            backendClassName = job.backend.__class__.__name__
+
+            if outputFile.compressed and outputfileClassName == 'OutputSandboxFile' and backendClassName not in ['Localhost', 'LSF']:
+                patternsToZip.append(outputFile.name)  
+            elif outputFile.compressed and outputfileClassName != 'OutputSandboxFile':
+                patternsToZip.append(outputFile.name)                                
     
-            if outputFile.__class__.__name__ == 'LCGStorageElementFile' and outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
+            if outputfileClassName == 'LCGStorageElementFile' and outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
                 lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
-            elif outputFile.__class__.__name__ == 'MassStorageFile' and outputFilePostProcessingOnWN(job, 'MassStorageFile'):  
+            elif outputfileClassName == 'MassStorageFile' and outputFilePostProcessingOnWN(job, 'MassStorageFile'):  
                 from Ganga.Utility.Config import getConfig      
                 #massStorageConfig = getConfig('MassStorageOutput')
                 massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']  
@@ -122,8 +128,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
     insertScript = """\n
 ###INDENT###for patternToZip in ###PATTERNSTOZIP###:
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),patternToZip)):
-###INDENT###        pass
-###INDENT###        #os.system("gzip %s" % currentFile)
+###INDENT###        os.system("gzip %s" % currentFile)
 ###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
 
 ###INDENT####system command executor with subprocess
