@@ -7,7 +7,7 @@ def outputFilePostProcessingOnWN(job, outputFileClassName):
 
     if job.backend_output_postprocess.has_key(backendClassName):
         if job.backend_output_postprocess[backendClassName].has_key(outputFileClassName):
-            if job.backend_output_postprocess[backendClassName][outputFileClassName] == 'WN' or job.backend_output_postprocess[backendClassName][outputFileClassName] == 'WNclient':
+            if job.backend_output_postprocess[backendClassName][outputFileClassName] == 'WN':
                 return True
         
     return False
@@ -22,7 +22,7 @@ def outputFilePostProcessingOnClient(job, outputFileClassName):
 
     if job.backend_output_postprocess.has_key(backendClassName):
         if job.backend_output_postprocess[backendClassName].has_key(outputFileClassName):
-            if job.backend_output_postprocess[backendClassName][outputFileClassName] == 'client' or job.backend_output_postprocess[backendClassName][outputFileClassName] == 'WNclient':
+            if job.backend_output_postprocess[backendClassName][outputFileClassName] == 'client':
                 return True
         
     return False
@@ -56,11 +56,10 @@ def getWNCodeForOutputSandbox(job, files):
 
     if len(job.outputfiles) > 0:
         for outputFile in job.outputfiles:  
-            if outputFilePostProcessingOnWN(job, 'OutputSandboxFile'):    
-                patternsToSandbox.append(outputFile.name)
+            patternsToSandbox.append(outputFile.name)
 
-                if outputFile.compressed:
-                    patternsToZip.append(outputFile.name)               
+            if outputFile.compressed:
+                patternsToZip.append(outputFile.name)               
                 
 
     insertScript = """\n
