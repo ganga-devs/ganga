@@ -122,7 +122,8 @@ def getWNCodeForOutputPostprocessing(job, indent):
     insertScript = """\n
 ###INDENT###for patternToZip in ###PATTERNSTOZIP###:
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),patternToZip)):
-###INDENT###        os.system("gzip %s" % currentFile)
+###INDENT###        pass
+###INDENT###        #os.system("gzip %s" % currentFile)
 ###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
 
 ###INDENT####system command executor with subprocess
