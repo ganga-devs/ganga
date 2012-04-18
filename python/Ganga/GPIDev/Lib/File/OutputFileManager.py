@@ -56,7 +56,10 @@ def getWNCodeForOutputSandbox(job, files):
 
     if len(job.outputfiles) > 0:
         for outputFile in job.outputfiles: 
-            if outputFile.__class__.__name__ == 'OutputSandboxFile':     
+            
+            outputFileClassName = outputFile.__class__.__name__
+        
+            if outputFileClassName == 'OutputSandboxFile' or (outputFileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
                 patternsToSandbox.append(outputFile.name)
 
                 if outputFile.compressed:
