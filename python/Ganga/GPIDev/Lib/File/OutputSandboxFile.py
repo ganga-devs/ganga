@@ -52,6 +52,7 @@ class OutputSandboxFile(GangaObject):
         import glob     
         import os
 
+        #compression for files on the client (files that were not ready on the WN like stdout and stderr on Batch backend)
         if self.compressed:
             for currentFile in glob.glob(os.path.join(self.joboutputdir, self.name)):
                 os.system("gzip %s" % currentFile)
