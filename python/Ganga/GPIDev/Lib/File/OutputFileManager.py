@@ -38,7 +38,10 @@ def getOutputSandboxPatterns(job):
         for outputFile in job.outputfiles:   
             if outputFilePostProcessingOnClient(job, outputFile.__class__.__name__): 
                 if outputFile.name not in outputPatterns:
-                    outputPatterns.append(outputFile.name)
+                    if outputFile.compressed:
+                        outputPatterns.append('%s.gz' % outputFile.name)
+                    else:       
+                        outputPatterns.append(outputFile.name)
                 
     return outputPatterns
 
