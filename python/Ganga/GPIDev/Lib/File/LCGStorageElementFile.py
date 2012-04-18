@@ -114,6 +114,8 @@ class LCGStorageElementFile(OutputSandboxFile):
             if self.compressed:
                 os.system("gzip %s" % currentFile)
                 currentFileGZipped = '%s.gz' % currentFile
+                print currentFileGZipped
+                print cmd
                 cmd = cmd.replace('filename', currentFileGZipped)               
                 cmd = cmd + ' file:%s' % currentFileGZipped
                 print 'executing command : %s' % cmd
