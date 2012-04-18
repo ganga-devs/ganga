@@ -214,7 +214,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
 ###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
 ###INDENT###            continue
    
-###INDENT###    if filenameWildCharZipped = filenameWildChar
+###INDENT###    filenameWildCharZipped = filenameWildChar
 ###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
 ###INDENT###        filenameWildCharZipped = '%s.gz' % filenameWildChar
 
