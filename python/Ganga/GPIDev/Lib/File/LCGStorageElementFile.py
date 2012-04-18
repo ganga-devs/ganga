@@ -109,21 +109,13 @@ class LCGStorageElementFile(OutputSandboxFile):
 
         os.environ['LFC_HOST'] = self.lfc_host
 
-        for currentFile in glob.glob(os.path.join(self.joboutputdir, self.name)):
+        fileName = self.name
+
+        if self.compressed:
+            fileName = '%s.gz' % self.name    
+
+        for currentFile in glob.glob(os.path.join(self.joboutputdir, fileName)):
             cmd = self.getUploadCmd()
-            """ 
-            if self.compressed:
-                logger.warning('before')
-                os.system("gzip %s" % currentFile)
-                logger.warning('after')
-                currentFileGZipped = '%s.gz' % currentFile
-                logger.warning(currentFileGZipped)
-                logger.warning(cmd)
-                cmd = cmd.replace('filename', currentFileGZipped)               
-                cmd = cmd + ' file:%s' % currentFileGZipped
-                logger.warning('executing command : %s' % cmd)
-            else:       
-            """ 
             cmd = cmd.replace('filename', currentFile)
             cmd = cmd + ' file:%s' % currentFile
 
