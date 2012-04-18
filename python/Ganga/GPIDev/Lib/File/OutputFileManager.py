@@ -172,6 +172,9 @@ def getWNCodeForOutputPostprocessing(job, indent):
 ###INDENT###            match = re.search('(guid:\S+)',mystdout)
 ###INDENT###            if match:
 ###INDENT###                guidResults.append(mystdout)
+
+###INDENT###            #remove file from output dir
+###INDENT###            os.system('rm %s' % currentFile)
 ###INDENT###        else:
 ###INDENT###            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
 
