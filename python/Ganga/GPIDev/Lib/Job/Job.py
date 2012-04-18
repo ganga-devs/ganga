@@ -400,9 +400,6 @@ class Job(GangaObject):
                 if self.backend_output_postprocess[backendClass].has_key(outputfileClass):
                     if self.backend_output_postprocess[backendClass][outputfileClass] == 'client':
                         outputfile.put()    
-                    elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WNclient':  
-                        if outputfile.name == 'stdout' or outputfile.name == 'stderr':
-                            outputfile.put() 
                     elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WN':        
 
                         if outputfileClass == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
@@ -420,6 +417,11 @@ class Job(GangaObject):
                                 if massStoragePattern == outputfile.name:
                                     for location in massStorageUploads[massStoragePattern]:
                                         outputfile.setLocation(location)     
+                    #on Batch backends these files can be postprocessed (compressed) only on the client
+                    elif outputfileClass == 'OutputSandboxFile' and backendClass = 'LSF':  
+                        if outputfile.name == 'stdout' or outputfile.name == 'stderr':
+                            outputfile.put() 
+
 
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   
