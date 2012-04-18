@@ -426,8 +426,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         #[Output] section
         outputconfig = makeConfig( "Output", "configuration section for postprocessing the output" )
 
-        outputconfig.addOption('OutputSandboxFile', {'fileExtensions':[], 'backendPostprocess':{'LSF':'WNclient', 'Localhost':'WN'}},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends')
-
         outputconfig.addOption('LCGStorageElementFile',{'fileExtensions':['*.root'], 'backendPostprocess':{'LSF':'client', 'LCG':'WN', 'CREAM':'WN', 'Localhost':'WN'}, 'uploadOptions':{'LFC_HOST':'lfc-dteam.cern.ch', 
 'dest_SRM':'srm-public.cern.ch'}},'fileExtensions:list of output files that will be written to LCG SE, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual LCG upload')
 
