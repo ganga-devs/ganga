@@ -115,7 +115,11 @@ class MassStorageFile(OutputSandboxFile):
                     logger.warning('skipping %s for uploading to Castor' % outputFile.name)
                     return
             
-            for currentFile in glob.glob(os.path.join(self.joboutputdir, self.name)):
+            fileName = self.name
+            if self.compressed:
+                fileName = '%s.gz' % self.name 
+
+            for currentFile in glob.glob(os.path.join(self.joboutputdir, fileName)):
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
                 if exitcode != 0:
                     logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFile, massStoragePath))
