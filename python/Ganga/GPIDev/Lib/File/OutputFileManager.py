@@ -104,9 +104,14 @@ def getWNCodeForOutputPostprocessing(job, indent):
 
     lcgCommands = []
     massStorageCommands = []
+    patternsToZip = []  
 
     if len(job.outputfiles) > 0:
-        for outputFile in job.outputfiles:      
+        for outputFile in job.outputfiles:  
+
+            if outputFile.compressed:   
+                patternsToZip.append(outputFile.name)               
+    
             if outputFile.__class__.__name__ == 'LCGStorageElementFile' and outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
                 lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
             elif outputFile.__class__.__name__ == 'MassStorageFile' and outputFilePostProcessingOnWN(job, 'MassStorageFile'):  
@@ -114,9 +119,11 @@ def getWNCodeForOutputPostprocessing(job, indent):
                 #massStorageConfig = getConfig('MassStorageOutput')
                 massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']  
                 massStorageCommands.append('massstorage %s %s %s %s %s' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
-                
-        
+
     insertScript = """\n
+###INDENT###for patternToZip in ###PATTERNSTOZIP###:
+###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),patternToZip)):
+###INDENT###        os.system("gzip %s" % currentFile)
 ###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
 
 ###INDENT####system command executor with subprocess
@@ -149,6 +156,9 @@ def getWNCodeForOutputPostprocessing(job, indent):
 ###INDENT###    os.environ['LFC_HOST'] = lfc_host
         
 ###INDENT###    guidResults = []
+
+###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
+###INDENT###        filenameWildChar = '%s.gz' % filenameWildChar
 
 ###INDENT###    import glob 
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
@@ -201,6 +211,9 @@ def getWNCodeForOutputPostprocessing(job, indent):
 ###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
 ###INDENT###            continue
             
+###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
+###INDENT###        filenameWildChar = '%s.gz' % filenameWildChar
+
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildChar)):
 ###INDENT###        currentFileBaseName = os.path.basename(currentFile)
 ###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)))
@@ -218,6 +231,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
 """
     insertScript = insertScript.replace('###LCGCOMMANDS###', str(lcgCommands))
     insertScript = insertScript.replace('###MASSSTORAGECOMMANDS###', str(massStorageCommands))
+    insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
     insertScript = insertScript.replace('###INDENT###', indent)
 
     return insertScript
