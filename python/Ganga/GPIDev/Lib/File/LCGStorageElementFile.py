@@ -116,6 +116,7 @@ class LCGStorageElementFile(OutputSandboxFile):
                 currentFileGZipped = '%s.gz' % currentFile
                 cmd = cmd.replace('filename', currentFileGZipped)               
                 cmd = cmd + ' file:%s' % currentFileGZipped
+                logger.info('executing command : %s' % cmd)
             else:       
                 cmd = cmd.replace('filename', currentFile)
                 cmd = cmd + ' file:%s' % currentFile
