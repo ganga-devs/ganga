@@ -231,6 +231,17 @@ class Root(IPrepareApp):
     def configure(self,masterappconfig):
         return (None,None)
 
+    def unprepare(self, force=False):
+        """
+        Revert a Root() application back to it's unprepared state.
+        """
+        logger.debug('Running unprepare in Root app')
+        if self.is_prepared is not None:
+            self.decrementShareCounter(self.is_prepared.name)
+            self.is_prepared = None
+
+
+
     def prepare(self, force=False):
         """
         A method to place the Root application into a prepard state.
@@ -239,10 +250,15 @@ class Root(IPrepareApp):
             raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s'%(self.is_prepared.name))
-        send_to_sharedir = self.copyPreparables()
-        #add the newly created shared directory into the metadata system if the app is associated with a persisted object
-        self.checkPreparedHasParent(self)
-        return 1
+        copy_worked = self.copyPreparables()
+        if copy_worked == 0:
+            logger.error('Failed during prepare() phase. Unpreparing application.')
+            self.unprepare()
+            return 0
+        else:
+            #add the newly created shared directory into the metadata system if the app is associated with a persisted object
+            self.checkPreparedHasParent(self)
+            return 1
 
     def _checkset_script(self,value):
         """Callback used to set usepython to 1 if the script name has a *.py or *.PY extention.""" 
