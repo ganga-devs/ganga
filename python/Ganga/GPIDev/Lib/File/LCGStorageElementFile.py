@@ -112,9 +112,7 @@ class LCGStorageElementFile(OutputSandboxFile):
         fileName = self.name
 
         if self.compressed:
-            fileName = '%s.gz' % self.name    
-
-        logger.warning(str(os.listdir(self.joboutputdir)))       
+            fileName = '%s.gz' % self.name          
 
         for currentFile in glob.glob(os.path.join(self.joboutputdir, fileName)):
             cmd = self.getUploadCmd()
