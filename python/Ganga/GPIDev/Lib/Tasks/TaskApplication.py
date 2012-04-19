@@ -139,6 +139,15 @@ def taskApp(app):
        raise AttributeError()
     for k in a._data:
        b._data[k] = a._data[k]
+
+    #We need to recalculate the application's preparable hash here, since the text string representation 
+    #of the application has changed (e.g. Executable -> ExecutableTask).
+    if hasattr(b, 'hash') and b.hash is not None:
+        try:
+            b.calc_hash()
+        except:
+            logger.warn('Non fatal error recalculating the task application hash value')
+
     return b
     
        

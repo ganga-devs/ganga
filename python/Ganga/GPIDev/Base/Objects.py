@@ -162,6 +162,13 @@ class Node(object):
         from VPrinter import VPrinter
         self.accept(VPrinter(f,sel))
 
+    #printPrepTree is only ever run on applications, from within IPrepareApp.py
+    #if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
+    #see the relevant code in VPrinter to understand why
+    def printPrepTree(self,f=None, sel='preparable' ):
+        from VPrinter import VPrinter
+        self.accept(VPrinter(f,sel))
+
     def printSummaryTree(self,level = 0, verbosity_level = 0, whitespace_marker = '', out = None, selection = ''):
         """If this method is overridden, the following should be noted:
 
