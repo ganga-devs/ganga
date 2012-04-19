@@ -244,7 +244,7 @@ class Root(IPrepareApp):
 
     def prepare(self, force=False):
         """
-        A method to place the Root application into a prepard state.
+        A method to place the Root application into a prepared state.
         """
         if (self.is_prepared is not None) and (force is not True):
             raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
