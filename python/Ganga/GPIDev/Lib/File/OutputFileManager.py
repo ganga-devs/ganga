@@ -115,16 +115,17 @@ def getWNCodeForOutputPostprocessing(job, indent):
             outputfileClassName = outputFile.__class__.__name__
             backendClassName = job.backend.__class__.__name__
 
-            if outputFile.compressed and outputfileClassName == 'OutputSandboxFile' and backendClassName not in ['Localhost', 'LSF']:
-                patternsToZip.append(outputFile.name)  
-            elif outputFile.compressed and outputfileClassName != 'OutputSandboxFile':
-                patternsToZip.append(outputFile.name)                                
+
+            if outputFile.compressed:   
+                if outputfileClassName == 'OutputSandboxFile' and backendClassName not in ['Localhost', 'LSF']:
+                    patternsToZip.append(outputFile.name)  
+                elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
+                    patternsToZip.append(outputFile.name)                                
     
             if outputfileClassName == 'LCGStorageElementFile' and outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
                 lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
             elif outputfileClassName == 'MassStorageFile' and outputFilePostProcessingOnWN(job, 'MassStorageFile'):  
                 from Ganga.Utility.Config import getConfig      
-                #massStorageConfig = getConfig('MassStorageOutput')
                 massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']  
                 massStorageCommands.append('massstorage %s %s %s %s %s' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
 
