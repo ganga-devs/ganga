@@ -28,7 +28,7 @@ class IPrepareApp(IApplication):
     Base class for all applications which can be placed into a prepared\
     state. 
     """
-    _schema =  Schema(Version(0,0), {})
+    _schema =  Schema(Version(0,0), { 'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'])} )
     _category='applications'
     _name = 'PrepareApp'
     _hidden = 1
@@ -57,6 +57,12 @@ class IPrepareApp(IApplication):
         pass
 
 
+    def post_prepare(self):
+        """
+        Put any methods that should always be run at the end of the preparation process here.
+        """
+        self.calc_hash()
+
     def unprepare(self, force=False):
         """
         Revert an application back to the exact state it was in prior to being\
@@ -74,6 +80,8 @@ class IPrepareApp(IApplication):
         This method iterates over all attributes in an application and decides\
         whether they should be persisted (i.e. copied) in the Shared Directory\
         when the application is prepared.
+        If an IOError is raised when attempting the copy, this method returns 0\
+        otherwise it returns 1.
         """
         send_to_sharedir = []
         for name,item in self._schema.allItems():
@@ -93,32 +101,60 @@ class IPrepareApp(IApplication):
                     #we have a file. if it's an absolute path, copy it to the shared dir
                         if os.path.abspath(subitem) == subitem:
                             logger.info('Sending file %s to shared directory.'%(subitem))
-                            shutil.copy2(subitem, os.path.join(shared_path,self.is_prepared.name))
-                            #else assume it's a system binary (or other attribute), so we don't need to transport anything to the sharedir
-                        else:
-                            pass
-                            #logger.debug('\'%s\', assumed to be available in $PATH'%(subitem))
+                            try:
+                                shutil.copy2(subitem, os.path.join(shared_path,self.is_prepared.name))
+                            except IOError, e:
+                                logger.error(e)
+                                return 0
                     elif type(subitem) is File and subitem.name is not '':
                         logger.info('Sending file object %s to shared directory'%subitem.name)
-                        shutil.copy2(subitem.name, os.path.join(shared_path,self.is_prepared.name))
+                        try:
+                            shutil.copy2(subitem.name, os.path.join(shared_path,self.is_prepared.name))
+                        except IOError, e:
+                            logger.error(e)
+                            return 0
             elif type(prepitem) is str:
                 logger.debug('found a string')
                 #we have a file. if it's an absolute path, copy it to the shared dir
                 if os.path.abspath(prepitem) == prepitem:
                     logger.info('Sending file %s to shared directory.'%(prepitem))
-                    shutil.copy2(prepitem, os.path.join(shared_path,self.is_prepared.name))
-                    #else assume it's a system binary (or other attribute), so we don't need to transport anything to the sharedir
-                else:
-                    pass
-                    #logger.info('Preparing application to use \'%s\', assumed to be available in $PATH'%(prepitem))
+                    try:
+                        shutil.copy2(prepitem, os.path.join(shared_path,self.is_prepared.name))
+                    except IOError, e:
+                        logger.error(e)
+                        return 0
             elif type(prepitem) is File and prepitem.name is not '':
                 logger.debug('found a file')
                 logger.info('Sending file object %s to shared directory'%prepitem.name)
-                shutil.copy2(prepitem.name, os.path.join(shared_path,self.is_prepared.name))
+                try:
+                    shutil.copy2(prepitem.name, os.path.join(shared_path,self.is_prepared.name))
+                except IOError, e:
+                    logger.error(e)
+                    return 0
             else:
                 logger.debug('Nothing worth copying found in %s' %(prepitem))
-        return 
+        return 1
 
+    def calc_hash(self, verify=False):
+        """Calculate the MD5 digest of the application's preparable attribute(s), and store
+        that value in the application schema. The value is recalculated (and compared against
+        the initial value) every time the application is written to the Ganga repository. This
+        allows warnings to be generated should an application's locked attributes be changed 
+        post-preparation.
+        """
+        from Ganga.GPIDev.Base.Proxy import runProxyMethod
+        import StringIO, md5
+        sio = StringIO.StringIO()
+        runProxyMethod(self,'printPrepTree',sio)
+        digest = md5.new()
+        digest.update(str(sio.getvalue()))
+        tmp=sio.getvalue()
+        if verify == False:
+            self.hash = digest.hexdigest()
+        else:
+            #we return true if this is called with verify=True and the current hash is the same as that stored in the schema.
+            #this is checked immediately prior to (re)writing the object to the repository
+            return digest.hexdigest() == self.hash
 
     def incrementShareCounter(self, shared_directory_name):
         logger.debug('Incrementing shared directory reference counter')
