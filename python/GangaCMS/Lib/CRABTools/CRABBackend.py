@@ -85,7 +85,7 @@ class CRABBackend(IBackend):
             # Forcing all the jobs to be submitted, so the monitoring loops keeps issuing calls.
             for subjob in job.subjobs:
                 if subjob.status in ('submitting'):
-                    subjob.updateStatus('submitted')
+                    subjob.updateStatus('failed')
 
 #            try:
 #                server.status(job)
