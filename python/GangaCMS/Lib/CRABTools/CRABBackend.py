@@ -307,7 +307,7 @@ class CRABBackend(IBackend):
                 job.updateStatus('submitted')
             if not (job.status in ['running'] ):
                 job.updateStatus('running')
-        elif (status == 'C' or status == 'CS') and not (job.status in ['submitting','new']):
+        elif (status == 'C' or status == 'CS') and not (job.status in ['submitted','submitting','new']):
             logger.warning('The job is an invalid status (%s - %s), it will  be reverted.' % (status, job.status))
             job.rollbackToNewState()
         elif (status == 'SS' or status == 'W') and not (job.status in ['submitting','submitted','killed']):
@@ -336,6 +336,16 @@ class CRABBackend(IBackend):
         else:
             if not STATUS.has_key(status):  
                 logger.warning('UNKNOWN STATUS: '+str(status)+' ')
+
+        # Check the CRAB created jobs that are set as submitted... for a timeout
+        if (status in ['C','CS']) and (job.status in ['submitted']):
+            try:
+                # If submission time is more than one hour ago, a problem happened...
+                if datetime.datetime.utcnow() - job.time.timestamps['submitted'] > datetime.timedelta(hours=1):
+                    logger.info('Submission for job %d failed (timeout).' % job.id)
+                    job.updateStatus('failed')
+            except:
+                logger.warning('Error while retrieving submit time for job %d.' % job.id)
 
     def master_updateMonitoringInformation(jobs):
 
