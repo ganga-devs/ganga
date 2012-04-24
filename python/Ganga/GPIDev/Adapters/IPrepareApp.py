@@ -28,7 +28,7 @@ class IPrepareApp(IApplication):
     Base class for all applications which can be placed into a prepared\
     state. 
     """
-    _schema =  Schema(Version(0,0), { 'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'])} )
+    _schema =  Schema(Version(0,0), { 'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'],hidden=1)} )
     _category='applications'
     _name = 'PrepareApp'
     _hidden = 1
