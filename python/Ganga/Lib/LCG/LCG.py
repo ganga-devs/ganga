@@ -1921,7 +1921,7 @@ sys.exit(0)
                 linesToAppend = []
 
                 jdlFileAppend = open(jdlpath, 'a')
-                linesToAppend.append("Requirements =\n")
+                linesToAppend.append("Requirements = \n")
                 excludedCEs = re.split('\s+', configexcludedCEs)        
                 index = 1
 
@@ -1957,7 +1957,7 @@ sys.exit(0)
                 index = 2
                 for line in originalLines:
   
-                    if line == "Requirements =\n":
+                    if line == "Requirements = \n":
                         break
         
                 index += 1      
@@ -1996,14 +1996,14 @@ sys.exit(0)
 
             i = 0       
             for line in newLines:
-                if line == 'Requirements =\n':
+                if line == 'Requirements = \n':
                     break
                 i += 1
 
-            if newLines[-1] == 'Requirements =\n':
-                newLines.remove('Requirements =\n')
+            if newLines[-1] == 'Requirements = \n':
+                newLines.remove('Requirements = \n')
             elif (not newLines[i+1].startswith('   ')):
-                newLines.remove('Requirements =\n')
+                newLines.remove('Requirements = \n')
                         
             jdlFileWrite = open(jdlpath, 'w')
             jdlFileWrite.writelines(newLines)
