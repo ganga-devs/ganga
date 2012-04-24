@@ -951,6 +951,9 @@ class LCG(IBackend):
 
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
+        #fix for savannah 76289, update the excludedCEs in jdl file
+        self.updateExcudedCEsInJdl(jdlpath)
+
         if config['MatchBeforeSubmit']:
             matches = grids[mt].list_match(jdlpath, ce=self.CE)
             if not matches:
@@ -1900,6 +1903,112 @@ sys.exit(0)
             os.remove(jdl_file2)
             
         return matches
+
+    def updateExcudedCEsInJdl(self, jdlpath):
+
+        import re
+        configexcludedCEs = getConfig('LCG')['ExcludedCEs']
+
+        jdlFileRead = open(jdlpath, 'r')
+        jdlText = jdlFileRead.read()
+        hasRequirements = jdlText.find("Requirements =") > -1
+        jdlFileRead.close()
+
+        if hasRequirements == False:
+    
+            if configexcludedCEs != '':
+
+                linesToAppend = []
+
+                jdlFileAppend = open(jdlpath, 'a')
+                linesToAppend.append("Requirements =\n")
+                excludedCEs = re.split('\s+', configexcludedCEs)        
+                index = 1
+
+                for excludedCE in excludedCEs:
+                    #if not the last one
+                    if index != len(excludedCEs):               
+                        linesToAppend.append('   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
+                    else:
+                        linesToAppend.append('   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
+
+                    index += 1 
+        
+                jdlFileAppend.writelines(linesToAppend)
+                jdlFileAppend.close()   
+        else:
+    
+            jdlFileRead = open(jdlpath, 'r')
+            originalLines = jdlFileRead.readlines()
+            jdlFileRead.close()
+
+            index = 0
+            thereAreExcudedCEs = False
+            for line in originalLines:
+  
+                #find the index of the first line with excludedCE  
+                if line.find('!RegExp') > -1 and line.find('other.GlueCEUniqueID') > -1:
+                    thereAreExcudedCEs = True
+                    break
+        
+                index += 1      
+
+            if (thereAreExcudedCEs == False):   
+                index = 2
+                for line in originalLines:
+  
+                    if line == "Requirements =\n":
+                        break
+        
+                index += 1      
+
+            newLines = []
+            removedLines = []
+
+            for line in originalLines:
+   
+                if line.find('!RegExp') > -1 and line.find('other.GlueCEUniqueID') > -1:
+                    removedLines.append(line)
+                    continue
+        
+                newLines.append(line)
+
+            endOfRequirements = False   
+
+            for line in removedLines:
+                if line.endswith(';\n'):
+                    endOfRequirements = True
+                    break               
+
+            if configexcludedCEs != '':
+                excludedCEs = re.split('\s+', configexcludedCEs)        
+                innerIndex = 1  
+                for excludedCE in excludedCEs:
+                    if innerIndex != len(excludedCEs):          
+                        newLines.insert(index + innerIndex - 1,'   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
+                    else:
+                        if endOfRequirements and thereAreExcudedCEs:    
+                            newLines.insert(index + innerIndex - 1,'   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
+                        else:
+                            newLines.insert(index + innerIndex - 1,'   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
+
+                    innerIndex += 1 
+
+            i = 0       
+            for line in newLines:
+                if line == 'Requirements =\n':
+                    break
+                i += 1
+
+            if newLines[-1] == 'Requirements =\n':
+                newLines.remove('Requirements =\n')
+            elif (not newLines[i+1].startswith('   ')):
+                newLines.remove('Requirements =\n')
+                        
+            jdlFileWrite = open(jdlpath, 'w')
+            jdlFileWrite.writelines(newLines)
+            jdlFileWrite.close()
+        
         
 class LCGJobConfig(StandardJobConfig):
     '''Extends the standard Job Configuration with additional attributes'''
