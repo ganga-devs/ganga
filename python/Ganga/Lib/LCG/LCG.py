@@ -1529,6 +1529,9 @@ sys.exit(0)
             'OutputSandbox' : output_sandbox
         }
 
+        if config['GLITE_WMS_WMPROXY_ENDPOINT'] != '':
+            jdl['Environment']['GLITE_WMS_WMPROXY_ENDPOINT'] = config['GLITE_WMS_WMPROXY_ENDPOINT']     
+
         if self.middleware.upper() == 'GLITE':
 
             # workaround of glite WMS bug: https://savannah.cern.ch/bugs/index.php?32345
@@ -2180,6 +2183,8 @@ config.addOption('Config','','sets the generic LCG-UI configuration script for t
 
 config.addOption('AllowedCEs','','sets allowed computing elements by a regular expression')
 config.addOption('ExcludedCEs','','sets excluded computing elements by a regular expression')
+
+config.addOption('GLITE_WMS_WMPROXY_ENDPOINT','','sets the WMProxy service to be contacted')
 
 config.addOption('MyProxyServer','myproxy.cern.ch','sets the myproxy server')
 config.addOption('RetryCount',3,'sets maximum number of job retry')
