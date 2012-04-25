@@ -29,6 +29,7 @@ from GangaPanda.Lib.Panda.Panda import setChirpVariables
 
 def createContainer(name):
     from pandatools import Client
+    # don't create containers for HC datasets
     if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
         try:
             Client.createContainer(name,False)
@@ -38,6 +39,7 @@ def createContainer(name):
 
 def addDatasetsToContainer(container,datasets):
     from pandatools import Client
+    # HC datasets don't use containers
     if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
         Client.addDatasetsToContainer(container,datasets,False)
 
@@ -321,10 +323,16 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         for site in bjsites:
             self.outDsLocation = Client.PandaSites[site]['ddm']
 
-            tmpDSName = job.outputdata.datasetname[0:-1] + ".%d.%s"% (self.rndSubNum, site)
+            tmpDSName = job.outputdata.datasetname[0:-1]
+            if configPanda['processingType'] != 'gangarobot-rctest':
+                tmpDSName += ".%d.%s"% (self.rndSubNum, site)
 
             try:
-                Client.addDataset(tmpDSName,False,location=self.outDsLocation)
+                tmpDsExist = False
+                if configPanda['processingType'] == 'gangarobot-rctest' and Client.getDatasets(tmpDSName):
+                    tmpDsExist = True
+                    logger.info('Re-using output dataset %s'%tmpDSName)
+                Client.addDataset(tmpDSName,False,location=self.outDsLocation,dsExist=tmpDsExist)
                 logger.info('Output dataset %s registered at %s'%(tmpDSName,self.outDsLocation))
                 dq2_set_dataset_lifetime(tmpDSName, self.outDsLocation)
                 self.indivOutDsList.append(tmpDSName)
@@ -557,7 +565,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #       if no outputdata are given
         if not job.outputdata:
             job.outputdata = DQ2OutputDataset()
-        job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]+'.%d.%s'% ( self.rndSubNum, job.backend.site )
+        job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]
+        if configPanda['processingType'] != 'gangarobot-rctest':
+            job.outputdata.datasetname += '.%d.%s'% ( self.rndSubNum, job.backend.site )
 
         if job.inputdata and self.inputdatatype=='DQ2':
             if len(job.inputdata.dataset) > 1:
