@@ -2004,6 +2004,16 @@ sys.exit(0)
                 newLines.remove('Requirements = \n')
             elif (not newLines[i+1].startswith('   ')):
                 newLines.remove('Requirements = \n')
+            else:
+                i += 1
+                while i < len(newLines):
+                    if newLines[i].startswith('   '):
+                        i += 1
+                    else:
+                        break
+
+            if newLines[i-1].endswith(' &&\n'):
+                newLines[i-1] = newLines[i-1][:-4] + ';\n'
                         
             jdlFileWrite = open(jdlpath, 'w')
             jdlFileWrite.writelines(newLines)
