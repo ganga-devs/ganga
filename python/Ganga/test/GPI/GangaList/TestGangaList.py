@@ -454,8 +454,8 @@ class TestGangaList(GangaGPITestCase):
     def testHash(self):
         
         try:
-            hash(self.proxied1)
+            hash(int(self.proxied1))
             assert False, 'Lists are not hashable'
         except TypeError:
             pass
-            
+
