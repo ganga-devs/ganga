@@ -5,6 +5,7 @@ from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHan
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 from GangaLHCb.Lib.Splitters.OptionsFileSplitter import OptionsFileSplitter
 from GangaLHCb.Lib.Splitters.GaussSplitter import GaussSplitter
+from Ganga import GPI
 from tempfile import mkdtemp
 
 class TestSplitters(GangaGPITestCase):
@@ -33,7 +34,7 @@ class TestSplitters(GangaGPITestCase):
     def test_SplitByFiles_split(self):
         job = Job(application=DaVinci())
         #job.application._impl.extra = GaudiExtras()
-        job.splitter = SplitByFiles(filesPerJob=2)
+        job.splitter = GPI.SplitByFiles(filesPerJob=2)
         dummy_files = ['pfn:f1.dst','pfn:f2.dst','pfn:f3.dst','pfn:f4.dst',
                        'pfn:f5.dst']
         job._impl.inputdata = LHCbDataset(dummy_files)._impl
@@ -64,7 +65,7 @@ class TestSplitters(GangaGPITestCase):
         ## Check also that data in the optsfiles was picked up.
         job = Job(application=DaVinci())
         #job.application._impl.extra = GaudiExtras()
-        job.splitter = SplitByFiles(filesPerJob=2)
+        job.splitter = GPI.SplitByFiles(filesPerJob=2)
         dummy_files = ['pfn:f1.dst','pfn:f2.dst','pfn:f3.dst','pfn:f4.dst',
                        'pfn:f5.dst']
         l = LHCbDataset(dummy_files)._impl
@@ -99,7 +100,7 @@ class TestSplitters(GangaGPITestCase):
         assert ok, 'problem w/ subjob 2 input data, for data in optsfile'
             
     def test_OptionsFileSplitter_split(self):
-        splitter = OptionsFileSplitter()
+        splitter = GPI.OptionsFileSplitter()
         splitter.optsArray = ['dummy1.opt','dummy2.opt','dummy3.opt']
         job = Job(application=DaVinci())
         #job.application._impl.extra = GaudiExtras()
@@ -122,7 +123,7 @@ class TestSplitters(GangaGPITestCase):
         job = Job(application=Gauss())
         job.application.optsfile = 'this-is-not-a-file' # hack for Gauss
         job.application._impl.master_configure()
-        gsplit = GaussSplitter(eventsPerJob=1,numberOfJobs=3)
+        gsplit = GPI.GaussSplitter(eventsPerJob=1,numberOfJobs=3)
         subjobs = gsplit._impl.split(job._impl)
         assert len(subjobs) == 3, 'incorrect # of jobs'
         def dataFilter(file):
