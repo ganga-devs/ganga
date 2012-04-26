@@ -243,9 +243,12 @@ class GaudiBase(IPrepareApp):
                 #self.prep_inputbox.append(share_file)
                 #self.prep_inputbox.append(File(name=share_path,subdir=subdir))
 
-        #add the newly created shared directory into the metadata system if the app is associated with a persisted object
-        self.checkPreparedHasParent(self)
-        self.post_prepare()
+        # add the newly created shared directory into the metadata system if the app is associated with a persisted object
+        # also call post_prepare for hashing
+        # commented out here as inherrited from this class with extended perpare
+        
+##         self.checkPreparedHasParent(self)
+##         self.post_prepare()
 
     def _register(self, force):
         if (self.is_prepared is not None) and (force is not True):

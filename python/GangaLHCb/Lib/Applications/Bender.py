@@ -1,7 +1,7 @@
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#                                                                       
 '''Application handler for GaudiPython applications in LHCb.'''
-import os
+import os, tempfile
 from os.path import split,join
 from Ganga.GPIDev.Schema import *
 import Ganga.Utility.logging
@@ -65,13 +65,13 @@ class Bender(GaudiBase):
                                    typelist=['str'],doc=docstr)
     docstr = 'The number of events '
     _schema.datadict['events'] = SimpleItem(preparable=1,defvalue=-1,typelist=['int'],doc=docstr)
-    _schema.datadict['is_prepared'] = SimpleItem(defvalue=None,
-                                                 strict_sequence=0,
-                                                 visitable=1,
-                                                 copyable=1,
-                                                 typelist=['type(None)','str'],
-                                                 protected=1,
-                                                 doc=docstr)
+##     _schema.datadict['is_prepared'] = SimpleItem(defvalue=None,
+##                                                  strict_sequence=0,
+##                                                  visitable=1,
+##                                                  copyable=1,
+##                                                  typelist=['type(None)','str'],
+##                                                  protected=1,
+##                                                  doc=docstr)
 
     def _get_default_version(self, gaudi_app):
         return guess_version(gaudi_app)
@@ -145,7 +145,7 @@ class Bender(GaudiBase):
 ##             raise ApplicationConfigurationError(None,msg)
        
     def prepare(self,force=False):
-        super(GaudiPython,self).prepare()
+        super(GaudiPython,self).prepare(force)
         self._check_inputs()
 
         share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),

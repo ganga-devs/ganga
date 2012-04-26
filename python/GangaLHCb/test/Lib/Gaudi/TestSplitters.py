@@ -38,6 +38,7 @@ class TestSplitters(GangaGPITestCase):
         dummy_files = ['pfn:f1.dst','pfn:f2.dst','pfn:f3.dst','pfn:f4.dst',
                        'pfn:f5.dst']
         job._impl.inputdata = LHCbDataset(dummy_files)._impl
+        job.prepare()
         subjobs = job.splitter._impl.split(job._impl)
         assert len(subjobs) == 3, 'incorrect number of split jobs'
         #for i in range(0,3):
@@ -103,6 +104,7 @@ class TestSplitters(GangaGPITestCase):
         splitter = GPI.OptionsFileSplitter()
         splitter.optsArray = ['dummy1.opt','dummy2.opt','dummy3.opt']
         job = Job(application=DaVinci())
+        job.prepare()
         #job.application._impl.extra = GaudiExtras()
         subjobs = splitter._impl.split(job._impl)
         assert len(subjobs) == 3, 'incorrect number of subjobs'
@@ -123,6 +125,7 @@ class TestSplitters(GangaGPITestCase):
         job = Job(application=Gauss())
         job.application.optsfile = 'this-is-not-a-file' # hack for Gauss
         job.application._impl.master_configure()
+        job.prepare()
         gsplit = GPI.GaussSplitter(eventsPerJob=1,numberOfJobs=3)
         subjobs = gsplit._impl.split(job._impl)
         assert len(subjobs) == 3, 'incorrect # of jobs'

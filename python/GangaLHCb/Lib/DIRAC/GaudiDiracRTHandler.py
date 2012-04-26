@@ -169,8 +169,7 @@ class GaudiDiracRTHandler(GaudiRunTimeHandler):
             dirac_script.inputdata = DiracInputData(indata)
 
         outputdata = OutputData()
-        if jobmasterconfig and hasattr(jobmasterconfig,'outputdata'):
-            outputdata.files += jobmasterconfig.outputdata
+        if jobmasterconfig: outputdata.files += jobmasterconfig.outputdata
 
         dirac_script.outputdata = outputdata
 

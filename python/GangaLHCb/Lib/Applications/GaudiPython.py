@@ -18,7 +18,7 @@ from Ganga.Utility.files import expandfilename
 from Ganga.Utility.Config import getConfig
 from AppsBaseUtils import guess_version
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-import shutil
+import shutil, tempfile
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -164,7 +164,7 @@ class GaudiPython(GaudiBase):
 
 
     def prepare(self,force=False):
-        super(GaudiPython,self).prepare()
+        super(GaudiPython,self).prepare(force)
         self._check_inputs()
 
         share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
