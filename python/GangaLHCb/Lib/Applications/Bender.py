@@ -158,6 +158,7 @@ class Bender(GaudiBase):
 
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
+        self.post_prepare()
 
 
     def master_configure(self):

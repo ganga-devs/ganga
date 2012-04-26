@@ -352,6 +352,7 @@ class Athena(IPrepareApp):
                  'recex_type'             : SimpleItem(defvalue = '',doc='Set to RDO, ESD or AOD to enable RecExCommon type jobs of appropriate type'),
                  'glue_packages'          : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='list of glue packages which cannot be found due to empty i686-slc4-gcc34-opt. e.g., [\'External/AtlasHepMC\',\'External/Lhapdf\']'),
                  'is_prepared'            : SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool', 'str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
                  'useRootCore'            : SimpleItem(defvalue = False, doc='Use RootCore'),
                  'useRootCoreNoBuild'     : SimpleItem(defvalue = False, doc='Use RootCore with NoBuild'),
                  'useNoDebugLogs'         : SimpleItem(defvalue = False, doc='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend'),
@@ -1152,6 +1153,7 @@ class Athena(IPrepareApp):
         #get hold of the metadata object for storing shared directory reference counts
         #we now inherit this from the IPrepareApp class
         self.checkPreparedHasParent(self)
+        self.post_prepare()
 
         return 1
 

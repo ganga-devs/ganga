@@ -210,7 +210,8 @@ class Root(IPrepareApp):
         'args' : SimpleItem(defvalue=[],typelist=['str','int'],sequence=1,doc="List of arguments for the script. Accepted types are numerics and strings"),
         'version' : SimpleItem(defvalue='5.18.00',doc="The version of Root to run"),
         'usepython' : SimpleItem(defvalue = False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
-        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
         } )
     _category = 'applications'
     _name = 'Root'
@@ -258,6 +259,7 @@ class Root(IPrepareApp):
         else:
             #add the newly created shared directory into the metadata system if the app is associated with a persisted object
             self.checkPreparedHasParent(self)
+            self.post_prepare()
             return 1
 
     def _checkset_script(self,value):

@@ -58,6 +58,9 @@ class GaudiBase(IPrepareApp):
                                        typelist=['type(None)','str'],
                                        protected=1,
                                        doc=docstr)
+    docstr = 'MD5 hash of the string representation of applications preparable attributes'
+    schema['hash'] = SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
+
     _name = 'GaudiBase'
     _exportmethods = ['getenv','getpack', 'make', 'cmt']
     _schema = Schema(Version(2, 1), schema)
@@ -242,6 +245,7 @@ class GaudiBase(IPrepareApp):
 
         #add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
+        self.post_prepare()
 
     def _register(self, force):
         if (self.is_prepared is not None) and (force is not True):

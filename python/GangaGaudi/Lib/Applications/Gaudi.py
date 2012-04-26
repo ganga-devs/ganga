@@ -135,6 +135,7 @@ class Gaudi(GaudiBase):
         file.write('gaudi_env = %s' % str(self.env))
         file.close()
         #self.prep_inputbox.append(File(os.path.join(share_dir,'gaudi-env.py.gz')))
+        self.post_prepare()
 
         try:
             self._parse_options()
