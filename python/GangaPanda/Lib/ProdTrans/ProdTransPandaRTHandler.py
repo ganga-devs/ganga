@@ -83,7 +83,11 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
 
         try:
             outDsLocation = Client.PandaSites[job.backend.site]['ddm']
-            Client.addDataset(job.outputdata.datasetname,False,location=outDsLocation,allowProdDisk=True)
+            tmpDsExist = False
+            if configPanda['processingType'] in ('gangarobot-rctest','hammercloud') and Client.getDatasets(job.outputdata.datasetname):
+                tmpDsExist = True
+                logger.info('Re-using output dataset %s'%job.outputdata.datasetname)
+            Client.addDataset(job.outputdata.datasetname,False,location=outDsLocation,allowProdDisk=True,dsExist=tmpDsExist)
             logger.info('Output dataset %s registered at %s'%(job.outputdata.datasetname,outDsLocation))
             dq2_set_dataset_lifetime(job.outputdata.datasetname, outDsLocation)
         except exceptions.SystemExit:

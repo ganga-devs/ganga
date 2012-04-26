@@ -324,12 +324,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             self.outDsLocation = Client.PandaSites[site]['ddm']
 
             tmpDSName = job.outputdata.datasetname[0:-1]
-            if configPanda['processingType'] != 'gangarobot-rctest':
+            if configPanda['processingType'] not in ('gangarobot-rctest','hammercloud'):
                 tmpDSName += ".%d.%s"% (self.rndSubNum, site)
 
             try:
                 tmpDsExist = False
-                if configPanda['processingType'] == 'gangarobot-rctest' and Client.getDatasets(tmpDSName):
+                if configPanda['processingType'] in ('gangarobot-rctest','hammercloud') and Client.getDatasets(tmpDSName):
                     tmpDsExist = True
                     logger.info('Re-using output dataset %s'%tmpDSName)
                 Client.addDataset(tmpDSName,False,location=self.outDsLocation,dsExist=tmpDsExist)
@@ -566,7 +566,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if not job.outputdata:
             job.outputdata = DQ2OutputDataset()
         job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]
-        if configPanda['processingType'] != 'gangarobot-rctest':
+        if configPanda['processingType'] not in ('gangarobot-rctest','hammercloud'):
             job.outputdata.datasetname += '.%d.%s'% ( self.rndSubNum, job.backend.site )
 
         if job.inputdata and self.inputdatatype=='DQ2':
