@@ -26,18 +26,19 @@ def backend_handlers():
 
 def available_apps():
   return ["Gauss", "Boole", "Brunel", "DaVinci", "Moore", "Vetra",
-          "Panoptes", "Erasmus"]
+          "Panoptes", "Erasmus","Alignment"]
 
 def available_packs(appname):
-  packs={'Gauss'   : 'Sim',
-         'Boole'   : 'Digi',
-         'Brunel'  : 'Rec',
-         'DaVinci' : 'Phys',
-         'Moore'   : 'Hlt',
-         'Vetra'   : 'Tell1',
-         'Panoptes': 'Rich',
-         'Bender'  : 'Phys',
-         'Erasmus' : ''
+  packs={'Gauss'     : 'Sim',
+         'Boole'     : 'Digi',
+         'Brunel'    : 'Rec',
+         'DaVinci'   : 'Phys',
+         'Moore'     : 'Hlt',
+         'Vetra'     : 'Tell1',
+         'Panoptes'  : 'Rich',
+         'Bender'    : 'Phys',
+         'Erasmus'   : '',
+         'Alignment' : 'Alignment/Escher'
          }
   return packs[appname]
 
