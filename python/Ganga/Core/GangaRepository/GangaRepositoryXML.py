@@ -35,16 +35,25 @@ def safe_save(fn,obj,to_file,ignore_subs=''):
     """Writes a file safely, raises IOError on error"""
     if hasattr(obj, 'application') and hasattr(obj.application, 'hash') and obj.application.hash is not None:
         if not obj.application.calc_hash(verify=True):  
-            logger.error('Protected attributes of %s application, associated with %s #%s have changed!' \
-                % (obj.application._name, obj._name, obj._registry_id))
+            try:
+                logger.error('Protected attributes of %s application, associated with %s #%s have changed!' \
+                    % (obj.application._name, obj._name, obj._registry_id))
+            except:
+                logger.error('Protected attributes of %s application associated with %s have changed!!!!' \
+                    % (obj.application._name, obj._name))
+                
             logger.error('If you knowingly circumvented the protection, ignore this message (and, optionally,')
             logger.error('re-prepare() the application). Otherwise, please file a bug report at:')
             logger.error('http://savannah.cern.ch/projects/ganga/')
     elif hasattr(obj, 'analysis') and hasattr(obj.analysis, 'application') and \
             hasattr(obj.analysis.application, 'hash') and obj.analysis.application.hash is not None:
                 if not obj.analysis.application.calc_hash(verify=True):  
-                    logger.error('Protected attributes of %s application, associated with %s #%s have changed!' \
-                    % (obj.analysis.application._name, obj._name, obj._registry_id))
+                    try:
+                        logger.error('Protected attributes of %s application, associated with %s #%s have changed!' \
+                        % (obj.analysis.application._name, obj._name, obj._registry_id))
+                    except:
+                        logger.error('Protected attributes of %s application associated with %s have changed!!!!' \
+                            % (obj.analysis.application._name, obj._name))
                     logger.error('If you knowingly circumvented the protection, ignore this message (and, optionally,')
                     logger.error('re-prepare() the application). Otherwise, please file a bug report at:')
                     logger.error('http://savannah.cern.ch/projects/ganga/')
