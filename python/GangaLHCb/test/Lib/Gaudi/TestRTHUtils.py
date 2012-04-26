@@ -59,7 +59,7 @@ class TestRTHUtils(GangaGPITestCase):
         
     def test_is_gaudi_child(self):
         assert is_gaudi_child(DaVinci()._impl)
-        assert is_gaudi_child(Gaudi()._impl)
+        #assert is_gaudi_child(Gaudi()._impl)
         assert not is_gaudi_child(GaudiPython()._impl)
         assert not is_gaudi_child(Bender()._impl)
 

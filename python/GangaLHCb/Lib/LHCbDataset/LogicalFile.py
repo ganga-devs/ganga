@@ -52,7 +52,7 @@ class LogicalFile(GangaObject):
     _exportmethods = ['replicate','download','remove','removeReplica',
                       'getMetadata','getReplicas','bkMetadata']
 
-    def __init__(self,name=''):        
+    def __init__(self,name=''):
         super(LogicalFile,self).__init__()
         self.name = strip_filename(name)
 

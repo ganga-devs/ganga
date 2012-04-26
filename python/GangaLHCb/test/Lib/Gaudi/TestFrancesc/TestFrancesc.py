@@ -16,15 +16,15 @@ class TestFrancesc(GangaGPITestCase):
     def setUp(self):
         pass
 
-    def test_Francesc_get_gaudi_appname(self):
-        g = Gaudi()
-        assert g._impl.get_gaudi_appname() == None
-        gp = GaudiPython(project='DaVinci')
-        assert gp._impl.get_gaudi_appname() == 'DaVinci'
-        dv = DaVinci()
-        assert dv._impl.get_gaudi_appname() == 'DaVinci'
-        b = Bender()
-        assert b._impl.get_gaudi_appname() == 'Bender'
+##     def test_Francesc_get_gaudi_appname(self):
+##         g = Gaudi()
+##         assert g._impl.get_gaudi_appname() == None
+##         gp = GaudiPython(project='DaVinci')
+##         assert gp._impl.get_gaudi_appname() == 'DaVinci'
+##         dv = DaVinci()
+##         assert dv._impl.get_gaudi_appname() == 'DaVinci'
+##         b = Bender()
+##         assert b._impl.get_gaudi_appname() == 'Bender'
 
     # test this fully in Gaudi and GaudiPython tests
     #def test_Francesc__init(self):
@@ -35,7 +35,7 @@ class TestFrancesc(GangaGPITestCase):
     def test_Francesc__getshell(self):
         # just check coverage...hard to check if the env is set properly
         apps = available_apps()
-        apps.remove('Gaudi')
+        #apps.remove('Gaudi')
         for app in apps:
             instance = eval('%s()' % app)
             instance._impl._getshell()

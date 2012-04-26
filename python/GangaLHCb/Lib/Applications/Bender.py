@@ -16,6 +16,7 @@ from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
 from Ganga.Utility.files import expandfilename
 from Ganga.Utility.Config import getConfig
 from AppsBaseUtils import guess_version
+from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

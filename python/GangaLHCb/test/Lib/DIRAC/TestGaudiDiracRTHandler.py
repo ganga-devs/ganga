@@ -34,7 +34,7 @@ class TestGaudiDiracRTHandler(GangaGPITestCase):
         stdjobconfig = self.rth.master_prepare(self.app,self.appmasterconfig)
         # should have master.buffer, master.in and options.pkl
         print 'sandbox =', stdjobconfig.getSandboxFiles()
-        assert len(stdjobconfig.getSandboxFiles()) == 3
+        assert len(stdjobconfig.getSandboxFiles()) == 4
 
     def test_GaudiDiracRTHandler_prepare(self):
         #app = self.app

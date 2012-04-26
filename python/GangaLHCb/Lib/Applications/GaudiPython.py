@@ -17,6 +17,7 @@ from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 from Ganga.Utility.Config import getConfig
 from AppsBaseUtils import guess_version
+from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import shutil
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

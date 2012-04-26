@@ -12,7 +12,7 @@ class TestPythonOptionsParser(GangaGPITestCase):
         gauss._getshell()
         optsfiles = ['./TestGaudi/Gauss-Job.py']
         self.extraopts = 'EventSelector(Input=[\"DATAFILE=\'LFN:dummy.dst\' TYP=\'POOL_ROOTTREE\' OPT=\'READ\'\"])'
-        self.parser = PythonOptionsParser(optsfiles,self.extraopts,gauss.shell)
+        self.parser = PythonOptionsParser(optsfiles,self.extraopts,gauss.env)
         self.job = job
         
     def test_PythonOptionsParser__get_opts_dict_and_pkl_string(self):

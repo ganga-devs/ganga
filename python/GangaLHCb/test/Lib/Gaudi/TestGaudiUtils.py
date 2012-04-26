@@ -8,7 +8,7 @@ class TestGaudiUtils(GangaGPITestCase):
 
     def setUp(self):
         self.apps = available_apps()
-        self.apps.remove('Gaudi')
+        #self.apps.remove('Gaudi')
         srcdir = os.path.dirname(inspect.getsourcefile(GaudiPython))
         self.optsfile = [File(os.path.join(srcdir,
                                            'options/GaudiPythonExample.py'))]
