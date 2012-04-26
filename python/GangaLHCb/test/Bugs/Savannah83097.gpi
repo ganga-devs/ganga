@@ -1,0 +1,91 @@
+import os,os.path,tempfile
+
+def checkCommandArgs(job):
+    job.submit()
+
+    tmpdir = tempfile.mktemp()
+    os.mkdir(tmpdir)
+    fname = os.path.join(tmpdir,'test_bug_83097.txt')
+
+
+    if type(job.backend) == type(Local()):
+        os.system('cd '+job.inputdir+';tar -xvf _input_sandbox_'+str(job.id)+'.tgz')
+        os.system('grep gaudirun.py ' + job.inputdir + 'gaudiscript.py > ' + fname)
+    elif type(job.backend) == type(Dirac()):
+        os.system('grep gaudirun.py ' + job.inputdir + 'gaudi-script.py > ' + fname)
+
+    f=open(fname)
+
+    if len(f.readlines())!=1:
+        print '************************************************************************************'
+        print '* More than one line with gaudiscript.py/gaudi-script.py may cause error... Check! *'
+        print '************************************************************************************'
+    f.seek(0)
+
+    for line in f:
+        if type(job.backend)==type(Local()) and line[line.find('gaudirun.py'):]!='gaudirun.py -T -v %s data.py""" % opts \n':
+            print '*******************************************************'
+            print '* Local backend job failed - Problem with RTHUtils.py *'
+            print '*******************************************************'
+            print r'* Expected: gaudirun.py -T -v %s data.py""" % opts \n   *'
+            print '* Located :', line[line.find('gaudirun.py'):]
+            print '*******************************************************'
+            raise JobError('Command line args wrong for Local() job')
+        elif type(job.backend)==type(Dirac()) and line[line.find('gaudirun.py'):]!='gaudirun.py -T -v options.pkl data.py""")/256)\n':
+            print '******************************************************************'
+            print '* Dirac backend job failed - Problem with GaudiDiracRTHandler.py *'
+            print '******************************************************************'
+            print r'* Expected: gaudirun.py -T -v options.pkl data.py""")/256)\n       *'
+            print '* Located :', line[line.find('gaudirun.py'):]
+            print '******************************************************************'
+            raise JobError('Command line args wrong for Dirac() job')
+    f.close()
+    job.kill()
+    job.remove()
+
+
+
+tmpdir2 = tempfile.mktemp()
+os.mkdir(tmpdir2)
+fname2 = os.path.join(tmpdir2,'test.opts')
+os.system('echo "#testopts" > ' + fname2)
+
+# should pass
+
+j=Job(application=DaVinci(args=['-T','-v'],optsfile=[fname2]),backend=Local())
+try:
+    checkCommandArgs(j)
+except JobError:
+    assert False
+
+j=Job(application=DaVinci(args=['-T -v'],optsfile=[fname2]),backend=Local())
+try:
+    checkCommandArgs(j)
+except JobError:
+    assert False
+
+j=Job(application=DaVinci(args=['-T','-v'],optsfile=[fname2]),backend=Dirac())
+try:
+    checkCommandArgs(j)
+except JobError:
+    assert False
+
+j=Job(application=DaVinci(args=['-T -v'],optsfile=[fname2]),backend=Dirac())
+try:
+    checkCommandArgs(j)
+except JobError:
+    assert False
+
+
+# should fail
+j1=Job(application=DaVinci(args=['-T'],optsfile=[fname2]),backend=Local())
+j2=Job(application=DaVinci(args=['-T-v'],optsfile=[fname2]),backend=Dirac())
+try:
+    checkCommandArgs(j1)
+    assert False
+except JobError:
+    try:
+        checkCommandArgs(j2)
+        assert Fasle
+    except JobError:
+        pass

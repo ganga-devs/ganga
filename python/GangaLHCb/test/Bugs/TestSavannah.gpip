@@ -1,0 +1,102 @@
+import os
+import os.path
+from tempfile import mktemp
+from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
+from GangaTest.Framework.utils import file_contains, is_job_finished, \
+     write_file
+
+class TestSavannah(GangaGPITestCase):
+
+    def testSavannah8937(self):
+        j = Job(application="DaVinci", backend="LSF")
+	j.backend.queue='8nm'
+        j.submit()
+        return Savannah8937(j)
+
+    def testSavannah18126(self):
+        rfile_name = 'Savannah18126.root'
+        extra_opts = 'from Configurables import DaVinci\nDaVinci().DataType="ROOT"\nDaVinci().HistogramFile = "%s"' % rfile_name
+        j = Job(name='NtupleTest', application=DaVinci(extraopts=extra_opts),
+                backend=Local())
+        j.submit()
+        return Savannah18126(j)
+
+    def testSavannah18127(self):
+        j = Job(name='CMTConfigTest', application=DaVinci(), backend=Local())
+        j.submit()
+        return Savannah18127(j)
+
+    def testSavannah33823(self):
+        j = Job(application=Executable(), backend=Dirac(CPUTime=60))
+        j.submit()
+        return Savannah33823(j)
+
+    def testSavannah33992(self):
+        
+        scriptString = '#include <cstdlib>\nvoid exitCode(){\n\texit(45);\n}'
+        file_name = 'exitCode.C'        
+        tmpdir = mktemp()
+        os.mkdir(tmpdir)
+        fileName = os.path.join(tmpdir,file_name)
+        write_file(fileName,scriptString)
+        
+        r =  Root()
+        r.script = fileName
+        j = Job(application=r, backend=Dirac(CPUTime=600))
+        j.submit()
+        return Savannah33992(j)
+        
+class Savannah8937(ICheckTest):
+
+    def isReadyForCheck(self):
+        return is_job_finished(self.j)
+
+    def checkTest(self):
+        assert(self.j.status == 'completed'), 'Job status is not \'completed\''
+
+
+class Savannah18126(ICheckTest):
+
+    def isReadyForCheck(self):
+        return is_job_finished(self.j)
+
+    def checkTest(self):
+        assert(self.j.status == 'completed'), 'Job status is not \'completed\''
+        rfile_name = 'Savannah18126.root'
+        assert(os.path.exists(os.path.join(self.j.outputdir,rfile_name)))
+
+
+class Savannah18127(ICheckTest):
+
+    def isReadyForCheck(self):
+        return is_job_finished(self.j)
+
+    def checkTest(self):
+        assert(self.j.status == 'completed'), 'Job status is not \'completed\''
+
+
+class Savannah33823(ICheckTest):
+
+    def isReadyForCheck(self):
+        return is_job_finished(self.j)
+
+    def checkTest(self):
+        assert(self.j.status == 'completed'), 'Job status is not \'completed\''
+        assert(os.path.exists(os.path.join(self.j.outputdir,'stdout')))
+        #assert pwd == os.getcwd(), 'Directory must not have been changed'
+
+
+class Savannah33992(ICheckTest):
+
+    def isReadyForCheck(self):
+        return is_job_finished(self.j)
+
+    def checkTest(self):
+        assert(self.j.status == 'failed'), 'Job should fail'
+        self.j.backend.getOutputSandbox()
+        f = os.path.join(self.j.outputdir,'std.out')
+        assert os.path.exists(f)
+        assert file_contains(f, 'Status after exitCode.C execution is 45'), 'Incorrect exit code'
+
+
+
