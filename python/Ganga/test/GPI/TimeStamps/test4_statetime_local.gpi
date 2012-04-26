@@ -1,4 +1,5 @@
 from GangaTest.Framework.utils import sleep_until_state
+config['Configuration']['resubmitOnlyFailedSubjobs']=False
 
 import datetime
 
@@ -14,12 +15,14 @@ assert type(j.time.submitted()) == datetime.datetime
 print "Job 1/6 done."
 
 j_comp = Job()
-
+j_comp.application.exe='sleep'
+j_comp.application.args=[30]
 
 j_comp.submit()
 
+assert sleep_until_state(j_comp, 180, 'running')
 j_comp.kill()
-
+assert sleep_until_state(j_comp, 180, 'killed')
 j_comp.resubmit()
 
 assert sleep_until_state(j_comp, 180, 'completed')
@@ -60,9 +63,9 @@ print "Job 3/6 done"
 #subjobs
 
 j = Job()
-
+j.application.exe='sleep'
 j.splitter='ArgSplitter'
-j.splitter.args=[[],[],[]]
+j.splitter.args=[[30],[30],[30]]
 
 j.submit()
 
@@ -75,13 +78,15 @@ print "Job 4/6 done."
 
 j_comp = Job()
 
+j_comp.application.exe='sleep'
 j_comp.splitter='ArgSplitter'
-j_comp.splitter.args=[[],[],[]]
+j_comp.splitter.args=[[30],[30],[30]]
 
 j_comp.submit()
 
+assert sleep_until_state(j_comp, 180, 'running')
 j_comp.kill()
-
+assert sleep_until_state(j_comp, 180, 'killed')
 j_comp.resubmit()
 
 assert sleep_until_state(j_comp, 120, 'completed')
